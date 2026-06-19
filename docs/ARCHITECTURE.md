@@ -338,3 +338,90 @@ See `android-skills:android-tdd`. The imposition engine is built **test-first** 
 ## 14. Decision & review trail
 
 All locked decisions and the Codex review outcomes are recorded as ADRs in [DECISIONS.md](DECISIONS.md). Major technical changes follow the [review workflow](../CLAUDE.md#review-workflow): propose → Codex review → reconcile → ADR.
+
+## 15. Subsystem dependency map, build order & critical path
+
+The whole-project view used to sequence implementation. Phasing definitions live in [ROADMAP.md](ROADMAP.md#guiding-sequence); this section is the *technical* dependency basis that justifies that order.
+
+### 15.1 Dependency graph
+
+```mermaid
+flowchart BT
+    model["core:model<br/>✅ v0.1.0"]
+    imp["core:imposition<br/>✅ v0.1.0"]
+    data["core:data<br/>S2 · designed"]
+    render["core:render<br/>S3 · next"]
+    editor["feature:editor (MVI)<br/>S4"]
+    export["export<br/>S5"]
+    app["app shell / navigation"]
+
+    imp --> model
+    data --> model
+    render --> model
+    editor --> model
+    editor --> data
+    editor --> render
+    export --> model
+    export --> imp
+    export --> render
+    export --> data
+    app --> editor
+    app --> export
+
+    classDef done fill:#dff5dd,stroke:#3a7;
+    classDef next fill:#fff4d6,stroke:#e0a800;
+    class model,imp done;
+    class render next;
+```
+
+*Arrow `A → B` = "A depends on B." `core:model` is the universal sink (pure, depends on nothing); the `app` shell is the source.*
+
+### 15.2 Build order
+
+| Phase | Subsystem | Direct deps | Status | Parallelizable with |
+|---|---|---|---|---|
+| S1 | `core:imposition` | `core:model` | ✅ shipped (v0.1.0) | — |
+| S2 | `core:data` | `core:model` | 🟦 designed; gated on [ADR-021/022/023](DECISIONS.md#adr-021) | S3 (no shared dep) |
+| **S3** | **`core:render`** | `core:model` | ⬜ **recommended next** | S2 finalization |
+| S4 | `feature:editor` | `core:model`, `core:data`, `core:render` | ⬜ | — (needs S2 **and** S3) |
+| S5 | `export` | `core:model`, `core:imposition`, `core:render`, `core:data` | ⬜ | — |
+| — | `app` shell / nav | features | ⬜ | — |
+
+### 15.3 Risk analysis
+
+| Subsystem | Residual risk | Severity | De-risked by |
+|---|---|---|---|
+| `core:imposition` | — (retired) | — | shipped, 95 tests, [ADR-007](DECISIONS.md#adr-007) |
+| `core:data` | corruption, schema drift, asset GC, autosave durability | Med–High | [storage spike](spikes/data-storage-layer.md), [ADR-009/021/022/023](DECISIONS.md#adr-009) |
+| `core:render` | **text-layout fidelity, transform correctness, preview↔export parity** | **High** | one shared renderer ([ADR-006](DECISIONS.md#adr-006)); Roborazzi diffs ([§11](#11-testing-strategy)) |
+| `feature:editor` | MVI state/undo complexity, gesture math | Med | MVI + command undo ([ADR-005](DECISIONS.md#adr-005)) |
+| `export` | PDF vector-text fidelity, raster OOM, fit-to-page rescale | Med–High | [ADR-001/011/012](DECISIONS.md#adr-001) |
+
+### 15.4 Critical path
+
+```mermaid
+flowchart LR
+    M["core:model ✅"] --> I["core:imposition ✅"]
+    M --> D["core:data (S2)"]
+    M --> R["core:render (S3)"]
+    D --> E["editor (S4)"]
+    R --> E
+    R --> X["export (S5)"]
+    D --> X
+    I --> X
+    E --> MVP(["MVP"])
+    X --> MVP
+```
+
+`core:render` depends only on `core:model` (not on `core:imposition`); **imposition is composed at export** ([ADR-006](DECISIONS.md#adr-006)). The gating node for all remaining work is therefore **`core:render`**: both the editor (S4) and export (S5) depend on it, so the critical path runs **`core:render` → {editor, export} → MVP**. `core:data` (S2) is a **parallel feeder** into the editor and export and shares no dependency with `core:render`, so persistence work and render work proceed concurrently.
+
+### 15.5 Which subsystem follows S2 — recommendation
+
+**Build `core:render` (S3) next.** Justification:
+
+1. **Critical-path node.** Render is the *only* prerequisite shared by **both** the editor (S4) and export (S5). Nothing downstream of S2 can ship without it: the editor has no canvas without a renderer, and export is *defined* as the second backend of the shared renderer ([ADR-006](DECISIONS.md#adr-006)). It maximises unblocking.
+2. **Already unblocked.** Render depends only on `core:model` — the scene/document types (including the additions S2 makes to `core:model`), **not** the persistence *mechanism* (`core:data`) and **not** `core:imposition` (which is composed at export, [ADR-006](DECISIONS.md#adr-006)). So it can start immediately and **overlap** with closing the held S2 ADRs (021/022/023).
+3. **Next-highest correctness risk** ([§12](#12-major-technical-risks)). After imposition, render fidelity (text layout, image transforms, preview↔export parity) is the biggest unproven risk — building it next honours the project's "prove the riskiest, most isolatable thing first" principle.
+4. **Editor cannot precede it.** S4 strictly depends on S3; sequencing the editor before render is infeasible.
+
+> **Sequencing rule:** finalize the held S2 ADRs (durable autosave, asset ownership, fidelity cap) *and* begin `core:render` design in parallel — they do not block each other. The editor (S4) starts only once **both** S2 and S3 land.

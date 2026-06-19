@@ -29,8 +29,14 @@
 | [ADR-016](#adr-016) | Format & paper extensibility (closed enums vs open specs) | Proposed |
 | [ADR-017](#adr-017) | Bleed, clip & safe-area semantics | Proposed |
 | [ADR-018](#adr-018) | Imposition convention & guide-ID versioning | Proposed |
+| [ADR-019](#adr-019) | Domain-layer threshold — no `:core:domain` until ViewModels outgrow repositories | Accepted |
+| [ADR-020](#adr-020) | Document serialization = kotlinx JSON behind a swappable `DocumentSerializer` | Accepted |
+| [ADR-021](#adr-021) | Autosave timing & durability policy | Proposed |
+| [ADR-022](#adr-022) | Asset GC & ownership model (ref-count + deferred undo-safe sweep) | Proposed |
+| [ADR-023](#adr-023) | Asset fidelity — store one export-capped import master, derive tiers | Proposed |
 
-> ADR-014 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19). They record rationale, risks, and future considerations only — **no decision is made yet** and none changes the merged imposition engine.
+> ADR-014 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change.
+> ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
 
 ---
 
@@ -166,3 +172,82 @@
 - **Options under consideration:** treat convention names and guide ids as **stable, append-only identifiers** with a documented registry; or version the `ConventionSpec` (e.g. a `version` field) so persisted layouts can be re-resolved across changes.
 - **Risks:** If a stored document or template references `"TOP_ROW_ROTATED"` and the name later changes, old projects break — a data-durability regression against [ADR-009](#adr-009). Golden tests already pin the current strings, which is good, but pinning ≠ a stability guarantee.
 - **Future considerations:** Decide before any convention name/id is exposed in a persisted `.zine` schema (S2 storage layer) or a user-facing template — that is the first point where the identifier becomes a durability obligation.
+
+## ADR-019 {#adr-019}
+**Domain-layer threshold: no `:core:domain` for the MVP; repository interfaces live in `:core:data` and graduate to a domain module only when ViewModel logic outgrows them. (Resolves S2 open question O1.)**
+- **Status:** Accepted (2026-06-19)
+- **Context:** Clean architecture ([ADR-013](#adr-013)) permits a `:core:domain` layer (use cases + repository interfaces). For an offline, beginner-first MVP most "use cases" would be thin pass-throughs to a repository, so the layer may be ceremony before it earns its keep.
+- **Alternatives considered:**
+  - **A — No `:core:domain`; interfaces in `:core:data`** *(recommended)*: ViewModels depend on repository interfaces defined in `:core:data`. Fewest modules; least boilerplate. *Risk:* ViewModels can accrete business logic that should live in use cases.
+  - **B — Full `:core:domain` now**: use cases + interfaces from day one. Clean separation, but most use cases are trivial wrappers today → boilerplate without payoff.
+  - **C — Interfaces in `:core:model`**: keeps interfaces "central," but `:core:model` must stay a pure, dependency-free data module; repository interfaces drag in `Result`/coroutine concerns and muddy that purity.
+- **Tradeoffs:** A optimizes for present simplicity and is **reversible** (extracting a domain module later is mechanical); B optimizes for a separation we don't yet need; C violates the model-purity invariant.
+- **Recommended direction:** **A.** Introduce `:core:domain` only when **multiple ViewModels duplicate the same orchestration/business rules**, or a ViewModel's logic spans multiple repositories with no natural home. That duplication is the explicit extraction trigger (refined per Codex review — the signal is cross-ViewModel duplication, not a single fat ViewModel alone).
+- **Consequences:** Fewer modules for S2–S4; watch cross-ViewModel rule duplication as the signal to extract. No impact on the shipped engine.
+- **Review (2026-06-19):** Codex — **promote to Accepted**; sound for a beginner-first MVP, matches the `:core:data` boundary, reversible. Adopted its refinement of the extraction trigger.
+
+## ADR-020 {#adr-020}
+**Document serialization = `kotlinx.serialization` JSON, accessed only through a single `DocumentSerializer` interface so the wire format is swappable. (Resolves O2.)**
+- **Status:** Accepted (2026-06-19)
+- **Context:** The zine document tree ([ADR-003](#adr-003)) is persisted as a file blob. Format choice affects debuggability, schema evolution, size/speed, and future KMP.
+- **Alternatives considered:**
+  - **A — kotlinx JSON behind a `DocumentSerializer` interface** *(recommended)*: human-readable, diff-friendly, tolerant evolution (`ignoreUnknownKeys`), KMP-ready; the interface isolates the one swap point.
+  - **B — Protobuf now**: compact and fast, but binary (hard to debug/inspect), rigid schema, and overkill for MVP document sizes.
+  - **C — Moshi/Gson JSON**: reflection-based, weaker sealed-class/`@SerialName` support, not multiplatform.
+  - **D — kotlinx JSON called directly (no interface)**: simplest, but couples every call site to the format, making a later swap a wide refactor.
+- **Tradeoffs:** JSON trades bytes/speed for readability, debuggability, and painless additive evolution — the right priorities pre-1.0; the interface (A vs D) costs one indirection but buys a clean escape hatch to Protobuf if write-amplification is ever measured ([ADR-014](#adr-014)/[risks R5](spikes/data-storage-layer.md#7-risks--mitigations)).
+- **Recommended direction:** **A.** kotlinx JSON now; all (de)serialization through `DocumentSerializer`; revisit format only with profiling evidence.
+- **Boundary caveat (per Codex):** the `DocumentSerializer` boundary makes **call sites** swappable, not the persisted schema. A later Protobuf must still carry a **format marker**, retain a **legacy-JSON reader**, and own format detection/migration. Therefore: design `DocumentMigrator`s to operate on **typed/canonical document versions**, not raw `JsonElement` trees — otherwise the Protobuf escape hatch is cosmetic. The serializer (not call sites) owns legacy-format detection.
+- **Consequences:** Debuggable documents; one swap point; KMP-aligned with the pure core. Migrators stay format-neutral.
+- **Review (2026-06-19):** Codex — **promote to Accepted**; JSON is correct pre-1.0 for inspectability/fixtures/iteration. Adopted the boundary caveat (canonical-version migrators + serializer-owned legacy detection) so the swap claim is real, not cosmetic.
+
+## ADR-021 {#adr-021}
+**Autosave = per-edit debounce + hard flush on lifecycle stop + a max-latency cap during continuous editing, with a single-writer guarantee. (Resolves O3.)**
+- **Status:** Proposed (2026-06-19)
+- **Context:** [ADR-009](#adr-009) mandates no lost work + crash safety + no main-thread jank. The timing policy decides the worst-case data-loss window and the write-amplification cost.
+- **Alternatives considered:**
+  - **A — Debounce (reset per edit) + flush on `ON_STOP`/`onPause` + max-latency cap + single-writer** *(recommended)*: coalesces bursts; bounds loss to one debounce window; guarantees a save when backgrounded; the cap prevents "never saves during a long continuous edit."
+  - **B — Save on every change**: zero loss window but write-amplifies and janks on large documents.
+  - **C — Save only on background/close**: cheap, but a crash mid-session loses everything since open.
+  - **D — Fixed periodic timer only**: may fire mid-keystroke or too rarely; ignores edit cadence.
+- **Tradeoffs:** A is the standard editor compromise — small added complexity (debounce + mutex) for a low write cost. **Honest loss bound:** the true worst case is "everything since the **last completed save**," not "one debounce window" — if the process is killed during a pending/in-flight flush, that debounce's edits are lost. `ON_STOP`/`onPause` is **best-effort**, not a process-death guarantee, and abrupt death has no callback. The **constants** (~600 ms debounce, ~10 s max-latency) are empirical/tunable.
+- **Recommended direction:** **A** for the *coalescing* policy, with the interval/cap as named tunables validated on a low-end device.
+- **Open durability contract (why this stays Proposed):** before Accept, define — (1) the precise loss bound we promise the user; (2) lifecycle-flush *completion* semantics (await the in-flight save on `ON_STOP`?); (3) cancellation behavior of a superseded debounce; (4) whether "never lose work" requires a tiny **write-ahead op-log / dirty journal** (durable "pending edit" record written synchronously) in addition to the debounced full-document save. If yes, the journal — not the debounce — is the durability mechanism and the debounced save is an optimization.
+- **Consequences (provisional):** requires a per-project single-writer mutex and an immutable snapshot at save time, decoupled from MVI command application ([ADR-005](#adr-005)).
+- **Review (2026-06-19):** Codex — **KEEP Proposed.** Direction is right but the durability claim was too strong; `ON_STOP` does not survive low-memory kill mid-flush. Resolve the durability contract (loss bound, flush completion, journal-or-not) before Accept. A small op-log may be required to honor "never lose work" ([ADR-009](#adr-009)).
+
+## ADR-022 {#adr-022}
+**Asset garbage collection = reference counting + a deferred sweep with a grace window (so undo can resurrect a removed element), plus periodic disk/table reconciliation. Never inline-delete asset bytes. (Resolves O4.)**
+- **Status:** Proposed (2026-06-19)
+- **Context:** Images are copied in and content-addressed ([ADR-004](#adr-004)); removing an element or project drops a reference. Deleting bytes eagerly conflicts with undo ([ADR-005](#adr-005)), which can restore a "deleted" element.
+- **Alternatives considered:**
+  - **A — Ref-count + deferred WorkManager sweep (grace window) + reconciliation** *(recommended)*: `refCount == 0` assets are deleted only after a grace boundary (undo cleared / project close), off the hot path, crash-safe; a reconciliation pass fixes disk/table drift.
+  - **B — Inline delete on element/project removal**: reclaims space immediately but **breaks undo** (the asset an undo needs is already gone) and runs deletion mid-session.
+  - **C — No GC**: simplest, but orphaned assets leak storage indefinitely.
+  - **D — GC on app start**: janks startup and still races undo within a session.
+- **Tradeoffs:** A defers space reclaim slightly in exchange for **undo-safety** and crash-safety — the correct priority given undo is a headline feature. B's immediacy is incompatible with undo; C/D fail on leakage or correctness.
+- **Recommended direction:** **A** for the *mechanism* (ref-count + deferred undo-safe sweep + reconciliation). Two sub-decisions remain open and block Accept:
+- **Open: asset ownership model (must resolve before Accept).** Content-addressing implies one file can back many references; a naïve **per-project `refCount`** is unsafe — if project X drops its last reference, the sweep must not delete `assets/<hash>` while project Y still references that hash. Options:
+  - **(i) Per-project asset store** (`projects/<id>/assets/<hash>`): dedup *within* a project only; GC and `.zine` backup are trivially self-contained; cross-project dedup is lost. *Leans recommended for MVP simplicity + backup portability.*
+  - **(ii) Global content-addressed store** (`assets/<hash>`) with a **global** hash ref-count or a `project_asset` join table: dedupes across projects, but GC must check **global** references and backup must copy referenced bytes into the `.zine`.
+  This corrects an inconsistency in the [storage spike §2/§5](spikes/data-storage-layer.md#2-storage-model--what-lives-where-and-why) (a per-project `asset.projectId` over a global store is contradictory).
+- **Open: concrete grace boundary.** "Undo cleared or project close" must become a **persisted/schedulable state** — a `deletableAt` tombstone + an **active-session guard** so a WorkManager sweep can never delete an asset the open editor's undo could resurrect. Project-close is only safe if undo history is session-only (it is, per [ADR-005](#adr-005)).
+- **Consequences (provisional):** Bounded, slightly delayed reclaim; couples GC to the undo horizon ([ADR-005](#adr-005)) and durability ([ADR-009](#adr-009)).
+- **Review (2026-06-19):** Codex — **KEEP Proposed.** Mechanism is right; never-inline-delete is correct. Hold pending (a) a concrete asset-ownership model (global hash ref-count/join table **or** per-project store) that handles shared hashes, and (b) `deletableAt`/active-session semantics. Caught a real spec bug: per-project ref-count over a global content-addressed store is unsafe.
+
+## ADR-023 {#adr-023}
+**Asset fidelity = store a single imported original capped to the export ceiling resolution; derive edit/preview bitmaps on demand. Do not persist multiple fidelity tiers in the MVP. (Resolves O5.)**
+- **Status:** Proposed (2026-06-19)
+- **Context:** Editing wants small bitmaps; 300 DPI export ([ADR-011](#adr-011)) wants fidelity. Phone photos (12–50 MP) are far larger than any single panel needs, so storing them untouched wastes space and memory.
+- **Alternatives considered:**
+  - **A — Store one original capped at the export ceiling; derive tiers at runtime** *(recommended)*: cap the longest edge at the maximum useful resolution (a full-bleed sheet at 300 DPI, e.g. Letter ≈ 2550×3300) **with crop/zoom headroom (~1.5×)**; Coil derives edit/preview bitmaps. One persisted file.
+  - **B — Store the full-resolution original untouched**: maximum fidelity, but unbounded storage and OOM risk on import.
+  - **C — Store only a downsampled edit copy**: smallest, but permanently caps export quality (cannot re-export larger).
+  - **D — Persist multiple tiers (original + edit + thumbnail)**: flexible, but multiplies storage and adds a tier-sync burden.
+- **Tradeoffs:** A bounds storage/memory while preserving enough resolution for a full-sheet 300 DPI export; the residual risk is a user cropping into a *tiny* region of a capped image and losing sharpness — mitigated by the headroom multiplier and acceptable for a beginner home-print MVP. The exact cap/headroom is **empirical** and must be validated against real export output.
+- **Recommended direction:** **A** as the *approach* (cap-and-derive). Held Proposed because the cap is an **irreversible** quality decision needing a measured policy, plus honest naming/UX.
+- **Open before Accept (per Codex):**
+  - **Measured cap policy:** the single cap must be the **max across all supported papers** (A4 is taller than Letter at 300 DPI) **plus future full-bleed** headroom — not just Letter. Validate the multiplier with real phone photos and **aggressive crops** (the failure mode is cropping into a tiny region of a capped image).
+  - **Honest naming:** call the stored file an **"import master" / optimized import**, never the "original" — the full camera original is **not** retained. UX/schema/docs must make the non-retention explicit so re-crop/zoom/re-export expectations are correct.
+- **Consequences (provisional):** Bounded storage; a defined quality ceiling; derive-on-demand keeps editing memory low ([ADR-011](#adr-011)).
+- **Review (2026-06-19):** Codex — **KEEP Proposed.** Bounded storage is reasonable but this is an irreversible discard; lock only after a measured cap (max paper + bleed) with crop/zoom quality tests, and rename "original" → import master with explicit non-retention UX.

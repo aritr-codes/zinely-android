@@ -36,7 +36,7 @@ flowchart LR
     S5 --> MVP(["MVP complete"])
 ```
 
-> **Status:** S1 (imposition engine + SVG proof sheet) is ✅ **implemented and green** — pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, Codex-reviewed per phase ([ADR-007 Implementation](DECISIONS.md#adr-007), [spike](spikes/imposition-engine.md)). Next: S2 data/storage layer.
+> **Status:** S1 (imposition engine + SVG proof sheet) is ✅ **implemented and green** — pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, Codex-reviewed per phase ([ADR-007 Implementation](DECISIONS.md#adr-007), [spike](spikes/imposition-engine.md)), shipped as milestone `v0.1.0-imposition-engine`. Next: **S2 data/storage layer** — design in [spikes/data-storage-layer.md](spikes/data-storage-layer.md) (pre-implementation).
 
 ---
 
