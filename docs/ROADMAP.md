@@ -36,6 +36,8 @@ flowchart LR
     S5 --> MVP(["MVP complete"])
 ```
 
+> **Status:** S1 (imposition engine + SVG proof sheet) is ✅ **implemented and green** — pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, Codex-reviewed per phase ([ADR-007 Implementation](DECISIONS.md#adr-007), [spike](spikes/imposition-engine.md)). Next: S2 data/storage layer.
+
 ---
 
 ## MVP — "one great format, done right"
@@ -85,5 +87,6 @@ flowchart LR
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
 | 2026-06-19 | Initial roadmap established | [PRD §7](PRD.md#7-scope--mvp) |
+| 2026-06-19 | S1 imposition engine spike implemented (pure Kotlin, 95 tests, Codex-reviewed) | [ADR-007](DECISIONS.md#adr-007) |
 
 > When phase contents change, add a row here and update the affected phase section + any new [ADR](DECISIONS.md).

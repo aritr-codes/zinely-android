@@ -24,4 +24,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "zinely"
 include(":app")
+// Pure-Kotlin, Android-independent core (imposition engine spike).
+include(":core:model")
+include(":core:imposition")
  

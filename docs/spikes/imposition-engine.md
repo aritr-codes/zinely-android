@@ -4,7 +4,7 @@
 >
 > Decision: [ADR-007](../DECISIONS.md#adr-007). Geometry evidence: [RESEARCH R1](../RESEARCH.md#r1-imposition-geometry--single-sheet-8-page-mini-zine). Consumed by the [export pipeline](../ARCHITECTURE.md#6-export-pipeline). **No implementation code in this doc — types & signatures only.**
 
-- **Status:** Design (pre-implementation) · 2026-06-19
+- **Status:** ✅ **Implemented** · 2026-06-19 — built test-first on branch `feat/imposition-engine` as `:core:model` + `:core:imposition` (pure Kotlin, zero Android). 95 tests (unit + jqwik property + golden SVG), all green. Each of the 5 phases was Codex-reviewed and reconciled; see [ADR-007 Implementation](../DECISIONS.md#adr-007). Sample proof: `core/imposition/src/test/resources/golden/single-sheet-8-letter.svg`.
 - **Why first:** it is the **#1 correctness risk** ([ARCHITECTURE §12](../ARCHITECTURE.md#12-major-technical-risks)) and the most isolatable — perfect for a test-first spike that retires risk before any UI exists.
 
 ---

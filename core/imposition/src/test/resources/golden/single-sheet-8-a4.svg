@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="841.89pt" height="595.276pt" viewBox="0 0 841.89 595.276">
+  <title>Zinely proof — TOP_ROW_ROTATED — SINGLE_SHEET_8</title>
+  <rect x="0" y="0" width="841.89" height="595.276" fill="white" stroke="#333" stroke-width="1"/>
+  <g transform="matrix(1 0 0 1 631.418 297.638)">
+    <rect class="panel" x="0" y="0" width="210.472" height="297.638" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="176.472" height="263.638" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="105.236,29.764 98.236,56.551 112.236,56.551" fill="#bbb"/>
+    <text x="105.236" y="148.819" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">1</text>
+    <text x="105.236" y="166.819" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">FRONT_COVER</text>
+  </g>
+  <g transform="matrix(-1 0 0 -1 841.89 297.638)">
+    <rect class="panel" x="0" y="0" width="210.472" height="297.638" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="176.472" height="263.638" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="105.236,29.764 98.236,56.551 112.236,56.551" fill="#bbb"/>
+    <text x="105.236" y="148.819" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">2</text>
+    <text x="105.236" y="166.819" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(-1 0 0 -1 631.418 297.638)">
+    <rect class="panel" x="0" y="0" width="210.472" height="297.638" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="176.472" height="263.638" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="105.236,29.764 98.236,56.551 112.236,56.551" fill="#bbb"/>
+    <text x="105.236" y="148.819" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">3</text>
+    <text x="105.236" y="166.819" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(-1 0 0 -1 420.945 297.638)">
+    <rect class="panel" x="0" y="0" width="210.472" height="297.638" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="176.472" height="263.638" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="105.236,29.764 98.236,56.551 112.236,56.551" fill="#bbb"/>
+    <text x="105.236" y="148.819" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">4</text>
+    <text x="105.236" y="166.819" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(-1 0 0 -1 210.472 297.638)">
+    <rect class="panel" x="0" y="0" width="210.472" height="297.638" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="176.472" height="263.638" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="105.236,29.764 98.236,56.551 112.236,56.551" fill="#bbb"/>
+    <text x="105.236" y="148.819" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">5</text>
+    <text x="105.236" y="166.819" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(1 0 0 1 0 297.638)">
+    <rect class="panel" x="0" y="0" width="210.472" height="297.638" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="176.472" height="263.638" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="105.236,29.764 98.236,56.551 112.236,56.551" fill="#bbb"/>
+    <text x="105.236" y="148.819" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">6</text>
+    <text x="105.236" y="166.819" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(1 0 0 1 210.472 297.638)">
+    <rect class="panel" x="0" y="0" width="210.472" height="297.638" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="176.472" height="263.638" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="105.236,29.764 98.236,56.551 112.236,56.551" fill="#bbb"/>
+    <text x="105.236" y="148.819" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">7</text>
+    <text x="105.236" y="166.819" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(1 0 0 1 420.945 297.638)">
+    <rect class="panel" x="0" y="0" width="210.472" height="297.638" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="176.472" height="263.638" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="105.236,29.764 98.236,56.551 112.236,56.551" fill="#bbb"/>
+    <text x="105.236" y="148.819" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">8</text>
+    <text x="105.236" y="166.819" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">BACK_COVER</text>
+  </g>
+  <line class="fold" x1="0" y1="297.638" x2="841.89" y2="297.638" stroke="#39f" stroke-width="0.75" stroke-dasharray="6 4"/>
+  <line class="fold" x1="210.472" y1="0" x2="210.472" y2="595.276" stroke="#39f" stroke-width="0.75" stroke-dasharray="6 4"/>
+  <line class="fold" x1="420.945" y1="0" x2="420.945" y2="595.276" stroke="#39f" stroke-width="0.75" stroke-dasharray="6 4"/>
+  <line class="fold" x1="631.418" y1="0" x2="631.418" y2="595.276" stroke="#39f" stroke-width="0.75" stroke-dasharray="6 4"/>
+  <line class="cut" x1="210.472" y1="297.638" x2="631.418" y2="297.638" stroke="#e33" stroke-width="1.5"/>
+</svg>
