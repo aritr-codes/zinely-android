@@ -22,6 +22,9 @@ local.properties
 # Kotlin
 .kotlin/
 
+# Dev scratch (commit message staging for the neutral runner workflow)
+/tools/commitmsg.txt
+
 # Editors / IDE (ignore the whole .idea directory)
 /.idea/
 .fleet/
