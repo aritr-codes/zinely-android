@@ -9,7 +9,11 @@ import com.aritr.zinely.core.model.ZineDocument
  * coordinator composes over [save].
  */
 public interface DocumentRepository {
-    /** Load and validate the current-shaped document for [projectId]. */
+    /**
+     * Load the current-shaped document for [projectId]. Implementations validate on the way out and
+     * fail only on ERROR-severity issues (`ValidationResult.isValid == false` → [DataError.Invalid]);
+     * WARNING-severity issues never block a load/save.
+     */
     public suspend fun load(projectId: String): DataResult<ZineDocument>
 
     /** Persist [document] for [projectId] atomically (last-write-wins within the single writer). */

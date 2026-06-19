@@ -27,7 +27,11 @@ public interface ProjectRepository {
     /** Rename a project; the document is untouched. */
     public suspend fun renameProject(id: String, title: String): DataResult<Unit>
 
-    /** Deep-copy a project (new id, copied document + assets) and return the new summary. */
+    /**
+     * Duplicate a project: a new id with a copy of the **document**, **referencing the same content
+     * hashes**. Assets are globally shared and content-addressed ([ADR-022]) — the blobs are never
+     * copied per project; the duplicate simply adds new live roots over the existing assets.
+     */
     public suspend fun duplicateProject(id: String): DataResult<ProjectSummary>
 
     /** Delete a project's metadata and document; orphaned assets are reclaimed by GC ([ADR-022]). */
