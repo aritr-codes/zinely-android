@@ -17,7 +17,7 @@
 **In scope (S2)**
 - Room database for **queryable project metadata** (list, sort, thumbnails).
 - The serialized **zine document** (`kotlinx.serialization` JSON) — schema, versioning, migration.
-- **Asset store** for copied-in images (content-addressed, reference-counted, orphan GC).
+- **Asset store** for copied-in images (global, content-addressed import masters; mark-and-sweep GC — [ADR-022](../DECISIONS.md#adr-022)/[ADR-023](../DECISIONS.md#adr-023)).
 - **Autosave** (debounced, atomic, recoverable) and crash recovery.
 - Repository + data-source interfaces with a sealed `Result<T>` boundary.
 - The `.zine` **backup/restore** package format (V1 surface, designed now so the schema is forward-compatible).
@@ -86,12 +86,12 @@ Three tiers, each chosen for what it is good at. The logical model is [ARCHITECT
 flowchart LR
     subgraph db["Room DB (metadata only — queryable)"]
         T1["zine_project\n(id, title, timestamps,\nformat, paper, paths, docSchemaVersion)"]
-        T2["asset (ownership per ADR-022)\n(contentHash, localPath, w, h, mime, refCount,\ndeletableAt) + project link"]
+        T2["asset INDEX — cache, not authority (ADR-022)\n(contentHash PK, localPath, w, h, mime, mtime)"]
     end
     subgraph fs["App-private filesystem (filesDir)"]
         D1["projects/&lt;id&gt;/document.json\n(+ document.json.tmp during save)"]
         D2["projects/&lt;id&gt;/thumbnail.png"]
-        A1["assets/&lt;sha256&gt;.&lt;ext&gt;\n(content-addressed, deduped)"]
+        A1["assets/&lt;sha256&gt;\n(global; content-addressed master; deduped)"]
     end
     T1 -. "documentPath" .-> D1
     T1 -. "thumbnailPath" .-> D2
@@ -100,13 +100,13 @@ flowchart LR
 
 | Tier | Holds | Why this tier |
 |---|---|---|
-| **Room** (`zine_project`, `asset`) | small, **queryable** metadata: list/sort/search, thumbnails, asset bookkeeping & ref-counts | relational queries + `@AutoMigration` + WAL crash-safety ([R4.2](../RESEARCH.md#r42-recommendation--recommendation), [R4.3](../RESEARCH.md#r43-crash-safety--verified)); the document tree is **not** relational, so it doesn't belong here. **Asset ownership** (global content-addressed store + global ref-count/join table **vs** per-project store) is an open decision in [ADR-022](../DECISIONS.md#adr-022) — a per-project `refCount` over a *global* store would be unsafe for shared hashes. |
+| **Room** (`zine_project`, `asset`) | small, **queryable** metadata: list/sort/search, thumbnails, an asset **index** (cache) | relational queries + `@AutoMigration` + WAL crash-safety ([R4.2](../RESEARCH.md#r42-recommendation--recommendation), [R4.3](../RESEARCH.md#r43-crash-safety--verified)); the document tree is **not** relational, so it doesn't belong here. **Asset ownership is decided** ([ADR-022](../DECISIONS.md#adr-022), Accepted): a **global** content-addressed store with **mark-and-sweep** liveness from document roots — *not* a per-project or ref-counted table, which would be unsafe for shared hashes. The `asset` row is a derived index, never the deletion authority. |
 | **JSON file** per project (`document.json`) | the full **zine document tree** (pages, elements, transforms, styles) | a deep, evolving tree serializes naturally; one atomic file = one atomic save unit; schema versions independently of Room |
-| **Asset store** (`assets/<hash>.<ext>`) | copied-in image **bytes** | binary blobs don't belong in SQLite or JSON; content-addressing dedupes and enables ref-counted GC |
+| **Asset store** (`assets/<sha256>`) | copied-in image **master bytes** | binary blobs don't belong in SQLite or JSON; content-addressing dedupes; liveness is by mark-and-sweep over document roots ([ADR-022](../DECISIONS.md#adr-022)) |
 
 **Key invariants**
 - `document.json` is the **single source of truth** for content; Room metadata is a **derived cache** (title, updatedAt, schemaVersion) refreshed on save. If they disagree, the document wins; metadata is rebuildable.
-- Assets are **immutable & content-addressed** (`sha256` of bytes). The same photo placed twice → one file, `refCount = 2`.
+- Assets are **immutable & content-addressed** (`sha256` of the master bytes). The same photo placed twice → **one file**, kept live as long as any document or undo stack references its hash (mark-and-sweep, [ADR-022](../DECISIONS.md#adr-022)).
 - All paths are **app-private** (`Context.filesDir`); no external storage, no `MediaStore` URIs persisted ([ADR-004](../DECISIONS.md#adr-004)).
 
 ---
@@ -175,13 +175,15 @@ sequenceDiagram
     participant DB as Room
 
     ED->>AC: onDocumentChanged(doc)  // every edit
-    AC->>AC: markDirty(); debounce ~750ms (reset on each edit)
-    Note over AC: also hard-flush on lifecycle STOP / onPause
-    AC->>DS: save(doc) on IO dispatcher
+    AC->>AC: markDirty(); debounce ~1s (reset per edit; 5s max-latency cap)
+    Note over AC: synchronous flush on ON_STOP / editor-exit (awaits in-flight save)
+    AC->>DS: save(immutable snapshot) on IO dispatcher
     DS->>DS: serialize(doc) -> bytes
     DS->>FS: write document.json.tmp
-    DS->>FS: fsync(tmp)              // durability before rename
+    DS->>FS: fsync(tmp)                       // data durable before rename
+    DS->>FS: keep prior good as document.json.bak
     DS->>FS: atomic rename tmp -> document.json
+    DS->>FS: best-effort dir fsync            // make the rename durable
     DS->>DB: update updatedAt, schemaVersion (single txn, WAL)
     DS-->>AC: Result.Success
     AC-->>ED: saved state (clean)
@@ -204,9 +206,9 @@ stateDiagram-v2
 
 **Rules**
 - **Write-temp → fsync → atomic rename** guarantees `document.json` is always either the old good version or the new good version — never a half-written file ([R4.3](../RESEARCH.md#r43-crash-safety--verified)).
-- **Debounce ~600ms** (tunable; [ADR-021](../DECISIONS.md#adr-021)) coalesces rapid edits; **force-flush** on `ON_STOP`/`onPause`. ⚠️ The honest loss bound is "since the **last completed save**" — `ON_STOP` is best-effort and does **not** survive a low-memory kill mid-flush. Whether "never lose work" needs a synchronous write-ahead op-log (vs debounce alone) is the open durability contract in [ADR-021](../DECISIONS.md#adr-021).
-- **Single-writer:** autosave per project is serialized (a `Mutex`/conflated channel) so two saves never race on the tmp file.
-- **Recovery:** on open, if a `.tmp` exists it is a crashed write → discard it (the good file is intact); only surface a "restore unsaved changes" prompt if we additionally keep a small journal indicating in-flight edits.
+- **Resolved contract ([ADR-021](../DECISIONS.md#adr-021), Accepted):** debounce **~1 s** (reset per edit) with a **5 s max-latency cap**; a **synchronous flush on `ON_STOP`/editor-exit** that awaits the in-flight save; keep one prior-good **`document.json.bak`**; **no op-log in the MVP.** Honest loss bound = "since the **last completed save**" (≈0 on clean exit). `ON_STOP` is best-effort and does **not** survive a low-memory kill mid-flush, so a crash in the un-saved window loses ≤ ~5 s — the accepted bound. [ADR-009](../DECISIONS.md#adr-009)'s "no lost work" = no loss of *committed* work + bounded in-flight loss.
+- **Single-writer:** autosave per project is serialized (a `Mutex`/conflated channel) so two saves never race on the tmp file; each save reads an **immutable snapshot** decoupled from MVI command application.
+- **Recovery:** on open, if `document.json` is missing/corrupt (interrupted rename / power loss), fall back to **`document.json.bak`**; a stray `.tmp` is a crashed write and is discarded (the good file or `.bak` is intact). A "restore unsaved changes" prompt would require the deferred op-log, which the MVP does not ship.
 - **Interaction with MVI undo ([ADR-005](../DECISIONS.md#adr-005)):** autosave persists **document state**, not the undo stack. Undo history is in-memory/session-scoped for MVP; persisting it is 🔭 future. Saving must be decoupled from command application (save reads an immutable snapshot).
 - **Thumbnails** are regenerated off-thread on save (debounced separately, lower frequency) to keep the project list fresh without per-keystroke cost.
 
@@ -220,21 +222,23 @@ From Photo Picker to a safe, deduped, garbage-collected on-disk asset ([ADR-004]
 flowchart LR
     PICK["Photo Picker\n(no storage permission)"] --> READ["Open InputStream\nvia ContentResolver"]
     READ --> DECODE["Decode bounds-first\n(inJustDecodeBounds + inSampleSize)"]
-    DECODE --> EXIF["Normalize EXIF\norientation"]
-    EXIF --> HASH["sha256 of normalized bytes"]
+    DECODE --> CAP["Downscale to <=4096px longest edge\n(import master; ADR-023)"]
+    CAP --> EXIF["Normalize EXIF\norientation"]
+    EXIF --> HASH["sha256 of master bytes"]
     HASH --> DEDUP{hash exists?}
-    DEDUP -- yes --> BUMP["refCount++"]
-    DEDUP -- no --> STORE["write assets/&lt;hash&gt;.&lt;ext&gt;\n+ asset row (refCount=1)"]
-    BUMP --> REF["ImageElement.assetId = hash"]
+    DEDUP -- yes --> TOUCH["touch mtime + register in-flight root"]
+    DEDUP -- no --> STORE["write assets/&lt;hash&gt;.tmp -> rename\n+ index row (cache)"]
+    TOUCH --> REF["ImageElement.assetId = hash\n(commit doc ref; clear in-flight)"]
     STORE --> REF
-    REF --> COIL["Coil loads from local path\n(memory/disk cache)"]
+    REF --> COIL["Coil derives preview/edit bitmaps\nfrom the master on demand"]
 ```
 
 **Strategy**
 - **Copy-in, never reference** the picker URI — a referenced URI can be revoked/deleted, breaking the project. Copy bytes into app-private storage immediately ([ADR-004](../DECISIONS.md#adr-004)).
-- **Content-addressed** (`sha256`) → automatic dedupe; immutable files are trivially cacheable by Coil.
-- **Reference counting** in the `asset` table: placing an image `refCount++`, deleting an element/project `refCount--`.
-- **Orphan GC (O4):** assets with `refCount == 0` are deleted by a **WorkManager** sweep (not inline), so deletion is crash-safe and off the hot path. A scrub also reconciles disk vs table (delete files with no row, null rows with no file).
+- **Import master ([ADR-023](../DECISIONS.md#adr-023), Accepted):** the stored bytes are a **4096 px-longest-edge master** (EXIF-normalised), not the camera original, which is **discarded**. The full sheet at 300 DPI needs ≤3508 px, so 4096 covers every print path with crop headroom; edit/preview/export bitmaps are derived on demand.
+- **Content-addressed** (`sha256` of the **master** bytes) → automatic dedupe; immutable files are trivially cacheable.
+- **Ownership & GC ([ADR-022](../DECISIONS.md#adr-022), Accepted):** one **global** `assets/<sha256>` store; liveness by **mark-and-sweep** over (all project documents' hashes) ∪ (live undo stacks) ∪ (in-flight imports), run by a deferred **WorkManager** sweep that deletes only orphans older than a **≥24 h grace window**, under a store mutex with an at-unlink mtime re-check. The Room `asset` table is a **cache/index, not the deletion authority** — only the documents are. **No reference counting** (it desyncs and can delete live bytes); a refcount may be added later only as a fast-path hint.
+- **Reconciliation:** the sweep reconciles `assets/` against the document-derived live set; disk-vs-documents wins over the Room index, so a corrupt index can never delete a live blob.
 - **Memory discipline:** never decode at full resolution for editing; decode to placement size; one bitmap at a time; recycle ([ADR-011](../DECISIONS.md#adr-011)).
 - **Decision to make (O5):** store originals or downsampled-for-edit copies (or both)? Export needs the highest fidelity available (300 DPI), editing needs small. *Default: keep the imported original (bounded by a max edge) as the asset; derive edit/preview bitmaps on demand.*
 
@@ -295,13 +299,13 @@ Each S2 open question is now recorded as an ADR with alternatives, tradeoffs, an
 |---|---|---|---|
 | **O1** — `:core:domain` now or later? | [ADR-019](../DECISIONS.md#adr-019) | ✅ Accepted | No `:core:domain` for MVP; extract on cross-ViewModel duplication. |
 | **O2** — serialization format lock-in | [ADR-020](../DECISIONS.md#adr-020) | ✅ Accepted | kotlinx JSON behind `DocumentSerializer`; migrators on canonical versions. |
-| **O3** — autosave timing & durability | [ADR-021](../DECISIONS.md#adr-021) | ⏳ Proposed | Debounce+flush policy set; durability contract (op-log?) open before Accept. |
-| **O4** — asset GC & ownership | [ADR-022](../DECISIONS.md#adr-022) | ⏳ Proposed | Ref-count + deferred undo-safe sweep; ownership model (global vs per-project) open. |
-| **O5** — asset fidelity | [ADR-023](../DECISIONS.md#adr-023) | ⏳ Proposed | Cap-and-derive approach; measured cap + "import master" naming open. |
+| **O3** — autosave timing & durability | [ADR-021](../DECISIONS.md#adr-021) | ✅ Accepted | Single-writer debounced atomic save (temp→fsync→rename→dir-fsync) + `.bak` + synchronous `ON_STOP` flush; **no op-log** (MVP); loss bound = since last completed save. |
+| **O4** — asset GC & ownership | [ADR-022](../DECISIONS.md#adr-022) | ✅ Accepted | **Global** content-addressed store + **mark-and-sweep** from document/undo/in-flight roots + ≥24 h grace; Room index is a cache; refcount rejected. |
+| **O5** — asset fidelity | [ADR-023](../DECISIONS.md#adr-023) | ✅ Accepted | One **4096 px import master**, EXIF-normalised, camera original discarded; derive edit/preview/export on demand. |
 
 Also intersecting S2: [ADR-015](../DECISIONS.md#adr-015) (validation result) and [ADR-018](../DECISIONS.md#adr-018) (convention/id versioning).
 
-> **Implementation gate:** ADR-021, ADR-022, ADR-023 must reach **Accepted** (their open contracts resolved + Codex-reviewed) before the corresponding S2 code is written. ADR-019/020 are settled.
+> **Implementation gate — CLEARED (2026-06-19):** ADR-019…023 are all **Accepted** (Codex-reviewed; 021 and 022 each took a second pass to close a durability/GC-race blocker). The data & asset foundations are decision-complete; **S2 implementation is unblocked.**
 
 ---
 

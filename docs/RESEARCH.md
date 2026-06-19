@@ -177,3 +177,47 @@ Real editors converge on a **hybrid**: command objects whose `undo()` carries a 
 
 ### R5.5 Recommendation — 🟦 RECOMMENDATION
 Single immutable `EditorState` in an MVI reducer; **command objects with field-level mementos** as the undo unit; gesture coalescing via begin/update/commit; live transforms through `graphicsLayer{}` lambda; snapping & hit-testing as pure, testable functions outside history. Flat element list + optional `parentId`. 🔭 FUTURE: persist command history, groups/frames, collaboration (undo rebase).
+
+---
+
+## R6. Local autosave durability & crash safety — ✅ VERIFIED + 🟦 RECOMMENDATION
+*Evidence base for [ADR-021](DECISIONS.md#adr-021). Research date 2026-06-19.*
+
+### R6.1 Android lifecycle & kill realities — ✅ VERIFIED
+`onStop()` is the last reliably-delivered callback for "save things the user is editing"; the docs explicitly direct saving permanent data there because the activity may be killed at any time after it returns. An abrupt low-memory kill terminates the process with **no further callback** — `onDestroy()`/ViewModel teardown are skipped. ⇒ all durability must be on disk before `onStop()` returns; nothing later can be relied on. **Sources:** [Activity lifecycle](https://developer.android.com/guide/components/activities/activity-lifecycle) · [Process lifecycle](https://developer.android.com/guide/components/activities/process-lifecycle).
+
+### R6.2 Atomic-write pattern — ✅ VERIFIED
+Crash-safe file replace = write a temp file → `fsync` the temp file → atomic `rename()` over the target → **`fsync` the containing directory**. `rename` is atomic on one filesystem, but without the temp-file fsync (data) and the directory fsync (the rename itself) a crash/power-loss can resurrect the old file or an empty one. Java has no portable directory-fsync, so the directory step is best-effort on Android — keep a prior-good `.bak` and validate on open as the backstop. **Sources:** [evanjones.ca — durability](https://www.evanjones.ca/durability-filesystem.html) · [crash-consistency: fsync/rename](https://0xkiire.com/crash-consistency-fsync-rename/).
+
+### R6.3 Op-log vs full-save; SQLite WAL — ✅ VERIFIED
+SQLite in WAL mode makes committed transactions durable across **application** crashes regardless of `synchronous`; only power loss can roll back to the last checkpoint under `synchronous=NORMAL`. A write-ahead op-log bounds loss to the last committed operation but adds synchronous-per-edit I/O and replay/recovery code. Local-first editors (Excalidraw, tldraw) just debounce a full serialized-JSON snapshot — no op-log. **Sources:** [SQLite PRAGMA](https://sqlite.org/pragma.html) · [SQLite forum: durability](https://sqlite.org/forum/info/9d6f13e346231916) · [tldraw persistence](https://tldraw.dev/docs/persistence).
+
+### R6.4 Recommendation — 🟦 RECOMMENDATION
+For a small in-memory JSON tree with in-memory undo: **debounced atomic full-save (≈1 s debounce, ≈5 s max-latency cap) + a synchronous `onStop` flush + single-writer actor + prior-good `.bak`; no op-log for MVP.** Honest loss bound: *since the last completed save* (≈0 on clean exit). Add an op-log only if "zero-loss"/power-loss durability becomes a hard requirement.
+
+## R7. Content-addressed asset ownership & garbage collection — ✅ VERIFIED + 🟦 RECOMMENDATION
+*Evidence base for [ADR-022](DECISIONS.md#adr-022). Research date 2026-06-19.*
+
+### R7.1 Production content-addressed stores converge on reachability + grace — ✅ VERIFIED
+git (`git gc` prunes only objects unreachable **and** older than `gc.pruneExpire`, default 2 weeks, to avoid deleting about-to-be-referenced objects), Nix (mark from GC roots, move dead paths to trash then empty), IPFS (sweep all but **pinned** roots), Docker/OCI (SHA-256 layers shared across images; prune only unreferenced blobs), and Jackrabbit Oak (**mark across all repositories** sharing a datastore before sweeping) all use mark-and-sweep from declared roots plus a grace period — not naive refcounts. **Sources:** [git-gc](https://git-scm.com/docs/git-gc) · [Nix Pills GC](https://nixos.org/guides/nix-pills/11-garbage-collector.html) · [IPFS persistence/pinning](https://docs.ipfs.tech/concepts/persistence/) · [Oak BlobStore](https://jackrabbit.apache.org/oak/docs/plugins/blobstore.html).
+
+### R7.2 Refcount vs mark-and-sweep — ✅ VERIFIED
+Reference counting reclaims immediately but a single missed increment/decrement (crash mid-update, lost edge) silently corrupts the count and can delete live bytes; mark-and-sweep recomputes liveness from authoritative roots each run and is self-correcting. For an app where the document JSON is the source of truth and projects are few, a periodic sweep is cheap and robust; asset→asset cycles don't exist. **Sources:** [GC vs ARC](https://medium.com/computed-comparisons/garbage-collection-vs-automatic-reference-counting-a420bd4c7c81) · [Cornell CS6120 — unified GC](https://www.cs.cornell.edu/courses/cs6120/2020fa/blog/unified-theory-gc).
+
+### R7.3 Tombstones / grace windows prevent resurrection — ✅ VERIFIED
+Cassandra/ScyllaDB defer the destructive step with a tombstone kept for `gc_grace_seconds` to avoid data resurrection — exactly the undo-safety property needed (a "removed" image must keep bytes while undo can restore it). **Sources:** [ScyllaDB tombstones](https://www.scylladb.com/2022/06/30/preventing-data-resurrection-with-repair-based-tombstone-garbage-collection/) · [Cassandra tombstones](https://cassandra.apache.org/doc/latest/cassandra/managing/operating/compaction/tombstones.html).
+
+### R7.4 Recommendation — 🟦 RECOMMENDATION
+Global `assets/<sha256>` store; **mark-and-sweep liveness from (all project documents) ∪ (live undo stacks)**, deferred via WorkManager, deleting only orphans older than a ≥24 h grace window; Room index is a cache, documents are the source of truth; `.zine` export = copy-projection of the project's blobs; import dedup-merges by hash. Refcount only ever as a fast-path hint, never the authority.
+
+## R8. Imported image fidelity & storage — ✅ VERIFIED + 🟦 RECOMMENDATION
+*Evidence base for [ADR-023](DECISIONS.md#adr-023). Research date 2026-06-19.*
+
+### R8.1 Pixel math at 300 DPI — ✅ VERIFIED
+`px = inches × 300`. Full-bleed full sheet: Letter 2550×3300 (8.4 MP), A4 2480×3508 (8.7 MP); one of 8 panels ≈ 638×1650 (Letter) / 620×1754 (A4). Largest longest-edge a single photo needs at print scale = **3508 px** (A4). A full-sheet ARGB_8888 bitmap ≈ 34 MB. 300 PPI is the print-quality target; **240 PPI** is widely accepted as visually indistinguishable, giving crop headroom. **Sources:** [Printivity — 300 PPI](https://www.printivity.com/insights/what-resolution-should-i-use-for-printing-answer-300-ppi) · [breathingcolor — DPI/PPI](https://www.breathingcolor.com/blogs/news/dpi-ppi-guide-to-printing-resolution).
+
+### R8.2 Proxy-and-master + Android decode realities — ✅ VERIFIED
+Photo/video editing edits a small proxy and re-applies to a high-res master at export; Canva caps the working surface rather than editing raw upload pixels. Android large-bitmap decoding needs `inJustDecodeBounds`→`inSampleSize`→re-decode (a 50 MP full decode ≈ 200 MB ⇒ OOM), `BitmapRegionDecoder` for crops, and one-time **EXIF orientation** normalisation; Coil downsamples to the target size by default. **Sources:** [Android — Loading Large Bitmaps](https://developer.android.com/topic/performance/graphics/load-bitmap) · [Canva size limits](https://www.canva.com/help/resize/) · [Coil changelog](https://coil-kt.github.io/coil/changelog/).
+
+### R8.3 Recommendation — 🟦 RECOMMENDATION
+Store one **import master at 4096 px longest edge** (JPEG q≈90 photos, lossless for alpha/graphics), EXIF-normalised; discard the camera original. 4096 clears the 3508 px A4 worst case with margin and crop headroom (50 % linear crop → 2048 px ≈ a full panel ≥240 PPI). Derive edit/preview via Coil downsample; export by sampling the master at the target pixel box. ~5 MB/photo vs 15–25 MB originals.

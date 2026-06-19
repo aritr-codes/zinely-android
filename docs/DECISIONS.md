@@ -31,9 +31,9 @@
 | [ADR-018](#adr-018) | Imposition convention & guide-ID versioning | Proposed |
 | [ADR-019](#adr-019) | Domain-layer threshold — no `:core:domain` until ViewModels outgrow repositories | Accepted |
 | [ADR-020](#adr-020) | Document serialization = kotlinx JSON behind a swappable `DocumentSerializer` | Accepted |
-| [ADR-021](#adr-021) | Autosave timing & durability policy | Proposed |
-| [ADR-022](#adr-022) | Asset GC & ownership model (ref-count + deferred undo-safe sweep) | Proposed |
-| [ADR-023](#adr-023) | Asset fidelity — store one export-capped import master, derive tiers | Proposed |
+| [ADR-021](#adr-021) | Autosave = single-writer debounced atomic full-save + `onStop` flush + `.bak`; no op-log (MVP) | Accepted |
+| [ADR-022](#adr-022) | Asset ownership = global content-addressed store + mark-and-sweep + grace window | Accepted |
+| [ADR-023](#adr-023) | Asset fidelity = one 4096 px import master, original discarded, derive tiers | Accepted |
 
 > ADR-014 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -202,52 +202,134 @@
 - **Review (2026-06-19):** Codex — **promote to Accepted**; JSON is correct pre-1.0 for inspectability/fixtures/iteration. Adopted the boundary caveat (canonical-version migrators + serializer-owned legacy detection) so the swap claim is real, not cosmetic.
 
 ## ADR-021 {#adr-021}
-**Autosave = per-edit debounce + hard flush on lifecycle stop + a max-latency cap during continuous editing, with a single-writer guarantee. (Resolves O3.)**
-- **Status:** Proposed (2026-06-19)
-- **Context:** [ADR-009](#adr-009) mandates no lost work + crash safety + no main-thread jank. The timing policy decides the worst-case data-loss window and the write-amplification cost.
+**Autosave = a single-writer, debounced *atomic full-document save* (temp → fsync → atomic rename → dir-fsync) that keeps one prior-good `.bak`, force-flushed synchronously on `ON_STOP` and explicit editor-exit. No operation log in the MVP. (Resolves O3; durability contract closed.)**
+- **Status:** Accepted (2026-06-19)
+- **Problem:** The document tree lives in memory and is persisted as one JSON file per project ([ADR-003](#adr-003)). We must define *how often* we save, *how* a save is made crash-atomic, and *the exact data-loss bound we promise the user* — given Android can kill the process at any time with no callback.
+- **Architectural constraints:**
+  - [ADR-009](#adr-009): no lost work, crash-safe, no main-thread jank.
+  - [ADR-003](#adr-003): the document is a JSON tree (not relational), so the unit of persistence is the whole tree, serialized via the [ADR-020](#adr-020) `DocumentSerializer`.
+  - [ADR-005](#adr-005): undo/redo is **in-memory and session-only** — it is not the durability mechanism.
+  - Privacy/offline: durability is purely on-device; no remote replica to fall back on.
+  - Autosave logic lives in `:core:data` (Android `FileChannel`/lifecycle), never in the pure core.
+- **Future requirements it must not foreclose:** the same atomic-write primitive must serve `.zine` backup export (V1); an optional write-ahead op-log could be added later if "zero-loss"/power-loss durability or collaborative history (Future) becomes a requirement — the `DocumentSerializer` boundary and single-writer actor make that additive.
 - **Alternatives considered:**
-  - **A — Debounce (reset per edit) + flush on `ON_STOP`/`onPause` + max-latency cap + single-writer** *(recommended)*: coalesces bursts; bounds loss to one debounce window; guarantees a save when backgrounded; the cap prevents "never saves during a long continuous edit."
-  - **B — Save on every change**: zero loss window but write-amplifies and janks on large documents.
-  - **C — Save only on background/close**: cheap, but a crash mid-session loses everything since open.
-  - **D — Fixed periodic timer only**: may fire mid-keystroke or too rarely; ignores edit cadence.
-- **Tradeoffs:** A is the standard editor compromise — small added complexity (debounce + mutex) for a low write cost. **Honest loss bound:** the true worst case is "everything since the **last completed save**," not "one debounce window" — if the process is killed during a pending/in-flight flush, that debounce's edits are lost. `ON_STOP`/`onPause` is **best-effort**, not a process-death guarantee, and abrupt death has no callback. The **constants** (~600 ms debounce, ~10 s max-latency) are empirical/tunable.
-- **Recommended direction:** **A** for the *coalescing* policy, with the interval/cap as named tunables validated on a low-end device.
-- **Open durability contract (why this stays Proposed):** before Accept, define — (1) the precise loss bound we promise the user; (2) lifecycle-flush *completion* semantics (await the in-flight save on `ON_STOP`?); (3) cancellation behavior of a superseded debounce; (4) whether "never lose work" requires a tiny **write-ahead op-log / dirty journal** (durable "pending edit" record written synchronously) in addition to the debounced full-document save. If yes, the journal — not the debounce — is the durability mechanism and the debounced save is an optimization.
-- **Consequences (provisional):** requires a per-project single-writer mutex and an immutable snapshot at save time, decoupled from MVI command application ([ADR-005](#adr-005)).
-- **Review (2026-06-19):** Codex — **KEEP Proposed.** Direction is right but the durability claim was too strong; `ON_STOP` does not survive low-memory kill mid-flush. Resolve the durability contract (loss bound, flush completion, journal-or-not) before Accept. A small op-log may be required to honor "never lose work" ([ADR-009](#adr-009)).
+  - **A — Debounced atomic full-save + synchronous `ON_STOP` flush + single-writer** *(recommended)*: coalesces bursts; rewrites the whole (small, KB-scale) JSON tree atomically; matches local-first editors (Excalidraw/tldraw debounce a full JSON snapshot). Loss bound: *since the last completed save*.
+  - **B — A + a synchronous append-only op-log / journal**: tightest bound (last committed op ≈ 0 loss) but pays a synchronous write per edit and adds replay/recovery code — the main bug surface — for marginal benefit at zine scale.
+  - **C — Document (or op-log) in SQLite/Room WAL**: crash-durability + auto-recovery for free, but turns the clean JSON tree into rows/opaque blobs, hurting portability/debuggability and fighting [ADR-003](#adr-003).
+  - **D — Save on every change**: zero window but write-amplifies and janks.
+  - **E — Save only on background/close**: a crash mid-session loses everything since open.
+- **Tradeoff matrix:**
+
+  | Approach | Loss bound | Write cost | Recovery-code complexity | Portability / debuggability |
+  |---|---|---|---|---|
+  | **A (chosen)** | since last completed save (≈ ≤ debounce; 0 on clean exit) | low (1 atomic rewrite per burst) | low (`.bak` fallback only) | high (plain JSON file) |
+  | B | last committed op (≈ 0) | high (sync I/O per edit) | **high** (log replay) | high |
+  | C | last commit / last checkpoint | medium | low (SQLite-managed) | **low** (rows/blob) |
+  | D | 0 | **very high** | low | high |
+  | E | whole session | very low | low | high |
+
+- **Decision — A, with this concrete durability contract:**
+  - **Single-writer:** one per-project serialization actor (a `Mutex`/`Channel` on an injected IO dispatcher) so saves never interleave; each save reads an **immutable document snapshot** decoupled from MVI command application ([ADR-005](#adr-005)).
+  - **Cadence:** debounce **1 s** after the last edit, with a hard **max-latency cap of 5 s** so a long continuous edit still flushes. A superseded debounce is cancelled (latest-wins); the cap is measured from the first un-saved edit.
+  - **Atomic write, every save:** serialize → write `document.json.tmp` → `FileDescriptor.sync()` → atomic `rename` over `document.json` → best-effort directory fsync. Before the rename, the previous good file is retained as `document.json.bak`.
+  - **Flush triggers:** debounce fire, max-latency cap, **a synchronous flush that awaits the in-flight save on `ON_STOP`**, and explicit "leave editor."
+  - **Open-time recovery:** if `document.json` is missing/corrupt (interrupted rename / power loss), fall back to `document.json.bak`. This is the backstop for the one residual gap below.
+  - **No op-log in MVP** — justified: the tree is small and undo is in-memory; the `.bak` + atomic rename guarantee a *completed save is never corrupted*, and the `ON_STOP` flush drives loss to 0 on a clean stop. **A crash before the next save completes still loses the un-saved edits in the current debounce/cap window (≤ ~5 s)** — that bounded window, not zero, is the accepted MVP cost. A write-ahead op-log (option B) is the path to literal per-edit zero-loss and is deferred; the single-writer + [ADR-020](#adr-020) `DocumentSerializer` boundary keep it additive.
+- **Reconciliation with [ADR-009](#adr-009):** ADR-009's "no lost work" is satisfied as **no loss of saved/committed work** (atomic write + `.bak` never corrupt or drop a completed save) **plus a small, bounded loss of in-flight edits** (≤ the debounce/cap window; 0 on clean `ON_STOP`). It is explicitly **not** a claim that every keystroke survives an arbitrary kill — that stricter guarantee needs the deferred op-log. This interpretation is the Accepted contract; ADR-009's prose is read through it.
+- **Loss bound promised to the user:** *"Your work is saved within about a second of you pausing, and always when you leave the editor. In a crash or forced close you can lose at most the last few seconds of edits since the last autosave — never the whole project."* Residual gaps: (a) an app crash during the un-saved window loses ≤ ~5 s of edits (bounded, accepted); (b) power loss interleaved with the rename, mitigated by the `.bak` fallback. `ON_STOP` is best-effort and does **not** survive a low-memory kill mid-flush ([Android process lifecycle](https://developer.android.com/guide/components/activities/process-lifecycle)), which the bound already accounts for.
+- **Cross-subsystem impact:**
+  - **S2 Data:** defines `DocumentRepository.save()` (atomic-write + `.bak` + dir-fsync), the per-project single-writer mutex, the debounce/cap constants, and open-time recovery. No op-log table; no document-in-SQLite.
+  - **S3 Render:** none directly — the renderer reads an immutable snapshot; autosave serializes the *same* snapshot, so render and save never contend.
+  - **S4 Editor:** the ViewModel feeds document changes to an `AutosaveCoordinator` (debounce + cap); it **must** invoke the synchronous flush on `ON_STOP`/`onPause` and on editor-exit. Undo stays in-memory.
+  - **S5 Export:** export must run against a flushed/known document state ("save-before-export"); export itself is a read, no autosave coupling.
+  - **`.zine` package:** reuses the identical atomic-write primitive for the backup archive; a half-written `.zine` is never swapped in.
+- **Evidence:** atomic write = temp→fsync(file)→rename→fsync(dir), with directory fsync required for durability ([evanjones.ca](https://www.evanjones.ca/durability-filesystem.html)); `onStop` is the last guaranteed callback and abrupt kill has none ([Activity lifecycle](https://developer.android.com/guide/components/activities/activity-lifecycle)); local-first editors debounce full JSON snapshots ([tldraw persistence](https://tldraw.dev/docs/persistence)). Landed in [RESEARCH R6](RESEARCH.md#r6-local-autosave-durability--crash-safety--verified--recommendation).
+- **Review (2026-06-19):** Codex — first pass **HOLD** (the original draft overclaimed ≈0 app-crash loss and left ADR-009 unreconciled). After removing the overclaim and adding the ADR-009 reconciliation (committed-save durability vs bounded in-flight loss), Codex: **ACCEPT** — "no op-log is defensible for MVP." → **Accepted.**
 
 ## ADR-022 {#adr-022}
-**Asset garbage collection = reference counting + a deferred sweep with a grace window (so undo can resurrect a removed element), plus periodic disk/table reconciliation. Never inline-delete asset bytes. (Resolves O4.)**
-- **Status:** Proposed (2026-06-19)
-- **Context:** Images are copied in and content-addressed ([ADR-004](#adr-004)); removing an element or project drops a reference. Deleting bytes eagerly conflicts with undo ([ADR-005](#adr-005)), which can restore a "deleted" element.
+**Asset ownership = a single *global* content-addressed store `assets/<sha256>`. Liveness is decided by *mark-and-sweep* over the union of every project document's referenced hashes plus the live in-memory undo/redo stacks — not by reference counting. A deferred WorkManager sweep deletes only orphans whose file mtime is older than a grace window. The Room asset table is an index/cache, never the source of truth. `.zine` export is a copy-projection of the project's blobs. (Resolves O4; ownership model closed.)**
+- **Status:** Accepted (2026-06-19)
+- **Problem:** Imported images are copied in and content-addressed by sha256 ([ADR-004](#adr-004)). We must define *who owns the bytes* and *when they may be deleted* so that we (a) dedup, (b) never delete bytes an undo could resurrect, (c) correctly handle the **same image used by two projects** (shared hash), and (d) still produce a self-contained `.zine` backup.
+- **Architectural constraints:**
+  - [ADR-005](#adr-005): undo/redo is in-memory, session-only — a "removed" image must keep its bytes while undo can restore it.
+  - [ADR-003](#adr-003): the project **document JSON is the authoritative reference set**; any DB index is derived from it.
+  - [ADR-009](#adr-009): crash-safe, no jank — deletion must be off the hot path and self-correcting after a crash.
+  - Privacy/offline: all in app-private storage; reclamation matters (phone photos are large).
+- **Future requirements it must not foreclose:** cross-project dedup as project count grows; portable `.zine` import/export (V1) that merges assets without collisions; possible shared-asset libraries (Future).
 - **Alternatives considered:**
-  - **A — Ref-count + deferred WorkManager sweep (grace window) + reconciliation** *(recommended)*: `refCount == 0` assets are deleted only after a grace boundary (undo cleared / project close), off the hot path, crash-safe; a reconciliation pass fixes disk/table drift.
-  - **B — Inline delete on element/project removal**: reclaims space immediately but **breaks undo** (the asset an undo needs is already gone) and runs deletion mid-session.
-  - **C — No GC**: simplest, but orphaned assets leak storage indefinitely.
-  - **D — GC on app start**: janks startup and still races undo within a session.
-- **Tradeoffs:** A defers space reclaim slightly in exchange for **undo-safety** and crash-safety — the correct priority given undo is a headline feature. B's immediacy is incompatible with undo; C/D fail on leakage or correctness.
-- **Recommended direction:** **A** for the *mechanism* (ref-count + deferred undo-safe sweep + reconciliation). Two sub-decisions remain open and block Accept:
-- **Open: asset ownership model (must resolve before Accept).** Content-addressing implies one file can back many references; a naïve **per-project `refCount`** is unsafe — if project X drops its last reference, the sweep must not delete `assets/<hash>` while project Y still references that hash. Options:
-  - **(i) Per-project asset store** (`projects/<id>/assets/<hash>`): dedup *within* a project only; GC and `.zine` backup are trivially self-contained; cross-project dedup is lost. *Leans recommended for MVP simplicity + backup portability.*
-  - **(ii) Global content-addressed store** (`assets/<hash>`) with a **global** hash ref-count or a `project_asset` join table: dedupes across projects, but GC must check **global** references and backup must copy referenced bytes into the `.zine`.
-  This corrects an inconsistency in the [storage spike §2/§5](spikes/data-storage-layer.md#2-storage-model--what-lives-where-and-why) (a per-project `asset.projectId` over a global store is contradictory).
-- **Open: concrete grace boundary.** "Undo cleared or project close" must become a **persisted/schedulable state** — a `deletableAt` tombstone + an **active-session guard** so a WorkManager sweep can never delete an asset the open editor's undo could resurrect. Project-close is only safe if undo history is session-only (it is, per [ADR-005](#adr-005)).
-- **Consequences (provisional):** Bounded, slightly delayed reclaim; couples GC to the undo horizon ([ADR-005](#adr-005)) and durability ([ADR-009](#adr-009)).
-- **Review (2026-06-19):** Codex — **KEEP Proposed.** Mechanism is right; never-inline-delete is correct. Hold pending (a) a concrete asset-ownership model (global hash ref-count/join table **or** per-project store) that handles shared hashes, and (b) `deletableAt`/active-session semantics. Caught a real spec bug: per-project ref-count over a global content-addressed store is unsafe.
+  - **A — Per-project store** (`projects/<id>/assets/<hash>`), dedup within a project: trivially self-contained backup, but loses cross-project dedup and duplicates the same photo across projects.
+  - **B — Global store + reference counting** (global count or `project_asset` join table): immediate reclaim, but ref-counts are **fragile** — one missed increment/decrement (crash mid-update, a lost undo edge) silently deletes live bytes; needs tombstones anyway.
+  - **C — Global store + mark-and-sweep from document roots + grace window** *(recommended)*: liveness is **recomputed from authoritative roots** each sweep, so it self-heals after crashes and makes shared-hash correctness automatic (reachable from *any* project ⇒ live). This is the git / Nix / IPFS / Jackrabbit-Oak consensus.
+- **Tradeoff matrix:**
+
+  | Model | Cross-project dedup | Undo-safety | Shared-hash correctness | Crash self-heal | Backup portability |
+  |---|---|---|---|---|---|
+  | A per-project | ✗ (duplicates) | easy (local bytes) | N/A (each owns a copy) | n/a | trivial (zip the dir) |
+  | B global + refcount | ✓ | needs tombstone | only if count never desyncs (**fragile**) | ✗ (count drifts) | copy-out on export |
+  | **C global + mark-sweep (chosen)** | ✓ | ✓ (undo stack is a root) | ✓ **by construction** | ✓ (recomputed from roots) | copy-projection on export |
+
+- **Decision — C, with this concrete model:**
+  - **Store:** one global `assets/<sha256>`; new blobs are written to a temp name and atomically renamed into place (no half-written content-addressed files).
+  - **Roots (the live set):** the union of (i) every project document's referenced asset hashes, (ii) the hashes held by the **live in-memory undo/redo stacks** of any open project, and (iii) the hashes in the **in-flight-import set** (below). While an image sits in undo history its hash is a root, so its bytes are never swept.
+  - **GC trigger:** opportunistic + deferred via a **WorkManager** worker (e.g. on background / daily), never on the delete action — deletes feel instant, reclamation is lazy.
+  - **Grace window:** the sweep computes the live set, then deletes only orphan files whose on-disk **mtime is older than a grace window (≥ 24 h)**. This protects (i) an import that wrote bytes just before the document reference committed, (ii) crash mid-edit, and (iii) the window between process death (which drops the in-memory undo roots) and the next sweep. Mirrors git `gc.pruneExpire` and Cassandra `gc_grace`.
+  - **Reconciliation / source of truth:** the Room `asset` index `(sha256 → localPath, w, h, mime, firstSeen, mtime)` is a **cache/optimization**. The sweep reconciles `assets/` against the document-derived live set; a Room↔disk mismatch is resolved in favour of *disk-vs-documents*, so a corrupt index can never authorize deleting live bytes — only the documents can.
+  - **Backup:** the global store gives runtime dedup; `.zine` export is a **projection** — resolve the project document's hashes, copy *those* blobs into the archive. Import copies incoming blobs into the global store keyed by hash, dedup-merging with anything already present. Export and the store are not competing sources of truth.
+  - **Import↔GC race (closed):** the dangerous case is an **old orphan** (already on disk, mtime past the grace window, currently unreferenced) that a new import is about to *reuse* (same hash) — a sweep that snapshotted the live set before the import's document-commit could delete it. Closure: on import, after content-addressing, the importer **(1) registers the hash in an in-flight-import set** (an additional root, item (iii) above) and **(2) touches the existing blob to refresh its mtime**, both *before* writing the document reference; deletion runs **under a store mutex** and **re-checks `mtime > grace` at unlink time**. Freshly written blobs are already protected by their new mtime; this extends the same protection to reused old orphans. The hash leaves the in-flight set once the document reference is committed.
+  - **Reference counting rejected** (option B): self-healing mark-and-sweep is both safer and, given few projects and small documents, cheap enough to run periodically. A refcount may later be added purely as a *fast-path hint*, never as the authority.
+- **Cross-subsystem impact:**
+  - **S2 Data:** `AssetStore` over global `assets/<sha256>` (temp→rename writes, an in-flight-import set, a store mutex shared with GC); the Room `asset` table as a derived index; a `GcWorker` (WorkManager) implementing mark-and-sweep + grace with an at-unlink mtime re-check; documents reference assets by hash.
+  - **S3 Render:** the renderer resolves an image element's hash → loads bytes via Coil from the store; it must degrade gracefully if a hash is unexpectedly missing, and it never triggers GC.
+  - **S4 Editor:** removing an element does **not** delete bytes (undo-safe); undo restores by re-referencing the hash; the open project's undo stack is a GC root; import adds a blob + a document reference.
+  - **S5 Export:** export reads referenced blobs; for `.zine` it copies the projection; it never deletes.
+  - **`.zine` package:** self-contained = the document + exactly its referenced blobs; import merges by hash (dedup on the way in). Manifest lists the hashes.
+- **Cross-ADR note (hashing):** assets are content-addressed by the **stored master bytes** ([ADR-023](#adr-023)), i.e. after capping/EXIF-normalisation — not the camera original. Re-encode need not be bitwise-deterministic across devices: liveness uses whatever hash the document recorded, so any non-determinism only lowers the dedup hit-rate, never breaks GC correctness.
+- **Evidence:** reachability-from-roots + grace-period pruning is the git / Nix / IPFS / Oak pattern; ref-count desync silently deletes live data; tombstone grace windows prevent data resurrection. Landed in [RESEARCH R7](RESEARCH.md#r7-content-addressed-asset-ownership--garbage-collection--verified--recommendation).
+- **Review (2026-06-19):** Codex — first pass **HOLD**: flagged a real race where an **old orphan** past the grace window, about to be reused by a concurrent import, could be swept before the document commit. Closed with an in-flight-import root set + mtime-refresh-before-commit + store mutex + at-unlink mtime re-check. Codex: **ACCEPT** — "reused-old-orphan race closed." → **Accepted.**
 
 ## ADR-023 {#adr-023}
-**Asset fidelity = store a single imported original capped to the export ceiling resolution; derive edit/preview bitmaps on demand. Do not persist multiple fidelity tiers in the MVP. (Resolves O5.)**
-- **Status:** Proposed (2026-06-19)
-- **Context:** Editing wants small bitmaps; 300 DPI export ([ADR-011](#adr-011)) wants fidelity. Phone photos (12–50 MP) are far larger than any single panel needs, so storing them untouched wastes space and memory.
+**Asset fidelity = store one *import master* per image, capped to 4096 px on the longest edge (EXIF-normalised on import); discard the camera original. Derive edit/preview/export bitmaps on demand. Schema and UX name it "import master," never "original," and surface that the full camera original is not retained. (Resolves O5; cap measured.)**
+- **Status:** Accepted (2026-06-19)
+- **Problem:** Editing wants small fast bitmaps; 300 DPI export ([ADR-011](#adr-011)) wants print fidelity. Phone photos (12–50 MP) far exceed any single panel's need, and decoding them whole risks OOM. We must pick *what bytes we keep* and *at what resolution* — an **irreversible** discard once the original is dropped.
+- **Architectural constraints:**
+  - [ADR-011](#adr-011): 300 DPI raster export; a full sheet ARGB_8888 ≈ 34 MB — memory is bounded.
+  - [ADR-004](#adr-004): assets are content-addressed by stored bytes; the stored master *is* the addressed object ([ADR-022](#adr-022)).
+  - [ADR-001](#adr-001)/[ADR-012](#adr-012): MVP papers are Letter + A4; full-bleed is future-facing.
+  - Privacy: not keeping a second full-res copy of the user's photo is a privacy plus.
+- **The pixel math (300 DPI):** `px = inches × 300`.
+
+  | Surface | Letter (8.5×11″) | A4 (210×297 mm) |
+  |---|---|---|
+  | Full sheet, full-bleed | 2550 × 3300 (8.4 MP) | 2480 × **3508** (8.7 MP) |
+  | One panel (¼ W × ½ H) | 638 × 1650 | 620 × 1754 |
+
+  The largest longest-edge a single photo ever needs at print scale is **3508 px** (A4 full-bleed full sheet). A panel needs ~1650–1754 px.
+- **Future requirements it must not foreclose:** larger formats / print-shop export (V2) may want a higher ceiling — the cap is a single named constant, and re-import is always available; full-bleed headroom is already covered by the chosen cap.
 - **Alternatives considered:**
-  - **A — Store one original capped at the export ceiling; derive tiers at runtime** *(recommended)*: cap the longest edge at the maximum useful resolution (a full-bleed sheet at 300 DPI, e.g. Letter ≈ 2550×3300) **with crop/zoom headroom (~1.5×)**; Coil derives edit/preview bitmaps. One persisted file.
-  - **B — Store the full-resolution original untouched**: maximum fidelity, but unbounded storage and OOM risk on import.
-  - **C — Store only a downsampled edit copy**: smallest, but permanently caps export quality (cannot re-export larger).
-  - **D — Persist multiple tiers (original + edit + thumbnail)**: flexible, but multiplies storage and adds a tier-sync burden.
-- **Tradeoffs:** A bounds storage/memory while preserving enough resolution for a full-sheet 300 DPI export; the residual risk is a user cropping into a *tiny* region of a capped image and losing sharpness — mitigated by the headroom multiplier and acceptable for a beginner home-print MVP. The exact cap/headroom is **empirical** and must be validated against real export output.
-- **Recommended direction:** **A** as the *approach* (cap-and-derive). Held Proposed because the cap is an **irreversible** quality decision needing a measured policy, plus honest naming/UX.
-- **Open before Accept (per Codex):**
-  - **Measured cap policy:** the single cap must be the **max across all supported papers** (A4 is taller than Letter at 300 DPI) **plus future full-bleed** headroom — not just Letter. Validate the multiplier with real phone photos and **aggressive crops** (the failure mode is cropping into a tiny region of a capped image).
-  - **Honest naming:** call the stored file an **"import master" / optimized import**, never the "original" — the full camera original is **not** retained. UX/schema/docs must make the non-retention explicit so re-crop/zoom/re-export expectations are correct.
-- **Consequences (provisional):** Bounded storage; a defined quality ceiling; derive-on-demand keeps editing memory low ([ADR-011](#adr-011)).
-- **Review (2026-06-19):** Codex — **KEEP Proposed.** Bounded storage is reasonable but this is an irreversible discard; lock only after a measured cap (max paper + bleed) with crop/zoom quality tests, and rename "original" → import master with explicit non-retention UX.
+  - **A — Keep the full camera original**: maximum fidelity + crop headroom, but 15–25 MB per 50 MP photo and OOM-prone decoding.
+  - **B — One capped "import master" (4096 px) + derive edit/preview/export on demand** *(recommended)*: exceeds the 3508 px worst case with crop headroom, ~5 MB/photo, OOM-safe.
+  - **C — Only a downsampled edit copy**: smallest, but can underfeed a full-bleed export and kills re-export quality.
+  - **D — Multi-tier (original + edit + thumb)**: max flexibility, but multiplies storage and adds tier-sync burden.
+- **Tradeoff matrix:**
+
+  | Strategy | Print quality | Crop headroom | Storage / photo | Memory / OOM |
+  |---|---|---|---|---|
+  | A full original | max | max | 15–25 MB | OOM-prone |
+  | **B 4096 master (chosen)** | excellent (≥ full-sheet need) | good | ~5 MB | safe |
+  | C edit-copy only | risky (may underfeed bleed) | poor | smallest | safe |
+  | D multi-tier | max | max | highest | safe |
+
+- **Decision — B, cap = 4096 px longest edge:**
+  - **Why 4096:** it clears the 3508 px A4 full-bleed worst case (×1.17 margin) and gives real crop headroom — a 50 %-linear crop still yields 2048 px ≈ a full panel at 300 DPI / well above the 240 PPI "indistinguishable" floor. It is a power-of-two friendly to `inSampleSize`/GPU.
+  - **Import pipeline:** decode-bounds → `inSampleSize` → downscale to ≤ 4096 longest edge → **normalise EXIF orientation once** → re-encode (JPEG q ≈ 90 for photos; PNG/lossless when alpha/graphics) → store as the master; **the camera original is discarded** after the master is written.
+  - **Derivation:** edit/preview bitmaps are Coil-downsampled to the on-screen panel size (≈ hundreds of px, ~1 MB); export composites by sampling the master at the panel's exact target pixel box at 300 DPI — never the original, never the whole master at once where region decode suffices.
+  - **Honest naming:** schema field and UX call it **import master / optimized import**; the import flow makes clear the full original is not retained, so re-crop/zoom/re-export expectations are correct.
+- **Cross-subsystem impact:**
+  - **S2 Data:** `AssetStore.import()` performs decode-bounds → downscale(4096) → EXIF-normalise → re-encode → hash → store; the stored asset is the master; the `asset` row records the master's dims/mime. No "original" field.
+  - **S3 Render:** derives preview/edit bitmaps from the master via Coil; export samples the master at the target box; the renderer never needs the original.
+  - **S4 Editor:** crop/zoom operate on the 4096 master with headroom; transforms are stored in points, applied to derived bitmaps.
+  - **S5 Export:** samples the master at the exact 300 DPI panel box; quality meets full-sheet need; the cap bounds maximum print size to ≈ a zine sheet (acceptable for MVP scope).
+  - **`.zine` package:** stores the master (not an original); a restored project has identical fidelity, and backups are ~5 MB/image rather than 15–25 MB.
+- **Edge case (noted):** a tiny photo blown up to a full-sheet full-bleed poster sits at ≈ 4096/3508 ≈ 300 PPI — fine; a user wanting a print *larger than a zine sheet* is capped. Acceptable for a Letter/A4 home-print MVP; revisit if larger formats enter scope (ROADMAP V2).
+- **Evidence:** 300 PPI is the print-quality target, 240 PPI the "indistinguishable" floor; proxy-and-master is standard in photo/video editing; Android large-bitmap decoding (`inSampleSize`, `BitmapRegionDecoder`) and EXIF normalisation are required to avoid OOM/rotation bugs. Landed in [RESEARCH R8](RESEARCH.md#r8-imported-image-fidelity--storage--verified--recommendation).
+- **Review (2026-06-19):** Codex — **ACCEPT** (first pass): "4096px is justified for the stated MVP … discarding the camera original is acceptable if the UI/schema honestly call the retained file an 'import master' … hashing post-downscale/EXIF master bytes is correct; non-deterministic re-encode reduces dedupe hits but does not break liveness." → **Accepted.**
