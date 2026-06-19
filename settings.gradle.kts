@@ -27,4 +27,7 @@ include(":app")
 // Pure-Kotlin, Android-independent core (imposition engine spike).
 include(":core:model")
 include(":core:imposition")
+// Pure-Kotlin data core (S2A): document schema, serializer, migration, validation,
+// repository + asset-manifest contracts. No Android deps yet (Room/WorkManager land in S2B).
+include(":core:data")
  
