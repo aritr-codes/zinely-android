@@ -24,6 +24,13 @@
 | [ADR-011](#adr-011) | Raster export = ARGB_8888 @300 DPI, decode-to-target, EXIF-normalize | Accepted |
 | [ADR-012](#adr-012) | Print correctness = exact paper size, safe-area inset, calibration ruler | Accepted |
 | [ADR-013](#adr-013) | App architecture = Clean + single Activity + Compose + Hilt | Accepted |
+| [ADR-014](#adr-014) | Geometry & transform public-API stability (finite guarantees, `times()` visibility) | Proposed |
+| [ADR-015](#adr-015) | Validation result contract (`List<ValidationIssue>` vs `ValidationResult`) | Proposed |
+| [ADR-016](#adr-016) | Format & paper extensibility (closed enums vs open specs) | Proposed |
+| [ADR-017](#adr-017) | Bleed, clip & safe-area semantics | Proposed |
+| [ADR-018](#adr-018) | Imposition convention & guide-ID versioning | Proposed |
+
+> ADR-014 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19). They record rationale, risks, and future considerations only — **no decision is made yet** and none changes the merged imposition engine.
 
 ---
 
@@ -119,3 +126,43 @@
 - **Status:** Accepted (2026-06-19)
 - **Decision:** Unidirectional data flow (Compose → ViewModel → repository → data sources). `StateFlow` UI state, injected `CoroutineDispatcher`s, `Result<T>` error boundary. Pure-Kotlin `core` modules isolated from Android. Full technical detail in [ARCHITECTURE.md](ARCHITECTURE.md).
 - **Consequences:** Standard, testable, modularization-ready. MVI scoped to the editor where state-transition density justifies it.
+
+## ADR-014 {#adr-014}
+**Public-API stability rules for the geometry & affine-transform layer (`core:model`).**
+- **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
+- **Context / rationale:** `core:model` is consumed *unmodified* by the future Android render and PDF/raster export layers, so its public surface is effectively an SDK boundary once those land. Two asymmetries exist today: (1) `PtPoint`/`PtRect`/`PtSize` reject NaN/∞ at construction but `AffineTransform2D` does not, so a hand-built transform can carry invalid numeric state into validation/render paths; (2) `AffineTransform2D.times()` and the raw `a..f` fields are `public`, widening the surface more than the consumer contract (`map`, `then`, `contentToSheet`) strictly requires.
+- **Options under consideration:** (a) add finite-value `require` to `AffineTransform2D` to match the primitives; (b) keep raw `a..f` public (Android/SVG/PDF consumers need matrix values) but consider `internal` for `times()`; (c) introduce an explicit `@since`/binary-compatibility policy before the first non-spike consumer.
+- **Risks:** Deferring (a) lets invalid transforms reach renderers as silent garbage rather than a fail-fast error. Tightening visibility *after* a consumer ships is a breaking change, so the window to decide is before S3 (render pipeline).
+- **Future considerations:** Revisit when `core:render` ([ADR-006](#adr-006)) is designed; that is the first real external consumer and the natural forcing function. The imposition engine itself only ever emits finite transforms, so this is not a correctness issue for the merged spike.
+
+## ADR-015 {#adr-015}
+**Return contract of `LayoutValidator` — raw issue list vs a structured result.**
+- **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
+- **Context / rationale:** `LayoutValidator.validate()` returns `List<ValidationIssue>` (empty = sound). The export pipeline will *gate* on this (block export when invalid, possibly warn-but-allow for non-fatal issues). A bare list pushes "is this fatal?" logic onto every caller and has no place for summaries, counts, or an explicit `isValid`.
+- **Options under consideration:** keep `List<ValidationIssue>` (simple, machine-readable, already deterministic-ordered); or wrap in `ValidationResult(isValid, errors, warnings, issues)` once `Severity.WARNING` is actually used (today every issue is `ERROR`).
+- **Risks:** Changing the return type after the export layer consumes it is breaking. The `Severity.WARNING` enum value is currently unused — a latent "we meant to distinguish these" that should be resolved deliberately, not by accretion.
+- **Future considerations:** Decide alongside the export-gating design (S5) or whenever the first `WARNING`-severity check is introduced — whichever comes first.
+
+## ADR-016 {#adr-016}
+**Extensibility of paper sizes and zine formats — closed enums vs open specs.**
+- **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
+- **Context / rationale:** `PaperSize` (Letter, A4) and `ZineFormat` (`SINGLE_SHEET_8`) are enums — a closed world. This is correct and safe for the MVP's "one great format" scope, but it forecloses custom paper (e.g. Legal, B5, user-defined) and new formats (4-page, 16-page saddle-stitch — [ROADMAP V2](ROADMAP.md#v2--more-formats--expression)) without a source change to the core model.
+- **Options under consideration:** keep enums through MVP/V1; or introduce open `PaperSpec(widthPt, heightPt)` / `FormatSpec(rows, cols, pageCount, convention)` value types when the second format lands, with the enums kept as canonical presets.
+- **Risks:** Premature generalization adds surface and validation burden now for value not realized until V2. Conversely, retrofitting open specs after several call sites assume the enum is churn. The `Imposer.convention: ConventionSpec` shape (one named convention per imposer) is workable but not elegant for multi-convention families.
+- **Future considerations:** Force the decision when implementing the **second** imposition format (V2 16-page saddle-stitch is the likely trigger); single-format MVP does not need it.
+
+## ADR-017 {#adr-017}
+**Bleed, clip, and safe-area semantics.**
+- **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
+- **Context / rationale:** `LayoutValidator` currently hard-enforces `clipLocalBounds == panelLocalBounds` because this engine renders the full panel with no bleed ([ADR-012](#adr-012) keeps content inside a safe inset; full-bleed is explicitly 🔭 FUTURE). The `clipLocalBounds` field exists to *future-proof* for bleed, but its meaning under bleed is undefined: bleed content extends **past** the trim/panel edge, so `clip` would become larger than `panelLocalBounds`, inverting today's invariant.
+- **Options under consideration:** define the invariant chain under bleed as `safe ⊆ panel ⊆ clip` (clip grows outward by the bleed amount) and relax the validator accordingly; specify how trim/crop marks interact with the safe inset and the cut line.
+- **Risks:** Introducing bleed is a **deliberate contract change**, not an additive field — the `clip == panel` validation must be loosened in lockstep or it will reject every bleed layout. Getting the trim-vs-bleed-vs-safe relationship wrong reintroduces the #1 print-correctness risk the engine was built to retire.
+- **Future considerations:** Resolve when V2 print-shop export groundwork (bleed, trim/crop marks) is scheduled ([ROADMAP V2](ROADMAP.md#v2--more-formats--expression)). No change to the MVP engine.
+
+## ADR-018 {#adr-018}
+**Versioning & stability of imposition convention names and fold/cut identifiers.**
+- **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
+- **Context / rationale:** The convention is keyed by name (`"TOP_ROW_ROTATED"`) and fold/cut guides by string id (`"H-center"`, `"V-quarter-1"`, `onFoldId`). These are an implicit contract: a stored `.zine` document, a golden test, or a render layer may key off them. There is no declared policy for how they evolve (rename, add, deprecate) without breaking persisted documents or downstream consumers.
+- **Options under consideration:** treat convention names and guide ids as **stable, append-only identifiers** with a documented registry; or version the `ConventionSpec` (e.g. a `version` field) so persisted layouts can be re-resolved across changes.
+- **Risks:** If a stored document or template references `"TOP_ROW_ROTATED"` and the name later changes, old projects break — a data-durability regression against [ADR-009](#adr-009). Golden tests already pin the current strings, which is good, but pinning ≠ a stability guarantee.
+- **Future considerations:** Decide before any convention name/id is exposed in a persisted `.zine` schema (S2 storage layer) or a user-facing template — that is the first point where the identifier becomes a durability obligation.
