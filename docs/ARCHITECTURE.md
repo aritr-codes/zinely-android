@@ -64,8 +64,10 @@ flowchart TD
 
 Single Gradle module to start, packaged so it splits cleanly into modules later (1:1 mapping shown). Pure-Kotlin core isolated from day one.
 
+> **Package root:** `com.aritr.zinely` — aligned with the existing app scaffold the project was created with (an earlier docs draft said `com.zinely`; the repo convention wins per [CLAUDE.md](../CLAUDE.md#engineering-conventions-summary-authority-is-docsarchitecturemd)).
+
 ```
-com.zinely
+com.aritr.zinely
 ├── core
 │   ├── model        // ZineDocument, Page, Element, Transform, geometry, units (points)
 │   ├── imposition   // single-sheet 8-page mapping (+ rotations, fold/cut guides, proof sheet)
