@@ -5,13 +5,28 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 
-/** Base type for any failure while migrating a persisted document. */
+/** Base type for any failure while migrating a persisted document. Part of the public taxonomy a
+ * repository maps to a `DataError`, even though the migration *mechanism* itself is internal. */
 public sealed class DocumentMigrationException(message: String) :
     DocumentSerializationException(message)
 
 /** The document JSON has no readable `schemaVersion` — it cannot be migrated safely. */
 public class MissingSchemaVersionException :
     DocumentMigrationException("Document JSON is missing a readable integer 'schemaVersion'")
+
+/**
+ * The document was written by a **newer** app version than this build supports. We refuse to load it
+ * rather than decode tolerantly, because a tolerant decode would silently drop the newer-only fields
+ * and a subsequent save would write them back at the older version — a silent downgrade / data loss
+ * ([ADR-021] durability; Codex review 2026-06-19). Read-only "open anyway" is a future enhancement
+ * that needs UI to honour it (S4).
+ */
+public class NewerSchemaVersionException(
+    public val documentVersion: Int,
+    public val supportedVersion: Int,
+) : DocumentMigrationException(
+    "Document schema v$documentVersion is newer than supported v$supportedVersion",
+)
 
 /** No migrator is registered to upgrade from [fromVersion] to [fromVersion] + 1. */
 public class MissingMigratorException(public val fromVersion: Int) :
@@ -28,15 +43,16 @@ public class InvalidMigratorChainException(message: String) : DocumentMigrationE
  * Behaviour:
  * - **at target** → returned unchanged;
  * - **older** → each `vN -> vN+1` migrator applied in order; a gap throws [MissingMigratorException];
- * - **newer than target** → returned unchanged so the serializer can decode tolerantly
- *   (`ignoreUnknownKeys`) rather than corrupt a document written by a future app version (spike §6).
+ * - **newer than target** → throws [NewerSchemaVersionException] (refuse, do not silently degrade).
  *
  * Chain integrity is validated **at construction**: every migrator must satisfy
  * `toVersion == fromVersion + 1` and no two may share a `fromVersion`.
+ *
+ * Internal: this is JSON-tree migration, an implementation detail of [JsonDocumentSerializer].
  */
-public class DocumentMigrations(
+internal class DocumentMigrations(
     migrators: List<DocumentMigrator>,
-    public val targetVersion: Int = CURRENT_SCHEMA_VERSION,
+    val targetVersion: Int = CURRENT_SCHEMA_VERSION,
 ) {
     private val byFromVersion: Map<Int, DocumentMigrator>
 
@@ -59,9 +75,10 @@ public class DocumentMigrations(
     }
 
     /** Migrate [input] up to [targetVersion], stamping `schemaVersion` after each applied step. */
-    public fun migrate(input: JsonObject): JsonObject {
+    fun migrate(input: JsonObject): JsonObject {
         val version = readSchemaVersion(input)
-        if (version >= targetVersion) return input
+        if (version > targetVersion) throw NewerSchemaVersionException(version, targetVersion)
+        if (version == targetVersion) return input
 
         var current = input
         var fromVersion = version

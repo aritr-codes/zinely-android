@@ -100,4 +100,40 @@ class JsonDocumentSerializerTest {
         assertTrue(text.contains("\"schemaVersion\""), text)
         assertTrue(text.contains("\"type\":\"image\""), text)
     }
+
+    @Test
+    fun `the json serializer reports the json persisted format`() {
+        assertEquals(PersistedFormat.JSON, serializer.format)
+    }
+
+    @Test
+    fun `serialized payload carries an explicit format marker`() {
+        val text = serializer.serialize(sample())
+        assertTrue(text.contains("\"_encoding\":\"json\""), text)
+    }
+
+    @Test
+    fun `a structural rename migration preserves the value through decode`() {
+        // Legacy v1 stored the paper under "paper"; v2 renames it to "paperSize". The value must
+        // survive into the typed model — this is why JSON-tree migration beats tolerant-decode fixup.
+        val rename = object : DocumentMigrator {
+            override val fromVersion = 1
+            override val toVersion = 2
+            override fun migrate(input: JsonObject): JsonObject = buildJsonObject {
+                input.forEach { (k, v) -> if (k != "paper") put(k, v) }
+                input["paper"]?.let { put("paperSize", it) }
+            }
+        }
+        val migrating = JsonDocumentSerializer(DocumentMigrations(listOf(rename), targetVersion = 2))
+        val legacy = "{\"schemaVersion\":1,\"format\":\"single_sheet_8\",\"paper\":\"a4\"}"
+        val decoded = migrating.deserialize(legacy)
+        assertEquals(PaperSize.A4, decoded.paperSize)
+        assertEquals(2, decoded.schemaVersion)
+    }
+
+    @Test
+    fun `a document newer than the current schema is refused`() {
+        val newer = "{\"schemaVersion\":${CURRENT_SCHEMA_VERSION + 1},\"format\":\"single_sheet_8\",\"paperSize\":\"a4\"}"
+        assertThrows<NewerSchemaVersionException> { serializer.deserialize(newer) }
+    }
 }

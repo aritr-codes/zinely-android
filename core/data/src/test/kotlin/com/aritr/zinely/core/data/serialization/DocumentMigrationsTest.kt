@@ -8,7 +8,6 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -96,12 +95,10 @@ class DocumentMigrationsTest {
     }
 
     @Test
-    fun `a newer-than-target document is returned unchanged for tolerant decoding`() {
+    fun `a newer-than-target document is refused, not silently degraded`() {
         val migrations = DocumentMigrations(listOf(stamping(1)), targetVersion = 2)
-        val newer = doc(5)
-        val out = migrations.migrate(newer)
-        assertEquals(5, out["schemaVersion"]!!.jsonPrimitive.int)
-        assertNull(out["v1_applied"])
-        assertTrue(out === newer || out == newer)
+        val ex = assertThrows<NewerSchemaVersionException> { migrations.migrate(doc(5)) }
+        assertEquals(5, ex.documentVersion)
+        assertEquals(2, ex.supportedVersion)
     }
 }

@@ -16,17 +16,34 @@ public class DocumentDecodeException(message: String, cause: Throwable? = null) 
     DocumentSerializationException(message, cause)
 
 /**
+ * The **persisted wire format** of a document, distinct from the document's own `ZineFormat`. The
+ * serializer stamps its format into the payload and is the sole owner of format/version detection,
+ * so a future Protobuf format ([ADR-020] escape hatch) is selected by an explicit marker, never by
+ * heuristics (Codex review 2026-06-19). Only JSON exists today.
+ */
+public enum class PersistedFormat(public val wire: String) {
+    JSON("json"),
+}
+
+/**
  * The single boundary that turns a [ZineDocument] into persisted text and back ([ADR-020]). Every
  * (de)serialization in the app routes through this interface, so the wire format stays swappable
  * (JSON now; Protobuf is the future escape hatch behind the same contract — S2 spike §3, O2).
+ *
+ * The serializer **owns format and schema-version detection**: callers hand it a payload and get a
+ * [ZineDocument] back, with no caller-side "is this JSON or Protobuf?" branching.
  */
 public interface DocumentSerializer {
-    /** Encode [document] as text at the **current** schema version. */
+    /** The wire format this serializer reads and writes. */
+    public val format: PersistedFormat
+
+    /** Encode [document] as text at the **current** schema version, stamped with [format]. */
     public fun serialize(document: ZineDocument): String
 
     /**
-     * Decode [text] into a current-shaped [ZineDocument]: migrate older versions first, tolerate
-     * unknown (newer) keys. Throws a [DocumentSerializationException] on any failure.
+     * Decode [text] into a current-shaped [ZineDocument]: migrate older versions up first, tolerate
+     * unknown (additive) keys, and **refuse** a document newer than this build supports. Throws a
+     * [DocumentSerializationException] on any failure.
      */
     public fun deserialize(text: String): ZineDocument
 }
