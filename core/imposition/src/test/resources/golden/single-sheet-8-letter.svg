@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="792pt" height="612pt" viewBox="0 0 792 612">
+  <title>Zinely proof — TOP_ROW_ROTATED — SINGLE_SHEET_8</title>
+  <rect x="0" y="0" width="792" height="612" fill="white" stroke="#333" stroke-width="1"/>
+  <g transform="matrix(1 0 0 1 594 306)">
+    <rect class="panel" x="0" y="0" width="198" height="306" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="164" height="272" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="99,30.6 92,58.14 106,58.14" fill="#bbb"/>
+    <text x="99" y="153" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">1</text>
+    <text x="99" y="171" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">FRONT_COVER</text>
+  </g>
+  <g transform="matrix(-1 0 0 -1 792 306)">
+    <rect class="panel" x="0" y="0" width="198" height="306" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="164" height="272" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="99,30.6 92,58.14 106,58.14" fill="#bbb"/>
+    <text x="99" y="153" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">2</text>
+    <text x="99" y="171" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(-1 0 0 -1 594 306)">
+    <rect class="panel" x="0" y="0" width="198" height="306" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="164" height="272" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="99,30.6 92,58.14 106,58.14" fill="#bbb"/>
+    <text x="99" y="153" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">3</text>
+    <text x="99" y="171" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(-1 0 0 -1 396 306)">
+    <rect class="panel" x="0" y="0" width="198" height="306" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="164" height="272" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="99,30.6 92,58.14 106,58.14" fill="#bbb"/>
+    <text x="99" y="153" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">4</text>
+    <text x="99" y="171" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(-1 0 0 -1 198 306)">
+    <rect class="panel" x="0" y="0" width="198" height="306" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="164" height="272" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="99,30.6 92,58.14 106,58.14" fill="#bbb"/>
+    <text x="99" y="153" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">5</text>
+    <text x="99" y="171" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(1 0 0 1 0 306)">
+    <rect class="panel" x="0" y="0" width="198" height="306" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="164" height="272" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="99,30.6 92,58.14 106,58.14" fill="#bbb"/>
+    <text x="99" y="153" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">6</text>
+    <text x="99" y="171" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(1 0 0 1 198 306)">
+    <rect class="panel" x="0" y="0" width="198" height="306" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="164" height="272" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="99,30.6 92,58.14 106,58.14" fill="#bbb"/>
+    <text x="99" y="153" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">7</text>
+    <text x="99" y="171" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">INTERIOR</text>
+  </g>
+  <g transform="matrix(1 0 0 1 396 306)">
+    <rect class="panel" x="0" y="0" width="198" height="306" fill="none" stroke="#999" stroke-width="0.75"/>
+    <rect class="safe" x="17" y="17" width="164" height="272" fill="none" stroke="#3a7" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <polygon class="up" points="99,30.6 92,58.14 106,58.14" fill="#bbb"/>
+    <text x="99" y="153" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#222">8</text>
+    <text x="99" y="171" text-anchor="middle" font-family="sans-serif" font-size="9" fill="#777">BACK_COVER</text>
+  </g>
+  <line class="fold" x1="0" y1="306" x2="792" y2="306" stroke="#39f" stroke-width="0.75" stroke-dasharray="6 4"/>
+  <line class="fold" x1="198" y1="0" x2="198" y2="612" stroke="#39f" stroke-width="0.75" stroke-dasharray="6 4"/>
+  <line class="fold" x1="396" y1="0" x2="396" y2="612" stroke="#39f" stroke-width="0.75" stroke-dasharray="6 4"/>
+  <line class="fold" x1="594" y1="0" x2="594" y2="612" stroke="#39f" stroke-width="0.75" stroke-dasharray="6 4"/>
+  <line class="cut" x1="198" y1="306" x2="594" y2="306" stroke="#e33" stroke-width="1.5"/>
+</svg>
