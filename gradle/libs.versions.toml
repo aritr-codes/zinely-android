@@ -38,6 +38,7 @@ jqwik = { group = "net.jqwik", name = "jqwik", version.ref = "jqwik" }
 # Pure-Kotlin data core (S2A)
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

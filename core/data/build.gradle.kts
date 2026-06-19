@@ -28,6 +28,7 @@ dependencies {
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.jqwik)
+    testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
