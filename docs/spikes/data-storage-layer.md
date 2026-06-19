@@ -270,7 +270,7 @@ flowchart TD
 
 **Rules**
 - **Never mutate a persisted field's meaning** — add a new field + bump `schemaVersion` + write a migrator. Same discipline as "never edit an Accepted ADR in place."
-- **Newer-than-app documents:** load tolerantly (drop unknown keys) and, if structurally risky, open **read-only** with a clear message rather than silently dropping data.
+- **Newer-than-app documents:** the MVP **refuses** them (`NewerSchemaVersionException`) — a tolerant decode followed by a save would silently downgrade newer-only data ([ADR-021] durability). Read-only "open anyway" is a future enhancement that needs S4 UI to honour it (see §11).
 - **Convention/guide-id stability** ([ADR-018](../DECISIONS.md#adr-018)) is a *migration* concern: a persisted `format`/convention name must remain resolvable forever or have a migrator.
 
 ---
@@ -322,17 +322,36 @@ Also intersecting S2: [ADR-015](../DECISIONS.md#adr-015) (validation result) and
 
 ## 10. Pre-implementation review checklist
 
-- [ ] Module boundaries: `:core:data → :core:model`, model stays Android-free.
-- [ ] `Result<T>` boundary: no platform exception escapes a repository.
-- [ ] Atomic-save contract specified and testable (tmp→fsync→rename).
-- [ ] Dual-axis versioning + a written migrator-per-bump policy.
-- [ ] Asset ref-counting + GC + disk/table reconciliation defined.
-- [ ] `.zine` package format frozen enough to be forward-compatible.
-- [ ] Serializer behind an interface (format swappability).
-- [ ] Dispatchers injected; autosave single-writer; off-main IO.
-- [ ] Open questions O1–O5 routed to ADRs with Codex review **before** coding.
-- [ ] No networking, no cloud, no external-storage URIs persisted.
+- [x] Module boundaries: `:core:data → :core:model`, model stays Android-free.
+- [x] `Result<T>` boundary: no platform exception escapes a repository *(contract: `DataResult`/`DataError`; mapping lands with the S2B impls)*.
+- [ ] Atomic-save contract specified and testable (tmp→fsync→rename) *(S2B — file data source)*.
+- [x] Dual-axis versioning + a written migrator-per-bump policy.
+- [x] Asset **mark-and-sweep** GC + disk/table reconciliation defined ([ADR-022]; sweep impl is S2B).
+- [x] `.zine` package format frozen enough to be forward-compatible *(manifest + validator built; SAF wiring V1)*.
+- [x] Serializer behind an interface (format swappability) *(+ explicit `_encoding` marker)*.
+- [ ] Dispatchers injected; autosave single-writer; off-main IO *(S2B — autosave coordinator)*.
+- [x] Open questions O1–O5 routed to ADRs with Codex review **before** coding.
+- [x] No networking, no cloud, no external-storage URIs persisted.
 
 ---
 
-*This document defines S2 to the depth the [imposition engine](imposition-engine.md) was defined before implementation. Implementation does not begin until the open decisions are recorded as ADRs and Codex-reviewed.*
+## 11. Implementation status — S2A pure-Kotlin data core (2026-06-19)
+
+**Built (TDD, Codex-reviewed, all green):** the Android-free half of `:core:data`.
+
+| Deliverable | Where | Notes |
+|---|---|---|
+| Versioned `@Serializable` document schema | `:core:model` (`Document.kt`, enums) | `CURRENT_SCHEMA_VERSION = 1`; explicit `@SerialName` wire names; `type` discriminator |
+| `DocumentSerializer` + JSON impl | `:core:data.serialization` | tolerant decode, `_encoding` format marker, serializer owns format/version detection |
+| Migration framework | same | **internal** JSON-tree migrators, contiguous chain, **refuses newer** documents ([ADR-020] amendment) |
+| Validation framework | `:core:data.validation` | `DocumentValidator` + structured `ValidationResult` (ERROR/WARNING, coded, `path`) — realises [ADR-015] |
+| Repository + result contracts | `:core:data.repository` | `DataResult`/`DataError`, `DocumentRepository`/`ProjectRepository`, `ProjectSummary` ([ADR-019]) |
+| Asset + manifest contracts | `:core:data.asset` | `ContentHash`/`ContentHasher`, `AssetStore` (no delete — GC owns it), `.zine` manifest + restore validator |
+
+**Deferred to S2B (Android):** Room DAO + `@AutoMigration`; the atomic-write file data source (tmp→fsync→rename→dir-fsync + `.bak`/recovery, [ADR-021]); the autosave coordinator (debounce + single-writer); the `AssetStore` impl + EXIF/4096 px downscale ([ADR-023]); the WorkManager mark-and-sweep GC ([ADR-022]); SAF `.zine` import/export wiring (V1).
+
+> **Newer-than-app documents (refinement of §6):** the MVP **refuses** a document whose `schemaVersion` exceeds the current build (`NewerSchemaVersionException`) rather than tolerantly decoding it — a tolerant read followed by a save would silently downgrade it. Read-only "open anyway" needs S4 UI and is deferred.
+
+---
+
+*This document defined S2 to the depth the [imposition engine](imposition-engine.md) was defined before implementation. S2A (the pure-Kotlin data core) is now implemented per §11; S2B (the Android-backed data sources) is the next build step.*

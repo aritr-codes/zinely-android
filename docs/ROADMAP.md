@@ -36,7 +36,7 @@ flowchart LR
     S5 --> MVP(["MVP complete"])
 ```
 
-> **Status:** S1 (imposition engine + SVG proof sheet) is ✅ **implemented and green** — pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, Codex-reviewed per phase ([ADR-007 Implementation](DECISIONS.md#adr-007), [spike](spikes/imposition-engine.md)), shipped as milestone `v0.1.0-imposition-engine`. **S2 data/storage layer** is designed ([spikes/data-storage-layer.md](spikes/data-storage-layer.md)) and its decision gate is **cleared** — ADR-019…023 all Accepted ([ADR-021](DECISIONS.md#adr-021)/[ADR-022](DECISIONS.md#adr-022)/[ADR-023](DECISIONS.md#adr-023)); implementation is unblocked.
+> **Status:** S1 (imposition engine + SVG proof sheet) is ✅ **implemented and green** — pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, Codex-reviewed per phase ([ADR-007 Implementation](DECISIONS.md#adr-007), [spike](spikes/imposition-engine.md)), shipped as milestone `v0.1.0-imposition-engine`. **S2A (pure-Kotlin data core)** is ✅ **implemented and green** — new `:core:data` (schema, `DocumentSerializer` + migration, validation, repository + `DataResult` contracts, content-addressed asset + `.zine` manifest contracts), TDD and Codex-reviewed ([spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19)). **S2B (Android-backed data sources)** — Room, atomic-write file source, autosave coordinator, asset store + WorkManager GC — is the next build step.
 
 ---
 
@@ -89,5 +89,6 @@ flowchart LR
 | 2026-06-19 | Initial roadmap established | [PRD §7](PRD.md#7-scope--mvp) |
 | 2026-06-19 | S1 imposition engine spike implemented (pure Kotlin, 95 tests, Codex-reviewed) | [ADR-007](DECISIONS.md#adr-007) |
 | 2026-06-19 | S2 decision gate **cleared** — ADR-019…023 all Accepted (autosave, asset ownership/GC, fidelity); S2 implementation unblocked | [ADR-021](DECISIONS.md#adr-021), [ADR-022](DECISIONS.md#adr-022), [ADR-023](DECISIONS.md#adr-023) |
+| 2026-06-19 | **S2A pure-Kotlin data core implemented** (`:core:data`: schema, serializer+migration, validation, repo/asset contracts; TDD, Codex-reviewed); ADR-015 resolved + ADR-020 amended | [ADR-015](DECISIONS.md#adr-015), [ADR-020](DECISIONS.md#adr-020), [spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19) |
 
 > When phase contents change, add a row here and update the affected phase section + any new [ADR](DECISIONS.md).
