@@ -1,0 +1,120 @@
+# Zinely — Architecture Decision Records (ADRs)
+
+> **The single authoritative home for every significant decision.** If a decision is referenced anywhere else (ARCHITECTURE, PRD, ROADMAP, code comments), it links *here* by ID — it is never re-decided elsewhere. See the **Documentation Rule** in [/CLAUDE.md](../CLAUDE.md).
+
+**How to use this log**
+- One ADR per decision. Never edit an Accepted ADR's decision in place — **supersede** it with a new ADR and set the old one's status to `Superseded by ADR-NNN`.
+- Status: `Proposed` → `Accepted` → (`Superseded` | `Deprecated`).
+- Major decisions (architecture, storage, rendering, export, editor, data model) follow the **Review Workflow**: propose → Codex review → reconcile → record here. The Codex outcome is noted in the ADR.
+- Evidence lives in [RESEARCH.md](RESEARCH.md); cite the relevant `R#` section rather than restating sources.
+
+### Index
+| ID | Decision | Status |
+|---|---|---|
+| [ADR-001](#adr-001) | Native `PdfDocument` for MVP PDF export (no third-party lib) | Accepted |
+| [ADR-002](#adr-002) | MVP scope = home-print-ready, not commercial prepress | Accepted |
+| [ADR-003](#adr-003) | Storage = Room metadata + serialized JSON document blob | Accepted |
+| [ADR-004](#adr-004) | Imported photos copied-in via Photo Picker (no URI references) | Accepted |
+| [ADR-005](#adr-005) | Editor = MVI + command-based undo with field-level mementos | Accepted |
+| [ADR-006](#adr-006) | One shared scene renderer, two backends (preview + export) | Accepted |
+| [ADR-007](#adr-007) | Pure-Kotlin imposition engine; canonical NASA/Chandra layout; SVG proof sheet | Accepted |
+| [ADR-008](#adr-008) | Beginner-first UX with progressive disclosure | Accepted |
+| [ADR-009](#adr-009) | Durability = autosave + atomic rename + SAF `.zine` backup; no cloud | Accepted |
+| [ADR-010](#adr-010) | Free, no monetization for MVP; bundle only license-clear fonts | Accepted |
+| [ADR-011](#adr-011) | Raster export = ARGB_8888 @300 DPI, decode-to-target, EXIF-normalize | Accepted |
+| [ADR-012](#adr-012) | Print correctness = exact paper size, safe-area inset, calibration ruler | Accepted |
+| [ADR-013](#adr-013) | App architecture = Clean + single Activity + Compose + Hilt | Accepted |
+
+---
+
+## ADR-001 {#adr-001}
+**Native `android.graphics.pdf.PdfDocument` for MVP PDF export — no third-party PDF library.**
+- **Status:** Accepted (2026-06-19)
+- **Context:** We need print-quality, on-device, offline PDF export. Question was whether the platform API gives crisp vector text or whether we need iText/PdfBox-Android.
+- **Decision:** Use `PdfDocument` + `Canvas`. Evidence ([R2.2](RESEARCH.md#r22-androidgraphicspdfpdfdocument--verified)) confirms its Skia backend emits **true vector, selectable text with embedded subset fonts** — sufficient for home print. No third-party lib in MVP.
+- **Consequences:** Zero added bundle weight / license risk; fully offline. Hard ceiling: sRGB only, no Trim/Bleed boxes — see ADR-002. Bundle our own licensed TTFs for reproducible output.
+- **Review:** Cross-model (Codex) review of the architecture flagged exactly this boundary; research corroborated. Reconciled: native is correct for MVP.
+
+## ADR-002 {#adr-002}
+**MVP scope is "home-print-ready," not "commercial print-ready."**
+- **Status:** Accepted (2026-06-19) · user-confirmed
+- **Context:** "Print-ready" is overloaded. `PdfDocument` cannot produce CMYK/spot/ICC color, PDF/X, or Trim/Bleed boxes ([R2.2](RESEARCH.md#r22-androidgraphicspdfpdfdocument--verified)).
+- **Decision:** MVP targets correct printing on a consumer inkjet/laser at 100% scale. We never market "commercial print-ready." Prepress (CMYK/ICC/PDF-X, bleed, crop marks) is 🔭 FUTURE and likely off-device — which conflicts with offline-first and is therefore explicitly deferred.
+- **Consequences:** Honest claims; lean MVP. Print-shop creators are a post-MVP audience. Scope tracked in [PRD.md](PRD.md).
+
+## ADR-003 {#adr-003}
+**Storage = Room metadata table + a versioned serialized JSON document blob per zine (not a fully relational element tree).**
+- **Status:** Accepted (2026-06-19)
+- **Context:** The zine document is a page→element tree with transforms. Options: relational (Room-tree) vs metadata + serialized blob ([R4.1](RESEARCH.md#r41-architectures-compared--verified)).
+- **Decision:** Room holds queryable **metadata** (id, title, timestamps, paperSize, format, thumbnail, documentPath, schemaVersion). The **document** is `kotlinx.serialization` JSON in a per-project file. JSON over Protobuf for MVP: human-readable, debuggable, schema-version via optional/defaulted fields + `ignoreUnknownKeys`.
+- **Consequences:** Clean 1:1 in-memory↔on-disk model that maps to Compose state, undo, and single-file export; whole-file rewrite per save (acceptable at zine scale). Document schema versioned independently of Room. **Protobuf** and **hybrid/relational** are 🔭 FUTURE if write-amplification or cross-document search ever dominates.
+- **Review:** Research-backed ([R4.2](RESEARCH.md#r42-recommendation--recommendation)). To get a Codex pass before the data-model spike.
+
+## ADR-004 {#adr-004}
+**Imported photos are copied into app-specific storage; selection via the Photo Picker. No retained MediaStore URIs.**
+- **Status:** Accepted (2026-06-19)
+- **Context:** Referenced URIs break when the user moves/deletes the source and complicate backup ([R4.4](RESEARCH.md#r44-image-import--verified--recommendation)).
+- **Decision:** Copy-in on import (no storage permission needed), dedupe by content hash, generate thumbnails, clean orphans, show per-project storage size. Select images with the **Photo Picker** (permission-free).
+- **Consequences:** Self-contained, durable, privacy-strong projects; higher disk use (mitigated by dedupe + visible size). Honors "photos never leave the device."
+
+## ADR-005 {#adr-005}
+**Editor uses MVI with command-based undo/redo carrying field-level mementos; gestures coalesce via begin/update/commit.**
+- **Status:** Accepted (2026-06-19)
+- **Context:** The direct-manipulation editor (move/resize/rotate, snapping, z-order) is the highest-complexity component. Undo design must be right from day one ([R5.1](RESEARCH.md#r51-undoredo--verified), [R5.3](RESEARCH.md#r53-coalescing-a-drag-into-one-undo-step--verified)).
+- **Decision:** Single immutable `EditorState` + pure reducer. Undo unit = **command objects** whose inverse stores only touched fields (the tldraw/Excalidraw/Figma hybrid), **not** per-frame snapshots. A drag = one command via `onDragStart`/`onDrag` (preview only) / `onDragEnd` (commit). Live transforms run through a `Modifier.graphicsLayer{}` lambda so frame updates skip the reducer. Snapping & hit-testing are pure functions outside history.
+- **Consequences:** Atomic semantic undo at low memory; 60–120fps drags; testable geometry. Rest of app stays MVVM (ADR-013).
+- **Review:** Research-backed; flag for Codex before the editor spike.
+
+## ADR-006 {#adr-006}
+**One shared scene renderer with two backends (Compose preview + Android `Canvas` → PDF/Bitmap); text driven through the same Android text path in both.**
+- **Status:** Accepted (2026-06-19)
+- **Context:** Preview↔export divergence (especially text layout) is a classic WYSIWYG bug class. A "shared renderer" only holds if text metrics/wrapping are shared too.
+- **Decision:** A pure scene→draw-command function feeds both backends; coordinates in **points**. Text is measured/drawn via the **same Android `StaticLayout`/`Paint` path** in preview and export (rendered into Compose via `drawIntoCanvas`). Verified by Roborazzi diff tests (preview vs export of the same page).
+- **Consequences:** WYSIWYG by construction. Slightly more plumbing for text in preview. Codex flagged this caveat in the architecture review; reconciled by mandating the shared text path.
+
+## ADR-007 {#adr-007}
+**Imposition is a pure-Kotlin, zero-Android module; canonical layout = NASA/Chandra convention (top row rotated 180°, cover at grid (1,3)); printer-free validation via an SVG proof sheet.**
+- **Status:** Accepted (2026-06-19)
+- **Context:** Wrong imposition = every printed zine is wrong — the #1 correctness risk. Multiple template conventions exist ([R1](RESEARCH.md#r1-imposition-geometry--single-sheet-8-page-mini-zine)).
+- **Decision:** Pure-Kotlin engine, fully unit-testable, no Android deps. Adopt the VERIFIED oracle in [R1.2](RESEARCH.md#r12-page--cell-mapping-the-oracle--verified) as the golden test (pages 2–5 → 180°; 1,6,7,8 → 0°). Expose a single convention flag (default canonical). Emit a **pure-Kotlin SVG proof sheet** (panel numbers, logical pages, orientation arrows, fold + cut guides) so fold logic is validated in a browser without a printer.
+- **Consequences:** Highest-risk logic is isolated, testable, and reviewable. Full design in [spikes/imposition-engine.md](spikes/imposition-engine.md).
+- **Review (completed 2026-06-19):** Codex confirmed the geometry + mapping are **correct**. Accepted refinements, folded into the spike: (a) emit an explicit per-panel `contentToSheet` affine transform + panel-local safe/clip rects so the consumer never re-derives rotation (rotate-about-center contract); (b) make the rotation rule **convention-scoped** via a named `ConventionSpec`, not a format-universal invariant; (c) **drop the under-specified `BOTTOM_ROW_ROTATED` mode** from v1 (any alternate needs its own spec + goldens); (d) model the cut as lying **on** the horizontal fold (`onFoldId`) and validate topology, not just geometry; (e) deterministic, locale-independent SVG; configurable safe inset; bleed explicitly out of scope. No open disagreements. See the [reconciliation table](spikes/imposition-engine.md#review--codex-critical-review-reconciled-2026-06-19).
+
+## ADR-008 {#adr-008}
+**Beginner-first UX with progressive disclosure.**
+- **Status:** Accepted (2026-06-19) · user-confirmed
+- **Decision:** Default surface is dead-simple (tap-to-place, few options, templates lead). Power features are revealed progressively, not removed. Resolves the "simple vs powerful" tension toward simplicity first.
+- **Consequences:** Drives editor IA and onboarding in [PRD.md](PRD.md). Power-creator depth phases in per [ROADMAP.md](ROADMAP.md).
+
+## ADR-009 {#adr-009}
+**Data durability = autosave + write-temp-then-atomic-rename + user-initiated `.zine` backup/restore via SAF. No cloud.**
+- **Status:** Accepted (2026-06-19) · user-confirmed
+- **Context:** No cloud means device loss = data loss unless we make local durability first-class ([R4.3](RESEARCH.md#r43-crash-safety--verified), [R4.5](RESEARCH.md#r45-saf-backup--scoped-storage--verified)).
+- **Decision:** Debounced autosave writing to a temp file then atomic-renaming over the good file; Room WAL for metadata; "restore unsaved changes" on relaunch. User-controlled backup/restore as a self-contained `.zine` zip (document + images) via `ACTION_CREATE_DOCUMENT` / `ACTION_OPEN_DOCUMENT`. Autosave/recovery in MVP; `.zine` backup in V1.
+- **Consequences:** Crash-safe local-first storage; portability without a hosted service. Honors "no cloud storage."
+
+## ADR-010 {#adr-010}
+**Free, no monetization for MVP; bundle only license-clear fonts/assets.**
+- **Status:** Accepted (2026-06-19) · user-confirmed
+- **Decision:** No billing, ads, or paywall in MVP. Bundle only OFL/clearly-licensed fonts. Revisit monetization later.
+- **Consequences:** Fits the privacy/indie ethos; no billing surface to build. Custom-font import deferred to V2 ([ROADMAP.md](ROADMAP.md)).
+
+## ADR-011 {#adr-011}
+**Raster export = ARGB_8888 at 300 DPI, decode-to-target, EXIF-normalized, recycled; PNG for line-art / JPG for photo-heavy.**
+- **Status:** Accepted (2026-06-19)
+- **Context:** A full sheet is ~33–35 MB ARGB; OOM risk on low-heap devices ([R2.6](RESEARCH.md#r26-raster-export-at-300-dpi--memory--verified)).
+- **Decision:** Letter 2550×3300 / A4 2480×3508. Decode user images bounds-first (`inJustDecodeBounds` + `inSampleSize`) to placement size; normalize EXIF orientation; stream `compress()` to the `OutputStream`; `recycle()` immediately; one sheet at a time off-main-thread. PNG default for flat art, JPG for photo. `RGB_565` only when no alpha/gradients.
+- **Consequences:** Predictable memory; correct orientation; crisp output.
+
+## ADR-012 {#adr-012}
+**Print correctness = export at exact paper size + safe-area inset (~6 mm / 0.25") + on-sheet calibration ruler + "Actual size, Fit-to-page OFF" guidance.**
+- **Status:** Accepted (2026-06-19)
+- **Context:** Driver "Fit to page" silently rescales fixed geometry; consumer printers can't print to the edge ([R2.4](RESEARCH.md#r24-fit-to-page-silently-breaks-imposition--verified), [R2.5](RESEARCH.md#r25-non-printable-margins--full-bleed--verified--recommendation)).
+- **Decision:** Export each paper size at its exact dimensions (no cross-size reliance); keep all content, fold lines, and cut marks inside a ~6 mm safe inset; print a 1 in / 50 mm calibration ruler; surface explicit "print at 100% / Actual size, turn Fit-to-page OFF" instructions in the export flow. Full-bleed is a 🔭 FUTURE advanced option.
+- **Consequences:** Folds/cuts land correctly on real home printers; white border accepted as correct behavior.
+
+## ADR-013 {#adr-013}
+**App architecture = Clean architecture + repository pattern + single Activity + Compose/Material 3 + Hilt(KSP) + type-safe Navigation Compose; MVVM everywhere except the MVI editor (ADR-005).**
+- **Status:** Accepted (2026-06-19)
+- **Decision:** Unidirectional data flow (Compose → ViewModel → repository → data sources). `StateFlow` UI state, injected `CoroutineDispatcher`s, `Result<T>` error boundary. Pure-Kotlin `core` modules isolated from Android. Full technical detail in [ARCHITECTURE.md](ARCHITECTURE.md).
+- **Consequences:** Standard, testable, modularization-ready. MVI scoped to the editor where state-transition density justifies it.
