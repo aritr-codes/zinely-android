@@ -86,7 +86,7 @@ Three tiers, each chosen for what it is good at. The logical model is [ARCHITECT
 flowchart LR
     subgraph db["Room DB (metadata only — queryable)"]
         T1["zine_project\n(id, title, timestamps,\nformat, paper, paths, docSchemaVersion)"]
-        T2["asset\n(id, projectId, contentHash,\nlocalPath, w, h, mime, refCount)"]
+        T2["asset (ownership per ADR-022)\n(contentHash, localPath, w, h, mime, refCount,\ndeletableAt) + project link"]
     end
     subgraph fs["App-private filesystem (filesDir)"]
         D1["projects/&lt;id&gt;/document.json\n(+ document.json.tmp during save)"]
@@ -100,7 +100,7 @@ flowchart LR
 
 | Tier | Holds | Why this tier |
 |---|---|---|
-| **Room** (`zine_project`, `asset`) | small, **queryable** metadata: list/sort/search, thumbnails, asset bookkeeping & ref-counts | relational queries + `@AutoMigration` + WAL crash-safety ([R4.2](../RESEARCH.md#r42-recommendation--recommendation), [R4.3](../RESEARCH.md#r43-crash-safety--verified)); the document tree is **not** relational, so it doesn't belong here |
+| **Room** (`zine_project`, `asset`) | small, **queryable** metadata: list/sort/search, thumbnails, asset bookkeeping & ref-counts | relational queries + `@AutoMigration` + WAL crash-safety ([R4.2](../RESEARCH.md#r42-recommendation--recommendation), [R4.3](../RESEARCH.md#r43-crash-safety--verified)); the document tree is **not** relational, so it doesn't belong here. **Asset ownership** (global content-addressed store + global ref-count/join table **vs** per-project store) is an open decision in [ADR-022](../DECISIONS.md#adr-022) — a per-project `refCount` over a *global* store would be unsafe for shared hashes. |
 | **JSON file** per project (`document.json`) | the full **zine document tree** (pages, elements, transforms, styles) | a deep, evolving tree serializes naturally; one atomic file = one atomic save unit; schema versions independently of Room |
 | **Asset store** (`assets/<hash>.<ext>`) | copied-in image **bytes** | binary blobs don't belong in SQLite or JSON; content-addressing dedupes and enables ref-counted GC |
 
@@ -204,7 +204,7 @@ stateDiagram-v2
 
 **Rules**
 - **Write-temp → fsync → atomic rename** guarantees `document.json` is always either the old good version or the new good version — never a half-written file ([R4.3](../RESEARCH.md#r43-crash-safety--verified)).
-- **Debounce ~750ms** (tunable; **O3**) coalesces rapid edits; **force-flush** on `ON_STOP`/`onPause` so backgrounding never loses the last edit.
+- **Debounce ~600ms** (tunable; [ADR-021](../DECISIONS.md#adr-021)) coalesces rapid edits; **force-flush** on `ON_STOP`/`onPause`. ⚠️ The honest loss bound is "since the **last completed save**" — `ON_STOP` is best-effort and does **not** survive a low-memory kill mid-flush. Whether "never lose work" needs a synchronous write-ahead op-log (vs debounce alone) is the open durability contract in [ADR-021](../DECISIONS.md#adr-021).
 - **Single-writer:** autosave per project is serialized (a `Mutex`/conflated channel) so two saves never race on the tmp file.
 - **Recovery:** on open, if a `.tmp` exists it is a crashed write → discard it (the good file is intact); only surface a "restore unsaved changes" prompt if we additionally keep a small journal indicating in-flight edits.
 - **Interaction with MVI undo ([ADR-005](../DECISIONS.md#adr-005)):** autosave persists **document state**, not the undo stack. Undo history is in-memory/session-scoped for MVP; persisting it is 🔭 future. Saving must be decoupled from command application (save reads an immutable snapshot).
@@ -287,18 +287,21 @@ flowchart TD
 
 ---
 
-## 8. Open questions → candidate ADRs
+## 8. Open questions → ADRs (resolved 2026-06-19, Codex-reviewed)
 
-These are **decisions to resolve during S2 design**, each a likely ADR (proposed, not decided here):
+Each S2 open question is now recorded as an ADR with alternatives, tradeoffs, and a recommendation:
 
-- **O1** — `:core:domain` now or later? → *candidate ADR: "Domain layer threshold."*
-- **O2** — Serialization format lock-in (JSON vs swappable for Protobuf). → *candidate ADR: "Document serialization format & `DocumentSerializer` boundary."*
-- **O3** — Autosave debounce interval + flush triggers. → folds into the [ADR-009](../DECISIONS.md#adr-009) implementation note.
-- **O4** — Orphan-GC trigger (WorkManager cadence vs on-delete). → *candidate ADR: "Asset lifecycle & garbage collection."*
-- **O5** — Store originals vs downsampled-for-edit. → *candidate ADR: "Asset fidelity tiers."*
-- Also relevant: [ADR-015](../DECISIONS.md#adr-015) (validation result) and [ADR-018](../DECISIONS.md#adr-018) (convention/id versioning) intersect S2 persistence.
+| Q | ADR | Status | Outcome |
+|---|---|---|---|
+| **O1** — `:core:domain` now or later? | [ADR-019](../DECISIONS.md#adr-019) | ✅ Accepted | No `:core:domain` for MVP; extract on cross-ViewModel duplication. |
+| **O2** — serialization format lock-in | [ADR-020](../DECISIONS.md#adr-020) | ✅ Accepted | kotlinx JSON behind `DocumentSerializer`; migrators on canonical versions. |
+| **O3** — autosave timing & durability | [ADR-021](../DECISIONS.md#adr-021) | ⏳ Proposed | Debounce+flush policy set; durability contract (op-log?) open before Accept. |
+| **O4** — asset GC & ownership | [ADR-022](../DECISIONS.md#adr-022) | ⏳ Proposed | Ref-count + deferred undo-safe sweep; ownership model (global vs per-project) open. |
+| **O5** — asset fidelity | [ADR-023](../DECISIONS.md#adr-023) | ⏳ Proposed | Cap-and-derive approach; measured cap + "import master" naming open. |
 
-> Per the [review workflow](../../CLAUDE.md#review-workflow): each major S2 decision gets a Codex review and an ADR before implementation.
+Also intersecting S2: [ADR-015](../DECISIONS.md#adr-015) (validation result) and [ADR-018](../DECISIONS.md#adr-018) (convention/id versioning).
+
+> **Implementation gate:** ADR-021, ADR-022, ADR-023 must reach **Accepted** (their open contracts resolved + Codex-reviewed) before the corresponding S2 code is written. ADR-019/020 are settled.
 
 ---
 
