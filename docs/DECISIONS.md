@@ -34,6 +34,7 @@
 | [ADR-021](#adr-021) | Autosave = single-writer debounced atomic full-save + `onStop` flush + `.bak`; no op-log (MVP) | Accepted |
 | [ADR-022](#adr-022) | Asset ownership = global content-addressed store + mark-and-sweep + grace window | Accepted |
 | [ADR-023](#adr-023) | Asset fidelity = one 4096 px import master, original discarded, derive tiers | Accepted |
+| [ADR-024](#adr-024) | Minimum supported Android version = API 24 (Android 7.0) | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -339,3 +340,16 @@
 - **Edge case (noted):** a tiny photo blown up to a full-sheet full-bleed poster sits at ≈ 4096/3508 ≈ 300 PPI — fine; a user wanting a print *larger than a zine sheet* is capped. Acceptable for a Letter/A4 home-print MVP; revisit if larger formats enter scope (ROADMAP V2).
 - **Evidence:** 300 PPI is the print-quality target, 240 PPI the "indistinguishable" floor; proxy-and-master is standard in photo/video editing; Android large-bitmap decoding (`inSampleSize`, `BitmapRegionDecoder`) and EXIF normalisation are required to avoid OOM/rotation bugs. Landed in [RESEARCH R8](RESEARCH.md#r8-imported-image-fidelity--storage--verified--recommendation).
 - **Review (2026-06-19):** Codex — **ACCEPT** (first pass): "4096px is justified for the stated MVP … discarding the camera original is acceptable if the UI/schema honestly call the retained file an 'import master' … hashing post-downscale/EXIF master bytes is correct; non-deterministic re-encode reduces dedupe hits but does not break liveness." → **Accepted.**
+
+## ADR-024 {#adr-024}
+**Minimum supported Android version = API 24 (Android 7.0). (Resolves [PRD Q1](PRD.md#13-open-questions).)**
+- **Status:** Accepted (2026-06-20)
+- **Context:** The `app` scaffold set `minSdk = 24` ([app/build.gradle.kts](../app/build.gradle.kts)) with `targetSdk = 36`, but the choice was never ratified ([PRD Q1](PRD.md#13-open-questions)). `minSdk` is a durable contract: it sets which platform APIs are available without backports and the addressable device population — both material to a beginner-first, accessibility-minded product ([ADR-008](#adr-008), [PRD principles](PRD.md#5-product-principles-non-negotiable)).
+- **Alternatives considered:**
+  - **A — `minSdk 24` (Android 7.0)** *(recommended)*: broadest reach (~97–98% of active devices). Every API Zinely needs works at 24 — Compose/Material 3, Room, Coil 3, WorkManager, AndroidX Photo Picker, `android.graphics.pdf.PdfDocument`, AndroidX `ExifInterface`, `FileProvider`. The pure-Kotlin core deliberately uses **epoch-millis `Long`** (not `java.time`), removing the main "26 is simpler" pressure.
+  - **B — `minSdk 26` (Android 8.0)**: ~92–95% reach. Gains native `java.time`, adaptive launcher icons, and notification channels with fewer compat shims — none of which this offline, account-free, **notification-free** app needs. `ImageDecoder` is API 28 regardless.
+  - **C — lower than 24 (e.g. 21)**: more reach but drags pre-7.0 fragmentation and weaker `FileProvider`/runtime-permission ergonomics; not worth it for the marginal additional share.
+- **Tradeoffs:** 24 maximises accessibility (the product's stated principle) at the cost of a few platform conveniences the app does not use; 26 trades ~3–5% of devices for those conveniences. Because the core avoids `java.time`, the usual desugaring tax of 24 is not incurred; if app-layer code later wants `java.time`, enabling **core library desugaring** is a cheap, localized switch.
+- **Decision — A, `minSdk 24`.** Keep `targetSdk 36`. Nothing in the planned stack forces 26.
+- **Consequences:** No core-library desugaring required by the current design; if introduced later, turn on desugaring rather than raising `minSdk`. Adaptive icons / any future notifications use AndroidX compat. This is a **reversible-upward** decision (raising `minSdk` later is mechanical; lowering it is the risky direction, and we are not committing to that).
+- **Review (2026-06-20):** Claude recommends 24; **Codex concurs — verdict "24"**: "Nothing in your listed stack actually forces 26 … avoiding `java.time` removes the most common '26 would be simpler' pressure … for Zinely's beginner-first/accessibility principle, 24 keeps more older/low-cost devices viable." Ratified per the user's request to adopt the joint recommendation.
