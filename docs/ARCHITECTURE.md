@@ -2,9 +2,9 @@
 
 > **The technical source of truth.** *How* Zinely is built. Product "what/why" → [PRD.md](PRD.md). Decisions → [DECISIONS.md](DECISIONS.md) (referenced by ADR id). Evidence → [RESEARCH.md](RESEARCH.md). Phasing → [ROADMAP.md](ROADMAP.md).
 >
-> Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **No code yet.**
+> Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`) and `core:data` (S2A). No Android-backed modules or app UI yet.
 
-> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-013); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
+> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-023); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
 
 ---
 
@@ -381,7 +381,8 @@ flowchart BT
 | Phase | Subsystem | Direct deps | Status | Parallelizable with |
 |---|---|---|---|---|
 | S1 | `core:imposition` | `core:model` | ✅ shipped (v0.1.0) | — |
-| S2 | `core:data` | `core:model` | 🟦 designed; gated on [ADR-021/022/023](DECISIONS.md#adr-021) | S3 (no shared dep) |
+| S2A | `core:data` (pure core) | `core:model` | ✅ implemented — schema, serializer+migration, validation, repo/asset contracts ([spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19)) | S3 (no shared dep) |
+| S2B | `core:data` (Android) | `core:model` | ⬜ Room + atomic-write file source + autosave + asset store + WorkManager GC | S3 (no shared dep) |
 | **S3** | **`core:render`** | `core:model` | ⬜ **recommended next** | S2 finalization |
 | S4 | `feature:editor` | `core:model`, `core:data`, `core:render` | ⬜ | — (needs S2 **and** S3) |
 | S5 | `export` | `core:model`, `core:imposition`, `core:render`, `core:data` | ⬜ | — |

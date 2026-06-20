@@ -281,7 +281,7 @@ flowchart TD
 |---|---|---|---|
 | R1 | **File corruption** on crash mid-write | High | write-temp → fsync → atomic rename; the good file is never touched until the new one is complete (§4) |
 | R2 | **Room ↔ document drift** (metadata says one thing, blob another) | Med | document is source of truth; metadata is a rebuildable cache; refresh in the same save txn |
-| R3 | **Orphaned / leaked assets** filling storage | Med | ref-counting + WorkManager GC + disk/table reconciliation sweep (§5) |
+| R3 | **Orphaned / leaked assets** filling storage | Med | **mark-and-sweep** GC over (documents ∪ undo ∪ in-flight-import) roots + ≥24 h grace + disk/table reconciliation, under a store mutex with an at-unlink mtime re-check ([ADR-022](../DECISIONS.md#adr-022), §5). **Ref-counting was rejected** (desyncs, can delete live bytes). |
 | R4 | **Schema drift breaks old files** | High | dual-axis versioning + tolerant decode + unit-tested migrators with golden fixtures (§6) |
 | R5 | **Large document** write-amplification / jank | Med | debounce; off-main IO; measure; Protobuf is the 🔭 escape hatch behind the `DocumentSerializer` interface (O2) |
 | R6 | **Autosave races** (concurrent saves, save-during-edit) | Med | per-project single-writer mutex; save operates on an immutable snapshot |
