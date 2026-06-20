@@ -16,6 +16,9 @@ local.properties
 
 # Multi-module build outputs
 **/build/
+# Eclipse / redhat-java extension compiled output (never committed)
+bin/
+**/bin/
 # Keep the committed Gradle wrapper jar
 !gradle/wrapper/gradle-wrapper.jar
 
