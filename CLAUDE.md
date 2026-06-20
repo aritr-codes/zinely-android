@@ -63,6 +63,95 @@ flowchart LR
 
 ---
 
+## Agent handoff protocol
+
+For any significant work item (feature, refactor, ADR, architecture change, milestone, or review), end with a standardized handoff.
+
+### Implementer → Reviewer
+
+When proposing completed work for review, provide:
+
+#### Session Summary
+
+* What changed
+* Why it changed
+* Files/modules affected
+* ADRs modified/created
+* Tests added/updated
+* Risks, limitations, deferred work
+
+#### Review Package
+
+* Branch
+* PR number
+* Commit range
+* Relevant ADRs
+* Relevant docs updated
+* Known concerns
+* Claims that require verification
+
+#### Reviewer Prompt
+
+A ready-to-paste prompt instructing the reviewer to validate the actual repository state, not the summary.
+
+### Reviewer → Implementer
+
+When reviewing work, provide:
+
+#### Findings
+
+Classify issues as:
+
+* Required Fix
+* Recommended Improvement
+* Observation
+
+#### Review Decision
+
+Choose one:
+
+* GO
+* GO WITH FIXES
+* NO-GO
+
+Include rationale.
+
+#### Next Action
+
+State the highest-priority next step.
+
+#### Implementation Brief
+
+A ready-to-paste prompt for the implementer containing:
+
+* Current state
+* Decision
+* Required fixes
+* Known risks
+* Relevant ADRs
+* Affected modules
+* Desired outcome
+
+### Review Principles
+
+Reviewer:
+
+* Validate against actual code, commits, tests, ADRs, PRs, and documentation.
+* Do not trust summaries as ground truth.
+* Separate merge blockers from follow-up work.
+* Distinguish implementation defects from documentation defects.
+
+Implementer:
+
+* Reconcile review findings individually.
+* Explicitly ACCEPT, PARTIALLY ACCEPT, or REJECT findings when responding to a review.
+* Provide evidence for rejected findings.
+* Generate the next handoff artifact.
+
+Assume future sessions may not have prior conversation history.
+
+---
+
 ## Research standards
 
 Don't rely solely on prior knowledge when research could improve accuracy. When researching product ideas, Android best practices, PDF generation, editor patterns, offline-first/storage approaches, or comparable products:
