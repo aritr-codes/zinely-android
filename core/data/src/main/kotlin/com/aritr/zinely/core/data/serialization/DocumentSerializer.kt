@@ -16,6 +16,14 @@ public class DocumentDecodeException(message: String, cause: Throwable? = null) 
     DocumentSerializationException(message, cause)
 
 /**
+ * The payload declares a persisted [PersistedFormat] that this serializer does not read. Format
+ * detection is explicit and serializer-owned: a serializer refuses a payload whose marker is not its
+ * own ([ADR-020] amendment), rather than guessing.
+ */
+public class UnsupportedFormatException(public val found: String, public val expected: String) :
+    DocumentSerializationException("Document declares persisted format $found; this serializer reads '$expected'")
+
+/**
  * The **persisted wire format** of a document, distinct from the document's own `ZineFormat`. The
  * serializer stamps its format into the payload and is the sole owner of format/version detection,
  * so a future Protobuf format ([ADR-020] escape hatch) is selected by an explicit marker, never by

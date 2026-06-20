@@ -136,4 +136,31 @@ class JsonDocumentSerializerTest {
         val newer = "{\"schemaVersion\":${CURRENT_SCHEMA_VERSION + 1},\"format\":\"single_sheet_8\",\"paperSize\":\"a4\"}"
         assertThrows<NewerSchemaVersionException> { serializer.deserialize(newer) }
     }
+
+    @Test
+    fun `the stamped json marker round-trips through deserialize`() {
+        // Proves the marker the serializer writes is the one it accepts on read.
+        val doc = sample()
+        assertEquals(doc, serializer.deserialize(serializer.serialize(doc)))
+    }
+
+    @Test
+    fun `a payload declaring a non-json persisted format is refused`() {
+        val foreign = "{\"_encoding\":\"protobuf\",\"schemaVersion\":1,\"format\":\"single_sheet_8\",\"paperSize\":\"a4\"}"
+        val ex = assertThrows<UnsupportedFormatException> { serializer.deserialize(foreign) }
+        assertEquals(PersistedFormat.JSON.wire, ex.expected)
+    }
+
+    @Test
+    fun `a non-string encoding marker is refused`() {
+        val bad = "{\"_encoding\":42,\"schemaVersion\":1,\"format\":\"single_sheet_8\",\"paperSize\":\"a4\"}"
+        assertThrows<UnsupportedFormatException> { serializer.deserialize(bad) }
+    }
+
+    @Test
+    fun `a legacy payload without an encoding marker is accepted as implicit json`() {
+        val legacy = "{\"schemaVersion\":1,\"format\":\"single_sheet_8\",\"paperSize\":\"a4\",\"pages\":[]}"
+        val decoded = serializer.deserialize(legacy)
+        assertEquals(PaperSize.A4, decoded.paperSize)
+    }
 }

@@ -5,6 +5,7 @@ import com.aritr.zinely.core.model.ZineDocument
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
@@ -54,8 +55,23 @@ public class JsonDocumentSerializer internal constructor(
     }
 
     override fun deserialize(text: String): ZineDocument {
-        val migrated = migrations.migrate(parse(text))
-        return decode(migrated)
+        val root = parse(text)
+        checkFormat(root)
+        return decode(migrations.migrate(root))
+    }
+
+    /**
+     * Enforce the format marker before version migration. A missing marker is accepted as legacy
+     * implicit-JSON (documents written before the marker existed, or hand-authored); a marker that
+     * names any other format — or is not a string — is refused. This is what makes format detection
+     * serializer-owned and non-heuristic rather than a cosmetic field ([ADR-020] amendment).
+     */
+    private fun checkFormat(root: JsonObject) {
+        val marker = root[ENCODING_KEY] ?: return
+        val wire = (marker as? JsonPrimitive)?.takeIf { it.isString }?.content
+        if (wire != format.wire) {
+            throw UnsupportedFormatException(found = marker.toString(), expected = format.wire)
+        }
     }
 
     private fun parse(text: String): JsonObject {
