@@ -313,10 +313,20 @@ Also intersecting S2: [ADR-015](../DECISIONS.md#adr-015) (validation result) and
 
 - **Pure-JVM unit tests** for the `DocumentSerializer` and every `DocumentMigrator` (golden old→new JSON fixtures; round-trip stability) — no Android needed, like the imposition core.
 - **Room** instrumented/Robolectric tests for DAOs and `@AutoMigration` (each migration has a fixture DB).
-- **Repository tests** with fake data sources: save→reopen fidelity, crash-recovery (simulate leftover `.tmp`), ref-count transitions, error→`Result` mapping.
+- **Repository tests** with fake data sources: save→reopen fidelity, crash-recovery (simulate leftover `.tmp`), GC liveness transitions (mark-and-sweep, **not** ref-count — [ADR-022](../DECISIONS.md#adr-022)), error→`Result` mapping.
 - **Atomic-write test:** inject a failure between tmp-write and rename; assert the prior good file survives.
-- **`.zine` round-trip:** export→import equality; reject tampered manifest/hash.
+- **`.zine` round-trip:** export→import equality; reject tampered manifest/hash; **byte-level integrity** — each blob's bytes hash to its `AssetEntry.hash` and match `byteCount` (the check the pure `ZinePackageManifestValidator` defers to restore).
 - **Property tests (jqwik):** arbitrary documents survive serialize→deserialize→serialize unchanged; migrators are idempotent at the target version.
+
+### 9.1 Mandatory S2B tests — asset GC race closure ([ADR-022](../DECISIONS.md#adr-022))
+
+These guard the import↔sweep race the `AssetStore` KDoc names; S2B must ship all five before the GC sweep is enabled:
+
+1. **In-flight import root registration** — a hash registered as in-flight is treated as live by a sweep that runs mid-import, even with no document reference yet.
+2. **mtime refresh before doc-ref commit** — `store()` touches the blob's mtime *before* returning, so a reused old blob (older than the grace window) is no longer GC-eligible once an import targets it.
+3. **Store mutex shared by writes and unlink** — a write and the sweep's unlink cannot interleave; the sweep blocks while a write to the same hash is in flight (and vice-versa).
+4. **Unlink-time mtime re-check** — the sweep re-reads mtime under the mutex immediately before `unlink`, and aborts the delete if the blob was revived since the sweep snapshot.
+5. **Room index never authorises deletion of live bytes** — a corrupt/stale `asset` index row does **not** cause deletion of a blob still referenced by any document/undo/in-flight root; liveness is decided by the document-derived set, not the index (disk-vs-documents wins).
 
 ---
 

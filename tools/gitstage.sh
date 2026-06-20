@@ -17,6 +17,8 @@ case "${1:-}" in
   s2a-model)     git add core/model/src ;;
   s2a-data)      git add core/data/src ;;
   s2a-docs)      git add docs/ ;;
+  # S2A follow-ups (post-merge): CI + core-only settings toggle
+  s2a-ci)        git add settings.gradle.kts .github/workflows/ci.yml tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

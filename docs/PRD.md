@@ -178,7 +178,7 @@ stateDiagram-v2
 | NFR-5 | **Fidelity:** preview matches export within tolerance (Roborazzi diff) ([ADR-006](DECISIONS.md#adr-006)) |
 | NFR-6 | **Print accuracy:** at 100% scale, fold/cut geometry lands within tolerance on consumer printers ([ADR-012](DECISIONS.md#adr-012)) |
 | NFR-7 | **Accessibility:** M3 touch targets, content descriptions, dynamic type (full pass in V1) |
-| NFR-8 | **Min SDK 26** (assumption — confirm), target latest |
+| NFR-8 | **Min SDK 24** (Android 7.0), ratified [ADR-024](DECISIONS.md#adr-024); target latest (`targetSdk 36`) |
 
 ## 12. Success criteria (MVP)
 
@@ -191,7 +191,7 @@ stateDiagram-v2
 
 | # | Question | Owner | Blocks |
 |---|---|---|---|
-| Q1 | minSdk 26 vs 24? — the `app` scaffold currently sets **`minSdk = 24`** ([app/build.gradle.kts](../app/build.gradle.kts)); awaiting the user's explicit ratification (and an ADR if 24 is confirmed, since it affects API availability) | user | build setup |
+| ~~Q1~~ | ✅ **Resolved (2026-06-20):** `minSdk = 24` (Android 7.0), ratified in [ADR-024](DECISIONS.md#adr-024) | user | ~~build setup~~ |
 | Q2 | Physical printer available for fold validation? (else rely on SVG proof sheet — [ADR-007](DECISIONS.md#adr-007)) | user | imposition validation |
 | Q3 | Bundled font set (which OFL families)? | user/design | typography |
 | Q4 | Brand/visual identity direction | user/design | UI theme |

@@ -4,7 +4,7 @@
 >
 > Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`) and `core:data` (S2A). No Android-backed modules or app UI yet.
 
-> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-023); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
+> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-024); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
 
 ---
 
@@ -349,7 +349,7 @@ The whole-project view used to sequence implementation. Phasing definitions live
 flowchart BT
     model["core:model<br/>✅ v0.1.0"]
     imp["core:imposition<br/>✅ v0.1.0"]
-    data["core:data<br/>S2 · designed"]
+    data["core:data<br/>S2A ✅ · S2B ⬜"]
     render["core:render<br/>S3 · next"]
     editor["feature:editor (MVI)<br/>S4"]
     export["export<br/>S5"]
@@ -403,7 +403,7 @@ flowchart BT
 ```mermaid
 flowchart LR
     M["core:model ✅"] --> I["core:imposition ✅"]
-    M --> D["core:data (S2)"]
+    M --> D["core:data (S2A ✅ / S2B ⬜)"]
     M --> R["core:render (S3)"]
     D --> E["editor (S4)"]
     R --> E

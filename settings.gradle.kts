@@ -23,7 +23,11 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "zinely"
-include(":app")
+// CI runs the pure-Kotlin core Android-free: set ZINELY_CORE_ONLY=true to drop the Android `:app`
+// module (whose AGP/compileSdk config needs an Android SDK on the runner). Local builds include it.
+if (providers.environmentVariable("ZINELY_CORE_ONLY").orNull != "true") {
+    include(":app")
+}
 // Pure-Kotlin, Android-independent core (imposition engine spike).
 include(":core:model")
 include(":core:imposition")
