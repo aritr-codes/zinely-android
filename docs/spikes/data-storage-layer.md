@@ -39,15 +39,15 @@ flowchart TD
     subgraph pure["core:model (pure Kotlin — shipped)"]
         M["Document tree types\nElement / Page / Transform\n(+ imposition types)"]
     end
-    subgraph data["core:data (S2 — this spike, Android)"]
-        REPO["ProjectRepository\nDocumentRepository"]
+    subgraph data["S2 data layer — split by ADR-025 (contracts · pure-JVM impls · Android adapters)"]
+        REPO["ProjectRepository\nDocumentRepository\n(:core:data contracts)"]
         subgraph ds["Data sources"]
-            ROOM["Room DAO\n(metadata)"]
-            DOCFS["DocumentFileDataSource\n(JSON read/write, atomic)"]
-            ASSET["AssetStore\n(copy-in, hash, GC)"]
+            ROOM["Room DAO\n(metadata)\n:data-android"]
+            DOCFS["DocumentFileDataSource\n(JSON read/write, atomic)\n:core:data-storage"]
+            ASSET["AssetStore\n(copy-in, hash, GC)\n:core:data-storage + :data-android"]
         end
-        SER["DocumentSerializer\n(kotlinx.serialization + migrations)"]
-        AUTOS["AutosaveCoordinator\n(debounce + dirty tracking)"]
+        SER["DocumentSerializer\n(kotlinx.serialization + migrations)\n:core:data"]
+        AUTOS["AutosaveCoordinator\n(debounce + dirty tracking)\n:core:data-storage"]
     end
     subgraph future["consumers (later phases)"]
         VM["Editor ViewModel (S4)"]
@@ -71,6 +71,7 @@ flowchart TD
 ```
 
 **Boundary rules**
+- **Post-[ADR-025](../DECISIONS.md#adr-025) layering (this spike predates the split):** the single `:core:data` box above is now three layers — `:core:data` (pure-Kotlin *contracts*), `:core:data-storage` (pure-JVM atomic file source / autosave / asset byte-store / mark-and-sweep GC, java.nio only, CI-tested now), and `:data-android` (Room / WorkManager / Bitmap-EXIF / SAF adapters, deferred until Android-SDK CI). Node tags in the diagram show where each lands.
 - `:core:data` depends on `:core:model`; **never the reverse**. `:core:model` gains **zero** Android deps (invariant from [CLAUDE.md](../../CLAUDE.md)).
 - Repositories return `Result<T>` (sealed) and map platform exceptions (`IOException`, `SQLiteException`, `SerializationException`) to domain errors at the boundary ([ARCHITECTURE §9](../ARCHITECTURE.md#9-error-handling)). No raw exception leaks past the repository.
 - Inject `CoroutineDispatcher`s (IO) — no hard-coded `Dispatchers.IO` ([ARCHITECTURE §10](../ARCHITECTURE.md#10-concurrency)).

@@ -2,7 +2,6 @@ package com.aritr.zinely.core.data.storage
 
 import java.io.IOException
 import java.nio.channels.FileChannel
-import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -29,9 +28,12 @@ public interface FileSystemOps {
     public fun fsyncDir(dir: Path)
 
     /**
-     * Move [source] onto [replacing], replacing any existing file. Atomic where the backend
-     * supports it, so [replacing] is never observed half-written — it holds either the old bytes
-     * or the new bytes, never a torn mix.
+     * Move [source] onto [replacing], replacing any existing file **atomically** whenever
+     * [capabilities].atomicReplace is `true`: [replacing] is never observed half-written — it holds
+     * either the complete old bytes or the complete new bytes, never a torn mix. A backend that
+     * cannot honour an atomic replace must **fail closed** (throw); it must never silently downgrade
+     * to a non-atomic copy/replace, which would break the all-or-nothing durability invariant
+     * ([ADR-021](../../docs/DECISIONS.md#adr-021), [ADR-022 amendment](../../docs/DECISIONS.md#adr-022)).
      */
     public fun atomicReplace(source: Path, replacing: Path)
 }
@@ -68,16 +70,16 @@ public object NioFileSystemOps : FileSystemOps {
     }
 
     override fun atomicReplace(source: Path, replacing: Path) {
-        try {
-            Files.move(
-                source,
-                replacing,
-                StandardCopyOption.ATOMIC_MOVE,
-                StandardCopyOption.REPLACE_EXISTING,
-            )
-        } catch (_: AtomicMoveNotSupportedException) {
-            // Fall back to a non-atomic replace where the backend lacks atomic move.
-            Files.move(source, replacing, StandardCopyOption.REPLACE_EXISTING)
-        }
+        // Fail closed. App-private internal storage supports atomic rename (the temp is a sibling on
+        // the same filesystem), so this succeeds for the intended scope. If a backend ever cannot do
+        // an atomic move, surface AtomicMoveNotSupportedException rather than silently doing a
+        // non-atomic replace — that would violate the all-or-nothing invariant this object advertises
+        // via capabilities.atomicReplace = true (ADR-021 / ADR-022 amendment / ADR-025 capability seam).
+        Files.move(
+            source,
+            replacing,
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING,
+        )
     }
 }

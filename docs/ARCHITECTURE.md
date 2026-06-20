@@ -4,7 +4,7 @@
 >
 > Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`) and `core:data` (S2A). No Android-backed modules or app UI yet.
 
-> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-024); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
+> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-025); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
 
 ---
 
@@ -62,7 +62,7 @@ flowchart TD
 
 ## 2. Module & package structure
 
-Single Gradle module to start, packaged so it splits cleanly into modules later (1:1 mapping shown). Pure-Kotlin core isolated from day one.
+Multi-module Gradle build; the pure-Kotlin core is isolated from day one. The package tree below is the logical layout; modules are split out incrementally (the realised vs planned split is listed under it).
 
 > **Package root:** `com.aritr.zinely` — aligned with the existing app scaffold the project was created with (an earlier docs draft said `com.zinely`; the repo convention wins per [CLAUDE.md](../CLAUDE.md#engineering-conventions-summary-authority-is-docsarchitecturemd)).
 
@@ -88,7 +88,7 @@ com.aritr.zinely
 └── ui               // theme, design system, shared composables (M3)
 ```
 
-Future multi-module split: `:core:model`, `:core:imposition`, `:core:render`, `:core:data`, `:core:domain`, `:core:ui`, `:feature:home|editor|export|settings`, `:app`.
+Module split (realised vs planned): **realised** — `:app`, `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability/GC core, [ADR-025](DECISIONS.md#adr-025)); **planned** — `:core:render` (S3), `:data-android` (S2B Android adapters: Room/WorkManager/Bitmap/SAF, [ADR-025](DECISIONS.md#adr-025)), `:core:domain`, `:core:ui`, `:feature:home|editor|export|settings`.
 
 ## 3. Data flow
 
