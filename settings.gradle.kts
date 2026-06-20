@@ -34,4 +34,7 @@ include(":core:imposition")
 // Pure-Kotlin data core (S2A): document schema, serializer, migration, validation,
 // repository + asset-manifest contracts. No Android deps yet (Room/WorkManager land in S2B).
 include(":core:data")
+// S2B durability/GC core (ADR-025): pure-JVM (java.nio) atomic file source, autosave
+// coordinator, content-addressed asset store + mark-and-sweep GC. Android-free; CI-tested.
+include(":core:data-storage")
  
