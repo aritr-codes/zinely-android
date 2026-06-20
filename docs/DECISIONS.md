@@ -25,7 +25,7 @@
 | [ADR-012](#adr-012) | Print correctness = exact paper size, safe-area inset, calibration ruler | Accepted |
 | [ADR-013](#adr-013) | App architecture = Clean + single Activity + Compose + Hilt | Accepted |
 | [ADR-014](#adr-014) | Geometry & transform public-API stability (finite guarantees, `times()` visibility) | Proposed |
-| [ADR-015](#adr-015) | Validation result contract (`List<ValidationIssue>` vs `ValidationResult`) | Proposed |
+| [ADR-015](#adr-015) | Validation result contract — document validation returns a structured `ValidationResult`; imposition keeps its list until a unification pass | Accepted |
 | [ADR-016](#adr-016) | Format & paper extensibility (closed enums vs open specs) | Proposed |
 | [ADR-017](#adr-017) | Bleed, clip & safe-area semantics | Proposed |
 | [ADR-018](#adr-018) | Imposition convention & guide-ID versioning | Proposed |
@@ -35,7 +35,7 @@
 | [ADR-022](#adr-022) | Asset ownership = global content-addressed store + mark-and-sweep + grace window | Accepted |
 | [ADR-023](#adr-023) | Asset fidelity = one 4096 px import master, original discarded, derive tiers | Accepted |
 
-> ADR-014 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change.
+> ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
 
 ---
@@ -142,12 +142,17 @@
 - **Future considerations:** Revisit when `core:render` ([ADR-006](#adr-006)) is designed; that is the first real external consumer and the natural forcing function. The imposition engine itself only ever emits finite transforms, so this is not a correctness issue for the merged spike.
 
 ## ADR-015 {#adr-015}
-**Return contract of `LayoutValidator` — raw issue list vs a structured result.**
-- **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
-- **Context / rationale:** `LayoutValidator.validate()` returns `List<ValidationIssue>` (empty = sound). The export pipeline will *gate* on this (block export when invalid, possibly warn-but-allow for non-fatal issues). A bare list pushes "is this fatal?" logic onto every caller and has no place for summaries, counts, or an explicit `isValid`.
-- **Options under consideration:** keep `List<ValidationIssue>` (simple, machine-readable, already deterministic-ordered); or wrap in `ValidationResult(isValid, errors, warnings, issues)` once `Severity.WARNING` is actually used (today every issue is `ERROR`).
-- **Risks:** Changing the return type after the export layer consumes it is breaking. The `Severity.WARNING` enum value is currently unused — a latent "we meant to distinguish these" that should be resolved deliberately, not by accretion.
-- **Future considerations:** Decide alongside the export-gating design (S5) or whenever the first `WARNING`-severity check is introduced — whichever comes first.
+**Validation result contract — document validation returns a structured `ValidationResult`; the imposition `LayoutValidator` keeps its `List<ValidationIssue>` until an explicit unification pass.**
+- **Status:** Accepted (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007); resolved in S2A when the first real `Severity.WARNING` appeared.
+- **Context:** Two validators now exist. The imposition [`LayoutValidator`](spikes/imposition-engine.md) returns `List<ValidationIssue>` (empty = sound); the new S2A [`DocumentValidator`](spikes/data-storage-layer.md) needs explicit `isValid` gating (export/save block on errors, [ADR-021]) **and** a real warning level — `text.empty` is non-blocking. The trigger ADR-015 named ("decide when the first `WARNING` is actually used") has arrived.
+- **Alternatives considered:**
+  - **A — Structured `ValidationResult` for documents; imposition keeps its list for now** *(recommended)*: `ValidationResult(issues)` exposes `errors`/`warnings`/`isValid`; coded issues carry a node `path`. Imposition is untouched (out of S2A scope) and unified later. Two shapes briefly coexist, but each is the right tool for its caller today.
+  - **B — Unify both validators on one shared result now**: cleanest end-state, but drags an imposition refactor (and its golden tests) into S2A, widening scope and risk for no MVP benefit.
+  - **C — Keep document validation on a bare `List<ValidationIssue>` too**: rejected — it has no `isValid`/severity split, exactly the gap that blocks export-gating and forces every caller to re-derive "is this fatal?".
+- **Tradeoffs:** A trades momentary duplication for scope safety and is **reversible** (a later pass folds imposition onto the same shape). The brief two-shape coexistence is acceptable because the document `ValidationResult` is deliberately designed to be that future unification target — this is a chosen shape, not accretion.
+- **Recommended direction:** **A.** `core.data.validation.ValidationResult` (`Severity` ERROR/WARNING, coded `ValidationIssue` with `path`, `isValid = no errors`). Warnings never block; only errors gate. Imposition's list is unified onto this shape when the export-gating design (S5) lands.
+- **Consequences:** Document validation has a real structured result and a used `WARNING` level; export/save can gate on `isValid`; the imposition validator stays as-is until S5. The unification is tracked as the trigger for the next pass.
+- **Review (2026-06-19):** Codex — **promote to Accepted**; the first real warning (`text.empty`) is the right trigger, and scoping it as "document now, imposition later, do not half-unify" avoids the accretion ADR-015 warned about.
 
 ## ADR-016 {#adr-016}
 **Extensibility of paper sizes and zine formats — closed enums vs open specs.**
@@ -200,6 +205,7 @@
 - **Boundary caveat (per Codex):** the `DocumentSerializer` boundary makes **call sites** swappable, not the persisted schema. A later Protobuf must still carry a **format marker**, retain a **legacy-JSON reader**, and own format detection/migration. Therefore: design `DocumentMigrator`s to operate on **typed/canonical document versions**, not raw `JsonElement` trees — otherwise the Protobuf escape hatch is cosmetic. The serializer (not call sites) owns legacy-format detection.
 - **Consequences:** Debuggable documents; one swap point; KMP-aligned with the pure core. Migrators stay format-neutral.
 - **Review (2026-06-19):** Codex — **promote to Accepted**; JSON is correct pre-1.0 for inspectability/fixtures/iteration. Adopted the boundary caveat (canonical-version migrators + serializer-owned legacy detection) so the swap claim is real, not cosmetic.
+- **Amendment (2026-06-19, S2A implementation; Codex-reviewed):** the original caveat's "design migrators on typed/canonical versions, **not** raw `JsonElement` trees" is **too absolute for v1** and is refined, not reversed. For the JSON-only MVP (schema v1, zero real migrators), **JSON-tree migrators are permitted *inside* `JsonDocumentSerializer`** and are kept `internal` so they are never the app-wide migration abstraction (that remains the format-neutral `DocumentSerializer`). What keeps the Protobuf escape hatch *real* rather than cosmetic, and is implemented now: (1) an explicit persisted **format marker** (`_encoding`) that is **validated on read** — a payload declaring any non-JSON encoding (or a non-string marker) is refused (`UnsupportedFormatException`), and an absent marker is accepted as legacy implicit-JSON — so detection is serializer-owned, not heuristic; (2) the **serializer owns** format + schema-version detection and legacy dispatch; (3) a **newer-than-current document is refused** (`NewerSchemaVersionException`), never tolerantly decoded-then-saved (which would silently downgrade — [ADR-021] durability); (4) a golden **structural-migration** test proving JSON-tree migration preserves moved/renamed data (the reason it beats tolerant-decode fixup). **Revisit trigger:** the *first* of {a real structural `v1→v2` migration, or adoption of a non-JSON persisted format} forces per-version typed snapshots + a one-time legacy-JSON→typed bridge. Codex verdict: reconciliation sound; do not refactor to typed snapshots at v1.
 
 ## ADR-021 {#adr-021}
 **Autosave = a single-writer, debounced *atomic full-document save* (temp → fsync → atomic rename → dir-fsync) that keeps one prior-good `.bak`, force-flushed synchronously on `ON_STOP` and explicit editor-exit. No operation log in the MVP. (Resolves O3; durability contract closed.)**

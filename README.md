@@ -5,7 +5,7 @@ Turn photos and words into a physical, foldable zine in minutes — entirely on 
 
 > *Physical media instead of social media.*
 
-[![status](https://img.shields.io/badge/status-pre--implementation-blue)](docs/ROADMAP.md)
+[![status](https://img.shields.io/badge/status-in--development-green)](docs/ROADMAP.md)
 [![platform](https://img.shields.io/badge/platform-Android-green)]()
 [![stack](https://img.shields.io/badge/Kotlin-Compose-7F52FF)]()
 
@@ -35,7 +35,7 @@ No existing product is **offline-first + account-free + native Android + a real 
 
 ## Status
 
-Pre-implementation. Architecture and documentation foundation complete; the first build step is a pure-Kotlin **imposition engine** spike. See the [roadmap](docs/ROADMAP.md).
+In development — pure-Kotlin core, no app UI yet. **S1** (imposition engine) shipped as `v0.1.0-imposition-engine`: `core:model` + `core:imposition`. **S2A** (the pure-Kotlin data core: document schema, serializer, migration, validation, repository + asset/`.zine` manifest contracts) is implemented in `core:data`. Next: **S2B** (Android-backed Room + file persistence + asset store) and **S3** (render). See the [roadmap](docs/ROADMAP.md).
 
 ---
 
@@ -51,7 +51,8 @@ Start here, then follow links. Each document is the **single source of truth** f
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phased plan: MVP → V1 → V2 → Future |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture Decision Records (ADRs) |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Cited evidence base (verified / recommendation / assumption / future) |
-| [docs/spikes/imposition-engine.md](docs/spikes/imposition-engine.md) | First spike: the imposition engine design |
+| [docs/spikes/imposition-engine.md](docs/spikes/imposition-engine.md) | First spike: the imposition engine design (S1) |
+| [docs/spikes/data-storage-layer.md](docs/spikes/data-storage-layer.md) | Data & storage layer design + S2A implementation status (S2) |
 
 ## Tech stack
 
@@ -59,7 +60,10 @@ Kotlin · Jetpack Compose · Material 3 · Hilt (KSP) · Room · kotlinx.seriali
 
 ## Building
 
-> No application code yet. Build instructions land with the first module.
+> No app (UI) module yet — the `app` shell is a placeholder. The pure-Kotlin core libraries
+> (`core:model`, `core:imposition`, `core:data`) build and test on the JVM with `jvmToolchain(21)`:
+> run `./gradlew :core:model:test :core:imposition:test :core:data:test`. Android-backed modules and
+> full app build instructions land with S2B.
 
 ## Privacy
 

@@ -191,7 +191,7 @@ stateDiagram-v2
 
 | # | Question | Owner | Blocks |
 |---|---|---|---|
-| Q1 | minSdk 26 vs 24? | user | build setup |
+| Q1 | minSdk 26 vs 24? — the `app` scaffold currently sets **`minSdk = 24`** ([app/build.gradle.kts](../app/build.gradle.kts)); awaiting the user's explicit ratification (and an ADR if 24 is confirmed, since it affects API availability) | user | build setup |
 | Q2 | Physical printer available for fold validation? (else rely on SVG proof sheet — [ADR-007](DECISIONS.md#adr-007)) | user | imposition validation |
 | Q3 | Bundled font set (which OFL families)? | user/design | typography |
 | Q4 | Brand/visual identity direction | user/design | UI theme |
