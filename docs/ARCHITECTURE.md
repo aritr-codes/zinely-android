@@ -350,7 +350,7 @@ flowchart BT
     model["core:model<br/>✅ v0.1.0"]
     imp["core:imposition<br/>✅ v0.1.0"]
     data["core:data<br/>S2A ✅ · S2B ⬜"]
-    render["core:render<br/>S3 · next"]
+    render["core:render<br/>S3 · parallel"]
     editor["feature:editor (MVI)<br/>S4"]
     export["export<br/>S5"]
     app["app shell / navigation"]
@@ -371,7 +371,7 @@ flowchart BT
     classDef done fill:#dff5dd,stroke:#3a7;
     classDef next fill:#fff4d6,stroke:#e0a800;
     class model,imp done;
-    class render next;
+    class data next;
 ```
 
 *Arrow `A → B` = "A depends on B." `core:model` is the universal sink (pure, depends on nothing); the `app` shell is the source.*
@@ -382,8 +382,9 @@ flowchart BT
 |---|---|---|---|---|
 | S1 | `core:imposition` | `core:model` | ✅ shipped (v0.1.0) | — |
 | S2A | `core:data` (pure core) | `core:model` | ✅ implemented — schema, serializer+migration, validation, repo/asset contracts ([spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19)) | S3 (no shared dep) |
-| S2B | `core:data` (Android) | `core:model` | ⬜ Room + atomic-write file source + autosave + asset store + WorkManager GC | S3 (no shared dep) |
-| **S3** | **`core:render`** | `core:model` | ⬜ **recommended next** | S2 finalization |
+| **S2B-core** | **`core:data-storage`** (pure JVM) | `core:data`, S2A | ⬜ **current build step** — atomic file source + autosave coordinator + content-addressed asset store + mark-and-sweep GC (java.nio; CI-tested now) ([ADR-025](DECISIONS.md#adr-025)) | S3 (no shared dep) |
+| S2B-android | `data-android` (Android library) | `core:data-storage` | ⬜ Room + WorkManager GC scheduler + Bitmap/EXIF import master + SAF `.zine`; needs Android-SDK CI ([ADR-025](DECISIONS.md#adr-025)) | S3 |
+| S3 | `core:render` | `core:model` | ⬜ parallel track (critical-path for S4/S5) | S2B (no shared dep) |
 | S4 | `feature:editor` | `core:model`, `core:data`, `core:render` | ⬜ | — (needs S2 **and** S3) |
 | S5 | `export` | `core:model`, `core:imposition`, `core:render`, `core:data` | ⬜ | — |
 | — | `app` shell / nav | features | ⬜ | — |
@@ -416,13 +417,13 @@ flowchart LR
 
 `core:render` depends only on `core:model` (not on `core:imposition`); **imposition is composed at export** ([ADR-006](DECISIONS.md#adr-006)). The gating node for all remaining work is therefore **`core:render`**: both the editor (S4) and export (S5) depend on it, so the critical path runs **`core:render` → {editor, export} → MVP**. `core:data` (S2) is a **parallel feeder** into the editor and export and shares no dependency with `core:render`, so persistence work and render work proceed concurrently.
 
-### 15.5 Which subsystem follows S2 — recommendation
+### 15.5 Which subsystem follows S2A — sequencing
 
-**Build `core:render` (S3) next.** Justification:
+**Build S2B (Android-backed `core:data`) next**, with `core:render` (S3) as a parallel track. Rationale:
 
-1. **Critical-path node.** Render is the *only* prerequisite shared by **both** the editor (S4) and export (S5). Nothing downstream of S2 can ship without it: the editor has no canvas without a renderer, and export is *defined* as the second backend of the shared renderer ([ADR-006](DECISIONS.md#adr-006)). It maximises unblocking.
-2. **Already unblocked.** Render depends only on `core:model` — the scene/document types (including the additions S2 makes to `core:model`), **not** the persistence *mechanism* (`core:data`) and **not** `core:imposition` (which is composed at export, [ADR-006](DECISIONS.md#adr-006)). So it can start immediately and **overlap** with closing the held S2 ADRs (021/022/023).
-3. **Next-highest correctness risk** ([§12](#12-major-technical-risks)). After imposition, render fidelity (text layout, image transforms, preview↔export parity) is the biggest unproven risk — building it next honours the project's "prove the riskiest, most isolatable thing first" principle.
-4. **Editor cannot precede it.** S4 strictly depends on S3; sequencing the editor before render is infeasible.
+1. **S2B completes the persistence vertical.** S2A landed the pure-Kotlin data core (schema, serializer+migration, validation, repository/`DataResult` + asset/`.zine` contracts). S2B implements the Android-backed data sources those contracts declare — Room metadata, atomic-write document file source, autosave coordinator, `AssetStore` impl, WorkManager mark-and-sweep GC — so the editor (S4) and export (S5) have a working store. Its design decisions are **Accepted, not held**: durable autosave ([ADR-021](DECISIONS.md#adr-021)), asset ownership/GC ([ADR-022](DECISIONS.md#adr-022)), import-master fidelity ([ADR-023](DECISIONS.md#adr-023)); the S2 decision gate is closed — no ADR blocks implementation.
+2. **`core:render` (S3) stays a parallel feeder.** Render depends only on `core:model`, shares **no** dependency with `core:data` (§15.4), and remains the critical-path node gating **both** editor and export — so it can proceed concurrently. We sequence S2B first because its ADRs are settled and ready to implement and it unblocks the editor's store; render proceeds alongside as capacity allows.
+3. **Render is still the next-highest correctness risk** ([§12](#12-major-technical-risks)) — text layout, image transforms, preview↔export parity. It is *parallel*, not deprioritised; it must land before the editor (S4) can begin.
+4. **Editor cannot precede either.** S4 strictly depends on **both** S2 (persistence) and S3 (render); sequencing the editor before them is infeasible.
 
-> **Sequencing rule:** finalize the held S2 ADRs (durable autosave, asset ownership, fidelity cap) *and* begin `core:render` design in parallel — they do not block each other. The editor (S4) starts only once **both** S2 and S3 land.
+> **Sequencing rule:** build S2B (Android persistence) now and progress `core:render` (S3) in parallel — they share no dependency and do not block each other. The editor (S4) starts only once **both** S2 and S3 land. **Mandatory before enabling the GC sweep:** the five ADR-022 race-closure tests in [spike §9.1](spikes/data-storage-layer.md#91-mandatory-s2b-tests--asset-gc-race-closure-adr-022).

@@ -318,15 +318,26 @@ Also intersecting S2: [ADR-015](../DECISIONS.md#adr-015) (validation result) and
 - **`.zine` round-trip:** export→import equality; reject tampered manifest/hash; **byte-level integrity** — each blob's bytes hash to its `AssetEntry.hash` and match `byteCount` (the check the pure `ZinePackageManifestValidator` defers to restore).
 - **Property tests (jqwik):** arbitrary documents survive serialize→deserialize→serialize unchanged; migrators are idempotent at the target version.
 
-### 9.1 Mandatory S2B tests — asset GC race closure ([ADR-022](../DECISIONS.md#adr-022))
+### 9.1 Mandatory S2B tests — asset GC race closure ([ADR-022](../DECISIONS.md#adr-022) + its 2026-06-20 amendment)
 
-These guard the import↔sweep race the `AssetStore` KDoc names; S2B must ship all five before the GC sweep is enabled:
+These guard the import↔sweep race the `AssetStore` KDoc names; all live in pure-JVM `:core:data-storage` ([ADR-025](../DECISIONS.md#adr-025)) and run on `java.nio` temp dirs. **The race-closure anchor is explicit pins + a generation counter, NOT mtime** (the [ADR-022 amendment](../DECISIONS.md#adr-022) demoted mtime to a secondary guard after Codex flagged coarse-granularity / tick-collapse / process-death holes). S2B must ship **all** of these green before the GC sweep is enabled:
 
-1. **In-flight import root registration** — a hash registered as in-flight is treated as live by a sweep that runs mid-import, even with no document reference yet.
-2. **mtime refresh before doc-ref commit** — `store()` touches the blob's mtime *before* returning, so a reused old blob (older than the grace window) is no longer GC-eligible once an import targets it.
-3. **Store mutex shared by writes and unlink** — a write and the sweep's unlink cannot interleave; the sweep blocks while a write to the same hash is in flight (and vice-versa).
-4. **Unlink-time mtime re-check** — the sweep re-reads mtime under the mutex immediately before `unlink`, and aborts the delete if the blob was revived since the sweep snapshot.
-5. **Room index never authorises deletion of live bytes** — a corrupt/stale `asset` index row does **not** cause deletion of a blob still referenced by any document/undo/in-flight root; liveness is decided by the document-derived set, not the index (disk-vs-documents wins).
+**Primary closure (pins + generation + document roots):**
+
+1. **In-flight import pin treated as live** — a hash with a pin file (`assets/.pins/<sha256>`) is live to a sweep that runs mid-import, even with no document reference yet; the pin is created *before* bytes are written and removed only *after* the document reference durably commits.
+2. **Pin survives process death** — a pin written, then process restart simulated (drop in-memory state, reopen store), is still honoured by the next sweep until it commits or its TTL lapses — proving the registry is persistent, not in-memory.
+3. **Generation counter aborts a revived unlink** — the sweep snapshots a per-hash generation at mark time; a concurrent `store()`/pin bumps it; the sweep, finding the generation advanced at unlink time, **aborts the delete** — independent of clock resolution.
+4. **Store mutex shared by writes and unlink** — a write and the sweep's unlink cannot interleave; the sweep blocks while a write to the same hash is in flight (and vice-versa).
+5. **Index never authorises deletion of live bytes** — a corrupt/stale `asset` index row does **not** cause deletion of a blob still referenced by any document/undo/pin root; liveness is decided by the document-derived set + pins, not the index (disk-vs-documents wins).
+
+**Secondary guard + robustness (per the Codex amendment review):**
+
+6. **mtime grace window is belt-and-suspenders only** — a freshly stored blob younger than the grace window is never swept even if (hypothetically) unpinned; assert the sweep treats mtime as a *conservative extra* guard and never as the sole liveness signal.
+7. **Coarse mtime resolution does not break closure** — simulate whole-second (or collapsed-tick) mtime granularity where touch+sweep land in one tick; closure must still hold because it rests on pins/generation, not mtime ordering.
+8. **Sweep after process death** — store + pin, simulate death, restart, run sweep: pinned/rooted bytes survive; only genuinely orphaned, unpinned, past-grace bytes are reclaimed.
+9. **Same-hash concurrent store + sweep** — interleave a `store()` of hash H with a sweep targeting H; the blob is never left half-written and never wrongly deleted (temp→rename write + mutex).
+
+> **Multi-process is a non-goal (MVP):** the store mutex is process-local; the app is single-process. Pins/generation are the cross-*restart* guard. A test asserts the documented single-process assumption (e.g. the lock strategy is process-local) so the boundary is explicit, not silent.
 
 ---
 
