@@ -40,6 +40,10 @@ android {
 }
 
 dependencies {
+    // S2B Android adapters (ADR-026 / ADR-025): the app consumes the data layer through this module.
+    // Completes the intended one-way graph :app -> :data-android -> :core:* (core never depends back).
+    implementation(project(":data-android"))
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

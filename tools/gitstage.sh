@@ -26,6 +26,8 @@ case "${1:-}" in
   # :data-android module skeleton (ADR-026 PR-A, Build Order Step 1)
   s2b-android)   git add settings.gradle.kts gradle/libs.versions.toml build.gradle.kts \
                          data-android/build.gradle.kts data-android/src tools/gitstage.sh ;;
+  # :app -> :data-android edge, completing the intended graph (ADR-026 PR-A, Checkpoint #1 fixup)
+  s2b-app-wire)  git add app/build.gradle.kts tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s
