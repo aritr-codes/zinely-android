@@ -61,6 +61,9 @@ dependencies {
     // Unit tests (plain JVM): drive the fail-closed durability contract through the DirFsync seam,
     // so no device/emulator is needed for the logic. android.system.Os is never touched here.
     testImplementation(libs.junit)
+    // The DocumentRepository contract is `suspend`; runTest drives it from JUnit4 without runBlocking
+    // (android-tdd). Production code stays coroutine-free — `suspend` compiles on the stdlib alone.
+    testImplementation(libs.kotlinx.coroutines.test)
 
     // Instrumented tests (real device/emulator): exercise the real android.system.Os directory
     // fsync + atomic rename on app-private storage. Cannot run in the current no-emulator CI.
