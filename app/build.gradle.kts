@@ -31,6 +31,9 @@ android {
         }
     }
     compileOptions {
+        // java.nio.file (used by the durability core, ADR-025) is API 26; minSdk is 24 (ADR-024).
+        // Core library desugaring backports it rather than raising minSdk — ADR-024's pre-blessed path.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -43,6 +46,9 @@ dependencies {
     // S2B Android adapters (ADR-026 / ADR-025): the app consumes the data layer through this module.
     // Completes the intended one-way graph :app -> :data-android -> :core:* (core never depends back).
     implementation(project(":data-android"))
+
+    // Backport java.nio.file (durability core) to minSdk 24 (ADR-024 / ADR-025).
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs.nio)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

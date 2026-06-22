@@ -31,6 +31,10 @@ android {
     // Match :app's Java level so the Android tier links consistently (the core modules build at
     // their own jvmToolchain; this module only consumes their published classes).
     compileOptions {
+        // This module (and the :core:data-storage durability core it adapts) use java.nio.file,
+        // which is API 26; minSdk is 24 (ADR-024). Core library desugaring backports it instead of
+        // raising minSdk — ADR-024's pre-blessed resolution.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -50,6 +54,9 @@ dependencies {
     implementation(project(":core:data"))          // DocumentRepository + DataResult/DataError contracts
     implementation(project(":core:data-storage"))  // AtomicFileStore, FileSystemOps seam, AutosaveCoordinator
     implementation(project(":core:model"))          // ZineDocument schema
+
+    // Backport java.nio.file (this module + the durability core) to minSdk 24 (ADR-024 / ADR-025).
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs.nio)
 
     // Unit tests (plain JVM): drive the fail-closed durability contract through the DirFsync seam,
     // so no device/emulator is needed for the logic. android.system.Os is never touched here.

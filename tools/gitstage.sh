@@ -31,6 +31,9 @@ case "${1:-}" in
   # AndroidFileSystemOps: real Os.fsync dir flush, fail-closed (ADR-026 PR-A, Build Order Step 2)
   s2b-fsops)     git add gradle/libs.versions.toml data-android/build.gradle.kts \
                          data-android/src tools/gitstage.sh ;;
+  # Core library desugaring (nio) so java.nio.file durability core runs on minSdk 24 (ADR-024 amend)
+  s2b-desugar)   git add gradle/libs.versions.toml app/build.gradle.kts \
+                         data-android/build.gradle.kts docs/DECISIONS.md tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s
