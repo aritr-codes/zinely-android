@@ -23,6 +23,9 @@ android {
 
     defaultConfig {
         minSdk = 24
+        // Real-device durability checks (Os.fsync, atomic rename) run as instrumented tests; the
+        // pure fail-closed logic is covered by JVM unit tests via the DirFsync seam.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     // Match :app's Java level so the Android tier links consistently (the core modules build at
@@ -48,5 +51,12 @@ dependencies {
     implementation(project(":core:data-storage"))  // AtomicFileStore, FileSystemOps seam, AutosaveCoordinator
     implementation(project(":core:model"))          // ZineDocument schema
 
+    // Unit tests (plain JVM): drive the fail-closed durability contract through the DirFsync seam,
+    // so no device/emulator is needed for the logic. android.system.Os is never touched here.
     testImplementation(libs.junit)
+
+    // Instrumented tests (real device/emulator): exercise the real android.system.Os directory
+    // fsync + atomic rename on app-private storage. Cannot run in the current no-emulator CI.
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }

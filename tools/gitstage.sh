@@ -28,6 +28,9 @@ case "${1:-}" in
                          data-android/build.gradle.kts data-android/src tools/gitstage.sh ;;
   # :app -> :data-android edge, completing the intended graph (ADR-026 PR-A, Checkpoint #1 fixup)
   s2b-app-wire)  git add app/build.gradle.kts tools/gitstage.sh ;;
+  # AndroidFileSystemOps: real Os.fsync dir flush, fail-closed (ADR-026 PR-A, Build Order Step 2)
+  s2b-fsops)     git add gradle/libs.versions.toml data-android/build.gradle.kts \
+                         data-android/src tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s
