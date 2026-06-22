@@ -1,15 +1,38 @@
 package com.aritr.zinely.core.data.storage
 
-import org.junit.jupiter.api.Disabled
+import com.aritr.zinely.core.data.repository.DataError
+import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.model.Page
+import com.aritr.zinely.core.model.PageRole
+import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.core.model.ZineDocument
+import com.aritr.zinely.core.model.ZineFormat
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.io.IOException
 
 /**
- * FROZEN design + test contract for the autosave coordinator (ADR-021), written before the
- * implementation as a disabled test list (the TDD "write the test names first" step). The next S2B
- * slice turns each test green one at a time (RED -> GREEN). Reviewed by Codex (GO WITH FIXES, all
- * fixes adopted); this file is the authoritative contract so a future session needs no chat history.
+ * Behavioural contract for the autosave coordinator (ADR-021), driven TDD against the frozen design
+ * (Codex: DESIGN APPROVED — BEGIN IMPLEMENTATION). The API below is authoritative so a future
+ * session needs no chat history; do not change it without a fresh review.
  *
- * ## Frozen API (`:core:data-storage`, pure JVM — ADR-025)
+ * ## API (`:core:data-storage`, pure JVM — ADR-025)
  * ```
  * public fun interface DocumentSaver {            // composes over DocumentRepository.save (NOT AtomicFileStore)
  *     public suspend fun save(document: ZineDocument): DataResult<Unit>
@@ -34,87 +57,331 @@ import org.junit.jupiter.api.Test
  *     public fun cancel()                           // dispose internal timers/jobs
  * }
  * ```
- * Production wiring binds the saver to the repository: `DocumentSaver { doc -> repository.save(projectId, doc) }`
- * — so serialization, validation, and DataError mapping are reused, not re-implemented (DocumentRepository KDoc).
+ * Production wiring binds the saver to the repository: `DocumentSaver { doc -> repository.save(projectId, doc) }`.
  *
  * ## Invariants (ADR-021 / ADR-009)
  * - One save at a time per coordinator (single writer); saves never interleave.
  * - Latest snapshot wins; snapshot is pulled at save start, not at markDirty().
  * - Dirty clears ONLY after a successful save of the latest known dirty state.
  * - flushNow() success ⇒ no known dirty edit remains unsaved at return time.
- * - Background failures are observable via [failures]; failures keep the coordinator dirty/retryable.
+ * - Background failures are observable via [AutosaveCoordinator.failures]; failures keep it dirty/retryable.
  * - CancellationException (external scope cancellation) propagates; it is never mapped to DataError.
  * - Android lifecycle ownership lives in the caller (`:data-android` / S4), not here.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class AutosaveCoordinatorTest {
 
     // --- Debounce + max-latency cap (ADR-021 cadence) ---
 
     @Test
-    @Disabled("autosave impl slice — debounce 1s coalescing (ADR-021)")
-    fun `debounce coalesces a burst of edits into a single save`() = Unit
+    fun `debounce coalesces a burst of edits into a single save`() = runTest {
+        val saver = RecordingSaver()
+        val coordinator = coordinator(saver, { doc(1) })
+
+        coordinator.markDirty(); runCurrent()
+        advanceTimeBy(300L); coordinator.markDirty(); runCurrent()
+        advanceTimeBy(300L); coordinator.markDirty(); runCurrent()
+
+        advanceTimeBy(300L); runCurrent() // 300ms since the last edit, still inside the 1s debounce
+        assertEquals(0, saver.callCount)
+
+        advanceUntilIdle() // debounce elapses
+        assertEquals(1, saver.callCount)
+    }
 
     @Test
-    @Disabled("autosave impl slice — 5s cap from the FIRST unsaved edit, not the latest (ADR-021)")
-    fun `max-latency cap fires 5s from the first unsaved edit during a long continuous edit`() = Unit
+    fun `max-latency cap fires 5s from the first unsaved edit during a long continuous edit`() = runTest {
+        val saver = RecordingSaver()
+        val coordinator = coordinator(saver, { doc(1) })
+
+        coordinator.markDirty(); runCurrent() // first edit at t=0; cap window t0..t5000
+        repeat(4) { advanceTimeBy(800L); coordinator.markDirty(); runCurrent() } // edits at 800..3200
+        assertEquals(0, saver.callCount) // t=3200 < cap; debounce keeps resetting → no save yet
+
+        repeat(2) { advanceTimeBy(800L); coordinator.markDirty(); runCurrent() } // edits at 4000, 4800
+        advanceTimeBy(400L); runCurrent() // advance to t=5200, past the 5s cap
+        assertEquals(1, saver.callCount) // cap fired at t=5000 even though edits never quiesced
+        assertEquals(doc(1), saver.saved.single())
+    }
 
     @Test
-    @Disabled("autosave impl slice — latest-wins cancellation (ADR-021)")
-    fun `a superseded debounce is cancelled and the latest snapshot wins`() = Unit
+    fun `a superseded debounce is cancelled and the latest snapshot wins`() = runTest {
+        var current = doc(1)
+        val saver = RecordingSaver()
+        val coordinator = coordinator(saver, { current })
+
+        coordinator.markDirty(); runCurrent()
+        advanceTimeBy(500L); runCurrent()
+        current = doc(2)
+        coordinator.markDirty(); runCurrent()
+
+        advanceUntilIdle()
+        assertEquals(1, saver.callCount)
+        assertEquals(doc(2), saver.saved.single())
+    }
 
     // --- Snapshot timing + immutability (pull-at-save) ---
 
     @Test
-    @Disabled("autosave impl slice — snapshot pulled at save time, not at markDirty (ADR-021)")
-    fun `the snapshot provider is called at save time, not at markDirty`() = Unit
+    fun `the snapshot provider is called at save time, not at markDirty`() = runTest {
+        var snapshotCalls = 0
+        val provider = DocumentSnapshotProvider { snapshotCalls++; doc(1) }
+        val saver = RecordingSaver()
+        val coordinator = coordinator(saver, provider)
+
+        coordinator.markDirty(); runCurrent()
+        assertEquals(0, snapshotCalls)
+
+        advanceUntilIdle()
+        assertEquals(1, snapshotCalls)
+        assertEquals(1, saver.callCount)
+    }
 
     @Test
-    @Disabled("autosave impl slice — saved snapshot is immutable vs later edits (ADR-021)")
-    fun `the saved snapshot is immutable relative to later editor mutations`() = Unit
+    fun `the saved snapshot is immutable relative to later editor mutations`() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        val saved = mutableListOf<ZineDocument>()
+        var current = doc(1)
+        val saver = DocumentSaver { d -> saved += d; gate.await(); DataResult.Success(Unit) }
+        val coordinator = coordinator(saver, { current })
+
+        coordinator.markDirty()
+        advanceUntilIdle() // save starts, captures doc(1), then awaits the gate
+        current = doc(2) // editor mutates AFTER the snapshot was pulled
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(listOf(doc(1)), saved)
+    }
 
     // --- Single writer ---
 
     @Test
-    @Disabled("autosave impl slice — single-writer serialization (ADR-021)")
-    fun `saves never interleave for one coordinator`() = Unit
+    fun `saves never interleave for one coordinator`() = runTest {
+        val release = Channel<Unit>(Channel.UNLIMITED)
+        var inFlight = 0
+        var maxConcurrent = 0
+        var current = doc(1)
+        val saver = DocumentSaver { _ ->
+            inFlight++
+            if (inFlight > maxConcurrent) maxConcurrent = inFlight
+            release.receive()
+            inFlight--
+            DataResult.Success(Unit)
+        }
+        val coordinator = coordinator(saver, { current })
+
+        coordinator.markDirty()
+        advanceUntilIdle() // save #1 starts and holds the write lock awaiting release
+        assertEquals(1, inFlight)
+
+        current = doc(2)
+        coordinator.markDirty()
+        advanceUntilIdle() // save #2 cannot start while #1 holds the writer
+        assertEquals(1, inFlight)
+
+        release.send(Unit); advanceUntilIdle() // #1 completes; #2 (debounced) then runs
+        release.send(Unit); advanceUntilIdle() // #2 completes
+        assertEquals(1, maxConcurrent)
+    }
 
     // --- flushNow semantics (ON_STOP / editor exit) ---
 
     @Test
-    @Disabled("autosave impl slice — no-op flush when clean (ADR-021)")
-    fun `flushNow with no pending dirty state returns success without saving`() = Unit
+    fun `flushNow with no pending dirty state returns success without saving`() = runTest {
+        val saver = RecordingSaver()
+        val coordinator = coordinator(saver, { doc(1) })
+
+        val result = coordinator.flushNow()
+
+        assertTrue(result is DataResult.Success)
+        assertEquals(0, saver.callCount)
+    }
 
     @Test
-    @Disabled("autosave impl slice — flushNow cancels pending timers and saves now (ADR-021)")
-    fun `flushNow cancels pending debounce and cap timers and saves immediately`() = Unit
+    fun `flushNow cancels pending debounce and cap timers and saves immediately`() = runTest {
+        val saver = RecordingSaver()
+        val coordinator = coordinator(saver, { doc(1) })
+
+        coordinator.markDirty(); runCurrent()
+        assertEquals(0, saver.callCount) // debounce pending, not yet saved
+
+        val result = coordinator.flushNow()
+        assertTrue(result is DataResult.Success)
+        assertEquals(1, saver.callCount) // saved immediately, without waiting for the 1s debounce
+
+        advanceUntilIdle()
+        assertEquals(1, saver.callCount) // the superseded pending timer no-ops
+    }
 
     @Test
-    @Disabled("autosave impl slice — flushNow awaits the in-flight save (ADR-021)")
-    fun `flushNow waits for an in-flight save to complete`() = Unit
+    fun `flushNow waits for an in-flight save to complete`() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        var calls = 0
+        val saver = DocumentSaver { _ -> calls++; gate.await(); DataResult.Success(Unit) }
+        val coordinator = coordinator(saver, { doc(1) })
+
+        coordinator.markDirty()
+        advanceUntilIdle() // background save in flight, holds the writer
+        assertEquals(1, calls)
+
+        val flush = async { coordinator.flushNow() }
+        runCurrent()
+        assertFalse(flush.isCompleted) // blocked on the in-flight writer
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+        assertTrue(flush.isCompleted)
+        assertTrue(flush.await() is DataResult.Success)
+    }
 
     @Test
-    @Disabled("autosave impl slice — flushNow re-saves edits arriving during the in-flight save (ADR-021)")
-    fun `flushNow performs a second save when dirtied while awaiting the in-flight save`() = Unit
+    fun `flushNow performs a second save when dirtied while awaiting the in-flight save`() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        var current = doc(1)
+        val saved = mutableListOf<ZineDocument>()
+        val saver = DocumentSaver { d ->
+            saved += d
+            if (saved.size == 1) gate.await() // hold only the first (in-flight) save
+            DataResult.Success(Unit)
+        }
+        val coordinator = coordinator(saver, { current })
+
+        coordinator.markDirty()
+        advanceUntilIdle() // save #1 (doc1) in flight, awaiting the gate
+        val flush = async { coordinator.flushNow() }
+        runCurrent()
+        current = doc(2)
+        coordinator.markDirty() // dirtied while flushNow awaits the in-flight save
+        runCurrent()
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+        assertTrue(flush.await() is DataResult.Success)
+        assertEquals(listOf(doc(1), doc(2)), saved) // second save persists the latest snapshot
+    }
 
     @Test
-    @Disabled("autosave impl slice — concurrent flushNow coalesces (ADR-021)")
-    fun `concurrent flushNow calls serialize and observe a consistent result`() = Unit
+    fun `concurrent flushNow calls serialize and observe a consistent result`() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        var calls = 0
+        val saver = DocumentSaver { _ -> calls++; gate.await(); DataResult.Success(Unit) }
+        val coordinator = coordinator(saver, { doc(1) })
+
+        coordinator.markDirty()
+        val f1 = async { coordinator.flushNow() }
+        val f2 = async { coordinator.flushNow() }
+        advanceUntilIdle() // one save in flight, the other queued on the writer
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+        assertTrue(f1.await() is DataResult.Success)
+        assertTrue(f2.await() is DataResult.Success)
+        assertEquals(1, calls) // the single dirty state is saved exactly once
+    }
 
     // --- Failure + dirty-state + cancellation semantics ---
 
     @Test
-    @Disabled("autosave impl slice — typed error, never a raw exception (DataResult)")
-    fun `a save failure surfaces a DataError, never a raw platform exception`() = Unit
+    fun `a save failure surfaces a DataError, never a raw platform exception`() = runTest {
+        val saver = DocumentSaver { _ -> throw IOException("disk full") }
+        val coordinator = coordinator(saver, { doc(1) })
+
+        coordinator.markDirty()
+        val result = coordinator.flushNow() // must not propagate the IOException
+
+        assertTrue(result is DataResult.Failure)
+    }
 
     @Test
-    @Disabled("autosave impl slice — failure keeps dirty/retryable (ADR-021 / ADR-009)")
-    fun `a save failure leaves the coordinator dirty and retryable`() = Unit
+    fun `a save failure leaves the coordinator dirty and retryable`() = runTest {
+        var calls = 0
+        var failNext = true
+        val saver = DocumentSaver { _ ->
+            calls++
+            if (failNext) DataResult.Failure(DataError.Io("transient")) else DataResult.Success(Unit)
+        }
+        val coordinator = coordinator(saver, { doc(1) })
+
+        coordinator.markDirty()
+        assertTrue(coordinator.flushNow() is DataResult.Failure)
+
+        failNext = false
+        assertTrue(coordinator.flushNow() is DataResult.Success)
+        assertEquals(2, calls) // retried because the failed edit stayed dirty
+    }
 
     @Test
-    @Disabled("autosave impl slice — background failure observable via failures flow (ADR-009)")
-    fun `a debounced background save failure is observable on the failures flow`() = Unit
+    fun `a debounced background save failure is observable on the failures flow`() = runTest {
+        val errors = mutableListOf<DataError>()
+        val saver = DocumentSaver { _ -> DataResult.Failure(DataError.Io("boom")) }
+        val coordinator = coordinator(saver, { doc(1) })
+        // Collect on a foreground job so advanceUntilIdle drives delivery (backgroundScope is not advanced).
+        val collector = launch { coordinator.failures.collect { errors += it } }
+        runCurrent() // subscribe the collector before the emit
+
+        coordinator.markDirty()
+        advanceUntilIdle() // debounce fires → background save fails → emits
+
+        assertEquals(listOf<DataError>(DataError.Io("boom")), errors)
+        collector.cancel()
+    }
 
     @Test
-    @Disabled("autosave impl slice — cancellation is not an error (structured concurrency)")
-    fun `external scope cancellation is not converted into a DataError`() = Unit
+    fun `external scope cancellation is not converted into a DataError`() = runTest {
+        val extScope = CoroutineScope(StandardTestDispatcher(testScheduler) + Job())
+        val errors = mutableListOf<DataError>()
+        val gate = CompletableDeferred<Unit>()
+        val saver = DocumentSaver { _ -> gate.await(); DataResult.Success(Unit) }
+        val coordinator =
+            AutosaveCoordinator(saver, { doc(1) }, extScope, StandardTestDispatcher(testScheduler))
+        // Foreground collector so a stray emission would actually be observed (advanceUntilIdle drives it).
+        val collector = launch { coordinator.failures.collect { errors += it } }
+        runCurrent()
+
+        coordinator.markDirty()
+        advanceUntilIdle() // background save in flight, awaiting the gate
+        extScope.cancel() // external cancellation mid-save
+        advanceUntilIdle()
+
+        assertTrue(errors.isEmpty()) // CancellationException is not mapped to a DataError
+        collector.cancel()
+    }
+}
+
+// --- Test fixtures -------------------------------------------------------------------------------
+
+/** Distinct, immutable documents keyed by [marker] (data-class equality distinguishes them). */
+private fun doc(marker: Int): ZineDocument =
+    ZineDocument(
+        format = ZineFormat.SINGLE_SHEET_8,
+        paperSize = PaperSize.LETTER,
+        pages = listOf(Page(index = marker, role = PageRole.INTERIOR)),
+    )
+
+/**
+ * A coordinator on the test's virtual clock. It runs on an independent foreground scope (a
+ * [StandardTestDispatcher] with its own [Job], not [TestScope.backgroundScope]) so `advanceUntilIdle`
+ * drives its debounce/cap timers — background-scope delays are *not* advanced by `advanceUntilIdle`.
+ * The scope has no parent in the test's job tree, so the runner neither waits on it nor flags a leak.
+ */
+private fun TestScope.coordinator(
+    saver: DocumentSaver,
+    snapshot: DocumentSnapshotProvider,
+    config: AutosaveConfig = AutosaveConfig(),
+): AutosaveCoordinator {
+    val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + Job())
+    return AutosaveCoordinator(saver, snapshot, scope, StandardTestDispatcher(testScheduler), config)
+}
+
+/** Records every saved document; returns success unless a [behavior] override is supplied. */
+private class RecordingSaver(
+    private val behavior: suspend (ZineDocument) -> DataResult<Unit> = { DataResult.Success(Unit) },
+) : DocumentSaver {
+    val saved = mutableListOf<ZineDocument>()
+    val callCount: Int get() = saved.size
+    override suspend fun save(document: ZineDocument): DataResult<Unit> {
+        saved += document
+        return behavior(document)
+    }
 }
