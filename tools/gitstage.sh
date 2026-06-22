@@ -23,6 +23,9 @@ case "${1:-}" in
   s2b-wiring)    git add settings.gradle.kts .github/workflows/ci.yml \
                          core/data-storage/build.gradle.kts tools/gitstage.sh ;;
   s2b-storage)   git add core/data-storage/src ;;
+  # :data-android module skeleton (ADR-026 PR-A, Build Order Step 1)
+  s2b-android)   git add settings.gradle.kts gradle/libs.versions.toml build.gradle.kts \
+                         data-android/build.gradle.kts data-android/src tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s
