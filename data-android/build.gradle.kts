@@ -55,6 +55,10 @@ dependencies {
     implementation(project(":core:data-storage"))  // AtomicFileStore, FileSystemOps seam, AutosaveCoordinator
     implementation(project(":core:model"))          // ZineDocument schema
 
+    // The in-memory SaveFailureSink (ADR-026) exposes autosave failures as a StateFlow; the editor
+    // collects it for a "couldn't save" cue. coroutines-core is the only production runtime dep here.
+    implementation(libs.kotlinx.coroutines.core)
+
     // Backport java.nio.file (this module + the durability core) to minSdk 24 (ADR-024 / ADR-025).
     coreLibraryDesugaring(libs.android.desugar.jdk.libs.nio)
 
