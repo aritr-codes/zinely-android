@@ -158,8 +158,10 @@ public class AutosaveCoordinator(
                 saver.save(snapshotProvider.snapshot()) // snapshot pulled at save start (latest wins)
             } catch (cancellation: CancellationException) {
                 throw cancellation // structured cancellation is never an autosave failure
-            } catch (t: Throwable) {
-                DataResult.Failure(DataError.Unknown(t.message ?: "autosave failed", t))
+            } catch (e: Exception) {
+                // catch Exception, not Throwable: never swallow fatal VM/programmer Errors
+                // (OutOfMemoryError, StackOverflowError, AssertionError) into a recoverable DataError
+                DataResult.Failure(DataError.Unknown(e.message ?: "autosave failed", e))
             }
             last = result
             if (result is DataResult.Success) {
