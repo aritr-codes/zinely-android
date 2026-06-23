@@ -59,6 +59,11 @@ dependencies {
     // collects it for a "couldn't save" cue. coroutines-core is the only production runtime dep here.
     implementation(libs.kotlinx.coroutines.core)
 
+    // EditorAutosaveBinder (ADR-026 §1/§3) observes Android lifecycle (ON_PAUSE/ON_STOP) to drive
+    // flush/teardown. Only the pure-JVM lifecycle-common types (Lifecycle, LifecycleEventObserver)
+    // are touched; no LifecycleRegistry/main-thread machinery, so unit tests run on plain JVM.
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+
     // Backport java.nio.file (this module + the durability core) to minSdk 24 (ADR-024 / ADR-025).
     coreLibraryDesugaring(libs.android.desugar.jdk.libs.nio)
 
