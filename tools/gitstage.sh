@@ -34,6 +34,12 @@ case "${1:-}" in
   # Core library desugaring (nio) so java.nio.file durability core runs on minSdk 24 (ADR-024 amend)
   s2b-desugar)   git add gradle/libs.versions.toml app/build.gradle.kts \
                          data-android/build.gradle.kts docs/DECISIONS.md tools/gitstage.sh ;;
+  # Hilt DI graph wiring + Android graph-validation CI (ADR-026 PR-A Step 7 — final PR-A step)
+  s2b-step7)     git add .github/workflows/ci.yml gradle/libs.versions.toml gradle.properties \
+                         app/build.gradle.kts app/src/main/AndroidManifest.xml \
+                         app/src/main/java/com/aritr/zinely/ZinelyApplication.kt \
+                         data-android/build.gradle.kts data-android/src \
+                         docs/spikes/pr-a-step-7-hilt-di.md tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

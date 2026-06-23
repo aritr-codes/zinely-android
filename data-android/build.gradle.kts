@@ -2,6 +2,11 @@ plugins {
     // AGP 9 supplies Kotlin built-in (see :app, which applies no kotlin-android plugin); the
     // `kotlin { }` block below configures that built-in extension.
     alias(libs.plugins.android.library)
+    // PR-A Step 7: Hilt graph + KSP annotation processing for the DI bindings in `di/`. The Hilt
+    // plugin is applied here (not just ksp(hilt-compiler)) so cross-module component aggregation
+    // works with `implementation` deps; `enableAggregatingTask` is set below.
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 // :data-android (ADR-026 / ADR-025) — the Android production adapters that bind the Android-free
@@ -24,8 +29,10 @@ android {
     defaultConfig {
         minSdk = 24
         // Real-device durability checks (Os.fsync, atomic rename) run as instrumented tests; the
-        // pure fail-closed logic is covered by JVM unit tests via the DirFsync seam.
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // pure fail-closed logic is covered by JVM unit tests via the DirFsync seam. The runner is
+        // the Hilt-aware one (PR-A Step 7) so the device-only graph smoke test gets a
+        // HiltTestApplication; the existing non-Hilt instrumented tests run unchanged under it.
+        testInstrumentationRunner = "com.aritr.zinely.data.android.HiltTestRunner"
     }
 
     // Match :app's Java level so the Android tier links consistently (the core modules build at
@@ -48,6 +55,12 @@ kotlin {
     explicitApi()
 }
 
+// PR-A Step 7: aggregate Hilt components across modules even though :app consumes this via
+// `implementation` (not `api`); recommended by the Hilt Gradle setup for multi-module graphs.
+hilt {
+    enableAggregatingTask = true
+}
+
 dependencies {
     // ADR-025 dependency direction: this Android module depends on the pure-Kotlin core; the core
     // never depends back. These are the only edges the adapters in later steps will bind against.
@@ -64,6 +77,11 @@ dependencies {
     // are touched; no LifecycleRegistry/main-thread machinery, so unit tests run on plain JVM.
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
+    // PR-A Step 7: Hilt graph for the autosave stack (modules + qualifiers + EntryPoint in `di/`).
+    // DI/build-time only — no networking/account/cloud dep (privacy invariant intact).
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
     // Backport java.nio.file (this module + the durability core) to minSdk 24 (ADR-024 / ADR-025).
     coreLibraryDesugaring(libs.android.desugar.jdk.libs.nio)
 
@@ -78,4 +96,9 @@ dependencies {
     // fsync + atomic rename on app-private storage. Cannot run in the current no-emulator CI.
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.test.runner)
+
+    // PR-A Step 7 device-only graph smoke test (§13.3, SUPPLEMENTAL — not a CI gate, no emulator
+    // here). Resolves AutosaveGraph from a HiltTestApplication and round-trips one save.
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.compiler)
 }

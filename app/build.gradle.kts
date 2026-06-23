@@ -1,6 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // PR-A Step 7: Hilt root (@HiltAndroidApp lives here); KSP runs the Hilt processor and the
+    // cross-module SingletonComponent aggregation — this is where the whole graph is validated.
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -46,6 +50,11 @@ dependencies {
     // S2B Android adapters (ADR-026 / ADR-025): the app consumes the data layer through this module.
     // Completes the intended one-way graph :app -> :data-android -> :core:* (core never depends back).
     implementation(project(":data-android"))
+
+    // PR-A Step 7: Hilt root. The @HiltAndroidApp Application is here; KSP aggregates and validates
+    // the SingletonComponent graph contributed by :data-android at `:app:compileDebugKotlin`.
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 
     // Backport java.nio.file (durability core) to minSdk 24 (ADR-024 / ADR-025).
     coreLibraryDesugaring(libs.android.desugar.jdk.libs.nio)
