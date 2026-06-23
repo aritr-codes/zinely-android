@@ -260,6 +260,72 @@ class AutosaveCoordinatorFactoryTest {
         }
     }
 
+    // --- Release-completion contract (awaitReleased) ---
+
+    @Test
+    fun `awaitReleased completes after close and frees the id`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val handle = factory.create("proj1") { doc(1) }
+
+        handle.close()
+        handle.awaitReleased() // suspends until project job completes + unregister has run
+
+        factory.create("proj1") { doc(2) } // id is released → no throw
+    }
+
+    @Test
+    fun `awaitReleased completes after cancel and frees the id`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val handle = factory.create("proj1") { doc(1) }
+
+        handle.cancel()
+        handle.awaitReleased()
+
+        factory.create("proj1") { doc(2) } // id is released → no throw
+    }
+
+    @Test
+    fun `awaitReleased completes after parent scope cancellation`() = runTest {
+        val f = Fixture(testScheduler)
+        val handle = f.factory().create("proj1") { doc(1) }
+
+        f.parent.cancel() // @AutosaveScope dies → project job (its child) completes
+
+        handle.awaitReleased() // returns once the project job completes and unregister has run
+    }
+
+    @Test
+    fun `create for the same id fails before release completes`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val handle = factory.create("proj1") { doc(1) }
+
+        handle.cancel() // teardown initiated; release is async (project job not yet complete)
+
+        // No advance/await: the project job's collector child has not been dispatched, so the job
+        // is still cancelling (not completed) → unregister has not run → the id is still active.
+        assertThrows(IllegalStateException::class.java) {
+            factory.create("proj1") { doc(2) }
+        }
+    }
+
+    @Test
+    fun `create for the same id succeeds after awaiting release`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val handle = factory.create("proj1") { doc(1) }
+
+        handle.cancel()
+        handle.awaitReleased() // gate on release completion → unregister guaranteed to have run
+
+        val reborn = factory.create("proj1") { doc(2) } // accepted now
+        reborn.markDirty()
+        advanceUntilIdle()
+        assertEquals(listOf("proj1" to doc(2)), f.repo.saves)
+    }
+
     @Test
     fun `factory construction requires a scope carrying a Job`() {
         val jobless = object : CoroutineScope {

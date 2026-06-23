@@ -6,6 +6,7 @@ import com.aritr.zinely.core.data.storage.AutosaveConfig
 import com.aritr.zinely.core.data.storage.AutosaveCoordinator
 import com.aritr.zinely.core.data.storage.DocumentSaver
 import com.aritr.zinely.core.data.storage.DocumentSnapshotProvider
+import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -88,6 +89,15 @@ public class AutosaveCoordinatorFactory(
 
         /** Per-project lifetime: child of [parentJob], so parent cancellation tears this down too. */
         private val projectJob = SupervisorJob(parentJob)
+
+        /**
+         * Release-completion signal (ADR-026 reopen contract). Parentless on purpose: no scope can
+         * cancel it, only the factory completes it — and only *after* [unregister] has run (see
+         * [attachCleanup]). Callers observe it through [awaitReleased] alone; they hold no handle that
+         * could complete or cancel it, so [awaitReleased] returning is a happens-before for the id
+         * having left the registry.
+         */
+        private val releaseSignal: CompletableJob = Job()
         private val projectScope =
             CoroutineScope(autosaveScope.coroutineContext + projectJob + ioDispatcher)
 
@@ -108,9 +118,16 @@ public class AutosaveCoordinatorFactory(
             }
         }
 
-        /** Wired by the factory after registry insert; unregisters exactly once on job completion. */
+        /**
+         * Wired by the factory after registry insert; on job completion unregisters exactly once and
+         * *then* completes [releaseSignal]. The order is load-bearing: anyone resumed by
+         * [awaitReleased] is guaranteed the id has already left the registry.
+         */
         fun attachCleanup() {
-            projectJob.invokeOnCompletion { unregister(projectId, this) }
+            projectJob.invokeOnCompletion {
+                unregister(projectId, this)
+                releaseSignal.complete()
+            }
         }
 
         override fun markDirty(): Unit = coordinator.markDirty()
@@ -127,6 +144,10 @@ public class AutosaveCoordinatorFactory(
         override fun cancel() {
             coordinator.cancel() // dispose the coordinator's loop (its job is a child of projectJob)
             projectJob.cancel() // tear down the collector + complete the job → invokeOnCompletion
+        }
+
+        override suspend fun awaitReleased() {
+            releaseSignal.join() // resumes only after invokeOnCompletion ran unregister + complete
         }
     }
 }
@@ -153,7 +174,23 @@ public interface ProjectAutosaveHandle {
     /**
      * Hard teardown without flushing. Idempotent. Releases the project id back to the factory
      * **asynchronously** — on project-job completion, after this call returns — so a same-id re-create
-     * issued immediately afterward may still see the id as active.
+     * issued immediately afterward may still see the id as active. Use [awaitReleased] to order a
+     * re-create after the release.
      */
     public fun cancel()
+
+    /**
+     * Suspend until this handle's project id has been released from the factory registry (ADR-026
+     * reopen contract). Returning establishes a happens-before: the registry no longer maps this id
+     * to this handle, so a subsequent [create][AutosaveCoordinatorFactory.create] for the same id will
+     * not be rejected *on account of this handle*. (It may still be rejected if another owner created
+     * the id in the interim, or if the autosave scope has since been cancelled — release frees only
+     * this handle's claim.)
+     *
+     * **Await-only:** the caller cannot complete or cancel the underlying signal — there is no handle
+     * to it but this method. Cancelling the awaiting coroutine cancels only the wait; the signal is
+     * untouched and still completes once teardown finishes. Idempotent and re-entrant: it returns
+     * immediately once released, and never completes while the handle is still live.
+     */
+    public suspend fun awaitReleased()
 }
