@@ -203,7 +203,7 @@ Production Android wiring.
 
 Status:
 
-COMPLETE
+COMPLETE — MERGED TO main
 
 * Step 1 ✅
 * Step 2 ✅
@@ -214,7 +214,8 @@ COMPLETE
 * Step 6 ✅
 * Step 7 ✅
 
-All steps accepted. PR-A is feature-complete. See "PR-A Final State" below.
+All steps accepted. PR-A merged to main via PR #7 (merge commit 39f0f05) on 2026-06-23;
+feature branch feat/s2b-autosave-coordinator deleted. See "PR-A Final State" below.
 
 ---
 
@@ -469,9 +470,14 @@ Status:
 
 Complete
 
-Final commit:
+Final implementation commit:
 
 9595785b98444e02a166f1ea48c5c766f82dc34c
+
+Merged to main:
+
+PR #7 — merge commit 39f0f05e548ad617d7d9cab073f241ad92ad14af (2026-06-23). Both required CI
+checks green at merge (android-graph 2m8s, core-tests 1m2s). Feature branch deleted.
 
 Acceptance summary:
 
@@ -509,10 +515,14 @@ GitHub Actions (.github/workflows/ci.yml) runs two jobs on every push to main an
 android-graph is the configuration in which the Hilt/KSP graph is compiled and validated; a broken
 binding now fails CI.
 
+Branch protection on main (set 2026-06-23): both checks are REQUIRED status checks
+("Android Hilt graph validation (SDK)" + "Pure-Kotlin core tests (JVM)"), strict mode on (branch
+must be up to date before merge). enforce_admins is off.
+
 ## Non-code follow-ups (outside the committed code)
 
-* Push the branch / open the PR.
-* Mark the android-graph CI job a required status check (branch protection — a repo setting, not code).
+* ✅ Branch pushed, PR #7 opened and merged to main.
+* ✅ android-graph + core-tests marked required status checks (branch protection).
 
 ---
 
@@ -723,4 +733,3 @@ cycle).
 * Asset pipeline (S2B remainder) — content-addressed AssetStore impl + EXIF/4096 downscale +
   mark-and-sweep GC (ADR-022/ADR-023).
 * Export pipeline — on-device PDF/image export.
-* Repo hygiene — push the PR-A branch / open the PR; mark android-graph a required status check.
