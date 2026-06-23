@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- :data-android is a library module; its package/namespace is declared in build.gradle.kts.
+     No components are registered here yet (ADR-026 PR-A, Step 1: skeleton only). -->
+<manifest />

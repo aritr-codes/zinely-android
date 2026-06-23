@@ -4,6 +4,10 @@ coreKtx = "1.10.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
+# AndroidX instrumentation runner for :data-android androidTest (real Os.fsync durability checks)
+androidxTestRunner = "1.5.2"
+# Core library desugaring (nio variant): backports java.nio.file to minSdk 24 (ADR-024 / ADR-025)
+desugarJdkLibs = "2.1.5"
 lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.8.0"
 kotlin = "2.2.10"
@@ -15,12 +19,19 @@ jqwik = "1.9.2"
 # Pure-Kotlin data core (S2A): kotlinx serialization (document JSON) + coroutines (Flow contracts)
 kotlinxSerialization = "1.8.1"
 kotlinxCoroutines = "1.9.0"
+# Hilt DI graph for the Android autosave stack (PR-A Step 7). Exact pins per the approved design:
+# Hilt 2.59.2 (AGP 9 support landed in 2.59; .1/.2 fixed AGP 9 Jetifier/plugin issues); KSP
+# 2.2.10-2.0.2 (the AGP-9 built-in-Kotlin 2.2.10 baseline). See docs/spikes/pr-a-step-7-hilt-di.md.
+hilt = "2.59.2"
+ksp = "2.2.10-2.0.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+android-desugar-jdk-libs-nio = { group = "com.android.tools", name = "desugar_jdk_libs_nio", version.ref = "desugarJdkLibs" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -39,10 +50,18 @@ jqwik = { group = "net.jqwik", name = "jqwik", version.ref = "jqwik" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
+# Hilt DI (PR-A Step 7): runtime + KSP annotation processor; -testing drives the device smoke test.
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+# Hilt DI graph wiring (PR-A Step 7), processed by KSP.
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 

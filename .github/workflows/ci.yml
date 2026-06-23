@@ -1,8 +1,12 @@
 name: CI
 
-# Runs the pure-Kotlin core test suites on every push to main and every PR. The Android `:app`
-# module is excluded via ZINELY_CORE_ONLY (see settings.gradle.kts) so CI needs no Android SDK —
-# Android-backed modules get their own SDK-provisioned job when S2B lands.
+# Two jobs run on every push to main and every PR:
+#   * core-tests      — pure-Kotlin core suites with ZINELY_CORE_ONLY=true (no Android SDK needed).
+#   * android-graph   — SDK-provisioned; with ZINELY_CORE_ONLY UNSET it compiles :app (and runs the
+#                       :data-android JVM tests), which is where Hilt/KSP validates the whole
+#                       SingletonComponent graph. This is the PR-A Step 7 acceptance gate
+#                       (docs/spikes/pr-a-step-7-hilt-di.md §13.1): before it, the Android/Hilt graph
+#                       was never compiled in CI, so a broken binding could merge undetected.
 on:
   push:
     branches: [ main ]
@@ -45,4 +49,42 @@ jobs:
         with:
           name: core-test-results
           path: '**/build/test-results/test/*.xml'
+          if-no-files-found: warn
+
+  android-graph:
+    name: Android Hilt graph validation (SDK)
+    runs-on: ubuntu-latest
+    # ZINELY_CORE_ONLY is intentionally UNSET here so settings.gradle.kts includes :app and
+    # :data-android — the only configuration in which the Hilt graph is compiled and validated.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate Hilt graph (compile :app) + run :data-android JVM tests
+        # :app:compileDebugKotlin is the minimum graph gate (KSP/Hilt run during Kotlin compilation
+        # and fail the build on any missing/duplicate/cyclic binding). :data-android:testDebugUnitTest
+        # is the justified stronger equivalent — it additionally runs the pure-JVM binding tests
+        # (@AutosaveScope shape, EditorAutosaveBinderFactory wiring) in the same SDK-provisioned job.
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:compileDebugKotlin :data-android:testDebugUnitTest --no-daemon --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-graph-test-results
+          path: 'data-android/build/test-results/testDebugUnitTest/*.xml'
           if-no-files-found: warn
