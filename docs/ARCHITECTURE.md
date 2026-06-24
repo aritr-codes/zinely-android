@@ -71,7 +71,7 @@ com.aritr.zinely
 ├── core
 │   ├── model        // ZineDocument, Page, Element, Transform, geometry, units (points)
 │   ├── imposition   // single-sheet 8-page mapping (+ rotations, fold/cut guides, proof sheet)
-│   └── render       // scene → draw-command model; Android Canvas backend adapter
+│   └── render       // PURE scene → draw-command model (ADR-027); Android backends live in a platform module, NOT here
 ├── data
 │   ├── db           // Room: ZineProjectEntity, DAOs, migrations
 │   ├── document     // JSON document store (atomic save, schema migration)
@@ -165,7 +165,7 @@ erDiagram
 
 ## 5. Rendering pipeline — one scene, two backends
 
-WYSIWYG by construction ([ADR-006](DECISIONS.md#adr-006)): a single pure function turns a `Page` into ordered draw commands; each backend supplies the points→target scale.
+WYSIWYG by construction ([ADR-006](DECISIONS.md#adr-006) principle; [ADR-027](DECISIONS.md#adr-027) concrete `:core:render` contract): a single pure function turns a `Page` into ordered, self-contained draw commands in page-local points; each backend supplies the points→target scale. Images emit *intent* and share one pure `computeImageBlit` (intrinsic from the backend's own decode); text emits *intent* and shares one Android `StaticLayout` path laid out in point space. Design + review trail: [spikes/core-render.md](spikes/core-render.md).
 
 ```mermaid
 flowchart TD
@@ -175,8 +175,9 @@ flowchart TD
     DC --> EB["ExportBackend\nAndroid Canvas"]
     EB --> PDFp["PdfDocument.Page\n(vector text + subset fonts)"]
     EB --> BMP["Bitmap @ 300 DPI\n(PNG / JPG)"]
-    TXT["Text path:\nStaticLayout + Paint"] -. shared metrics .-> SR
-    SR -. Roborazzi diff .-> VERIFY{"preview == export?"}
+    TXT["SharedTextLayout + computeImageBlit\n(StaticLayout/Paint · decoder intrinsic)\nAndroid, shared by both backends"] -. resolves text/image .-> PB
+    TXT -. resolves text/image .-> EB
+    DC -. Roborazzi diff .-> VERIFY{"preview == export?"}
 ```
 
 - **Critical:** text is measured/drawn through the **same Android `StaticLayout`/`Paint` path** in both preview and export (rendered into Compose via `drawIntoCanvas`) — otherwise Compose-text vs Canvas-text layout diverges ([R2.2](RESEARCH.md#r22-androidgraphicspdfpdfdocument--verified), [R5](RESEARCH.md#r5-canvas--scene-graph-editor-architecture)).
@@ -350,7 +351,7 @@ flowchart BT
     model["core:model<br/>✅ v0.1.0"]
     imp["core:imposition<br/>✅ v0.1.0"]
     data["core:data<br/>S2A ✅ · S2B ⬜"]
-    render["core:render<br/>S3 · parallel"]
+    render["core:render<br/>S3 🚧 · ADR-027"]
     editor["feature:editor (MVI)<br/>S4"]
     export["export<br/>S5"]
     app["app shell / navigation"]
@@ -384,7 +385,7 @@ flowchart BT
 | S2A | `core:data` (pure core) | `core:model` | ✅ implemented — schema, serializer+migration, validation, repo/asset contracts ([spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19)) | S3 (no shared dep) |
 | **S2B-core** | **`core:data-storage`** (pure JVM) | `core:data`, S2A | ⬜ **current build step** — atomic file source + autosave coordinator + content-addressed asset store + mark-and-sweep GC (java.nio; CI-tested now) ([ADR-025](DECISIONS.md#adr-025)) | S3 (no shared dep) |
 | S2B-android | `data-android` (Android library) | `core:data-storage` | ⬜ Room + WorkManager GC scheduler + Bitmap/EXIF import master + SAF `.zine`; needs Android-SDK CI ([ADR-025](DECISIONS.md#adr-025)) | S3 |
-| S3 | `core:render` | `core:model` | ⬜ parallel track (critical-path for S4/S5) | S2B (no shared dep) |
+| S3 | `core:render` | `core:model` | 🚧 [ADR-027](DECISIONS.md#adr-027) accepted; **pure-JVM render core landed** (`:core:render`, 23 tests, Codex GO) — **Android parity backend tier remains** (SharedTextLayout + computeImageBlit invocation + Roborazzi, [spike §9.2](spikes/core-render.md#92-visual-fidelity-proof-backend-module-android--the-part-jvm-cant-prove)); critical-path for S4/S5 | S2B (no shared dep) |
 | S4 | `feature:editor` | `core:model`, `core:data`, `core:render` | ⬜ | — (needs S2 **and** S3) |
 | S5 | `export` | `core:model`, `core:imposition`, `core:render`, `core:data` | ⬜ | — |
 | — | `app` shell / nav | features | ⬜ | — |
