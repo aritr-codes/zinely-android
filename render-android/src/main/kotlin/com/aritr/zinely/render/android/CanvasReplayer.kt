@@ -18,6 +18,9 @@ import com.aritr.zinely.core.render.FillRect
  * they pass in; the geometry here is identical, which is what makes `preview == export` structural
  * rather than disciplinary (ADR-006).
  *
+ * Collaborators are injected so every provider shares one configuration: [fontResolver] for text
+ * ([SharedTextLayout]); the image-byte source arrives at G4. A single instance is reused across pages.
+ *
  * **Replay quad (ADR-028 clause 2, spike §3.1).** Page scope is set once —
  * `save → concat(pageToDevice) → clip(pageClip)` — then each command replays self-contained:
  * `save → concat(localToPage) → clip(localClip) → draw → restore`. The clip is applied **after** the
@@ -25,13 +28,15 @@ import com.aritr.zinely.core.render.FillRect
  * `pageToDevice × localToPage` (column-vector [AffineTransform2D], `other` applied first).
  *
  * **Coordinate model (ADR-028 clause 3).** [pageToDevice] is the *visual* page→device transform and
- * differs by target — points→pixels (`×300/72`) for raster, points→points (identity-scale) for the
- * PDF canvas, screen `px/pt` for preview. [decodePxPerPt] is the **separate** image-decode resolution,
- * never inferred from [pageToDevice]; it is unused until image replay lands (G4).
+ * differs by target — points→pixels (`×300/72`) for raster, points→points for the PDF canvas, screen
+ * `px/pt` for preview. [decodePxPerPt] is the **separate** image-decode resolution, never inferred from
+ * [pageToDevice]; it is unused until image replay lands (G4).
  *
- * G2 scope: [FillRect] only. [DrawImage] (G4) and [DrawTextBox] (G3) are not yet replayed.
+ * G3 scope: [FillRect] + [DrawTextBox]. [DrawImage] (G4) is not yet replayed.
  */
-public object CanvasReplayer {
+public class CanvasReplayer(
+    private val fontResolver: FontResolver = FontResolver.Default,
+) {
 
     /** Pinned fill paint: solid, anti-alias off so geometric fills diff at zero tolerance (spike §4.1). */
     private val fillPaint = Paint().apply {
@@ -78,9 +83,28 @@ public object CanvasReplayer {
                     r.x.toFloat(), r.y.toFloat(), r.right.toFloat(), r.bottom.toFloat(), fillPaint,
                 )
             }
-            // Replayed in later gates; the page/clip quad above is already in place for them.
-            is DrawTextBox -> TODO("DrawTextBox replay lands in G3 (SharedTextLayout)")
+            is DrawTextBox -> drawText(canvas, command)
+            // Replayed in G4; the page/clip quad above is already in place for it.
             is DrawImage -> TODO("DrawImage replay lands in G4 (ImageBlitter); uses decodePxPerPt=$decodePxPerPt")
+        }
+    }
+
+    /**
+     * Lays text out in point-space layout units ([SharedTextLayout.LAYOUT_SCALE]) and draws it at a
+     * pre-concatenated `scale(1/K)`, so the device matrix is unchanged and wrapping is resolution-
+     * independent (§4). The local clip (= text box, in points) was applied **before** this scale, so it
+     * still bounds the text in point space. `StaticLayout.draw` keeps PDF text vector (§4.3) — never a
+     * `drawBitmap`. The text origin is the box's local `(0,0)` (the command carries no offset).
+     */
+    private fun drawText(canvas: Canvas, command: DrawTextBox) {
+        val layout = SharedTextLayout.build(command.text, command.style, command.boxWidthPt, fontResolver)
+        val inverseScale = 1f / SharedTextLayout.LAYOUT_SCALE
+        val textScope = canvas.save()
+        try {
+            canvas.scale(inverseScale, inverseScale)
+            layout.draw(canvas)
+        } finally {
+            canvas.restoreToCount(textScope)
         }
     }
 }
@@ -104,6 +128,6 @@ private fun AffineTransform2D.toMatrix(): Matrix = Matrix().apply {
 private fun Canvas.clipRect(rect: PtRect): Boolean =
     clipRect(rect.x.toFloat(), rect.y.toFloat(), rect.right.toFloat(), rect.bottom.toFloat())
 
-/** Packs an [ColorRgba] (straight, 8-bit) into an Android ARGB int. */
-private fun ColorRgba.toArgb(): Int =
+/** Packs a [ColorRgba] (straight, 8-bit) into an Android ARGB int. */
+internal fun ColorRgba.toArgb(): Int =
     (a and 0xFF shl 24) or (r and 0xFF shl 16) or (g and 0xFF shl 8) or (b and 0xFF)
