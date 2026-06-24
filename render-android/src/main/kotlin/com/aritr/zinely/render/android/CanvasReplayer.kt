@@ -10,6 +10,8 @@ import com.aritr.zinely.core.render.DrawCommand
 import com.aritr.zinely.core.render.DrawImage
 import com.aritr.zinely.core.render.DrawTextBox
 import com.aritr.zinely.core.render.FillRect
+import kotlin.math.abs
+import kotlin.math.sqrt
 
 /**
  * Replays the pure [`:core:render`][DrawCommand] tape (ADR-027) onto a raw [android.graphics.Canvas]
@@ -19,7 +21,8 @@ import com.aritr.zinely.core.render.FillRect
  * rather than disciplinary (ADR-006).
  *
  * Collaborators are injected so every provider shares one configuration: [fontResolver] for text
- * ([SharedTextLayout]); the image-byte source arrives at G4. A single instance is reused across pages.
+ * ([SharedTextLayout]) and [imageBlitter] for images ([ImageBlitter], over an `AssetBytesSource`).
+ * A single instance is reused across pages.
  *
  * **Replay quad (ADR-028 clause 2, spike §3.1).** Page scope is set once —
  * `save → concat(pageToDevice) → clip(pageClip)` — then each command replays self-contained:
@@ -32,10 +35,12 @@ import com.aritr.zinely.core.render.FillRect
  * `px/pt` for preview. [decodePxPerPt] is the **separate** image-decode resolution, never inferred from
  * [pageToDevice]; it is unused until image replay lands (G4).
  *
- * G3 scope: [FillRect] + [DrawTextBox]. [DrawImage] (G4) is not yet replayed.
+ * Scope: [FillRect], [DrawTextBox], and [DrawImage] (the latter only when an [imageBlitter] is wired —
+ * it needs an `AssetBytesSource`, supplied in app/export wiring).
  */
 public class CanvasReplayer(
     private val fontResolver: FontResolver = FontResolver.Default,
+    private val imageBlitter: ImageBlitter? = null,
 ) {
 
     /** Pinned fill paint: solid, anti-alias off so geometric fills diff at zero tolerance (spike §4.1). */
@@ -84,8 +89,14 @@ public class CanvasReplayer(
                 )
             }
             is DrawTextBox -> drawText(canvas, command)
-            // Replayed in G4; the page/clip quad above is already in place for it.
-            is DrawImage -> TODO("DrawImage replay lands in G4 (ImageBlitter); uses decodePxPerPt=$decodePxPerPt")
+            is DrawImage -> {
+                val blitter = checkNotNull(imageBlitter) {
+                    "CanvasReplayer needs an ImageBlitter (AssetBytesSource) to replay DrawImage"
+                }
+                // decodePxPerPt is the page→device density; localScale is the element's own scale within
+                // page space, so the decode footprint = destRect × decodePxPerPt × localScale (§5.1).
+                blitter.draw(canvas, command, decodePxPerPt, command.localToPage.uniformScale())
+            }
         }
     }
 
@@ -131,3 +142,10 @@ private fun Canvas.clipRect(rect: PtRect): Boolean =
 /** Packs a [ColorRgba] (straight, 8-bit) into an Android ARGB int. */
 internal fun ColorRgba.toArgb(): Int =
     (a and 0xFF shl 24) or (r and 0xFF shl 16) or (g and 0xFF shl 8) or (b and 0xFF)
+
+/**
+ * The element-local → page-local **linear (uniform) scale** = `sqrt(|det|)` of the transform's linear
+ * part. For the MVP element transform (rotation + translation, [ADR-027]) this is `1`; for a uniform
+ * scale `s` it is `s`. Used to size the image decode footprint (§5.1).
+ */
+internal fun AffineTransform2D.uniformScale(): Double = sqrt(abs(a * d - b * c))
