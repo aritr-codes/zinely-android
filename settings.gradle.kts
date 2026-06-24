@@ -35,6 +35,10 @@ if (providers.environmentVariable("ZINELY_CORE_ONLY").orNull != "true") {
 // Pure-Kotlin, Android-independent core (imposition engine spike).
 include(":core:model")
 include(":core:imposition")
+// Pure-Kotlin render core (S3, ADR-027): scene → ordered draw-command tape consumed by both
+// the editor preview (S4) and PDF/image export (S5) for preview==export parity. Only dep
+// :core:model; zero Android. Android backends live in a platform module, not here.
+include(":core:render")
 // Pure-Kotlin data core (S2A): document schema, serializer, migration, validation,
 // repository + asset-manifest contracts. No Android deps yet (Room/WorkManager land in S2B).
 include(":core:data")

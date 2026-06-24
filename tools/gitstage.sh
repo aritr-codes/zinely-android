@@ -40,6 +40,11 @@ case "${1:-}" in
                          app/src/main/java/com/aritr/zinely/ZinelyApplication.kt \
                          data-android/build.gradle.kts data-android/src \
                          docs/spikes/pr-a-step-7-hilt-di.md tools/gitstage.sh ;;
+  # S3 — pure-Kotlin :core:render command model (ADR-027); Android parity backend tier still pending
+  s3-render)     git add settings.gradle.kts .github/workflows/ci.yml \
+                         core/render/build.gradle.kts core/render/src \
+                         docs/DECISIONS.md docs/ARCHITECTURE.md docs/ROADMAP.md \
+                         docs/spikes/core-render.md tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s
