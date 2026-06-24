@@ -165,7 +165,7 @@ erDiagram
 
 ## 5. Rendering pipeline — one scene, two backends
 
-WYSIWYG by construction ([ADR-006](DECISIONS.md#adr-006) principle; [ADR-027](DECISIONS.md#adr-027) concrete `:core:render` contract): a single pure function turns a `Page` into ordered, self-contained draw commands in page-local points; each backend supplies the points→target scale. Images emit *intent* and share one pure `computeImageBlit` (intrinsic from the backend's own decode); text emits *intent* and shares one Android `StaticLayout` path laid out in point space. Design + review trail: [spikes/core-render.md](spikes/core-render.md).
+WYSIWYG by construction ([ADR-006](DECISIONS.md#adr-006) principle; [ADR-027](DECISIONS.md#adr-027) concrete pure `:core:render` contract; [ADR-028](DECISIONS.md#adr-028) the Android replay/parity tier): a single pure function turns a `Page` into ordered, self-contained draw commands in page-local points; each backend supplies the points→target scale. Images emit *intent* and share one pure `computeImageBlit` (intrinsic from the backend's own decode); text emits *intent* and shares one Android `StaticLayout` path laid out in point space. The Android side ([ADR-028](DECISIONS.md#adr-028)) is a single `CanvasReplayer` invoked with two canvas providers — export PDF (drawing in **PostScript points**, with a *separate* image-decode pixel scale) and export raster (`×300/72` pixels); the editor-preview Compose host lands in S4. Design + review trail: [spikes/core-render.md](spikes/core-render.md) (pure tier) + [spikes/core-render-android-backend.md](spikes/core-render-android-backend.md) (Android tier).
 
 ```mermaid
 flowchart TD
@@ -351,7 +351,8 @@ flowchart BT
     model["core:model<br/>✅ v0.1.0"]
     imp["core:imposition<br/>✅ v0.1.0"]
     data["core:data<br/>S2A ✅ · S2B ⬜"]
-    render["core:render<br/>S3 🚧 · ADR-027"]
+    render["core:render<br/>S3 🚧 · ADR-027 (pure tier ✅ on main)"]
+    ra["render-android<br/>S3 ⬜ · ADR-028 (Android tier)"]
     editor["feature:editor (MVI)<br/>S4"]
     export["export<br/>S5"]
     app["app shell / navigation"]
@@ -359,12 +360,13 @@ flowchart BT
     imp --> model
     data --> model
     render --> model
+    ra --> render
     editor --> model
     editor --> data
-    editor --> render
+    editor --> ra
     export --> model
     export --> imp
-    export --> render
+    export --> ra
     export --> data
     app --> editor
     app --> export
@@ -385,9 +387,10 @@ flowchart BT
 | S2A | `core:data` (pure core) | `core:model` | ✅ implemented — schema, serializer+migration, validation, repo/asset contracts ([spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19)) | S3 (no shared dep) |
 | **S2B-core** | **`core:data-storage`** (pure JVM) | `core:data`, S2A | ⬜ **current build step** — atomic file source + autosave coordinator + content-addressed asset store + mark-and-sweep GC (java.nio; CI-tested now) ([ADR-025](DECISIONS.md#adr-025)) | S3 (no shared dep) |
 | S2B-android | `data-android` (Android library) | `core:data-storage` | ⬜ Room + WorkManager GC scheduler + Bitmap/EXIF import master + SAF `.zine`; needs Android-SDK CI ([ADR-025](DECISIONS.md#adr-025)) | S3 |
-| S3 | `core:render` | `core:model` | 🚧 [ADR-027](DECISIONS.md#adr-027) accepted; **pure-JVM render core landed** (`:core:render`, 23 tests, Codex GO) — **Android parity backend tier remains** (SharedTextLayout + computeImageBlit invocation + Roborazzi, [spike §9.2](spikes/core-render.md#92-visual-fidelity-proof-backend-module-android--the-part-jvm-cant-prove)); critical-path for S4/S5 | S2B (no shared dep) |
-| S4 | `feature:editor` | `core:model`, `core:data`, `core:render` | ⬜ | — (needs S2 **and** S3) |
-| S5 | `export` | `core:model`, `core:imposition`, `core:render`, `core:data` | ⬜ | — |
+| S3-core | `core:render` (pure) | `core:model` | ✅ **on main** ([ADR-027](DECISIONS.md#adr-027)) — pure-JVM render core landed (`:core:render`, 23 tests, Codex GO, PR #9 merged `60f7344`) | S2B (no shared dep) |
+| **S3-android** | **`render-android`** (Android library) | `core:render` | 🚧 **design accepted** ([ADR-028](DECISIONS.md#adr-028)); **not built** — one `CanvasReplayer` + two canvas providers, `SharedTextLayout`, crop-aware `ImageBlitter`, Roborazzi raw-`CanvasReplayer` raster/PDF parity goldens (Compose preview-host parity owed by S4); needs Android-SDK CI ([spike](spikes/core-render-android-backend.md)). Gated like `:data-android`. Closes S3 | S2B (no shared dep) |
+| S4 | `feature:editor` | `core:model`, `core:data`, `render-android` (→ `core:render`) | ⬜ — also adds the Compose preview host + its parity test ([ADR-028](DECISIONS.md#adr-028)) | — (needs S2 **and** S3) |
+| S5 | `export` | `core:model`, `core:imposition`, `core:data`, `render-android` (→ `core:render`) | ⬜ | — |
 | — | `app` shell / nav | features | ⬜ | — |
 
 ### 15.3 Risk analysis
