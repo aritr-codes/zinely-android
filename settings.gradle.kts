@@ -31,6 +31,12 @@ if (providers.environmentVariable("ZINELY_CORE_ONLY").orNull != "true") {
     // Android stack (Os.fsync FileSystemOps, file-only DocumentRepository, autosave coordinator
     // factory, lifecycle binder, Hilt graph). Needs the Android SDK, so it is gated out with `:app`.
     include(":data-android")
+    // S3 Android render backend (ADR-028 / spike core-render-android-backend.md): replays the pure
+    // :core:render DrawCommand tape onto a real android.graphics.Canvas via one CanvasReplayer + two
+    // canvas providers (export PDF/raster; Compose preview host lands in S4). Needs the Android SDK
+    // (Robolectric NATIVE + Roborazzi parity goldens), so it is gated out with :app / :data-android.
+    // G1 = scaffold only; api(:core:render) is the only production edge (no Compose/Coil/Room).
+    include(":render-android")
 }
 // Pure-Kotlin, Android-independent core (imposition engine spike).
 include(":core:model")
