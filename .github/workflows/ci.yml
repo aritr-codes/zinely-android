@@ -72,19 +72,28 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Validate Hilt graph (compile :app) + run :data-android JVM tests
+      - name: Validate Hilt graph (compile :app) + run :data-android & :render-android JVM tests
         # :app:compileDebugKotlin is the minimum graph gate (KSP/Hilt run during Kotlin compilation
         # and fail the build on any missing/duplicate/cyclic binding). :data-android:testDebugUnitTest
         # is the justified stronger equivalent — it additionally runs the pure-JVM binding tests
         # (@AutosaveScope shape, EditorAutosaveBinderFactory wiring) in the same SDK-provisioned job.
+        #
+        # :render-android (ADR-028 S3, G1 scaffold): testDebugUnitTest runs the Robolectric NATIVE
+        # smoke (real-Skia raster + api(:core:render) edge); verifyRoborazziDebug exercises the
+        # Roborazzi plugin/task wiring (a no-op until the G6 goldens are committed). :core:render
+        # itself stays in the core-only job — it is pure and Android-free.
         run: |
           chmod +x ./gradlew
-          ./gradlew :app:compileDebugKotlin :data-android:testDebugUnitTest --no-daemon --stacktrace
+          ./gradlew :app:compileDebugKotlin :data-android:testDebugUnitTest \
+            :render-android:testDebugUnitTest :render-android:verifyRoborazziDebug \
+            --no-daemon --stacktrace
 
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: android-graph-test-results
-          path: 'data-android/build/test-results/testDebugUnitTest/*.xml'
+          path: |
+            data-android/build/test-results/testDebugUnitTest/*.xml
+            render-android/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- :render-android is a library module; its package/namespace is declared in build.gradle.kts.
+     No components are registered here (ADR-028 G1: scaffold only; replay logic lands in G2–G6). -->
+<manifest />
