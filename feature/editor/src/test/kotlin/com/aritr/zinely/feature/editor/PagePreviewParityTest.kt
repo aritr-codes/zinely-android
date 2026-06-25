@@ -78,6 +78,12 @@ class PagePreviewParityTest {
         // Matches RasterGoldenTest.aa(): the committed AA tolerance (fraction of pixels allowed to differ).
         const val AA_THRESHOLD = 0.02
         const val MISSING_ASSET = "no-such-asset" // resolves to null → placeholder
+
+        // The text box ([textTape]) in page points — also the region the text-wiring proof crops to.
+        const val TEXT_BOX_X_PT = 6.0
+        const val TEXT_BOX_Y_PT = 10.0
+        const val TEXT_BOX_W_PT = 64.0
+        const val TEXT_BOX_H_PT = 40.0
     }
 
     private val sheet = PtSize(72.0, 72.0)
@@ -126,10 +132,10 @@ class PagePreviewParityTest {
                 bold = false,
                 italic = false,
             ),
-            boxWidthPt = 64.0,
-            boxHeightPt = 40.0,
-            localToPage = AffineTransform2D.translate(6.0, 10.0),
-            localClip = PtRect(0.0, 0.0, 64.0, 40.0),
+            boxWidthPt = TEXT_BOX_W_PT,
+            boxHeightPt = TEXT_BOX_H_PT,
+            localToPage = AffineTransform2D.translate(TEXT_BOX_X_PT, TEXT_BOX_Y_PT),
+            localClip = PtRect(0.0, 0.0, TEXT_BOX_W_PT, TEXT_BOX_H_PT),
         ),
     )
 
@@ -271,25 +277,44 @@ class PagePreviewParityTest {
         val bundledDirect = directReplayBitmap(textTape(), fontResolver = BundledFontResolver(assets))
         val defaultDirect = directReplayBitmap(textTape(), fontResolver = FontResolver.Default)
 
-        // Sanity: text actually rendered (ink present), so the comparison is not over two blank rasters.
-        assertTrue("text host produced no ink", inkCount(host) > 20)
+        // Compare ONLY within the text box's device-px region, NOT the whole 72pt sheet (review #19,
+        // finding #1). Text ink is a tiny fraction of the full frame, so a whole-frame differing-fraction
+        // dilutes the font signal below any useful bar — a host wrongly using FontResolver.Default could
+        // still pass an absolute whole-frame 0.02. The textTape box is localToPage=translate(6,10), 64x40pt
+        // → px region (15,25)..(175,125) at 2.5 px/pt; cropping there concentrates the glyph signal.
+        val rx = (TEXT_BOX_X_PT * SCREEN_PX_PER_PT).toInt()
+        val ry = (TEXT_BOX_Y_PT * SCREEN_PX_PER_PT).toInt()
+        val rw = (TEXT_BOX_W_PT * SCREEN_PX_PER_PT).toInt()
+        val rh = (TEXT_BOX_H_PT * SCREEN_PX_PER_PT).toInt()
+        val hostRegion = Bitmap.createBitmap(host, rx, ry, rw, rh)
+        val bundledRegion = Bitmap.createBitmap(bundledDirect, rx, ry, rw, rh)
+        val defaultRegion = Bitmap.createBitmap(defaultDirect, rx, ry, rw, rh)
 
-        // PRIMARY proof (Codex fix #3): host text == bundled-resolver direct replay (AA tolerance for
-        // glyph edges). This fails if the host routes text through FontResolver.Default.
-        val bundledFraction = differingFraction(host, bundledDirect)
+        // Sanity: text actually rendered in the region (not two blank crops).
+        assertTrue("text host produced no ink in the text region", inkCount(hostRegion) > 20)
+
+        val hostVsBundled = differingFraction(hostRegion, bundledRegion)
+        val bundledVsDefault = differingFraction(bundledRegion, defaultRegion)
+
+        // (1) DISCRIMINATOR: the chosen text must render differently in Inter vs the system default by
+        // MORE than the host's own AA tolerance — otherwise the proof below cannot tell a bundled host
+        // from a Default one, so the test fails loudly asking for distinguishing text rather than passing
+        // vacuously. (This is the teeth the old `bundledVsDefault > 0.0` lacked.)
         assertTrue(
-            "host text must match the BUNDLED-font direct replay (${"%.4f".format(bundledFraction)} " +
-                "differ > $AA_THRESHOLD) — proves PagePreview injects BundledFontResolver, not Default.",
-            bundledFraction <= AA_THRESHOLD,
+            "bundled vs Default fonts differ by only ${"%.4f".format(bundledVsDefault)} of the text region " +
+                "(<= $AA_THRESHOLD); the test cannot distinguish the resolvers — choose text/size that " +
+                "renders differently in Inter vs the system default.",
+            bundledVsDefault > AA_THRESHOLD,
         )
 
-        // EXTRA confidence: the bundled and default resolvers must actually differ here (otherwise the
-        // primary proof would be tautological).
-        val bundledVsDefault = differingFraction(bundledDirect, defaultDirect)
+        // (2) PRIMARY proof (review #19, finding #1): host text matches the BUNDLED-resolver replay within
+        // the AA tolerance. Because (1) guarantees bundledVsDefault > AA_THRESHOLD, a host that wrongly used
+        // FontResolver.Default would have hostVsBundled ≈ bundledVsDefault > AA_THRESHOLD and FAIL here —
+        // so this now genuinely proves PagePreview injects BundledFontResolver, not Default.
         assertTrue(
-            "bundled vs Default font produced identical rasters (${"%.4f".format(bundledVsDefault)}); " +
-                "the bundled-wiring proof would be tautological — choose text that distinguishes them.",
-            bundledVsDefault > 0.0,
+            "host text drifted from the BUNDLED-font replay (${"%.4f".format(hostVsBundled)} of the text " +
+                "region differ > $AA_THRESHOLD) — PagePreview must route text through BundledFontResolver.",
+            hostVsBundled <= AA_THRESHOLD,
         )
 
         // Cheap belt-and-braces: the seam type is exactly BundledFontResolver.

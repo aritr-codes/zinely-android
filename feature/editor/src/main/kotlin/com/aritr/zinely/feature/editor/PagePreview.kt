@@ -73,12 +73,15 @@ public fun PagePreview(
     screenPxPerPt: Float,
     pageOffset: PtPoint = PtPoint(0.0, 0.0),
     modifier: Modifier = Modifier,
-    imageBytes: AssetBytesSource = AssetBytesSource { null },
+    imageBytes: AssetBytesSource = EmptyAssetBytes,
 ) {
     val assets = LocalContext.current.assets
-    // One replayer per (asset source, image source), rebuilt only if either identity changes. The
-    // resolver is the §4.2-obligated BundledFontResolver (via the shared previewFontResolver seam);
-    // the blitter is wired so a DrawImage tape paints the placeholder instead of throwing.
+    // One replayer per (asset source, image source), rebuilt only if either identity changes — so the
+    // default [imageBytes] is the stable [EmptyAssetBytes] singleton, NOT a fresh `AssetBytesSource { null }`
+    // in the default-arg expression (which, absent SAM caching, would change identity each recomposition
+    // and rebuild the replayer + reload the bundled fonts every frame). The resolver is the §4.2-obligated
+    // BundledFontResolver (via the shared previewFontResolver seam); the blitter is wired so a DrawImage
+    // tape paints the placeholder instead of throwing.
     val replayer = remember(assets, imageBytes) {
         CanvasReplayer(
             fontResolver = previewFontResolver(assets),
@@ -106,3 +109,13 @@ public fun PagePreview(
  * the host uses, not a re-implementation. `internal` so it never widens the module's public API.
  */
 internal fun previewFontResolver(assets: AssetManager): FontResolver = BundledFontResolver(assets)
+
+/**
+ * The stable default [PagePreview.imageBytes] source — a single process-wide [AssetBytesSource] that
+ * returns `null` for every asset (→ the missing-asset placeholder). Hoisted out of the default-argument
+ * expression so [PagePreview]'s `remember(assets, imageBytes)` key stays stable across recompositions
+ * when the caller omits `imageBytes`; a `AssetBytesSource { null }` written inline in the default would
+ * (absent SAM caching) allocate a new identity each recomposition and needlessly rebuild the
+ * [CanvasReplayer] + reload the bundled fonts every frame.
+ */
+internal val EmptyAssetBytes: AssetBytesSource = AssetBytesSource { null }
