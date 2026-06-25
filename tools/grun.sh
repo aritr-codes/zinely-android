@@ -18,5 +18,6 @@ case "$cmd" in
   cm)  m="$1"; shift; "$RUNNER" ":core:${m}:check" "$@" ;;         # check one core module
   call) "$RUNNER" ":core:model:test" ":core:imposition:test" "$@" ;; # both core modules
   task) "$RUNNER" tasks "$@" ;;
+  conn) "$RUNNER" ":render-android:connectedDebugAndroidTest" "$@" ;; # instrumented androidTest on a connected device
   *)   "$RUNNER" "$cmd" "$@" ;;
 esac
