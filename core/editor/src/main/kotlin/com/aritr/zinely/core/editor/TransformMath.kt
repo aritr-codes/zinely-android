@@ -14,6 +14,14 @@ import kotlin.math.abs
 public object TransformMath {
 
     /**
+     * The floor a bake clamps width/height to. A gesture can drive a box to zero/negative size (pinch to
+     * nothing, a handle dragged onto its anchor, `ScaleBy(<=0)`); a degenerate box is invisible,
+     * un-hittable, and — fed to a `PtRect`/`PtSize` — throws on its non-negative `require`. Clamping keeps
+     * the element recoverable.
+     */
+    public const val MIN_SIZE_PT: Double = 1.0
+
+    /**
      * Centre-anchored bake — the **pinch** and a11y `ScaleBy`/`RotateBy`/`Nudge` path. Uniform scale and
      * rotation pivot on the element centre (which therefore stays fixed under scale/rotate); [panPt] is a
      * page-space translation of that centre. Uniform scale and centre-rotation commute, so this is correct
@@ -27,8 +35,8 @@ public object TransformMath {
     ): Transform {
         val cx = before.xPt + before.widthPt / 2.0 + panPt.x
         val cy = before.yPt + before.heightPt / 2.0 + panPt.y
-        val w = before.widthPt * zoom
-        val h = before.heightPt * zoom
+        val w = (before.widthPt * zoom).coerceAtLeast(MIN_SIZE_PT)
+        val h = (before.heightPt * zoom).coerceAtLeast(MIN_SIZE_PT)
         return Transform(
             xPt = cx - w / 2.0,
             yPt = cy - h / 2.0,
@@ -66,8 +74,8 @@ public object TransformMath {
 
         // New half-extents from the drag, expressed in the element's local axes.
         val dragLocal = toLocal.map(PtPoint(dragPagePt.x - anchorPage.x, dragPagePt.y - anchorPage.y))
-        val w = if (movingLocal.x != anchorLocal.x) abs(dragLocal.x) else before.widthPt
-        val h = if (movingLocal.y != anchorLocal.y) abs(dragLocal.y) else before.heightPt
+        val w = (if (movingLocal.x != anchorLocal.x) abs(dragLocal.x) else before.widthPt).coerceAtLeast(MIN_SIZE_PT)
+        val h = (if (movingLocal.y != anchorLocal.y) abs(dragLocal.y) else before.heightPt).coerceAtLeast(MIN_SIZE_PT)
 
         // Solve the new centre so the anchor stays at anchorPage.
         val anchorOffset1 = toPage.map(PtPoint(anchorLocal.x * w / 2.0, anchorLocal.y * h / 2.0))

@@ -428,6 +428,16 @@ Status: **DESIGNED** — pure core implemented.
 | `EditorReducer.kt` | the pure reducer — token-validated commits, autosave only on doc mutation, document-global undo/redo (§2.2, §5) |
 | `Snap.kt` | pure candidate-line snapping + render-only guides (§5.4) |
 
+### 10.2 Post-merge review hardening (2026-06-25)
+
+A max-effort review of the PR surfaced reducer-robustness gaps, all fixed TDD (10 new tests, 53 total green):
+- **DeletePage index** — deleting a page at/before `currentPageIndex` now shifts current down one (was off-by-one, showed the wrong page).
+- **Per-page selection/session** — `GoToPage`/`AddPage`/`DeletePage` clear `selection` and end any open `Transforming` session (a stale same-index/same-token commit could otherwise hit the wrong page).
+- **Invertible commits** — `CommitTransform` keeps only ids from the begin snapshot; `CommitText` normalises the committed id to the target; `CommitAddImage` mints the id reducer-side (+`nextToken`) so it can't collide and make `PlaceCommand` undo delete two elements.
+- **Degenerate size** — `TransformMath` clamps baked width/height to `MIN_SIZE_PT` (pinch/handle/`ScaleBy(≤0)` can't produce a zero/negative, un-hittable box or a `PtRect` `require` throw).
+- **Snap input guard** — a non-finite `thresholdPt` (e.g. `8px / screenPxPerPt` at `screenPxPerPt == 0`) is a no-op, not a snap-to-everything.
+- **Selection restore** — undo of `DeletePageCommand` restores the page's `priorSelection` (fulfils Codex fix #8 end-to-end).
+
 **Next (gated `:feature:editor`, Android — needs Compose + CI goldens):** the `EditorStore`
 (`StateFlow<EditorUiState>` + effect runner over the S2B autosave binder), `detectTransformGestures` →
 `graphicsLayer{}` preview → `CommitTransform`, the selection contextbar (nudge/scale/rotate steppers +

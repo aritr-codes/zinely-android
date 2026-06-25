@@ -22,6 +22,9 @@ public data class SnapResult(val adjusted: PtRect, val guides: List<SnapGuide>)
 public object Snap {
 
     public fun snap(moving: PtRect, others: List<PtRect>, pageSize: PtSize, thresholdPt: Double): SnapResult {
+        // A non-finite threshold (e.g. 8px / screenPxPerPt with screenPxPerPt == 0) would either snap to the
+        // globally nearest line at any distance (∞) or never snap (NaN). Treat it as "no snapping".
+        if (!thresholdPt.isFinite() || thresholdPt < 0.0) return SnapResult(moving, emptyList())
         val xLines = buildList {
             add(0.0); add(pageSize.width / 2.0); add(pageSize.width)
             for (o in others) { add(o.x); add(o.centerX); add(o.right) }
