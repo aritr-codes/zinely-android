@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zinely — Edit text (mockup)</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .text-edit .page-sheet { aspect-ratio: 3 / 4; }
+  .text-edit .el-text {
+    position: absolute; left: 12%; top: 20%; width: 70%;
+    font-size: 24px; font-weight: 700; line-height: 1.2;
+    color: var(--md-on-surface);
+    outline: 2px solid var(--md-primary); outline-offset: 6px; border-radius: 4px;
+    padding: 2px 4px;
+  }
+  /* blinking caret to signal active text entry */
+  .text-edit .caret { display:inline-block; width:2px; height:1em; vertical-align:-2px;
+    background: var(--md-primary); animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  /* selected swatch ring */
+  .text-edit .swatch { width:30px; height:30px; border-radius:50%; border:2px solid var(--md-outline);
+    display:inline-block; }
+  .text-edit .swatch.sel { outline:2px solid var(--md-primary); outline-offset:2px; }
+  .text-edit .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .text-edit .seg { display:flex; gap:4px; }
+  .text-edit .stepper { display:flex; align-items:center; gap:6px; }
+  .text-edit .sheet-grip { width:32px; height:4px; border-radius:2px; background:var(--md-outline);
+    margin:8px auto 4px; }
+  .text-edit label.lbl { font-size:11px; opacity:.7; width:100%; }
+</style>
+</head>
+<body>
+<div class="phone text-edit">
+
+  <div class="statusbar"><span>9:41</span><span>▢ ▢ ▮</span></div>
+
+  <div class="appbar">
+    <button class="tool" aria-label="Cancel">✕</button>
+    <strong style="flex:1">Edit text</strong>
+    <button class="btn-tonal">Done</button>
+  </div>
+
+  <!-- Canvas with the text element in active-edit (IME) mode -->
+  <div class="canvas-stage">
+    <div class="page-sheet">
+      <div class="el-text" contenteditable="false" aria-label="Text being edited">
+        Make your own zine.<span class="caret"></span>
+      </div>
+    </div>
+
+    <div class="note">
+      Reached via <b>double-tap</b> on a text element (or <b>Add text</b> → new box).
+      The system keyboard (IME) is up; the contextual bar below carries text styling.
+    </div>
+  </div>
+
+  <!-- M3 BOTTOM SHEET: text styling controls (font / size / color / align) -->
+  <section class="sheet" aria-label="Text style controls">
+    <div class="sheet-grip"></div>
+
+    <div class="row">
+      <label class="lbl">Font</label>
+      <div class="seg">
+        <button class="chip">Inter</button>
+        <button class="chip">Serif</button>
+        <button class="chip">Mono</button>
+        <button class="chip">Display</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <label class="lbl">Size</label>
+      <div class="stepper">
+        <button class="btn" aria-label="Decrease size">−</button>
+        <span class="chip">24 sp</span>
+        <button class="btn" aria-label="Increase size">+</button>
+      </div>
+      <span style="flex:1"></span>
+      <label class="lbl" style="width:auto">Weight</label>
+      <div class="seg">
+        <button class="chip">Reg</button>
+        <button class="chip">Bold</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <label class="lbl">Color</label>
+      <span class="swatch sel" style="background:var(--md-on-surface)"></span>
+      <span class="swatch" style="background:var(--md-primary)"></span>
+      <span class="swatch" style="background:var(--md-error)"></span>
+      <span class="swatch" style="background:var(--md-secondary-container)"></span>
+      <span class="swatch" style="background:#fff"></span>
+    </div>
+
+    <div class="row">
+      <label class="lbl">Align</label>
+      <div class="seg">
+        <button class="chip">⬅ Left</button>
+        <button class="chip">⬌ Center</button>
+        <button class="chip">➡ Right</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Simulated IME keyboard so reviewers read the thumb-zone layering -->
+  <div class="note" style="text-align:center; opacity:.6">▁▁▁ system keyboard (IME) ▁▁▁</div>
+
+</div>
+</body>
+</html>

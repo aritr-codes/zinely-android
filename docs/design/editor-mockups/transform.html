@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely · Transform states (mockup)</title>
+<link rel="stylesheet" href="./style.css" />
+<style>
+  /* Scoped tweaks for transform.html only — shared tokens come from style.css */
+  .tf-frames { display:flex; gap:14px; flex-wrap:wrap; padding:12px; }
+  .tf-frame { flex:1 1 220px; }
+  .tf-label { font-size:12px; font-weight:600; letter-spacing:.04em;
+    text-transform:uppercase; color:var(--md-on-surface); opacity:.7; margin:0 0 6px; }
+
+  /* The element being transformed (a placeholder photo/text block) */
+  .tf-el { position:absolute; left:50%; top:50%; width:120px; height:88px;
+    transform:translate(-50%,-50%); background:var(--md-surface-variant);
+    border-radius:var(--radius); display:grid; place-items:center;
+    color:var(--md-on-surface); font-size:13px; }
+  .tf-el.rot { transform:translate(-50%,-50%) rotate(15deg); }
+
+  /* Selection bounding box overlay */
+  .sel-box { position:absolute; left:50%; top:50%; width:120px; height:88px;
+    transform:translate(-50%,-50%); border:2px solid var(--md-primary);
+    border-radius:6px; pointer-events:none; }
+  .sel-box.rot { transform:translate(-50%,-50%) rotate(15deg); }
+
+  /* Corner scale dots — sized ≥ touch comfort, visually shown at 28px hit-pad */
+  .dot { position:absolute; width:18px; height:18px; border-radius:50%;
+    background:var(--md-surface); border:2px solid var(--md-primary);
+    box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  /* invisible ≥48dp touch pad around each dot */
+  .dot::after { content:""; position:absolute; inset:-15px; border-radius:50%; }
+  .dot.tl{ left:-9px; top:-9px; } .dot.tr{ right:-9px; top:-9px; }
+  .dot.bl{ left:-9px; bottom:-9px; } .dot.br{ right:-9px; bottom:-9px; }
+
+  /* Rotation handle — stem + grab knob above the box */
+  .rot-stem { position:absolute; left:50%; top:-34px; width:2px; height:34px;
+    background:var(--md-primary); transform:translateX(-50%); }
+  .rot-knob { position:absolute; left:50%; top:-46px; width:22px; height:22px;
+    transform:translate(-50%,0); border-radius:50%; background:var(--md-primary);
+    border:2px solid var(--md-on-primary); display:grid; place-items:center; }
+  .rot-knob::after{ content:""; position:absolute; inset:-13px; border-radius:50%; }
+  .rot-knob span { color:var(--md-on-primary); font-size:12px; line-height:1; }
+
+  /* Live transform readout pill */
+  .readout { position:absolute; left:50%; bottom:10px; transform:translateX(-50%);
+    background:var(--md-on-surface); color:var(--md-surface); font-size:12px;
+    font-variant-numeric:tabular-nums; padding:5px 10px; border-radius:999px;
+    white-space:nowrap; box-shadow:0 2px 6px rgba(0,0,0,.3); }
+
+  /* Gesture-direction arrows for the annotated states */
+  .ghint { position:absolute; font-size:11px; color:var(--md-primary);
+    font-weight:600; background:var(--md-secondary-container);
+    padding:2px 7px; border-radius:999px; }
+  .ghint.move { left:8px; top:8px; }
+  .ghint.scale{ right:8px; bottom:8px; }
+  .ghint.rot  { left:8px; top:8px; }
+
+  .gesturemap { display:grid; grid-template-columns:1fr 1fr; gap:8px;
+    padding:0 12px 12px; }
+  .gesturemap .chip { justify-content:flex-start; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>Zinely</span><span>▮▮▮ 100%</span></div>
+
+  <div class="appbar">
+    <button class="tool" aria-label="Back">‹</button>
+    <strong style="flex:1">Transform element</strong>
+    <button class="tool" aria-label="Undo">↶</button>
+    <button class="tool" aria-label="Redo">↷</button>
+  </div>
+
+  <p class="tf-label" style="padding:10px 12px 0">Three states of a selected element</p>
+
+  <div class="tf-frames">
+    <!-- MOVE (drag) -->
+    <section class="tf-frame">
+      <p class="tf-label">1 · Move</p>
+      <div class="canvas-stage" style="position:relative; height:200px;">
+        <div class="page-sheet" style="position:absolute; inset:14px;">
+          <div class="tf-el">Photo</div>
+          <div class="selection sel-box">
+            <span class="dot tl"></span><span class="dot tr"></span>
+            <span class="dot bl"></span><span class="dot br"></span>
+            <span class="rot-stem"></span>
+            <span class="rot-knob"><span>⟳</span></span>
+          </div>
+          <span class="ghint move">↕↔ drag</span>
+          <div class="readout">x 142, y 96 · 100% · 0°</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCALE (pinch / corner handle) -->
+    <section class="tf-frame">
+      <p class="tf-label">2 · Scale</p>
+      <div class="canvas-stage" style="position:relative; height:200px;">
+        <div class="page-sheet" style="position:absolute; inset:14px;">
+          <div class="tf-el" style="width:140px;height:104px;">Photo</div>
+          <div class="selection sel-box" style="width:140px;height:104px;">
+            <span class="dot tl"></span><span class="dot tr"></span>
+            <span class="dot bl"></span>
+            <span class="dot br" style="outline:3px solid var(--md-secondary-container);outline-offset:2px;"></span>
+            <span class="rot-stem"></span>
+            <span class="rot-knob"><span>⟳</span></span>
+          </div>
+          <span class="ghint scale">⤡ pinch / drag corner</span>
+          <div class="readout">120% · keep ratio</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROTATE (two-finger / rotation handle) -->
+    <section class="tf-frame">
+      <p class="tf-label">3 · Rotate</p>
+      <div class="canvas-stage" style="position:relative; height:200px;">
+        <div class="page-sheet" style="position:absolute; inset:14px;">
+          <div class="tf-el rot">Photo</div>
+          <div class="selection sel-box rot">
+            <span class="dot tl"></span><span class="dot tr"></span>
+            <span class="dot bl"></span><span class="dot br"></span>
+            <span class="rot-stem"></span>
+            <span class="rot-knob" style="outline:3px solid var(--md-secondary-container);outline-offset:2px;"><span>⟳</span></span>
+          </div>
+          <span class="ghint rot">↻ two-finger / drag knob</span>
+          <div class="readout">15° · snaps at 0/15/45/90</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Contextual action bar for the selected element (delete lives here) -->
+  <div class="contextbar">
+    <span class="chip">Selected · Photo</span>
+    <span style="flex:1"></span>
+    <button class="tool" aria-label="Duplicate">⧉</button>
+    <button class="tool" aria-label="Lock">🔒</button>
+    <button class="tool" aria-label="Delete element"
+            style="color:var(--md-error)">🗑</button>
+  </div>
+
+  <div class="gesturemap">
+    <span class="chip">👆 Long-press → select</span>
+    <span class="chip">✋ Drag → move</span>
+    <span class="chip">🤏 Pinch → scale</span>
+    <span class="chip">🔄 Two-finger twist → rotate</span>
+  </div>
+
+  <div class="note">
+    Handles render with an invisible ≥48dp touch pad (the visible dot is ~18px, the
+    hit area is padded outward). Corner dots scale proportionally; the top knob rotates.
+    A single live <strong>readout pill</strong> echoes position · scale% · angle so the
+    gesture maps 1:1 onto the editor's <code>AffineTransform2D</code> (translate · scale · rotate).
+  </div>
+
+  <div class="bottombar">
+    <button class="tool">✋<small>Select</small></button>
+    <button class="tool">⤢<small>Scale</small></button>
+    <button class="tool">⟳<small>Rotate</small></button>
+    <button class="tool">⧉<small>Layers</small></button>
+    <button class="tool">＋<small>Add</small></button>
+  </div>
+</div>
+</body>
+</html>
