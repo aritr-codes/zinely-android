@@ -41,7 +41,7 @@ jobs:
       - name: Run core module tests
         run: |
           chmod +x ./gradlew
-          ./gradlew :core:model:test :core:imposition:test :core:render:test :core:data:test :core:data-storage:test --no-daemon --stacktrace
+          ./gradlew :core:model:test :core:imposition:test :core:render:test :core:data:test :core:data-storage:test :core:editor:test --no-daemon --stacktrace
 
       - name: Upload test reports
         if: always()

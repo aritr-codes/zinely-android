@@ -58,4 +58,8 @@ include(":core:data")
 // S2B durability/GC core (ADR-025): pure-JVM (java.nio) atomic file source, autosave
 // coordinator, content-addressed asset store + mark-and-sweep GC. Android-free; CI-tested.
 include(":core:data-storage")
+// S4 editor state + interaction core (ADR-029): pure MVI reducer over the :core:model ZineDocument
+// tree, command/field-memento undo, and pure hit-test/snap/transform-bake geometry. Only dep
+// :core:model; zero Android. The Android store/gestures/contextbar live in :feature:editor.
+include(":core:editor")
  
