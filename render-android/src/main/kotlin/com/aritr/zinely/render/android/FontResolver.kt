@@ -8,11 +8,11 @@ import android.graphics.Typeface
  * tests, so a family resolves to the same glyphs and metrics in preview, export, and goldens — this is
  * what keeps wrapping identical across paths (ADR-028 §4.2, risk R2).
  *
- * The production resolver (G6) loads a fixed, self-covering bundled-font map from `assets/fonts/`
- * ([ADR-010](../DECISIONS.md#adr-010) / [ADR-001](../DECISIONS.md#adr-001)) so no device/system font is
- * ever reached for the MVP charset. [Default] is a deterministic system-family stand-in used until that
- * bundled map lands; it is sufficient for in-process layout-determinism tests but is **not** the
- * golden-grade resolver (system fonts vary by device — out of scope for G3, see §4.2).
+ * The production resolver is [BundledFontResolver] (G6b): it loads a fixed, self-covering bundled-font
+ * map from `assets/fonts/` ([ADR-010](../DECISIONS.md#adr-010) / [ADR-001](../DECISIONS.md#adr-001)) so
+ * no device/system font is ever reached for the MVP charset. [Default] is a deterministic system-family
+ * stand-in: sufficient for in-process layout-determinism tests but **not** golden-grade (system fonts
+ * vary by device). S4/S5 wiring MUST inject [BundledFontResolver], never [Default] (§4.2, risk R2).
  */
 public fun interface FontResolver {
     public fun resolve(fontFamily: String, bold: Boolean, italic: Boolean): Typeface
