@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely · Layers / z-order (mockup)</title>
+<link rel="stylesheet" href="./style.css" />
+<style>
+  /* Scoped tweaks for layers.html only */
+  .layers-list { list-style:none; margin:0; padding:6px 0 4px; }
+  .layer { display:flex; align-items:center; gap:10px; min-height:var(--touch);
+    padding:8px 12px; border-radius:var(--radius); }
+  .layer + .layer { margin-top:2px; }
+  .layer.selected { background:var(--md-secondary-container);
+    outline:2px solid var(--md-primary); }
+  .layer .grip { width:40px; height:40px; display:grid; place-items:center;
+    color:var(--md-outline); font-size:18px; cursor:grab; flex:none; }
+  .layer .thumb { width:40px; height:40px; border-radius:6px; flex:none;
+    background:var(--md-surface-variant); display:grid; place-items:center;
+    font-size:16px; }
+  .layer .meta { flex:1; min-width:0; }
+  .layer .meta .t { font-size:14px; color:var(--md-on-surface);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .layer .meta .s { font-size:11px; color:var(--md-on-surface); opacity:.6; }
+  .layer.hidden .thumb, .layer.hidden .meta { opacity:.4; }
+  .iconbtn { width:44px; height:44px; display:grid; place-items:center; flex:none;
+    border:none; background:transparent; color:var(--md-on-surface); font-size:18px;
+    border-radius:50%; }
+  .layer.dragging { box-shadow:0 6px 16px rgba(0,0,0,.28);
+    background:var(--md-surface); transform:scale(1.01); }
+  .drop-line { height:2px; background:var(--md-primary); margin:2px 12px; border-radius:2px; }
+  .z-hint { font-size:11px; color:var(--md-on-surface); opacity:.55;
+    padding:2px 16px 8px; display:flex; justify-content:space-between; }
+  .arrange-row { display:flex; gap:8px; padding:8px 12px 4px; }
+  .arrange-row .btn-tonal { flex:1; }
+  /* canvas mini preview that mirrors selection */
+  .mini-canvas { position:relative; }
+  .mini-el { position:absolute; border-radius:6px;
+    background:var(--md-surface-variant); display:grid; place-items:center; font-size:11px; }
+  .mini-el.sel { outline:2px solid var(--md-primary); }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>Zinely</span><span>▮▮▮ 100%</span></div>
+
+  <div class="appbar">
+    <button class="tool" aria-label="Back">‹</button>
+    <strong style="flex:1">My zine · Page 2</strong>
+    <button class="tool" aria-label="Undo">↶</button>
+    <button class="tool" aria-label="Redo">↷</button>
+  </div>
+
+  <!-- Canvas mirrors layer selection -->
+  <div class="canvas-stage" style="position:relative; height:170px;">
+    <div class="page-sheet mini-canvas" style="position:absolute; inset:14px;">
+      <div class="mini-el" style="left:18px;top:16px;width:120px;height:80px;">Background</div>
+      <div class="mini-el" style="left:48px;top:40px;width:90px;height:54px;">Photo</div>
+      <div class="mini-el sel" style="left:70px;top:24px;width:96px;height:30px;">Title text</div>
+    </div>
+  </div>
+
+  <!-- Layers as an M3 standard bottom sheet -->
+  <div class="sheet" role="dialog" aria-label="Layers">
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 12px 0;">
+      <div style="flex:1;text-align:center;">
+        <span style="display:inline-block;width:32px;height:4px;border-radius:2px;
+              background:var(--md-outline);opacity:.5;"></span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;padding:6px 12px;">
+      <strong style="flex:1">Layers</strong>
+      <span class="chip">Top = front</span>
+    </div>
+
+    <div class="z-hint"><span>▲ Front (drawn last)</span></div>
+
+    <ul class="layers-list">
+      <!-- Top layer = front-most. Drag the grip to reorder. -->
+      <li class="layer selected" aria-selected="true">
+        <span class="grip" title="Drag to reorder">⠿</span>
+        <span class="thumb">T</span>
+        <span class="meta"><div class="t">Title text</div><div class="s">Text · front</div></span>
+        <button class="iconbtn" aria-label="Hide">👁</button>
+      </li>
+      <div class="drop-line" aria-hidden="true"></div>
+      <li class="layer dragging">
+        <span class="grip">⠿</span>
+        <span class="thumb">🖼</span>
+        <span class="meta"><div class="t">Photo — beach.jpg</div><div class="s">Image</div></span>
+        <button class="iconbtn" aria-label="Hide">👁</button>
+      </li>
+      <li class="layer hidden">
+        <span class="grip">⠿</span>
+        <span class="thumb">▦</span>
+        <span class="meta"><div class="t">Sticker · star</div><div class="s">Shape · hidden</div></span>
+        <button class="iconbtn" aria-label="Show">🚫</button>
+      </li>
+      <li class="layer">
+        <span class="grip">⠿</span>
+        <span class="thumb">▬</span>
+        <span class="meta"><div class="t">Background fill</div><div class="s">Shape · back</div></span>
+        <button class="iconbtn" aria-label="Hide">👁</button>
+      </li>
+    </ul>
+
+    <div class="z-hint"><span>▼ Back (drawn first)</span></div>
+
+    <!-- Discrete bring-forward / send-back for the selected layer -->
+    <div class="arrange-row">
+      <button class="btn-tonal" aria-label="Send to back">⤓ Back</button>
+      <button class="btn-tonal" aria-label="Send backward">▽ Backward</button>
+      <button class="btn-tonal" aria-label="Bring forward">△ Forward</button>
+      <button class="btn-tonal" aria-label="Bring to front">⤒ Front</button>
+    </div>
+
+    <div class="note">
+      List order = paint order (top row draws last / sits in front). Reorder by dragging
+      the <strong>⠿ grip</strong> (≥48dp); a primary-colour drop-line shows the landing slot.
+      Each row toggles <strong>visibility</strong> (👁). The four arrange buttons cover
+      front / forward / backward / back for users who don't discover drag. Selection is
+      two-way bound: tapping a row highlights the element on canvas and vice-versa.
+    </div>
+  </div>
+</div>
+</body>
+</html>

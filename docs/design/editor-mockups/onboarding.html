@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zinely · Onboarding / empty state</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <div class="screen-title">
+    <h1>First run · Empty state onboarding</h1>
+    <p>Illustration + benefits-led value prop + single CTA · no multi-slide tour</p>
+  </div>
+
+  <div class="phone">
+    <div class="phone__screen">
+
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="statusbar__icons">▮ ▮ ▮ ▮</span>
+      </div>
+
+      <!-- top app bar: just the brand on first run -->
+      <div class="appbar">
+        <span class="appbar__title">Zinely</span>
+      </div>
+
+      <div class="phone__body" style="display:flex; flex-direction:column;">
+
+        <!-- centred empty-state content -->
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px 28px; gap:8px;">
+
+          <!-- illustration placeholder: a little zine being folded -->
+          <div style="width:180px; height:180px; display:flex; align-items:center; justify-content:center; margin-bottom:8px;">
+            <svg width="170" height="170" viewBox="0 0 170 170" aria-hidden="true">
+              <rect x="20" y="34" width="130" height="100" rx="6" fill="#E2E0FF"/>
+              <rect x="20" y="34" width="65" height="100" rx="6" fill="#C9C7F2"/>
+              <line x1="85" y1="30" x2="85" y2="138" stroke="#4A4AE0" stroke-width="2" stroke-dasharray="4 4"/>
+              <rect x="32" y="50" width="40" height="8" rx="3" fill="#4A4AE0"/>
+              <rect x="32" y="66" width="34" height="5" rx="2" fill="#9C9AD6"/>
+              <rect x="32" y="78" width="40" height="5" rx="2" fill="#BCBAE6"/>
+              <rect x="98" y="50" width="40" height="40" rx="3" fill="#fff"/>
+              <rect x="98" y="98" width="40" height="6" rx="2" fill="#fff"/>
+              <rect x="98" y="110" width="30" height="5" rx="2" fill="#fff"/>
+              <circle cx="148" cy="40" r="10" fill="#4A4AE0"/>
+              <path d="M144 40 l3 3 l5 -6" stroke="#fff" stroke-width="2" fill="none"/>
+            </svg>
+          </div>
+
+          <h2 style="font-size:1.4rem; margin:0;">Make your first zine</h2>
+          <p style="color:var(--md-on-surface-variant); font-size:.95rem; margin:4px 0 0; line-height:1.45;">
+            Lay out pages, add text and photos, and print a fold-it-yourself zine at home.
+          </p>
+
+          <!-- privacy promise = the hook (chips) -->
+          <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:18px;">
+            <span class="chip chip--selected">🔒 No account</span>
+            <span class="chip chip--selected">✈️ Works offline</span>
+            <span class="chip chip--selected">📵 Stays on your phone</span>
+          </div>
+        </div>
+
+        <!-- primary CTA pinned near the bottom (thumb reach) + skip -->
+        <div style="padding:16px 24px 24px; display:flex; flex-direction:column; gap:10px;">
+          <button class="btn btn--block">＋ &nbsp;New zine</button>
+          <button class="btn btn--text btn--block">Browse a sample</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="note-group">
+    <div class="note"><strong>One benefits-led empty state, not a carousel.</strong> Illustration + one-line value prop + a single primary CTA. (NN/g: users skip long tutorials; contextual + benefits-oriented wins.)</div>
+    <div class="note"><strong>Lead with the privacy promise.</strong> "No account · offline · stays on your phone" turns Zinely's core constraint into the hook — its actual differentiator.</div>
+    <div class="note"><strong>Primary CTA = "New zine"</strong> — resolves to the <em>same</em> action as the home FAB. "Browse a sample" is a low-commitment secondary path; no forced sign-in, no permission walls.</div>
+    <div class="note"><strong>Empty-state ≡ first-run.</strong> This screen is shown whenever the project list is empty, so deleting all zines returns here naturally.</div>
+  </div>
+
+  <p style="margin-top:24px;"><a href="./index.html">← All mockups</a></p>
+
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely · Page navigation (mockup)</title>
+<link rel="stylesheet" href="./style.css" />
+<style>
+  /* Scoped tweaks for page-nav.html only */
+  .view-toggle { display:flex; gap:8px; padding:8px 12px; }
+  .view-toggle .chip[aria-pressed="true"] {
+    background:var(--md-secondary-container); outline:2px solid var(--md-primary); }
+
+  /* Filmstrip of page thumbnails */
+  .filmstrip { display:flex; gap:10px; overflow-x:auto; padding:12px;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+  .pthumb { scroll-snap-align:center; flex:none; width:78px; text-align:center; }
+  .pthumb .frame { width:78px; height:104px; border-radius:var(--radius);
+    background:var(--md-surface); border:2px solid var(--md-outline);
+    display:grid; place-items:center; color:var(--md-on-surface); position:relative;
+    overflow:hidden; }
+  .pthumb.current .frame { border-color:var(--md-primary); border-width:3px;
+    box-shadow:0 0 0 3px var(--md-secondary-container); }
+  .pthumb .frame .mini { position:absolute; background:var(--md-surface-variant);
+    border-radius:3px; }
+  .pthumb .lbl { font-size:12px; margin-top:5px; color:var(--md-on-surface); }
+  .pthumb.current .lbl { font-weight:700; color:var(--md-primary); }
+
+  /* Spread (two facing pages) thumbnail */
+  .pthumb.spread { width:140px; }
+  .pthumb.spread .frame { width:140px; }
+  .pthumb.spread .frame::after { content:""; position:absolute; left:50%; top:6px;
+    bottom:6px; width:1px; background:var(--md-outline); opacity:.5; }
+
+  .addpage { flex:none; width:78px; height:104px; border-radius:var(--radius);
+    border:2px dashed var(--md-outline); background:transparent;
+    color:var(--md-primary); font-size:28px; display:grid; place-items:center;
+    align-self:flex-start; }
+  .addpage small { display:block; font-size:11px; }
+
+  .pageindicator { text-align:center; font-size:13px; color:var(--md-on-surface);
+    opacity:.7; padding:2px 0 8px; font-variant-numeric:tabular-nums; }
+  .dotrow { display:flex; gap:6px; justify-content:center; padding:4px 0 10px; }
+  .dotrow i { width:7px; height:7px; border-radius:50%; background:var(--md-outline);
+    opacity:.5; }
+  .dotrow i.on { background:var(--md-primary); opacity:1; width:18px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>Zinely</span><span>▮▮▮ 100%</span></div>
+
+  <div class="appbar">
+    <button class="tool" aria-label="Back">‹</button>
+    <strong style="flex:1">My zine</strong>
+    <button class="tool" aria-label="Undo">↶</button>
+    <button class="tool" aria-label="Redo">↷</button>
+  </div>
+
+  <!-- Single vs Spread view toggle -->
+  <div class="view-toggle" role="group" aria-label="Page view">
+    <button class="chip" aria-pressed="true">▯ Single page</button>
+    <button class="chip" aria-pressed="false">▯▯ Spread</button>
+  </div>
+
+  <!-- Main canvas: current page (single view) -->
+  <div class="canvas-stage" style="position:relative; height:230px;">
+    <div class="page-sheet" style="position:absolute; left:50%; top:14px; bottom:14px;
+         transform:translateX(-50%); width:170px; display:grid; place-items:center;">
+      <span style="opacity:.5">Page 2 canvas</span>
+    </div>
+  </div>
+
+  <div class="pageindicator">Page 2 of 6</div>
+  <div class="dotrow" aria-hidden="true">
+    <i></i><i class="on"></i><i></i><i></i><i></i><i></i>
+  </div>
+
+  <!-- Filmstrip pager -->
+  <div class="filmstrip" aria-label="Pages">
+    <div class="pthumb">
+      <div class="frame"><span class="mini" style="left:14px;top:18px;right:14px;height:40px;"></span></div>
+      <div class="lbl">1 · Cover</div>
+    </div>
+    <div class="pthumb current" aria-current="page">
+      <div class="frame">
+        <span class="mini" style="left:10px;top:14px;right:10px;height:30px;"></span>
+        <span class="mini" style="left:18px;top:52px;width:42px;height:30px;"></span>
+      </div>
+      <div class="lbl">2</div>
+    </div>
+    <div class="pthumb">
+      <div class="frame"><span class="mini" style="left:16px;top:30px;right:16px;height:48px;"></span></div>
+      <div class="lbl">3</div>
+    </div>
+    <div class="pthumb">
+      <div class="frame"></div>
+      <div class="lbl">4</div>
+    </div>
+    <div class="pthumb">
+      <div class="frame"><span class="mini" style="left:14px;top:60px;right:14px;height:22px;"></span></div>
+      <div class="lbl">5</div>
+    </div>
+    <div class="pthumb">
+      <div class="frame"><span style="font-size:11px;opacity:.6">Back</span></div>
+      <div class="lbl">6</div>
+    </div>
+    <!-- Add page at the end of the strip -->
+    <button class="addpage" aria-label="Add page">＋<small>Add</small></button>
+  </div>
+
+  <div class="note">
+    Horizontal <strong>filmstrip</strong> doubles as pager: swipe or tap a thumbnail to
+    jump pages; the current page gets a primary 3px ring + page-dots indicator
+    (<code>2 of 6</code>). <strong>＋ Add</strong> appends a blank page at the strip's end.
+    The <strong>Single / Spread</strong> toggle switches the canvas + thumbnail shape
+    (spread = two facing pages with a centre gutter) for booklet-style zines, while keeping
+    the same paint model underneath.
+  </div>
+
+  <!-- Reorder hint via long-press on a thumbnail -->
+  <div class="note" style="margin-top:0">
+    Long-press a thumbnail to drag-reorder pages; release to drop. Duplicate / delete page
+    live in the thumbnail's contextual menu.
+  </div>
+
+  <div class="bottombar">
+    <button class="tool">✋<small>Select</small></button>
+    <button class="tool">＋<small>Add</small></button>
+    <button class="tool">⧉<small>Layers</small></button>
+    <button class="tool">▤<small>Pages</small></button>
+    <button class="tool">⤴<small>Export</small></button>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zinely · Editor (mockup)</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  /* Page-scoped only. Structural styling lives in the shared style.css. */
+  .editor .page-sheet { width: 78%; aspect-ratio: 3 / 4; position: relative; }
+
+  /* Placed text element (the ONE selected element) */
+  .editor .el-text {
+    position:absolute; left:18%; top:26%; width:56%;
+    font-size:22px; font-weight:700; line-height:1.15; color:var(--md-on-surface);
+  }
+  /* Non-selected image element, for layering context */
+  .editor .el-img {
+    position:absolute; right:8%; bottom:10%; width:38%; aspect-ratio:1/1;
+    border-radius:var(--radius); opacity:.85;
+    background:repeating-linear-gradient(45deg,
+      var(--md-surface-variant) 0 12px, var(--md-outline) 12px 13px);
+  }
+
+  /* Selection box positioned to wrap the text element (shared .selection = outline only) */
+  .editor .sel-box {
+    position:absolute; left:16%; top:23%; width:60%; height:24%;
+  }
+  /* Corner scale dots: shown ~18px, padded to a ≥48dp hit area */
+  .editor .dot { position:absolute; width:18px; height:18px; border-radius:50%;
+    background:var(--md-surface); border:2px solid var(--md-primary);
+    box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .editor .dot::after { content:""; position:absolute; inset:-15px; border-radius:50%; }
+  .editor .dot.tl{left:-9px;top:-9px;} .editor .dot.tr{right:-9px;top:-9px;}
+  .editor .dot.bl{left:-9px;bottom:-9px;} .editor .dot.br{right:-9px;bottom:-9px;}
+  /* Rotation handle: stem + grab knob detached above the top edge */
+  .editor .rot-stem { position:absolute; left:50%; top:-34px; width:2px; height:34px;
+    background:var(--md-primary); transform:translateX(-50%); }
+  .editor .rot-knob { position:absolute; left:50%; top:-46px; width:22px; height:22px;
+    transform:translate(-50%,0); border-radius:50%; background:var(--md-primary);
+    border:2px solid var(--md-on-primary); display:grid; place-items:center; }
+  .editor .rot-knob::after { content:""; position:absolute; inset:-13px; border-radius:50%; }
+  .editor .rot-knob span { color:var(--md-on-primary); font-size:12px; line-height:1; }
+
+  .editor .contextbar { top:14%; }
+  .editor .gmap { display:flex; flex-wrap:wrap; gap:6px; }
+  .editor .gmap .chip { font-size:11px; }
+</style>
+</head>
+<body>
+<div class="phone editor">
+
+  <div class="statusbar"><span>9:41</span><span>▢ ▢ ▮</span></div>
+
+  <!-- Top app bar: project context + undo/redo -->
+  <div class="appbar">
+    <button class="tool" aria-label="Back">‹</button>
+    <strong style="flex:1">Summer Zine · p.3</strong>
+    <button class="tool" aria-label="Undo">↶</button>
+    <button class="tool" aria-label="Redo">↷</button>
+  </div>
+
+  <!-- CANVAS STAGE: neutral workspace holding the white printable page-sheet -->
+  <div class="canvas-stage">
+
+    <div class="page-sheet">
+      <!-- non-selected element (layering context) -->
+      <div class="el-img" aria-label="Image element (not selected)"></div>
+      <!-- the ONE selected element -->
+      <div class="el-text">Make your<br>own zine.</div>
+
+      <!-- Selection overlay: bounding box + corner scale dots + rotation handle -->
+      <div class="selection sel-box" aria-label="Selection bounding box">
+        <span class="dot tl"></span><span class="dot tr"></span>
+        <span class="dot bl"></span><span class="dot br"></span>
+        <span class="rot-stem"></span>
+        <span class="rot-knob"><span>⟳</span></span>
+      </div>
+    </div>
+
+    <!-- Contextual toolbar for the selected element -->
+    <div class="contextbar" role="toolbar" aria-label="Text element actions">
+      <button class="chip">✎ Edit</button>
+      <button class="chip">⧉ Duplicate</button>
+      <button class="chip">⤢ Arrange</button>
+      <button class="chip">🗑 Delete</button>
+    </div>
+
+    <!-- Affordance annotation -->
+    <div class="note">
+      Handles paint ~18px but carry an invisible <b>≥48dp</b> hit pad (M3 touch-target rule).
+      Corner dots = proportional scale · detached top knob = rotate.
+    </div>
+  </div>
+
+  <!-- GESTURE MAP -->
+  <div class="note">
+    <b>Gesture map → MVI intent</b>
+    <div class="gmap">
+      <span class="chip">tap = select</span>
+      <span class="chip">tap empty = deselect</span>
+      <span class="chip">drag = move</span>
+      <span class="chip">pinch = scale</span>
+      <span class="chip">2-finger twist = rotate</span>
+      <span class="chip">long-press = menu / reorder</span>
+      <span class="chip">double-tap text = edit</span>
+    </div>
+  </div>
+
+  <!-- PERSISTENT M3 BOTTOM TOOL BAR: document-level insert / navigate -->
+  <nav class="bottombar" aria-label="Editor tools">
+    <button class="tool">T<small>Add text</small></button>
+    <button class="tool">🖼<small>Add image</small></button>
+    <button class="tool">▤<small>Layers</small></button>
+    <button class="tool">▦<small>Pages</small></button>
+    <button class="tool">⤓<small>Export</small></button>
+  </nav>
+
+</div>
+</body>
+</html>

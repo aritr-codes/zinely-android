@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zinely — Add image (mockup)</title>
+<link rel="stylesheet" href="./style.css">
+<style>
+  .add-image .page-sheet { aspect-ratio: 3 / 4; }
+
+  /* --- Picker sheet (state A) --- */
+  .add-image .sheet-grip { width:32px; height:4px; border-radius:2px; background:var(--md-outline);
+    margin:8px auto 10px; }
+  .add-image .offline-banner {
+    display:flex; align-items:center; gap:8px;
+    background: var(--md-secondary-container); color: var(--md-on-surface);
+    border-radius: var(--radius); padding:10px 12px; font-size:13px; margin-bottom:10px;
+  }
+  .add-image .source-row { display:flex; gap:8px; margin-bottom:12px; }
+  .add-image .gallery-grid {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:6px;
+  }
+  .add-image .thumb {
+    aspect-ratio:1/1; border-radius:var(--radius); border:1px solid var(--md-outline);
+    background: repeating-linear-gradient(45deg,
+      var(--md-surface-variant) 0 10px, var(--md-outline) 10px 11px);
+  }
+  .add-image .thumb.cam { display:flex; align-items:center; justify-content:center;
+    background: var(--md-surface-variant); font-size:22px; }
+
+  /* --- Placed image with handles (state B) --- */
+  .add-image .page-sheet { width:78%; aspect-ratio:3/4; position:relative; }
+  .add-image .el-img {
+    position:absolute; left:18%; top:24%; width:56%; aspect-ratio:4/3;
+    border-radius: var(--radius);
+    background: repeating-linear-gradient(45deg,
+      var(--md-surface-variant) 0 14px, var(--md-outline) 14px 15px);
+  }
+  /* selection box wrapping the placed image (shared .selection = outline only) */
+  .add-image .sel-box { position:absolute; left:18%; top:24%; width:56%; aspect-ratio:4/3; }
+  .add-image .dot { position:absolute; width:18px; height:18px; border-radius:50%;
+    background:var(--md-surface); border:2px solid var(--md-primary);
+    box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .add-image .dot::after { content:""; position:absolute; inset:-15px; border-radius:50%; }
+  .add-image .dot.tl{left:-9px;top:-9px;} .add-image .dot.tr{right:-9px;top:-9px;}
+  .add-image .dot.bl{left:-9px;bottom:-9px;} .add-image .dot.br{right:-9px;bottom:-9px;}
+  .add-image .rot-stem { position:absolute; left:50%; top:-34px; width:2px; height:34px;
+    background:var(--md-primary); transform:translateX(-50%); }
+  .add-image .rot-knob { position:absolute; left:50%; top:-46px; width:22px; height:22px;
+    transform:translate(-50%,0); border-radius:50%; background:var(--md-primary);
+    border:2px solid var(--md-on-primary); display:grid; place-items:center; }
+  .add-image .rot-knob::after { content:""; position:absolute; inset:-13px; border-radius:50%; }
+  .add-image .rot-knob span { color:var(--md-on-primary); font-size:12px; line-height:1; }
+  .add-image .step-tag { font-size:11px; font-weight:700; color:var(--md-on-primary);
+    background:var(--md-primary); border-radius:999px; padding:2px 8px; }
+</style>
+</head>
+<body>
+<div class="phone add-image">
+
+  <div class="statusbar"><span>9:41</span><span>▢ ▢ ▮</span></div>
+
+  <div class="appbar">
+    <button class="tool" aria-label="Back">‹</button>
+    <strong style="flex:1">Add image</strong>
+  </div>
+
+  <!-- STATE B (background): page after the image is placed, with transform handles -->
+  <div class="canvas-stage">
+    <div class="page-sheet">
+      <div class="el-img" aria-label="Placed image element"></div>
+      <div class="selection sel-box" aria-label="Selection bounding box">
+        <span class="dot tl"></span><span class="dot tr"></span>
+        <span class="dot bl"></span><span class="dot br"></span>
+        <span class="rot-stem"></span>
+        <span class="rot-knob"><span>⟳</span></span>
+      </div>
+    </div>
+    <div class="note">
+      <span class="step-tag">2</span> After picking, the image is placed centered with the same
+      <b>corner-scale + rotate</b> handles and gesture map as any element
+      (drag move · pinch scale · twist rotate).
+    </div>
+  </div>
+
+  <!-- STATE A (foreground): the image-source bottom sheet, OFFLINE emphasis -->
+  <section class="sheet" aria-label="Pick an on-device image">
+    <div class="sheet-grip"></div>
+
+    <div class="row" style="display:flex; align-items:center; gap:8px;">
+      <span class="step-tag">1</span>
+      <b>Add from your phone</b>
+    </div>
+
+    <!-- Privacy / offline reassurance — non-negotiable Zinely invariant -->
+    <div class="offline-banner">
+      🔒 <span><b>On-device only.</b> Nothing leaves your phone — no cloud, no upload, no account.</span>
+    </div>
+
+    <div class="source-row">
+      <button class="btn-tonal">🖼 Photos</button>
+      <button class="btn-tonal">📷 Camera</button>
+    </div>
+
+    <div class="gallery-grid" aria-label="Device gallery (placeholders)">
+      <div class="thumb cam" title="Take photo">📷</div>
+      <div class="thumb"></div>
+      <div class="thumb"></div>
+      <div class="thumb"></div>
+      <div class="thumb"></div>
+      <div class="thumb"></div>
+      <div class="thumb"></div>
+      <div class="thumb"></div>
+      <div class="thumb"></div>
+    </div>
+
+    <div class="note">
+      Models the <b>Android Photo Picker</b>: system gallery, no storage permission, no network.
+      No stock library, no "from URL", no cloud drives in MVP.
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

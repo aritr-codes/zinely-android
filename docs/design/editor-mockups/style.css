@@ -1,0 +1,516 @@
+/* =====================================================================
+   Zinely — Editor Mockups · SHARED stylesheet (THROWAWAY)
+   ---------------------------------------------------------------------
+   ONE design system for ALL mockups in this folder. Other mockup files
+   (editor.html, text-edit.html, add-image.html, transform.html,
+   layers.html, page-nav.html, export.html, project-list.html,
+   onboarding.html) code against the EXACT class names below.
+   DO NOT rename tokens or classes — they are a shared contract.
+
+   Look: Material 3, mobile-first, deep-indigo primary. Low/mid fidelity.
+   All touch targets >= 48dp (--touch).
+   ===================================================================== */
+
+/* -------------------------------------------------------------
+   DESIGN TOKENS  (M3 colour roles + shape + touch)
+   ------------------------------------------------------------- */
+:root {
+  /* Colour roles (deep indigo/purple primary, M3-flavoured) */
+  --md-primary:            #4A4AE0;  /* brand / FAB / primary action   */
+  --md-on-primary:         #FFFFFF;  /* text/icon on primary           */
+  --md-surface:            #FCFBFF;  /* app background / cards          */
+  --md-on-surface:         #1A1B20;  /* primary text                   */
+  --md-surface-variant:    #E4E1EC;  /* subtle fills, dividers' field  */
+  --md-outline:            #76767F;  /* borders, hairlines, handles    */
+  --md-secondary-container:#E2E0FF;  /* tonal buttons, selected chips  */
+  --md-error:              #BA1A1A;  /* destructive / error            */
+
+  /* Derived helpers (not part of the required token list, but handy) */
+  --md-on-surface-variant: #46464F;  /* secondary text                 */
+  --md-on-secondary-container:#1A1A55;
+  --md-surface-dim:        #F2F0F6;  /* slightly recessed surface      */
+  --md-scrim:              rgba(0,0,0,.32);
+
+  /* Shape */
+  --radius:    16px;   /* default component radius        */
+  --radius-lg: 28px;   /* sheets, large cards, FAB-ish     */
+  --radius-sm: 8px;
+
+  /* Touch */
+  --touch: 48px;       /* minimum interactive target (48dp) */
+
+  /* Type + elevation */
+  --font: "Roboto", system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  --elev-1: 0 1px 2px rgba(0,0,0,.10), 0 1px 3px rgba(0,0,0,.06);
+  --elev-2: 0 2px 6px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.08);
+  --elev-3: 0 6px 16px rgba(0,0,0,.16), 0 2px 6px rgba(0,0,0,.10);
+}
+
+/* -------------------------------------------------------------
+   RESET / PAGE
+   ------------------------------------------------------------- */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--md-on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  /* gallery backdrop for the mockup pages themselves */
+  background: #ECEAF2 radial-gradient(circle at 50% 0%, #f4f2fb, #e6e3ef);
+  min-height: 100vh;
+  padding: 32px 16px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+h1, h2, h3 { font-weight: 600; }
+a { color: var(--md-primary); }
+
+/* page caption above a phone frame (mockup chrome, not part of UI) */
+.screen-title {
+  text-align: center;
+  max-width: 412px;
+}
+.screen-title h1 { margin: 0 0 4px; font-size: 1.15rem; }
+.screen-title p  { margin: 0; color: var(--md-on-surface-variant); font-size: .85rem; }
+
+/* -------------------------------------------------------------
+   .phone  — mobile device frame (~360–412px, rounded, subtle bezel)
+   ------------------------------------------------------------- */
+.phone {
+  width: 384px;
+  max-width: 100%;
+  height: 800px;
+  background: var(--md-surface);
+  border-radius: 40px;
+  border: 10px solid #15151b;       /* bezel */
+  box-shadow: var(--elev-3);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+/* the scrollable app area inside the bezel */
+.phone__screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+.phone__body {              /* scrolling content region */
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* -------------------------------------------------------------
+   .statusbar — edge-to-edge system bar mock
+   ------------------------------------------------------------- */
+.statusbar {
+  height: 28px;
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--md-on-surface);
+  background: var(--md-surface);
+}
+.statusbar__icons { letter-spacing: 2px; }
+
+/* -------------------------------------------------------------
+   .appbar — M3 top app bar
+   ------------------------------------------------------------- */
+.appbar {
+  flex: 0 0 auto;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--md-surface);
+  color: var(--md-on-surface);
+}
+.appbar__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  flex: 1;
+  padding: 0 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* contextual / selection variant (e.g. after long-press multiselect) */
+.appbar--context {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+
+/* round 48dp icon button used in app bars / toolbars */
+.iconbtn {
+  width: var(--touch);
+  height: var(--touch);
+  min-width: var(--touch);
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: inherit;
+  cursor: pointer;
+}
+.iconbtn:hover { background: rgba(0,0,0,.06); }
+
+/* -------------------------------------------------------------
+   .fab — M3 Floating Action Button (>=56px)
+   ------------------------------------------------------------- */
+.fab {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  min-width: 56px;
+  height: 56px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  box-shadow: var(--elev-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 5;
+}
+.fab__icon { font-size: 1.5rem; line-height: 1; }
+.fab--round { width: 56px; padding: 0; justify-content: center; } /* icon-only */
+
+/* -------------------------------------------------------------
+   .bottombar — thumb-reach bottom tool bar (icons + labels, >=48dp)
+   .tool      — a single item in it
+   ------------------------------------------------------------- */
+.bottombar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: 2px;
+  padding: 6px 4px;
+  background: var(--md-surface-dim);
+  border-top: 1px solid var(--md-surface-variant);
+}
+.tool {
+  flex: 1 1 0;
+  min-width: var(--touch);
+  min-height: var(--touch);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 2px;
+  cursor: pointer;
+  color: var(--md-on-surface-variant);
+  font-size: .68rem;
+}
+.tool__icon { font-size: 1.3rem; line-height: 1; }
+.tool--active {
+  color: var(--md-on-secondary-container);
+}
+.tool--active .tool__icon {
+  background: var(--md-secondary-container);
+  border-radius: 14px;
+  padding: 2px 14px;
+}
+
+/* -------------------------------------------------------------
+   .canvas-stage — editor canvas backdrop
+   .page-sheet   — the white zine page sitting on the stage
+   ------------------------------------------------------------- */
+.canvas-stage {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background:
+    var(--md-surface-variant)
+    repeating-conic-gradient(#0000 0 25%, rgba(0,0,0,.025) 0 50%)
+    0 0 / 28px 28px;          /* faint checkerboard = workspace */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.page-sheet {
+  background: #fff;
+  width: 78%;
+  aspect-ratio: 3 / 4;          /* portrait, print-ish */
+  box-shadow: var(--elev-2);
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* -------------------------------------------------------------
+   SELECTION / TRANSFORM
+   .selection — dashed selection outline
+   .handle    — ~20px touch dot for resize/rotate
+   ------------------------------------------------------------- */
+.selection {
+  position: absolute;
+  border: 2px dashed var(--md-primary);
+  border-radius: 3px;
+  pointer-events: none;
+}
+.handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border: 2px solid var(--md-primary);
+  border-radius: 50%;
+  box-shadow: var(--elev-1);
+  transform: translate(-50%, -50%);
+}
+.handle--tl { left: 0;    top: 0; }
+.handle--tr { left: 100%; top: 0; }
+.handle--bl { left: 0;    top: 100%; }
+.handle--br { left: 100%; top: 100%; }
+/* rotate handle floats above the top edge with a little stem */
+.handle--rotate { left: 50%; top: -28px; }
+.handle--rotate::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 100%;
+  width: 2px; height: 26px;
+  background: var(--md-primary);
+  transform: translateX(-50%);
+}
+
+/* -------------------------------------------------------------
+   .contextbar — contextual toolbar floating above selection / bottom
+   ------------------------------------------------------------- */
+.contextbar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--md-on-surface);
+  color: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--elev-3);
+  z-index: 6;
+}
+.contextbar .iconbtn { width: 44px; height: 44px; color: #fff; }
+.contextbar .iconbtn:hover { background: rgba(255,255,255,.14); }
+.contextbar__divider { width: 1px; height: 24px; background: rgba(255,255,255,.24); margin: 0 2px; }
+
+/* -------------------------------------------------------------
+   .sheet — M3 bottom sheet
+   ------------------------------------------------------------- */
+.sheet {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  background: var(--md-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--elev-3);
+  padding: 8px 16px 20px;
+  z-index: 7;
+}
+.sheet__grabber {
+  width: 36px; height: 4px;
+  background: var(--md-outline);
+  opacity: .4;
+  border-radius: 2px;
+  margin: 6px auto 12px;
+}
+.sheet__title { font-size: 1rem; font-weight: 600; margin: 0 0 12px; }
+
+/* -------------------------------------------------------------
+   .chip — M3 assist/filter chip
+   ------------------------------------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--md-outline);
+  background: transparent;
+  font-size: .82rem;
+  color: var(--md-on-surface);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chip--selected {
+  background: var(--md-secondary-container);
+  border-color: transparent;
+  color: var(--md-on-secondary-container);
+}
+
+/* -------------------------------------------------------------
+   .btn / .btn-tonal — M3 buttons (>=48dp tall via padding)
+   ------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--touch);
+  padding: 12px 24px;
+  border: none;
+  border-radius: 24px;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn:hover { filter: brightness(1.05); }
+.btn--block { width: 100%; }
+.btn-tonal {
+  background: var(--md-secondary-container);
+  color: var(--md-on-secondary-container);
+}
+.btn--text {
+  background: transparent;
+  color: var(--md-primary);
+}
+
+/* -------------------------------------------------------------
+   .card + .grid — thumbnail gallery
+   ------------------------------------------------------------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px 16px 96px;     /* bottom pad clears the FAB */
+}
+.card {
+  background: var(--md-surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+.card__thumb {
+  aspect-ratio: 3 / 4;          /* print-ish portrait preview */
+  background: #fff;
+  border: 1px solid var(--md-surface-variant);
+  border-radius: var(--radius);
+  box-shadow: var(--elev-1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-outline);
+}
+.card__meta { padding: 8px 4px 4px; }
+.card__title {
+  font-size: .9rem;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card__sub {
+  font-size: .76rem;
+  color: var(--md-on-surface-variant);
+  margin: 2px 0 0;
+}
+/* selection check overlay for multiselect */
+.card__check {
+  position: absolute;
+  top: 8px; left: 8px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: .9rem;
+  box-shadow: var(--elev-1);
+}
+.card--selected .card__check { display: flex; }
+.card--selected .card__thumb { outline: 3px solid var(--md-primary); outline-offset: -3px; }
+
+/* -------------------------------------------------------------
+   .note — annotation callout for the mockups (NOT part of the UI)
+   ------------------------------------------------------------- */
+.note {
+  position: relative;
+  max-width: 412px;
+  margin: 0 auto;
+  background: #FFF7DB;
+  border: 1px dashed #E0B300;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: .8rem;
+  color: #5b4a00;
+  box-shadow: var(--elev-1);
+}
+.note strong { color: #715c00; }
+.note--pin {              /* small floating pin variant placed over UI */
+  position: absolute;
+  max-width: 200px;
+  z-index: 20;
+  font-size: .72rem;
+  padding: 6px 9px;
+}
+.note-group {             /* stack of notes under a phone */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 412px;
+}
+
+/* gesture-map note: monospace mini-legend */
+.gesture-map {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: .72rem;
+  line-height: 1.5;
+}
+
+/* -------------------------------------------------------------
+   Index page helpers (index.html only)
+   ------------------------------------------------------------- */
+.index-wrap { max-width: 880px; width: 100%; }
+.index-group { margin: 28px 0 8px; }
+.index-group h2 { font-size: 1rem; margin: 0 0 12px; color: var(--md-on-surface-variant); }
+.index-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.index-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--md-surface);
+  border: 1px solid var(--md-surface-variant);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--elev-1);
+}
+.index-link:hover { box-shadow: var(--elev-2); border-color: var(--md-primary); }
+.index-link b { display: block; color: var(--md-primary); margin-bottom: 4px; }
+.index-link span { font-size: .82rem; color: var(--md-on-surface-variant); }

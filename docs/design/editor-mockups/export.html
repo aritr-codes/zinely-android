@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely · Export (mockup)</title>
+<link rel="stylesheet" href="./style.css" />
+<style>
+  /* Scoped tweaks for export.html only */
+  .scrim { position:absolute; inset:0; background:rgba(0,0,0,.32); }
+  .export-sheet { position:absolute; left:0; right:0; bottom:0;
+    border-top-left-radius:var(--radius-lg); border-top-right-radius:var(--radius-lg); }
+  .grab { width:32px; height:4px; border-radius:2px; background:var(--md-outline);
+    opacity:.5; margin:8px auto 4px; }
+  .seg { display:flex; gap:8px; }
+  .seg .chip { flex:1; justify-content:center; }
+  .seg .chip[aria-pressed="true"] { background:var(--md-secondary-container);
+    outline:2px solid var(--md-primary); font-weight:600; }
+  .field-label { font-size:12px; font-weight:600; letter-spacing:.03em;
+    text-transform:uppercase; color:var(--md-on-surface); opacity:.65;
+    margin:14px 0 6px; }
+  .offline-banner { display:flex; align-items:center; gap:10px;
+    background:var(--md-secondary-container); color:var(--md-on-surface);
+    border-radius:var(--radius); padding:10px 12px; font-size:13px; }
+  .offline-banner .ico { font-size:18px; }
+  .homeprint { display:flex; align-items:center; gap:10px; padding:6px 0;
+    font-size:13px; color:var(--md-on-surface); }
+  .export-btn { width:100%; justify-content:center; font-size:16px; padding:14px;
+    margin-top:16px; }
+  .summary { font-size:12px; color:var(--md-on-surface); opacity:.7;
+    text-align:center; margin-top:8px; }
+  .sub { font-size:12px; color:var(--md-on-surface); opacity:.6; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="statusbar"><span>9:41</span><span>Zinely</span><span>▮▮▮ 100%</span></div>
+
+  <div class="appbar">
+    <button class="tool" aria-label="Back">‹</button>
+    <strong style="flex:1">My zine · 6 pages</strong>
+    <button class="tool" aria-label="More">⋮</button>
+  </div>
+
+  <!-- Dimmed editor behind the modal sheet -->
+  <div class="canvas-stage" style="position:relative; height:340px;">
+    <div class="page-sheet" style="position:absolute; left:50%; top:14px; bottom:14px;
+         transform:translateX(-50%); width:160px; display:grid; place-items:center;">
+      <span style="opacity:.4">Page 1</span>
+    </div>
+    <div class="scrim"></div>
+
+    <!-- M3 modal bottom sheet: Export -->
+    <div class="sheet export-sheet" role="dialog" aria-label="Export zine">
+      <div class="grab" aria-hidden="true"></div>
+      <div style="display:flex;align-items:center;padding:2px 4px 6px;">
+        <strong style="flex:1;font-size:18px;">Export</strong>
+        <button class="tool" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Offline / privacy reassurance up top -->
+      <div class="offline-banner">
+        <span class="ico">📴</span>
+        <span>Exports stay <strong>on your device</strong> — no account, no cloud, no upload.</span>
+      </div>
+
+      <!-- Format -->
+      <div class="field-label">Format</div>
+      <div class="seg" role="group" aria-label="Format">
+        <button class="chip" aria-pressed="true">📄 PDF <span class="sub">· print-ready</span></button>
+        <button class="chip" aria-pressed="false">🖼 Images <span class="sub">· PNG / page</span></button>
+      </div>
+
+      <!-- Page size -->
+      <div class="field-label">Page size</div>
+      <div class="seg" role="group" aria-label="Page size">
+        <button class="chip" aria-pressed="true">Letter <span class="sub">8.5×11"</span></button>
+        <button class="chip" aria-pressed="false">A4 <span class="sub">210×297mm</span></button>
+      </div>
+
+      <!-- Home-print emphasis -->
+      <div class="field-label">Print at home</div>
+      <label class="homeprint">
+        <input type="checkbox" checked style="width:20px;height:20px;accent-color:var(--md-primary)" />
+        Add fold &amp; cut guide marks (booklet imposition)
+      </label>
+      <label class="homeprint">
+        <input type="checkbox" style="width:20px;height:20px;accent-color:var(--md-primary)" />
+        Fit to printable area (margins safe for home printers)
+      </label>
+
+      <!-- Primary action -->
+      <button class="btn export-btn" aria-label="Export PDF">⤓ Export PDF</button>
+      <div class="summary">6 pages · Letter · 1 PDF saved to your Files</div>
+
+      <div class="note" style="margin-top:12px">
+        Single decisive <strong>Export PDF</strong> primary button (home-print is the MVP
+        target). Format + size are chip toggles, not buried in a menu. The offline banner is
+        the first thing read, reinforcing the privacy invariant — there is deliberately
+        <em>no</em> "share to cloud" path. "Images" is the secondary export for sticker /
+        social reuse.
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
