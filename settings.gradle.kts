@@ -37,6 +37,13 @@ if (providers.environmentVariable("ZINELY_CORE_ONLY").orNull != "true") {
     // (Robolectric NATIVE + Roborazzi parity goldens), so it is gated out with :app / :data-android.
     // G1 = scaffold only; api(:core:render) is the only production edge (no Compose/Coil/Room).
     include(":render-android")
+    // S4 Compose preview host (ADR-028 §2.4 / spike §2.4): a thin drawIntoCanvas bridge that replays
+    // the pure :core:render tape onto the Compose nativeCanvas via the SAME :render-android
+    // CanvasReplayer the export path uses, discharging the Compose-host==export parity obligation
+    // (Codex Required-fix C) the S3 spike deferred. Needs the Android SDK (Compose + Robolectric
+    // NATIVE + Roborazzi), so it is gated out with :app / :data-android / :render-android. Preview
+    // host only this step — no MVI store / gestures / undo yet.
+    include(":feature:editor")
 }
 // Pure-Kotlin, Android-independent core (imposition engine spike).
 include(":core:model")

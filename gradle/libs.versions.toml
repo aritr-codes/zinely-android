@@ -69,6 +69,9 @@ hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testi
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
+# S4 :feature:editor preview-host parity: Roborazzi's Compose capture (captureRoboImage on a
+# composable / SemanticsNodeInteraction) for the Compose-host == export raster golden (ADR-028 §7.3).
+roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
