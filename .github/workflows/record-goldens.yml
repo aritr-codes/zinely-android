@@ -12,11 +12,6 @@ name: Record goldens
 # ambient drift. This job only PRODUCES artifacts; it never commits, so golden changes stay code-reviewed.
 on:
   workflow_dispatch:
-  # TEMPORARY (removed before merge): workflow_dispatch only dispatches from the default branch, so to
-  # record the first goldens from this feature branch we trigger on push to it. The follow-up commit
-  # that commits the goldens also removes this trigger, leaving workflow_dispatch-only on main.
-  push:
-    branches: [ feat/g6a-raster-goldens ]
 
 permissions:
   contents: read
