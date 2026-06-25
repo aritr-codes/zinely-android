@@ -25,8 +25,9 @@ bin/
 # Kotlin
 .kotlin/
 
-# Dev scratch (commit message staging for the neutral runner workflow)
+# Dev scratch (commit message + PR body staging for the neutral runner workflow)
 /tools/commitmsg.txt
+/tools/prbody.txt
 
 # jqwik failure-sample database (regenerated each test run)
 .jqwik-database
