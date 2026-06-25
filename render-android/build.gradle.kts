@@ -52,9 +52,22 @@ android {
 
     testOptions {
         unitTests {
-            // Robolectric needs merged Android resources/assets on the unit-test classpath; required
-            // for graphicsMode=NATIVE and (at G6) for loading the bundled font + image fixtures.
+            // Robolectric needs merged Android resources/assets on the unit-test classpath for
+            // graphicsMode=NATIVE. (The G6a image-master fixture lives in androidTest assets — the
+            // headless raster suite renders only Canvas-primitive cases, no PNG decode.)
             isIncludeAndroidResources = true
+
+            // G6a Roborazzi golden stability (ADR-028 §7.3/§7.5). The golden FILE LOCATION is the
+            // explicit module-relative path each test passes to captureRoboImage (".../src/test/
+            // roborazzi/<case>.png"), resolved against the unit-test task's working dir (the module
+            // root) — the SAME path in record and verify mode, so a golden recorded on the pinned CI
+            // image gates every later run. captureRoboImage is a no-op under a plain testDebugUnitTest
+            // (neither record nor verify property set), so the headless job stays green until the
+            // goldens are committed — exactly the G1 task-wiring intent. maxParallelForks=1 keeps the
+            // raster single-fork deterministic.
+            all { test ->
+                test.maxParallelForks = 1
+            }
         }
     }
 }

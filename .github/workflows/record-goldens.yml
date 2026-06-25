@@ -1,0 +1,53 @@
+name: Record goldens
+
+# Manual (workflow_dispatch) Roborazzi golden recorder for :render-android (ADR-028 §7.5).
+#
+# Goldens MUST be recorded on the SAME pinned image that verifies them (ubuntu-24.04, JDK 21, pinned
+# Robolectric/Roborazzi/SDK, UTC/en_US) — see the android-graph verify job in ci.yml. There is no local
+# Android build in this project (no SDK on dev machines), so this workflow is the only way to produce
+# the committed PNGs: run it, download the `roborazzi-goldens` artifact, commit the PNGs under
+# render-android/src/test/roborazzi/, and the android-graph `verifyRoborazziDebug` step then gates them.
+#
+# A re-record (toolchain bump or an intentional visual change) is a deliberate, reviewed refresh — never
+# ambient drift. This job only PRODUCES artifacts; it never commits, so golden changes stay code-reviewed.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    name: Record :render-android goldens (pinned image)
+    runs-on: ubuntu-24.04
+    # ZINELY_CORE_ONLY intentionally UNSET so settings.gradle.kts includes :render-android.
+    env:
+      TZ: UTC
+      LANG: en_US.UTF-8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Record Roborazzi goldens
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :render-android:recordRoborazziDebug --rerun-tasks --no-daemon --stacktrace
+
+      - name: Upload recorded goldens
+        uses: actions/upload-artifact@v4
+        with:
+          name: roborazzi-goldens
+          path: render-android/src/test/roborazzi/**/*.png
+          if-no-files-found: error
