@@ -78,7 +78,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Validate Hilt graph (compile :app) + run :data-android & :render-android JVM tests
+      - name: Validate Hilt graph (compile :app) + run :data-android, :render-android & :feature:editor JVM tests
         # :app:compileDebugKotlin is the minimum graph gate (KSP/Hilt run during Kotlin compilation
         # and fail the build on any missing/duplicate/cyclic binding). :data-android:testDebugUnitTest
         # is the justified stronger equivalent — it additionally runs the pure-JVM binding tests
@@ -92,10 +92,18 @@ jobs:
         # decode are both unsupported), so they live in src/androidTest and run on a device —
         # compileDebugAndroidTestKotlin compile-checks them here (no emulator), so they can't bitrot.
         # :core:render itself stays in the core-only job — pure, Android-free.
+        #
+        # :feature:editor (ADR-028 S4): the Compose preview host. Its testDebugUnitTest is the
+        # preview==export parity gate — a purely behavioural Robolectric NATIVE proof (no committed
+        # Roborazzi golden, so no verify step): the Compose host raster must match a direct CanvasReplayer
+        # replay of the same tape (fills EXACT, AA edges <= 0.02), and text must route through the
+        # bundled font resolver. No consumer module depends on it yet, so it is NOT otherwise compiled
+        # in CI — this line is what actually gates it.
         run: |
           chmod +x ./gradlew
           ./gradlew :app:compileDebugKotlin :data-android:testDebugUnitTest \
             :render-android:compileDebugAndroidTestKotlin \
+            :feature:editor:testDebugUnitTest \
             --no-daemon --stacktrace
 
       - name: Verify :render-android Roborazzi goldens + NATIVE unit proofs
@@ -114,6 +122,7 @@ jobs:
           path: |
             data-android/build/test-results/testDebugUnitTest/*.xml
             render-android/build/test-results/testDebugUnitTest/*.xml
+            feature/editor/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn
 
       # On a Roborazzi verify failure, the actual/compare/diff PNGs let a reviewer see the drift
