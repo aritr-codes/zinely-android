@@ -53,9 +53,15 @@ jobs:
 
   android-graph:
     name: Android Hilt graph validation (SDK)
-    runs-on: ubuntu-latest
+    # Pinned image (not ubuntu-latest): this job VERIFIES the Roborazzi goldens, which are only valid
+    # against the image they were recorded on (ADR-028 §7.5). The record-goldens.yml workflow pins the
+    # SAME ubuntu-24.04 + UTC/en_US so a verify never drifts against the recorded raster.
+    runs-on: ubuntu-24.04
     # ZINELY_CORE_ONLY is intentionally UNSET here so settings.gradle.kts includes :app and
     # :data-android — the only configuration in which the Hilt graph is compiled and validated.
+    env:
+      TZ: UTC
+      LANG: en_US.UTF-8
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,19 +84,27 @@ jobs:
         # is the justified stronger equivalent — it additionally runs the pure-JVM binding tests
         # (@AutosaveScope shape, EditorAutosaveBinderFactory wiring) in the same SDK-provisioned job.
         #
-        # :render-android (ADR-028 S3): testDebugUnitTest runs the Robolectric NATIVE proofs (real-Skia
-        # raster provider + replayer/transform conformance + api(:core:render) edge); verifyRoborazziDebug
-        # exercises the Roborazzi task wiring (a no-op until the G6 goldens are committed). The PDF
-        # provider's write+rasterise-back proof cannot run under Robolectric NATIVE (PdfDocument
-        # generation is unsupported) so it lives in src/androidTest and runs on a device — but
-        # compileDebugAndroidTestKotlin compile-checks it here (no emulator needed), so the deferred
-        # instrumented proof can't bitrot. :core:render itself stays in the core-only job — pure, Android-free.
+        # :render-android (ADR-028 S3): the Robolectric NATIVE unit proofs run in the next step via
+        # verifyRoborazziDebug (which runs testDebugUnitTest in verify mode — real-Skia raster provider +
+        # replayer/transform conformance + the G6a RasterGoldenTest cases + api(:core:render) edge). The
+        # PDF write+rasterise proof AND the real-PNG image-fidelity proof (ImageReplayInstrumentedTest)
+        # cannot run under Robolectric NATIVE (PdfDocument generation and BitmapRegionDecoder region
+        # decode are both unsupported), so they live in src/androidTest and run on a device —
+        # compileDebugAndroidTestKotlin compile-checks them here (no emulator), so they can't bitrot.
+        # :core:render itself stays in the core-only job — pure, Android-free.
         run: |
           chmod +x ./gradlew
           ./gradlew :app:compileDebugKotlin :data-android:testDebugUnitTest \
-            :render-android:testDebugUnitTest :render-android:verifyRoborazziDebug \
             :render-android:compileDebugAndroidTestKotlin \
             --no-daemon --stacktrace
+
+      - name: Verify :render-android Roborazzi goldens + NATIVE unit proofs
+        # verifyRoborazziDebug runs render-android's testDebugUnitTest in verify mode: all NATIVE unit
+        # tests PLUS the G6a golden pixel-diffs (committed under render-android/src/test/roborazzi/).
+        # Its own invocation — running it alongside a plain testDebugUnitTest would force that task into
+        # verify mode anyway. --rerun-tasks defeats the up-to-date skip: the source-tree goldens are not
+        # a tracked task input, so without it a cached verify could pass without actually comparing.
+        run: ./gradlew :render-android:verifyRoborazziDebug --rerun-tasks --no-daemon --stacktrace
 
       - name: Upload test reports
         if: always()
@@ -101,3 +115,13 @@ jobs:
             data-android/build/test-results/testDebugUnitTest/*.xml
             render-android/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn
+
+      # On a Roborazzi verify failure, the actual/compare/diff PNGs let a reviewer see the drift
+      # (ADR-028 §7.3) instead of guessing from a pixel-count delta. Only present when verify fails.
+      - name: Upload Roborazzi compare images on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: roborazzi-compare-images
+          path: render-android/build/outputs/roborazzi/**
+          if-no-files-found: ignore
