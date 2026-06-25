@@ -19,5 +19,7 @@ case "$cmd" in
   call) "$RUNNER" ":core:model:test" ":core:imposition:test" "$@" ;; # both core modules
   task) "$RUNNER" tasks "$@" ;;
   conn) "$RUNNER" ":render-android:connectedDebugAndroidTest" "$@" ;; # instrumented androidTest on a connected device
+  ed)  "$RUNNER" ":feature:editor:testDebugUnitTest" "$@" ;;        # S4 :feature:editor headless unit suite (preview-host parity)
+  edc) "$RUNNER" ":feature:editor:connectedDebugAndroidTest" "$@" ;; # S4 :feature:editor instrumented androidTest (device) — if probe forces it
   *)   "$RUNNER" "$cmd" "$@" ;;
 esac
