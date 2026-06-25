@@ -44,7 +44,9 @@ class TextGoldenTest {
         val EXPORT = ExportScale.EXPORT_PX_PER_PT
 
         // Text is all AA edges; a small committed threshold absorbs sub-pixel jitter on the pinned image.
-        fun text() = RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.03f))
+        // Matches RasterGoldenTest's AA tolerance — text must not be looser than geometric fills (it is the
+        // more fidelity-sensitive case: a shifted wrapped word must not hide under the diff budget).
+        fun text() = RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.02f))
     }
 
     private val replayer = CanvasReplayer(
