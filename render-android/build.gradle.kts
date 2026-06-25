@@ -13,9 +13,10 @@ plugins {
 // android.graphics.Canvas behind two providers (export PDF in PostScript points + export raster
 // ×300/72); the Compose preview host is a thin bridge that lands in :feature:editor (S4).
 //
-// G1 (this change) is SCAFFOLD ONLY — no replay logic. It proves the gated module builds, that the
-// api(:core:render) edge resolves, and that Robolectric graphicsMode=NATIVE rasterises real pixels in
-// CI (the load-bearing prerequisite for every later golden, spike §7.1). G2–G6 add the logic + goldens.
+// Built incrementally across gates G1–G6 (spike §9): G1 scaffold; G2 CanvasReplayer + FillRect; G3
+// SharedTextLayout; G4 ImageBlitter; G5 (current) the two export canvas providers + the PdfRenderer
+// rasterise-back harness; G6 the Roborazzi parity goldens. Robolectric graphicsMode=NATIVE rasterises
+// real Skia pixels in CI for the raster path (spike §7.1); the PDF write path is instrumented (below).
 //
 // Dependency direction (ADR-025/028): :render-android -> :core:render -> :core:model, never the
 // reverse — no Android type leaks into a pure core. No Compose / Coil / Room / :data-android: image
@@ -31,6 +32,12 @@ android {
 
     defaultConfig {
         minSdk = 24
+        // The raster provider is proven headless (Robolectric NATIVE rasterises real Skia). The PDF
+        // provider's write+rasterise-back proof needs the real android.graphics.pdf stack (PdfDocument
+        // generation is unsupported under Robolectric NATIVE — "document is closed!" on a fresh page),
+        // so it lives in src/androidTest and runs on a device/emulator — same split as :data-android's
+        // Os.fsync checks (ADR-028 risk R1/Q3). Plain runner; no Hilt graph in this module.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
@@ -74,4 +81,13 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.junit.rule)
+
+    // Instrumented tests (real device/emulator): the PDF provider's exit-bar proof — write a page with
+    // the real PdfDocument and rasterise it back with the real PdfRenderer (ADR-028 §7.3 layer 1).
+    // Robolectric NATIVE rasterises Bitmap/Canvas but cannot generate a PdfDocument, so this proof
+    // cannot run in the current no-emulator CI (it is compile-checked there; run on a device). Same
+    // authored-not-CI-run split as :data-android's Os.fsync durability tests.
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.core) // ApplicationProvider (explicit, not via transitivity)
 }
