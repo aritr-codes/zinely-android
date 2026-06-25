@@ -20,9 +20,14 @@ import java.io.File
  */
 public class PdfRasterizer {
 
-    /** Renders page [pageIndex] of [pdfBytes] to a fresh `ARGB_8888` bitmap at the export resolution. */
-    public fun rasterize(pdfBytes: ByteArray, pageIndex: Int = 0): Bitmap {
-        val file = File.createTempFile("zinely-export", ".pdf")
+    /**
+     * Renders page [pageIndex] of [pdfBytes] to a fresh `ARGB_8888` bitmap at the export resolution.
+     *
+     * @param cacheDir directory for the seekable staging file; pass an app cache dir on-device (where
+     *   `java.io.tmpdir` is not guaranteed writable). Defaults to the JVM temp dir.
+     */
+    public fun rasterize(pdfBytes: ByteArray, pageIndex: Int = 0, cacheDir: File? = null): Bitmap {
+        val file = File.createTempFile("zinely-export", ".pdf", cacheDir)
         try {
             file.writeBytes(pdfBytes)
             // PdfRenderer takes ownership of the descriptor and closes it on close(); own-and-guard so we

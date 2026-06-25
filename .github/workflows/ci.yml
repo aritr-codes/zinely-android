@@ -78,14 +78,18 @@ jobs:
         # is the justified stronger equivalent — it additionally runs the pure-JVM binding tests
         # (@AutosaveScope shape, EditorAutosaveBinderFactory wiring) in the same SDK-provisioned job.
         #
-        # :render-android (ADR-028 S3, G1 scaffold): testDebugUnitTest runs the Robolectric NATIVE
-        # smoke (real-Skia raster + api(:core:render) edge); verifyRoborazziDebug exercises the
-        # Roborazzi plugin/task wiring (a no-op until the G6 goldens are committed). :core:render
-        # itself stays in the core-only job — it is pure and Android-free.
+        # :render-android (ADR-028 S3): testDebugUnitTest runs the Robolectric NATIVE proofs (real-Skia
+        # raster provider + replayer/transform conformance + api(:core:render) edge); verifyRoborazziDebug
+        # exercises the Roborazzi task wiring (a no-op until the G6 goldens are committed). The PDF
+        # provider's write+rasterise-back proof cannot run under Robolectric NATIVE (PdfDocument
+        # generation is unsupported) so it lives in src/androidTest and runs on a device — but
+        # compileDebugAndroidTestKotlin compile-checks it here (no emulator needed), so the deferred
+        # instrumented proof can't bitrot. :core:render itself stays in the core-only job — pure, Android-free.
         run: |
           chmod +x ./gradlew
           ./gradlew :app:compileDebugKotlin :data-android:testDebugUnitTest \
             :render-android:testDebugUnitTest :render-android:verifyRoborazziDebug \
+            :render-android:compileDebugAndroidTestKotlin \
             --no-daemon --stacktrace
 
       - name: Upload test reports

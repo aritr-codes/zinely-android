@@ -6,6 +6,8 @@ junitVersion = "1.1.5"
 espressoCore = "3.5.1"
 # AndroidX instrumentation runner for :data-android androidTest (real Os.fsync durability checks)
 androidxTestRunner = "1.5.2"
+# AndroidX test core (ApplicationProvider) for :render-android androidTest (real PdfDocument proof)
+androidxTestCore = "1.5.0"
 # Core library desugaring (nio variant): backports java.nio.file to minSdk 24 (ADR-024 / ADR-025)
 desugarJdkLibs = "2.1.5"
 lifecycleRuntimeKtx = "2.6.1"
@@ -25,8 +27,9 @@ kotlinxCoroutines = "1.9.0"
 hilt = "2.59.2"
 ksp = "2.2.10-2.0.2"
 # S3 :render-android visual-fidelity tier (ADR-028). Robolectric runs Android graphics on the JVM
-# (no emulator) and MUST be 4.10+ for graphicsMode=NATIVE (real Skia text/Canvas/PdfDocument — the
-# load-bearing prerequisite, spike §7.1). Roborazzi drives the preview==export golden diffs on top of
+# (no emulator) and MUST be 4.10+ for graphicsMode=NATIVE (real Skia text/Canvas — the load-bearing
+# prerequisite, spike §7.1). NATIVE does NOT support PdfDocument generation (G5: "document is closed!"),
+# so the PDF write proof is an instrumented androidTest (R1). Roborazzi drives the golden diffs on top of
 # NATIVE. Both pins are part of the pinned golden toolchain (§7.5); a bump is a deliberate re-record.
 # Version compatibility with AGP 9.2.1 is validated by the android-graph CI job (cannot build locally).
 robolectric = "4.16.1"
@@ -38,6 +41,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 android-desugar-jdk-libs-nio = { group = "com.android.tools", name = "desugar_jdk_libs_nio", version.ref = "desugarJdkLibs" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
