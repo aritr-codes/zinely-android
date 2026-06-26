@@ -1,5 +1,8 @@
 package com.aritr.zinely.editor
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -55,6 +58,21 @@ private fun EditorDestination() {
     val view = LocalView.current
     LaunchedEffect(view) {
         viewModel.announcements.collect { text -> view.announceForAccessibility(text) }
+    }
+
+    // The system photo picker (ADR-031 §5). The launcher lives here (Compose-only); the VM-held
+    // PhotoPicker bridges it to the import pipeline. Bind the launch action while composed; unbind on
+    // dispose so a pending pick() resumes null instead of hanging (Codex RF2).
+    val pickLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        viewModel.photoPicker.deliver(uri)
+    }
+    DisposableEffect(viewModel) {
+        viewModel.photoPicker.bind {
+            pickLauncher.launch(
+                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+            )
+        }
+        onDispose { viewModel.photoPicker.unbind() }
     }
 
     when (val state = boot) {

@@ -1,9 +1,11 @@
 package com.aritr.zinely.editor
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.aritr.zinely.core.data.asset.AssetStore
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
 import com.aritr.zinely.core.data.storage.DocumentSnapshotProvider
@@ -16,7 +18,6 @@ import com.aritr.zinely.feature.editor.Announcer
 import com.aritr.zinely.feature.editor.AutosaveSink
 import com.aritr.zinely.feature.editor.DefaultEditorEffectRunner
 import com.aritr.zinely.feature.editor.EditorStore
-import com.aritr.zinely.feature.editor.UnavailableImagePipeline
 import com.aritr.zinely.render.android.AssetBytesSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -75,6 +76,8 @@ internal class EditorViewModel @Inject constructor(
     private val repository: DocumentRepository,
     private val binderFactory: EditorAutosaveBinderFactory,
     private val imposer: Imposer,
+    private val assetStore: AssetStore,
+    private val imageDecoder: ImportMasterDecoder,
     @param:AssetsDir private val assetsDir: File,
     // @param: pins the qualifier to the constructor value parameter (what Dagger reads) and opts out of
     // the KT-73255 default-target migration warning — same convention as EditorAutosaveBinderFactory.
@@ -91,6 +94,13 @@ internal class EditorViewModel @Inject constructor(
     /** A11y live-region channel; the composable collects this and calls `view.announceForAccessibility`. */
     private val _announcements = MutableSharedFlow<String>(extraBufferCapacity = 8)
     val announcements: SharedFlow<String> = _announcements.asSharedFlow()
+
+    /**
+     * The picker rendezvous (ADR-031 §5). VM-held so its lifetime matches the project; the Compose host
+     * [bind][PhotoPicker.bind]s its `ActivityResultLauncher` and [deliver][PhotoPicker.deliver]s results,
+     * while the import pipeline [await][PhotoPicker.await]s. Single instance ⇒ single-flight is global.
+     */
+    val photoPicker: PhotoPicker<Uri> = PhotoPicker()
 
     init {
         viewModelScope.launch(mainDispatcher) {
@@ -121,9 +131,20 @@ internal class EditorViewModel @Inject constructor(
 
         val announcer = Announcer { text -> _announcements.tryEmit(text) }
         val autosave = AutosaveSink { binder.markDirty() }
+        val pageSizePt = editedPageSize(initial.document, imposer)
+
+        // The real import pipeline (ADR-031 §5): pick on Main via the VM-held picker, decode/store on IO.
+        val imagePipeline = AndroidImagePickDecodePipeline(
+            picker = photoPicker,
+            decoder = imageDecoder,
+            assetStore = assetStore,
+            io = ioDispatcher,
+            main = mainDispatcher,
+            pageSizePt = pageSizePt,
+        )
 
         // Step 2: the store (a val) — its effect runner routes Autosave → the sink, image → the
-        // placeholder pipeline (Inc 1; real pick/decode is Inc 2), announce → the SharedFlow announcer.
+        // pick/decode/store pipeline, announce → the SharedFlow announcer.
         val store = EditorStore(
             initial = initial,
             scope = viewModelScope,
@@ -133,7 +154,7 @@ internal class EditorViewModel @Inject constructor(
                 io = ioDispatcher,
                 main = mainDispatcher,
                 autosave = autosave,
-                imagePipeline = UnavailableImagePipeline,
+                imagePipeline = imagePipeline,
                 announcer = announcer,
             ),
         )
@@ -147,7 +168,7 @@ internal class EditorViewModel @Inject constructor(
 
         return EditorBootState.Ready(
             store = store,
-            pageSizePt = editedPageSize(initial.document, imposer),
+            pageSizePt = pageSizePt,
             binder = binder,
             // Render reads masters straight from the content-addressed store dir (ADR-031 §3). Image
             // *import* (the writer) lands in Inc 2b; until then the seed doc has no images, so this just

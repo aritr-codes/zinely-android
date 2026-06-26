@@ -1,6 +1,9 @@
 package com.aritr.zinely.editor
 
 import android.content.Context
+import com.aritr.zinely.core.data.asset.AssetStore
+import com.aritr.zinely.core.data.storage.FileAssetStore
+import com.aritr.zinely.core.data.storage.FileSystemOps
 import com.aritr.zinely.core.imposition.Imposer
 import com.aritr.zinely.core.imposition.SingleSheet8Imposer
 import dagger.Module
@@ -60,4 +63,20 @@ internal object EditorAppModule {
     @AssetsDir
     fun provideAssetsDir(@ApplicationContext context: Context): File =
         File(context.filesDir, "assets")
+
+    /**
+     * The content-addressed import store (ADR-031 §1) over `filesDir/assets`, wired with the **real**
+     * [FileSystemOps] (the `:data-android` `AndroidFileSystemOps` with true `Os.fsync` dir flush — Codex
+     * Inc-2a obs), not the pure `Nio` default.
+     */
+    @Provides
+    @Singleton
+    fun provideAssetStore(@AssetsDir assetsDir: File, fs: FileSystemOps): AssetStore =
+        FileAssetStore(rootDir = assetsDir.toPath(), fs = fs)
+
+    /** The [ADR-023] import-master decoder (ADR-031 §4); needs the app `ContentResolver` for picked Uris. */
+    @Provides
+    @Singleton
+    fun provideImportMasterDecoder(@ApplicationContext context: Context): ImportMasterDecoder =
+        ImportMasterDecoder(context.contentResolver)
 }

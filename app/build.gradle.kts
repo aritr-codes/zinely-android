@@ -71,6 +71,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     // Route serializers for the @Serializable navigation routes (kotlin-serialization plugin output).
     implementation(libs.kotlinx.serialization.json)
+    // S4 Inc 2b: EXIF orientation normalisation on image import (ADR-031 §4).
+    implementation(libs.androidx.exifinterface)
     // collectAsStateWithLifecycle in the nav host / boot state (CLAUDE.md). Same 2.6.1 as -ktx.
     implementation(libs.androidx.lifecycle.runtime.compose)
 
