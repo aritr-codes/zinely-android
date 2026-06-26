@@ -5,6 +5,9 @@ plugins {
     // cross-module SingletonComponent aggregation — this is where the whole graph is validated.
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    // S4 app shell (ADR-030): @Serializable type-safe navigation routes need the kotlinx-serialization
+    // compiler plugin to generate the route serializers navigation-compose's toRoute()/composable<T> read.
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -51,6 +54,26 @@ dependencies {
     // Completes the intended one-way graph :app -> :data-android -> :core:* (core never depends back).
     implementation(project(":data-android"))
 
+    // S4 editor host (ADR-030): the app mounts :feature:editor's EditorScreen + EditorStore, constructs
+    // the store's effect seams, and derives pageSizePt from :core:imposition. :core:editor types
+    // (EditorModel/Intent) appear in the wiring; :core:imposition supplies the panel size.
+    implementation(project(":feature:editor"))
+    implementation(project(":core:editor"))
+    implementation(project(":core:imposition"))
+    // The editor host references these contracts directly (DocumentRepository, DataResult, the autosave
+    // DocumentSnapshotProvider); :data-android pulls them as `implementation`, so they are not on :app's
+    // classpath transitively — declare them explicitly.
+    implementation(project(":core:data"))          // DocumentRepository + DataResult/DataError
+    implementation(project(":core:data-storage"))  // DocumentSnapshotProvider (autosave pull seam)
+
+    // Single-Activity navigation graph + type-safe routes, and the hiltViewModel() bridge (ADR-030 §1).
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
+    // Route serializers for the @Serializable navigation routes (kotlin-serialization plugin output).
+    implementation(libs.kotlinx.serialization.json)
+    // collectAsStateWithLifecycle in the nav host / boot state (CLAUDE.md). Same 2.6.1 as -ktx.
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
     // PR-A Step 7: Hilt root. The @HiltAndroidApp Application is here; KSP aggregates and validates
     // the SingletonComponent graph contributed by :data-android at `:app:compileDebugKotlin`.
     implementation(libs.hilt.android)
@@ -68,6 +91,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
+    // EditorBootstrap unit tests (ADR-030): seed-on-miss over a fake DocumentRepository (runTest) and
+    // editedPageSize over the real SingleSheet8Imposer — pure JVM, no Robolectric/Hilt.
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

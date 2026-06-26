@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
+   Privacy invariant (PRD §5, ADR-030): Zinely is offline-only — user documents (filesDir) and all app
+   data must never leave the device. android:allowBackup="false" disables cloud auto-backup, but on
+   Android 12+ device-to-device (D2D) transfer is a SEPARATE channel that allowBackup does NOT gate;
+   without explicit <device-transfer> exclusions it copies app data wholesale (Codex RF2). So we exclude
+   every domain from BOTH channels here. (API 31+; older devices use backup_rules.xml.)
    See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <exclude domain="root" path="." />
+        <exclude domain="file" path="." />
+        <exclude domain="database" path="." />
+        <exclude domain="sharedpref" path="." />
+        <exclude domain="external" path="." />
     </device-transfer>
-    -->
 </data-extraction-rules>

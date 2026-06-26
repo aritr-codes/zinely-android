@@ -7,41 +7,33 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.aritr.zinely.editor.ZinelyNavHost
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+/**
+ * The single Activity (ADR-030 §1). Hosts the navigation-compose graph; all screens are composable
+ * destinations. `@AndroidEntryPoint` lets `hiltViewModel()` resolve the editor's `@HiltViewModel`
+ * against the `:data-android` SingletonComponent graph.
+ */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ZinelyTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+            ZinelyApp()
         }
     }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
+private fun ZinelyApp() {
     ZinelyTheme {
-        Greeting("Android")
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            ZinelyNavHost(modifier = Modifier.fillMaxSize().padding(innerPadding))
+        }
     }
 }
