@@ -11,6 +11,7 @@ import com.aritr.zinely.core.editor.LivePreview
 import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.render.SceneRenderer
 import com.aritr.zinely.render.android.AssetBytesSource
 
@@ -35,7 +36,9 @@ import com.aritr.zinely.render.android.AssetBytesSource
  * @param defaults document defaults the renderer folds (background).
  * @param pageSizePt the edited page/panel size in points (also the page clip); hoisted (imposition owns
  *   the panel size — not derived here).
- * @param live the ephemeral gesture accumulator for this frame, or `null` when no gesture is active.
+ * @param live the ephemeral pan/pinch/rotate accumulator for this frame, or `null` when inactive.
+ * @param resizeOverride directly-baked transforms for an active **handle-resize** drag (opposite-anchor,
+ *   §5.3), or `null`. When non-null it takes precedence over [live] (a handle drag is its own session).
  * @param modifier sized by the caller; both the preview and the chrome fill it so their device-px
  *   coordinates align.
  * @param imageBytes import-master byte source for image elements; defaults to the missing-asset placeholder.
@@ -47,6 +50,7 @@ public fun EditorPagePreview(
     pageSizePt: PtSize,
     live: LiveTransform?,
     modifier: Modifier = Modifier,
+    resizeOverride: Map<String, Transform>? = null,
     imageBytes: AssetBytesSource = EmptyAssetBytes,
 ) {
     val page = uiState.document.pages[uiState.currentPageIndex]
@@ -54,11 +58,13 @@ public fun EditorPagePreview(
     val screenPxPerPt = uiState.view.screenPxPerPt
     val pageOffset = uiState.view.pageOffset
 
-    // Bake the live gesture into the selected transforms (same bake as commit) for an open session only.
-    val effectivePage = if (interaction is Interaction.Transforming && live != null) {
-        LivePreview.apply(page, interaction.before, live, screenPxPerPt.toDouble())
-    } else {
-        page
+    // Bake the active gesture into the selected transforms for an open session only. A handle-resize
+    // override (directly-baked, opposite-anchor) wins over the pan/pinch LiveTransform path.
+    val effectivePage = when {
+        resizeOverride != null -> LivePreview.applyOverride(page, resizeOverride)
+        interaction is Interaction.Transforming && live != null ->
+            LivePreview.apply(page, interaction.before, live, screenPxPerPt.toDouble())
+        else -> page
     }
 
     // Recomputed only when the effective page / defaults / size change — i.e. per frame during a drag

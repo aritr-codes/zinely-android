@@ -35,10 +35,20 @@ public object LivePreview {
         screenPxPerPt: Double,
     ): Page {
         if (before.isEmpty()) return page
-        val baked = before.mapValues { (_, t) -> live.bake(t, screenPxPerPt) }
+        return applyOverride(page, before.mapValues { (_, t) -> live.bake(t, screenPxPerPt) })
+    }
+
+    /**
+     * The page rendered this frame when the preview transform is computed **directly** (not via a
+     * [LiveTransform]) — the handle-resize path, where each frame's [overrides] come from
+     * [TransformMath.bakeHandleResize] (opposite-anchor, §5.3). Replaces each overridden element's
+     * transform in place, preserving list/z-order; empty ⇒ the page unchanged.
+     */
+    public fun applyOverride(page: Page, overrides: Map<String, Transform>): Page {
+        if (overrides.isEmpty()) return page
         return page.copy(
             elements = page.elements.map { element ->
-                val newTransform = baked[element.id] ?: return@map element
+                val newTransform = overrides[element.id] ?: return@map element
                 element.withTransform(newTransform)
             },
         )

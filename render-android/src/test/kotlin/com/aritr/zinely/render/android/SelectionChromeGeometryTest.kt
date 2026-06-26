@@ -60,6 +60,19 @@ class SelectionChromeGeometryTest {
     }
 
     @Test
+    fun handle_positions_match_corners_and_edge_midpoints() {
+        val t = Transform(40.0, 40.0, 20.0, 20.0, rotationDegrees = 0.0)
+        val s = 2.0
+        val off = PtPoint(0.0, 0.0)
+        val corners = SelectionChromeGeometry.outlineDevicePx(t, s, off)
+        // Corner handle local (1,1) == BR == corners[2]; edge (1,0) == right-edge midpoint.
+        assertPt(corners[2], SelectionChromeGeometry.handleDevicePx(t, PtPoint(1.0, 1.0), s, off))
+        assertPt(corners[0], SelectionChromeGeometry.handleDevicePx(t, PtPoint(-1.0, -1.0), s, off))
+        assertPt(PtPoint(120.0, 100.0), SelectionChromeGeometry.handleDevicePx(t, PtPoint(1.0, 0.0), s, off)) // right edge
+        assertPt(PtPoint(100.0, 80.0), SelectionChromeGeometry.handleDevicePx(t, PtPoint(0.0, -1.0), s, off))  // top edge
+    }
+
+    @Test
     fun non_square_box_keeps_width_height_distinct() {
         val corners = SelectionChromeGeometry.outlineDevicePx(
             Transform(0.0, 0.0, 30.0, 10.0, rotationDegrees = 0.0),

@@ -531,3 +531,29 @@ same `LiveTransform.bake` the commit uses. Codex (below) endorsed this as the st
 **Test tiers:** `SelectionChromeGeometryTest` (`:render-android`, pure-JVM) + `LivePreviewTest` (`:core:editor`, pure-JVM, incl. an explicit preview==commit-application assertion) prove the math; `EditorPagePreviewTest` (`:feature:editor`, Robolectric NATIVE) is a host smoke proof that both layers compose idle and mid-gesture.
 
 **Still next:** resize **handles** + their opposite-anchor resize gesture (`TransformMath.bakeHandleResize`, §5.2/§5.3), live **snap guides** (`Snap` applied during update, render-only, **F1 skip-rotated**), the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.
+
+### 10.6 Gated `:feature:editor` — resize handles landed (2026-06-26)
+
+The eight opposite-anchor resize handles (§5.2/§5.3) are implemented + tested.
+
+| File | Module | What |
+|---|---|---|
+| `ResizeHandle.kt` | `:core:editor` | the 8-handle enum (local `(±1,±1)` unit frame) + `opposite` (mirror through centre, written `0.0 − v` so a 0-axis stays `+0.0`) + `TransformMath.resizeByHandle(before, handle, dragPagePt)` — a total adapter over `bakeHandleResize` wiring `anchor = handle.opposite`, `moving = handle.local`. |
+| `SelectionChromeGeometry.handleDevicePx` | `:render-android` | a handle's device-px position (local `(±1,±1)` → `(±w/2,±h/2)`, rotate `+rot` about centre, `previewPageToDevice`) — shares the `outlineDevicePx` mapper. |
+| `LivePreview.applyOverride` | `:core:editor` | the **directly-baked** preview path (resize computes a `Transform` per frame, not a `LiveTransform`); `apply` now delegates to it. |
+| `ResizeHandles.kt` | `:feature:editor` | per-handle 48dp hit target (WCAG 2.5.8; 12dp dot) with its own `detectDragGestures` begin/update/commit loop: opens one session (`BeginTransform`, token read synchronously), bakes `resizeByHandle(before, handle, previewDeviceToPage(cur))` each frame into `resizeOverride`, commits one `CommitTransform` on release (one drag = one undo step). `EditorPagePreview` gained `resizeOverride` (wins over the pan/pinch `live` path). |
+
+**Anchoring:** `cur` seeds at the handle's geometric device-px centre and accumulates post-slop drag deltas; `before` is read from the reducer-owned `Transforming.before` each frame (never a live element re-read). On a rotated element the **raw page-space** pointer (`previewDeviceToPage(cur)`, scale/offset inverse only) is fed to `bakeHandleResize`, which owns the projection into the rotated local frame — the correct boundary (Codex confirmed).
+
+**Codex review of the resize gesture (2026-06-26, GO — no Required-fix):**
+
+| Codex point | Outcome |
+|---|---|
+| onDrag should re-validate the session **token** before baking/preview (a concurrent interaction could replace ours) | **adopted** — `onDrag` bakes/`onResize`es only if `interaction is Transforming && token == myToken`; also covers nested-session preview from overlapping hit boxes. |
+| Overlapping 48dp hit boxes for a tiny element | Compose dispatches a down to a single topmost target ⇒ one `BeginTransform`; the token guard + reducer single-session authority handle the multi-touch edge. **Observation** (handle spacing/collapse for tiny boxes is a later polish). |
+| Begin while another session is live | reducer is authoritative; gesture relies on token validation. |
+| Touch-slop lag (seed at centre, drop slop) / commit `last` / rotation parity | confirmed correct as-is. |
+
+**Test tiers:** `ResizeHandleTest` (`:core:editor`, pure-JVM — opposite mirror, corner holds opposite fixed, edge resizes one axis, rotation invariant) + `SelectionChromeGeometryTest` handle-position cases (`:render-android`, pure-JVM); `ResizeHandlesTest` (`:feature:editor`, Robolectric NATIVE) drives a BR-corner drag → exactly one session, top-left held fixed in page space, box grows, one baked commit.
+
+**Still next:** live **snap guides** (`Snap` during update, render-only, **F1 skip-rotated**), the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.

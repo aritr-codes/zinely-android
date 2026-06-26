@@ -27,12 +27,8 @@ public object SelectionChromeGeometry {
      * then mapped to device px by [ExportScale.previewPageToDevice].
      */
     public fun outlineDevicePx(t: Transform, screenPxPerPt: Double, pageOffset: PtPoint): List<PtPoint> {
-        val cx = t.xPt + t.widthPt / 2.0
-        val cy = t.yPt + t.heightPt / 2.0
         val hw = t.widthPt / 2.0
         val hh = t.heightPt / 2.0
-        val rotate = AffineTransform2D.rotateDeg(t.rotationDegrees)
-        val toDevice = ExportScale.previewPageToDevice(screenPxPerPt, pageOffset)
         // Clockwise from top-left in element-local axes (+x right, +y down).
         val localCorners = listOf(
             PtPoint(-hw, -hh), // TL
@@ -40,8 +36,26 @@ public object SelectionChromeGeometry {
             PtPoint(hw, hh),   // BR
             PtPoint(-hw, hh),  // BL
         )
-        return localCorners.map { local ->
-            val rotated = rotate.map(local)
+        val mapLocal = localMapper(t, screenPxPerPt, pageOffset)
+        return localCorners.map(mapLocal)
+    }
+
+    /**
+     * The device-px position of one resize handle, given its **local unit-frame** coordinate `(±1, ±1)`
+     * (see `ResizeHandle.local` in `:core:editor`): scaled to the half-extents `(lx·w/2, ly·h/2)`, rotated
+     * about the centre by `+rot`, then mapped to device px — so the handle sits on the rendered box edge.
+     */
+    public fun handleDevicePx(t: Transform, local: PtPoint, screenPxPerPt: Double, pageOffset: PtPoint): PtPoint =
+        localMapper(t, screenPxPerPt, pageOffset)(PtPoint(local.x * t.widthPt / 2.0, local.y * t.heightPt / 2.0))
+
+    /** Maps an element-local offset from the box centre to device px (rotate about centre → +centre → device). */
+    private fun localMapper(t: Transform, screenPxPerPt: Double, pageOffset: PtPoint): (PtPoint) -> PtPoint {
+        val cx = t.xPt + t.widthPt / 2.0
+        val cy = t.yPt + t.heightPt / 2.0
+        val rotate = AffineTransform2D.rotateDeg(t.rotationDegrees)
+        val toDevice = ExportScale.previewPageToDevice(screenPxPerPt, pageOffset)
+        return { localOffset ->
+            val rotated = rotate.map(localOffset)
             toDevice.map(PtPoint(cx + rotated.x, cy + rotated.y))
         }
     }
