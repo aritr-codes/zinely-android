@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +18,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aritr.zinely.core.editor.Intent
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -95,12 +97,22 @@ private fun EditorDestination() {
                 state.binder.observe(lifecycleOwner.lifecycle)
                 onDispose { }
             }
-            EditorScreen(
-                store = state.store,
-                pageSizePt = state.pageSizePt,
-                modifier = Modifier.fillMaxSize(),
-                imageBytes = state.imageBytes,
-            )
+            // The editor surface (ADR-029) ships no add-image affordance, so the app supplies the entry
+            // point that drives the Inc 2b import pipeline: dispatch the existing Intent.RequestAddImage
+            // → Effect.PickAndDecodeImage → the photo picker. Kept at the app layer (no :feature:editor
+            // change); a richer toolbar is future work.
+            Box(modifier = Modifier.fillMaxSize()) {
+                EditorScreen(
+                    store = state.store,
+                    pageSizePt = state.pageSizePt,
+                    modifier = Modifier.fillMaxSize(),
+                    imageBytes = state.imageBytes,
+                )
+                ExtendedFloatingActionButton(
+                    onClick = { state.store.dispatch(Intent.RequestAddImage) },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
+                ) { Text("Add image") }
+            }
         }
     }
 }
