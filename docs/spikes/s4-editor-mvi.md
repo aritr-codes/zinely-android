@@ -473,3 +473,31 @@ serialising shell over the frozen reducer):
 **Still next:** gesture pipeline (`detectTransformGestures` → ephemeral `graphicsLayer{}` → `CommitTransform`),
 selection chrome + handles, the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`),
 the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.
+
+### 10.4 Gated `:feature:editor` — gesture pipeline landed (2026-06-26)
+
+The §5 live-transform gesture layer is implemented + tested. The pure frame/bake math is pushed down into
+`:core:editor` (unit-tested, no Compose); only event decoding lives in the Compose `Modifier`.
+
+| File | Module | What |
+|---|---|---|
+| `LiveTransform.kt` | `:core:editor` | the off-reducer accumulator (§5.1): `accumulate(panPx,zoomFactor,rotΔ)` folds each frame into one ephemeral `{panXpx,panYpx,zoom,rotationDeg}`; `clampedZoom(before)` floors the live `graphicsLayer` scale at `MIN_SIZE_PT` (**F2**); `bake(before, screenPxPerPt)` → committed `Transform` via `TransformMath.bakeCentreAnchored` (px-pan → page-pt at bake). |
+| `ExportScale.previewDeviceToPage` | `:render-android` | algebraic **inverse** of the preview seam (`pagePt = px/s − offset`), the px→pt map the gesture layer needs for `SelectAt`; kept beside its forward twin, round-trip unit-tested. |
+| `EditorGestures.kt` | `:feature:editor` | `Modifier.editorTransformGestures(...)`: a tap layer (`detectTapGestures` → long-press `SelectAt` / double-tap edit seam) + a hand-rolled begin/update/commit transform loop. First real delta past **touch-slop** opens the session (`BeginTransform`, token read synchronously per the §5.1 mailbox contract), frames push `LiveTransform` to `onPreview` (drives the chrome `graphicsLayer`), lift **bakes** each member's snapshot `before` (§5.2) into one `CommitTransform` (one gesture = one undo step, R5.3). |
+
+**D3 discharged:** the loop bakes from `(uiState.interaction as Transforming).before`, never a re-read of selection; an end-of-gesture token re-check commits only if our session is still live (else leaves a newer one untouched). **F2 discharged** via `clampedZoom`. Group transform bakes each member about its own centre — MVP selects one; the group-bbox-centre transform (§5.5) is the additive multi-select extension.
+
+**Test tiers:** `LiveTransformTest` (`:core:editor`, pure-JVM — accumulation, F2 clamp, px→pt pan, centre-stability) + `ExportScaleTest` round-trip (`:render-android`) cover the math; `EditorGesturesTest` (`:feature:editor`, Robolectric NATIVE + compose-ui-test input injection) covers the **wiring** — a drag opens exactly one session and commits one baked move, a long-press emits `SelectAt`, a still finger never opens a session.
+
+**Codex review of the gesture wiring (2026-06-26, GO WITH FIXES — reconciled):**
+
+| Codex finding | Reconciliation |
+|---|---|
+| Ownership leak — ignoring **all** pre-session consumption let a long-press (which consumes) still cross slop and start a transform | ignore only the consumed **first down**; any *later* external consumption abandons a not-yet-started transform (`token == null` → `break`) or cancels a live one (`token != null` → `CancelTransform`). So *long-press = discrete select*, *drag-before-long-press = transform* — predictable, no flicker. |
+| Transform target should be stable, not slop-cross selection | snapshot `selectionAtDown` right after `awaitFirstDown`; `BeginTransform(selectionAtDown)`. (Equal in practice — a transform can only begin before long-press fires — but makes the contract explicit.) |
+| End-of-gesture token re-check | **kept** — guards against a newer interaction replacing the session before commit. |
+| Pre-slop motion discarded (~`touchSlop` undercount) | **accepted** for MVP touch drag (small startup lag, matches platform `detectTransformGestures`); documented. Carry the slop residual into the first baked frame only if precision input demands it later. |
+
+The pre-slop accumulation mirrors the platform detector (cumulative `{zoom,rotation,pan}` vs slop, not per-frame) — an interpolated swipe arrives as many sub-slop steps, so a per-frame test would never cross.
+
+**Still next:** selection chrome + handles (consumes `onPreview` via `graphicsLayer`; `HitTest`/`Snap` guides, F1 skip-rotated), the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5; supplies the `BeginEditText` intent the double-tap seam dispatches), and Roborazzi selection-chrome goldens.

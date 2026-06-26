@@ -64,6 +64,19 @@ public object ExportScale {
      */
     public fun previewPageToDevice(screenPxPerPt: Double, pageOffset: PtPoint): AffineTransform2D =
         uniformScale(screenPxPerPt).times(AffineTransform2D.translate(pageOffset.x, pageOffset.y))
+
+    /**
+     * Inverse of [previewPageToDevice] — maps a device pixel back to its page point, the conversion the
+     * S4 gesture layer needs to turn a touch (px) into a page-space hit point for `SelectAt`/snapping.
+     * Algebraic inverse of `scale(s) · translate(offset)`: `pagePt = devicePx / s − offset`. Kept beside
+     * its forward twin so the preview seam owns **both** directions and they cannot drift; the round-trip
+     * is asserted in `ExportScaleTest`.
+     */
+    public fun previewDeviceToPage(screenPxPerPt: Double, pageOffset: PtPoint, devicePx: PtPoint): PtPoint =
+        PtPoint(
+            x = devicePx.x / screenPxPerPt - pageOffset.x,
+            y = devicePx.y / screenPxPerPt - pageOffset.y,
+        )
 }
 
 /** Named paper sizes in points (ADR-028 §3.2). The MVP home-print targets ([ADR-011]). */

@@ -44,6 +44,19 @@ class ExportScaleTest {
     }
 
     @Test
+    fun previewDeviceToPageInvertsPageToDevice() {
+        // The gesture seam (§5.4): a touch in px must map back to the exact page point, round-tripping
+        // through previewPageToDevice. Picked a non-trivial scale + offset.
+        val s = 2.5
+        val offset = PtPoint(10.0, -4.0)
+        val pagePt = PtPoint(33.0, 21.0)
+        val device = ExportScale.previewPageToDevice(s, offset).map(pagePt)
+        val back = ExportScale.previewDeviceToPage(s, offset, device)
+        assertEquals(pagePt.x, back.x, 1e-6)
+        assertEquals(pagePt.y, back.y, 1e-6)
+    }
+
+    @Test
     fun paperSizesMatchSpec() {
         assertEquals(PtSize(612.0, 792.0), PaperSize.LETTER.sizePt)
         assertEquals(PtSize(595.0, 842.0), PaperSize.A4.sizePt)
