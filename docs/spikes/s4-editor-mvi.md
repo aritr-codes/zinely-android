@@ -442,3 +442,34 @@ A max-effort review of the PR surfaced reducer-robustness gaps, all fixed TDD (1
 (`StateFlow<EditorUiState>` + effect runner over the S2B autosave binder), `detectTransformGestures` →
 `graphicsLayer{}` preview → `CommitTransform`, the selection contextbar (nudge/scale/rotate steppers +
 `semantics{customActions}`), per-element focus semantics on the Canvas, and Roborazzi selection-chrome goldens.
+
+### 10.3 Gated `:feature:editor` — store layer landed (2026-06-26)
+
+The MVI **store spine** is implemented + unit-tested (pure-JVM, no Robolectric — `EditorStore` is a thin
+serialising shell over the frozen reducer):
+
+| File | What |
+|---|---|
+| `EditorStore.kt` | `StateFlow<EditorUiState>` over the reducer; main-thread FIFO **mailbox** dispatch; synchronous `BeginTransform`-token contract; debug Autosave-payload invariant |
+| `EditorEffects.kt` | `EditorEffectRunner` + `DefaultEditorEffectRunner`; seams `AutosaveSink` (binder `markDirty()`), `Announcer`, `ImagePickDecodePipeline`/`ImagePickResult`; `UnavailableImagePipeline` placeholder (Failure → announce, no broken element) |
+
+**Module boundary kept:** `:feature:editor` depends on `:core:editor` (api) + coroutines (api) but **not**
+`:data-android` — the S2B [`EditorAutosaveBinder`](../../data-android/src/main/kotlin/com/aritr/zinely/data/android/EditorAutosaveBinder.kt)
+`markDirty()` is adapted to the `AutosaveSink` seam at the DI/app layer; the image source stays the
+`AssetBytesSource{null}` placeholder seam (real source = a later S4 step).
+
+**Codex review of the new wiring (2026-06-26, GO WITH FIXES — all reconciled):**
+
+| Codex finding | Reconciliation |
+|---|---|
+| D1 — main-thread confinement is enough for thread-safety but **not** re-entrancy ordering | dispatch serialised through a main-thread **FIFO mailbox** (`drain`): an effect re-entering via the store's synchronous `dispatch` is enqueued + drained after the current reduction — never a nested reduction. Background follow-ups use a main-confined `postDispatch`. |
+| D2 — pull-based autosave makes the effect `document` payload redundant | runner ignores the payload, calls `markDirty()` (binder pulls latest); store keeps a **debug invariant** `check(effect.document === reduction.model.document)` so payload/state can't silently diverge. |
+| D3 — on gesture end bake from the reducer-held `before`, not a re-read of current selection; cancel/replace the active gesture on selection/page change | the gesture layer (next increment) reads `before`/`token` from `uiState.interaction as Transforming`; the reducer already clears the session on page-nav. |
+| D4 — image seam fine; reducer should mint id | `ImagePickResult.Success(element)` id is a placeholder — `Intent.CommitAddImage` re-mints reducer-side (already true). |
+| D5 — **real race**: ON_PAUSE force-commit ordering must be explicit, not rely on observer order | the binder's lifecycle flush is async-on-io (posted off the main thread), so a **synchronous** main-thread `CommitText` in the editor's own ON_PAUSE handler always updates the model before the io flush coroutine pulls the snapshot. To be enforced + tested when the text-edit session lands (the editor screen owns the ON_PAUSE commit; flush is not relied on for ordering). |
+| F1 — rotated-element snap | **skip snapping when `rotationDegrees != 0`** (Snap is AABB-only; snapping a rotated box's AABB would shift it misleadingly and guides wouldn't align to visible edges). |
+| F2 — live min-size guard | preview clamps `w*zoom ≥ MIN_SIZE_PT` to mirror the commit-time clamp. |
+
+**Still next:** gesture pipeline (`detectTransformGestures` → ephemeral `graphicsLayer{}` → `CommitTransform`),
+selection chrome + handles, the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`),
+the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.
