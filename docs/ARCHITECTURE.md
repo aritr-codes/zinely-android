@@ -351,9 +351,9 @@ flowchart BT
     model["core:model<br/>✅ v0.1.0"]
     imp["core:imposition<br/>✅ v0.1.0"]
     data["core:data<br/>S2A ✅ · S2B ⬜"]
-    render["core:render<br/>S3 🚧 · ADR-027 (pure tier ✅ on main)"]
-    ra["render-android<br/>S3 ⬜ · ADR-028 (Android tier)"]
-    editor["feature:editor (MVI)<br/>S4"]
+    render["core:render<br/>S3 ✅ · ADR-027 (pure tier on main)"]
+    ra["render-android<br/>S3 ✅ · ADR-028 (Android tier on main)"]
+    editor["feature:editor (MVI)<br/>S4 ✅ surface on main · ADR-029"]
     export["export<br/>S5"]
     app["app shell / navigation"]
 
@@ -373,7 +373,7 @@ flowchart BT
 
     classDef done fill:#dff5dd,stroke:#3a7;
     classDef next fill:#fff4d6,stroke:#e0a800;
-    class model,imp done;
+    class model,imp,render,ra,editor done;
     class data next;
 ```
 
@@ -388,8 +388,8 @@ flowchart BT
 | **S2B-core** | **`core:data-storage`** (pure JVM) | `core:data`, S2A | ⬜ **current build step** — atomic file source + autosave coordinator + content-addressed asset store + mark-and-sweep GC (java.nio; CI-tested now) ([ADR-025](DECISIONS.md#adr-025)) | S3 (no shared dep) |
 | S2B-android | `data-android` (Android library) | `core:data-storage` | ⬜ Room + WorkManager GC scheduler + Bitmap/EXIF import master + SAF `.zine`; needs Android-SDK CI ([ADR-025](DECISIONS.md#adr-025)) | S3 |
 | S3-core | `core:render` (pure) | `core:model` | ✅ **on main** ([ADR-027](DECISIONS.md#adr-027)) — pure-JVM render core landed (`:core:render`, 23 tests, Codex GO, PR #9 merged `60f7344`) | S2B (no shared dep) |
-| **S3-android** | **`render-android`** (Android library) | `core:render` | 🚧 **design accepted** ([ADR-028](DECISIONS.md#adr-028)); **not built** — one `CanvasReplayer` + two canvas providers, `SharedTextLayout`, crop-aware `ImageBlitter`, Roborazzi raw-`CanvasReplayer` raster/PDF parity goldens (Compose preview-host parity proven in S4, PR #19, spike §2.4); needs Android-SDK CI ([spike](spikes/core-render-android-backend.md)). Gated like `:data-android`. Closes S3 | S2B (no shared dep) |
-| S4 | `feature:editor` | `core:model`, `core:data`, `render-android` (→ `core:render`) | 🚧 **preview host landed; parity ✅ (PR #19)** — stateless `PagePreview` Compose `drawIntoCanvas` bridge over `:render-android`'s `CanvasReplayer` (injects `BundledFontResolver`, §4.2). Discharges the Compose-host==export parity obligation ([ADR-028](DECISIONS.md#adr-028) §2.4, spike §2.4 "Codex Required-fix C"): `PagePreviewParityTest` (Robolectric NATIVE) diffs the host vs a direct replay of the same tape — **fills/placeholder EXACT, AA edges ≤ 0.02, text via the bundled resolver** — plus a Compose-Canvas derisk probe; **purely behavioural (no committed golden)**, gated in the `android-graph` CI job. **MVI store / gestures / undo still planned.** Gated like `:render-android` | — (needs S2 **and** S3) |
+| **S3-android** | **`render-android`** (Android library) | `core:render` | ✅ **on main** ([ADR-028](DECISIONS.md#adr-028), G1–G6) — one `CanvasReplayer` + two export providers, `SharedTextLayout`, crop-aware `ImageBlitter`, bundled **Inter** (MVP charset + cmap coverage guard). Roborazzi raster + text parity goldens **headless-CI-gated**; image + PDF write/parity proofs on-device (compile-checked in CI) ([spike](spikes/core-render-android-backend.md)). Gated like `:data-android`. **Closes S3** | S2B (no shared dep) |
+| S4 | `feature:editor` | `core:model`, `core:data`, `render-android` (→ `core:render`) | ✅ **interaction surface on main** ([ADR-029](DECISIONS.md#adr-029), PR #21) — pure `:core:editor` MVI reducer + the gated `:feature:editor` store, gesture pipeline, selection chrome + live document-order preview, opposite-anchor resize handles, live snap guides (preview==commit), a11y contextbar/element semantics (WCAG 2.5.7), race-safe text-edit session, host `EditorScreen`, and selection-chrome Roborazzi goldens (CI-gated). Preview-host `preview == export` parity proven (PR #19). **Remaining: wire `EditorScreen` into `:app` nav + `pageSizePt` from imposition + image pipeline + autosave binder.** Gated like `:render-android` | — (needs S2 **and** S3) |
 | S5 | `export` | `core:model`, `core:imposition`, `core:data`, `render-android` (→ `core:render`) | ⬜ | — |
 | — | `app` shell / nav | features | ⬜ | — |
 
