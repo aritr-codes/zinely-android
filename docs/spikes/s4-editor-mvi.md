@@ -587,3 +587,29 @@ Snapping (§5.4) is wired into the live transform path: applied to the **preview
 **Test tiers:** `LiveSnapTest` (`:core:editor`, pure-JVM — pan snaps to page edge + guide, bake==commit, F1 rotated skip, multi-select no-snap, non-positive-scale degrade, rotated-neighbour excluded, candidates from others) on top of the existing `SnapTest`; `EditorPagePreviewTest` asserts the `snap-guides` layer composes idle + mid-gesture; `EditorGesturesTest.drag_towardPageEdge_commitsTheSnappedTransform` drives a deterministic `down`/`moveBy(76px)`/`up` and asserts the **committed** right edge snapped exactly to the page edge (x→80, vs un-snapped 78).
 
 **Still next:** the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.
+
+### 10.8 Gated `:feature:editor` — a11y contextbar + element semantics landed (2026-06-26)
+
+The WCAG 2.5.7 single-pointer surface (§6) is implemented — **no new reducer logic**; the pure `Nudge`/`ScaleBy`/`RotateBy` twins (one `TransformCommand` each = one undo step) already shipped, this wires their UI.
+
+| File | Module | What |
+|---|---|---|
+| `EditorA11y.kt` | `:feature:editor` | shared vocabulary: step sizes (`NUDGE_STEP_PT=4.0`, `SCALE_STEP_FACTOR=1.1`, `ROTATE_STEP_DEGREES=15°`), `label(element)`, and `elementCustomActions(id, dispatch)` — 11 `CustomAccessibilityAction`s (move ×4, larger/smaller, rotate cw/ccw, bring-forward/send-backward, delete). Transform actions are **select-then-act** (`dispatch(Select(id))` then the twin) so a selection-scoped intent hits the right element even when TalkBack focus lands without a prior tap; `Select` mints no command ⇒ still one undo step. |
+| `ElementSemanticsLayer.kt` | `:feature:editor` | the accessible **mirror** of the decorative `PagePreview` Canvas: one focusable semantic node per element (`element-node-<id>`), placed over the element's **rotated AABB** (bbox of `outlineDevicePx`'s 4 corners), inflated to a ≥48dp square centred on the element (2.5.8). **Semantics-ONLY** (no `clickable`/`selectable`) so it never consumes pointer input — touch falls through to `editorTransformGestures` beneath; TalkBack still activates via the `onClick` semantic action. Carries `contentDescription`/`Role.Button`/`selected`/custom actions. The container is a `isTraversalGroup` and each node sets `traversalIndex = listIndex` so focus order = document (back-to-front) order despite overlapping bounds. |
+| `EditorContextBar.kt` | `:feature:editor` | the **visible** twin (`editor-context-bar`), shown only for a non-empty selection: a Row of ≥48dp Material3 `IconButton`s dispatching the **same** intents on the current selection (nudge/scale/rotate read `model.selection`; reorder/delete shown only for a single selected element). Glyphs decorative (`clearAndSetSemantics` sets the spoken label); pads `WindowInsets.navigationBars` (edge-to-edge). |
+
+**One code path, three entries:** gesture commit, per-element custom action, and visible button all dispatch the identical reducer intents — they can't diverge, and each is one undo step.
+
+**Codex review (2026-06-26, GO — no Required-fix):**
+
+| Codex point | Outcome |
+|---|---|
+| `mergeDescendants=true` unnecessary/harmful on a childless node | **adopted** — plain `.semantics{}`. |
+| Overlapping nodes → nondeterministic TalkBack focus order | **adopted** — `isTraversalGroup` + per-node `traversalIndex` from document order. |
+| select-then-act = one undo step? | **confirmed** — `Select` mints no command; avoid firing selection announcements from `Select` so it reads as one op. |
+| semantics-only fall-through; canvas-decorative + mirror; centred-48dp; `selected` sufficient (no `liveRegion`/`stateDescription`) | **confirmed correct as-is.** |
+| Hardcoded English labels (no string-res infra); rotation-normalize + max-size clamp | **deferred debt** — i18n needs a `res/` setup; rotation-normalize/max-clamp touch the already-landed pure reducer, out of this feature increment's scope. Tracked. |
+
+**Test tiers (Robolectric NATIVE):** `EditorContextBarTest` — Move-right nudges the selected element by one step; Make-larger then Rotate each commit one step (20→22pt centre-anchored, +15°); bar present for a selection, absent (recomposes) without. `ElementSemanticsLayerTest` — a node exists per element reporting `selected` + `contentDescription`; invoking the **Make larger** / **Delete** custom actions drives the same reducer intent against a real `EditorStore` (scales 20→22; removes the element).
+
+**Still next:** the race-safe text-edit session (§5.6, D5) — also adds the `Edit text` custom action + the `BeginEditText` the double-tap seam dispatches; and Roborazzi selection-chrome goldens.
