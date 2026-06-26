@@ -77,7 +77,7 @@ public fun ElementSemanticsLayer(
             val hDp = with(density) { hPx.toDp() }
 
             val selected = element.id in uiState.selection
-            val actions = EditorA11y.elementCustomActions(element.id, dispatch)
+            val actions = EditorA11y.elementCustomActions(element, dispatch)
             val description = EditorA11y.label(element)
 
             // Semantics-ONLY (no clickable/selectable): the node must not consume pointer input, or it

@@ -613,3 +613,32 @@ The WCAG 2.5.7 single-pointer surface (§6) is implemented — **no new reducer 
 **Test tiers (Robolectric NATIVE):** `EditorContextBarTest` — Move-right nudges the selected element by one step; Make-larger then Rotate each commit one step (20→22pt centre-anchored, +15°); bar present for a selection, absent (recomposes) without. `ElementSemanticsLayerTest` — a node exists per element reporting `selected` + `contentDescription`; invoking the **Make larger** / **Delete** custom actions drives the same reducer intent against a real `EditorStore` (scales 20→22; removes the element).
 
 **Still next:** the race-safe text-edit session (§5.6, D5) — also adds the `Edit text` custom action + the `BeginEditText` the double-tap seam dispatches; and Roborazzi selection-chrome goldens.
+
+### 10.9 Gated `:feature:editor` + `:core:editor` — race-safe text-edit session landed (2026-06-26)
+
+The text-edit session (§5.6, D5): begin/commit/cancel like a drag — one session = at most one command (one undo step); intermediate keystrokes never reach the store; the draft is **feature-ephemeral**.
+
+| File | Module | What |
+|---|---|---|
+| `Intent.kt` / `EditorReducer.kt` | `:core:editor` | `BeginEditText(id)` (a11y) + `BeginEditTextAt(pagePoint)` (double-tap seam, hit-tests via the same pure `HitTest` as `SelectAt`) → `openTextSession` opens `EditingText(id, nextToken)` iff a `TextElement` is hit. `CommitText(id, after, token)` and `CancelText(id, token)` are **token-gated** (a stale commit/cancel after nav or a newer session is a no-op). `endTextSession` closes to `Idle` and resolves the result — see below. |
+| `EditTextSession.kt` | `:feature:editor` | the IME overlay: a `BasicTextField` bound to a `remember(session.token)` `TextFieldValue` (draft never touches the document while typing). `commit()` (latched once) fires on keyboard **Done**, **focus-loss**, **`ON_PAUSE`** (the durability force-commit — synchronous so the reduction's autosave captures the draft before a process kill), and **`onDispose`** (tap-away never lost; token guard no-ops a duplicate). `EditorA11y` gained an **Edit text** custom action (text elements only) dispatching `BeginEditText`. |
+
+**Empty-handling / one-undo (the load-bearing semantics).** The box is "blank" iff its **resulting** text is blank (`after?.text ?: before.text` — so *cancelling* a box that already has text is never a delete). A blank result removes the box; if its placement is the **last undo step and was a blank freshly-placed box**, that `PlaceCommand` is **coalesced away** (undone + popped) so "add text → type nothing → dismiss" leaves zero undo cruft; otherwise an existing box is removed via a `DeleteCommand` (one undo restores). A non-blank commit takes only `text`/`style` from `after` and keeps `before`'s geometry/zIndex (a malformed commit can't move the element); equal-to-`before` ⇒ no command/autosave.
+
+**Codex review (2026-06-26, GO — no Required-fix; several adopted):**
+
+| Codex point | Outcome |
+|---|---|
+| `CancelText` was un-tokened — a stale cancel could kill a newer session | **adopted** — `CancelText(id, token)`, token-gated like commit. |
+| Empty existing box should **delete** (convention), not silently restore prior text | **adopted** — blank result deletes; *new empty cancels placement, existing empty deletes (undoable)*. |
+| place-then-cancel as `[Place, Delete]` = awkward undo (resurrects empty box) | **adopted** — coalesce the trailing blank `PlaceCommand` for the id (undo + pop) ⇒ net-zero history. |
+| Don't trust UI-supplied geometry/style in `after` if the edit should only change text | **adopted** — commit rebuilds from `before`, taking only `text`/`style`. |
+| Opening a newer session while one is open can lose the old draft (token rejects the stale commit) | **documented host invariant** — the host must commit/cancel before beginning another edit; token guard prevents corruption (only an unreachable-in-MVP draft loss). |
+| `ON_PAUSE` ordering vs a separate autosave binder that also observes `ON_PAUSE` | **documented** — relies on the `CommitText` reduction's own `Autosave` being durably enqueued; binder integration (flush-on-`ON_STOP` / explicit ordering) is the future host wiring. |
+| IME composition (CJK) at pause; `remember(token)` reset semantics; `onDispose` not the sole durability path | **confirmed correct** (best-effort on pause; `ON_PAUSE` is the primary durability path, `onDispose` the backstop). |
+
+**Deferred debt (tracked):** compose-ui `LocalLifecycleOwner` is used (deprecated → lifecycle-runtime-compose) to avoid a graph-wide lifecycle version bump; hardcoded English a11y/labels still pending a `res/` string setup.
+
+**Test tiers:** `TextEditSessionTest` (`:core:editor`, pure-JVM — begin opens/selects/advances-token + no autosave; `BeginEditTextAt` hits text not image/miss; a full session = one `EditTextCommand` + one-undo restore; stale token rejected; no-op commit closes with no command; existing-empty deletes + undo restores; **place-then-cancel coalesces to empty history**; non-blank keeps before's geometry vs a malformed `after`; cancel keeps an existing box; stale/no-session cancel no-op); `EditTextSessionTest` (`:feature:editor`, Robolectric NATIVE — typing stays ephemeral until Done commits the whole draft as one edit; one undo fully restores ⇒ exactly one command despite the onDispose backstop also firing).
+
+**Still next:** Roborazzi selection-chrome goldens; the host **EditorScreen** that owns `live`/`resizeOverride`/edit state and wires the gesture/handle/contextbar/edit layers together.

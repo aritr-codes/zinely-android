@@ -83,7 +83,9 @@ class EditorReviewFixesTest {
     @Test
     fun `CommitText normalizes the committed element id to the target id`() {
         val start = model(listOf(pageOf(0, txt("a", text = "old"))), selection = setOf("a"))
-        val r = EditorReducer.reduce(start, Intent.CommitText("a", TextElement("WRONG", txt("a").transform, 0, "new")))
+        val begun = EditorReducer.reduce(start, Intent.BeginEditText("a")).model
+        val token = (begun.interaction as Interaction.EditingText).token
+        val r = EditorReducer.reduce(begun, Intent.CommitText("a", TextElement("WRONG", txt("a").transform, 0, "new"), token))
         val out = els(r.model).single() as TextElement
         assertEquals("a", out.id)
         assertEquals("new", out.text)
