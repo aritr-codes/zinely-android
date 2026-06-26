@@ -74,7 +74,19 @@ public object EditorReducer {
                     TransformCommand(tx.pageIndex, tx.before, after))
             }
         }
-        Intent.CancelTransform -> Reduction(model.copy(interaction = Interaction.Idle))
+        is Intent.CancelTransform -> {
+            val tx = model.interaction as? Interaction.Transforming
+            // Stale / mismatched cancel (a newer session replaced ours) ⇒ no-op, so it can't wipe a live one.
+            if (tx == null || tx.token != intent.token) Reduction(model)
+            else Reduction(model.copy(interaction = Interaction.Idle))
+        }
+
+        // Display-only viewport update: no autosave, no history, and selection/interaction untouched so a
+        // resize/rotation mid-session can't disturb an open gesture. Idempotent — equal view ⇒ no-op.
+        is Intent.SetViewport -> {
+            val next = ViewState(intent.screenPxPerPt, intent.pageOffset)
+            if (next == model.view) Reduction(model) else Reduction(model.copy(view = next))
+        }
         is Intent.Nudge -> bakeSelection(model) { it.copy(xPt = it.xPt + intent.deltaPt.x, yPt = it.yPt + intent.deltaPt.y) }
         is Intent.ScaleBy -> bakeSelection(model) { TransformMath.bakeCentreAnchored(it, PtPoint(0.0, 0.0), intent.factor, 0.0) }
         is Intent.RotateBy -> bakeSelection(model) { it.copy(rotationDegrees = it.rotationDegrees + intent.degrees) }

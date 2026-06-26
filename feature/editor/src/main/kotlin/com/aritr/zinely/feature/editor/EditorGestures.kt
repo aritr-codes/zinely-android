@@ -171,7 +171,7 @@ public fun Modifier.editorTransformGestures(
                             dispatch(Intent.CommitTransform(snap.transforms, token))
                         }
                         // Our session is still open but the pointer was canceled mid-gesture — discard it.
-                        mine -> dispatch(Intent.CancelTransform)
+                        mine -> dispatch(Intent.CancelTransform(token))
                         // else: a newer gesture/selection replaced our session — leave it untouched.
                     }
                     onPreview(null)
