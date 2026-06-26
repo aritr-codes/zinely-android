@@ -17,8 +17,10 @@ import com.aritr.zinely.feature.editor.AutosaveSink
 import com.aritr.zinely.feature.editor.DefaultEditorEffectRunner
 import com.aritr.zinely.feature.editor.EditorStore
 import com.aritr.zinely.feature.editor.UnavailableImagePipeline
+import com.aritr.zinely.render.android.AssetBytesSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import java.io.File
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -41,11 +43,13 @@ internal sealed interface EditorBootState {
     /** Bootstrap failed (Corrupt / Invalid / Io / SchemaTooNew). [message] is user-facing, cause-free. */
     data class Error(val message: String) : EditorBootState
 
-    /** Ready: the wired [store], the imposition-derived [pageSizePt], and the lifecycle [binder]. */
+    /** Ready: the wired [store], the imposition-derived [pageSizePt], the lifecycle [binder], and the
+     * render read-path [imageBytes] over the content-addressed master store (ADR-031 §3). */
     data class Ready(
         val store: EditorStore,
         val pageSizePt: PtSize,
         val binder: EditorAutosaveBinder,
+        val imageBytes: AssetBytesSource,
     ) : EditorBootState
 }
 
@@ -71,6 +75,7 @@ internal class EditorViewModel @Inject constructor(
     private val repository: DocumentRepository,
     private val binderFactory: EditorAutosaveBinderFactory,
     private val imposer: Imposer,
+    @param:AssetsDir private val assetsDir: File,
     // @param: pins the qualifier to the constructor value parameter (what Dagger reads) and opts out of
     // the KT-73255 default-target migration warning — same convention as EditorAutosaveBinderFactory.
     @param:MainDispatcher private val mainDispatcher: CoroutineDispatcher,
@@ -144,6 +149,10 @@ internal class EditorViewModel @Inject constructor(
             store = store,
             pageSizePt = editedPageSize(initial.document, imposer),
             binder = binder,
+            // Render reads masters straight from the content-addressed store dir (ADR-031 §3). Image
+            // *import* (the writer) lands in Inc 2b; until then the seed doc has no images, so this just
+            // resolves any future-referenced master and renders a placeholder for a missing one.
+            imageBytes = FileAssetBytesSource(assetsDir),
         )
     }
 

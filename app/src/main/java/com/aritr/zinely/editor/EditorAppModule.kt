@@ -1,13 +1,16 @@
 package com.aritr.zinely.editor
 
+import android.content.Context
 import com.aritr.zinely.core.imposition.Imposer
 import com.aritr.zinely.core.imposition.SingleSheet8Imposer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
@@ -19,6 +22,15 @@ import javax.inject.Singleton
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 internal annotation class MainDispatcher
+
+/**
+ * The global content-addressed asset directory `filesDir/assets` (ADR-022/ADR-031 §6). One provider,
+ * shared by the writer (`FileAssetStore`, Inc 2b) and the render reader (`FileAssetBytesSource`), so
+ * the store root is defined in exactly one place. Qualified because a bare `File` is ambiguous.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+internal annotation class AssetsDir
 
 /**
  * App-layer DI for the editor host (ADR-030 §2). Supplies the two collaborators the editor wiring needs
@@ -41,4 +53,11 @@ internal object EditorAppModule {
     @Provides
     @Singleton
     fun provideImposer(): Imposer = SingleSheet8Imposer()
+
+    /** `filesDir/assets` — the content-addressed master store root (created lazily by the writer). */
+    @Provides
+    @Singleton
+    @AssetsDir
+    fun provideAssetsDir(@ApplicationContext context: Context): File =
+        File(context.filesDir, "assets")
 }

@@ -81,6 +81,7 @@ private fun EditorDestination() {
                 store = state.store,
                 pageSizePt = state.pageSizePt,
                 modifier = Modifier.fillMaxSize(),
+                imageBytes = state.imageBytes,
             )
         }
     }
