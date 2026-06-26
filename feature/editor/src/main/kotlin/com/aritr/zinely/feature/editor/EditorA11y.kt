@@ -38,20 +38,23 @@ public object EditorA11y {
      * lands via TalkBack without a prior tap), then dispatches the twin intent. Reorder/delete are
      * id-scoped already. The visible contextbar reuses the same intents on the current selection.
      */
-    public fun elementCustomActions(id: String, dispatch: (Intent) -> Unit): List<CustomAccessibilityAction> {
+    public fun elementCustomActions(element: Element, dispatch: (Intent) -> Unit): List<CustomAccessibilityAction> {
+        val id = element.id
         fun selectThen(action: () -> Unit): Boolean { dispatch(Intent.Select(id)); action(); return true }
-        return listOf(
-            CustomAccessibilityAction("Move left") { selectThen { dispatch(Intent.Nudge(PtPoint(-NUDGE_STEP_PT, 0.0))) } },
-            CustomAccessibilityAction("Move right") { selectThen { dispatch(Intent.Nudge(PtPoint(NUDGE_STEP_PT, 0.0))) } },
-            CustomAccessibilityAction("Move up") { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, -NUDGE_STEP_PT))) } },
-            CustomAccessibilityAction("Move down") { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, NUDGE_STEP_PT))) } },
-            CustomAccessibilityAction("Make larger") { selectThen { dispatch(Intent.ScaleBy(SCALE_STEP_FACTOR)) } },
-            CustomAccessibilityAction("Make smaller") { selectThen { dispatch(Intent.ScaleBy(1.0 / SCALE_STEP_FACTOR)) } },
-            CustomAccessibilityAction("Rotate clockwise") { selectThen { dispatch(Intent.RotateBy(ROTATE_STEP_DEGREES)) } },
-            CustomAccessibilityAction("Rotate counterclockwise") { selectThen { dispatch(Intent.RotateBy(-ROTATE_STEP_DEGREES)) } },
-            CustomAccessibilityAction("Bring forward") { dispatch(Intent.Reorder(id, ReorderOp.BRING_FORWARD)); true },
-            CustomAccessibilityAction("Send backward") { dispatch(Intent.Reorder(id, ReorderOp.SEND_BACKWARD)); true },
-            CustomAccessibilityAction("Delete") { dispatch(Intent.Delete(setOf(id))); true },
-        )
+        return buildList {
+            // Editing text is the primary action for a text box (the a11y twin of the double-tap seam).
+            if (element is TextElement) add(CustomAccessibilityAction("Edit text") { dispatch(Intent.BeginEditText(id)); true })
+            add(CustomAccessibilityAction("Move left") { selectThen { dispatch(Intent.Nudge(PtPoint(-NUDGE_STEP_PT, 0.0))) } })
+            add(CustomAccessibilityAction("Move right") { selectThen { dispatch(Intent.Nudge(PtPoint(NUDGE_STEP_PT, 0.0))) } })
+            add(CustomAccessibilityAction("Move up") { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, -NUDGE_STEP_PT))) } })
+            add(CustomAccessibilityAction("Move down") { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, NUDGE_STEP_PT))) } })
+            add(CustomAccessibilityAction("Make larger") { selectThen { dispatch(Intent.ScaleBy(SCALE_STEP_FACTOR)) } })
+            add(CustomAccessibilityAction("Make smaller") { selectThen { dispatch(Intent.ScaleBy(1.0 / SCALE_STEP_FACTOR)) } })
+            add(CustomAccessibilityAction("Rotate clockwise") { selectThen { dispatch(Intent.RotateBy(ROTATE_STEP_DEGREES)) } })
+            add(CustomAccessibilityAction("Rotate counterclockwise") { selectThen { dispatch(Intent.RotateBy(-ROTATE_STEP_DEGREES)) } })
+            add(CustomAccessibilityAction("Bring forward") { dispatch(Intent.Reorder(id, ReorderOp.BRING_FORWARD)); true })
+            add(CustomAccessibilityAction("Send backward") { dispatch(Intent.Reorder(id, ReorderOp.SEND_BACKWARD)); true })
+            add(CustomAccessibilityAction("Delete") { dispatch(Intent.Delete(setOf(id))); true })
+        }
     }
 }

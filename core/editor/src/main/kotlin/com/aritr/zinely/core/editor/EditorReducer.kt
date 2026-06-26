@@ -37,11 +37,18 @@ public object EditorReducer {
             committing(model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
                 PlaceCommand(model.currentPageIndex, intent.element.copy(id = id, zIndex = nextZ(model))))
         }
+        is Intent.BeginEditText -> openTextSession(model, intent.id)
+        is Intent.BeginEditTextAt -> openTextSession(model, HitTest.topmostAt(currentPage(model), intent.pagePoint))
         is Intent.CommitText -> {
-            val before = currentPage(model).elements.firstOrNull { it.id == intent.id } as? TextElement
-                ?: return Reduction(model)
-            // Normalise the committed element's id to the target so selection/lookups can't desync.
-            committing(model, EditTextCommand(model.currentPageIndex, intent.id, before, intent.after.copy(id = intent.id)))
+            val tx = model.interaction as? Interaction.EditingText
+            // Stale / mismatched commit (nav, cancel, or a newer session replaced ours) ⇒ no-op (D5).
+            if (tx == null || tx.token != intent.token || tx.id != intent.id) Reduction(model)
+            else endTextSession(model, intent.id, intent.after)
+        }
+        is Intent.CancelText -> {
+            val tx = model.interaction as? Interaction.EditingText
+            if (tx == null || tx.token != intent.token || tx.id != intent.id) Reduction(model)
+            else endTextSession(model, intent.id, after = null)
         }
 
         // — transform: begin/commit/cancel + a11y twins —
@@ -135,6 +142,64 @@ public object EditorReducer {
             history = History(undo = model.history.undo + cmd, redo = emptyList()),
         )
         return Reduction(next, listOf(Effect.Autosave(doc)))
+    }
+
+    /** Open a text-edit session on [id] iff it names a [TextElement] on the current page; else a no-op. */
+    private fun openTextSession(model: EditorModel, id: String?): Reduction {
+        val el = id?.let { currentPage(model).elements.firstOrNull { e -> e.id == it } } as? TextElement
+        return if (el == null) Reduction(model) else Reduction(
+            model.copy(
+                selection = setOf(el.id),
+                nextToken = model.nextToken + 1,
+                interaction = Interaction.EditingText(el.id, model.nextToken),
+            ),
+        )
+    }
+
+    /**
+     * End a text-edit session (§5.6). [after] == null means **discard** (cancel); a non-null [after] is the
+     * committed draft. Either way the session closes to [Interaction.Idle]. No empty `TextElement` ever
+     * leaks (matches the `text.empty` warning):
+     *  - **Blank result** ⇒ the box is removed. If the box was a still-blank **freshly-placed** one (its
+     *    placement is the last undo step), the placement is **coalesced away** — undone and popped — so
+     *    "add text, type nothing, dismiss" leaves no undo cruft. Otherwise an existing box is removed via a
+     *    [DeleteCommand] (one undo restores it).
+     *  - **Non-blank** ⇒ only the `text`/`style` are taken from [after]; geometry/zIndex are kept from
+     *    `before` (a malformed commit can't move the element). Equal to `before` ⇒ no command/autosave.
+     */
+    private fun endTextSession(model: EditorModel, id: String, after: TextElement?): Reduction {
+        val idle = model.copy(interaction = Interaction.Idle)
+        val before = currentPage(model).elements.firstOrNull { it.id == id } as? TextElement
+            ?: return Reduction(idle) // element vanished mid-session ⇒ just close
+        // Cancel (after == null) keeps `before`'s text; commit takes the draft's. The box is "blank" only if
+        // its RESULTING text is blank — so cancelling a box that already has text is never a delete.
+        val resultText = after?.text ?: before.text
+        if (resultText.isBlank()) {
+            val lastPlace = model.history.undo.lastOrNull() as? PlaceCommand
+            val freshBlankPlace = lastPlace != null && lastPlace.element.id == id &&
+                (lastPlace.element as? TextElement)?.text?.isBlank() == true
+            return if (freshBlankPlace) {
+                // The box was just placed empty and never gained content ⇒ undo the placement entirely.
+                val doc = lastPlace!!.invertOn(model.document)
+                Reduction(
+                    idle.copy(
+                        document = doc,
+                        selection = idle.selection - id,
+                        history = model.history.copy(undo = model.history.undo.dropLast(1)),
+                    ),
+                    listOf(Effect.Autosave(doc)),
+                )
+            } else {
+                val removed = currentPage(model).elements.withIndex()
+                    .filter { it.value.id == id }.map { it.index to it.value }
+                committing(idle.copy(selection = idle.selection - id), DeleteCommand(model.currentPageIndex, removed))
+            }
+        }
+        // Non-blank: change only text/style; keep before's geometry/zIndex. Cancel (after == null) keeps
+        // `before` verbatim ⇒ no-op. No command/autosave if nothing actually changed.
+        val committed = if (after == null) before else before.copy(text = after.text, style = after.style)
+        return if (committed == before) Reduction(idle)
+        else committing(idle, EditTextCommand(model.currentPageIndex, id, before, committed))
     }
 
     /** a11y single-pointer twin: commit a per-selected-element transform via one [TransformCommand]. */

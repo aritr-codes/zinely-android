@@ -19,7 +19,20 @@ public sealed interface Intent {
     public data class PlaceText(val transform: Transform, val text: String) : Intent
     public data object RequestAddImage : Intent
     public data class CommitAddImage(val element: com.aritr.zinely.core.model.ImageElement) : Intent
-    public data class CommitText(val id: String, val after: TextElement) : Intent
+
+    // — text-edit session (§5.6, D5): begin/commit/cancel, like a drag — one session = one EditTextCommand.
+    /** Open a text-edit session on a [TextElement] by id (the a11y "Edit text" action). */
+    public data class BeginEditText(val id: String) : Intent
+
+    /** Open a text-edit session on the topmost [TextElement] at a page point (the double-tap seam). */
+    public data class BeginEditTextAt(val pagePoint: PtPoint) : Intent
+
+    /** Commit the session's draft. [token] rejects a late commit after nav/cancel/new session (D5). */
+    public data class CommitText(val id: String, val after: TextElement, val token: Long) : Intent
+
+    /** Discard the session's draft (back/dismiss); a still-empty box is removed (§5.6). [token] rejects a
+     *  stale cancel after a newer session opened (D5). */
+    public data class CancelText(val id: String, val token: Long) : Intent
 
     // — transform (gesture + a11y twins share the commit path, §6) —
     public data class BeginTransform(val ids: Set<String>) : Intent
