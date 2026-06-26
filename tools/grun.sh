@@ -21,6 +21,8 @@ case "$cmd" in
   conn) "$RUNNER" ":render-android:connectedDebugAndroidTest" "$@" ;; # instrumented androidTest on a connected device
   ra)  "$RUNNER" ":render-android:testDebugUnitTest" "$@" ;;        # :render-android headless unit suite (ExportScale, replayer conformance)
   ed)  "$RUNNER" ":feature:editor:testDebugUnitTest" "$@" ;;        # S4 :feature:editor headless unit suite (preview-host parity)
+  app) "$RUNNER" ":app:testDebugUnitTest" "$@" ;;                   # S4 :app headless unit suite (EditorBootstrap seed/page-size)
+  appc) "$RUNNER" ":app:compileDebugKotlin" "$@" ;;                 # S4 :app main compile (Hilt KSP graph validation)
   edc) "$RUNNER" ":feature:editor:connectedDebugAndroidTest" "$@" ;; # S4 :feature:editor instrumented androidTest (device) — if probe forces it
   *)   "$RUNNER" "$cmd" "$@" ;;
 esac
