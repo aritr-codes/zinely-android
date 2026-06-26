@@ -1,0 +1,190 @@
+package com.aritr.zinely.feature.editor
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.editor.Interaction
+import com.aritr.zinely.core.editor.LiveTransform
+import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.Transform
+import com.aritr.zinely.render.android.AssetBytesSource
+import kotlin.math.min
+
+/** Test tag on the editor canvas Box (the measured, gesture-bearing area). */
+public const val EditorCanvasTestTag: String = "editor-canvas"
+
+/**
+ * The S4 editor host (ADR-029 §5, §6) — the screen that assembles every interaction layer over one
+ * [EditorStore]. It is the seam the per-increment components were built against: it owns the **ephemeral**
+ * gesture state ([live] / [resizeOverride], feature-layer per the §5.1 contract — never in the reducer),
+ * measures the canvas, and feeds the resulting scale back into the model so every layer shares one
+ * [com.aritr.zinely.core.editor.ViewState].
+ *
+ * **Single viewport source.** The page is fit into the measured canvas; the host dispatches
+ * [Intent.SetViewport] (display-only — no autosave, no history) so the gesture commit (`LiveSnap` over
+ * `screenPxPerPt`) and the preview render agree exactly (preview == commit). [pageSizePt] is hoisted —
+ * imposition owns the panel size; this host does not derive it.
+ *
+ * **Layer stack** (bottom → top), siblings sized identically so device-px coordinates align:
+ *  1. [EditorPagePreview] — the decorative page render + snap guides + selection chrome (no pointer input).
+ *  2. The gesture surface — [editorTransformGestures]: long-press select, double-tap → [Intent.BeginEditTextAt],
+ *     pan/pinch/rotate → live preview + one [Intent.CommitTransform].
+ *  3. [ResizeHandles] — eight opposite-anchor handles (single selection); they consume their own pointers,
+ *     so they sit above the gesture surface and win the hit-test without racing it.
+ *  4. [ElementSemanticsLayer] — the accessible mirror (semantics-only, consumes nothing).
+ *  5. The [EditTextSession] overlay when an [Interaction.EditingText] is open (IME-padded sheet).
+ * The [EditorContextBar] (the visible 2.5.7 single-pointer twins) sits below the canvas, shown on selection.
+ *
+ * Stateless beyond the two gesture accumulators: [store] is hoisted (constructed with its effect runner at
+ * the DI/app layer). The model is collected with `collectAsStateWithLifecycle`; the gesture/handle layers
+ * read the *latest* snapshot synchronously via `{ store.uiState.value }` (the token-read contract, §5.1).
+ *
+ * @param store the editor MVI store (its `uiState` is the single source of truth).
+ * @param pageSizePt the edited page/panel size in points; hoisted from imposition (also the page clip).
+ * @param modifier sizing/placement for the whole screen.
+ * @param imageBytes import-master byte source for image elements; defaults to the missing-asset placeholder.
+ */
+@Composable
+public fun EditorScreen(
+    store: EditorStore,
+    pageSizePt: PtSize,
+    modifier: Modifier = Modifier,
+    imageBytes: AssetBytesSource = EmptyAssetBytes,
+) {
+    val uiState by store.uiState.collectAsStateWithLifecycle()
+    val dispatch: (Intent) -> Unit = store::dispatch
+    val currentState = { store.uiState.value }
+
+    // Feature-ephemeral gesture accumulators — the live pan/pinch frame and the handle-resize override.
+    // They never reach the reducer; only the baked CommitTransform does (§5.1). Handle drags consume their
+    // pointers, so at most one of the two is non-null at a time; the preview prioritises resizeOverride.
+    var live by remember { mutableStateOf<LiveTransform?>(null) }
+    var resizeOverride by remember { mutableStateOf<Map<String, Transform>?>(null) }
+
+    Column(modifier = modifier) {
+        BoxWithConstraints(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .testTag(EditorCanvasTestTag),
+        ) {
+            // Fit the whole page into the measured canvas (contain), top-left anchored (pan stays zero for
+            // the MVP host; true centring/zoom is a follow-up). The scale is the single px-per-point source.
+            val widthPx = constraints.maxWidth.toFloat()
+            val heightPx = constraints.maxHeight.toFloat()
+            val scale: Float = remember(widthPx, heightPx, pageSizePt) {
+                if (pageSizePt.width <= 0.0 || pageSizePt.height <= 0.0 || widthPx <= 0f || heightPx <= 0f) {
+                    1f
+                } else {
+                    min(widthPx / pageSizePt.width, heightPx / pageSizePt.height).toFloat()
+                }
+            }
+            val interaction = uiState.interaction
+            val editing = interaction is Interaction.EditingText
+
+            // Push the measured scale into the model so every layer shares it (idempotent — the reducer
+            // no-ops an equal view). Deferred until no gesture/edit session is open (Codex RF3): a viewport
+            // change re-keys the gesture `pointerInput(screenPxPerPt, …)`, restarting it mid-drag with no
+            // cleanup — which would strand a `Transforming` session and a non-null `live`. Re-runs when the
+            // interaction returns to Idle, so the latest scale is applied the instant the gesture ends.
+            val idle = interaction is Interaction.Idle
+            LaunchedEffect(scale, idle) {
+                if (idle) dispatch(Intent.SetViewport(scale, PtPoint(0.0, 0.0)))
+            }
+
+            Box(modifier = Modifier.fillMaxSize()) {
+                EditorPagePreview(
+                    uiState = uiState,
+                    defaults = uiState.document.defaults,
+                    pageSizePt = pageSizePt,
+                    live = live,
+                    modifier = Modifier.fillMaxSize(),
+                    resizeOverride = resizeOverride,
+                    imageBytes = imageBytes,
+                )
+                // The page gesture surface and resize handles are inert while a text session is open (Codex
+                // RF1): otherwise a stray long-press/double-tap replaces `EditingText`, and the session's
+                // onDispose commits a now-stale token → the draft is silently dropped. The handles also yield
+                // to an in-flight page drag (`live != null`) so the two never run concurrent sessions (RF2).
+                if (!editing) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .editorTransformGestures(
+                                screenPxPerPt = uiState.view.screenPxPerPt,
+                                pageOffset = uiState.view.pageOffset,
+                                pageSizePt = pageSizePt,
+                                currentState = currentState,
+                                dispatch = dispatch,
+                                onPreview = { live = it },
+                                onDoubleTap = { pagePoint -> dispatch(Intent.BeginEditTextAt(pagePoint)) },
+                            ),
+                    )
+                    if (live == null) {
+                        ResizeHandles(
+                            uiState = uiState,
+                            currentState = currentState,
+                            dispatch = dispatch,
+                            onResize = { resizeOverride = it },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+                ElementSemanticsLayer(
+                    uiState = uiState,
+                    dispatch = dispatch,
+                    modifier = Modifier.fillMaxSize(),
+                )
+
+                // The text-edit overlay: only while a session is open and its element still exists (a delete
+                // races it closed; the session's onDispose/token guard then no-ops the trailing commit).
+                if (interaction is Interaction.EditingText) {
+                    val editing = uiState.document.pages[uiState.currentPageIndex].elements
+                        .firstOrNull { it.id == interaction.id } as? TextElement
+                    if (editing != null) {
+                        Surface(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .imePadding(),
+                            color = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            tonalElevation = 3.dp,
+                        ) {
+                            EditTextSession(
+                                session = interaction,
+                                element = editing,
+                                dispatch = dispatch,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        EditorContextBar(
+            selection = uiState.selection,
+            dispatch = dispatch,
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
+}

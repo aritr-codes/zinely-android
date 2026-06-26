@@ -37,7 +37,10 @@ public sealed interface Intent {
     // — transform (gesture + a11y twins share the commit path, §6) —
     public data class BeginTransform(val ids: Set<String>) : Intent
     public data class CommitTransform(val after: Map<String, Transform>, val token: Long) : Intent
-    public data object CancelTransform : Intent
+
+    /** Discard an open transform session's preview. [token]-gated (like [CommitTransform]) so a stale cancel
+     *  from a superseded session can't idle a newer one (Codex review, host increment). */
+    public data class CancelTransform(val token: Long) : Intent
     public data class Nudge(val deltaPt: PtPoint) : Intent
     public data class ScaleBy(val factor: Double) : Intent
     public data class RotateBy(val degrees: Double) : Intent
@@ -45,6 +48,15 @@ public sealed interface Intent {
     // — structure —
     public data class Reorder(val id: String, val op: ReorderOp) : Intent
     public data class Delete(val ids: Set<String>) : Intent
+
+    // — view (display-only; never autosaved, never in history — §5) —
+    /**
+     * Set the preview viewport ([ViewState]) — device px-per-point and page pan — after the host measures
+     * the canvas. Display-only: it mutates neither the document, the selection, nor the interaction, emits
+     * no [Effect.Autosave], and never enters undo history. The host keeps it the single source so the
+     * gesture commit ([CommitTransform] via `LiveSnap`) and the preview render share one scale.
+     */
+    public data class SetViewport(val screenPxPerPt: Float, val pageOffset: PtPoint) : Intent
 
     // — pages —
     public data class GoToPage(val index: Int) : Intent

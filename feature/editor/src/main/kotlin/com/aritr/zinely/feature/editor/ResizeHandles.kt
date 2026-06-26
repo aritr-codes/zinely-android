@@ -104,8 +104,8 @@ public fun ResizeHandles(
                     dispatch(Intent.CommitTransform(mapOf(selectedId to after), token))
                     onResize(null)
                 },
-                cancelSession = {
-                    dispatch(Intent.CancelTransform)
+                cancelSession = { token ->
+                    dispatch(Intent.CancelTransform(token))
                     onResize(null)
                 },
             )
@@ -127,7 +127,7 @@ private fun HandleTarget(
     onDrag: (Offset, Long) -> Transform?,
     beginSession: () -> Long?,
     commitSession: (Transform, Long) -> Unit,
-    cancelSession: () -> Unit,
+    cancelSession: (Long) -> Unit,
 ) {
     val half = hitSizePx / 2f
     Box(
@@ -162,11 +162,12 @@ private fun HandleTarget(
                     onDragEnd = {
                         val t = token
                         val after = last
-                        if (t != null && after != null) commitSession(after, t) else if (t != null) cancelSession()
+                        if (t != null && after != null) commitSession(after, t) else if (t != null) cancelSession(t)
                         token = null
                     },
                     onDragCancel = {
-                        if (token != null) cancelSession()
+                        val t = token
+                        if (t != null) cancelSession(t)
                         token = null
                     },
                 )

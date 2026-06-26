@@ -77,6 +77,20 @@ class EditorReducerTest {
     }
 
     @Test
+    fun `CancelTransform idles its own session but a stale-token cancel is a no-op`() {
+        val begun = EditorReducer.reduce(modelOf(txt("a")), Intent.BeginTransform(setOf("a"))).model
+        val token = (begun.interaction as Interaction.Transforming).token
+        // A stale cancel (a newer session would carry a different token) must NOT wipe the live session.
+        val stale = EditorReducer.reduce(begun, Intent.CancelTransform(token + 1))
+        assertEquals(begun.interaction, stale.model.interaction)
+        // The matching cancel idles it and discards the preview (no command, no autosave).
+        val r = EditorReducer.reduce(begun, Intent.CancelTransform(token))
+        assertTrue(r.model.interaction is Interaction.Idle)
+        assertTrue(r.model.history.undo.isEmpty())
+        assertTrue(r.effects.none { it is Effect.Autosave })
+    }
+
+    @Test
     fun `Delete removes the element and clears it from selection`() {
         val start = modelOf(txt("a"), txt("b")).copy(selection = setOf("a"))
         val r = EditorReducer.reduce(start, Intent.Delete(setOf("a")))
