@@ -20,6 +20,7 @@ import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
@@ -86,6 +87,7 @@ class EditorGesturesTest {
                     .editorTransformGestures(
                         screenPxPerPt = pxPerPt,
                         pageOffset = PtPoint(0.0, 0.0),
+                        pageSizePt = PtSize(100.0, 100.0),
                         currentState = { store.uiState.value },
                         dispatch = h::dispatch,
                         onPreview = { h.lastPreviewWasNull = it == null },
@@ -121,6 +123,30 @@ class EditorGesturesTest {
         // Session closed and preview reset.
         assertTrue(store.uiState.value.interaction is Interaction.Idle)
         assertTrue(h.lastPreviewWasNull)
+    }
+
+    @Test
+    fun drag_towardPageEdge_commitsTheSnappedTransform() {
+        val store = newStore()
+        // 20×20 box at (40,40). A single moveBy applies its FULL pan (the slop-crossing frame is also
+        // accumulated), so +76px at 2px/pt is a deterministic +38pt move: right edge lands at 98 — within
+        // the 8px/2 = 4pt snap threshold of the page's right edge (100). The commit snaps right→100, x→80
+        // (vs the un-snapped 78), proving the snap is baked into the commit (preview == commit, §5.4).
+        store.dispatch(Intent.PlaceText(Transform(40.0, 40.0, 20.0, 20.0), "t"))
+        val id = store.uiState.value.selection.single()
+        val h = setContent(store)
+
+        composeRule.onNodeWithTag("surface").performTouchInput {
+            down(center)
+            moveBy(Offset(76f, 0f))
+            up()
+        }
+        composeRule.waitForIdle()
+
+        val moved = store.uiState.value.document.pages[0].elements.single { it.id == id }.transform
+        assertEquals(100.0, moved.xPt + moved.widthPt, 1e-6)
+        assertEquals(80.0, moved.xPt, 1e-6)
+        assertTrue(store.uiState.value.interaction is Interaction.Idle)
     }
 
     @Test

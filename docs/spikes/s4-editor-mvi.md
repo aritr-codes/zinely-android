@@ -556,4 +556,34 @@ The eight opposite-anchor resize handles (§5.2/§5.3) are implemented + tested.
 
 **Test tiers:** `ResizeHandleTest` (`:core:editor`, pure-JVM — opposite mirror, corner holds opposite fixed, edge resizes one axis, rotation invariant) + `SelectionChromeGeometryTest` handle-position cases (`:render-android`, pure-JVM); `ResizeHandlesTest` (`:feature:editor`, Robolectric NATIVE) drives a BR-corner drag → exactly one session, top-left held fixed in page space, box grows, one baked commit.
 
-**Still next:** live **snap guides** (`Snap` during update, render-only, **F1 skip-rotated**), the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.
+**Still next:** the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.
+
+### 10.7 Gated `:feature:editor` — live snap guides landed (2026-06-26)
+
+Snapping (§5.4) is wired into the live transform path: applied to the **preview** during the drag and **baked into the commit**; guide lines are **render-only**.
+
+| File | Module | What |
+|---|---|---|
+| `LiveSnap.kt` | `:core:editor` | the **single-source** resolver `resolve(page, selection, before, live, screenPxPerPt, pageSize, thresholdPt): LiveSnapResult(transforms, guides)` — bakes each member (§5.2) then, for the single-select non-rotated case, snaps the moving box via the pure `Snap`. `thresholdPt(screenPxPerPt) = 8px / screenPxPerPt` (shared so preview and commit agree). |
+| `SnapGuides.kt` | `:feature:editor` | draw-only Canvas (testTag `snap-guides`), **screen-space constant 1dp stroke** (like `SelectionChrome`), each guide mapped through `previewPageToDevice` to a full-canvas line; defaults to theme `tertiary` to read distinctly from the `primary` chrome. |
+| `EditorPagePreview.kt` | `:feature:editor` | the pan/pinch path now resolves through `LiveSnap` (was `LivePreview.apply`); renders `applyOverride(snap.transforms)` and the `SnapGuides(snap.guides)` layer. **Resize-override path is unchanged (no snap).** |
+| `EditorGestures.kt` | `:feature:editor` | gained a `pageSizePt` param; the commit now calls the **same** `LiveSnap.resolve` (was `before.mapValues { live.bake }`) so the committed transform equals the last previewed one. |
+
+**preview == commit by construction:** both layers call `LiveSnap.resolve` with identical inputs — same reducer-owned `before`, same final `live`, same `screenPxPerPt`/`pageSizePt`/threshold — so the snap is baked into the commit, never merely shown. The preview passes `interaction.ids` (the session id set, == commit's `tx.ids`), not ambient selection.
+
+**MVP scope / invariants:** single-select snaps; **F1** skips snapping when the baked box is rotated (`|rotationDegrees| > 1e-6`); multi-select (§5.5) bakes without snapping. Candidate lines exclude rotated neighbours (their stored AABB no longer touches the rendered shape). Snap **translates only** (x/y), never resizes — correct after a pinch-zoom too. Reading the page via `tx.pageIndex` / live `page.elements` is sound because **no document-mutating intent runs during an open single-pointer `Transforming` session** (the gesture owns the surface; only `Begin`→`Commit` are dispatched).
+
+**Codex review (2026-06-26, GO — no Required-fix):**
+
+| Codex point | Outcome |
+|---|---|
+| F1 should use an epsilon, not exact `!= 0.0`, vs float bake noise | **adopted** — `abs(rotationDegrees) > 1e-6`. |
+| Rotated *other* elements as un-rotated rects snap to invisible edges | **adopted** — rotated neighbours excluded from candidate lines. |
+| `8/screenPxPerPt` → `Infinity`; `bake` may still divide by zero / spread NaN at `screenPxPerPt == 0` | **adopted** — `resolve` early-returns `before` unchanged + no guides when `screenPxPerPt` is non-finite/≤0 (never a poisoned commit). |
+| `resolve` returned a singleton `mapOf(id to snapped)`, dropping other baked members | **adopted** — returns `baked + (id to snapped)`. |
+| Preview should use the session ids, not ambient selection | **adopted** — preview passes `interaction.ids`. |
+| Page identity / `pageIndex` stability mid-gesture; translate-only after pinch | **documented invariant** (no concurrent doc mutation during a session) / confirmed correct. |
+
+**Test tiers:** `LiveSnapTest` (`:core:editor`, pure-JVM — pan snaps to page edge + guide, bake==commit, F1 rotated skip, multi-select no-snap, non-positive-scale degrade, rotated-neighbour excluded, candidates from others) on top of the existing `SnapTest`; `EditorPagePreviewTest` asserts the `snap-guides` layer composes idle + mid-gesture; `EditorGesturesTest.drag_towardPageEdge_commitsTheSnappedTransform` drives a deterministic `down`/`moveBy(76px)`/`up` and asserts the **committed** right edge snapped exactly to the page edge (x→80, vs un-snapped 78).
+
+**Still next:** the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.

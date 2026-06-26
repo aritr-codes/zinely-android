@@ -69,6 +69,7 @@ class EditorPagePreviewTest {
             }
         }
         composeRule.onNodeWithTag(PagePreviewTestTag).fetchSemanticsNode()
+        composeRule.onNodeWithTag(SnapGuidesTestTag).fetchSemanticsNode()
         composeRule.onNodeWithTag(SelectionChromeTestTag).fetchSemanticsNode()
     }
 
@@ -89,8 +90,9 @@ class EditorPagePreviewTest {
                 )
             }
         }
-        // Both layers still present while a transform session is open + a live frame is applied.
+        // All three layers still present while a transform session is open + a live frame is applied.
         composeRule.onNodeWithTag(PagePreviewTestTag).fetchSemanticsNode()
+        composeRule.onNodeWithTag(SnapGuidesTestTag).fetchSemanticsNode()
         composeRule.onNodeWithTag(SelectionChromeTestTag).fetchSemanticsNode()
     }
 }
