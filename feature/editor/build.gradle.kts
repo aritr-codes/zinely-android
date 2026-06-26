@@ -90,6 +90,15 @@ dependencies {
     // :core:model, giving consumers those API types transitively (Codex fix #6).
     api(project(":render-android"))
 
+    // The pure MVI core (ADR-029): EditorStore's PUBLIC surface exposes EditorModel/EditorUiState/Intent
+    // (params + dispatch + uiState), so this is `api`, not implementation.
+    api(project(":core:editor"))
+
+    // Coroutines: StateFlow / CoroutineScope / CoroutineDispatcher appear in EditorStore's public API
+    // (uiState, constructor), so `api`. Dispatchers.Main itself (coroutines-android) is supplied by the
+    // app module that constructs the store — the store only takes an injected dispatcher.
+    api(libs.kotlinx.coroutines.core)
+
     // Desugar runtime for isCoreLibraryDesugaringEnabled above (ADR-024). Convention parity.
     coreLibraryDesugaring(libs.android.desugar.jdk.libs.nio)
 
@@ -104,6 +113,8 @@ dependencies {
     // Unit tests run on the JVM via Robolectric NATIVE (real Skia) — no emulator, fits the existing
     // Android-SDK CI job. compose-ui-test drives the host composable; Roborazzi captures/diffs.
     testImplementation(libs.junit)
+    // Store wiring tests: pure-JVM coroutines test (TestScope/StandardTestDispatcher), no Robolectric.
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.junit.rule)
