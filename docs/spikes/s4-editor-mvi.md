@@ -501,3 +501,33 @@ The §5 live-transform gesture layer is implemented + tested. The pure frame/bak
 The pre-slop accumulation mirrors the platform detector (cumulative `{zoom,rotation,pan}` vs slop, not per-frame) — an interpolated swipe arrives as many sub-slop steps, so a per-frame test would never cross.
 
 **Still next:** selection chrome + handles (consumes `onPreview` via `graphicsLayer`; `HitTest`/`Snap` guides, F1 skip-rotated), the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5; supplies the `BeginEditText` intent the double-tap seam dispatches), and Roborazzi selection-chrome goldens.
+
+### 10.5 Gated `:feature:editor` — selection chrome + live preview landed (2026-06-26)
+
+The selection boundary + the visible live gesture preview are implemented + tested. **Note a deliberate
+mechanism change vs §5.1:** the live preview is **not** a `graphicsLayer` over a cached layer — it is a
+**document-order re-render** of the whole page each frame with the selected transforms baked through the
+same `LiveTransform.bake` the commit uses. Codex (below) endorsed this as the strongest parity choice.
+
+| File | Module | What |
+|---|---|---|
+| `SelectionChromeGeometry.kt` | `:render-android` | pure: a committed `Transform` → its four device-px corners `[TL,TR,BR,BL]`, rotating local `(±w/2,±h/2)` about the box centre by `+rot` (**same sign** as `SceneRenderer.localToPage`) then `ExportScale.previewPageToDevice`. JVM-unit-tested (axis-aligned, page-offset, CW-90°, non-square). |
+| `LivePreview.kt` | `:core:editor` | pure `apply(page, before, live, screenPxPerPt)`: replaces each `before`-keyed element's transform with `live.bake(before[id], s)`, preserving list/z-order — the **same** mapping `Command.kt`'s `TransformCommand` applies at commit, so preview == commit by construction. |
+| `SelectionChrome.kt` | `:feature:editor` | draw-only Compose overlay: strokes each (live-baked) box outline in **screen space at constant width** (theme `primary`, WCAG 1.4.11 ≥3:1) — never inside a scaling `graphicsLayer`. |
+| `EditorPagePreview.kt` | `:feature:editor` | stateless host stacking `PagePreview` (live-effective tape) under `SelectionChrome`; bakes the live gesture for an open `Transforming` session only; tape `remember`ed on `(effectivePage, defaults, size)`. |
+
+**Live-preview mechanism — Codex review (2026-06-26, GO WITH FIXES → adopted approach B):**
+
+| Codex finding (re: the originally-drafted `graphicsLayer` two-layer split) | Reconciliation |
+|---|---|
+| Multi-select pivot diverges if `graphicsLayer` uses one group-centre pivot but bake is per-element | **dissolved** by approach B — live uses the *same per-element* `bake` as commit, so live == commit even for multi. |
+| `transformOrigin` must be in the layer's measured local space, not assumed page-size px | **N/A** under B — no `graphicsLayer`, no origin math. |
+| `graphicsLayer` scales a rasterised text/clip/stroke layer → not pixel-equal to a baked relayout | **N/A** under B — the live frame *is* the `SceneRenderer` → `PagePreview` render path (true parity). |
+| Commit transition must be atomic (no stale-overlay / half-baked frame) | **holds** under B — baked transforms + `Idle` publish in one synchronous reduction; `onPreview(null)` runs after `CommitTransform` returns ⇒ live tape == commit tape at the swap, no flicker. |
+| Z-order: a floated overlay loses the element's real z-slot | **correct** under B — rendered in document order (Codex's "best parity option"). |
+| Chrome stroke fattens under zoom then snaps back if drawn inside the scaled layer | chrome drawn in **screen space, constant stroke**, from the live-baked box. |
+| Don't re-decode images per frame / re-run render needlessly | tape `remember`ed; image bytes cached in the replayer by asset key. **Accepted follow-up:** per-frame whole-page re-render is pure point math + replay (text-first MVP fine); revisit decode caching if an image-drag janks. |
+
+**Test tiers:** `SelectionChromeGeometryTest` (`:render-android`, pure-JVM) + `LivePreviewTest` (`:core:editor`, pure-JVM, incl. an explicit preview==commit-application assertion) prove the math; `EditorPagePreviewTest` (`:feature:editor`, Robolectric NATIVE) is a host smoke proof that both layers compose idle and mid-gesture.
+
+**Still next:** resize **handles** + their opposite-anchor resize gesture (`TransformMath.bakeHandleResize`, §5.2/§5.3), live **snap guides** (`Snap` applied during update, render-only, **F1 skip-rotated**), the a11y contextbar (`Nudge`/`ScaleBy`/`RotateBy` + `semantics{customActions}`), the race-safe text-edit session (§5.6, D5), and Roborazzi selection-chrome goldens.
