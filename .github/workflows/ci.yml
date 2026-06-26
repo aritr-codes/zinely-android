@@ -93,26 +93,33 @@ jobs:
         # compileDebugAndroidTestKotlin compile-checks them here (no emulator), so they can't bitrot.
         # :core:render itself stays in the core-only job — pure, Android-free.
         #
-        # :feature:editor (ADR-028 S4): the Compose preview host. Its testDebugUnitTest is the
-        # preview==export parity gate — a purely behavioural Robolectric NATIVE proof (no committed
-        # Roborazzi golden, so no verify step): the Compose host raster must match a direct CanvasReplayer
-        # replay of the same tape (fills EXACT, AA edges <= 0.02), and text must route through the
-        # bundled font resolver. No consumer module depends on it yet, so it is NOT otherwise compiled
-        # in CI — this line is what actually gates it.
+        # :feature:editor (ADR-028 S4): the Compose preview host. Its NATIVE unit suite is the
+        # preview==export parity gate (PagePreviewParityTest: host raster == direct CanvasReplayer replay,
+        # fills EXACT / AA edges <= 0.02, text via the bundled font resolver) PLUS the S4 selection-chrome
+        # goldens (ADR-029 §5). The chrome layers draw in Compose screen space — not in the pure tape — so
+        # parity cannot cover them; they are pinned by committed Roborazzi goldens instead. Both run in the
+        # verify step below (verifyRoborazziDebug runs testDebugUnitTest in verify mode). No consumer module
+        # depends on :feature:editor yet, so that verify step is what actually gates it in CI.
         run: |
           chmod +x ./gradlew
           ./gradlew :app:compileDebugKotlin :data-android:testDebugUnitTest \
             :render-android:compileDebugAndroidTestKotlin \
-            :feature:editor:testDebugUnitTest \
             --no-daemon --stacktrace
 
-      - name: Verify :render-android Roborazzi goldens + NATIVE unit proofs
-        # verifyRoborazziDebug runs render-android's testDebugUnitTest in verify mode: all NATIVE unit
-        # tests PLUS the G6a golden pixel-diffs (committed under render-android/src/test/roborazzi/).
-        # Its own invocation — running it alongside a plain testDebugUnitTest would force that task into
-        # verify mode anyway. --rerun-tasks defeats the up-to-date skip: the source-tree goldens are not
-        # a tracked task input, so without it a cached verify could pass without actually comparing.
-        run: ./gradlew :render-android:verifyRoborazziDebug --rerun-tasks --no-daemon --stacktrace
+      - name: Verify :render-android + :feature:editor Roborazzi goldens + NATIVE unit proofs
+        # verifyRoborazziDebug runs each module's testDebugUnitTest in verify mode: all NATIVE unit tests
+        # PLUS the committed golden pixel-diffs (render-android/src/test/roborazzi/ — the G6a raster
+        # goldens; feature/editor/src/test/roborazzi/ — the S4 selection-chrome goldens). --rerun-tasks
+        # defeats the up-to-date skip: the source-tree goldens are not a tracked task input, so without it
+        # a cached verify could pass without actually comparing.
+        #
+        # ORDERING (record-then-verify, ADR-028 §7.5): the feature/editor goldens are produced by the
+        # record-goldens.yml workflow on this pinned image and committed under feature/editor/src/test/
+        # roborazzi/. This step is RED until those PNGs are committed — that transient is the deliberate,
+        # reviewed golden-landing dance, not drift.
+        run: |
+          ./gradlew :render-android:verifyRoborazziDebug :feature:editor:verifyRoborazziDebug \
+            --rerun-tasks --no-daemon --stacktrace
 
       - name: Upload test reports
         if: always()
@@ -132,5 +139,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: roborazzi-compare-images
-          path: render-android/build/outputs/roborazzi/**
+          path: |
+            render-android/build/outputs/roborazzi/**
+            feature/editor/build/outputs/roborazzi/**
           if-no-files-found: ignore

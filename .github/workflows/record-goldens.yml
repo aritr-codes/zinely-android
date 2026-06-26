@@ -1,12 +1,14 @@
 name: Record goldens
 
-# Manual (workflow_dispatch) Roborazzi golden recorder for :render-android (ADR-028 §7.5).
+# Manual (workflow_dispatch) Roborazzi golden recorder for :render-android AND :feature:editor (ADR-028 §7.5).
 #
 # Goldens MUST be recorded on the SAME pinned image that verifies them (ubuntu-24.04, JDK 21, pinned
-# Robolectric/Roborazzi/SDK, UTC/en_US) — see the android-graph verify job in ci.yml. There is no local
+# Robolectric/Roborazzi/SDK, UTC/en_US) — see the android-graph verify steps in ci.yml. There is no local
 # Android build in this project (no SDK on dev machines), so this workflow is the only way to produce
 # the committed PNGs: run it, download the `roborazzi-goldens` artifact, commit the PNGs under
-# render-android/src/test/roborazzi/, and the android-graph `verifyRoborazziDebug` step then gates them.
+#   * render-android/src/test/roborazzi/  (the :render-android raster goldens, G6a), and
+#   * feature/editor/src/test/roborazzi/  (the S4 selection-chrome goldens, ADR-029 §5),
+# and the android-graph `verifyRoborazziDebug` steps then gate them.
 #
 # A re-record (toolchain bump or an intentional visual change) is a deliberate, reviewed refresh — never
 # ambient drift. This job only PRODUCES artifacts; it never commits, so golden changes stay code-reviewed.
@@ -18,9 +20,9 @@ permissions:
 
 jobs:
   record:
-    name: Record :render-android goldens (pinned image)
+    name: Record :render-android + :feature:editor goldens (pinned image)
     runs-on: ubuntu-24.04
-    # ZINELY_CORE_ONLY intentionally UNSET so settings.gradle.kts includes :render-android.
+    # ZINELY_CORE_ONLY intentionally UNSET so settings.gradle.kts includes :render-android + :feature:editor.
     env:
       TZ: UTC
       LANG: en_US.UTF-8
@@ -43,11 +45,16 @@ jobs:
       - name: Record Roborazzi goldens
         run: |
           chmod +x ./gradlew
-          ./gradlew :render-android:recordRoborazziDebug --rerun-tasks --no-daemon --stacktrace
+          ./gradlew :render-android:recordRoborazziDebug :feature:editor:recordRoborazziDebug \
+            --rerun-tasks --no-daemon --stacktrace
 
       - name: Upload recorded goldens
         uses: actions/upload-artifact@v4
         with:
+          # Both module trees preserved under their paths; commit each set to its module's
+          # src/test/roborazzi/ directory (see the header note).
           name: roborazzi-goldens
-          path: render-android/src/test/roborazzi/**/*.png
+          path: |
+            render-android/src/test/roborazzi/**/*.png
+            feature/editor/src/test/roborazzi/**/*.png
           if-no-files-found: error
