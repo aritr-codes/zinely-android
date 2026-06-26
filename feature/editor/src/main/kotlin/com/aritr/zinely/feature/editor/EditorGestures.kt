@@ -18,8 +18,10 @@ import kotlin.math.abs
 import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
+import com.aritr.zinely.core.editor.LiveSnap
 import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.render.android.ExportScale
 
 /**
@@ -46,6 +48,8 @@ import com.aritr.zinely.render.android.ExportScale
  *
  * @param screenPxPerPt device px per point at the current preview scale; must match [PagePreview].
  * @param pageOffset page-space pan applied before the screen scale; must match [PagePreview].
+ * @param pageSizePt the edited page/panel size in points; the snap candidate-line source for the commit,
+ *   and MUST match the [EditorPagePreview] value so the committed snap equals the previewed one.
  * @param currentState reads the live [EditorUiState] snapshot (e.g. `{ store.uiState.value }`) — used to
  *   read the session token after [Intent.BeginTransform] and the snapshot `before` map at commit.
  * @param dispatch forwards an [Intent] into the store.
@@ -56,6 +60,7 @@ import com.aritr.zinely.render.android.ExportScale
 public fun Modifier.editorTransformGestures(
     screenPxPerPt: Float,
     pageOffset: PtPoint,
+    pageSizePt: PtSize,
     currentState: () -> EditorUiState,
     dispatch: (Intent) -> Unit,
     onPreview: (LiveTransform?) -> Unit,
@@ -145,13 +150,25 @@ public fun Modifier.editorTransformGestures(
                 } while (event.changes.any { it.pressed })
 
                 if (token != null) {
-                    val tx = currentState().interaction
+                    val state = currentState()
+                    val tx = state.interaction
                     val mine = tx is Interaction.Transforming && tx.token == token
                     when {
                         mine && !canceled -> {
-                            val before = (tx as Interaction.Transforming).before
-                            val after = before.mapValues { (_, t) -> live.bake(t, screenPxPerPt.toDouble()) }
-                            dispatch(Intent.CommitTransform(after, token))
+                            tx as Interaction.Transforming
+                            // Commit through the SAME LiveSnap.resolve the preview used this frame, so the
+                            // committed transform equals the last previewed one (preview == commit) and the
+                            // snap is baked in, not just shown (§5.4).
+                            val snap = LiveSnap.resolve(
+                                page = state.document.pages[tx.pageIndex],
+                                selection = tx.ids,
+                                before = tx.before,
+                                live = live,
+                                screenPxPerPt = screenPxPerPt.toDouble(),
+                                pageSize = pageSizePt,
+                                thresholdPt = LiveSnap.thresholdPt(screenPxPerPt.toDouble()),
+                            )
+                            dispatch(Intent.CommitTransform(snap.transforms, token))
                         }
                         // Our session is still open but the pointer was canceled mid-gesture — discard it.
                         mine -> dispatch(Intent.CancelTransform)

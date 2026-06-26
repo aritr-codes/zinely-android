@@ -8,8 +8,11 @@ import androidx.compose.ui.Modifier
 import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LivePreview
+import com.aritr.zinely.core.editor.LiveSnap
 import com.aritr.zinely.core.editor.LiveTransform
+import com.aritr.zinely.core.editor.SnapGuide
 import com.aritr.zinely.core.model.DocumentDefaults
+import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.render.SceneRenderer
@@ -59,12 +62,35 @@ public fun EditorPagePreview(
     val pageOffset = uiState.view.pageOffset
 
     // Bake the active gesture into the selected transforms for an open session only. A handle-resize
-    // override (directly-baked, opposite-anchor) wins over the pan/pinch LiveTransform path.
-    val effectivePage = when {
-        resizeOverride != null -> LivePreview.applyOverride(page, resizeOverride)
-        interaction is Interaction.Transforming && live != null ->
-            LivePreview.apply(page, interaction.before, live, screenPxPerPt.toDouble())
-        else -> page
+    // override (directly-baked, opposite-anchor) wins over the pan/pinch LiveTransform path. The pan/pinch
+    // path resolves through LiveSnap (§5.4) — the SAME call the gesture commit makes, so the snapped frame
+    // shown here equals the committed transform (preview == commit), and its render-only guides are drawn.
+    val effectivePage: Page
+    val guides: List<SnapGuide>
+    when {
+        resizeOverride != null -> {
+            effectivePage = LivePreview.applyOverride(page, resizeOverride)
+            guides = emptyList()
+        }
+        interaction is Interaction.Transforming && live != null -> {
+            val snap = LiveSnap.resolve(
+                page = page,
+                // The session's ids (== commit's `tx.ids`), NOT ambient selection, so preview == commit
+                // even if selection churns mid-gesture (Codex rec #1).
+                selection = interaction.ids,
+                before = interaction.before,
+                live = live,
+                screenPxPerPt = screenPxPerPt.toDouble(),
+                pageSize = pageSizePt,
+                thresholdPt = LiveSnap.thresholdPt(screenPxPerPt.toDouble()),
+            )
+            effectivePage = LivePreview.applyOverride(page, snap.transforms)
+            guides = snap.guides
+        }
+        else -> {
+            effectivePage = page
+            guides = emptyList()
+        }
     }
 
     // Recomputed only when the effective page / defaults / size change — i.e. per frame during a drag
@@ -84,6 +110,12 @@ public fun EditorPagePreview(
             pageOffset = pageOffset,
             modifier = Modifier.fillMaxSize(),
             imageBytes = imageBytes,
+        )
+        SnapGuides(
+            guides = guides,
+            screenPxPerPt = screenPxPerPt,
+            pageOffset = pageOffset,
+            modifier = Modifier.fillMaxSize(),
         )
         SelectionChrome(
             transforms = selectedTransforms,
