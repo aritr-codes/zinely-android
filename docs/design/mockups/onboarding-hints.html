@@ -1,0 +1,185 @@
+<!-- PROTOTYPE ONLY — not production Compose. Canonical visual reference. See docs/design/DESIGN-LANGUAGE.md#4-onboarding-philosophy -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely — Onboarding: teach by doing</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  /* ── screen-specific styling for the onboarding / contextual-hint moment ── */
+
+  .stage{ overflow:visible; }
+
+  /* the just-placed photo (CSS rectangle standing in for a real image) */
+  .photo-wrap{ position:relative; width:52%; transform:rotate(-3.5deg); }
+  .photo{
+    position:relative; width:100%; aspect-ratio:4/3; border-radius:4px;
+    background:linear-gradient(150deg,#E9D7C3 0%, #D8B89A 45%, #C9A488 100%);
+    border:7px solid #fff;
+    box-shadow:0 10px 20px rgba(0,0,0,.30);
+  }
+  /* faint photographic horizon so it reads as a picture, not a swatch */
+  .photo::before{
+    content:""; position:absolute; left:0; right:0; bottom:0; height:40%;
+    border-bottom-left-radius:2px; border-bottom-right-radius:2px;
+    background:linear-gradient(0deg, rgba(38,70,83,.28), transparent);
+  }
+  /* a tiny tape corner holding the photo to the page */
+  .photo .tape-corner{
+    position:absolute; top:-13px; left:-10px; width:54px; height:22px;
+    transform:rotate(-34deg);
+    background:rgba(42,157,143,.62); box-shadow:0 2px 5px rgba(0,0,0,.22);
+    clip-path:polygon(0 22%,8% 0,100% 10%,94% 90%,0 100%);
+  }
+
+  /* SELECTION chrome: thin frame + small corner handles */
+  .photo-wrap.selected .photo{ outline:1.5px solid var(--stamp-blue); outline-offset:5px; }
+  .handle{
+    position:absolute; width:11px; height:11px; background:#fff;
+    border:1.5px solid var(--stamp-blue); border-radius:2px; z-index:3;
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+  }
+  .handle.tl{ left:-11px; top:-11px; }
+  .handle.tr{ right:-11px; top:-11px; }
+  .handle.bl{ left:-11px; bottom:-11px; }
+  .handle.br{ right:-11px; bottom:-11px; }
+
+  /* ── contextual HINT (coach mark): a gentle speech bubble, never a blocking modal ── */
+  .hint-bubble{
+    position:absolute; left:50%; bottom:-2px; transform:translate(-50%,100%);
+    width:max-content; max-width:230px; z-index:6;
+    background:#FFFDF7; color:var(--ink);
+    border:1.5px solid var(--paper-edge); border-radius:16px;
+    padding:12px 14px 10px; text-align:center; line-height:1.3;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+    transform-origin:top center;
+  }
+  .hint-bubble .say{ font-size:15px; color:var(--ink); }
+  /* little stalk pointing UP at the photo */
+  .hint-bubble::before{
+    content:""; position:absolute; top:-9px; left:50%; transform:translateX(-50%) rotate(45deg);
+    width:16px; height:16px; background:#FFFDF7;
+    border-left:1.5px solid var(--paper-edge); border-top:1.5px solid var(--paper-edge);
+    border-top-left-radius:3px;
+  }
+  /* implicit dismiss — comfortably ≥48dp tall tap target */
+  .gotit{
+    margin-top:9px; min-height:48px; min-width:96px;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    font-family:inherit; font-size:14px; cursor:pointer;
+    border:none; border-radius:13px; padding:0 18px;
+    background:var(--tape-coral); color:#fff;
+    box-shadow:0 4px 0 #c1573b, 0 7px 13px rgba(0,0,0,.28);
+    transition:transform var(--dur-fast) var(--ease-out);
+  }
+  .gotit:active{ transform:translateY(3px); box-shadow:0 1px 0 #c1573b; }
+
+  /* hint enters softly, then leaves on dismiss */
+  .hint-bubble{ animation:hintIn var(--dur) var(--ease-out) both; }
+  .hint-host.dismissed .hint-bubble{ opacity:0; transform:translate(-50%,100%) scale(.92); pointer-events:none; }
+  .hint-host .hint-bubble{ transition:opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+  @keyframes hintIn{
+    from{ opacity:0; transform:translate(-50%,100%) scale(.9); }
+    to  { opacity:1; transform:translate(-50%,100%) scale(1); }
+  }
+
+  /* transient autosave toast near the top of the canvas */
+  .toast{
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    z-index:7; font-size:13px; color:var(--ink);
+    background:#FFFDF7; border:1px solid var(--paper-edge); border-radius:20px;
+    padding:6px 14px; box-shadow:0 6px 14px rgba(0,0,0,.22);
+    transform:translateX(-50%) rotate(-1.5deg);
+    animation:toastFloat 3.2s var(--ease-out) both;
+  }
+  @keyframes toastFloat{
+    0%   { opacity:0; transform:translateX(-50%) translateY(-8px) rotate(-1.5deg); }
+    15%  { opacity:1; transform:translateX(-50%) translateY(0)   rotate(-1.5deg); }
+    80%  { opacity:1; }
+    100% { opacity:.0; transform:translateX(-50%) translateY(-4px) rotate(-1.5deg); }
+  }
+
+  /* page-label, low-key */
+  .pagelabel{ position:absolute; left:14px; bottom:10px; font-size:12px; color:var(--ink-soft); transform:rotate(-1deg); }
+
+  /* honour reduced-motion: no float, no slide — just present, calm */
+  @media (prefers-reduced-motion: reduce){
+    .hint-bubble{ animation:none; }
+    .toast{ animation:none; opacity:1; }
+    .hint-host .hint-bubble{ transition:opacity var(--dur) linear; }
+    .hint-host.dismissed .hint-bubble{ transform:translate(-50%,100%) scale(1); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="frame-wrap">
+    <div class="title-tag">onboarding — teach by doing</div>
+
+    <div class="phone">
+      <div class="topbar">
+        <div class="brand">Zinely<small>EDITOR</small></div>
+        <div class="proj-chip">my first zine</div>
+      </div>
+
+      <div class="stage">
+        <!-- autosave reassurance, transient -->
+        <div class="toast" id="toast">Saved ✨</div>
+
+        <div class="sheet page">
+          <div class="tape-top"></div>
+
+          <!-- the freshly placed, currently SELECTED photo + its coach mark -->
+          <div class="hint-host" id="hintHost">
+            <div class="photo-wrap selected">
+              <div class="tape-corner"></div>
+              <div class="photo"></div>
+              <div class="handle tl"></div>
+              <div class="handle tr"></div>
+              <div class="handle bl"></div>
+              <div class="handle br"></div>
+
+              <!-- contextual hint pointing at the photo -->
+              <div class="hint-bubble" role="status">
+                <div class="say">Drag to move it. Pinch to resize.</div>
+                <button class="gotit" id="gotit" type="button">Got it</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pagelabel">page 1 of 8</div>
+        </div>
+      </div>
+
+      <!-- booklet navigator: 8 cards, current is taped up; dot marks the page with the photo -->
+      <div class="strip">
+        <div class="pcard current">1<div class="dot"></div></div>
+        <div class="pcard">2</div>
+        <div class="pcard">3</div>
+        <div class="pcard">4</div>
+        <div class="pcard">5</div>
+        <div class="pcard">6</div>
+        <div class="pcard">7</div>
+        <div class="pcard">8</div>
+      </div>
+
+      <!-- privacy / affordance reassurance under the chrome -->
+      <div class="hint">no account · nothing to set up · you can always undo</div>
+    </div>
+
+    <div class="cap">
+      No tutorial carousel, no sign-up tour. The empty page and these in-context
+      hints <em>are</em> the onboarding — Zinely teaches by doing. The coach mark
+      appears once, right when it's useful, and leaves the moment you tap “Got it.”
+    </div>
+  </div>
+
+<script>
+  // The only behaviour: dismissing the one-time hint. No libraries, no network.
+  document.getElementById('gotit').addEventListener('click', function () {
+    document.getElementById('hintHost').classList.add('dismissed');
+  });
+</script>
+</body>
+</html>

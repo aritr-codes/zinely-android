@@ -50,6 +50,44 @@ flowchart LR
 > [docs/design/DESIGN-LANGUAGE.md](design/DESIGN-LANGUAGE.md). S5 and the Room-backed project
 > layer are unchanged in content, only resequenced after `SUX`.
 
+### Journey-ordered build sequence (product design sprint, 2026-06-28)
+
+A product design sprint produced the canonical blueprint — [DESIGN-LANGUAGE.md](design/DESIGN-LANGUAGE.md)
+(hub), [VOICE.md](design/VOICE.md), [EXPERIENCE-MAP.md](design/EXPERIENCE-MAP.md),
+[SCREEN-INVENTORY.md](design/SCREEN-INVENTORY.md), [DESIGN-RULES.md](design/DESIGN-RULES.md), and the
+[HTML prototypes](design/mockups/index.html). Its core sequencing principle: **build the product in
+the order a first-timer lives it** (the [emotional arc](design/EXPERIENCE-MAP.md#1-the-emotional-arc-target)),
+not feature-by-feature, so each slice delivers a felt win that funds the next.
+
+```mermaid
+flowchart LR
+    subgraph SUX["SUX · first-time creation (0.5.0)"]
+      U1["empty-state\ninvitation ✅"] --> U2["supply tray\n(visible actions)"] --> U3["contextual\nhints"] --> U4["visible undo/redo\n+ warm autosave"]
+    end
+    subgraph S5["S5 · make it real (0.6.0+)"]
+      X1["preview\n(the booklet)"] --> X2["export ·\nPrint & fold"] --> X3["completion ·\nfold + share"]
+    end
+    subgraph PROJ["project layer + shell"]
+      P1["Room project\nstore + thumbnails"] --> P2["Home /\nMy zines"]
+    end
+    W["Welcome\n(first-run flag)"]:::free --> SUX
+    SUX --> S5 --> MVP(["MVP · create AND export"])
+    PROJ -. enables Home .-> MVP
+    classDef now fill:#fff4d6,stroke:#e0a800;
+    classDef free fill:#e8f1ec,stroke:#2A9D8F;
+    class U1 now;
+```
+
+> **Why this order.** The two journey **peaks** are *first photo placed* (already unlocked) and
+> *print & fold* (S5) — so `SUX` finishes making the *creation* moment delightful, then S5 delivers
+> the *payoff*. **Welcome is decoupled** (Codex review): it is *not* Room-gated — it routes straight
+> to the editor on the `"default"` project behind a local first-run flag, so it can ship early as
+> part of the first-run experience. Only **Home/My-zines** is sequenced **with the Room project
+> layer** (plus shelf thumbnails) — it has no value until there is more than one project to shelve,
+> and it is off the critical path to the MVP "create **and** export one zine" exit.
+> Stickers/templates remain V1 expression. Each screen's build readiness is tracked in
+> [SCREEN-INVENTORY.md](design/SCREEN-INVENTORY.md#coverage-check-screen--milestone).
+
 > **Status:** **S1–S4 are implemented and on `main`.** S1 imposition engine (pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, milestone `v0.1.0-imposition-engine`); S2 persistence (`:core:data` contracts + pure-JVM `:core:data-storage` durability core/asset store + Android `:data-android` adapters); S3 render (`:core:render` pure tier + `:render-android` PDF/raster backends); S4 editor (`:core:editor` MVI core + `:feature:editor` interaction surface, now **mounted in `:app`** with interactive image import and autosave). Each was TDD'd and Codex-reviewed per increment.
 >
 > **What is NOT yet built**, despite the MVP scope below: production persistence is **file-only and single-project** — `data-android` ships a file-backed `DocumentRepository` writing `projects/<id>/document.json` on one fixed `"default"` project; **Room metadata, `ProjectRepository`, and the asset GC/sweeper are deferred** (no multi-project store yet). The render/**export backends exist** in `:render-android`, but there is **no user-facing export, share, print, or home/library flow** wired yet. **S5 (export flow) and the Room-backed project layer remain the next build steps.**
@@ -117,6 +155,7 @@ flowchart LR
 | 2026-06-28 | **Doc-truthfulness reconciliation** (Codex onboarding review GO-WITH-FIXES): corrected stale "no app UI / S2B-next" status and persistence/export overstatement across `README.md`, `ARCHITECTURE.md`, `ROADMAP.md`; aligned `AssetStore`/`core:data-storage` GC comments with the deferred-sweeper reality. No code behavior changed. | [review](reviews/2026-06-27-onboarding-review-claude-brief.md) |
 | 2026-06-28 | **Editor UI foundation** (`v0.4.0`): scrapbook page navigator (all 8 pages reachable, `Intent.GoToPage`) + zine "workbench" theme replacing the default template; design SoT seeded. | [ADR-008](DECISIONS.md#adr-008), [design](design/editor-visual-direction.md) |
 | 2026-06-28 | **Sequencing change → first-time creation UX milestone (`SUX`)** inserted before export (S5), per a UX audit; project versioning adopted (SemVer 0.y per milestone) + `CHANGELOG.md` added. | [ADR-008](DECISIONS.md#adr-008), [DESIGN-LANGUAGE](design/DESIGN-LANGUAGE.md), [CHANGELOG](../CHANGELOG.md) |
+| 2026-06-28 | **Product design sprint** — full blueprint authored (design system hub + voice, experience map, screen inventory, design rules, 11 HTML prototypes); build resequenced **journey-order** within `SUX`/S5; Welcome/Home bound to the Room project layer; architectural implications flagged for ADRs. No production UI changed. | [DESIGN-LANGUAGE](design/DESIGN-LANGUAGE.md), [EXPERIENCE-MAP](design/EXPERIENCE-MAP.md), [ARCHITECTURE §15.6](ARCHITECTURE.md) |
 
 > When phase contents change, add a row here and update the affected phase section + any new [ADR](DECISIONS.md).
 

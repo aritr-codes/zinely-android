@@ -433,3 +433,66 @@ S1–S4 have landed: the pure cores (`core:model`/`imposition`/`data`/`data-stor
 2. **Room-backed project layer.** Production persistence is currently **file-only and single-project** ([§4](#4-data-models--storage)): a file-backed `DocumentRepository` on one `"default"` project. The deferred Room metadata table + `ProjectRepository` unlock the home/library multi-project flow, and the **asset GC/sweeper** ([ADR-022](DECISIONS.md#adr-022)/[ADR-031](DECISIONS.md#adr-031)) lands with that work.
 
 > **Sequencing rule:** S5 (export) is the next critical-path build; the Room/`ProjectRepository`/home-library layer and the asset GC proceed alongside it. **Mandatory before enabling the GC sweep:** the import path must pin a hash before the document reference commits ([ADR-031](DECISIONS.md#adr-031) §2), plus the five ADR-022 race-closure tests in [spike §9.1](spikes/data-storage-layer.md#91-mandatory-s2b-tests--asset-gc-race-closure-adr-022).
+
+### 15.6 Architectural implications surfaced by the design sprint (2026-06-28)
+
+The [product design sprint](design/DESIGN-LANGUAGE.md) defined the full target product before building
+it. Designing every screen as one coherent experience surfaced concrete technical implications. These
+are **🟦 RECOMMENDATIONs / 🔭 FUTURE**, not yet decided — each non-trivial one needs an
+[ADR](DECISIONS.md) (Codex-reviewed) before implementation. None introduces a network/account/upload
+path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds across all of them.
+
+1. **Navigation graph expansion → amend [ADR-030](DECISIONS.md#adr-030).** A type-safe single-Activity
+   `ZinelyNavHost` already exists, with `EditorRoute("default")` as the start destination. The
+   [screen inventory](design/SCREEN-INVENTORY.md) expands it with Welcome, Home/My-zines, Preview,
+   Export, Completion, and Settings — additional type-safe `@Serializable` destinations (navigate from
+   UI, not ViewModels). 🟦 **Welcome and Settings are not Room-gated** (Codex review): Welcome routes
+   straight to `EditorRoute("default")` behind a **local first-run flag** (see item 4), and Settings
+   needs only the local prefs store — both can ship before the project layer. **Only Home/My-zines is
+   gated on the Room `ProjectRepository`** (§15.5) — and Home additionally requires **project-card
+   thumbnail production/invalidation**, which nothing in the repo owns yet (`ProjectRepository` exists
+   today only as a pure contract).
+
+2. **Sticker/decoration element type → new ADR.** Today `core:model`/`core:render` know only
+   `ImageElement` and `TextElement`. The [sticker picker](design/SCREEN-INVENTORY.md#sticker-picker)
+   wants a bundled, app-owned, non-GC'd decoration. 🟦 The **recommended** path (an ADR choice, not a
+   design-forced inevitability) is a dedicated sticker `Element` variant in
+   [`core:model`](#4-data-models--storage): a **schema version bump** (`DocumentSerializer` + a
+   migration), a new `SceneRenderer` draw command in [`core:render`](#5-render-pipeline) with
+   **preview==export** parity, and a **bundled sticker catalog** kept distinct from the *user*
+   content-addressed asset store ([ADR-031](DECISIONS.md#adr-031)) — program assets, license-clear, not
+   GC'd. 🔭 V1 expression.
+
+3. **Template/preset model → new ADR.** The [template picker](design/SCREEN-INVENTORY.md#template-picker)
+   needs a `TemplateCatalog` of pre-authored page layouts. For a *new* project, the cleanest expression
+   is **seed documents / page presets** through the existing `EditorBootstrap` seed-on-miss path. 🟦 But
+   the screen-inventory promise is that the picker also **applies a layout to the current page/zine from
+   inside the editor** — that bootstrap path does **not** cover an in-editor mutation (Codex review). So
+   it additionally needs an **editor mutation path**: a new MVI intent/command, defined **replace-vs-merge**
+   semantics against existing page content, and correct **undo + autosave** behavior (applying a template
+   must be a single undoable step). Templates stay editable starting content, no lock-in. 🔭 V1.
+
+4. **Lightweight preferences / onboarding-state store → fold into a Settings ADR.** Contextual
+   [one-time hints](design/DESIGN-LANGUAGE.md#4-onboarding-philosophy), reduced-motion/haptic/sound
+   choices, and paper-size/theme need a small **key-value store (DataStore)** separate from the document
+   store. 🟦 Local-only, no network; "seen hint X" flags live here, not in the `.zine` document.
+
+5. **`:feature:preview` is a new render *consumer*, not new architecture.** The
+   [preview](design/SCREEN-INVENTORY.md#preview) renders pages in **booklet reading order** (1→8), reusing
+   `CanvasReplayer`/`PagePreview` — orthogonal to the imposition order used at export. ✅ No core change;
+   a thin feature module.
+
+6. **Motion/haptics as design tokens.** [Motion §10](design/DESIGN-LANGUAGE.md#10-motion) /
+   [haptics §11](design/DESIGN-LANGUAGE.md#11-haptics) imply a centralized `MotionTokens`/animation-spec
+   object in the theme and a reduced-motion + system-haptic-setting plumb-through, so timings/easings are
+   consistent and degrade gracefully rather than being hand-tuned per screen. 🟦 Low risk, do with the
+   tray slice.
+
+7. **Microcopy as a single string source.** Every user-facing string is owned by
+   [VOICE.md](design/VOICE.md) and should land as **Android string resources** (one catalog), not inline
+   literals — for voice consistency and future i18n. 🟦 A discipline, enforced via
+   [DESIGN-RULES.md](design/DESIGN-RULES.md).
+
+> **Net:** nothing here blocks the current `SUX`/S5 critical path. The two items that touch the
+> **document schema** (stickers) or the **bootstrap/seed path** (templates) are the ones to ADR-gate
+> first, since they ripple through serialization, migration, and the render parity goldens.

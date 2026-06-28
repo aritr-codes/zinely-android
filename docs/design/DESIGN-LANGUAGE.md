@@ -1,11 +1,23 @@
 # Zinely — Design Language
 
 > **The single source of truth for how Zinely should *feel*.** Visual identity, interaction
-> philosophy, onboarding, emotional goals, progressive disclosure, accessibility, and the
-> first-time user journey. The editor-surface specifics live in
+> philosophy, onboarding, emotional goals, progressive disclosure, accessibility, motion,
+> haptics, sound, and the first-time user journey. The editor-surface specifics live in
 > [editor-visual-direction.md](editor-visual-direction.md); product scope in
 > [PRD.md](../PRD.md); the beginner-first decision in [ADR-008](../DECISIONS.md#adr-008).
 > Status: design SoT · 2026-06-28.
+
+> **This document is the hub of the Zinely design system.** Focused companions own one
+> responsibility each and are linked, not restated (per the [Documentation Rule](../../CLAUDE.md)):
+>
+> | Companion | Owns |
+> |---|---|
+> | [VOICE.md](VOICE.md) | brand personality, tone rules, the microcopy library |
+> | [EXPERIENCE-MAP.md](EXPERIENCE-MAP.md) | the emotional arc + end-to-end user journey |
+> | [SCREEN-INVENTORY.md](SCREEN-INVENTORY.md) | every planned screen, its purpose + actions |
+> | [DESIGN-RULES.md](DESIGN-RULES.md) | the non-negotiable per-screen review checklist |
+> | [editor-visual-direction.md](editor-visual-direction.md) | the editor surface specifics |
+> | [mockups/](mockups/) | the interactive HTML prototypes (canonical visual reference) |
 
 ---
 
@@ -170,3 +182,67 @@ The next milestone is the **first-time creation experience**, not more editor po
 
 Out of scope for these slices (still deferred): home flow, library/project management, export
 flow.
+
+## 10. Motion
+
+Animation in Zinely has one job: **make the app feel like handling paper and supplies, not
+operating software.** Motion is physical, gentle, and brief — it reinforces craft, never shows off.
+
+- **Philosophy — physical, not flashy.** Things move the way paper and stickers move: they settle,
+  they have a little weight, they don't teleport. A photo *drops in* and settles; a sticker
+  *presses on*; the current page *lifts* off the strip. Motion communicates a real-world
+  action, so it teaches without words.
+- **Easing.** Standard transitions use a gentle ease-out (decelerate — arrives softly, like
+  something coming to rest). Playful "settle" moments add a *tiny* overshoot/spring (≈3–5%, one
+  bounce) — enough to feel alive, never bouncy or cartoonish. Avoid linear (robotic) and avoid
+  big springs (toy-like).
+- **Duration.** Keep it quick so it never gates the user: micro-feedback ~100–150ms, standard
+  element/transition ~200–300ms, a larger screen transition ~300–400ms. If a beginner ever waits
+  on an animation, it's too long.
+- **Page movement.** Switching pages: the chosen page card lifts, rotates a hair, and the tape
+  settles onto it; the canvas cross-fades to the new page. The booklet feeling comes from cards
+  that behave like real cards.
+- **Card & paper interactions.** Selecting lifts an element slightly (shadow grows); dragging
+  follows the finger 1:1 with no lag (use an ephemeral gesture frame); releasing settles with a
+  soft ease-out. Resize handles track the pinch exactly — preview equals commit.
+- **Delightful micro-animations (sparingly, earned).** A sticker-pop when the first element lands;
+  a soft "Saved ✨" fade; a gentle confetti/sparkle at export ("Your zine is ready! 🎉"). Reserve
+  the biggest celebration for the biggest win so it keeps meaning.
+- **Reduced motion is first-class.** With the system reduced-motion setting on, every animation
+  degrades to a simple cross-fade or an instant state change. Motion is always decorative on top
+  of an already-correct static state — never the only signal that something happened
+  ([accessibility](#7-accessibility)).
+
+## 11. Haptics
+
+Touch feedback makes the digital feel tactile — but overused it becomes noise. Use the lightest
+appropriate effect, and only to confirm a *physical-feeling* event.
+
+- **Yes, gently:** an element snaps to a guide (a light tick — the satisfying "it clicked into
+  place"); an element is selected/picked up (a soft tap); a sticker presses on; export completes
+  (one warm confirmation). These mirror real craft-table sensations.
+- **No:** every drag frame, every scroll, routine button taps, typing, navigation. Continuous or
+  ambient haptics drain battery and quickly feel like buzzing rather than craft.
+- **Always optional & respectful.** Honor the system haptic setting; never the *only* feedback for
+  anything (pair with a visual). A "Reduce haptics" affordance lives in
+  [Settings](SCREEN-INVENTORY.md#settings) for the future.
+
+## 12. Sound
+
+Zinely is **silent by default.** Many users craft in quiet, shared, or public spaces, and
+unexpected sound is the opposite of cozy.
+
+- **Default: off.** No sound ships enabled. The app must be fully delightful muted.
+- **Optional, opt-in, subtle.** *If* sound is ever added, it is a single opt-in toggle in
+  [Settings](SCREEN-INVENTORY.md#settings), and limited to small, soft, organic craft sounds — a
+  faint paper rustle, a soft sticker "tick," a gentle chime at export. Calm, never cute-loud,
+  never UI-beepy.
+- **Never required.** Sound is pure garnish on already-complete visual + haptic feedback; respect
+  the silent/Do-Not-Disturb mode absolutely. Accessibility never depends on audio.
+
+## 13. Brand personality
+
+The voice that ties the visuals, motion, and copy together — *the crafty friend who makes you
+feel talented* — is defined in **[VOICE.md](VOICE.md)**, alongside the canonical microcopy library
+every screen draws from. Visual identity (§2 above) and that voice are two halves of the same
+personality; design them together.
