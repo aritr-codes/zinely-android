@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
@@ -155,6 +156,19 @@ public fun EditorScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
 
+                // First-run invitation: when the current page is blank and no text session is open,
+                // a blank sheet reads as a void — so we overlay the cozy empty state with two visible
+                // supplies (DESIGN-LANGUAGE §8/§9). It sits above the gesture surface so its buttons
+                // win the hit-test; once the page has an element it disappears and the canvas is live.
+                val currentPageEmpty = uiState.document.pages[uiState.currentPageIndex].elements.isEmpty()
+                if (currentPageEmpty && !editing) {
+                    EditorEmptyState(
+                        onAddPhoto = { dispatch(Intent.RequestAddImage) },
+                        onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+
                 // The text-edit overlay: only while a session is open and its element still exists (a delete
                 // races it closed; the session's onDispose/token guard then no-ops the trailing commit).
                 if (interaction is Interaction.EditingText) {
@@ -198,4 +212,36 @@ public fun EditorScreen(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+}
+
+/**
+ * "Add words" from the empty state: place an **empty** text box centered on the page and **open its
+ * edit session immediately**, so the beginner goes straight to typing — no committed placeholder
+ * sentence, and no reliance on the hidden double-tap-to-edit affordance (Codex UX finding). Composed
+ * from existing intents: [Intent.PlaceText] reduces synchronously and selects the new element, so its
+ * id is readable from [currentState] the instant `dispatch` returns (see `EditorStore` threading note),
+ * and we hand it to [Intent.BeginEditText].
+ *
+ * Follow-up (tracked, not this slice): make this a single reducer-owned intent so a cancelled brand-new
+ * empty text is removed and place+edit collapse into one undo step.
+ */
+internal fun addTextAndEdit(
+    pageSizePt: PtSize,
+    currentState: () -> EditorUiState,
+    dispatch: (Intent) -> Unit,
+) {
+    dispatch(Intent.PlaceText(centeredTextBox(pageSizePt), ""))
+    currentState().selection.singleOrNull()?.let { dispatch(Intent.BeginEditText(it)) }
+}
+
+/** A text box centered on the page (points) for a newly added text element. */
+private fun centeredTextBox(page: PtSize): Transform {
+    val w = page.width * 0.7
+    val h = page.height * 0.16
+    return Transform(
+        xPt = (page.width - w) / 2.0,
+        yPt = (page.height - h) / 2.0,
+        widthPt = w,
+        heightPt = h,
+    )
 }
