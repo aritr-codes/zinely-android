@@ -32,9 +32,23 @@ flowchart LR
     S1["Spike: imposition engine\n(+ SVG proof sheet)"] --> S2["Data/storage layer\n(Room meta + JSON doc)"]
     S2 --> S3["Render pipeline\n(shared scene → preview/export)"]
     S3 --> S4["Editor (MVI)\nplace/transform/undo"]
-    S4 --> S5["Export flow\nPDF + image + share"]
+    S4 --> SUX["First-time creation UX\nempty state · onboarding · supplies"]
+    SUX --> S5["Export flow\nPDF + image + share"]
     S5 --> MVP(["MVP complete"])
+    classDef now fill:#fff4d6,stroke:#e0a800;
+    class SUX now;
 ```
+
+> **Sequencing change (2026-06-28).** A repository UX audit confirmed the editor is
+> *functionally* strong but *emotionally* intimidating for the beginner-first audience
+> ([ADR-008](DECISIONS.md#adr-008)): it opens to a near-blank sheet, core actions hide behind
+> gestures, and the chrome reads like generic productivity software. So a **first-time creation
+> experience** milestone (`SUX`) is inserted **before** the export flow (S5): cozy empty state,
+> contextual onboarding, a visible scrapbook supply tray, discoverable add-text/undo-redo, and
+> "all 8 pages together." Rationale: export has no value if a first-time user never makes a page
+> they want to print — *reduce intimidation before adding power*. The design SoT is
+> [docs/design/DESIGN-LANGUAGE.md](design/DESIGN-LANGUAGE.md). S5 and the Room-backed project
+> layer are unchanged in content, only resequenced after `SUX`.
 
 > **Status:** **S1–S4 are implemented and on `main`.** S1 imposition engine (pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, milestone `v0.1.0-imposition-engine`); S2 persistence (`:core:data` contracts + pure-JVM `:core:data-storage` durability core/asset store + Android `:data-android` adapters); S3 render (`:core:render` pure tier + `:render-android` PDF/raster backends); S4 editor (`:core:editor` MVI core + `:feature:editor` interaction surface, now **mounted in `:app`** with interactive image import and autosave). Each was TDD'd and Codex-reviewed per increment.
 >
@@ -101,5 +115,22 @@ flowchart LR
 | 2026-06-26 | **S4 `:feature:editor` interaction surface MERGED** (PR #21 — 10 increments, each Codex-reviewed): store + effect runner, gesture pipeline, selection chrome + live document-order preview, opposite-anchor resize, live snap guides (preview==commit), a11y contextbar + element semantics (WCAG 2.5.7), race-safe text-edit session, host `EditorScreen`, and **selection-chrome Roborazzi goldens** (CI-gated). **Editor not yet wired into `:app` navigation** — that + `pageSizePt`/image-pipeline/autosave-binder at the app/DI layer is the next step. | [ADR-029](DECISIONS.md#adr-029), [spike §10.10–§10.11](spikes/s4-editor-mvi.md) |
 | 2026-06-27 | **S4 editor mounted in `:app`** (PR #23): single-Activity `ZinelyNavHost` on a fixed `"default"` project, `EditorViewModel`/`EditorBootstrap` (seed-on-miss + imposition-derived page size), autosave binder, and content-addressed asset store + interactive image import. | [ADR-030](DECISIONS.md#adr-030), [ADR-031](DECISIONS.md#adr-031) |
 | 2026-06-28 | **Doc-truthfulness reconciliation** (Codex onboarding review GO-WITH-FIXES): corrected stale "no app UI / S2B-next" status and persistence/export overstatement across `README.md`, `ARCHITECTURE.md`, `ROADMAP.md`; aligned `AssetStore`/`core:data-storage` GC comments with the deferred-sweeper reality. No code behavior changed. | [review](reviews/2026-06-27-onboarding-review-claude-brief.md) |
+| 2026-06-28 | **Editor UI foundation** (`v0.4.0`): scrapbook page navigator (all 8 pages reachable, `Intent.GoToPage`) + zine "workbench" theme replacing the default template; design SoT seeded. | [ADR-008](DECISIONS.md#adr-008), [design](design/editor-visual-direction.md) |
+| 2026-06-28 | **Sequencing change → first-time creation UX milestone (`SUX`)** inserted before export (S5), per a UX audit; project versioning adopted (SemVer 0.y per milestone) + `CHANGELOG.md` added. | [ADR-008](DECISIONS.md#adr-008), [DESIGN-LANGUAGE](design/DESIGN-LANGUAGE.md), [CHANGELOG](../CHANGELOG.md) |
 
 > When phase contents change, add a row here and update the affected phase section + any new [ADR](DECISIONS.md).
+
+## Version milestones (SemVer)
+
+Pre-1.0, the minor version tracks completed vertical-slice milestones; `1.0.0` ships at MVP
+exit. Full history in [CHANGELOG.md](../CHANGELOG.md).
+
+| Version | Milestone | State |
+|---|---|---|
+| `0.1.0` | S1 — imposition engine | ✅ tagged `v0.1.0-imposition-engine` |
+| `0.2.0` | S2 — persistence (file-only) | ✅ on `main` |
+| `0.3.0` | S3 — rendering pipeline | ✅ on `main` |
+| `0.4.0` | S4 — editor foundation + UI foundation | ✅ on `main` — **tag the page-navigator/theme commit** (the foundation), not later `SUX` work |
+| `0.5.0` | `SUX` — first-time creation experience (empty state shipped first) | 🔭 current milestone |
+| `0.6.0`+ | S5 — export/share + Room project layer | 🔭 then |
+| `1.0.0` | MVP — create **and** export a zine | 🔭 exit criteria |

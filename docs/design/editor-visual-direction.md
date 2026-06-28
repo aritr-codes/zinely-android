@@ -1,9 +1,11 @@
 # Editor — Visual Direction & Interaction Brief
 
-> **Status:** Design brief · 2026-06-28 · scopes the editor UI/UX only (single fixed
+> **Status:** Design brief · updated 2026-06-28 · scopes the editor UI/UX only (single fixed
 > `"default"` project, editor already mounted per [ADR-030](../DECISIONS.md#adr-030)).
-> Not a product-scope change — phasing stays in [ROADMAP.md](../ROADMAP.md), decisions in
-> [DECISIONS.md](../DECISIONS.md). Home / library / export flows remain **deferred**.
+> The product-wide **why and feel** (emotional goals, onboarding, UX principles, accessibility,
+> first-time journey) live in **[DESIGN-LANGUAGE.md](DESIGN-LANGUAGE.md)** — this doc is the
+> editor-surface specifics under that umbrella. Phasing stays in [ROADMAP.md](../ROADMAP.md),
+> decisions in [DECISIONS.md](../DECISIONS.md). Home / library / export flows remain **deferred**.
 
 ## 1. Why this work, and why now
 
@@ -105,13 +107,25 @@ carrier of the visual language.
   assets and density variants. MVP draws texture with tint + shadow + shapes to keep the
   slice asset-free and reviewable; richer textures can land later behind the same surface.
 
-## 6. Chosen implementation slice
+## 6. Implementation slices
+
+**Shipped (v0.4.0):**
 
 1. **Zine theme foundation** (`:app`): fixed paper/ink/craft palette, `dynamicColor` off,
    so the identity is consistent and print-brand-led.
 2. **`EditorPageStrip`** (`:feature:editor`): the scrapbook page navigator, hosted in
-   `EditorScreen`, wiring the already-shipped `Intent.GoToPage`. The functional unlock.
+   `EditorScreen`, wiring the already-shipped `Intent.GoToPage`. The functional unlock —
+   all eight pages reachable.
 
-Deferred to follow-up slices (designed here, not built now): the tool tray (add-text/undo/
-redo affordances), context-bar restyle, real mini-render thumbnails, bundled marker font,
-richer paper textures. Home / library / export stay out of scope entirely.
+**Next (current milestone — first-time creation experience, see
+[DESIGN-LANGUAGE §9](DESIGN-LANGUAGE.md#9-implementation-priority)):**
+
+3. **`EditorEmptyState`** (`:feature:editor`): the cozy first-run invitation shown when the
+   current page has no elements — encouraging copy + discoverable "add a photo" / "add words"
+   supplies (the audit's empty-state + discoverability + visible-add-text + contextual-guidance
+   findings). Wires `Intent.RequestAddImage` and `Intent.PlaceText`. **This is the chosen slice.**
+
+Deferred to later slices (designed, not built now): the supply tray replacing the FAB, visible
+undo/redo, one-time contextual move/resize hints, context-bar restyle, real mini-render page
+thumbnails, bundled marker font, richer paper textures. Home / library / export stay out of
+scope entirely.

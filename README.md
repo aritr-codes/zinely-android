@@ -52,6 +52,8 @@ Start here, then follow links. Each document is the **single source of truth** f
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical source of truth — architecture, pipelines, models, diagrams |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phased plan: MVP → V1 → V2 → Future |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Architecture Decision Records (ADRs) |
+| [docs/design/DESIGN-LANGUAGE.md](docs/design/DESIGN-LANGUAGE.md) | Design SoT — visual identity, onboarding & UX philosophy, emotional goals |
+| [CHANGELOG.md](CHANGELOG.md) | Release history (Keep a Changelog · SemVer) |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Cited evidence base (verified / recommendation / assumption / future) |
 | [docs/spikes/imposition-engine.md](docs/spikes/imposition-engine.md) | First spike: the imposition engine design (S1) |
 | [docs/spikes/data-storage-layer.md](docs/spikes/data-storage-layer.md) | Data & storage layer design + S2A implementation status (S2) |
