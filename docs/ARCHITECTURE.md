@@ -2,9 +2,9 @@
 
 > **The technical source of truth.** *How* Zinely is built. Product "what/why" → [PRD.md](PRD.md). Decisions → [DECISIONS.md](DECISIONS.md) (referenced by ADR id). Evidence → [RESEARCH.md](RESEARCH.md). Phasing → [ROADMAP.md](ROADMAP.md).
 >
-> Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`) and `core:data` (S2A). No Android-backed modules or app UI yet.
+> Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`), `core:data` + `core:data-storage` (S2), `core:render` (S3), `core:editor` (S4) — plus the Android-backed `data-android` (file persistence), `render-android` (PDF/raster backends), and `feature:editor` (interaction surface). The `:app` module mounts a working **editor** on a single fixed `"default"` project with interactive image import and autosave. **Not yet implemented:** Room project metadata, `ProjectRepository`, any user-facing export/share flow, and the home/settings screens (see [§4](#4-data-models--storage) and [ROADMAP.md](ROADMAP.md)).
 
-> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-025); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
+> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-031); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
 
 ---
 
@@ -88,7 +88,7 @@ com.aritr.zinely
 └── ui               // theme, design system, shared composables (M3)
 ```
 
-Module split (realised vs planned): **realised** — `:app`, `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability/GC core, [ADR-025](DECISIONS.md#adr-025)), `:render-android` (S3 Android replay tier, [ADR-028](DECISIONS.md#adr-028)), `:feature:editor` (S4 — **preview host only** so far: a thin Compose `drawIntoCanvas` bridge over `:render-android`'s `CanvasReplayer`; MVI store/gestures/undo still planned); **planned** — `:core:render` (S3, pure tier on main), `:data-android` (S2B Android adapters: Room/WorkManager/Bitmap/SAF, [ADR-025](DECISIONS.md#adr-025)), `:core:domain`, `:core:ui`, `:feature:home|export|settings`.
+Module split (realised vs planned): **realised** — `:app` (mounts the editor on a fixed `"default"` project), `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability core + content-addressed asset store, [ADR-025](DECISIONS.md#adr-025); GC/sweeper deferred — see [§4](#4-data-models--storage)), `:core:render` (S3 pure tier, [ADR-027](DECISIONS.md#adr-027)), `:render-android` (S3 Android replay/export tier, [ADR-028](DECISIONS.md#adr-028)), `:core:editor` (S4 pure MVI reducer, [ADR-029](DECISIONS.md#adr-029)), `:feature:editor` (S4 interaction surface — MVI store, gesture pipeline, selection chrome, snap guides, a11y contextbar, text-edit session, host `EditorScreen`), `:data-android` (S2B Android adapters: file-only `DocumentRepository` over app-private storage; **Room/WorkManager not yet implemented**, [ADR-025](DECISIONS.md#adr-025)); **planned** — `:core:domain`, `:core:ui`, `:feature:home|export|settings`, and the Room metadata / `ProjectRepository` / export-share wiring those imply.
 
 ## 3. Data flow
 
@@ -112,6 +112,8 @@ UI models are mapped from domain/data models inside ViewModels and contain only 
 ## 4. Data models & storage
 
 **Storage split ([ADR-003](DECISIONS.md#adr-003)):** Room stores queryable **metadata**; the zine **document tree** is `kotlinx.serialization` JSON in a per-project file (not relational). Images are **copied in** ([ADR-004](DECISIONS.md#adr-004)). Document schema is versioned **independently** of the Room schema. The diagram below is the *logical* model; only `ZINE_PROJECT` is a real table — the rest is the serialized document.
+
+> **⚠️ Current implementation (checkout state).** The Room metadata table, `ZINE_PROJECT`, and `ProjectRepository` are **the accepted target, not yet built**. Production persistence today is **file-backed only**: `data-android`'s `DocumentRepositoryImpl` serializes the document tree to `projects/<id>/document.json` over app-private storage, bound through `core:data-storage`'s atomic `AtomicFileStore` + autosave coordinator. The app runs on a **single fixed `"default"` project** (`ZinelyNavHost` / `EditorBootstrap`); there is no multi-project metadata store, no Room/DAO/`@AutoMigration`, and no `ProjectRepository` binding ([DataModule](../data-android/src/main/kotlin/com/aritr/zinely/data/android/di/DataModule.kt) binds only `DocumentRepository`). Image assets are persisted by the content-addressed `FileAssetStore`; the asset **GC/sweeper is deferred** ([ADR-031](DECISIONS.md#adr-031)). Room metadata + `ProjectRepository` land with the home/library work ([ROADMAP.md](ROADMAP.md)); see also the deferral note in [DECISIONS.md](DECISIONS.md).
 
 ```mermaid
 erDiagram
@@ -185,6 +187,8 @@ flowchart TD
 - `PdfDocument`'s Skia backend yields **true vector, selectable text with embedded subset fonts** — no third-party PDF lib needed ([ADR-001](DECISIONS.md#adr-001)).
 
 ## 6. Export pipeline
+
+> **⚠️ Current implementation (checkout state).** The shared **render/export backends exist** — `render-android` ships `PdfPageRenderer`, `RasterPageRenderer`, and the `CanvasReplayer` over the pure `core:render` tape. The **user-facing export flow does not**: there is no `:feature:export` module, no `FileProvider` / `MediaStore` / `ACTION_CREATE_DOCUMENT` / `PrintManager` wiring, and no share path. The pipeline below is the accepted design for S5, not yet shipped UI.
 
 ```mermaid
 flowchart TD
@@ -350,12 +354,12 @@ The whole-project view used to sequence implementation. Phasing definitions live
 flowchart BT
     model["core:model<br/>✅ v0.1.0"]
     imp["core:imposition<br/>✅ v0.1.0"]
-    data["core:data<br/>S2A ✅ · S2B ⬜"]
+    data["core:data + data-storage<br/>S2 ✅ (file-only; Room/GC deferred)"]
     render["core:render<br/>S3 ✅ · ADR-027 (pure tier on main)"]
     ra["render-android<br/>S3 ✅ · ADR-028 (Android tier on main)"]
-    editor["feature:editor (MVI)<br/>S4 ✅ surface on main · ADR-029"]
-    export["export<br/>S5"]
-    app["app shell / navigation"]
+    editor["feature:editor (MVI)<br/>S4 ✅ surface on main · mounted in app · ADR-029"]
+    export["export<br/>S5 ⬜ (backends exist; no UI flow)"]
+    app["app shell / navigation<br/>✅ editor mounted (fixed default project)"]
 
     imp --> model
     data --> model
@@ -373,11 +377,11 @@ flowchart BT
 
     classDef done fill:#dff5dd,stroke:#3a7;
     classDef next fill:#fff4d6,stroke:#e0a800;
-    class model,imp,render,ra,editor done;
-    class data next;
+    class model,imp,data,render,ra,editor,app done;
+    class export next;
 ```
 
-*Arrow `A → B` = "A depends on B." `core:model` is the universal sink (pure, depends on nothing); the `app` shell is the source.*
+*Arrow `A → B` = "A depends on B." `core:model` is the universal sink (pure, depends on nothing); the `app` shell is the source. `data` is ✅ for the **file-only** vertical; Room metadata + `ProjectRepository` remain deferred ([§4](#4-data-models--storage)).*
 
 ### 15.2 Build order
 
@@ -385,11 +389,11 @@ flowchart BT
 |---|---|---|---|---|
 | S1 | `core:imposition` | `core:model` | ✅ shipped (v0.1.0) | — |
 | S2A | `core:data` (pure core) | `core:model` | ✅ implemented — schema, serializer+migration, validation, repo/asset contracts ([spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19)) | S3 (no shared dep) |
-| **S2B-core** | **`core:data-storage`** (pure JVM) | `core:data`, S2A | ⬜ **current build step** — atomic file source + autosave coordinator + content-addressed asset store + mark-and-sweep GC (java.nio; CI-tested now) ([ADR-025](DECISIONS.md#adr-025)) | S3 (no shared dep) |
-| S2B-android | `data-android` (Android library) | `core:data-storage` | ⬜ Room + WorkManager GC scheduler + Bitmap/EXIF import master + SAF `.zine`; needs Android-SDK CI ([ADR-025](DECISIONS.md#adr-025)) | S3 |
+| **S2B-core** | **`core:data-storage`** (pure JVM) | `core:data`, S2A | ✅ **on main** — atomic file source + autosave coordinator + content-addressed asset store (java.nio; CI-tested) ([ADR-025](DECISIONS.md#adr-025)). **Mark-and-sweep GC deferred — not yet implemented** ([ADR-031](DECISIONS.md#adr-031) §2) | S3 (no shared dep) |
+| S2B-android | `data-android` (Android library) | `core:data-storage` | ✅ **on main (file-only)** — file-backed `DocumentRepository` over app-private storage + autosave coordinator factory/binder + Hilt graph ([ADR-025](DECISIONS.md#adr-025)/[ADR-026](DECISIONS.md#adr-026)). **Room metadata, WorkManager GC, and SAF `.zine` not yet implemented** | S3 |
 | S3-core | `core:render` (pure) | `core:model` | ✅ **on main** ([ADR-027](DECISIONS.md#adr-027)) — pure-JVM render core landed (`:core:render`, 23 tests, Codex GO, PR #9 merged `60f7344`) | S2B (no shared dep) |
 | **S3-android** | **`render-android`** (Android library) | `core:render` | ✅ **on main** ([ADR-028](DECISIONS.md#adr-028), G1–G6) — one `CanvasReplayer` + two export providers, `SharedTextLayout`, crop-aware `ImageBlitter`, bundled **Inter** (MVP charset + cmap coverage guard). Roborazzi raster + text parity goldens **headless-CI-gated**; image + PDF write/parity proofs on-device (compile-checked in CI) ([spike](spikes/core-render-android-backend.md)). Gated like `:data-android`. **Closes S3** | S2B (no shared dep) |
-| S4 | `feature:editor` | `core:model`, `core:data`, `render-android` (→ `core:render`) | ✅ **interaction surface on main** ([ADR-029](DECISIONS.md#adr-029), PR #21) — pure `:core:editor` MVI reducer + the gated `:feature:editor` store, gesture pipeline, selection chrome + live document-order preview, opposite-anchor resize handles, live snap guides (preview==commit), a11y contextbar/element semantics (WCAG 2.5.7), race-safe text-edit session, host `EditorScreen`, and selection-chrome Roborazzi goldens (CI-gated). Preview-host `preview == export` parity proven (PR #19). **Remaining: wire `EditorScreen` into `:app` nav + `pageSizePt` from imposition + image pipeline + autosave binder.** Gated like `:render-android` | — (needs S2 **and** S3) |
+| S4 | `feature:editor` | `core:model`, `core:data`, `render-android` (→ `core:render`) | ✅ **interaction surface on main** ([ADR-029](DECISIONS.md#adr-029), PR #21) — pure `:core:editor` MVI reducer + the gated `:feature:editor` store, gesture pipeline, selection chrome + live document-order preview, opposite-anchor resize handles, live snap guides (preview==commit), a11y contextbar/element semantics (WCAG 2.5.7), race-safe text-edit session, host `EditorScreen`, and selection-chrome Roborazzi goldens (CI-gated). Preview-host `preview == export` parity proven (PR #19). **Now mounted in `:app`** (PR #23, [ADR-030](DECISIONS.md#adr-030)/[ADR-031](DECISIONS.md#adr-031)): `ZinelyNavHost` on a fixed `"default"` project, `pageSizePt` from imposition, interactive image import, autosave binder. Gated like `:render-android` | — (needs S2 **and** S3) |
 | S5 | `export` | `core:model`, `core:imposition`, `core:data`, `render-android` (→ `core:render`) | ⬜ | — |
 | — | `app` shell / nav | features | ⬜ | — |
 
@@ -408,11 +412,11 @@ flowchart BT
 ```mermaid
 flowchart LR
     M["core:model ✅"] --> I["core:imposition ✅"]
-    M --> D["core:data (S2A ✅ / S2B ⬜)"]
-    M --> R["core:render (S3)"]
-    D --> E["editor (S4)"]
+    M --> D["core:data (S2 ✅, file-only)"]
+    M --> R["core:render (S3 ✅)"]
+    D --> E["editor (S4 ✅, mounted)"]
     R --> E
-    R --> X["export (S5)"]
+    R --> X["export (S5 ⬜)"]
     D --> X
     I --> X
     E --> MVP(["MVP"])
@@ -421,13 +425,11 @@ flowchart LR
 
 `core:render` depends only on `core:model` (not on `core:imposition`); **imposition is composed at export** ([ADR-006](DECISIONS.md#adr-006)). The gating node for all remaining work is therefore **`core:render`**: both the editor (S4) and export (S5) depend on it, so the critical path runs **`core:render` → {editor, export} → MVP**. `core:data` (S2) is a **parallel feeder** into the editor and export and shares no dependency with `core:render`, so persistence work and render work proceed concurrently.
 
-### 15.5 Which subsystem follows S2A — sequencing
+### 15.5 What follows S4 — sequencing
 
-**Build S2B (Android-backed `core:data`) next**, with `core:render` (S3) as a parallel track. Rationale:
+S1–S4 have landed: the pure cores (`core:model`/`imposition`/`data`/`data-storage`/`render`/`editor`), the Android tiers (`data-android` file-only persistence, `render-android` backends), and the `feature:editor` surface — now **mounted in `:app`** on a fixed `"default"` project. Two tracks remain before MVP:
 
-1. **S2B completes the persistence vertical.** S2A landed the pure-Kotlin data core (schema, serializer+migration, validation, repository/`DataResult` + asset/`.zine` contracts). S2B implements the Android-backed data sources those contracts declare — Room metadata, atomic-write document file source, autosave coordinator, `AssetStore` impl, WorkManager mark-and-sweep GC — so the editor (S4) and export (S5) have a working store. Its design decisions are **Accepted, not held**: durable autosave ([ADR-021](DECISIONS.md#adr-021)), asset ownership/GC ([ADR-022](DECISIONS.md#adr-022)), import-master fidelity ([ADR-023](DECISIONS.md#adr-023)); the S2 decision gate is closed — no ADR blocks implementation.
-2. **`core:render` (S3) stays a parallel feeder.** Render depends only on `core:model`, shares **no** dependency with `core:data` (§15.4), and remains the critical-path node gating **both** editor and export — so it can proceed concurrently. We sequence S2B first because its ADRs are settled and ready to implement and it unblocks the editor's store; render proceeds alongside as capacity allows.
-3. **Render is still the next-highest correctness risk** ([§12](#12-major-technical-risks)) — text layout, image transforms, preview↔export parity. It is *parallel*, not deprioritised; it must land before the editor (S4) can begin.
-4. **Editor cannot precede either.** S4 strictly depends on **both** S2 (persistence) and S3 (render); sequencing the editor before them is infeasible.
+1. **S5 — export/share flow.** The render/export **backends already exist** (`render-android`: `PdfPageRenderer`, `RasterPageRenderer`, `CanvasReplayer`); what is missing is the user-facing `:feature:export` UI plus `FileProvider`/`MediaStore`/`PrintManager` wiring ([§6](#6-export-pipeline)). This is the critical-path item to a printable artifact.
+2. **Room-backed project layer.** Production persistence is currently **file-only and single-project** ([§4](#4-data-models--storage)): a file-backed `DocumentRepository` on one `"default"` project. The deferred Room metadata table + `ProjectRepository` unlock the home/library multi-project flow, and the **asset GC/sweeper** ([ADR-022](DECISIONS.md#adr-022)/[ADR-031](DECISIONS.md#adr-031)) lands with that work.
 
-> **Sequencing rule:** build S2B (Android persistence) now and progress `core:render` (S3) in parallel — they share no dependency and do not block each other. The editor (S4) starts only once **both** S2 and S3 land. **Mandatory before enabling the GC sweep:** the five ADR-022 race-closure tests in [spike §9.1](spikes/data-storage-layer.md#91-mandatory-s2b-tests--asset-gc-race-closure-adr-022).
+> **Sequencing rule:** S5 (export) is the next critical-path build; the Room/`ProjectRepository`/home-library layer and the asset GC proceed alongside it. **Mandatory before enabling the GC sweep:** the import path must pin a hash before the document reference commits ([ADR-031](DECISIONS.md#adr-031) §2), plus the five ADR-022 race-closure tests in [spike §9.1](spikes/data-storage-layer.md#91-mandatory-s2b-tests--asset-gc-race-closure-adr-022).

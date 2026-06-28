@@ -35,7 +35,9 @@ No existing product is **offline-first + account-free + native Android + a real 
 
 ## Status
 
-In development — pure-Kotlin core, no app UI yet. **S1** (imposition engine) shipped as `v0.1.0-imposition-engine`: `core:model` + `core:imposition`. **S2A** (the pure-Kotlin data core: document schema, serializer, migration, validation, repository + asset/`.zine` manifest contracts) is implemented in `core:data`. Next: **S2B** (Android-backed Room + file persistence + asset store) and **S3** (render). See the [roadmap](docs/ROADMAP.md).
+In development — the app now mounts a working **editor** on a single fixed `"default"` project. Shipped so far: **S1** imposition engine (`core:model` + `core:imposition`, milestone `v0.1.0-imposition-engine`); **S2** persistence core (`core:data` contracts + pure-JVM `core:data-storage` durability/asset store) plus the Android `data-android` adapters; **S3** render (pure `core:render` + `render-android` PDF/raster backends); and **S4** the editor (`core:editor` MVI core + `feature:editor` interaction surface, wired into `:app` with interactive image import and autosave).
+
+Current production persistence is **file-backed only**: a single `DocumentRepository` writes `projects/<id>/document.json`, the app uses one fixed `"default"` project, and `ProjectRepository` / Room metadata are **deferred** (not yet implemented). Render/export **backends** exist, but there is **no user-facing export, share, or home/library flow yet**. See the [roadmap](docs/ROADMAP.md).
 
 ---
 
@@ -60,10 +62,11 @@ Kotlin · Jetpack Compose · Material 3 · Hilt (KSP) · Room · kotlinx.seriali
 
 ## Building
 
-> No app (UI) module yet — the `app` shell is a placeholder. The pure-Kotlin core libraries
-> (`core:model`, `core:imposition`, `core:data`) build and test on the JVM with `jvmToolchain(21)`:
-> run `./gradlew :core:model:test :core:imposition:test :core:data:test`. Android-backed modules and
-> full app build instructions land with S2B.
+> The `:app` module is a real Android app that mounts the editor. The pure-Kotlin core libraries
+> (`core:model`, `core:imposition`, `core:data`, `core:data-storage`, `core:render`, `core:editor`)
+> build and test on the JVM with `jvmToolchain(21)` and run Android-free in CI (set
+> `ZINELY_CORE_ONLY=true` to drop the Android modules). The Android-backed modules — `:app`,
+> `:data-android`, `:render-android`, `:feature:editor` — require the Android SDK to build.
 
 ## Privacy
 
