@@ -181,6 +181,17 @@ public fun EditorScreen(
             }
         }
 
+        // The page navigator: makes all pages of the SINGLE_SHEET_8 document reachable (before this
+        // only page 0 was). Reads page count / current / per-page content from the same hoisted state
+        // and dispatches Intent.GoToPage; the reducer clears selection + returns to Idle on the switch.
+        EditorPageStrip(
+            pageCount = uiState.document.pages.size,
+            currentPageIndex = uiState.currentPageIndex,
+            pageHasContent = { idx -> uiState.document.pages[idx].elements.isNotEmpty() },
+            onSelectPage = { dispatch(Intent.GoToPage(it)) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
         EditorContextBar(
             selection = uiState.selection,
             dispatch = dispatch,

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely — page strip states & palette</title>
+<!-- PROTOTYPE ONLY. Component-level reference for the page navigator + zine palette.
+     Pairs with editor-workbench.html and docs/design/editor-visual-direction.md. -->
+<style>
+  :root{
+    --paper:#F4EFE6; --paper-edge:#E7DFD0; --desk:#3A3A3C;
+    --ink:#23201C; --ink-soft:#6B6358;
+    --tape-yellow:#E9C46A; --tape-coral:#E76F51; --tape-teal:#2A9D8F; --stamp-blue:#264653;
+  }
+  body{ margin:0; background:#222; color:#eee; font-family:"Segoe Print","Bradley Hand",system-ui,sans-serif; padding:28px; }
+  h1{ font-size:20px; } h2{ font-size:14px; color:#bbb; margin-top:28px; letter-spacing:1px; }
+  .desk{ background:var(--desk); border-radius:14px; padding:22px; display:inline-flex; gap:12px; align-items:flex-end; }
+  .pcard{ position:relative; width:54px; height:70px; border-radius:3px; background:var(--paper); color:var(--ink-soft);
+    display:grid; place-items:center; font-size:15px; box-shadow:0 4px 10px rgba(0,0,0,.4); border:1px solid var(--paper-edge); }
+  .pcard .dot{ position:absolute; bottom:6px; right:7px; width:8px; height:8px; border-radius:50%; background:var(--tape-coral); }
+  .pcard.current{ transform:rotate(-3deg) translateY(-12px) scale(1.1); color:var(--ink); box-shadow:0 12px 20px rgba(0,0,0,.55); }
+  .pcard.current::after{ content:""; position:absolute; top:-10px; left:50%; width:38px; height:18px;
+    transform:translateX(-50%) rotate(-4deg); background:rgba(233,196,106,.85); clip-path:polygon(0 15%,100% 0,96% 100%,4% 92%); }
+  .cap{ font-size:11px; color:#999; text-align:center; margin-top:6px; }
+  .col{ display:flex; flex-direction:column; align-items:center; }
+  .swatches{ display:flex; gap:10px; flex-wrap:wrap; }
+  .sw{ width:96px; height:64px; border-radius:10px; display:flex; align-items:flex-end; padding:6px; font-size:10px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.5); }
+  .sw.dark{ color:#23201C; text-shadow:none; }
+</style>
+</head>
+<body>
+  <h1>Page navigator — component states</h1>
+  <p style="color:#aaa;font-size:13px;max-width:560px">
+    The strip lays all eight pages on the desk at once. Tap = <code>Intent.GoToPage(i)</code>.
+    The current page lifts, tilts, and gets a strip of tape; pages holding elements show an ink dot.
+  </p>
+  <div class="desk">
+    <div class="col"><div class="pcard">1<div class="dot"></div></div><div class="cap">has art</div></div>
+    <div class="col"><div class="pcard">2<div class="dot"></div></div><div class="cap">has art</div></div>
+    <div class="col"><div class="pcard current">3<div class="dot"></div></div><div class="cap">current</div></div>
+    <div class="col"><div class="pcard">4</div><div class="cap">empty</div></div>
+    <div class="col"><div class="pcard">5<div class="dot"></div></div><div class="cap">has art</div></div>
+    <div class="col"><div class="pcard">6</div><div class="cap">empty</div></div>
+    <div class="col"><div class="pcard">7</div><div class="cap">empty</div></div>
+    <div class="col"><div class="pcard">8</div><div class="cap">empty</div></div>
+  </div>
+
+  <h2>ZINE PALETTE</h2>
+  <div class="swatches">
+    <div class="sw dark" style="background:#F4EFE6">paper #F4EFE6</div>
+    <div class="sw dark" style="background:#E7DFD0">paperEdge #E7DFD0</div>
+    <div class="sw" style="background:#3A3A3C">desk #3A3A3C</div>
+    <div class="sw" style="background:#23201C">ink #23201C</div>
+    <div class="sw" style="background:#6B6358">inkSoft #6B6358</div>
+    <div class="sw dark" style="background:#E9C46A">tapeYellow #E9C46A</div>
+    <div class="sw" style="background:#E76F51">tapeCoral #E76F51</div>
+    <div class="sw" style="background:#2A9D8F">tapeTeal #2A9D8F</div>
+    <div class="sw" style="background:#264653">stampBlue #264653</div>
+  </div>
+</body>
+</html>
