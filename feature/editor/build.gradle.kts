@@ -107,6 +107,11 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
+    // Real Material icons for the context-bar restyle (replaces the unicode-glyph placeholders). The
+    // directional/transform/reorder/delete glyphs (KeyboardArrow*, Add/Remove, Rotate*, FlipTo*, Delete)
+    // are sourced here so the bar reads as designed chrome, not productivity-template text. Version from
+    // the BOM; R8 tree-shakes unused vectors out of the release app.
+    implementation(libs.androidx.compose.material.icons.extended)
     // collectAsStateWithLifecycle in EditorScreen (CLAUDE.md). Same 2.6.1 as -ktx — no version bump.
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.ui.tooling.preview)

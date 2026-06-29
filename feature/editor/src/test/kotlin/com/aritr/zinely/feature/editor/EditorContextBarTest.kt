@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
@@ -96,6 +97,49 @@ class EditorContextBarTest {
         // Centre-anchored scale by 1.1 grows 20 → 22; rotation adds one 15° step.
         assertEquals(22.0, t.widthPt, 1e-6)
         assertEquals(EditorA11y.ROTATE_STEP_DEGREES, t.rotationDegrees, 1e-9)
+    }
+
+    @Test
+    fun reorder_controls_show_for_a_single_selection() {
+        val store = storeWithSelectedText()
+        setBar(store)
+
+        // Single selection ⇒ the id-scoped reorder + delete controls are all present. The bar scrolls,
+        // so assert tree presence (assertExists), not on-screen visibility, of these trailing controls.
+        composeRule.onNodeWithContentDescription("Bring forward").assertExists()
+        composeRule.onNodeWithContentDescription("Send backward").assertExists()
+        composeRule.onNodeWithContentDescription("Delete").assertExists()
+    }
+
+    @Test
+    fun reorder_controls_are_hidden_for_a_multi_selection() {
+        // The reorder ops are id-scoped (singleOrNull): a 2-element selection must hide them while the
+        // selection-wide controls (nudge/scale/rotate/delete) stay. Selection is passed directly so the
+        // gating is exercised without a multi-select intent.
+        composeRule.setContent {
+            MaterialTheme {
+                EditorContextBar(selection = setOf("a", "b"), dispatch = {})
+            }
+        }
+
+        composeRule.onNodeWithContentDescription("Move right").assertExists()
+        composeRule.onNodeWithContentDescription("Delete").assertExists()
+        composeRule.onNodeWithContentDescription("Bring forward").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Send backward").assertDoesNotExist()
+    }
+
+    @Test
+    fun delete_removes_the_selected_element() {
+        val store = storeWithSelectedText()
+        val id = store.uiState.value.selection.single()
+        setBar(store)
+
+        // Delete is the trailing control; scroll it into view first (the bar scrolls horizontally).
+        composeRule.onNodeWithContentDescription("Delete").performScrollTo().performClick()
+        composeRule.waitForIdle()
+
+        val present = store.uiState.value.document.pages[0].elements.any { it.id == id }
+        assertEquals(false, present)
     }
 
     @Test
