@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,11 +14,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -25,6 +28,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.model.DocumentDefaults
+import com.aritr.zinely.core.model.Page
+import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.render.SceneRenderer
+import com.aritr.zinely.render.android.AssetBytesSource
+import kotlin.math.min
 
 /** Test tag on the page-strip container. */
 public const val EditorPageStripTestTag: String = "editor-page-strip"
@@ -32,40 +41,54 @@ public const val EditorPageStripTestTag: String = "editor-page-strip"
 /** Per-card test tag suffix: `"$EditorPageStripTestTag-card-<pageNumber>"` (1-based). */
 public fun editorPageCardTag(pageNumber: Int): String = "$EditorPageStripTestTag-card-$pageNumber"
 
+/** Per-card mini-render test tag suffix: `"$EditorPageStripTestTag-thumb-<pageNumber>"` (1-based). */
+public fun editorPageThumbTag(pageNumber: Int): String = "$EditorPageStripTestTag-thumb-$pageNumber"
+
 /**
  * The scrapbook **page navigator** (docs/design/editor-visual-direction.md §4) — a strip of small
  * paper *cards*, one per page, laid on the "desk" band under the canvas. It is the on-screen carrier
  * of `Intent.GoToPage`: tapping a card selects that page. Before this, only page 0 of the eight-page
  * `SINGLE_SHEET_8` document was reachable in the mounted editor.
  *
- * Visual language: each card is paper (`surface`) on the desk (`background`); off-current cards sit at
- * a slight handmade tilt, the current card is lifted, upright-ish, and marked with a strip of "tape"
- * (`tertiary`); a page that already holds elements shows a small ink dot (`primary`). All decoration
- * rides a real control — the card *is* the navigation affordance.
+ * Visual language: each card is a **live miniature page preview** — the page's own
+ * [SceneRenderer] tape replayed through [PagePreview], the *same* render path the main canvas uses
+ * ([EditorPagePreview]), so a card looks like the page it navigates to rather than a numbered
+ * placeholder. Off-current cards sit at a slight handmade tilt; the current card is lifted,
+ * upright-ish, and marked with a strip of "tape" (`tertiary`). An **empty** page renders as a blank
+ * sheet, so it keeps a faint page number to stay legible and inviting (DESIGN-RULES 4, 10). All
+ * decoration rides a real control — the card *is* the navigation affordance, the thumbnail *is* the
+ * page.
  *
  * Accessibility: each card is a [selectable] with `Role.Tab`, a "Page N" content description, and a
- * selected/not-selected state, so the strip is a proper page picker to TalkBack; the visual tilt and
- * tape are decorative only. Touch targets are ≥48dp.
+ * selected/not-selected state, so the strip is a proper page picker to TalkBack; the tilt, tape, and
+ * the mini-render itself are decorative (the thumbnail clears no semantics it needs and adds none —
+ * the card owns the label). Touch targets are ≥48dp.
  *
- * Stateless: [currentPageIndex], [pageCount] and [pageHasContent] are read from the hoisted editor
+ * Stateless: [pages], [currentPageIndex], [pageSizePt] and [defaults] are read from the hoisted editor
  * state by the host; [onSelectPage] dispatches `Intent.GoToPage`. The reducer clears selection and
  * returns to Idle on a page change, so no ephemeral gesture state can leak across the switch.
  *
- * @param pageCount total pages in the document (cards rendered `0 until pageCount`).
+ * @param pages the document pages (cards rendered in order); each card mini-renders its page.
  * @param currentPageIndex the page currently shown on the canvas (lifted + taped).
- * @param pageHasContent whether page `i` holds at least one element (drives the ink dot).
+ * @param pageSizePt the page/panel size in points — the same hoisted size the main canvas renders at,
+ *   so a thumbnail is a faithful scaled-down twin of the page.
+ * @param defaults document defaults the renderer folds (background); same value the canvas uses.
  * @param onSelectPage invoked with the tapped page index (the host dispatches `Intent.GoToPage`).
  * @param modifier sizing/placement applied by the host.
+ * @param imageBytes import-master byte source for image elements; defaults to the missing-asset
+ *   placeholder (the host threads its real source so thumbnails match the canvas).
  */
 @Composable
 public fun EditorPageStrip(
-    pageCount: Int,
+    pages: List<Page>,
     currentPageIndex: Int,
-    pageHasContent: (Int) -> Boolean,
+    pageSizePt: PtSize,
+    defaults: DocumentDefaults,
     onSelectPage: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    imageBytes: AssetBytesSource = EmptyAssetBytes,
 ) {
-    if (pageCount <= 0) return
+    if (pages.isEmpty()) return
     Row(
         modifier = modifier
             .testTag(EditorPageStripTestTag)
@@ -75,11 +98,14 @@ public fun EditorPageStrip(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        for (i in 0 until pageCount) {
+        pages.forEachIndexed { i, page ->
             PageCard(
                 pageNumber = i + 1,
+                page = page,
                 current = i == currentPageIndex,
-                hasContent = pageHasContent(i),
+                pageSizePt = pageSizePt,
+                defaults = defaults,
+                imageBytes = imageBytes,
                 onClick = { onSelectPage(i) },
             )
         }
@@ -90,8 +116,11 @@ public fun EditorPageStrip(
 @Composable
 private fun PageCard(
     pageNumber: Int,
+    page: Page,
     current: Boolean,
-    hasContent: Boolean,
+    pageSizePt: PtSize,
+    defaults: DocumentDefaults,
+    imageBytes: AssetBytesSource,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -121,7 +150,7 @@ private fun PageCard(
             },
         contentAlignment = Alignment.Center,
     ) {
-        // The paper card itself (a hair smaller than the touch box).
+        // The paper card itself (a hair smaller than the touch box); clips the mini-render to its edge.
         Box(
             modifier = Modifier
                 .size(width = 44.dp, height = 60.dp)
@@ -130,21 +159,23 @@ private fun PageCard(
                 .background(colors.surface),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = "$pageNumber",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = if (current) FontWeight.Bold else FontWeight.Normal,
-                color = if (current) colors.onSurface else colors.onSurfaceVariant,
+            PageThumbnail(
+                page = page,
+                pageSizePt = pageSizePt,
+                defaults = defaults,
+                imageBytes = imageBytes,
+                modifier = Modifier
+                    .testTag(editorPageThumbTag(pageNumber))
+                    .size(width = 44.dp, height = 60.dp),
             )
-            // Ink dot: this page already holds elements.
-            if (hasContent) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(5.dp)
-                        .size(7.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(colors.primary),
+            // Empty page renders as a blank sheet — keep a faint page number so it stays legible and
+            // inviting (a content card needs no number; its thumbnail already identifies it).
+            if (page.elements.isEmpty()) {
+                Text(
+                    text = "$pageNumber",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = if (current) FontWeight.Bold else FontWeight.Normal,
+                    color = colors.onSurfaceVariant,
                 )
             }
         }
@@ -159,5 +190,47 @@ private fun PageCard(
                     .background(colors.tertiary),
             )
         }
+    }
+}
+
+/**
+ * A live miniature of one [page]: the page's [SceneRenderer] tape replayed through [PagePreview] — the
+ * same render path [EditorPagePreview] uses, so the thumbnail is a faithful scaled-down twin of the
+ * canvas (no second rendering model). The page is **contained** within the card: [BoxWithConstraints]
+ * measures the card, the fit scale (device-px per point) sizes a [PagePreview] to the page's aspect,
+ * and any leftover sliver shows the paper card behind it. Purely decorative — the parent card owns the
+ * navigation control + a11y label.
+ */
+@Composable
+private fun PageThumbnail(
+    page: Page,
+    pageSizePt: PtSize,
+    defaults: DocumentDefaults,
+    imageBytes: AssetBytesSource,
+    modifier: Modifier,
+) {
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+        val wPx = constraints.maxWidth.toFloat()
+        val hPx = constraints.maxHeight.toFloat()
+        // Degenerate sizes (zero page or zero box) → nothing to draw; the paper card stands in.
+        if (pageSizePt.width <= 0.0 || pageSizePt.height <= 0.0 || wPx <= 0f || hPx <= 0f) return@BoxWithConstraints
+
+        // Contain: fit the whole page into the card, device-px per point.
+        val scale = min(wPx / pageSizePt.width, hPx / pageSizePt.height).toFloat()
+        // Recomputed only when the page content / size / defaults change (value-equality keys), so an
+        // edit to one page re-renders only that card — the strip stays light per keystroke.
+        val tape = remember(page, pageSizePt, defaults) {
+            SceneRenderer.render(page, pageSizePt, defaults)
+        }
+        val density = LocalDensity.current
+        val outW = with(density) { (pageSizePt.width * scale).toFloat().toDp() }
+        val outH = with(density) { (pageSizePt.height * scale).toFloat().toDp() }
+        PagePreview(
+            tape = tape,
+            sheet = pageSizePt,
+            screenPxPerPt = scale,
+            modifier = Modifier.size(width = outW, height = outH),
+            imageBytes = imageBytes,
+        )
     }
 }
