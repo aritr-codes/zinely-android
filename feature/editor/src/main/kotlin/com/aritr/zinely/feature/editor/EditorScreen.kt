@@ -238,14 +238,18 @@ public fun EditorScreen(
         )
 
         // The page navigator: makes all pages of the SINGLE_SHEET_8 document reachable (before this
-        // only page 0 was). Reads page count / current / per-page content from the same hoisted state
-        // and dispatches Intent.GoToPage; the reducer clears selection + returns to Idle on the switch.
+        // only page 0 was). Each card mini-renders its page through the SAME render path the canvas
+        // uses, so it reads as a real workbench; reads pages / current / size / defaults from the same
+        // hoisted state and dispatches Intent.GoToPage; the reducer clears selection + returns to Idle
+        // on the switch. Threads the host's imageBytes so a card's images match the canvas.
         EditorPageStrip(
-            pageCount = uiState.document.pages.size,
+            pages = uiState.document.pages,
             currentPageIndex = uiState.currentPageIndex,
-            pageHasContent = { idx -> uiState.document.pages[idx].elements.isNotEmpty() },
+            pageSizePt = pageSizePt,
+            defaults = uiState.document.defaults,
             onSelectPage = { dispatch(Intent.GoToPage(it)) },
             modifier = Modifier.fillMaxWidth(),
+            imageBytes = imageBytes,
         )
 
         EditorContextBar(

@@ -75,16 +75,18 @@ carrier of the visual language.
 │     │                               │        │
 │     └───────────────────────────────┘        │
 │  [1][2][3*][4][5][6][7][8]   ← page strip     │   page cards: tap = GoToPage,
-│   tape marks the current page; dot = has art  │   current page lifted + taped
+│   tape marks the current page; cards mini-render │ current page lifted + taped
 ├─────────────────────────────────────────────┤
 │  ‹ › ʌ v  + −  ↻ ↺  ⤒ ⤓  ⌫   (on selection)   │   existing context bar (restyled later)
 └─────────────────────────────────────────────┘
 ```
 
-- **Page strip (this slice).** A horizontal row of eight small paper *cards* under the
-  canvas. The current page is lifted, slightly rotated, and marked with a strip of "tape";
-  pages that contain elements show a small ink dot. Tapping a card dispatches
-  `Intent.GoToPage(index)`. This makes all eight pages reachable for the first time.
+- **Page strip.** A horizontal row of eight small paper *cards* under the canvas. The current
+  page is lifted, slightly rotated, and marked with a strip of "tape". Each card hosts a **live
+  mini-render** of its page (the `SceneRenderer` → `PagePreview` path the main canvas uses), so a
+  card looks like the page it navigates to; an empty page renders as a blank sheet and keeps a faint
+  page number to stay legible. Tapping a card dispatches `Intent.GoToPage(index)`. This makes all
+  eight pages reachable for the first time.
 - **Supply tray (shipped — `EditorSupplyTray`).** Replaced the lone FAB: add-photo, add-text,
   undo, redo as visible "supply" buttons under the canvas; undo/redo bind to `canUndo`/`canRedo`.
   See §6 slice 4.
@@ -100,10 +102,13 @@ carrier of the visual language.
   hides the booklet structure; the strip keeps all eight pages visible at once (closer to
   laying spreads on a table) and is more discoverable. Chosen: strip. A pager remains a
   possible V1 gesture on top of it.
-- **Real mini-renders vs. lightweight cards (this slice).** Live `SceneRenderer` thumbnails
-  per card are achievable (the tape + `PagePreview` exist) but add decode/measure cost and
-  widen the change surface. MVP ships styled cards with a content indicator; swapping in
-  real mini-renders is an isolated follow-up that doesn't change the interaction.
+- **Real mini-renders vs. lightweight cards.** Live `SceneRenderer` thumbnails per card add
+  decode/measure cost (each card hosts its own `PagePreview` → `CanvasReplayer`, so the strip is
+  ~8 preview hosts) and widen the strip's inputs (it now takes the pages + page size + defaults,
+  not just a content predicate). The first cut shipped styled cards with a content dot; the
+  mini-render swap landed next as an isolated follow-up that left the interaction (one `GoToPage`
+  per tap, same a11y) untouched. Accepted: the strip composes once and each card's tape is memoised
+  per page, so per-edit work is one re-render of the changed card.
 - **Texture via bitmap assets vs. drawn.** Bundled paper PNGs look richer but add binary
   assets and density variants. MVP draws texture with tint + shadow + shapes to keep the
   slice asset-free and reviewable; richer textures can land later behind the same surface.
@@ -116,7 +121,10 @@ carrier of the visual language.
    so the identity is consistent and print-brand-led.
 2. **`EditorPageStrip`** (`:feature:editor`): the scrapbook page navigator, hosted in
    `EditorScreen`, wiring the already-shipped `Intent.GoToPage`. The functional unlock —
-   all eight pages reachable.
+   all eight pages reachable. **Mini-render upgrade (this slice):** each card now hosts a live
+   `SceneRenderer` → `PagePreview` thumbnail of its page (the canvas render path), replacing the
+   number+content-dot placeholder; behavior, `GoToPage`, the `Role.Tab`/"Page N" picker semantics,
+   and ≥48dp targets unchanged. Empty pages keep a faint number for legibility.
 
 **Next (current milestone — first-time creation experience, see
 [DESIGN-LANGUAGE §9](DESIGN-LANGUAGE.md#9-implementation-priority)):**
@@ -140,7 +148,7 @@ carrier of the visual language.
    tracked follow-up).
 
 Deferred to later slices (designed, not built now): persisting the hint's "already seen" state across
-sessions, context-bar restyle, real mini-render page thumbnails, bundled marker font, richer paper textures,
+sessions, context-bar restyle, bundled marker font, richer paper textures,
 and a string-resource catalog ([ARCHITECTURE §15.6](../ARCHITECTURE.md#156-architectural-implications-surfaced-by-the-design-sprint-2026-06-28)).
 A known follow-up: on a blank page the empty-state overlay and the tray both surface add-photo /
 add-words — kept deliberately (the overlay teaches, the tray is the persistent home) but a candidate
