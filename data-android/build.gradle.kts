@@ -72,6 +72,10 @@ dependencies {
     // collects it for a "couldn't save" cue. coroutines-core is the only production runtime dep here.
     implementation(libs.kotlinx.coroutines.core)
 
+    // ADR-032: the local key-value preferences store (one-time-hint "seen" flags; future Settings).
+    // Local-only, no network — privacy invariant intact. Backs DataStoreEditorOnboardingStore.
+    implementation(libs.androidx.datastore.preferences)
+
     // EditorAutosaveBinder (ADR-026 §1/§3) observes Android lifecycle (ON_PAUSE/ON_STOP) to drive
     // flush/teardown. Only the pure-JVM lifecycle-common types (Lifecycle, LifecycleEventObserver)
     // are touched; no LifecycleRegistry/main-thread machinery, so unit tests run on plain JVM.

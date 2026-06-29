@@ -61,10 +61,20 @@ class EditorScreenTest {
         )
     }
 
-    private fun setScreen(store: EditorStore) {
+    private fun setScreen(
+        store: EditorStore,
+        moveResizeHintSeen: Boolean? = false,
+        onMoveResizeHintSeen: () -> Unit = {},
+    ) {
         composeRule.setContent {
             MaterialTheme {
-                EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(300.dp, 400.dp))
+                EditorScreen(
+                    store = store,
+                    pageSizePt = pageSizePt,
+                    modifier = Modifier.size(300.dp, 400.dp),
+                    moveResizeHintSeen = moveResizeHintSeen,
+                    onMoveResizeHintSeen = onMoveResizeHintSeen,
+                )
             }
         }
     }
@@ -173,6 +183,46 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         store.dispatch(Intent.Select(id))
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun a_persisted_seen_flag_suppresses_the_hint_across_sessions() {
+        // ADR-032: a relaunch where the store already recorded "seen" must NOT re-teach. With the gate
+        // true, selecting an element shows no hint — the across-sessions promise, distinct from the
+        // session-local "Got it" latch.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects
+        setScreen(store, moveResizeHintSeen = true)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun the_hint_stays_hidden_while_the_persisted_flag_is_still_loading() {
+        // ADR-032 flash-avoidance: a null gate (value not yet loaded) must NOT show the hint, so it can't
+        // flash before the persisted state is known. It becomes eligible only once a real `false` arrives.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects
+        setScreen(store, moveResizeHintSeen = null)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun dismissing_the_hint_reports_it_seen_for_persistence() {
+        // The "Got it" tap must drive the persistence callback (the host's only write seam, ADR-032), not
+        // just the session latch — otherwise the flag never survives the process.
+        var reportedSeen = false
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        setScreen(store, onMoveResizeHintSeen = { reportedSeen = true })
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(MoveResizeHintDismissTag).performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(reportedSeen)
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
     }
 

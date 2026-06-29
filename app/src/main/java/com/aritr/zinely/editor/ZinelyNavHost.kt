@@ -95,6 +95,10 @@ private fun EditorDestination() {
                 state.binder.observe(lifecycleOwner.lifecycle)
                 onDispose { }
             }
+            // The across-sessions move/resize-hint gate (ADR-032): a load-aware tri-state — `null` until
+            // the persisted flag loads (the host hides the hint on `null`, so it can't flash before its
+            // state is known), then the real `false`/`true`. Lifecycle-aware.
+            val moveResizeHintSeen by viewModel.moveResizeHintSeen.collectAsStateWithLifecycle()
             // The editor surface now owns its own add-photo entry point: the EditorSupplyTray's
             // "Add a photo" supply dispatches the same Intent.RequestAddImage → Effect.PickAndDecodeImage
             // → the photo picker bound above. The lone app-level FAB has been removed (ADR-029 follow-up:
@@ -104,6 +108,8 @@ private fun EditorDestination() {
                 pageSizePt = state.pageSizePt,
                 modifier = Modifier.fillMaxSize(),
                 imageBytes = state.imageBytes,
+                moveResizeHintSeen = moveResizeHintSeen,
+                onMoveResizeHintSeen = viewModel::markMoveResizeHintSeen,
             )
         }
     }
