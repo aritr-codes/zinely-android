@@ -137,6 +137,61 @@ class EditorScreenTest {
     }
 
     @Test
+    fun a_move_resize_hint_appears_once_an_element_is_selected() {
+        // Discoverability teach: once a placed element is single-selected (handles visible, Idle), the
+        // one-time hint floats in to say the moves are drag/pinch — the gestures that have no other twin.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects, Idle
+        setScreen(store)
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun the_move_resize_hint_stays_hidden_with_no_selection() {
+        // Relevance: nothing selected → no handles → no gesture to teach → no hint clutter.
+        val store = store()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun tapping_got_it_dismisses_the_move_resize_hint_for_the_session() {
+        // Easy, touch-safe dismissal; screen-local one-time — re-selecting must not bring it back.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        val id = store.uiState.value.selection.single()
+        setScreen(store)
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(MoveResizeHintDismissTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+
+        // Re-select the same element: still dismissed (one-time, not per-selection nagging).
+        store.dispatch(Intent.ClearSelection)
+        composeRule.waitForIdle()
+        store.dispatch(Intent.Select(id))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun opening_a_text_session_replaces_the_hint_with_the_edit_overlay() {
+        // The hint never blocks editing: opening a text session yields the hint and raises the overlay.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        val id = store.uiState.value.selection.single()
+        setScreen(store)
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
+    }
+
+    @Test
     fun an_open_text_session_raises_the_edit_overlay() {
         val store = store()
         store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))

@@ -130,9 +130,17 @@ carrier of the visual language.
    behavior), **Undo** / **Redo** bound to `canUndo` / `canRedo`. Replaces the app-level lone "Add
    image" FAB (removed from `ZinelyNavHost`), so every primary action is a visible, thumb-reachable
    supply (DESIGN-RULES 1–3, 7) and undo/redo are reachable for the first time (DESIGN-RULES 6).
+5. **`EditorMoveResizeHint`** (`:feature:editor`): a one-time, screen-local contextual hint. The moment a
+   placed element is first single-selected (resize handles up, not editing) it floats in the canonical
+   line ([VOICE §3](VOICE.md#3-microcopy-library)) — *"Drag to move it. Pinch to resize."* — teaching the
+   two manipulations that have no discrete-control twin. Non-modal and non-blocking (declares no
+   `pointerInput`; touches fall through to the gesture surface), with an explicit ≥48dp "Got it"; it also
+   auto-dismisses the instant a live drag/resize begins (discovery *is* dismissal). Deliberately
+   session-local only — **no DataStore, no onboarding store** this slice (a persistent "seen" store is a
+   tracked follow-up).
 
-Deferred to later slices (designed, not built now): one-time contextual move/resize hints,
-context-bar restyle, real mini-render page thumbnails, bundled marker font, richer paper textures,
+Deferred to later slices (designed, not built now): persisting the hint's "already seen" state across
+sessions, context-bar restyle, real mini-render page thumbnails, bundled marker font, richer paper textures,
 and a string-resource catalog ([ARCHITECTURE §15.6](../ARCHITECTURE.md#156-architectural-implications-surfaced-by-the-design-sprint-2026-06-28)).
 A known follow-up: on a blank page the empty-state overlay and the tray both surface add-photo /
 add-words — kept deliberately (the overlay teaches, the tray is the persistent home) but a candidate
