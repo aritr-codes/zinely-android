@@ -14,6 +14,7 @@ import com.aritr.zinely.core.imposition.Imposer
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.data.android.EditorAutosaveBinder
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
+import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
 import com.aritr.zinely.feature.editor.Announcer
 import com.aritr.zinely.feature.editor.AutosaveSink
 import com.aritr.zinely.feature.editor.DefaultEditorEffectRunner
@@ -25,9 +26,11 @@ import java.io.File
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -78,6 +81,7 @@ internal class EditorViewModel @Inject constructor(
     private val imposer: Imposer,
     private val assetStore: AssetStore,
     private val imageDecoder: ImportMasterDecoder,
+    private val onboardingStore: EditorOnboardingStore,
     @param:AssetsDir private val assetsDir: File,
     // @param: pins the qualifier to the constructor value parameter (what Dagger reads) and opts out of
     // the KT-73255 default-target migration warning — same convention as EditorAutosaveBinderFactory.
@@ -101,6 +105,22 @@ internal class EditorViewModel @Inject constructor(
      * while the import pipeline [await][PhotoPicker.await]s. Single instance ⇒ single-flight is global.
      */
     val photoPicker: PhotoPicker<Uri> = PhotoPicker()
+
+    /**
+     * The across-sessions "already saw the move/resize hint" gate (ADR-032), read from the local
+     * preferences store as a **load-aware tri-state**: `null` until the persisted value loads, then the
+     * real `false` (fresh install) / `true`. The host shows the hint only on `false`, so the `null`
+     * loading window can't flash it, yet a first gesture during that window still persists (`null != true`
+     * — Codex RF1), avoiding a re-teach next launch. `Eagerly` so the load is in flight at VM creation.
+     */
+    val moveResizeHintSeen: StateFlow<Boolean?> =
+        onboardingStore.moveResizeHintSeen
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
+    /** Persist that the move/resize hint has been seen (idempotent). Fire-and-forget on [viewModelScope]. */
+    fun markMoveResizeHintSeen() {
+        viewModelScope.launch { onboardingStore.markMoveResizeHintSeen() }
+    }
 
     init {
         viewModelScope.launch(mainDispatcher) {

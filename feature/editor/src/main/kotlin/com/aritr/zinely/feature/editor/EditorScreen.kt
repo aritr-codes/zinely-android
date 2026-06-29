@@ -64,6 +64,14 @@ public const val EditorCanvasTestTag: String = "editor-canvas"
  * @param pageSizePt the edited page/panel size in points; hoisted from imposition (also the page clip).
  * @param modifier sizing/placement for the whole screen.
  * @param imageBytes import-master byte source for image elements; defaults to the missing-asset placeholder.
+ * @param moveResizeHintSeen the persisted "already seen the one-time move/resize hint" gate (ADR-032),
+ *   hoisted from the app/VM over the local preferences store, as a **load-aware tri-state**: `null` =
+ *   not yet loaded, `false` = loaded & unseen, `true` = loaded & seen. The hint shows only on `false`, so
+ *   a not-yet-loaded (`null`) flag can never flash it; and persistence on discovery fires unless the flag
+ *   is *positively* `true`, so a first gesture during the load window still records the hint as seen
+ *   (avoids re-teaching next launch). Defaults to `false` (loaded-unseen) for tests.
+ * @param onMoveResizeHintSeen invoked when the hint is dismissed — via "Got it" or via discovery (a live
+ *   drag/resize) — so the host can persist the flag. Idempotent on the store side. Defaults to a no-op.
  */
 @Composable
 public fun EditorScreen(
@@ -71,6 +79,8 @@ public fun EditorScreen(
     pageSizePt: PtSize,
     modifier: Modifier = Modifier,
     imageBytes: AssetBytesSource = EmptyAssetBytes,
+    moveResizeHintSeen: Boolean? = false,
+    onMoveResizeHintSeen: () -> Unit = {},
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
@@ -82,12 +92,21 @@ public fun EditorScreen(
     var live by remember { mutableStateOf<LiveTransform?>(null) }
     var resizeOverride by remember { mutableStateOf<Map<String, Transform>?>(null) }
 
-    // Screen-local, one-time move/resize hint (no DataStore, no onboarding store — this slice teaches
-    // discoverability for the current session only). Once dismissed it never returns this screen; a
-    // live drag/resize counts as discovery and dismisses it too (set in the LaunchedEffect below).
+    // One-time move/resize hint, now persisted **across sessions** (ADR-032): [moveResizeHintSeen] is the
+    // load-aware across-install gate (null=loading / false=unseen / true=seen) hoisted from the app's
+    // preferences store, [moveResizeHintDismissed] is the within-session latch. The hint shows only when
+    // the gate is loaded-unseen and the latch is clear. A live drag/resize counts as discovery (discovery
+    // *is* dismissal) and dismisses + persists it too.
     var moveResizeHintDismissed by remember { mutableStateOf(false) }
     LaunchedEffect(live != null || resizeOverride != null) {
-        if (live != null || resizeOverride != null) moveResizeHintDismissed = true
+        if ((live != null || resizeOverride != null) && !moveResizeHintDismissed) {
+            moveResizeHintDismissed = true
+            // Persist unless the flag is *positively* already-seen. `null` (still loading) persists too, so
+            // a first gesture before the value loads is recorded (Codex RF1) — the write is idempotent, so
+            // the only cost is one redundant set on the rare pre-load discovery; later loaded-true sessions
+            // (the common case) skip the write entirely.
+            if (moveResizeHintSeen != true) onMoveResizeHintSeen()
+        }
     }
 
     Column(modifier = modifier) {
@@ -187,10 +206,14 @@ public fun EditorScreen(
                 // (the LaunchedEffect makes that dismissal stick); avoids a one-frame overlap.
                 val gesturing = live != null || resizeOverride != null
                 val showMoveResizeHint =
-                    !editing && !gesturing && uiState.selection.size == 1 && !moveResizeHintDismissed
+                    !editing && !gesturing && uiState.selection.size == 1 &&
+                        !moveResizeHintDismissed && moveResizeHintSeen == false
                 if (showMoveResizeHint) {
                     EditorMoveResizeHint(
-                        onDismiss = { moveResizeHintDismissed = true },
+                        onDismiss = {
+                            moveResizeHintDismissed = true
+                            onMoveResizeHintSeen()
+                        },
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .padding(top = 8.dp),

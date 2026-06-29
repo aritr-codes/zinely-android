@@ -27,6 +27,9 @@ jqwik = "1.9.2"
 # Pure-Kotlin data core (S2A): kotlinx serialization (document JSON) + coroutines (Flow contracts)
 kotlinxSerialization = "1.8.1"
 kotlinxCoroutines = "1.9.0"
+# Local key-value preferences store (ADR-032): one-time-hint "seen" flags + future Settings choices.
+# Local-only, no network (privacy invariant). minSdk 24 OK; pulls only coroutines/okio at runtime.
+datastore = "1.1.1"
 # Hilt DI graph for the Android autosave stack (PR-A Step 7). Exact pins per the approved design:
 # Hilt 2.59.2 (AGP 9 support landed in 2.59; .1/.2 fixed AGP 9 Jetifier/plugin issues); KSP
 # 2.2.10-2.0.2 (the AGP-9 built-in-Kotlin 2.2.10 baseline). See docs/spikes/pr-a-step-7-hilt-di.md.
@@ -70,6 +73,9 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 # Material icon set for editor chrome (context bar). Version comes from the Compose BOM; R8 tree-shakes
 # unused vectors out of the release app, so the artifact's size is a build-time, not ship-time, cost.
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+# Local key-value preferences store (ADR-032): the Settings/onboarding key-value store designated by
+# ARCHITECTURE §15.6 item 4, separate from the .zine document store. Android impl in :data-android.
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 # Pure-Kotlin core test stack
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junitJupiter" }
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatform" }

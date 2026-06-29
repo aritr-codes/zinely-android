@@ -476,6 +476,10 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    [one-time hints](design/DESIGN-LANGUAGE.md#4-onboarding-philosophy), reduced-motion/haptic/sound
    choices, and paper-size/theme need a small **key-value store (DataStore)** separate from the document
    store. 🟦 Local-only, no network; "seen hint X" flags live here, not in the `.zine` document.
+   **First instantiation shipped — [ADR-032](DECISIONS.md#adr-032):** a Preferences DataStore in
+   `:data-android` behind the `EditorOnboardingStore` seam now persists the move/resize hint's
+   across-sessions "seen" flag; the Settings choices grow into the same store (the full Settings ADR is
+   still pending).
 
 5. **`:feature:preview` is a new render *consumer*, not new architecture.** The
    [preview](design/SCREEN-INVENTORY.md#preview) renders pages in **booklet reading order** (1→8), reusing
