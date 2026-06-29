@@ -77,7 +77,7 @@ carrier of the visual language.
 │  [1][2][3*][4][5][6][7][8]   ← page strip     │   page cards: tap = GoToPage,
 │   tape marks the current page; cards mini-render │ current page lifted + taped
 ├─────────────────────────────────────────────┤
-│  ‹ › ʌ v  + −  ↻ ↺  ⤒ ⤓  ⌫   (on selection)   │   existing context bar (restyled later)
+│  ‹ › ʌ v  + −  ↻ ↺  ⤒ ⤓  ⌫   (on selection)   │   context bar: real icons on stamped chips
 └─────────────────────────────────────────────┘
 ```
 
@@ -90,8 +90,11 @@ carrier of the visual language.
 - **Supply tray (shipped — `EditorSupplyTray`).** Replaced the lone FAB: add-photo, add-text,
   undo, redo as visible "supply" buttons under the canvas; undo/redo bind to `canUndo`/`canRedo`.
   See §6 slice 4.
-- **Context bar (later).** Keep the current behavior and a11y; restyle glyphs → real icons
-  on stamped chips.
+- **Context bar (shipped — `EditorContextBar`).** The on-selection transform controls now read as
+  the zine identity: a "desk" band of small **stamped paper craft-chips**, each carrying a real
+  Material icon (a slight handmade tilt) in place of the old unicode placeholder glyphs. The row
+  scrolls horizontally so every ≥48dp control stays reachable on a narrow phone. Behavior, the
+  dispatched intents, single-selection gating, and the spoken a11y labels are unchanged. See §6 slice 6.
 
 ## 5. Tradeoffs & alternatives considered
 
@@ -125,6 +128,11 @@ carrier of the visual language.
    `SceneRenderer` → `PagePreview` thumbnail of its page (the canvas render path), replacing the
    number+content-dot placeholder; behavior, `GoToPage`, the `Role.Tab`/"Page N" picker semantics,
    and ≥48dp targets unchanged. Empty pages keep a faint number for legibility.
+6. **`EditorContextBar` restyle** (`:feature:editor`): the on-selection transform controls restyled to
+   the zine identity — a "desk" band of stamped paper craft-chips, each carrying a real Material icon
+   (handmade tilt) in place of the old unicode glyphs, with the row scrolling horizontally so every
+   ≥48dp control stays reachable. The dispatched intents, single-selection gating, and spoken a11y
+   labels are unchanged — the last unstyled editor chrome now reads as designed supplies. See §4.
 
 **Next (current milestone — first-time creation experience, see
 [DESIGN-LANGUAGE §9](DESIGN-LANGUAGE.md#9-implementation-priority)):**
@@ -148,7 +156,7 @@ carrier of the visual language.
    tracked follow-up).
 
 Deferred to later slices (designed, not built now): persisting the hint's "already seen" state across
-sessions, context-bar restyle, bundled marker font, richer paper textures,
+sessions, bundled marker font, richer paper textures,
 and a string-resource catalog ([ARCHITECTURE §15.6](../ARCHITECTURE.md#156-architectural-implications-surfaced-by-the-design-sprint-2026-06-28)).
 A known follow-up: on a blank page the empty-state overlay and the tray both surface add-photo /
 add-words — kept deliberately (the overlay teaches, the tray is the persistent home) but a candidate
