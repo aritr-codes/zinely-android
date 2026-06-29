@@ -1,10 +1,13 @@
 # Zinely — Experience Map
 
-> **The single source of truth for the *emotional* arc and the end-to-end journey.** What the
-> user feels at each step, where friction lives, and where to plant delight. The feelings
-> themselves are defined in [DESIGN-LANGUAGE.md §1](DESIGN-LANGUAGE.md#1-who-this-is-for-and-what-they-should-feel);
+> **The companion design reference for the *emotional* arc and the end-to-end journey.** What the
+> user feels at each step, where friction lives, and where to plant delight — a design reference
+> under the canonical doc system in [CLAUDE.md](../../CLAUDE.md), not a parallel source of truth
+> (the MVP flow itself is owned by [PRD.md §8–9](../PRD.md#8-core-user-workflow-mvp); phasing by
+> [ROADMAP.md](../ROADMAP.md)). The feelings themselves are defined in
+> [DESIGN-LANGUAGE.md §1](DESIGN-LANGUAGE.md#1-who-this-is-for-and-what-they-should-feel);
 > the screens in [SCREEN-INVENTORY.md](SCREEN-INVENTORY.md); the words in
-> [VOICE.md](VOICE.md). Status: design SoT · 2026-06-28.
+> [VOICE.md](VOICE.md). Status: design reference · 2026-06-28.
 
 We are not designing screens; we are designing **momentum** — a sequence of small wins that each
 make the next step feel worth taking. The risk for this audience is not confusion, it is

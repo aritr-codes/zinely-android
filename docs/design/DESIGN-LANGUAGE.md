@@ -1,23 +1,28 @@
 # Zinely — Design Language
 
-> **The single source of truth for how Zinely should *feel*.** Visual identity, interaction
-> philosophy, onboarding, emotional goals, progressive disclosure, accessibility, motion,
-> haptics, sound, and the first-time user journey. The editor-surface specifics live in
-> [editor-visual-direction.md](editor-visual-direction.md); product scope in
-> [PRD.md](../PRD.md); the beginner-first decision in [ADR-008](../DECISIONS.md#adr-008).
-> Status: design SoT · 2026-06-28.
+> **The design-system hub — the companion design reference for how Zinely should *feel*.** Visual
+> identity, interaction philosophy, onboarding, emotional goals, progressive disclosure,
+> accessibility, motion, haptics, sound, and the first-time user journey. This is a **companion
+> reference under the canonical doc system in [CLAUDE.md](../../CLAUDE.md)**, not a parallel
+> source of truth: product scope (what & why) stays owned by [PRD.md](../PRD.md), the technical
+> source of truth by [ARCHITECTURE.md](../ARCHITECTURE.md), and decisions by
+> [DECISIONS.md](../DECISIONS.md) — this elaborates the *feel*, it does not redefine scope. The
+> editor-surface specifics live in [editor-visual-direction.md](editor-visual-direction.md); the
+> beginner-first decision in [ADR-008](../DECISIONS.md#adr-008). Status: design reference · 2026-06-28.
 
-> **This document is the hub of the Zinely design system.** Focused companions own one
-> responsibility each and are linked, not restated (per the [Documentation Rule](../../CLAUDE.md)):
+> **This document is the hub of the Zinely design references.** Focused companions each cover one
+> area and are linked, not restated (per the [Documentation Rule](../../CLAUDE.md)). They are
+> design references, not canonical owners — where they touch product scope or technical decisions,
+> the [PRD](../PRD.md) / [ARCHITECTURE](../ARCHITECTURE.md) / [DECISIONS](../DECISIONS.md) win:
 >
-> | Companion | Owns |
+> | Companion | Covers |
 > |---|---|
 > | [VOICE.md](VOICE.md) | brand personality, tone rules, the microcopy library |
 > | [EXPERIENCE-MAP.md](EXPERIENCE-MAP.md) | the emotional arc + end-to-end user journey |
 > | [SCREEN-INVENTORY.md](SCREEN-INVENTORY.md) | every planned screen, its purpose + actions |
 > | [DESIGN-RULES.md](DESIGN-RULES.md) | the non-negotiable per-screen review checklist |
 > | [editor-visual-direction.md](editor-visual-direction.md) | the editor surface specifics |
-> | [mockups/](mockups/) | the interactive HTML prototypes (canonical visual reference) |
+> | [mockups/](mockups/) | the interactive HTML prototypes (working visual reference) |
 
 ---
 
@@ -243,6 +248,6 @@ unexpected sound is the opposite of cozy.
 ## 13. Brand personality
 
 The voice that ties the visuals, motion, and copy together — *the crafty friend who makes you
-feel talented* — is defined in **[VOICE.md](VOICE.md)**, alongside the canonical microcopy library
+feel talented* — is defined in **[VOICE.md](VOICE.md)**, alongside the reference microcopy library
 every screen draws from. Visual identity (§2 above) and that voice are two halves of the same
 personality; design them together.

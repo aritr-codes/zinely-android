@@ -1,10 +1,11 @@
 # Zinely — Design Rules
 
 > **The non-negotiable checklist every screen must pass before it ships.** A short, practical
-> gate derived from the design system. If a screen fails any rule, it is not done — fix the screen,
-> not the rule. Rationale lives in [DESIGN-LANGUAGE.md](DESIGN-LANGUAGE.md); words in
-> [VOICE.md](VOICE.md); the arc in [EXPERIENCE-MAP.md](EXPERIENCE-MAP.md). Status: design SoT ·
-> 2026-06-28.
+> gate derived from the design references. If a screen fails any rule, it is not done — fix the
+> screen, not the rule. A companion design reference under the canonical doc system in
+> [CLAUDE.md](../../CLAUDE.md), not a parallel source of truth. Rationale lives in
+> [DESIGN-LANGUAGE.md](DESIGN-LANGUAGE.md); words in [VOICE.md](VOICE.md); the arc in
+> [EXPERIENCE-MAP.md](EXPERIENCE-MAP.md). Status: design reference · 2026-06-28.
 
 These rules encode the one goal — *"I want to make something cute,"* not *"I need to learn this
 editor"* ([ADR-008](../DECISIONS.md#adr-008)). They are intentionally absolute so reviews are
@@ -64,7 +65,7 @@ Run this before calling any screen done. Every box must be ✅.
 ## How this gate is used
 
 - **Design:** a screen's [HTML prototype](mockups/) must satisfy the rules before it becomes the
-  canonical reference.
+  working visual reference.
 - **Implementation:** the Compose PR description links the screen's prototype and confirms the
   checklist; the [reviewer](../../CLAUDE.md#review-workflow) validates against it.
 - **Conflict:** if a rule and a feature request collide, the rule wins or the feature is

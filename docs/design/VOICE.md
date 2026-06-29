@@ -1,13 +1,14 @@
 # Zinely — Voice & Microcopy
 
-> **The single source of truth for how Zinely *talks*.** Brand personality, tone rules, and a
-> ready-to-use microcopy library. The feel this voice serves lives in
+> **The companion design reference for how Zinely *talks*.** Brand personality, tone rules, and a
+> ready-to-use microcopy library — a design reference under the canonical doc system in
+> [CLAUDE.md](../../CLAUDE.md), not a parallel source of truth. The feel this voice serves lives in
 > [DESIGN-LANGUAGE.md](DESIGN-LANGUAGE.md); the screens it appears on in
 > [SCREEN-INVENTORY.md](SCREEN-INVENTORY.md); the journey it accompanies in
-> [EXPERIENCE-MAP.md](EXPERIENCE-MAP.md). Status: design SoT · 2026-06-28.
+> [EXPERIENCE-MAP.md](EXPERIENCE-MAP.md). Status: design reference · 2026-06-28.
 
 Copy is not decoration applied at the end — it is half of the interface a beginner actually
-reads. This document is the canonical wording. When implementing a screen, take the string from
+reads. This document is the reference wording. When implementing a screen, take the string from
 here rather than inventing one; if a needed string is missing, add it here in the same change.
 
 ---

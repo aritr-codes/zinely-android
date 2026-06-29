@@ -1,11 +1,13 @@
 # Zinely — Screen Inventory
 
-> **The single source of truth for *which screens exist* and what each one is for.** Every planned
-> surface, its purpose, primary/secondary actions, and emotional goal — so screens are designed as
-> one product, not in isolation. Feel: [DESIGN-LANGUAGE.md](DESIGN-LANGUAGE.md); words:
+> **The companion design reference for *which screens exist* and what each one is for.** Every
+> planned surface, its purpose, primary/secondary actions, and emotional goal — so screens are
+> designed as one product, not in isolation. A design reference under the canonical doc system in
+> [CLAUDE.md](../../CLAUDE.md), not a parallel source of truth: product scope is owned by
+> [PRD.md](../PRD.md) and phasing/sequencing by [ROADMAP.md](../ROADMAP.md) — where this disagrees
+> with them, they win. Feel: [DESIGN-LANGUAGE.md](DESIGN-LANGUAGE.md); words:
 > [VOICE.md](VOICE.md); the arc that strings them together:
-> [EXPERIENCE-MAP.md](EXPERIENCE-MAP.md); build order: [ROADMAP.md](../ROADMAP.md).
-> Status: design SoT · 2026-06-28.
+> [EXPERIENCE-MAP.md](EXPERIENCE-MAP.md). Status: design reference · 2026-06-28.
 
 **Legend — build status:** ✅ shipped · 🔂 current milestone (`SUX`) · 🔭 designed, deferred.
 Each surface maps to a milestone so the [roadmap](../ROADMAP.md) can sequence by journey, not by
@@ -168,5 +170,5 @@ flowchart TD
 | Settings | needs only **local prefs** (DataStore) — *not* Room-gated | 🔭 |
 | Sticker picker, Template picker | V1 | 🔭 |
 
-The [HTML prototypes](mockups/) realize each of these as the canonical visual reference before any
+The [HTML prototypes](mockups/) realize each of these as the working visual reference before any
 Compose is written.

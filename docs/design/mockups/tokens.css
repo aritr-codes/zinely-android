@@ -1,5 +1,6 @@
 /* Zinely — shared design tokens + prototype component kit.
-   CANONICAL VISUAL REFERENCE for the HTML prototypes (NOT production Compose).
+   Working visual reference for the HTML prototypes (NOT production Compose; a design
+   reference under the canonical doc system in CLAUDE.md, not a parallel source of truth).
    Source of truth for the values: docs/design/DESIGN-LANGUAGE.md §2 (palette) + §10 (motion).
    Every mockup links this file so the whole set stays coherent. Add shared pieces here,
    screen-specific styling stays inline in each prototype. */

@@ -148,6 +148,26 @@ stateDiagram-v2
     FoldGuide --> Editor
 ```
 
+> **First-run flow — current state & design-sprint proposal (reconciliation, 2026-06-28).** This
+> navigation map is the MVP **target** and remains the owning spec for product flow. Two things it
+> must be read against:
+>
+> 1. **Current build.** The app today boots **straight into the Editor** on a single fixed
+>    `"default"` project. Home, Settings, and a user-facing Export flow are **not yet implemented**
+>    (persistence is file-only and single-project) — see [ROADMAP status](ROADMAP.md). So the
+>    `Home → Editor → Export` entry above is not yet the shipped reality.
+> 2. **Design-sprint proposal (not yet ratified).** The
+>    [design references](design/DESIGN-LANGUAGE.md) **propose** a refined first-run: a **Welcome**
+>    screen first — routing straight to the editor behind a *local first-run flag*, **not**
+>    Room-gated — with **Home/My-zines deferred behind the future Room project layer** rather than
+>    being the entry point ([SCREEN-INVENTORY](design/SCREEN-INVENTORY.md),
+>    [journey-ordered sequence](ROADMAP.md#journey-ordered-build-sequence-product-design-sprint-2026-06-28)).
+>
+> That proposal is a **PRD-owned flow/scope change** and is **pending ratification here** plus a
+> navigation [ADR](DECISIONS.md) (amending [ADR-030](DECISIONS.md#adr-030)). Until that lands, **this
+> map stays authoritative**; when it lands, update this section + §7 and link the ADR. This note is
+> what keeps the PRD, ROADMAP, and design references in agreement in the meantime.
+
 ## 10. Functional requirements (MVP)
 
 | ID | Requirement | Priority |
