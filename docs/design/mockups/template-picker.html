@@ -1,0 +1,221 @@
+<!-- PROTOTYPE ONLY — not production Compose. Working visual reference (a design reference, not a parallel source of truth). See docs/design/SCREEN-INVENTORY.md#template-picker -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely — template picker (design reference)</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  /* ---- screen-specific styling for the template picker ----
+     Reuses kit classes from tokens.css (.phone .topbar .brand .proj-chip .stage
+     .sheet .tape-top .blob .hint .cap .frame-wrap .title-tag .btn). Everything
+     below is unique to this screen: the scrolling grid of mini-page thumbnails. */
+
+  .stage{ display:block; place-items:initial; padding:14px 18px 6px; }
+
+  .picker-head{ color:var(--ink); text-align:center; padding:6px 8px 12px; }
+  .picker-head h1{ margin:0 0 4px; font-size:24px; line-height:1.15; color:var(--ink); }
+  .picker-head p{ margin:0; font-size:14px; color:var(--ink-soft); }
+
+  /* scrollable 2-column grid of paper template cards */
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 14px;
+    overflow-y:auto; padding:8px 4px 14px; max-height:430px; }
+
+  /* one template = a tilted little paper card with a tape corner + caption */
+  .tcard{ position:relative; background:var(--paper); border-radius:5px; cursor:pointer;
+    padding:10px 10px 8px; border:1px solid var(--paper-edge); text-align:center;
+    transform:rotate(var(--r,0deg));
+    box-shadow:0 8px 16px rgba(0,0,0,.34), 0 2px 0 var(--paper-edge);
+    transition:transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+    background-image:repeating-linear-gradient(90deg, rgba(120,110,95,.05) 0 2px, transparent 2px 5px); }
+  .tcard:nth-child(odd){ --r:-2deg; } .tcard:nth-child(3n){ --r:2.2deg; } .tcard:nth-child(4n){ --r:-1.4deg; }
+  .tcard:hover{ box-shadow:0 12px 22px rgba(0,0,0,.42), 0 2px 0 var(--paper-edge); }
+  .tcard:focus-visible{ outline:3px solid var(--stamp-blue); outline-offset:3px; }
+  .tcard:active{ transform:rotate(var(--r,0deg)) translateY(2px); }
+
+  /* tape corner sticker on each card */
+  .tcard .tape-corner{ position:absolute; top:-9px; left:50%; width:54px; height:18px;
+    transform:translateX(-50%) rotate(-4deg); background:rgba(233,196,106,.78);
+    box-shadow:0 2px 5px rgba(0,0,0,.22); clip-path:polygon(0 18%,100% 0,96% 100%,4% 90%); }
+  .tcard:nth-child(even) .tape-corner{ background:rgba(42,157,143,.5); transform:translateX(-50%) rotate(5deg); }
+
+  /* selected: lift + coral underline, clearly chosen but still handmade */
+  .tcard.sel{ transform:rotate(0deg) translateY(-6px) scale(1.03);
+    box-shadow:0 16px 28px rgba(0,0,0,.5), 0 0 0 3px var(--tape-coral), 0 2px 0 var(--paper-edge); }
+  .tcard.sel .tcap{ color:var(--ink); font-weight:600; }
+  .tcard.sel .check{ opacity:1; transform:scale(1) rotate(-8deg); }
+  .check{ position:absolute; right:-8px; top:-10px; width:30px; height:30px; border-radius:50%;
+    background:var(--tape-coral); color:#fff; display:grid; place-items:center; font-size:16px;
+    box-shadow:0 4px 10px rgba(0,0,0,.3); opacity:0; transform:scale(.4) rotate(-8deg);
+    transition:opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+
+  /* the mini page drawn purely in CSS — its layout = the template preview */
+  .mini{ aspect-ratio:3/4; background:#fbf8f1; border:1px solid var(--paper-edge);
+    border-radius:2px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.03); padding:8px;
+    display:flex; overflow:hidden; }
+  .ph{ background:linear-gradient(135deg,#cdb9a3,#b59e84); border-radius:2px; flex:1; position:relative; }
+  .ph::after{ content:"⛰"; position:absolute; inset:0; display:grid; place-items:center;
+    color:rgba(255,255,255,.85); font-size:18px; }
+  .ln{ height:5px; border-radius:3px; background:var(--ink-faint); }
+
+  /* layout 1 — one big photo (full bleed) */
+  .m-big{ padding:5px; }
+  /* layout 2 — photo + caption */
+  .m-cap{ flex-direction:column; gap:6px; }
+  .m-cap .ph{ flex:none; height:60%; }
+  .m-cap .lines{ display:flex; flex-direction:column; gap:5px; padding:0 2px; }
+  .m-cap .ln:nth-child(2){ width:70%; }
+  /* layout 3 — 2x2 little grid */
+  .m-grid{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:5px; }
+  .m-grid .ph::after{ font-size:12px; }
+  /* layout 4 — just words (journal) */
+  .m-words{ flex-direction:column; gap:7px; justify-content:center; padding:10px 8px; }
+  .m-words .ln{ width:100%; }
+  .m-words .ln:nth-child(2){ width:88%; } .m-words .ln:nth-child(4){ width:92%; }
+  .m-words .ln:nth-child(5){ width:64%; } .m-words .ln:nth-child(3){ width:78%; }
+  /* layout 5 — polaroid + note */
+  .m-pol{ position:relative; }
+  .m-pol .polaroid{ position:absolute; left:10%; top:12%; width:58%; background:#fff; padding:5px 5px 12px;
+    transform:rotate(-6deg); box-shadow:0 4px 9px rgba(0,0,0,.28); border-radius:1px; }
+  .m-pol .polaroid .ph{ height:42px; }
+  .m-pol .note{ position:absolute; right:6%; bottom:10%; width:46%; transform:rotate(4deg);
+    display:flex; flex-direction:column; gap:4px; }
+  .m-pol .note .ln{ background:var(--stamp-blue); opacity:.5; }
+  .m-pol .note .ln:nth-child(2){ width:72%; }
+  /* layout 6 — blank (equal, inviting — NOT greyed) */
+  .m-blank{ position:relative; place-items:center; display:grid; }
+  .m-blank .spark{ font-size:24px; opacity:.55; transform:rotate(-6deg); }
+  .tcard.blank .tape-corner{ background:rgba(231,111,81,.55); }
+
+  .tcap{ margin-top:7px; font-size:13px; color:var(--ink-soft); line-height:1.2; }
+
+  /* footer action bar inside the phone */
+  .actionbar{ padding:10px 18px 6px; display:flex; gap:10px; align-items:center;
+    background:linear-gradient(0deg, rgba(0,0,0,.22), transparent); }
+  .actionbar .picked{ flex:1; color:#e9e2d5; font-size:12px; min-height:18px; }
+  .actionbar .picked b{ color:#fff; }
+  .btn.primary[disabled]{ opacity:.5; cursor:default; box-shadow:0 6px 0 #c1573b; }
+  .btn{ padding:13px 22px; font-size:15px; min-height:48px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .tcard, .check, .btn, .supply{ transition:none; }
+    .tcard.sel{ transform:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="frame-wrap">
+    <div class="title-tag">template picker — a head start</div>
+    <div class="phone">
+      <div class="topbar">
+        <div class="brand">Zinely<small>NEW PAGE</small></div>
+        <div class="proj-chip">my first zine</div>
+      </div>
+
+      <div class="stage">
+        <div class="picker-head">
+          <h1>Pick a starting point</h1>
+          <p>Just a head start — you can change everything.</p>
+        </div>
+
+        <div class="grid" id="grid">
+          <!-- One big photo -->
+          <div class="tcard" tabindex="0" role="button" aria-pressed="false" data-name="One big photo">
+            <span class="tape-corner"></span><span class="check">✓</span>
+            <div class="mini m-big"><div class="ph"></div></div>
+            <div class="tcap">One big photo</div>
+          </div>
+
+          <!-- Photo + a caption -->
+          <div class="tcard" tabindex="0" role="button" aria-pressed="false" data-name="Photo + a caption">
+            <span class="tape-corner"></span><span class="check">✓</span>
+            <div class="mini m-cap">
+              <div class="ph"></div>
+              <div class="lines"><div class="ln"></div><div class="ln"></div></div>
+            </div>
+            <div class="tcap">Photo + a caption</div>
+          </div>
+
+          <!-- Little grid -->
+          <div class="tcard" tabindex="0" role="button" aria-pressed="false" data-name="Little grid">
+            <span class="tape-corner"></span><span class="check">✓</span>
+            <div class="mini m-grid">
+              <div class="ph"></div><div class="ph"></div><div class="ph"></div><div class="ph"></div>
+            </div>
+            <div class="tcap">Little grid</div>
+          </div>
+
+          <!-- Just words -->
+          <div class="tcard" tabindex="0" role="button" aria-pressed="false" data-name="Just words">
+            <span class="tape-corner"></span><span class="check">✓</span>
+            <div class="mini m-words">
+              <div class="ln"></div><div class="ln"></div><div class="ln"></div>
+              <div class="ln"></div><div class="ln"></div>
+            </div>
+            <div class="tcap">Just words</div>
+          </div>
+
+          <!-- Polaroid + note -->
+          <div class="tcard" tabindex="0" role="button" aria-pressed="false" data-name="Polaroid + note">
+            <span class="tape-corner"></span><span class="check">✓</span>
+            <div class="mini m-pol">
+              <div class="polaroid"><div class="ph"></div></div>
+              <div class="note"><div class="ln"></div><div class="ln"></div></div>
+            </div>
+            <div class="tcap">Polaroid + note</div>
+          </div>
+
+          <!-- Blank — equal, inviting -->
+          <div class="tcard blank" tabindex="0" role="button" aria-pressed="false" data-name="Blank page">
+            <span class="tape-corner"></span><span class="check">✓</span>
+            <div class="mini m-blank"><span class="spark">✨</span></div>
+            <div class="tcap">Blank page — I'll wing it</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actionbar">
+        <div class="picked" id="picked" aria-live="polite">Tap any card — even blank.</div>
+        <button class="btn primary" id="use" disabled>Use this</button>
+      </div>
+      <div class="hint">templates are optional · everything stays editable · you can always undo</div>
+    </div>
+
+    <div class="cap"><b>Scaffolding, not lock-in.</b> Templates are a gentle head start for anyone who
+      freezes at a blank page — pick one and every piece stays movable, swappable, deletable after.
+      <b>Blank is a peer</b>, sitting in the same grid at the same size, never greyed or hidden.</div>
+  </div>
+
+<script>
+  (function(){
+    var grid = document.getElementById('grid');
+    var useBtn = document.getElementById('use');
+    var picked = document.getElementById('picked');
+    var current = null;
+
+    function select(card){
+      if(current){ current.classList.remove('sel'); current.setAttribute('aria-pressed','false'); }
+      current = card;
+      card.classList.add('sel');
+      card.setAttribute('aria-pressed','true');
+      var name = card.getAttribute('data-name');
+      picked.innerHTML = 'Starting with <b>' + name + '</b>';
+      useBtn.disabled = false;
+    }
+
+    grid.querySelectorAll('.tcard').forEach(function(card){
+      card.addEventListener('click', function(){ select(card); });
+      card.addEventListener('keydown', function(e){
+        if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); select(card); }
+      });
+    });
+
+    useBtn.addEventListener('click', function(){
+      if(!current) return;
+      picked.innerHTML = 'Opening <b>' + current.getAttribute('data-name') + '</b>…';
+    });
+  })();
+</script>
+</body>
+</html>

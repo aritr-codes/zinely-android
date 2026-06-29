@@ -32,11 +32,72 @@ flowchart LR
     S1["Spike: imposition engine\n(+ SVG proof sheet)"] --> S2["Data/storage layer\n(Room meta + JSON doc)"]
     S2 --> S3["Render pipeline\n(shared scene → preview/export)"]
     S3 --> S4["Editor (MVI)\nplace/transform/undo"]
-    S4 --> S5["Export flow\nPDF + image + share"]
+    S4 --> SUX["First-time creation UX\nempty state · onboarding · supplies"]
+    SUX --> S5["Export flow\nPDF + image + share"]
     S5 --> MVP(["MVP complete"])
+    classDef now fill:#fff4d6,stroke:#e0a800;
+    class SUX now;
 ```
 
-> **Status:** S1 (imposition engine + SVG proof sheet) is ✅ **implemented and green** — pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, Codex-reviewed per phase ([ADR-007 Implementation](DECISIONS.md#adr-007), [spike](spikes/imposition-engine.md)), shipped as milestone `v0.1.0-imposition-engine`. **S2A (pure-Kotlin data core)** is ✅ **implemented and green** — new `:core:data` (schema, `DocumentSerializer` + migration, validation, repository + `DataResult` contracts, content-addressed asset + `.zine` manifest contracts), TDD and Codex-reviewed ([spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19)). **S2B (Android-backed data sources)** — Room, atomic-write file source, autosave coordinator, asset store + WorkManager GC — is the next build step.
+> **Sequencing change (2026-06-28).** A repository UX audit confirmed the editor is
+> *functionally* strong but *emotionally* intimidating for the beginner-first audience
+> ([ADR-008](DECISIONS.md#adr-008)): it opens to a near-blank sheet, core actions hide behind
+> gestures, and the chrome reads like generic productivity software. So a **first-time creation
+> experience** milestone (`SUX`) is inserted **before** the export flow (S5): cozy empty state,
+> contextual onboarding, a visible scrapbook supply tray, discoverable add-text/undo-redo, and
+> "all 8 pages together." Rationale: export has no value if a first-time user never makes a page
+> they want to print — *reduce intimidation before adding power*. The design references are anchored
+> by [docs/design/DESIGN-LANGUAGE.md](design/DESIGN-LANGUAGE.md) (companion references under the
+> canonical doc system in [CLAUDE.md](../CLAUDE.md)). S5 and the Room-backed project
+> layer are unchanged in content, only resequenced after `SUX`.
+
+### Journey-ordered build sequence (product design sprint, 2026-06-28)
+
+A product design sprint produced the canonical blueprint — [DESIGN-LANGUAGE.md](design/DESIGN-LANGUAGE.md)
+(hub), [VOICE.md](design/VOICE.md), [EXPERIENCE-MAP.md](design/EXPERIENCE-MAP.md),
+[SCREEN-INVENTORY.md](design/SCREEN-INVENTORY.md), [DESIGN-RULES.md](design/DESIGN-RULES.md), and the
+[HTML prototypes](design/mockups/index.html). Its core sequencing principle: **build the product in
+the order a first-timer lives it** (the [emotional arc](design/EXPERIENCE-MAP.md#1-the-emotional-arc-target)),
+not feature-by-feature, so each slice delivers a felt win that funds the next.
+
+```mermaid
+flowchart LR
+    subgraph SUX["SUX · first-time creation (0.5.0)"]
+      U1["empty-state\ninvitation ✅"] --> U2["supply tray\n(visible actions)"] --> U3["contextual\nhints"] --> U4["visible undo/redo\n+ warm autosave"]
+    end
+    subgraph S5["S5 · make it real (0.6.0+)"]
+      X1["preview\n(the booklet)"] --> X2["export ·\nPrint & fold"] --> X3["completion ·\nfold + share"]
+    end
+    subgraph PROJ["project layer + shell"]
+      P1["Room project\nstore + thumbnails"] --> P2["Home /\nMy zines"]
+    end
+    W["Welcome\n(first-run flag)"]:::free --> SUX
+    SUX --> S5 --> MVP(["MVP · create AND export"])
+    PROJ -. enables Home .-> MVP
+    classDef now fill:#fff4d6,stroke:#e0a800;
+    classDef free fill:#e8f1ec,stroke:#2A9D8F;
+    class U1 now;
+```
+
+> **Why this order.** The two journey **peaks** are *first photo placed* (already unlocked) and
+> *print & fold* (S5) — so `SUX` finishes making the *creation* moment delightful, then S5 delivers
+> the *payoff*. **Welcome is decoupled** (Codex review): it is *not* Room-gated — it routes straight
+> to the editor on the `"default"` project behind a local first-run flag, so it can ship early as
+> part of the first-run experience. Only **Home/My-zines** is sequenced **with the Room project
+> layer** (plus shelf thumbnails) — it has no value until there is more than one project to shelve,
+> and it is off the critical path to the MVP "create **and** export one zine" exit.
+> Stickers/templates remain V1 expression. Each screen's build readiness is tracked in
+> [SCREEN-INVENTORY.md](design/SCREEN-INVENTORY.md#coverage-check-screen--milestone).
+>
+> ⚠️ **This is build *sequencing*; the Welcome-first first-run flow itself is a PRD-owned change
+> that is *proposed, pending ratification* in [PRD §9](PRD.md#9-navigation-map-mvp)** (plus a
+> navigation ADR amending [ADR-030](DECISIONS.md#adr-030)). The order here is what we build *if/when*
+> that flow is approved; until then the [PRD navigation map](PRD.md#9-navigation-map-mvp) stays
+> authoritative for the flow.
+
+> **Status:** **S1–S4 are implemented and on `main`.** S1 imposition engine (pure-Kotlin `:core:model` + `:core:imposition`, 95 tests, milestone `v0.1.0-imposition-engine`); S2 persistence (`:core:data` contracts + pure-JVM `:core:data-storage` durability core/asset store + Android `:data-android` adapters); S3 render (`:core:render` pure tier + `:render-android` PDF/raster backends); S4 editor (`:core:editor` MVI core + `:feature:editor` interaction surface, now **mounted in `:app`** with interactive image import and autosave). Each was TDD'd and Codex-reviewed per increment.
+>
+> **What is NOT yet built**, despite the MVP scope below: production persistence is **file-only and single-project** — `data-android` ships a file-backed `DocumentRepository` writing `projects/<id>/document.json` on one fixed `"default"` project; **Room metadata, `ProjectRepository`, and the asset GC/sweeper are deferred** (no multi-project store yet). The render/**export backends exist** in `:render-android`, but there is **no user-facing export, share, print, or home/library flow** wired yet. **S5 (export flow) and the Room-backed project layer remain the next build steps.**
 
 ---
 
@@ -97,5 +158,26 @@ flowchart LR
 | 2026-06-25 | **S3 Android backend tier BUILT + MERGED** (`:render-android`, G1–G6): one `CanvasReplayer` + two export providers, point-space `SharedTextLayout`, crop-aware `ImageBlitter`, bundled **Inter** (MVP charset + cmap coverage guard). Roborazzi raster + text parity goldens are **headless-CI-gated**; image + PDF write/parity proofs run on-device (compile-checked in CI). Closes S3 raster+PDF parity (Compose preview-host parity proven in S4 Step 1). | [ADR-028](DECISIONS.md#adr-028), [spike](spikes/core-render-android-backend.md) |
 | 2026-06-25 | **S4 Step 1 preview host + pure `:core:editor` MVI merged.** PR #19: stateless `PagePreview` Compose `drawIntoCanvas` host over the same `CanvasReplayer`, `preview == export` proven headless (discharges Codex Required-fix C). PR #20: pure **`:core:editor`** reducer — `EditorModel`/`Intent`/`EditorReducer`/`HitTest`/`Snap`/`Command`, 43 pure-JVM tests; **ADR-029 Accepted**. | [ADR-029](DECISIONS.md#adr-029), [spike](spikes/s4-editor-mvi.md) |
 | 2026-06-26 | **S4 `:feature:editor` interaction surface MERGED** (PR #21 — 10 increments, each Codex-reviewed): store + effect runner, gesture pipeline, selection chrome + live document-order preview, opposite-anchor resize, live snap guides (preview==commit), a11y contextbar + element semantics (WCAG 2.5.7), race-safe text-edit session, host `EditorScreen`, and **selection-chrome Roborazzi goldens** (CI-gated). **Editor not yet wired into `:app` navigation** — that + `pageSizePt`/image-pipeline/autosave-binder at the app/DI layer is the next step. | [ADR-029](DECISIONS.md#adr-029), [spike §10.10–§10.11](spikes/s4-editor-mvi.md) |
+| 2026-06-27 | **S4 editor mounted in `:app`** (PR #23): single-Activity `ZinelyNavHost` on a fixed `"default"` project, `EditorViewModel`/`EditorBootstrap` (seed-on-miss + imposition-derived page size), autosave binder, and content-addressed asset store + interactive image import. | [ADR-030](DECISIONS.md#adr-030), [ADR-031](DECISIONS.md#adr-031) |
+| 2026-06-28 | **Doc-truthfulness reconciliation** (Codex onboarding review GO-WITH-FIXES): corrected stale "no app UI / S2B-next" status and persistence/export overstatement across `README.md`, `ARCHITECTURE.md`, `ROADMAP.md`; aligned `AssetStore`/`core:data-storage` GC comments with the deferred-sweeper reality. No code behavior changed. | [review](reviews/2026-06-27-onboarding-review-claude-brief.md) |
+| 2026-06-28 | **Editor UI foundation** (`v0.4.0`): scrapbook page navigator (all 8 pages reachable, `Intent.GoToPage`) + zine "workbench" theme replacing the default template; design references seeded. | [ADR-008](DECISIONS.md#adr-008), [design](design/editor-visual-direction.md) |
+| 2026-06-28 | **Sequencing change → first-time creation UX milestone (`SUX`)** inserted before export (S5), per a UX audit; project versioning adopted (SemVer 0.y per milestone) + `CHANGELOG.md` added. | [ADR-008](DECISIONS.md#adr-008), [DESIGN-LANGUAGE](design/DESIGN-LANGUAGE.md), [CHANGELOG](../CHANGELOG.md) |
+| 2026-06-28 | **Product design sprint** — full set of design references authored (design hub + voice, experience map, screen inventory, design rules, 11 HTML prototypes); build resequenced **journey-order** within `SUX`/S5; **Welcome decoupled** (first-run flag, not Room-gated), **only Home/My-zines bound to the Room project layer**; architectural implications flagged for ADRs. No production UI changed. | [DESIGN-LANGUAGE](design/DESIGN-LANGUAGE.md), [EXPERIENCE-MAP](design/EXPERIENCE-MAP.md), [ARCHITECTURE §15.6](ARCHITECTURE.md) |
+| 2026-06-29 | **`SUX` editor UI slices** (`:feature:editor`): cozy first-run **empty-state** invitation, then the scrapbook **supply tray** — Add a photo / Add words / Undo / Redo as visible thumb-zone supplies, undo/redo bound to `canUndo`/`canRedo`. The app-level lone "Add image" FAB removed from `ZinelyNavHost`. UI/UX only — no `:core`, schema, render, or export change. | [editor brief §6](design/editor-visual-direction.md), [DESIGN-RULES](design/DESIGN-RULES.md) |
 
 > When phase contents change, add a row here and update the affected phase section + any new [ADR](DECISIONS.md).
+
+## Version milestones (SemVer)
+
+Pre-1.0, the minor version tracks completed vertical-slice milestones; `1.0.0` ships at MVP
+exit. Full history in [CHANGELOG.md](../CHANGELOG.md).
+
+| Version | Milestone | State |
+|---|---|---|
+| `0.1.0` | S1 — imposition engine | ✅ tagged `v0.1.0-imposition-engine` |
+| `0.2.0` | S2 — persistence (file-only) | ✅ on `main` |
+| `0.3.0` | S3 — rendering pipeline | ✅ on `main` |
+| `0.4.0` | S4 — editor foundation + UI foundation | ✅ on `main` — **tag the page-navigator/theme commit** (the foundation), not later `SUX` work |
+| `0.5.0` | `SUX` — first-time creation experience (empty state shipped first) | 🔭 current milestone |
+| `0.6.0`+ | S5 — export/share + Room project layer | 🔭 then |
+| `1.0.0` | MVP — create **and** export a zine | 🔭 exit criteria |

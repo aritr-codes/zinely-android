@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely — Editor workbench mockup</title>
+<!--
+  PROTOTYPE ONLY — not production Compose. Demonstrates the editor visual direction and the
+  page-navigator interaction (Intent.GoToPage) before implementation. See
+  docs/design/editor-visual-direction.md. Open in any browser. Phone-sized frame.
+-->
+<style>
+  :root {
+    --paper:#F4EFE6; --paper-edge:#E7DFD0; --desk:#3A3A3C; --desk-2:#46464a;
+    --ink:#23201C; --ink-soft:#6B6358;
+    --tape-yellow:#E9C46A; --tape-coral:#E76F51; --tape-teal:#2A9D8F; --stamp-blue:#264653;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; display:grid; place-items:center;
+    background:#1d1d1f; font-family:"Segoe Print","Bradley Hand","Comic Sans MS",system-ui,sans-serif;
+    color:var(--ink); padding:24px;
+  }
+  .phone {
+    width:390px; height:780px; border-radius:36px; overflow:hidden; position:relative;
+    background:
+      radial-gradient(120% 80% at 50% -10%, var(--desk-2), var(--desk) 60%);
+    box-shadow:0 30px 70px rgba(0,0,0,.55), inset 0 0 0 2px #000;
+    display:flex; flex-direction:column;
+  }
+  /* faint desk grain */
+  .phone::before {
+    content:""; position:absolute; inset:0; pointer-events:none; opacity:.06;
+    background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px);
+  }
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 18px 6px; color:#f2ece1;
+  }
+  .brand { font-size:20px; letter-spacing:.5px; }
+  .brand small { display:block; font-size:11px; color:#b9b2a6; letter-spacing:1px; }
+  .proj-chip {
+    font-size:11px; color:#cdc6b9; border:1px dashed #6f6a60; border-radius:20px;
+    padding:4px 10px; transform:rotate(-1.5deg);
+  }
+
+  /* canvas area */
+  .stage { flex:1; position:relative; display:grid; place-items:center; padding:14px 26px; }
+  .sheet {
+    position:relative; width:100%; aspect-ratio:3/4; background:var(--paper);
+    border-radius:3px; transform:rotate(-.6deg);
+    box-shadow:0 16px 30px rgba(0,0,0,.45), 0 2px 0 var(--paper-edge);
+    background-image:
+      radial-gradient(140% 120% at 0% 0%, rgba(0,0,0,.04), transparent 40%),
+      repeating-linear-gradient(90deg, rgba(120,110,95,.05) 0 2px, transparent 2px 5px);
+  }
+  /* torn taped top edge */
+  .sheet .tape-top {
+    position:absolute; top:-14px; left:50%; width:120px; height:30px; transform:translateX(-50%) rotate(-2deg);
+    background:rgba(233,196,106,.72); box-shadow:0 2px 6px rgba(0,0,0,.25);
+    clip-path:polygon(0 20%,6% 0,100% 8%,96% 92%,0 100%);
+  }
+  .sheet .pagelabel {
+    position:absolute; left:14px; bottom:10px; font-size:12px; color:var(--ink-soft);
+    transform:rotate(-1deg);
+  }
+  /* sample placed elements */
+  .el { position:absolute; box-shadow:0 6px 14px rgba(0,0,0,.22); }
+  .el.photo { background:#cdb9a3 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23c2ad95"/><path d="M0 8 L4 4 L7 7 L10 4" stroke="%238c7b66" fill="none"/></svg>'); }
+  .el.photo-1 { width:46%; height:34%; left:8%; top:12%; transform:rotate(-4deg); border:6px solid #fff; }
+  .el.text-1 {
+    left:14%; top:54%; width:62%; transform:rotate(-1.5deg); font-size:22px; color:var(--ink);
+    background:transparent; box-shadow:none; line-height:1.15;
+  }
+  .el.sticker {
+    right:9%; top:42%; width:62px; height:62px; border-radius:50%;
+    background:var(--tape-teal); color:#fff; display:grid; place-items:center; font-size:11px;
+    text-align:center; transform:rotate(8deg); box-shadow:0 4px 10px rgba(0,0,0,.3);
+  }
+  /* selection chrome on the selected element */
+  .el.selected { outline:2px dashed var(--stamp-blue); outline-offset:4px; }
+  .handle { position:absolute; width:12px; height:12px; background:#fff; border:2px solid var(--stamp-blue); border-radius:2px; }
+
+  /* right tool tray */
+  .tray {
+    position:absolute; right:10px; top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .tool {
+    width:50px; height:50px; border-radius:14px; border:none; cursor:pointer;
+    background:var(--paper); color:var(--ink); font-size:20px; font-family:inherit;
+    box-shadow:0 5px 0 var(--paper-edge), 0 8px 14px rgba(0,0,0,.3);
+    display:grid; place-items:center; transition:transform .08s, box-shadow .08s;
+  }
+  .tool:active { transform:translateY(4px); box-shadow:0 1px 0 var(--paper-edge); }
+  .tool[disabled] { opacity:.4; box-shadow:0 5px 0 var(--paper-edge); cursor:default; }
+  .tool .lbl { font-size:8px; letter-spacing:.5px; }
+  .tool.primary { background:var(--tape-coral); color:#fff; box-shadow:0 5px 0 #c1573b, 0 8px 14px rgba(0,0,0,.35); }
+  .tool.primary:active { box-shadow:0 1px 0 #c1573b; }
+
+  /* page strip */
+  .strip {
+    display:flex; gap:8px; padding:10px 14px 8px; overflow-x:auto;
+    background:linear-gradient(0deg, rgba(0,0,0,.25), transparent);
+  }
+  .pcard {
+    position:relative; flex:0 0 auto; width:46px; height:60px; border-radius:3px; cursor:pointer;
+    background:var(--paper); color:var(--ink-soft); font-size:13px;
+    display:grid; place-items:center; transform:rotate(var(--r,0deg));
+    box-shadow:0 4px 10px rgba(0,0,0,.35); border:1px solid var(--paper-edge);
+    transition:transform .12s, box-shadow .12s;
+  }
+  .pcard:nth-child(odd){ --r:-2deg; } .pcard:nth-child(3n){ --r:2.5deg; }
+  .pcard .dot { position:absolute; bottom:5px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--tape-coral); }
+  .pcard.current {
+    transform:rotate(-3deg) translateY(-10px) scale(1.08); color:var(--ink);
+    box-shadow:0 10px 18px rgba(0,0,0,.5);
+  }
+  .pcard.current::after {
+    content:""; position:absolute; top:-9px; left:50%; width:34px; height:16px;
+    transform:translateX(-50%) rotate(-4deg); background:rgba(233,196,106,.85);
+    clip-path:polygon(0 15%,100% 0,96% 100%,4% 92%);
+  }
+
+  /* context bar */
+  .ctxbar {
+    display:flex; gap:2px; justify-content:center; padding:8px 8px 14px;
+    background:#efe7d8; border-top:2px dashed #d9cfbb;
+  }
+  .ctxbar.hidden { display:none; }
+  .ctxbtn { width:38px; height:38px; border:none; background:transparent; font-size:18px; cursor:pointer; color:var(--ink); border-radius:9px; }
+  .ctxbtn:active { background:#e2d8c4; }
+  .hint { color:#b9b2a6; font-size:10px; text-align:center; padding:2px 0 8px; letter-spacing:.4px; }
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="topbar">
+      <div class="brand">Zinely<small>WORKBENCH</small></div>
+      <div class="proj-chip">my zine · default</div>
+    </div>
+
+    <div class="stage">
+      <div class="sheet" id="sheet">
+        <div class="tape-top"></div>
+        <!-- page content swapped by JS -->
+        <div id="content"></div>
+        <div class="pagelabel" id="pagelabel">page 3 of 8</div>
+      </div>
+
+      <div class="tray">
+        <button class="tool primary" title="Add photo">🖼<span class="lbl">PHOTO</span></button>
+        <button class="tool" title="Add text">T<span class="lbl">TEXT</span></button>
+        <button class="tool" id="undo" title="Undo">↶<span class="lbl">UNDO</span></button>
+        <button class="tool" id="redo" title="Redo" disabled>↷<span class="lbl">REDO</span></button>
+      </div>
+    </div>
+
+    <div class="strip" id="strip"></div>
+    <div class="hint" id="hint">tap a page card to switch · the taped card is the page you're on</div>
+
+    <div class="ctxbar" id="ctxbar">
+      <button class="ctxbtn">‹</button><button class="ctxbtn">›</button>
+      <button class="ctxbtn">ʌ</button><button class="ctxbtn">v</button>
+      <button class="ctxbtn">+</button><button class="ctxbtn">−</button>
+      <button class="ctxbtn">↻</button><button class="ctxbtn">↺</button>
+      <button class="ctxbtn">⌫</button>
+    </div>
+  </div>
+
+<script>
+  // 8-page model with which pages have content (mirrors "element count > 0" indicator).
+  const PAGES = [
+    {has:true},{has:true},{has:true},{has:false},
+    {has:true},{has:false},{has:false},{has:false}
+  ];
+  let current = 2; // page index (0-based) → "page 3"
+
+  const strip = document.getElementById('strip');
+  const content = document.getElementById('content');
+  const pagelabel = document.getElementById('pagelabel');
+  const ctxbar = document.getElementById('ctxbar');
+
+  function renderStrip() {
+    strip.innerHTML = '';
+    PAGES.forEach((p, i) => {
+      const c = document.createElement('div');
+      c.className = 'pcard' + (i === current ? ' current' : '');
+      c.textContent = i + 1;
+      if (p.has) { const d = document.createElement('div'); d.className = 'dot'; c.appendChild(d); }
+      c.onclick = () => goToPage(i);   // ← Intent.GoToPage(i)
+      strip.appendChild(c);
+    });
+  }
+
+  function renderPage() {
+    pagelabel.textContent = `page ${current + 1} of 8`;
+    // Show sample art only on "has content" pages; empty pages get an invitation.
+    if (PAGES[current].has) {
+      content.innerHTML = `
+        <div class="el photo photo-1 selected">
+          <div class="handle" style="left:-6px;top:-6px"></div>
+          <div class="handle" style="right:-6px;top:-6px"></div>
+          <div class="handle" style="left:-6px;bottom:-6px"></div>
+          <div class="handle" style="right:-6px;bottom:-6px"></div>
+        </div>
+        <div class="el text-1">a little zine,<br/>made by hand</div>
+        <div class="el sticker">cut&nbsp;here ✂</div>`;
+      ctxbar.classList.remove('hidden');
+    } else {
+      content.innerHTML = `<div class="el text-1" style="top:38%;left:10%;width:80%;text-align:center;color:#8c8170">
+        <div style="font-size:24px;color:#23201c">make page ${current + 1} cute ✨</div>
+        <div style="font-size:15px;margin-top:6px">tap 🖼 add a photo · ✏️ add words</div></div>`;
+      ctxbar.classList.add('hidden');
+    }
+  }
+
+  function goToPage(i) {
+    current = i;          // reducer: copy(currentPageIndex=i, selection=∅, Idle)
+    renderStrip();
+    renderPage();
+  }
+
+  renderStrip();
+  renderPage();
+</script>
+</body>
+</html>

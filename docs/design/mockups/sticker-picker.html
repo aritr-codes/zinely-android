@@ -1,0 +1,233 @@
+<!-- PROTOTYPE ONLY — not production Compose. Working visual reference (a design reference, not a parallel source of truth). See docs/design/SCREEN-INVENTORY.md#sticker-picker -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely — Sticker picker mockup</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  /* screen-specific styling for the sticker-picker prototype (kit lives in tokens.css) */
+
+  /* the working page sits up top, a photo already placed, partly covered by the tray */
+  .stage{ align-items:start; padding-top:18px; }
+  .sheet.page{ place-items:stretch; }
+  .work{ position:relative; width:100%; height:100%; }
+  .photo-box{
+    position:absolute; left:10%; top:7%; width:58%; height:40%;
+    border:7px solid #fff; transform:rotate(-2.5deg);
+    background:#cdb9a3 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><rect width="12" height="12" fill="%23c2ad95"/><path d="M0 9 L5 4 L8 7 L12 4" stroke="%238c7b66" fill="none" stroke-width="1.2"/><circle cx="9" cy="3" r="1.4" fill="%23d8c8af"/></svg>');
+    box-shadow:0 8px 16px rgba(0,0,0,.22);
+  }
+  .photo-box .pin{
+    position:absolute; top:-10px; left:50%; width:54px; height:18px;
+    transform:translateX(-50%) rotate(3deg); background:rgba(42,157,143,.7);
+    clip-path:polygon(0 22%,8% 0,100% 10%,94% 90%,0 100%);
+  }
+  .caption{
+    position:absolute; left:14%; top:50%; width:70%; transform:rotate(-1.5deg);
+    font-size:21px; color:var(--ink); line-height:1.2;
+  }
+
+  /* placed stickers land here with a little pop */
+  .placed{
+    position:absolute; font-size:34px; line-height:1; pointer-events:none;
+    filter:drop-shadow(0 3px 4px rgba(0,0,0,.25));
+    animation:pop var(--dur) var(--ease-out);
+  }
+  @keyframes pop{
+    0%{ transform:scale(.2) rotate(var(--rot,0deg)); opacity:0; }
+    70%{ transform:scale(1.18) rotate(var(--rot,0deg)); opacity:1; }
+    100%{ transform:scale(1) rotate(var(--rot,0deg)); opacity:1; }
+  }
+
+  /* ── BOTTOM SHEET TRAY ───────────────────────────────────────── */
+  .tray{
+    position:absolute; left:0; right:0; bottom:0; z-index:5;
+    background:linear-gradient(180deg, #FBF7EF, var(--paper));
+    border-radius:24px 24px 0 0; padding:10px 16px 18px;
+    box-shadow:0 -12px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.6);
+    max-height:60%;
+  }
+  /* a strip of washi tape pinning the sheet to the desk */
+  .tray::before{
+    content:""; position:absolute; top:-11px; left:50%; width:96px; height:24px;
+    transform:translateX(-50%) rotate(-2deg); background:rgba(42,157,143,.7);
+    clip-path:polygon(0 22%,7% 0,100% 9%,95% 92%,0 100%);
+  }
+  .grab{
+    width:44px; height:5px; border-radius:3px; margin:2px auto 10px;
+    background:var(--ink-faint); opacity:.7;
+  }
+  .tray h2{
+    margin:0; font-size:21px; color:var(--ink); letter-spacing:.3px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tray h2 .spk{ font-size:18px; }
+  .tray .reassure{ margin:4px 0 12px; font-size:13px; color:var(--ink-soft); }
+
+  /* category chips row */
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding:1px 1px 12px; }
+  .chip{
+    flex:0 0 auto; font-family:inherit; cursor:pointer; font-size:14px;
+    min-height:38px; padding:8px 16px; border-radius:20px; color:var(--ink);
+    background:var(--paper); border:2px solid var(--paper-edge);
+    transition:transform var(--dur-fast) var(--ease-out);
+  }
+  .chip:nth-child(odd){ transform:rotate(-1.5deg); }
+  .chip:nth-child(even){ transform:rotate(1.5deg); }
+  .chip[aria-pressed="true"]{
+    background:var(--tape-coral); color:#fff; border-color:#c1573b;
+    box-shadow:0 4px 0 #c1573b;
+  }
+  .chip:active{ transform:translateY(2px); }
+
+  /* the supplies grid */
+  .grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;
+    overflow-y:auto; max-height:230px; padding:4px 2px 2px;
+  }
+  /* each item reuses the kit .blob; comfy >=64px tap target */
+  .grid .blob{
+    cursor:pointer; border:none; font-family:inherit; aspect-ratio:1/1;
+    min-height:64px; font-size:30px; line-height:1; background:#FFFDF8;
+    transition:transform var(--dur-fast) var(--ease-out);
+  }
+  .grid .blob:nth-child(4n+1){ transform:rotate(-4deg); }
+  .grid .blob:nth-child(4n+2){ transform:rotate(3deg); }
+  .grid .blob:nth-child(4n+3){ transform:rotate(-2deg); }
+  .grid .blob:nth-child(4n){ transform:rotate(4deg); }
+  .grid .blob:active{ transform:translateY(3px) scale(.96); }
+  /* craft accent backgrounds — soft tints of the tape palette */
+  .grid .blob.coral{ background:#FAD9CF; color:#9c3a22; }
+  .grid .blob.teal{ background:#CDEAE5; color:#1f6f64; }
+  .grid .blob.yellow{ background:#F6E6BD; color:#8a6a1f; }
+  .grid .blob.blue{ background:#D2DCE0; color:var(--stamp-blue); }
+
+  /* a real strip of washi tape rendered in the grid */
+  .grid .blob.washi{ background:transparent; box-shadow:none; }
+  .grid .blob.washi i{
+    display:block; width:80%; height:30px; transform:rotate(-6deg);
+    background:repeating-linear-gradient(45deg, var(--tape-coral) 0 7px, #f0a18b 7px 14px);
+    clip-path:polygon(0 18%,5% 0,100% 12%,96% 90%,0 100%);
+    box-shadow:0 4px 8px rgba(0,0,0,.2);
+  }
+  /* a stamp-edged square */
+  .grid .blob.stamp i{
+    display:grid; place-items:center; width:74%; height:74%; font-size:24px;
+    background:#fff; color:var(--stamp-blue);
+    -webkit-mask:radial-gradient(circle 3px at 3px 50%, transparent 96%, #000) -3px 0/8px 100% repeat-y,
+                 radial-gradient(circle 3px at calc(100% - 3px) 50%, transparent 96%, #000) 3px 0/8px 100% repeat-y,
+                 radial-gradient(circle 3px at 50% 3px, transparent 96%, #000) 0 -3px/100% 8px repeat-x,
+                 radial-gradient(circle 3px at 50% calc(100% - 3px), transparent 96%, #000) 0 3px/100% 8px repeat-x,
+                 linear-gradient(#000,#000);
+    mask:radial-gradient(circle 3px at 3px 50%, transparent 96%, #000) -3px 0/8px 100% repeat-y,
+         radial-gradient(circle 3px at calc(100% - 3px) 50%, transparent 96%, #000) 3px 0/8px 100% repeat-y,
+         radial-gradient(circle 3px at 50% 3px, transparent 96%, #000) 0 -3px/100% 8px repeat-x,
+         radial-gradient(circle 3px at 50% calc(100% - 3px), transparent 96%, #000) 0 3px/100% 8px repeat-x,
+         linear-gradient(#000,#000);
+  }
+
+  .hint{ position:absolute; bottom:6px; left:0; right:0; z-index:6; }
+
+  @media (prefers-reduced-motion: reduce){
+    .chip, .grid .blob{ transition:none !important; }
+    .chip:active, .grid .blob:active{ transform:none; }
+    .placed{ animation:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="frame-wrap">
+    <div class="title-tag">sticker picker — decorate</div>
+
+    <div class="phone">
+      <div class="topbar">
+        <div class="brand">Zinely<small>MY ZINE</small></div>
+        <div class="proj-chip">page 3 of 8</div>
+      </div>
+
+      <div class="stage">
+        <!-- the working page, partly covered by the tray sliding up -->
+        <div class="sheet page">
+          <div class="tape-top"></div>
+          <div class="work" id="page">
+            <div class="photo-box"><div class="pin"></div></div>
+            <div class="caption">our little summer trip</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM SHEET TRAY: a tray of cute supplies -->
+      <div class="tray" role="dialog" aria-label="Stickers and tape">
+        <div class="grab" aria-hidden="true"></div>
+        <h2><span class="spk" aria-hidden="true">✿</span> Stickers &amp; tape</h2>
+        <p class="reassure">Tap one to pop it on your page.</p>
+
+        <div class="chips" role="tablist" aria-label="Sticker categories">
+          <button class="chip" type="button" role="tab" aria-pressed="true">Cute</button>
+          <button class="chip" type="button" role="tab" aria-pressed="false">Tape</button>
+          <button class="chip" type="button" role="tab" aria-pressed="false">Stamps</button>
+          <button class="chip" type="button" role="tab" aria-pressed="false">Letters</button>
+        </div>
+
+        <div class="grid" id="grid" aria-label="Supplies">
+          <button class="blob coral"  type="button" data-sticker="✿" aria-label="Flower sticker">✿</button>
+          <button class="blob teal"   type="button" data-sticker="❀" aria-label="Blossom sticker">❀</button>
+          <button class="blob coral"  type="button" data-sticker="♥" aria-label="Heart sticker">♥</button>
+          <button class="blob yellow" type="button" data-sticker="★" aria-label="Star sticker">★</button>
+          <button class="blob washi"  type="button" data-sticker="🎀" aria-label="Washi tape"><i></i></button>
+          <button class="blob blue stamp" type="button" data-sticker="✦" aria-label="Stamp"><i>✦</i></button>
+          <button class="blob yellow" type="button" data-sticker="☺" aria-label="Smiley sticker">☺</button>
+          <button class="blob blue"   type="button" data-sticker="☁" aria-label="Cloud sticker">☁</button>
+          <button class="blob teal"   type="button" data-sticker="✨" aria-label="Sparkle sticker">✨</button>
+          <button class="blob teal"   type="button" data-sticker="❧" aria-label="Leaf sticker">❧</button>
+          <button class="blob coral"  type="button" data-sticker="🎀" aria-label="Bow sticker">🎀</button>
+          <button class="blob yellow" type="button" data-sticker="❁" aria-label="Daisy sticker">❁</button>
+        </div>
+      </div>
+
+      <div class="hint">all free · nothing to buy · works fully offline</div>
+    </div>
+
+    <div class="cap">
+      The <b>sticker picker</b> is a bottom-sheet <b>tray of supplies</b> — stickers, tape, stamps.
+      We show a <b>small curated set</b> first so it never feels overwhelming, and nothing here is
+      “wrong”. It’s playful, <b>free and offline</b> (no store, no prices) — just
+      <b>tap to pop</b> a sticker onto your page.
+    </div>
+  </div>
+
+<script>
+  // tap a sticker → pop a copy onto the page (no libs, no network)
+  var page = document.getElementById('page');
+  var grid = document.getElementById('grid');
+  var nudge = 0; // small offset so repeated taps don't perfectly stack
+
+  grid.addEventListener('click', function(e){
+    var btn = e.target.closest('.blob');
+    if (!btn) return;
+    var glyph = btn.getAttribute('data-sticker') || '✿';
+    var s = document.createElement('span');
+    s.className = 'placed';
+    s.textContent = glyph;
+    // scatter near the lower-right of the page, with a handmade tilt
+    var rot = (Math.random() * 24 - 12).toFixed(1);
+    s.style.setProperty('--rot', rot + 'deg');
+    s.style.left = (38 + Math.random() * 34 + (nudge % 3) * 4) + '%';
+    s.style.top  = (30 + Math.random() * 30) + '%';
+    page.appendChild(s);
+    nudge++;
+  });
+
+  // category chips toggle the selected one
+  var chips = document.querySelectorAll('.chip');
+  Array.prototype.forEach.call(chips, function(chip){
+    chip.addEventListener('click', function(){
+      Array.prototype.forEach.call(chips, function(c){ c.setAttribute('aria-pressed','false'); });
+      chip.setAttribute('aria-pressed','true');
+    });
+  });
+</script>
+</body>
+</html>

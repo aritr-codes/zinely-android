@@ -1,0 +1,161 @@
+<!-- PROTOTYPE ONLY — not production Compose. Working visual reference (a design reference, not a parallel source of truth). See docs/design/SCREEN-INVENTORY.md#supply-tray -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely — Supply tray mockup</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  /* screen-specific styling for the supply-tray prototype (kit lives in tokens.css) */
+
+  /* working page content — a photo already placed + a handwritten caption */
+  .sheet.page{ place-items:stretch; }
+  .work{ position:relative; width:100%; height:100%; }
+  .photo-box{
+    position:absolute; left:8%; top:8%; width:60%; height:42%;
+    border:7px solid #fff; transform:rotate(-3deg);
+    background:#cdb9a3 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><rect width="12" height="12" fill="%23c2ad95"/><path d="M0 9 L5 4 L8 7 L12 4" stroke="%238c7b66" fill="none" stroke-width="1.2"/><circle cx="9" cy="3" r="1.4" fill="%23d8c8af"/></svg>');
+    box-shadow:0 8px 16px rgba(0,0,0,.22);
+  }
+  .photo-box .pin{
+    position:absolute; top:-10px; left:50%; width:54px; height:18px;
+    transform:translateX(-50%) rotate(3deg); background:rgba(42,157,143,.7);
+    clip-path:polygon(0 22%,8% 0,100% 10%,94% 90%,0 100%);
+  }
+  .caption{
+    position:absolute; left:12%; top:58%; width:74%; transform:rotate(-1.5deg);
+    font-size:23px; color:var(--ink); line-height:1.2;
+  }
+  .caption .sub{ display:block; font-size:15px; color:var(--ink-soft); margin-top:6px; }
+
+  /* the supply shelf — a little strip of craft supplies, not a Material toolbar */
+  .shelf-wrap{ padding:6px 16px 4px; }
+  .shelf{
+    position:relative; display:flex; gap:10px; align-items:flex-end; justify-content:center;
+    padding:14px 14px 16px; border-radius:18px;
+    background:linear-gradient(180deg, rgba(244,239,230,.10), rgba(0,0,0,.18));
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06), inset 0 -3px 6px rgba(0,0,0,.25);
+  }
+  /* a wooden ledge under the supplies */
+  .shelf::after{
+    content:""; position:absolute; left:8px; right:8px; bottom:6px; height:5px; border-radius:4px;
+    background:linear-gradient(90deg, #6f6a60, #8a8478 40%, #6f6a60);
+    opacity:.5;
+  }
+  /* override kit .supply sizing for a cozier shelf fit; targets stay >=48dp */
+  .shelf .supply{ min-width:74px; min-height:64px; padding:12px 10px 11px; gap:5px; }
+  .shelf .supply .ic{ font-size:23px; line-height:1; }
+  .shelf .supply .lbl{ font-size:13px; letter-spacing:.2px; }
+
+  /* the primary supply leans up a touch like a featured sticker */
+  .shelf .supply.photo{ transform:rotate(-2deg); }
+  .shelf .supply.text{ transform:rotate(1.5deg); }
+
+  /* pressed feedback (JS-added), alongside :active in the kit */
+  .supply.pressed{ transform:translateY(4px) rotate(0deg); }
+
+  /* disabled redo — clearly inert: faded, flat, no press shadow, no cursor */
+  .supply.disabled{
+    opacity:.42; cursor:default; box-shadow:0 2px 0 var(--paper-edge);
+    filter:saturate(.6);
+  }
+  .supply.disabled:active{ transform:none; }
+
+  .hint{ padding-top:6px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .supply, .btn, .pcard{ transition:none !important; }
+    .supply.pressed, .supply:active{ transform:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="frame-wrap">
+    <div class="title-tag">supply tray — nothing hidden</div>
+
+    <div class="phone">
+      <div class="topbar">
+        <div class="brand">Zinely<small>MY ZINE</small></div>
+        <div class="proj-chip">page 3 of 8</div>
+      </div>
+
+      <div class="stage">
+        <div class="sheet page">
+          <div class="tape-top"></div>
+          <div class="work">
+            <div class="photo-box"><div class="pin"></div></div>
+            <div class="caption">
+              our little summer trip
+              <span class="sub">— pebbles &amp; salty hair ✺</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THE SUPPLY TRAY: a shelf of visible craft supplies (replaces the lone + FAB) -->
+      <div class="shelf-wrap">
+        <div class="shelf supplies" role="toolbar" aria-label="Supplies">
+          <button class="supply photo primary" type="button">
+            <span class="ic" aria-hidden="true">🖼️</span>
+            <span class="lbl">Add a photo</span>
+          </button>
+          <button class="supply text secondary" type="button">
+            <span class="ic" aria-hidden="true">✏️</span>
+            <span class="lbl">Add words</span>
+          </button>
+          <button class="supply text secondary" type="button">
+            <span class="ic" aria-hidden="true">↶</span>
+            <span class="lbl">Undo</span>
+          </button>
+          <button class="supply text secondary disabled" type="button" disabled aria-disabled="true">
+            <span class="ic" aria-hidden="true">↷</span>
+            <span class="lbl">Redo</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="hint">no account · nothing to set up · you can always undo</div>
+
+      <!-- booklet navigator: 8 pages, current taped, dots on pages with content -->
+      <div class="strip" id="strip"></div>
+    </div>
+
+    <div class="cap">
+      The <b>supply tray</b> replaces the lone floating “+”. Every primary action is a visible
+      craft supply sitting in the thumb zone — “Add a photo” is the coral primary, the rest are paper.
+      <b>Undo</b> and <b>Redo</b> live here too: Redo is greyed to show real state binding
+      (canUndo&nbsp;=&nbsp;true, canRedo&nbsp;=&nbsp;false) — nothing hidden in a menu or a gesture.
+    </div>
+  </div>
+
+<script>
+  // booklet model: which pages already have content (→ teal dot)
+  var PAGES = [
+    {has:true},{has:true},{has:true},{has:false},
+    {has:true},{has:false},{has:false},{has:false}
+  ];
+  var current = 2; // page 3 (0-based)
+
+  var strip = document.getElementById('strip');
+  PAGES.forEach(function(p, i){
+    var c = document.createElement('div');
+    c.className = 'pcard' + (i === current ? ' current' : '');
+    c.textContent = i + 1;
+    if (p.has){ var d = document.createElement('div'); d.className = 'dot'; c.appendChild(d); }
+    strip.appendChild(c);
+  });
+
+  // trivial pressed feedback on enabled supplies (no libs, no network)
+  Array.prototype.forEach.call(document.querySelectorAll('.supply:not(.disabled)'), function(btn){
+    btn.addEventListener('pointerdown', function(){
+      btn.classList.add('pressed');
+    });
+    var clear = function(){ btn.classList.remove('pressed'); };
+    btn.addEventListener('pointerup', clear);
+    btn.addEventListener('pointerleave', clear);
+    btn.addEventListener('pointercancel', clear);
+  });
+</script>
+</body>
+</html>

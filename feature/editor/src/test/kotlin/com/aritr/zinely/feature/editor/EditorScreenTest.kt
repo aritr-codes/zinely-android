@@ -7,7 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
@@ -112,6 +114,26 @@ class EditorScreenTest {
         store.dispatch(Intent.BeginEditText(id))
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("${ResizeHandleTagPrefix}TOP_LEFT").assertDoesNotExist()
+    }
+
+    @Test
+    fun the_supply_tray_add_words_drives_the_live_host_add_text_path() {
+        // Wiring proof at the host seam: the EditorSupplyTray is assembled inside EditorScreen (not tested in
+        // isolation here), so tapping its "Add words" supply must run the host's addTextAndEdit — place an
+        // empty text element on the current page, select it, and open its edit session.
+        val store = store()
+        setScreen(store)
+        composeRule.waitForIdle()
+        assertTrue(store.uiState.value.document.pages[0].elements.isEmpty())
+
+        composeRule.onNodeWithTag(SupplyAddWordsTag).performClick()
+        composeRule.waitForIdle()
+
+        val page = store.uiState.value.document.pages[0]
+        assertTrue(page.elements.size == 1)
+        assertTrue(store.uiState.value.selection.size == 1)
+        assertTrue(store.uiState.value.interaction is Interaction.EditingText)
+        composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
     }
 
     @Test

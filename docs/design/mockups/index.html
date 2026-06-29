@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zinely — product prototypes (working UX reference)</title>
+<!--
+  INDEX of the Zinely interactive HTML prototypes. PROTOTYPES ONLY — not production Compose.
+  These are the working visual/UX reference for the Compose implementation — a design reference
+  under the canonical doc system in CLAUDE.md, NOT a parallel source of truth (product scope is
+  owned by docs/PRD.md, phasing by docs/ROADMAP.md).
+  Ordered by the user journey (docs/design/EXPERIENCE-MAP.md), not by build order.
+  Design references hub: docs/design/DESIGN-LANGUAGE.md.
+-->
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  body{ display:block; padding:36px 24px 64px; }
+  .head{ max-width:880px; margin:0 auto 28px; color:#efe9dd; }
+  .head h1{ font-size:30px; margin:0 0 6px; }
+  .head p{ color:var(--ink-faint); font-size:15px; line-height:1.5; margin:6px 0; }
+  .head a{ color:var(--tape-yellow); }
+  .grid{ max-width:880px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
+  .card{ display:block; text-decoration:none; background:var(--paper); color:var(--ink); border-radius:10px; padding:16px 16px 14px;
+    box-shadow:0 8px 18px rgba(0,0,0,.4), 0 2px 0 var(--paper-edge); transform:rotate(var(--r,-.6deg));
+    transition:transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); position:relative; }
+  .card:nth-child(odd){ --r:.7deg; } .card:nth-child(3n){ --r:-1.4deg; }
+  .card:hover{ transform:rotate(0deg) translateY(-3px); box-shadow:0 14px 26px rgba(0,0,0,.5), 0 2px 0 var(--paper-edge); }
+  .card .stage-tag{ position:absolute; top:-9px; right:12px; font-size:10px; letter-spacing:.5px; color:#fff;
+    background:var(--stamp-blue); padding:3px 8px; border-radius:10px; transform:rotate(2deg); }
+  .card h3{ margin:4px 0 4px; font-size:17px; }
+  .card p{ margin:0; font-size:12.5px; color:var(--ink-soft); line-height:1.4; }
+  .card .badge{ display:inline-block; margin-top:8px; font-size:11px; padding:2px 8px; border-radius:10px; }
+  .b-ship{ background:#d8e8df; color:var(--stamp-blue); } .b-now{ background:var(--tape-yellow); color:#5a4a16; }
+  .b-soon{ background:#efe2d6; color:var(--ink-soft); }
+  .legend{ max-width:880px; margin:22px auto 0; color:var(--ink-faint); font-size:12px; }
+  .legend span{ margin-right:14px; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>Zinely — product prototypes ✨</h1>
+    <p><b>The working UX reference.</b> Interactive HTML mockups — prototypes, not production
+      Compose. Compose implementation follows these. A design reference under the
+      <a href="../../../CLAUDE.md">canonical doc system</a>, not a parallel source of truth
+      (scope: <a href="../../PRD.md">PRD.md</a> · phasing: <a href="../../ROADMAP.md">ROADMAP.md</a>).
+      Design references:
+      <a href="../DESIGN-LANGUAGE.md">DESIGN-LANGUAGE.md</a> · journey:
+      <a href="../EXPERIENCE-MAP.md">EXPERIENCE-MAP.md</a> · words:
+      <a href="../VOICE.md">VOICE.md</a> · screens:
+      <a href="../SCREEN-INVENTORY.md">SCREEN-INVENTORY.md</a> · rules:
+      <a href="../DESIGN-RULES.md">DESIGN-RULES.md</a>.</p>
+    <p>Ordered the way a first-timer lives it: open → make a page → decorate → preview → print → share.</p>
+  </div>
+
+  <div class="grid">
+    <a class="card" href="welcome.html"><span class="stage-tag">01</span>
+      <h3>Welcome</h3><p>"Make a little zine." One obvious start; privacy as gentle reassurance.</p>
+      <span class="badge b-soon">designed</span></a>
+
+    <a class="card" href="first-run-empty-state.html"><span class="stage-tag">02</span>
+      <h3>First-run empty state</h3><p>A blank page becomes an invitation: "Let's make something cute ✨" + two supplies.</p>
+      <span class="badge b-now">current · shipped</span></a>
+
+    <a class="card" href="editor-workbench.html"><span class="stage-tag">03</span>
+      <h3>Editor — workbench</h3><p>The craft table: a sheet of paper on a desk, supplies within reach.</p>
+      <span class="badge b-ship">shipped</span></a>
+
+    <a class="card" href="onboarding-hints.html"><span class="stage-tag">04</span>
+      <h3>Onboarding — teach by doing</h3><p>One-time contextual hints after the first photo. No carousel.</p>
+      <span class="badge b-soon">designed</span></a>
+
+    <a class="card" href="supply-tray.html"><span class="stage-tag">05</span>
+      <h3>Supply tray</h3><p>Replaces the lone FAB — every primary action a visible supply; undo/redo on show.</p>
+      <span class="badge b-soon">next · designed</span></a>
+
+    <a class="card" href="page-strip-and-palette.html"><span class="stage-tag">06</span>
+      <h3>Page navigator + palette</h3><p>All 8 pages visible as paper cards; the booklet structure made obvious.</p>
+      <span class="badge b-ship">shipped</span></a>
+
+    <a class="card" href="sticker-picker.html"><span class="stage-tag">07</span>
+      <h3>Sticker picker</h3><p>A tray of cute supplies — stickers, tape, stamps. Playful, curated, free.</p>
+      <span class="badge b-soon">V1 · designed</span></a>
+
+    <a class="card" href="template-picker.html"><span class="stage-tag">08</span>
+      <h3>Template picker</h3><p>Gentle starting layouts; "blank" stays equal. A head start, never a constraint.</p>
+      <span class="badge b-soon">V1 · designed</span></a>
+
+    <a class="card" href="preview.html"><span class="stage-tag">09</span>
+      <h3>Preview</h3><p>The finished booklet you page through. The moment of pride.</p>
+      <span class="badge b-soon">designed</span></a>
+
+    <a class="card" href="export.html"><span class="stage-tag">10</span>
+      <h3>Print &amp; fold</h3><p>Plain format choices + actual-size guidance. No jargon, prints right.</p>
+      <span class="badge b-soon">designed</span></a>
+
+    <a class="card" href="completion.html"><span class="stage-tag">11</span>
+      <h3>Completion — fold steps</h3><p>"Your zine is ready! 🎉" + simple fold steps + share with a friend.</p>
+      <span class="badge b-soon">designed</span></a>
+  </div>
+
+  <div class="legend">
+    <span><b>shipped</b> — built &amp; on a branch/main</span>
+    <span><b>current/next</b> — the SUX milestone</span>
+    <span><b>designed</b> — design reference, not yet built</span>
+  </div>
+</body>
+</html>

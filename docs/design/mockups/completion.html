@@ -1,0 +1,301 @@
+<!-- PROTOTYPE ONLY — not production Compose. Working visual reference (a design reference, not a parallel source of truth). See docs/design/SCREEN-INVENTORY.md#completion--fold-steps -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zinely — Your zine is ready!</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* screen-specific styling for the COMPLETION / fold-steps screen — the payoff peak */
+
+  .done-stage{
+    flex:1; display:flex; flex-direction:column; align-items:center;
+    gap:18px; padding:14px 22px 22px; text-align:center; overflow-y:auto;
+  }
+
+  /* hero -------------------------------------------------------------------- */
+  .hero{
+    position:relative; width:100%; display:flex; flex-direction:column;
+    align-items:center; gap:12px; padding:8px 0 4px;
+  }
+  .done-h1{
+    color:#f4eee2; font-size:25px; line-height:1.2; margin:0; letter-spacing:.3px;
+    animation:pop 420ms var(--ease-out) both;
+  }
+  .done-sub{ color:#d8d1c4; font-size:14px; margin:0; }
+
+  /* the finished folded booklet illustration */
+  .lil-book{
+    position:relative; width:124px; height:150px; margin:4px 0 2px;
+    animation:settle 460ms var(--ease-out) both;
+  }
+  .lil-book .cover{
+    position:absolute; inset:0; border-radius:4px 8px 8px 4px; background:var(--paper);
+    box-shadow:0 16px 30px rgba(0,0,0,.45), 0 2px 0 var(--paper-edge);
+    transform:rotate(-2.4deg);
+    background-image:
+      radial-gradient(130% 120% at 0% 0%, rgba(0,0,0,.05), transparent 42%),
+      repeating-linear-gradient(0deg, rgba(120,110,95,.05) 0 9px, transparent 9px 17px);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  }
+  /* spine + page-edge so it reads as a real little book */
+  .lil-book .cover::before{
+    content:""; position:absolute; top:0; bottom:0; left:0; width:11px;
+    background:linear-gradient(90deg, rgba(60,52,42,.22), transparent);
+  }
+  .lil-book::after{
+    content:""; position:absolute; top:5px; bottom:5px; right:-4px; width:6px; border-radius:0 4px 4px 0;
+    background:repeating-linear-gradient(0deg, var(--paper) 0 2px, var(--paper-edge) 2px 3px);
+    box-shadow:3px 6px 12px rgba(0,0,0,.3); transform:rotate(-2.4deg); z-index:-1;
+  }
+  .lil-book .cover-tape{
+    position:absolute; top:-10px; left:54%; width:58px; height:20px; z-index:2;
+    transform:translateX(-50%) rotate(-5deg);
+    background:rgba(42,157,143,.8); box-shadow:0 2px 5px rgba(0,0,0,.22);
+    clip-path:polygon(0 18%,100% 0,96% 100%,4% 88%);
+  }
+  .lil-book .b-photo{
+    width:60px; height:46px; border-radius:2px; background:var(--tape-coral);
+    box-shadow:0 5px 10px rgba(0,0,0,.26), inset 0 0 0 4px #fff; transform:rotate(-2deg);
+  }
+  .lil-book .b-title{ color:var(--ink); font-size:16px; line-height:1.15; transform:rotate(-1deg); }
+  .lil-book .b-sub{ color:var(--ink-soft); font-size:10px; transform:rotate(1deg); }
+
+  /* gentle, calm confetti / sparkle ---------------------------------------- */
+  .sparkles{ position:absolute; inset:-8px 0 -8px; pointer-events:none; z-index:3; }
+  .spark{
+    position:absolute; font-size:15px; opacity:0;
+    animation:twinkle 1100ms var(--ease-out) forwards;
+  }
+  .bit{
+    position:absolute; width:7px; height:7px; border-radius:2px; opacity:0;
+    transform:rotate(12deg);
+    animation:drift 1300ms var(--ease-out) forwards;
+  }
+
+  /* how to fold it ---------------------------------------------------------- */
+  .fold-card{
+    width:100%; background:var(--paper); border-radius:14px; padding:16px 16px 18px;
+    box-shadow:0 8px 18px rgba(0,0,0,.32), 0 2px 0 var(--paper-edge);
+    transform:rotate(-.5deg); text-align:left;
+  }
+  .fold-card h2{
+    margin:0 0 12px; color:var(--ink); font-size:18px; letter-spacing:.3px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .fold-card h2 .pin{
+    width:24px; height:24px; border-radius:50%; background:var(--tape-yellow);
+    color:var(--stamp-blue); font-size:14px; display:grid; place-items:center;
+    transform:rotate(-10deg); box-shadow:inset 0 0 0 2px rgba(255,255,255,.45);
+  }
+  .step{ display:flex; align-items:center; gap:14px; padding:9px 0; }
+  .step + .step{ border-top:1px dashed var(--paper-edge); }
+  .step .num{
+    flex:0 0 auto; width:30px; height:30px; border-radius:50%; background:var(--stamp-blue);
+    color:#fff; font-size:15px; display:grid; place-items:center; transform:rotate(-3deg);
+    box-shadow:0 3px 7px rgba(0,0,0,.2);
+  }
+  .step .txt{ color:var(--ink); font-size:14px; line-height:1.35; }
+
+  /* tiny CSS fold diagrams — a sheet being folded -------------------------- */
+  .diagram{
+    flex:0 0 auto; width:46px; height:40px; position:relative;
+    display:grid; place-items:center;
+  }
+  .pg{
+    position:relative; width:34px; height:34px; background:#fff;
+    box-shadow:0 2px 5px rgba(0,0,0,.2), inset 0 0 0 1px var(--paper-edge);
+  }
+  /* 1: fold in half — dashed center line + arrow */
+  .pg.half::before{
+    content:""; position:absolute; top:0; bottom:0; left:50%;
+    border-left:2px dashed var(--ink-faint);
+  }
+  .pg.half::after{
+    content:"⤸"; position:absolute; right:-4px; top:-9px; font-size:13px; color:var(--tape-coral);
+  }
+  /* 2: fold again — narrower, a second crease */
+  .pg.quarter{ width:18px; }
+  .pg.quarter::before{
+    content:""; position:absolute; top:0; bottom:0; left:50%;
+    border-left:2px dashed var(--ink-faint);
+  }
+  .pg.quarter::after{
+    content:""; position:absolute; top:50%; right:-12px; width:9px; height:2px; background:var(--tape-teal);
+  }
+  /* 3: cut the center — scissors + a slit */
+  .pg.cut::before{
+    content:""; position:absolute; left:25%; right:25%; top:50%; height:0;
+    border-top:2px solid var(--tape-coral);
+  }
+  .pg.cut::after{ content:"✂"; position:absolute; left:-5px; top:9px; font-size:13px; color:var(--ink-soft); }
+  /* 4: pop into a booklet — a tiny open book */
+  .booklet-ic{ display:flex; transform:rotate(-2deg); filter:drop-shadow(0 2px 3px rgba(0,0,0,.2)); }
+  .booklet-ic span{
+    width:15px; height:30px; background:#fff; box-shadow:inset 0 0 0 1px var(--paper-edge);
+  }
+  .booklet-ic span:first-child{ transform:skewY(8deg); border-right:1px solid var(--paper-edge); }
+  .booklet-ic span:last-child{ transform:skewY(-8deg); }
+
+  /* actions ----------------------------------------------------------------- */
+  .actions{ width:100%; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .actions .btn.primary{ min-width:240px; transform:rotate(-.5deg); }
+  .actions .row{ display:flex; gap:12px; width:100%; }
+  .actions .row .btn{ flex:1; min-height:48px; }
+  .share-note{ color:#cbc4b7; font-size:11px; margin:-2px 0 0; }
+
+  @keyframes pop{
+    0%{ opacity:0; transform:translateY(8px) scale(.94); }
+    60%{ transform:translateY(0) scale(1.03); }
+    100%{ opacity:1; transform:scale(1); }
+  }
+  @keyframes settle{
+    0%{ opacity:0; transform:translateY(10px) rotate(-2.4deg) scale(.95); }
+    100%{ opacity:1; transform:translateY(0) rotate(0) scale(1); }
+  }
+  @keyframes twinkle{
+    0%{ opacity:0; transform:scale(.4) rotate(0); }
+    40%{ opacity:1; transform:scale(1.1) rotate(8deg); }
+    100%{ opacity:0; transform:scale(.7) rotate(-6deg) translateY(-10px); }
+  }
+  @keyframes drift{
+    0%{ opacity:0; transform:translateY(0) rotate(12deg); }
+    35%{ opacity:.9; }
+    100%{ opacity:0; transform:translateY(26px) rotate(40deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+    .spark, .bit{ opacity:0 !important; }   /* no confetti/sparkle under reduced motion */
+  }
+</style>
+</head>
+<body>
+
+<div class="frame-wrap">
+  <div class="title-tag">completion — the payoff</div>
+
+  <div class="phone">
+    <div class="topbar">
+      <div class="brand">Zinely<small>LITTLE PAPER ZINES</small></div>
+      <div class="proj-chip">My summer zine</div>
+    </div>
+
+    <div class="done-stage">
+
+      <!-- celebratory hero -->
+      <div class="hero">
+        <div class="sparkles" id="sparkles" aria-hidden="true"></div>
+        <h1 class="done-h1">Your zine is ready! 🎉</h1>
+        <p class="done-sub">You made a little book. That's the whole thing.</p>
+
+        <div class="lil-book" aria-hidden="true">
+          <span class="cover-tape"></span>
+          <div class="cover">
+            <div class="b-photo"></div>
+            <div class="b-title">My<br>Summer</div>
+            <div class="b-sub">made by me</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- how to fold it -->
+      <section class="fold-card">
+        <h2><span class="pin">✦</span>How to fold it</h2>
+
+        <div class="step">
+          <span class="diagram"><span class="pg half"></span></span>
+          <span class="num">1</span>
+          <span class="txt">Fold the sheet in half, the long way. Press the crease flat.</span>
+        </div>
+
+        <div class="step">
+          <span class="diagram"><span class="pg quarter"></span></span>
+          <span class="num">2</span>
+          <span class="txt">Fold it in half again, then open this last fold back up.</span>
+        </div>
+
+        <div class="step">
+          <span class="diagram"><span class="pg cut"></span></span>
+          <span class="num">3</span>
+          <span class="txt">Snip the little slit in the middle — just along the center crease.</span>
+        </div>
+
+        <div class="step">
+          <span class="diagram"><span class="booklet-ic"><span></span><span></span></span></span>
+          <span class="num">4</span>
+          <span class="txt">Push the ends together so the slit opens, and fold it into a tiny book.</span>
+        </div>
+      </section>
+
+      <!-- actions -->
+      <div class="actions">
+        <button class="btn primary" type="button">Send to a friend</button>
+        <p class="share-note">opens your phone's own share sheet</p>
+
+        <div class="row">
+          <button class="btn ghost" type="button">Open it</button>
+          <button class="btn ghost" type="button">Make another</button>
+        </div>
+
+        <div class="promise"><span class="dot"></span>works offline · stays on your phone</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="cap">
+    This is the emotional <em>peak</em> — "I made this," and now you can hold it. The
+    <em>fold steps are never assumed</em>: tiny diagrams walk through every crease and the one
+    little cut. "Send to a friend" opens the phone's <em>own</em> system share sheet — offline,
+    no account, nothing uploaded to Zinely. "Make another" closes the loop back to a fresh zine.
+  </div>
+</div>
+
+<script>
+  // One-shot, gentle sparkle + a few colored bits around the hero on load.
+  // Calm by design: a handful of pieces, not a full-screen party. Reduced-motion users
+  // get nothing animated (the CSS media query forces opacity:0 and kills animations).
+  (function(){
+    var reduce = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    var host = document.getElementById('sparkles');
+    if (!host) return;
+
+    var stars  = ['✨','✦','✧'];
+    var colors = ['var(--tape-coral)','var(--tape-teal)','var(--tape-yellow)','var(--stamp-blue)'];
+    // a few scattered positions (% across the hero), gentle spread
+    var spots  = [10, 26, 44, 62, 78, 90];
+
+    spots.forEach(function(left, n){
+      var top = (n % 2 === 0) ? 6 : 64;   // alternate high/low, never crowding the headline
+
+      if (n % 2 === 0){
+        var s = document.createElement('span');
+        s.className = 'spark';
+        s.textContent = stars[n % stars.length];
+        s.style.left = left + '%';
+        s.style.top = top + '%';
+        s.style.animationDelay = (n * 80) + 'ms';
+        host.appendChild(s);
+      } else {
+        var b = document.createElement('span');
+        b.className = 'bit';
+        b.style.left = left + '%';
+        b.style.top = top + '%';
+        b.style.background = colors[n % colors.length];
+        b.style.animationDelay = (n * 80 + 40) + 'ms';
+        host.appendChild(b);
+      }
+    });
+
+    // one-shot: clean up after the animation so it never re-fires or lingers
+    setTimeout(function(){ host.innerHTML = ''; }, 1800);
+  })();
+</script>
+
+</body>
+</html>
