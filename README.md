@@ -57,7 +57,7 @@ Start here, then follow links. Each document is the **single source of truth** f
 | [docs/design/EXPERIENCE-MAP.md](docs/design/EXPERIENCE-MAP.md) | Emotional arc + end-to-end user journey |
 | [docs/design/SCREEN-INVENTORY.md](docs/design/SCREEN-INVENTORY.md) | Every planned screen — purpose, actions, emotional goal |
 | [docs/design/DESIGN-RULES.md](docs/design/DESIGN-RULES.md) | Non-negotiable per-screen design checklist |
-| [docs/design/mockups/index.html](docs/design/mockups/index.html) | Interactive HTML prototypes — canonical UX reference |
+| [docs/design/mockups/index.html](docs/design/mockups/index.html) | Interactive HTML prototypes — working design reference |
 | [CHANGELOG.md](CHANGELOG.md) | Release history (Keep a Changelog · SemVer) |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Cited evidence base (verified / recommendation / assumption / future) |
 | [docs/spikes/imposition-engine.md](docs/spikes/imposition-engine.md) | First spike: the imposition engine design (S1) |
