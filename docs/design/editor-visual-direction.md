@@ -85,8 +85,9 @@ carrier of the visual language.
   canvas. The current page is lifted, slightly rotated, and marked with a strip of "tape";
   pages that contain elements show a small ink dot. Tapping a card dispatches
   `Intent.GoToPage(index)`. This makes all eight pages reachable for the first time.
-- **Tool tray (next slice).** Replaces the lone FAB: add-photo, add-text, undo, redo as
-  "supply" buttons; undo/redo bind to `canUndo`/`canRedo`.
+- **Supply tray (shipped — `EditorSupplyTray`).** Replaced the lone FAB: add-photo, add-text,
+  undo, redo as visible "supply" buttons under the canvas; undo/redo bind to `canUndo`/`canRedo`.
+  See §6 slice 4.
 - **Context bar (later).** Keep the current behavior and a11y; restyle glyphs → real icons
   on stamped chips.
 
@@ -123,9 +124,16 @@ carrier of the visual language.
 3. **`EditorEmptyState`** (`:feature:editor`): the cozy first-run invitation shown when the
    current page has no elements — encouraging copy + discoverable "add a photo" / "add words"
    supplies (the audit's empty-state + discoverability + visible-add-text + contextual-guidance
-   findings). Wires `Intent.RequestAddImage` and `Intent.PlaceText`. **This is the chosen slice.**
+   findings). Wires `Intent.RequestAddImage` and `Intent.PlaceText`.
+4. **`EditorSupplyTray`** (`:feature:editor`): the always-visible scrapbook supply shelf under the
+   canvas — **Add a photo** (`Intent.RequestAddImage`), **Add words** (the empty-state add-text
+   behavior), **Undo** / **Redo** bound to `canUndo` / `canRedo`. Replaces the app-level lone "Add
+   image" FAB (removed from `ZinelyNavHost`), so every primary action is a visible, thumb-reachable
+   supply (DESIGN-RULES 1–3, 7) and undo/redo are reachable for the first time (DESIGN-RULES 6).
 
-Deferred to later slices (designed, not built now): the supply tray replacing the FAB, visible
-undo/redo, one-time contextual move/resize hints, context-bar restyle, real mini-render page
-thumbnails, bundled marker font, richer paper textures. Home / library / export stay out of
-scope entirely.
+Deferred to later slices (designed, not built now): one-time contextual move/resize hints,
+context-bar restyle, real mini-render page thumbnails, bundled marker font, richer paper textures,
+and a string-resource catalog ([ARCHITECTURE §15.6](../ARCHITECTURE.md#156-architectural-implications-surfaced-by-the-design-sprint-2026-06-28)).
+A known follow-up: on a blank page the empty-state overlay and the tray both surface add-photo /
+add-words — kept deliberately (the overlay teaches, the tray is the persistent home) but a candidate
+to de-duplicate. Home / library / export stay out of scope entirely.

@@ -195,6 +195,20 @@ public fun EditorScreen(
             }
         }
 
+        // The supply tray: the visible shelf of craft supplies that replaces the app's lone "Add image"
+        // FAB. Every primary action lives here in the thumb zone — add a photo (the old FAB's
+        // Intent.RequestAddImage), add words (the empty-state add-text behavior), and undo/redo bound to
+        // the real canUndo/canRedo so a disabled supply is visibly inert, not a dead tap.
+        EditorSupplyTray(
+            canUndo = uiState.canUndo,
+            canRedo = uiState.canRedo,
+            onAddPhoto = { dispatch(Intent.RequestAddImage) },
+            onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
+            onUndo = { dispatch(Intent.Undo) },
+            onRedo = { dispatch(Intent.Redo) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
         // The page navigator: makes all pages of the SINGLE_SHEET_8 document reachable (before this
         // only page 0 was). Reads page count / current / per-page content from the same hoisted state
         // and dispatches Intent.GoToPage; the reducer clears selection + returns to Idle on the switch.
