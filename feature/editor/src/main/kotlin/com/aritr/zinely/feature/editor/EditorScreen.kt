@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -80,6 +81,14 @@ public fun EditorScreen(
     // pointers, so at most one of the two is non-null at a time; the preview prioritises resizeOverride.
     var live by remember { mutableStateOf<LiveTransform?>(null) }
     var resizeOverride by remember { mutableStateOf<Map<String, Transform>?>(null) }
+
+    // Screen-local, one-time move/resize hint (no DataStore, no onboarding store — this slice teaches
+    // discoverability for the current session only). Once dismissed it never returns this screen; a
+    // live drag/resize counts as discovery and dismisses it too (set in the LaunchedEffect below).
+    var moveResizeHintDismissed by remember { mutableStateOf(false) }
+    LaunchedEffect(live != null || resizeOverride != null) {
+        if (live != null || resizeOverride != null) moveResizeHintDismissed = true
+    }
 
     Column(modifier = modifier) {
         BoxWithConstraints(
@@ -166,6 +175,25 @@ public fun EditorScreen(
                         onAddPhoto = { dispatch(Intent.RequestAddImage) },
                         onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
                         modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+
+                // One-time move/resize hint: the moment a placed element is single-selected (handles up,
+                // not editing) we float in the gentle "drag to move · pinch to resize" note — those two
+                // gestures have no discrete-control twin, so a beginner can miss them. It is non-blocking
+                // (declares no pointerInput; touches fall through to the gesture surface) and one-time per
+                // screen. Sits below the edit overlay so a text session always wins the top of the canvas.
+                // Also gate on no in-flight gesture so the hint is gone the same frame a drag begins
+                // (the LaunchedEffect makes that dismissal stick); avoids a one-frame overlap.
+                val gesturing = live != null || resizeOverride != null
+                val showMoveResizeHint =
+                    !editing && !gesturing && uiState.selection.size == 1 && !moveResizeHintDismissed
+                if (showMoveResizeHint) {
+                    EditorMoveResizeHint(
+                        onDismiss = { moveResizeHintDismissed = true },
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 8.dp),
                     )
                 }
 
