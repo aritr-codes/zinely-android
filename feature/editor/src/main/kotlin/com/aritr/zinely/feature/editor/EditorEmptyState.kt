@@ -6,14 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,34 +24,30 @@ import androidx.compose.ui.unit.dp
 /** Test tag on the empty-state container. */
 public const val EditorEmptyStateTestTag: String = "editor-empty-state"
 
-/** Content descriptions = stable hooks for the two supply actions (also the spoken a11y labels). */
+/** The two add-action labels — owned by the supply tray (the single action home, [ADR-033]). Shared as
+ *  the tray's visible + spoken labels; the empty state references them only to *name* what's below. */
 public const val AddPhotoActionLabel: String = "Add a photo"
 public const val AddWordsActionLabel: String = "Add words"
 
 /**
  * The cozy first-run invitation (docs/design/DESIGN-LANGUAGE.md §8/§9) — shown on the canvas when the
  * current page has no elements. It turns a blank sheet (which reads as a void) into an encouraging
- * "let's make something cute" prompt with two **visible** supplies, so a first-time user can start
- * without discovering a hidden gesture (the UX-audit findings: empty-state, discoverability, visible
- * add-text, contextual guidance).
+ * "let's make something cute" prompt, so a first-time user feels invited rather than faced with a void.
  *
- * Both actions are hoisted: [onAddPhoto] dispatches `Intent.RequestAddImage` (the same path as the
- * app's photo entry point) and [onAddText] dispatches `Intent.PlaceText` (a seed text box the user then
- * edits) — wired by the host so this composable stays pure and testable. Warm, first-person microcopy
- * and the privacy reassurance are part of the identity, never system-error-shaped.
+ * **Invitation-only — no buttons ([ADR-033](../DECISIONS.md#adr-033)).** The add actions live solely in
+ * the always-visible [EditorSupplyTray] (the thumb-zone home, DESIGN-RULES 3/7), so "Add a photo" /
+ * "Add words" never appear twice at once on a blank page. This surface only *invites and orients* — its
+ * subcopy names the two ways to start and points to the supplies on the shelf just below. Warm,
+ * first-person microcopy and the privacy reassurance are part of the identity, never system-error-shaped.
  *
- * Accessibility: the two supplies are real M3 buttons (≥48dp, `Role.Button`) with the action text as
- * their spoken label; the decorative sticker cluster is not announced. Colours come from the theme
- * (primary = coral supply, paper card for the secondary), so it inherits the zine identity.
+ * Accessibility: this overlay is non-interactive text + ornament — the decorative sticker cluster is not
+ * announced, and the actionable, labelled controls are the tray's (each a ≥48dp `Role.Button`). Colours
+ * come from the theme, so it inherits the zine identity.
  *
- * @param onAddPhoto invoked when the user taps "Add a photo".
- * @param onAddText invoked when the user taps "Add words".
  * @param modifier sizing/placement applied by the host (typically centered over the page).
  */
 @Composable
 public fun EditorEmptyState(
-    onAddPhoto: () -> Unit,
-    onAddText: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -81,29 +73,14 @@ public fun EditorEmptyState(
             color = colors.onSurface,
             textAlign = TextAlign.Center,
         )
+        // Names the two ways to start AND points to where they live (the supply shelf just below), so the
+        // button-less invitation still answers "what do I do next?" without re-presenting the actions.
         Text(
-            text = "Start with a photo or a few words.",
+            text = "Grab a photo or a few words from the supplies below.",
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-
-        Spacer(Modifier.size(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(
-                onClick = onAddPhoto,
-                modifier = Modifier.heightIn(min = 48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary,
-                ),
-            ) { Text("🖼️  $AddPhotoActionLabel") }
-
-            OutlinedButton(
-                onClick = onAddText,
-                modifier = Modifier.heightIn(min = 48.dp),
-            ) { Text("✏️  $AddWordsActionLabel") }
-        }
 
         Spacer(Modifier.size(4.dp))
         Text(

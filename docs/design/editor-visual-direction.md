@@ -158,8 +158,14 @@ carrier of the visual language.
    shows **once per install** and never flashes before its state loads — the editor's first persisted
    onboarding state and the reusable seam the Settings store grows into.
 
+**Resolved — blank-page add-action de-dup ([ADR-033](../DECISIONS.md#adr-033)):** the empty-state
+overlay and the tray no longer both surface add-photo / add-words. The **tray is the single action
+home** (always visible, thumb zone); the `EditorEmptyState` overlay is now **invitation-only** — warm
+copy + ornament + privacy line, **no buttons** — whose subcopy points to the supplies below. So each
+add action appears exactly once on a blank page (DESIGN-RULES R3/R7), unambiguous for TalkBack too.
+
 Deferred to later slices (designed, not built now): bundled marker font, richer paper textures,
-and a string-resource catalog ([ARCHITECTURE §15.6](../ARCHITECTURE.md#156-architectural-implications-surfaced-by-the-design-sprint-2026-06-28)).
-A known follow-up: on a blank page the empty-state overlay and the tray both surface add-photo /
-add-words — kept deliberately (the overlay teaches, the tray is the persistent home) but a candidate
-to de-duplicate. Home / library / export stay out of scope entirely.
+a string-resource catalog ([ARCHITECTURE §15.6](../ARCHITECTURE.md#156-architectural-implications-surfaced-by-the-design-sprint-2026-06-28)),
+and the ADR-033 follow-up **tray-orientation polish** (a visual notch/arrow tying the invitation to the
+shelf + a tray a11y "section" label) — deferred to avoid altering the shipped tray across all states.
+Home / library / export stay out of scope entirely.

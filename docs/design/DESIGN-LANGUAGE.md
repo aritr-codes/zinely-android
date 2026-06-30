@@ -154,7 +154,7 @@ vision/motor ability). It is a first-class constraint, not a polish pass.
 ```mermaid
 flowchart TD
     A["Open app → editor on the 'default' zine"] --> B{"Page empty?"}
-    B -- yes --> C["Cozy empty state:\n'Let's make something cute ✨'\n[ Add a photo ]  [ Add words ]\nworks offline · stays on your phone"]
+    B -- yes --> C["Cozy empty state (invitation only — ADR-033):\n'Let's make something cute ✨'\n'…from the supplies below ↓'\nworks offline · stays on your phone"]
     B -- no --> D["Page with their art"]
     C -->|tap Add a photo| E["System photo picker → photo lands centered, selected"]
     C -->|tap Add words| F["A text box appears: 'Your words here', selected"]
