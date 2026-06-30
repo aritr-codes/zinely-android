@@ -99,10 +99,11 @@ private fun EditorDestination() {
             // the persisted flag loads (the host hides the hint on `null`, so it can't flash before its
             // state is known), then the real `false`/`true`. Lifecycle-aware.
             val moveResizeHintSeen by viewModel.moveResizeHintSeen.collectAsStateWithLifecycle()
-            // The unresolved-save-failure flag (ADR-035): the honest correction to "Saved ✨", derived
-            // from the app-scoped SaveFailureSink (ADR-026 §5). Lifecycle-aware; the host renders the warm
-            // banner and suppresses the optimistic chip while it is true.
-            val saveErrorVisible by viewModel.saveErrorVisible.collectAsStateWithLifecycle()
+            // The unresolved-save-failure kind (ADR-035/ADR-036): the honest correction to "Saved ✨",
+            // derived from the app-scoped SaveFailureSink (ADR-026 §5) and mapped to a feature-local
+            // SaveErrorKind (null = none). Lifecycle-aware; the host renders the warm banner (copy keyed by
+            // the kind) and suppresses the optimistic chip while it is non-null.
+            val saveError by viewModel.saveError.collectAsStateWithLifecycle()
             // The editor surface now owns its own add-photo entry point: the EditorSupplyTray's
             // "Add a photo" supply dispatches the same Intent.RequestAddImage → Effect.PickAndDecodeImage
             // → the photo picker bound above. The lone app-level FAB has been removed (ADR-029 follow-up:
@@ -117,9 +118,10 @@ private fun EditorDestination() {
                 // The autosave-event stream (ADR-034): each emission raises the transient "Saved ✨"
                 // reassurance in the host. Hot SharedFlow, collected inside EditorScreen.
                 savedSignals = viewModel.saved,
-                // The honest save-failure correction (ADR-035): show the warm banner + suppress "Saved ✨"
-                // while a failure is unresolved; "Got it" clears it from the sink.
-                saveErrorVisible = saveErrorVisible,
+                // The honest save-failure correction (ADR-035/ADR-036): show the warm banner (generic or
+                // storage-specific copy, by kind) + suppress "Saved ✨" while a failure is unresolved;
+                // "Got it" clears it from the sink.
+                saveError = saveError,
                 onDismissSaveError = viewModel::dismissSaveError,
             )
         }

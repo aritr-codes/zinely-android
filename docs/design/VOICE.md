@@ -124,7 +124,7 @@ expose a code.
 |---|---|
 | photo won't load | **"That photo didn't want to come in. Try another?"** |
 | autosave couldn't save (transient) | **"Couldn't save your latest change just now. It'll try again next time you make a change."** |
-| out of storage on save | **"Your phone's storage is full. Free up a little space and it'll save."** |
+| out of storage on save | **"Your phone is low on storage. Free up a little space, then keep editing — it'll save."** |
 | export couldn't write file | **"Couldn't finish the file just now. Try Print & fold again?"** |
 | unexpected hiccup | **"Something hiccuped. Your work is safe — try that again?"** |
 
@@ -133,8 +133,14 @@ The **autosave-couldn't-save** line is the warm banner implemented per
 fires when a save is *scheduled*, not completed — [ADR-034](../DECISIONS.md#adr-034)). It is a single,
 deliberately non-specific line because the save seam ([ADR-026 §5](../DECISIONS.md#adr-026)
 `SaveFailureSink`) reports only a generic `DataError`, with no storage-full subtype to key the more
-specific "your phone's storage is full" copy on — that storage-specific variant waits on a future
-`:core` error classification. Assertive live region, dismissible with "Got it"; it suppresses the
+specific storage line on. **[ADR-036](../DECISIONS.md#adr-036)** (Accepted) adds that: the
+`:data-android` repository classifies out-of-space at its write-failure seam via a **free-space probe**
+(`usableSpace < payloadBytes` → a new `DataError.OutOfSpace`), the app maps it to a feature-local
+`SaveErrorKind`, and the banner keys the storage line above on it (`SaveFailureOutOfSpaceText`). The wording
+is **"low on storage"** (not "full") because the probe is a heuristic disk-*state* signal, not proof of the
+proximate cause — and it carries the **same no-autonomous-retry honesty** as the generic line ("then keep
+editing — it'll save"), so it never implies a background retry. The probe is deliberately
+false-negative-biased: a missed case degrades safely to the generic line, never a false "low on storage". Assertive live region, dismissible with "Got it"; it suppresses the
 "Saved ✨" chip while shown so the editor never claims a save it knows failed. The retry wording is
 strictly honest to the implementation: the live system runs **no autonomous retry loop** — a failed
 autosave leaves the document dirty and reattempts on the user's next change (or a lifecycle flush), so

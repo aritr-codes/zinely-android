@@ -32,7 +32,22 @@ public const val EditorSaveFailureTestTag: String = "editor-save-failure"
 public const val SaveFailureDismissTag: String = "editor-save-failure-dismiss"
 
 /**
- * The visible failure line (canonical, docs/design/VOICE.md §Errors "autosave couldn't save"). Names
+ * Which honest save-failure copy the banner shows ([ADR-036](../DECISIONS.md#adr-036)). A **feature-local**
+ * enum so `:feature:editor` keys the warm storage-specific line without ever depending on `:core:data`'s
+ * `DataError` or `:data-android`'s `SaveFailure` — the app maps the failure to this enum at the host seam.
+ * [Generic] is the cause-agnostic line; [OutOfSpace] is shown only when the repository's free-space probe
+ * proved the device cannot hold the document (never a false "low on storage" claim).
+ */
+public enum class SaveErrorKind {
+    /** A save failed for an unclassified reason (the cause-agnostic [SaveFailureText]). */
+    Generic,
+
+    /** A save failed and the device verifiably lacks the space to hold it ([SaveFailureOutOfSpaceText]). */
+    OutOfSpace,
+}
+
+/**
+ * The generic failure line (canonical, docs/design/VOICE.md §Errors "autosave couldn't save"). Names
  * what happened and the **real** way out — no blame, no error code, no emoji (VOICE rule 7 forbids emoji
  * on error copy), and no overclaim. There is no autonomous background retry loop in the live system: a
  * failed autosave leaves the document dirty/retryable, and the next save fires on the next edit (which
@@ -41,6 +56,23 @@ public const val SaveFailureDismissTag: String = "editor-save-failure-dismiss"
  */
 public const val SaveFailureText: String =
     "Couldn’t save your latest change just now. It’ll try again next time you make a change."
+
+/**
+ * The storage-specific failure line ([ADR-036](../DECISIONS.md#adr-036); VOICE §Errors). Shown only when
+ * the repository's free-space probe proved the device cannot hold the document — an honest **state**
+ * statement ("low on storage"), deliberately softer than "full" because the probe is a heuristic, not a
+ * proven proximate cause. It carries the **same no-autonomous-retry honesty** as [SaveFailureText]: there
+ * is no background retry, so it names the real trigger ("then keep editing — it'll save"), never implying
+ * the save will happen on its own once space is freed.
+ */
+public const val SaveFailureOutOfSpaceText: String =
+    "Your phone is low on storage. Free up a little space, then keep editing — it’ll save."
+
+/** The honest line for [kind] (VOICE §Errors). */
+private fun saveFailureText(kind: SaveErrorKind): String = when (kind) {
+    SaveErrorKind.Generic -> SaveFailureText
+    SaveErrorKind.OutOfSpace -> SaveFailureOutOfSpaceText
+}
 
 /** The dismiss affordance label — the same gentle "Got it" idiom as the move/resize hint. */
 public const val SaveFailureDismissLabel: String = "Got it"
@@ -75,6 +107,9 @@ public const val SaveFailureDismissLabel: String = "Got it"
  * @param visible whether an unresolved save failure is currently known for this project (ADR-026 §5).
  * @param onDismiss invoked when the user taps "Got it" — the host clears the failure from the sink.
  * @param modifier sizing/placement applied by the host (typically aligned to the top of the canvas).
+ * @param kind which honest line to show ([ADR-036](../DECISIONS.md#adr-036)): the cause-agnostic
+ *   [SaveErrorKind.Generic] or the storage-specific [SaveErrorKind.OutOfSpace]. Defaults to [Generic].
+ *   The host retains the last non-null kind across the exit fade so the copy doesn't flip mid-dismissal.
  * @param reduceMotion whether to drop the fade (defaults to the system "remove animations" setting).
  */
 @Composable
@@ -82,6 +117,7 @@ public fun EditorSaveFailure(
     visible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    kind: SaveErrorKind = SaveErrorKind.Generic,
     reduceMotion: Boolean = rememberReduceMotion(),
 ) {
     AnimatedVisibility(
@@ -101,7 +137,7 @@ public fun EditorSaveFailure(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = SaveFailureText,
+                text = saveFailureText(kind),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onErrorContainer,
                 modifier = Modifier

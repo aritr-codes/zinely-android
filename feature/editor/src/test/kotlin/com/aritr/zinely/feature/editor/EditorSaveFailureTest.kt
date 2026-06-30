@@ -47,6 +47,27 @@ class EditorSaveFailureTest {
     }
 
     @Test
+    fun renders_the_generic_line_for_the_generic_kind() {
+        composeRule.setContent {
+            MaterialTheme {
+                EditorSaveFailure(visible = true, onDismiss = {}, kind = SaveErrorKind.Generic, reduceMotion = true)
+            }
+        }
+        composeRule.onNodeWithText(SaveFailureText, substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun renders_the_storage_line_for_the_out_of_space_kind() {
+        // ADR-036: the storage kind keys the specific "low on storage" copy, never the generic line.
+        composeRule.setContent {
+            MaterialTheme {
+                EditorSaveFailure(visible = true, onDismiss = {}, kind = SaveErrorKind.OutOfSpace, reduceMotion = true)
+            }
+        }
+        composeRule.onNodeWithText(SaveFailureOutOfSpaceText, substring = true).assertIsDisplayed()
+    }
+
+    @Test
     fun is_absent_when_not_visible() {
         composeRule.setContent {
             MaterialTheme { EditorSaveFailure(visible = false, onDismiss = {}, reduceMotion = true) }
