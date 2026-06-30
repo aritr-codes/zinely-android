@@ -26,6 +26,7 @@ class DefaultEditorEffectRunnerTest {
         pipeline: ImagePickDecodePipeline,
         autosave: AutosaveSink = AutosaveSink {},
         announcer: Announcer = Announcer {},
+        savedSignal: SavedSignal = SavedSignal {},
     ) = DefaultEditorEffectRunner(
         scope = scope,
         io = dispatcher,
@@ -33,6 +34,7 @@ class DefaultEditorEffectRunnerTest {
         autosave = autosave,
         imagePipeline = pipeline,
         announcer = announcer,
+        savedSignal = savedSignal,
     )
 
     private fun image() = ImageElement(
@@ -47,6 +49,16 @@ class DefaultEditorEffectRunnerTest {
         val r = runner(this, UnavailableImagePipeline, autosave = { dirty++ })
         r.run(Effect.Autosave(document = stubDoc()), dispatch = {})
         assertEquals(1, dirty)
+    }
+
+    @Test
+    fun autosaveEffect_signalsSaved() = runTest(dispatcher) {
+        // The same autosave event that marks the binder dirty also raises the transient "Saved ✨"
+        // confirmation — one save signal, two consumers (persist + reassure), never a second save system.
+        var saved = 0
+        val r = runner(this, UnavailableImagePipeline, savedSignal = { saved++ })
+        r.run(Effect.Autosave(document = stubDoc()), dispatch = {})
+        assertEquals(1, saved)
     }
 
     @Test

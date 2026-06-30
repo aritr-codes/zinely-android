@@ -101,7 +101,8 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 
 ### Success & encouragement
 
-- Autosave: **"Saved ✨"** *(quiet, transient)*
+- Autosave: **"Saved ✨"** *(quiet, transient)* — implemented per [ADR-034](../DECISIONS.md#adr-034)
+  (polite live region, reduced-motion-safe, yields to the move/resize hint).
 - First element placed: a small sticker-pop, no words needed — the moment speaks.
 - Page feels done (heuristic, optional): **"Looking good."**
 - Zine exported: **"Your zine is ready! 🎉"**

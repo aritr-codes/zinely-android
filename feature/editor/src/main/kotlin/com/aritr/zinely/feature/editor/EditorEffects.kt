@@ -38,6 +38,16 @@ public fun interface Announcer {
     public fun announce(text: String)
 }
 
+/**
+ * Saved-confirmation seam (ADR-034) — fired on every [Effect.Autosave] alongside [AutosaveSink.markDirty],
+ * so the same existing save signal both persists (via the binder) and raises the transient "Saved ✨"
+ * reassurance. The app adapts it to a `SharedFlow` the editor host collects; it carries no payload — the
+ * autosave event itself *is* the message.
+ */
+public fun interface SavedSignal {
+    public fun onSaved()
+}
+
 /** The outcome of one image pick→decode→store attempt (spike §2.2, Codex rec #6 — never a silent no-op). */
 public sealed interface ImagePickResult {
     /** Decoded + stored. The reducer re-mints the element id, so [element]'s id is a placeholder only. */
@@ -71,7 +81,8 @@ public object UnavailableImagePipeline : ImagePickDecodePipeline {
 
 /**
  * The production [EditorEffectRunner] (spike §10.3, Codex-reconciled). It routes each [Effect]:
- *  - [Effect.Autosave] → [AutosaveSink.markDirty] (pull-based; binder owns timing — required-fix #5);
+ *  - [Effect.Autosave] → [AutosaveSink.markDirty] (pull-based; binder owns timing — required-fix #5) **and**
+ *    [SavedSignal.onSaved] (the transient "Saved ✨" reassurance — ADR-034);
  *  - [Effect.PickAndDecodeImage] → launch the [ImagePickDecodePipeline] on [io], then on success dispatch
  *    [Intent.CommitAddImage] (the reducer mints the id), on failure announce, on cancel do nothing;
  *  - [Effect.Announce] → [Announcer.announce].
@@ -87,11 +98,17 @@ public class DefaultEditorEffectRunner(
     private val autosave: AutosaveSink,
     private val imagePipeline: ImagePickDecodePipeline,
     private val announcer: Announcer,
+    private val savedSignal: SavedSignal,
 ) : EditorEffectRunner {
 
     override fun run(effect: Effect, dispatch: (Intent) -> Unit) {
         when (effect) {
-            is Effect.Autosave -> autosave.markDirty()
+            is Effect.Autosave -> {
+                // The same autosave event drives both consumers: the binder persists (pull-based), and the
+                // host raises the transient "Saved ✨" reassurance (ADR-034). Marker only — no bytes here.
+                autosave.markDirty()
+                savedSignal.onSaved()
+            }
             is Effect.Announce -> announcer.announce(effect.text)
             Effect.PickAndDecodeImage -> launchImagePick(dispatch)
         }

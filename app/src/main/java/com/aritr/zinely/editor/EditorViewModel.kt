@@ -19,6 +19,7 @@ import com.aritr.zinely.feature.editor.Announcer
 import com.aritr.zinely.feature.editor.AutosaveSink
 import com.aritr.zinely.feature.editor.DefaultEditorEffectRunner
 import com.aritr.zinely.feature.editor.EditorStore
+import com.aritr.zinely.feature.editor.SavedSignal
 import com.aritr.zinely.render.android.AssetBytesSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -100,6 +101,16 @@ internal class EditorViewModel @Inject constructor(
     val announcements: SharedFlow<String> = _announcements.asSharedFlow()
 
     /**
+     * Autosave-confirmation channel (ADR-034): the effect runner emits one `Unit` per `Effect.Autosave`,
+     * the editor host collects it and surfaces the transient "Saved ✨" reassurance. Replay-free
+     * (`replay = 0`) with a small extra buffer so `tryEmit` from the runner never blocks. A signal emitted
+     * while nobody is collecting (e.g. across a rotation's subscriber gap) is simply **dropped** — by
+     * design: a missed "Saved" is harmless feedback, and durability is the binder's job, never this flow's.
+     */
+    private val _saved = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
+    val saved: SharedFlow<Unit> = _saved.asSharedFlow()
+
+    /**
      * The picker rendezvous (ADR-031 §5). VM-held so its lifetime matches the project; the Compose host
      * [bind][PhotoPicker.bind]s its `ActivityResultLauncher` and [deliver][PhotoPicker.deliver]s results,
      * while the import pipeline [await][PhotoPicker.await]s. Single instance ⇒ single-flight is global.
@@ -151,6 +162,10 @@ internal class EditorViewModel @Inject constructor(
 
         val announcer = Announcer { text -> _announcements.tryEmit(text) }
         val autosave = AutosaveSink { binder.markDirty() }
+        // The transient "Saved ✨" reassurance: the runner fires this on every Effect.Autosave, alongside
+        // the binder mark-dirty (ADR-034). tryEmit is non-blocking; a full buffer just drops a redundant
+        // confirmation (the save still happens — the binder is the durability path, this is only feedback).
+        val savedSignal = SavedSignal { _saved.tryEmit(Unit) }
         val pageSizePt = editedPageSize(initial.document, imposer)
 
         // The real import pipeline (ADR-031 §5): pick on Main via the VM-held picker, decode/store on IO.
@@ -176,6 +191,7 @@ internal class EditorViewModel @Inject constructor(
                 autosave = autosave,
                 imagePipeline = imagePipeline,
                 announcer = announcer,
+                savedSignal = savedSignal,
             ),
         )
 
