@@ -73,6 +73,7 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 | export | **Print & fold** | Export / Generate PDF |
 | share | **Send to a friend** | Share via… |
 | settings | **Settings** *(plain is fine here)* | Preferences / Configuration |
+| the supply shelf | **Supplies** *(the tray's section heading / screen-reader landmark)* | Tools / Toolbar |
 
 ### Onboarding & first run
 

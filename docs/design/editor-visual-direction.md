@@ -164,8 +164,13 @@ home** (always visible, thumb zone); the `EditorEmptyState` overlay is now **inv
 copy + ornament + privacy line, **no buttons** — whose subcopy points to the supplies below. So each
 add action appears exactly once on a blank page (DESIGN-RULES R3/R7), unambiguous for TalkBack too.
 
-Deferred to later slices (designed, not built now): bundled marker font, richer paper textures,
-a string-resource catalog ([ARCHITECTURE §15.6](../ARCHITECTURE.md#156-architectural-implications-surfaced-by-the-design-sprint-2026-06-28)),
-and the ADR-033 follow-up **tray-orientation polish** (a visual notch/arrow tying the invitation to the
-shelf + a tray a11y "section" label) — deferred to avoid altering the shipped tray across all states.
+**Resolved — blank-page tray-orientation polish (ADR-033 follow-up):** the invitation and the shelf are
+now tied together both ways. The `EditorEmptyState` carries a subtle **downward cue** (a static chevron,
+no motion → reduced-motion-safe; cleared from the a11y tree, so it adds no screen-reader noise) that
+points the eye to the supplies just below; and the `EditorSupplyTray` is titled with a quiet
+**"Supplies" `heading()`** so a screen reader lands on a named section landmark before the four actions
+(DESIGN-RULES 9). The four supplies, their intents, undo/redo gating, and add behaviors are unchanged.
+
+Deferred to later slices (designed, not built now): bundled marker font, richer paper textures, and
+a string-resource catalog ([ARCHITECTURE §15.6](../ARCHITECTURE.md#156-architectural-implications-surfaced-by-the-design-sprint-2026-06-28)).
 Home / library / export stay out of scope entirely.

@@ -46,4 +46,19 @@ class EditorEmptyStateTest {
         composeRule.onNodeWithText(AddPhotoActionLabel, substring = true).assertDoesNotExist()
         composeRule.onNodeWithText(AddWordsActionLabel, substring = true).assertDoesNotExist()
     }
+
+    @Test
+    fun shows_a_decorative_cue_toward_the_supplies_below() {
+        // Orientation polish (ADR-033 follow-up): a subtle cue ties the invitation to the supply shelf
+        // below. It lives inside the overlay, so it's present exactly when the blank-page overlay is, and
+        // it is decorative — cleared from the a11y tree so it adds no screen-reader noise (the tray's
+        // "Supplies" heading carries the spoken orientation instead).
+        composeRule.setContent {
+            MaterialTheme { EditorEmptyState() }
+        }
+        composeRule.onNodeWithTag(EmptyStateTrayCueTag).assertExists()
+        // Decorative-with-a-job (DESIGN-RULES 10): the glyph must be cleared from the a11y tree, so it
+        // is never announced — proves silence, not just that the tag is queryable (Codex review).
+        composeRule.onNodeWithText("⌄", substring = true).assertDoesNotExist()
+    }
 }

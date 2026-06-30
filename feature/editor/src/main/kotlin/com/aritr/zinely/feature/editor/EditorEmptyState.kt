@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,9 @@ public const val EditorEmptyStateTestTag: String = "editor-empty-state"
  *  the tray's visible + spoken labels; the empty state references them only to *name* what's below. */
 public const val AddPhotoActionLabel: String = "Add a photo"
 public const val AddWordsActionLabel: String = "Add words"
+
+/** Test tag on the decorative downward cue that ties the invitation to the supply shelf below. */
+public const val EmptyStateTrayCueTag: String = "empty-state-tray-cue"
 
 /**
  * The cozy first-run invitation (docs/design/DESIGN-LANGUAGE.md §8/§9) — shown on the canvas when the
@@ -89,6 +93,21 @@ public fun EditorEmptyState(
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+
+        // Orientation cue: a subtle downward chevron beneath the invitation, pointing the eye to the
+        // supply shelf just below the canvas where the add actions live (ADR-033 follow-up). It is a
+        // flourish that also does a job (DESIGN-RULES 10) — purely static (no motion, so the reduced-
+        // motion path is a no-op) and `clearAndSetSemantics` strips it from the a11y tree, so it adds
+        // no screen-reader noise; the tray's "Supplies" heading gives TalkBack the same orientation.
+        Box(modifier = Modifier.testTag(EmptyStateTrayCueTag)) {
+            Text(
+                text = "⌄",
+                style = MaterialTheme.typography.titleLarge,
+                color = colors.onSurfaceVariant.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.clearAndSetSemantics { },
+            )
+        }
     }
 }
 
