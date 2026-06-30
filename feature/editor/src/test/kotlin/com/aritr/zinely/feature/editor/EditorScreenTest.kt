@@ -90,7 +90,7 @@ class EditorScreenTest {
         moveResizeHintSeen: Boolean? = false,
         onMoveResizeHintSeen: () -> Unit = {},
         savedSignals: Flow<Unit> = emptyFlow(),
-        saveErrorVisible: Boolean = false,
+        saveError: SaveErrorKind? = null,
         onDismissSaveError: () -> Unit = {},
     ) {
         composeRule.setContent {
@@ -102,7 +102,7 @@ class EditorScreenTest {
                     moveResizeHintSeen = moveResizeHintSeen,
                     onMoveResizeHintSeen = onMoveResizeHintSeen,
                     savedSignals = savedSignals,
-                    saveErrorVisible = saveErrorVisible,
+                    saveError = saveError,
                     onDismissSaveError = onDismissSaveError,
                 )
             }
@@ -408,7 +408,7 @@ class EditorScreenTest {
     fun no_save_failure_means_no_failure_banner() {
         // Quiet by default: with no reported failure, the editor shows no "couldn't save" chrome.
         val store = store()
-        setScreen(store, saveErrorVisible = false)
+        setScreen(store, saveError = null)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertDoesNotExist()
     }
@@ -417,10 +417,23 @@ class EditorScreenTest {
     fun a_save_failure_shows_the_warm_failure_banner() {
         // ADR-035: a reported autosave failure surfaces the honest, warm "couldn't save" banner.
         val store = store()
-        setScreen(store, saveErrorVisible = true)
+        setScreen(store, saveError = SaveErrorKind.Generic)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
         composeRule.onNodeWithText(SaveFailureText, substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun a_storage_failure_shows_the_out_of_space_copy() {
+        // ADR-036: a probe-classified out-of-space failure shows the storage-specific line, not the generic
+        // one — the honest, actionable "low on storage" guidance, keyed by the feature-local kind.
+        val store = store()
+        setScreen(store, saveError = SaveErrorKind.OutOfSpace)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText(SaveFailureOutOfSpaceText, substring = true).assertIsDisplayed()
+        // It must NOT show the generic line when the failure is specifically storage exhaustion.
+        composeRule.onNodeWithText(SaveFailureText, substring = true).assertDoesNotExist()
     }
 
     @Test
@@ -430,7 +443,7 @@ class EditorScreenTest {
         val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
         val store = store()
         composeRule.mainClock.autoAdvance = false
-        setScreen(store, savedSignals = signals, saveErrorVisible = true)
+        setScreen(store, savedSignals = signals, saveError = SaveErrorKind.Generic)
         composeRule.waitForIdle()
 
         signals.tryEmit(Unit)
@@ -448,7 +461,7 @@ class EditorScreenTest {
         // known failure keeps it hidden and shows the banner instead.
         val store = store()
         store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects → hint
-        setScreen(store, saveErrorVisible = true)
+        setScreen(store, saveError = SaveErrorKind.Generic)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
@@ -470,7 +483,7 @@ class EditorScreenTest {
                     pageSizePt = pageSizePt,
                     modifier = Modifier.size(300.dp, 400.dp),
                     savedSignals = signals,
-                    saveErrorVisible = errorVisible.value,
+                    saveError = if (errorVisible.value) SaveErrorKind.Generic else null,
                     onDismissSaveError = { errorVisible.value = false },
                 )
             }
@@ -504,7 +517,7 @@ class EditorScreenTest {
         // failure state of its own, so it just wires the callback through.
         var dismissed = false
         val store = store()
-        setScreen(store, saveErrorVisible = true, onDismissSaveError = { dismissed = true })
+        setScreen(store, saveError = SaveErrorKind.Generic, onDismissSaveError = { dismissed = true })
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
 
         composeRule.onNodeWithTag(SaveFailureDismissTag).performClick()

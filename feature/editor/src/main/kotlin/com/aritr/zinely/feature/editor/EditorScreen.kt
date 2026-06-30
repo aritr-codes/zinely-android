@@ -82,11 +82,12 @@ public const val EditorCanvasTestTag: String = "editor-canvas"
  *   that work is being saved, not that a write has completed. The host surfaces the transient "Saved ✨"
  *   reassurance per emission (optimistic, not a completion receipt — ADR-034), coalescing a burst into one
  *   visible window. Defaults to an empty flow (no confirmation) for previews/tests.
- * @param saveErrorVisible whether an unresolved autosave failure is currently known for this project
- *   (ADR-035, hoisted from the app over the `SaveFailureSink` of ADR-026 §5). When `true` the host shows
- *   the warm [EditorSaveFailure] banner **and** suppresses the optimistic "Saved ✨" chip and the
- *   move/resize hint — the editor must not claim a save it knows failed. Defaults to `false` for
- *   previews/tests.
+ * @param saveError the kind of unresolved autosave failure currently known for this project, or `null`
+ *   when there is none (ADR-035/[ADR-036](../DECISIONS.md#adr-036), hoisted from the app over the
+ *   `SaveFailureSink` of ADR-026 §5; the app maps `DataError` → a feature-local [SaveErrorKind] so this
+ *   layer stays free of core/data-android types). When non-null the host shows the warm
+ *   [EditorSaveFailure] banner (copy keyed by the kind) **and** suppresses the optimistic "Saved ✨" chip
+ *   and the move/resize hint — the editor must not claim a save it knows failed. Defaults to `null`.
  * @param onDismissSaveError invoked when the user taps the failure banner's "Got it" — the app clears
  *   the failure from the sink. Defaults to a no-op.
  */
@@ -99,12 +100,20 @@ public fun EditorScreen(
     moveResizeHintSeen: Boolean? = false,
     onMoveResizeHintSeen: () -> Unit = {},
     savedSignals: Flow<Unit> = emptyFlow(),
-    saveErrorVisible: Boolean = false,
+    saveError: SaveErrorKind? = null,
     onDismissSaveError: () -> Unit = {},
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
     val currentState = { store.uiState.value }
+
+    // A known save failure (ADR-035) gates the optimistic "Saved ✨" + the move/resize hint and raises the
+    // banner. The presence flag drives all the suppression below; the kind only selects the banner copy.
+    val saveErrorVisible = saveError != null
+    // Retain the last shown kind so the copy stays put through the banner's exit fade (when `saveError`
+    // returns to null on dismissal, `saveErrorVisible` flips false but the text must not flip too).
+    var lastSaveErrorKind by remember { mutableStateOf(SaveErrorKind.Generic) }
+    if (saveError != null) lastSaveErrorKind = saveError
 
     // Transient "Saved ✨" reassurance (ADR-034). Driven solely by the existing autosave event stream — no
     // new save logic. `collectLatest` coalesces a burst of saves (e.g. several quick commits) into one
@@ -296,6 +305,7 @@ public fun EditorScreen(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 8.dp),
+                    kind = lastSaveErrorKind,
                 )
 
                 // The text-edit overlay: only while a session is open and its element still exists (a delete

@@ -40,11 +40,19 @@ class DocumentRepositoryImplTest {
 
     private fun tempRoot(): Path = Files.createTempDirectory("zinely-doc-repo")
 
+    // Pass a probe only when a test pins one; otherwise fall through to the production default
+    // (DocumentRepositoryImpl's nearest-existing-ancestor probe), so the generic-Io tests measure real
+    // free space rather than a naive probe of the not-yet-existent document file (which reports 0).
     private fun repo(
         root: Path,
         store: AtomicFileStore = AtomicFileStore(NioFileSystemOps),
         serializer: DocumentSerializer = this.serializer,
-    ) = DocumentRepositoryImpl(root, store, serializer, validator)
+        freeSpaceProbe: ((Path) -> Long)? = null,
+    ) = if (freeSpaceProbe == null) {
+        DocumentRepositoryImpl(root, store, serializer, validator)
+    } else {
+        DocumentRepositoryImpl(root, store, serializer, validator, freeSpaceProbe)
+    }
 
     private fun docPath(root: Path, id: String): Path =
         root.resolve("projects").resolve(id).resolve("document.json")
@@ -275,6 +283,55 @@ class DocumentRepositoryImplTest {
 
         assertTrue("expected Invalid, got $error", error is DataError.Invalid)
         assertEquals("projectId.invalid", (error as DataError.Invalid).issues.first().code)
+    }
+
+    // --- ADR-036 storage-aware classification: free-space probe, not errno/string sniffing ---
+
+    @Test
+    fun `save classifies a write failure as OutOfSpace when usable space is below the payload`() = runTest {
+        val root = tempRoot()
+        // A write that fails the way a full disk would (the atomic replace throws), paired with a probe
+        // reporting no usable space: the device verifiably cannot hold the payload, so the repository
+        // attributes the failure to storage exhaustion (ADR-036 §Decision 2/3), not a generic IO fault.
+        val store = AtomicFileStore(object : FileSystemOps by NioFileSystemOps {
+            override fun atomicReplace(source: Path, replacing: Path): Unit = throw IOException("ENOSPC")
+        })
+
+        val error = (repo(root, store, freeSpaceProbe = { 0L })
+            .save("proj1", validDoc()) as DataResult.Failure).error
+
+        assertTrue("expected OutOfSpace, got $error", error is DataError.OutOfSpace)
+    }
+
+    @Test
+    fun `save keeps a write failure as Io when usable space exceeds the payload`() = runTest {
+        val root = tempRoot()
+        // The same write failure, but with ample free space reported: this is NOT storage-full, so the
+        // honest classification stays the generic Io — never a false "storage full" claim (ADR-036 bars
+        // false positives of the strong line; only a genuine space shortfall earns OutOfSpace).
+        val store = AtomicFileStore(object : FileSystemOps by NioFileSystemOps {
+            override fun atomicReplace(source: Path, replacing: Path): Unit = throw IOException("transient")
+        })
+
+        val error = (repo(root, store, freeSpaceProbe = { Long.MAX_VALUE })
+            .save("proj1", validDoc()) as DataResult.Failure).error
+
+        assertTrue("expected Io, got $error", error is DataError.Io)
+    }
+
+    @Test
+    fun `save keeps a write failure as Io when the free-space probe itself throws`() = runTest {
+        val root = tempRoot()
+        // The probe cannot report (e.g. a SecurityException reading usable space): a failed probe must
+        // NEVER invent a storage-full claim (ADR-036 no-false-positive bar) — it degrades to generic Io.
+        val store = AtomicFileStore(object : FileSystemOps by NioFileSystemOps {
+            override fun atomicReplace(source: Path, replacing: Path): Unit = throw IOException("write blocked")
+        })
+
+        val error = (repo(root, store, freeSpaceProbe = { throw SecurityException("probe denied") })
+            .save("proj1", validDoc()) as DataResult.Failure).error
+
+        assertTrue("expected Io, got $error", error is DataError.Io)
     }
 
     // ---------------------------------------------------------------------------------------------

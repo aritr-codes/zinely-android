@@ -46,6 +46,14 @@ public class DocumentRepositoryImpl(
     private val store: AtomicFileStore,
     private val serializer: DocumentSerializer = JsonDocumentSerializer(),
     private val validator: DocumentValidator = DefaultDocumentValidator(),
+    // ADR-036 storage-aware classification seam. Probes the usable space of the target's filesystem so a
+    // write `IOException` paired with a genuine space shortfall is attributed to storage exhaustion rather
+    // than flattened into a generic Io. Injected for deterministic unit tests; the production default reads
+    // the real usable-bytes at the nearest existing ancestor of the target (java.io, no Android dependency)
+    // — the document file itself does not exist on a first save, and `File.getUsableSpace()` returns 0 for a
+    // non-existent path on some platforms, which would otherwise misread as "full". NOT errno/string
+    // sniffing — see [classifyWriteFailure] and [DataError.OutOfSpace].
+    private val freeSpaceProbe: (Path) -> Long = { usableSpaceNear(it) },
 ) : DocumentRepository {
 
     /** `rootDir/projects`, normalised once so the containment check is a cheap prefix test. */
@@ -104,13 +112,44 @@ public class DocumentRepositoryImpl(
         }
 
         // ADR-026 commit: synchronous, blocking, fail-closed. No dispatch, no interruption — the
-        // write runs to completion and any storage failure propagates as Io.
+        // write runs to completion and any storage failure propagates as a DataResult.Failure.
+        val bytes = text.encodeToByteArray()
         try {
-            store.write(path, text.encodeToByteArray())
+            store.write(path, bytes)
         } catch (e: IOException) {
-            return failure(DataError.Io("failed to write document for '$projectId'", e))
+            return failure(classifyWriteFailure(projectId, path, bytes.size.toLong(), e))
         }
         return DataResult.Success(Unit)
+    }
+
+    /**
+     * Map a write `IOException` to the honest [DataError] (ADR-036). When the target filesystem's usable
+     * space is below the payload size, the device **verifiably cannot hold this document**, so the failure
+     * is attributed to storage exhaustion ([DataError.OutOfSpace]) — a true statement of the disk's state,
+     * actionable by the user ("free up space"). Otherwise it stays the generic [DataError.Io].
+     *
+     * This is a deliberately **false-negative-biased** heuristic, not errno/string sniffing: `java.nio
+     * Files.write` (the frozen `AtomicFileStore` write path) surfaces a full disk as a plain `IOException`
+     * with no structured `errno`, so the probe is the only honest signal available without changing the
+     * frozen pure core. The threshold uses the payload size alone; an overwrite's transient `.bak` copy
+     * needs more, so a shortfall in the `payload < usable < payload+existing` band classifies as `Io` (a
+     * safe under-claim). We never claim "out of space" unless the disk demonstrably can't fit the payload.
+     */
+    private fun classifyWriteFailure(
+        projectId: String,
+        path: Path,
+        payloadBytes: Long,
+        cause: IOException,
+    ): DataError {
+        val outOfSpace = try {
+            freeSpaceProbe(path) < payloadBytes
+        } catch (_: Exception) {
+            // A probe that cannot report (e.g. a SecurityException) must never *invent* a storage-full
+            // claim — fall back to the generic Io, preserving the no-false-positive bar.
+            false
+        }
+        val message = "failed to write document for '$projectId'"
+        return if (outOfSpace) DataError.OutOfSpace(message, cause) else DataError.Io(message, cause)
     }
 
     /**
@@ -174,5 +213,20 @@ public class DocumentRepositoryImpl(
 
         /** Untrusted-id whitelist: excludes `.`, `/`, `\`, so traversal sequences cannot form. */
         val PROJECT_ID = Regex("^[A-Za-z0-9_-]{1,64}$")
+
+        /**
+         * Usable bytes of the filesystem holding [path], measured at the nearest **existing** ancestor
+         * (ADR-036 default probe). A first save's `document.json` — and possibly its project dir — does not
+         * exist yet, and `File.getUsableSpace()` returns 0 for a non-existent abstract path on some
+         * platforms (Windows), which would falsely read as "no space"; walking up to a real directory
+         * yields the true free space. In production the app-private `filesDir` is always an existing
+         * ancestor, so a real measurement is always found; the `?: 0L` is only a defensive fallback for the
+         * unreachable case of no existing ancestor at all.
+         */
+        fun usableSpaceNear(path: Path): Long {
+            var p: Path? = path
+            while (p != null && !Files.exists(p)) p = p.parent
+            return p?.toFile()?.usableSpace ?: 0L
+        }
     }
 }
