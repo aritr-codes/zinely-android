@@ -90,6 +90,8 @@ class EditorScreenTest {
         moveResizeHintSeen: Boolean? = false,
         onMoveResizeHintSeen: () -> Unit = {},
         savedSignals: Flow<Unit> = emptyFlow(),
+        saveErrorVisible: Boolean = false,
+        onDismissSaveError: () -> Unit = {},
     ) {
         composeRule.setContent {
             MaterialTheme {
@@ -100,6 +102,8 @@ class EditorScreenTest {
                     moveResizeHintSeen = moveResizeHintSeen,
                     onMoveResizeHintSeen = onMoveResizeHintSeen,
                     savedSignals = savedSignals,
+                    saveErrorVisible = saveErrorVisible,
+                    onDismissSaveError = onDismissSaveError,
                 )
             }
         }
@@ -398,6 +402,114 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         // Save fired, but the chip stays hidden because the hint owns the top of the canvas.
         composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun no_save_failure_means_no_failure_banner() {
+        // Quiet by default: with no reported failure, the editor shows no "couldn't save" chrome.
+        val store = store()
+        setScreen(store, saveErrorVisible = false)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun a_save_failure_shows_the_warm_failure_banner() {
+        // ADR-035: a reported autosave failure surfaces the honest, warm "couldn't save" banner.
+        val store = store()
+        setScreen(store, saveErrorVisible = true)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText(SaveFailureText, substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun a_save_failure_suppresses_the_optimistic_saved_confirmation() {
+        // Honesty precedence (ADR-035): "Saved ✨" fires at mark-dirty (optimistic, ADR-034). While a real
+        // failure is known, the editor must NOT also flash "Saved" — the failure banner wins, the chip yields.
+        val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val store = store()
+        composeRule.mainClock.autoAdvance = false
+        setScreen(store, savedSignals = signals, saveErrorVisible = true)
+        composeRule.waitForIdle()
+
+        signals.tryEmit(Unit)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
+        // A save was "scheduled", but with a failure on record the chip stays hidden; the banner shows.
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun a_save_failure_suppresses_the_move_resize_hint() {
+        // Competing-chrome precedence (ADR-035): the one-time teaching hint yields to the more important
+        // honest failure banner at the top of the canvas; selecting an element raises the hint, but a
+        // known failure keeps it hidden and shows the banner instead.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects → hint
+        setScreen(store, saveErrorVisible = true)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun dismissing_a_failure_does_not_resurrect_a_stale_saved_chip() {
+        // Honesty regression (Codex Required Fix): "Saved ✨" runs an independent 1600ms window. If a save
+        // signal lit the chip, then a failure appears (chip yields to the banner), then the user dismisses
+        // the failure BEFORE that window elapses, the chip must NOT pop back — there is no success evidence.
+        val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val store = store()
+        val errorVisible = androidx.compose.runtime.mutableStateOf(false)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            MaterialTheme {
+                EditorScreen(
+                    store = store,
+                    pageSizePt = pageSizePt,
+                    modifier = Modifier.size(300.dp, 400.dp),
+                    savedSignals = signals,
+                    saveErrorVisible = errorVisible.value,
+                    onDismissSaveError = { errorVisible.value = false },
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        // A save signal lights the chip.
+        signals.tryEmit(Unit)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+
+        // A failure appears mid-window: chip yields to the banner (past its fade-out).
+        errorVisible.value = true
+        composeRule.mainClock.advanceTimeBy(500L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
+
+        // Dismiss the failure while the original 1600ms window would still be open: the chip must stay
+        // gone — the failure cancelled its timer, only a new save signal could re-light it.
+        errorVisible.value = false
+        composeRule.mainClock.advanceTimeBy(500L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun tapping_got_it_on_the_failure_banner_invokes_the_dismiss_callback() {
+        // The host forwards dismissal to the app (which clears the sink, ADR-026 §5) — the host owns no
+        // failure state of its own, so it just wires the callback through.
+        var dismissed = false
+        val store = store()
+        setScreen(store, saveErrorVisible = true, onDismissSaveError = { dismissed = true })
+        composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(SaveFailureDismissTag).performClick()
+        composeRule.waitForIdle()
+        assertTrue(dismissed)
     }
 
     @Test

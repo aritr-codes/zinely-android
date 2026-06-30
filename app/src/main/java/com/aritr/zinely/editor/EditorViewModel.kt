@@ -13,6 +13,7 @@ import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.imposition.Imposer
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.data.android.EditorAutosaveBinder
+import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
 import com.aritr.zinely.feature.editor.Announcer
@@ -31,6 +32,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -79,6 +82,7 @@ internal class EditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val repository: DocumentRepository,
     private val binderFactory: EditorAutosaveBinderFactory,
+    private val saveFailureSink: SaveFailureSink,
     private val imposer: Imposer,
     private val assetStore: AssetStore,
     private val imageDecoder: ImportMasterDecoder,
@@ -109,6 +113,34 @@ internal class EditorViewModel @Inject constructor(
      */
     private val _saved = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
     val saved: SharedFlow<Unit> = _saved.asSharedFlow()
+
+    /**
+     * Whether this project has an **unresolved** autosave failure (ADR-035) — the honest correction to
+     * the optimistic "Saved ✨" ([ADR-034](#adr-034)). Derived from the app-scoped [SaveFailureSink]
+     * (ADR-026 §5), into which the autosave coordinator's background failures *and* the binder's
+     * lifecycle/teardown flush failures are already reported; this is exactly the single-project slice the
+     * sink documents (`failures.map { it[projectId] }.distinctUntilChanged()`). `Eagerly` so a failure
+     * reported during a brief subscriber gap (e.g. an ON_STOP flush while backgrounded) is still reflected
+     * the moment the host re-subscribes — the upstream is a hot `StateFlow`, so the latest value is kept.
+     *
+     * **No auto-clear on recovery (accepted limitation).** The frozen `:core:data-storage` coordinator
+     * emits failures only — no per-edit *success* signal — so the editor cannot learn that a later save
+     * silently succeeded. The flag therefore stays set until the user dismisses it ([dismissSaveError]).
+     * (The sink also offers `clearAll` for a workspace/project switch, but the app is single-route today,
+     * so nothing invokes it yet — it is the mechanism for when a home/library screen lands.) This errs
+     * toward caution (never a false "Saved"); true recovery would need a `:core` success hook (out of
+     * bounds, as in ADR-034).
+     */
+    val saveErrorVisible: StateFlow<Boolean> =
+        saveFailureSink.failures
+            .map { projectId in it }
+            .distinctUntilChanged()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
+
+    /** Dismiss this project's save-failure cue (user tapped "Got it"); re-shows if a later save fails. */
+    fun dismissSaveError() {
+        saveFailureSink.clear(projectId)
+    }
 
     /**
      * The picker rendezvous (ADR-031 §5). VM-held so its lifetime matches the project; the Compose host

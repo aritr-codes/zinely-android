@@ -82,6 +82,13 @@ public const val EditorCanvasTestTag: String = "editor-canvas"
  *   that work is being saved, not that a write has completed. The host surfaces the transient "Saved ✨"
  *   reassurance per emission (optimistic, not a completion receipt — ADR-034), coalescing a burst into one
  *   visible window. Defaults to an empty flow (no confirmation) for previews/tests.
+ * @param saveErrorVisible whether an unresolved autosave failure is currently known for this project
+ *   (ADR-035, hoisted from the app over the `SaveFailureSink` of ADR-026 §5). When `true` the host shows
+ *   the warm [EditorSaveFailure] banner **and** suppresses the optimistic "Saved ✨" chip and the
+ *   move/resize hint — the editor must not claim a save it knows failed. Defaults to `false` for
+ *   previews/tests.
+ * @param onDismissSaveError invoked when the user taps the failure banner's "Got it" — the app clears
+ *   the failure from the sink. Defaults to a no-op.
  */
 @Composable
 public fun EditorScreen(
@@ -92,6 +99,8 @@ public fun EditorScreen(
     moveResizeHintSeen: Boolean? = false,
     onMoveResizeHintSeen: () -> Unit = {},
     savedSignals: Flow<Unit> = emptyFlow(),
+    saveErrorVisible: Boolean = false,
+    onDismissSaveError: () -> Unit = {},
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
@@ -102,10 +111,15 @@ public fun EditorScreen(
     // visible window: each new save cancels the prior dismissal timer and restarts it, so the chip stays
     // up once rather than flickering, and TalkBack's polite live region announces once per appearance.
     var savedVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(savedSignals) {
+    LaunchedEffect(savedSignals, saveErrorVisible) {
         // Clear any stuck state first: if the source flow is ever swapped mid-window, the prior collector
         // is cancelled before its dismissal timer fires, so reset on (re)subscribe (Codex review #3).
+        // Keying on saveErrorVisible also closes an honesty hole (ADR-035, Codex Required Fix): a known
+        // failure cancels the in-flight "Saved" window (savedVisible → false) and stops collecting, so the
+        // chip can't resurrect from a stale timer when the user dismisses the banner. Only a *new* save
+        // signal after the failure clears re-lights it.
         savedVisible = false
+        if (saveErrorVisible) return@LaunchedEffect
         savedSignals.collectLatest {
             savedVisible = true
             delay(SavedConfirmationVisibleMs)
@@ -238,10 +252,13 @@ public fun EditorScreen(
                 // screen. Sits below the edit overlay so a text session always wins the top of the canvas.
                 // Also gate on no in-flight gesture so the hint is gone the same frame a drag begins
                 // (the LaunchedEffect makes that dismissal stick); avoids a one-frame overlap.
+                // A known save failure (ADR-035) outranks the teaching hint at the top region: an
+                // honest "couldn't save" must win over a one-time tip, so the hint yields while it shows
+                // (it returns on the next eligible selection once the failure is dismissed/cleared).
                 val gesturing = live != null || resizeOverride != null
                 val showMoveResizeHint =
                     !editing && !gesturing && uiState.selection.size == 1 &&
-                        !moveResizeHintDismissed && moveResizeHintSeen == false
+                        !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible
                 if (showMoveResizeHint) {
                     EditorMoveResizeHint(
                         onDismiss = {
@@ -262,10 +279,23 @@ public fun EditorScreen(
                 // teaching hint wins; the chip simply skips that one window. Passive (no pointer input);
                 // it fades itself out after the transient window.
                 EditorSavedConfirmation(
-                    visible = savedVisible && !showMoveResizeHint,
+                    visible = savedVisible && !showMoveResizeHint && !saveErrorVisible,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(top = 8.dp, end = 8.dp),
+                )
+
+                // The warm save-failure banner (ADR-035) — the honest correction to the optimistic
+                // "Saved ✨". Reuses the existing app-scoped SaveFailureSink (ADR-026 §5); no second save
+                // system. Persistent (until "Got it" / project switch), unlike the transient chip, and
+                // pinned TopCenter at the top of the canvas — well clear of the thumb-zone supply tray
+                // (DESIGN-RULES R3/R7). It takes precedence over the chip + hint, both gated off above.
+                EditorSaveFailure(
+                    visible = saveErrorVisible,
+                    onDismiss = onDismissSaveError,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp),
                 )
 
                 // The text-edit overlay: only while a session is open and its element still exists (a delete

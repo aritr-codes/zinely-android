@@ -123,9 +123,22 @@ expose a code.
 | Situation | Zinely says |
 |---|---|
 | photo won't load | **"That photo didn't want to come in. Try another?"** |
+| autosave couldn't save (transient) | **"Couldn't save your latest change just now. It'll try again next time you make a change."** |
 | out of storage on save | **"Your phone's storage is full. Free up a little space and it'll save."** |
 | export couldn't write file | **"Couldn't finish the file just now. Try Print & fold again?"** |
 | unexpected hiccup | **"Something hiccuped. Your work is safe — try that again?"** |
+
+The **autosave-couldn't-save** line is the warm banner implemented per
+[ADR-035](../DECISIONS.md#adr-035): it is the honest correction to the optimistic "Saved ✨" (which
+fires when a save is *scheduled*, not completed — [ADR-034](../DECISIONS.md#adr-034)). It is a single,
+deliberately non-specific line because the save seam ([ADR-026 §5](../DECISIONS.md#adr-026)
+`SaveFailureSink`) reports only a generic `DataError`, with no storage-full subtype to key the more
+specific "your phone's storage is full" copy on — that storage-specific variant waits on a future
+`:core` error classification. Assertive live region, dismissible with "Got it"; it suppresses the
+"Saved ✨" chip while shown so the editor never claims a save it knows failed. The retry wording is
+strictly honest to the implementation: the live system runs **no autonomous retry loop** — a failed
+autosave leaves the document dirty and reattempts on the user's next change (or a lifecycle flush), so
+the line points at making another change rather than implying a background retry.
 
 Every error names the safety net ("your work is safe") when true, because for this audience the
 real fear is *losing what they made*.
