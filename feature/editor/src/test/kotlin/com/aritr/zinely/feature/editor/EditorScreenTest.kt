@@ -6,6 +6,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
@@ -144,6 +145,29 @@ class EditorScreenTest {
         assertTrue(store.uiState.value.selection.size == 1)
         assertTrue(store.uiState.value.interaction is Interaction.EditingText)
         composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun on_a_blank_page_the_add_actions_are_not_duplicated_the_tray_owns_them() {
+        // ADR-033 de-dup: a blank page raises the invitation overlay AND the persistent tray. The overlay
+        // is invitation-only (no buttons), so each add action exists exactly once on screen — in the tray
+        // (the thumb-zone home, DESIGN-RULES 3/7). Guards against re-adding buttons to the empty state.
+        val store = store()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorEmptyStateTestTag).assertIsDisplayed()
+
+        // Exactly one "Add a photo" / "Add words" affordance — the tray's, not a second in the overlay.
+        assertTrue(
+            composeRule.onAllNodesWithText(AddPhotoActionLabel, substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().size == 1,
+        )
+        assertTrue(
+            composeRule.onAllNodesWithText(AddWordsActionLabel, substring = true, useUnmergedTree = true)
+                .fetchSemanticsNodes().size == 1,
+        )
+        composeRule.onNodeWithTag(SupplyAddPhotoTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(SupplyAddWordsTag).assertIsDisplayed()
     }
 
     @Test

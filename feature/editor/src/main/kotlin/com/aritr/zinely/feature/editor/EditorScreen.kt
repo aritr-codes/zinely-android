@@ -184,15 +184,15 @@ public fun EditorScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
 
-                // First-run invitation: when the current page is blank and no text session is open,
-                // a blank sheet reads as a void — so we overlay the cozy empty state with two visible
-                // supplies (DESIGN-LANGUAGE §8/§9). It sits above the gesture surface so its buttons
-                // win the hit-test; once the page has an element it disappears and the canvas is live.
+                // First-run invitation: when the current page is blank and no text session is open, a
+                // blank sheet reads as a void — so we overlay the cozy empty state (DESIGN-LANGUAGE §8/§9).
+                // It is **invitation-only** ([ADR-033](../DECISIONS.md#adr-033)): the add actions live
+                // solely in the persistent supply tray below, so "Add a photo" / "Add words" never appear
+                // twice at once. The overlay just invites + points to the shelf; it disappears the instant
+                // the page gets an element. Non-interactive, so touches fall through to the gesture surface.
                 val currentPageEmpty = uiState.document.pages[uiState.currentPageIndex].elements.isEmpty()
                 if (currentPageEmpty && !editing) {
                     EditorEmptyState(
-                        onAddPhoto = { dispatch(Intent.RequestAddImage) },
-                        onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
                         modifier = Modifier.align(Alignment.Center),
                     )
                 }

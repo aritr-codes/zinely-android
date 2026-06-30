@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,9 @@ public const val SupplyRedoTag: String = "supply-redo"
 /** Spoken a11y labels = the visible supply labels (reuses the empty-state strings for the add actions). */
 public const val UndoActionLabel: String = "Undo"
 public const val RedoActionLabel: String = "Redo"
+
+/** The shelf's section heading — orients screen-reader users before the four supplies (ADR-033 follow-up). */
+public const val TraySectionLabel: String = "Supplies"
 
 /**
  * The scrapbook **supply tray** (docs/design/editor-visual-direction.md §4 "tool tray"; mockup
@@ -55,6 +59,11 @@ public const val RedoActionLabel: String = "Redo"
  * contract: it reports `enabled = false` to TalkBack and tests (`assertIsNotEnabled`) and `clickable`
  * suppresses its tap — but the OnClick semantics node may remain (marked disabled), so tests assert
  * the disabled/enabled *state*, not the absence of a click action.
+ *
+ * Orientation: the shelf is titled with a quiet "Supplies" [TraySectionLabel] `heading()`, so a screen
+ * reader lands on a named section landmark before traversing the four actions (DESIGN-RULES 9; the
+ * ADR-033 follow-up). It is visually low-emphasis so it never competes with the coral primary supply
+ * (DESIGN-RULES 3), and adds a label only — no behavior — on every page.
  *
  * Stateless: every value is hoisted; the host reads [canUndo]/[canRedo] from the editor state and
  * dispatches on each callback. No motion beyond M3 ripple, so the reduced-motion path is a no-op.
@@ -77,56 +86,71 @@ public fun EditorSupplyTray(
     onRedo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Column(
         modifier = modifier
             .testTag(EditorSupplyTrayTestTag)
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 12.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Bottom,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        // Each supply takes an equal share of the row (weight) rather than a fixed min width, so the
-        // four cards never overflow a narrow phone or clip at large font scales (Codex layout finding).
-        SupplyButton(
-            label = AddPhotoActionLabel,
-            glyph = "🖼️",
-            primary = true,
-            enabled = true,
-            tilt = -2f,
-            testTag = SupplyAddPhotoTag,
-            onClick = onAddPhoto,
-            modifier = Modifier.weight(1f),
+        // A quiet section heading naming the shelf. Visually low-emphasis (it must not compete with the
+        // coral primary supply — DESIGN-RULES 3); semantically a `heading()`, so a screen reader lands on
+        // "Supplies" as orientation before traversing the four actions (DESIGN-RULES 9). Always present:
+        // the shelf is a stable landmark on every page, and the heading adds no behavior, only a label.
+        Text(
+            text = TraySectionLabel,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.semantics { heading() },
         )
-        SupplyButton(
-            label = AddWordsActionLabel,
-            glyph = "✏️",
-            primary = false,
-            enabled = true,
-            tilt = 1.5f,
-            testTag = SupplyAddWordsTag,
-            onClick = onAddText,
-            modifier = Modifier.weight(1f),
-        )
-        SupplyButton(
-            label = UndoActionLabel,
-            glyph = "↶",
-            primary = false,
-            enabled = canUndo,
-            tilt = -1f,
-            testTag = SupplyUndoTag,
-            onClick = onUndo,
-            modifier = Modifier.weight(1f),
-        )
-        SupplyButton(
-            label = RedoActionLabel,
-            glyph = "↷",
-            primary = false,
-            enabled = canRedo,
-            tilt = 1f,
-            testTag = SupplyRedoTag,
-            onClick = onRedo,
-            modifier = Modifier.weight(1f),
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            // Each supply takes an equal share of the row (weight) rather than a fixed min width, so the
+            // four cards never overflow a narrow phone or clip at large font scales (Codex layout finding).
+            SupplyButton(
+                label = AddPhotoActionLabel,
+                glyph = "🖼️",
+                primary = true,
+                enabled = true,
+                tilt = -2f,
+                testTag = SupplyAddPhotoTag,
+                onClick = onAddPhoto,
+                modifier = Modifier.weight(1f),
+            )
+            SupplyButton(
+                label = AddWordsActionLabel,
+                glyph = "✏️",
+                primary = false,
+                enabled = true,
+                tilt = 1.5f,
+                testTag = SupplyAddWordsTag,
+                onClick = onAddText,
+                modifier = Modifier.weight(1f),
+            )
+            SupplyButton(
+                label = UndoActionLabel,
+                glyph = "↶",
+                primary = false,
+                enabled = canUndo,
+                tilt = -1f,
+                testTag = SupplyUndoTag,
+                onClick = onUndo,
+                modifier = Modifier.weight(1f),
+            )
+            SupplyButton(
+                label = RedoActionLabel,
+                glyph = "↷",
+                primary = false,
+                enabled = canRedo,
+                tilt = 1f,
+                testTag = SupplyRedoTag,
+                onClick = onRedo,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 

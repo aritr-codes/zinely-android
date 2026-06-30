@@ -73,6 +73,7 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 | export | **Print & fold** | Export / Generate PDF |
 | share | **Send to a friend** | Share via… |
 | settings | **Settings** *(plain is fine here)* | Preferences / Configuration |
+| the supply shelf | **Supplies** *(the tray's section heading / screen-reader landmark)* | Tools / Toolbar |
 
 ### Onboarding & first run
 
@@ -83,9 +84,12 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 
 ### Empty states
 
-- First page, no content: **"Let's make something cute ✨"** / sub: **"Add a photo or a few
-  words to start."** / **[ Add a photo ] [ Add words ]**
-- A later empty page: **"A fresh page. What goes here?"** / **[ Add a photo ] [ Add words ]**
+- First page, no content: **"Let's make something cute ✨"** / sub: **"Grab a photo or a few
+  words from the supplies below."** The empty state is an **invitation only — no buttons**
+  ([ADR-033](../DECISIONS.md#adr-033)); the `[ Add a photo ] [ Add words ]` controls live solely
+  in the persistent supply tray below it, so they're never shown twice at once.
+- A later empty page: **"A fresh page. What goes here?"** (same invitation-only rule; the tray owns
+  the add actions).
 - No projects yet (future home): **"Nothing here yet — let's change that."** / **[ Start a zine ]**
 
 ### Hints (contextual, one-time, dismissible)

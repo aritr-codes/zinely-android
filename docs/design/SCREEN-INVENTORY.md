@@ -76,11 +76,17 @@ flowchart TD
 - **Status:** 🔂 current milestone (first implemented `SUX` slice; component shipped, being
   refined).
 - **Purpose:** turn a blank page from a void into an invitation — *the* onboarding moment.
-- **Primary action:** **Add a photo** (filled, coral).
-- **Secondary:** **Add words** (outlined). Privacy line beneath.
-- **Emotional goal:** "Let's make something cute ✨" — safe to try, no instructions needed.
+- **Primary action:** owned by the **supply tray** below, not the overlay — the empty state is an
+  **invitation only** ([ADR-033](../DECISIONS.md#adr-033)): warm copy + ornament + privacy line, **no
+  buttons**. The tray's **Add a photo** (coral primary) / **Add words** are the single, thumb-zone home
+  for the add actions, so they're never duplicated on a blank page (DESIGN-RULES R3/R7).
+- **Emotional goal:** "Let's make something cute ✨" — safe to try, no instructions needed; the subcopy
+  points to the supplies below ("Grab a photo or a few words from the supplies below.").
 - **Notes:** appears whenever the current page has no elements and no text session is open;
-  disappears the instant the page gets content.
+  disappears the instant the page gets content. Non-interactive (touches fall through to the canvas).
+  Carries a subtle, decorative **downward cue** toward the supply tray (ADR-033 follow-up) — static
+  (reduced-motion-safe) and cleared from the a11y tree, so the spoken orientation comes from the tray's
+  "Supplies" heading instead.
 
 ### Page navigator
 - **Status:** ✅ shipped (`EditorPageStrip`, `Intent.GoToPage`).
@@ -97,7 +103,9 @@ flowchart TD
 - **Primary actions:** add photo, add words.
 - **Secondary:** undo, redo (enabled by `canUndo`/`canRedo`); later stickers, templates.
 - **Emotional goal:** supplies within reach, nothing hidden — discoverability over gestures.
-- **Notes:** thumb-zone placement; ≥48dp; on-brand "supply" styling, not a toolbar.
+- **Notes:** thumb-zone placement; ≥48dp; on-brand "supply" styling, not a toolbar. Titled with a quiet
+  **"Supplies" `heading()`** so a screen reader gets section orientation before the four actions
+  (ADR-033 follow-up); the heading adds a label only, no behavior, on every page.
 
 ### Photo picker
 - **Status:** ✅ shipped (system picker via `Intent.RequestAddImage`,

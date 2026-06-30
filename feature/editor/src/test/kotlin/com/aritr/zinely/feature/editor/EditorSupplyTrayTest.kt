@@ -4,11 +4,16 @@ import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
@@ -140,5 +145,24 @@ class EditorSupplyTrayTest {
         composeRule.waitForIdle()
 
         assertEquals(before - 1, store.uiState.value.document.pages[0].elements.size)
+    }
+
+    @Test
+    fun the_tray_offers_a_supplies_section_label_for_orientation() {
+        // Orientation polish (ADR-033 follow-up): a quiet "Supplies" heading names the shelf, so a
+        // screen-reader user lands on a section landmark before traversing the four supply actions
+        // (DESIGN-RULES 9). It is a `heading()` so TalkBack announces it as orientation, not a button.
+        composeRule.setContent {
+            MaterialTheme {
+                EditorSupplyTray(
+                    canUndo = false,
+                    canRedo = false,
+                    onAddPhoto = {}, onAddText = {}, onUndo = {}, onRedo = {},
+                )
+            }
+        }
+        composeRule.onNodeWithText(TraySectionLabel).assertIsDisplayed()
+        composeRule.onNodeWithText(TraySectionLabel)
+            .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
     }
 }
