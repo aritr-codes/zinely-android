@@ -183,7 +183,8 @@ The next milestone is the **first-time creation experience**, not more editor po
 3. **Contextual hints** — one-time, dismissible coach marks for move/resize, replacing reliance
    on hidden gestures.
 4. **Page-strip polish** — richer paper-card thumbnails; reinforce "all 8 pages together."
-5. **Visible undo/redo** + warm autosave feedback.
+5. **Visible undo/redo** + warm autosave feedback (the transient "Saved ✨" confirmation ships per
+   [ADR-034](../DECISIONS.md#adr-034)).
 
 Out of scope for these slices (still deferred): home flow, library/project management, export
 flow.

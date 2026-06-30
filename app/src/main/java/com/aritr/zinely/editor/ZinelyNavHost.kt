@@ -110,6 +110,9 @@ private fun EditorDestination() {
                 imageBytes = state.imageBytes,
                 moveResizeHintSeen = moveResizeHintSeen,
                 onMoveResizeHintSeen = viewModel::markMoveResizeHintSeen,
+                // The autosave-event stream (ADR-034): each emission raises the transient "Saved ✨"
+                // reassurance in the host. Hot SharedFlow, collected inside EditorScreen.
+                savedSignals = viewModel.saved,
             )
         }
     }

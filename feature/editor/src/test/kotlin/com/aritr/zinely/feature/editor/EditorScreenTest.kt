@@ -24,6 +24,9 @@ import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -86,6 +89,7 @@ class EditorScreenTest {
         store: EditorStore,
         moveResizeHintSeen: Boolean? = false,
         onMoveResizeHintSeen: () -> Unit = {},
+        savedSignals: Flow<Unit> = emptyFlow(),
     ) {
         composeRule.setContent {
             MaterialTheme {
@@ -95,6 +99,7 @@ class EditorScreenTest {
                     modifier = Modifier.size(300.dp, 400.dp),
                     moveResizeHintSeen = moveResizeHintSeen,
                     onMoveResizeHintSeen = onMoveResizeHintSeen,
+                    savedSignals = savedSignals,
                 )
             }
         }
@@ -324,6 +329,75 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun the_saved_confirmation_is_hidden_until_a_save_signal() {
+        // Quiet by default: with no autosave event, the editor shows no "Saved" chrome — it only appears
+        // in response to a real save signal (VOICE: earned, not constant).
+        val store = store()
+        setScreen(store, savedSignals = MutableSharedFlow())
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun a_save_signal_shows_the_saved_confirmation() {
+        // The host subscribes to the autosave/persist signal stream and surfaces the transient "Saved ✨"
+        // reassurance when a save event arrives — driven by the existing path, not a second save system.
+        val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val store = store()
+        composeRule.mainClock.autoAdvance = false
+        setScreen(store, savedSignals = signals)
+        composeRule.waitForIdle() // the collector is now subscribed (replay=0 SharedFlow)
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+
+        signals.tryEmit(Unit)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun the_saved_confirmation_auto_dismisses_after_the_transient_window() {
+        // Non-blocking and transient: it fades itself out after the window — it never lingers or competes
+        // with the tray. Clock is hand-advanced so the dismissal is deterministic, not wall-clock racy.
+        val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val store = store()
+        composeRule.mainClock.autoAdvance = false
+        setScreen(store, savedSignals = signals)
+        composeRule.waitForIdle()
+
+        signals.tryEmit(Unit)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+
+        // Past the visible window + the fade-out: the chip removes itself.
+        composeRule.mainClock.advanceTimeBy(SavedConfirmationVisibleMs + 1000L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun the_saved_confirmation_yields_while_the_move_resize_hint_is_visible() {
+        // Competing-chrome guard (Codex review #2): placing the first element BOTH selects it (raising the
+        // move/resize hint at TopCenter, up to 320dp wide) and autosaves. On a narrow canvas a TopEnd
+        // "Saved" chip would overlap the centered hint, so the chip yields — the teaching hint wins, the
+        // chip simply skips that window.
+        val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects → hint
+        composeRule.mainClock.autoAdvance = false
+        setScreen(store, savedSignals = signals)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+
+        signals.tryEmit(Unit)
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.waitForIdle()
+        // Save fired, but the chip stays hidden because the hint owns the top of the canvas.
+        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
     }
 
     @Test

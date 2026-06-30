@@ -31,6 +31,10 @@ import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.AssetBytesSource
 import kotlin.math.min
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emptyFlow
 
 /** Test tag on the editor canvas Box (the measured, gesture-bearing area). */
 public const val EditorCanvasTestTag: String = "editor-canvas"
@@ -73,6 +77,11 @@ public const val EditorCanvasTestTag: String = "editor-canvas"
  *   (avoids re-teaching next launch). Defaults to `false` (loaded-unseen) for tests.
  * @param onMoveResizeHintSeen invoked when the hint is dismissed — via "Got it" or via discovery (a live
  *   drag/resize) — so the host can persist the flag. Idempotent on the store side. Defaults to a no-op.
+ * @param savedSignals the autosave-event stream (ADR-034): each emission is one autosave *scheduled*
+ *   (mark-dirty), raised by the existing `Effect.Autosave` path (runner → app `SharedFlow`) — it signals
+ *   that work is being saved, not that a write has completed. The host surfaces the transient "Saved ✨"
+ *   reassurance per emission (optimistic, not a completion receipt — ADR-034), coalescing a burst into one
+ *   visible window. Defaults to an empty flow (no confirmation) for previews/tests.
  */
 @Composable
 public fun EditorScreen(
@@ -82,10 +91,27 @@ public fun EditorScreen(
     imageBytes: AssetBytesSource = EmptyAssetBytes,
     moveResizeHintSeen: Boolean? = false,
     onMoveResizeHintSeen: () -> Unit = {},
+    savedSignals: Flow<Unit> = emptyFlow(),
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
     val currentState = { store.uiState.value }
+
+    // Transient "Saved ✨" reassurance (ADR-034). Driven solely by the existing autosave event stream — no
+    // new save logic. `collectLatest` coalesces a burst of saves (e.g. several quick commits) into one
+    // visible window: each new save cancels the prior dismissal timer and restarts it, so the chip stays
+    // up once rather than flickering, and TalkBack's polite live region announces once per appearance.
+    var savedVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(savedSignals) {
+        // Clear any stuck state first: if the source flow is ever swapped mid-window, the prior collector
+        // is cancelled before its dismissal timer fires, so reset on (re)subscribe (Codex review #3).
+        savedVisible = false
+        savedSignals.collectLatest {
+            savedVisible = true
+            delay(SavedConfirmationVisibleMs)
+            savedVisible = false
+        }
+    }
 
     // Feature-ephemeral gesture accumulators — the live pan/pinch frame and the handle-resize override.
     // They never reach the reducer; only the baked CommitTransform does (§5.1). Handle drags consume their
@@ -227,6 +253,20 @@ public fun EditorScreen(
                             .padding(top = 8.dp),
                     )
                 }
+
+                // The transient "Saved ✨" autosave reassurance (ADR-034). Pinned to the top-*end* corner —
+                // a quiet, non-thumb-zone spot well clear of the supply tray's primary actions below
+                // (DESIGN-RULES R3/R7). It **yields to the move/resize hint**: the first element placement
+                // both selects (raising the hint at TopCenter, up to 320dp wide) and autosaves, so on a
+                // phone-width canvas a TopEnd chip could overlap the centered hint (Codex review #2). The
+                // teaching hint wins; the chip simply skips that one window. Passive (no pointer input);
+                // it fades itself out after the transient window.
+                EditorSavedConfirmation(
+                    visible = savedVisible && !showMoveResizeHint,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(top = 8.dp, end = 8.dp),
+                )
 
                 // The text-edit overlay: only while a session is open and its element still exists (a delete
                 // races it closed; the session's onDispose/token guard then no-ops the trailing commit).
