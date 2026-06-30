@@ -11,8 +11,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 
 /**
  * Assembles and owns one autosave unit per project (ADR-026 §2, PR-A Step 5). Each [create] wires a
@@ -56,7 +54,7 @@ public class AutosaveCoordinatorFactory(
      *
      * **Release is asynchronous:** a prior handle's id is freed only when its project [Job] *completes*
      * (via `invokeOnCompletion`), which happens after — not at — the `close()`/`cancel()` call returns,
-     * once the coordinator and collector finish cancelling on [ioDispatcher]. So an immediate re-create
+     * once the coordinator finishes cancelling on [ioDispatcher]. So an immediate re-create
      * of the same id on the heels of a teardown can still observe it as active and throw; the lifecycle
      * binder (Step 6) owns ordering teardown completion before re-creation.
      */
@@ -107,16 +105,18 @@ public class AutosaveCoordinatorFactory(
             scope = projectScope,
             dispatcher = ioDispatcher,
             config = config,
+            // ADR-037: the factory is the SOLE SaveFailureSink feeder. The coordinator notifies this
+            // listener once per completed save — background AND caller-flush (flushNow/close) alike, in
+            // durable-write order, synchronously under the writer lock — so a durable success clears the
+            // project's failure and a failure reports it. No lossy SharedFlow, no second routing path:
+            // `clear` no-ops on an absent key, so the common all-success case never churns the sink.
+            outcomeListener = { result ->
+                when (result) {
+                    is DataResult.Success -> failureSink.clear(projectId)
+                    is DataResult.Failure -> failureSink.report(projectId, result.error)
+                }
+            },
         )
-
-        init {
-            // Background (debounced) failures only; flushNow/close failures return to the caller and
-            // never reach `failures`, so they are never reported here. Lives on projectScope, so it
-            // dies with the project (collection stops on cancel/close/parent-cancel).
-            projectScope.launch {
-                coordinator.failures.collect { failureSink.report(projectId, it) }
-            }
-        }
 
         /**
          * Wired by the factory after registry insert; on job completion unregisters exactly once and
@@ -143,7 +143,7 @@ public class AutosaveCoordinatorFactory(
 
         override fun cancel() {
             coordinator.cancel() // dispose the coordinator's loop (its job is a child of projectJob)
-            projectJob.cancel() // tear down the collector + complete the job → invokeOnCompletion
+            projectJob.cancel() // tear down the project scope + complete the job → invokeOnCompletion
         }
 
         override suspend fun awaitReleased() {
@@ -155,14 +155,18 @@ public class AutosaveCoordinatorFactory(
 /**
  * A live per-project autosave unit produced by [AutosaveCoordinatorFactory]. Narrow by design: push
  * edits with [markDirty], force a save with [flushNow], and tear down with [close] (graceful,
- * flush-then-cancel) or [cancel] (hard, no flush). [flushNow]/[close] return the save result to the
- * caller; background failures go to the [SaveFailureSink] instead.
+ * flush-then-cancel) or [cancel] (hard, no flush). [flushNow]/[close] also return the save result to
+ * the caller, but **every** completed save — background, [flushNow], and [close] — additionally drives
+ * the application-scoped [SaveFailureSink] through the coordinator's synchronous outcome listener
+ * (ADR-037): a durable success clears the project's failure, a failure reports it. The factory is the
+ * sole sink feeder; callers no longer route outcomes themselves.
  */
 public interface ProjectAutosaveHandle {
     /** Signal that the document changed; the actual save is debounced (ADR-021). */
     public fun markDirty()
 
-    /** Persist the latest dirty state now, returning the result to the caller (not the sink). */
+    /** Persist the latest dirty state now, returning the result to the caller. The outcome also drives
+     * the [SaveFailureSink] via the coordinator's outcome listener (ADR-037). */
     public suspend fun flushNow(): DataResult<Unit>
 
     /**

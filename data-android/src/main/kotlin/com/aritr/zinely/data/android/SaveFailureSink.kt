@@ -8,10 +8,11 @@ import kotlinx.coroutines.flow.update
 
 /**
  * The latest unresolved autosave failure for one project (ADR-026 §5). [failureCount] is the number
- * of failures **reported since the last [SaveFailureSink.clear]** for this project — the frozen
- * autosave coordinator emits failures only (no success events), so it is a since-last-clear tally,
- * not a strictly-consecutive one. It also counts only failures the collector actually observed: the
- * coordinator's `failures` flow drops oldest on overflow, so a dropped failure is not tallied here.
+ * of failures **reported since the last [SaveFailureSink.clear]** for this project. Since ADR-037 the
+ * coordinator's synchronous outcome listener `clear`s the project on every **durably-confirmed save**,
+ * so this is now a true **consecutive-failure** tally (it resets to zero the moment a save succeeds),
+ * not merely since-last-manual-dismiss. Each completed save delivers exactly one outcome (no lossy
+ * transport), so no failure goes untallied.
  */
 public data class SaveFailure(
     val projectId: String,
@@ -20,10 +21,12 @@ public data class SaveFailure(
 )
 
 /**
- * Application-scoped, in-memory sink for background autosave failures (ADR-026 §5). A later wiring
- * step collects the [AutosaveCoordinator][com.aritr.zinely.core.data.storage.AutosaveCoordinator]'s
- * `failures` flow into [report]; the editor observes [failures] to surface a "couldn't save" cue and
- * calls [clear] once the failure is resolved or dismissed.
+ * Application-scoped, in-memory sink for autosave failures (ADR-026 §5). The
+ * [AutosaveCoordinatorFactory][com.aritr.zinely.data.android.AutosaveCoordinatorFactory] is the sole
+ * feeder: it wires the [AutosaveCoordinator][com.aritr.zinely.core.data.storage.AutosaveCoordinator]'s
+ * synchronous outcome listener so a failed save calls [report] and a **durably-confirmed** save calls
+ * [clear] (ADR-037 silent-recovery clear). The editor observes [failures] to surface a "couldn't save"
+ * cue; the user can also dismiss it explicitly via [clear].
  *
  * **In-memory only:** failures do not survive process death. On relaunch the editor reloads the
  * durable `document.json`, which is itself the recovery (ADR-026 accepted limitation) — so no

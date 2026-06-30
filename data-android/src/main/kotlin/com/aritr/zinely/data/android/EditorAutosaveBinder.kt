@@ -2,7 +2,6 @@ package com.aritr.zinely.data.android
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.storage.DocumentSnapshotProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -23,10 +22,12 @@ import kotlinx.coroutines.withContext
  * [NonCancellable] so that once teardown begins it always finishes — even if [autosaveScope] is
  * cancelled mid-flight — and a [binderMutex] makes the teardown flush the final, non-concurrent write.
  *
- * **Failure routing (ADR-026 §5).** Background (debounced) failures already reach the [SaveFailureSink]
- * via the factory's collector; the binder additionally routes its *own* caller-owned flushes — the
- * lifecycle flush and the teardown flush — to the same sink (the editor has no other place to learn of
- * them). Foreground/direct [ProjectAutosaveHandle.flushNow] callers are unaffected.
+ * **Failure routing (ADR-037).** The binder no longer touches the [SaveFailureSink] at all. Every
+ * completed save — background, the lifecycle flush, and the teardown flush — drives the sink through
+ * the coordinator's single synchronous outcome listener (wired by [AutosaveCoordinatorFactory]), which
+ * runs under the writer lock *before* [ProjectAutosaveHandle.flushNow]/[ProjectAutosaveHandle.close]
+ * return. Because the teardown flush runs under [NonCancellable] here, its outcome is delivered to the
+ * sink before the project scope is cancelled — exactly once, with no lost failure and no double count.
  *
  * **Threading.** [observe]/[dispose] are main-thread (lifecycle) calls; flush work is never run on the
  * lifecycle thread — it is dispatched onto [autosaveScope] (the io dispatcher).
@@ -36,7 +37,6 @@ public class EditorAutosaveBinder(
     private val projectId: String,
     snapshotProvider: DocumentSnapshotProvider,
     private val autosaveScope: CoroutineScope,
-    private val failureSink: SaveFailureSink,
 ) {
     /** The single per-project handle (ADR-026 §2). Created once; never re-created across rotations. */
     private val handle: ProjectAutosaveHandle = factory.create(projectId, snapshotProvider)
@@ -92,7 +92,7 @@ public class EditorAutosaveBinder(
         autosaveScope.launch {
             binderMutex.withLock {
                 if (closed) return@withLock
-                reportIfFailure(handle.flushNow())
+                handle.flushNow() // outcome drives the sink via the coordinator listener (ADR-037)
             }
         }
     }
@@ -102,7 +102,8 @@ public class EditorAutosaveBinder(
      * ([ProjectAutosaveHandle.close]) and the [ProjectAutosaveHandle.awaitReleased] wait run under
      * [NonCancellable], so once begun the teardown always completes even if [autosaveScope] is cancelled
      * mid-flight; joining the returned job therefore guarantees the project id has left the factory
-     * registry (the reopen contract). Teardown flush failures are routed to the [SaveFailureSink].
+     * registry (the reopen contract). The teardown flush outcome reaches the [SaveFailureSink] via the
+     * coordinator's synchronous listener (ADR-037), before the project scope is cancelled.
      */
     public fun closeProject(): Job = synchronized(closeLock) {
         closeJob ?: run {
@@ -110,7 +111,7 @@ public class EditorAutosaveBinder(
             detachObserver() // release the lifecycle reference on explicit close, not only via dispose()
             autosaveScope.launch {
                 withContext(NonCancellable) {
-                    binderMutex.withLock { reportIfFailure(handle.close()) }
+                    binderMutex.withLock { handle.close() }
                     handle.awaitReleased()
                 }
             }.also { closeJob = it }
@@ -126,9 +127,5 @@ public class EditorAutosaveBinder(
         observer?.let { prior -> observedLifecycle?.removeObserver(prior) }
         observer = null
         observedLifecycle = null
-    }
-
-    private fun reportIfFailure(result: DataResult<Unit>) {
-        if (result is DataResult.Failure) failureSink.report(projectId, result.error)
     }
 }

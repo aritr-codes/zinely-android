@@ -127,13 +127,14 @@ internal class EditorViewModel @Inject constructor(
      * reported during a brief subscriber gap (e.g. an ON_STOP flush while backgrounded) is still reflected
      * the moment the host re-subscribes — the upstream is a hot `StateFlow`, so the latest value is kept.
      *
-     * **No auto-clear on recovery (accepted limitation).** The frozen `:core:data-storage` coordinator
-     * emits failures only — no per-edit *success* signal — so the editor cannot learn that a later save
-     * silently succeeded. The kind therefore stays set until the user dismisses it ([dismissSaveError]).
-     * (The sink also offers `clearAll` for a workspace/project switch, but the app is single-route today,
-     * so nothing invokes it yet — it is the mechanism for when a home/library screen lands.) This errs
-     * toward caution (never a false "Saved"); true recovery would need a `:core` success hook (out of
-     * bounds, as in ADR-034).
+     * **Auto-clear on silent recovery (ADR-037).** The coordinator's synchronous outcome listener now
+     * `clear`s this project from the sink on every **durably-confirmed** save (the factory is the sole
+     * feeder), so a failure that later succeeds — a background debounced save, a lifecycle flush, or a
+     * teardown flush — auto-dismisses this banner the instant work is safe again. The clear is honest:
+     * it only *removes* a resolved failure and never raises a positive "Saved ✨" (that cue is the
+     * separate [SavedSignal] path, untouched here), so a false positive is structurally impossible. The
+     * user can still dismiss manually via [dismissSaveError]. (The sink also offers `clearAll` for a
+     * workspace/project switch, but the app is single-route today, so nothing invokes it yet.)
      */
     val saveError: StateFlow<SaveErrorKind?> =
         saveFailureSink.failures

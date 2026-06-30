@@ -85,12 +85,13 @@ public const val SaveFailureDismissLabel: String = "Got it"
  * this calm line instead — and suppresses the "Saved ✨" chip — so the editor never claims success it
  * doesn't have.
  *
- * **Persistent, not transient.** Unlike the auto-dismissing "Saved ✨", a failure is information the
- * user may need to act on (e.g. free space), so it stays until the user taps [SaveFailureDismissLabel].
- * The frozen `:core:data-storage` coordinator emits no per-edit *success* signal, so the editor cannot
- * auto-clear on a later silent recovery — it errs toward caution (never false reassurance). The copy
- * names the retry honestly: the save reattempts on the user's next change (or a lifecycle flush), not via
- * an autonomous loop the system does not run.
+ * **Persistent, with honest silent-recovery auto-clear ([ADR-037](../DECISIONS.md#adr-037)).** Unlike
+ * the auto-dismissing "Saved ✨", a failure is information the user may need to act on (e.g. free space),
+ * so it stays until either the user taps [SaveFailureDismissLabel] **or** a later save is *durably
+ * confirmed* — at which point the coordinator's outcome listener clears the failure and this banner
+ * auto-dismisses. The clear only ever *removes* a resolved failure; it never raises a positive cue, so
+ * it can never produce a false "Saved ✨". The copy still names the retry honestly: the save reattempts
+ * on the user's next change (or a lifecycle flush), not via an autonomous loop the system does not run.
  *
  * **TalkBack: assertive.** A save failure carries asymmetric cost (possible loss of the latest edits),
  * so unlike the polite "Saved ✨" this is a [LiveRegionMode.Assertive] live region — it should not wait

@@ -14,7 +14,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -50,21 +49,23 @@ import java.io.IOException
  *     scope: CoroutineScope,                        // caller-owned (lifecycle stays outside this module)
  *     dispatcher: CoroutineDispatcher,             // injected; test uses a test dispatcher/scheduler
  *     config: AutosaveConfig = AutosaveConfig(),
+ *     outcomeListener: (DataResult<Unit>) -> Unit = {}, // ADR-037: synchronous per-attempt outcome seam
  * ) {
  *     public fun markDirty()                        // push: signal a change after the reducer commits
  *     public suspend fun flushNow(): DataResult<Unit> // ON_STOP / editor-exit / save-before-export
- *     public val failures: Flow<DataError>          // background (debounced) save failures, observable
  *     public fun cancel()                           // dispose internal timers/jobs
  * }
  * ```
  * Production wiring binds the saver to the repository: `DocumentSaver { doc -> repository.save(projectId, doc) }`.
  *
- * ## Invariants (ADR-021 / ADR-009)
+ * ## Invariants (ADR-021 / ADR-009 / ADR-037)
  * - One save at a time per coordinator (single writer); saves never interleave.
  * - Latest snapshot wins; snapshot is pulled at save start, not at markDirty().
  * - Dirty clears ONLY after a successful save of the latest known dirty state.
  * - flushNow() success ⇒ no known dirty edit remains unsaved at return time.
- * - Background failures are observable via [AutosaveCoordinator.failures]; failures keep it dirty/retryable.
+ * - Every completed save attempt (background **and** flushNow) notifies [outcomeListener] exactly once,
+ *   under the writer lock, in durable-write order; on success after the save generation advances.
+ *   Failures keep the coordinator dirty/retryable. Listener faults are isolated from the writer.
  * - CancellationException (external scope cancellation) propagates; it is never mapped to DataError.
  * - Android lifecycle ownership lives in the caller (`:data-android` / S4), not here.
  */
@@ -312,40 +313,119 @@ class AutosaveCoordinatorTest {
     }
 
     @Test
-    fun `a debounced background save failure is observable on the failures flow`() = runTest {
-        val errors = mutableListOf<DataError>()
+    fun `a debounced background save failure is delivered to the outcome listener`() = runTest {
+        val outcomes = mutableListOf<DataResult<Unit>>()
         val saver = DocumentSaver { _ -> DataResult.Failure(DataError.Io("boom")) }
-        val coordinator = coordinator(saver, { doc(1) })
-        // Collect on a foreground job so advanceUntilIdle drives delivery (backgroundScope is not advanced).
-        val collector = launch { coordinator.failures.collect { errors += it } }
-        runCurrent() // subscribe the collector before the emit
+        val coordinator = coordinator(saver, { doc(1) }, outcomeListener = { outcomes += it })
 
         coordinator.markDirty()
-        advanceUntilIdle() // debounce fires → background save fails → emits
+        advanceUntilIdle() // debounce fires → background save fails → notifies the listener
 
-        assertEquals(listOf<DataError>(DataError.Io("boom")), errors)
-        collector.cancel()
+        assertEquals(listOf<DataResult<Unit>>(DataResult.Failure(DataError.Io("boom"))), outcomes)
     }
 
     @Test
     fun `external scope cancellation is not converted into a DataError`() = runTest {
         val extScope = CoroutineScope(StandardTestDispatcher(testScheduler) + Job())
-        val errors = mutableListOf<DataError>()
+        val outcomes = mutableListOf<DataResult<Unit>>()
         val gate = CompletableDeferred<Unit>()
         val saver = DocumentSaver { _ -> gate.await(); DataResult.Success(Unit) }
-        val coordinator =
-            AutosaveCoordinator(saver, { doc(1) }, extScope, StandardTestDispatcher(testScheduler))
-        // Foreground collector so a stray emission would actually be observed (advanceUntilIdle drives it).
-        val collector = launch { coordinator.failures.collect { errors += it } }
-        runCurrent()
+        val coordinator = AutosaveCoordinator(
+            saver, { doc(1) }, extScope, StandardTestDispatcher(testScheduler),
+            outcomeListener = { outcomes += it },
+        )
 
         coordinator.markDirty()
         advanceUntilIdle() // background save in flight, awaiting the gate
         extScope.cancel() // external cancellation mid-save
         advanceUntilIdle()
 
-        assertTrue(errors.isEmpty()) // CancellationException is not mapped to a DataError
-        collector.cancel()
+        // CancellationException is not mapped to a DataError → no Failure outcome is emitted.
+        assertTrue(outcomes.none { it is DataResult.Failure })
+    }
+
+    // --- ADR-037: synchronous outcome listener ---
+
+    @Test
+    fun `a successful save notifies the listener with Success`() = runTest {
+        val outcomes = mutableListOf<DataResult<Unit>>()
+        val coordinator = coordinator(RecordingSaver(), { doc(1) }, outcomeListener = { outcomes += it })
+
+        coordinator.markDirty()
+        advanceUntilIdle()
+
+        assertEquals(listOf<DataResult<Unit>>(DataResult.Success(Unit)), outcomes)
+    }
+
+    @Test
+    fun `a successful save notifies once and leaves the coordinator clean`() = runTest {
+        // Observable contract: exactly one Success notification, and afterward the edit is persisted —
+        // a redundant flushNow is a no-op (no second repository call). The stricter invariant that the
+        // listener fires *after* savedGen advances within the lock is enforced by drain()'s structure
+        // (the success branch sets savedGen, then calls notifyOutcome) and is not separately observable
+        // through the public API without a production-only test hook (which TDD forbids).
+        val saver = RecordingSaver()
+        val outcomes = mutableListOf<DataResult<Unit>>()
+        val coordinator = coordinator(saver, { doc(1) }, outcomeListener = { outcomes += it })
+
+        coordinator.markDirty()
+        advanceUntilIdle()
+        assertEquals(listOf<DataResult<Unit>>(DataResult.Success(Unit)), outcomes)
+
+        val redundant = coordinator.flushNow() // clean → no-op
+        assertTrue(redundant is DataResult.Success)
+        assertEquals(1, saver.callCount) // nothing left to save: the edit was already persisted
+    }
+
+    @Test
+    fun `a listener fault does not corrupt the writer and the next save still runs`() = runTest {
+        val saver = RecordingSaver()
+        var current = doc(1)
+        val coordinator = coordinator(saver, { current }, outcomeListener = {
+            throw IllegalStateException("observer blew up")
+        })
+
+        coordinator.markDirty()
+        advanceUntilIdle()
+        assertEquals(1, saver.callCount) // first save completed despite the throwing listener
+
+        current = doc(2)
+        coordinator.markDirty()
+        advanceUntilIdle()
+        assertEquals(2, saver.callCount) // writer is not poisoned: the next save still runs
+        assertEquals(listOf(doc(1), doc(2)), saver.saved)
+    }
+
+    @Test
+    fun `the default no-op listener preserves existing behaviour`() = runTest {
+        // Back-compat: a coordinator built without the seam saves exactly as before.
+        val saver = RecordingSaver()
+        val coordinator = coordinator(saver, { doc(1) })
+
+        coordinator.markDirty()
+        advanceUntilIdle()
+
+        assertEquals(1, saver.callCount)
+    }
+
+    @Test
+    fun `bursty saves deliver exactly one ordered outcome per completed save with no loss`() = runTest {
+        val outcomes = mutableListOf<DataResult<Unit>>()
+        val saver = RecordingSaver()
+        var current = doc(0)
+        val coordinator = coordinator(saver, { current }, outcomeListener = { outcomes += it })
+
+        // Five discrete edit→flush cycles: each flushNow forces exactly one completed save.
+        repeat(5) { i ->
+            current = doc(i + 1)
+            coordinator.markDirty()
+            coordinator.flushNow()
+        }
+        advanceUntilIdle()
+
+        assertEquals(5, saver.callCount) // five completed saves
+        assertEquals(saver.callCount, outcomes.size) // exactly one outcome per completed save — none lost
+        assertTrue(outcomes.all { it is DataResult.Success })
     }
 }
 
@@ -369,9 +449,12 @@ private fun TestScope.coordinator(
     saver: DocumentSaver,
     snapshot: DocumentSnapshotProvider,
     config: AutosaveConfig = AutosaveConfig(),
+    outcomeListener: (DataResult<Unit>) -> Unit = {},
 ): AutosaveCoordinator {
     val scope = CoroutineScope(StandardTestDispatcher(testScheduler) + Job())
-    return AutosaveCoordinator(saver, snapshot, scope, StandardTestDispatcher(testScheduler), config)
+    return AutosaveCoordinator(
+        saver, snapshot, scope, StandardTestDispatcher(testScheduler), config, outcomeListener,
+    )
 }
 
 /** Records every saved document; returns success unless a [behavior] override is supplied. */
