@@ -3,7 +3,6 @@ package com.aritr.zinely.data.android.di
 import com.aritr.zinely.core.data.storage.DocumentSnapshotProvider
 import com.aritr.zinely.data.android.AutosaveCoordinatorFactory
 import com.aritr.zinely.data.android.EditorAutosaveBinder
-import com.aritr.zinely.data.android.SaveFailureSink
 import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
 
@@ -16,13 +15,16 @@ import javax.inject.Inject
  *
  * Constructor-injectable (`@Inject`), so Hilt provides it with no `@Provides` method. It is the only
  * `@Inject` constructor introduced by Step 7 — and it is a **new** class, never a frozen adapter.
+ *
+ * The binder no longer needs the [com.aritr.zinely.data.android.SaveFailureSink]: every save outcome
+ * reaches the sink through the coordinator's outcome listener, wired by [AutosaveCoordinatorFactory]
+ * (ADR-037).
  */
 public class EditorAutosaveBinderFactory @Inject constructor(
     private val factory: AutosaveCoordinatorFactory,
     // @param: pins the qualifier to the constructor value parameter (what Dagger reads) and opts out
     // of the KT-73255 default-target migration warning.
     @param:AutosaveScope private val autosaveScope: CoroutineScope,
-    private val failureSink: SaveFailureSink,
 ) {
     /**
      * Build the binder for an open project. Constructing the binder **eagerly registers** the project
@@ -33,5 +35,5 @@ public class EditorAutosaveBinderFactory @Inject constructor(
         projectId: String,
         snapshotProvider: DocumentSnapshotProvider,
     ): EditorAutosaveBinder =
-        EditorAutosaveBinder(factory, projectId, snapshotProvider, autosaveScope, failureSink)
+        EditorAutosaveBinder(factory, projectId, snapshotProvider, autosaveScope)
 }

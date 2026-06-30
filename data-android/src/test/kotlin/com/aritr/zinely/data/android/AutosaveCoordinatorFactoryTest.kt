@@ -31,14 +31,15 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Contract for the ADR-026 / PR-A Step 5 [AutosaveCoordinatorFactory]: the ownership boundary that
- * assembles one autosave unit per project (coordinator + repository saver + failure→sink collector)
- * and enforces a single active coordinator per project id (ADR-021 single writer). This is pure
- * composition over the frozen [AutosaveCoordinator][com.aritr.zinely.core.data.storage.AutosaveCoordinator];
- * lifecycle teardown policy and the NonCancellable orchestration stay in Step 6.
+ * assembles one autosave unit per project (coordinator + repository saver + the ADR-037 outcome
+ * listener that is the sole [SaveFailureSink] feeder) and enforces a single active coordinator per
+ * project id (ADR-021 single writer). This is pure composition over the frozen
+ * [AutosaveCoordinator][com.aritr.zinely.core.data.storage.AutosaveCoordinator]; lifecycle teardown
+ * policy and the NonCancellable orchestration stay in Step 6.
  *
  * Tests run on the virtual clock (a shared [TestCoroutineScheduler]) like the coordinator's own
  * suite: the factory's `@AutosaveScope` and io dispatcher are a [StandardTestDispatcher] over the
- * test scheduler, so `advanceUntilIdle` drives every debounce/cap timer and failure delivery.
+ * test scheduler, so `advanceUntilIdle` drives every debounce/cap timer and outcome delivery.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AutosaveCoordinatorFactoryTest {
@@ -87,7 +88,7 @@ class AutosaveCoordinatorFactoryTest {
         assertEquals(DataError.Io("x"), f.sink.failures.value.getValue("p2").error)
     }
 
-    // --- flushNow: returned to caller, never reported to the sink ---
+    // --- flushNow: returned to caller AND routed to the sink via the listener (ADR-037) ---
 
     @Test
     fun `flushNow persists the dirty snapshot synchronously and returns the repository result`() =
@@ -103,7 +104,9 @@ class AutosaveCoordinatorFactoryTest {
         }
 
     @Test
-    fun `flushNow failure is returned to the caller and not reported to the sink`() = runTest {
+    fun `flushNow failure is returned to the caller and also reported to the sink`() = runTest {
+        // ADR-037: the factory's outcome listener is the sole sink feeder and fires for flushNow too, so
+        // a caller-flush failure now reaches the sink directly (the binder no longer routes it).
         val f = Fixture(testScheduler)
         f.repo.result = { DataResult.Failure(DataError.Io("disk full")) }
         val handle = f.factory().create("proj1") { doc(1) }
@@ -112,7 +115,46 @@ class AutosaveCoordinatorFactoryTest {
         val result = handle.flushNow() // no advanceUntilIdle: only the direct flush path runs
 
         assertTrue(result.isFailure)
-        assertNull(f.sink.failures.value["proj1"]) // flushNow failures never traverse `failures`
+        assertEquals(DataError.Io("disk full"), f.sink.failures.value.getValue("proj1").error)
+    }
+
+    @Test
+    fun `a durable background success clears a prior failure (silent-recovery clear)`() = runTest {
+        val f = Fixture(testScheduler)
+        f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
+        val handle = f.factory().create("proj1") { doc(1) }
+
+        handle.markDirty()
+        advanceUntilIdle() // background save fails → reported
+        assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount)
+
+        f.repo.result = { DataResult.Success(Unit) }
+        handle.markDirty()
+        advanceUntilIdle() // next debounced save succeeds → listener clears
+
+        assertNull(f.sink.failures.value["proj1"]) // banner would auto-dismiss
+    }
+
+    @Test
+    fun `failureCount is a consecutive tally that resets on a durable success`() = runTest {
+        // fail, fail, success, fail ⇒ final count 1 (success cleared the run; the last fail starts fresh).
+        val f = Fixture(testScheduler)
+        var outcome: DataResult<Unit> = DataResult.Failure(DataError.Io("e"))
+        f.repo.result = { outcome }
+        val handle = f.factory().create("proj1") { doc(1) }
+
+        handle.markDirty(); handle.flushNow() // fail → count 1
+        handle.markDirty(); handle.flushNow() // fail → count 2
+        assertEquals(2, f.sink.failures.value.getValue("proj1").failureCount)
+
+        outcome = DataResult.Success(Unit)
+        handle.markDirty(); handle.flushNow() // success → cleared
+        assertNull(f.sink.failures.value["proj1"])
+
+        outcome = DataResult.Failure(DataError.Io("e"))
+        handle.markDirty(); handle.flushNow() // fail again → count 1, not 3 (flushNow saves synchronously;
+        // no advanceUntilIdle, so a parked background debounced save can't sneak in an extra report)
+        assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount)
     }
 
     // --- Ownership boundary: one active coordinator per project ---
@@ -133,7 +175,7 @@ class AutosaveCoordinatorFactoryTest {
         // The registry is the single-writer guard (ADR-021); under contention the synchronized
         // check-and-insert must admit exactly one winner and reject the rest. Not a runTest: real
         // threads race create(). The scope's StandardTestDispatcher is never advanced, so the
-        // per-handle collector coroutines stay parked — only the registry serialization is exercised.
+        // per-handle coordinator save loops stay parked — only the registry serialization is exercised.
         val dispatcher = StandardTestDispatcher(TestCoroutineScheduler())
         val scope = CoroutineScope(dispatcher + SupervisorJob())
         val factory =
@@ -211,7 +253,7 @@ class AutosaveCoordinatorFactoryTest {
     }
 
     @Test
-    fun `failure collection stops after the handle is cancelled`() = runTest {
+    fun `failure reporting stops after the handle is cancelled`() = runTest {
         val f = Fixture(testScheduler)
         f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
         val handle = f.factory().create("proj1") { doc(1) }
@@ -223,7 +265,7 @@ class AutosaveCoordinatorFactoryTest {
         handle.cancel()
         advanceUntilIdle()
 
-        handle.markDirty() // after cancel: collector is gone
+        handle.markDirty() // after cancel: the coordinator is disposed, so no further saves/outcomes
         advanceUntilIdle()
         assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount) // unchanged
     }
@@ -304,7 +346,8 @@ class AutosaveCoordinatorFactoryTest {
 
         handle.cancel() // teardown initiated; release is async (project job not yet complete)
 
-        // No advance/await: the project job's collector child has not been dispatched, so the job
+        // No advance/await: the project job's child coroutine (the coordinator save loop) has not been
+        // dispatched, so the job
         // is still cancelling (not completed) → unregister has not run → the id is still active.
         assertThrows(IllegalStateException::class.java) {
             factory.create("proj1") { doc(2) }

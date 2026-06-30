@@ -8,11 +8,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,6 +60,14 @@ public data class AutosaveConfig(
  * @param scope caller-owned scope; the coordinator launches its save loop on a child [SupervisorJob]
  *   of this scope, so the caller's cancellation cancels the coordinator (and [cancel] disposes the
  *   coordinator without touching the caller's scope).
+ * @param outcomeListener a pure, **synchronous** observer of every completed save attempt (ADR-037),
+ *   invoked inside [drain] under the single-writer lock — once per attempt, in durable-write order,
+ *   for both the background and [flushNow] paths; on success it fires only *after* the save generation
+ *   advances. It is the single ordered seam an adapter uses to drive failure-surfacing **and**
+ *   silent-recovery clearing (`Success` ⇒ a durable write landed). **Contract:** the listener must be
+ *   cheap, non-blocking, and **non-reentrant** — it must not call back into [markDirty]/[flushNow]
+ *   (it runs while the write lock is held). Its faults are isolated (see [notifyOutcome]) so a
+ *   misbehaving observer can never corrupt the writer. Defaults to a no-op (back-compatible).
  */
 public class AutosaveCoordinator(
     private val saver: DocumentSaver,
@@ -71,6 +75,7 @@ public class AutosaveCoordinator(
     scope: CoroutineScope,
     dispatcher: CoroutineDispatcher,
     private val config: AutosaveConfig = AutosaveConfig(),
+    private val outcomeListener: (DataResult<Unit>) -> Unit = {},
 ) {
     /** Child of the caller's job: cancelled by caller-scope cancellation or by [cancel]; never cancels the caller. */
     private val job = SupervisorJob(scope.coroutineContext[Job])
@@ -86,14 +91,6 @@ public class AutosaveCoordinator(
 
     /** Serializes every actual save so the background loop and [flushNow] never write concurrently. */
     private val writeMutex = Mutex()
-
-    private val _failures = MutableSharedFlow<DataError>(
-        extraBufferCapacity = 64,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
-
-    /** Background (debounced) save failures. [flushNow] returns its failure directly instead. */
-    public val failures: Flow<DataError> = _failures.asSharedFlow()
 
     init {
         coordinatorScope.launch { consume() }
@@ -139,8 +136,7 @@ public class AutosaveCoordinator(
                     // a new edit arrived inside the debounce gap → reset and keep waiting
                 }
             }
-            val result = drain(loopUntilClean = false)
-            if (result is DataResult.Failure) _failures.tryEmit(result.error)
+            drain(loopUntilClean = false) // outcomes (success + failure) flow via [outcomeListener]
         }
     }
 
@@ -149,6 +145,11 @@ public class AutosaveCoordinator(
      * start (latest wins) and advances [savedGen] only on success (a failure stays dirty/retryable).
      * When [loopUntilClean], keeps saving until no newer edit remains (used by [flushNow]); the
      * background path saves once and lets a fresh tick reschedule any edit made during the save.
+     *
+     * Every completed save attempt notifies [outcomeListener] (ADR-037) once, while the writer lock is
+     * still held, so emission order equals durable-write order for both paths; on success the listener
+     * fires *after* [savedGen] advances, so an observer sees a coherent "this generation is persisted"
+     * state.
      */
     private suspend fun drain(loopUntilClean: Boolean): DataResult<Unit> = writeMutex.withLock {
         var last: DataResult<Unit> = DataResult.Success(Unit)
@@ -164,13 +165,35 @@ public class AutosaveCoordinator(
                 DataResult.Failure(DataError.Unknown(e.message ?: "autosave failed", e))
             }
             last = result
-            if (result is DataResult.Success) {
-                savedGen.set(gen) // clear the edit we captured (a newer edit re-dirties via dirtyGen)
-                if (!loopUntilClean) break
-            } else {
-                break // leave savedGen behind so the edit stays dirty and retryable
+            when (result) {
+                is DataResult.Success -> {
+                    savedGen.set(gen) // clear the edit we captured (a newer edit re-dirties via dirtyGen)
+                    notifyOutcome(result) // AFTER savedGen advances: observers see a persisted state
+                    if (!loopUntilClean) break
+                }
+                is DataResult.Failure -> {
+                    notifyOutcome(result) // leave savedGen behind so the edit stays dirty and retryable
+                    break
+                }
             }
         }
         last
+    }
+
+    /**
+     * Notify [outcomeListener] of one completed save attempt, fault-isolated (ADR-037 §3). Mirrors the
+     * save loop's own bar — catch non-fatal [Exception], **re-throw [CancellationException]** — so a
+     * misbehaving observer can neither abort the in-flight save nor leave [writeMutex] poisoned, while
+     * a fatal VM `Error` and structured cancellation still propagate. (Swallowing [Throwable] would be a
+     * *weaker* bar than the save call itself.)
+     */
+    private fun notifyOutcome(result: DataResult<Unit>) {
+        try {
+            outcomeListener(result)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            // observer fault is contained; the writer is never corrupted
+        }
     }
 }

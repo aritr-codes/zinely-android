@@ -26,6 +26,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -104,10 +105,10 @@ class EditorAutosaveBinderTest {
         assertEquals(listOf("proj1" to doc(1)), f.repo.saves)
     }
 
-    // --- Failure routing: lifecycle/teardown flush failures → sink ---
+    // --- Failure routing + silent-recovery clear: outcomes reach the sink via the coordinator listener (ADR-037) ---
 
     @Test
-    fun `a lifecycle flush failure is reported to the sink`() = runTest {
+    fun `a lifecycle flush failure reaches the sink (via the coordinator listener)`() = runTest {
         val f = BinderFixture(testScheduler)
         f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
         val binder = f.binder()
@@ -118,8 +119,60 @@ class EditorAutosaveBinderTest {
         lifecycle.emit(Lifecycle.Event.ON_PAUSE)
         runCurrent()
 
+        // The binder no longer reports directly; the flush outcome drives the sink through the listener.
         val failure = f.sink.failures.value.getValue("proj1")
         assertEquals(DataError.Io("boom"), failure.error)
+    }
+
+    @Test
+    fun `a lifecycle flush success clears a prior failure (silent recovery)`() = runTest {
+        val f = BinderFixture(testScheduler)
+        f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
+        val binder = f.binder()
+        val lifecycle = FakeLifecycle()
+        binder.observe(lifecycle)
+
+        binder.markDirty()
+        advanceUntilIdle() // background save fails → sink reports
+        assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount)
+
+        f.repo.result = { DataResult.Success(Unit) }
+        binder.markDirty()
+        lifecycle.emit(Lifecycle.Event.ON_PAUSE)
+        runCurrent() // lifecycle flush succeeds → listener clears the project
+
+        assertNull(f.sink.failures.value["proj1"]) // banner would auto-dismiss
+    }
+
+    @Test
+    fun `a teardown flush success clears a prior failure (no stale-on-reopen)`() = runTest {
+        val f = BinderFixture(testScheduler)
+        f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
+        val binder = f.binder()
+
+        binder.markDirty()
+        advanceUntilIdle() // background save fails → sink reports
+        assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount)
+
+        f.repo.result = { DataResult.Success(Unit) }
+        binder.markDirty()
+        binder.closeProject() // teardown flush succeeds under NonCancellable → listener clears BEFORE cancel
+        advanceUntilIdle()
+
+        assertNull(f.sink.failures.value["proj1"]) // cleared synchronously, never lost to teardown
+    }
+
+    @Test
+    fun `a teardown flush failure is reported exactly once`() = runTest {
+        val f = BinderFixture(testScheduler)
+        f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
+        val binder = f.binder()
+
+        binder.markDirty()
+        binder.closeProject() // teardown flush fails → reported once via the listener (no double-count)
+        advanceUntilIdle()
+
+        assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount)
     }
 
     // --- Teardown: idempotent, exactly one flush ---
@@ -212,7 +265,7 @@ class EditorAutosaveBinderTest {
             val repo = GatedRepository()
             val sink = InMemorySaveFailureSink()
             val factory = AutosaveCoordinatorFactory(scope, dispatcher, repo, sink, AutosaveConfig())
-            val binder = EditorAutosaveBinder(factory, "proj1", { doc(1) }, scope, sink)
+            val binder = EditorAutosaveBinder(factory, "proj1", { doc(1) }, scope)
 
             binder.markDirty()
             val job = binder.closeProject()
@@ -234,7 +287,7 @@ class EditorAutosaveBinderTest {
             val repo = RecordingRepository()
             val sink = InMemorySaveFailureSink()
             val factory = AutosaveCoordinatorFactory(scope, dispatcher, repo, sink, AutosaveConfig())
-            val binder = EditorAutosaveBinder(factory, "proj1", { doc(1) }, scope, sink)
+            val binder = EditorAutosaveBinder(factory, "proj1", { doc(1) }, scope)
 
             binder.markDirty()
             scope.cancel() // autosave scope dies before teardown is launched
@@ -371,7 +424,7 @@ private class BinderFixture(scheduler: TestCoroutineScheduler) {
     fun binder(
         projectId: String = "proj1",
         provider: DocumentSnapshotProvider = DocumentSnapshotProvider { doc(1) },
-    ): EditorAutosaveBinder = EditorAutosaveBinder(factory, projectId, provider, scope, sink)
+    ): EditorAutosaveBinder = EditorAutosaveBinder(factory, projectId, provider, scope)
 }
 
 /** Records every save with its project id; [result] decides each call's outcome (default success). */

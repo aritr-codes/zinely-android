@@ -38,7 +38,7 @@ class EditorAutosaveBinderFactoryTest {
         val scope = CoroutineScope(dispatcher + SupervisorJob())
         val coordinatorFactory =
             AutosaveCoordinatorFactory(scope, dispatcher, RecordingRepository(), InMemorySaveFailureSink(), AutosaveConfig())
-        val binderFactory = EditorAutosaveBinderFactory(coordinatorFactory, scope, InMemorySaveFailureSink())
+        val binderFactory = EditorAutosaveBinderFactory(coordinatorFactory, scope)
 
         val binder = binderFactory.create("proj1", DocumentSnapshotProvider { doc(1) })
         assertNotNull(binder)
