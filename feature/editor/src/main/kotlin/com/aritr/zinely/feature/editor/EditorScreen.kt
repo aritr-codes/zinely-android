@@ -24,6 +24,7 @@ import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
+import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextElement
@@ -190,10 +191,17 @@ public fun EditorScreen(
                 // solely in the persistent supply tray below, so "Add a photo" / "Add words" never appear
                 // twice at once. The overlay just invites + points to the shelf; it disappears the instant
                 // the page gets an element. Non-interactive, so touches fall through to the gesture surface.
-                val currentPageEmpty = uiState.document.pages[uiState.currentPageIndex].elements.isEmpty()
+                val currentPage = uiState.document.pages[uiState.currentPageIndex]
+                val currentPageEmpty = currentPage.elements.isEmpty()
                 if (currentPageEmpty && !editing) {
+                    // First page keeps the warm welcome; a later blank page gets the lighter "fresh page"
+                    // line (VOICE empty states). Only the headline differs — same invitation-only overlay.
+                    // "First" is the page's own identity (front cover, or index 0), not just the cursor, so
+                    // it stays correct if roles ever diverge from list position (Codex review); today's
+                    // all-INTERIOR docs fall back to index 0.
                     EditorEmptyState(
                         modifier = Modifier.align(Alignment.Center),
+                        firstPage = currentPage.role == PageRole.FRONT_COVER || currentPage.index == 0,
                     )
                 }
 

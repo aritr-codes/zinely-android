@@ -81,7 +81,10 @@ flowchart TD
   buttons**. The tray's **Add a photo** (coral primary) / **Add words** are the single, thumb-zone home
   for the add actions, so they're never duplicated on a blank page (DESIGN-RULES R3/R7).
 - **Emotional goal:** "Let's make something cute ✨" — safe to try, no instructions needed; the subcopy
-  points to the supplies below ("Grab a photo or a few words from the supplies below.").
+  points to the supplies below ("Grab a photo or a few words from the supplies below."). The headline
+  follows the page position ([VOICE empty states](VOICE.md#empty-states)): the first page keeps that
+  welcome; a later blank page uses the lighter "A fresh page. What goes here?" variant (same
+  invitation-only rule, same subcopy/cue — only the headline changes).
 - **Notes:** appears whenever the current page has no elements and no text session is open;
   disappears the instant the page gets content. Non-interactive (touches fall through to the canvas).
   Carries a subtle, decorative **downward cue** toward the supply tray (ADR-033 follow-up) — static

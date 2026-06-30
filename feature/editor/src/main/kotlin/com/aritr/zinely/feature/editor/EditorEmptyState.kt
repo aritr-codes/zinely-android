@@ -33,6 +33,12 @@ public const val AddWordsActionLabel: String = "Add words"
 /** Test tag on the decorative downward cue that ties the invitation to the supply shelf below. */
 public const val EmptyStateTrayCueTag: String = "empty-state-tray-cue"
 
+/** Headline for the **first** blank page — the warm welcome (VOICE empty states). */
+public const val FirstPageInvitationHeadline: String = "Let's make something cute ✨"
+
+/** Headline for a **later** blank page — the lighter "fresh page" variant (VOICE empty states). */
+public const val LaterPageInvitationHeadline: String = "A fresh page. What goes here?"
+
 /**
  * The cozy first-run invitation (docs/design/DESIGN-LANGUAGE.md §8/§9) — shown on the canvas when the
  * current page has no elements. It turns a blank sheet (which reads as a void) into an encouraging
@@ -48,11 +54,19 @@ public const val EmptyStateTrayCueTag: String = "empty-state-tray-cue"
  * announced, and the actionable, labelled controls are the tray's (each a ≥48dp `Role.Button`). Colours
  * come from the theme, so it inherits the zine identity.
  *
+ * The headline follows the page's position (VOICE empty states): the **first** page keeps the warm
+ * welcome ([FirstPageInvitationHeadline]); a **later** blank page uses the lighter "fresh page" variant
+ * ([LaterPageInvitationHeadline]). Only the headline changes — the subcopy, cue, and invitation-only
+ * rule are identical, so the tray still solely owns the add actions on every blank page.
+ *
  * @param modifier sizing/placement applied by the host (typically centered over the page).
+ * @param firstPage whether the current page is the first page of the zine — selects the headline copy.
+ *   Defaults to `true` (the welcoming line) for standalone previews/tests.
  */
 @Composable
 public fun EditorEmptyState(
     modifier: Modifier = Modifier,
+    firstPage: Boolean = true,
 ) {
     val colors = MaterialTheme.colorScheme
     Column(
@@ -71,7 +85,7 @@ public fun EditorEmptyState(
         }
 
         Text(
-            text = "Let's make something cute ✨",
+            text = if (firstPage) FirstPageInvitationHeadline else LaterPageInvitationHeadline,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = colors.onSurface,

@@ -48,6 +48,27 @@ class EditorEmptyStateTest {
     }
 
     @Test
+    fun first_blank_page_shows_the_welcoming_line() {
+        // VOICE empty states: the first page keeps the warm welcome.
+        composeRule.setContent {
+            MaterialTheme { EditorEmptyState(firstPage = true) }
+        }
+        composeRule.onNodeWithText(FirstPageInvitationHeadline, substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText(LaterPageInvitationHeadline, substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun later_blank_page_shows_the_fresh_page_line() {
+        // VOICE empty states: a later blank page uses the lighter "fresh page" variant (same
+        // invitation-only rule — the tray still owns the add actions).
+        composeRule.setContent {
+            MaterialTheme { EditorEmptyState(firstPage = false) }
+        }
+        composeRule.onNodeWithText(LaterPageInvitationHeadline, substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText(FirstPageInvitationHeadline, substring = true).assertDoesNotExist()
+    }
+
+    @Test
     fun shows_a_decorative_cue_toward_the_supplies_below() {
         // Orientation polish (ADR-033 follow-up): a subtle cue ties the invitation to the supply shelf
         // below. It lives inside the overlay, so it's present exactly when the blank-page overlay is, and
