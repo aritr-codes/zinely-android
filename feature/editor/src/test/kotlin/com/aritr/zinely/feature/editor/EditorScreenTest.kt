@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.editor.Interaction
@@ -56,6 +57,25 @@ class EditorScreenTest {
                     format = ZineFormat.SINGLE_SHEET_8,
                     paperSize = PaperSize.LETTER,
                     pages = listOf(Page(index = 0, role = PageRole.INTERIOR)),
+                ),
+            ),
+            scope, Dispatchers.Unconfined, runner,
+        )
+    }
+
+    private fun twoPageStore(): EditorStore {
+        val runner = object : EditorEffectRunner {
+            override fun run(effect: Effect, dispatch: (Intent) -> Unit) = Unit
+        }
+        return EditorStore(
+            EditorModel(
+                document = ZineDocument(
+                    format = ZineFormat.SINGLE_SHEET_8,
+                    paperSize = PaperSize.LETTER,
+                    pages = listOf(
+                        Page(index = 0, role = PageRole.INTERIOR),
+                        Page(index = 1, role = PageRole.INTERIOR),
+                    ),
                 ),
             ),
             scope, Dispatchers.Unconfined, runner,
@@ -168,6 +188,47 @@ class EditorScreenTest {
         )
         composeRule.onNodeWithTag(SupplyAddPhotoTag).assertIsDisplayed()
         composeRule.onNodeWithTag(SupplyAddWordsTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun the_empty_state_copy_follows_the_current_page_position() {
+        // VOICE empty states: the host threads the current page position so page 0 gets the welcoming
+        // line and any later blank page gets the lighter "fresh page" variant. The overlay stays
+        // invitation-only either way (tray owns the actions); only the headline changes.
+        val store = twoPageStore()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(FirstPageInvitationHeadline, substring = true).assertIsDisplayed()
+
+        store.dispatch(Intent.GoToPage(1))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(LaterPageInvitationHeadline, substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText(FirstPageInvitationHeadline, substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun a_front_cover_page_gets_the_welcoming_line() {
+        // The "first page" signal is the page's identity, not just the cursor: a role-typed FRONT_COVER
+        // gets the warm welcome, so future role-aware documents don't regress to the "fresh page" line.
+        val store = EditorStore(
+            EditorModel(
+                document = ZineDocument(
+                    format = ZineFormat.SINGLE_SHEET_8,
+                    paperSize = PaperSize.LETTER,
+                    pages = listOf(
+                        Page(index = 0, role = PageRole.FRONT_COVER),
+                        Page(index = 1, role = PageRole.INTERIOR),
+                    ),
+                ),
+            ),
+            scope, Dispatchers.Unconfined,
+            object : EditorEffectRunner {
+                override fun run(effect: Effect, dispatch: (Intent) -> Unit) = Unit
+            },
+        )
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText(FirstPageInvitationHeadline, substring = true).assertIsDisplayed()
     }
 
     @Test
