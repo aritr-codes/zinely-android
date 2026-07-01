@@ -186,6 +186,9 @@ public fun ExportScreen(
 
         TextButton(
             onClick = onFoldHelp,
+            // Disabled mid-render so the user can't navigate away while an export is in flight and then
+            // return to a surprise share of the finished file (Codex RF2).
+            enabled = !busy,
             modifier = Modifier.padding(bottom = 16.dp),
         ) { Text("How do I fold it?") }
     }

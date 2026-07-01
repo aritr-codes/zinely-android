@@ -30,3 +30,14 @@ internal data class PreviewRoute(val projectId: String)
  */
 @Serializable
 internal data class ExportRoute(val projectId: String)
+
+/**
+ * The type-safe route for the [CompletionScreen][com.aritr.zinely.feature.editor.CompletionScreen] ·
+ * fold steps (S5 step 3, [ADR-040](../../../../../../docs/DECISIONS.md#adr-040)) — the payoff peak. Carries
+ * the same [projectId] so the completion host re-fetches the *editor's* back-stack entry and reuses the
+ * shipped export seam (same shared-VM reason as [ExportRoute] / [PreviewRoute]: the single-writer autosave
+ * factory, ADR-026, forbids a second VM). Reached today from Export's "How do I fold it?"; the auto
+ * post-export landing is deferred (ADR-040).
+ */
+@Serializable
+internal data class CompletionRoute(val projectId: String)

@@ -188,7 +188,7 @@ flowchart TD
 
 ## 6. Export pipeline
 
-> **⚠️ Current implementation (checkout state).** The **user-facing export flow ships** (S5 step 2, [ADR-039](DECISIONS.md#adr-039)): a `:render-android` `SheetComposer` composites all 8 imposed panels onto ONE sheet over the shared `CanvasReplayer` (reusing `PdfPageRenderer`/`RasterPageRenderer`'s scale seams, not a parallel path), a `:app` `ZineExporter` runs it off-main and writes a vector **PDF** + a 300 DPI **PNG** to the export cache, and `ExportScreen` shares each via a scoped `FileProvider` `content://` URI (`ACTION_SEND`). **Still deferred:** the on-sheet calibration ruler ([ADR-012](DECISIONS.md#adr-012) — the single-sheet-8 grid tiles edge-to-edge, no margin), the fold-steps **Completion** screen, `PrintManager`, and `MediaStore`/`ACTION_CREATE_DOCUMENT` "save a copy". The pipeline below is the accepted design; the shipped path realises its export half.
+> **⚠️ Current implementation (checkout state).** The **user-facing export flow ships** (S5 step 2, [ADR-039](DECISIONS.md#adr-039)): a `:render-android` `SheetComposer` composites all 8 imposed panels onto ONE sheet over the shared `CanvasReplayer` (reusing `PdfPageRenderer`/`RasterPageRenderer`'s scale seams, not a parallel path), a `:app` `ZineExporter` runs it off-main and writes a vector **PDF** + a 300 DPI **PNG** to the export cache, and `ExportScreen` shares each via a scoped `FileProvider` `content://` URI (`ACTION_SEND`). The fold-steps **Completion** screen also ships (S5 step 3, [ADR-040](DECISIONS.md#adr-040)): it reuses the *same* export seam (no parallel path) and maps the finished file to `ACTION_SEND` (share) or `ACTION_VIEW` (open). **Still deferred:** the on-sheet calibration ruler ([ADR-012](DECISIONS.md#adr-012) — the single-sheet-8 grid tiles edge-to-edge, no margin), Completion's **auto post-export landing** (reached from Export's fold-help today), `PrintManager`, and `MediaStore`/`ACTION_CREATE_DOCUMENT` "save a copy". The pipeline below is the accepted design; the shipped path realises its export half.
 
 ```mermaid
 flowchart TD
@@ -358,7 +358,7 @@ flowchart BT
     render["core:render<br/>S3 ✅ · ADR-027 (pure tier on main)"]
     ra["render-android<br/>S3 ✅ · ADR-028 (Android tier on main)"]
     editor["feature:editor (MVI)<br/>S4 ✅ surface on main · mounted in app · ADR-029"]
-    export["export<br/>S5 🟨 (PDF/PNG + share shipped; Completion + ruler deferred)"]
+    export["export<br/>S5 🟨 (PDF/PNG + share + Completion shipped; ruler + auto-landing deferred)"]
     app["app shell / navigation<br/>✅ editor mounted (fixed default project)"]
 
     imp --> model

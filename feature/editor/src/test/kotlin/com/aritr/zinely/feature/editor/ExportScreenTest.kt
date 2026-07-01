@@ -89,9 +89,11 @@ class ExportScreenTest {
     }
 
     @Test
-    fun cards_disable_while_a_render_is_in_flight() {
+    fun cards_and_fold_help_disable_while_a_render_is_in_flight() {
         setExport(working = ExportKind.PDF)
         composeRule.onNodeWithTag(ExportPdfCardTestTag).assertIsNotEnabled()
         composeRule.onNodeWithTag(ExportPngCardTestTag).assertIsNotEnabled()
+        // Fold-help disabled mid-render so the user can't leave and return to a surprise share (RF2).
+        composeRule.onNodeWithText("How do I fold it?").performScrollTo().assertIsNotEnabled()
     }
 }
