@@ -29,7 +29,7 @@ flowchart TD
     TRAY --> PICK["Photo picker (system) ✅"]
     TRAY --> STK["Sticker picker 🔭"]
     ED --> TPL["Template picker 🔭"]
-    ED --> PRE["Preview 🔭"]
+    ED --> PRE["Preview ✅"]
     PRE --> EXP["Export · Print & fold 🔭"]
     EXP --> DONE["Completion · fold steps 🔭"]
     ED --> SET["Settings 🔭"]
@@ -135,12 +135,18 @@ flowchart TD
 - **Notes:** templates are scaffolding, not lock-in; everything stays editable.
 
 ### Preview
-- **Status:** 🔭 deferred (pre-export).
+- **Status:** ✅ shipped (S5 step 1 — the reader's-booklet screen; **Print & fold** is a stubbed
+  next-step seam, a warm "coming soon", until the export flow lands).
 - **Purpose:** see the whole zine as a folded booklet before printing.
 - **Primary action:** **Print & fold** → Export.
 - **Secondary:** page through the booklet; back to editing.
 - **Emotional goal:** pride — "I made this."
-- **Notes:** shows the *reader's* booklet, not the imposition sheet (that's an export detail).
+- **Notes:** shows the *reader's* booklet (`document.pages` in reading order), not the imposition sheet
+  (that's an export detail). Renders each page through the **same** `SceneRenderer` → `PagePreview`
+  path the editor canvas and page-strip use — no parallel rendering model. Reached via a top "Preview"
+  entry on the editor; the preview host **shares the editor's `EditorViewModel`** (fetched from the
+  editor's back-stack entry) so it reflects the live document and never constructs a second
+  single-writer VM ([ADR-026](../DECISIONS.md#adr-026)/[ADR-030](../DECISIONS.md#adr-030)).
 
 ### Export · Print & fold
 - **Status:** 🔭 deferred (S5 — the export flow).
@@ -175,7 +181,8 @@ flowchart TD
 |---|---|---|
 | Editor, Page navigator, Photo picker | S4 / `0.4.0` | ✅ |
 | Empty-state, Supply tray | `SUX` / `0.5.0` | 🔂 / 🔭 |
-| Preview, Export, Completion | S5 / `0.6.0`+ | 🔭 |
+| Preview | S5 / `0.6.0`+ | ✅ (Print & fold stubbed) |
+| Export, Completion | S5 / `0.6.0`+ | 🔭 |
 | Welcome | needs only a **first-run flag** (local prefs) — *not* Room-gated | 🔭 |
 | Home / My zines | needs the **Room project layer** + shelf **thumbnails** | 🔭 |
 | Settings | needs only **local prefs** (DataStore) — *not* Room-gated | 🔭 |

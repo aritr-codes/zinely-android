@@ -1,14 +1,18 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,6 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aritr.zinely.core.editor.EditorUiState
@@ -38,6 +44,9 @@ import kotlinx.coroutines.flow.emptyFlow
 
 /** Test tag on the editor canvas Box (the measured, gesture-bearing area). */
 public const val EditorCanvasTestTag: String = "editor-canvas"
+
+/** Test tag on the top "Preview" entry point (shown only when the host provides an `onPreview`). */
+public const val EditorPreviewActionTestTag: String = "editor-preview-action"
 
 /**
  * The S4 editor host (ADR-029 §5, §6) — the screen that assembles every interaction layer over one
@@ -93,6 +102,9 @@ public const val EditorCanvasTestTag: String = "editor-canvas"
  * @param onRetrySaveError invoked when the user taps the failure banner's "Try now" ([ADR-038](../DECISIONS.md#adr-038))
  *   — the app forces an immediate save; the outcome flows through the ADR-037 path (clears on success,
  *   re-reports on failure). Defaults to a no-op.
+ * @param onPreview invoked by the "Preview" entry point (S5 step 1) to open the reader's-booklet
+ *   [PreviewScreen]. `null` (the default) hides the affordance entirely, so a screen without a preview
+ *   destination (previews/tests) is unchanged; the app passes a navigate-to-preview action.
  */
 @Composable
 public fun EditorScreen(
@@ -106,6 +118,7 @@ public fun EditorScreen(
     saveError: SaveErrorKind? = null,
     onDismissSaveError: () -> Unit = {},
     onRetrySaveError: () -> Unit = {},
+    onPreview: (() -> Unit)? = null,
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
@@ -164,6 +177,23 @@ public fun EditorScreen(
     }
 
     Column(modifier = modifier) {
+        // The "Preview" entry to the reader's-booklet PreviewScreen (S5 step 1). A quiet top-end nav
+        // action (not a thumb-zone craft supply — it advances the journey, it doesn't place content);
+        // shown only when the host supplies a destination, so the editor's tested layout is unchanged
+        // without one.
+        if (onPreview != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(
+                    onClick = onPreview,
+                    modifier = Modifier
+                        .testTag(EditorPreviewActionTestTag)
+                        .semantics { contentDescription = "Preview" },
+                ) { Text("Preview  ›") }
+            }
+        }
         BoxWithConstraints(
             modifier = Modifier
                 .weight(1f)

@@ -10,3 +10,13 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 internal data class EditorRoute(val projectId: String)
+
+/**
+ * The type-safe route for the reader's-booklet [PreviewScreen] (S5 step 1). Carries the same [projectId]
+ * as the [EditorRoute] it was opened from, so the preview host can re-fetch the *editor's* back-stack
+ * entry and share its already-constructed `EditorViewModel` — never a second one. That sharing is not a
+ * nicety: the VM eagerly registers its `projectId` with the single-writer autosave factory (ADR-026), so
+ * a second VM for the same project would be rejected. The preview therefore renders the live editor store.
+ */
+@Serializable
+internal data class PreviewRoute(val projectId: String)

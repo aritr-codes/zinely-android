@@ -11,23 +11,29 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import androidx.compose.runtime.DisposableEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aritr.zinely.feature.editor.EditorScreen
+import com.aritr.zinely.feature.editor.PreviewScreen
 
 /**
- * The single-Activity navigation graph (ADR-030 §1). One destination this increment — the editor on a
- * fixed `"default"` project — reached by type-safe [EditorRoute]. Adding a home/library screen later is
- * a new `composable<…>` + a changed start destination, nothing structural.
+ * The single-Activity navigation graph (ADR-030 §1). Two destinations: the editor on a fixed `"default"`
+ * project ([EditorRoute], the start), and the reader's-booklet [PreviewRoute] it opens (S5 step 1). Both
+ * are type-safe; adding a home/library screen later is a new `composable<…>` + a changed start
+ * destination, nothing structural.
  */
 @Composable
 internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
@@ -37,8 +43,70 @@ internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
         startDestination = EditorRoute(projectId = "default"),
         modifier = modifier,
     ) {
-        composable<EditorRoute> {
-            EditorDestination()
+        composable<EditorRoute> { entry ->
+            val route = entry.toRoute<EditorRoute>()
+            EditorDestination(
+                onPreview = { navController.navigate(PreviewRoute(route.projectId)) },
+            )
+        }
+        composable<PreviewRoute> { entry ->
+            val route = entry.toRoute<PreviewRoute>()
+            // Share the editor's already-constructed VM (see [PreviewRoute]): fetch the editor's live
+            // back-stack entry (it stays on the stack under the preview) and resolve the SAME
+            // EditorViewModel against it — never a second instance for this project (ADR-026 single-writer).
+            val editorEntry = remember(route.projectId) {
+                navController.getBackStackEntry(EditorRoute(route.projectId))
+            }
+            PreviewDestination(
+                viewModel = hiltViewModel(editorEntry),
+                onBack = { navController.popBackStack() },
+            )
+        }
+    }
+}
+
+/**
+ * The reader's-booklet preview host (S5 step 1). Renders the *shared* editor store's live document as a
+ * paged booklet ([PreviewScreen]) — reading order, not the imposition sheet. Print & fold lands in the
+ * next S5 step; until then it surfaces a warm "coming soon" so the primary action still feels real.
+ */
+@Composable
+private fun PreviewDestination(viewModel: EditorViewModel, onBack: () -> Unit) {
+    val boot by viewModel.bootState.collectAsStateWithLifecycle()
+    when (val state = boot) {
+        is EditorBootState.Ready -> {
+            val uiState by state.store.uiState.collectAsStateWithLifecycle()
+            val context = LocalContext.current
+            PreviewScreen(
+                pages = uiState.document.pages,
+                pageSizePt = state.pageSizePt,
+                defaults = uiState.document.defaults,
+                onBack = onBack,
+                onPrintAndFold = {
+                    Toast.makeText(context, "Print & fold is coming soon ✨", Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier.fillMaxSize(),
+                imageBytes = state.imageBytes,
+            )
+        }
+        // Loading is a transient window (e.g. re-bootstrapping after process-death restore) — spin.
+        EditorBootState.Loading -> Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) { CircularProgressIndicator() }
+
+        // A failed reopen must not strand the preview on an infinite spinner (Codex Required Fix): show
+        // the honest message and a way back to the editor, mirroring EditorDestination's Error branch.
+        is EditorBootState.Error -> Box(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(state.message)
+                androidx.compose.material3.TextButton(onClick = onBack) { Text("‹  Back to editing") }
+            }
         }
     }
 }
@@ -49,7 +117,7 @@ internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
  * (b) drains a11y announcements to the platform live region — neither belongs in the VM (Codex rec 1).
  */
 @Composable
-private fun EditorDestination() {
+private fun EditorDestination(onPreview: () -> Unit) {
     val viewModel: EditorViewModel = hiltViewModel()
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
 
@@ -126,6 +194,7 @@ private fun EditorDestination() {
                 // "Try now" (ADR-038): force an immediate save; the outcome flows through the ADR-037
                 // path (clears the banner on success, re-reports on a repeat failure).
                 onRetrySaveError = viewModel::retrySave,
+                onPreview = onPreview,
             )
         }
     }
