@@ -3,11 +3,13 @@ package com.aritr.zinely.render.android
 import android.graphics.Color
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.render.DrawCommand
 import com.aritr.zinely.core.render.FillRect
+import java.io.ByteArrayOutputStream
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -75,5 +77,36 @@ class PdfExportInstrumentedTest {
             rasterBitmap.getPixel(cx, cy),
             pdfBitmap.getPixel(cx, cy),
         )
+    }
+
+    /**
+     * ADR-039 §1: [SheetComposer] composites multiple imposed panels onto ONE PDF page. Two 72×72
+     * panels side by side on a 144×72 sheet must each land in their own cell (rasterise-back proof).
+     * Robolectric NATIVE cannot generate a `PdfDocument`, so the 8-up composition is proven here on a
+     * device — the headless twin is `SheetComposerTest` (PNG).
+     */
+    @Test
+    fun sheetComposerPlacesEachPanelIntoItsPdfCell() {
+        val composer = SheetComposer(replayer)
+        val wide = PtSize(144.0, 72.0)
+        val panels = listOf(
+            SheetPanel(
+                AffineTransform2D.identity(),
+                PtRect(0.0, 0.0, 72.0, 72.0),
+                listOf(FillRect(PtRect(0.0, 0.0, 72.0, 72.0), ColorRgba(255, 0, 0, 255))),
+            ),
+            SheetPanel(
+                AffineTransform2D.translate(72.0, 0.0),
+                PtRect(0.0, 0.0, 72.0, 72.0),
+                listOf(FillRect(PtRect(0.0, 0.0, 72.0, 72.0), ColorRgba(0, 0, 255, 255))),
+            ),
+        )
+        val pdfBytes = ByteArrayOutputStream().also { composer.writePdf(wide, panels, emptyList(), it) }.toByteArray()
+        val bitmap = rasterizer.rasterize(pdfBytes, cacheDir = cacheDir)
+
+        assertEquals("sheet width @300/72", ExportScale.pxExtent(144.0), bitmap.width)
+        val s = ExportScale.EXPORT_PX_PER_PT
+        assertEquals("left cell = panel A", Color.RED, bitmap.getPixel((36.0 * s).toInt(), (36.0 * s).toInt()))
+        assertEquals("right cell = panel B", Color.BLUE, bitmap.getPixel((108.0 * s).toInt(), (36.0 * s).toInt()))
     }
 }

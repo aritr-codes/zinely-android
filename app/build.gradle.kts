@@ -60,6 +60,11 @@ dependencies {
     implementation(project(":feature:editor"))
     implementation(project(":core:editor"))
     implementation(project(":core:imposition"))
+    // S5 export (ADR-039): the app owns the export product path — it runs the Imposer + SceneRenderer and
+    // hands per-panel tapes to :render-android's SheetComposer (the multi-panel PDF/PNG composer over the
+    // shared CanvasReplayer). :core:render supplies SceneRenderer + the DrawCommand tape.
+    implementation(project(":render-android"))
+    implementation(project(":core:render"))
     // The editor host references these contracts directly (DocumentRepository, DataResult, the autosave
     // DocumentSnapshotProvider); :data-android pulls them as `implementation`, so they are not on :app's
     // classpath transitively — declare them explicitly.
