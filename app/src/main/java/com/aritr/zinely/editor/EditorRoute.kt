@@ -20,3 +20,13 @@ internal data class EditorRoute(val projectId: String)
  */
 @Serializable
 internal data class PreviewRoute(val projectId: String)
+
+/**
+ * The type-safe route for the [ExportScreen][com.aritr.zinely.feature.editor.ExportScreen] · "Print & fold"
+ * (S5 step 2, [ADR-039](../../../../../../docs/DECISIONS.md#adr-039)). Carries the same [projectId] so the
+ * export host re-fetches the *editor's* back-stack entry and reads its live `EditorViewModel` document —
+ * the same shared-VM seam [PreviewRoute] uses, and for the same reason (the single-writer autosave factory,
+ * ADR-026, forbids a second VM for the project). The export therefore renders exactly what Preview showed.
+ */
+@Serializable
+internal data class ExportRoute(val projectId: String)

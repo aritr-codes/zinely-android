@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import android.content.Intent
 import android.widget.Toast
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
@@ -26,7 +27,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.compose.runtime.DisposableEffect
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import com.aritr.zinely.export.ExportFormat
+import com.aritr.zinely.export.ExportUiState
+import com.aritr.zinely.export.ExportViewModel
 import com.aritr.zinely.feature.editor.EditorScreen
+import com.aritr.zinely.feature.editor.ExportKind
+import com.aritr.zinely.feature.editor.ExportScreen
 import com.aritr.zinely.feature.editor.PreviewScreen
 
 /**
@@ -60,6 +68,19 @@ internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
             PreviewDestination(
                 viewModel = hiltViewModel(editorEntry),
                 onBack = { navController.popBackStack() },
+                onPrintAndFold = { navController.navigate(ExportRoute(route.projectId)) },
+            )
+        }
+        composable<ExportRoute> { entry ->
+            val route = entry.toRoute<ExportRoute>()
+            // Same shared-VM seam as Preview (see [ExportRoute]): the export reads the editor's live
+            // document from its back-stack entry, so export == what Preview showed.
+            val editorEntry = remember(route.projectId) {
+                navController.getBackStackEntry(EditorRoute(route.projectId))
+            }
+            ExportDestination(
+                viewModel = hiltViewModel(editorEntry),
+                onBack = { navController.popBackStack() },
             )
         }
     }
@@ -67,24 +88,25 @@ internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
 
 /**
  * The reader's-booklet preview host (S5 step 1). Renders the *shared* editor store's live document as a
- * paged booklet ([PreviewScreen]) — reading order, not the imposition sheet. Print & fold lands in the
- * next S5 step; until then it surfaces a warm "coming soon" so the primary action still feels real.
+ * paged booklet ([PreviewScreen]) — reading order, not the imposition sheet. Print & fold advances to
+ * the [ExportRoute] · Export screen (S5 step 2, [ExportDestination]).
  */
 @Composable
-private fun PreviewDestination(viewModel: EditorViewModel, onBack: () -> Unit) {
+private fun PreviewDestination(
+    viewModel: EditorViewModel,
+    onBack: () -> Unit,
+    onPrintAndFold: () -> Unit,
+) {
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
     when (val state = boot) {
         is EditorBootState.Ready -> {
             val uiState by state.store.uiState.collectAsStateWithLifecycle()
-            val context = LocalContext.current
             PreviewScreen(
                 pages = uiState.document.pages,
                 pageSizePt = state.pageSizePt,
                 defaults = uiState.document.defaults,
                 onBack = onBack,
-                onPrintAndFold = {
-                    Toast.makeText(context, "Print & fold is coming soon ✨", Toast.LENGTH_SHORT).show()
-                },
+                onPrintAndFold = onPrintAndFold,
                 modifier = Modifier.fillMaxSize(),
                 imageBytes = state.imageBytes,
             )
@@ -109,6 +131,83 @@ private fun PreviewDestination(viewModel: EditorViewModel, onBack: () -> Unit) {
             }
         }
     }
+}
+
+/**
+ * The Export · "Print & fold" host (S5 step 2, [ADR-039](../../../../../../docs/DECISIONS.md#adr-039)).
+ * Reads the *shared* editor document (same back-stack-entry seam as [PreviewDestination]) so `export ==
+ * preview`, and hosts its own read-only [ExportViewModel] which renders the imposed sheet to a PDF/PNG
+ * off-thread and emits a [ShareRequest]. This composable owns only the Android edges the VM must not: it
+ * launches the OS share sheet for each finished file, and stubs the deferred fold-help seam.
+ */
+@Composable
+private fun ExportDestination(viewModel: EditorViewModel, onBack: () -> Unit) {
+    val boot by viewModel.bootState.collectAsStateWithLifecycle()
+    val exportViewModel: ExportViewModel = hiltViewModel()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Hand each finished export to the OS share sheet (ADR-039 §4): a scoped, read-granted content:// URI.
+    // Collect only while STARTED so an export that finishes while backgrounded doesn't launch the chooser
+    // at a stopped lifecycle state — the buffered Channel holds the event until we resume (Codex).
+    LaunchedEffect(exportViewModel, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            exportViewModel.shares.collect { request ->
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = request.mime
+                    putExtra(Intent.EXTRA_STREAM, request.uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(send, "Share your zine"))
+            }
+        }
+    }
+
+    when (val state = boot) {
+        is EditorBootState.Ready -> {
+            val uiState by state.store.uiState.collectAsStateWithLifecycle()
+            val exportState by exportViewModel.state.collectAsStateWithLifecycle()
+            ExportScreen(
+                onPrintPdf = {
+                    exportViewModel.export(uiState.document, state.pageSizePt, state.imageBytes, ExportFormat.PDF)
+                },
+                onSavePng = {
+                    exportViewModel.export(uiState.document, state.pageSizePt, state.imageBytes, ExportFormat.PNG)
+                },
+                onFoldHelp = {
+                    // Fold steps are the S5 Completion screen (SCREEN-INVENTORY) — warm placeholder until then.
+                    Toast.makeText(context, "Fold steps are coming soon ✨", Toast.LENGTH_SHORT).show()
+                },
+                onBack = onBack,
+                working = (exportState as? ExportUiState.Working)?.format?.toExportKind(),
+                errorMessage = (exportState as? ExportUiState.Error)?.message,
+                onDismissError = exportViewModel::dismissError,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        EditorBootState.Loading -> Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) { CircularProgressIndicator() }
+
+        is EditorBootState.Error -> Box(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(state.message)
+                androidx.compose.material3.TextButton(onClick = onBack) { Text("‹  Back to editing") }
+            }
+        }
+    }
+}
+
+/** Map the host export format to the screen's feature-local kind (module-boundary mirror). */
+private fun ExportFormat.toExportKind(): ExportKind = when (this) {
+    ExportFormat.PDF -> ExportKind.PDF
+    ExportFormat.PNG -> ExportKind.PNG
 }
 
 /**
