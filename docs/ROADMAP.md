@@ -66,7 +66,7 @@ flowchart LR
       U1["empty-state\ninvitation ✅"] --> U2["supply tray\n(visible actions)"] --> U3["contextual\nhints"] --> U4["visible undo/redo\n+ warm autosave"]
     end
     subgraph S5["S5 · make it real (0.6.0+)"]
-      X1["preview\n(the booklet)"] --> X2["export ·\nPrint & fold"] --> X3["completion ·\nfold + share"]
+      X1["preview\n(the booklet) ✅"] --> X2["export ·\nPrint & fold ✅"] --> X3["completion ·\nfold + share ✅"]
     end
     subgraph PROJ["project layer + shell"]
       P1["Room project\nstore + thumbnails"] --> P2["Home /\nMy zines"]
@@ -182,5 +182,5 @@ exit. Full history in [CHANGELOG.md](../CHANGELOG.md).
 | `0.3.0` | S3 — rendering pipeline | ✅ on `main` |
 | `0.4.0` | S4 — editor foundation + UI foundation | ✅ on `main` — **tag the page-navigator/theme commit** (the foundation), not later `SUX` work |
 | `0.5.0` | `SUX` — first-time creation experience (empty state shipped first) | 🔭 current milestone |
-| `0.6.0`+ | S5 — export/share + Room project layer | 🔭 then |
+| `0.6.0`+ | S5 — export/share + Room project layer | 🚧 export/share screens (preview·export·completion, ADR-039/040) ✅ on `main`; Room project layer 🔭 |
 | `1.0.0` | MVP — create **and** export a zine | 🔭 exit criteria |
