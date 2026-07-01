@@ -2,7 +2,7 @@
 
 > **The technical source of truth.** *How* Zinely is built. Product "what/why" → [PRD.md](PRD.md). Decisions → [DECISIONS.md](DECISIONS.md) (referenced by ADR id). Evidence → [RESEARCH.md](RESEARCH.md). Phasing → [ROADMAP.md](ROADMAP.md).
 >
-> Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`), `core:data` + `core:data-storage` (S2), `core:render` (S3), `core:editor` (S4) — plus the Android-backed `data-android` (file persistence), `render-android` (PDF/raster backends), and `feature:editor` (interaction surface). The `:app` module mounts a working **editor** on a single fixed `"default"` project with interactive image import and autosave. **Not yet implemented:** Room project metadata, `ProjectRepository`, any user-facing export/share flow, and the home/settings screens (see [§4](#4-data-models--storage) and [ROADMAP.md](ROADMAP.md)).
+> Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`), `core:data` + `core:data-storage` (S2), `core:render` (S3), `core:editor` (S4) — plus the Android-backed `data-android` (file persistence), `render-android` (PDF/raster backends), and `feature:editor` (interaction surface). The `:app` module mounts a working **editor** on a single fixed `"default"` project with interactive image import and autosave, plus a reader **Preview** and a real **Export · Print & fold** (vector PDF + 300 DPI PNG of the imposed sheet, shared via `FileProvider`; S5 steps 1–2, [ADR-039](DECISIONS.md#adr-039)). **Not yet implemented:** Room project metadata, `ProjectRepository`, the export **Completion/fold-steps** screen and on-sheet calibration ruler, and the home/settings screens (see [§4](#4-data-models--storage) and [ROADMAP.md](ROADMAP.md)).
 
 > **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-031); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
 
@@ -188,7 +188,7 @@ flowchart TD
 
 ## 6. Export pipeline
 
-> **⚠️ Current implementation (checkout state).** The shared **render/export backends exist** — `render-android` ships `PdfPageRenderer`, `RasterPageRenderer`, and the `CanvasReplayer` over the pure `core:render` tape. The **user-facing export flow does not**: there is no `:feature:export` module, no `FileProvider` / `MediaStore` / `ACTION_CREATE_DOCUMENT` / `PrintManager` wiring, and no share path. The pipeline below is the accepted design for S5, not yet shipped UI.
+> **⚠️ Current implementation (checkout state).** The **user-facing export flow ships** (S5 step 2, [ADR-039](DECISIONS.md#adr-039)): a `:render-android` `SheetComposer` composites all 8 imposed panels onto ONE sheet over the shared `CanvasReplayer` (reusing `PdfPageRenderer`/`RasterPageRenderer`'s scale seams, not a parallel path), a `:app` `ZineExporter` runs it off-main and writes a vector **PDF** + a 300 DPI **PNG** to the export cache, and `ExportScreen` shares each via a scoped `FileProvider` `content://` URI (`ACTION_SEND`). **Still deferred:** the on-sheet calibration ruler ([ADR-012](DECISIONS.md#adr-012) — the single-sheet-8 grid tiles edge-to-edge, no margin), the fold-steps **Completion** screen, `PrintManager`, and `MediaStore`/`ACTION_CREATE_DOCUMENT` "save a copy". The pipeline below is the accepted design; the shipped path realises its export half.
 
 ```mermaid
 flowchart TD
@@ -358,7 +358,7 @@ flowchart BT
     render["core:render<br/>S3 ✅ · ADR-027 (pure tier on main)"]
     ra["render-android<br/>S3 ✅ · ADR-028 (Android tier on main)"]
     editor["feature:editor (MVI)<br/>S4 ✅ surface on main · mounted in app · ADR-029"]
-    export["export<br/>S5 ⬜ (backends exist; no UI flow)"]
+    export["export<br/>S5 🟨 (PDF/PNG + share shipped; Completion + ruler deferred)"]
     app["app shell / navigation<br/>✅ editor mounted (fixed default project)"]
 
     imp --> model
@@ -394,7 +394,7 @@ flowchart BT
 | S3-core | `core:render` (pure) | `core:model` | ✅ **on main** ([ADR-027](DECISIONS.md#adr-027)) — pure-JVM render core landed (`:core:render`, 23 tests, Codex GO, PR #9 merged `60f7344`) | S2B (no shared dep) |
 | **S3-android** | **`render-android`** (Android library) | `core:render` | ✅ **on main** ([ADR-028](DECISIONS.md#adr-028), G1–G6) — one `CanvasReplayer` + two export providers, `SharedTextLayout`, crop-aware `ImageBlitter`, bundled **Inter** (MVP charset + cmap coverage guard). Roborazzi raster + text parity goldens **headless-CI-gated**; image + PDF write/parity proofs on-device (compile-checked in CI) ([spike](spikes/core-render-android-backend.md)). Gated like `:data-android`. **Closes S3** | S2B (no shared dep) |
 | S4 | `feature:editor` | `core:model`, `core:data`, `render-android` (→ `core:render`) | ✅ **interaction surface on main** ([ADR-029](DECISIONS.md#adr-029), PR #21) — pure `:core:editor` MVI reducer + the gated `:feature:editor` store, gesture pipeline, selection chrome + live document-order preview, opposite-anchor resize handles, live snap guides (preview==commit), a11y contextbar/element semantics (WCAG 2.5.7), race-safe text-edit session, host `EditorScreen`, and selection-chrome Roborazzi goldens (CI-gated). Preview-host `preview == export` parity proven (PR #19). **Now mounted in `:app`** (PR #23, [ADR-030](DECISIONS.md#adr-030)/[ADR-031](DECISIONS.md#adr-031)): `ZinelyNavHost` on a fixed `"default"` project, `pageSizePt` from imposition, interactive image import, autosave binder. Gated like `:render-android` | — (needs S2 **and** S3) |
-| S5 | `export` | `core:model`, `core:imposition`, `core:data`, `render-android` (→ `core:render`) | ⬜ | — |
+| S5 | `export` | `core:model`, `core:imposition`, `core:data`, `render-android` (→ `core:render`) | 🟨 | PDF/PNG + share shipped ([ADR-039](DECISIONS.md#adr-039)); Completion screen + calibration ruler deferred |
 | — | `app` shell / nav | features | ⬜ | — |
 
 ### 15.3 Risk analysis
@@ -416,7 +416,7 @@ flowchart LR
     M --> R["core:render (S3 ✅)"]
     D --> E["editor (S4 ✅, mounted)"]
     R --> E
-    R --> X["export (S5 ⬜)"]
+    R --> X["export (S5 🟨)"]
     D --> X
     I --> X
     E --> MVP(["MVP"])

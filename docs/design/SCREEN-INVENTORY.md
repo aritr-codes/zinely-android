@@ -30,7 +30,7 @@ flowchart TD
     TRAY --> STK["Sticker picker 🔭"]
     ED --> TPL["Template picker 🔭"]
     ED --> PRE["Preview ✅"]
-    PRE --> EXP["Export · Print & fold 🔭"]
+    PRE --> EXP["Export · Print & fold ✅"]
     EXP --> DONE["Completion · fold steps 🔭"]
     ED --> SET["Settings 🔭"]
 ```
@@ -135,8 +135,8 @@ flowchart TD
 - **Notes:** templates are scaffolding, not lock-in; everything stays editable.
 
 ### Preview
-- **Status:** ✅ shipped (S5 step 1 — the reader's-booklet screen; **Print & fold** is a stubbed
-  next-step seam, a warm "coming soon", until the export flow lands).
+- **Status:** ✅ shipped (S5 step 1 — the reader's-booklet screen; **Print & fold** now navigates to the
+  real [Export](#export--print--fold) screen, S5 step 2).
 - **Purpose:** see the whole zine as a folded booklet before printing.
 - **Primary action:** **Print & fold** → Export.
 - **Secondary:** page through the booklet; back to editing.
@@ -149,14 +149,21 @@ flowchart TD
   single-writer VM ([ADR-026](../DECISIONS.md#adr-026)/[ADR-030](../DECISIONS.md#adr-030)).
 
 ### Export · Print & fold
-- **Status:** 🔭 deferred (S5 — the export flow).
+- **Status:** ✅ shipped (S5 step 2, [ADR-039](../DECISIONS.md#adr-039)). Real vector PDF + 300 DPI PNG of
+  the imposed sheet, shared via the OS. On-sheet **calibration ruler deferred with cause** (the
+  single-sheet-8 grid tiles edge-to-edge — no margin to hold one; the "Actual size" note carries the
+  scaling guidance until a margin/bleed variant lands).
 - **Purpose:** produce a correct, home-printable artifact.
-- **Primary action:** **Print at home (PDF)**.
-- **Secondary:** **Save as image (PNG)**; "Actual size" print guidance; "How do I fold it?".
+- **Primary action:** **Print at home (PDF)** (vector text, [ADR-001](../DECISIONS.md#adr-001)).
+- **Secondary:** **Save as image (PNG)** (ARGB @300 DPI, [ADR-011](../DECISIONS.md#adr-011)); "Actual size"
+  print guidance; "How do I fold it?" (a seam to the deferred Completion screen).
 - **Emotional goal:** accomplished; confidence it will print right.
-- **Notes:** the imposition engine ([ADR-007](../DECISIONS.md#adr-007)) and render backends exist;
-  this is the user-facing wrapper. "Actual size" guidance is non-negotiable (the classic
-  prints-wrong-and-won't-fold failure).
+- **Notes:** this screen *is* about the imposition sheet (unlike Preview's reader booklet). It runs the
+  imposition engine ([ADR-007](../DECISIONS.md#adr-007)) + the shared render path through a new
+  `SheetComposer` that composites all 8 panels onto ONE sheet — no parallel rendering model, so
+  `export == preview`. Fold/cut guides are drawn on the sheet; the file is shared as a scoped
+  `FileProvider` `content://` URI. **No print jargon in the UI**; "Actual size" guidance is
+  non-negotiable ([ADR-012](../DECISIONS.md#adr-012) — the classic prints-wrong-and-won't-fold failure).
 
 ### Completion · fold steps
 - **Status:** 🔭 deferred (S5).
@@ -181,8 +188,9 @@ flowchart TD
 |---|---|---|
 | Editor, Page navigator, Photo picker | S4 / `0.4.0` | ✅ |
 | Empty-state, Supply tray | `SUX` / `0.5.0` | 🔂 / 🔭 |
-| Preview | S5 / `0.6.0`+ | ✅ (Print & fold stubbed) |
-| Export, Completion | S5 / `0.6.0`+ | 🔭 |
+| Preview | S5 / `0.6.0`+ | ✅ |
+| Export · Print & fold | S5 / `0.6.0`+ | ✅ (calibration ruler deferred) |
+| Completion · fold steps | S5 / `0.6.0`+ | 🔭 |
 | Welcome | needs only a **first-run flag** (local prefs) — *not* Room-gated | 🔭 |
 | Home / My zines | needs the **Room project layer** + shelf **thumbnails** | 🔭 |
 | Settings | needs only **local prefs** (DataStore) — *not* Room-gated | 🔭 |
