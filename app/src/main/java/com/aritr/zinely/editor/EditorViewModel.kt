@@ -148,6 +148,15 @@ internal class EditorViewModel @Inject constructor(
     }
 
     /**
+     * Retry now (user tapped "Try now" on the failure banner, ADR-038): force an immediate save attempt.
+     * The outcome flows through the coordinator's ADR-037 listener — a durable success clears the banner,
+     * a repeat failure re-reports it — so this method routes nothing itself. No-op until the binder exists.
+     */
+    fun retrySave() {
+        (bootState.value as? EditorBootState.Ready)?.binder?.requestFlush()
+    }
+
+    /**
      * The picker rendezvous (ADR-031 §5). VM-held so its lifetime matches the project; the Compose host
      * [bind][PhotoPicker.bind]s its `ActivityResultLauncher` and [deliver][PhotoPicker.deliver]s results,
      * while the import pipeline [await][PhotoPicker.await]s. Single instance ⇒ single-flight is global.

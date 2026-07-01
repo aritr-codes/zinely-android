@@ -31,6 +31,12 @@ public const val EditorSaveFailureTestTag: String = "editor-save-failure"
 /** Test tag on the banner's dismiss control. */
 public const val SaveFailureDismissTag: String = "editor-save-failure-dismiss"
 
+/** Test tag on the banner's manual-retry control ([ADR-038](../DECISIONS.md#adr-038)). */
+public const val SaveFailureRetryTag: String = "editor-save-failure-retry"
+
+/** The manual-retry affordance label ([ADR-038](../DECISIONS.md#adr-038); VOICE §Errors). */
+public const val SaveFailureRetryLabel: String = "Try now"
+
 /**
  * Which honest save-failure copy the banner shows ([ADR-036](../DECISIONS.md#adr-036)). A **feature-local**
  * enum so `:feature:editor` keys the warm storage-specific line without ever depending on `:core:data`'s
@@ -55,7 +61,7 @@ public enum class SaveErrorKind {
  * not at an imagined self-retry.
  */
 public const val SaveFailureText: String =
-    "Couldn’t save your latest change just now. It’ll try again next time you make a change."
+    "Couldn’t save your latest change just now. Tap Try now, or keep editing — it’ll try again."
 
 /**
  * The storage-specific failure line ([ADR-036](../DECISIONS.md#adr-036); VOICE §Errors). Shown only when
@@ -66,7 +72,7 @@ public const val SaveFailureText: String =
  * the save will happen on its own once space is freed.
  */
 public const val SaveFailureOutOfSpaceText: String =
-    "Your phone is low on storage. Free up a little space, then keep editing — it’ll save."
+    "Your phone is low on storage. Free up a little space, then tap Try now — or keep editing to retry."
 
 /** The honest line for [kind] (VOICE §Errors). */
 private fun saveFailureText(kind: SaveErrorKind): String = when (kind) {
@@ -105,8 +111,14 @@ public const val SaveFailureDismissLabel: String = "Got it"
  * With [reduceMotion] on (system animator scale 0) the fade degrades to an instant appear/disappear;
  * otherwise it is a gentle ~150ms fade in / ~200ms fade out.
  *
+ * **Manual retry ([ADR-038](../DECISIONS.md#adr-038)).** A "Try now" control forces an immediate save
+ * attempt. Its outcome flows through the *same* durable path as every other save (the coordinator's
+ * ADR-037 listener): a real success clears this banner, a repeat failure re-shows it. The button never
+ * raises a positive cue itself, so — like the silent-recovery clear — it cannot produce a false "Saved ✨".
+ *
  * @param visible whether an unresolved save failure is currently known for this project (ADR-026 §5).
  * @param onDismiss invoked when the user taps "Got it" — the host clears the failure from the sink.
+ * @param onRetry invoked when the user taps "Try now" — the host forces an immediate save (ADR-038).
  * @param modifier sizing/placement applied by the host (typically aligned to the top of the canvas).
  * @param kind which honest line to show ([ADR-036](../DECISIONS.md#adr-036)): the cause-agnostic
  *   [SaveErrorKind.Generic] or the storage-specific [SaveErrorKind.OutOfSpace]. Defaults to [Generic].
@@ -118,6 +130,7 @@ public fun EditorSaveFailure(
     visible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    onRetry: () -> Unit = {},
     kind: SaveErrorKind = SaveErrorKind.Generic,
     reduceMotion: Boolean = rememberReduceMotion(),
 ) {
@@ -148,6 +161,17 @@ public fun EditorSaveFailure(
                     // button stays an independent, focusable, clickable control.
                     .semantics { liveRegion = LiveRegionMode.Assertive },
             )
+            TextButton(
+                onClick = onRetry,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .testTag(SaveFailureRetryTag),
+            ) {
+                Text(
+                    text = SaveFailureRetryLabel,
+                    color = colors.onErrorContainer,
+                )
+            }
             TextButton(
                 onClick = onDismiss,
                 modifier = Modifier

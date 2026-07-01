@@ -87,4 +87,32 @@ class EditorSaveFailureTest {
         composeRule.waitForIdle()
         assertTrue(dismissed)
     }
+
+    // --- ADR-038: manual "Try now" retry ---
+
+    @Test
+    fun renders_the_retry_control_when_visible() {
+        composeRule.setContent {
+            MaterialTheme { EditorSaveFailure(visible = true, onDismiss = {}, reduceMotion = true) }
+        }
+        composeRule.onNodeWithTag(SaveFailureRetryTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun tapping_retry_invokes_the_callback() {
+        var retried = false
+        composeRule.setContent {
+            MaterialTheme {
+                EditorSaveFailure(
+                    visible = true,
+                    onDismiss = {},
+                    onRetry = { retried = true },
+                    reduceMotion = true,
+                )
+            }
+        }
+        composeRule.onNodeWithTag(SaveFailureRetryTag).performClick()
+        composeRule.waitForIdle()
+        assertTrue(retried)
+    }
 }
