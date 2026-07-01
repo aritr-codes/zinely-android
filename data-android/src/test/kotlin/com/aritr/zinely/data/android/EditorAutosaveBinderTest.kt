@@ -175,6 +175,162 @@ class EditorAutosaveBinderTest {
         assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount)
     }
 
+    // --- Manual retry (ADR-038): requestFlush forces an immediate save through the same path ---
+
+    @Test
+    fun `requestFlush forces an immediate save of the pending edit`() = runTest {
+        val f = BinderFixture(testScheduler)
+        val binder = f.binder()
+
+        binder.markDirty()
+        binder.requestFlush()
+        runCurrent() // no debounce elapsed: only the forced flush can have saved
+
+        assertEquals(listOf("proj1" to doc(1)), f.repo.saves)
+    }
+
+    @Test
+    fun `requestFlush success clears a prior failure (silent recovery via retry)`() = runTest {
+        val f = BinderFixture(testScheduler)
+        f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
+        val binder = f.binder()
+
+        binder.markDirty()
+        advanceUntilIdle() // background save fails → sink reports (doc stays dirty)
+        assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount)
+
+        f.repo.result = { DataResult.Success(Unit) }
+        binder.requestFlush()
+        runCurrent() // retry succeeds → listener clears the project
+
+        assertNull(f.sink.failures.value["proj1"]) // banner auto-dismisses
+    }
+
+    @Test
+    fun `requestFlush failure re-reports to the sink`() = runTest {
+        val f = BinderFixture(testScheduler)
+        f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
+        val binder = f.binder()
+
+        binder.markDirty()
+        binder.requestFlush()
+        runCurrent()
+
+        assertEquals(DataError.Io("boom"), f.sink.failures.value.getValue("proj1").error)
+    }
+
+    @Test
+    fun `a double-tapped retry saves once and emits no spurious outcome`() = runTest {
+        val f = BinderFixture(testScheduler)
+        f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
+        val binder = f.binder()
+
+        binder.markDirty()
+        advanceUntilIdle() // fail → reported (count 1)
+        f.repo.result = { DataResult.Success(Unit) }
+
+        binder.requestFlush() // first tap: launches the flush (pending until dispatched)
+        binder.requestFlush() // second tap: a flush is already pending → coalesced, not a second launch
+        advanceUntilIdle()
+
+        assertEquals(2, f.repo.saves.size) // the failed background save + one coalesced retry only
+        assertNull(f.sink.failures.value["proj1"])
+    }
+
+    @Test
+    fun `a second retry queued before the first runs is coalesced (single-flight)`() = runTest {
+        // The distinguishing case the success-only double-tap test cannot prove: when the first retry is
+        // *failing* the document stays dirty, so a serialized-but-uncoalesced second tap would launch a
+        // second real failing save. Single-flight coalesces it onto the still-pending first flush.
+        val f = BinderFixture(testScheduler)
+        f.repo.result = { DataResult.Failure(DataError.Io("boom")) }
+        val binder = f.binder()
+
+        binder.markDirty()
+        binder.requestFlush() // A: launched, not yet dispatched
+        binder.requestFlush() // B: a flush is already pending → coalesced
+        runCurrent()          // run the pending flush(es); no debounce elapsed
+
+        assertEquals(1, f.repo.saves.size) // one forced save only, though the first is failing (doc dirty)
+        assertEquals(1, f.sink.failures.value.getValue("proj1").failureCount)
+    }
+
+    @Test
+    fun `a retry tapped while the first is still in-flight is coalesced (single-flight)`() = runTest {
+        // The genuinely mid-flight variant: the first retry is holding the writer, suspended inside the
+        // save, when the second tap lands. It must ride the in-flight attempt, not queue a second one.
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(dispatcher + SupervisorJob())
+        val repo = GatedRepository { DataResult.Failure(DataError.Io("boom")) }
+        val sink = InMemorySaveFailureSink()
+        val factory = AutosaveCoordinatorFactory(scope, dispatcher, repo, sink, AutosaveConfig())
+        val binder = EditorAutosaveBinder(factory, "proj1", { doc(1) }, scope)
+
+        binder.markDirty()
+        binder.requestFlush()
+        runCurrent()             // A now mid-save: holding the writer, suspended on the gate
+        binder.requestFlush()    // B: a second tap while A is in-flight
+        repo.gate.complete(Unit) // release A's save (fails → doc stays dirty)
+        runCurrent()             // drain A (and B, had it launched); no debounce elapsed
+
+        assertEquals(1, repo.saves.size) // B coalesced onto A, not a second failing write
+        assertEquals(1, sink.failures.value.getValue("proj1").failureCount)
+    }
+
+    @Test
+    fun `an ON_PAUSE landing during a failing in-flight retry coalesces onto it`() = runTest {
+        // Pins the ADR-038 contract that coalescing spans the two enqueueFlush callers: a lifecycle edge
+        // arriving while a retry is mid-flight rides that attempt rather than launching a second write.
+        // (The ON_STOP backstop still fires a fresh flush once the retry has completed — flushJob inactive.)
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(dispatcher + SupervisorJob())
+        val repo = GatedRepository { DataResult.Failure(DataError.Io("boom")) }
+        val sink = InMemorySaveFailureSink()
+        val factory = AutosaveCoordinatorFactory(scope, dispatcher, repo, sink, AutosaveConfig())
+        val binder = EditorAutosaveBinder(factory, "proj1", { doc(1) }, scope)
+        val lifecycle = FakeLifecycle()
+        binder.observe(lifecycle)
+
+        binder.markDirty()
+        binder.requestFlush()
+        runCurrent()                        // retry now mid-save, holding the writer, suspended on the gate
+        lifecycle.emit(Lifecycle.Event.ON_PAUSE) // coalesced onto the in-flight retry
+        repo.gate.complete(Unit)
+        runCurrent()
+
+        assertEquals(1, repo.saves.size) // the lifecycle edge did not launch a second failing write
+    }
+
+    @Test
+    fun `requestFlush after close produces no further writes`() = runTest {
+        val f = BinderFixture(testScheduler)
+        val binder = f.binder()
+
+        binder.markDirty()
+        binder.closeProject()
+        advanceUntilIdle() // teardown flush → save #1
+        val afterClose = f.repo.saves.size
+
+        binder.markDirty()
+        binder.requestFlush() // inert on a closed binder (no resurrection)
+        advanceUntilIdle()
+
+        assertEquals(afterClose, f.repo.saves.size)
+    }
+
+    @Test
+    fun `requestFlush during an in-flight teardown is inert`() = runTest {
+        val f = BinderFixture(testScheduler)
+        val binder = f.binder()
+
+        binder.markDirty()
+        binder.closeProject() // closed = true synchronously; teardown launched but not yet run
+        binder.requestFlush() // must be dropped by the closed-guard, not launch a racing write
+        advanceUntilIdle()
+
+        assertEquals(1, f.repo.saves.size) // only the teardown flush wrote
+    }
+
     // --- Teardown: idempotent, exactly one flush ---
 
     @Test
@@ -442,8 +598,13 @@ private class RecordingRepository(
     }
 }
 
-/** Save suspends on [gate] until it is completed, giving tests a deterministic mid-flush pause point. */
-private class GatedRepository : DocumentRepository {
+/**
+ * Save suspends on [gate] until it is completed, giving tests a deterministic mid-flush pause point;
+ * [result] decides each released call's outcome (default success — the NonCancellable teardown tests).
+ */
+private class GatedRepository(
+    var result: (String) -> DataResult<Unit> = { DataResult.Success(Unit) },
+) : DocumentRepository {
     val saves = mutableListOf<Pair<String, ZineDocument>>()
     val gate = CompletableDeferred<Unit>()
 
@@ -453,7 +614,7 @@ private class GatedRepository : DocumentRepository {
     override suspend fun save(projectId: String, document: ZineDocument): DataResult<Unit> {
         gate.await()
         saves += projectId to document
-        return DataResult.Success(Unit)
+        return result(projectId)
     }
 }
 

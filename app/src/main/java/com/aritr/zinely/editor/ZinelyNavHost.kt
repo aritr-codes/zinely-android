@@ -123,6 +123,9 @@ private fun EditorDestination() {
                 // "Got it" clears it from the sink.
                 saveError = saveError,
                 onDismissSaveError = viewModel::dismissSaveError,
+                // "Try now" (ADR-038): force an immediate save; the outcome flows through the ADR-037
+                // path (clears the banner on success, re-reports on a repeat failure).
+                onRetrySaveError = viewModel::retrySave,
             )
         }
     }

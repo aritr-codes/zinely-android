@@ -37,3 +37,6 @@ bin/
 .fleet/
 .vscode/
 Thumbs.db
+
+# CodeGraph local index (developer tooling, not part of the source)
+/.codegraph/

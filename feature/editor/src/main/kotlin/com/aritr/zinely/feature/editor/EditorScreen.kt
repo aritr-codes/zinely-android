@@ -90,6 +90,9 @@ public const val EditorCanvasTestTag: String = "editor-canvas"
  *   and the move/resize hint — the editor must not claim a save it knows failed. Defaults to `null`.
  * @param onDismissSaveError invoked when the user taps the failure banner's "Got it" — the app clears
  *   the failure from the sink. Defaults to a no-op.
+ * @param onRetrySaveError invoked when the user taps the failure banner's "Try now" ([ADR-038](../DECISIONS.md#adr-038))
+ *   — the app forces an immediate save; the outcome flows through the ADR-037 path (clears on success,
+ *   re-reports on failure). Defaults to a no-op.
  */
 @Composable
 public fun EditorScreen(
@@ -102,6 +105,7 @@ public fun EditorScreen(
     savedSignals: Flow<Unit> = emptyFlow(),
     saveError: SaveErrorKind? = null,
     onDismissSaveError: () -> Unit = {},
+    onRetrySaveError: () -> Unit = {},
 ) {
     val uiState by store.uiState.collectAsStateWithLifecycle()
     val dispatch: (Intent) -> Unit = store::dispatch
@@ -305,6 +309,7 @@ public fun EditorScreen(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 8.dp),
+                    onRetry = onRetrySaveError,
                     kind = lastSaveErrorKind,
                 )
 
