@@ -31,7 +31,7 @@ flowchart TD
     ED --> TPL["Template picker 🔭"]
     ED --> PRE["Preview ✅"]
     PRE --> EXP["Export · Print & fold ✅"]
-    EXP --> DONE["Completion · fold steps 🔭"]
+    EXP --> DONE["Completion · fold steps ✅"]
     ED --> SET["Settings 🔭"]
 ```
 
@@ -156,7 +156,7 @@ flowchart TD
 - **Purpose:** produce a correct, home-printable artifact.
 - **Primary action:** **Print at home (PDF)** (vector text, [ADR-001](../DECISIONS.md#adr-001)).
 - **Secondary:** **Save as image (PNG)** (ARGB @300 DPI, [ADR-011](../DECISIONS.md#adr-011)); "Actual size"
-  print guidance; "How do I fold it?" (a seam to the deferred Completion screen).
+  print guidance; "How do I fold it?" now opens the real **Completion** screen ([ADR-040](../DECISIONS.md#adr-040)).
 - **Emotional goal:** accomplished; confidence it will print right.
 - **Notes:** this screen *is* about the imposition sheet (unlike Preview's reader booklet). It runs the
   imposition engine ([ADR-007](../DECISIONS.md#adr-007)) + the shared render path through a new
@@ -166,12 +166,18 @@ flowchart TD
   non-negotiable ([ADR-012](../DECISIONS.md#adr-012) — the classic prints-wrong-and-won't-fold failure).
 
 ### Completion · fold steps
-- **Status:** 🔭 deferred (S5).
+- **Status:** ✅ shipped (S5 step 3, [ADR-040](../DECISIONS.md#adr-040)). Payoff hero + four **static**, never-assumed
+  fold diagrams; **Send to a friend** / **Open it** / **Keep editing**. Hosted over the shipped export seam (no
+  parallel path). **Auto post-export landing deferred** (would alter the shipped Export share flow); reached today from
+  Export's "How do I fold it?".
 - **Purpose:** celebrate, and get the printed sheet folded into a book.
-- **Primary action:** **Send to a friend** (system share, offline).
-- **Secondary:** **Open it**; step-by-step fold instructions; "make another."
+- **Primary action:** **Send to a friend** (system share, offline — reuses the `ExportViewModel`; `ACTION_SEND`).
+- **Secondary:** **Open it** (`ACTION_VIEW` the exported PDF); step-by-step fold instructions; **Keep editing** (the
+  honest "make another" until the multi-project layer — [ADR-030 §4](../DECISIONS.md#adr-030)).
 - **Emotional goal:** the payoff peak + connection; the reason to come back.
-- **Notes:** "Your zine is ready! 🎉"; fold steps illustrated, never assumed known.
+- **Notes:** "Your zine is ready! 🎉"; fold steps illustrated (static Canvas diagrams), never assumed known;
+  no animation → reduced-motion-safe by construction. Honest offline copy (Zinely uploads nothing; the file leaves
+  only when the user shares it).
 
 ### Settings
 - **Status:** 🔭 deferred (minimal).
@@ -190,7 +196,7 @@ flowchart TD
 | Empty-state, Supply tray | `SUX` / `0.5.0` | 🔂 / 🔭 |
 | Preview | S5 / `0.6.0`+ | ✅ |
 | Export · Print & fold | S5 / `0.6.0`+ | ✅ (calibration ruler deferred) |
-| Completion · fold steps | S5 / `0.6.0`+ | 🔭 |
+| Completion · fold steps | S5 / `0.6.0`+ | ✅ (auto post-export landing deferred) |
 | Welcome | needs only a **first-run flag** (local prefs) — *not* Room-gated | 🔭 |
 | Home / My zines | needs the **Room project layer** + shelf **thumbnails** | 🔭 |
 | Settings | needs only **local prefs** (DataStore) — *not* Room-gated | 🔭 |

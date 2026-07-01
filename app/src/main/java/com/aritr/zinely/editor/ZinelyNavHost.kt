@@ -11,14 +11,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ContentResolver
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
@@ -32,6 +38,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.aritr.zinely.export.ExportFormat
 import com.aritr.zinely.export.ExportUiState
 import com.aritr.zinely.export.ExportViewModel
+import com.aritr.zinely.feature.editor.CompletionAction
+import com.aritr.zinely.feature.editor.CompletionScreen
 import com.aritr.zinely.feature.editor.EditorScreen
 import com.aritr.zinely.feature.editor.ExportKind
 import com.aritr.zinely.feature.editor.ExportScreen
@@ -81,6 +89,20 @@ internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
             ExportDestination(
                 viewModel = hiltViewModel(editorEntry),
                 onBack = { navController.popBackStack() },
+                onFoldHelp = { navController.navigate(CompletionRoute(route.projectId)) },
+            )
+        }
+        composable<CompletionRoute> { entry ->
+            val route = entry.toRoute<CompletionRoute>()
+            // Same shared-VM seam again (see [CompletionRoute]): Completion reuses the shipped export path
+            // to render the live document, then shares/opens the result.
+            val editorEntry = remember(route.projectId) {
+                navController.getBackStackEntry(EditorRoute(route.projectId))
+            }
+            CompletionDestination(
+                viewModel = hiltViewModel(editorEntry),
+                onBack = { navController.popBackStack() },
+                onKeepEditing = { navController.popBackStack(EditorRoute(route.projectId), inclusive = false) },
             )
         }
     }
@@ -141,7 +163,7 @@ private fun PreviewDestination(
  * launches the OS share sheet for each finished file, and stubs the deferred fold-help seam.
  */
 @Composable
-private fun ExportDestination(viewModel: EditorViewModel, onBack: () -> Unit) {
+private fun ExportDestination(viewModel: EditorViewModel, onBack: () -> Unit, onFoldHelp: () -> Unit) {
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
     val exportViewModel: ExportViewModel = hiltViewModel()
     val context = LocalContext.current
@@ -152,13 +174,8 @@ private fun ExportDestination(viewModel: EditorViewModel, onBack: () -> Unit) {
     // at a stopped lifecycle state — the buffered Channel holds the event until we resume (Codex).
     LaunchedEffect(exportViewModel, lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            exportViewModel.shares.collect { request ->
-                val send = Intent(Intent.ACTION_SEND).apply {
-                    type = request.mime
-                    putExtra(Intent.EXTRA_STREAM, request.uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                context.startActivity(Intent.createChooser(send, "Share your zine"))
+            exportViewModel.ready.collect { ready ->
+                context.startActivity(Intent.createChooser(shareIntent(ready.uri, ready.mime), "Share your zine"))
             }
         }
     }
@@ -174,10 +191,7 @@ private fun ExportDestination(viewModel: EditorViewModel, onBack: () -> Unit) {
                 onSavePng = {
                     exportViewModel.export(uiState.document, state.pageSizePt, state.imageBytes, ExportFormat.PNG)
                 },
-                onFoldHelp = {
-                    // Fold steps are the S5 Completion screen (SCREEN-INVENTORY) — warm placeholder until then.
-                    Toast.makeText(context, "Fold steps are coming soon ✨", Toast.LENGTH_SHORT).show()
-                },
+                onFoldHelp = onFoldHelp,
                 onBack = onBack,
                 working = (exportState as? ExportUiState.Working)?.format?.toExportKind(),
                 errorMessage = (exportState as? ExportUiState.Error)?.message,
@@ -209,6 +223,113 @@ private fun ExportFormat.toExportKind(): ExportKind = when (this) {
     ExportFormat.PDF -> ExportKind.PDF
     ExportFormat.PNG -> ExportKind.PNG
 }
+
+/**
+ * The Completion · fold-steps host (S5 step 3, [ADR-040](../../../../../../docs/DECISIONS.md#adr-040)) —
+ * the payoff screen. Reuses the shipped export seam (its own [ExportViewModel] over the shared editor
+ * document, same back-stack-entry seam as [ExportDestination]) so there is no parallel export path: both
+ * "Send to a friend" and "Open it" render the current document to a PDF, and this composable maps the one
+ * finished-file event to the right Android edge — a share chooser or a viewer.
+ *
+ * The VM's [ExportReady] event is delivery-agnostic (ADR-040); single-flight guarantees at most one export
+ * in flight, so [pending] — the action that started it — is the correct routing for the file that comes
+ * back. "Keep editing" is the honest "make another" until the multi-project layer exists (ADR-040).
+ */
+@Composable
+private fun CompletionDestination(
+    viewModel: EditorViewModel,
+    onBack: () -> Unit,
+    onKeepEditing: () -> Unit,
+) {
+    val boot by viewModel.bootState.collectAsStateWithLifecycle()
+    val exportViewModel: ExportViewModel = hiltViewModel()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // The action that started the in-flight export (single-flight → at most one), so the finished file is
+    // routed to the tap that asked for it. rememberSaveable so a config change mid-render doesn't reset it
+    // to SEND and misroute an in-flight OPEN (the survivor VM still emits the buffered file) — Codex RF1.
+    val pending = rememberSaveable { mutableStateOf(CompletionAction.SEND) }
+
+    LaunchedEffect(exportViewModel, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            exportViewModel.ready.collect { ready ->
+                try {
+                    when (pending.value) {
+                        CompletionAction.SEND -> context.startActivity(
+                            Intent.createChooser(shareIntent(ready.uri, ready.mime), "Share your zine"),
+                        )
+                        // ACTION_VIEW is stricter than SEND; the try/catch below is the necessary fallback
+                        // when no viewer is installed (Codex).
+                        CompletionAction.OPEN -> context.startActivity(
+                            openIntent(context.contentResolver, ready.uri, ready.mime),
+                        )
+                    }
+                } catch (e: ActivityNotFoundException) {
+                    Toast.makeText(context, "No app on your phone can open that yet.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    when (val state = boot) {
+        is EditorBootState.Ready -> {
+            val uiState by state.store.uiState.collectAsStateWithLifecycle()
+            val exportState by exportViewModel.state.collectAsStateWithLifecycle()
+            CompletionScreen(
+                onSendToFriend = {
+                    pending.value = CompletionAction.SEND
+                    exportViewModel.export(uiState.document, state.pageSizePt, state.imageBytes, ExportFormat.PDF)
+                },
+                onOpenIt = {
+                    pending.value = CompletionAction.OPEN
+                    exportViewModel.export(uiState.document, state.pageSizePt, state.imageBytes, ExportFormat.PDF)
+                },
+                onKeepEditing = onKeepEditing,
+                onBack = onBack,
+                working = if (exportState is ExportUiState.Working) pending.value else null,
+                errorMessage = (exportState as? ExportUiState.Error)?.message,
+                onDismissError = exportViewModel::dismissError,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        EditorBootState.Loading -> Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) { CircularProgressIndicator() }
+
+        is EditorBootState.Error -> Box(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(state.message)
+                androidx.compose.material3.TextButton(onClick = onBack) { Text("‹  Back to editing") }
+            }
+        }
+    }
+}
+
+/** A share-sheet Intent for a finished export: the scoped, read-granted `content://` URI as an attachment. */
+private fun shareIntent(uri: Uri, mime: String): Intent =
+    Intent(Intent.ACTION_SEND).apply {
+        type = mime
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+/**
+ * An open-in-viewer Intent for a finished export. `ClipData` alongside `setDataAndType` + the read grant
+ * makes more viewers accept the scoped cache URI (Codex); the caller catches `ActivityNotFoundException`.
+ */
+private fun openIntent(resolver: ContentResolver, uri: Uri, mime: String): Intent =
+    Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mime)
+        clipData = ClipData.newUri(resolver, "zine", uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
 
 /**
  * Hosts one [EditorViewModel] and renders its [EditorBootState]. The VM owns the store/binder for the

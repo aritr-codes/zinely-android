@@ -24,17 +24,22 @@ internal sealed interface ExportUiState {
     data class Error(val message: String) : ExportUiState
 }
 
-/** A one-shot request to hand a finished file to the OS share sheet (ADR-039 §4). */
-internal data class ShareRequest(val uri: Uri, val mime: String)
+/**
+ * A one-shot "the file is ready" event (ADR-039 §4, ADR-040): a scoped, read-granted `content://` [uri]
+ * and its [mime]. Deliberately delivery-agnostic — *what* the host does with it (an `ACTION_SEND` share
+ * or an `ACTION_VIEW` open) is UI consumption the VM has no business knowing; each host tracks its own
+ * pending action and maps this event to the right Intent.
+ */
+internal data class ExportReady(val uri: Uri, val mime: String)
 
 /**
  * Drives one export (ADR-039 §5). Reads no document of its own — the host passes the *live shared editor*
  * document/pageSize/imageBytes (so `export == preview`) into [export]; this VM only renders + shares, so
  * it never touches the single-writer autosave factory (ADR-026) and is safe to scope to the export route.
  *
- * Single-flight: taps while a render is in flight are ignored. Success emits a [ShareRequest] the host
- * collects to launch the chooser; any failure (IO, or an `OutOfMemoryError` on the ~33 MB sheet) becomes
- * a friendly [ExportUiState.Error].
+ * Single-flight: taps while a render is in flight are ignored. Success emits an [ExportReady] event the
+ * host collects to launch a share/open Intent; any failure (IO, or an `OutOfMemoryError` on the ~33 MB
+ * sheet) becomes a friendly [ExportUiState.Error].
  */
 @HiltViewModel
 internal class ExportViewModel @Inject constructor(
@@ -44,8 +49,8 @@ internal class ExportViewModel @Inject constructor(
     private val _state = MutableStateFlow<ExportUiState>(ExportUiState.Idle)
     val state: StateFlow<ExportUiState> = _state.asStateFlow()
 
-    private val _shares = Channel<ShareRequest>(Channel.BUFFERED)
-    val shares: Flow<ShareRequest> = _shares.receiveAsFlow()
+    private val _ready = Channel<ExportReady>(Channel.BUFFERED)
+    val ready: Flow<ExportReady> = _ready.receiveAsFlow()
 
     fun export(
         document: ZineDocument,
@@ -58,7 +63,7 @@ internal class ExportViewModel @Inject constructor(
             _state.value = ExportUiState.Working(format)
             _state.value = try {
                 val uri = exporter.export(document, pageSizePt, imageBytes, format)
-                _shares.send(ShareRequest(uri, format.mime))
+                _ready.send(ExportReady(uri, format.mime))
                 ExportUiState.Idle
             } catch (ce: CancellationException) {
                 throw ce
