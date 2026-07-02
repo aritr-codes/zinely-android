@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **S6.2 — Home · "My zines" read-only shelf, built-but-unwired**
+  ([ADR-043](docs/DECISIONS.md#adr-043)): a stateless `HomeScreen` in `:feature:editor`
+  (paper-card list — title, "8-page mini · Letter/A4", warm "Edited …" recency — plus a
+  CTA-less empty-state invitation) and an MVVM `HomeViewModel` in `:app` observing
+  `ProjectRepository.observeProjects()`. Deliberately **not registered in `ZinelyNavHost`**
+  (Codex Required Fix): the app still boots into `EditorRoute("default")`, and no
+  create/duplicate/delete/rename affordance exists anywhere (ADR-042 hard invariants).
+  Shelf actions arrive in S6.3, thumbnails S6.4, navigation wiring + re-root S6.5.
 - **S6.1 — Room-backed project store** ([ADR-042](docs/DECISIONS.md#adr-042)): the
   `ProjectRepository` contract gets its first real implementation in `:data-android` —
   an observable multi-project metadata index (Room `projects` table, schema exported)
