@@ -45,6 +45,12 @@ case "${1:-}" in
                          core/render/build.gradle.kts core/render/src \
                          docs/DECISIONS.md docs/ARCHITECTURE.md docs/ROADMAP.md \
                          docs/spikes/core-render.md tools/gitstage.sh ;;
+  # S6.1 — Room-backed ProjectRepository index over per-project files (ADR-042)
+  s61-room)      git add CHANGELOG.md gradle/libs.versions.toml \
+                         core/data/src data-android/build.gradle.kts \
+                         data-android/schemas data-android/src \
+                         docs/ARCHITECTURE.md docs/DECISIONS.md docs/ROADMAP.md \
+                         tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

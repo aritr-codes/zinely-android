@@ -35,11 +35,12 @@ import kotlin.coroutines.cancellation.CancellationException
  * the write — so coroutine cancellation can never tear a half-written document. Storage failures
  * are simply propagated as [DataError.Io].
  *
- * **Path safety:** [projectId] is untrusted. Every path flows through the single [resolveDocument]
- * chokepoint — whitelist match, normalise, and a `startsWith(projectsRoot)` containment check — so
- * a malicious id can never escape `rootDir/projects/`. Scope is app-private internal storage, where
- * there are no attacker-controlled symlinks (ADR-025); the containment check uses `NOFOLLOW_LINKS`
- * as belt-and-braces.
+ * **Path safety:** [projectId] is untrusted. Every path flows through the shared [ProjectPaths]
+ * chokepoint (ADR-042 extraction — one whitelist/containment rule for every `:data-android` store)
+ * — whitelist match, normalise, containment check — so a malicious id can never escape
+ * `rootDir/projects/`. Scope is app-private internal storage, where there are no
+ * attacker-controlled symlinks (ADR-025); the containment check uses `NOFOLLOW_LINKS` as
+ * belt-and-braces.
  */
 public class DocumentRepositoryImpl(
     rootDir: Path,
@@ -56,8 +57,8 @@ public class DocumentRepositoryImpl(
     private val freeSpaceProbe: (Path) -> Long = { usableSpaceNear(it) },
 ) : DocumentRepository {
 
-    /** `rootDir/projects`, normalised once so the containment check is a cheap prefix test. */
-    private val projectsRoot: Path = rootDir.resolve(PROJECTS_DIR).normalize()
+    /** The shared untrusted-id → path chokepoint (ADR-042). */
+    private val paths = ProjectPaths(rootDir)
 
     override suspend fun load(projectId: String): DataResult<ZineDocument> {
         val path = resolveDocument(projectId) ?: return invalidId()
@@ -180,17 +181,8 @@ public class DocumentRepositoryImpl(
     private fun decode(bytes: ByteArray): ZineDocument =
         serializer.deserialize(bytes.decodeToString(throwOnInvalidSequence = true))
 
-    /**
-     * The single path-resolution chokepoint. Returns the document path for [projectId], or `null`
-     * when the id is not on the safe whitelist or would resolve outside [projectsRoot]. No path is
-     * ever built for a project outside this function.
-     */
-    private fun resolveDocument(projectId: String): Path? {
-        if (!PROJECT_ID.matches(projectId)) return null
-        val resolved = projectsRoot.resolve(projectId).resolve(DOCUMENT_FILE).normalize()
-        if (!resolved.startsWith(projectsRoot)) return null
-        return resolved
-    }
+    /** Resolve via the shared [ProjectPaths] chokepoint; `null` when [projectId] is unsafe. */
+    private fun resolveDocument(projectId: String): Path? = paths.documentFile(projectId)
 
     private fun invalidId(): DataResult<Nothing> = failure(
         DataError.Invalid(
@@ -208,12 +200,6 @@ public class DocumentRepositoryImpl(
     private fun failure(error: DataError): DataResult<Nothing> = DataResult.Failure(error)
 
     private companion object {
-        const val PROJECTS_DIR = "projects"
-        const val DOCUMENT_FILE = "document.json"
-
-        /** Untrusted-id whitelist: excludes `.`, `/`, `\`, so traversal sequences cannot form. */
-        val PROJECT_ID = Regex("^[A-Za-z0-9_-]{1,64}$")
-
         /**
          * Usable bytes of the filesystem holding [path], measured at the nearest **existing** ancestor
          * (ADR-036 default probe). A first save's `document.json` — and possibly its project dir — does not

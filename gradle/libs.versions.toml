@@ -43,6 +43,10 @@ ksp = "2.2.10-2.0.2"
 # Version compatibility with AGP 9.2.1 is validated by the android-graph CI job (cannot build locally).
 robolectric = "4.16.1"
 roborazzi = "1.64.0"
+# S6.1 (ADR-042): Room-backed project-metadata index in :data-android. Local-only DB (privacy
+# invariant); Room 2.7+ folds coroutines/Flow support into room-runtime, so no room-ktx artifact.
+# The androidx.room Gradle plugin owns schema export (data-android/schemas, checked in).
+room = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -90,6 +94,9 @@ hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.r
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
 # S3 :render-android test stack: Robolectric NATIVE (real Skia on the JVM) + Roborazzi golden diffs.
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+# S6.1 (ADR-042): project-metadata Room index (:data-android only).
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
 # S4 :feature:editor preview-host parity: Roborazzi's Compose capture (captureRoboImage on a
@@ -107,4 +114,6 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 # Roborazzi Gradle plugin: registers recordRoborazzi*/verifyRoborazzi* tasks on :render-android (G1).
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+# S6.1 (ADR-042): Room schema export/validation for :data-android.
+room = { id = "androidx.room", version.ref = "room" }
 
