@@ -90,6 +90,11 @@ internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
                 viewModel = hiltViewModel(editorEntry),
                 onBack = { navController.popBackStack() },
                 onFoldHelp = { navController.navigate(CompletionRoute(route.projectId)) },
+                // ADR-041: after a successful export shares the file, land on Completion (the fold-steps
+                // payoff) — the natural post-export destination the deferred ADR-040 gap named. launchSingleTop
+                // future-proofs the no-duplicate-Completion guarantee against `ready` ever becoming a
+                // replaying stream (today it's a one-shot Channel, so the dedupe already holds) — Codex.
+                onExported = { navController.navigate(CompletionRoute(route.projectId)) { launchSingleTop = true } },
             )
         }
         composable<CompletionRoute> { entry ->
@@ -159,11 +164,17 @@ private fun PreviewDestination(
  * The Export · "Print & fold" host (S5 step 2, [ADR-039](../../../../../../docs/DECISIONS.md#adr-039)).
  * Reads the *shared* editor document (same back-stack-entry seam as [PreviewDestination]) so `export ==
  * preview`, and hosts its own read-only [ExportViewModel] which renders the imposed sheet to a PDF/PNG
- * off-thread and emits a [ShareRequest]. This composable owns only the Android edges the VM must not: it
- * launches the OS share sheet for each finished file, and stubs the deferred fold-help seam.
+ * off-thread and emits an [ExportReady] event. This composable owns only the Android edges the VM must not:
+ * it launches the OS share sheet for each finished file, then auto-lands on Completion ([onExported],
+ * ADR-041), and routes the manual fold-help seam ([onFoldHelp]) to the same screen.
  */
 @Composable
-private fun ExportDestination(viewModel: EditorViewModel, onBack: () -> Unit, onFoldHelp: () -> Unit) {
+private fun ExportDestination(
+    viewModel: EditorViewModel,
+    onBack: () -> Unit,
+    onFoldHelp: () -> Unit,
+    onExported: () -> Unit,
+) {
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
     val exportViewModel: ExportViewModel = hiltViewModel()
     val context = LocalContext.current
@@ -176,6 +187,11 @@ private fun ExportDestination(viewModel: EditorViewModel, onBack: () -> Unit, on
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             exportViewModel.ready.collect { ready ->
                 context.startActivity(Intent.createChooser(shareIntent(ready.uri, ready.mime), "Share your zine"))
+                // Auto-land on the Completion payoff after the share is dispatched (ADR-041). No duplicate
+                // Completion stacks: `ready` is a one-shot Channel (each success consumed once, never
+                // replayed), and this collector is repeatOnLifecycle(STARTED)-gated so Export stops
+                // collecting once Completion covers it. onExported navigates launchSingleTop as belt-and-braces.
+                onExported()
             }
         }
     }
