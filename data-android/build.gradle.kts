@@ -7,6 +7,14 @@ plugins {
     // works with `implementation` deps; `enableAggregatingTask` is set below.
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    // S6.1 (ADR-042): @Serializable per-project meta.json sidecar (title/createdAt authority).
+    alias(libs.plugins.kotlin.serialization)
+    // S6.1 (ADR-042): Room schema export to data-android/schemas (checked in, exportSchema = true).
+    alias(libs.plugins.room)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 // :data-android (ADR-026 / ADR-025) — the Android production adapters that bind the Android-free
@@ -33,6 +41,16 @@ android {
         // the Hilt-aware one (PR-A Step 7) so the device-only graph smoke test gets a
         // HiltTestApplication; the existing non-Hilt instrumented tests run unchanged under it.
         testInstrumentationRunner = "com.aritr.zinely.data.android.HiltTestRunner"
+    }
+
+    // S6.1 (ADR-042): the RoomProjectRepository suite runs Room on the JVM via Robolectric
+    // (inMemoryDatabaseBuilder — no emulator, matches the repo's no-emulator CI). Robolectric
+    // needs the merged manifest/resources on the unit-test classpath (same setting as
+    // :feature:editor / :render-android).
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 
     // Match :app's Java level so the Android tier links consistently (the core modules build at
@@ -76,6 +94,13 @@ dependencies {
     // Local-only, no network — privacy invariant intact. Backs DataStoreEditorOnboardingStore.
     implementation(libs.androidx.datastore.preferences)
 
+    // S6.1 (ADR-042): the Room-backed project-metadata index (rebuildable cache; files are the
+    // source of truth) + kotlinx JSON for the per-project meta.json sidecar. Local-only DB — no
+    // network, privacy invariant intact.
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.kotlinx.serialization.json)
+
     // EditorAutosaveBinder (ADR-026 §1/§3) observes Android lifecycle (ON_PAUSE/ON_STOP) to drive
     // flush/teardown. Only the pure-JVM lifecycle-common types (Lifecycle, LifecycleEventObserver)
     // are touched; no LifecycleRegistry/main-thread machinery, so unit tests run on plain JVM.
@@ -95,6 +120,12 @@ dependencies {
     // The DocumentRepository contract is `suspend`; runTest drives it from JUnit4 without runBlocking
     // (android-tdd). Production code stays coroutine-free — `suspend` compiles on the stdlib alone.
     testImplementation(libs.kotlinx.coroutines.test)
+
+    // S6.1 (ADR-042): Room DAO/repository tests on the JVM — Robolectric supplies the Android
+    // SQLite runtime for Room.inMemoryDatabaseBuilder; androidx test core supplies
+    // ApplicationProvider. No emulator (repo precedent: :feature:editor, :render-android).
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 
     // Instrumented tests (real device/emulator): exercise the real android.system.Os directory
     // fsync + atomic rename on app-private storage. Cannot run in the current no-emulator CI.

@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **S6.1 — Room-backed project store** ([ADR-042](docs/DECISIONS.md#adr-042)): the
+  `ProjectRepository` contract gets its first real implementation in `:data-android` —
+  an observable multi-project metadata index (Room `projects` table, schema exported)
+  over the per-project files, which stay the source of truth (`document.json` + a new
+  atomic `meta.json` sidecar for title/createdAt). Existing on-disk projects — including
+  the S4 `"default"` seed — are adopted by an idempotent reconcile scan (no destructive
+  migration; nav unchanged). Create/rename/duplicate/delete land file-first with the row
+  re-derived; duplicates share content-addressed assets (new GC live-root by
+  construction, no sweeper shipped). Data layer only — the Home/My-zines shelf arrives
+  in S6.2+.
 - Design language + onboarding philosophy as canonical pre-implementation design:
   [docs/design/DESIGN-LANGUAGE.md](docs/design/DESIGN-LANGUAGE.md) and refreshed
   interactive mockups under [docs/design/mockups/](docs/design/mockups/).

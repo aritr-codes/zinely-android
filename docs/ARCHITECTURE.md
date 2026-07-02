@@ -354,7 +354,7 @@ The whole-project view used to sequence implementation. Phasing definitions live
 flowchart BT
     model["core:model<br/>✅ v0.1.0"]
     imp["core:imposition<br/>✅ v0.1.0"]
-    data["core:data + data-storage<br/>S2 ✅ (file-only; Room/GC deferred)"]
+    data["core:data + data-storage<br/>S2 ✅ (Room project store ✅ S6.1; GC deferred)"]
     render["core:render<br/>S3 ✅ · ADR-027 (pure tier on main)"]
     ra["render-android<br/>S3 ✅ · ADR-028 (Android tier on main)"]
     editor["feature:editor (MVI)<br/>S4 ✅ surface on main · mounted in app · ADR-029"]
@@ -381,7 +381,7 @@ flowchart BT
     class export next;
 ```
 
-*Arrow `A → B` = "A depends on B." `core:model` is the universal sink (pure, depends on nothing); the `app` shell is the source. `data` is ✅ for the **file-only** vertical; Room metadata + `ProjectRepository` remain deferred ([§4](#4-data-models--storage)).*
+*Arrow `A → B` = "A depends on B." `core:model` is the universal sink (pure, depends on nothing); the `app` shell is the source. `data` is ✅ for the document vertical **and (S6.1, [ADR-042](DECISIONS.md#adr-042))** the Room-backed `ProjectRepository` — a rebuildable index over the per-project files; the asset GC/sweeper remains deferred ([§4](#4-data-models--storage)).*
 
 ### 15.2 Build order
 
@@ -390,7 +390,7 @@ flowchart BT
 | S1 | `core:imposition` | `core:model` | ✅ shipped (v0.1.0) | — |
 | S2A | `core:data` (pure core) | `core:model` | ✅ implemented — schema, serializer+migration, validation, repo/asset contracts ([spike §11](spikes/data-storage-layer.md#11-implementation-status--s2a-pure-kotlin-data-core-2026-06-19)) | S3 (no shared dep) |
 | **S2B-core** | **`core:data-storage`** (pure JVM) | `core:data`, S2A | ✅ **on main** — atomic file source + autosave coordinator + content-addressed asset store (java.nio; CI-tested) ([ADR-025](DECISIONS.md#adr-025)). **Mark-and-sweep GC deferred — not yet implemented** ([ADR-031](DECISIONS.md#adr-031) §2) | S3 (no shared dep) |
-| S2B-android | `data-android` (Android library) | `core:data-storage` | ✅ **on main (file-only)** — file-backed `DocumentRepository` over app-private storage + autosave coordinator factory/binder + Hilt graph ([ADR-025](DECISIONS.md#adr-025)/[ADR-026](DECISIONS.md#adr-026)). **Room metadata, WorkManager GC, and SAF `.zine` not yet implemented** | S3 |
+| S2B-android | `data-android` (Android library) | `core:data-storage` | ✅ **on main** — file-backed `DocumentRepository` over app-private storage + autosave coordinator factory/binder + Hilt graph ([ADR-025](DECISIONS.md#adr-025)/[ADR-026](DECISIONS.md#adr-026)); **S6.1 added the Room-backed `ProjectRepository`** (`projects` index table + `meta.json` sidecar + reconcile-adoption of the `"default"` seed, [ADR-042](DECISIONS.md#adr-042)). **WorkManager GC and SAF `.zine` not yet implemented** | S3 |
 | S3-core | `core:render` (pure) | `core:model` | ✅ **on main** ([ADR-027](DECISIONS.md#adr-027)) — pure-JVM render core landed (`:core:render`, 23 tests, Codex GO, PR #9 merged `60f7344`) | S2B (no shared dep) |
 | **S3-android** | **`render-android`** (Android library) | `core:render` | ✅ **on main** ([ADR-028](DECISIONS.md#adr-028), G1–G6) — one `CanvasReplayer` + two export providers, `SharedTextLayout`, crop-aware `ImageBlitter`, bundled **Inter** (MVP charset + cmap coverage guard). Roborazzi raster + text parity goldens **headless-CI-gated**; image + PDF write/parity proofs on-device (compile-checked in CI) ([spike](spikes/core-render-android-backend.md)). Gated like `:data-android`. **Closes S3** | S2B (no shared dep) |
 | S4 | `feature:editor` | `core:model`, `core:data`, `render-android` (→ `core:render`) | ✅ **interaction surface on main** ([ADR-029](DECISIONS.md#adr-029), PR #21) — pure `:core:editor` MVI reducer + the gated `:feature:editor` store, gesture pipeline, selection chrome + live document-order preview, opposite-anchor resize handles, live snap guides (preview==commit), a11y contextbar/element semantics (WCAG 2.5.7), race-safe text-edit session, host `EditorScreen`, and selection-chrome Roborazzi goldens (CI-gated). Preview-host `preview == export` parity proven (PR #19). **Now mounted in `:app`** (PR #23, [ADR-030](DECISIONS.md#adr-030)/[ADR-031](DECISIONS.md#adr-031)): `ZinelyNavHost` on a fixed `"default"` project, `pageSizePt` from imposition, interactive image import, autosave binder. Gated like `:render-android` | — (needs S2 **and** S3) |
@@ -430,7 +430,7 @@ flowchart LR
 S1–S4 have landed: the pure cores (`core:model`/`imposition`/`data`/`data-storage`/`render`/`editor`), the Android tiers (`data-android` file-only persistence, `render-android` backends), and the `feature:editor` surface — now **mounted in `:app`** on a fixed `"default"` project. Two tracks remain before MVP:
 
 1. **S5 — export/share flow.** The render/export **backends already exist** (`render-android`: `PdfPageRenderer`, `RasterPageRenderer`, `CanvasReplayer`); what is missing is the user-facing `:feature:export` UI plus `FileProvider`/`MediaStore`/`PrintManager` wiring ([§6](#6-export-pipeline)). This is the critical-path item to a printable artifact.
-2. **Room-backed project layer.** Production persistence is currently **file-only and single-project** ([§4](#4-data-models--storage)): a file-backed `DocumentRepository` on one `"default"` project. The deferred Room metadata table + `ProjectRepository` unlock the home/library multi-project flow, and the **asset GC/sweeper** ([ADR-022](DECISIONS.md#adr-022)/[ADR-031](DECISIONS.md#adr-031)) lands with that work.
+2. **Room-backed project layer.** The data half landed in **S6.1** ([ADR-042](DECISIONS.md#adr-042)): a Room `projects` **index** (files are the source of truth — `document.json` + a per-project `meta.json` sidecar for title/createdAt) behind the `ProjectRepository` contract, with the on-disk `"default"` seed adopted by an idempotent reconcile scan. Still open on this track: the **Home/My-zines shelf UI, create/duplicate/delete actions, thumbnails, nav re-rooting** (S6.2–S6.5) and the **asset GC/sweeper** ([ADR-022](DECISIONS.md#adr-022)/[ADR-031](DECISIONS.md#adr-031) §2 — enabling it stays blocked until imports pin).
 
 > **Sequencing rule:** S5 (export) is the next critical-path build; the Room/`ProjectRepository`/home-library layer and the asset GC proceed alongside it. **Mandatory before enabling the GC sweep:** the import path must pin a hash before the document reference commits ([ADR-031](DECISIONS.md#adr-031) §2), plus the five ADR-022 race-closure tests in [spike §9.1](spikes/data-storage-layer.md#91-mandatory-s2b-tests--asset-gc-race-closure-adr-022).
 
