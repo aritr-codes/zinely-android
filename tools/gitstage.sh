@@ -51,6 +51,10 @@ case "${1:-}" in
                          data-android/schemas data-android/src \
                          docs/ARCHITECTURE.md docs/DECISIONS.md docs/ROADMAP.md \
                          tools/gitstage.sh ;;
+  # S6.2 — Home / "My zines" read-only shelf, built-but-unwired (ADR-043)
+  s62-home)      git add CHANGELOG.md app/src feature/editor/src \
+                         docs/ARCHITECTURE.md docs/DECISIONS.md docs/ROADMAP.md \
+                         docs/design/SCREEN-INVENTORY.md tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

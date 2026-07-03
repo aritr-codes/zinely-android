@@ -2,9 +2,9 @@
 
 > **The technical source of truth.** *How* Zinely is built. Product "what/why" → [PRD.md](PRD.md). Decisions → [DECISIONS.md](DECISIONS.md) (referenced by ADR id). Evidence → [RESEARCH.md](RESEARCH.md). Phasing → [ROADMAP.md](ROADMAP.md).
 >
-> Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`), `core:data` + `core:data-storage` (S2), `core:render` (S3), `core:editor` (S4) — plus the Android-backed `data-android` (file persistence), `render-android` (PDF/raster backends), and `feature:editor` (interaction surface). The `:app` module mounts a working **editor** on a single fixed `"default"` project with interactive image import and autosave, plus a reader **Preview** and a real **Export · Print & fold** (vector PDF + 300 DPI PNG of the imposed sheet, shared via `FileProvider`; S5 steps 1–2, [ADR-039](DECISIONS.md#adr-039)). **Not yet implemented:** Room project metadata, `ProjectRepository`, the export **Completion/fold-steps** screen and on-sheet calibration ruler, and the home/settings screens (see [§4](#4-data-models--storage) and [ROADMAP.md](ROADMAP.md)).
+> Privacy-first, offline-first Android app for printable zines · Kotlin · Compose · Material 3 · on-device PDF/image export. **Implemented so far:** the pure-Kotlin core — `core:model` + `core:imposition` (S1, shipped `v0.1.0`), `core:data` + `core:data-storage` (S2), `core:render` (S3), `core:editor` (S4) — plus the Android-backed `data-android` (file persistence), `render-android` (PDF/raster backends), and `feature:editor` (interaction surface). The `:app` module mounts a working **editor** on a single fixed `"default"` project with interactive image import and autosave, plus the complete S5 export/share flow: reader **Preview**, **Export · Print & fold** (vector PDF + 300 DPI PNG of the imposed sheet, shared via `FileProvider`, [ADR-039](DECISIONS.md#adr-039)), and the **Completion · fold-steps** payoff with auto post-export landing ([ADR-040](DECISIONS.md#adr-040)/[ADR-041](DECISIONS.md#adr-041)). **S6.1** landed the Room-backed `ProjectRepository` (a rebuildable index over the per-project files, [ADR-042](DECISIONS.md#adr-042)); **S6.2** built the read-only **Home / "My zines" shelf** — present and tested, but **built-but-unwired** (no nav route until the S6.5 re-root, [ADR-043](DECISIONS.md#adr-043), [§8](#8-navigation-technical)). **Still deferred:** shelf actions (create/duplicate/delete/rename, S6.3), thumbnails (S6.4), Home nav wiring + start-destination re-root (S6.5), the Settings screen, the asset GC/sweeper ([ADR-031](DECISIONS.md#adr-031) §2), and the on-sheet calibration ruler (deferred with cause, [ADR-039](DECISIONS.md#adr-039)) — see [§4](#4-data-models--storage) and [ROADMAP.md](ROADMAP.md).
 
-> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-031); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
+> **Decisions & roadmap are not duplicated here.** Locked decisions live in [DECISIONS.md](DECISIONS.md) (ADR-001…ADR-043); phasing in [ROADMAP.md](ROADMAP.md). This document references them.
 
 ---
 
@@ -88,7 +88,7 @@ com.aritr.zinely
 └── ui               // theme, design system, shared composables (M3)
 ```
 
-Module split (realised vs planned): **realised** — `:app` (mounts the editor on a fixed `"default"` project), `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability core + content-addressed asset store, [ADR-025](DECISIONS.md#adr-025); GC/sweeper deferred — see [§4](#4-data-models--storage)), `:core:render` (S3 pure tier, [ADR-027](DECISIONS.md#adr-027)), `:render-android` (S3 Android replay/export tier, [ADR-028](DECISIONS.md#adr-028)), `:core:editor` (S4 pure MVI reducer, [ADR-029](DECISIONS.md#adr-029)), `:feature:editor` (S4 interaction surface — MVI store, gesture pipeline, selection chrome, snap guides, a11y contextbar, text-edit session, host `EditorScreen`), `:data-android` (S2B Android adapters: file-only `DocumentRepository` over app-private storage; **Room/WorkManager not yet implemented**, [ADR-025](DECISIONS.md#adr-025)); **planned** — `:core:domain`, `:core:ui`, `:feature:home|export|settings`, and the Room metadata / `ProjectRepository` / export-share wiring those imply.
+Module split (realised vs planned): **realised** — `:app` (mounts the editor on a fixed `"default"` project), `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability core + content-addressed asset store, [ADR-025](DECISIONS.md#adr-025); GC/sweeper deferred — see [§4](#4-data-models--storage)), `:core:render` (S3 pure tier, [ADR-027](DECISIONS.md#adr-027)), `:render-android` (S3 Android replay/export tier, [ADR-028](DECISIONS.md#adr-028)), `:core:editor` (S4 pure MVI reducer, [ADR-029](DECISIONS.md#adr-029)), `:feature:editor` (S4 interaction surface — MVI store, gesture pipeline, selection chrome, snap guides, a11y contextbar, text-edit session, host `EditorScreen`; also hosts the S5 Preview/Export/Completion screens and the S6.2 read-only `HomeScreen`, [ADR-043](DECISIONS.md#adr-043)), `:data-android` (S2B Android adapters: file-backed `DocumentRepository` over app-private storage + **the S6.1 Room-backed `ProjectRepository` index** (`projects` table + `meta.json` sidecar, files-as-truth, [ADR-042](DECISIONS.md#adr-042)); **WorkManager GC and SAF `.zine` restore not yet implemented**, [ADR-025](DECISIONS.md#adr-025)); **planned** — `:core:domain`, `:core:ui`, and `:feature:home|export|settings` as module *extractions* (their screens currently live in `:feature:editor`/future work; a `:feature:home` split is deferred until S6.5 or a second consumer justifies it, [ADR-043](DECISIONS.md#adr-043)).
 
 ## 3. Data flow
 
@@ -113,7 +113,7 @@ UI models are mapped from domain/data models inside ViewModels and contain only 
 
 **Storage split ([ADR-003](DECISIONS.md#adr-003)):** Room stores queryable **metadata**; the zine **document tree** is `kotlinx.serialization` JSON in a per-project file (not relational). Images are **copied in** ([ADR-004](DECISIONS.md#adr-004)). Document schema is versioned **independently** of the Room schema. The diagram below is the *logical* model; only `ZINE_PROJECT` is a real table — the rest is the serialized document.
 
-> **⚠️ Current implementation (checkout state).** The Room metadata table, `ZINE_PROJECT`, and `ProjectRepository` are **the accepted target, not yet built**. Production persistence today is **file-backed only**: `data-android`'s `DocumentRepositoryImpl` serializes the document tree to `projects/<id>/document.json` over app-private storage, bound through `core:data-storage`'s atomic `AtomicFileStore` + autosave coordinator. The app runs on a **single fixed `"default"` project** (`ZinelyNavHost` / `EditorBootstrap`); there is no multi-project metadata store, no Room/DAO/`@AutoMigration`, and no `ProjectRepository` binding ([DataModule](../data-android/src/main/kotlin/com/aritr/zinely/data/android/di/DataModule.kt) binds only `DocumentRepository`). Image assets are persisted by the content-addressed `FileAssetStore`; the asset **GC/sweeper is deferred** ([ADR-031](DECISIONS.md#adr-031)). Room metadata + `ProjectRepository` land with the home/library work ([ROADMAP.md](ROADMAP.md)); see also the deferral note in [DECISIONS.md](DECISIONS.md).
+> **⚠️ Current implementation (checkout state).** The Room-backed `ProjectRepository` **landed in S6.1** ([ADR-042](DECISIONS.md#adr-042)): `data-android` now has a `projects` Room table (v1, schema exported) as a **rebuildable index** behind the `RoomProjectRepository` binding in [DataModule](../data-android/src/main/kotlin/com/aritr/zinely/data/android/di/DataModule.kt) — the **files stay the source of truth** (`DocumentRepositoryImpl` writes `projects/<id>/document.json` via `core:data-storage`'s atomic `AtomicFileStore`, plus an atomic `meta.json` sidecar for title/createdAt), with an idempotent reconcile scan adopting on-disk projects (including the S4 `"default"` seed) and rows re-derived from disk after every mutation. At the **UI level** the app still runs on the single fixed `"default"` project (`ZinelyNavHost` / `EditorBootstrap`, [ADR-030](DECISIONS.md#adr-030) §4): the S6.2 read-only shelf over `observeProjects()` is **built-but-unwired** ([ADR-043](DECISIONS.md#adr-043), [§8](#8-navigation-technical)); shelf actions/thumbnails/nav re-root are S6.3–S6.5. Image assets are persisted by the content-addressed `FileAssetStore`; the asset **GC/sweeper is deferred** ([ADR-031](DECISIONS.md#adr-031)).
 
 ```mermaid
 erDiagram
@@ -265,19 +265,21 @@ The drag preview is transient state (`activeGesture`) — never undoable, never 
 
 ## 8. Navigation (technical)
 
-Single Activity (`MainActivity`) + `navigation-compose` with type-safe `@Serializable` routes; navigation triggered from UI via `NavController`, never from a ViewModel. One-shot ViewModel events use `Channel`+`receiveAsFlow()` where exactly-once delivery matters, else `SharedFlow(replay=0)`. User-facing flow map: [PRD §9](PRD.md#9-navigation-map-mvp).
+Single Activity (`MainActivity`) + `navigation-compose` with type-safe `@Serializable` routes; navigation triggered from UI via `NavController`, never from a ViewModel. One-shot ViewModel events use `Channel`+`receiveAsFlow()` where exactly-once delivery matters, else `SharedFlow(replay=0)`. User-facing *target* flow map: [PRD §9](PRD.md#9-navigation-map-mvp).
+
+**The wired graph today** (`ZinelyNavHost`, [ADR-030](DECISIONS.md#adr-030)/[ADR-039](DECISIONS.md#adr-039)/[ADR-040](DECISIONS.md#adr-040)/[ADR-041](DECISIONS.md#adr-041)) — start destination `EditorRoute("default")`, seed-on-miss:
 
 ```mermaid
 flowchart LR
-    Home["HomeRoute"] -->|projectId| Editor["EditorRoute(projectId)"]
-    Home --> Settings["SettingsRoute"]
-    Editor -->|projectId| Export["ExportRoute(projectId)"]
-    Editor --> Fold["FoldGuideRoute"]
-    Export --> Editor
-    Fold --> Editor
-    Editor -->|back, autosaved| Home
-    Settings --> Home
+    Editor["EditorRoute(projectId) — start, 'default'"] -->|Preview| Preview["PreviewRoute(projectId)"]
+    Preview -->|"Print & fold"| Export["ExportRoute(projectId)"]
+    Export -->|"fold help / auto post-export (ADR-041)"| Completion["CompletionRoute(projectId)"]
+    Preview -->|back| Editor
+    Export -->|back| Preview
+    Completion -->|"back / keep editing"| Editor
 ```
+
+**Not in the graph:** the S6.2 Home/My-zines shelf is **built-but-unwired** ([ADR-043](DECISIONS.md#adr-043)) — `HomeScreen`/`HomeViewModel` exist and are tested, but no Home route is registered, because a Home destination inside this editor-rooted graph would encode a `default → Home → default` second-`EditorViewModel` path the [ADR-026](DECISIONS.md#adr-026) single-writer factory rejects. Home enters the graph (and becomes the start destination) with the S6.5 re-root, which owns the back-stack policy; Welcome and Settings remain future routes ([SCREEN-INVENTORY](design/SCREEN-INVENTORY.md)).
 
 ## 9. Error handling
 
@@ -412,11 +414,11 @@ flowchart BT
 ```mermaid
 flowchart LR
     M["core:model ✅"] --> I["core:imposition ✅"]
-    M --> D["core:data (S2 ✅, file-only)"]
+    M --> D["core:data (S2 ✅; Room project store ✅ S6.1)"]
     M --> R["core:render (S3 ✅)"]
     D --> E["editor (S4 ✅, mounted)"]
     R --> E
-    R --> X["export (S5 🟨)"]
+    R --> X["export (S5 ✅)"]
     D --> X
     I --> X
     E --> MVP(["MVP"])
@@ -427,12 +429,12 @@ flowchart LR
 
 ### 15.5 What follows S4 — sequencing
 
-S1–S4 have landed: the pure cores (`core:model`/`imposition`/`data`/`data-storage`/`render`/`editor`), the Android tiers (`data-android` file-only persistence, `render-android` backends), and the `feature:editor` surface — now **mounted in `:app`** on a fixed `"default"` project. Two tracks remain before MVP:
+S1–S4 have landed: the pure cores (`core:model`/`imposition`/`data`/`data-storage`/`render`/`editor`), the Android tiers (`data-android` — file persistence and, since S6.1, the Room-backed `ProjectRepository` index; `render-android` backends), and the `feature:editor` surface — now **mounted in `:app`** on a fixed `"default"` project. Of the two post-S4 tracks, one is done and one is in flight:
 
-1. **S5 — export/share flow.** The render/export **backends already exist** (`render-android`: `PdfPageRenderer`, `RasterPageRenderer`, `CanvasReplayer`); what is missing is the user-facing `:feature:export` UI plus `FileProvider`/`MediaStore`/`PrintManager` wiring ([§6](#6-export-pipeline)). This is the critical-path item to a printable artifact.
-2. **Room-backed project layer.** The data half landed in **S6.1** ([ADR-042](DECISIONS.md#adr-042)): a Room `projects` **index** (files are the source of truth — `document.json` + a per-project `meta.json` sidecar for title/createdAt) behind the `ProjectRepository` contract, with the on-disk `"default"` seed adopted by an idempotent reconcile scan. Still open on this track: the **Home/My-zines shelf UI, create/duplicate/delete actions, thumbnails, nav re-rooting** (S6.2–S6.5) and the **asset GC/sweeper** ([ADR-022](DECISIONS.md#adr-022)/[ADR-031](DECISIONS.md#adr-031) §2 — enabling it stays blocked until imports pin).
+1. **S5 — export/share flow: ✅ complete on `main`.** Preview → Export · Print & fold (vector PDF + 300 DPI PNG over the `render-android` backends, shared via `FileProvider`) → Completion · fold-steps, with auto post-export landing ([ADR-039](DECISIONS.md#adr-039)/[ADR-040](DECISIONS.md#adr-040)/[ADR-041](DECISIONS.md#adr-041), [§6](#6-export-pipeline)). The screens live in `:feature:editor` with `:app` hosts — no separate `:feature:export` module was needed; `MediaStore`/`PrintManager` wiring remains future polish, and the on-sheet calibration ruler stays deferred with cause (ADR-039).
+2. **Room-backed project layer (S6, in flight).** The data half landed in **S6.1** ([ADR-042](DECISIONS.md#adr-042)): a Room `projects` **index** (files are the source of truth — `document.json` + a per-project `meta.json` sidecar for title/createdAt) behind the `ProjectRepository` contract, with the on-disk `"default"` seed adopted by an idempotent reconcile scan. The **read-only Home/My-zines shelf UI landed in S6.2** ([ADR-043](DECISIONS.md#adr-043)) — built-but-unwired: `HomeScreen`/`HomeViewModel` exist and are tested, but no nav route is registered ([§8](#8-navigation-technical)). Still open on this track: the **shelf actions (create/duplicate/delete/rename, S6.3 — behind the ADR-042 open-editor exclusion), thumbnails (S6.4), nav wiring + re-rooting (S6.5)** and the **asset GC/sweeper** ([ADR-022](DECISIONS.md#adr-022)/[ADR-031](DECISIONS.md#adr-031) §2 — enabling it stays blocked until imports pin).
 
-> **Sequencing rule:** S5 (export) is the next critical-path build; the Room/`ProjectRepository`/home-library layer and the asset GC proceed alongside it. **Mandatory before enabling the GC sweep:** the import path must pin a hash before the document reference commits ([ADR-031](DECISIONS.md#adr-031) §2), plus the five ADR-022 race-closure tests in [spike §9.1](spikes/data-storage-layer.md#91-mandatory-s2b-tests--asset-gc-race-closure-adr-022).
+> **Sequencing rule:** with S5 shipped, the S6 multi-project/home-library track is the critical path (next: S6.3 shelf actions behind the ADR-042 open-editor exclusion); the asset GC proceeds alongside it. **Mandatory before enabling the GC sweep:** the import path must pin a hash before the document reference commits ([ADR-031](DECISIONS.md#adr-031) §2), plus the five ADR-022 race-closure tests in [spike §9.1](spikes/data-storage-layer.md#91-mandatory-s2b-tests--asset-gc-race-closure-adr-022).
 
 ### 15.6 Architectural implications surfaced by the design sprint (2026-06-28)
 
@@ -449,9 +451,14 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    UI, not ViewModels). 🟦 **Welcome and Settings are not Room-gated** (Codex review): Welcome routes
    straight to `EditorRoute("default")` behind a **local first-run flag** (see item 4), and Settings
    needs only the local prefs store — both can ship before the project layer. **Only Home/My-zines is
-   gated on the Room `ProjectRepository`** (§15.5) — and Home additionally requires **project-card
-   thumbnail production/invalidation**, which nothing in the repo owns yet (`ProjectRepository` exists
-   today only as a pure contract).
+   gated on the Room `ProjectRepository`** (§15.5) — landed in S6.1 ([ADR-042](DECISIONS.md#adr-042)),
+   and the **read-only Home shelf now exists as a built-but-unwired surface** (S6.2,
+   [ADR-043](DECISIONS.md#adr-043)): stateless `HomeScreen` in `:feature:editor` + MVVM
+   `HomeViewModel` in `:app`, deliberately **absent from `ZinelyNavHost`** until the S6.5 back-stack
+   policy (a registered Home route inside the editor-rooted graph would encode the
+   `default → Home → default` second-VM path [ADR-026](DECISIONS.md#adr-026) forbids). Home still
+   additionally requires **project-card thumbnail production/invalidation** (S6.4), which nothing in
+   the repo owns yet.
 
 2. **Sticker/decoration element type → new ADR.** Today `core:model`/`core:render` know only
    `ImageElement` and `TextElement`. The [sticker picker](design/SCREEN-INVENTORY.md#sticker-picker)

@@ -54,7 +54,11 @@ flowchart TD
   returning users land on Home/Editor once Home exists.
 
 ### Home / My zines
-- **Status:** 🔭 deferred (needs the Room project layer — [ROADMAP](../ROADMAP.md)).
+- **Status:** 🔂 read-only shelf **built, not yet wired** (S6.2, [ADR-043](../DECISIONS.md#adr-043)):
+  list + open + CTA-less empty state exist and are tested, but no nav route is registered — the app
+  still boots into the editor. **Start a zine / duplicate / delete arrive with S6.3** (the create
+  action), thumbnails with S6.4, and the route + start-destination re-root with S6.5. This section
+  stays the *target* spec (CTA included).
 - **Purpose:** see and reopen the zines I've made; start a new one.
 - **Primary action:** **Start a zine** (prominent, always reachable).
 - **Secondary:** open / duplicate / delete a project (gentle, undoable); each as a paper-card
