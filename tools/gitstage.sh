@@ -60,6 +60,11 @@ case "${1:-}" in
                          data-android/src \
                          docs/ARCHITECTURE.md docs/DECISIONS.md docs/ROADMAP.md \
                          docs/design/SCREEN-INVENTORY.md tools/gitstage.sh ;;
+  # S6.4 — Home shelf page-1 thumbnails via the shared render parity path (ADR-045)
+  s64-thumbs)    git add CHANGELOG.md app/src feature/editor/src \
+                         data-android/src render-android/src \
+                         docs/ARCHITECTURE.md docs/DECISIONS.md docs/ROADMAP.md \
+                         docs/design/SCREEN-INVENTORY.md tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

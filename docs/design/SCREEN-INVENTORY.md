@@ -55,12 +55,13 @@ flowchart TD
 
 ### Home / My zines
 - **Status:** 🔂 full shelf **built, not yet wired** (S6.2 read shelf [ADR-043](../DECISIONS.md#adr-043);
-  S6.3 actions [ADR-044](../DECISIONS.md#adr-044)): list + open + **Start a zine** (empty-state CTA
-  restored + content FAB) + per-card rename/duplicate/**undoable delete** (snackbar undo window, no
-  confirm dialog) all exist and are tested — the open-editor exclusion is enforced in the data layer
+  S6.3 actions [ADR-044](../DECISIONS.md#adr-044); S6.4 thumbnails [ADR-045](../DECISIONS.md#adr-045)):
+  list + open + **Start a zine** (empty-state CTA restored + content FAB) + per-card
+  rename/duplicate/**undoable delete** (snackbar undo window, no confirm dialog) + **page-1 paper-card
+  thumbnails** (rendered through the shared render/export parity path; warm paper placeholder on any
+  failure) all exist and are tested — the open-editor exclusion is enforced in the data layer
   (`DataError.Busy`). But no nav route is registered, so the app still boots into the editor and every
-  action is reachable only in tests. Thumbnails arrive with S6.4; the route + start-destination
-  re-root with S6.5.
+  action is reachable only in tests. The route + start-destination re-root lands with S6.5.
 - **Purpose:** see and reopen the zines I've made; start a new one.
 - **Primary action:** **Start a zine** (prominent, always reachable).
 - **Secondary:** open / duplicate / delete a project (gentle, undoable); each as a paper-card
@@ -204,7 +205,7 @@ flowchart TD
 | Export · Print & fold | S5 / `0.6.0`+ | ✅ (calibration ruler deferred) |
 | Completion · fold steps | S5 / `0.6.0`+ | ✅ (auto post-export landing deferred) |
 | Welcome | needs only a **first-run flag** (local prefs) — *not* Room-gated | 🔭 |
-| Home / My zines | needs the **Room project layer** + shelf **thumbnails** | 🔭 |
+| Home / My zines | shelf + actions + thumbnails **built** (S6.1–S6.4); needs only the **S6.5 nav re-root** | 🔂 |
 | Settings | needs only **local prefs** (DataStore) — *not* Room-gated | 🔭 |
 | Sticker picker, Template picker | V1 | 🔭 |
 

@@ -1,5 +1,9 @@
 package com.aritr.zinely.home
 
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
+import androidx.compose.ui.graphics.colorspace.ColorSpace
+import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectRepository
@@ -18,6 +22,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -81,14 +87,51 @@ class HomeViewModelTest {
         }
     }
 
+    /**
+     * Recording thumbnail fake (S6.4, ADR-045): scripts [ensure] per id and records every ask, so
+     * the "hidden cards are never asked for" and delivery-mapping assertions are direct.
+     */
+    private class FakeShelfThumbnails : ShelfThumbnails {
+        val asked = mutableListOf<String>()
+        var bitmaps: Map<String, ImageBitmap> = emptyMap()
+
+        override suspend fun ensure(projectId: String): ImageBitmap? {
+            asked += projectId
+            return bitmaps[projectId]
+        }
+    }
+
+    /** A JVM-pure [ImageBitmap] — the VM never reads pixels, it only carries the reference. */
+    private class FakeImageBitmap : ImageBitmap {
+        override val width: Int = 1
+        override val height: Int = 1
+        override val config: ImageBitmapConfig = ImageBitmapConfig.Argb8888
+        override val hasAlpha: Boolean = false
+        override val colorSpace: ColorSpace = ColorSpaces.Srgb
+        override fun prepareToDraw() = Unit
+        override fun readPixels(
+            buffer: IntArray,
+            startX: Int,
+            startY: Int,
+            width: Int,
+            height: Int,
+            bufferOffset: Int,
+            stride: Int,
+        ) = Unit
+    }
+
     private val dispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: FakeProjectRepository
+    private lateinit var thumbnails: FakeShelfThumbnails
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         repository = FakeProjectRepository()
+        thumbnails = FakeShelfThumbnails()
     }
+
+    private fun viewModel() = HomeViewModel(repository, thumbnails)
 
     @After
     fun tearDown() {
@@ -112,7 +155,7 @@ class HomeViewModelTest {
 
     @Test
     fun `the shelf is Loading until the store first answers`() = runTest {
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
 
         val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
         assertEquals(HomeUiState.Loading, viewModel.state.value)
@@ -121,7 +164,7 @@ class HomeViewModelTest {
 
     @Test
     fun `an empty store is the Empty shelf, never a zero-card Content`() = runTest {
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
 
         val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(emptyList())
@@ -133,7 +176,7 @@ class HomeViewModelTest {
     @Test
     fun `projects become warm cards - id, title, format and recency labels`() = runTest {
         val fiveMinutesAgo = System.currentTimeMillis() - 5 * 60_000L
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
 
         val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(
@@ -151,7 +194,7 @@ class HomeViewModelTest {
 
     @Test
     fun `A4 zines say so on their card`() = runTest {
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
 
         val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(
@@ -173,7 +216,7 @@ class HomeViewModelTest {
     @Test
     fun `the shelf re-renders when the store changes`() = runTest {
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
 
         val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(listOf(summary("z1", "One", now)))
@@ -191,7 +234,7 @@ class HomeViewModelTest {
         // Newest-first is the ProjectRepository contract (ADR-042 §7); the VM must pass it
         // through untouched rather than duplicate the ordering logic (Codex).
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
 
         val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(
@@ -212,7 +255,7 @@ class HomeViewModelTest {
     @Test
     fun `Start a zine creates with the warm defaults`() = runTest {
         // Given
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         repository.createResult = { DataResult.Success(summary("new", "My zine", 0L)) }
 
         // When
@@ -228,7 +271,7 @@ class HomeViewModelTest {
     @Test
     fun `a failed create surfaces the warm generic message`() = runTest {
         // Given
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         repository.createResult = { DataResult.Failure(DataError.Io("disk")) }
         val events = mutableListOf<HomeShelfEvent>()
         val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
@@ -244,7 +287,7 @@ class HomeViewModelTest {
     @Test
     fun `rename trims the title before it reaches the store`() = runTest {
         // Given
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
 
         // When
         viewModel.rename("z1", "  Trip notes  ")
@@ -256,7 +299,7 @@ class HomeViewModelTest {
     @Test
     fun `a blank rename keeps the existing name - no store call`() = runTest {
         // Given
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
 
         // When
         viewModel.rename("z1", "   ")
@@ -268,7 +311,7 @@ class HomeViewModelTest {
     @Test
     fun `duplicate delegates to the store`() = runTest {
         // Given
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         repository.duplicateResult = { DataResult.Success(summary("copy", "One copy", 0L)) }
 
         // When
@@ -281,7 +324,7 @@ class HomeViewModelTest {
     @Test
     fun `a Busy refusal reads as still-saving, not as a failure`() = runTest {
         // Given — the ADR-044 §1 gate refused: an editor session is still live/releasing
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         repository.duplicateResult = { DataResult.Failure(DataError.Busy("live session")) }
         val events = mutableListOf<HomeShelfEvent>()
         val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
@@ -298,7 +341,7 @@ class HomeViewModelTest {
     fun `delete hides the card immediately and prompts for undo - no store call yet`() = runTest {
         // Given
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
         val events = mutableListOf<HomeShelfEvent>()
         val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
@@ -319,7 +362,7 @@ class HomeViewModelTest {
     fun `a second delete of the same card does not prompt twice`() = runTest {
         // Given
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
         val events = mutableListOf<HomeShelfEvent>()
         val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
@@ -339,7 +382,7 @@ class HomeViewModelTest {
     fun `undo unhides the card without touching the store`() = runTest {
         // Given
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(listOf(summary("z1", "One", now)))
         viewModel.delete("z1")
@@ -357,7 +400,7 @@ class HomeViewModelTest {
     fun `commit performs the store delete`() = runTest {
         // Given
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(listOf(summary("z1", "One", now)))
         viewModel.delete("z1")
@@ -375,7 +418,7 @@ class HomeViewModelTest {
         // Given — unhiding on success would flash the deleted card back for the window between
         // deleteProject returning and observeProjects() re-emitting (reviewer Required Fix)
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
         viewModel.delete("z1")
@@ -396,7 +439,7 @@ class HomeViewModelTest {
     fun `a failed commit unhides the card and says so - the shelf never lies`() = runTest {
         // Given (Codex: deleteProject is not infallible)
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         repository.deleteResult = { DataResult.Failure(DataError.Io("unindex failed")) }
         val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
         val events = mutableListOf<HomeShelfEvent>()
@@ -418,7 +461,7 @@ class HomeViewModelTest {
     fun `hiding every card is a zero-card Content, never the Empty invitation`() = runTest {
         // Given — Empty means the STORE is empty; a pending delete is still reversible (Codex)
         val now = System.currentTimeMillis()
-        val viewModel = HomeViewModel(repository)
+        val viewModel = viewModel()
         val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
         repository.projects.emit(listOf(summary("z1", "One", now)))
 
@@ -429,6 +472,60 @@ class HomeViewModelTest {
         val state = viewModel.state.value
         assertTrue(state is HomeUiState.Content && state.cards.isEmpty())
         stateJob.cancel()
+    }
+
+    // --- S6.4 shelf thumbnails (ADR-045) ---
+
+    @Test
+    fun `a delivered thumbnail rides its card`() = runTest {
+        // Given a thumbnail the producer can deliver for z1
+        val bitmap = FakeImageBitmap()
+        thumbnails.bitmaps = mapOf("z1" to bitmap)
+        val viewModel = viewModel()
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+
+        // When the store emits the project
+        repository.projects.emit(listOf(summary("z1", "One", System.currentTimeMillis())))
+
+        // Then the card carries exactly that bitmap
+        val card = (viewModel.state.value as HomeUiState.Content).cards.single()
+        assertSame(bitmap, card.thumbnail)
+        job.cancel()
+    }
+
+    @Test
+    fun `no thumbnail is a null card slot - the warm placeholder, never a broken shelf`() = runTest {
+        // Given a producer with nothing to give (unreadable document, render failure)
+        val viewModel = viewModel()
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+
+        // When
+        repository.projects.emit(listOf(summary("z1", "One", System.currentTimeMillis())))
+
+        // Then
+        assertNull((viewModel.state.value as HomeUiState.Content).cards.single().thumbnail)
+        assertTrue("the shelf still asked" , thumbnails.asked.contains("z1"))
+        job.cancel()
+    }
+
+    @Test
+    fun `every visible card is asked for - hidden pending-delete cards are not`() = runTest {
+        // Given two zines on the shelf
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        assertTrue(thumbnails.asked.containsAll(listOf("z1", "z2")))
+
+        // When z1 is hidden by a pending delete and the shelf re-emits
+        viewModel.delete("z1")
+        thumbnails.asked.clear()
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+
+        // Then only the visible card is asked for (ADR-045 §2 / ADR-044 pending-delete interplay)
+        assertTrue(thumbnails.asked.contains("z2"))
+        assertTrue("hidden card must not be asked for", "z1" !in thumbnails.asked)
+        job.cancel()
     }
 
     // --- the recency label, a pure function ---

@@ -15,6 +15,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **S6.4 — Home shelf thumbnails (built on the unwired shelf)**
+  ([ADR-045](docs/DECISIONS.md#adr-045)): each "My zines" card now shows a page-1
+  miniature rendered through the proven parity path — the `SceneRenderer` tape replayed
+  by the shared `CanvasReplayer` via a new thin `:render-android` `ThumbnailRenderer`
+  (paper-white, 320 px longest edge, the export font/image stack) — so **a thumbnail is
+  a miniature of the export by construction**. Thumbnails are produced pull-based on
+  shelf observation by an `:app` `ShelfThumbnailProducer` (IO, one mutex, capped
+  in-memory LRU) and cached as a **derived, never-authoritative** PNG at
+  `cacheDir/thumbnails/<id>.png`, invalidated by a single stamp: the PNG's mtime is set
+  to `document.json`'s mtime and validity is exact equality. Rename doesn't regenerate
+  (content unchanged); duplicate renders fresh; any failure shows a warm paper
+  placeholder — the shelf never breaks. New narrow `:data-android` seam
+  `ProjectDocumentLayout.documentFile` (over the internal `ProjectPaths` chokepoint);
+  ADR-031's no-sweeper invariant untouched (a thumbnail is never a GC root). Navigation
+  unchanged — Home remains unwired until S6.5.
 - **S6.3 — Home shelf actions: create · rename · duplicate · undoable delete
   (testable-only until S6.5)** ([ADR-044](docs/DECISIONS.md#adr-044)): "Start a zine"
   returns to the empty shelf (ending the ADR-043 §5 named deviation) and as a content-shelf

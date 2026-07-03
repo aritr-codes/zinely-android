@@ -2,6 +2,7 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -259,5 +260,45 @@ class HomeScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("That didn't work — try again?").assertExists()
+    }
+
+    // --- S6.4 card thumbnails (ADR-045) ---
+
+    @Test
+    fun `a card with a thumbnail shows the page-1 image, not the placeholder`() {
+        // Given a card carrying a decoded thumbnail
+        setHome(listOf(twoZines[0].copy(thumbnail = ImageBitmap(4, 8)), twoZines[1]))
+
+        // Then that card renders the image and drops its placeholder
+        composeRule.onNodeWithTag(homeCardThumbnailTestTag("zine-b"), useUnmergedTree = true)
+            .assertExists()
+        composeRule
+            .onNodeWithTag(homeCardThumbnailPlaceholderTestTag("zine-b"), useUnmergedTree = true)
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun `a card without a thumbnail shows the warm paper placeholder, never a broken slot`() {
+        // Given cards with no thumbnail yet (still rendering, or the document was unreadable)
+        setHome(twoZines)
+
+        // Then every card shows the placeholder and no image node exists
+        composeRule
+            .onNodeWithTag(homeCardThumbnailPlaceholderTestTag("zine-b"), useUnmergedTree = true)
+            .assertExists()
+        composeRule
+            .onNodeWithTag(homeCardThumbnailPlaceholderTestTag("zine-a"), useUnmergedTree = true)
+            .assertExists()
+        composeRule.onNodeWithTag(homeCardThumbnailTestTag("zine-b"), useUnmergedTree = true)
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun `the thumbnail is decorative - it adds no tap target to the card`() {
+        // Given one card with and one without a thumbnail
+        setHome(listOf(twoZines[0].copy(thumbnail = ImageBitmap(4, 8)), twoZines[1]))
+
+        // Then the S6.3 structural contract is unchanged: open + menu per card, plus the FAB
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(twoZines.size * 2 + 1)
     }
 }
