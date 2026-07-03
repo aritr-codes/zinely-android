@@ -27,10 +27,14 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.aritr.zinely.home.HomeUiState
+import com.aritr.zinely.home.HomeViewModel
+import com.aritr.zinely.feature.editor.HomeScreen
 import androidx.compose.runtime.DisposableEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -46,23 +50,35 @@ import com.aritr.zinely.feature.editor.ExportScreen
 import com.aritr.zinely.feature.editor.PreviewScreen
 
 /**
- * The single-Activity navigation graph (ADR-030 §1). Two destinations: the editor on a fixed `"default"`
- * project ([EditorRoute], the start), and the reader's-booklet [PreviewRoute] it opens (S5 step 1). Both
- * are type-safe; adding a home/library screen later is a new `composable<…>` + a changed start
- * destination, nothing structural.
+ * The single-Activity navigation graph (ADR-030 §1, re-rooted by ADR-046 §1). [HomeRoute] — the
+ * "My zines" shelf — is the start destination and the single back-stack root: a card tap or a fresh
+ * create pushes [EditorRoute] (launchSingleTop guards a double-tap), and returning is only ever a
+ * pop — no code path *navigates* to Home, so two editor entries can never coexist. Preview/Export/
+ * Completion stack above the editor and share its ViewModel (the ADR-026 single-writer seam).
+ * [navController] is injectable for the host-level tests; production uses the remembered default.
  */
 @Composable
-internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
-    val navController = rememberNavController()
+internal fun ZinelyNavHost(
+    modifier: Modifier = Modifier,
+    navController: NavHostController = rememberNavController(),
+) {
     NavHost(
         navController = navController,
-        startDestination = EditorRoute(projectId = "default"),
+        startDestination = HomeRoute,
         modifier = modifier,
     ) {
+        composable<HomeRoute> {
+            HomeDestination(
+                onOpenZine = { id ->
+                    navController.navigate(EditorRoute(id)) { launchSingleTop = true }
+                },
+            )
+        }
         composable<EditorRoute> { entry ->
             val route = entry.toRoute<EditorRoute>()
             EditorDestination(
                 onPreview = { navController.navigate(PreviewRoute(route.projectId)) },
+                onBack = { navController.popBackStack() },
             )
         }
         composable<PreviewRoute> { entry ->
@@ -111,6 +127,40 @@ internal fun ZinelyNavHost(modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+/**
+ * The Home · "My zines" shelf host (S6.5, ADR-046 §5) — the root destination. Hosts the S6.2–6.4
+ * [HomeViewModel] and threads its state/events into the stateless [HomeScreen]. Navigation is this
+ * layer's concern, not the screen's: card taps and "Start a zine" both route through the VM (which
+ * first commits any pending undoable deletes — leaving the shelf is a snackbar dismissal, ADR-046
+ * §4) and come back as one-shot [HomeViewModel.openEvents] ids collected here into [onOpenZine].
+ */
+@Composable
+private fun HomeDestination(onOpenZine: (String) -> Unit) {
+    val viewModel: HomeViewModel = hiltViewModel()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(viewModel) {
+        viewModel.openEvents.collect { id -> onOpenZine(id) }
+    }
+
+    HomeScreen(
+        loading = state is HomeUiState.Loading,
+        // The honest empty signal (ADR-044 §3): the invitation only when the STORE is empty — a
+        // shelf filtered to zero by pending deletes stays a zero-card shelf.
+        storeEmpty = state is HomeUiState.Empty,
+        cards = (state as? HomeUiState.Content)?.cards ?: emptyList(),
+        events = viewModel.events,
+        onOpenZine = viewModel::openZine,
+        onStartZine = viewModel::startZine,
+        onRenameZine = viewModel::rename,
+        onDuplicateZine = viewModel::duplicate,
+        onDeleteZine = viewModel::delete,
+        onDeleteUndo = viewModel::undoDelete,
+        onDeleteCommit = viewModel::commitDelete,
+        modifier = Modifier.fillMaxSize(),
+    )
 }
 
 /**
@@ -351,9 +401,11 @@ private fun openIntent(resolver: ContentResolver, uri: Uri, mime: String): Inten
  * Hosts one [EditorViewModel] and renders its [EditorBootState]. The VM owns the store/binder for the
  * project's lifetime; this composable only (a) drives the autosave binder off the UI lifecycle and
  * (b) drains a11y announcements to the platform live region — neither belongs in the VM (Codex rec 1).
+ * [onBack] returns to the shelf from the boot-error state: with the seed-on-miss retired a missing
+ * project is a normal user path, and the root editor error must not be a dead end (ADR-046 §3).
  */
 @Composable
-private fun EditorDestination(onPreview: () -> Unit) {
+private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
     val viewModel: EditorViewModel = hiltViewModel()
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
 
@@ -388,7 +440,14 @@ private fun EditorDestination(onPreview: () -> Unit) {
         is EditorBootState.Error -> Box(
             modifier = Modifier.fillMaxSize().padding(24.dp),
             contentAlignment = Alignment.Center,
-        ) { Text(state.message) }
+        ) {
+            androidx.compose.foundation.layout.Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(state.message)
+                androidx.compose.material3.TextButton(onClick = onBack) { Text("‹  Back to your shelf") }
+            }
+        }
 
         is EditorBootState.Ready -> {
             // Attach the autosave binder to the UI lifecycle: it flushes on ON_PAUSE/ON_STOP and

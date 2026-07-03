@@ -152,10 +152,10 @@ stateDiagram-v2
 > navigation map is the MVP **target** and remains the owning spec for product flow. Two things it
 > must be read against:
 >
-> 1. **Current build.** The app today boots **straight into the Editor** on a single fixed
->    `"default"` project. Home, Settings, and a user-facing Export flow are **not yet implemented**
->    (persistence is file-only and single-project) — see [ROADMAP status](ROADMAP.md). So the
->    `Home → Editor → Export` entry above is not yet the shipped reality.
+> 1. **Current build.** The app boots onto **Home / "My zines"** and the
+>    `Home → Editor → Export` spine above **is the shipped reality** (S5 export/share +
+>    S6 multi-project & Home, [ADR-046](DECISIONS.md#adr-046)) — see
+>    [ROADMAP status](ROADMAP.md). **Welcome and Settings are not yet implemented.**
 > 2. **Design-sprint proposal (not yet ratified).** The
 >    [design references](design/DESIGN-LANGUAGE.md) **propose** a refined first-run: a **Welcome**
 >    screen first — routing straight to the editor behind a *local first-run flag*, **not**

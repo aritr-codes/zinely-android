@@ -35,9 +35,9 @@ No existing product is **offline-first + account-free + native Android + a real 
 
 ## Status
 
-In development — the app now mounts a working **editor** on a single fixed `"default"` project. Shipped so far: **S1** imposition engine (`core:model` + `core:imposition`, milestone `v0.1.0-imposition-engine`); **S2** persistence core (`core:data` contracts + pure-JVM `core:data-storage` durability/asset store) plus the Android `data-android` adapters; **S3** render (pure `core:render` + `render-android` PDF/raster backends); and **S4** the editor (`core:editor` MVI core + `feature:editor` interaction surface, wired into `:app` with interactive image import and autosave).
+In development — the app boots onto the **Home / "My zines" shelf** and mounts a working per-project **editor**. Shipped so far: **S1** imposition engine (`core:model` + `core:imposition`, milestone `v0.1.0-imposition-engine`); **S2** persistence core (`core:data` contracts + pure-JVM `core:data-storage` durability/asset store) plus the Android `data-android` adapters; **S3** render (pure `core:render` + `render-android` PDF/raster backends); **S4** the editor (`core:editor` MVI core + `feature:editor` interaction surface, wired into `:app` with interactive image import and autosave); **S5** the export/share flow (Preview → Export · Print & fold, vector PDF + 300 DPI PNG → Completion · fold-steps); and **S6** the multi-project layer (Room-backed `ProjectRepository` index over files-as-truth, plus the Home shelf — create/rename/duplicate/undoable-delete, page-1 thumbnails, wired as the navigation root).
 
-Current production persistence is **file-backed only**: a single `DocumentRepository` writes `projects/<id>/document.json`, the app uses one fixed `"default"` project, and `ProjectRepository` / Room metadata are **deferred** (not yet implemented). Render/export **backends** exist, but there is **no user-facing export, share, or home/library flow yet**. See the [roadmap](docs/ROADMAP.md).
+Persistence is **files-as-truth**: `DocumentRepository` writes `projects/<id>/document.json` atomically, with the Room `projects` table as a rebuildable index ([ADR-042](docs/DECISIONS.md#adr-042)). Still deferred: the Settings screen and the asset GC/sweeper. See the [roadmap](docs/ROADMAP.md).
 
 ---
 

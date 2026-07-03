@@ -135,10 +135,15 @@ public sealed interface HomeShelfEvent {
  * open-editor exclusion lives in the data layer (`DataError.Busy`), not here — failures arrive
  * back as warm [HomeShelfEvent.Message]s. Stateless but for the rename draft and the snackbar;
  * the host owns state, timing of nothing (the snackbar owns the undo window), and navigation.
+ *
+ * [storeEmpty] is the honest empty-shelf signal (ADR-044 §3, wired by ADR-046): the invitation
+ * shows only when the STORE is empty — a shelf filtered to zero visible [cards] by pending
+ * undoable deletes is a zero-card shelf (with the FAB still reachable), never the invitation.
  */
 @Composable
 public fun HomeScreen(
     loading: Boolean,
+    storeEmpty: Boolean,
     cards: List<HomeZineCard>,
     events: Flow<HomeShelfEvent>,
     onOpenZine: (String) -> Unit,
@@ -179,8 +184,9 @@ public fun HomeScreen(
         modifier = modifier,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            // The empty state carries its own inline CTA; doubling it with a FAB would shout.
-            if (!loading && cards.isNotEmpty()) {
+            // The empty state carries its own inline CTA; doubling it with a FAB would shout. A
+            // zero-card (pending-delete-filtered) shelf keeps the FAB: Start a zine stays reachable.
+            if (!loading && !storeEmpty) {
                 ExtendedFloatingActionButton(onClick = onStartZine) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     Spacer(Modifier.size(8.dp))
@@ -203,7 +209,7 @@ public fun HomeScreen(
                     contentAlignment = Alignment.Center,
                 ) { CircularProgressIndicator() }
 
-                cards.isEmpty() -> HomeEmptyShelf(onStartZine, Modifier.fillMaxSize())
+                storeEmpty -> HomeEmptyShelf(onStartZine, Modifier.fillMaxSize())
 
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize().testTag(HomeShelfTestTag),

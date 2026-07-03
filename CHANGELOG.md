@@ -15,6 +15,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **S6.5 — nav re-root: Home is the app** ([ADR-046](docs/DECISIONS.md#adr-046), the final
+  S6 slice): `ZinelyNavHost` now starts at a new `HomeRoute` — the single back-stack root —
+  hosting the S6.2–6.4 "My zines" shelf. A card tap (or **Start a zine**, which now creates
+  *and opens* the new zine, single-flight) pushes `EditorRoute(id)` with `launchSingleTop`;
+  returning is only ever a pop, and Completion's "Keep editing" still pops to the existing
+  editor entry. A fast reopen of a just-closed zine no longer risks the spurious
+  "Couldn't open" boot error: the editor bootstrap awaits the single-writer release through
+  the same 5 s `AutosaveSessionGate` policy the shelf mutations use
+  (`EditorAutosaveBinderFactory.awaitNoSession`; timeout ⇒ a warm "still saving" error).
+  Leaving the shelf commits pending undoable deletes (leaving = snackbar dismissal; a failed
+  commit un-hides the card and messages, and never blocks the open), and an open that lands
+  while the shelf is away is discarded on return — navigation only ever follows a fresh tap.
+  The shelf re-reads the store on every return (`WhileSubscribed(0)`), so recency labels and
+  thumbnails are fresh after an editing session. `HomeScreen` gained an explicit `storeEmpty` signal so a shelf
+  filtered to zero by pending deletes never shows the empty invitation. New host-level
+  Robolectric nav tests (`TestNavHostController` + a debug-only `HiltTestActivity`) cover
+  the whole back-stack policy — the graph's first.
+
 - **S6.4 — Home shelf thumbnails (built on the unwired shelf)**
   ([ADR-045](docs/DECISIONS.md#adr-045)): each "My zines" card now shows a page-1
   miniature rendered through the proven parity path — the `SceneRenderer` tape replayed
@@ -72,6 +90,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > These entries belong to the in-progress **0.5.0** (`SUX`) milestone. The completed
 > editor/UI foundation below is **0.4.0** — tag that commit, not the SUX work-in-progress.
+
+### Removed
+- **The `"default"` seed-on-miss bootstrap** ([ADR-030](docs/DECISIONS.md#adr-030) §4,
+  retired by [ADR-046](docs/DECISIONS.md#adr-046) §3): the editor no longer silently
+  creates a blank document for a missing id — `NotFound` is an honest boot error with a
+  **Back to your shelf** action. First run lands on the empty shelf's **Start a zine**
+  invitation instead of a pre-seeded editor. Existing installs keep their zine: the on-disk
+  `"default"` project was already adopted as an ordinary shelf row by the ADR-042 reconcile
+  (zero migration), and deleting it now really deletes it (no re-seed on next boot —
+  the ADR-042 hard-invariant #1 and ADR-044 §3 delete-honesty arcs close).
 
 ### Changed
 - Roadmap re-sequenced: the next milestone targets the **first-time creation experience**

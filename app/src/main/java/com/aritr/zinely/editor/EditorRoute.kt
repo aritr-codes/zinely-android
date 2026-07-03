@@ -3,10 +3,19 @@ package com.aritr.zinely.editor
 import kotlinx.serialization.Serializable
 
 /**
- * The type-safe navigation route for the editor (ADR-030 §1). [projectId] is the document this host
- * opens; the MVP seeds a single fixed `"default"` project (no ProjectRepository yet, ADR-030 §4), but
- * the id is a real route argument — threaded into [EditorViewModel] via `SavedStateHandle.toRoute` —
- * so multi-project navigation is an additive change, not a rewrite.
+ * The type-safe route for the Home · "My zines" shelf — the app's start destination and single
+ * back-stack root (S6.5, [ADR-046](../../../../../../docs/DECISIONS.md#adr-046) §1). Every editor
+ * chain is pushed above it and popping always lands back here; no code path *navigates* to Home, so
+ * two [EditorRoute] entries can never coexist.
+ */
+@Serializable
+internal data object HomeRoute
+
+/**
+ * The type-safe navigation route for the editor (ADR-030 §1). [projectId] is the project a shelf
+ * card tap or a fresh create handed over (ADR-046 §1/§5 — the ADR-030 §4 fixed-`"default"` seed is
+ * retired); it is a real route argument — threaded into [EditorViewModel] via
+ * `SavedStateHandle.toRoute` — so every open is the same code path.
  */
 @Serializable
 internal data class EditorRoute(val projectId: String)

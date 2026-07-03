@@ -60,11 +60,16 @@ class HomeScreenTest {
         ),
     )
 
-    private fun setHome(cards: List<HomeZineCard>, loading: Boolean = false) {
+    private fun setHome(
+        cards: List<HomeZineCard>,
+        loading: Boolean = false,
+        storeEmpty: Boolean = cards.isEmpty(),
+    ) {
         composeRule.setContent {
             MaterialTheme {
                 HomeScreen(
                     loading = loading,
+                    storeEmpty = storeEmpty,
                     cards = cards,
                     events = events,
                     onOpenZine = { opened += it },
@@ -141,6 +146,21 @@ class HomeScreenTest {
         composeRule.onNodeWithText("Start a zine").performClick()
         composeRule.waitForIdle()
 
+        assertEquals(1, startCount)
+    }
+
+    @Test
+    fun `a shelf filtered to zero by pending deletes never shows the empty invitation`() {
+        // ADR-044 §3 honoured in the real UI (ADR-046 wiring): zero VISIBLE cards over a non-empty
+        // store is a zero-card shelf — the invitation would lie while a delete is still undoable.
+        setHome(emptyList(), storeEmpty = false)
+
+        composeRule.onNodeWithTag(HomeEmptyStateTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(HomeShelfTestTag).assertExists()
+
+        // "Start a zine" stays reachable (SCREEN-INVENTORY: prominent, ALWAYS reachable) via the FAB.
+        composeRule.onNodeWithText("Start a zine").performClick()
+        composeRule.waitForIdle()
         assertEquals(1, startCount)
     }
 

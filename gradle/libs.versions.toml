@@ -64,6 +64,8 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 # S4 app shell (ADR-030): single-Activity navigation graph + type-safe routes, and the Hilt bridge
 # that scopes hiltViewModel() to a NavBackStackEntry.
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+# S6.5 (ADR-046): TestNavHostController for the :app host-level back-stack-policy tests (Robolectric).
+androidx-navigation-testing = { group = "androidx.navigation", name = "navigation-testing", version.ref = "navigationCompose" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }

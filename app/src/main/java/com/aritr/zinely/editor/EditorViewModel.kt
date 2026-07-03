@@ -17,6 +17,7 @@ import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
 import com.aritr.zinely.data.android.prefs.EditorOnboardingStore
 import com.aritr.zinely.feature.editor.Announcer
+import com.aritr.zinely.home.BUSY_MESSAGE
 import com.aritr.zinely.feature.editor.AutosaveSink
 import com.aritr.zinely.feature.editor.DefaultEditorEffectRunner
 import com.aritr.zinely.feature.editor.EditorStore
@@ -181,8 +182,16 @@ internal class EditorViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(mainDispatcher) {
-            // Load/seed off the UI thread: DocumentRepositoryImpl does blocking nio read/write/fsync and
-            // does not hop dispatchers itself (Codex RF1), so the first-run seed save would otherwise ANR.
+            // Await the single-writer slot BEFORE loading (ADR-046 §2, realising ADR-030 Rec1): a fast
+            // reopen of a just-closed project must ride out its asynchronous teardown flush — which also
+            // means the load below reads the flushed bytes. The bound is the shared AutosaveSessionGate
+            // policy; false = still busy at the bound → a warm boot error, never a hang or a crash.
+            if (!binderFactory.awaitNoSession(projectId)) {
+                _bootState.value = EditorBootState.Error(BUSY_MESSAGE)
+                return@launch
+            }
+            // Load off the UI thread: DocumentRepositoryImpl does blocking nio read/fsync and does not
+            // hop dispatchers itself (Codex RF1), so a large document load would otherwise ANR.
             val result = withContext(ioDispatcher) { bootstrapDocument(repository, projectId) }
             // Back on Main: the store's dispatch is main-thread-only by contract, so it is built here.
             _bootState.value = when (result) {

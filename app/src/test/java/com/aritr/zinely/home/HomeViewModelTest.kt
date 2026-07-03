@@ -11,10 +11,13 @@ import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.feature.editor.HomeShelfEvent
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -50,6 +53,12 @@ class HomeViewModelTest {
         val duplicated = mutableListOf<String>()
         val deleted = mutableListOf<String>()
 
+        /** How many times the shelf stream has been (re)collected — the ADR-046 §6 freshness proof. */
+        var observeCollections = 0
+
+        /** When set, [createProject] suspends on it — lets a test hold a create in flight (§5 single-flight). */
+        var createGate: CompletableDeferred<Unit>? = null
+
         var createResult: () -> DataResult<ProjectSummary> =
             { error("script createResult when the test asserts on it") }
         var renameResult: () -> DataResult<Unit> = { DataResult.Success(Unit) }
@@ -57,7 +66,10 @@ class HomeViewModelTest {
             { error("script duplicateResult when the test asserts on it") }
         var deleteResult: () -> DataResult<Unit> = { DataResult.Success(Unit) }
 
-        override fun observeProjects(): Flow<List<ProjectSummary>> = projects
+        override fun observeProjects(): Flow<List<ProjectSummary>> = flow {
+            observeCollections++
+            emitAll(projects)
+        }
 
         override suspend fun getProject(id: String): DataResult<ProjectSummary> =
             error("not used by the shelf")
@@ -68,6 +80,7 @@ class HomeViewModelTest {
             paperSize: PaperSize,
         ): DataResult<ProjectSummary> {
             created += Triple(title, format, paperSize)
+            createGate?.await()
             return createResult()
         }
 
@@ -526,6 +539,213 @@ class HomeViewModelTest {
         assertTrue(thumbnails.asked.contains("z2"))
         assertTrue("hidden card must not be asked for", "z1" !in thumbnails.asked)
         job.cancel()
+    }
+
+    // --- S6.5 nav re-root (ADR-046) ---
+
+    @Test
+    fun `Start a zine emits exactly one open event with the created id`() = runTest {
+        // Given
+        val viewModel = viewModel()
+        repository.createResult = { DataResult.Success(summary("new-id", "My zine", 0L)) }
+        val opened = mutableListOf<String>()
+        val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect { opened += it } }
+
+        // When
+        viewModel.startZine()
+
+        // Then — create → navigate (ADR-046 §5): the destination collects this and pushes EditorRoute
+        assertEquals(listOf("new-id"), opened)
+        openJob.cancel()
+    }
+
+    @Test
+    fun `a failed create emits no open event - the warm message only`() = runTest {
+        // Given
+        val viewModel = viewModel()
+        repository.createResult = { DataResult.Failure(DataError.Io("disk")) }
+        val opened = mutableListOf<String>()
+        val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect { opened += it } }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        // When
+        viewModel.startZine()
+
+        // Then
+        assertTrue(opened.isEmpty())
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), events)
+        openJob.cancel()
+        eventsJob.cancel()
+    }
+
+    @Test
+    fun `Start a zine is single-flight - taps during an in-flight create are no-ops`() = runTest {
+        // Given a create the test holds in flight (ADR-046 §5, Codex RF3: an unguarded double-tap
+        // mints two projects and two navigations)
+        val viewModel = viewModel()
+        val gate = CompletableDeferred<Unit>()
+        repository.createGate = gate
+        repository.createResult = { DataResult.Success(summary("only-one", "My zine", 0L)) }
+        val opened = mutableListOf<String>()
+        val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect { opened += it } }
+
+        // When — a rapid second (and third) tap while the first create is still in flight
+        viewModel.startZine()
+        viewModel.startZine()
+        viewModel.startZine()
+        gate.complete(Unit)
+
+        // Then — one project, one open event
+        assertEquals(1, repository.created.size)
+        assertEquals(listOf("only-one"), opened)
+        openJob.cancel()
+    }
+
+    @Test
+    fun `opening a card emits its open event`() = runTest {
+        // Given
+        val viewModel = viewModel()
+        val opened = mutableListOf<String>()
+        val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect { opened += it } }
+
+        // When
+        viewModel.openZine("z1")
+
+        // Then
+        assertEquals(listOf("z1"), opened)
+        openJob.cancel()
+    }
+
+    @Test
+    fun `leaving the shelf commits pending deletes before the open event`() = runTest {
+        // Given a pending undoable delete (ADR-046 §4: leaving the shelf IS the snackbar dismissal —
+        // otherwise the cancelled snackbar collector strands the card hidden forever, Codex RF1)
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+        // Snapshot the committed deletes at the moment the open event is delivered — order, not just presence.
+        val deletesAtOpen = mutableListOf<List<String>>()
+        val openJob = launch(Dispatchers.Main) {
+            viewModel.openEvents.collect { deletesAtOpen += repository.deleted.toList() }
+        }
+
+        // When — tapping the other card
+        viewModel.openZine("z2")
+
+        // Then — z1's delete was committed BEFORE the navigation event went out
+        assertEquals(listOf(listOf("z1")), deletesAtOpen)
+        stateJob.cancel()
+        openJob.cancel()
+    }
+
+    @Test
+    fun `Start a zine also commits pending deletes first`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+        repository.createResult = { DataResult.Success(summary("new-id", "My zine", 0L)) }
+
+        // When
+        viewModel.startZine()
+
+        // Then
+        assertEquals(listOf("z1"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `an unrelated pending delete's commit failure unhides and messages but never blocks the open`() = runTest {
+        // Given (ADR-046 §4, Codex round 2: the failed delete rolls back visibly; navigation proceeds)
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        repository.deleteResult = { DataResult.Failure(DataError.Io("unindex failed")) }
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        val opened = mutableListOf<String>()
+        val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect { opened += it } }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+
+        // When
+        viewModel.openZine("z2")
+
+        // Then — the open went out, the failed delete is back on the shelf with its warm message
+        assertEquals(listOf("z2"), opened)
+        assertEquals(
+            listOf("z1", "z2"),
+            (viewModel.state.value as HomeUiState.Content).cards.map { it.id }.sorted(),
+        )
+        assertEquals(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE), events.last())
+        stateJob.cancel()
+        eventsJob.cancel()
+        openJob.cancel()
+    }
+
+    @Test
+    fun `an open buffered while nobody collected never fires on shelf return`() = runTest {
+        // Given an open that landed while the shelf was not collecting (e.g. a slow create finishing
+        // after the user already tapped into another editor) — Codex implementation-review RF: a
+        // stale open must never re-navigate on return; navigation is a FRESH user action.
+        val viewModel = viewModel()
+        viewModel.openZine("stale")
+
+        // When the shelf destination comes back and re-subscribes
+        val opened = mutableListOf<String>()
+        val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect { opened += it } }
+
+        // Then the stale open is discarded, and a fresh tap still opens normally
+        assertTrue(opened.isEmpty())
+        viewModel.openZine("fresh")
+        assertEquals(listOf("fresh"), opened)
+        openJob.cancel()
+    }
+
+    @Test
+    fun `committed pending ids are pruned once the store emission drops them`() = runTest {
+        // Given a committed delete the store has caught up with (Codex implementation-review Rec:
+        // the Home VM is process-lifetime now — stale hidden ids must not accumulate forever)
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+        viewModel.commitDelete("z1")
+        repository.projects.emit(listOf(summary("z2", "Two", now)))
+
+        // When the same id later reappears in the store
+        repository.projects.emit(listOf(summary("z1", "One again", now), summary("z2", "Two", now)))
+
+        // Then it is visible — the stale pending id was pruned, not left filtering forever
+        assertEquals(
+            listOf("z1", "z2"),
+            (viewModel.state.value as HomeUiState.Content).cards.map { it.id }.sorted(),
+        )
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `returning to the shelf re-collects the store - fresh labels and thumbnails`() = runTest {
+        // Given a first shelf visit (ADR-046 §6: WhileSubscribed(0) — a warm 5 s window used to keep
+        // the stale upstream alive across the most common edit → back round-trip, ADR-045 §6)
+        val viewModel = viewModel()
+        val firstVisit = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", System.currentTimeMillis())))
+        assertEquals(1, repository.observeCollections)
+
+        // When the shelf is left (collection stops) and immediately returned to — NO virtual time passes
+        firstVisit.cancel()
+        val secondVisit = launch(Dispatchers.Main) { viewModel.state.collect {} }
+
+        // Then the upstream was re-collected: the store is re-read, labels/thumbnails re-derived
+        assertEquals(2, repository.observeCollections)
+        secondVisit.cancel()
     }
 
     // --- the recency label, a pure function ---
