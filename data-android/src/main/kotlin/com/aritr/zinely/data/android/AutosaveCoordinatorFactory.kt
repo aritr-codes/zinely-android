@@ -73,6 +73,19 @@ public class AutosaveCoordinatorFactory(
         }
     }
 
+    /**
+     * Suspend until [projectId] has no live session in the registry (ADR-044 §1 — the seam behind
+     * `ProjectSessionGate`). Returns immediately when the id is absent. Loops because release is
+     * asynchronous and a successor could re-register between a handle's release and our re-check;
+     * each iteration awaits the *current* owner's [ProjectAutosaveHandle.awaitReleased].
+     */
+    public suspend fun awaitReleased(projectId: String) {
+        while (true) {
+            val handle = synchronized(lock) { active[projectId] } ?: return
+            handle.awaitReleased()
+        }
+    }
+
     /** Remove [handle] iff it is still the registered owner of [projectId] (never clobber a successor). */
     private fun unregister(projectId: String, handle: ProjectAutosaveHandle) {
         synchronized(lock) {

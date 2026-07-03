@@ -2,16 +2,25 @@ package com.aritr.zinely.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aritr.zinely.core.data.repository.DataError
+import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.HomeZineCard
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -25,30 +34,119 @@ internal sealed interface HomeUiState {
 }
 
 /**
- * The S6.2 read-only Home · "My zines" shelf (ADR-043; MVVM — ADR-005 scoped MVI to the editor,
- * and this screen only observes). Maps the [ProjectRepository]'s newest-first
- * [ProjectSummary] stream to warm [HomeZineCard]s — **order passed through untouched** (ordering
- * is the ADR-042 §7 repository contract, never re-derived here). Mutations are S6.3; this VM
- * holds no reference to any mutating call. Recency labels are computed at emission and go stale
- * until the next one — accepted for a shelf you just navigated to (fresh subscription = fresh
- * labels via WhileSubscribed); a ticking clock is not this slice's problem.
+ * The Home · "My zines" shelf (read shelf: ADR-043; actions: ADR-044; MVVM — ADR-005 scoped MVI to
+ * the editor). Maps the [ProjectRepository]'s newest-first [ProjectSummary] stream to warm
+ * [HomeZineCard]s — **order passed through untouched** (the ADR-042 §7 repository contract, never
+ * re-derived here). Recency labels are computed at emission and go stale until the next one —
+ * accepted for a shelf you just navigated to (fresh subscription = fresh labels via
+ * WhileSubscribed); a ticking clock is not this slice's problem.
+ *
+ * S6.3 actions (ADR-044): create with warm defaults; rename/duplicate delegating to the store
+ * (which enforces the open-editor exclusion and answers [DataError.Busy]); delete as a deferred
+ * commit — the card hides immediately, a queued [HomeShelfEvent.DeletePrompt] drives one undo
+ * snackbar, and only its dismissal calls [ProjectRepository.deleteProject]. A failed commit
+ * unhides the card: the shelf never lies about what was deleted. [HomeUiState.Empty] means the
+ * STORE is empty; a shelf filtered to zero by pending deletes stays a zero-card
+ * [HomeUiState.Content] (the invitation would be dishonest while a delete is still reversible).
  */
 @HiltViewModel
 internal class HomeViewModel @Inject constructor(
-    projectRepository: ProjectRepository,
+    private val projectRepository: ProjectRepository,
 ) : ViewModel() {
 
-    val state: StateFlow<HomeUiState> = projectRepository.observeProjects()
-        .map { projects ->
+    /** Ids hidden from the shelf while their undo window is open (ADR-044 §3). */
+    private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Queued one-shot events; the buffer absorbs emissions while the screen is between collects. */
+    private val eventQueue = Channel<HomeShelfEvent>(Channel.BUFFERED)
+
+    /** One-shot shelf events (undo prompts, warm failure messages), each consumed exactly once. */
+    val events: Flow<HomeShelfEvent> = eventQueue.receiveAsFlow()
+
+    val state: StateFlow<HomeUiState> =
+        combine(projectRepository.observeProjects(), pendingDeletes) { projects, pending ->
             if (projects.isEmpty()) {
                 HomeUiState.Empty
             } else {
                 val now = System.currentTimeMillis()
-                HomeUiState.Content(projects.map { it.toCard(now) })
+                HomeUiState.Content(projects.filterNot { it.id in pending }.map { it.toCard(now) })
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
+
+    /** "Start a zine": create immediately with the warm defaults (ADR-044 §4); no navigation here. */
+    fun startZine() {
+        viewModelScope.launch {
+            projectRepository
+                .createProject(DEFAULT_NEW_TITLE, ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)
+                .sendMessageOnFailure()
+        }
+    }
+
+    /** Rename with the ADR-044 §4 normalisation: trimmed; blank keeps the existing name. */
+    fun rename(id: String, title: String) {
+        val trimmed = title.trim()
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch { projectRepository.renameProject(id, trimmed).sendMessageOnFailure() }
+    }
+
+    fun duplicate(id: String) {
+        viewModelScope.launch { projectRepository.duplicateProject(id).sendMessageOnFailure() }
+    }
+
+    /**
+     * Hide the card and prompt for undo — the store is untouched until [commitDelete]. Ignored when
+     * [id] is not a visible card (double-tap, or already pending).
+     */
+    fun delete(id: String) {
+        val cards = (state.value as? HomeUiState.Content)?.cards ?: return
+        val title = cards.firstOrNull { it.id == id }?.title ?: return
+        pendingDeletes.update { it + id }
+        eventQueue.trySend(HomeShelfEvent.DeletePrompt(id, title))
+    }
+
+    /** Undo within the window: unhide; the store was never called. */
+    fun undoDelete(id: String) {
+        pendingDeletes.update { it - id }
+    }
+
+    /**
+     * The undo window closed: perform the store delete. On success the id STAYS in
+     * [pendingDeletes] — unhiding here would flash the deleted card back for the window between
+     * `deleteProject` returning and [ProjectRepository.observeProjects] re-emitting; once the flow
+     * emits the shorter list the filter is a no-op (a stale id over a fresh-UUID store is inert).
+     * Only a failed commit unhides + messages: the card is still real, and the shelf never lies.
+     */
+    fun commitDelete(id: String) {
+        viewModelScope.launch {
+            when (val result = projectRepository.deleteProject(id)) {
+                is DataResult.Success -> Unit // stay hidden; the store flow removes the card
+                is DataResult.Failure -> {
+                    pendingDeletes.update { it - id } // the card is still real — show it again
+                    eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
+                }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
+    }
+
+    private suspend fun DataResult<*>.sendMessageOnFailure() {
+        if (this is DataResult.Failure) eventQueue.send(HomeShelfEvent.Message(error.warmMessage()))
+    }
 }
+
+/** Warm failure copy (VOICE): [DataError.Busy] is "still saving", never a scary failure. */
+private fun DataError.warmMessage(): String = when (this) {
+    is DataError.Busy -> BUSY_MESSAGE
+    else -> GENERIC_FAILURE_MESSAGE
+}
+
+/** Default title for a shelf-created zine — aligned with the store's adoption fallback (ADR-044 §4). */
+internal const val DEFAULT_NEW_TITLE: String = "My zine"
+
+/** The ADR-044 §1 gate refused: an editor session is still live/releasing. Retry-shaped, warm. */
+internal const val BUSY_MESSAGE: String = "That zine is still saving — try again in a moment."
+
+/** Any other mutation failure (VOICE: warm, recoverable, no jargon). */
+internal const val GENERIC_FAILURE_MESSAGE: String = "That didn't work — try again?"
 
 /** `ProjectSummary` → the card the shelf shows: only display strings past this point (ADR-043). */
 internal fun ProjectSummary.toCard(nowEpochMs: Long): HomeZineCard = HomeZineCard(

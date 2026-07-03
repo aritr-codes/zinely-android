@@ -8,6 +8,7 @@ import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.data.storage.FileSystemOps
 import com.aritr.zinely.data.android.AndroidFileSystemOps
 import com.aritr.zinely.data.android.AutosaveCoordinatorFactory
+import com.aritr.zinely.data.android.AutosaveSessionGate
 import com.aritr.zinely.data.android.DocumentRepositoryImpl
 import com.aritr.zinely.data.android.InMemorySaveFailureSink
 import com.aritr.zinely.data.android.RoomProjectRepository
@@ -74,12 +75,16 @@ internal object DataModule {
         database: ZinelyDatabase,
         documents: DocumentRepository,
         store: AtomicFileStore,
+        autosaveFactory: AutosaveCoordinatorFactory,
         @IoDispatcher io: CoroutineDispatcher,
     ): ProjectRepository = RoomProjectRepository(
         rootDir = context.filesDir.toPath(),
         dao = database.projectDao(),
         documents = documents,
         store = store,
+        // ADR-044 §1: mutations are refused (DataError.Busy) while the target id has a live
+        // editor autosave session in the single-writer registry.
+        sessionGate = AutosaveSessionGate(autosaveFactory),
         io = io,
     )
 
