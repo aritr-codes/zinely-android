@@ -456,9 +456,13 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    [ADR-043](DECISIONS.md#adr-043)): stateless `HomeScreen` in `:feature:editor` + MVVM
    `HomeViewModel` in `:app`, deliberately **absent from `ZinelyNavHost`** until the S6.5 back-stack
    policy (a registered Home route inside the editor-rooted graph would encode the
-   `default → Home → default` second-VM path [ADR-026](DECISIONS.md#adr-026) forbids). Home still
-   additionally requires **project-card thumbnail production/invalidation** (S6.4), which nothing in
-   the repo owns yet.
+   `default → Home → default` second-VM path [ADR-026](DECISIONS.md#adr-026) forbids).
+   **Project-card thumbnail production/invalidation landed in S6.4**
+   ([ADR-045](DECISIONS.md#adr-045)): page-1 miniatures through the shared-`CanvasReplayer`
+   parity path (a thin `:render-android` `ThumbnailRenderer`), produced pull-based on shelf
+   observation by an `:app` producer and cached as a derived, never-authoritative PNG under
+   `cacheDir/thumbnails/<id>.png` keyed on the `document.json` mtime — so only the **S6.5
+   route + start-destination re-root** remains before Home is user-reachable.
 
 2. **Sticker/decoration element type → new ADR.** Today `core:model`/`core:render` know only
    `ImageElement` and `TextElement`. The [sticker picker](design/SCREEN-INVENTORY.md#sticker-picker)

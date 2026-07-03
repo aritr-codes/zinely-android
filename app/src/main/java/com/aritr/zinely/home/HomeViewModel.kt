@@ -1,5 +1,6 @@
 package com.aritr.zinely.home
 
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aritr.zinely.core.data.repository.DataError
@@ -52,10 +53,17 @@ internal sealed interface HomeUiState {
 @HiltViewModel
 internal class HomeViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
+    private val shelfThumbnails: ShelfThumbnails,
 ) : ViewModel() {
 
     /** Ids hidden from the shelf while their undo window is open (ADR-044 §3). */
     private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
+
+    /** Delivered page-1 thumbnails by project id (ADR-045); absent = warm placeholder on the card. */
+    private val thumbnails = MutableStateFlow<Map<String, ImageBitmap>>(emptyMap())
+
+    /** Ids with an ensure() in flight — one request per id at a time; emissions re-ask when done. */
+    private val thumbnailsInFlight = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
     /** Queued one-shot events; the buffer absorbs emissions while the screen is between collects. */
     private val eventQueue = Channel<HomeShelfEvent>(Channel.BUFFERED)
@@ -64,14 +72,39 @@ internal class HomeViewModel @Inject constructor(
     val events: Flow<HomeShelfEvent> = eventQueue.receiveAsFlow()
 
     val state: StateFlow<HomeUiState> =
-        combine(projectRepository.observeProjects(), pendingDeletes) { projects, pending ->
+        combine(
+            projectRepository.observeProjects(),
+            pendingDeletes,
+            thumbnails,
+        ) { projects, pending, thumbs ->
             if (projects.isEmpty()) {
                 HomeUiState.Empty
             } else {
                 val now = System.currentTimeMillis()
-                HomeUiState.Content(projects.filterNot { it.id in pending }.map { it.toCard(now) })
+                val visible = projects.filterNot { it.id in pending }
+                // Ask for every visible card's thumbnail on every emission (ADR-045 §2): the
+                // producer's mtime stamp makes a fresh ask a cheap no-op, delivery lands in
+                // [thumbnails] which re-runs this combine, and identical results change nothing —
+                // the loop converges. Hidden pending-delete cards are never asked for.
+                visible.forEach { requestThumbnail(it.id) }
+                HomeUiState.Content(visible.map { it.toCard(now, thumbs[it.id]) })
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
+
+    /** Launch one ensure() per id at a time; the map updates only when the bitmap actually changes. */
+    private fun requestThumbnail(id: String) {
+        if (!thumbnailsInFlight.add(id)) return
+        viewModelScope.launch {
+            try {
+                when (val bitmap = shelfThumbnails.ensure(id)) {
+                    null -> thumbnails.update { if (id in it) it - id else it }
+                    else -> thumbnails.update { if (it[id] === bitmap) it else it + (id to bitmap) }
+                }
+            } finally {
+                thumbnailsInFlight.remove(id)
+            }
+        }
+    }
 
     /** "Start a zine": create immediately with the warm defaults (ADR-044 §4); no navigation here. */
     fun startZine() {
@@ -148,12 +181,16 @@ internal const val BUSY_MESSAGE: String = "That zine is still saving — try aga
 /** Any other mutation failure (VOICE: warm, recoverable, no jargon). */
 internal const val GENERIC_FAILURE_MESSAGE: String = "That didn't work — try again?"
 
-/** `ProjectSummary` → the card the shelf shows: only display strings past this point (ADR-043). */
-internal fun ProjectSummary.toCard(nowEpochMs: Long): HomeZineCard = HomeZineCard(
+/** `ProjectSummary` → the card the shelf shows: only display data past this point (ADR-043/045). */
+internal fun ProjectSummary.toCard(
+    nowEpochMs: Long,
+    thumbnail: ImageBitmap? = null,
+): HomeZineCard = HomeZineCard(
     id = id,
     title = title,
     formatLabel = "${format.shelfLabel()} · ${paperSize.shelfLabel()}",
     editedLabel = editedLabel(updatedAtEpochMs, nowEpochMs),
+    thumbnail = thumbnail,
 )
 
 /** Warm, jargon-free format name (never the enum's SCREAMING_SNAKE identity). */

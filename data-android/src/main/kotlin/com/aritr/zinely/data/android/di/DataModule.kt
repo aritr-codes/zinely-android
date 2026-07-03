@@ -11,8 +11,10 @@ import com.aritr.zinely.data.android.AutosaveCoordinatorFactory
 import com.aritr.zinely.data.android.AutosaveSessionGate
 import com.aritr.zinely.data.android.DocumentRepositoryImpl
 import com.aritr.zinely.data.android.InMemorySaveFailureSink
+import com.aritr.zinely.data.android.ProjectDocumentLayout
 import com.aritr.zinely.data.android.RoomProjectRepository
 import com.aritr.zinely.data.android.SaveFailureSink
+import com.aritr.zinely.data.android.projectDocumentLayout
 import com.aritr.zinely.data.android.room.ZinelyDatabase
 import dagger.Module
 import dagger.Provides
@@ -87,6 +89,15 @@ internal object DataModule {
         sessionGate = AutosaveSessionGate(autosaveFactory),
         io = io,
     )
+
+    /**
+     * S6.4 (ADR-045): the narrow document-file window the shelf-thumbnail producer stats for its
+     * invalidation stamp — same `rootDir` as the stores, same ProjectPaths chokepoint.
+     */
+    @Provides
+    @Singleton
+    fun provideProjectDocumentLayout(@ApplicationContext context: Context): ProjectDocumentLayout =
+        projectDocumentLayout(context.filesDir.toPath())
 
     @Provides
     @Singleton

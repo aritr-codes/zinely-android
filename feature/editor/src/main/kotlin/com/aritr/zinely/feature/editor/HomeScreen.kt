@@ -1,5 +1,7 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,7 +46,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -77,6 +82,12 @@ public fun homeCardTestTag(id: String): String = "home-card-$id"
 /** Test tag for a card's overflow-menu button. */
 public fun homeCardMenuTestTag(id: String): String = "home-card-menu-$id"
 
+/** Test tag for a card's rendered page-1 thumbnail image (ADR-045). */
+public fun homeCardThumbnailTestTag(id: String): String = "home-card-thumb-$id"
+
+/** Test tag for a card's warm paper placeholder, shown whenever no thumbnail exists. */
+public fun homeCardThumbnailPlaceholderTestTag(id: String): String = "home-card-thumb-placeholder-$id"
+
 /** The undo snackbar's message for a hidden-pending-delete zine (VOICE: gentle, undoable). */
 public fun homeDeletedMessage(title: String): String = "“$title” deleted"
 
@@ -90,6 +101,11 @@ public data class HomeZineCard(
     val title: String,
     val formatLabel: String,
     val editedLabel: String,
+    /**
+     * The rendered page-1 thumbnail (ADR-045), already decoded off-main by the host; `null` shows
+     * the warm paper placeholder — a missing thumbnail is never a broken card.
+     */
+    val thumbnail: ImageBitmap? = null,
 )
 
 /**
@@ -252,6 +268,10 @@ private fun HomeZineCardRow(
             modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            HomeCardThumbnail(
+                card = card,
+                modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp),
+            )
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -302,6 +322,40 @@ private fun HomeZineCardRow(
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * The card's little page-1 render (ADR-045, SCREEN-INVENTORY §Home "paper-card thumbnail") — a
+ * fixed paper-shaped slot so cards never jump when a thumbnail arrives. No thumbnail (still
+ * rendering, unreadable document, decode failure) shows a soft blank paper placeholder: warm,
+ * never broken. Decorative — the title text is the card's accessible name, so no description.
+ */
+@Composable
+private fun HomeCardThumbnail(card: HomeZineCard, modifier: Modifier = Modifier) {
+    val shape = MaterialTheme.shapes.small
+    Box(
+        modifier = modifier
+            .size(width = 44.dp, height = 64.dp)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
+    ) {
+        val thumbnail = card.thumbnail
+        if (thumbnail != null) {
+            Image(
+                bitmap = thumbnail,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize().testTag(homeCardThumbnailTestTag(card.id)),
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(homeCardThumbnailPlaceholderTestTag(card.id)),
+            )
         }
     }
 }
