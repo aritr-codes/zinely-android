@@ -1,10 +1,12 @@
 package com.aritr.zinely.home
 
+import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.feature.editor.HomeShelfEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -29,29 +31,54 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
-    /** Read-only shelf fake: scripts [observeProjects]; every mutation is an unused-path error. */
+    /**
+     * Recording shelf fake (S6.3, ADR-044): scripts [observeProjects] via a cold-until-emitted
+     * replaying SharedFlow and records every mutation; per-call results are scriptable so failure
+     * paths (generic, [DataError.Busy]) are testable.
+     */
     private class FakeProjectRepository : ProjectRepository {
         val projects = MutableSharedFlow<List<ProjectSummary>>(replay = 1)
+
+        val created = mutableListOf<Triple<String, ZineFormat, PaperSize>>()
+        val renamed = mutableListOf<Pair<String, String>>()
+        val duplicated = mutableListOf<String>()
+        val deleted = mutableListOf<String>()
+
+        var createResult: () -> DataResult<ProjectSummary> =
+            { error("script createResult when the test asserts on it") }
+        var renameResult: () -> DataResult<Unit> = { DataResult.Success(Unit) }
+        var duplicateResult: () -> DataResult<ProjectSummary> =
+            { error("script duplicateResult when the test asserts on it") }
+        var deleteResult: () -> DataResult<Unit> = { DataResult.Success(Unit) }
 
         override fun observeProjects(): Flow<List<ProjectSummary>> = projects
 
         override suspend fun getProject(id: String): DataResult<ProjectSummary> =
-            error("not used by the read-only shelf")
+            error("not used by the shelf")
 
         override suspend fun createProject(
             title: String,
             format: ZineFormat,
             paperSize: PaperSize,
-        ): DataResult<ProjectSummary> = error("no mutation UI in S6.2 (ADR-042 invariant)")
+        ): DataResult<ProjectSummary> {
+            created += Triple(title, format, paperSize)
+            return createResult()
+        }
 
-        override suspend fun renameProject(id: String, title: String): DataResult<Unit> =
-            error("no mutation UI in S6.2 (ADR-042 invariant)")
+        override suspend fun renameProject(id: String, title: String): DataResult<Unit> {
+            renamed += id to title
+            return renameResult()
+        }
 
-        override suspend fun duplicateProject(id: String): DataResult<ProjectSummary> =
-            error("no mutation UI in S6.2 (ADR-042 invariant)")
+        override suspend fun duplicateProject(id: String): DataResult<ProjectSummary> {
+            duplicated += id
+            return duplicateResult()
+        }
 
-        override suspend fun deleteProject(id: String): DataResult<Unit> =
-            error("no mutation UI in S6.2 (ADR-042 invariant)")
+        override suspend fun deleteProject(id: String): DataResult<Unit> {
+            deleted += id
+            return deleteResult()
+        }
     }
 
     private val dispatcher = UnconfinedTestDispatcher()
@@ -178,6 +205,230 @@ class HomeViewModelTest {
         val cards = (viewModel.state.value as HomeUiState.Content).cards
         assertEquals(listOf("newest", "older", "oldest"), cards.map { it.id })
         job.cancel()
+    }
+
+    // --- S6.3 shelf actions (ADR-044) ---
+
+    @Test
+    fun `Start a zine creates with the warm defaults`() = runTest {
+        // Given
+        val viewModel = HomeViewModel(repository)
+        repository.createResult = { DataResult.Success(summary("new", "My zine", 0L)) }
+
+        // When
+        viewModel.startZine()
+
+        // Then — "My zine", the only format, and the bootstrap-matching paper (ADR-044 §4)
+        assertEquals(
+            listOf(Triple("My zine", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)),
+            repository.created,
+        )
+    }
+
+    @Test
+    fun `a failed create surfaces the warm generic message`() = runTest {
+        // Given
+        val viewModel = HomeViewModel(repository)
+        repository.createResult = { DataResult.Failure(DataError.Io("disk")) }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        // When
+        viewModel.startZine()
+
+        // Then
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), events)
+        eventsJob.cancel()
+    }
+
+    @Test
+    fun `rename trims the title before it reaches the store`() = runTest {
+        // Given
+        val viewModel = HomeViewModel(repository)
+
+        // When
+        viewModel.rename("z1", "  Trip notes  ")
+
+        // Then
+        assertEquals(listOf("z1" to "Trip notes"), repository.renamed)
+    }
+
+    @Test
+    fun `a blank rename keeps the existing name - no store call`() = runTest {
+        // Given
+        val viewModel = HomeViewModel(repository)
+
+        // When
+        viewModel.rename("z1", "   ")
+
+        // Then
+        assertTrue(repository.renamed.isEmpty())
+    }
+
+    @Test
+    fun `duplicate delegates to the store`() = runTest {
+        // Given
+        val viewModel = HomeViewModel(repository)
+        repository.duplicateResult = { DataResult.Success(summary("copy", "One copy", 0L)) }
+
+        // When
+        viewModel.duplicate("z1")
+
+        // Then
+        assertEquals(listOf("z1"), repository.duplicated)
+    }
+
+    @Test
+    fun `a Busy refusal reads as still-saving, not as a failure`() = runTest {
+        // Given — the ADR-044 §1 gate refused: an editor session is still live/releasing
+        val viewModel = HomeViewModel(repository)
+        repository.duplicateResult = { DataResult.Failure(DataError.Busy("live session")) }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+
+        // When
+        viewModel.duplicate("z1")
+
+        // Then
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(BUSY_MESSAGE)), events)
+        eventsJob.cancel()
+    }
+
+    @Test
+    fun `delete hides the card immediately and prompts for undo - no store call yet`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = HomeViewModel(repository)
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        repository.projects.emit(listOf(summary("z1", "Zine one", now), summary("z2", "Zine two", now)))
+
+        // When
+        viewModel.delete("z1")
+
+        // Then — card hidden, one prompt with the title, nothing deleted in the store
+        assertEquals(listOf("z2"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.DeletePrompt("z1", "Zine one")), events)
+        assertTrue(repository.deleted.isEmpty())
+        stateJob.cancel()
+        eventsJob.cancel()
+    }
+
+    @Test
+    fun `a second delete of the same card does not prompt twice`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = HomeViewModel(repository)
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+
+        // When — the card is already hidden, so a second tap can't see it; guard anyway
+        viewModel.delete("z1")
+        viewModel.delete("z1")
+
+        // Then
+        assertEquals(1, events.size)
+        stateJob.cancel()
+        eventsJob.cancel()
+    }
+
+    @Test
+    fun `undo unhides the card without touching the store`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = HomeViewModel(repository)
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+
+        // When
+        viewModel.undoDelete("z1")
+
+        // Then
+        assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        assertTrue(repository.deleted.isEmpty())
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `commit performs the store delete`() = runTest {
+        // Given
+        val now = System.currentTimeMillis()
+        val viewModel = HomeViewModel(repository)
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+
+        // When
+        viewModel.commitDelete("z1")
+
+        // Then
+        assertEquals(listOf("z1"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a successful commit keeps the card hidden until the store emits the shorter list`() = runTest {
+        // Given — unhiding on success would flash the deleted card back for the window between
+        // deleteProject returning and observeProjects() re-emitting (reviewer Required Fix)
+        val now = System.currentTimeMillis()
+        val viewModel = HomeViewModel(repository)
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+
+        // When — the store delete succeeds but the flow has NOT re-emitted yet
+        viewModel.commitDelete("z1")
+
+        // Then — the card stays hidden
+        assertEquals(listOf("z2"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+
+        // and when the store catches up, the shelf simply reflects it
+        repository.projects.emit(listOf(summary("z2", "Two", now)))
+        assertEquals(listOf("z2"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        stateJob.cancel()
+    }
+
+    @Test
+    fun `a failed commit unhides the card and says so - the shelf never lies`() = runTest {
+        // Given (Codex: deleteProject is not infallible)
+        val now = System.currentTimeMillis()
+        val viewModel = HomeViewModel(repository)
+        repository.deleteResult = { DataResult.Failure(DataError.Io("unindex failed")) }
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        viewModel.delete("z1")
+
+        // When
+        viewModel.commitDelete("z1")
+
+        // Then — card back on the shelf + a warm failure message after the prompt
+        assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        assertEquals(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE), events.last())
+        stateJob.cancel()
+        eventsJob.cancel()
+    }
+
+    @Test
+    fun `hiding every card is a zero-card Content, never the Empty invitation`() = runTest {
+        // Given — Empty means the STORE is empty; a pending delete is still reversible (Codex)
+        val now = System.currentTimeMillis()
+        val viewModel = HomeViewModel(repository)
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+
+        // When
+        viewModel.delete("z1")
+
+        // Then
+        val state = viewModel.state.value
+        assertTrue(state is HomeUiState.Content && state.cards.isEmpty())
+        stateJob.cancel()
     }
 
     // --- the recency label, a pure function ---

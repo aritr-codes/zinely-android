@@ -47,15 +47,18 @@ import kotlinx.serialization.json.Json
  * simultaneously active; ADR-042).
  *
  * Invariants recorded in ADR-042: project mutations MUST NOT run against a project with an open
- * editor session (enforced by the S6.3 shelf layer via the autosave binder's single-writer
- * registry); `"default"` stays the ADR-030 §4 bootstrap-reserved id until S6.5 moves the start
- * destination — the app shell re-seeds it on next boot if deleted at this level.
+ * editor session — enforced HERE (ADR-044 §1, stronger than the shelf-layer enforcement ADR-042
+ * assigned): every id-targeted mutation awaits [sessionGate] before taking the mutex and refuses
+ * with [DataError.Busy] if a session is still live at the gate's bound. `"default"` stays the
+ * ADR-030 §4 bootstrap-reserved id until S6.5 moves the start destination — the app shell re-seeds
+ * it on next boot if deleted at this level.
  */
 internal class RoomProjectRepository(
     rootDir: Path,
     private val dao: ProjectDao,
     private val documents: DocumentRepository,
     private val store: AtomicFileStore,
+    private val sessionGate: ProjectSessionGate,
     private val io: CoroutineDispatcher,
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
@@ -112,6 +115,7 @@ internal class RoomProjectRepository(
     }
 
     override suspend fun renameProject(id: String, title: String): DataResult<Unit> = withContext(io) {
+        sessionBusy(id)?.let { return@withContext it }
         mutex.withLock {
             ensureReconciledLocked()
             val docFile = paths.documentFile(id)
@@ -132,6 +136,8 @@ internal class RoomProjectRepository(
     }
 
     override suspend fun duplicateProject(id: String): DataResult<ProjectSummary> = withContext(io) {
+        // The SOURCE is gated: a live session's unflushed edits would make the copy silently stale.
+        sessionBusy(id)?.let { return@withContext it }
         mutex.withLock {
             ensureReconciledLocked()
             val source = when (val loaded = documents.load(id)) {
@@ -158,6 +164,7 @@ internal class RoomProjectRepository(
     }
 
     override suspend fun deleteProject(id: String): DataResult<Unit> = withContext(io) {
+        sessionBusy(id)?.let { return@withContext it }
         mutex.withLock {
             ensureReconciledLocked()
             // An unsafe id can never name a project; deleting it is a no-op success (idempotent).
@@ -181,6 +188,16 @@ internal class RoomProjectRepository(
             DataResult.Success(Unit)
         }
     }
+
+    /**
+     * ADR-044 §1: await [sessionGate] BEFORE the repository mutex (a gated wait inside the lock would
+     * stall unrelated ops) and refuse with [DataError.Busy] while [id] has a live editor session.
+     * `create` never calls this — a fresh UUID can have no session. TOCTOU after the gate passes is
+     * accepted under the nav invariants (shelf and editor never simultaneously active; ADR-044).
+     */
+    private suspend fun sessionBusy(id: String): DataResult.Failure? =
+        if (sessionGate.awaitNoSession(id)) null
+        else failure(DataError.Busy("project '$id' has a live editor session"))
 
     // ---- the single files→row derivation path ---------------------------------------------------
 

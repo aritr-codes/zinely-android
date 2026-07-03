@@ -13,13 +13,16 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -367,6 +370,80 @@ class AutosaveCoordinatorFactoryTest {
         reborn.markDirty()
         advanceUntilIdle()
         assertEquals(listOf("proj1" to doc(2)), f.repo.saves)
+    }
+
+    // --- By-id release await (ADR-044 §1: the seam behind ProjectSessionGate) ---
+
+    @Test
+    fun `awaitReleased by id returns immediately when the id has no live session`() = runTest {
+        val f = Fixture(testScheduler)
+
+        f.factory().awaitReleased("never-opened") // returning at all is the assertion
+    }
+
+    @Test
+    fun `awaitReleased by id suspends across a live session and resumes after release`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val handle = factory.create("proj1") { doc(1) }
+
+        var resumed = false
+        val waiter = launch { factory.awaitReleased("proj1"); resumed = true }
+        advanceUntilIdle()
+        assertFalse(resumed) // session live → the waiter must still be suspended
+
+        handle.cancel()
+        advanceUntilIdle() // async unregister runs → waiter resumes
+        assertTrue(resumed)
+        waiter.join()
+    }
+
+    @Test
+    fun `awaitReleased by id returning orders a same-id create after the release`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        factory.create("proj1") { doc(1) }.cancel() // release is async
+
+        factory.awaitReleased("proj1")
+
+        factory.create("proj1") { doc(2) } // accepted → the id had left the registry
+    }
+
+    // --- AutosaveSessionGate: the timed ProjectSessionGate over the registry (ADR-044 §1) ---
+
+    @Test
+    fun `session gate answers true immediately for an id with no session`() = runTest {
+        val f = Fixture(testScheduler)
+        val gate = AutosaveSessionGate(f.factory(), timeoutMs = 5_000)
+
+        assertTrue(gate.awaitNoSession("nobody"))
+    }
+
+    @Test
+    fun `session gate answers true once the session releases within the bound`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val gate = AutosaveSessionGate(factory, timeoutMs = 5_000)
+        val handle = factory.create("proj1") { doc(1) }
+
+        val answer = async { gate.awaitNoSession("proj1") }
+        handle.cancel() // async release lands within the bound
+        advanceUntilIdle()
+
+        assertTrue(answer.await())
+    }
+
+    @Test
+    fun `session gate answers false when the session outlives the bound`() = runTest {
+        val f = Fixture(testScheduler)
+        val factory = f.factory()
+        val gate = AutosaveSessionGate(factory, timeoutMs = 5_000)
+        factory.create("proj1") { doc(1) } // never torn down
+
+        val answer = async { gate.awaitNoSession("proj1") }
+        advanceUntilIdle() // virtual clock runs past the bound
+
+        assertFalse(answer.await())
     }
 
     @Test

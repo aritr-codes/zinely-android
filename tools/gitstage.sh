@@ -55,6 +55,11 @@ case "${1:-}" in
   s62-home)      git add CHANGELOG.md app/src feature/editor/src \
                          docs/ARCHITECTURE.md docs/DECISIONS.md docs/ROADMAP.md \
                          docs/design/SCREEN-INVENTORY.md tools/gitstage.sh ;;
+  # S6.3 — Home shelf actions + repo-enforced open-editor exclusion (ADR-044)
+  s63-actions)   git add CHANGELOG.md core/data/src app/src feature/editor/src \
+                         data-android/src \
+                         docs/ARCHITECTURE.md docs/DECISIONS.md docs/ROADMAP.md \
+                         docs/design/SCREEN-INVENTORY.md tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

@@ -54,11 +54,13 @@ flowchart TD
   returning users land on Home/Editor once Home exists.
 
 ### Home / My zines
-- **Status:** 🔂 read-only shelf **built, not yet wired** (S6.2, [ADR-043](../DECISIONS.md#adr-043)):
-  list + open + CTA-less empty state exist and are tested, but no nav route is registered — the app
-  still boots into the editor. **Start a zine / duplicate / delete arrive with S6.3** (the create
-  action), thumbnails with S6.4, and the route + start-destination re-root with S6.5. This section
-  stays the *target* spec (CTA included).
+- **Status:** 🔂 full shelf **built, not yet wired** (S6.2 read shelf [ADR-043](../DECISIONS.md#adr-043);
+  S6.3 actions [ADR-044](../DECISIONS.md#adr-044)): list + open + **Start a zine** (empty-state CTA
+  restored + content FAB) + per-card rename/duplicate/**undoable delete** (snackbar undo window, no
+  confirm dialog) all exist and are tested — the open-editor exclusion is enforced in the data layer
+  (`DataError.Busy`). But no nav route is registered, so the app still boots into the editor and every
+  action is reachable only in tests. Thumbnails arrive with S6.4; the route + start-destination
+  re-root with S6.5.
 - **Purpose:** see and reopen the zines I've made; start a new one.
 - **Primary action:** **Start a zine** (prominent, always reachable).
 - **Secondary:** open / duplicate / delete a project (gentle, undoable); each as a paper-card

@@ -27,6 +27,15 @@ public sealed interface DataError {
      */
     public data class OutOfSpace(val message: String, val cause: Throwable? = null) : DataError
 
+    /**
+     * The operation was refused because the target is claimed by a concurrent owner — for project
+     * mutations, a live (or still-releasing) editor autosave session on the project (ADR-042 hard
+     * invariant, enforced per ADR-044 §1). A **business-rule conflict**, not storage I/O: retrying
+     * after the session closes is expected to succeed, so UI copy should say "still saving", never
+     * "save failed".
+     */
+    public data class Busy(val message: String) : DataError
+
     /** A stored document could not be decoded — malformed/corrupt bytes. */
     public data class Corrupt(val message: String, val cause: Throwable? = null) : DataError
 

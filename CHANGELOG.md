@@ -15,6 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **S6.3 — Home shelf actions: create · rename · duplicate · undoable delete
+  (testable-only until S6.5)** ([ADR-044](docs/DECISIONS.md#adr-044)): "Start a zine"
+  returns to the empty shelf (ending the ADR-043 §5 named deviation) and as a content-shelf
+  FAB — one tap creates "My zine" (`SINGLE_SHEET_8` · `LETTER`, the bootstrap-seed defaults);
+  each card gains an overflow menu with Rename (gentle **[ Keep name ] [ Rename ]** dialog,
+  blank disabled, trimmed in the VM), Duplicate, and a confirm-less Delete with a snackbar
+  undo window (the card hides instantly; Undo restores it with no store call; dismissal
+  commits `deleteProject`; a failed commit un-hides the card — the shelf never lies). The
+  **ADR-042 open-editor exclusion is now enforced inside `RoomProjectRepository`**: a
+  `ProjectSessionGate` over `AutosaveCoordinatorFactory`'s new by-id `awaitReleased`
+  (the ADR-030 Rec1 seam realised) gates rename/delete targets and the duplicate source;
+  a session still live at the bound refuses with the new **`DataError.Busy`** ("That zine
+  is still saving — try again in a moment."). Navigation is untouched: Home remains
+  unwired, so every action is reachable only in tests until the S6.5 re-root.
 - **S6.2 — Home · "My zines" read-only shelf, built-but-unwired**
   ([ADR-043](docs/DECISIONS.md#adr-043)): a stateless `HomeScreen` in `:feature:editor`
   (paper-card list — title, "8-page mini · Letter/A4", warm "Edited …" recency — plus a

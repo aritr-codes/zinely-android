@@ -75,15 +75,26 @@ class RoomProjectRepositoryTest {
     private fun repo(
         store: AtomicFileStore = this.store,
         dao: ProjectDao = db.projectDao(),
+        sessionGate: ProjectSessionGate = ProjectSessionGate { true },
     ): RoomProjectRepository = RoomProjectRepository(
         rootDir = root,
         dao = dao,
         documents = documents,
         store = store,
+        sessionGate = sessionGate,
         io = Dispatchers.Unconfined,
         clock = { now },
         newId = { "p${nextId++}" },
     )
+
+    /** Records every id the repository gates on; [open] scripts the answer (false = session live). */
+    private class RecordingGate(private val open: Boolean = true) : ProjectSessionGate {
+        val askedIds = mutableListOf<String>()
+        override suspend fun awaitNoSession(projectId: String): Boolean {
+            askedIds += projectId
+            return open
+        }
+    }
 
     /**
      * A store whose atomic commit fails for `meta.json` targets only (the same [FileSystemOps]
@@ -413,5 +424,66 @@ class RoomProjectRepositoryTest {
         // durable file truth, so its mtime wins without coupling autosave to the metadata layer
         assertEquals(listOf(first, second), projects.map { it.id })
         assertEquals(editedAt, projects.first().updatedAtEpochMs)
+    }
+
+    // ---- ADR-044 open-editor exclusion gate ------------------------------------------------------
+
+    @Test
+    fun `given a live session on the target, when renaming, then Busy and the title is untouched`() = runTest {
+        // Given — p1 exists; the gate reports a session that never releases
+        repo().createProject("Before", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)
+        val gated = repo(sessionGate = RecordingGate(open = false))
+
+        // When
+        val result = gated.renameProject("p1", "After")
+
+        // Then — refused as Busy; file truth and index both keep the old title
+        assertTrue(result.errorOrNull() is DataError.Busy)
+        assertEquals("Before", repo().observeProjects().first().single().title)
+    }
+
+    @Test
+    fun `given a live session on the target, when deleting, then Busy and the files survive`() = runTest {
+        // Given
+        repo().createProject("Keep", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)
+        val gated = repo(sessionGate = RecordingGate(open = false))
+
+        // When
+        val result = gated.deleteProject("p1")
+
+        // Then — refused; document.json still on disk and the row still observable
+        assertTrue(result.errorOrNull() is DataError.Busy)
+        assertTrue(Files.isRegularFile(documentFile("p1")))
+        assertEquals(listOf("p1"), repo().observeProjects().first().map { it.id })
+    }
+
+    @Test
+    fun `given a live session on the source, when duplicating, then Busy and no copy appears`() = runTest {
+        // Given
+        repo().createProject("Original", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)
+        val gated = repo(sessionGate = RecordingGate(open = false))
+
+        // When
+        val result = gated.duplicateProject("p1")
+
+        // Then
+        assertTrue(result.errorOrNull() is DataError.Busy)
+        assertEquals(1, repo().observeProjects().first().size)
+    }
+
+    @Test
+    fun `mutations gate on the right id and create consults no gate`() = runTest {
+        // Given — an open gate that records what it was asked
+        val gate = RecordingGate(open = true)
+        val repo = repo(sessionGate = gate)
+
+        // When — create (fresh id: no session possible), then rename/duplicate/delete
+        repo.createProject("T", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)
+        repo.renameProject("p1", "T2")
+        repo.duplicateProject("p1") // copy id p2
+        repo.deleteProject("p1")
+
+        // Then — rename+delete gate the target, duplicate gates the SOURCE; create asked nothing
+        assertEquals(listOf("p1", "p1", "p1"), gate.askedIds)
     }
 }
