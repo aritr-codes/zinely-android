@@ -65,6 +65,11 @@ case "${1:-}" in
                          data-android/src render-android/src \
                          docs/ARCHITECTURE.md docs/DECISIONS.md docs/ROADMAP.md \
                          docs/design/SCREEN-INVENTORY.md tools/gitstage.sh ;;
+  # S6.5 — nav re-root: HomeRoute start destination, seed retirement, host-level nav tests (ADR-046)
+  s65-navroot)   git add CHANGELOG.md README.md gradle/libs.versions.toml \
+                         app/build.gradle.kts app/src feature/editor/src data-android/src \
+                         docs/ARCHITECTURE.md docs/DECISIONS.md docs/PRD.md docs/ROADMAP.md \
+                         docs/design/SCREEN-INVENTORY.md tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

@@ -12,12 +12,15 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.HomeZineCard
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -71,6 +74,27 @@ internal class HomeViewModel @Inject constructor(
     /** One-shot shelf events (undo prompts, warm failure messages), each consumed exactly once. */
     val events: Flow<HomeShelfEvent> = eventQueue.receiveAsFlow()
 
+    /** Queued one-shot "open this project" navigation events (ADR-046 §5) — consumed by the nav
+     * destination (navigation is a destination-layer concern), never by [HomeScreen] itself. */
+    private val openQueue = Channel<String>(Channel.BUFFERED)
+
+    /**
+     * One-shot open-project ids; the destination collects and navigates `EditorRoute(id)`. Each
+     * (re)collection first **discards anything buffered while nobody was collecting** (Codex
+     * implementation-review Required Fix): an open that landed after the shelf left composition —
+     * e.g. a slow create finishing behind an already-taken card tap — must never auto-navigate on
+     * return. Navigation is a fresh user action; a dropped stale open costs one re-tap, data-safe.
+     */
+    val openEvents: Flow<String> = flow {
+        while (openQueue.tryReceive().isSuccess) {
+            // discard stale opens buffered between shelf visits
+        }
+        emitAll(openQueue.receiveAsFlow())
+    }
+
+    /** The in-flight create (ADR-046 §5 single-flight): taps during it are no-ops. */
+    private var createJob: Job? = null
+
     val state: StateFlow<HomeUiState> =
         combine(
             projectRepository.observeProjects(),
@@ -81,6 +105,14 @@ internal class HomeViewModel @Inject constructor(
                 HomeUiState.Empty
             } else {
                 val now = System.currentTimeMillis()
+                // Prune pending ids the store no longer knows (committed deletes it caught up with):
+                // this VM is process-lifetime since the ADR-046 re-root, so "stale ids are inert"
+                // is no longer enough — they must not accumulate forever (Codex). The update
+                // re-triggers this combine once; the second pass is a no-op and it converges.
+                val projectIds = projects.mapTo(HashSet()) { it.id }
+                if (pending.any { it !in projectIds }) {
+                    pendingDeletes.update { current -> current.filterTo(mutableSetOf()) { it in projectIds } }
+                }
                 val visible = projects.filterNot { it.id in pending }
                 // Ask for every visible card's thumbnail on every emission (ADR-045 §2): the
                 // producer's mtime stamp makes a fresh ask a cheap no-op, delivery lands in
@@ -89,7 +121,11 @@ internal class HomeViewModel @Inject constructor(
                 visible.forEach { requestThumbnail(it.id) }
                 HomeUiState.Content(visible.map { it.toCard(now, thumbs[it.id]) })
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
+        // WhileSubscribed(0), not 5_000 (ADR-046 §6): every return to the shelf re-collects the
+        // upstream, so max(row, doc mtime) recency and thumbnails re-derive after an editor round-trip
+        // — the store emits nothing on autosave mtime changes, so a warm subscription shows stale
+        // cards on exactly the most common flow. stateIn keeps the last value: no Loading flash.
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState.Loading)
 
     /** Launch one ensure() per id at a time; the map updates only when the bitmap actually changes. */
     private fun requestThumbnail(id: String) {
@@ -106,12 +142,34 @@ internal class HomeViewModel @Inject constructor(
         }
     }
 
-    /** "Start a zine": create immediately with the warm defaults (ADR-044 §4); no navigation here. */
-    fun startZine() {
+    /**
+     * Open a card's project: commit any pending deletes first (leaving the shelf is a snackbar
+     * dismissal — ADR-046 §4), then hand the id to the destination as a one-shot open event. A hidden
+     * pending-delete card is untappable, so [id] can never itself be pending.
+     */
+    fun openZine(id: String) {
         viewModelScope.launch {
-            projectRepository
-                .createProject(DEFAULT_NEW_TITLE, ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)
-                .sendMessageOnFailure()
+            commitPendingDeletesNow()
+            openQueue.send(id)
+        }
+    }
+
+    /**
+     * "Start a zine": create with the warm defaults, then navigate into the new zine via the same
+     * one-shot open path (ADR-046 §5). Single-flight — a tap while a create is in flight is a no-op
+     * (an unguarded double-tap would mint two projects and two navigations); pending deletes commit
+     * first (ADR-046 §4). Create failure keeps the warm message and emits no open event.
+     */
+    fun startZine() {
+        if (createJob?.isActive == true) return
+        createJob = viewModelScope.launch {
+            commitPendingDeletesNow()
+            when (val result =
+                projectRepository.createProject(DEFAULT_NEW_TITLE, ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)
+            ) {
+                is DataResult.Success -> openQueue.send(result.value.id)
+                is DataResult.Failure -> eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
+            }
         }
     }
 
@@ -150,15 +208,28 @@ internal class HomeViewModel @Inject constructor(
      * Only a failed commit unhides + messages: the card is still real, and the shelf never lies.
      */
     fun commitDelete(id: String) {
-        viewModelScope.launch {
-            when (val result = projectRepository.deleteProject(id)) {
-                is DataResult.Success -> Unit // stay hidden; the store flow removes the card
-                is DataResult.Failure -> {
-                    pendingDeletes.update { it - id } // the card is still real — show it again
-                    eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
-                }
+        viewModelScope.launch { performCommit(id) }
+    }
+
+    /** The one commit path [commitDelete] and [commitPendingDeletesNow] share. */
+    private suspend fun performCommit(id: String) {
+        when (val result = projectRepository.deleteProject(id)) {
+            is DataResult.Success -> Unit // stay hidden; the store flow removes the card
+            is DataResult.Failure -> {
+                pendingDeletes.update { it - id } // the card is still real — show it again
+                eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
             }
         }
+    }
+
+    /**
+     * Commit every pending delete before leaving the shelf (ADR-046 §4): navigating away cancels the
+     * snackbar collector, so neither undo nor commit would ever run — this awaits the commits the
+     * dismissal would have made. A failed commit rolls back visibly through [performCommit] (unhide +
+     * warm message, seen on return) and **never blocks** the requested open/create.
+     */
+    private suspend fun commitPendingDeletesNow() {
+        pendingDeletes.value.forEach { performCommit(it) }
     }
 
     private suspend fun DataResult<*>.sendMessageOnFailure() {

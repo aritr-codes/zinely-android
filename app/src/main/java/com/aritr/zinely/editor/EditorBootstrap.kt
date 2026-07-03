@@ -12,45 +12,31 @@ import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 
 /**
- * Pure (Android-free) bootstrap helpers for the editor host (ADR-030 §2/§4). Kept out of the
- * `@HiltViewModel` so the seed-on-miss flow and the imposition-derived page size are unit-testable
- * with a fake [DocumentRepository] and a real [Imposer] — no Robolectric, no Hilt.
+ * Pure (Android-free) bootstrap helpers for the editor host (ADR-030 §2/§5). Kept out of the
+ * `@HiltViewModel` so the load flow and the imposition-derived page size are unit-testable with a
+ * fake [DocumentRepository] and a real [Imposer] — no Robolectric, no Hilt.
  */
 
-/** The blank document seeded when [projectId] does not yet exist (MVP: one fixed `"default"` project). */
+/** A blank SINGLE_SHEET_8 document — the shape DocumentValidator accepts (count must match the
+ * format; role is unconstrained). Kept for test fixtures; production creation is the store's
+ * `createProject` (ADR-042 §5) since ADR-046 §3 retired the editor's seed-on-miss. */
 internal fun blankDocument(): ZineDocument = ZineDocument(
     format = ZineFormat.SINGLE_SHEET_8,
     paperSize = PaperSize.LETTER,
-    // pageCount pages, all INTERIOR — the shape DocumentValidator accepts (count must match the format;
-    // role is unconstrained for SINGLE_SHEET_8). Matches the data-android validDoc() fixture.
     pages = (0 until ZineFormat.SINGLE_SHEET_8.pageCount).map { Page(index = it, role = PageRole.INTERIOR) },
 )
 
 /**
- * Load the document for [projectId], seeding a blank one on first run (ADR-030 §4). The single
- * [DataError.NotFound] case is the expected new-project path: build [blankDocument], persist it, and
- * return it (so the very first autosave has a real on-disk baseline). Every other failure
- * (Corrupt / Invalid / Io / SchemaTooNew) propagates unchanged — those are real errors the host
- * surfaces as a bootstrap failure, never silently overwritten with a blank (which would destroy a
- * recoverable document).
+ * Load the document for [projectId]. Every failure — **including [DataError.NotFound]** — propagates
+ * unchanged for the host to surface as a boot error. The ADR-030 §4 seed-on-miss was retired by
+ * ADR-046 §3: with Home as the start destination, the editor is only ever entered with an id that
+ * came from a shelf card or a fresh `createProject`, so a missing document is a real error (and
+ * silently re-creating a blank would fake-resurrect a deleted project).
  */
 internal suspend fun bootstrapDocument(
     repository: DocumentRepository,
     projectId: String,
-): DataResult<ZineDocument> =
-    when (val loaded = repository.load(projectId)) {
-        is DataResult.Success -> loaded
-        is DataResult.Failure -> when (loaded.error) {
-            is DataError.NotFound -> {
-                val seed = blankDocument()
-                when (val saved = repository.save(projectId, seed)) {
-                    is DataResult.Success -> DataResult.Success(seed)
-                    is DataResult.Failure -> saved
-                }
-            }
-            else -> loaded
-        }
-    }
+): DataResult<ZineDocument> = repository.load(projectId)
 
 /**
  * The edited page/panel size in points, derived from imposition (ADR-030 §5 — never hardcoded).

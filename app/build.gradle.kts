@@ -47,6 +47,14 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        unitTests {
+            // S6.5 (ADR-046): the ZinelyNavHost back-stack-policy tests run the real graph under
+            // Robolectric — merged resources/manifest give the test the debug-only HiltTestActivity.
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -98,9 +106,18 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
-    // EditorBootstrap unit tests (ADR-030): seed-on-miss over a fake DocumentRepository (runTest) and
+    // EditorBootstrap unit tests (ADR-030): load over a fake DocumentRepository (runTest) and
     // editedPageSize over the real SingleSheet8Imposer — pure JVM, no Robolectric/Hilt.
     testImplementation(libs.kotlinx.coroutines.test)
+    // S6.5 nav re-root (ADR-046): the graph's first host-level tests — the REAL ZinelyNavHost +
+    // Hilt graph under Robolectric, driven by a TestNavHostController (start destination, card-tap
+    // push, singleTop dedupe, error back, Keep-editing pop-to-existing).
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.navigation.testing)
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.compiler)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -19,10 +19,9 @@ feature.
 
 ```mermaid
 flowchart TD
-    W["Welcome 🔭"] --> H["Home / My zines 🔭"]
+    W["Welcome 🔭"] --> H["Home / My zines ✅"]
     H -->|start a zine| ED["Editor ✅"]
     H -->|open| ED
-    W -.first run, no projects.-> ED
     ED --> ES["Empty-state invitation 🔂"]
     ED --> NAV["Page navigator ✅"]
     ED --> TRAY["Supply tray 🔭"]
@@ -35,33 +34,34 @@ flowchart TD
     ED --> SET["Settings 🔭"]
 ```
 
-> **Note (MVP truth):** today the app boots **straight into the Editor** on a fixed `"default"`
-> project — Welcome and Home are designed but not built (no multi-project store yet; see
-> [ROADMAP status](../ROADMAP.md)). The inventory describes the *target* product so each screen is
-> designed coherently; the roadmap controls what gets built when.
+> **Note (MVP truth):** since the S6.5 re-root ([ADR-046](../DECISIONS.md#adr-046)) the app boots
+> onto **Home / My zines** — the single back-stack root; first run lands on its empty-shelf
+> **Start a zine** invitation. Welcome is still designed-but-deferred 🔭 (a local first-run flag
+> routing to Home; see [ROADMAP status](../ROADMAP.md)). The inventory describes the *target*
+> product so each screen is designed coherently; the roadmap controls what gets built when.
 
 ## The screens
 
 ### Welcome
 - **Status:** 🔭 deferred (first-run only).
 - **Purpose:** in one glance, communicate "I make a tiny printable book," and start.
-- **Primary action:** **Start making** → Editor (or Home, once it exists).
+- **Primary action:** **Start making** → Home (the shipped start destination, [ADR-046](../DECISIONS.md#adr-046)).
 - **Secondary:** none (deliberately — one obvious next step).
 - **Emotional goal:** invited, reassured ("works offline · stays on your phone").
 - **Notes:** no carousel, no account, no permissions yet. A folding-zine illustration carries the
-  promise. Shown once (a **local first-run flag**, not Room) and then routes straight to the editor
-  on the `"default"` project — so it is **not blocked by the project layer** and can ship early;
-  returning users land on Home/Editor once Home exists.
+  promise. Shown once (a **local first-run flag**, not Room) and then routes to Home — whose
+  empty-shelf **Start a zine** invitation is the first-run landing until Welcome ships.
 
 ### Home / My zines
-- **Status:** 🔂 full shelf **built, not yet wired** (S6.2 read shelf [ADR-043](../DECISIONS.md#adr-043);
-  S6.3 actions [ADR-044](../DECISIONS.md#adr-044); S6.4 thumbnails [ADR-045](../DECISIONS.md#adr-045)):
-  list + open + **Start a zine** (empty-state CTA restored + content FAB) + per-card
-  rename/duplicate/**undoable delete** (snackbar undo window, no confirm dialog) + **page-1 paper-card
-  thumbnails** (rendered through the shared render/export parity path; warm paper placeholder on any
-  failure) all exist and are tested — the open-editor exclusion is enforced in the data layer
-  (`DataError.Busy`). But no nav route is registered, so the app still boots into the editor and every
-  action is reachable only in tests. The route + start-destination re-root lands with S6.5.
+- **Status:** ✅ shipped and **wired as the start destination / single back-stack root** (S6.2 read
+  shelf [ADR-043](../DECISIONS.md#adr-043); S6.3 actions [ADR-044](../DECISIONS.md#adr-044); S6.4
+  thumbnails [ADR-045](../DECISIONS.md#adr-045); S6.5 re-root [ADR-046](../DECISIONS.md#adr-046)):
+  list + open (card tap → that project's editor; a fast reopen awaits the single-writer release) +
+  **Start a zine** (empty-state CTA + content FAB; creates then opens the new zine) + per-card
+  rename/duplicate/**undoable delete** (snackbar undo window, no confirm dialog — leaving the shelf
+  commits pending deletes) + **page-1 paper-card thumbnails** (shared render/export parity path;
+  warm paper placeholder on any failure; refreshed on every shelf return). The open-editor exclusion
+  is enforced in the data layer (`DataError.Busy`).
 - **Purpose:** see and reopen the zines I've made; start a new one.
 - **Primary action:** **Start a zine** (prominent, always reachable).
 - **Secondary:** open / duplicate / delete a project (gentle, undoable); each as a paper-card
@@ -205,7 +205,7 @@ flowchart TD
 | Export · Print & fold | S5 / `0.6.0`+ | ✅ (calibration ruler deferred) |
 | Completion · fold steps | S5 / `0.6.0`+ | ✅ (auto post-export landing deferred) |
 | Welcome | needs only a **first-run flag** (local prefs) — *not* Room-gated | 🔭 |
-| Home / My zines | shelf + actions + thumbnails **built** (S6.1–S6.4); needs only the **S6.5 nav re-root** | 🔂 |
+| Home / My zines | shelf + actions + thumbnails + **nav re-root as start destination** (S6.1–S6.5, [ADR-046](../DECISIONS.md#adr-046)) | ✅ |
 | Settings | needs only **local prefs** (DataStore) — *not* Room-gated | 🔭 |
 | Sticker picker, Template picker | V1 | 🔭 |
 

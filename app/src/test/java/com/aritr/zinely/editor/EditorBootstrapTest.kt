@@ -52,28 +52,15 @@ class EditorBootstrapTest {
     }
 
     @Test
-    fun `NotFound seeds a blank document, persists it, and returns the seed`() = runTest {
-        val repo = FakeRepository(loadResult = DataResult.Failure(DataError.NotFound("default")))
+    fun `NotFound propagates as a failure and never seeds (ADR-046 §3 — seed-on-miss retired)`() = runTest {
+        val notFound = DataError.NotFound("missing-id")
+        val repo = FakeRepository(loadResult = DataResult.Failure(notFound))
 
-        val result = bootstrapDocument(repo, "default")
+        val result = bootstrapDocument(repo, "missing-id")
 
-        val seeded = (result as DataResult.Success).value
-        assertEquals(8, seeded.pages.size)
-        assertSame("returned doc must be the one persisted", seeded, repo.savedDocument)
-        assertEquals("default", repo.savedProjectId)
-    }
-
-    @Test
-    fun `NotFound but save fails propagates the save failure`() = runTest {
-        val ioError = DataError.Io("disk full")
-        val repo = FakeRepository(
-            loadResult = DataResult.Failure(DataError.NotFound("default")),
-            saveResult = DataResult.Failure(ioError),
-        )
-
-        val result = bootstrapDocument(repo, "default")
-
-        assertEquals(ioError, (result as DataResult.Failure).error)
+        assertEquals(notFound, (result as DataResult.Failure).error)
+        assertNull("a missing project must never be silently re-created", repo.savedDocument)
+        assertNull(repo.savedProjectId)
     }
 
     @Test

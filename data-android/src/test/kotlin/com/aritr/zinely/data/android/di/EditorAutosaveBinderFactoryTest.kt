@@ -18,8 +18,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -51,6 +53,51 @@ class EditorAutosaveBinderFactoryTest {
 
         binder.dispose() // release the eagerly-registered project so the test scope drains cleanly
         advanceUntilIdle()
+    }
+
+    // ADR-046 §2: the editor's await-release-before-reopen (ADR-030 Rec1) goes through the SAME
+    // AutosaveSessionGate policy the repository's mutation gate uses — one 5 s bound, no drift.
+
+    @Test
+    fun `awaitNoSession returns true immediately when the project has no live session`() = runTest {
+        val dispatcher: CoroutineDispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(dispatcher + SupervisorJob())
+        val coordinatorFactory =
+            AutosaveCoordinatorFactory(scope, dispatcher, RecordingRepository(), InMemorySaveFailureSink(), AutosaveConfig())
+        val binderFactory = EditorAutosaveBinderFactory(coordinatorFactory, scope)
+
+        assertTrue(binderFactory.awaitNoSession("never-opened"))
+    }
+
+    @Test
+    fun `awaitNoSession reports busy at the bound while a session stays live`() = runTest {
+        val dispatcher: CoroutineDispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(dispatcher + SupervisorJob())
+        val coordinatorFactory =
+            AutosaveCoordinatorFactory(scope, dispatcher, RecordingRepository(), InMemorySaveFailureSink(), AutosaveConfig())
+        val binderFactory = EditorAutosaveBinderFactory(coordinatorFactory, scope)
+        val binder = binderFactory.create("proj1", DocumentSnapshotProvider { doc(1) })
+
+        // The session is never closed, so the (virtual) timeout is what answers — false, not a hang.
+        assertFalse(binderFactory.awaitNoSession("proj1"))
+
+        binder.dispose()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `awaitNoSession rides out an in-flight asynchronous release`() = runTest {
+        val dispatcher: CoroutineDispatcher = StandardTestDispatcher(testScheduler)
+        val scope = CoroutineScope(dispatcher + SupervisorJob())
+        val coordinatorFactory =
+            AutosaveCoordinatorFactory(scope, dispatcher, RecordingRepository(), InMemorySaveFailureSink(), AutosaveConfig())
+        val binderFactory = EditorAutosaveBinderFactory(coordinatorFactory, scope)
+        val binder = binderFactory.create("proj1", DocumentSnapshotProvider { doc(1) })
+
+        // Close the project (the reopen scenario): release is asynchronous — the awaiting reopen must
+        // resume true once the teardown completes, well inside the bound.
+        binder.dispose()
+        assertTrue(binderFactory.awaitNoSession("proj1"))
     }
 }
 
