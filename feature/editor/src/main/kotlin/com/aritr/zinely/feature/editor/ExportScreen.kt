@@ -21,6 +21,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +34,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.imposition.ConventionSpec
+import com.aritr.zinely.core.imposition.SingleSheet8
+import com.aritr.zinely.core.model.GridCell
+import com.aritr.zinely.core.model.Rotation
 
 /** Test tag on the whole Export surface. */
 public const val ExportScreenTestTag: String = "export-screen"
@@ -111,7 +116,7 @@ public fun ExportScreen(
         Text(
             text = "We'll lay out all 8 pages on one sheet. Print it, fold it, done.",
             style = MaterialTheme.typography.bodyMedium,
-            color = colors.onSurfaceVariant,
+            color = colors.deskTextSoft,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 8.dp),
         )
@@ -242,17 +247,38 @@ private fun FormatCard(
     }
 }
 
+/** One decorative panel: the booklet page number in a grid cell, and whether it prints upside-down. */
+internal data class DecorativePanel(val pageNumber: Int, val flipped: Boolean)
+
+/**
+ * The decorative sheet's rows, derived straight from the canonical engine convention so the picture
+ * can never drift from the real imposition again (a hardcoded copy did: 5·4·3·6 / 8·1·2·7). For
+ * [SingleSheet8.TOP_ROW_ROTATED] this yields top `5 4 3 2` (flipped) / bottom `6 7 8 1` (upright).
+ */
+internal fun decorativeImpositionRows(
+    spec: ConventionSpec = SingleSheet8.TOP_ROW_ROTATED,
+): List<List<DecorativePanel>> {
+    val pageAt = spec.cellOf.entries.associate { (page, cell) -> cell to page }
+    val rowCount = spec.cellOf.values.maxOf { it.row } + 1
+    val colCount = spec.cellOf.values.maxOf { it.col } + 1
+    return List(rowCount) { row ->
+        List(colCount) { col ->
+            val page = pageAt.getValue(GridCell(row, col))
+            DecorativePanel(page, spec.rotationOf.getValue(page) == Rotation.HALF)
+        }
+    }
+}
+
 /**
  * A decorative "all 8 pages, one sheet" picture (mockup's imposition thumbnail) — a 4×2 grid with the
  * top row visually flipped, like real imposition. Purely illustrative, so it is cleared from the a11y
- * tree; the meaning is carried by the surrounding copy. Not a live render (that is the export itself).
+ * tree; the meaning is carried by the surrounding copy. Not a live render (that is the export itself),
+ * but its order/rotation comes from the canonical convention via [decorativeImpositionRows].
  */
 @Composable
 private fun DecorativeImpositionSheet() {
     val colors = MaterialTheme.colorScheme
-    // The canonical single-sheet-8 order (top row rotated): 5 4 3 6 / 8 1 2 7.
-    val topRow = listOf(5, 4, 3, 6)
-    val bottomRow = listOf(8, 1, 2, 7)
+    val rows = remember { decorativeImpositionRows() }
     Surface(
         color = colors.surface,
         shape = RoundedCornerShape(4.dp),
@@ -263,29 +289,30 @@ private fun DecorativeImpositionSheet() {
             .clearAndSetSemantics { },
     ) {
         Column(modifier = Modifier.padding(10.dp)) {
-            ImpositionRow(topRow, flipped = true)
-            Spacer(modifier = Modifier.size(6.dp))
-            ImpositionRow(bottomRow, flipped = false)
+            rows.forEachIndexed { index, row ->
+                if (index > 0) Spacer(modifier = Modifier.size(6.dp))
+                ImpositionRow(row)
+            }
         }
     }
 }
 
 @Composable
-private fun ImpositionRow(pageNumbers: List<Int>, flipped: Boolean) {
+private fun ImpositionRow(panels: List<DecorativePanel>) {
     val colors = MaterialTheme.colorScheme
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        pageNumbers.forEach { n ->
+        panels.forEach { panel ->
             Box(
                 modifier = Modifier
                     .width(46.dp)
                     .size(width = 46.dp, height = 40.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(colors.surfaceVariant)
-                    .graphicsLayer { rotationZ = if (flipped) 180f else 0f },
+                    .graphicsLayer { rotationZ = if (panel.flipped) 180f else 0f },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = n.toString(),
+                    text = panel.pageNumber.toString(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
                     color = colors.onSurfaceVariant,

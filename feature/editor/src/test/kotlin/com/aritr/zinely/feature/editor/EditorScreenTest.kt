@@ -110,6 +110,16 @@ class EditorScreenTest {
     }
 
     @Test
+    fun paper_surface_backs_the_page_render() {
+        // Given a mounted editor
+        setScreen(store())
+        composeRule.waitForIdle()
+        // Then the page-footprint paper backing is present under the render (the canvas page must
+        // read as paper like Preview/export/thumbnails, never the bare desk).
+        composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).assertExists()
+    }
+
+    @Test
     fun measuring_the_canvas_pushes_a_real_viewport_into_the_model() {
         val store = store()
         setScreen(store)

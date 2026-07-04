@@ -1,5 +1,6 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,6 +47,9 @@ import kotlinx.coroutines.flow.emptyFlow
 
 /** Test tag on the editor canvas Box (the measured, gesture-bearing area). */
 public const val EditorCanvasTestTag: String = "editor-canvas"
+
+/** Test tag on the paper surface under the page render (the page-footprint paper backing). */
+public const val EditorPaperSurfaceTestTag: String = "editor-paper"
 
 /** Test tag on the top "Preview" entry point (shown only when the host provides an `onPreview`). */
 public const val EditorPreviewActionTestTag: String = "editor-preview-action"
@@ -225,6 +231,21 @@ public fun EditorScreen(
             }
 
             Box(modifier = Modifier.fillMaxSize()) {
+                // The page footprint reads as paper — the same `surface` role Preview's BookletPage,
+                // the export sheet, and the shelf thumbnails present — instead of the bare desk
+                // showing through. Purely a host backing UNDER the render: the SceneRenderer contract
+                // is untouched (a document background still paints over it; Background.None now shows
+                // paper, matching export onto a white sheet). Sized to the page at the fitted scale,
+                // top-left anchored like the render itself (pan is zero in the MVP host).
+                val density = LocalDensity.current
+                val paperWidth = with(density) { (pageSizePt.width * scale).toFloat().toDp() }
+                val paperHeight = with(density) { (pageSizePt.height * scale).toFloat().toDp() }
+                Box(
+                    modifier = Modifier
+                        .size(paperWidth, paperHeight)
+                        .background(MaterialTheme.colorScheme.surface)
+                        .testTag(EditorPaperSurfaceTestTag),
+                )
                 EditorPagePreview(
                     uiState = uiState,
                     defaults = uiState.document.defaults,

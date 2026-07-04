@@ -214,7 +214,10 @@ public fun HomeScreen(
                 text = "My zines",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+                // Desk-level text: the scaffold body is `background` (the dark desk), not a paper
+                // card, so the pairing role is onBackground — onSurface is ink for paper surfaces
+                // and vanishes on the desk in dark mode.
+                color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 8.dp),
             )
             when {
@@ -489,12 +492,14 @@ private fun HomeRenameDialog(
 
 /**
  * The empty shelf — the canonical SCREEN-INVENTORY §Home pairing: warm invitation + its
- * **Start a zine** CTA (S6.3, ADR-044 §4 — this ends the ADR-043 §5 named deviation). In practice
- * this state is unreachable while boot seeds `"default"` (ADR-030 §4) — it exists, warm and
- * tested, for the S6.5 re-root.
+ * **Start a zine** CTA (S6.3, ADR-044 §4 — this ends the ADR-043 §5 named deviation). Since the
+ * S6.5 re-root retired the `"default"` seed-on-miss (ADR-046), this is the real first-run landing.
  */
 @Composable
 private fun HomeEmptyShelf(onStartZine: () -> Unit, modifier: Modifier = Modifier) {
+    // This whole invitation sits directly on the desk (`background`), not on a paper card, so its
+    // text pairs with onBackground (secondary lines: the shared soft desk role, see DeskText.kt).
+    val colors = MaterialTheme.colorScheme
     Column(
         modifier = modifier.testTag(HomeEmptyStateTestTag).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -504,14 +509,14 @@ private fun HomeEmptyShelf(onStartZine: () -> Unit, modifier: Modifier = Modifie
             text = HomeEmptyHeadline,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = colors.onBackground,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.size(8.dp))
         Text(
             text = "Every zine you make will line up right here.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = colors.deskTextSoft,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.size(16.dp))
@@ -520,7 +525,7 @@ private fun HomeEmptyShelf(onStartZine: () -> Unit, modifier: Modifier = Modifie
         Text(
             text = "works offline · stays on your phone",
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = colors.deskTextSoft,
             textAlign = TextAlign.Center,
         )
     }

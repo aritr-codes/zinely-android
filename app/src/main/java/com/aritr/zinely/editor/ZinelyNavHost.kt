@@ -299,7 +299,7 @@ private fun ExportFormat.toExportKind(): ExportKind = when (this) {
  *
  * The VM's [ExportReady] event is delivery-agnostic (ADR-040); single-flight guarantees at most one export
  * in flight, so [pending] — the action that started it — is the correct routing for the file that comes
- * back. "Keep editing" is the honest "make another" until the multi-project layer exists (ADR-040).
+ * back. "Keep editing" pops back to the existing editor; since the S6.5 re-root the Home shelf is the multi-project home (ADR-046).
  */
 @Composable
 private fun CompletionDestination(

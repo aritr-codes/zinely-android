@@ -141,17 +141,20 @@
           <span class="tape-top"></span>
           <span class="fold"></span>
           <span class="cut"></span>
+          <!-- panel order/rotation = the canonical TOP_ROW_ROTATED convention
+               (core/imposition Convention.kt, docs/RESEARCH.md R1.2): top 5·4·3·2 flipped,
+               bottom 6·7·8·1 upright. Keep in sync with ExportScreen.decorativeImpositionRows. -->
           <div class="imp-grid">
             <!-- top row reads as flipped, like real imposition -->
             <div class="pp flip blue"><span class="n">5</span></div>
             <div class="pp flip"><span class="n">4</span></div>
             <div class="pp flip teal"><span class="n">3</span></div>
-            <div class="pp flip yellow"><span class="n">6</span></div>
+            <div class="pp flip yellow"><span class="n">2</span></div>
             <!-- bottom row upright -->
-            <div class="pp"><span class="n">8</span></div>
-            <div class="pp teal"><span class="n">1</span></div>
-            <div class="pp yellow"><span class="n">2</span></div>
-            <div class="pp blue"><span class="n">7</span></div>
+            <div class="pp"><span class="n">6</span></div>
+            <div class="pp teal"><span class="n">7</span></div>
+            <div class="pp yellow"><span class="n">8</span></div>
+            <div class="pp blue"><span class="n">1</span></div>
           </div>
         </div>
         <div class="imp-cap">all 8 pages, one sheet ✦</div>
