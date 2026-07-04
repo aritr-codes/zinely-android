@@ -57,7 +57,9 @@ flowchart TD
   shelf [ADR-043](../DECISIONS.md#adr-043); S6.3 actions [ADR-044](../DECISIONS.md#adr-044); S6.4
   thumbnails [ADR-045](../DECISIONS.md#adr-045); S6.5 re-root [ADR-046](../DECISIONS.md#adr-046)):
   list + open (card tap → that project's editor; a fast reopen awaits the single-writer release) +
-  **Start a zine** (empty-state CTA + content FAB; creates then opens the new zine) + per-card
+  **Start a zine** (empty-state CTA + content FAB; opens the [ADR-047](../DECISIONS.md#adr-047)
+  **paper chooser** — "What paper will you print on?" Letter / A4, tap = create — then opens the
+  new zine) + per-card
   rename/duplicate/**undoable delete** (snackbar undo window, no confirm dialog — leaving the shelf
   commits pending deletes) + **page-1 paper-card thumbnails** (shared render/export parity path;
   warm paper placeholder on any failure; refreshed on every shelf return). The open-editor exclusion

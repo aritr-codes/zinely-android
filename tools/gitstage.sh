@@ -74,6 +74,11 @@ case "${1:-}" in
   s70-import)    git add app/src \
                          docs/DECISIONS.md docs/ROADMAP.md \
                          tools/gitstage.sh ;;
+  # S7.1 — A4 at create (paper chooser) + honest alpha scope record (ADR-047, PRD §7.3)
+  s71-a4)        git add CHANGELOG.md app/src feature/editor/src \
+                         docs/DECISIONS.md docs/PRD.md docs/ROADMAP.md \
+                         docs/design/SCREEN-INVENTORY.md \
+                         tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

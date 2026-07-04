@@ -272,11 +272,27 @@ class HomeViewModelTest {
         repository.createResult = { DataResult.Success(summary("new", "My zine", 0L)) }
 
         // When
-        viewModel.startZine()
+        viewModel.startZine(PaperSize.LETTER)
 
         // Then — "My zine", the only format, and the bootstrap-matching paper (ADR-044 §4)
         assertEquals(
             listOf(Triple("My zine", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)),
+            repository.created,
+        )
+    }
+
+    @Test
+    fun `Start a zine creates on the chosen paper`() = runTest {
+        // Given — S7.1: the shelf asks which paper before creating (A4 printers exist)
+        val viewModel = viewModel()
+        repository.createResult = { DataResult.Success(summary("new", "My zine", 0L)) }
+
+        // When the person picks A4
+        viewModel.startZine(PaperSize.A4)
+
+        // Then the project is created on A4, not the old hardcoded Letter
+        assertEquals(
+            listOf(Triple("My zine", ZineFormat.SINGLE_SHEET_8, PaperSize.A4)),
             repository.created,
         )
     }
@@ -290,7 +306,7 @@ class HomeViewModelTest {
         val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
 
         // When
-        viewModel.startZine()
+        viewModel.startZine(PaperSize.LETTER)
 
         // Then
         assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE)), events)
@@ -552,7 +568,7 @@ class HomeViewModelTest {
         val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect { opened += it } }
 
         // When
-        viewModel.startZine()
+        viewModel.startZine(PaperSize.LETTER)
 
         // Then — create → navigate (ADR-046 §5): the destination collects this and pushes EditorRoute
         assertEquals(listOf("new-id"), opened)
@@ -570,7 +586,7 @@ class HomeViewModelTest {
         val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
 
         // When
-        viewModel.startZine()
+        viewModel.startZine(PaperSize.LETTER)
 
         // Then
         assertTrue(opened.isEmpty())
@@ -591,9 +607,9 @@ class HomeViewModelTest {
         val openJob = launch(Dispatchers.Main) { viewModel.openEvents.collect { opened += it } }
 
         // When — a rapid second (and third) tap while the first create is still in flight
-        viewModel.startZine()
-        viewModel.startZine()
-        viewModel.startZine()
+        viewModel.startZine(PaperSize.LETTER)
+        viewModel.startZine(PaperSize.LETTER)
+        viewModel.startZine(PaperSize.LETTER)
         gate.complete(Unit)
 
         // Then — one project, one open event
@@ -652,7 +668,7 @@ class HomeViewModelTest {
         repository.createResult = { DataResult.Success(summary("new-id", "My zine", 0L)) }
 
         // When
-        viewModel.startZine()
+        viewModel.startZine(PaperSize.LETTER)
 
         // Then
         assertEquals(listOf("z1"), repository.deleted)

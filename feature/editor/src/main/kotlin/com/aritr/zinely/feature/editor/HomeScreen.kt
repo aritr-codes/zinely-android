@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.model.PaperSize
 import kotlinx.coroutines.flow.Flow
 
 /** Test tag on the shelf list (the Content state's scrollable column of zine cards). */
@@ -75,6 +77,13 @@ public const val HomeEmptyHeadline: String = "Nothing here yet — let's change 
 public const val HomeRenameDialogTestTag: String = "home-rename-dialog"
 public const val HomeRenameFieldTestTag: String = "home-rename-field"
 public const val HomeRenameConfirmTestTag: String = "home-rename-confirm"
+
+/** Test tag on the Start-a-zine paper chooser dialog (S7.1/ADR-047). */
+public const val HomePaperChooserTestTag: String = "home-paper-chooser"
+
+/** Test tag for one paper choice inside the chooser. */
+public fun homePaperChoiceTestTag(paperSize: PaperSize): String =
+    "home-paper-choice-${paperSize.name}"
 
 /** Test tag for one zine card on the shelf, keyed by its stable project [id]. */
 public fun homeCardTestTag(id: String): String = "home-card-$id"
@@ -129,7 +138,8 @@ public sealed interface HomeShelfEvent {
  * list of paper cards, newest first *as given* (ordering is the `ProjectRepository` contract,
  * never re-derived here), each opening its zine via [onOpenZine]. **Start a zine** is always
  * reachable — the empty invitation's CTA (the ADR-043 §5 deviation is over) and an extended FAB on
- * the content shelf. Each card carries an overflow menu: Rename (gentle dialog, blank disabled),
+ * the content shelf; both open the paper chooser (S7.1/ADR-047), and only a picked paper fires
+ * [onStartZine]. Each card carries an overflow menu: Rename (gentle dialog, blank disabled),
  * Duplicate, and a confirm-less Delete whose undo window is the snackbar driven by [events]
  * ([HomeShelfEvent.DeletePrompt] → Undo ⇒ [onDeleteUndo], dismissed ⇒ [onDeleteCommit]). The
  * open-editor exclusion lives in the data layer (`DataError.Busy`), not here — failures arrive
@@ -147,7 +157,7 @@ public fun HomeScreen(
     cards: List<HomeZineCard>,
     events: Flow<HomeShelfEvent>,
     onOpenZine: (String) -> Unit,
-    onStartZine: () -> Unit,
+    onStartZine: (PaperSize) -> Unit,
     onRenameZine: (String, String) -> Unit,
     onDuplicateZine: (String) -> Unit,
     onDeleteZine: (String) -> Unit,
@@ -179,6 +189,10 @@ public fun HomeScreen(
     }
 
     var renameTarget by remember { mutableStateOf<HomeZineCard?>(null) }
+    // Both create affordances (empty CTA + FAB) open the one paper chooser (S7.1/ADR-047):
+    // the create is committed only when a paper is picked — Letter is never silently assumed.
+    // Saveable so a rotation mid-question keeps the dialog up (Codex).
+    var paperChooserOpen by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = modifier,
@@ -187,7 +201,7 @@ public fun HomeScreen(
             // The empty state carries its own inline CTA; doubling it with a FAB would shout. A
             // zero-card (pending-delete-filtered) shelf keeps the FAB: Start a zine stays reachable.
             if (!loading && !storeEmpty) {
-                ExtendedFloatingActionButton(onClick = onStartZine) {
+                ExtendedFloatingActionButton(onClick = { paperChooserOpen = true }) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     Spacer(Modifier.size(8.dp))
                     Text("Start a zine")
@@ -209,7 +223,7 @@ public fun HomeScreen(
                     contentAlignment = Alignment.Center,
                 ) { CircularProgressIndicator() }
 
-                storeEmpty -> HomeEmptyShelf(onStartZine, Modifier.fillMaxSize())
+                storeEmpty -> HomeEmptyShelf({ paperChooserOpen = true }, Modifier.fillMaxSize())
 
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize().testTag(HomeShelfTestTag),
@@ -242,6 +256,78 @@ public fun HomeScreen(
             },
             onKeepName = { renameTarget = null },
         )
+    }
+
+    if (paperChooserOpen) {
+        HomePaperChooserDialog(
+            onChoose = { paper ->
+                paperChooserOpen = false
+                onStartZine(paper)
+            },
+            onDismiss = { paperChooserOpen = false },
+        )
+    }
+}
+
+/**
+ * The Start-a-zine paper chooser (S7.1/ADR-047): one warm question — which paper will this zine be
+ * printed on — with both supported answers as full-width tappable rows (tap = create, no separate
+ * confirm). Core imposition has been paper-agnostic since S1; this dialog ends the shelf's
+ * hardcoded Letter. VOICE: dimensions as people print them, "Not now" (never "Cancel").
+ */
+@Composable
+private fun HomePaperChooserDialog(
+    onChoose: (PaperSize) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(HomePaperChooserTestTag),
+        title = { Text("What paper will you print on?") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                PaperChoiceRow(PaperSize.LETTER, "Letter", "8.5 × 11 in", onChoose)
+                PaperChoiceRow(PaperSize.A4, "A4", "210 × 297 mm", onChoose)
+            }
+        },
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Not now") } },
+    )
+}
+
+/** One tappable paper option: name over its size, a ≥48dp row styled like the shelf's cards. */
+@Composable
+private fun PaperChoiceRow(
+    paperSize: PaperSize,
+    name: String,
+    dimensions: String,
+    onChoose: (PaperSize) -> Unit,
+) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(homePaperChoiceTestTag(paperSize))
+            .semantics { role = Role.Button }
+            .clickable(onClickLabel = "Start a $name zine") { onChoose(paperSize) },
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = dimensions,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

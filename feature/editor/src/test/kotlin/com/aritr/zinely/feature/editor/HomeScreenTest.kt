@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextReplacement
+import com.aritr.zinely.core.model.PaperSize
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -37,7 +38,7 @@ class HomeScreenTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private val opened = mutableListOf<String>()
-    private var startCount = 0
+    private val started = mutableListOf<PaperSize>()
     private val renamed = mutableListOf<Pair<String, String>>()
     private val duplicated = mutableListOf<String>()
     private val deleted = mutableListOf<String>()
@@ -73,7 +74,7 @@ class HomeScreenTest {
                     cards = cards,
                     events = events,
                     onOpenZine = { opened += it },
-                    onStartZine = { startCount++ },
+                    onStartZine = { started += it },
                     onRenameZine = { id, title -> renamed += id to title },
                     onDuplicateZine = { duplicated += it },
                     onDeleteZine = { deleted += it },
@@ -124,7 +125,7 @@ class HomeScreenTest {
         composeRule.onNodeWithTag(HomeShelfTestTag).assertDoesNotExist()
     }
 
-    // --- Start a zine (ADR-044 §4: the ADR-043 §5 CTA deviation ends) ---
+    // --- Start a zine (ADR-044 §4 CTA + the S7.1/ADR-047 paper chooser) ---
 
     @Test
     fun `the empty shelf pairs the invitation with its Start a zine CTA`() {
@@ -136,7 +137,9 @@ class HomeScreenTest {
 
         composeRule.onNodeWithText("Start a zine").performClick()
         composeRule.waitForIdle()
-        assertEquals(1, startCount)
+        composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.LETTER)).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf(PaperSize.LETTER), started)
     }
 
     @Test
@@ -145,8 +148,10 @@ class HomeScreenTest {
 
         composeRule.onNodeWithText("Start a zine").performClick()
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.LETTER)).performClick()
+        composeRule.waitForIdle()
 
-        assertEquals(1, startCount)
+        assertEquals(listOf(PaperSize.LETTER), started)
     }
 
     @Test
@@ -161,7 +166,57 @@ class HomeScreenTest {
         // "Start a zine" stays reachable (SCREEN-INVENTORY: prominent, ALWAYS reachable) via the FAB.
         composeRule.onNodeWithText("Start a zine").performClick()
         composeRule.waitForIdle()
-        assertEquals(1, startCount)
+        composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.LETTER)).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf(PaperSize.LETTER), started)
+    }
+
+    @Test
+    fun `Start a zine asks which paper - nothing is created until a paper is chosen`() {
+        // Given the content shelf (S7.1/ADR-047: A4 printers exist; Letter is not assumed)
+        setHome(twoZines)
+
+        // When "Start a zine" is tapped
+        composeRule.onNodeWithText("Start a zine").performClick()
+        composeRule.waitForIdle()
+
+        // Then the paper chooser is up, both papers offered, and no create fired yet
+        composeRule.onNodeWithTag(HomePaperChooserTestTag).assertExists()
+        composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.LETTER)).assertExists()
+        composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.A4)).assertExists()
+        assertEquals(emptyList<PaperSize>(), started)
+    }
+
+    @Test
+    fun `choosing A4 creates on A4 and closes the chooser`() {
+        // Given the chooser is open
+        setHome(twoZines)
+        composeRule.onNodeWithText("Start a zine").performClick()
+        composeRule.waitForIdle()
+
+        // When A4 is chosen
+        composeRule.onNodeWithTag(homePaperChoiceTestTag(PaperSize.A4)).performClick()
+        composeRule.waitForIdle()
+
+        // Then exactly one A4 create fired and the chooser is gone
+        assertEquals(listOf(PaperSize.A4), started)
+        composeRule.onNodeWithTag(HomePaperChooserTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun `Not now closes the chooser without creating anything`() {
+        // Given the chooser is open
+        setHome(twoZines)
+        composeRule.onNodeWithText("Start a zine").performClick()
+        composeRule.waitForIdle()
+
+        // When backing out
+        composeRule.onNodeWithText("Not now").performClick()
+        composeRule.waitForIdle()
+
+        // Then no create, no chooser
+        assertEquals(emptyList<PaperSize>(), started)
+        composeRule.onNodeWithTag(HomePaperChooserTestTag).assertDoesNotExist()
     }
 
     // --- per-card actions (overflow menu) ---
