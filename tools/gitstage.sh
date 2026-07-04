@@ -70,6 +70,10 @@ case "${1:-}" in
                          app/build.gradle.kts app/src feature/editor/src data-android/src \
                          docs/ARCHITECTURE.md docs/DECISIONS.md docs/PRD.md docs/ROADMAP.md \
                          docs/design/SCREEN-INVENTORY.md tools/gitstage.sh ;;
+  # S7.0 — on-device photo import fix: readBounds stream-guard + decoder regression suite (ADR-031 smoke)
+  s70-import)    git add app/src \
+                         docs/DECISIONS.md docs/ROADMAP.md \
+                         tools/gitstage.sh ;;
   *) echo "unknown milestone: ${1:-<none>}" >&2; exit 2 ;;
 esac
 git status -s

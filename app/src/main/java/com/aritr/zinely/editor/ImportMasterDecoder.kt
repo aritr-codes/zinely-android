@@ -29,7 +29,8 @@ public data class MasterImage(val bytes: ByteArray, val widthPx: Int, val height
  * Returns `null` on any failure (unreadable/unsupported/corrupt/`OutOfMemoryError`); the caller maps
  * that to a user-visible import failure rather than crashing.
  *
- * Android (Bitmap) work — runs on an IO dispatcher (the caller confines it); not unit-testable headless.
+ * Android (Bitmap) work — runs on an IO dispatcher (the caller confines it); covered headlessly by
+ * `ImportMasterDecoderTest` (Robolectric NATIVE real-Skia + shadow resolver, S7.0).
  */
 public class ImportMasterDecoder(private val contentResolver: ContentResolver) {
 
@@ -66,7 +67,11 @@ public class ImportMasterDecoder(private val contentResolver: ContentResolver) {
 
     private fun readBounds(uri: Uri): Pair<Int, Int>? {
         val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) } ?: return null
+        // A bounds-only decodeStream returns null BY CONTRACT (it only fills opts) — the null check
+        // must apply to the stream, never the decode result (S7.0: `?.use{decode} ?: return null`
+        // made every on-device import fail).
+        val stream = contentResolver.openInputStream(uri) ?: return null
+        stream.use { BitmapFactory.decodeStream(it, null, opts) }
         return if (opts.outWidth > 0 && opts.outHeight > 0) opts.outWidth to opts.outHeight else null
     }
 
