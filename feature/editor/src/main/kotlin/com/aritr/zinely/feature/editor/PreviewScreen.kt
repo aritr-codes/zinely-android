@@ -78,8 +78,8 @@ public const val PreviewBookletTestTag: String = "preview-booklet"
  *   the editor renders at, so a previewed page is a faithful scaled twin of the canvas.
  * @param defaults document defaults the renderer folds (background); same value the canvas uses.
  * @param onBack invoked by the secondary "Back to editing" action.
- * @param onPrintAndFold invoked by the primary "Print & fold" action (the Export seam — real export lands
- *   in the next S5 step; the host wires a warm placeholder until then).
+ * @param onPrintAndFold invoked by the primary "Print & fold" action — the host navigates to the
+ *   shipped Export · Print & fold screen ([ADR-039]).
  * @param modifier sizing/placement for the whole screen.
  * @param imageBytes import-master byte source for image elements; defaults to the missing-asset placeholder
  *   (the host threads its real source so the booklet matches the canvas).
@@ -126,7 +126,7 @@ public fun PreviewScreen(
         Text(
             text = "Here's your little book.",
             style = MaterialTheme.typography.bodyMedium,
-            color = colors.onSurfaceVariant,
+            color = colors.deskTextSoft,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 8.dp),
         )
@@ -183,7 +183,7 @@ public fun PreviewScreen(
         Text(
             text = "page ${index + 1} of $total",
             style = MaterialTheme.typography.labelMedium,
-            color = colors.onSurfaceVariant,
+            color = colors.deskTextSoft,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
@@ -192,7 +192,7 @@ public fun PreviewScreen(
         )
 
         // Primary action: Print & fold (thumb zone). Enabled — it is the one obvious next step
-        // (DESIGN-LANGUAGE §3); real PDF/image export lands in the next S5 step, the host wires the seam.
+        // (DESIGN-LANGUAGE §3); the host navigates to the shipped Export screen (ADR-039).
         Button(
             onClick = onPrintAndFold,
             modifier = Modifier

@@ -984,3 +984,13 @@ TDD, Given-When-Then. `:app` `HomeViewModelTest` (+1 — 36 green; `:app` suite 
 ### Review (2026-07-04)
 
 Codex (read-only, against the working tree): **GO-WITH-FIXES**. **Required Fix (accepted)** — the [PRD §8](PRD.md#8-core-user-workflow-mvp) workflow diagram still read "Preview imposed sheet + fold/cut guides", contradicting the reworded FR-6 in the same file → the diagram now shows the shipped split (Preview = reader booklet; Export = imposed sheet + guides). **Recommended (accepted)** — the chooser's open flag was plain `remember`, so a rotation mid-question dismissed the dialog → `rememberSaveable` (a lost *answer* was never at risk; only the open question). **Recommended (rejected, consistent-by-decision)** — surface the VM's single-flight create in the UI (a reopened chooser mid-slow-create is a silent no-op): [ADR-046](#adr-046) §5 already decided *"the VM guard is the contract, no UI disable"*, and this change keeps that contract; a busy indicator is UI polish that can ride any later slice. Verified by Codex against the repo: `createProject(…, paperSize)` persists the choice; editor sizing and export both derive from `document.paperSize`; the ExportScreen sheet picture is documented decorative; SheetGuides fold/cut + ~17 pt safe-area inset and the ruler deferral are real; no GC is shipped; FR-3 styling is absent from the editor surface; claimed test counts match the local result XMLs. → **Accepted.**
+
+### Amendment (2026-07-04) — the FR-2 fit/fill clause joins the deferral list
+
+The §Decision 2 list missed one alpha gap: [PRD §7.1](PRD.md#7-scope--mvp)'s photo-placement item
+includes *"basic fit (fit/fill)"*, and the model + render layers have carried `Fit.FIT`/`Fit.FILL`
+since S3 (`computeImageBlit`, [ADR-027](#adr-027)) — but the alpha editor exposes **no fit/fill
+control**: every placed photo stays `Fit.FIT` (the model default; no `Intent` changes it). The
+clause is **deferred post-alpha S7.x** alongside the FR-3 text-styling clause, not silently shipped.
+[PRD §7.3](PRD.md#73-alpha-release-scope--v060-alpha1-adr-047) gains the matching row in the same
+change.

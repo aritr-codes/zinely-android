@@ -94,6 +94,12 @@ dependencies {
     // (params + dispatch + uiState), so this is `api`, not implementation.
     api(project(":core:editor"))
 
+    // The canonical imposition convention (pure Kotlin, zero Android): ExportScreen's decorative
+    // sheet derives its panel order/rotation from SingleSheet8.TOP_ROW_ROTATED instead of keeping a
+    // second hardcoded truth that can drift (it did — the checkpoint caught 5·4·3·6/8·1·2·7).
+    // Internal-only use, so `implementation`.
+    implementation(project(":core:imposition"))
+
     // Coroutines: StateFlow / CoroutineScope / CoroutineDispatcher appear in EditorStore's public API
     // (uiState, constructor), so `api`. Dispatchers.Main itself (coroutines-android) is supplied by the
     // app module that constructs the store — the store only takes an injected dispatcher.

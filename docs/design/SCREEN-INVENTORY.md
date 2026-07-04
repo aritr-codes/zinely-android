@@ -175,14 +175,15 @@ flowchart TD
   non-negotiable ([ADR-012](../DECISIONS.md#adr-012) — the classic prints-wrong-and-won't-fold failure).
 
 ### Completion · fold steps
-- **Status:** ✅ shipped (S5 step 3, [ADR-040](../DECISIONS.md#adr-040)). Payoff hero + four **static**, never-assumed
-  fold diagrams; **Send to a friend** / **Open it** / **Keep editing**. Hosted over the shipped export seam (no
-  parallel path). **Auto post-export landing deferred** (would alter the shipped Export share flow); reached today from
-  Export's "How do I fold it?".
+- **Status:** ✅ shipped (S5 steps 3–4, [ADR-040](../DECISIONS.md#adr-040)/[ADR-041](../DECISIONS.md#adr-041)).
+  Payoff hero + four **static**, never-assumed fold diagrams; **Send to a friend** / **Open it** / **Keep editing**.
+  Hosted over the shipped export seam (no parallel path). Reached **automatically after every export** (the
+  ADR-041 auto post-export landing) and manually from Export's "How do I fold it?".
 - **Purpose:** celebrate, and get the printed sheet folded into a book.
 - **Primary action:** **Send to a friend** (system share, offline — reuses the `ExportViewModel`; `ACTION_SEND`).
-- **Secondary:** **Open it** (`ACTION_VIEW` the exported PDF); step-by-step fold instructions; **Keep editing** (the
-  honest "make another" until the multi-project layer — [ADR-030 §4](../DECISIONS.md#adr-030)).
+- **Secondary:** **Open it** (`ACTION_VIEW` the exported PDF); step-by-step fold instructions; **Keep editing**
+  (pops back to the existing editor; since the S6.5 re-root the Home shelf is the multi-project home —
+  [ADR-046](../DECISIONS.md#adr-046)).
 - **Emotional goal:** the payoff peak + connection; the reason to come back.
 - **Notes:** "Your zine is ready! 🎉"; fold steps illustrated (static Canvas diagrams), never assumed known;
   no animation → reduced-motion-safe by construction. Honest offline copy (Zinely uploads nothing; the file leaves
@@ -205,7 +206,7 @@ flowchart TD
 | Empty-state, Supply tray | `SUX` / `0.5.0` | 🔂 / 🔭 |
 | Preview | S5 / `0.6.0`+ | ✅ |
 | Export · Print & fold | S5 / `0.6.0`+ | ✅ (calibration ruler deferred) |
-| Completion · fold steps | S5 / `0.6.0`+ | ✅ (auto post-export landing deferred) |
+| Completion · fold steps | S5 / `0.6.0`+ | ✅ (incl. auto post-export landing, [ADR-041](../DECISIONS.md#adr-041)) |
 | Welcome | needs only a **first-run flag** (local prefs) — *not* Room-gated | 🔭 |
 | Home / My zines | shelf + actions + thumbnails + **nav re-root as start destination** (S6.1–S6.5, [ADR-046](../DECISIONS.md#adr-046)) | ✅ |
 | Settings | needs only **local prefs** (DataStore) — *not* Room-gated | 🔭 |

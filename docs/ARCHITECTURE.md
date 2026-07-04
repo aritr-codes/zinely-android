@@ -88,7 +88,7 @@ com.aritr.zinely
 └── ui               // theme, design system, shared composables (M3)
 ```
 
-Module split (realised vs planned): **realised** — `:app` (mounts the editor on a fixed `"default"` project), `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability core + content-addressed asset store, [ADR-025](DECISIONS.md#adr-025); GC/sweeper deferred — see [§4](#4-data-models--storage)), `:core:render` (S3 pure tier, [ADR-027](DECISIONS.md#adr-027)), `:render-android` (S3 Android replay/export tier, [ADR-028](DECISIONS.md#adr-028)), `:core:editor` (S4 pure MVI reducer, [ADR-029](DECISIONS.md#adr-029)), `:feature:editor` (S4 interaction surface — MVI store, gesture pipeline, selection chrome, snap guides, a11y contextbar, text-edit session, host `EditorScreen`; also hosts the S5 Preview/Export/Completion screens and the S6.2 read-only `HomeScreen`, [ADR-043](DECISIONS.md#adr-043)), `:data-android` (S2B Android adapters: file-backed `DocumentRepository` over app-private storage + **the S6.1 Room-backed `ProjectRepository` index** (`projects` table + `meta.json` sidecar, files-as-truth, [ADR-042](DECISIONS.md#adr-042)); **WorkManager GC and SAF `.zine` restore not yet implemented**, [ADR-025](DECISIONS.md#adr-025)); **planned** — `:core:domain`, `:core:ui`, and `:feature:home|export|settings` as module *extractions* (their screens currently live in `:feature:editor`/future work; a `:feature:home` split is deferred until S6.5 or a second consumer justifies it, [ADR-043](DECISIONS.md#adr-043)).
+Module split (realised vs planned): **realised** — `:app` (Home-shelf nav root + per-project editor hosts, [ADR-046](DECISIONS.md#adr-046)), `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability core + content-addressed asset store, [ADR-025](DECISIONS.md#adr-025); GC/sweeper deferred — see [§4](#4-data-models--storage)), `:core:render` (S3 pure tier, [ADR-027](DECISIONS.md#adr-027)), `:render-android` (S3 Android replay/export tier, [ADR-028](DECISIONS.md#adr-028)), `:core:editor` (S4 pure MVI reducer, [ADR-029](DECISIONS.md#adr-029)), `:feature:editor` (S4 interaction surface — MVI store, gesture pipeline, selection chrome, snap guides, a11y contextbar, text-edit session, host `EditorScreen`; also hosts the S5 Preview/Export/Completion screens and the S6.2 read-only `HomeScreen`, [ADR-043](DECISIONS.md#adr-043)), `:data-android` (S2B Android adapters: file-backed `DocumentRepository` over app-private storage + **the S6.1 Room-backed `ProjectRepository` index** (`projects` table + `meta.json` sidecar, files-as-truth, [ADR-042](DECISIONS.md#adr-042)); **WorkManager GC and SAF `.zine` restore not yet implemented**, [ADR-025](DECISIONS.md#adr-025)); **planned** — `:core:domain`, `:core:ui`, and `:feature:home|export|settings` as module *extractions* (their screens currently live in `:feature:editor`/future work; a `:feature:home` split is deferred until S6.5 or a second consumer justifies it, [ADR-043](DECISIONS.md#adr-043)).
 
 ## 3. Data flow
 
@@ -199,7 +199,7 @@ flowchart TD
     E --> F["Clip → translate → rotate → scale"]
     F --> G["SceneRenderer draws that logical page"]
     G --> D
-    D -->|all panels done| H["Draw guides:\nsafe area · fold · cut · calibration ruler"]
+    D -->|all panels done| H["Draw guides:\nsafe area · fold · cut\n(calibration ruler deferred — ADR-039)"]
     H --> I["Write output\nSAF / MediaStore (Downloads)"]
     I --> J["Share via FileProvider"]
     H -. raster only .-> K["compress() streamed → recycle()"]
@@ -208,7 +208,7 @@ flowchart TD
     class I,J nonet;
 ```
 
-**Print correctness ([ADR-012](DECISIONS.md#adr-012)):** export at **exact paper size**; keep all geometry inside a ~6 mm/0.25" **safe area**; print a 1 in / 50 mm **calibration ruler**; surface **"print at 100% / Actual size, Fit-to-page OFF"**. No network at any step.
+**Print correctness ([ADR-012](DECISIONS.md#adr-012)):** export at **exact paper size**; keep all geometry inside a ~6 mm/0.25" **safe area**; print a 1 in / 50 mm **calibration ruler** (accepted design, **not yet shipped** — deferred with cause, [ADR-039](DECISIONS.md#adr-039): the edge-to-edge grid leaves no margin; the "Actual size" note carries the guidance); surface **"print at 100% / Actual size, Fit-to-page OFF"**. No network at any step.
 
 **Export sequence (PDF):**
 
@@ -362,8 +362,8 @@ flowchart BT
     render["core:render<br/>S3 ✅ · ADR-027 (pure tier on main)"]
     ra["render-android<br/>S3 ✅ · ADR-028 (Android tier on main)"]
     editor["feature:editor (MVI)<br/>S4 ✅ surface on main · mounted in app · ADR-029"]
-    export["export<br/>S5 🟨 (PDF/PNG + share + Completion shipped; ruler + auto-landing deferred)"]
-    app["app shell / navigation<br/>✅ editor mounted (fixed default project)"]
+    export["export<br/>S5 ✅ (Preview · Export · Completion + auto-landing; ruler deferred)"]
+    app["app shell / navigation<br/>✅ HomeRoute nav root · per-project editor (ADR-046)"]
 
     imp --> model
     data --> model
@@ -398,8 +398,8 @@ flowchart BT
 | S3-core | `core:render` (pure) | `core:model` | ✅ **on main** ([ADR-027](DECISIONS.md#adr-027)) — pure-JVM render core landed (`:core:render`, 23 tests, Codex GO, PR #9 merged `60f7344`) | S2B (no shared dep) |
 | **S3-android** | **`render-android`** (Android library) | `core:render` | ✅ **on main** ([ADR-028](DECISIONS.md#adr-028), G1–G6) — one `CanvasReplayer` + two export providers, `SharedTextLayout`, crop-aware `ImageBlitter`, bundled **Inter** (MVP charset + cmap coverage guard). Roborazzi raster + text parity goldens **headless-CI-gated**; image + PDF write/parity proofs on-device (compile-checked in CI) ([spike](spikes/core-render-android-backend.md)). Gated like `:data-android`. **Closes S3** | S2B (no shared dep) |
 | S4 | `feature:editor` | `core:model`, `core:data`, `render-android` (→ `core:render`) | ✅ **interaction surface on main** ([ADR-029](DECISIONS.md#adr-029), PR #21) — pure `:core:editor` MVI reducer + the gated `:feature:editor` store, gesture pipeline, selection chrome + live document-order preview, opposite-anchor resize handles, live snap guides (preview==commit), a11y contextbar/element semantics (WCAG 2.5.7), race-safe text-edit session, host `EditorScreen`, and selection-chrome Roborazzi goldens (CI-gated). Preview-host `preview == export` parity proven (PR #19). **Now mounted in `:app`** (PR #23, [ADR-030](DECISIONS.md#adr-030)/[ADR-031](DECISIONS.md#adr-031)): `ZinelyNavHost` on a fixed `"default"` project, `pageSizePt` from imposition, interactive image import, autosave binder. Gated like `:render-android` | — (needs S2 **and** S3) |
-| S5 | `export` | `core:model`, `core:imposition`, `core:data`, `render-android` (→ `core:render`) | 🟨 | PDF/PNG + share shipped ([ADR-039](DECISIONS.md#adr-039)); Completion screen + calibration ruler deferred |
-| — | `app` shell / nav | features | ⬜ | — |
+| S5 | `export` | `core:model`, `core:imposition`, `core:data`, `render-android` (→ `core:render`) | ✅ **on main** | Preview → Export (vector PDF + 300 DPI PNG + share, [ADR-039](DECISIONS.md#adr-039)) → Completion with **auto post-export landing** ([ADR-040](DECISIONS.md#adr-040)/[ADR-041](DECISIONS.md#adr-041)); calibration ruler stays deferred with cause (ADR-039) |
+| — | `app` shell / nav | features | ✅ **on main** | single-Activity `ZinelyNavHost`; `HomeRoute` start destination / single back-stack root ([ADR-046](DECISIONS.md#adr-046)); Welcome + Settings surfaces still deferred |
 
 ### 15.3 Risk analysis
 

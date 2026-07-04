@@ -128,7 +128,7 @@ public fun CompletionScreen(
         Text(
             text = "You made a little book. That's the whole thing.",
             style = MaterialTheme.typography.bodyMedium,
-            color = colors.onSurfaceVariant,
+            color = colors.deskTextSoft,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 6.dp),
         )
@@ -202,7 +202,7 @@ public fun CompletionScreen(
         Text(
             text = "opens your phone's own share sheet",
             style = MaterialTheme.typography.labelSmall,
-            color = colors.onSurfaceVariant,
+            color = colors.deskTextSoft,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
         )
@@ -239,7 +239,7 @@ public fun CompletionScreen(
         Text(
             text = "Made on your phone — Zinely uploads nothing. It's yours until you share it.",
             style = MaterialTheme.typography.labelSmall,
-            color = colors.onSurfaceVariant,
+            color = colors.deskTextSoft,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(start = 32.dp, end = 32.dp, bottom = 16.dp),
         )
