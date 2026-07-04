@@ -155,17 +155,18 @@ internal class HomeViewModel @Inject constructor(
     }
 
     /**
-     * "Start a zine": create with the warm defaults, then navigate into the new zine via the same
-     * one-shot open path (ADR-046 §5). Single-flight — a tap while a create is in flight is a no-op
+     * "Start a zine": create on the chosen [paperSize] (S7.1/ADR-047 — the shelf's paper chooser
+     * decides; nothing is hardcoded here), then navigate into the new zine via the same one-shot
+     * open path (ADR-046 §5). Single-flight — a tap while a create is in flight is a no-op
      * (an unguarded double-tap would mint two projects and two navigations); pending deletes commit
      * first (ADR-046 §4). Create failure keeps the warm message and emits no open event.
      */
-    fun startZine() {
+    fun startZine(paperSize: PaperSize) {
         if (createJob?.isActive == true) return
         createJob = viewModelScope.launch {
             commitPendingDeletesNow()
             when (val result =
-                projectRepository.createProject(DEFAULT_NEW_TITLE, ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER)
+                projectRepository.createProject(DEFAULT_NEW_TITLE, ZineFormat.SINGLE_SHEET_8, paperSize)
             ) {
                 is DataResult.Success -> openQueue.send(result.value.id)
                 is DataResult.Failure -> eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))

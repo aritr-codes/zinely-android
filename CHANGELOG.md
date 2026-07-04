@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **S7.1 — choose your paper when you start a zine** ([ADR-047](docs/DECISIONS.md#adr-047)):
+  **Start a zine** (empty-shelf CTA and shelf FAB alike) now asks *"What paper will you print
+  on?"* — **Letter** (8.5 × 11 in) or **A4** (210 × 297 mm) — and creates the zine on the paper
+  you pick; nothing is created until you choose, and "Not now" backs out. Ends the shelf's
+  hardcoded Letter: the imposition, render, export, and project store have carried the paper
+  size end-to-end since S1, so an A4 zine previews, exports, and folds correctly. The
+  v0.6.0-alpha.1 scope (what ships now vs. post-alpha: text styling, layout presets,
+  calibration ruler, asset GC) is recorded in [PRD §7.3](docs/PRD.md#73-alpha-release-scope--v060-alpha1-adr-047).
+
 - **S6.5 — nav re-root: Home is the app** ([ADR-046](docs/DECISIONS.md#adr-046), the final
   S6 slice): `ZinelyNavHost` now starts at a new `HomeRoute` — the single back-stack root —
   hosting the S6.2–6.4 "My zines" shelf. A card tap (or **Start a zine**, which now creates
@@ -90,6 +99,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > These entries belong to the in-progress **0.5.0** (`SUX`) milestone. The completed
 > editor/UI foundation below is **0.4.0** — tag that commit, not the SUX work-in-progress.
+
+### Fixed
+- **S7.0 — photo import works on real devices**
+  ([ADR-031 §Review 2b](docs/DECISIONS.md#adr-031)): every on-device import failed with
+  "That image couldn't be added." — `ImportMasterDecoder.readBounds` null-guarded the result
+  of a bounds-only `BitmapFactory.decodeStream` (null **by contract**) instead of the stream.
+  Fixed at the guard, with the decoder's first headless regression suite
+  (`ImportMasterDecoderTest`, Robolectric NATIVE + fresh-stream-per-open shadow resolver).
 
 ### Removed
 - **The `"default"` seed-on-miss bootstrap** ([ADR-030](docs/DECISIONS.md#adr-030) §4,

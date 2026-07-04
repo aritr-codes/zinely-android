@@ -115,6 +115,21 @@ flowchart TB
 Networking of any kind · accounts/auth · cloud/sync · commercial prepress (CMYK/ICC/PDF-X, bleed, crop marks) · multi-format impositions (16/32-page saddle-stitch) · drawing/stickers layer · custom font import · on-device filters/adjustments beyond crop · templates marketplace · analytics SDKs.
 > These are deferred, not rejected — see [ROADMAP.md](ROADMAP.md). Any change here is a scope change and must update this section + an ADR.
 
+### 7.3 Alpha release scope — v0.6.0-alpha.1 ([ADR-047](DECISIONS.md#adr-047))
+
+The first installable alpha ships the full create → edit → export → print spine, but **not every
+MVP requirement**. Deferred **within MVP** (post-alpha, before `1.0.0`):
+
+| Deferred from the alpha | Status | Note |
+|---|---|---|
+| Text **styling** (FR-3 style clause: font choice, size/color/align) | post-alpha S7.x | add/edit text ships; alpha text is single-style |
+| Per-page layout presets (FR-4, Should) | post-alpha | freeform place/move/resize is the alpha's layout model |
+| Calibration ruler | deferred with cause | [ADR-039](DECISIONS.md#adr-039): edge-to-edge tiling leaves no margin; the "Actual size" note carries the guidance |
+| Asset GC sweeper | deferred | [ADR-031 §2](DECISIONS.md#adr-031): **app storage grows with every import** — replaced/deleted photos are not yet reclaimed |
+
+FR-6 is **satisfied** by the shipped reader/imposition split (see the FR table note below), and
+FR-1's Letter/A4 choice is real at create ([ADR-047](DECISIONS.md#adr-047) paper chooser).
+
 ## 8. Core user workflow (MVP)
 
 ```mermaid
@@ -122,8 +137,8 @@ flowchart LR
     A["Open app"] --> B["New zine\n(choose paper)"]
     B --> C["Edit pages\nplace photos + text"]
     C -->|autosave| C
-    C --> D["Preview imposed sheet\n+ fold/cut guides"]
-    D --> E["Export PDF / image"]
+    C --> D["Preview the booklet\n(reader order)"]
+    D --> E["Export PDF / image\n(imposed sheet + fold/cut guides)"]
     E --> F["Print at 100%"]
     F --> G["Fold + 1 cut"]
     G --> H(["Finished 8-page zine"])
@@ -177,7 +192,7 @@ stateDiagram-v2
 | FR-3 | Add, edit, style text on any page | Must |
 | FR-4 | Apply single/double/full layout per page | Should |
 | FR-5 | Automatically impose 8 pages onto the sheet (correct order + rotation) | Must |
-| FR-6 | Preview the imposed sheet with fold + cut guides + safe area | Must |
+| FR-6 | Preview the zine as the reader's booklet; export the imposed sheet with fold + cut guides + safe-area inset | Must |
 | FR-7 | Export a vector-text PDF at exact paper size | Must |
 | FR-8 | Export a 300 DPI PNG/JPG | Must |
 | FR-9 | Autosave continuously; recover after a crash | Must |
@@ -186,6 +201,13 @@ stateDiagram-v2
 | FR-12 | Share exported file via system share sheet | Must |
 | FR-13 | Show fold/cut instructions + "print at 100%" guidance | Must |
 | FR-14 | Operate fully offline with no account | Must |
+
+> **FR-6 wording (2026-07-04, [ADR-047](DECISIONS.md#adr-047)).** Originally "preview the imposed
+> sheet". The shipped design deliberately splits the two views
+> ([SCREEN-INVENTORY](design/SCREEN-INVENTORY.md#preview)): **Preview** shows the *reader's booklet*
+> (the thing a person can judge), the Export screen shows a friendly *decorative* sheet picture, and
+> the real imposed sheet — fold + cut guides, safe-area inset — **is the exported artifact itself**
+> ([ADR-039](DECISIONS.md#adr-039)). The requirement moved to match the design, not the reverse.
 
 ## 11. Non-functional requirements
 
