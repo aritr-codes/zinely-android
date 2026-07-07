@@ -14,6 +14,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet — next up: post-alpha S7.x (save-a-copy export, text styling)._
+
+## [0.6.0-alpha.1] — 2026-07-07 — First installable alpha
+
+The first build handed to early testers: the full create → edit → export → print spine.
+Bundles the never-separately-released **0.5.0** (`SUX` first-time creation) and **0.6.0**
+(S5 export/share + S6 project layer & Home) milestone work plus the S7 alpha-push slices.
+Gate evidence: the physical print/fold test passed (printed at 100%, folded, 1→8 order/
+rotation/scale correct), and the "text missing in preview" field report was triaged to the
+known [ADR-028](docs/DECISIONS.md#adr-028) Latin-first charset limitation (see below) —
+full triage in [the release assessment](docs/reviews/2026-07-04-alpha-release-assessment.md).
+
+### Known limitations (alpha)
+
+- **Export is share/open-only — no copy is saved to your phone yet.** "Print at home" and
+  "Save as image" hand the finished sheet to the app you pick (share sheet / viewer); Zinely
+  writes only a temporary internal file, nothing appears in your gallery or Downloads unless
+  the app you share to saves it. A real "Save to your phone" is the first post-alpha slice
+  ([ADR-039](docs/DECISIONS.md#adr-039) deferral).
+- **Text is English-first Latin only.** The bundled font covers the
+  [MVP charset](docs/DECISIONS.md#adr-028) (ASCII + Latin-1 letters + common punctuation);
+  other scripts (e.g. Bengali, Hindi, CJK) and emoji may render blank or degraded.
+- **The editor page sits left with a gap on the right** on some screens (page is fit
+  top-left, not centred). Cosmetic only — preview, export, and print are unaffected.
+- **Alpha builds are debug-signed**: a future properly-signed build will require
+  uninstall + reinstall (projects on the device are lost).
+- **App storage grows with every photo import** (replaced/deleted photos are not yet
+  reclaimed — [ADR-031 §2](docs/DECISIONS.md#adr-031)).
+- Print at **100% / Actual size** — printer "fit to page" breaks the fold alignment
+  (the in-app note says the same).
+- Alpha scope vs the MVP (single-style text, no fit/fill control, no layout presets, no
+  calibration ruler): [PRD §7.3](docs/PRD.md#73-alpha-release-scope--v060-alpha1-adr-047).
+
 ### Added
 - **S7.1 — choose your paper when you start a zine** ([ADR-047](docs/DECISIONS.md#adr-047)):
   **Start a zine** (empty-shelf CTA and shelf FAB alike) now asks *"What paper will you print
@@ -97,8 +130,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   blank canvas; contextual guidance instead of hidden gestures). "Add words" places an
   empty text box and opens its editor immediately — straight to typing, no placeholder.
 
-> These entries belong to the in-progress **0.5.0** (`SUX`) milestone. The completed
-> editor/UI foundation below is **0.4.0** — tag that commit, not the SUX work-in-progress.
+> The `SUX`-era entries above were built under the **0.5.0** milestone; the alpha is the
+> first release that ships them.
 
 ### Fixed
 - **S7.0 — photo import works on real devices**
@@ -195,7 +228,8 @@ The riskiest, most isolatable thing first: the math that makes a folded zine cor
   SVG proof sheet); pure Kotlin, golden-tested against the imposition oracle
   ([ADR-007](docs/DECISIONS.md#adr-007)). Tagged `v0.1.0-imposition-engine`.
 
-[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.6.0-alpha.1...HEAD
+[0.6.0-alpha.1]: https://github.com/aritr-codes/zinely-android/compare/v0.4.0...v0.6.0-alpha.1
 [0.4.0]: https://github.com/aritr-codes/zinely-android/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/aritr-codes/zinely-android/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/aritr-codes/zinely-android/compare/v0.1.0...v0.2.0

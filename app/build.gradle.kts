@@ -10,6 +10,17 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// The single version truth: versionName below and the artifact name both read this, so a
+// version bump is one line and the APK renames itself. "0.6.0-alpha.1" = the first installable
+// alpha (Step 4, 2026-07-07): the physical print/fold verification cleared the ADR-047 gate and
+// the preview-text report was triaged to the ADR-028 Latin-first charset limitation.
+val zinelyVersionName = "0.6.0-alpha.1"
+
+// Artifact naming: every APK/bundle is "zinely-<versionName>-<variant>.apk" (e.g.
+// zinely-1.0-release.apk) so testers always see the app name + version in the file, never
+// an anonymous "app-release.apk".
+base.archivesName.set("zinely-$zinelyVersionName")
+
 android {
     namespace = "com.aritr.zinely"
     compileSdk {
@@ -23,13 +34,17 @@ android {
         minSdk = 24
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
+            // Alpha side-load signing only: the machine-local debug keystore keeps the release
+            // build installable for testers (and signature-stable across rebuilds from this
+            // machine). A real release keystore must replace this before any store distribution.
+            signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
