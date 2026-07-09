@@ -2,4 +2,11 @@
 <!-- :feature:editor is a library module; its package/namespace is declared in build.gradle.kts.
      No components are registered here (S4 preview-host step: a stateless @Composable bridge, no
      Activity/Service; MVI store + navigation land in the following S4 steps). -->
-<manifest />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- The four-verb haptic vocabulary of the DESIGN-FROZEN spec (ZinelyHaptics). VIBRATE is a
+         normal permission: no runtime prompt, no user data, no network. It reads nothing and sends
+         nothing, so the privacy invariant (PRD §5: no network, no analytics, no upload) is intact.
+         Without it Vibrator.vibrate() silently no-ops. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+</manifest>
