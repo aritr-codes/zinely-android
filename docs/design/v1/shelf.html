@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Zinely — The Shelf (V1 · Creative Workbench)</title>
+<!--
+  ============================================================================
+  ZINELY — THE SHELF  ·  V1 redesign, Surface 1 of 3 (Shelf / Bench / Proof)
+  STATUS: DESIGN-FROZEN (2026-07-08). Adversarial review GO + Design Director GO.
+          Post-freeze: only bug/parity/a11y/perf/theme fixes. Any visual or interaction
+          change must update THIS spec first, then Compose — never the reverse.
+          One non-automatable step remains before Compose parity: a real on-device
+          keyboard/TalkBack pass. Director's 3 recommended-polish items are next-pass, not gates.
+  ----------------------------------------------------------------------------
+  CANONICAL DESIGN SOURCE for the Shelf surface. Prototype, not production Compose.
+  Implements the accepted "Creative Workbench" direction (zinely-v1-design-exploration.md)
+  on the accepted Design Foundation (zinely-design-foundation.md). This does NOT inherit
+  the earlier docs/design/mockups set (that was the superseded "cute/handwritten" identity).
+
+  Identity carried as tokens below: fixed riso palette (DESIGN-LANGUAGE §2), two type voices
+  (Inter grotesque shell / Fraunces display-serif voice), Flat 2.0 depth, one coral accent =
+  the single live action, calm springs everywhere + reduced-motion path, four-verb haptic
+  vocabulary simulated via navigator.vibrate.
+
+  The floating "Prototype" dock (bottom-left) is REVIEW SCAFFOLDING, not product chrome:
+  it flips the states a real device would move through — Empty / Few / Many / Loading / Error,
+  Light|Dark, Reduced-motion, Phone|Tablet — so one file shows the complete experience.
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+<style>
+/* ============================ TOKENS ============================ */
+:root{
+  /* riso palette — DESIGN-LANGUAGE §2 (fixed brand, dynamic color OFF) */
+  --paper:#F4EFE6; --paper-2:#EFE8DA; --paper-edge:#E1D8C7;
+  --ink:#23201C; --ink-soft:#6B6358; --ink-faint:#9C9385;
+  --coral:#E76F51;            /* the accent — decorative / large / fills only, never small text */
+  --coral-strong:#C64E34;     /* coral FILL under white text — AA 4.6:1 (the primary button only) */
+  --coral-text:#A63C22;       /* coral as TEXT on light shell surfaces (paper/field/menu) — AA ≥5:1 */
+  --teal:#2A9D8F; --yellow:#E9C46A; --stamp:#264653;
+
+  /* the desk — the surface the shelf sits on */
+  --desk:#E7DECE;             /* light: a warm paper-neutral bench (a touch deeper than paper so sheets lift) */
+  --desk-edge:#DBD1BF;
+  --shelf-line:rgba(35,32,28,.10);
+  --shadow-1:0 1px 2px rgba(35,32,28,.10);
+  --shadow-2:0 10px 22px rgba(35,32,28,.16), 0 2px 5px rgba(35,32,28,.10);
+  --shadow-lift:0 18px 34px rgba(35,32,28,.22), 0 3px 8px rgba(35,32,28,.14);
+  --on-desk:var(--ink); --on-desk-soft:#5E574C; --on-desk-faint:#726A5C; /* soft ≥5:1, faint tertiary/decorative only */
+  --scrim:rgba(35,32,28,.42);
+  --field:#FBF8F1; --field-edge:#DED4C2;
+  --menu:#FBF8F1;
+
+  /* type */
+  --shell:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --voice:"Fraunces", Georgia, "Times New Roman", serif;
+
+  /* motion — DESIGN-LANGUAGE §10; calm shell, one signature (the fold, not here) */
+  --ease:cubic-bezier(.2,.7,.3,1);
+  --fast:130ms; --base:230ms;
+}
+:root[data-theme="dark"]{
+  --paper:#EDE6D9; --paper-2:#E4DBCB; --paper-edge:#C7BCA6; /* lit sheets stay warm */
+  --desk:#201F1E;             /* dark: a lit paper on a dark desk */
+  --desk-edge:#161514;
+  --shelf-line:rgba(255,255,255,.06);
+  --shadow-1:0 1px 2px rgba(0,0,0,.5);
+  --shadow-2:0 12px 26px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+  --shadow-lift:0 20px 40px rgba(0,0,0,.62), 0 4px 10px rgba(0,0,0,.5);
+  --on-desk:#EFE9DD; --on-desk-soft:#C3BBAC; --on-desk-faint:#8C8577;
+  --scrim:rgba(0,0,0,.58);
+  --field:#2B2A28; --field-edge:#413E39;
+  --menu:#2B2A28;
+  --coral-text:#E76F51;       /* coral as TEXT on dark shell surfaces — AA 5.4:1 on the dark menu */
+  --shelf-line:rgba(255,255,255,.06);
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0; background:var(--desk); color:var(--on-desk); font-family:var(--shell);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  transition:background var(--base) var(--ease), color var(--base) var(--ease);
+}
+:focus-visible{ outline:3px solid var(--coral-strong); outline-offset:2px; border-radius:6px; }
+
+/* ============================ APP FRAME ============================ */
+/* .device simulates a viewport; real content is fully responsive inside it. */
+.device{
+  position:relative; margin:0 auto; min-height:100vh; min-height:100dvh;
+  max-width:var(--w, 100%); background:var(--desk);
+  display:flex; flex-direction:column;
+  box-shadow:0 0 0 1px var(--desk-edge);
+  transition:max-width var(--base) var(--ease);
+}
+@media (min-width:900px){ .device[style*="480"]{ box-shadow:0 0 60px rgba(0,0,0,.28), 0 0 0 1px var(--desk-edge); } }
+
+/* ---- top app bar ---- */
+.appbar{
+  position:sticky; top:0; z-index:20; padding:18px 20px 12px;
+  background:linear-gradient(var(--desk) 78%, transparent);
+  display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
+}
+.wordmark{ font-family:var(--voice); font-weight:600; font-size:26px; letter-spacing:-.01em; line-height:1; color:var(--on-desk); }
+.wordmark .dot{ color:var(--coral); }
+.privacy{
+  display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--on-desk-soft);
+  padding:6px 11px; border-radius:999px; border:1px solid var(--shelf-line); background:transparent;
+}
+.privacy svg{ width:14px; height:14px; }
+.privacy .pulse{ width:6px; height:6px; border-radius:50%; background:var(--teal); }
+
+/* ---- search + sort (appear only when many) ---- */
+.tools{ display:flex; gap:10px; padding:0 20px 6px; align-items:center; }
+.tools.hidden{ display:none; }
+.search{ flex:1; display:flex; align-items:center; gap:9px; background:var(--field); border:1px solid var(--field-edge);
+  border-radius:14px; padding:0 12px; min-height:48px; transition:border-color var(--fast) var(--ease); }
+.search:focus-within{ border-color:var(--coral-strong); }
+.search svg{ width:17px; height:17px; color:var(--on-desk-faint); flex:0 0 auto; }
+.search input{ border:none; background:none; outline:none; font-family:var(--shell); font-size:15px; color:var(--on-desk); width:100%; padding:0; }
+.search input::placeholder{ color:var(--on-desk-faint); }
+.sortbtn{ display:inline-flex; align-items:center; gap:6px; min-height:48px; padding:0 14px; border-radius:14px;
+  border:1px solid var(--field-edge); background:var(--field); color:var(--on-desk-soft); font-family:var(--shell);
+  font-size:13.5px; font-weight:500; cursor:pointer; white-space:nowrap; }
+.sortbtn svg{ width:15px; height:15px; }
+
+/* ---- shelf header ---- */
+.shelf-head{ padding:14px 20px 4px; display:flex; align-items:baseline; gap:10px; }
+.shelf-head h2{ font-family:var(--voice); font-weight:600; font-size:20px; margin:0; color:var(--on-desk); }
+.shelf-head .count{ font-size:13px; color:var(--on-desk-soft); font-variant-numeric:tabular-nums; }
+
+/* ============================ THE SHELF (grid of zines as objects) ============================ */
+.scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:112px; display:flex; flex-direction:column; }
+.shelf{
+  display:grid; gap:26px 18px; padding:16px 20px 8px;
+  grid-template-columns:repeat(2, 1fr);
+}
+@media (min-width:560px){ .shelf{ grid-template-columns:repeat(3, 1fr); } }
+@media (min-width:820px){ .shelf{ grid-template-columns:repeat(4, 1fr); gap:34px 24px; padding:22px 28px 8px; } }
+@media (min-width:1180px){ .shelf{ grid-template-columns:repeat(5, 1fr); } }
+
+/* a zine = a small physical object standing on a ledge, not a thumbnail card */
+.zine{ position:relative; padding-bottom:16px; }
+.zine::after{ /* the ledge the object rests on — Flat 2.0 depth, honest (a line + a cast shadow), no fake wood */
+  content:""; position:absolute; left:-6%; right:-6%; bottom:9px; height:1px; background:var(--shelf-line);
+}
+.cover{
+  position:relative; display:block; width:100%; aspect-ratio:3/4; border:none; cursor:pointer; text-align:left;
+  background:var(--paper); color:var(--ink); border-radius:3px 5px 5px 3px; padding:15px 14px;
+  font-family:var(--shell); overflow:hidden;
+  box-shadow:var(--shadow-2), 0 2px 0 var(--paper-edge);
+  transform:rotate(var(--tilt,0deg)); transform-origin:bottom center;
+  transition:transform var(--base) var(--ease), box-shadow var(--base) var(--ease);
+  background-image:
+    linear-gradient(90deg, rgba(0,0,0,.05) 0 2px, transparent 2px 6px), /* spine tooth */
+    radial-gradient(120% 90% at 0% 0%, rgba(0,0,0,.035), transparent 46%);
+}
+.cover::before{ /* spine shadow — the object has a bound edge, so it has weight */
+  content:""; position:absolute; left:0; top:0; bottom:0; width:7px;
+  background:linear-gradient(90deg, rgba(0,0,0,.14), rgba(0,0,0,0)); }
+.zine:nth-child(3n+1) .cover{ --tilt:-1.1deg; }
+.zine:nth-child(3n+2) .cover{ --tilt:.8deg; }
+.zine:nth-child(3n+3) .cover{ --tilt:-.4deg; }
+.cover:hover,.cover:focus-visible{ transform:rotate(0deg) translateY(-4px); box-shadow:var(--shadow-lift), 0 2px 0 var(--paper-edge); }
+.cover:active{ transform:rotate(0deg) translateY(-1px) scale(.995); }
+
+/* arrival: the shelf is set by hand — objects settle onto their ledges in a calm stagger (no bounce).
+   Applied only when zines populate/appear; reduced-motion zeroes it via the rules at the foot of this sheet. */
+@keyframes settle{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+.shelf.arrive .zine{ animation:settle .38s var(--ease) both; animation-delay:calc(var(--i,0) * 36ms); }
+
+.cover .kicker{ position:relative; z-index:2; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-soft); font-weight:600; }
+.cover .title{ position:relative; z-index:2; font-family:var(--voice); font-weight:600; font-size:clamp(17px,4.6vw,22px); line-height:1.06; margin:6px 0 0;
+  color:var(--ink); letter-spacing:-.015em; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+
+/* ---- THE LOUD PART: a riso ink band bleeding across the cover. "The zine is loud; the bench is quiet."
+   The ink owns the middle; title (above) and edition (below) stay dark-ink-on-paper and legible.
+   Per-zine ink + archetype + paper stock make the shelf read as a COLLECTION, not a beige grid. */
+.cover.p2{ background:var(--paper-2); }
+.cover .art{ position:absolute; left:0; right:0; top:32%; height:47%; overflow:hidden; z-index:1; mix-blend-mode:multiply; }
+.cover.wip .art{ opacity:.5; }                                  /* unfinished reads lighter — ink not yet committed */
+.cover .art::before{ content:""; position:absolute; inset:-24% -12%; background:var(--ink1,var(--coral)); opacity:.92; }
+.cover .art::after{  content:""; position:absolute; inset:-24% -12%; background:var(--ink2,transparent); opacity:.5;
+  transform:translate(3px,4px); }                                /* second-ink overprint, deliberately misregistered (riso) */
+.cover.a-sun  .art::before,.cover.a-sun  .art::after{ border-radius:50%; inset:-46% 15%; }
+.cover.a-bars .art::before{ background:repeating-linear-gradient(180deg,var(--ink1,var(--coral)) 0 9px,transparent 9px 19px); }
+.cover.a-bars .art::after{  background:repeating-linear-gradient(180deg,var(--ink2,transparent) 0 9px,transparent 9px 19px); }
+.cover.a-tone .art::before{ background:radial-gradient(var(--ink1,var(--coral)) 30%,transparent 32%); background-size:9px 9px; }
+.cover.a-tone .art::after{  display:none; }
+.cover.a-split .art::before{ clip-path:polygon(0 0,100% 0,100% 100%,42% 100%); }
+.cover.a-split .art::after{  clip-path:polygon(0 0,42% 0,0 100%,0 100%); background:var(--ink2,var(--teal)); opacity:.85; transform:none; }
+
+/* the fold — the one signature gesture, whispered on every object as a faint scored crease */
+.cover .fold{ position:absolute; left:50%; top:9%; bottom:9%; width:1px; z-index:2; transform:translateX(-.5px);
+  background:repeating-linear-gradient(var(--ink-faint) 0 3px,transparent 3px 8px); opacity:.26; }
+
+.cover .edition{ position:absolute; z-index:2; left:14px; right:14px; bottom:12px; display:flex; align-items:center; justify-content:space-between;
+  font-size:10.5px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+.cover .edition .no{ font-weight:600; letter-spacing:.02em; }
+/* in-progress objects read unfinished: a soft pencil tick instead of an edition stamp */
+.cover.wip .edition .no{ color:var(--ink-soft); } /* the coral wipdot carries the status; text stays ink (AA on paper) */
+.cover .wipdot{ width:6px; height:6px; border-radius:50%; background:var(--coral); box-shadow:0 0 0 3px rgba(231,111,81,.16); }
+
+/* the ⋯ affordance — always focusable (a11y), visible on hover/focus, ≥44px target */
+.more{ position:absolute; top:6px; right:6px; width:34px; height:34px; border-radius:9px; border:none; cursor:pointer;
+  background:rgba(244,239,230,.86); color:var(--ink-soft); display:grid; place-items:center;
+  opacity:0; transform:translateY(-2px); transition:opacity var(--fast) var(--ease), transform var(--fast) var(--ease);
+  box-shadow:var(--shadow-1); }
+.more::after{ content:""; position:absolute; inset:-8px; } /* expands the hit target to ~50px without moving the glyph */
+.zine:hover .more,.cover:focus-visible + .more,.more:focus-visible{ opacity:1; transform:none; }
+@media (hover:none){ .more{ opacity:1; } } /* touch: no hover, so always show */
+.more svg{ width:18px; height:18px; }
+
+/* ============================ EMPTY STATE (teach by making) ============================ */
+.empty{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  padding:40px 30px 120px; gap:2px; }
+.empty .sheet-hint{ position:relative; width:132px; aspect-ratio:3/4; margin-bottom:26px;
+  background:var(--paper); border-radius:3px 5px 5px 3px; box-shadow:var(--shadow-2), 0 2px 0 var(--paper-edge);
+  transform:rotate(-1.4deg); }
+.empty .sheet-hint::before{ content:""; position:absolute; left:50%; top:12%; bottom:12%; width:1px; z-index:2;
+  background:repeating-linear-gradient(var(--ink-faint) 0 4px, transparent 4px 9px); opacity:.55;
+  transform:scaleY(0); transform-origin:top; animation:score 820ms var(--ease) 340ms both; } /* the fold scores itself on */
+@keyframes score{ to{ transform:scaleY(1); } }
+/* the eight panels one folded sheet becomes — ghost in after the fold, a promise of what you'll make */
+.empty .sheet-hint .panels{ position:absolute; inset:0; opacity:0; animation:ghost 700ms var(--ease) 1000ms both;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 calc(25% - .5px), var(--ink-faint) calc(25% - .5px) 25%),
+    linear-gradient(90deg, transparent calc(50% - .5px), var(--ink-faint) 0 calc(50% + .5px), transparent 0); }
+@keyframes ghost{ to{ opacity:.24; } }
+.empty .sheet-hint .starter{ position:absolute; left:18px; top:20px; width:30px; height:30px; border-radius:8px; z-index:1;
+  background:var(--coral); opacity:.16; mix-blend-mode:multiply; }
+.empty h2{ font-family:var(--voice); font-weight:600; font-size:clamp(23px,6vw,30px); margin:0; color:var(--on-desk); letter-spacing:-.02em; }
+.empty p{ margin:8px 0 0; font-size:15.5px; line-height:1.5; color:var(--on-desk-soft); max-width:30ch; }
+.empty .privacy-line{ margin-top:22px; }
+
+/* ============================ LOADING (calm skeleton) ============================ */
+.skeleton .cover{ background:var(--paper-2); box-shadow:var(--shadow-2); pointer-events:none; }
+.skeleton .cover *{ visibility:hidden; }
+.skeleton .cover{ position:relative; overflow:hidden; }
+.skeleton .cover::after{ content:""; position:absolute; inset:0; visibility:visible;
+  background:linear-gradient(100deg, transparent 20%, rgba(255,255,255,.35) 50%, transparent 80%);
+  transform:translateX(-100%); animation:sweep 1.5s var(--ease) infinite; }
+@keyframes sweep{ to{ transform:translateX(100%); } }
+
+/* ============================ ERROR (visible, recoverable) ============================ */
+.errorstate{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  padding:40px 30px 120px; gap:4px; }
+.errorstate .badge{ width:56px; height:56px; border-radius:16px; display:grid; place-items:center; margin-bottom:14px;
+  background:rgba(198,78,52,.14); color:var(--coral-text); }
+.errorstate h2{ font-family:var(--voice); font-weight:600; font-size:22px; margin:0; color:var(--on-desk); }
+.errorstate p{ margin:6px 0 18px; font-size:14.5px; color:var(--on-desk-soft); max-width:32ch; line-height:1.5; }
+
+/* ============================ PRIMARY ACTION — thumb zone ============================ */
+.dock{ position:sticky; bottom:0; z-index:20; padding:14px 20px calc(16px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent, var(--desk) 42%); display:flex; justify-content:center; pointer-events:none; }
+.start{ pointer-events:auto; display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  min-height:56px; padding:0 30px; border:none; border-radius:18px; cursor:pointer;
+  background:var(--coral-strong); color:#fff; font-family:var(--shell); font-size:17px; font-weight:600; letter-spacing:.01em;
+  box-shadow:0 8px 20px rgba(198,78,52,.34), 0 2px 0 rgba(0,0,0,.12);
+  transition:transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }
+.start svg{ width:20px; height:20px; }
+.start:hover{ transform:translateY(-2px); box-shadow:0 12px 26px rgba(198,78,52,.4), 0 2px 0 rgba(0,0,0,.12); }
+.start:active{ transform:translateY(1px) scale(.99); }
+@media (min-width:820px){ .dock{ justify-content:flex-end; padding-right:28px; } }
+
+/* ============================ SHEETS / MENUS / SNACKBAR ============================ */
+.scrim{ position:fixed; inset:0; background:var(--scrim); opacity:0; pointer-events:none; z-index:40;
+  transition:opacity var(--base) var(--ease); }
+.scrim.on{ opacity:1; pointer-events:auto; }
+
+.sheet{ position:fixed; left:0; right:0; bottom:0; z-index:50; background:var(--menu); color:var(--on-desk);
+  border-radius:22px 22px 0 0; padding:8px 20px calc(24px + env(safe-area-inset-bottom));
+  box-shadow:0 -18px 44px rgba(0,0,0,.28); transform:translateY(102%);
+  transition:transform var(--base) var(--ease); max-width:520px; margin:0 auto; }
+.sheet.on{ transform:none; }
+.sheet .grip{ width:38px; height:4px; border-radius:2px; background:var(--field-edge); margin:8px auto 14px; }
+.sheet h3{ font-family:var(--voice); font-weight:600; font-size:19px; margin:2px 2px 4px; }
+.sheet .sub{ font-size:13px; color:var(--on-desk-soft); margin:0 2px 16px; }
+
+/* paper chooser (create flow entry) */
+.papers{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:6px; }
+.paper{ cursor:pointer; border:1px solid var(--field-edge); background:var(--field); border-radius:14px; padding:16px 14px;
+  display:flex; flex-direction:column; align-items:center; gap:12px; font-family:var(--shell); color:var(--on-desk);
+  transition:border-color var(--fast) var(--ease), transform var(--fast) var(--ease); }
+.paper:hover{ border-color:var(--coral-strong); transform:translateY(-2px); }
+.paper .stock{ background:var(--paper); box-shadow:var(--shadow-1),0 1px 0 var(--paper-edge); border-radius:2px; }
+.paper.a4 .stock{ width:52px; height:74px; }        /* real-ish proportions: A4 ≈ 1:1.41 */
+.paper.letter .stock{ width:56px; height:72px; }    /* Letter ≈ 1:1.29 */
+.paper .name{ font-weight:600; font-size:15px; }
+.paper .dim{ font-size:11.5px; color:var(--on-desk-soft); }
+
+/* action sheet (per-zine) + sort menu */
+.menu-list{ display:flex; flex-direction:column; }
+.menu-list button{ display:flex; align-items:center; gap:14px; width:100%; min-height:52px; padding:0 6px; border:none;
+  background:none; color:var(--on-desk); font-family:var(--shell); font-size:15.5px; cursor:pointer; text-align:left;
+  border-radius:10px; }
+.menu-list button:hover{ background:rgba(35,32,28,.05); }
+:root[data-theme="dark"] .menu-list button:hover{ background:rgba(255,255,255,.06); }
+.menu-list button svg{ width:19px; height:19px; color:var(--on-desk-soft); flex:0 0 auto; }
+.menu-list button.danger{ color:var(--coral-text); }
+.menu-list button.danger svg{ color:var(--coral-text); }
+.menu-list button[aria-checked="true"]{ color:var(--on-desk); font-weight:600; } /* selection carried by the check glyph + weight, not coral */
+.menu-list .check{ margin-left:auto; opacity:0; }
+.menu-list button[aria-checked="true"] .check{ opacity:1; }
+.sheet .named{ font-weight:600; }
+
+/* snackbar — undo over confirm (Foundation: destructive = undo, not a dialog) */
+.snackbar{ position:fixed; left:50%; bottom:96px; z-index:60; transform:translate(-50%, 20px);
+  background:var(--stamp); color:#F4EFE6; border-radius:14px; padding:4px 6px 4px 16px; display:flex; align-items:center; gap:8px;
+  box-shadow:0 12px 30px rgba(0,0,0,.4); font-size:14px; opacity:0; pointer-events:none; max-width:calc(100% - 32px);
+  transition:opacity var(--fast) var(--ease), transform var(--fast) var(--ease); }
+.snackbar.on{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+.snackbar button{ background:none; border:none; color:var(--yellow); font-family:var(--shell); font-weight:700; font-size:14px;
+  cursor:pointer; min-height:48px; padding:0 16px; border-radius:10px; letter-spacing:.02em; } /* ≥48px recovery target */
+.snackbar button:hover{ background:rgba(255,255,255,.08); }
+
+/* toast — quiet "opens the Bench" acknowledgement */
+.toast{ position:fixed; left:50%; bottom:96px; z-index:60; transform:translate(-50%,20px);
+  background:var(--on-desk); color:var(--desk); border-radius:12px; padding:11px 16px; font-size:13.5px; font-weight:500;
+  box-shadow:0 12px 30px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity var(--fast) var(--ease), transform var(--fast) var(--ease); }
+.toast.on{ opacity:1; transform:translate(-50%,0); }
+
+/* rename inline field inside action sheet */
+.rename{ display:none; gap:10px; margin:6px 2px 2px; }
+.rename.on{ display:flex; }
+.rename input{ flex:1; min-height:48px; border:1px solid var(--field-edge); background:var(--field); color:var(--on-desk);
+  border-radius:12px; padding:0 14px; font-family:var(--voice); font-size:17px; font-weight:600; outline:none; }
+.rename input:focus{ border-color:var(--coral-strong); }
+.rename .save{ min-height:48px; padding:0 18px; border:none; border-radius:12px; background:var(--coral-strong); color:#fff;
+  font-family:var(--shell); font-weight:600; font-size:15px; cursor:pointer; }
+
+/* ============================ PROTOTYPE DOCK (review scaffolding, not product) ============================ */
+.proto{ position:fixed; left:12px; bottom:12px; z-index:80; font-family:var(--shell); }
+.proto details{ background:rgba(20,19,18,.92); color:#EDE7DB; border-radius:14px; box-shadow:0 12px 30px rgba(0,0,0,.5);
+  backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.08); }
+.proto summary{ list-style:none; cursor:pointer; padding:9px 13px; font-size:12px; font-weight:600; letter-spacing:.02em;
+  display:flex; align-items:center; gap:8px; }
+.proto summary::-webkit-details-marker{ display:none; }
+.proto summary .k{ width:7px; height:7px; border-radius:50%; background:var(--coral); }
+.proto .body{ padding:4px 13px 13px; display:grid; gap:10px; min-width:210px; }
+.proto .row{ display:flex; flex-direction:column; gap:5px; }
+.proto .lab{ font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:#9a9284; }
+.proto .seg{ display:flex; gap:4px; flex-wrap:wrap; }
+.proto .seg button{ flex:1; min-width:46px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04);
+  color:#cfc8ba; font-family:var(--shell); font-size:11.5px; padding:7px 6px; border-radius:9px; cursor:pointer; }
+.proto .seg button[aria-pressed="true"]{ background:var(--coral); color:#1a120e; border-color:var(--coral); font-weight:700; }
+.proto .note{ font-size:10.5px; color:#8b8375; line-height:1.4; }
+
+.hide{ display:none !important; }
+
+/* ============================ REDUCED MOTION ============================ */
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+}
+:root[data-motion="reduce"] *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+:root[data-motion="reduce"] .skeleton .cover::after{ animation:none; opacity:.4; transform:none; }
+</style>
+</head>
+<body>
+<div class="device" id="device">
+
+  <!-- TOP APP BAR -->
+  <header class="appbar">
+    <div class="wordmark">Zinely<span class="dot">.</span></div>
+    <div class="privacy" title="Everything stays on this device. No account, no cloud, no network.">
+      <span class="pulse" aria-hidden="true"></span>
+      <span>On this device</span>
+    </div>
+  </header>
+
+  <!-- SEARCH + SORT (only present when the shelf is large) -->
+  <div class="tools hidden" id="tools">
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="search" type="search" placeholder="Search your zines" aria-label="Search your zines" autocomplete="off" />
+    </label>
+    <button class="sortbtn" id="sortbtn" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M7 12h10M10 17h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="sortlabel">Recent</span>
+    </button>
+  </div>
+
+  <!-- SHELF HEADER -->
+  <div class="shelf-head" id="shelfHead">
+    <h2>Your zines</h2>
+    <span class="count" id="count"></span>
+  </div>
+
+  <!-- MAIN — the shelf / empty / loading / error swap in here -->
+  <div class="scroll" id="scroll">
+    <div class="shelf" id="shelf" role="list" aria-label="Your zines"></div>
+
+    <!-- EMPTY -->
+    <section class="empty hide" id="empty">
+      <div class="sheet-hint" aria-hidden="true"><span class="panels"></span><span class="starter"></span></div>
+      <h2>Make your first little zine.</h2>
+      <p>One sheet of paper, printed at home and folded by hand into a small book. Start one and the bench will teach you the rest.</p>
+      <div class="privacy privacy-line">
+        <span class="pulse" aria-hidden="true"></span>
+        <span>Kept on this device — no account, nothing uploaded</span>
+      </div>
+    </section>
+
+    <!-- ERROR -->
+    <section class="errorstate hide" id="error">
+      <div class="badge" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><path d="M12 8v5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1.2" fill="currentColor"/><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Couldn't open your shelf</h2>
+      <p>Your zines are safe on this device — we just couldn't read them this time.</p>
+      <button class="start" id="retry" style="background:var(--stamp); box-shadow:var(--shadow-2);">Try again</button>
+    </section>
+  </div>
+
+  <!-- PRIMARY ACTION -->
+  <div class="dock" id="dock">
+    <button class="start" id="start" aria-label="Start a zine">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <span>Start a zine</span>
+    </button>
+  </div>
+</div>
+
+<!-- SCRIM + SHEETS -->
+<div class="scrim" id="scrim"></div>
+
+<!-- create-flow entry: paper chooser -->
+<div class="sheet" id="createSheet" role="dialog" aria-modal="true" aria-label="Start a zine" inert>
+  <div class="grip"></div>
+  <h3>Start a zine</h3>
+  <p class="sub">Choose your paper. You can print it at home on either.</p>
+  <div class="papers">
+    <button class="paper a4" data-paper="A4"><span class="stock"></span><span class="name">A4</span><span class="dim">210 × 297 mm</span></button>
+    <button class="paper letter" data-paper="Letter"><span class="stock"></span><span class="name">Letter</span><span class="dim">8.5 × 11 in</span></button>
+  </div>
+  <p class="sub" style="margin-top:14px; text-align:center;">Eight pages from one folded sheet.</p>
+</div>
+
+<!-- per-zine action sheet -->
+<div class="sheet" id="actionSheet" role="dialog" aria-modal="true" aria-label="Zine actions" inert>
+  <div class="grip"></div>
+  <h3 id="actionTitle" class="named">—</h3>
+  <p class="sub" id="actionSub">—</p>
+  <div class="rename" id="rename">
+    <input id="renameInput" type="text" aria-label="Rename zine" />
+    <button class="save" id="renameSave">Save</button>
+  </div>
+  <div class="menu-list" id="actionMenu" role="menu">
+    <button role="menuitem" data-act="open"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4z" stroke="currentColor" stroke-width="2"/><path d="M4 9h16" stroke="currentColor" stroke-width="2"/></svg>Open on the bench</button>
+    <button role="menuitem" data-act="rename"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 5l5 5L9 20H4v-5L14 5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Rename</button>
+    <button role="menuitem" data-act="duplicate"><svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="2"/></svg>Duplicate</button>
+    <button role="menuitem" data-act="share"><svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/><path d="M8.6 10.6l6.8-4M8.6 13.4l6.8 4" stroke="currentColor" stroke-width="2"/></svg>Share…</button>
+    <button role="menuitem" data-act="delete" class="danger"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V4h4v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Delete</button>
+  </div>
+</div>
+
+<!-- sort menu -->
+<div class="sheet" id="sortSheet" role="dialog" aria-modal="true" aria-label="Sort zines" inert>
+  <div class="grip"></div>
+  <h3>Sort</h3>
+  <div class="menu-list" id="sortMenu" role="menu">
+    <button role="menuitemradio" data-sort="recent" aria-checked="true">Recently opened <svg class="check" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button role="menuitemradio" data-sort="name" aria-checked="false">Name (A–Z) <svg class="check" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button role="menuitemradio" data-sort="oldest" aria-checked="false">Oldest first <svg class="check" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+</div>
+
+<!-- SNACKBAR + TOAST -->
+<div class="snackbar" id="snackbar" role="status"><span id="snackText">Deleted</span><button id="undo">Undo</button></div>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- PROTOTYPE DOCK -->
+<div class="proto">
+  <details open>
+    <summary><span class="k"></span> Prototype</summary>
+    <div class="body">
+      <div class="row"><span class="lab">Shelf state</span>
+        <div class="seg" id="segState">
+          <button data-state="few" aria-pressed="true">Few</button>
+          <button data-state="many" aria-pressed="false">Many</button>
+          <button data-state="empty" aria-pressed="false">Empty</button>
+          <button data-state="loading" aria-pressed="false">Loading</button>
+          <button data-state="error" aria-pressed="false">Error</button>
+        </div>
+      </div>
+      <div class="row"><span class="lab">Theme</span>
+        <div class="seg" id="segTheme">
+          <button data-theme="light" aria-pressed="false">Light</button>
+          <button data-theme="dark" aria-pressed="false">Dark</button>
+          <button data-theme="system" aria-pressed="true">System</button>
+        </div>
+      </div>
+      <div class="row"><span class="lab">Width</span>
+        <div class="seg" id="segWidth">
+          <button data-w="phone" aria-pressed="true">Phone</button>
+          <button data-w="tablet" aria-pressed="false">Tablet</button>
+          <button data-w="full" aria-pressed="false">Full</button>
+        </div>
+      </div>
+      <div class="row"><span class="lab">Motion</span>
+        <div class="seg" id="segMotion">
+          <button data-motion="full" aria-pressed="true">Full</button>
+          <button data-motion="reduce" aria-pressed="false">Reduced</button>
+        </div>
+      </div>
+      <p class="note">Rotate the device or drag the window — the shelf is really responsive; “Width” only frames it.</p>
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const root = document.documentElement;
+
+  /* ---------- data ---------- */
+  // riso cover recipes — a dominant ink field + optional misregistered second ink + one of four
+  // print archetypes. Assigned by a stable hash of the title so each zine keeps its own look under
+  // any sort: the shelf reads as a drawer of different objects, not one template repeated.
+  const FIELD  = ["var(--coral)","var(--teal)","var(--stamp)","var(--yellow)"];
+  const ACCENT = ["var(--yellow)","var(--coral)","var(--teal)","var(--stamp)"];
+  const ARCH   = ["a-sun","a-bars","a-tone","a-split"];
+  const hash = s => { let h=0; for(const c of s) h=(h+c.charCodeAt(0))|0; return Math.abs(h); };
+  const recipe = t => { const h=hash(t);
+    return { arch:ARCH[h%4], ink1:FIELD[h%4], ink2:(h%3===0)?ACCENT[(h>>2)%4]:"", stock:(h%2)?"p2":"" }; };
+  const seed = [
+    { t:"Corner Store Poems",   d:"2026-07-06", wip:false, no:12 },
+    { t:"Tuesday",              d:"2026-07-04", wip:true,  no:null },
+    { t:"Small Machines",       d:"2026-06-28", wip:false, no:8 },
+    { t:"How to Fold a River",  d:"2026-06-15", wip:false, no:24 },
+    { t:"Notes on Rain",        d:"2026-05-30", wip:false, no:5 },
+  ];
+  const manyExtra = ["Overgrown","The Lint Collector","Bus Window","Cold Coffee Club","Paper Teeth","Field Recordings",
+    "Almost a Garden","Neon Laundromat","Two Left Feet","Marginalia","The Slow Channel","Analog Ghosts",
+    "Kitchen Table Press","Static & Salt","Weekend Cartographer","A Softer Static"];
+  const buildMany = () => {
+    const out = seed.slice();
+    manyExtra.forEach((t,i) => out.push({ t, d:`2026-0${(i%5)+1}-1${i%9}`, wip:i%7===0, no:i%7===0?null:(3+i) }));
+    return out;
+  };
+
+  let zines = [], removed = null, undoTimer = null, sort = "recent", state = "few", activeId = null, lastFocus = null;
+
+  const fmt = iso => { const [y,m,dd] = iso.split("-").map(Number);
+    return `${String(dd).padStart(2,"0")} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]}`; };
+
+  /* ---------- render ---------- */
+  const shelf = $("#shelf"), scroll = $("#scroll"), tools = $("#tools"), empty = $("#empty"),
+        errorEl = $("#error"), shelfHead = $("#shelfHead"), dock = $("#dock"), count = $("#count");
+
+  function sorted(list){
+    const a = list.slice();
+    if(sort==="name")   a.sort((x,y)=> x.t.localeCompare(y.t));
+    if(sort==="oldest") a.sort((x,y)=> x.d.localeCompare(y.d));
+    if(sort==="recent") a.sort((x,y)=> y.d.localeCompare(x.d));
+    return a;
+  }
+
+  function render(animate){
+    const q = ($("#search").value || "").trim().toLowerCase();
+    const many = state==="many";
+    tools.classList.toggle("hidden", !many);            // search+sort only when large — curate, don't accumulate
+    const loading = state==="loading", err = state==="error", isEmpty = state==="empty";
+
+    empty.classList.toggle("hide", !isEmpty);
+    errorEl.classList.toggle("hide", !err);
+    shelf.classList.toggle("hide", isEmpty || err);
+    shelfHead.classList.toggle("hide", isEmpty || err || loading);
+    dock.classList.toggle("hide", err);                 // no primary action on an error screen
+    shelf.classList.toggle("skeleton", loading);
+
+    if(isEmpty || err){ shelf.innerHTML=""; return; }
+
+    if(loading){
+      shelf.innerHTML = Array.from({length:6}).map(()=>`<div class="zine"><div class="cover"></div></div>`).join("");
+      count.textContent = ""; return;
+    }
+
+    let list = sorted(zines);
+    if(many && q) list = list.filter(z => z.t.toLowerCase().includes(q));
+    count.textContent = zines.length ? `${zines.length}` : "";
+
+    if(many && q && list.length===0){
+      shelf.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--on-desk-soft); padding:30px 0; font-size:14.5px;">Nothing here by that name.</div>`;
+      return;
+    }
+
+    shelf.innerHTML = list.map((z,i) => {
+      const r = recipe(z.t);
+      const style = `--i:${Math.min(i,10)}; --ink1:${r.ink1};${r.ink2?` --ink2:${r.ink2};`:""}`;
+      const stamp = z.wip
+        ? `<span class="no">In progress</span><span class="wipdot" aria-hidden="true"></span>`
+        : `<span class="no">No.&nbsp;${String(z.no).padStart(2,"0")}</span><span>${fmt(z.d)}</span>`;
+      return `<div class="zine" role="listitem" data-id="${z.id}" style="${style}">
+        <button class="cover ${r.arch} ${r.stock} ${z.wip?"wip":""}" aria-label="${z.t}${z.wip?", in progress":", finished zine"}. Open on the bench.">
+          <span class="kicker">${z.wip?"Unfinished":"Zine"}</span>
+          <span class="title">${z.t}</span>
+          <span class="art" aria-hidden="true"></span>
+          <span class="fold" aria-hidden="true"></span>
+          <span class="edition">${stamp}</span>
+        </button>
+        <button class="more" aria-label="Actions for ${z.t}" data-more="${z.id}">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+        </button>
+      </div>`;
+    }).join("");
+
+    if(animate){ shelf.classList.remove("arrive"); void shelf.offsetWidth; shelf.classList.add("arrive"); } // replay the settle
+    else shelf.classList.remove("arrive");
+  }
+
+  /* ---------- state loading ---------- */
+  function setState(s){
+    state = s;
+    $$("#segState button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.state===s)));
+    if(s==="empty"){ zines = []; }
+    else if(s==="many"){ zines = buildMany().map(withId); }
+    else if(s==="few"){ zines = seed.map(withId); }
+    // loading: brief skeleton, then resolve to "few"
+    if(s==="loading"){
+      render();
+      clearTimeout(setState._t);
+      setState._t = setTimeout(() => { if(state==="loading"){ zines = seed.map(withId); state="few";
+        $$("#segState button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.state==="few"))); render(true); } }, 1400);
+      return;
+    }
+    render(true);
+  }
+  let _idc = 0; const withId = z => ({ ...z, id: "z"+(++_idc) });
+  const $$ = s => Array.from(document.querySelectorAll(s));
+
+  /* ---------- haptics (four verbs) — Foundation §haptics; never the sole channel ---------- */
+  const canVibe = "vibrate" in navigator;
+  const reduced = () => root.getAttribute("data-motion")==="reduce" ||
+    (root.getAttribute("data-motion")!=="full" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const HAPTIC = { tick:[8], snap:[6,20,10], boundary:[24], success:[12,30,12,30] };
+  const buzz = v => { if(canVibe && !reduced()) navigator.vibrate(HAPTIC[v]||0); };
+
+  /* ---------- sheets ---------- */
+  const scrim = $("#scrim");
+  const dev = $("#device");
+  const protoEl = document.querySelector(".proto");
+  const SHEETS = ["#createSheet","#actionSheet","#sortSheet"].map(s => $(s));
+  let openSheet = null;
+  // Open sheet = the ONLY interactive region: every other sheet + the whole app behind the
+  // scrim + the prototype dock go `inert`, so keyboard/TalkBack can't leak past the modal (RF2+RF3).
+  function show(el){
+    lastFocus = document.activeElement;   // capture BEFORE any inert — setting inert on an ancestor blurs the trigger (RF4)
+    closeSheets(true); openSheet = el; scrim.classList.add("on");
+    SHEETS.forEach(s => { s.inert = (s !== el); });
+    el.classList.add("on");
+    dev.inert = true; protoEl.inert = true;
+    if(el === $("#sortSheet")) $("#sortbtn").setAttribute("aria-expanded","true");
+    setTimeout(() => {                     // focus the first VISIBLE control — skips the hidden rename input (RF4)
+      const target = Array.from(el.querySelectorAll("button, input, [tabindex]")).find(n => n.offsetParent !== null);
+      if(target) target.focus();
+    }, 60);
+  }
+  function closeSheets(keepScrim){
+    SHEETS.forEach(s => { s.classList.remove("on"); s.inert = true; });
+    $("#rename").classList.remove("on");
+    $("#sortbtn").setAttribute("aria-expanded","false");
+    if(!keepScrim){ scrim.classList.remove("on"); openSheet=null; dev.inert=false; protoEl.inert=false;
+      if(lastFocus && lastFocus.focus) lastFocus.focus(); }
+  }
+  scrim.addEventListener("click", () => closeSheets(false));
+  document.addEventListener("keydown", e => { if(e.key==="Escape"){ closeSheets(false); hideSnack(); } });
+
+  /* ---------- create flow ---------- */
+  $("#start").addEventListener("click", () => { buzz("tick"); show($("#createSheet")); });
+  $$(".paper").forEach(p => p.addEventListener("click", () => {
+    buzz("snap"); closeSheets(false); toast(`New ${p.dataset.paper} zine → opening the bench`); }));
+
+  /* ---------- open a zine ---------- */
+  shelf.addEventListener("click", e => {
+    const cover = e.target.closest(".cover"); const more = e.target.closest(".more");
+    if(more){ openActions(more.dataset.more); return; }
+    if(cover && !shelf.classList.contains("skeleton")){
+      buzz("tick");
+      const id = cover.closest(".zine").dataset.id; const z = zines.find(x=>x.id===id);
+      toast(`Opening “${z.t}” on the bench`);
+    }
+  });
+  // long-press → actions (touch)
+  let lpTimer=null;
+  shelf.addEventListener("touchstart", e => { const c=e.target.closest(".cover"); if(!c) return;
+    lpTimer = setTimeout(()=>{ buzz("boundary"); openActions(c.closest(".zine").dataset.id); }, 480); }, {passive:true});
+  shelf.addEventListener("touchend", ()=> clearTimeout(lpTimer));
+  shelf.addEventListener("touchmove", ()=> clearTimeout(lpTimer), {passive:true});
+
+  /* ---------- action sheet ---------- */
+  function openActions(id){
+    activeId = id; const z = zines.find(x=>x.id===id); if(!z) return;
+    buzz("tick");
+    $("#actionTitle").textContent = z.t;
+    $("#actionSub").textContent = z.wip ? "In progress · kept on this device" : `No. ${String(z.no).padStart(2,"0")} · ${fmt(z.d)}`;
+    $("#rename").classList.remove("on");
+    show($("#actionSheet"));
+  }
+  $("#actionMenu").addEventListener("click", e => {
+    const b = e.target.closest("button"); if(!b) return; const act = b.dataset.act;
+    const z = zines.find(x=>x.id===activeId);
+    if(act==="open"){ closeSheets(false); toast(`Opening “${z.t}” on the bench`); }
+    if(act==="rename"){ const r=$("#rename"); r.classList.add("on"); const inp=$("#renameInput"); inp.value=z.t; inp.focus(); inp.select(); }
+    if(act==="duplicate"){ const copy={...z, id:"z"+(++_idc), t:z.t+" (copy)", d:z.d}; const idx=zines.indexOf(z); zines.splice(idx+1,0,copy);
+      buzz("snap"); closeSheets(false); render(true); toast("Duplicated"); }
+    if(act==="share"){ closeSheets(false); toast("Share via your device — nothing is uploaded"); }
+    if(act==="delete"){ doDelete(z); }
+  });
+  $("#renameSave").addEventListener("click", saveRename);
+  $("#renameInput").addEventListener("keydown", e => { if(e.key==="Enter") saveRename(); });
+  function saveRename(){ const z=zines.find(x=>x.id===activeId); const v=$("#renameInput").value.trim();
+    if(z && v){ z.t=v; buzz("snap"); } closeSheets(false); render(); }
+
+  /* ---------- delete + undo (undo over confirm) ---------- */
+  function doDelete(z){
+    const idx = zines.indexOf(z); removed = { z, idx };
+    zines.splice(idx,1); buzz("boundary"); closeSheets(false); render();
+    $("#snackText").textContent = `Deleted “${z.t}”`;
+    $("#snackbar").classList.add("on");
+    $("#undo").focus(); // the triggering ⋯ button was destroyed by render(); move focus to the recovery action (O1)
+    clearTimeout(undoTimer); undoTimer = setTimeout(hideSnack, 5000);
+  }
+  function hideSnack(){ $("#snackbar").classList.remove("on"); removed=null; }
+  $("#undo").addEventListener("click", () => {
+    if(removed){ zines.splice(removed.idx,0,removed.z); buzz("tick"); render(true); }
+    hideSnack();
+  });
+
+  /* ---------- toast ---------- */
+  let toastTimer=null;
+  function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on");
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("on"), 2200); }
+
+  /* ---------- search + sort ---------- */
+  $("#search").addEventListener("input", render);
+  $("#sortbtn").addEventListener("click", () => show($("#sortSheet")));
+  $("#sortMenu").addEventListener("click", e => {
+    const b=e.target.closest("button"); if(!b) return; sort=b.dataset.sort;
+    $$("#sortMenu button").forEach(x=>x.setAttribute("aria-checked", String(x===b)));
+    $("#sortlabel").textContent = { recent:"Recent", name:"Name", oldest:"Oldest" }[sort];
+    buzz("tick"); closeSheets(false); render();
+  });
+
+  /* ---------- prototype dock ---------- */
+  $("#segState").addEventListener("click", e => { const b=e.target.closest("button"); if(b) setState(b.dataset.state); });
+  $("#retry").addEventListener("click", () => setState("loading"));
+  $("#segTheme").addEventListener("click", e => { const b=e.target.closest("button"); if(!b) return;
+    $$("#segTheme button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    const t=b.dataset.theme; if(t==="system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", t); });
+  $("#segWidth").addEventListener("click", e => { const b=e.target.closest("button"); if(!b) return;
+    $$("#segWidth button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    const map={ phone:"430px", tablet:"920px", full:"100%" };
+    $("#device").style.setProperty("--w", map[b.dataset.w]); });
+  $("#segMotion").addEventListener("click", e => { const b=e.target.closest("button"); if(!b) return;
+    $$("#segMotion button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    root.setAttribute("data-motion", b.dataset.motion); });
+
+  /* ---------- boot ---------- */
+  root.setAttribute("data-motion","full");
+  $("#device").style.setProperty("--w","430px");
+  setState("few");
+})();
+</script>
+</body>
+</html>

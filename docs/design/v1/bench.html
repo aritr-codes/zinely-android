@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Zinely — The Bench (V1 · Creative Workbench)</title>
+<!--
+  ============================================================================
+  ZINELY — THE BENCH  ·  V1 redesign, Surface 2 of 3 (Shelf / Bench / Proof)
+  STATUS: DESIGN-FROZEN (2026-07-08). Adversarial engineering+a11y review GO +
+          Design Director GO. Inherits the DESIGN-FROZEN Shelf (shelf.html) —
+          same tokens, type voices, motion, haptics, sheets, snackbar/toast,
+          prototype-dock scaffolding. This surface is the editor: where a zine
+          is actually made. It is the heart of the product.
+          Post-freeze: only bug/parity/a11y/perf/theme fixes. Any visual or
+          interaction change must update THIS spec first, then Compose — never
+          the reverse. One non-automatable step remains before Compose parity:
+          a real on-device keyboard/TalkBack pass (role="application" stage +
+          the four gesture verbs need device semantics wired in Compose).
+          Non-blocking next-pass polish (recorded, not gates): drop the page's
+          left "spine" shadow (book cue vs fold cue); make photo import read as
+          the user's own photo riso-processed (not a random archetype); verify
+          the sheet isn't cramped on a short phone. Sub-AA authorial inks left
+          as artist choices (teal-as-text 2.9:1) — a beginner-safe default is a
+          next-pass call, not a freeze gate.
+  ----------------------------------------------------------------------------
+  CANONICAL DESIGN SOURCE for the Bench surface. Prototype, not production Compose.
+  Implements the accepted "Creative Workbench" direction (zinely-v1-design-exploration.md
+  §"The Bench") on the accepted Design Foundation (zinely-design-foundation.md).
+
+  Load-bearing design decisions carried from the vision:
+    · THE SHEET IS THE TRUTH. You edit ONE physical sheet whose eight panels are
+      shown in reading order as a fold-map (the rail), never a "page list". The
+      screen never lets you forget it's one sheet that folds. (The imposition truth
+      — which panels sit upside-down on the flat sheet — is the PROOF surface's job.)
+    · THE BENCH IS QUIET SO THE ZINE CAN BE LOUD. The shell is neutral paper/ink +
+      one coral live-action. The artifact carries the spot inks, overprint, grain.
+    · CANVAS DOMINATES, CHROME DISAPPEARS. No heavy toolbars. Chrome for a block
+      appears only when that block is live, in the thumb zone, then gets out of the way.
+    · ONE GESTURE GRAMMAR, NEVER BROKEN. Tap selects · drag moves · pinch scales ·
+      double-tap edits · long-press = secondary only · two-finger/empty-drag pans.
+      Keyboard mirrors every one (a11y floor, not bolt-on).
+    · DELIGHT ≈ ZERO HERE, ON PURPOSE. The bench protects flow. The whole delight
+      budget is spent later, on the fold. The bench only makes the fold feel inevitable.
+    · TEACH BY MAKING. Never a blank canvas — a starter mark on a new zine, a ghost
+      prompt on an empty panel. Undo over confirm. Errors visible + recoverable.
+
+  Multi-select is DELIBERATELY omitted: a single-sheet 8-panel zine holds few blocks
+  per panel; one-block-at-a-time keeps the flow calm and beginner-first. (Foundation
+  §emotional-journey: "delight ≈ zero here; protect flow".) Noted as a design choice,
+  not an oversight.
+
+  The floating "Prototype" dock (bottom-left) is REVIEW SCAFFOLDING, not product chrome:
+  it flips the states a real device would move through — New / Existing / Empty panel /
+  Loading / Error, Light|Dark, Reduced-motion, Phone|Tablet — so one file shows the
+  complete experience. Forward navigation to the Proof surface is stubbed as a toast
+  (the Proof is Surface 3, authored separately and not built here).
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+<style>
+/* ============================ TOKENS (inherited verbatim from the frozen Shelf) ============================ */
+:root{
+  --paper:#F4EFE6; --paper-2:#EFE8DA; --paper-edge:#E1D8C7;
+  --ink:#23201C; --ink-soft:#6B6358; --ink-faint:#9C9385;
+  --coral:#E76F51; --coral-strong:#C64E34; --coral-text:#A63C22;
+  --teal:#2A9D8F; --yellow:#E9C46A; --stamp:#264653;
+
+  --desk:#E7DECE; --desk-edge:#DBD1BF;
+  --shelf-line:rgba(35,32,28,.10);
+  --shadow-1:0 1px 2px rgba(35,32,28,.10);
+  --shadow-2:0 10px 22px rgba(35,32,28,.16), 0 2px 5px rgba(35,32,28,.10);
+  --shadow-lift:0 18px 34px rgba(35,32,28,.22), 0 3px 8px rgba(35,32,28,.14);
+  --on-desk:var(--ink); --on-desk-soft:#5E574C; --on-desk-faint:#726A5C;
+  --scrim:rgba(35,32,28,.42);
+  --field:#FBF8F1; --field-edge:#DED4C2;
+  --menu:#FBF8F1;
+
+  --shell:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --voice:"Fraunces", Georgia, "Times New Roman", serif;
+
+  --ease:cubic-bezier(.2,.7,.3,1);
+  --fast:130ms; --base:230ms;
+}
+:root[data-theme="dark"]{
+  --paper:#EDE6D9; --paper-2:#E4DBCB; --paper-edge:#C7BCA6;
+  --desk:#201F1E; --desk-edge:#161514;
+  --shelf-line:rgba(255,255,255,.06);
+  --shadow-1:0 1px 2px rgba(0,0,0,.5);
+  --shadow-2:0 12px 26px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
+  --shadow-lift:0 20px 40px rgba(0,0,0,.62), 0 4px 10px rgba(0,0,0,.5);
+  --on-desk:#EFE9DD; --on-desk-soft:#C3BBAC; --on-desk-faint:#8C8577;
+  --scrim:rgba(0,0,0,.58);
+  --field:#2B2A28; --field-edge:#413E39;
+  --menu:#2B2A28;
+  --coral-text:#E76F51;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0; background:var(--desk); color:var(--on-desk); font-family:var(--shell);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  transition:background var(--base) var(--ease), color var(--base) var(--ease);
+  overscroll-behavior:none;
+}
+:focus-visible{ outline:3px solid var(--coral-strong); outline-offset:2px; border-radius:6px; }
+
+/* ============================ APP FRAME ============================ */
+.device{
+  position:relative; margin:0 auto; height:100vh; height:100dvh;
+  max-width:var(--w, 100%); background:var(--desk);
+  display:flex; flex-direction:column; overflow:hidden;
+  box-shadow:0 0 0 1px var(--desk-edge);
+  transition:max-width var(--base) var(--ease);
+}
+@media (min-width:900px){ .device[style*="430"], .device[style*="480"]{ box-shadow:0 0 60px rgba(0,0,0,.28), 0 0 0 1px var(--desk-edge); } }
+
+/* ---- top bench bar: loss-safe back · zine name · undo/redo. Minimal — the work is the point. ---- */
+.benchbar{
+  position:relative; z-index:20; padding:12px 12px calc(10px);
+  display:flex; align-items:center; gap:8px;
+  background:linear-gradient(var(--desk) 82%, transparent);
+}
+.iconbtn{ flex:0 0 auto; width:44px; height:44px; border-radius:12px; border:none; cursor:pointer;
+  background:transparent; color:var(--on-desk); display:grid; place-items:center;
+  transition:background var(--fast) var(--ease); }
+.iconbtn:hover{ background:rgba(35,32,28,.06); }
+:root[data-theme="dark"] .iconbtn:hover{ background:rgba(255,255,255,.07); }
+.iconbtn:disabled{ color:var(--on-desk-faint); opacity:.5; cursor:default; }
+.iconbtn:disabled:hover{ background:transparent; }
+.iconbtn svg{ width:22px; height:22px; }
+
+.benchtitle{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 2px; }
+.benchtitle .name{ font-family:var(--voice); font-weight:600; font-size:17px; color:var(--on-desk); letter-spacing:-.01em;
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:text; background:none; border:none;
+  border-radius:8px; padding:2px 8px; }
+.benchtitle .name:hover{ background:rgba(35,32,28,.05); }
+:root[data-theme="dark"] .benchtitle .name:hover{ background:rgba(255,255,255,.06); }
+.benchtitle .save{ display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--on-desk-faint); margin-top:1px;
+  transition:opacity var(--base) var(--ease); height:13px; }
+.benchtitle .save .dot{ width:5px; height:5px; border-radius:50%; background:var(--teal); }
+.benchtitle .save.saving .dot{ background:var(--yellow); }
+.undoredo{ flex:0 0 auto; display:flex; gap:2px; }
+
+/* ============================ THE STAGE (canvas — dominant) ============================ */
+.stage{ position:relative; flex:1 1 auto; min-height:0; overflow:hidden;
+  display:grid; place-items:center; padding:10px 18px;
+  touch-action:none; /* we own the gestures (pan/pinch) */ }
+/* the pan/zoom layer */
+.canvas{ position:relative; transform:translate(var(--px,0px),var(--py,0px)) scale(var(--z,1));
+  transition:transform var(--base) var(--ease); will-change:transform; }
+.canvas.grabbing{ transition:none; }
+
+/* the panel = one physical page of the sheet. A-series proportion (1 : √2). */
+.page{ position:relative; width:min(70vw, 300px, calc((100dvh - 340px) * .707));
+  aspect-ratio:210/297; background:var(--paper); border-radius:2px 4px 4px 2px;
+  box-shadow:var(--shadow-lift), 0 2px 0 var(--paper-edge);
+  background-image:radial-gradient(120% 90% at 0% 0%, rgba(0,0,0,.03), transparent 46%);
+  overflow:hidden; user-select:none; -webkit-user-select:none; }
+.page.p2{ background:var(--paper-2); }
+/* the bound edge — the sheet has weight (Flat 2.0, honest depth) */
+.page::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:6px; z-index:6;
+  background:linear-gradient(90deg, rgba(0,0,0,.10), rgba(0,0,0,0)); pointer-events:none; }
+/* print honesty: the safe margin the home printer can't cross — shown, never hidden (Foundation §print-honesty) */
+.page .safe{ position:absolute; inset:7.5%; border:1px dashed var(--ink-faint); opacity:.42; border-radius:2px;
+  pointer-events:none; z-index:5; transition:opacity var(--fast) var(--ease), border-color var(--fast) var(--ease); }
+.page.edge .safe{ opacity:.9; border-color:var(--coral-text); }   /* a block hit the printable edge */
+/* snap guides — center lines flash when a block locks to them */
+.page .guide{ position:absolute; background:var(--teal); opacity:0; z-index:5; pointer-events:none; transition:opacity 90ms linear; }
+.page .guide.v{ left:50%; top:6%; bottom:6%; width:1px; transform:translateX(-.5px); }
+.page .guide.h{ top:50%; left:6%; right:6%; height:1px; transform:translateY(-.5px); }
+.page .guide.on{ opacity:.8; }
+
+/* the ghost prompt on an empty panel — never a blank canvas (teach by making) */
+.page .ghost{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:10px; text-align:center; padding:14% 12%; color:var(--ink-soft); pointer-events:none; z-index:1; } /* instructional copy holds AA on paper (RF3) */
+.page .ghost svg{ width:34px; height:34px; opacity:.6; }
+.page .ghost span{ font-size:12.5px; line-height:1.45; max-width:20ch; }
+.page.has-blocks .ghost{ display:none; }
+/* panel switch = travelling ALONG one creased sheet toward the tapped side — not swapping pages in a list */
+@keyframes slideFromRight{ from{ transform:translateX(20px); opacity:.35; } to{ transform:none; opacity:1; } }
+@keyframes slideFromLeft{  from{ transform:translateX(-20px); opacity:.35; } to{ transform:none; opacity:1; } }
+.page.from-right{ animation:slideFromRight .26s var(--ease); }
+.page.from-left{  animation:slideFromLeft  .26s var(--ease); }
+
+/* ---- blocks (the artifact — allowed to be loud) ---- */
+.block{ position:absolute; z-index:2; cursor:grab; touch-action:none;
+  transform:translate(-50%,-50%) rotate(var(--r,0deg)); transform-origin:center;
+  left:var(--bx); top:var(--by); width:var(--bw);
+  transition:box-shadow var(--fast) var(--ease); }
+.block:active{ cursor:grabbing; }
+.block.dragging{ z-index:4; }
+.block .surface{ position:relative; width:100%; }
+/* text block */
+.block.text .surface{ font-family:var(--voice); color:var(--btext,var(--ink)); line-height:1.14; letter-spacing:-.01em;
+  font-weight:600; word-break:break-word; }
+.block.text.body .surface{ font-family:var(--shell); font-weight:400; font-size:calc(var(--bfs,13) * 1px); line-height:1.42; letter-spacing:0; }
+.block.text .surface{ font-size:calc(var(--bfs,26) * 1px); }
+.block.text .surface[contenteditable="true"]{ outline:none; cursor:text; caret-color:var(--coral-strong); }
+/* image block — riso-inked art field (no stock photos; local + on-brand). Same archetype vocabulary as the Shelf covers. */
+.block.image .surface{ aspect-ratio:var(--bratio,1); border-radius:2px; overflow:hidden; position:relative;
+  background:var(--paper); mix-blend-mode:multiply; }
+.block.image .surface::before{ content:""; position:absolute; inset:-14%; background:var(--ink1,var(--coral)); opacity:.9; }
+.block.image .surface::after{ content:""; position:absolute; inset:-14%; background:var(--ink2,transparent); opacity:.5; transform:translate(3px,4px); }
+.block.image.a-sun   .surface::before,.block.image.a-sun .surface::after{ border-radius:50%; inset:-30% 12%; }
+.block.image.a-bars  .surface::before{ background:repeating-linear-gradient(180deg,var(--ink1,var(--coral)) 0 8px,transparent 8px 16px); }
+.block.image.a-bars  .surface::after{ background:repeating-linear-gradient(180deg,var(--ink2,transparent) 0 8px,transparent 8px 16px); }
+.block.image.a-tone  .surface::before{ background:radial-gradient(var(--ink1,var(--coral)) 30%,transparent 32%); background-size:8px 8px; }
+.block.image.a-tone  .surface::after{ display:none; }
+.block.image.a-split .surface::before{ clip-path:polygon(0 0,100% 0,100% 100%,42% 100%); }
+.block.image.a-split .surface::after{ clip-path:polygon(0 0,42% 0,0 100%,0 100%); background:var(--ink2,var(--teal)); opacity:.85; transform:none; }
+
+/* selection: coral outline blooms + weighted lift (Delight #6 + #8). The one coral thing on the artifact. */
+.block.sel{ z-index:5; }
+.block.sel .surface{ box-shadow:0 0 0 2px var(--coral-strong); }
+.block.sel.dragging .surface,.block.lifted .surface{ box-shadow:0 0 0 2px var(--coral-strong), var(--shadow-2); }
+.block.text.sel .surface{ box-shadow:0 0 0 2px var(--coral-strong); border-radius:3px; }
+
+/* transform handles — appear only on the selected block, in-place (direct manipulation, no side panel) */
+.handles{ position:absolute; inset:0; z-index:6; pointer-events:none; }
+.handle{ position:absolute; width:26px; height:26px; pointer-events:auto; display:grid; place-items:center; }
+.handle::after{ content:""; width:15px; height:15px; background:var(--paper); border:2px solid var(--coral-strong); border-radius:4px;
+  box-shadow:var(--shadow-1); }
+.handle.rot::after{ border-radius:50%; }
+.handle.se{ right:-13px; bottom:-13px; cursor:nwse-resize; }
+.handle.rot{ left:50%; top:-34px; transform:translateX(-50%); cursor:grab; }
+.handle.rot::before{ content:""; position:absolute; left:50%; top:13px; width:2px; height:21px; background:var(--coral-strong); transform:translateX(-1px); }
+
+/* ============================ THE FOLD-MAP RAIL (page nav — one sheet, eight panels) ============================ */
+.rail-wrap{ position:relative; z-index:15; padding:6px 0 4px; }
+.rail-lab{ display:flex; align-items:center; justify-content:center; gap:7px; font-size:11px; color:var(--on-desk-faint);
+  letter-spacing:.02em; margin-bottom:7px; }
+.rail-lab .crease{ width:12px; height:12px; }
+.rail{ display:flex; gap:0; justify-content:safe center; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 16px 4px;
+  scroll-snap-type:x proximity; scrollbar-width:none; }
+.rail::-webkit-scrollbar{ display:none; }
+/* ONE creased ribbon, not eight cards: panels butt edge-to-edge, share a scored crease at each seam,
+   and lie flat on the desk (Flat 2.0). The form now carries "one sheet" — the caption isn't writing a cheque the shape can't cash. */
+.railcell{ flex:0 0 auto; position:relative; scroll-snap-align:center; padding:0; }
+.panelbtn{ position:relative; display:block; border:none; cursor:pointer; background:var(--paper); padding:0;
+  width:34px; aspect-ratio:210/297; border-radius:0; box-shadow:0 2px 0 var(--paper-edge);
+  overflow:hidden; transition:box-shadow var(--fast) var(--ease); }
+.railcell:first-child .panelbtn{ border-radius:2px 0 0 2px; }   /* only the two ends of the sheet are rounded */
+.railcell:last-child  .panelbtn{ border-radius:0 2px 2px 0; }
+.panelbtn.p2{ background:var(--paper-2); }
+.panelbtn .mini{ position:absolute; border-radius:1px; }
+/* the crease: a scored fold-line ON the seam each panel shares with the next — the fold, made visible in the map */
+.railcell:not(:last-child) .panelbtn::after{ content:""; position:absolute; right:0; top:6%; bottom:6%; width:1px; z-index:3;
+  background:repeating-linear-gradient(var(--ink-faint) 0 3px, transparent 3px 6px); opacity:.5; }
+/* current = "this part of the sheet": an INSET coral ring — the panel stays in the ribbon, never pops up like a selected tile */
+.panelbtn.cur{ box-shadow:inset 0 0 0 2px var(--coral-strong), 0 2px 0 var(--paper-edge); z-index:2; }
+.panelbtn:hover{ box-shadow:inset 0 0 0 1.5px var(--on-desk-faint), 0 2px 0 var(--paper-edge); }
+.panelbtn.cur:hover{ box-shadow:inset 0 0 0 2px var(--coral-strong), 0 2px 0 var(--paper-edge); }
+.railcell .plabel{ display:block; text-align:center; font-size:9px; color:var(--on-desk-faint); margin-top:5px;
+  font-variant-numeric:tabular-nums; letter-spacing:.02em; }
+.railcell.iscur .plabel{ color:var(--coral-text); font-weight:600; }
+
+/* ============================ TOOLBAR (thumb zone — chrome appears only when useful) ============================ */
+.toolbar{ position:relative; z-index:16; display:flex; align-items:center; gap:10px;
+  padding:8px 16px calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent, var(--desk) 34%); }
+.toolgroup{ flex:1 1 auto; display:flex; align-items:center; gap:8px; min-width:0; }
+/* a shell tool button (add text / add image / contextual) */
+.tool{ display:inline-flex; align-items:center; gap:8px; min-height:48px; padding:0 15px; border-radius:14px; cursor:pointer;
+  border:1px solid var(--field-edge); background:var(--field); color:var(--on-desk); font-family:var(--shell);
+  font-size:14px; font-weight:500; white-space:nowrap; transition:border-color var(--fast) var(--ease), background var(--fast) var(--ease); }
+.tool:hover{ border-color:var(--on-desk-faint); }
+.tool svg{ width:18px; height:18px; flex:0 0 auto; }
+.tool.icononly{ padding:0; width:48px; justify-content:center; }
+.tool.danger{ color:var(--coral-text); }
+.tool.danger svg{ color:var(--coral-text); }
+/* the single coral live-action on the bench: move forward to proof it (where the fold happens) */
+.proof{ flex:0 0 auto; display:inline-flex; align-items:center; gap:9px; min-height:52px; padding:0 22px; border:none; cursor:pointer;
+  border-radius:16px; background:var(--coral-strong); color:#fff; font-family:var(--shell); font-size:15.5px; font-weight:600; letter-spacing:.01em;
+  box-shadow:0 8px 20px rgba(198,78,52,.32), 0 2px 0 rgba(0,0,0,.12);
+  transition:transform var(--fast) var(--ease), box-shadow var(--fast) var(--ease); }
+.proof svg{ width:19px; height:19px; }
+.proof:hover{ transform:translateY(-2px); box-shadow:0 12px 26px rgba(198,78,52,.4), 0 2px 0 rgba(0,0,0,.12); }
+.proof:active{ transform:translateY(1px) scale(.99); }
+/* the contextual (selection) toolbar swaps in over the add-tools */
+.toolbar[data-mode="add"] .sel-tools{ display:none; }
+.toolbar[data-mode="select"] .add-tools{ display:none; }
+/* colour / ink popover */
+.inkbar{ position:absolute; bottom:calc(70px + env(safe-area-inset-bottom)); left:16px; z-index:30;
+  background:var(--menu); border:1px solid var(--field-edge); border-radius:16px; padding:10px; display:none; gap:8px;
+  box-shadow:var(--shadow-2); }
+.inkbar.on{ display:flex; }
+.swatch{ width:34px; height:34px; border-radius:9px; cursor:pointer; border:2px solid transparent; }
+.swatch[aria-pressed="true"]{ border-color:var(--on-desk); }
+.zoombar{ position:absolute; right:14px; top:8px; z-index:14; display:flex; flex-direction:column; gap:4px; }
+.zoombar button{ width:38px; height:38px; border-radius:11px; border:1px solid var(--field-edge); background:var(--field);
+  color:var(--on-desk); cursor:pointer; display:grid; place-items:center; box-shadow:var(--shadow-1); }
+.zoombar button svg{ width:18px; height:18px; }
+.zoombar.hide{ display:none; }
+
+/* ============================ LOADING (calm skeleton bench) ============================ */
+.loadwrap{ position:absolute; inset:0; display:none; place-items:center; z-index:8; }
+.loadwrap.on{ display:grid; }
+.loadpage{ width:min(70vw,300px,calc((100dvh - 340px)*.707)); aspect-ratio:210/297; background:var(--paper-2);
+  border-radius:2px 4px 4px 2px; box-shadow:var(--shadow-lift); position:relative; overflow:hidden; }
+.loadpage::after{ content:""; position:absolute; inset:0;
+  background:linear-gradient(100deg, transparent 20%, rgba(255,255,255,.35) 50%, transparent 80%);
+  transform:translateX(-100%); animation:sweep 1.5s var(--ease) infinite; }
+@keyframes sweep{ to{ transform:translateX(100%); } }
+
+/* ============================ ERROR (visible, recoverable) ============================ */
+.errwrap{ position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:30px; z-index:9; background:var(--desk); }
+.errwrap.on{ display:flex; }
+.errwrap .badge{ width:56px; height:56px; border-radius:16px; display:grid; place-items:center; margin-bottom:14px;
+  background:rgba(198,78,52,.14); color:var(--coral-text); }
+.errwrap h2{ font-family:var(--voice); font-weight:600; font-size:22px; margin:0; color:var(--on-desk); }
+.errwrap p{ margin:6px 0 18px; font-size:14.5px; color:var(--on-desk-soft); max-width:32ch; line-height:1.5; }
+.btn-stamp{ display:inline-flex; align-items:center; justify-content:center; min-height:52px; padding:0 26px; border:none; cursor:pointer;
+  border-radius:16px; background:var(--stamp); color:#F4EFE6; font-family:var(--shell); font-size:16px; font-weight:600; box-shadow:var(--shadow-2); }
+
+/* first-arrival: the sheet settles onto the bench (inherited from the Shelf's calm settle, no bounce) */
+@keyframes settleIn{ from{ opacity:0; transform:translateY(16px) scale(.985); } to{ opacity:1; transform:none; } }
+.stage.arrive .canvas{ animation:settleIn .42s var(--ease) both; }
+@keyframes blockIn{ from{ opacity:0; transform:translate(-50%,-42%) rotate(var(--r,0deg)); } to{ opacity:1; } }
+.stage.arrive .block{ animation:blockIn .38s var(--ease) both; animation-delay:calc(120ms + var(--bi,0) * 55ms); }
+
+/* ============================ SCRIM / SHEETS / SNACKBAR / TOAST (inherited) ============================ */
+.scrim{ position:fixed; inset:0; background:var(--scrim); opacity:0; pointer-events:none; z-index:40; transition:opacity var(--base) var(--ease); }
+.scrim.on{ opacity:1; pointer-events:auto; }
+.sheet{ position:fixed; left:0; right:0; bottom:0; z-index:50; background:var(--menu); color:var(--on-desk);
+  border-radius:22px 22px 0 0; padding:8px 20px calc(24px + env(safe-area-inset-bottom));
+  box-shadow:0 -18px 44px rgba(0,0,0,.28); transform:translateY(102%); transition:transform var(--base) var(--ease);
+  max-width:520px; margin:0 auto; }
+.sheet.on{ transform:none; }
+.sheet .grip{ width:38px; height:4px; border-radius:2px; background:var(--field-edge); margin:8px auto 14px; }
+.sheet h3{ font-family:var(--voice); font-weight:600; font-size:19px; margin:2px 2px 4px; }
+.sheet .sub{ font-size:13px; color:var(--on-desk-soft); margin:0 2px 16px; }
+.menu-list{ display:flex; flex-direction:column; }
+.menu-list button{ display:flex; align-items:center; gap:14px; width:100%; min-height:52px; padding:0 6px; border:none;
+  background:none; color:var(--on-desk); font-family:var(--shell); font-size:15.5px; cursor:pointer; text-align:left; border-radius:10px; }
+.menu-list button:hover{ background:rgba(35,32,28,.05); }
+:root[data-theme="dark"] .menu-list button:hover{ background:rgba(255,255,255,.06); }
+.menu-list button svg{ width:19px; height:19px; color:var(--on-desk-soft); flex:0 0 auto; }
+.menu-list button.danger{ color:var(--coral-text); } .menu-list button.danger svg{ color:var(--coral-text); }
+/* image-source chooser (import) */
+.sources{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:4px; }
+.source{ cursor:pointer; border:1px solid var(--field-edge); background:var(--field); border-radius:14px; padding:18px 14px;
+  display:flex; flex-direction:column; align-items:center; gap:10px; font-family:var(--shell); color:var(--on-desk);
+  transition:border-color var(--fast) var(--ease), transform var(--fast) var(--ease); }
+.source:hover{ border-color:var(--on-desk-faint); transform:translateY(-2px); }
+.source svg{ width:26px; height:26px; color:var(--on-desk-soft); }
+.source .name{ font-weight:600; font-size:14.5px; }
+.source .hint{ font-size:11px; color:var(--on-desk-soft); }
+
+.snackbar{ position:fixed; left:50%; bottom:104px; z-index:60; transform:translate(-50%,20px);
+  background:var(--stamp); color:#F4EFE6; border-radius:14px; padding:4px 6px 4px 16px; display:flex; align-items:center; gap:8px;
+  box-shadow:0 12px 30px rgba(0,0,0,.4); font-size:14px; opacity:0; pointer-events:none; max-width:calc(100% - 32px);
+  transition:opacity var(--fast) var(--ease), transform var(--fast) var(--ease); }
+.snackbar.on{ opacity:1; transform:translate(-50%,0); pointer-events:auto; }
+.snackbar button{ background:none; border:none; color:var(--yellow); font-family:var(--shell); font-weight:700; font-size:14px;
+  cursor:pointer; min-height:48px; padding:0 16px; border-radius:10px; letter-spacing:.02em; }
+.snackbar button:hover{ background:rgba(255,255,255,.08); }
+.toast{ position:fixed; left:50%; bottom:104px; z-index:60; transform:translate(-50%,20px);
+  background:var(--on-desk); color:var(--desk); border-radius:12px; padding:11px 16px; font-size:13.5px; font-weight:500;
+  box-shadow:0 12px 30px rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity var(--fast) var(--ease), transform var(--fast) var(--ease); }
+.toast.on{ opacity:1; transform:translate(-50%,0); }
+
+/* ============================ PROTOTYPE DOCK (review scaffolding, not product) ============================ */
+.proto{ position:fixed; left:12px; bottom:12px; z-index:80; font-family:var(--shell); }
+.proto details{ background:rgba(20,19,18,.92); color:#EDE7DB; border-radius:14px; box-shadow:0 12px 30px rgba(0,0,0,.5);
+  backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.08); }
+.proto summary{ list-style:none; cursor:pointer; padding:9px 13px; font-size:12px; font-weight:600; letter-spacing:.02em;
+  display:flex; align-items:center; gap:8px; }
+.proto summary::-webkit-details-marker{ display:none; }
+.proto summary .k{ width:7px; height:7px; border-radius:50%; background:var(--coral); }
+.proto .body{ padding:4px 13px 13px; display:grid; gap:10px; min-width:214px; }
+.proto .row{ display:flex; flex-direction:column; gap:5px; }
+.proto .lab{ font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:#9a9284; }
+.proto .seg{ display:flex; gap:4px; flex-wrap:wrap; }
+.proto .seg button{ flex:1; min-width:44px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04);
+  color:#cfc8ba; font-family:var(--shell); font-size:11.5px; padding:7px 6px; border-radius:9px; cursor:pointer; }
+.proto .seg button[aria-pressed="true"]{ background:var(--coral); color:#1a120e; border-color:var(--coral); font-weight:700; }
+.proto .note{ font-size:10.5px; color:#8b8375; line-height:1.4; }
+
+.hide{ display:none !important; }
+
+/* ============================ REDUCED MOTION ============================ */
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+}
+:root[data-motion="reduce"] *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+:root[data-motion="reduce"] .loadpage::after{ animation:none; opacity:.4; transform:none; }
+</style>
+</head>
+<body>
+<div class="device" id="device">
+
+  <!-- TOP BENCH BAR -->
+  <header class="benchbar">
+    <button class="iconbtn" id="back" aria-label="Back to your shelf (your work is saved)">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="benchtitle">
+      <button class="name" id="zineName" title="Rename this zine">Corner Store Poems</button>
+      <span class="save" id="saveState" role="status"><span class="dot" aria-hidden="true"></span><span id="saveText">Saved on this device</span></span>
+    </div>
+    <div class="undoredo">
+      <button class="iconbtn" id="undo" aria-label="Undo" disabled>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 7L4 12l5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12h11a5 5 0 0 1 0 10h-2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="iconbtn" id="redo" aria-label="Redo" disabled>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 7l5 5-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12H9a5 5 0 0 0 0 10h2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- THE STAGE -->
+  <div class="stage" id="stage" role="application" aria-label="Zine editing canvas. Tap a block to select it; drag to move; double-tap to edit; long-press for more.">
+    <div class="zoombar" id="zoombar">
+      <button id="zoomIn" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none"><path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+      <button id="zoomOut" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+    </div>
+
+    <div class="canvas" id="canvas">
+      <div class="page" id="page" role="group" aria-label="Current panel">
+        <div class="safe" aria-hidden="true"></div>
+        <div class="guide v" aria-hidden="true"></div>
+        <div class="guide h" aria-hidden="true"></div>
+        <div class="ghost" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>This panel is empty. Add text or a picture below.</span>
+        </div>
+        <!-- blocks render here -->
+      </div>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loadwrap" id="loadwrap"><div class="loadpage"></div></div>
+    <!-- ERROR -->
+    <div class="errwrap" id="errwrap">
+      <div class="badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" width="26" height="26"><path d="M12 8v5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1.2" fill="currentColor"/><path d="M12 3l9 16H3l9-16z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></div>
+      <h2>Couldn't open this zine</h2>
+      <p>Your work is safe on this device — we just couldn't read it this time.</p>
+      <button class="btn-stamp" id="retry">Try again</button>
+    </div>
+  </div>
+
+  <!-- FOLD-MAP RAIL -->
+  <div class="rail-wrap" id="railWrap">
+    <div class="rail-lab">
+      <svg class="crease" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18" stroke="currentColor" stroke-width="1.6" stroke-dasharray="2 3"/></svg>
+      <span>One sheet · folds into 8 pages</span>
+    </div>
+    <div class="rail" id="rail" role="tablist" aria-label="Panels of your sheet, in reading order"></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar" id="toolbar" data-mode="add">
+    <div class="toolgroup add-tools">
+      <button class="tool" id="addText"><svg viewBox="0 0 24 24" fill="none"><path d="M5 6h14M12 6v13M9 19h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Text</button>
+      <button class="tool" id="addImage"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M5 17l4.5-4 3 2.5L16 12l3 3" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Picture</button>
+    </div>
+    <div class="toolgroup sel-tools">
+      <button class="tool" id="tEdit"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 5l5 5L9 20H4v-5L14 5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span id="tEditLabel">Edit</span></button>
+      <button class="tool icononly" id="tInk" aria-label="Ink colour"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16" fill="currentColor"/></svg></button>
+      <button class="tool icononly" id="tDup" aria-label="Duplicate"><svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="2"/></svg></button>
+      <button class="tool icononly danger" id="tDel" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V4h4v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="tool icononly" id="tDone" aria-label="Done — deselect"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <button class="proof" id="proof">
+      <span>Proof</span>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- INK POPOVER -->
+  <div class="inkbar" id="inkbar" role="group" aria-label="Ink colour"></div>
+</div>
+
+<!-- SCRIM + SHEETS -->
+<div class="scrim" id="scrim"></div>
+
+<!-- image-source chooser (import) -->
+<div class="sheet" id="importSheet" role="dialog" aria-modal="true" aria-label="Add a picture" inert>
+  <div class="grip"></div>
+  <h3>Add a picture</h3>
+  <p class="sub">Pictures stay on this device — nothing is uploaded.</p>
+  <div class="sources">
+    <button class="source" data-src="photos"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="10" r="1.6" fill="currentColor"/><path d="M5 17l4.5-4 3 2.5L16 12l3 3" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span class="name">From this device</span><span class="hint">Your photos</span></button>
+    <button class="source" data-src="camera"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="2"/></svg><span class="name">Take a photo</span><span class="hint">Camera</span></button>
+  </div>
+</div>
+
+<!-- per-block action sheet (long-press / secondary) -->
+<div class="sheet" id="blockSheet" role="dialog" aria-modal="true" aria-label="Block actions" inert>
+  <div class="grip"></div>
+  <h3 id="blockTitle">Block</h3>
+  <div class="menu-list" id="blockMenu" role="menu">
+    <button role="menuitem" data-act="edit"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 5l5 5L9 20H4v-5L14 5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span id="bmEdit">Edit text</span></button>
+    <button role="menuitem" data-act="front"><svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 14V6a2 2 0 0 1 2-2h8" stroke="currentColor" stroke-width="2"/></svg>Bring to front</button>
+    <button role="menuitem" data-act="duplicate"><svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="2"/></svg>Duplicate</button>
+    <button role="menuitem" data-act="delete" class="danger"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V4h4v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Delete</button>
+  </div>
+</div>
+
+<!-- rename sheet -->
+<div class="sheet" id="renameSheet" role="dialog" aria-modal="true" aria-label="Rename zine" inert>
+  <div class="grip"></div>
+  <h3>Rename</h3>
+  <div style="display:flex; gap:10px; margin:4px 2px 2px;">
+    <input id="renameInput" type="text" aria-label="Zine name" style="flex:1; min-height:48px; border:1px solid var(--field-edge); background:var(--field); color:var(--on-desk); border-radius:12px; padding:0 14px; font-family:var(--voice); font-size:17px; font-weight:600; outline:none;" />
+    <button class="save" id="renameSave" style="min-height:48px; padding:0 18px; border:none; border-radius:12px; background:var(--coral-strong); color:#fff; font-family:var(--shell); font-weight:600; font-size:15px; cursor:pointer;">Save</button>
+  </div>
+</div>
+
+<!-- SNACKBAR + TOAST -->
+<div class="snackbar" id="snackbar" role="status"><span id="snackText">Deleted</span><button id="undoSnack">Undo</button></div>
+<div class="toast" id="toast" role="status"></div>
+
+<!-- PROTOTYPE DOCK -->
+<div class="proto">
+  <details open>
+    <summary><span class="k"></span> Prototype</summary>
+    <div class="body">
+      <div class="row"><span class="lab">Zine state</span>
+        <div class="seg" id="segState">
+          <button data-state="existing" aria-pressed="true">Existing</button>
+          <button data-state="new" aria-pressed="false">New</button>
+          <button data-state="empty" aria-pressed="false">Empty panel</button>
+          <button data-state="loading" aria-pressed="false">Loading</button>
+          <button data-state="error" aria-pressed="false">Error</button>
+        </div>
+      </div>
+      <div class="row"><span class="lab">Theme</span>
+        <div class="seg" id="segTheme">
+          <button data-theme="light" aria-pressed="false">Light</button>
+          <button data-theme="dark" aria-pressed="false">Dark</button>
+          <button data-theme="system" aria-pressed="true">System</button>
+        </div>
+      </div>
+      <div class="row"><span class="lab">Width</span>
+        <div class="seg" id="segWidth">
+          <button data-w="phone" aria-pressed="true">Phone</button>
+          <button data-w="tablet" aria-pressed="false">Tablet</button>
+          <button data-w="full" aria-pressed="false">Full</button>
+        </div>
+      </div>
+      <div class="row"><span class="lab">Motion</span>
+        <div class="seg" id="segMotion">
+          <button data-motion="full" aria-pressed="true">Full</button>
+          <button data-motion="reduce" aria-pressed="false">Reduced</button>
+        </div>
+      </div>
+      <p class="note">Tap a block to select · drag to move · double-tap to edit · pinch to scale · long-press for more. Keyboard: arrows nudge, Enter edits, Delete removes, ⌘/Ctrl+Z undo.</p>
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const root = document.documentElement;
+  const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+
+  /* ---------- panels: one sheet, eight panels, reading order ---------- */
+  const PANELS = ["Front cover","Page 1","Page 2","Page 3","Page 4","Page 5","Page 6","Back cover"];
+  const SHORT  = ["Cover","1","2","3","4","5","6","Back"];
+
+  /* ---------- ink vocabulary (the artifact is allowed to be loud) ---------- */
+  const INKS = [
+    {k:"ink",   v:"var(--ink)",   lab:"Ink"},
+    {k:"coral", v:"var(--coral-text)", lab:"Coral"},
+    {k:"teal",  v:"var(--teal)",  lab:"Teal"},
+    {k:"stamp", v:"var(--stamp)", lab:"Blue"},
+    {k:"yellow",v:"#7A5E12",      lab:"Ochre"}   /* yellow-as-text darkened: ~5.3:1 light / ~4.9:1 dark paper (AA both) (RF4) */
+  ];
+  const FIELD = ["var(--coral)","var(--teal)","var(--stamp)","var(--yellow)"];
+  const ACCENT= ["var(--yellow)","var(--coral)","var(--teal)","var(--stamp)"];
+  const ARCH  = ["a-sun","a-bars","a-tone","a-split"];
+
+  /* ---------- data model ----------
+     A block lives on one panel, positioned by CENTER as a % of the page, width as % of page width.
+     x,y in %; w in %; r rotation deg. Text: {text, ink, size, body}. Image: {arch, ink1, ink2, ratio}. */
+  let _bid = 0; const nid = () => "b" + (++_bid);
+  function seedExisting(){
+    return [
+      { id:nid(), panel:0, type:"text",  x:50, y:30, w:74, r:-2, text:"Corner Store Poems", ink:"ink",   size:30, body:false },
+      { id:nid(), panel:0, type:"image", x:50, y:64, w:56, r:1.5, arch:0, ink1:0, ink2:0, ratio:1 },
+      { id:nid(), panel:0, type:"text",  x:50, y:88, w:60, r:0, text:"a tiny zine", ink:"coral", size:13, body:true },
+      { id:nid(), panel:1, type:"text",  x:50, y:24, w:78, r:0, text:"Morning, and the kettle is the loudest thing for miles.", ink:"ink", size:15, body:true },
+      { id:nid(), panel:1, type:"image", x:50, y:70, w:64, r:-2, arch:2, ink1:1, ink2:0, ratio:1.2 },
+      { id:nid(), panel:2, type:"image", x:50, y:44, w:80, r:1, arch:3, ink1:2, ink2:1, ratio:1 },
+      { id:nid(), panel:2, type:"text",  x:50, y:86, w:70, r:0, text:"No. 12 — the aisle of small machines", ink:"stamp", size:13, body:true },
+      { id:nid(), panel:5, type:"text",  x:50, y:50, w:70, r:-1, text:"Fold here.", ink:"coral", size:22, body:false },
+      { id:nid(), panel:7, type:"text",  x:50, y:80, w:66, r:0, text:"made by hand · kept on this device", ink:"ink", size:11, body:true }
+    ];
+  }
+  function seedNew(){
+    return [
+      { id:nid(), panel:0, type:"text", x:50, y:40, w:72, r:-2, text:"Your title", ink:"ink", size:30, body:false, starter:true },
+      { id:nid(), panel:0, type:"text", x:50, y:60, w:60, r:0, text:"tap to make it yours", ink:"coral", size:13, body:true, starter:true }
+    ];
+  }
+
+  let blocks = [], cur = 0, sel = null, name = "Corner Store Poems", stock = "";
+  let history = [], hpos = -1, removed = null, undoTimer = null;
+  let zoom = 1, panX = 0, panY = 0;
+
+  /* ---------- els ---------- */
+  const stage=$("#stage"), canvas=$("#canvas"), page=$("#page"), rail=$("#rail"),
+        toolbar=$("#toolbar"), inkbar=$("#inkbar"), zoombar=$("#zoombar"),
+        loadwrap=$("#loadwrap"), errwrap=$("#errwrap"), scrim=$("#scrim"),
+        snackbar=$("#snackbar"), toastEl=$("#toast"), saveState=$("#saveState"), saveText=$("#saveText");
+
+  /* ---------- haptics (four verbs) — inherited from the Shelf ---------- */
+  const canVibe = "vibrate" in navigator;
+  const reduced = () => root.getAttribute("data-motion")==="reduce" ||
+    (root.getAttribute("data-motion")!=="full" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const HAPTIC = { tick:[8], snap:[6,20,10], boundary:[24], success:[12,30,12,30] };
+  const buzz = v => { if(canVibe && !reduced()) navigator.vibrate(HAPTIC[v]||0); };
+
+  /* ---------- history (undo over confirm; real stack) ---------- */
+  function snapshot(){
+    history = history.slice(0, hpos+1);
+    history.push(JSON.stringify(blocks));
+    if(history.length > 60) history.shift();
+    hpos = history.length - 1;
+    updateUndo(); markSaving();
+  }
+  function updateUndo(){ $("#undo").disabled = hpos<=0; $("#redo").disabled = hpos>=history.length-1; }
+  function restore(){ blocks = JSON.parse(history[hpos]); if(sel && !blocks.find(b=>b.id===sel)) sel=null; render(); updateUndo(); markSaving(); }
+  $("#undo").addEventListener("click", () => { if(hpos>0){ hpos--; buzz("tick"); restore(); } });
+  $("#redo").addEventListener("click", () => { if(hpos<history.length-1){ hpos++; buzz("tick"); restore(); } });
+
+  /* ---------- save feedback (auto-save, offline) ---------- */
+  let saveTimer=null;
+  function markSaving(){ saveState.classList.add("saving"); saveText.textContent="Saving…";
+    clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ saveState.classList.remove("saving"); saveText.textContent="Saved on this device"; }, 620); }
+
+  /* ---------- rendering ---------- */
+  const inkVal = k => (INKS.find(i=>i.k===k)||INKS[0]).v;
+  function blockEl(b, idx){
+    const el = document.createElement("div");
+    el.setAttribute("role","button");
+    el.className = "block " + b.type + (b.type==="text" && b.body ? " body":"") + (b.type==="image" ? " "+ARCH[b.arch]:"") + (b.id===sel?" sel":"");
+    el.dataset.id = b.id; el.style.setProperty("--bx", b.x+"%"); el.style.setProperty("--by", b.y+"%");
+    el.style.setProperty("--bw", b.w+"%"); el.style.setProperty("--r", (b.r||0)+"deg"); el.style.setProperty("--bi", idx);
+    el.tabIndex = 0;
+    if(b.type==="text"){
+      el.style.setProperty("--btext", inkVal(b.ink)); el.style.setProperty("--bfs", b.size);
+      const s = document.createElement("div"); s.className="surface"; s.textContent=b.text; el.appendChild(s);
+      el.setAttribute("aria-label", `Text: “${b.text}”. Selected? Tap to select, double-tap to edit.`);
+    } else {
+      el.style.setProperty("--bratio", b.ratio||1);
+      el.style.setProperty("--ink1", FIELD[b.ink1]); if(b.ink2!=null) el.style.setProperty("--ink2", ACCENT[b.ink2]);
+      const s=document.createElement("div"); s.className="surface"; el.appendChild(s);
+      el.setAttribute("aria-label", "Picture. Tap to select.");
+    }
+    if(b.id===sel){
+      const h=document.createElement("div"); h.className="handles";
+      h.innerHTML = `<div class="handle rot" data-h="rot" role="button" aria-label="Rotate"></div><div class="handle se" data-h="se" role="button" aria-label="Resize"></div>`;
+      el.appendChild(h);
+    }
+    return el;
+  }
+  function render(){
+    // page stock
+    page.classList.toggle("p2", stock==="p2");
+    // remove existing blocks (keep safe/guide/ghost helpers)
+    page.querySelectorAll(".block").forEach(n=>n.remove());
+    const here = blocks.map((b,i)=>({b,i})).filter(o=>o.b.panel===cur);
+    page.classList.toggle("has-blocks", here.length>0);
+    here.forEach((o,vi)=> page.appendChild(blockEl(o.b, vi)));
+    renderRail(); syncToolbar();
+    canvas.style.setProperty("--z", zoom); canvas.style.setProperty("--px", panX+"px"); canvas.style.setProperty("--py", panY+"px");
+    zoombar.classList.toggle("hide", false);
+  }
+  function renderRail(){
+    rail.innerHTML = PANELS.map((p,i)=>{
+      const bs = blocks.filter(b=>b.panel===i);
+      const minis = bs.slice(0,4).map(b=>{
+        const w = clamp(b.w*0.34,6,26), h = b.type==="text" ? Math.max(2, (b.size||14)*0.12) : w*0.7;
+        const bg = b.type==="text" ? "var(--ink-faint)" : FIELD[b.ink1];
+        return `<span class="mini" style="left:${clamp(b.x-w/2,4,92)}%;top:${clamp(b.y-h/2,4,92)}%;width:${w}%;height:${h}px;background:${bg};opacity:${b.type==='text'?0.55:0.8}"></span>`;
+      }).join("");
+      return `<div class="railcell ${i===cur?'iscur':''}" role="presentation">
+        <button class="panelbtn ${stock==='p2'?'p2':''} ${i===cur?'cur':''}" role="tab" aria-selected="${i===cur}" aria-label="${PANELS[i]}${bs.length?', '+bs.length+' item'+(bs.length>1?'s':''):' (empty)'}" data-panel="${i}">${minis}</button>
+        <span class="plabel">${SHORT[i]}</span></div>`;
+    }).join("");
+  }
+  function syncToolbar(){
+    const b = blocks.find(x=>x.id===sel);
+    toolbar.dataset.mode = b ? "select" : "add";
+    if(b){
+      $("#tEditLabel").textContent = b.type==="text" ? "Edit" : "Replace";
+      $("#tInk").style.display = ""; // ink applies to both (text colour / image spot-ink)
+    }
+    inkbar.classList.remove("on");
+  }
+
+  /* ---------- selection ---------- */
+  function select(id, haptic){
+    sel = id; if(haptic!==false) buzz("tick"); render();
+    if(id){ const el=page.querySelector(`.block[data-id="${id}"]`); if(el) el.focus({preventScroll:true}); }
+  }
+  function deselect(){ if(sel){ sel=null; render(); } }
+  // Tab/focus a block => select it (keyboard mirror of tap-select). Guarded so the
+  // render()+refocus inside select() can't recurse (sel===id short-circuits). (RF1)
+  page.addEventListener("focusin", e=>{ const bEl=e.target.closest(".block");
+    if(bEl && bEl.dataset.id!==sel) select(bEl.dataset.id, false); });
+
+  // tap empty canvas => deselect (but not when a drag/pinch just happened)
+  stage.addEventListener("pointerdown", e=>{
+    if(e.target===stage || e.target===canvas || e.target===page || e.target.classList.contains("safe") || e.target.classList.contains("ghost")){
+      panStart(e);
+    }
+  });
+
+  /* ---------- block gestures: tap-select, drag-move, dbltap-edit, resize, rotate, long-press ---------- */
+  const pointers = new Map();
+  let drag = null;         // {id, mode:'move'|'se'|'rot', ...}
+  let lp = null;           // long-press timer
+  let lastTap = {id:null, t:0};
+
+  page.addEventListener("pointerdown", e=>{
+    const hEl = e.target.closest(".handle");
+    const bEl = e.target.closest(".block");
+    if(!bEl && !hEl) return;
+    e.stopPropagation();
+    const id = (bEl||page.querySelector(".block.sel")).dataset.id;
+    const b = blocks.find(x=>x.id===id); if(!b) return;
+    pointers.set(e.pointerId, e);
+
+    // pinch on a block => scale (two pointers)
+    if(pointers.size===2 && sel===id){ startPinch(); return; }
+
+    if(hEl){
+      if(sel!==id) select(id, false);
+      startHandle(e, b, hEl.dataset.h); return;
+    }
+    // select on first touch
+    if(sel!==id) select(id);
+    // double-tap => edit text
+    const now = Date.now();
+    if(b.type==="text" && lastTap.id===id && now-lastTap.t < 300){ lastTap={id:null,t:0}; startEdit(b); return; }
+    lastTap = {id, t:now};
+    // long-press => secondary menu
+    clearTimeout(lp); lp = setTimeout(()=>{ drag=null; buzz("boundary"); openBlockSheet(id); }, 480);
+    startMove(e, b);
+  });
+
+  function startMove(e, b){
+    const rect = page.getBoundingClientRect();
+    drag = { id:b.id, mode:"move", sx:e.clientX, sy:e.clientY, ox:b.x, oy:b.y, rect, moved:false };
+    const el = page.querySelector(`.block[data-id="${b.id}"]`); if(el){ el.classList.add("dragging"); el.setPointerCapture(e.pointerId); }
+  }
+  function startHandle(e, b, mode){
+    const rect = page.getBoundingClientRect();
+    const cx = rect.left + rect.width * b.x/100, cy = rect.top + rect.height * b.y/100;
+    drag = { id:b.id, mode, sx:e.clientX, sy:e.clientY, ow:b.w, or:b.r||0, rect, cx, cy,
+             sd:Math.hypot(e.clientX-cx, e.clientY-cy), sa:Math.atan2(e.clientY-cy, e.clientX-cx), moved:false };
+    const el = page.querySelector(`.block[data-id="${b.id}"]`); if(el) el.setPointerCapture(e.pointerId);
+  }
+
+  page.addEventListener("pointermove", e=>{
+    if(pointers.has(e.pointerId)) pointers.set(e.pointerId, e);
+    if(pinch){ movePinch(); return; }
+    if(!drag) return;
+    const b = blocks.find(x=>x.id===drag.id); if(!b) return;
+    const dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
+    if(Math.abs(dx)>4||Math.abs(dy)>4){ drag.moved=true; clearTimeout(lp); }
+
+    if(drag.mode==="move"){
+      let nx = drag.ox + dx/drag.rect.width*100/zoom;
+      let ny = drag.oy + dy/drag.rect.height*100/zoom;
+      // snap to centre lines
+      const gv=$(".guide.v"), gh=$(".guide.h");
+      if(Math.abs(nx-50)<2.2){ if(Math.abs(drag.ox-50)>=2.2) buzz("snap"); nx=50; gv.classList.add("on"); } else gv.classList.remove("on");
+      if(Math.abs(ny-50)<2.2){ if(Math.abs(drag.oy-50)>=2.2) buzz("snap"); ny=50; gh.classList.add("on"); } else gh.classList.remove("on");
+      // boundary at the safe margin (Foundation: silently prevent the #1 home-print failure)
+      const before = [nx,ny];
+      nx = clamp(nx, 9, 91); ny = clamp(ny, 9, 91);
+      const hitEdge = (before[0]!==nx || before[1]!==ny);
+      page.classList.toggle("edge", hitEdge);
+      if(hitEdge && !drag.edgeBuzzed){ buzz("boundary"); drag.edgeBuzzed=true; }
+      if(!hitEdge) drag.edgeBuzzed=false;
+      b.x=nx; b.y=ny; applyBlock(b);
+    } else if(drag.mode==="se"){
+      const d = Math.hypot(e.clientX-drag.cx, e.clientY-drag.cy);
+      b.w = clamp(drag.ow * d/drag.sd, 12, 96); applyBlock(b);
+    } else if(drag.mode==="rot"){
+      const a = Math.atan2(e.clientY-drag.cy, e.clientX-drag.cx);
+      let deg = drag.or + (a-drag.sa)*180/Math.PI;
+      if(Math.abs(deg%90)<4 || Math.abs(Math.abs(deg%90)-90)<4){ deg = Math.round(deg/15)*15; } // gentle detents
+      b.r = deg; applyBlock(b);
+    }
+  });
+  function applyBlock(b){
+    const el = page.querySelector(`.block[data-id="${b.id}"]`); if(!el) return;
+    el.style.setProperty("--bx", b.x+"%"); el.style.setProperty("--by", b.y+"%");
+    el.style.setProperty("--bw", b.w+"%"); el.style.setProperty("--r", (b.r||0)+"deg");
+  }
+  function endDrag(e){
+    if(e) pointers.delete(e.pointerId);
+    clearTimeout(lp);
+    if(pinch && pointers.size<2) endPinch();
+    if(drag){
+      const el = page.querySelector(`.block[data-id="${drag.id}"]`); if(el) el.classList.remove("dragging");
+      $(".guide.v").classList.remove("on"); $(".guide.h").classList.remove("on"); page.classList.remove("edge");
+      if(drag.moved) snapshot();
+      drag = null;
+    }
+  }
+  page.addEventListener("pointerup", endDrag);
+  page.addEventListener("pointercancel", endDrag);
+
+  /* ---------- pinch to scale the selected block ---------- */
+  let pinch = null;
+  function startPinch(){
+    const b = blocks.find(x=>x.id===sel); if(!b) return;
+    clearTimeout(lp); // a real pinch outlasts 480ms — don't let the long-press sheet fire mid-scale (RF2)
+    const p = Array.from(pointers.values());
+    pinch = { id:b.id, ow:b.w, sd:Math.hypot(p[0].clientX-p[1].clientX, p[0].clientY-p[1].clientY) };
+    drag = null;
+  }
+  function movePinch(){
+    if(!pinch) return; const b=blocks.find(x=>x.id===pinch.id); if(!b) return;
+    const p = Array.from(pointers.values()); if(p.length<2) return;
+    const d = Math.hypot(p[0].clientX-p[1].clientX, p[0].clientY-p[1].clientY);
+    b.w = clamp(pinch.ow * d/pinch.sd, 12, 96); applyBlock(b);
+  }
+  function endPinch(){ if(pinch){ snapshot(); pinch=null; } }
+
+  /* ---------- text editing (double-tap / Enter) ---------- */
+  let editing = null;
+  function startEdit(b){
+    editing = b.id; const el = page.querySelector(`.block[data-id="${b.id}"] .surface`); if(!el) return;
+    el.setAttribute("contenteditable","true"); el.focus();
+    const rng=document.createRange(); rng.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(rng);
+    el.addEventListener("blur", commitEdit, {once:true});
+    el.addEventListener("keydown", ev=>{ if(ev.key==="Enter" && !ev.shiftKey){ ev.preventDefault(); el.blur(); }
+      if(ev.key==="Escape"){ ev.preventDefault(); el.blur(); } });
+  }
+  function commitEdit(){
+    const b = blocks.find(x=>x.id===editing); if(!b){ editing=null; return; }
+    const el = page.querySelector(`.block[data-id="${b.id}"] .surface`);
+    const v = (el.textContent||"").trim();
+    el.removeAttribute("contenteditable");
+    if(v && v!==b.text){ b.text=v; b.starter=false; snapshot(); }
+    else { el.textContent = b.text; }
+    editing=null; render();
+    const nb = page.querySelector(`.block[data-id="${b.id}"]`); if(nb) nb.focus({preventScroll:true}); // keep focus on the block, not <body> (RI2)
+  }
+
+  /* ---------- toolbar actions ---------- */
+  $("#addText").addEventListener("click", ()=>{
+    const b = { id:nid(), panel:cur, type:"text", x:50, y:34, w:70, r:0, text:"New text", ink:"ink", size:22, body:false };
+    blocks.push(b); buzz("snap"); select(b.id,false); snapshot(); render(); const nb=blocks.find(x=>x.id===b.id); startEdit(nb);
+  });
+  $("#addImage").addEventListener("click", ()=> openImport());
+  $("#tEdit").addEventListener("click", ()=>{ const b=blocks.find(x=>x.id===sel); if(!b) return;
+    if(b.type==="text") startEdit(b); else openImport(true); });
+  $("#tDup").addEventListener("click", ()=>{ const b=blocks.find(x=>x.id===sel); if(!b) return;
+    const c={...b, id:nid(), x:clamp(b.x+6,9,91), y:clamp(b.y+6,9,91)}; blocks.push(c); buzz("snap"); snapshot(); select(c.id,false); });
+  $("#tDel").addEventListener("click", ()=>{ const b=blocks.find(x=>x.id===sel); if(b) deleteBlock(b); });
+  $("#tDone").addEventListener("click", ()=>{ buzz("tick"); deselect(); });
+  $("#tInk").addEventListener("click", ()=> toggleInk());
+
+  function toggleInk(){
+    const b = blocks.find(x=>x.id===sel); if(!b){ inkbar.classList.remove("on"); return; }
+    if(inkbar.classList.contains("on")){ inkbar.classList.remove("on"); return; }
+    inkbar.innerHTML = INKS.map(ink=>`<button class="swatch" data-ink="${ink.k}" aria-label="${ink.lab}" aria-pressed="${b.type==='text'? b.ink===ink.k : false}" style="background:${ink.v}"></button>`).join("");
+    inkbar.classList.add("on");
+  }
+  inkbar.addEventListener("click", e=>{ const s=e.target.closest(".swatch"); if(!s) return;
+    const b=blocks.find(x=>x.id===sel); if(!b) return; const k=s.dataset.ink;
+    if(b.type==="text"){ b.ink=k; }
+    else { const idx=INKS.findIndex(i=>i.k===k); b.ink1=clamp(idx,0,FIELD.length-1); } // recolour the spot ink
+    buzz("tick"); inkbar.classList.remove("on"); snapshot(); render();
+  });
+
+  function deleteBlock(b){
+    const idx = blocks.indexOf(b); removed = { b, idx };
+    blocks.splice(idx,1); if(sel===b.id) sel=null;
+    buzz("boundary"); inkbar.classList.remove("on"); snapshot(); render();
+    $("#snackText").textContent = b.type==="text" ? "Deleted text" : "Deleted picture";
+    snackbar.classList.add("on"); $("#undoSnack").focus();
+    clearTimeout(undoTimer); undoTimer=setTimeout(hideSnack, 5000);
+  }
+  function hideSnack(){ snackbar.classList.remove("on"); removed=null; }
+  $("#undoSnack").addEventListener("click", ()=>{
+    if(removed){ blocks.splice(removed.idx,0,removed.b); buzz("tick"); snapshot(); select(removed.b.id,false); }
+    hideSnack();
+  });
+
+  /* ---------- proof (forward → Surface 3, stubbed) ---------- */
+  $("#proof").addEventListener("click", ()=>{ buzz("tick"); toast("Proof → check how it prints, then fold"); });
+
+  /* ---------- rail (panel nav) ---------- */
+  rail.addEventListener("click", e=>{ const b=e.target.closest(".panelbtn"); if(!b) return;
+    const p = +b.dataset.panel; if(p===cur) return;
+    const dir = p>cur ? "from-right" : "from-left";   // travel toward the tapped panel's side of the sheet
+    deselect(); cur=p; buzz("tick"); render();
+    if(!reduced()){ page.classList.remove("from-right","from-left"); void page.offsetWidth; page.classList.add(dir); }
+    const cell = b.closest(".railcell"); if(cell) cell.scrollIntoView({inline:"center", block:"nearest", behavior: reduced()?"auto":"smooth"});
+  });
+
+  /* ---------- zoom + pan ---------- */
+  function setZoom(z){ zoom = clamp(z, 1, 3); if(zoom===1){ panX=0; panY=0; } canvas.style.setProperty("--z",zoom);
+    canvas.style.setProperty("--px",panX+"px"); canvas.style.setProperty("--py",panY+"px"); }
+  $("#zoomIn").addEventListener("click", ()=>{ setZoom(zoom+0.5); buzz("tick"); });
+  $("#zoomOut").addEventListener("click", ()=>{ setZoom(zoom-0.5); buzz("tick"); });
+  // pan the canvas by dragging empty stage (only meaningful when zoomed) — two-finger pan grammar, mouse-friendly fallback
+  let pan = null;
+  function panStart(e){ if(sel) deselect();
+    pan = { sx:e.clientX, sy:e.clientY, ox:panX, oy:panY }; canvas.classList.add("grabbing");
+    stage.setPointerCapture(e.pointerId);
+  }
+  stage.addEventListener("pointermove", e=>{ if(!pan || zoom===1) return;
+    panX = pan.ox + (e.clientX-pan.sx); panY = pan.oy + (e.clientY-pan.sy);
+    canvas.style.setProperty("--px",panX+"px"); canvas.style.setProperty("--py",panY+"px"); });
+  const panEnd = ()=>{ pan=null; canvas.classList.remove("grabbing"); };
+  stage.addEventListener("pointerup", panEnd); stage.addEventListener("pointercancel", panEnd);
+
+  /* ---------- keyboard grammar (a11y mirror of every gesture) ---------- */
+  let nudgeTimer=null; // coalesce a run of arrow-nudges into one undo step
+  function nudgeCommit(){ clearTimeout(nudgeTimer); nudgeTimer=setTimeout(()=>snapshot(), 400); }
+  document.addEventListener("keydown", e=>{
+    if(editing) return; // editing owns the keyboard
+    if(e.key==="Escape"){ if(inkbar.classList.contains("on")) inkbar.classList.remove("on"); else if(openSheet) closeSheets(false); else deselect(); return; }
+    if(openSheet) return; // an open modal sheet owns the keyboard — don't nudge/delete the block behind the scrim (RI1)
+    const meta = e.ctrlKey||e.metaKey;
+    if(meta && e.key.toLowerCase()==="z"){ e.preventDefault(); if(e.shiftKey){ if(hpos<history.length-1){ hpos++; buzz("tick"); restore(); } } else if(hpos>0){ hpos--; buzz("tick"); restore(); } return; }
+    if(!sel) return;
+    const b = blocks.find(x=>x.id===sel); if(!b) return;
+    const step = e.shiftKey ? 5 : 1;
+    if(e.key.startsWith("Arrow")){ e.preventDefault();
+      if(e.key==="ArrowLeft")  b.x=clamp(b.x-step,9,91);
+      if(e.key==="ArrowRight") b.x=clamp(b.x+step,9,91);
+      if(e.key==="ArrowUp")    b.y=clamp(b.y-step,9,91);
+      if(e.key==="ArrowDown")  b.y=clamp(b.y+step,9,91);
+      applyBlock(b); nudgeCommit(); }
+    else if((e.key==="Enter"||e.key==="F2") && b.type==="text"){ e.preventDefault(); startEdit(b); }
+    else if(e.key==="Delete"||e.key==="Backspace"){ e.preventDefault(); deleteBlock(b); }
+  });
+
+  /* ---------- sheets (inherited pattern from the Shelf) ---------- */
+  const dev=$("#device"), protoEl=document.querySelector(".proto");
+  const SHEETS = ["#importSheet","#blockSheet","#renameSheet"].map(s=>$(s));
+  let openSheet=null, lastFocus=null, replaceMode=false;
+  function show(el){
+    lastFocus = document.activeElement; closeSheets(true); openSheet=el; scrim.classList.add("on");
+    SHEETS.forEach(s=> s.inert=(s!==el)); el.classList.add("on"); dev.inert=true; protoEl.inert=true;
+    setTimeout(()=>{ const t=Array.from(el.querySelectorAll("button,input,[tabindex]")).find(n=>n.offsetParent!==null); if(t) t.focus(); }, 60);
+  }
+  function closeSheets(keep){
+    SHEETS.forEach(s=>{ s.classList.remove("on"); s.inert=true; });
+    if(!keep){ scrim.classList.remove("on"); openSheet=null; dev.inert=false; protoEl.inert=false; if(lastFocus&&lastFocus.focus) lastFocus.focus(); }
+  }
+  scrim.addEventListener("click", ()=> closeSheets(false));
+
+  function openImport(replace){ replaceMode=!!replace; show($("#importSheet")); }
+  $$(".source").forEach(s=> s.addEventListener("click", ()=>{
+    closeSheets(false); buzz("snap");
+    const arch = Math.floor(Math.random()*ARCH.length), ink1=Math.floor(Math.random()*FIELD.length), ink2=Math.floor(Math.random()*ACCENT.length);
+    if(replaceMode && sel){ const b=blocks.find(x=>x.id===sel); if(b&&b.type==="image"){ b.arch=arch; b.ink1=ink1; b.ink2=ink2; } toast("Picture replaced"); }
+    else { const b={ id:nid(), panel:cur, type:"image", x:50, y:50, w:64, r:0, arch, ink1, ink2, ratio:1 }; blocks.push(b); select(b.id,false); toast("Added — kept on this device"); }
+    snapshot(); render();
+  }));
+
+  function openBlockSheet(id){
+    sel=id; render(); const b=blocks.find(x=>x.id===id); if(!b) return;
+    $("#blockTitle").textContent = b.type==="text" ? "Text" : "Picture";
+    $("#bmEdit").textContent = b.type==="text" ? "Edit text" : "Replace picture";
+    show($("#blockSheet"));
+  }
+  $("#blockMenu").addEventListener("click", e=>{ const btn=e.target.closest("button"); if(!btn) return;
+    const b=blocks.find(x=>x.id===sel); if(!b) return; const act=btn.dataset.act;
+    if(act==="edit"){ closeSheets(false); if(b.type==="text") startEdit(b); else openImport(true); }
+    if(act==="front"){ blocks.splice(blocks.indexOf(b),1); blocks.push(b); buzz("tick"); closeSheets(false); snapshot(); render(); }
+    if(act==="duplicate"){ const c={...b,id:nid(),x:clamp(b.x+6,9,91),y:clamp(b.y+6,9,91)}; blocks.push(c); buzz("snap"); closeSheets(false); snapshot(); select(c.id,false); }
+    if(act==="delete"){ closeSheets(false); deleteBlock(b); }
+  });
+
+  /* ---------- rename ---------- */
+  $("#zineName").addEventListener("click", ()=>{ $("#renameInput").value=name; show($("#renameSheet")); });
+  function saveRename(){ const v=$("#renameInput").value.trim(); if(v){ name=v; $("#zineName").textContent=v; buzz("snap"); } closeSheets(false); }
+  $("#renameSave").addEventListener("click", saveRename);
+  $("#renameInput").addEventListener("keydown", e=>{ if(e.key==="Enter") saveRename(); });
+
+  /* ---------- back / toast ---------- */
+  $("#back").addEventListener("click", ()=>{ buzz("tick"); toast("Saved — back to your shelf"); });
+  let toastTimer=null;
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add("on"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>toastEl.classList.remove("on"), 2200); }
+
+  /* ---------- state loading (prototype dock) ---------- */
+  function setState(s){
+    $$("#segState button").forEach(b=> b.setAttribute("aria-pressed", String(b.dataset.state===s)));
+    loadwrap.classList.remove("on"); errwrap.classList.remove("on"); canvas.style.visibility="visible";
+    if(s==="loading"){ canvas.style.visibility="hidden"; loadwrap.classList.add("on");
+      clearTimeout(setState._t); setState._t=setTimeout(()=>{ setState("existing"); }, 1400); return; }
+    if(s==="error"){ canvas.style.visibility="hidden"; errwrap.classList.add("on"); return; }
+    // build content
+    _bid=0; sel=null; cur=0; zoom=1; panX=0; panY=0;
+    if(s==="new"){ name="Untitled zine"; stock=""; blocks=seedNew(); }
+    else if(s==="empty"){ name="Small Machines"; stock="p2"; blocks=[]; }   // start on an empty panel
+    else { name="Corner Store Poems"; stock=""; blocks=seedExisting(); }
+    $("#zineName").textContent=name;
+    history=[JSON.stringify(blocks)]; hpos=0; updateUndo();
+    render(); arrive();
+  }
+  function arrive(){ if(reduced()) return; stage.classList.remove("arrive"); void stage.offsetWidth; stage.classList.add("arrive");
+    setTimeout(()=> stage.classList.remove("arrive"), 900); }
+
+  $("#segState").addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) setState(b.dataset.state); });
+  $("#retry").addEventListener("click", ()=> setState("loading"));
+  $("#segTheme").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return;
+    $$("#segTheme button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    const t=b.dataset.theme; if(t==="system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", t); });
+  $("#segWidth").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return;
+    $$("#segWidth button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    const map={ phone:"430px", tablet:"920px", full:"100%" }; $("#device").style.setProperty("--w", map[b.dataset.w]); });
+  $("#segMotion").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return;
+    $$("#segMotion button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    root.setAttribute("data-motion", b.dataset.motion); });
+
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && openSheet) closeSheets(false); });
+
+  /* ---------- boot ---------- */
+  root.setAttribute("data-motion","full");
+  $("#device").style.setProperty("--w","430px");
+  setState("existing");
+})();
+</script>
+</body>
+</html>
