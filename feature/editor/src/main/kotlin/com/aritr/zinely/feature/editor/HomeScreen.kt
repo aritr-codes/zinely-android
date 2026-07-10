@@ -164,6 +164,9 @@ public fun HomeScreen(
     onDeleteUndo: (String) -> Unit,
     onDeleteCommit: (String) -> Unit,
     modifier: Modifier = Modifier,
+    /** The shelf could not be *read*. No zine was lost; [onRetry] simply asks the store again. */
+    error: Boolean = false,
+    onRetry: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     // The collector outlives recompositions; always call the latest handlers.
@@ -200,7 +203,9 @@ public fun HomeScreen(
         floatingActionButton = {
             // The empty state carries its own inline CTA; doubling it with a FAB would shout. A
             // zero-card (pending-delete-filtered) shelf keeps the FAB: Start a zine stays reachable.
-            if (!loading && !storeEmpty) {
+            // The error state hides it (`dock.classList.toggle("hide", err)`): there is no starting a
+            // new zine on a shelf that cannot be read.
+            if (!loading && !storeEmpty && !error) {
                 ExtendedFloatingActionButton(onClick = { paperChooserOpen = true }) {
                     Icon(Icons.Filled.Add, contentDescription = null)
                     Spacer(Modifier.size(8.dp))
@@ -221,6 +226,10 @@ public fun HomeScreen(
                 modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 8.dp),
             )
             when {
+                // Before loading: an unreadable shelf must never flash the empty invitation, and a
+                // stale spinner over a failed read would spin forever.
+                error -> ShelfErrorState(onRetry, Modifier.fillMaxSize())
+
                 loading -> Box(
                     modifier = Modifier.fillMaxSize().testTag(HomeLoadingTestTag),
                     contentAlignment = Alignment.Center,

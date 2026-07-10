@@ -150,6 +150,9 @@ private fun HomeDestination(onOpenZine: (String) -> Unit) {
         // The honest empty signal (ADR-044 §3): the invitation only when the STORE is empty — a
         // shelf filtered to zero by pending deletes stays a zero-card shelf.
         storeEmpty = state is HomeUiState.Empty,
+        // The shelf could not be read. The zines are still on the device; the retry re-asks the store.
+        error = state is HomeUiState.Error,
+        onRetry = viewModel::retry,
         cards = (state as? HomeUiState.Content)?.cards ?: emptyList(),
         events = viewModel.events,
         onOpenZine = viewModel::openZine,
