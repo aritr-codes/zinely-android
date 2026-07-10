@@ -1,4 +1,4 @@
-# CLAUDE.md — Zinely working conventions
+# CLAUDE.md — Zinely engineering handbook
 
 Instructions for any engineer or AI agent working in this repository. Read this first.
 
@@ -42,119 +42,132 @@ Before creating a new document:
 
 ---
 
-## Review workflow
+## Multi-agent workflow
 
-Claude Code is the **primary architect and implementer**. Codex (`mcp__codex__codex`) is an **independent reviewer**.
+Claude Code is the **primary implementer**. Major work — architecture, storage, rendering, export, editor, data model, UI features, releases — must be **independently reviewed by a Review Agent** before it is accepted.
 
-For any **major** decision — architecture, storage, rendering, export, editor, or data model:
+### Agent roles
+
+| Agent | Responsibility |
+|---|---|
+| **Implementer Agent** | Designs and implements. Updates documentation in the same change. Adds tests. **Never self-approves.** |
+| **Review Agent** | Validates actual repository state; assumes implementation claims are untrusted; requests evidence when needed. Classifies findings as **Required Fix / Recommended Improvement / Observation** and produces a decision: **GO / GO WITH FIXES / NO-GO**. |
+| **Release Agent** | Owns release readiness: git status, version bumps, release notes, changelog, roadmap, packaging, limitations, and blockers vs known limitations. See [Release review](#release-review-release-agent). |
+| **Research Agent** | External research, citations, evidence gathering, industry best practices. Operates under [Research standards](#research-standards). |
 
 ```mermaid
 flowchart LR
-    A["Draft proposal\n(Claude Code)"] --> B["Request Codex review\nflag bugs / risks / alternatives"]
-    B --> C["Reconcile feedback\n(fix or note disagreement + why)"]
-    C --> D["Record accepted decision\nas an ADR in DECISIONS.md"]
-    D --> E["Implement"]
+    R["Research Agent\nevidence + citations"] --> P["Implementer Agent\ndraft proposal"]
+    P --> ADR["Record decision as ADR\nin DECISIONS.md"]
+    ADR --> I["Implementer Agent\ncode · tests · docs"]
+    I --> V["Review Agent\nvalidate repo state"]
+    V -->|"GO WITH FIXES / NO-GO"| I
+    V -->|"GO"| M["Merge"]
+    M --> REL["Release Agent\nrelease readiness (at release time)"]
 ```
 
-- Surface material disagreements explicitly ("Codex flagged X; chose Y because Z").
-- Note the Codex outcome in the ADR.
-- Skip the review for trivial/low-stakes changes (typos, renames, ≤5-line edits, status updates).
-- If the Codex tool is unavailable in a given harness, **say so** in the deliverable and flag the item for a review pass before implementation.
+- Surface material disagreements explicitly ("Review flagged X; chose Y because Z"); note the review outcome in the ADR.
+- Skip independent review only for trivial/low-stakes changes (typos, renames, ≤5-line edits, status updates).
+- If no independent Review Agent is available in a given harness, **say so** in the deliverable and flag the item for a review pass before merge.
 
 ---
 
 ## Agent handoff protocol
 
-For any significant work item (feature, refactor, ADR, architecture change, milestone, or review), end with a standardized handoff.
+For any significant work item (feature, refactor, ADR, architecture change, milestone, release, or review), end with a standardized handoff. Assume future sessions have **no prior conversation history**.
 
-### Implementer → Reviewer
+### Implementer → Review Agent
+- **Session Summary** — what changed, why, files/modules affected, ADRs modified/created, tests added/updated, risks/limitations/deferred work.
+- **Review Package** — branch, PR number, commit range, relevant ADRs, docs updated, known concerns, claims that require verification.
+- **Reviewer Prompt** — ready-to-paste; instructs the reviewer to validate the **actual repository state**, not the summary.
 
-When proposing completed work for review, provide:
+### Review Agent → Implementer
+- **Findings** — each classified as Required Fix / Recommended Improvement / Observation.
+- **Review Decision** — GO / GO WITH FIXES / NO-GO, with rationale.
+- **Next Action** — the highest-priority next step.
+- **Implementation Brief** — ready-to-paste: current state, decision, required fixes, known risks, relevant ADRs, affected modules, desired outcome.
 
-#### Session Summary
+### Responding to a review (Implementer)
+- Reconcile findings **individually**: explicitly ACCEPT, PARTIALLY ACCEPT, or REJECT each one.
+- Provide evidence for rejected findings.
+- Generate the next handoff artifact.
 
-* What changed
-* Why it changed
-* Files/modules affected
-* ADRs modified/created
-* Tests added/updated
-* Risks, limitations, deferred work
+### Review principles (Review Agent)
+- Validate against actual code, commits, tests, ADRs, PRs, and documentation — **never trust summaries as ground truth**.
+- Challenge assumptions; request evidence for any unverified claim.
+- Verify ADR consistency and documentation consistency (per the Documentation Rule).
+- Distinguish implementation defects from documentation defects.
+- Identify overpromising user-facing wording (release notes, changelog, UI copy).
+- Separate merge blockers from follow-up work.
 
-#### Review Package
+---
 
-* Branch
-* PR number
-* Commit range
-* Relevant ADRs
-* Relevant docs updated
-* Known concerns
-* Claims that require verification
+## HTML-first UI workflow (mandatory)
 
-#### Reviewer Prompt
+**The HTML prototype is the canonical design source. Compose is an implementation of the HTML specification.**
 
-A ready-to-paste prompt instructing the reviewer to validate the actual repository state, not the summary.
+Every UI feature follows this pipeline:
 
-### Reviewer → Implementer
+> Problem → Research → Competitive analysis → Interactive HTML prototype → Internal critique → User feedback → Design refinement → **DESIGN FREEZE** → Compose implementation → Pixel-parity verification → Device verification → Adversarial review → Merge
 
-When reviewing work, provide:
+### DESIGN FREEZE
 
-#### Findings
+Once a design is frozen, the HTML specification is authoritative and stable.
 
-Classify issues as:
+**Allowed after freeze:** bug fixes · accessibility improvements · performance work · implementation parity fixes · theme compatibility.
 
-* Required Fix
-* Recommended Improvement
-* Observation
+**Not allowed after freeze:** visual redesign · interaction redesign · feature additions.
 
-#### Review Decision
+Any UX change after freeze must **first update the HTML specification**, then be implemented in Compose — never the reverse.
 
-Choose one:
+### Pixel parity
 
-* GO
-* GO WITH FIXES
-* NO-GO
+Before merge, every UI feature must pass parity verification:
 
-Include rationale.
+1. Capture **device screenshots** of the Compose implementation.
+2. Compare against the **frozen HTML prototype**.
+3. Verify parity (layout, spacing, typography, color, interaction states).
 
-#### Next Action
+Differences become review findings (classified per the review principles above) — they are fixed or explicitly accepted, never silently ignored.
 
-State the highest-priority next step.
+---
 
-#### Implementation Brief
+## Release review (Release Agent)
 
-A ready-to-paste prompt for the implementer containing:
+Before any release, the Release Agent verifies:
 
-* Current state
-* Decision
-* Required fixes
-* Known risks
-* Relevant ADRs
-* Affected modules
-* Desired outcome
+- **Release scope** matches [ROADMAP.md](docs/ROADMAP.md) and the [PRD](docs/PRD.md).
+- **Changelog** and **release notes** are accurate, complete, and free of overpromising wording.
+- **Version numbers** are bumped consistently everywhere they appear.
+- **Known limitations** are documented and honest.
+- **Blockers vs deferrals** are correctly categorized (table below).
+- **git status** is clean; the release commit range is what it claims to be.
+- **Packaging contents** are correct (artifact naming, variant, signing).
 
-### Review Principles
+### Release categories — never conflate
 
-Reviewer:
+| Category | Meaning | Gate |
+|---|---|---|
+| **Release Blocker** | Broken or unacceptable for *this* release | Must be fixed before shipping |
+| **Known Limitation** | Accepted, documented gap in this release | Must appear in release notes |
+| **Technical Debt** | Internal quality issue; no immediate user impact | Track and schedule; never ships as a surprise |
+| **Future Enhancement** | Out of scope by design | Belongs on the roadmap |
 
-* Validate against actual code, commits, tests, ADRs, PRs, and documentation.
-* Do not trust summaries as ground truth.
-* Separate merge blockers from follow-up work.
-* Distinguish implementation defects from documentation defects.
+---
 
-Implementer:
+## House conventions
 
-* Reconcile review findings individually.
-* Explicitly ACCEPT, PARTIALLY ACCEPT, or REJECT findings when responding to a review.
-* Provide evidence for rejected findings.
-* Generate the next handoff artifact.
-
-Assume future sessions may not have prior conversation history.
+- **Pure helper extraction** — where logic allows, extract pure (platform-free, unit-testable) helpers rather than embedding logic in framework code.
+- **Thin framework seams** — wrap platform APIs behind thin seams so core logic stays testable and platform-independent.
+- **Invariant documentation** — non-obvious behavior gets its invariant documented where the code lives.
+- **Repository state beats summaries** — the code, commits, and tests are authoritative; summaries are claims.
+- **Docs ship with code** — documentation is updated in the same change as the implementation (see the Documentation Rule).
 
 ---
 
 ## Research standards
 
-Don't rely solely on prior knowledge when research could improve accuracy. When researching product ideas, Android best practices, PDF generation, editor patterns, offline-first/storage approaches, or comparable products:
+Research is the Research Agent's responsibility; don't rely solely on prior knowledge when research could improve accuracy. When researching product ideas, Android best practices, PDF generation, editor patterns, offline-first/storage approaches, or comparable products:
 
 - Use **web search** for up-to-date information; validate against current industry practice.
 - **Cite sources** (markdown links). Land durable findings in [RESEARCH.md](docs/RESEARCH.md) and reference them.
@@ -186,4 +199,4 @@ Use **Mermaid** diagrams aggressively — prefer a diagram over long prose where
 - Use the `android-skills:` skills (`android-dev`, `compose`, `kotlin-flows`, etc.) for implementation detail.
 
 ## Definition of done (for a change)
-1. Code + tests pass. 2. Docs updated per the Documentation Rule. 3. Major decisions recorded as ADRs (Codex-reviewed). 4. No new network/account/cloud dependency. 5. Privacy & offline invariants intact.
+1. Code + tests pass. 2. Docs updated per the Documentation Rule. 3. Major decisions recorded as ADRs (independently reviewed by the Review Agent). 4. UI features: HTML spec frozen + pixel parity verified. 5. No new network/account/cloud dependency. 6. Privacy & offline invariants intact.
