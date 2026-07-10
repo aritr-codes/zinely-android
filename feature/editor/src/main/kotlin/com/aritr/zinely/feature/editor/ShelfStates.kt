@@ -399,7 +399,7 @@ internal fun ShelfEmptyState(modifier: Modifier = Modifier) {
     ) {
         SheetHint()
         BasicText(
-            text = "Make your first little zine.",
+            text = HomeEmptyHeadline,
             style = TextStyle(
                 color = colors.onDesk,
                 fontFamily = ZinelyTheme.typography.voice,

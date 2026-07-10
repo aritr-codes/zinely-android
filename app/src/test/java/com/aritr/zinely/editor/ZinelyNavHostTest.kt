@@ -2,12 +2,16 @@ package com.aritr.zinely.editor
 
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.aritr.zinely.feature.editor.CompletionKeepEditingTestTag
+import com.aritr.zinely.feature.editor.HomeEmptyHeadline
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
@@ -55,7 +59,11 @@ class ZinelyNavHostTest {
             navController = TestNavHostController(LocalContext.current).apply {
                 navigatorProvider.addNavigator(ComposeNavigator())
             }
-            ZinelyNavHost(navController = navController)
+            // `MainActivity` hosts the graph inside `ZinelyTheme`, and the Shelf now reads that
+            // theme's haptics and tokens. A bare host is not the tree the app actually runs.
+            ZinelyTheme {
+                ZinelyNavHost(navController = navController)
+            }
         }
     }
 
@@ -82,6 +90,24 @@ class ZinelyNavHostTest {
         }
     }
 
+    /**
+     * A shelf card prints its title inside `clearAndSetSemantics{}` — one node, one announcement —
+     * so the title is reachable as the card's label, never as a text node. Tests address the object
+     * the way a screen reader does.
+     */
+    private fun cardLabel(title: String) = "$title, finished zine. Open on the bench."
+
+    private fun waitForCard(title: String, timeoutMs: Long = 10_000) {
+        composeRule.waitUntil(timeoutMs) {
+            composeRule.onAllNodesWithContentDescription(cardLabel(title))
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun tapCard(title: String) {
+        composeRule.onNodeWithContentDescription(cardLabel(title)).performClick()
+    }
+
     private fun waitForHome() {
         composeRule.waitUntil(10_000) {
             navController.currentDestination?.hasRoute<HomeRoute>() == true
@@ -102,7 +128,10 @@ class ZinelyNavHostTest {
 
         // Then — HomeRoute is the start destination and single root (ADR-046 §1)
         assertTrue(navController.currentDestination?.hasRoute<HomeRoute>() == true)
-        composeRule.onNodeWithText("My zines").assertExists()
+        // Nothing is seeded, so the shelf that greets a first run is the empty one — after the
+        // skeleton, since the store read is asynchronous. Its head, and its count, appear only once
+        // there is something to count.
+        waitForText(HomeEmptyHeadline)
     }
 
     @Test
@@ -110,10 +139,10 @@ class ZinelyNavHostTest {
         // Given a zine on the shelf
         val id = seedZine()
         setHost()
-        waitForText(SEEDED_TITLE)
+        waitForCard(SEEDED_TITLE)
 
         // When the card is tapped
-        composeRule.onNodeWithText(SEEDED_TITLE).performClick()
+        tapCard(SEEDED_TITLE)
 
         // Then the editor for exactly that project is pushed above Home
         waitForEditor()
@@ -129,16 +158,16 @@ class ZinelyNavHostTest {
         // Given an editor that was just left (its binder release is asynchronous — ADR-046 §2)
         val id = seedZine()
         setHost()
-        waitForText(SEEDED_TITLE)
-        composeRule.onNodeWithText(SEEDED_TITLE).performClick()
+        waitForCard(SEEDED_TITLE)
+        tapCard(SEEDED_TITLE)
         waitForEditor()
         waitForText("Add a photo") // Ready: the supply tray is up
         composeRule.runOnUiThread { navController.popBackStack() }
         waitForHome()
 
         // When the same card is reopened immediately
-        waitForText(SEEDED_TITLE)
-        composeRule.onNodeWithText(SEEDED_TITLE).performClick()
+        waitForCard(SEEDED_TITLE)
+        tapCard(SEEDED_TITLE)
         waitForEditor()
 
         // Then the editor awaits the single-writer slot and boots Ready — no spurious boot error
@@ -186,8 +215,8 @@ class ZinelyNavHostTest {
         // Given the full chain above one editor: Home / Editor / Preview / Export / Completion
         val id = seedZine()
         setHost()
-        waitForText(SEEDED_TITLE)
-        composeRule.onNodeWithText(SEEDED_TITLE).performClick()
+        waitForCard(SEEDED_TITLE)
+        tapCard(SEEDED_TITLE)
         waitForEditor()
         waitForText("Add a photo")
         composeRule.runOnUiThread {

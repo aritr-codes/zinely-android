@@ -34,7 +34,12 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
@@ -164,11 +169,12 @@ internal fun ShelfCard(
                 Column {
                     Text(
                         text = card.formatLabel.uppercase(),
-                        fontFamily = type.shell,
-                        fontSize = 9.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.16.em,
-                        color = colors.inkSoft,
+                        style = cssTextStyle(
+                            fontFamily = type.shell,
+                            fontSize = 9.5.sp,
+                            lineHeight = 9.5.sp * 1.2f,
+                            color = colors.inkSoft,
+                        ).copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.16.em),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -176,12 +182,12 @@ internal fun ShelfCard(
                     Text(
                         text = card.title,
                         modifier = Modifier.padding(top = 6.dp),
-                        fontFamily = type.voice,
-                        fontSize = titleSize,
-                        fontWeight = FontWeight.SemiBold,
-                        lineHeight = titleSize * 1.06f,
-                        letterSpacing = (-0.015).em,
-                        color = colors.ink,
+                        style = cssTextStyle(
+                            fontFamily = type.voice,
+                            fontSize = titleSize,
+                            lineHeight = titleSize * 1.06f,
+                            color = colors.ink,
+                        ).copy(fontWeight = FontWeight.SemiBold, letterSpacing = (-0.015).em),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -190,9 +196,12 @@ internal fun ShelfCard(
                     text = card.editedLabel,
                     // `.edition{bottom:12px}` against the cover's own `padding:15px 14px` box.
                     modifier = Modifier.align(Alignment.BottomStart).offset(y = 3.dp),
-                    fontFamily = type.shell,
-                    fontSize = 10.5.sp,
-                    color = colors.inkSoft,
+                    style = cssTextStyle(
+                        fontFamily = type.shell,
+                        fontSize = 10.5.sp,
+                        lineHeight = 10.5.sp * 1.2f,
+                        color = colors.inkSoft,
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -249,6 +258,33 @@ private fun MoreButton(title: String, onClick: () -> Unit, modifier: Modifier = 
         }
     }
 }
+
+/**
+ * A text style whose box is the height CSS says it is.
+ *
+ * Compose, unlike CSS, pads a text node with the font's own ascent/descent metrics and centres the
+ * declared `lineHeight` inside that padding. On the cover this is not cosmetic: `.title` is a
+ * `line-height:1.06` two-line clamp sitting directly above an ink band that begins at `top:32%`, and
+ * the extra leading pushes its second line down into the print. Trimming the first line's top and the
+ * last line's bottom, and dropping the legacy font padding, makes `lineHeight` mean what the frozen
+ * stylesheet means by it.
+ */
+private fun cssTextStyle(
+    fontFamily: FontFamily,
+    fontSize: TextUnit,
+    lineHeight: TextUnit,
+    color: Color,
+): TextStyle = TextStyle(
+    color = color,
+    fontFamily = fontFamily,
+    fontSize = fontSize,
+    lineHeight = lineHeight,
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both,
+    ),
+)
 
 /** `clamp(17px, 4.6vw, 22px)` — the one type size in the trilogy that scales with the viewport. */
 @Composable

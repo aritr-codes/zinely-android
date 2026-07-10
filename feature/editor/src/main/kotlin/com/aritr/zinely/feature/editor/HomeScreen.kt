@@ -1,42 +1,12 @@
 package com.aritr.zinely.feature.editor
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,38 +17,34 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.ui.components.ZSnackbar
+import com.aritr.zinely.ui.components.ZToast
+import com.aritr.zinely.ui.theme.ZinelyHaptic
+import com.aritr.zinely.ui.theme.ZinelyTheme
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 
-/** Test tag on the shelf list (the Content state's scrollable column of zine cards). */
+/** Test tag on the shelf grid (the Content state's objects). */
 public const val HomeShelfTestTag: String = "home-shelf"
 
-/** Test tag on the Loading spinner container. */
+/** Test tag on the loading skeleton. */
 public const val HomeLoadingTestTag: String = "home-loading"
 
 /** Test tag on the empty-shelf invitation container. */
 public const val HomeEmptyStateTestTag: String = "home-empty-state"
 
-/** Headline for the empty shelf (SCREEN-INVENTORY §Home), paired with its Start-a-zine CTA. */
-public const val HomeEmptyHeadline: String = "Nothing here yet — let's change that."
+/** `.empty h2` — the invitation, which teaches rather than reports (`shelf.html:399`). */
+public const val HomeEmptyHeadline: String = "Make your first little zine."
 
-/** Test tag on the rename dialog, its title field, and its confirm button (ADR-044 §4). */
-public const val HomeRenameDialogTestTag: String = "home-rename-dialog"
+/** Test tags on the rename row inside the action sheet (`.rename input`, `.rename .save`). */
 public const val HomeRenameFieldTestTag: String = "home-rename-field"
 public const val HomeRenameConfirmTestTag: String = "home-rename-confirm"
 
-/** Test tag on the Start-a-zine paper chooser dialog (S7.1/ADR-047). */
+/** Test tag on the Start-a-zine paper chooser (`#createSheet`, S7.1/ADR-047). */
 public const val HomePaperChooserTestTag: String = "home-paper-chooser"
 
 /** Test tag for one paper choice inside the chooser. */
@@ -88,17 +54,11 @@ public fun homePaperChoiceTestTag(paperSize: PaperSize): String =
 /** Test tag for one zine card on the shelf, keyed by its stable project [id]. */
 public fun homeCardTestTag(id: String): String = "home-card-$id"
 
-/** Test tag for a card's overflow-menu button. */
+/** Test tag for a card's `⋯` affordance. */
 public fun homeCardMenuTestTag(id: String): String = "home-card-menu-$id"
 
-/** Test tag for a card's rendered page-1 thumbnail image (ADR-045). */
-public fun homeCardThumbnailTestTag(id: String): String = "home-card-thumb-$id"
-
-/** Test tag for a card's warm paper placeholder, shown whenever no thumbnail exists. */
-public fun homeCardThumbnailPlaceholderTestTag(id: String): String = "home-card-thumb-placeholder-$id"
-
-/** The undo snackbar's message for a hidden-pending-delete zine (VOICE: gentle, undoable). */
-public fun homeDeletedMessage(title: String): String = "“$title” deleted"
+/** `Deleted “X”` — `$("#snackText").textContent` (`shelf.html:723`). */
+public fun homeDeletedMessage(title: String): String = "Deleted “$title”"
 
 /**
  * One zine on the shelf — the feature-local UI model, carrying only what the card shows
@@ -111,8 +71,12 @@ public data class HomeZineCard(
     val formatLabel: String,
     val editedLabel: String,
     /**
-     * The rendered page-1 thumbnail (ADR-045), already decoded off-main by the host; `null` shows
-     * the warm paper placeholder — a missing thumbnail is never a broken card.
+     * The rendered page-1 thumbnail (ADR-045).
+     *
+     * **Not rendered.** The frozen Shelf prints a generated riso cover per zine instead of a page
+     * preview — an owner decision, taken with the pipeline left in place. The producer, its ADR and
+     * its tests are untouched; nothing on this surface reads this field. Retiring or reviving the
+     * pipeline is an M6 owner decision.
      */
     val thumbnail: ImageBitmap? = null,
 )
@@ -120,7 +84,8 @@ public data class HomeZineCard(
 /**
  * One-shot shelf event from the host to the screen (ADR-044 §3/§5) — feature-local so the module
  * stays free of `:core:data`. Queued events, not observable state: each is consumed exactly once
- * by the screen's snackbar loop, so multiple deletes serialise and recomposition can't replay one.
+ * by the screen's serialising loop, so multiple deletes queue behind one another and recomposition
+ * can't replay one.
  */
 public sealed interface HomeShelfEvent {
     /**
@@ -129,26 +94,36 @@ public sealed interface HomeShelfEvent {
      */
     public data class DeletePrompt(val id: String, val title: String) : HomeShelfEvent
 
-    /** A transient, warm, already-worded message (mutation failures). */
+    /** A warm, transient message (a failed mutation). */
     public data class Message(val text: String) : HomeShelfEvent
 }
 
 /**
- * Home · "My zines" (read shelf ADR-043 + S6.3 actions ADR-044; SCREEN-INVENTORY §Home): a cozy
- * list of paper cards, newest first *as given* (ordering is the `ProjectRepository` contract,
- * never re-derived here), each opening its zine via [onOpenZine]. **Start a zine** is always
- * reachable — the empty invitation's CTA (the ADR-043 §5 deviation is over) and an extended FAB on
- * the content shelf; both open the paper chooser (S7.1/ADR-047), and only a picked paper fires
- * [onStartZine]. Each card carries an overflow menu: Rename (gentle dialog, blank disabled),
- * Duplicate, and a confirm-less Delete whose undo window is the snackbar driven by [events]
- * ([HomeShelfEvent.DeletePrompt] → Undo ⇒ [onDeleteUndo], dismissed ⇒ [onDeleteCommit]). The
- * open-editor exclusion lives in the data layer (`DataError.Busy`), not here — failures arrive
- * back as warm [HomeShelfEvent.Message]s. Stateless but for the rename draft and the snackbar;
- * the host owns state, timing of nothing (the snackbar owns the undo window), and navigation.
+ * Which sheet is open. **At most one, ever** — `show()` in the frozen spec calls `closeSheets(true)`
+ * before opening, and marks every other sheet plus the whole app behind the scrim `inert`. Modelling
+ * the open sheet as one nullable value rather than three booleans makes that invariant unstateable
+ * otherwise, which is the point: two open sheets is not a bug to be fixed, it is a state that cannot
+ * be written down.
+ */
+private sealed interface ShelfSheet {
+    data object Create : ShelfSheet
+    data object Sort : ShelfSheet
+    data class Actions(val cardId: String) : ShelfSheet
+}
+
+/** What the snackbar is waiting to be told: `true` = the user pressed Undo. */
+private class UndoRequest(val id: String, val message: String, val outcome: CompletableDeferred<Boolean>)
+
+/**
+ * The Home · "My zines" shelf — a drawer of small printed objects, not a list of files.
  *
- * [storeEmpty] is the honest empty-shelf signal (ADR-044 §3, wired by ADR-046): the invitation
- * shows only when the STORE is empty — a shelf filtered to zero visible [cards] by pending
- * undoable deletes is a zero-card shelf (with the FAB still reachable), never the invitation.
+ * Stateless with respect to the store: it renders the [cards] it is given and hands every mutation
+ * back. Search and sort are *view* state and live here, because nothing outside this screen has an
+ * opinion about them; [SHELF_TOOLS_THRESHOLD] decides whether they are offered at all.
+ *
+ * [storeEmpty] is the honest empty signal (ADR-044 §3): the invitation shows only when the STORE is
+ * empty — a shelf filtered to zero visible [cards] by pending undoable deletes is a zero-card shelf,
+ * never the invitation. A shelf filtered to zero by a *search* is neither: it is the search miss.
  */
 @Composable
 public fun HomeScreen(
@@ -168,374 +143,192 @@ public fun HomeScreen(
     error: Boolean = false,
     onRetry: () -> Unit = {},
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
+    val haptics = ZinelyTheme.haptics
+
+    var openSheet by remember { mutableStateOf<ShelfSheet?>(null) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var sort by rememberSaveable { mutableStateOf(ShelfSort.Recent) }
+
+    var undo by remember { mutableStateOf<UndoRequest?>(null) }
+    var toast by remember { mutableStateOf<Pair<String, CompletableDeferred<Unit>>?>(null) }
+
     // The collector outlives recompositions; always call the latest handlers.
     val currentUndo by rememberUpdatedState(onDeleteUndo)
     val currentCommit by rememberUpdatedState(onDeleteCommit)
+
+    // One collector, and it *suspends* on each event until that event's surface is finished with.
+    // Two deletes in quick succession therefore queue: the second snackbar never overwrites the
+    // first, which would silently commit a delete the user still had a window to undo.
     LaunchedEffect(events) {
         events.collect { event ->
             when (event) {
                 is HomeShelfEvent.DeletePrompt -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = homeDeletedMessage(event.title),
-                        actionLabel = "Undo",
-                        duration = SnackbarDuration.Long,
+                    val outcome = CompletableDeferred<Boolean>()
+                    undo = UndoRequest(event.id, homeDeletedMessage(event.title), outcome)
+                    try {
+                        if (outcome.await()) currentUndo(event.id) else currentCommit(event.id)
+                    } finally {
+                        undo = null
+                        // A rotation disposes this composition and cancels the `await` above. The
+                        // card is already hidden, so leaving the outcome unresolved would strand the
+                        // zine: gone from the shelf, still in the store, with no window left to undo.
+                        // Ending the window early *is* the answer ADR-046 §4 already gives for the
+                        // sibling case (navigating away commits); the pending delete resolves the
+                        // same way here, on the ViewModel's scope, which outlives the Activity.
+                        if (!outcome.isCompleted) currentCommit(event.id)
+                    }
+                }
+
+                is HomeShelfEvent.Message -> {
+                    val gone = CompletableDeferred<Unit>()
+                    toast = event.text to gone
+                    gone.await()
+                    toast = null
+                }
+            }
+        }
+    }
+
+    val shown = remember(cards, query, sort) { shelfVisibleCards(cards, query, sort) }
+    val searchable = cards.size >= SHELF_TOOLS_THRESHOLD
+    val showTools = searchable && !loading && !storeEmpty && !error
+    val showHead = !loading && !storeEmpty && !error
+
+    BoxWithConstraints(modifier.fillMaxSize().background(ZinelyTheme.colors.desk)) {
+        val shelfWidth = maxWidth
+        val wide = shelfWidth >= 820.dp
+        Column(Modifier.fillMaxSize()) {
+            ShelfAppBar()
+            if (showTools) {
+                ShelfTools(
+                    query = query,
+                    onQueryChange = { query = it },
+                    sortLabel = sort.buttonLabel,
+                    onSortClick = { haptics.perform(ZinelyHaptic.Tick); openSheet = ShelfSheet.Sort },
+                )
+            }
+            if (showHead) ShelfHead(cards.size)
+
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                when {
+                    // An unreadable shelf must never flash the empty invitation, and a skeleton over
+                    // a failed read would hold still forever.
+                    error -> ShelfErrorState(onRetry, Modifier.fillMaxSize())
+
+                    loading -> ShelfLoadingSkeleton(
+                        columns = shelfColumns(shelfWidth),
+                        roomy = wide,
+                        modifier = Modifier.fillMaxSize(),
                     )
-                    when (result) {
-                        SnackbarResult.ActionPerformed -> currentUndo(event.id)
-                        SnackbarResult.Dismissed -> currentCommit(event.id)
-                    }
+
+                    storeEmpty -> ShelfEmptyState(Modifier.fillMaxSize())
+
+                    // `if(many && q && list.length===0)` — a search that matched nothing is not an
+                    // empty shelf. The zines are all still there; the name isn't.
+                    searchable && query.isNotBlank() && shown.isEmpty() ->
+                        ShelfSearchMiss(Modifier.align(Alignment.TopCenter))
+
+                    else -> ShelfGrid(
+                        cards = shown,
+                        onOpenZine = onOpenZine,
+                        onZineActions = { id ->
+                            haptics.perform(ZinelyHaptic.Tick)
+                            openSheet = ShelfSheet.Actions(id)
+                        },
+                        modifier = Modifier.fillMaxSize().testTag(HomeShelfTestTag),
+                    )
                 }
-                is HomeShelfEvent.Message -> snackbarHostState.showSnackbar(event.text)
             }
         }
-    }
 
-    var renameTarget by remember { mutableStateOf<HomeZineCard?>(null) }
-    // Both create affordances (empty CTA + FAB) open the one paper chooser (S7.1/ADR-047):
-    // the create is committed only when a paper is picked — Letter is never silently assumed.
-    // Saveable so a rotation mid-question keeps the dialog up (Codex).
-    var paperChooserOpen by rememberSaveable { mutableStateOf(false) }
-
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            // The empty state carries its own inline CTA; doubling it with a FAB would shout. A
-            // zero-card (pending-delete-filtered) shelf keeps the FAB: Start a zine stays reachable.
-            // The error state hides it (`dock.classList.toggle("hide", err)`): there is no starting a
-            // new zine on a shelf that cannot be read.
-            if (!loading && !storeEmpty && !error) {
-                ExtendedFloatingActionButton(onClick = { paperChooserOpen = true }) {
-                    Icon(Icons.Filled.Add, contentDescription = null)
-                    Spacer(Modifier.size(8.dp))
-                    Text("Start a zine")
-                }
-            }
-        },
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            Text(
-                text = "My zines",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                // Desk-level text: the scaffold body is `background` (the dark desk), not a paper
-                // card, so the pairing role is onBackground — onSurface is ink for paper surfaces
-                // and vanishes on the desk in dark mode.
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 8.dp),
+        // `.dock{ position:sticky }` floats over the scroll (whose 112dp bottom padding clears it).
+        // `dock.classList.toggle("hide", err)` — no starting a new zine on a shelf that can't be read.
+        if (!error) {
+            ShelfDock(
+                onStart = { haptics.perform(ZinelyHaptic.Tick); openSheet = ShelfSheet.Create },
+                wide = wide,
+                modifier = Modifier.align(Alignment.BottomCenter),
             )
-            when {
-                // Before loading: an unreadable shelf must never flash the empty invitation, and a
-                // stale spinner over a failed read would spin forever.
-                error -> ShelfErrorState(onRetry, Modifier.fillMaxSize())
+        }
 
-                loading -> Box(
-                    modifier = Modifier.fillMaxSize().testTag(HomeLoadingTestTag),
-                    contentAlignment = Alignment.Center,
-                ) { CircularProgressIndicator() }
-
-                storeEmpty -> HomeEmptyShelf({ paperChooserOpen = true }, Modifier.fillMaxSize())
-
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize().testTag(HomeShelfTestTag),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    itemsIndexed(cards, key = { _, card -> card.id }) { index, card ->
-                        HomeZineCardRow(
-                            card = card,
-                            // A hair of alternating tilt — handmade, not template-made
-                            // (DESIGN-LANGUAGE §2); static, so reduced motion is untouched.
-                            tilt = if (index % 2 == 0) -0.6f else 0.6f,
-                            onOpen = { onOpenZine(card.id) },
-                            onRename = { renameTarget = card },
-                            onDuplicate = { onDuplicateZine(card.id) },
-                            onDelete = { onDeleteZine(card.id) },
-                        )
-                    }
-                }
-            }
+        // `.snackbar`/`.toast{ bottom:96px }` — above the dock, never under the thumb that made them.
+        undo?.let { request ->
+            ZSnackbar(
+                message = request.message,
+                actionLabel = "Undo",
+                onAction = { haptics.perform(ZinelyHaptic.Tick); request.outcome.complete(true) },
+                onTimeout = { request.outcome.complete(false) },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp),
+            )
+        }
+        toast?.let { (text, gone) ->
+            ZToast(
+                message = text,
+                onTimeout = { gone.complete(Unit) },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp),
+            )
         }
     }
 
-    renameTarget?.let { target ->
-        HomeRenameDialog(
-            card = target,
-            onRename = { title ->
-                renameTarget = null
-                onRenameZine(target.id, title)
-            },
-            onKeepName = { renameTarget = null },
-        )
-    }
-
-    if (paperChooserOpen) {
-        HomePaperChooserDialog(
-            onChoose = { paper ->
-                paperChooserOpen = false
-                onStartZine(paper)
-            },
-            onDismiss = { paperChooserOpen = false },
-        )
-    }
-}
-
-/**
- * The Start-a-zine paper chooser (S7.1/ADR-047): one warm question — which paper will this zine be
- * printed on — with both supported answers as full-width tappable rows (tap = create, no separate
- * confirm). Core imposition has been paper-agnostic since S1; this dialog ends the shelf's
- * hardcoded Letter. VOICE: dimensions as people print them, "Not now" (never "Cancel").
- */
-@Composable
-private fun HomePaperChooserDialog(
-    onChoose: (PaperSize) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.testTag(HomePaperChooserTestTag),
-        title = { Text("What paper will you print on?") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PaperChoiceRow(PaperSize.LETTER, "Letter", "8.5 × 11 in", onChoose)
-                PaperChoiceRow(PaperSize.A4, "A4", "210 × 297 mm", onChoose)
-            }
+    ShelfCreateSheet(
+        visible = openSheet is ShelfSheet.Create,
+        onDismiss = { openSheet = null },
+        onChoosePaper = { paper ->
+            openSheet = null
+            onStartZine(paper)
         },
-        confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Not now") } },
     )
-}
 
-/** One tappable paper option: name over its size, a ≥48dp row styled like the shelf's cards. */
-@Composable
-private fun PaperChoiceRow(
-    paperSize: PaperSize,
-    name: String,
-    dimensions: String,
-    onChoose: (PaperSize) -> Unit,
-) {
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(homePaperChoiceTestTag(paperSize))
-            .semantics { role = Role.Button }
-            .clickable(onClickLabel = "Start a $name zine") { onChoose(paperSize) },
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text = dimensions,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
+    ShelfSortSheet(
+        visible = openSheet is ShelfSheet.Sort,
+        selected = sort,
+        onDismiss = { openSheet = null },
+        onSelect = { sort = it },
+    )
 
-/**
- * One paper card on the shelf: title over format + recency; the card body is one ≥48dp open tap,
- * and the trailing overflow menu holds the S6.3 actions (Rename / Duplicate / Delete).
- */
-@Composable
-private fun HomeZineCardRow(
-    card: HomeZineCard,
-    tilt: Float,
-    onOpen: () -> Unit,
-    onRename: () -> Unit,
-    onDuplicate: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        shadowElevation = 1.dp,
-        modifier = Modifier
-            .fillMaxWidth()
-            .rotate(tilt)
-            .testTag(homeCardTestTag(card.id))
-            .semantics { role = Role.Button }
-            .clickable(onClickLabel = "Open ${card.title}") { onOpen() },
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            HomeCardThumbnail(
-                card = card,
-                modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp),
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp, top = 12.dp, bottom = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Text(
-                    text = card.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = card.formatLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = card.editedLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Box(modifier = Modifier.padding(end = 4.dp)) {
-                var menuOpen by remember { mutableStateOf(false) }
-                IconButton(
-                    onClick = { menuOpen = true },
-                    modifier = Modifier.testTag(homeCardMenuTestTag(card.id)),
-                ) {
-                    Icon(
-                        Icons.Filled.MoreVert,
-                        contentDescription = "Options for ${card.title}",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text("Rename") },
-                        onClick = { menuOpen = false; onRename() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Duplicate") },
-                        onClick = { menuOpen = false; onDuplicate() },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete") },
-                        onClick = { menuOpen = false; onDelete() },
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * The card's little page-1 render (ADR-045, SCREEN-INVENTORY §Home "paper-card thumbnail") — a
- * fixed paper-shaped slot so cards never jump when a thumbnail arrives. No thumbnail (still
- * rendering, unreadable document, decode failure) shows a soft blank paper placeholder: warm,
- * never broken. Decorative — the title text is the card's accessible name, so no description.
- */
-@Composable
-private fun HomeCardThumbnail(card: HomeZineCard, modifier: Modifier = Modifier) {
-    val shape = MaterialTheme.shapes.small
-    Box(
-        modifier = modifier
-            .size(width = 44.dp, height = 64.dp)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center,
-    ) {
-        val thumbnail = card.thumbnail
-        if (thumbnail != null) {
-            Image(
-                bitmap = thumbnail,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize().testTag(homeCardThumbnailTestTag(card.id)),
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .testTag(homeCardThumbnailPlaceholderTestTag(card.id)),
-            )
-        }
-    }
-}
-
-/**
- * The gentle rename dialog (VOICE: **[ Keep name ] [ Rename ]**, never "Are you sure"). The draft
- * starts as the current title; a blank draft disables Rename — the VM additionally trims and
- * treats blank as keep, so this is belt over that brace (ADR-044 §4).
- */
-@Composable
-private fun HomeRenameDialog(
-    card: HomeZineCard,
-    onRename: (String) -> Unit,
-    onKeepName: () -> Unit,
-) {
-    var draft by remember(card.id) { mutableStateOf(card.title) }
-    AlertDialog(
-        onDismissRequest = onKeepName,
-        modifier = Modifier.testTag(HomeRenameDialogTestTag),
-        title = { Text("Rename this zine?") },
-        text = {
-            OutlinedTextField(
-                value = draft,
-                onValueChange = { draft = it },
-                singleLine = true,
-                modifier = Modifier.testTag(HomeRenameFieldTestTag),
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onRename(draft) },
-                enabled = draft.isNotBlank(),
-                modifier = Modifier.testTag(HomeRenameConfirmTestTag),
-            ) { Text("Rename") }
-        },
-        dismissButton = { TextButton(onClick = onKeepName) { Text("Keep name") } },
+    // The card outlives its sheet's exit slide: nulling it on dismiss would hard-cut the animation.
+    var actionCard by remember { mutableStateOf<HomeZineCard?>(null) }
+    val target = (openSheet as? ShelfSheet.Actions)?.let { open -> cards.firstOrNull { it.id == open.cardId } }
+    LaunchedEffect(target) { if (target != null) actionCard = target }
+    ShelfActionSheet(
+        visible = target != null,
+        card = actionCard,
+        onDismiss = { openSheet = null },
+        onOpen = onOpenZine,
+        onRename = onRenameZine,
+        onDuplicate = onDuplicateZine,
+        onDelete = onDeleteZine,
     )
 }
 
 /**
- * The empty shelf — the canonical SCREEN-INVENTORY §Home pairing: warm invitation + its
- * **Start a zine** CTA (S6.3, ADR-044 §4 — this ends the ADR-043 §5 named deviation). Since the
- * S6.5 re-root retired the `"default"` seed-on-miss (ADR-046), this is the real first-run landing.
+ * `sorted(list)` then `list.filter(...)` — the shelf's view of its own objects.
+ *
+ * **A conflict with the frozen spec, resolved in the spec's favour where it can be.** The prototype
+ * sorts on a `d` date field that no repository row exposes to this screen; the card carries a
+ * *recency label*, not a timestamp. But the repository's contract (ADR-042 §7) is that
+ * `observeProjects()` emits newest-first, so:
+ *
+ * - `Recent` is the given order, passed through untouched — which is exactly what the spec's
+ *   `y.d.localeCompare(x.d)` computes.
+ * - `Oldest` is that order reversed — likewise exactly `x.d.localeCompare(y.d)`.
+ * - `Name` sorts by title, case-insensitively, as `localeCompare` does.
+ *
+ * No date is re-derived here and no ordering is invented; the spec's three orders are reproduced
+ * from the one ordering the repository is contractually required to provide.
  */
-@Composable
-private fun HomeEmptyShelf(onStartZine: () -> Unit, modifier: Modifier = Modifier) {
-    // This whole invitation sits directly on the desk (`background`), not on a paper card, so its
-    // text pairs with onBackground (secondary lines: the shared soft desk role, see DeskText.kt).
-    val colors = MaterialTheme.colorScheme
-    Column(
-        modifier = modifier.testTag(HomeEmptyStateTestTag).padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = HomeEmptyHeadline,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = colors.onBackground,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.size(8.dp))
-        Text(
-            text = "Every zine you make will line up right here.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.deskTextSoft,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.size(16.dp))
-        Button(onClick = onStartZine) { Text("Start a zine") }
-        Spacer(Modifier.size(16.dp))
-        Text(
-            text = "works offline · stays on your phone",
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.deskTextSoft,
-            textAlign = TextAlign.Center,
-        )
+internal fun shelfVisibleCards(
+    cards: List<HomeZineCard>,
+    query: String,
+    sort: ShelfSort,
+): List<HomeZineCard> {
+    val sorted = when (sort) {
+        ShelfSort.Recent -> cards
+        ShelfSort.Oldest -> cards.asReversed()
+        ShelfSort.Name -> cards.sortedBy { it.title.lowercase() }
     }
+    val needle = query.trim().lowercase()
+    // `if(many && q)` — a shelf too small to offer search is never filtered by a stale query.
+    if (needle.isEmpty() || cards.size < SHELF_TOOLS_THRESHOLD) return sorted
+    return sorted.filter { it.title.lowercase().contains(needle) }
 }
