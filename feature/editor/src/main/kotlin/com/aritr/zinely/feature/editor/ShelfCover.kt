@@ -1,6 +1,8 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -94,16 +97,23 @@ internal fun Modifier.shelfSettle(index: Int): Modifier {
  * (kicker, title, edition) is the caller's, laid out inside the frozen `15px 14px` padding and over
  * the ink — the spec keeps text at `z-index:2` on paper so it stays legible whatever the band does.
  *
+ * [lifted] is `:hover, :focus-visible` and [pressed] is `:active`. Both straighten the object — an
+ * object you have picked up hangs plumb — and the press is a *smaller* lift than the hover, so a tap
+ * reads as the object settling back toward the shelf rather than leaping off it. Only the lift deepens
+ * the shadow: the spec's `:active` rule sets no `box-shadow`, so a touch (which never hovers) presses
+ * the object without raising it.
+ *
  * Deliberately absent, and unchanged from the M2 deviations already recorded: the `.wip` variant
  * (`.cover.wip .art{opacity:.5}` and the pencil tick) — no `ProjectRepository` field says a zine is
- * unfinished, so nothing can drive it. The hover/focus lift and the `:active` press are the *card's*
- * to own, since they read a click's interaction source; they land with it, not here.
+ * unfinished, so nothing can drive it.
  */
 @Composable
 internal fun ShelfCover(
     recipe: ShelfCoverRecipe,
     index: Int,
     modifier: Modifier = Modifier,
+    lifted: Boolean = false,
+    pressed: Boolean = false,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val colors = ZinelyTheme.colors
@@ -112,15 +122,41 @@ internal fun ShelfCover(
     val ink2 = recipe.accent?.toColor(colors)
         ?: colors.teal.takeIf { recipe.archetype == ShelfArchetype.Split }
 
+    // `transition: transform var(--base) var(--ease), box-shadow var(--base) var(--ease)`.
+    val motion = LocalZinelyMotion.current
+    val tilt by animateFloatAsState(
+        targetValue = if (lifted || pressed) 0f else shelfTilt(index),
+        animationSpec = motion.base(),
+        label = "shelfCoverTilt",
+    )
+    val rise by animateDpAsState(
+        targetValue = when {
+            pressed -> (-1).dp
+            lifted -> (-4).dp
+            else -> 0.dp
+        },
+        animationSpec = motion.base(),
+        label = "shelfCoverRise",
+    )
+    val squeeze by animateFloatAsState(
+        targetValue = if (pressed) 0.995f else 1f,
+        animationSpec = motion.base(),
+        label = "shelfCoverSqueeze",
+    )
+
     ZPaperSurface(
         modifier = modifier
             .fillMaxWidth()
             .aspectRatio(3f / 4f)
             .graphicsLayer {
-                rotationZ = shelfTilt(index)
+                rotationZ = tilt
+                translationY = rise.toPx()
+                scaleX = squeeze
+                scaleY = squeeze
                 transformOrigin = TransformOrigin(0.5f, 1f)
             },
         shape = RoundedCornerShape(topStart = 3.dp, topEnd = 5.dp, bottomEnd = 5.dp, bottomStart = 3.dp),
+        shadow = if (lifted) ZinelyTheme.elevation.shadowLift else ZinelyTheme.elevation.shadow2,
         boundEdgeWidth = 7.dp,
         boundEdgeAlpha = 0.14f,
         usePaper2 = recipe.usePaper2,
