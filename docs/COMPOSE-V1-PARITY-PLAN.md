@@ -192,24 +192,32 @@ flowchart LR
   **9 pt** cut — `opsz` needs API 26, minSdk is 24 — and M2's pixel-parity gate is the check on it.
 - **Complexity:** Medium.
 
-### M1 — Shared component library
-- **Goal:** the reusable `Z*` chrome the HTML shares across surfaces, each carrying a11y by
-  construction.
-- **Components:** buttons (primary/ghost/icon), scrim + `inert`-modal sheet, snackbar (`role=status`
-  + Undo), toast, cards, dialogs, loading/error chrome (replacing the inline per-destination
-  `CircularProgressIndicator`/error `Column`s), an **AccessibleControl** wrapper encoding the
-  "spoken label + `Role.Button` + ≥48dp + cleared decoration" pattern, and the debug-only prototype
-  harness.
-- **Files:** **new** `ui/components/` (`ZButton.kt`, `ZSheet.kt`, `ZSnackbar.kt`, `ZToast.kt`,
-  `ZCard.kt`, `ZDialog.kt`, `ZLoadError.kt`, `ZAccessibleControl.kt`); consumes M0 tokens.
+### M1 — Shared component library — ✅ DONE (2026-07-10, [ADR-049](DECISIONS.md#adr-049))
+- **Goal:** the reusable `Z*` chrome the HTML shares across surfaces (≥2 consumers), each carrying
+  a11y by construction.
+- **Files (as shipped):** **new** `ui/components/` — `ZinelyShadow.kt` (the M0-deferred multi-layer
+  shadow `Modifier`, with the CSS-blur→BlurMaskFilter sigma conversion), `ZFocusRing.kt`,
+  `ZAccessibleControl.kt`, `ZButton.kt` (`ZPrimaryButton` + `ZPrimaryButtonMetrics.{Shelf,Bench,Proof}`
+  test-pinned presets, `ZStampButton`, `ZIconButton`, `ZToolButton` + five presets), `ZSheet.kt`
+  (custom Dialog-hosted scrim+sheet; **no drag-to-dismiss** — the frozen grip is decorative;
+  Material3 `ModalBottomSheet` rejected in ADR-049), `ZMenuItem.kt` (+ `ZSelectedStyle` — shelf and
+  proof select **oppositely**, a spec-driven param), `ZSnackbar.kt` (component-owned flat 5s timer,
+  focus-to-action), `ZToast.kt` (2.2s), `ZStatusPane.kt`, `ZSweep.kt` (reduced motion = the spec's
+  static `.4` wash), `ZPaperSurface.kt`, `ZTextField.kt`.
 - **Dependencies:** M0.
-- **Review criteria:** each component matches the frozen shared-component behavior across all three
-  surfaces; a11y semantics baked in (not left to callers); reduced-motion honored; stable test tags
-  preserved/introduced.
-- **DoD:** per-component Compose UI tests + Roborazzi goldens; a11y assertions; no inline
-  re-implementation remains for these primitives on migrated screens.
-- **Risks:** premature generalization (build only what ≥2 surfaces share; leave one-offs inline);
-  the `inert`-modal focus-trap parity in Compose.
+- **DoD:** ✅ `ZComponentsTest` (14) — preset pins, timers via `mainClock`, roles/selection/48dp/
+  disabled/dismissal; `ZComponentGoldenTest` (2) — light+dark galleries with behavioural pixel
+  asserts (golden PNGs record on the pinned CI image post-push, per the module convention). Full
+  `:feature:editor` suite 164/0; `assembleDebug` green.
+- **Deviations from the plan (recorded in ADR-049):** **no `ZDialog`** — the frozen trilogy contains
+  zero dialogs; sheets are the only modal idiom, and HomeScreen's two inline `AlertDialog`s migrate
+  to `ZSheet` in M2. **No `ZCard`** — the recurring surface is the physical `ZPaperSurface`.
+  **No prototype dock** — spec marks it review scaffolding; Roborazzi drives theme/size directly.
+  **Hover states skipped** (spec's own `@media (hover:none)` precedent; press transforms shipped).
+- **Carried into M2:** loading/error migration happens per-screen (`zinelySweep` + `ZStatusPane`
+  replace the inline spinner/error `Column`s as each screen reskins); HomeScreen's no-action
+  snackbar `Message` events route to `ZToast` (frozen vocabulary); riso art field lands with M2 and
+  is extracted at M3 as a golden-preserving move.
 - **Complexity:** Medium.
 
 ### M2 — Shelf parity
