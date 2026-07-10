@@ -66,8 +66,15 @@ class HomeViewModelTest {
             { error("script duplicateResult when the test asserts on it") }
         var deleteResult: () -> DataResult<Unit> = { DataResult.Success(Unit) }
 
+        /** When set, the *next* collection of [observeProjects] throws instead of emitting. */
+        var observeFailure: Throwable? = null
+
         override fun observeProjects(): Flow<List<ProjectSummary>> = flow {
             observeCollections++
+            observeFailure?.let { failure ->
+                observeFailure = null // one scripted failure: a retry must be able to succeed
+                throw failure
+            }
             emitAll(projects)
         }
 
@@ -172,6 +179,56 @@ class HomeViewModelTest {
 
         val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
         assertEquals(HomeUiState.Loading, viewModel.state.value)
+        job.cancel()
+    }
+
+    @Test
+    fun `a store that cannot be read is the Error shelf, not an empty one`() = runTest {
+        repository.observeFailure = IllegalStateException("the store is unreadable")
+        val viewModel = viewModel()
+
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+
+        // Never Empty: an unreadable shelf must not invite you to make your first zine.
+        assertEquals(HomeUiState.Error, viewModel.state.value)
+        job.cancel()
+    }
+
+    @Test
+    fun `retry re-subscribes and a shelf that reads on the second ask recovers`() = runTest {
+        repository.observeFailure = IllegalStateException("the store is unreadable")
+        val viewModel = viewModel()
+
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        assertEquals(HomeUiState.Error, viewModel.state.value)
+        assertEquals(1, repository.observeCollections)
+
+        // When retried, a *fresh* collection is made — the thrown flow is dead and cannot be revived
+        viewModel.retry()
+        assertEquals(2, repository.observeCollections)
+        repository.projects.emit(listOf(summary("p1", "Notes on Rain", updatedAtEpochMs = 0L)))
+
+        val cards = (viewModel.state.value as HomeUiState.Content).cards
+        assertEquals(listOf("Notes on Rain"), cards.map { it.title })
+        job.cancel()
+    }
+
+    /**
+     * A retry holds the error until the store answers. It must NOT re-arm Loading: this flow is
+     * re-collected on every return to the shelf (ADR-046 §6), so a per-subscription Loading emission
+     * would wipe the cached Content and flash the skeleton on the app's most common flow.
+     */
+    @Test
+    fun `retry holds the error until the store answers, never flashing Loading`() = runTest {
+        repository.observeFailure = IllegalStateException("the store is unreadable")
+        val viewModel = viewModel()
+
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        assertEquals(HomeUiState.Error, viewModel.state.value)
+
+        viewModel.retry()
+        // The second ask is in flight; the store has not answered it yet.
+        assertEquals(HomeUiState.Error, viewModel.state.value)
         job.cancel()
     }
 

@@ -12,14 +12,17 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.HomeZineCard
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -30,10 +33,14 @@ import javax.inject.Inject
 /**
  * What the Home shelf shows (ADR-043). [Loading] until the project store first answers (so the
  * empty invitation never flashes); [Empty] is a real state, distinct from a zero-card [Content].
+ *
+ * [Error] means the shelf could not be *read*. It never means a zine was lost — the store is a file
+ * on this device and it is still there — which is why [HomeViewModel.retry] simply re-asks.
  */
 internal sealed interface HomeUiState {
     data object Loading : HomeUiState
     data object Empty : HomeUiState
+    data object Error : HomeUiState
     data class Content(val cards: List<HomeZineCard>) : HomeUiState
 }
 
@@ -95,7 +102,38 @@ internal class HomeViewModel @Inject constructor(
     /** The in-flight create (ADR-046 §5 single-flight): taps during it are no-ops. */
     private var createJob: Job? = null
 
-    val state: StateFlow<HomeUiState> =
+    /**
+     * Bumped by [retry]. `flatMapLatest` below turns each bump into a **fresh** subscription to
+     * `observeProjects()` — a flow that has thrown is dead, and `catch` cannot revive it, so the only
+     * honest retry is a new collection of a new flow.
+     */
+    private val retries = MutableStateFlow(0)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val state: StateFlow<HomeUiState> = retries.flatMapLatest { shelfStateFlow() }
+        // WhileSubscribed(0), not 5_000 (ADR-046 §6): every return to the shelf re-collects the
+        // upstream, so max(row, doc mtime) recency and thumbnails re-derive after an editor round-trip
+        // — the store emits nothing on autosave mtime changes, so a warm subscription shows stale
+        // cards on exactly the most common flow. stateIn keeps the last value: no Loading flash.
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState.Loading)
+
+    /**
+     * One subscription's worth of shelf state.
+     *
+     * `catch` is **outside** the combine, so a throw from any of the three sources lands here; it
+     * swallows nothing silently — [HomeUiState.Error] is a visible, recoverable state with [retry]
+     * behind it.
+     *
+     * There is deliberately **no** `onStart { emit(Loading) }` here, tempting as it is: this flow is
+     * re-collected on every return to the shelf (`WhileSubscribed(0)`, ADR-046 §6), and a Loading
+     * emission per subscription would wipe the cached [HomeUiState.Content] and flash the skeleton on
+     * the most common flow in the app. A retry therefore holds [HomeUiState.Error] until the store
+     * answers; the "Try again" button owns its own pressed state, which is where that cue belongs.
+     *
+     * `CancellationException` is not caught: `catch` re-throws it by contract, so leaving the shelf
+     * cancels the collection rather than painting an error over a screen nobody is looking at.
+     */
+    private fun shelfStateFlow(): Flow<HomeUiState> =
         combine(
             projectRepository.observeProjects(),
             pendingDeletes,
@@ -121,11 +159,16 @@ internal class HomeViewModel @Inject constructor(
                 visible.forEach { requestThumbnail(it.id) }
                 HomeUiState.Content(visible.map { it.toCard(now, thumbs[it.id]) })
             }
-        // WhileSubscribed(0), not 5_000 (ADR-046 §6): every return to the shelf re-collects the
-        // upstream, so max(row, doc mtime) recency and thumbnails re-derive after an editor round-trip
-        // — the store emits nothing on autosave mtime changes, so a warm subscription shows stale
-        // cards on exactly the most common flow. stateIn keeps the last value: no Loading flash.
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState.Loading)
+        }.catch { emit(HomeUiState.Error) }
+
+    /**
+     * The shelf failed to open; ask again. Idempotent from the user's side — each tap is one fresh
+     * subscription, and `flatMapLatest` cancels the previous one, so a double-tap cannot leave two
+     * collections racing to fill the same shelf.
+     */
+    fun retry() {
+        retries.update { it + 1 }
+    }
 
     /** Launch one ensure() per id at a time; the map updates only when the bitmap actually changes. */
     private fun requestThumbnail(id: String) {
