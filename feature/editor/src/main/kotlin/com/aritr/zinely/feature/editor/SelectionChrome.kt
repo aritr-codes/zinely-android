@@ -1,7 +1,6 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -12,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.SelectionChromeGeometry
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the chrome Canvas. */
 public const val SelectionChromeTestTag: String = "selection-chrome"
@@ -27,15 +27,17 @@ public const val SelectionChromeTestTag: String = "selection-chrome"
  * [com.aritr.zinely.core.editor.LivePreview]), so the outline tracks the gesture without the stroke
  * fattening under zoom or snapping back at commit.
  *
- * Non-text contrast (WCAG 1.4.11 ≥3:1): the stroke defaults to the theme `primary`. Resize handles, snap
- * guides, and the a11y contextbar land in the following increments; this step is the selection boundary.
+ * Non-text contrast (WCAG 1.4.11 ≥3:1): the stroke defaults to the frozen `--coral-strong` token — the
+ * `box-shadow:0 0 0 2px var(--coral-strong)` the Bench spec strokes the selected block with (bench.html
+ * `.block.sel`). Resize handles, snap guides, and the a11y contextbar land in the following increments;
+ * this step is the selection boundary.
  *
  * @param transforms the (live-baked) committed boxes to outline; empty ⇒ nothing drawn.
  * @param screenPxPerPt device px per point — MUST match the sibling [PagePreview].
  * @param pageOffset page-space pan applied before the screen scale — MUST match [PagePreview].
  * @param modifier sizing applied by the caller; size it identically to the sibling [PagePreview] so the
  *   device-px corners align.
- * @param color the outline stroke colour; defaults to the theme `primary`.
+ * @param color the outline stroke colour; defaults to the frozen `--coral-strong` token.
  */
 @Composable
 public fun SelectionChrome(
@@ -43,7 +45,7 @@ public fun SelectionChrome(
     screenPxPerPt: Float,
     pageOffset: PtPoint,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
+    color: Color = ZinelyTheme.colors.coralStrong,
 ) {
     Canvas(modifier = modifier.testTag(SelectionChromeTestTag)) {
         val strokePx = 2.dp.toPx()

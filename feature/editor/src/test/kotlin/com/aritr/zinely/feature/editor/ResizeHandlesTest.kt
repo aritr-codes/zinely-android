@@ -2,7 +2,6 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -20,6 +19,7 @@ import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -78,7 +78,7 @@ class ResizeHandlesTest {
         val h = Harness(store)
 
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 ResizeHandles(
                     uiState = store.uiState.value,
                     currentState = { store.uiState.value },

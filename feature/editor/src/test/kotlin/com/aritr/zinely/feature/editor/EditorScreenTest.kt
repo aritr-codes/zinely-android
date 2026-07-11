@@ -2,7 +2,6 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -22,6 +21,7 @@ import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -94,7 +94,7 @@ class EditorScreenTest {
         onDismissSaveError: () -> Unit = {},
     ) {
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorScreen(
                     store = store,
                     pageSizePt = pageSizePt,
@@ -487,7 +487,7 @@ class EditorScreenTest {
         val errorVisible = androidx.compose.runtime.mutableStateOf(false)
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorScreen(
                     store = store,
                     pageSizePt = pageSizePt,

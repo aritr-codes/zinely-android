@@ -1,7 +1,6 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -13,6 +12,7 @@ import com.aritr.zinely.core.editor.SnapAxis
 import com.aritr.zinely.core.editor.SnapGuide
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.render.android.ExportScale
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the snap-guide Canvas. */
 public const val SnapGuidesTestTag: String = "snap-guides"
@@ -33,8 +33,9 @@ public const val SnapGuidesTestTag: String = "snap-guides"
  * @param screenPxPerPt device px per point — MUST match the sibling [PagePreview].
  * @param pageOffset page-space pan applied before the screen scale — MUST match [PagePreview].
  * @param modifier sized identically to the sibling [PagePreview] so the device-px positions align.
- * @param color the guide stroke colour; defaults to the theme `tertiary` to read distinctly from the
- *   `primary` selection chrome.
+ * @param color the guide stroke colour; defaults to the frozen `--teal` token — the colour the Bench
+ *   spec strokes its centre `.guide` lines with (bench.html), reading distinctly from the coral
+ *   selection chrome.
  */
 @Composable
 public fun SnapGuides(
@@ -42,7 +43,7 @@ public fun SnapGuides(
     screenPxPerPt: Float,
     pageOffset: PtPoint,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.tertiary,
+    color: Color = ZinelyTheme.colors.teal,
 ) {
     Canvas(modifier = modifier.testTag(SnapGuidesTestTag)) {
         if (guides.isEmpty()) return@Canvas

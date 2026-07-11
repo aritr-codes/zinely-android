@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +26,7 @@ import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.ExportScale
 import com.aritr.zinely.render.android.SelectionChromeGeometry
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.roundToInt
 
 /** Stable test-tag prefix; a handle's node tag is `"$ResizeHandleTagPrefix${handle.name}"`. */
@@ -52,7 +52,8 @@ public const val ResizeHandleTagPrefix: String = "resize-handle-"
  * @param onResize receives the live override map each frame (drives `resizeOverride`), `null` on end.
  * @param modifier sized identically to the sibling [PagePreview]/[SelectionChrome] so handle device-px
  *   positions align.
- * @param color handle fill; defaults to the theme `primary`.
+ * @param color handle fill; defaults to the frozen `--coral-strong` token — the colour the Bench spec
+ *   borders its `.handle` dots with (bench.html).
  */
 @Composable
 public fun ResizeHandles(
@@ -61,7 +62,7 @@ public fun ResizeHandles(
     dispatch: (Intent) -> Unit,
     onResize: (Map<String, Transform>?) -> Unit,
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
+    color: Color = ZinelyTheme.colors.coralStrong,
 ) {
     val selectedId = uiState.selection.singleOrNull() ?: return
     val element = uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == selectedId } ?: return

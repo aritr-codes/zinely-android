@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -28,6 +27,7 @@ import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.core.render.SceneRenderer
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assert.assertEquals
@@ -116,7 +116,7 @@ class SelectionChromeGoldenTest {
         )
 
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 content(Modifier.size(w.dp, h.dp))
             }
         }
@@ -145,23 +145,21 @@ class SelectionChromeGoldenTest {
     }
 
     /**
-     * Count of pixels whose R/G/B are each within [tol] of [argb]. A thin (1dp) AA guide line rarely
-     * leaves an exact-colour core column (it straddles two device columns and blends both), so its
-     * presence is proven by near-colour pixels along the line rather than exact ones.
+     * Count of pixels carrying the teal guide's **hue signature** — green the dominant channel (`G>R` and
+     * `G≥B`). The `--teal` token (#2A9D8F) is dark and saturated, so a 1dp AA line straddling two device
+     * columns blends ~50% with the light paper and never lands within a tight per-channel tolerance of the
+     * pure token (unlike the near-paper `--yellow` it replaced). Its hue survives the blend, and neither the
+     * warm paper (`G<R`) nor the `--coral-strong` chrome (`R≫G`) satisfies it — so a green-dominant count
+     * isolates the guide without false positives.
      */
-    private fun Bitmap.countNear(argb: Int, tol: Int): Int {
-        val r = (argb shr 16) and 0xFF
-        val g = (argb shr 8) and 0xFF
-        val b = argb and 0xFF
+    private fun Bitmap.countTealGuide(): Int {
         var n = 0
         for (y in 0 until height) for (x in 0 until width) {
             val p = getPixel(x, y)
-            if (kotlin.math.abs(((p shr 16) and 0xFF) - r) <= tol &&
-                kotlin.math.abs(((p shr 8) and 0xFF) - g) <= tol &&
-                kotlin.math.abs((p and 0xFF) - b) <= tol
-            ) {
-                n++
-            }
+            val r = (p shr 16) and 0xFF
+            val g = (p shr 8) and 0xFF
+            val b = p and 0xFF
+            if (g - r >= 16 && g - b >= 4) n++
         }
         return n
     }
@@ -170,7 +168,7 @@ class SelectionChromeGoldenTest {
     fun axis_aligned_selection_outline() {
         var chromeArgb = 0
         val bmp = pageBitmap { m ->
-            chromeArgb = MaterialTheme.colorScheme.primary.toArgb()
+            chromeArgb = ZinelyTheme.colors.coralStrong.toArgb()
             EditorPagePreview(
                 uiState = selectedModel(rotationDegrees = 0.0).toUiState(),
                 defaults = DocumentDefaults(),
@@ -179,10 +177,10 @@ class SelectionChromeGoldenTest {
                 modifier = m,
             )
         }
-        // The primary-coloured outline must actually be on the page (not a vacuous blank capture); a 2dp
+        // The coral-strong outline must actually be on the page (not a vacuous blank capture); a 2dp
         // stroke around a 32pt box at 2.5 px/pt leaves well over 50 flat-colour core pixels.
         assertTrue(
-            "selection outline did not paint the theme primary on the page",
+            "selection outline did not paint the coral-strong token on the page",
             bmp.countColour(chromeArgb) > 50,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_axis_aligned.png", aa())
@@ -192,7 +190,7 @@ class SelectionChromeGoldenTest {
     fun rotated_selection_outline() {
         var chromeArgb = 0
         val bmp = pageBitmap { m ->
-            chromeArgb = MaterialTheme.colorScheme.primary.toArgb()
+            chromeArgb = ZinelyTheme.colors.coralStrong.toArgb()
             EditorPagePreview(
                 uiState = selectedModel(rotationDegrees = 30.0).toUiState(),
                 defaults = DocumentDefaults(),
@@ -202,7 +200,7 @@ class SelectionChromeGoldenTest {
             )
         }
         assertTrue(
-            "rotated selection outline did not paint the theme primary on the page",
+            "rotated selection outline did not paint the coral-strong token on the page",
             bmp.countColour(chromeArgb) > 50,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_rotated.png", aa())
@@ -225,9 +223,7 @@ class SelectionChromeGoldenTest {
         val tape = SceneRenderer.render(page, sheet, DocumentDefaults())
         val selectedTransforms = page.elements.filter { it.id in uiState.selection }.map { it.transform }
 
-        var guideArgb = 0
         val bmp = pageBitmap { m ->
-            guideArgb = MaterialTheme.colorScheme.tertiary.toArgb()
             Box(m) {
                 PagePreview(
                     tape = tape,
@@ -254,12 +250,12 @@ class SelectionChromeGoldenTest {
                 )
             }
         }
-        // 1dp AA guides blend with the white page, so match near the tertiary colour, not exactly. A
-        // vertical + horizontal full-span line at 2.5 px/pt leaves well over 50 near-colour pixels; a
-        // blank/undrawn guide layer leaves none.
+        // 1dp AA guides blend with the page, so prove them by the teal hue signature, not exact colour. A
+        // vertical + horizontal full-span line at 2.5 px/pt leaves well over 50 green-dominant pixels; a
+        // blank/undrawn guide layer (warm paper only) leaves none.
         assertTrue(
-            "snap guides did not paint the theme tertiary on the page",
-            bmp.countNear(guideArgb, tol = 48) > 50,
+            "snap guides did not paint the teal token on the page",
+            bmp.countTealGuide() > 50,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_snap_guides.png", aa())
     }

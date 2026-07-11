@@ -2,7 +2,6 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -21,6 +20,7 @@ import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -58,7 +58,7 @@ class EditorPagePreviewTest {
     @Test
     fun renders_preview_and_chrome_for_a_selection_when_idle() {
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorPagePreview(
                     uiState = model().toUiState(),
                     defaults = DocumentDefaults(),
@@ -80,7 +80,7 @@ class EditorPagePreviewTest {
         val live = LiveTransform().accumulate(panXpx = 40.0, panYpx = 0.0, zoomFactor = 1.0, rotationDelta = 0.0)
 
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorPagePreview(
                     uiState = model(transforming).toUiState(),
                     defaults = DocumentDefaults(),
