@@ -21,6 +21,16 @@ internal data object HomeRoute
 internal data class EditorRoute(val projectId: String)
 
 /**
+ * The type-safe route for the single **Proof** surface (M5, [ADR-051](../../../../../../docs/DECISIONS.md#adr-051)).
+ * One route, three internal acts (Sheet → Print → Fold) — the collapse of the former Preview + Export +
+ * Completion triad into one screen (ADR-051 Decision A). Carries the same [projectId] so the Proof host
+ * re-fetches the *editor's* back-stack entry and shares its already-constructed `EditorViewModel` (the
+ * ADR-026 single-writer seam), exactly as the retired triad did.
+ */
+@Serializable
+internal data class ProofRoute(val projectId: String)
+
+/**
  * The type-safe route for the reader's-booklet [PreviewScreen] (S5 step 1). Carries the same [projectId]
  * as the [EditorRoute] it was opened from, so the preview host can re-fetch the *editor's* back-stack
  * entry and share its already-constructed `EditorViewModel` — never a second one. That sharing is not a

@@ -1069,3 +1069,74 @@ The frozen trilogy shares, byte-identical or parametrically, across ≥2 of Shel
 Independent Review Agent, **pre-implementation**: **GO WITH FIXES** — four Required Fixes, all accepted: **(RF-1)** proof's `.primary` is a *third* metric set (54/22/16/16/10), not bench's — loose scalar params replaced with named test-pinned presets; **(RF-2)** shelf's retry is `.start` metrics + stamp fill + `--shadow-2` (shelf.html:414), not `.btn-stamp` — consumer map fixed, the Stamp fill does not hardcode a shadow; **(RF-3)** "pressed border→on-desk-faint" was the *hover* state mislabelled — hover skipped (decision 4), the only real pressed rule (`translateY(1px)`, proof exportrow) implemented as a preset flag, stepnav disabled `opacity:.4` added; **(RF-4)** safe-area/IME insets added to ZSheet, and the Dialog-window vs decor-view golden conflict resolved by goldening `ZSheetSurface` in a plain host. Recommended fixes adopted: blur sigma conversion, static reduced-motion sweep, ZMenuColumn dropped (a menu is a plain Column), proof's Coral selection includes the check glyph, exit animation completes before the Dialog unmounts, HomeScreen's no-action `Message` events route to `ZToast` at M2.
 
 Independent Review Agent, **post-implementation** (against commit `b8929b6`): **GO WITH FIXES** — one Required Fix, accepted and applied: the ZPaperSurface kdoc conflated proof’s two paper-surface consumers into one wrong tuple (mini-page is 4px @ **.10**, proof.html:242-243; the book cover is a second consumer at 5px @ .14, proof.html:318-319) — kdoc corrected; the component itself is parametric and was correct. The reviewer independently re-verified all four pre-implementation Required Fixes against the CSS, the blur-sigma math and reversed draw order, theme isolation (no MaterialTheme reads, no component→screen imports), caller-owned haptics, and doc consistency. Reviewer’s open verification gap (no Bash in its session) closed by the implementer with evidence: `git show b8929b6 --stat` = 16 files (14 new components/tests + DECISIONS.md + parity plan; no screen/manifest/gradle changes); `:feature:editor:testDebugUnitTest` = 164 tests, 0 failures.
+
+## ADR-050 {#adr-050}
+
+**The DESIGN-FROZEN `proof.html` Act-1 imposed-sheet illustration is corrected to match the validated imposition engine (a recorded post-freeze freeze-amendment) — the engine ([ADR-007](#adr-007)) stays authoritative and unchanged.** The correction was made 2026-07-08 but lived only in the [COMPOSE-V1-PARITY-PLAN](COMPOSE-V1-PARITY-PLAN.md), which disclaims ADR authority; this ADR gives it a durable home, per the [2026-07-11 M0–M3 reconciliation](reviews/2026-07-11-m0-m3-reconciliation.md) §8.2.
+
+*Status: Accepted (2026-07-08; recorded as an ADR 2026-07-11).*
+
+### Context
+
+The V1 Proof surface's Act-1 "here is your printed sheet" illustration encoded a single-sheet-8 imposition that disagreed with the physically-validated shipping engine (`core:imposition`, `Convention.kt` `SingleSheet8.TOP_ROW_ROTATED`, [ADR-007](#adr-007)) in **6 of 8 cells**. `proof.html` declared `LAYOUT = [6,7,0,1,5,4,3,2]`, annotated as a *topological* derivation "NOT physically folded". This surfaced as finding **F1** in the Compose V1 parity readiness review ([COMPOSE-V1-PARITY-PLAN §Phase 1](COMPOSE-V1-PARITY-PLAN.md)).
+
+Because the HTML trilogy is DESIGN-FROZEN and canonical ([CLAUDE.md HTML-first workflow](../CLAUDE.md)), a spec-vs-engine conflict cannot be left implicit: either the engine is wrong (every printed zine is wrong) or the illustration is wrong.
+
+### Decision
+
+An independent from-scratch fold re-derivation proved the **HTML illustration physically wrong**: its front cover (page 1) was back-to-back with page 4, so opening the cover would land the reader on page 4, not page 2. The engine is correct and authoritative — it is the alpha physical-print-validated path ([ADR-007](#adr-007); RESEARCH [R1.2](RESEARCH.md#r12-page--cell-mapping-the-oracle--verified) VERIFIED oracle).
+
+Resolution = **spec correction (option B).** `proof.html`'s Act-1 `LAYOUT` was corrected to mirror the engine (`[6,7,0,1,5,4,3,2]` → `[4,3,2,1,5,6,7,0]`); the only change is the illustrative grid and the developer comments describing it — no interaction, motion, typography, spacing, colour, copy, or layout change. DESIGN-FROZEN status is retained with this recorded freeze amendment.
+
+| row | col0 | col1 | col2 | col3 | source (now identical) |
+|---|---|---|---|---|---|
+| top (flipped 180°) | 5 | 4 | 3 | 2 | engine `TOP_ROW_ROTATED` **and** corrected `proof.html` |
+| bottom | 6 | 7 | 8 | 1 | cover page 1 at grid (1,3), back cover page 8 at (1,2) |
+
+Alternatives rejected: **(A)** change the engine to match the HTML — rejected, the engine is physically validated and the HTML was proven wrong; **(C)** keep both and carry a permanent Compose parity carve-out for the imposed sheet — rejected, it would institutionalise a known-wrong illustration and stand a second source of imposition truth beside the engine.
+
+### Consequences
+
+- The Proof Act-1 sheet is now a **single source of truth with the engine**. Compose consumes the engine (`SingleSheet8Imposer`/`Convention`) and the frozen HTML already matches it, so the imposed sheet has **no parity carve-out**.
+- [ADR-007](#adr-007) is unchanged and remains the imposition authority; this ADR records only the freeze-amendment governance event and the direction of correction (spec → engine).
+- The consumer contract holds: Compose derives the sheet from the convention and **never** re-encodes a raw layout array — already enforced for the export sheet by `DecorativeImpositionOrderTest` (S7.2), the same guard extending to the Proof Act-1 when M5 lands.
+
+### Review (2026-07-08)
+
+The correction was independently reviewed **cell-by-cell** — all 8 cells and rotations now equal the engine → **GO**. The [2026-07-11 M0–M3 reconciliation](reviews/2026-07-11-m0-m3-reconciliation.md) §8.2 flagged that the correction lacked an ADR home; this ADR closes that gap. No engine code changed — the change is confined to `docs/design/v1/proof.html`.
+
+## ADR-051 {#adr-051}
+
+**The V1 Proof surface is one screen with three internal acts (Sheet → Print → Fold), not three navigation destinations — the former `PreviewRoute` + `ExportRoute` + `CompletionRoute` collapse into a single `ProofRoute`/`ProofScreen` (Decision A), and the reading-order reader-booklet (`PreviewScreen`) is retired as superseded by the imposed-sheet-first Proof (Decision B).** The DESIGN-FROZEN [`proof.html`](design/v1/proof.html) is the specification; this ADR records the two structural consequences of implementing it, both authored inside M5 batch **B1** ([m5-proof-batching.md](spikes/m5-proof-batching.md)).
+
+*Status: Accepted (2026-07-11).*
+
+### Context
+
+M2 (Shelf) and M3 (Bench) were pure re-skins — the frozen HTML mapped one-to-one onto existing screens, so neither needed an ADR. The Proof does not. The frozen `proof.html` is **one surface**: a shared top bar (loss-safe back · zine name · three progress creases), a single `.acts` container that cross-fades/slides between three acts, one bottom action bar whose primary/secondary reconfigure per act, and an act state machine (`setAct` / `configurePrimary` / `onPrimary`). The app today ships **three navigation destinations** above the editor — `PreviewRoute` (reader booklet) → `ExportRoute` → `CompletionRoute` — each with its own `*Destination` host in `ZinelyNavHost`, sharing the editor VM by the [ADR-026](#adr-026) single-writer seam, with [ADR-041](#adr-041) auto-landing on Completion after a successful export.
+
+Two facts make M5 structural, not cosmetic:
+
+1. The frozen progress creases, act-slide transitions, single shared action bar, and the in-spec `savePdf → snack "Fold now" → setAct(2)` hand-off all describe **intra-screen act state**, not inter-route navigation. Keeping three routes would re-encode one frozen surface as three.
+2. `PreviewScreen` pages the document in **reading order** (the reader's little book). The frozen Proof Act 1 is the **imposed sheet** — a different artifact (today's *decorative* sheet in `ExportScreen`, `decorativeImpositionRows`). The frozen V1 Proof contains **no reading-order pager**; it supersedes the Preview + Export + Completion triad.
+
+### Decision
+
+**A — collapse the three routes into one `ProofRoute` + `ProofScreen`.** One screen holds `act: Sheet/Print/Fold` state; the three leaf routes and their `*Destination` hosts merge into a single `ProofDestination`. The [ADR-026](#adr-026) shared-editor-VM seam (`getBackStackEntry(EditorRoute)`) is **preserved** — only the three leaf routes merge. The [ADR-041](#adr-041) post-export → payoff hand-off is **preserved as intent** and becomes an **intra-screen act transition** (`export success → act = Fold`) rather than a `navigate(CompletionRoute)` — this is *closer* to ADR-041's stated intent (the fold payoff is the natural post-export landing), not a regression. Re-attaching the export/share wiring to `ProofDestination` is B3's work; B1 stands up the frame and the collapsed host only.
+
+**B — retire the reader-booklet.** `PreviewScreen`/`PreviewRoute` are dropped: the imposed-sheet-first Proof is the frozen intent, and the frozen spec has no pager. This is an accepted **scope change** (feature supersession), user-confirmed 2026-07-11, **not** a silent deletion. The screen file and its test are removed in B5 (the plan sequences deletions late to keep each batch's diff focused); B1 stops routing to it. A PRD scope note records the supersession ([PRD §8](PRD.md#8-core-user-workflow-mvp)).
+
+Alternatives rejected: **(A′)** keep three routes and animate between them — rejected, it re-encodes one frozen surface as three and cannot express the shared action bar / progress creases / act state machine without duplicating them across hosts. **(B-keep)** preserve the reader as a pre-Proof step — rejected, it is **not in the frozen spec**; per the HTML-first workflow, adding it would require updating the HTML spec *first*, which the frozen design intentionally does not.
+
+### Consequences
+
+- `ZinelyNavHost` has one destination above the editor (`ProofRoute`), down from three. `EditorDestination.onPreview` now navigates `ProofRoute`.
+- The `ProofScreen` act state machine mirrors `proof.html` `setAct`/`configurePrimary` exactly: Sheet primary "Print setup" → Print; Print primary "Now fold it" + "Back" secondary → Fold / Sheet; Fold hides the global primary (the fold step nav owns it, B4). The topbar act-status line is a Compose live region announced on every act change.
+- The frozen `#segAct` Sheet/Print/Fold buttons are **prototype-dock review scaffolding** — the production progress creases are passive (`aria-hidden`), never a tappable act-switcher.
+- The imposition invariant is untouched: Act 1 will derive order/rotation from the engine ([ADR-007](#adr-007)) via `decorativeImpositionRows(TOP_ROW_ROTATED)` — no raw layout array in Compose — and the corrected frozen grid ([ADR-050](#adr-050)) already matches the engine, so there is **no imposed-sheet parity carve-out**. (Enforced in B2.)
+- Behaviour is otherwise reskin-invariant: `ExportViewModel.export`, the OS share/open edges, and the [ADR-041](#adr-041) payoff survive; only the chrome and the route topology change.
+- `PreviewRoute`/`ExportRoute`/`CompletionRoute` and `PreviewScreen`/`ExportScreen`/`CompletionScreen` remain in the tree, unreferenced by the graph, until B5 deletes them — a deliberate late-deletion to keep B1 structural.
+
+### Review
+
+B1 (this ADR + the scaffold) is independently reviewed by a Review Agent before merge, per the [multi-agent workflow](../CLAUDE.md#multi-agent-workflow); the outcome is recorded here on reconciliation.

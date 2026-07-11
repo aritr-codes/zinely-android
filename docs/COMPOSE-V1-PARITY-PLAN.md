@@ -11,6 +11,8 @@
 > reinterprets it. Any post-freeze UX change updates the HTML spec first, then Compose
 > ([CLAUDE.md HTML-first workflow](../CLAUDE.md)).
 
+> **Amendment (2026-07-11) — reconciled against repository reality** ([reviews/2026-07-11-m0-m3-reconciliation.md](reviews/2026-07-11-m0-m3-reconciliation.md), Review Agent **GO**). **M2 (Shelf)** and **M3 (Bench)** are now **DONE** (code) on `feat/m0-design-system`, joining M0 ([ADR-048](DECISIONS.md#adr-048)) and M1 ([ADR-049](DECISIONS.md#adr-049)). The **F1** Proof-sheet correction now has a durable home in [ADR-050](DECISIONS.md#adr-050) — it previously lived only in this artifact, which holds no ADR authority. **M4 is reshaped:** its derive-and-guard core already shipped pre-plan (S7.2 `57ed568` — `ExportScreen.decorativeImpositionRows` + `DecorativeImpositionOrderTest`), and the plan named the wrong artifact (`SvgProofSheetRenderer` emits an SVG string Compose cannot render natively), so **M4 folds into M5** as a one-test engine-truth checkpoint. Milestone bodies below are updated in place where marked; ROADMAP.md now carries the M0–M6 track.
+
 ---
 
 ## 0. The one fact that reshapes the plan
@@ -50,7 +52,8 @@ single-sheet-8 imposition from the **physically-validated shipping engine** — 
 layout was proven **physically wrong**: its front cover (page 1) was back-to-back with page 4, so
 opening the cover would land the reader on page 4, not page 2. The engine is correct and authoritative
 (`Convention.kt` `TOP_ROW_ROTATED`; RESEARCH R1.2 VERIFIED oracle citing Chandra/NASA + Cambridge +
-university guides; [ADR-007](DECISIONS.md#adr-007); alpha physical print test passed).
+university guides; [ADR-007](DECISIONS.md#adr-007); alpha physical print test passed). This correction
+is recorded as [ADR-050](DECISIONS.md#adr-050) (2026-07-11).
 
 **Resolution taken — spec correction (option B).** `proof.html`'s Act-1 illustrative imposed-sheet
 `LAYOUT` was corrected to mirror the engine (`[6,7,0,1,5,4,3,2]` → `[4,3,2,1,5,6,7,0]`), the only
@@ -96,7 +99,7 @@ Key confirmations (evidence-checked, not summary-trusted):
 
 | # | Finding | Class | Reconciliation |
 |---|---|---|---|
-| **F1** | proof.html originally declared `LAYOUT=[6,7,0,1,5,4,3,2]` a *topological* derivation "NOT physically folded" — **verified physically WRONG** (front cover's leaf-mate was page 4, not page 2), diverging from the validated engine in 6 of 8 cells. | Required (imposition) | **RESOLVED (2026-07-08).** The engine is authoritative (alpha print test). Rather than a permanent parity carve-out, the frozen `proof.html` Act-1 illustrative sheet was **corrected** to the engine layout (`→ [4,3,2,1,5,6,7,0]`) as a reviewed spec correction (option B), DESIGN-FROZEN retained. The imposed sheet is now a single source of truth with the engine — **no carve-out**; Compose consumes the engine and the frozen HTML already matches it. M4 remains an engine-truth reconciliation checkpoint (below), now with zero spec conflict. |
+| **F1** | proof.html originally declared `LAYOUT=[6,7,0,1,5,4,3,2]` a *topological* derivation "NOT physically folded" — **verified physically WRONG** (front cover's leaf-mate was page 4, not page 2), diverging from the validated engine in 6 of 8 cells. | Required (imposition) | **RESOLVED (2026-07-08).** The engine is authoritative (alpha print test). Rather than a permanent parity carve-out, the frozen `proof.html` Act-1 illustrative sheet was **corrected** to the engine layout (`→ [4,3,2,1,5,6,7,0]`) as a reviewed spec correction (option B), DESIGN-FROZEN retained. The imposed sheet is now a single source of truth with the engine — **no carve-out**; Compose consumes the engine and the frozen HTML already matches it. Recorded as [ADR-050](DECISIONS.md#adr-050) (2026-07-11). The remaining engine-truth checkpoint folds into M5 (see the M4 section below). |
 | **F2** | All three files load Inter+Fraunces from `fonts.googleapis.com`. That CDN path cannot ship (privacy invariant). Fraunces not yet bundled. | Recommended | **ACCEPT.** Pulled **into M0** as a hard prerequisite — pixel parity is impossible without the bundled display face. Inter is already bundled for export ([ADR-028](DECISIONS.md#adr-028)). |
 | **F3** | On-device keyboard/TalkBack pass is non-automatable; pending for all three (bench gesture-verb semantics; proof fold step-nav + climax reveal). | Recommended | **ACCEPT.** Becomes explicit device-pass gates in M2/M3/M5 and the M6 sign-off. |
 | **F4** | `DESIGN-LANGUAGE.md §2` + `mockups/tokens.css` still describe the **superseded** identity (old palette `#3A3A3C`/`#E7DFD0`, "marker/handwritten" type). Single-source-of-truth risk. | Recommended | **ACCEPT as a doc task, OUT of this code plan.** Flagged as pre-M0 doc reconciliation (below). Not done here — this plan makes no documentation rewrites. |
@@ -154,13 +157,11 @@ UI-independent module. No dates ([per the brief](../CLAUDE.md)); complexity is r
 
 ```mermaid
 flowchart LR
-    M0["M0 · Design-system\nfoundation"] --> M1["M1 · Shared\ncomponent library"]
-    M1 --> M2["M2 · Shelf\nparity"]
-    M1 --> M3["M3 · Bench\nparity"]
-    M4["M4 · Imposition\nreconcile + validate\n(parallel, pure core)"] --> M5["M5 · Proof\nparity (the Fold)"]
-    M2 --> M5
+    M0["M0 · Design-system\nfoundation ✅"] --> M1["M1 · Shared\ncomponent library ✅"]
+    M1 --> M2["M2 · Shelf\nparity ✅"]
+    M1 --> M3["M3 · Bench\nparity ✅"]
+    M2 --> M5["M5 · Proof parity (the Fold)\n— includes former M4\nimposition-truth checkpoint"]
     M3 --> M5
-    M0 -.-> M4
     M5 --> M6["M6 · Full-app\nreview + sign-off"]
     M2 --> M6
     M3 --> M6
@@ -220,8 +221,9 @@ flowchart LR
   is extracted at M3 as a golden-preserving move.
 - **Complexity:** Medium.
 
-### M2 — Shelf parity
-- **Goal:** `HomeScreen` matches `shelf.html` pixel/motion/interaction/a11y.
+### M2 — Shelf parity — ✅ DONE (code) (2026-07-10, `feat/m0-design-system`, ~8 feature commits …`d21a7d6`)
+- Pure reskin of `HomeScreen` to the frozen Shelf; `HomeViewModel` untouched (behaviour invariant). No ADR — no architecture decision. **Open loose end:** the 10 `shelf_*.png` goldens are **untracked and misplaced** in `feature/editor/src/test/roborazzi/` (editor module, not home) and the matrix is incomplete — pixel-parity is not locked on the branch (reconciliation §8.3). HomeScreen's two inline `AlertDialog`s migrated to `ZSheet` here (per [ADR-049](DECISIONS.md#adr-049) §3).
+- **Goal (original):** `HomeScreen` matches `shelf.html` pixel/motion/interaction/a11y.
 - **Files:** `feature/editor/HomeScreen.kt` (+ its inline dialogs migrate to M1 `ZDialog`);
   `HomeViewModel` untouched (behavior invariant).
 - **Dependencies:** M0, M1.
@@ -234,8 +236,9 @@ flowchart LR
   implementation that proves the parity harness for M3/M5.**
 - **Complexity:** Low–Medium.
 
-### M3 — Bench parity
-- **Goal:** `EditorScreen` + sub-composables match `bench.html`, preserving MVI, gestures, and the
+### M3 — Bench parity — ✅ DONE (code) (2026-07-10, `feat/m0-design-system`, batches B1–B4 `77bb9b5`…`f1edf45` = HEAD)
+- Executed as four explicit batches (selection chrome → stage/artifact → editor chrome → overlays), reading the frozen desk tokens; `EditorStore`/reducer untouched. No ADR — pure reskin. Goldens re-record on the pinned CI image post-push. This B1–B4 split is the template recommended for M5.
+- **Goal (original):** `EditorScreen` + sub-composables match `bench.html`, preserving MVI, gestures, and the
   a11y mirror.
 - **Files:** `feature/editor/EditorScreen.kt` and the ~20 sub-composables (`EditorContextBar`,
   `EditorSupplyTray`, `EditorPageStrip`, `EditorPagePreview`, `SelectionChrome`, `ResizeHandles`,
@@ -251,31 +254,46 @@ flowchart LR
   documented.
 - **Complexity:** High.
 
-### M4 — Imposition reconciliation (engine-truth checkpoint)
-- **Goal:** make the Compose Proof *consume* the validated `core:imposition` engine for its Act-1
-  sheet. The freeze-vs-engine conflict is **already resolved** (F1 — the frozen HTML was corrected to
-  the engine), so this is a pure wiring + guard checkpoint. **Not an engine build.**
-- **Files:** **no `core:imposition` production change expected**; **new** *engine-truth* golden
-  asserting the Compose imposed sheet == `SingleSheet8Imposer`/`Convention` output; consume
-  `SvgProofSheetRenderer`/`ImpositionLayout`/`Convention` in the Proof preview.
-- **Dependencies:** M0 (styling only); otherwise independent of M1/M2/M3 — **runs in parallel**.
-  Blocks M5's Act-1 sheet.
-- **Review criteria:** Proof derives its sheet from the engine and **never** re-encodes a raw layout
-  array; the alpha physical-print result is cited as ground truth; the engine-truth golden is green.
-  Because the corrected frozen HTML now matches the engine, the Compose sheet satisfies **both** the
-  engine-truth golden and frozen-HTML pixel parity — no carve-out.
-- **DoD:** engine-truth golden green; the shipping engine (not any prototype array) is the sole source
-  of the imposed sheet in Compose; no raw imposition-layout literal anywhere in Compose.
-- **Risks:** **Low.** Physical correctness is solved and the spec conflict is closed. The one
-  low-level trap: accidentally porting a layout array instead of calling the engine.
-- **Complexity:** Low.
+### M4 — Imposition-truth checkpoint — ⤳ FOLDED INTO M5 (reshaped 2026-07-11, [reconciliation](reviews/2026-07-11-m0-m3-reconciliation.md))
+M4 is **no longer a standalone milestone**. Two facts from the reconciliation collapsed it:
+
+1. **The derive-and-guard core already exists — and predates this plan.** S7.2 (`57ed568`, 2026-07-04)
+   removed a hardcoded Compose layout array (it had drifted to `5·4·3·6 / 8·1·2·7`) and replaced it
+   with derivation from the convention: `ExportScreen.decorativeImpositionRows(SingleSheet8.TOP_ROW_ROTATED)`
+   inverts `spec.cellOf` with **no literal array**, guarded by `DecorativeImpositionOrderTest`. The
+   anti-drift discipline M4 was going to introduce is already in place.
+2. **The plan named the wrong artifact.** `SvgProofSheetRenderer` emits an **SVG string**, which
+   Compose/Android cannot render natively — it is the L2 golden/proof artifact only. The Proof Act-1
+   sheet is a **decorative thumbnail** (like the shipped `ExportScreen` `DecorativeImpositionSheet`,
+   "Not a live render"), not a live imposition render. And the frozen `proof.html` grid was corrected
+   to the engine ([ADR-050](DECISIONS.md#adr-050)), so there is **no spec conflict left to reconcile**.
+
+- **What remains (executed inside M5):** relocate the convention-derived decorative Act-1 sheet into
+  the unified Proof, assert its order/rotation derive from `SingleSheet8.TOP_ROW_ROTATED` (extend the
+  existing drift guard), and keep **no raw imposition-layout literal anywhere in Compose**. Because the
+  Act-1 sheet only exists *inside* the unified Proof, this is an M5 sub-step, not a parallel track.
+- **Do NOT:** wire `SvgProofSheetRenderer` into Compose; stand up a live proof renderer for Act-1;
+  port a layout array instead of deriving from the engine.
+- **Complexity:** trivial (one relocation + one golden), folded into M5.
 
 ### M5 — Proof parity (the Fold)
+
+> **🚧 In progress — batched.** M5 is decomposed into B1→B5 in [spikes/m5-proof-batching.md](spikes/m5-proof-batching.md).
+> Unlike M2/M3 it is **not a pure reskin**: the frozen Proof is one 3-act surface where the app ships
+> three routes, so two structural calls are recorded in **[ADR-051](DECISIONS.md#adr-051)** — **(A)**
+> collapse `PreviewRoute`/`ExportRoute`/`CompletionRoute` into one `ProofRoute`/`ProofScreen`, and **(B)**
+> retire the reading-order reader-booklet (`PreviewScreen`), superseded by the imposed-sheet-first Proof.
+> **B1 (scaffold + route collapse + ADR-051) landed 2026-07-11** — the 3-act frame (top bar · 3 progress
+> creases · one action bar · act state machine · act-status live region) over empty act bodies. B2 (Act 1
+> imposed sheet + engine-truth checkpoint) · B3 (Act 2 print recipe + export wiring) · B4 (Act 3 fold +
+> climax) · B5 (overlays + retire the old screens + parity seal) remain.
+
 - **Goal:** unify `PreviewScreen` + `ExportScreen` + `CompletionScreen` into the frozen 3-act Proof
   (Sheet → Print → Fold), with the Fold climax getting the whole delight budget.
 - **Files:** `feature/editor/PreviewScreen.kt`, `ExportScreen.kt`, `CompletionScreen.kt` (reconciled
-  into the 3-act flow); consumes M4 imposition output; `ExportViewModel` behavior invariant.
-- **Dependencies:** M0, M1, M4 (and M2/M3 patterns).
+  into the 3-act flow); derives the Act-1 sheet from the engine (the folded-in M4 checkpoint);
+  `ExportViewModel` behavior invariant.
+- **Dependencies:** M0, M1 (and M2/M3 patterns). The former M4 checkpoint is now an M5 sub-step.
 - **Review criteria:** parity gate vs frozen Proof — the honest print recipe (100%/Actual-size,
   Landscape, paper-match, single-sided), dead-band honesty, the 5-step fold guide, and the staged
   climax reveal (settle → shelf-line callback → words → actions) with the `success` haptic; print
@@ -362,3 +380,9 @@ parallel on the pure-core track at any point after M0.
 No Compose implementation begun · no ADR written · no HTML changed · no existing documentation
 rewritten · no product redesign · no feature added. This is planning and readiness only. The F4 doc
 reconciliation and all code milestones are **proposed**, to be executed as separate reviewed changes.
+
+> **Amended 2026-07-11:** the paragraph above describes this plan *as originally authored* (2026-07-08).
+> M0–M3 have since been implemented and this plan reconciled with repository reality — see the
+> amendment banner at the top, [ADR-050](DECISIONS.md#adr-050) (the F1 correction's ADR home), and the
+> M0–M6 track now recorded in [ROADMAP.md](ROADMAP.md). The F4 `DESIGN-LANGUAGE.md §2` / `mockups/tokens.css`
+> stale-palette reconciliation **remains open** as a separate doc task.

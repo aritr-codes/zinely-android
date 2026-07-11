@@ -209,6 +209,15 @@ stateDiagram-v2
 > (the thing a person can judge), the Export screen shows a friendly *decorative* sheet picture, and
 > the real imposed sheet — fold + cut guides, safe-area inset — **is the exported artifact itself**
 > ([ADR-039](DECISIONS.md#adr-039)). The requirement moved to match the design, not the reverse.
+>
+> **FR-6 scope change (2026-07-11, [ADR-051](DECISIONS.md#adr-051)) — reader-booklet retired in the V1
+> Proof.** The DESIGN-FROZEN V1 Proof surface unifies Preview + Export + Completion into one 3-act screen
+> (Sheet → Print → Fold) and has **no reading-order pager**: its Act 1 shows the *imposed sheet as it
+> prints*, not the reader's booklet. So under the V1 re-skin the "preview as the reader's booklet" clause
+> of FR-6 is **superseded** — the user reviews the imposed sheet directly in the Proof. This is an accepted
+> feature supersession (user-confirmed), landing on `feat/m0-design-system` (M5; the reader-booklet
+> `PreviewScreen` is removed in batch B5). The imposition-correctness half of FR-6 (fold/cut guides,
+> safe-area inset, correct order/rotation) is unchanged and strengthened — Act 1 derives from the engine.
 
 ## 11. Non-functional requirements
 

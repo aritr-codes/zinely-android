@@ -5,12 +5,13 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
-import com.aritr.zinely.feature.editor.CompletionKeepEditingTestTag
 import com.aritr.zinely.feature.editor.HomeEmptyHeadline
+import com.aritr.zinely.feature.editor.ProofBackTestTag
+import com.aritr.zinely.feature.editor.ProofScreenTestTag
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.ComposeNavigator
@@ -211,29 +212,29 @@ class ZinelyNavHostTest {
     }
 
     @Test
-    fun `Keep editing pops to the existing editor entry`() {
-        // Given the full chain above one editor: Home / Editor / Preview / Export / Completion
+    fun `the single Proof surface stacks above the editor and loss-safe back returns to it`() {
+        // Given the M5 collapse (ADR-051): one ProofRoute above the editor, not the Preview/Export/
+        // Completion triad. Home / Editor / Proof.
         val id = seedZine()
         setHost()
         waitForCard(SEEDED_TITLE)
         tapCard(SEEDED_TITLE)
         waitForEditor()
         waitForText("Add a photo")
-        composeRule.runOnUiThread {
-            navController.navigate(PreviewRoute(id))
-            navController.navigate(ExportRoute(id))
-            navController.navigate(CompletionRoute(id))
+        composeRule.runOnUiThread { navController.navigate(ProofRoute(id)) }
+
+        // Then the Proof surface is up (one destination, not three)
+        composeRule.waitUntil(10_000) {
+            navController.currentDestination?.hasRoute<ProofRoute>() == true
         }
-        waitForText("Keep editing")
+        composeRule.onNodeWithTag(ProofScreenTestTag).assertIsDisplayed()
 
-        // When — scroll first: the action sits below the fold steps on the small test display
-        composeRule.onNodeWithTag(CompletionKeepEditingTestTag).performScrollTo().performClick()
-
-        // Then the pop lands on the EXISTING editor entry (shared-VM seam intact)…
+        // When loss-safe back is tapped, the pop lands on the EXISTING editor entry (shared-VM seam intact)…
+        composeRule.onNodeWithTag(ProofBackTestTag).performClick()
         waitForEditor()
         assertEquals(id, navController.currentBackStackEntry?.toRoute<EditorRoute>()?.projectId)
 
-        // …with Preview/Export/Completion all popped: one more back is the shelf
+        // …with the Proof popped: one more back is the shelf
         composeRule.runOnUiThread { navController.popBackStack() }
         waitForHome()
     }
