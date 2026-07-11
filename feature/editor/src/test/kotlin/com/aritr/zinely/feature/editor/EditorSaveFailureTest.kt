@@ -1,7 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -31,7 +31,7 @@ class EditorSaveFailureTest {
     @Test
     fun renders_the_failure_line_when_visible_with_motion() {
         composeRule.setContent {
-            MaterialTheme { EditorSaveFailure(visible = true, onDismiss = {}, reduceMotion = false) }
+            ZinelyTheme { EditorSaveFailure(visible = true, onDismiss = {}, reduceMotion = false) }
         }
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
         composeRule.onNodeWithText(SaveFailureText, substring = true).assertIsDisplayed()
@@ -41,7 +41,7 @@ class EditorSaveFailureTest {
     fun renders_the_failure_line_when_visible_with_reduced_motion() {
         // Reduced-motion degrades the transition, never the content: the static state is identical.
         composeRule.setContent {
-            MaterialTheme { EditorSaveFailure(visible = true, onDismiss = {}, reduceMotion = true) }
+            ZinelyTheme { EditorSaveFailure(visible = true, onDismiss = {}, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
     }
@@ -49,7 +49,7 @@ class EditorSaveFailureTest {
     @Test
     fun renders_the_generic_line_for_the_generic_kind() {
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorSaveFailure(visible = true, onDismiss = {}, kind = SaveErrorKind.Generic, reduceMotion = true)
             }
         }
@@ -60,7 +60,7 @@ class EditorSaveFailureTest {
     fun renders_the_storage_line_for_the_out_of_space_kind() {
         // ADR-036: the storage kind keys the specific "low on storage" copy, never the generic line.
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorSaveFailure(visible = true, onDismiss = {}, kind = SaveErrorKind.OutOfSpace, reduceMotion = true)
             }
         }
@@ -70,7 +70,7 @@ class EditorSaveFailureTest {
     @Test
     fun is_absent_when_not_visible() {
         composeRule.setContent {
-            MaterialTheme { EditorSaveFailure(visible = false, onDismiss = {}, reduceMotion = true) }
+            ZinelyTheme { EditorSaveFailure(visible = false, onDismiss = {}, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertDoesNotExist()
     }
@@ -79,7 +79,7 @@ class EditorSaveFailureTest {
     fun tapping_dismiss_invokes_the_callback() {
         var dismissed = false
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorSaveFailure(visible = true, onDismiss = { dismissed = true }, reduceMotion = true)
             }
         }
@@ -93,7 +93,7 @@ class EditorSaveFailureTest {
     @Test
     fun renders_the_retry_control_when_visible() {
         composeRule.setContent {
-            MaterialTheme { EditorSaveFailure(visible = true, onDismiss = {}, reduceMotion = true) }
+            ZinelyTheme { EditorSaveFailure(visible = true, onDismiss = {}, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(SaveFailureRetryTag).assertIsDisplayed()
     }
@@ -102,7 +102,7 @@ class EditorSaveFailureTest {
     fun tapping_retry_invokes_the_callback() {
         var retried = false
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorSaveFailure(
                     visible = true,
                     onDismiss = {},

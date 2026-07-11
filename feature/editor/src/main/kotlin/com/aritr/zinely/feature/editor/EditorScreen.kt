@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -236,9 +235,9 @@ public fun EditorScreen(
             }
 
             Box(modifier = Modifier.fillMaxSize()) {
-                // The page footprint reads as paper — the same `surface` role Preview's BookletPage,
-                // the export sheet, and the shelf thumbnails present — instead of the bare desk
-                // showing through. Purely a host backing UNDER the render: the SceneRenderer contract
+                // The page footprint reads as paper — the frozen `--paper` sheet (bench.html `.panel`),
+                // instead of the bare desk showing through. Purely a host backing UNDER the render: the
+                // SceneRenderer contract
                 // is untouched (a document background still paints over it; Background.None now shows
                 // paper, matching export onto a white sheet). Sized to the page at the fitted scale,
                 // top-left anchored like the render itself (pan is zero in the MVP host).
@@ -248,7 +247,7 @@ public fun EditorScreen(
                 Box(
                     modifier = Modifier
                         .size(paperWidth, paperHeight)
-                        .background(MaterialTheme.colorScheme.surface)
+                        .background(ZinelyTheme.colors.paper)
                         .testTag(EditorPaperSurfaceTestTag),
                 )
                 EditorPagePreview(
@@ -380,8 +379,11 @@ public fun EditorScreen(
                                 .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
                                 .imePadding(),
-                            color = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            // The text-edit overlay is a paper input panel — frozen `--paper`/`--ink`
+                            // (bench edits in-place on the panel; this bottom sheet is the Compose host's
+                            // input surface), off the abused Material `surface`/`onSurface` roles.
+                            color = ZinelyTheme.colors.paper,
+                            contentColor = ZinelyTheme.colors.ink,
                             tonalElevation = 3.dp,
                         ) {
                             EditTextSession(

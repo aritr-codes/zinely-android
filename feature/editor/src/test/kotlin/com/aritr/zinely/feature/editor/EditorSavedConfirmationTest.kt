@@ -1,7 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -29,7 +29,7 @@ class EditorSavedConfirmationTest {
     @Test
     fun renders_the_saved_line_when_visible_with_motion() {
         composeRule.setContent {
-            MaterialTheme { EditorSavedConfirmation(visible = true, reduceMotion = false) }
+            ZinelyTheme { EditorSavedConfirmation(visible = true, reduceMotion = false) }
         }
         composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
     }
@@ -39,7 +39,7 @@ class EditorSavedConfirmationTest {
         // Reduced-motion degrades the transition, never the content: the static state is identical, so the
         // confirmation still shows the line with no animation to depend on.
         composeRule.setContent {
-            MaterialTheme { EditorSavedConfirmation(visible = true, reduceMotion = true) }
+            ZinelyTheme { EditorSavedConfirmation(visible = true, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
     }
@@ -47,7 +47,7 @@ class EditorSavedConfirmationTest {
     @Test
     fun is_absent_when_not_visible() {
         composeRule.setContent {
-            MaterialTheme { EditorSavedConfirmation(visible = false, reduceMotion = true) }
+            ZinelyTheme { EditorSavedConfirmation(visible = false, reduceMotion = true) }
         }
         composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
     }

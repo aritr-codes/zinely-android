@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the move/resize hint container. */
 public const val EditorMoveResizeHintTestTag: String = "editor-move-resize-hint"
@@ -63,14 +64,18 @@ public fun EditorMoveResizeHint(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = MaterialTheme.colorScheme
+    // A tilted paper sticky on the desk (this teaching note has no bench.html counterpart — the frozen
+    // prototype has no coach/hint surface; it is a WCAG/onboarding affordance). Frozen sticky vocabulary:
+    // a `--paper` sheet with `--ink` text, off the abused Material `secondaryContainer` (a baseline lilac
+    // absent from the riso palette).
+    val colors = ZinelyTheme.colors
     Row(
         modifier = modifier
             .testTag(EditorMoveResizeHintTestTag)
             .graphicsLayer { rotationZ = -1.5f }
             .widthIn(max = 320.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(colors.secondaryContainer)
+            .background(colors.paper)
             .padding(start = 14.dp, end = 4.dp)
             // One merged label for TalkBack: the teaching line is the content; glyph/tilt are decorative.
             .semantics(mergeDescendants = true) {},
@@ -82,13 +87,13 @@ public fun EditorMoveResizeHint(
         Text(
             text = "✋",
             style = MaterialTheme.typography.bodyMedium,
-            color = colors.onSecondaryContainer,
+            color = colors.ink,
             modifier = Modifier.clearAndSetSemantics {},
         )
         Text(
             text = MoveResizeHintText,
             style = MaterialTheme.typography.bodyMedium,
-            color = colors.onSecondaryContainer,
+            color = colors.ink,
             modifier = Modifier.weight(1f, fill = false),
         )
         TextButton(
@@ -101,7 +106,7 @@ public fun EditorMoveResizeHint(
                 text = MoveResizeHintDismissLabel,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = colors.onSecondaryContainer,
+                color = colors.ink,
             )
         }
     }

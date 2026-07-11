@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the warm save-failure banner. */
 public const val EditorSaveFailureTestTag: String = "editor-save-failure"
@@ -140,12 +141,17 @@ public fun EditorSaveFailure(
         enter = if (reduceMotion) EnterTransition.None else fadeIn(tween(durationMillis = 150)),
         exit = if (reduceMotion) ExitTransition.None else fadeOut(tween(durationMillis = 200)),
     ) {
-        val colors = MaterialTheme.colorScheme
+        val colors = ZinelyTheme.colors
         Row(
             modifier = Modifier
                 .testTag(EditorSaveFailureTestTag)
                 .clip(RoundedCornerShape(12.dp))
-                .background(colors.errorContainer)
+                // The frozen actionable-message surface (bench.html `.snackbar`): a `--stamp` pill with
+                // light `--paper` text and `--yellow` action labels — off the abused Material
+                // `errorContainer` (a baseline pale-pink absent from the riso palette). bench has no
+                // error banner (a happy-path prototype), so the snackbar — its one action-bearing
+                // notification surface — is the faithful frozen home for this warm failure message.
+                .background(colors.stamp)
                 .padding(start = 12.dp, end = 4.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -153,7 +159,8 @@ public fun EditorSaveFailure(
             Text(
                 text = saveFailureText(kind),
                 style = MaterialTheme.typography.bodyMedium,
-                color = colors.onErrorContainer,
+                // Snackbar body: light `--paper` on the `--stamp` pill (bench.html `.snackbar color:#F4EFE6`).
+                color = colors.paper,
                 modifier = Modifier
                     .weight(1f, fill = false)
                     // Scope the assertive live region to the message only — not the "Got it" button — so
@@ -169,7 +176,8 @@ public fun EditorSaveFailure(
             ) {
                 Text(
                     text = SaveFailureRetryLabel,
-                    color = colors.onErrorContainer,
+                    // Snackbar action label: `--yellow` (bench.html `.snackbar button`).
+                    color = colors.yellow,
                 )
             }
             TextButton(
@@ -180,7 +188,8 @@ public fun EditorSaveFailure(
             ) {
                 Text(
                     text = SaveFailureDismissLabel,
-                    color = colors.onErrorContainer,
+                    // Snackbar action label: `--yellow` (bench.html `.snackbar button`).
+                    color = colors.yellow,
                 )
             }
         }

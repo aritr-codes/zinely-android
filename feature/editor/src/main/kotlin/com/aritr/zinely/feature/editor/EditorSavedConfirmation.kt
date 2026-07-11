@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the transient autosave-confirmation chip. */
 public const val EditorSavedConfirmationTestTag: String = "editor-saved-confirmation"
@@ -87,14 +88,19 @@ public fun EditorSavedConfirmation(
         enter = if (reduceMotion) EnterTransition.None else fadeIn(tween(durationMillis = 150)),
         exit = if (reduceMotion) ExitTransition.None else fadeOut(tween(durationMillis = 200)),
     ) {
-        val colors = MaterialTheme.colorScheme
+        val colors = ZinelyTheme.colors
         Row(
             modifier = Modifier
                 .testTag(EditorSavedConfirmationTestTag)
                 // A hair of scrapbook tilt — decorative, carries no meaning.
                 .graphicsLayer { rotationZ = -2f }
                 .clip(RoundedCornerShape(12.dp))
-                .background(colors.secondaryContainer)
+                // The frozen transient status pill (bench.html `.toast`): an inverse-surface chip —
+                // `--on-desk` fill under `--desk` text — off the abused Material `secondaryContainer`
+                // (a baseline lilac absent from the riso palette). (bench models the durable save state
+                // as an inline `.save` dot in the title chrome; this floating pill is the ADR-034
+                // transient-confirmation surface, so it borrows the toast's inverse-pill tokens.)
+                .background(colors.onDesk)
                 .padding(horizontal = 12.dp, vertical = 6.dp)
                 // One polite live region; the spoken content is "Saved" (the ✨ below is decorative).
                 .semantics(mergeDescendants = true) {
@@ -107,13 +113,13 @@ public fun EditorSavedConfirmation(
                 text = SavedConfirmationSpokenLabel,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = colors.onSecondaryContainer,
+                color = colors.desk,
             )
             // Decorative sparkle — kept out of the spoken label so TalkBack says "Saved", not "sparkles".
             Text(
                 text = "✨",
                 style = MaterialTheme.typography.labelLarge,
-                color = colors.onSecondaryContainer,
+                color = colors.desk,
                 modifier = Modifier.clearAndSetSemantics {},
             )
         }
