@@ -188,7 +188,7 @@ flowchart TD
 
 ## 6. Export pipeline
 
-> **⚠️ Current implementation (checkout state).** The **user-facing export flow ships** (S5 step 2, [ADR-039](DECISIONS.md#adr-039)): a `:render-android` `SheetComposer` composites all 8 imposed panels onto ONE sheet over the shared `CanvasReplayer` (reusing `PdfPageRenderer`/`RasterPageRenderer`'s scale seams, not a parallel path), a `:app` `ZineExporter` runs it off-main and writes a vector **PDF** + a 300 DPI **PNG** to the export cache, and `ExportScreen` shares each via a scoped `FileProvider` `content://` URI (`ACTION_SEND`). The fold-steps **Completion** screen also ships (S5 step 3, [ADR-040](DECISIONS.md#adr-040)): it reuses the *same* export seam (no parallel path) and maps the finished file to `ACTION_SEND` (share) or `ACTION_VIEW` (open). Completion's **auto post-export landing** also ships (S5 step 4, [ADR-041](DECISIONS.md#adr-041)). **Still deferred:** the on-sheet calibration ruler ([ADR-012](DECISIONS.md#adr-012) — the single-sheet-8 grid tiles edge-to-edge, no margin), `PrintManager`, and `MediaStore`/`ACTION_CREATE_DOCUMENT` "save a copy". The pipeline below is the accepted design; the shipped path realises its export half.
+> **⚠️ Current implementation (checkout state).** The **user-facing export flow ships** (S5 step 2, [ADR-039](DECISIONS.md#adr-039)): a `:render-android` `SheetComposer` composites all 8 imposed panels onto ONE sheet over the shared `CanvasReplayer` (reusing `PdfPageRenderer`/`RasterPageRenderer`'s scale seams, not a parallel path), a `:app` `ZineExporter` runs it off-main and writes a vector **PDF** + a 300 DPI **PNG** to the export cache, and the host maps each finished file to a scoped `FileProvider` `content://` URI — `ACTION_SEND` (share) or `ACTION_VIEW` (open). **Since M5 ([ADR-051](DECISIONS.md#adr-051)) the export UI host is the unified `ProofScreen`** (Act 2 "Print" `ProofPrintAct` + the `ProofDestination` edges): the former `ExportScreen` (share) and `Completion` fold-steps screen were retired in B5, and the [ADR-041](DECISIONS.md#adr-041) auto post-export landing is preserved as the intra-screen "Fold now" hand-off to Act 3. The export *backend* (SheetComposer/ZineExporter/FileProvider, ADR-039) is unchanged. **Still deferred:** the on-sheet calibration ruler ([ADR-012](DECISIONS.md#adr-012) — the single-sheet-8 grid tiles edge-to-edge, no margin), `PrintManager` ([ADR-052](DECISIONS.md#adr-052)), and `MediaStore`/`ACTION_CREATE_DOCUMENT` "save a copy". The pipeline below is the accepted design; the shipped path realises its export half.
 
 ```mermaid
 flowchart TD
@@ -267,18 +267,14 @@ The drag preview is transient state (`activeGesture`) — never undoable, never 
 
 Single Activity (`MainActivity`) + `navigation-compose` with type-safe `@Serializable` routes; navigation triggered from UI via `NavController`, never from a ViewModel. One-shot ViewModel events use `Channel`+`receiveAsFlow()` where exactly-once delivery matters, else `SharedFlow(replay=0)`. User-facing *target* flow map: [PRD §9](PRD.md#9-navigation-map-mvp).
 
-**The wired graph today** (`ZinelyNavHost`, [ADR-030](DECISIONS.md#adr-030)/[ADR-039](DECISIONS.md#adr-039)/[ADR-040](DECISIONS.md#adr-040)/[ADR-041](DECISIONS.md#adr-041)/[ADR-046](DECISIONS.md#adr-046)) — start destination `HomeRoute`, the single back-stack root:
+**The wired graph today** (`ZinelyNavHost`, [ADR-030](DECISIONS.md#adr-030)/[ADR-039](DECISIONS.md#adr-039)/[ADR-041](DECISIONS.md#adr-041)/[ADR-046](DECISIONS.md#adr-046)/[ADR-051](DECISIONS.md#adr-051)) — start destination `HomeRoute`, the single back-stack root. The former Preview → Export → Completion triad collapsed into the **one** `ProofRoute`/`ProofScreen` (Sheet → Print → Fold internal acts, [ADR-051](DECISIONS.md#adr-051)); the ADR-041 post-export → fold payoff is preserved as an intra-screen act nudge, not a route:
 
 ```mermaid
 flowchart LR
     Home["HomeRoute — start, single root"] -->|"open card / start a zine (launchSingleTop)"| Editor["EditorRoute(projectId)"]
-    Editor -->|Preview| Preview["PreviewRoute(projectId)"]
-    Preview -->|"Print & fold"| Export["ExportRoute(projectId)"]
-    Export -->|"fold help / auto post-export (ADR-041)"| Completion["CompletionRoute(projectId)"]
+    Editor -->|"Preview → Proof"| Proof["ProofRoute(projectId) — Sheet · Print · Fold"]
     Editor -->|"back / boot-error back"| Home
-    Preview -->|back| Editor
-    Export -->|back| Preview
-    Completion -->|"back / keep editing"| Editor
+    Proof -->|"back / make another"| Editor
 ```
 
 **Back-stack policy ([ADR-046](DECISIONS.md#adr-046)):** returning editor → Home is only ever a *pop* (no code path navigates to Home), so two `EditorRoute` entries never coexist; a fast reopen of a just-closed project awaits the [ADR-026](DECISIONS.md#adr-026) single-writer release inside the editor bootstrap (`EditorAutosaveBinderFactory.awaitNoSession`, the same `AutosaveSessionGate` 5 s policy the repository's mutation gate uses — timeout ⇒ a warm "still saving" boot error). The [ADR-030](DECISIONS.md#adr-030) §4 `"default"` seed-on-miss is retired: a missing document is an honest boot error with a back-to-shelf action, and first run lands on the Empty-shelf **Start a zine** CTA. Leaving the shelf commits pending undoable deletes (leaving = snackbar dismissal). Welcome and Settings remain future routes ([SCREEN-INVENTORY](design/SCREEN-INVENTORY.md)).
@@ -450,7 +446,9 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    The [screen inventory](design/SCREEN-INVENTORY.md) expands the type-safe single-Activity
    `ZinelyNavHost` with Welcome, Home/My-zines, Preview, Export, Completion, and Settings —
    additional type-safe `@Serializable` destinations (navigate from UI, not ViewModels). Preview /
-   Export / Completion landed in S5; the Room-gated **Home/My-zines** pipeline landed across S6:
+   Export / Completion landed in S5 and were later **unified into the single `ProofRoute`** (M5,
+   [ADR-051](DECISIONS.md#adr-051); the three screens/routes retired in B5); the Room-gated
+   **Home/My-zines** pipeline landed across S6:
    the store (S6.1, [ADR-042](DECISIONS.md#adr-042)), the shelf (S6.2,
    [ADR-043](DECISIONS.md#adr-043)), the actions (S6.3, [ADR-044](DECISIONS.md#adr-044)), the
    thumbnails (S6.4, [ADR-045](DECISIONS.md#adr-045)), and the **S6.5 re-root**

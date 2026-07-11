@@ -109,9 +109,10 @@ public const val EditorPreviewActionTestTag: String = "editor-preview-action"
  * @param onRetrySaveError invoked when the user taps the failure banner's "Try now" ([ADR-038](../DECISIONS.md#adr-038))
  *   — the app forces an immediate save; the outcome flows through the ADR-037 path (clears on success,
  *   re-reports on failure). Defaults to a no-op.
- * @param onPreview invoked by the "Preview" entry point (S5 step 1) to open the reader's-booklet
- *   [PreviewScreen]. `null` (the default) hides the affordance entirely, so a screen without a preview
- *   destination (previews/tests) is unchanged; the app passes a navigate-to-preview action.
+ * @param onPreview invoked by the "Preview" entry point to open the unified Proof surface (M5,
+ *   [ADR-051](../DECISIONS.md#adr-051) — the reader's-booklet PreviewScreen it once opened is retired,
+ *   superseded by the imposed-sheet-first Proof). `null` (the default) hides the affordance entirely, so a
+ *   screen without a proof destination (previews/tests) is unchanged; the app passes a navigate action.
  */
 @Composable
 public fun EditorScreen(
@@ -184,7 +185,7 @@ public fun EditorScreen(
     }
 
     Column(modifier = modifier) {
-        // The "Preview" entry to the reader's-booklet PreviewScreen (S5 step 1). A quiet top-end nav
+        // The "Preview" entry to the unified Proof surface (M5, ADR-051). A quiet top-end nav
         // action (not a thumb-zone craft supply — it advances the journey, it doesn't place content);
         // shown only when the host supplies a destination, so the editor's tested layout is unchanged
         // without one.

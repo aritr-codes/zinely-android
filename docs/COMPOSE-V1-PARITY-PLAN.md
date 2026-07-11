@@ -278,7 +278,7 @@ M4 is **no longer a standalone milestone**. Two facts from the reconciliation co
 
 ### M5 — Proof parity (the Fold)
 
-> **🚧 In progress — batched.** M5 is decomposed into B1→B5 in [spikes/m5-proof-batching.md](spikes/m5-proof-batching.md).
+> **✅ Complete — all batches landed.** M5 is decomposed into B1→B5 in [spikes/m5-proof-batching.md](spikes/m5-proof-batching.md).
 > Unlike M2/M3 it is **not a pure reskin**: the frozen Proof is one 3-act surface where the app ships
 > three routes, so two structural calls are recorded in **[ADR-051](DECISIONS.md#adr-051)** — **(A)**
 > collapse `PreviewRoute`/`ExportRoute`/`CompletionRoute` into one `ProofRoute`/`ProofScreen`, and **(B)**
@@ -289,8 +289,13 @@ M4 is **no longer a standalone milestone**. Two facts from the reconciliation co
 > the top row flipped, three vertical + one horizontal crease, the one coral cut + "one cut" label, the
 > calm dead-band, the honesty legend, and the front/back cover cards); `decorativeImpositionRows`
 > relocated from `ExportScreen` into the Proof and its drift guard extended with the frozen-grid ↔ engine
-> equivalence — **no raw imposition array in Compose** (folded-in M4 checkpoint). B3 (Act 2 print recipe +
-> export wiring) · B4 (Act 3 fold + climax) · B5 (overlays + retire the old screens + parity seal) remain.
+> equivalence — **no raw imposition array in Compose** (folded-in M4 checkpoint).
+> **B3 (Act 2 — Print) landed 2026-07-11** — the honest recipe + two-action export row; in-app Print dropped ([ADR-052](DECISIONS.md#adr-052)).
+> **B4 (Act 3 — The Fold) landed 2026-07-11** — the five-step guide + staged finished-book climax, `success` haptic, reduced-motion path.
+> **B5 (retirement + parity seal) landed 2026-07-12** — `PreviewScreen`/`ExportScreen`/`CompletionScreen` + their tests + the
+> orphaned `PreviewRoute`/`ExportRoute`/`CompletionRoute` deleted after a repo-wide audit proved them unreachable; the recoverable
+> export-error overlay (frozen `#errwrap`) and the ADR-041 "Fold now" post-export hand-off preserved so the retirement ships no
+> regression; loading-sweep/empty/toast overlays are documented deferrals (prototype-simulated / no wired data signal).
 
 - **Goal:** unify `PreviewScreen` + `ExportScreen` + `CompletionScreen` into the frozen 3-act Proof
   (Sheet → Print → Fold), with the Fold climax getting the whole delight budget.

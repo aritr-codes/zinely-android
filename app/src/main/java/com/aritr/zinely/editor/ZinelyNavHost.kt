@@ -36,6 +36,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.aritr.zinely.export.ExportFormat
 import com.aritr.zinely.export.ExportUiState
+import kotlinx.coroutines.flow.MutableSharedFlow
 import com.aritr.zinely.export.ExportViewModel
 import com.aritr.zinely.home.HomeUiState
 import com.aritr.zinely.home.HomeViewModel
@@ -160,6 +161,11 @@ private fun ProofDestination(
     // learned this — Codex RF1).
     val pending = rememberSaveable { mutableStateOf(ProofExportTarget.OPEN) }
 
+    // One emission per successful Save-PDF render — drives the Proof's "Fold now" hand-off snackbar (the
+    // ADR-041 post-export → fold payoff, now intra-screen). extraBufferCapacity so the collector's tryEmit
+    // never suspends. A transient nudge, so it is not persisted across config change.
+    val saved = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
+
     // Hand each finished export to the right OS edge (ADR-039 §4): a scoped, read-granted content:// URI.
     // Collect only while STARTED so an export finishing while backgrounded doesn't launch at a stopped
     // lifecycle — the buffered Channel holds the event until resume.
@@ -169,9 +175,12 @@ private fun ProofDestination(
                 try {
                     when (pending.value) {
                         // Save PDF → open the finished PDF in the user's viewer (from which they print/save).
-                        ProofExportTarget.OPEN -> context.startActivity(
-                            openIntent(context.contentResolver, ready.uri, ready.mime),
-                        )
+                        // The render succeeded (the file is on-device), so raise the "Fold now" hand-off
+                        // first — even if no viewer is installed, the save is real and folding is next.
+                        ProofExportTarget.OPEN -> {
+                            saved.tryEmit(Unit)
+                            context.startActivity(openIntent(context.contentResolver, ready.uri, ready.mime))
+                        }
                         // Share → the OS chooser.
                         ProofExportTarget.SEND -> context.startActivity(
                             Intent.createChooser(shareIntent(ready.uri, ready.mime), "Share your zine"),
@@ -211,6 +220,21 @@ private fun ProofDestination(
                 },
                 // Single-flight: disable the export row while a render is in flight.
                 exportBusy = exportState is ExportUiState.Working,
+                // A failed render surfaces the recoverable error overlay (carries forward the retired
+                // ExportScreen's error surfacing — never a silent failure). "Try again" clears the error
+                // and re-fires the same target's export against the live document.
+                exportFailed = exportState is ExportUiState.Error,
+                onRetryExport = {
+                    exportViewModel.dismissError()
+                    exportViewModel.export(
+                        uiState.document.copy(paperSize = paper.value),
+                        state.pageSizePt,
+                        state.imageBytes,
+                        ExportFormat.PDF,
+                    )
+                },
+                // The "Fold now" post-export hand-off (ADR-041): one nudge per successful Save-PDF.
+                savedSignals = saved,
                 // "Make another" after the fold reveal. The true multi-project "new zine" awaits that
                 // layer (the retired CompletionScreen's onKeepEditing carried the same honest deferral);
                 // for the single-project MVP it returns to the bench, where the work is already saved.

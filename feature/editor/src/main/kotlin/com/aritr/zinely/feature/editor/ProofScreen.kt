@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,11 +56,15 @@ import com.aritr.zinely.ui.components.ZIconButton
 import com.aritr.zinely.ui.components.ZPrimaryButton
 import com.aritr.zinely.ui.components.ZPrimaryButtonMetrics
 import com.aritr.zinely.ui.components.ZPrimaryFill
+import com.aritr.zinely.ui.components.ZSnackbar
+import com.aritr.zinely.ui.components.ZStatusPane
 import com.aritr.zinely.ui.components.ZToolButton
 import com.aritr.zinely.ui.components.ZToolButtonMetrics
 import com.aritr.zinely.ui.theme.ZinelyEasing
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 // Test tags — the stable handles the ProofScreen suite and host tests address.
 public const val ProofScreenTestTag: String = "proof-screen"
@@ -68,6 +73,9 @@ public const val ProofPrimaryTestTag: String = "proof-primary"
 public const val ProofSecondaryTestTag: String = "proof-secondary"
 public const val ProofActLabelTestTag: String = "proof-act-label"
 public const val ProofProgressTestTag: String = "proof-progress"
+public const val ProofErrorPaneTestTag: String = "proof-error-pane"
+public const val ProofRetryTestTag: String = "proof-retry"
+public const val ProofFoldSnackTestTag: String = "proof-fold-snack"
 
 /**
  * The three acts of the frozen Proof surface, in climb order (`proof.html` `setAct(0..2)`).
@@ -100,19 +108,22 @@ private val CLIMAX_BEAT_DELAYS = intArrayOf(980, 200, 260, 260, 300)
 private const val PROOF_ACT_MILLIS: Int = 340
 
 /**
- * The **B1** Proof scaffold (M5, [ADR-051]) — the single 3-act surface that collapses the former
- * Preview + Export + Completion routes into one screen (`proof.html`, DESIGN-FROZEN). This batch
- * stands up the frame only: the shared top bar (loss-safe back · zine name · three passive progress
- * creases), the act state machine (Sheet → Print → Fold with slide transitions, instant under reduced
- * motion), the shared bottom action bar reconfigured per act, and the topbar act-status live region.
+ * The unified Proof surface (M5, [ADR-051]) — the single 3-act screen that collapses the former
+ * Preview + Export + Completion routes into one (`proof.html`, DESIGN-FROZEN). The shared top bar
+ * (loss-safe back · zine name · three passive progress creases), the act state machine (Sheet → Print →
+ * Fold with slide transitions, instant under reduced motion), the shared bottom action bar reconfigured
+ * per act, and the topbar act-status live region frame the three act bodies: Act 1 the imposed sheet
+ * ([ProofSheetAct]), Act 2 the honest print recipe + export ([ProofPrintAct]), Act 3 the fold guide +
+ * staged climax ([ProofFoldAct]). The primary/secondary configuration follows `proof.html`
+ * `configurePrimary()` exactly — on the Fold act the global primary is hidden because the step nav owns it.
  *
- * **Act bodies are intentionally empty here.** Act 1 (the imposed sheet), Act 2 (the print recipe +
- * export), and Act 3 (the fold guide + climax) land in B2/B3/B4; this scaffold defines the seam they
- * hang off. The primary/secondary configuration follows `proof.html` `configurePrimary()` exactly —
- * on the Fold act the primary is hidden because the (not-yet-built) step nav will own it.
+ * B5 seals the surface: a **recoverable export-error overlay** (frozen `#errwrap`, [exportFailed]) that
+ * carries forward the retired `ExportScreen`'s error surfacing so a failed render is never silent, and the
+ * **"Fold now" hand-off snackbar** ([savedSignals]) — the [ADR-041] post-export → fold payoff, preserved
+ * as an intra-screen nudge rather than a route navigation.
  *
- * Stateless except for the act pointer: the act is [rememberSaveable] so a rotation keeps the climb
- * position. [onBack] is the loss-safe exit to the bench (the work is already autosaved).
+ * Stateless except for the act pointer + fold sub-state: the act is [rememberSaveable] so a rotation keeps
+ * the climb position. [onBack] is the loss-safe exit to the bench (the work is already autosaved).
  *
  * @param zineName the project title shown in the top bar.
  * @param onBack loss-safe back to the editor (the bench) — the work is saved.
@@ -120,6 +131,13 @@ private const val PROOF_ACT_MILLIS: Int = 340
  * @param onPaperSelected the user picked a paper size in Act 2's chooser.
  * @param onExportPdf Act 2 export — the host renders the PDF and hands it to the [ProofExportTarget] edge.
  * @param exportBusy an export is in flight — Act 2 disables its export row.
+ * @param exportFailed the last export could not be rendered — show the recoverable error overlay (the
+ *   frozen `#errwrap`). Carries forward the retired `ExportScreen`'s error surfacing so a failed render is
+ *   never silent; the loss-safe back stays available in the top bar.
+ * @param onRetryExport the error overlay's "Try again" — the host clears the error and re-fires the last
+ *   export (same target + document).
+ * @param savedSignals one emission per **successful Save-PDF** render. Each raises the frozen "Fold now"
+ *   snackbar — the [ADR-041] post-export → fold hand-off, preserved as an intra-screen nudge to Act 3.
  * @param onMakeAnother Act 3 finished — the "Make another" exit (the single-project MVP returns to the bench).
  * @param modifier sizing/placement for the whole surface.
  */
@@ -132,6 +150,9 @@ public fun ProofScreen(
     onPaperSelected: (PaperSize) -> Unit = {},
     onExportPdf: (ProofExportTarget) -> Unit = {},
     exportBusy: Boolean = false,
+    exportFailed: Boolean = false,
+    onRetryExport: () -> Unit = {},
+    savedSignals: Flow<Unit> = emptyFlow(),
     onMakeAnother: () -> Unit = {},
 ) {
     val colors = ZinelyTheme.colors
@@ -153,6 +174,14 @@ public fun ProofScreen(
     // The climax reveal pointer, 0→5 (settle → shelf-line → words-h → words-p → exits). Driven by the
     // beat schedule below; saved so a rotation mid-reveal resumes rather than restarts the moment.
     var climaxBeat by rememberSaveable { mutableStateOf(0) }
+
+    // The frozen "Fold now" snackbar (`savePdf → snack`): raised once per successful Save-PDF export. It
+    // is the ADR-041 post-export → fold hand-off, now an intra-screen nudge (its action jumps to Fold).
+    // NOT rememberSaveable: a transient nudge should not survive a rotation and re-announce itself.
+    var foldSnack by remember { mutableStateOf(false) }
+    LaunchedEffect(savedSignals) {
+        savedSignals.collect { foldSnack = true }
+    }
 
     fun go(target: ProofAct) {
         haptics.perform(ZinelyHaptic.Tick)
@@ -198,7 +227,7 @@ public fun ProofScreen(
         ACT_LABELS.getValue(act)
     }
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(colors.desk)
@@ -217,67 +246,127 @@ public fun ProofScreen(
             }
             .testTag(ProofScreenTestTag),
     ) {
-        ProofTopBar(zineName = zineName, act = act, actLabel = actLabel, onBack = onBack)
+        Column(Modifier.fillMaxSize()) {
+            ProofTopBar(zineName = zineName, act = act, actLabel = actLabel, onBack = onBack)
 
-        // The acts container. Forward moves slide in from the right (+16px), a back move from the
-        // left (−16px) — `proof.html` actIn / actInBack — both fading in over --fast..ease. Bodies
-        // are empty in B1 (B2–B4 fill them).
-        AnimatedContent(
-            targetState = act,
-            transitionSpec = {
-                val forward = targetState.ordinal >= initialState.ordinal
-                val dur = if (reduceMotion) 0 else PROOF_ACT_MILLIS
-                val dx = if (forward) slidePx else -slidePx
-                (
-                    fadeIn(tween(dur, easing = ZinelyEasing)) +
-                        slideInHorizontally(tween(dur, easing = ZinelyEasing)) { dx }
-                    ) togetherWith fadeOut(tween(dur, easing = ZinelyEasing))
-            },
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            label = "proofAct",
-        ) { target ->
-            when (target) {
-                // Act 1 — the imposed sheet (B2).
-                ProofAct.SHEET -> ProofSheetAct(Modifier.fillMaxSize())
-                // Act 2 — the honest print recipe + export (B3).
-                ProofAct.PRINT -> ProofPrintAct(
-                    paper = paper,
-                    onPaperSelected = onPaperSelected,
-                    onExportPdf = onExportPdf,
-                    exportBusy = exportBusy,
-                    modifier = Modifier.fillMaxSize(),
+            if (exportFailed) {
+                // The recoverable export error (frozen `#errwrap`) replaces the acts + action bar so there
+                // is exactly one recovery action; the top bar's loss-safe back stays available (the Proof
+                // "back everywhere" invariant). This carries forward the retired ExportScreen's error
+                // surfacing — a failed render must never be silent.
+                ProofErrorPane(
+                    onRetry = onRetryExport,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
                 )
-                // Act 3 — the fold guide + the staged climax (B4).
-                ProofAct.FOLD -> ProofFoldAct(
-                    step = foldStep,
-                    finished = foldFinished,
-                    climaxBeat = climaxBeat,
-                    reduceMotion = reduceMotion,
-                    onNext = { advanceFold() },
-                    onPrev = { retreatFold() },
-                    modifier = Modifier.fillMaxSize(),
+            } else {
+                // The acts container. Forward moves slide in from the right (+16px), a back move from the
+                // left (−16px) — `proof.html` actIn / actInBack — both fading in over --fast..ease.
+                AnimatedContent(
+                    targetState = act,
+                    transitionSpec = {
+                        val forward = targetState.ordinal >= initialState.ordinal
+                        val dur = if (reduceMotion) 0 else PROOF_ACT_MILLIS
+                        val dx = if (forward) slidePx else -slidePx
+                        (
+                            fadeIn(tween(dur, easing = ZinelyEasing)) +
+                                slideInHorizontally(tween(dur, easing = ZinelyEasing)) { dx }
+                            ) togetherWith fadeOut(tween(dur, easing = ZinelyEasing))
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    label = "proofAct",
+                ) { target ->
+                    when (target) {
+                        // Act 1 — the imposed sheet (B2).
+                        ProofAct.SHEET -> ProofSheetAct(Modifier.fillMaxSize())
+                        // Act 2 — the honest print recipe + export (B3).
+                        ProofAct.PRINT -> ProofPrintAct(
+                            paper = paper,
+                            onPaperSelected = onPaperSelected,
+                            onExportPdf = onExportPdf,
+                            exportBusy = exportBusy,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        // Act 3 — the fold guide + the staged climax (B4).
+                        ProofAct.FOLD -> ProofFoldAct(
+                            step = foldStep,
+                            finished = foldFinished,
+                            climaxBeat = climaxBeat,
+                            reduceMotion = reduceMotion,
+                            onNext = { advanceFold() },
+                            onPrev = { retreatFold() },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+
+                ProofActionBar(
+                    act = act,
+                    onPrimary = {
+                        when (act) {
+                            ProofAct.SHEET -> go(ProofAct.PRINT)
+                            ProofAct.PRINT -> go(ProofAct.FOLD)
+                            ProofAct.FOLD -> Unit // the fold owns its own actions (finish / exits) below
+                        }
+                    },
+                    onSecondary = { if (act == ProofAct.PRINT) go(ProofAct.SHEET) },
+                    foldFinished = foldFinished,
+                    foldOnLastStep = foldStep == FOLD_LAST_STEP,
+                    foldActionsRevealed = climaxBeat >= 5,
+                    onFoldFinish = { foldFinished = true },
+                    onMakeAnother = { haptics.perform(ZinelyHaptic.Tick); onMakeAnother() },
+                    onBackToBench = { haptics.perform(ZinelyHaptic.Tick); onBack() },
                 )
             }
         }
 
-        ProofActionBar(
-            act = act,
-            onPrimary = {
-                when (act) {
-                    ProofAct.SHEET -> go(ProofAct.PRINT)
-                    ProofAct.PRINT -> go(ProofAct.FOLD)
-                    ProofAct.FOLD -> Unit // the fold owns its own actions (finish / exits) below
-                }
+        // The "Fold now" hand-off snackbar (frozen bottom offset 104dp), above the action bar. Its action
+        // is the ADR-041 nudge to the fold; the 5s timeout dismisses it (ZSnackbar owns the timer).
+        if (foldSnack && !exportFailed) {
+            ZSnackbar(
+                message = "Saved “$zineName.pdf” to this device",
+                actionLabel = "Fold now",
+                onAction = { foldSnack = false; go(ProofAct.FOLD) },
+                onTimeout = { foldSnack = false },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 104.dp)
+                    .testTag(ProofFoldSnackTestTag),
+            )
+        }
+    }
+}
+
+/**
+ * The recoverable export-error overlay — the frozen `#errwrap`: a coral warning badge, the honest
+ * "your zine is safe" reassurance, and a single stamp "Try again" that re-fires the last export. One
+ * action only; the top bar's loss-safe back is the other way out.
+ */
+@Composable
+private fun ProofErrorPane(onRetry: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = ZinelyTheme.colors
+    Box(modifier, contentAlignment = Alignment.Center) {
+        ZStatusPane(
+            title = "Couldn’t make the PDF",
+            body = "Your zine is safe on this device — the export just didn’t finish. Try once more.",
+            badgeBackground = colors.coral.copy(alpha = 0.14f),
+            badgeContent = colors.coralText,
+            modifier = Modifier
+                .padding(horizontal = 24.dp)
+                .testTag(ProofErrorPaneTestTag),
+            badgeIcon = { tint -> ProofWarnBadge(tint) },
+            cta = {
+                ZPrimaryButton(
+                    text = "Try again",
+                    onClick = onRetry,
+                    metrics = ZPrimaryButtonMetrics.Proof,
+                    fill = ZPrimaryFill.Stamp,
+                    modifier = Modifier.testTag(ProofRetryTestTag),
+                )
             },
-            onSecondary = { if (act == ProofAct.PRINT) go(ProofAct.SHEET) },
-            foldFinished = foldFinished,
-            foldOnLastStep = foldStep == FOLD_LAST_STEP,
-            foldActionsRevealed = climaxBeat >= 5,
-            onFoldFinish = { foldFinished = true },
-            onMakeAnother = { haptics.perform(ZinelyHaptic.Tick); onMakeAnother() },
-            onBackToBench = { haptics.perform(ZinelyHaptic.Tick); onBack() },
         )
     }
 }
@@ -485,6 +574,26 @@ private fun ProofVectorIcon(pathData: String, tint: Color) {
 
 @Composable
 private fun rememberPath(pathData: String) =
-    androidx.compose.runtime.remember(pathData) {
+    remember(pathData) {
         PathParser().parsePathString(pathData).toPath()
     }
+
+/** The frozen `#errwrap` badge — a warning triangle with an exclamation (stroke) and its dot (fill). */
+@Composable
+private fun ProofWarnBadge(tint: Color) {
+    val triangle = rememberPath("M12 3l9 16H3l9-16z")
+    val stem = rememberPath("M12 8v5")
+    Canvas(Modifier.fillMaxSize()) {
+        val s = size.minDimension / 24f
+        scale(s, s, pivot = androidx.compose.ui.geometry.Offset.Zero) {
+            val stroke = Stroke(
+                width = 2f,
+                cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                join = androidx.compose.ui.graphics.StrokeJoin.Round,
+            )
+            drawPath(triangle, tint, style = stroke)
+            drawPath(stem, tint, style = stroke)
+            drawCircle(tint, radius = 1.2f, center = androidx.compose.ui.geometry.Offset(12f, 16.5f))
+        }
+    }
+}

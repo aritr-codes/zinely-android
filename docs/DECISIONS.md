@@ -713,7 +713,7 @@
 
 **Completion · fold-steps screen — the payoff peak, hosted over the shipped export seam (S5 step 3).**
 
-*Status: Accepted (2026-07-01). Builds on [ADR-039](#adr-039) (export path), [ADR-026](#adr-026) (single-writer / shared editor VM), [ADR-012](#adr-012) (print guidance), [ADR-006](#adr-006) (`export == preview`).*
+*Status: Accepted (2026-07-01); the `CompletionScreen` UI it introduced was **superseded by [ADR-051](#adr-051)** and retired in M5 B5 (2026-07-12) — the fold payoff now lives in the unified `ProofScreen` Act 3. The export-seam decisions here still stand. Builds on [ADR-039](#adr-039) (export path), [ADR-026](#adr-026) (single-writer / shared editor VM), [ADR-012](#adr-012) (print guidance), [ADR-006](#adr-006) (`export == preview`).*
 
 ### Context
 
@@ -1135,7 +1135,7 @@ Alternatives rejected: **(A′)** keep three routes and animate between them —
 - The frozen `#segAct` Sheet/Print/Fold buttons are **prototype-dock review scaffolding** — the production progress creases are passive (`aria-hidden`), never a tappable act-switcher.
 - The imposition invariant is untouched: Act 1 will derive order/rotation from the engine ([ADR-007](#adr-007)) via `decorativeImpositionRows(TOP_ROW_ROTATED)` — no raw layout array in Compose — and the corrected frozen grid ([ADR-050](#adr-050)) already matches the engine, so there is **no imposed-sheet parity carve-out**. (Enforced in B2.)
 - Behaviour is otherwise reskin-invariant: `ExportViewModel.export`, the OS share/open edges, and the [ADR-041](#adr-041) payoff survive; only the chrome and the route topology change.
-- `PreviewRoute`/`ExportRoute`/`CompletionRoute` and `PreviewScreen`/`ExportScreen`/`CompletionScreen` remain in the tree, unreferenced by the graph, until B5 deletes them — a deliberate late-deletion to keep B1 structural.
+- `PreviewRoute`/`ExportRoute`/`CompletionRoute` and `PreviewScreen`/`ExportScreen`/`CompletionScreen` remained in the tree, unreferenced by the graph, until B5 deleted them — a deliberate late-deletion to keep B1 structural. **Executed in B5 (2026-07-12):** a repository-wide retirement audit confirmed no production reference survived (only the three screens' own tests + doc/KDoc mentions), then the three screens, their three tests, and the three orphaned routes were deleted. Two behaviours the retired screens carried are **preserved in the Proof so the retirement ships no regression**: (a) the recoverable **export-error surfacing** the old `ExportScreen`/`CompletionScreen` had (`error: String?`) — now the frozen `#errwrap` overlay (`ZStatusPane`, loss-safe back retained) so a failed render is never silent; and (b) the **ADR-041 post-export → fold hand-off** (the old auto-land on Completion) — now the intra-screen "Fold now" snackbar (Decision A). The frozen loading-sweep / empty / decorative-toast overlays are **documented deferrals** — prototype-simulated states whose wired equivalents are covered by the host boot-gating / OS chooser / live recipe, or (empty) have no data signal without a new feature; recorded in [m5-proof-batching.md](spikes/m5-proof-batching.md) §B5, not silently dropped.
 
 ### Review
 

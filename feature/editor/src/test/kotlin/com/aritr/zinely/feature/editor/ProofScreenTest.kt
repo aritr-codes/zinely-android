@@ -8,6 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -18,6 +21,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -317,6 +321,58 @@ class ProofScreenTest {
 
         composeRule.onNodeWithText("Make another").performClick()
         assertEquals(1, madeAnother)
+    }
+
+    // ---- B5 — overlays & the post-export hand-off (ADR-051, ADR-041) --------------------------
+
+    @Test
+    fun `a failed export shows the recoverable error overlay with one retry, back still available`() {
+        var retried = 0
+        composeRule.setContent {
+            ZinelyTheme {
+                ProofScreen(
+                    zineName = "Corner Store Poems",
+                    onBack = { backCount++ },
+                    exportFailed = true,
+                    onRetryExport = { retried++ },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag(ProofErrorPaneTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText("Couldn’t make the PDF").assertIsDisplayed()
+        // The error replaces the acts + action bar — exactly one recovery action, no dead act primary.
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).assertDoesNotExist()
+        // …but the loss-safe back stays available (the Proof "back everywhere" invariant).
+        composeRule.onNodeWithContentDescription("Back to the bench (your work is saved)").assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ProofRetryTestTag).performClick()
+        assertEquals(1, retried)
+    }
+
+    @Test
+    fun `a successful save-pdf raises the fold-now snackbar whose action jumps to the fold`() {
+        // Instant snackbar: without the enter slide, the action sits at its final hit-testable position.
+        forceReduceMotion()
+        val saved = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        // A short name keeps the (width-unconstrained) snackbar's action on-screen in the test surface.
+        composeRule.setContent {
+            ZinelyTheme {
+                ProofScreen(zineName = "Zine", onBack = {}, savedSignals = saved)
+            }
+        }
+        // The save happens on the Print act; the hand-off nudges forward to the Fold.
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // Sheet → Print
+        saved.tryEmit(Unit) // the host's signal after a successful Save-PDF render
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(ProofFoldSnackTestTag).assertIsDisplayed()
+        // Click the action node itself (the sole clickable under the snackbar) — a positional tap on the
+        // label text alone doesn't reliably propagate to the parent clickable under Robolectric.
+        composeRule.onNode(hasClickAction() and hasAnyAncestor(hasTestTag(ProofFoldSnackTestTag)))
+            .performClick()
+
+        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Step 3 of 3 · Fold")
     }
 
     /** Android's "Remove animations" (`ANIMATOR_DURATION_SCALE = 0`) — the reduced-motion signal. */

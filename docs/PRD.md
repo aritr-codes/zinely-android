@@ -216,7 +216,7 @@ stateDiagram-v2
 > prints*, not the reader's booklet. So under the V1 re-skin the "preview as the reader's booklet" clause
 > of FR-6 is **superseded** — the user reviews the imposed sheet directly in the Proof. This is an accepted
 > feature supersession (user-confirmed), landing on `feat/m0-design-system` (M5; the reader-booklet
-> `PreviewScreen` is removed in batch B5). The imposition-correctness half of FR-6 (fold/cut guides,
+> `PreviewScreen` was removed in batch B5, 2026-07-12). The imposition-correctness half of FR-6 (fold/cut guides,
 > safe-area inset, correct order/rotation) is unchanged and strengthened — Act 1 derives from the engine.
 >
 > **FR-6 scope note (2026-07-11, [ADR-052](DECISIONS.md#adr-052)) — no in-app print in V1 (Known
