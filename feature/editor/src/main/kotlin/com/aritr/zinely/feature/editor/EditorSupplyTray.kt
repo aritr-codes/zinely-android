@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the supply-tray container. */
 public const val EditorSupplyTrayTestTag: String = "editor-supply-tray"
@@ -89,7 +90,9 @@ public fun EditorSupplyTray(
     Column(
         modifier = modifier
             .testTag(EditorSupplyTrayTestTag)
-            .background(MaterialTheme.colorScheme.background)
+            // The shelf sits on the frozen "desk" surface (bench.html `--desk`), not the abused Legacy
+            // `background` slate that never existed in the palette.
+            .background(ZinelyTheme.colors.desk)
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -101,7 +104,9 @@ public fun EditorSupplyTray(
             text = TraySectionLabel,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // Quiet secondary label ON the desk band → `--on-desk-soft` (bench.html), not the paper-ink
+            // `onSurfaceVariant` role it used before.
+            color = ZinelyTheme.colors.onDeskSoft,
             modifier = Modifier.semantics { heading() },
         )
         Row(
@@ -170,16 +175,19 @@ private fun SupplyButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = MaterialTheme.colorScheme
+    val colors = ZinelyTheme.colors
+    // Frozen supply vocabulary: the primary "Add a photo" is the coral FILL under white text
+    // (`--coral-strong`, AA 4.6:1 — the palette's designated primary-button fill); the rest are paper
+    // sheets (`--paper`); a disabled supply fades to a flat de-saturated paper-edge card.
     val container: Color = when {
-        !enabled -> colors.surfaceVariant.copy(alpha = 0.4f)
-        primary -> colors.primary
-        else -> colors.surface
+        !enabled -> colors.paperEdge.copy(alpha = 0.4f)
+        primary -> colors.coralStrong
+        else -> colors.paper
     }
     val content: Color = when {
-        !enabled -> colors.onSurfaceVariant.copy(alpha = 0.5f)
-        primary -> colors.onPrimary
-        else -> colors.onSurface
+        !enabled -> colors.inkSoft.copy(alpha = 0.5f)
+        primary -> Color.White
+        else -> colors.ink
     }
 
     Column(

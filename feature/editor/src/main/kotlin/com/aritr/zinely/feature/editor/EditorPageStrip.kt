@@ -33,6 +33,7 @@ import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.render.SceneRenderer
 import com.aritr.zinely.render.android.AssetBytesSource
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 
 /** Test tag on the page-strip container. */
@@ -92,7 +93,9 @@ public fun EditorPageStrip(
     Row(
         modifier = modifier
             .testTag(EditorPageStripTestTag)
-            .background(MaterialTheme.colorScheme.background)
+            // The rail sits on the frozen "desk" surface (bench.html `.rail` over `--desk`), not the
+            // abused Legacy `background` slate.
+            .background(ZinelyTheme.colors.desk)
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 12.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -123,7 +126,7 @@ private fun PageCard(
     imageBytes: AssetBytesSource,
     onClick: () -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
+    val colors = ZinelyTheme.colors
     // Deterministic handmade tilt: small alternating angle by page parity (the current card overrides).
     val tilt = if (current) -3f else if (pageNumber % 2 == 0) 2.5f else -2f
 
@@ -156,7 +159,7 @@ private fun PageCard(
                 .size(width = 44.dp, height = 60.dp)
                 .shadow(if (current) 8.dp else 3.dp, RoundedCornerShape(3.dp))
                 .clip(RoundedCornerShape(3.dp))
-                .background(colors.surface),
+                .background(colors.paper),
             contentAlignment = Alignment.Center,
         ) {
             PageThumbnail(
@@ -175,11 +178,15 @@ private fun PageCard(
                     text = "$pageNumber",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = if (current) FontWeight.Bold else FontWeight.Normal,
-                    color = colors.onSurfaceVariant,
+                    color = colors.inkSoft,
                 )
             }
         }
-        // Tape marker on the current page (decorative; sits above the card's top edge).
+        // Tape marker on the current page (decorative; sits above the card's top edge). The tape uses the
+        // frozen `--yellow` authorial ink (the migrated Legacy `tertiary` role, byte-identical).
+        // DIVERGENCE (reported, not redesigned): bench.html marks the current panel with an inset
+        // `2px var(--coral-strong)` ring (`.panelbtn.cur`), not a yellow tape strip — a conflict between
+        // the frozen Bench spec and editor-visual-direction.md's tape metaphor, left for a design decision.
         if (current) {
             Box(
                 modifier = Modifier
@@ -187,7 +194,7 @@ private fun PageCard(
                     .graphicsLayer { rotationZ = -4f; translationY = -4.dp.toPx() }
                     .size(width = 30.dp, height = 13.dp)
                     .clip(RoundedCornerShape(1.dp))
-                    .background(colors.tertiary),
+                    .background(colors.yellow),
             )
         }
     }

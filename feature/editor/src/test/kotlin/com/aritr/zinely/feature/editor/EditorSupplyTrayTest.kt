@@ -1,7 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -72,7 +72,7 @@ class EditorSupplyTrayTest {
         var undo = 0
         var redo = 0
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorSupplyTray(
                     canUndo = true,
                     canRedo = true,
@@ -98,7 +98,7 @@ class EditorSupplyTrayTest {
     @Test
     fun redo_is_disabled_when_cannot_redo() {
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorSupplyTray(
                     canUndo = true,
                     canRedo = false,
@@ -117,7 +117,7 @@ class EditorSupplyTrayTest {
     fun undo_enabled_state_tracks_store_and_undo_reverts_the_change() {
         val store = onePageStore()
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 val state by store.uiState.collectAsState()
                 EditorSupplyTray(
                     canUndo = state.canUndo,
@@ -153,7 +153,7 @@ class EditorSupplyTrayTest {
         // screen-reader user lands on a section landmark before traversing the four supply actions
         // (DESIGN-RULES 9). It is a `heading()` so TalkBack announces it as orientation, not a button.
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorSupplyTray(
                     canUndo = false,
                     canRedo = false,

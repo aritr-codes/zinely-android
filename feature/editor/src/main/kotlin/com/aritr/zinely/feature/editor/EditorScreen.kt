@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,6 +40,7 @@ import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.AssetBytesSource
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -194,6 +196,9 @@ public fun EditorScreen(
             ) {
                 TextButton(
                     onClick = onPreview,
+                    // Desk-level nav action — the coral accent sourced from the frozen `--coral` token
+                    // (the migrated Legacy `primary` role, byte-identical) instead of the Material default.
+                    colors = ButtonDefaults.textButtonColors(contentColor = ZinelyTheme.colors.coral),
                     modifier = Modifier
                         .testTag(EditorPreviewActionTestTag)
                         .semantics { contentDescription = "Preview" },

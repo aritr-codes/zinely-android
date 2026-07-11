@@ -1,7 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertHeightIsAtLeast
@@ -75,7 +75,7 @@ class EditorPageStripTest {
 
     private fun setStrip(store: EditorStore) {
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 val state by store.uiState.collectAsState()
                 EditorPageStrip(
                     pages = state.document.pages,

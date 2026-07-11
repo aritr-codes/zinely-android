@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.RotateLeft
 import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ReorderOp
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the contextbar surface; absent from the tree when there's no selection. */
 public const val EditorContextBarTestTag: String = "editor-context-bar"
@@ -89,8 +89,10 @@ public fun EditorContextBar(
 
     Surface(
         modifier = modifier.testTag(EditorContextBarTestTag),
-        color = MaterialTheme.colorScheme.background,
-        contentColor = MaterialTheme.colorScheme.onBackground,
+        // The bar is a "desk" band — the frozen surface the sheets sit on (bench.html `body{ background:var(--desk) }`),
+        // with `--on-desk` ink — replacing the abused Legacy `background` (a slate grey absent from the palette).
+        color = ZinelyTheme.colors.desk,
+        contentColor = ZinelyTheme.colors.onDesk,
     ) {
         Row(
             modifier = Modifier
@@ -137,13 +139,13 @@ private fun BarButton(icon: ImageVector, description: String, tilt: Float, onCli
                 .graphicsLayer { rotationZ = tilt }
                 .size(38.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(MaterialTheme.colorScheme.surface),
+                .background(ZinelyTheme.colors.paper),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = ZinelyTheme.colors.ink,
                 modifier = Modifier.size(22.dp),
             )
         }

@@ -1,7 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
@@ -62,7 +62,7 @@ class EditorContextBarTest {
 
     private fun setBar(store: EditorStore) {
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 val state by store.uiState.collectAsState()
                 EditorContextBar(selection = state.selection, dispatch = store::dispatch)
             }
@@ -117,7 +117,7 @@ class EditorContextBarTest {
         // selection-wide controls (nudge/scale/rotate/delete) stay. Selection is passed directly so the
         // gating is exercised without a multi-select intent.
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 EditorContextBar(selection = setOf("a", "b"), dispatch = {})
             }
         }
