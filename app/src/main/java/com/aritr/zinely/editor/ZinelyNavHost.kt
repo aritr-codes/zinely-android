@@ -211,6 +211,10 @@ private fun ProofDestination(
                 },
                 // Single-flight: disable the export row while a render is in flight.
                 exportBusy = exportState is ExportUiState.Working,
+                // "Make another" after the fold reveal. The true multi-project "new zine" awaits that
+                // layer (the retired CompletionScreen's onKeepEditing carried the same honest deferral);
+                // for the single-project MVP it returns to the bench, where the work is already saved.
+                onMakeAnother = onBack,
                 modifier = Modifier.fillMaxSize(),
             )
         }

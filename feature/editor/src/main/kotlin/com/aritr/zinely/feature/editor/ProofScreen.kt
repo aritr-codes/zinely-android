@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,6 +33,11 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -48,6 +54,7 @@ import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.components.ZIconButton
 import com.aritr.zinely.ui.components.ZPrimaryButton
 import com.aritr.zinely.ui.components.ZPrimaryButtonMetrics
+import com.aritr.zinely.ui.components.ZPrimaryFill
 import com.aritr.zinely.ui.components.ZToolButton
 import com.aritr.zinely.ui.components.ZToolButtonMetrics
 import com.aritr.zinely.ui.theme.ZinelyEasing
@@ -80,6 +87,11 @@ private val ACT_LABELS = mapOf(
 private const val ICON_BACK = "M15 5l-7 7 7 7"
 private const val ICON_ARROW = "M5 12h13M13 6l6 6-6 6"
 private const val ICON_FOLD = "M4 6h16v6l-8 6-8-6z"
+private const val ICON_CHECK = "M5 12l5 5 9-11"
+private const val ICON_PLUS = "M12 5v14M5 12h14"
+
+/** The frozen climax beat schedule (`finishFold` setTimeouts): cumulative 980/1180/1440/1700/2000ms. */
+private val CLIMAX_BEAT_DELAYS = intArrayOf(980, 200, 260, 260, 300)
 
 /**
  * `.act.enter{ animation:actIn .34s var(--ease) }` — the frozen act-slide duration. Proof-specific
@@ -108,6 +120,7 @@ private const val PROOF_ACT_MILLIS: Int = 340
  * @param onPaperSelected the user picked a paper size in Act 2's chooser.
  * @param onExportPdf Act 2 export — the host renders the PDF and hands it to the [ProofExportTarget] edge.
  * @param exportBusy an export is in flight — Act 2 disables its export row.
+ * @param onMakeAnother Act 3 finished — the "Make another" exit (the single-project MVP returns to the bench).
  * @param modifier sizing/placement for the whole surface.
  */
 @Composable
@@ -119,6 +132,7 @@ public fun ProofScreen(
     onPaperSelected: (PaperSize) -> Unit = {},
     onExportPdf: (ProofExportTarget) -> Unit = {},
     exportBusy: Boolean = false,
+    onMakeAnother: () -> Unit = {},
 ) {
     val colors = ZinelyTheme.colors
     val haptics = ZinelyTheme.haptics
@@ -130,18 +144,80 @@ public fun ProofScreen(
     // Capture reduced-motion here: transitionSpec runs outside composition and can't read ZinelyTheme.
     val reduceMotion = ZinelyTheme.motion.reduceMotion
 
+    // Act 3 (Fold) sub-state, hoisted so the shared action bar can own the finish button and the
+    // finished-state exits (`configurePrimary`, RF-1). The Fold is reached once, forward-only from Print
+    // (no in-act back to Print), so first entry starts fresh; rememberSaveable keeps the position — and,
+    // once past the reveal, the finished book — across rotation.
+    var foldStep by rememberSaveable { mutableStateOf(0) }
+    var foldFinished by rememberSaveable { mutableStateOf(false) }
+    // The climax reveal pointer, 0→5 (settle → shelf-line → words-h → words-p → exits). Driven by the
+    // beat schedule below; saved so a rotation mid-reveal resumes rather than restarts the moment.
+    var climaxBeat by rememberSaveable { mutableStateOf(0) }
+
     fun go(target: ProofAct) {
         haptics.perform(ZinelyHaptic.Tick)
         actOrdinal = target.ordinal
+    }
+    // The fold guide's step nav (also driven by ←/→). The next arrow past the last step is the finish.
+    fun advanceFold() {
+        if (foldStep < FOLD_LAST_STEP) {
+            haptics.perform(ZinelyHaptic.Tick)
+            foldStep += 1
+        } else {
+            foldFinished = true
+        }
+    }
+    fun retreatFold() {
+        if (foldStep > 0) {
+            haptics.perform(ZinelyHaptic.Tick)
+            foldStep -= 1
+        }
+    }
+
+    // The climax, delivered in beats so the reveal lands — the book becomes a book BEFORE the words and
+    // exits arrive (`finishFold`). The `success` verb fires once at the top (silenced under reduced
+    // motion, where every beat is already at its final state); a `tick` marks the shelf-line beat.
+    LaunchedEffect(foldFinished) {
+        if (!foldFinished) return@LaunchedEffect
+        if (reduceMotion) {
+            climaxBeat = 5
+            return@LaunchedEffect
+        }
+        if (climaxBeat == 0) haptics.perform(ZinelyHaptic.Success)
+        while (climaxBeat < 5) {
+            kotlinx.coroutines.delay(CLIMAX_BEAT_DELAYS[climaxBeat].toLong())
+            climaxBeat += 1
+            if (climaxBeat == 2) haptics.perform(ZinelyHaptic.Tick) // the shelf-line draws under the book
+        }
+    }
+
+    // The topbar live caption switches to the payoff once the fold is finished (`actLabel` = "Done …").
+    val actLabel = if (act == ProofAct.FOLD && foldFinished) {
+        "Done · Your zine is ready"
+    } else {
+        ACT_LABELS.getValue(act)
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.desk)
+            // ←/→ drive the fold step nav while the guide is up (spec document keydown). Preview so the
+            // arrows navigate steps rather than move focus between the step-nav buttons.
+            .onPreviewKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown && act == ProofAct.FOLD && !foldFinished) {
+                    when (event.key) {
+                        Key.DirectionRight -> { advanceFold(); true }
+                        Key.DirectionLeft -> { retreatFold(); true }
+                        else -> false
+                    }
+                } else {
+                    false
+                }
+            }
             .testTag(ProofScreenTestTag),
     ) {
-        ProofTopBar(zineName = zineName, act = act, onBack = onBack)
+        ProofTopBar(zineName = zineName, act = act, actLabel = actLabel, onBack = onBack)
 
         // The acts container. Forward moves slide in from the right (+16px), a back move from the
         // left (−16px) — `proof.html` actIn / actInBack — both fading in over --fast..ease. Bodies
@@ -173,8 +249,16 @@ public fun ProofScreen(
                     exportBusy = exportBusy,
                     modifier = Modifier.fillMaxSize(),
                 )
-                // ponytail: Fold (B4) body still empty; the Box holds the frame's shape.
-                ProofAct.FOLD -> Box(Modifier.fillMaxSize())
+                // Act 3 — the fold guide + the staged climax (B4).
+                ProofAct.FOLD -> ProofFoldAct(
+                    step = foldStep,
+                    finished = foldFinished,
+                    climaxBeat = climaxBeat,
+                    reduceMotion = reduceMotion,
+                    onNext = { advanceFold() },
+                    onPrev = { retreatFold() },
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
 
@@ -184,10 +268,16 @@ public fun ProofScreen(
                 when (act) {
                     ProofAct.SHEET -> go(ProofAct.PRINT)
                     ProofAct.PRINT -> go(ProofAct.FOLD)
-                    ProofAct.FOLD -> Unit // the step nav owns the primary here (B4)
+                    ProofAct.FOLD -> Unit // the fold owns its own actions (finish / exits) below
                 }
             },
             onSecondary = { if (act == ProofAct.PRINT) go(ProofAct.SHEET) },
+            foldFinished = foldFinished,
+            foldOnLastStep = foldStep == FOLD_LAST_STEP,
+            foldActionsRevealed = climaxBeat >= 5,
+            onFoldFinish = { foldFinished = true },
+            onMakeAnother = { haptics.perform(ZinelyHaptic.Tick); onMakeAnother() },
+            onBackToBench = { haptics.perform(ZinelyHaptic.Tick); onBack() },
         )
     }
 }
@@ -197,6 +287,7 @@ public fun ProofScreen(
 private fun ProofTopBar(
     zineName: String,
     act: ProofAct,
+    actLabel: String,
     onBack: () -> Unit,
 ) {
     val colors = ZinelyTheme.colors
@@ -231,7 +322,7 @@ private fun ProofTopBar(
                 ),
             )
             BasicText(
-                text = ACT_LABELS.getValue(act),
+                text = actLabel,
                 modifier = Modifier
                     .testTag(ProofActLabelTestTag)
                     // role="status" — announce the act change to the screen reader.
@@ -288,13 +379,21 @@ private fun ProgressCreases(act: ProofAct) {
  * The single bottom action bar, reconfigured per act — `proof.html` `configurePrimary()`:
  * - Sheet: primary "Print setup" (→ Print). No secondary.
  * - Print: primary "Now fold it" (→ Fold) + a "Back" secondary (→ Sheet).
- * - Fold: primary hidden — the fold step nav owns it (B4). No global secondary until finished.
+ * - Fold, mid-steps: empty — the in-body step nav owns navigation (`primary.classList.toggle("hide")`).
+ * - Fold, last step: the ONE stamp finish primary "It's folded — show me" (RF-1: never a dead primary).
+ * - Fold, finished (after the reveal's `showActions` beat): "Back to bench" + a coral "Make another".
  */
 @Composable
 private fun ProofActionBar(
     act: ProofAct,
     onPrimary: () -> Unit,
     onSecondary: () -> Unit,
+    foldFinished: Boolean,
+    foldOnLastStep: Boolean,
+    foldActionsRevealed: Boolean,
+    onFoldFinish: () -> Unit,
+    onMakeAnother: () -> Unit,
+    onBackToBench: () -> Unit,
 ) {
     val colors = ZinelyTheme.colors
     Row(
@@ -305,14 +404,6 @@ private fun ProofActionBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        if (act == ProofAct.PRINT) {
-            ZToolButton(
-                onClick = onSecondary,
-                metrics = ZToolButtonMetrics.ProofGhost,
-                text = "Back",
-                modifier = Modifier.testTag(ProofSecondaryTestTag),
-            )
-        }
         when (act) {
             ProofAct.SHEET -> ZPrimaryButton(
                 text = "Print setup",
@@ -321,16 +412,50 @@ private fun ProofActionBar(
                 modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
                 icon = { tint -> ProofVectorIcon(ICON_ARROW, tint) },
             )
-            ProofAct.PRINT -> ZPrimaryButton(
-                text = "Now fold it",
-                onClick = onPrimary,
-                metrics = ZPrimaryButtonMetrics.Proof,
-                modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
-                icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
-            )
-            // Fold: the global primary is hidden (spec `primary.classList.toggle("hide", act===2)`);
-            // the step nav supplies the finish action in B4. A spacer keeps the bar from collapsing.
-            ProofAct.FOLD -> Spacer(Modifier.weight(1f))
+            ProofAct.PRINT -> {
+                ZToolButton(
+                    onClick = onSecondary,
+                    metrics = ZToolButtonMetrics.ProofGhost,
+                    text = "Back",
+                    modifier = Modifier.testTag(ProofSecondaryTestTag),
+                )
+                ZPrimaryButton(
+                    text = "Now fold it",
+                    onClick = onPrimary,
+                    metrics = ZPrimaryButtonMetrics.Proof,
+                    modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
+                    icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
+                )
+            }
+            ProofAct.FOLD -> when {
+                // The last step hands off to ONE prominent finish action (the `.primary.stamp`).
+                !foldFinished && foldOnLastStep -> ZPrimaryButton(
+                    text = "It’s folded — show me",
+                    onClick = onFoldFinish,
+                    metrics = ZPrimaryButtonMetrics.Proof,
+                    fill = ZPrimaryFill.Stamp,
+                    modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
+                    icon = { tint -> ProofVectorIcon(ICON_CHECK, tint) },
+                )
+                // The exits arrive only after the reveal has fully landed (`showActions`, beat 5).
+                foldFinished && foldActionsRevealed -> {
+                    ZToolButton(
+                        onClick = onBackToBench,
+                        metrics = ZToolButtonMetrics.ProofGhost,
+                        text = "Back to bench",
+                        modifier = Modifier.testTag(ProofSecondaryTestTag),
+                    )
+                    ZPrimaryButton(
+                        text = "Make another",
+                        onClick = onMakeAnother,
+                        metrics = ZPrimaryButtonMetrics.Proof,
+                        modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
+                        icon = { tint -> ProofVectorIcon(ICON_PLUS, tint) },
+                    )
+                }
+                // Mid-steps (and during the climax beats): the global bar is empty. A spacer holds height.
+                else -> Spacer(Modifier.weight(1f))
+            }
         }
     }
 }

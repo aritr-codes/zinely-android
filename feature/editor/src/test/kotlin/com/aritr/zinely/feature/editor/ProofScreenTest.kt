@@ -203,4 +203,128 @@ class ProofScreenTest {
         composeRule.onNodeWithTag(ProofSavePdfTestTag).assertIsNotEnabled()
         composeRule.onNodeWithTag(ProofShareTestTag).assertIsNotEnabled()
     }
+
+    // ---- Act 3 — The Fold (B4, ADR-051) -------------------------------------------------------
+
+    private var madeAnother = 0
+
+    /** Mount the Proof and advance to the Fold act (Sheet → Print → Fold). */
+    private fun setProofOnFold() {
+        composeRule.setContent {
+            ZinelyTheme {
+                ProofScreen(zineName = "Corner Store Poems", onBack = { backCount++ }, onMakeAnother = { madeAnother++ })
+            }
+        }
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // Sheet → Print
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // Print → Fold
+    }
+
+    // The step nav lives inside the guide's vertical scroll — scroll it into the hit-testable position
+    // before injecting the click (the same pattern the Act 2 export-row test uses).
+    private fun stepForward() =
+        composeRule.onNodeWithTag(ProofStepNextTestTag).performScrollTo().performClick()
+
+    @Test
+    fun `the fold opens on the five-step guide - step 1, prev disabled, no global primary`() {
+        setProofOnFold()
+
+        composeRule.onNodeWithTag(ProofFoldGuideTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofStepTitleTestTag).assertTextEquals("1. Crease into eight")
+        composeRule.onNodeWithTag(ProofStepPrevTestTag).assertIsNotEnabled()
+        // Mid-guide the shared action bar is empty — the in-body step nav owns navigation.
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the next arrow advances the fold steps and updates the live caption`() {
+        setProofOnFold()
+
+        stepForward()
+        composeRule.onNodeWithTag(ProofStepTitleTestTag).assertTextEquals("2. One cut — the only cut")
+        // Prev is now reachable (no longer at the first step).
+        composeRule.onNodeWithTag(ProofStepPrevTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofStepPrevTestTag).performScrollTo().performClick()
+        composeRule.onNodeWithTag(ProofStepTitleTestTag).assertTextEquals("1. Crease into eight")
+    }
+
+    // The ←/→ step-nav path (screen-root onPreviewKeyEvent → advance/retreat) is verified by review and
+    // on-device (the F3 keyboard gate). It is not unit-tested here: Robolectric's focus owner + key-event
+    // dispatch don't reliably drive a screen-root preview handler, so an automated assertion would be flaky.
+
+    @Test
+    fun `the last step swaps the next arrow for the one finish primary`() {
+        setProofOnFold()
+
+        repeat(4) { stepForward() } // → step 5 (the last)
+        composeRule.onNodeWithTag(ProofStepTitleTestTag).assertTextEquals("5. Push in and wrap")
+        // RF-1: exactly one finish action, and the next arrow is gone (no dead primary, no double-next).
+        composeRule.onNodeWithTag(ProofStepNextTestTag).assertDoesNotExist()
+        composeRule.onNodeWithText("It’s folded — show me").assertIsDisplayed()
+    }
+
+    @Test
+    fun `finishing the fold reveals the finished book and the done caption`() {
+        setProofOnFold()
+        repeat(4) { stepForward() }
+
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // finish
+        composeRule.waitForIdle() // let the climax beats run out on the test clock
+
+        composeRule.onNodeWithTag(ProofFoldGuideTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(ProofDoneHeadingTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText("Your zine is a book.").assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Done · Your zine is ready")
+    }
+
+    @Test
+    fun `the finished exits stay held back behind the staged reveal`() {
+        // Full motion: the reveal runs in timed beats. Right after finish the book is up, but the exits
+        // are gated behind the final `showActions` beat — they must not be present yet.
+        setProofOnFold()
+        repeat(4) { stepForward() }
+
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // finish
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(ProofDoneHeadingTestTag).assertIsDisplayed() // the book became a book…
+        composeRule.onNodeWithText("Make another").assertDoesNotExist() // …but the exits are held back
+        composeRule.onNodeWithText("Back to bench").assertDoesNotExist()
+    }
+
+    @Test
+    fun `under reduced motion the finish jumps straight to the finished book and its exits`() {
+        // Remove animations → every beat collapses to its final state at once (no staged wait).
+        forceReduceMotion()
+        setProofOnFold()
+        repeat(4) { stepForward() }
+
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // finish
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(ProofDoneHeadingTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText("Make another").assertIsDisplayed()
+        composeRule.onNodeWithText("Back to bench").assertIsDisplayed()
+    }
+
+    @Test
+    fun `make another invokes its callback`() {
+        madeAnother = 0
+        forceReduceMotion() // deterministic: the exits are revealed at once
+        setProofOnFold()
+        repeat(4) { stepForward() }
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // finish
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Make another").performClick()
+        assertEquals(1, madeAnother)
+    }
+
+    /** Android's "Remove animations" (`ANIMATOR_DURATION_SCALE = 0`) — the reduced-motion signal. */
+    private fun forceReduceMotion() {
+        android.provider.Settings.Global.putFloat(
+            org.robolectric.RuntimeEnvironment.getApplication().contentResolver,
+            android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,
+            0f,
+        )
+    }
 }
