@@ -152,10 +152,13 @@ public fun ProofScreen(
                 .weight(1f)
                 .fillMaxWidth(),
             label = "proofAct",
-        ) { _ ->
-            // ponytail: empty act body — content is B2/B3/B4. The Box holds the frame's shape so the
-            // scaffold golden captures the topbar + action bar spacing, not a collapsed column.
-            Box(Modifier.fillMaxSize())
+        ) { target ->
+            when (target) {
+                // Act 1 — the imposed sheet (B2).
+                ProofAct.SHEET -> ProofSheetAct(Modifier.fillMaxSize())
+                // ponytail: Print (B3) + Fold (B4) bodies still empty; the Box holds the frame's shape.
+                ProofAct.PRINT, ProofAct.FOLD -> Box(Modifier.fillMaxSize())
+            }
         }
 
         ProofActionBar(

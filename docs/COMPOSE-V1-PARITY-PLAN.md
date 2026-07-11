@@ -284,9 +284,13 @@ M4 is **no longer a standalone milestone**. Two facts from the reconciliation co
 > collapse `PreviewRoute`/`ExportRoute`/`CompletionRoute` into one `ProofRoute`/`ProofScreen`, and **(B)**
 > retire the reading-order reader-booklet (`PreviewScreen`), superseded by the imposed-sheet-first Proof.
 > **B1 (scaffold + route collapse + ADR-051) landed 2026-07-11** — the 3-act frame (top bar · 3 progress
-> creases · one action bar · act state machine · act-status live region) over empty act bodies. B2 (Act 1
-> imposed sheet + engine-truth checkpoint) · B3 (Act 2 print recipe + export wiring) · B4 (Act 3 fold +
-> climax) · B5 (overlays + retire the old screens + parity seal) remain.
+> creases · one action bar · act state machine · act-status live region) over empty act bodies.
+> **B2 (Act 1 — The Sheet) landed 2026-07-11** — the imposed landscape sheet (engine-ordered 8 cells with
+> the top row flipped, three vertical + one horizontal crease, the one coral cut + "one cut" label, the
+> calm dead-band, the honesty legend, and the front/back cover cards); `decorativeImpositionRows`
+> relocated from `ExportScreen` into the Proof and its drift guard extended with the frozen-grid ↔ engine
+> equivalence — **no raw imposition array in Compose** (folded-in M4 checkpoint). B3 (Act 2 print recipe +
+> export wiring) · B4 (Act 3 fold + climax) · B5 (overlays + retire the old screens + parity seal) remain.
 
 - **Goal:** unify `PreviewScreen` + `ExportScreen` + `CompletionScreen` into the frozen 3-act Proof
   (Sheet → Print → Fold), with the Fold climax getting the whole delight budget.

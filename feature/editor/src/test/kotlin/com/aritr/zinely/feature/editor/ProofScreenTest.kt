@@ -86,6 +86,31 @@ class ProofScreenTest {
     }
 
     @Test
+    fun `the sheet act shows the imposed sheet, one aria-label, and both cover cards`() {
+        setProof()
+
+        // Act 1 body (B2): the imposed sheet is present with exactly one image description…
+        composeRule.onNodeWithTag(ProofSheetPreviewTestTag).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(
+            "Your zine imposed on one landscape sheet: eight panels, " +
+                "the top row upside-down, with one cut line across the centre.",
+        ).assertIsDisplayed()
+        // …and the front/back confidence cards (below the sheet — exist, may need scrolling to see).
+        composeRule.onNodeWithText("Front cover").assertExists()
+        composeRule.onNodeWithText("Back cover").assertExists()
+    }
+
+    @Test
+    fun `the imposed sheet belongs to act 1 only - it is gone on the print act`() {
+        setProof()
+        composeRule.onNodeWithTag(ProofSheetPreviewTestTag).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // → Print
+
+        composeRule.onNodeWithTag(ProofSheetPreviewTestTag).assertDoesNotExist()
+    }
+
+    @Test
     fun `the progress creases are present as one decorative node`() {
         setProof()
         composeRule.onNodeWithTag(ProofProgressTestTag).assertIsDisplayed()

@@ -34,10 +34,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.aritr.zinely.core.imposition.ConventionSpec
-import com.aritr.zinely.core.imposition.SingleSheet8
-import com.aritr.zinely.core.model.GridCell
-import com.aritr.zinely.core.model.Rotation
 
 /** Test tag on the whole Export surface. */
 public const val ExportScreenTestTag: String = "export-screen"
@@ -243,28 +239,6 @@ private fun FormatCard(
             if (loading) {
                 CircularProgressIndicator(color = content, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
             }
-        }
-    }
-}
-
-/** One decorative panel: the booklet page number in a grid cell, and whether it prints upside-down. */
-internal data class DecorativePanel(val pageNumber: Int, val flipped: Boolean)
-
-/**
- * The decorative sheet's rows, derived straight from the canonical engine convention so the picture
- * can never drift from the real imposition again (a hardcoded copy did: 5·4·3·6 / 8·1·2·7). For
- * [SingleSheet8.TOP_ROW_ROTATED] this yields top `5 4 3 2` (flipped) / bottom `6 7 8 1` (upright).
- */
-internal fun decorativeImpositionRows(
-    spec: ConventionSpec = SingleSheet8.TOP_ROW_ROTATED,
-): List<List<DecorativePanel>> {
-    val pageAt = spec.cellOf.entries.associate { (page, cell) -> cell to page }
-    val rowCount = spec.cellOf.values.maxOf { it.row } + 1
-    val colCount = spec.cellOf.values.maxOf { it.col } + 1
-    return List(rowCount) { row ->
-        List(colCount) { col ->
-            val page = pageAt.getValue(GridCell(row, col))
-            DecorativePanel(page, spec.rotationOf.getValue(page) == Rotation.HALF)
         }
     }
 }
