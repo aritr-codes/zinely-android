@@ -1,7 +1,6 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -19,6 +18,7 @@ import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -65,7 +65,7 @@ class EditTextSessionTest {
 
     private fun setSession(store: EditorStore) {
         composeRule.setContent {
-            MaterialTheme {
+            ZinelyTheme {
                 val state by store.uiState.collectAsState()
                 val session = state.interaction
                 if (session is Interaction.EditingText) {

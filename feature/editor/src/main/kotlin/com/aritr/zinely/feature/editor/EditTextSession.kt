@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.SolidColor
 // NB: compose-ui's LocalLifecycleOwner is deprecated in favour of lifecycle-runtime-compose's, but moving
 // homes means bumping the graph-wide lifecycle version (catalog is on 2.6.1 ktx) — deferred to a dep-bump.
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -30,6 +31,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the edit-session text field. */
 public const val EditTextSessionTestTag: String = "edit-text-session"
@@ -113,7 +115,14 @@ public fun EditTextSession(
             .onFocusChanged { state ->
                 if (state.isFocused) hadFocus = true else if (hadFocus) commit()
             },
-        textStyle = LocalTextStyle.current.merge(MaterialTheme.typography.bodyLarge),
+        // Draft renders in the frozen shell voice (Inter) — the SAME bundled face the export/preview path
+        // renders the committed TextElement with — so the draft and the baked artifact read alike (bench.html
+        // sets the editing surface in a bundled voice, never a system fallback).
+        textStyle = LocalTextStyle.current
+            .merge(MaterialTheme.typography.bodyLarge)
+            .copy(fontFamily = ZinelyTheme.typography.shell),
+        // Frozen caret colour: bench.html `.block.text .surface[contenteditable]{ caret-color:var(--coral-strong) }`.
+        cursorBrush = SolidColor(ZinelyTheme.colors.coralStrong),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { commit() }),
     )

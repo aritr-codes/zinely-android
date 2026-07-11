@@ -1,11 +1,12 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,8 +53,9 @@ public const val ResizeHandleTagPrefix: String = "resize-handle-"
  * @param onResize receives the live override map each frame (drives `resizeOverride`), `null` on end.
  * @param modifier sized identically to the sibling [PagePreview]/[SelectionChrome] so handle device-px
  *   positions align.
- * @param color handle fill; defaults to the frozen `--coral-strong` token — the colour the Bench spec
- *   borders its `.handle` dots with (bench.html).
+ * @param color the handle's accent (border) colour; defaults to the frozen `--coral-strong` token — the
+ *   colour the Bench spec borders its `.handle` squares with (bench.html `.handle::after`). The square
+ *   itself is filled with `--paper`.
  */
 @Composable
 public fun ResizeHandles(
@@ -115,9 +117,10 @@ public fun ResizeHandles(
 }
 
 /**
- * One 48dp handle hit-target placed (centred) on [centerPx], drawing a small dot. Owns the per-handle drag
- * loop: [beginSession] on first drag → token; [onDrag] each move with the handle's accumulated device-px
- * position → the live-baked transform; [commitSession]/[cancelSession] on end/cancel.
+ * One 48dp handle hit-target placed (centred) on [centerPx], drawing the frozen handle mark — a 15dp
+ * paper-filled rounded square (radius 4) with a 2dp [color] border (bench.html `.handle::after`). Owns the
+ * per-handle drag loop: [beginSession] on first drag → token; [onDrag] each move with the handle's
+ * accumulated device-px position → the live-baked transform; [commitSession]/[cancelSession] on end/cancel.
  */
 @Composable
 private fun HandleTarget(
@@ -175,10 +178,14 @@ private fun HandleTarget(
             },
         contentAlignment = Alignment.Center,
     ) {
+        // The frozen mark: a 15dp paper square, radius 4, ringed by a 2dp coral-strong border
+        // (bench.html `.handle::after`). The paper fill keeps the coral ring reading against the artifact.
+        val shape = RoundedCornerShape(4.dp)
         Box(
             Modifier
-                .size(12.dp)
-                .background(color, CircleShape),
+                .size(15.dp)
+                .background(ZinelyTheme.colors.paper, shape)
+                .border(2.dp, color, shape),
         )
     }
 }

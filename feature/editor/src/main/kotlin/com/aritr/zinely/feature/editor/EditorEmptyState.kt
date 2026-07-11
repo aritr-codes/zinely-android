@@ -15,12 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the empty-state container. */
 public const val EditorEmptyStateTestTag: String = "editor-empty-state"
@@ -68,7 +70,11 @@ public fun EditorEmptyState(
     modifier: Modifier = Modifier,
     firstPage: Boolean = true,
 ) {
-    val colors = MaterialTheme.colorScheme
+    // The invitation overlays the blank paper, so its ink pairs with the paper tokens (headline `--ink`,
+    // supporting copy `--ink-soft`) — the same on-paper vocabulary bench.html's empty-panel ghost uses.
+    // The sticker cluster carries the frozen authorial inks (teal / paper-edge / coral).
+    val colors = ZinelyTheme.colors
+    val type = ZinelyTheme.typography
     Column(
         modifier = modifier
             .testTag(EditorEmptyStateTestTag)
@@ -79,32 +85,33 @@ public fun EditorEmptyState(
         // Decorative "sticker cluster" — three tilted craft shapes. Asset-free (drawn), and not
         // announced to screen readers (purely ornamental).
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StickerBlob(colors.secondary, tilt = -9f, glyph = "✿")
-            StickerBlob(colors.surfaceVariant, tilt = 6f, glyph = "❀")
-            StickerBlob(colors.primary, tilt = 12f, glyph = "★")
+            StickerBlob(colors.teal, tilt = -9f, glyph = "✿")
+            StickerBlob(colors.paperEdge, tilt = 6f, glyph = "❀")
+            StickerBlob(colors.coral, tilt = 12f, glyph = "★")
         }
 
         Text(
             text = if (firstPage) FirstPageInvitationHeadline else LaterPageInvitationHeadline,
-            style = MaterialTheme.typography.headlineSmall,
+            // The product's display voice (Fraunces) for the headline, matching the frozen `--voice`.
+            style = MaterialTheme.typography.headlineSmall.copy(fontFamily = type.voice),
             fontWeight = FontWeight.Bold,
-            color = colors.onSurface,
+            color = colors.ink,
             textAlign = TextAlign.Center,
         )
         // Names the two ways to start AND points to where they live (the supply shelf just below), so the
         // button-less invitation still answers "what do I do next?" without re-presenting the actions.
         Text(
             text = "Grab a photo or a few words from the supplies below.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = type.shell),
+            color = colors.inkSoft,
             textAlign = TextAlign.Center,
         )
 
         Spacer(Modifier.size(4.dp))
         Text(
             text = "works offline · stays on your phone",
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall.copy(fontFamily = type.shell),
+            color = colors.inkSoft,
             textAlign = TextAlign.Center,
         )
 
@@ -117,7 +124,7 @@ public fun EditorEmptyState(
             Text(
                 text = "⌄",
                 style = MaterialTheme.typography.titleLarge,
-                color = colors.onSurfaceVariant.copy(alpha = 0.7f),
+                color = colors.inkSoft.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.clearAndSetSemantics { },
             )
@@ -136,6 +143,6 @@ private fun StickerBlob(color: androidx.compose.ui.graphics.Color, tilt: Float, 
             .background(color),
         contentAlignment = Alignment.Center,
     ) {
-        Text(glyph, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimary)
+        Text(glyph, style = MaterialTheme.typography.titleLarge, color = Color.White)
     }
 }

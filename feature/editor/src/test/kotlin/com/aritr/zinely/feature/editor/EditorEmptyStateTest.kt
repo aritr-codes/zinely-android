@@ -1,13 +1,13 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import org.junit.Rule
 import org.junit.Test
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
@@ -30,7 +30,7 @@ class EditorEmptyStateTest {
     @Test
     fun shows_the_invitation_copy() {
         composeRule.setContent {
-            MaterialTheme { EditorEmptyState() }
+            ZinelyTheme { EditorEmptyState() }
         }
         composeRule.onNodeWithTag(EditorEmptyStateTestTag).assertIsDisplayed()
         composeRule.onNodeWithText("Let's make something cute", substring = true).assertIsDisplayed()
@@ -41,7 +41,7 @@ class EditorEmptyStateTest {
         // ADR-033 de-dup: the invitation must NOT carry its own "Add a photo" / "Add words" controls —
         // those live solely in the supply tray. Rendered standalone (no tray), neither label appears.
         composeRule.setContent {
-            MaterialTheme { EditorEmptyState() }
+            ZinelyTheme { EditorEmptyState() }
         }
         composeRule.onNodeWithText(AddPhotoActionLabel, substring = true).assertDoesNotExist()
         composeRule.onNodeWithText(AddWordsActionLabel, substring = true).assertDoesNotExist()
@@ -51,7 +51,7 @@ class EditorEmptyStateTest {
     fun first_blank_page_shows_the_welcoming_line() {
         // VOICE empty states: the first page keeps the warm welcome.
         composeRule.setContent {
-            MaterialTheme { EditorEmptyState(firstPage = true) }
+            ZinelyTheme { EditorEmptyState(firstPage = true) }
         }
         composeRule.onNodeWithText(FirstPageInvitationHeadline, substring = true).assertIsDisplayed()
         composeRule.onNodeWithText(LaterPageInvitationHeadline, substring = true).assertDoesNotExist()
@@ -62,7 +62,7 @@ class EditorEmptyStateTest {
         // VOICE empty states: a later blank page uses the lighter "fresh page" variant (same
         // invitation-only rule — the tray still owns the add actions).
         composeRule.setContent {
-            MaterialTheme { EditorEmptyState(firstPage = false) }
+            ZinelyTheme { EditorEmptyState(firstPage = false) }
         }
         composeRule.onNodeWithText(LaterPageInvitationHeadline, substring = true).assertIsDisplayed()
         composeRule.onNodeWithText(FirstPageInvitationHeadline, substring = true).assertDoesNotExist()
@@ -75,7 +75,7 @@ class EditorEmptyStateTest {
         // it is decorative — cleared from the a11y tree so it adds no screen-reader noise (the tray's
         // "Supplies" heading carries the spoken orientation instead).
         composeRule.setContent {
-            MaterialTheme { EditorEmptyState() }
+            ZinelyTheme { EditorEmptyState() }
         }
         composeRule.onNodeWithTag(EmptyStateTrayCueTag).assertExists()
         // Decorative-with-a-job (DESIGN-RULES 10): the glyph must be cleared from the a11y tree, so it

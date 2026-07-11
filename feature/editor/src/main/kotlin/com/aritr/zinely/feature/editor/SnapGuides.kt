@@ -33,9 +33,10 @@ public const val SnapGuidesTestTag: String = "snap-guides"
  * @param screenPxPerPt device px per point — MUST match the sibling [PagePreview].
  * @param pageOffset page-space pan applied before the screen scale — MUST match [PagePreview].
  * @param modifier sized identically to the sibling [PagePreview] so the device-px positions align.
- * @param color the guide stroke colour; defaults to the frozen `--teal` token — the colour the Bench
- *   spec strokes its centre `.guide` lines with (bench.html), reading distinctly from the coral
- *   selection chrome.
+ * @param color the guide stroke colour; defaults to the frozen `--teal` token at the spec's fired-guide
+ *   opacity — bench.html strokes `.page .guide{ background:var(--teal) }` and reveals the firing line at
+ *   `.guide.on{ opacity:.8 }`. A `SnapGuides` only ever draws guides that fired this frame (the `.on`
+ *   state), so the default carries that `.8`. It reads distinctly from the coral selection chrome.
  */
 @Composable
 public fun SnapGuides(
@@ -43,7 +44,7 @@ public fun SnapGuides(
     screenPxPerPt: Float,
     pageOffset: PtPoint,
     modifier: Modifier = Modifier,
-    color: Color = ZinelyTheme.colors.teal,
+    color: Color = ZinelyTheme.colors.teal.copy(alpha = 0.8f),
 ) {
     Canvas(modifier = modifier.testTag(SnapGuidesTestTag)) {
         if (guides.isEmpty()) return@Canvas
