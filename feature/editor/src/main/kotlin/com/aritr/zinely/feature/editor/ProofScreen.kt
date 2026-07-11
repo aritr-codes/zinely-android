@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.components.ZIconButton
 import com.aritr.zinely.ui.components.ZPrimaryButton
 import com.aritr.zinely.ui.components.ZPrimaryButtonMetrics
@@ -103,6 +104,10 @@ private const val PROOF_ACT_MILLIS: Int = 340
  *
  * @param zineName the project title shown in the top bar.
  * @param onBack loss-safe back to the editor (the bench) — the work is saved.
+ * @param paper the paper size shown in Act 2's recipe (the host threads it into the export).
+ * @param onPaperSelected the user picked a paper size in Act 2's chooser.
+ * @param onExportPdf Act 2 export — the host renders the PDF and hands it to the [ProofExportTarget] edge.
+ * @param exportBusy an export is in flight — Act 2 disables its export row.
  * @param modifier sizing/placement for the whole surface.
  */
 @Composable
@@ -110,6 +115,10 @@ public fun ProofScreen(
     zineName: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    paper: PaperSize = PaperSize.A4,
+    onPaperSelected: (PaperSize) -> Unit = {},
+    onExportPdf: (ProofExportTarget) -> Unit = {},
+    exportBusy: Boolean = false,
 ) {
     val colors = ZinelyTheme.colors
     val haptics = ZinelyTheme.haptics
@@ -156,8 +165,16 @@ public fun ProofScreen(
             when (target) {
                 // Act 1 — the imposed sheet (B2).
                 ProofAct.SHEET -> ProofSheetAct(Modifier.fillMaxSize())
-                // ponytail: Print (B3) + Fold (B4) bodies still empty; the Box holds the frame's shape.
-                ProofAct.PRINT, ProofAct.FOLD -> Box(Modifier.fillMaxSize())
+                // Act 2 — the honest print recipe + export (B3).
+                ProofAct.PRINT -> ProofPrintAct(
+                    paper = paper,
+                    onPaperSelected = onPaperSelected,
+                    onExportPdf = onExportPdf,
+                    exportBusy = exportBusy,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                // ponytail: Fold (B4) body still empty; the Box holds the frame's shape.
+                ProofAct.FOLD -> Box(Modifier.fillMaxSize())
             }
         }
 

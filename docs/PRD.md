@@ -218,6 +218,15 @@ stateDiagram-v2
 > feature supersession (user-confirmed), landing on `feat/m0-design-system` (M5; the reader-booklet
 > `PreviewScreen` is removed in batch B5). The imposition-correctness half of FR-6 (fold/cut guides,
 > safe-area inset, correct order/rotation) is unchanged and strengthened — Act 1 derives from the engine.
+>
+> **FR-6 scope note (2026-07-11, [ADR-052](DECISIONS.md#adr-052)) — no in-app print in V1 (Known
+> Limitation).** The frozen Proof Act 2 originally showed three export actions (Save PDF · Share · Print).
+> The app has no OS `PrintManager` path, and Android's system print dialog offers no "actual size vs
+> fit-to-page" control — routing through it would silently reintroduce the fit-to-page shrink the recipe
+> exists to prevent. So the V1 Proof ships **Save PDF + Share** (PDF → the user's own printer app is the
+> honest home-print handoff); the print *recipe* and framing are unchanged. A first-class in-app print
+> (Android `PrintManager`) is a **Future Enhancement** ([ROADMAP](ROADMAP.md)) with its own ADR + batch —
+> a **Known Limitation** for V1, not a blocker, surfaced in release notes when V1 ships.
 
 ## 11. Non-functional requirements
 

@@ -11,24 +11,39 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import android.content.ActivityNotFoundException
+import android.content.ClipData
+import android.content.ContentResolver
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.aritr.zinely.export.ExportFormat
+import com.aritr.zinely.export.ExportUiState
+import com.aritr.zinely.export.ExportViewModel
 import com.aritr.zinely.home.HomeUiState
 import com.aritr.zinely.home.HomeViewModel
 import com.aritr.zinely.feature.editor.HomeScreen
 import androidx.compose.runtime.DisposableEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aritr.zinely.feature.editor.EditorScreen
+import com.aritr.zinely.feature.editor.ProofExportTarget
 import com.aritr.zinely.feature.editor.ProofScreen
 
 /**
@@ -119,10 +134,16 @@ private fun HomeDestination(onOpenZine: (String) -> Unit) {
 
 /**
  * The single **Proof** host (M5, [ADR-051](../../../../../../docs/DECISIONS.md#adr-051)) — the collapse
- * of the former Preview + Export + Completion triad into one 3-act surface ([ProofScreen]). B1 stands up
- * the frame only: it boots the *shared* editor VM (the ADR-026 single-writer seam, same back-stack-entry
- * resolution the triad used) and renders the Proof scaffold. Export/share wiring and the ADR-041
- * post-export → Fold hand-off are re-attached to this host in B3, when Act 2 lands.
+ * of the former Preview + Export + Completion triad into one 3-act surface ([ProofScreen]). It boots the
+ * *shared* editor VM (the ADR-026 single-writer seam, same back-stack-entry resolution the triad used)
+ * and, from B3, hosts its own read-only [ExportViewModel] over that shared document so `export == preview`
+ * ([ADR-039]) without touching the single-writer autosave path. This composable owns the Android edges
+ * the VM must not: it maps each finished [ExportFormat.PDF] to the right intent — a viewer ([ProofExportTarget.OPEN]
+ * → `ACTION_VIEW`) or the OS share chooser ([ProofExportTarget.SEND] → `ACTION_SEND`).
+ *
+ * Per [ADR-052] there is **no OS print path** — the honest home-print handoff is Save PDF + Share. The
+ * chosen paper size is Proof-local UI state threaded into the export as a document copy (no store write),
+ * so a paper change flows to the file without mutating the single-writer document.
  */
 @Composable
 private fun ProofDestination(
@@ -130,14 +151,66 @@ private fun ProofDestination(
     onBack: () -> Unit,
 ) {
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
+    val exportViewModel: ExportViewModel = hiltViewModel()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // The edge the in-flight export is destined for (single-flight → at most one). rememberSaveable so a
+    // config change mid-render can't reset it and misroute the buffered file (the old CompletionDestination
+    // learned this — Codex RF1).
+    val pending = rememberSaveable { mutableStateOf(ProofExportTarget.OPEN) }
+
+    // Hand each finished export to the right OS edge (ADR-039 §4): a scoped, read-granted content:// URI.
+    // Collect only while STARTED so an export finishing while backgrounded doesn't launch at a stopped
+    // lifecycle — the buffered Channel holds the event until resume.
+    LaunchedEffect(exportViewModel, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            exportViewModel.ready.collect { ready ->
+                try {
+                    when (pending.value) {
+                        // Save PDF → open the finished PDF in the user's viewer (from which they print/save).
+                        ProofExportTarget.OPEN -> context.startActivity(
+                            openIntent(context.contentResolver, ready.uri, ready.mime),
+                        )
+                        // Share → the OS chooser.
+                        ProofExportTarget.SEND -> context.startActivity(
+                            Intent.createChooser(shareIntent(ready.uri, ready.mime), "Share your zine"),
+                        )
+                    }
+                } catch (e: ActivityNotFoundException) {
+                    // ACTION_VIEW is stricter than SEND; no viewer installed is the honest failure here.
+                    Toast.makeText(context, "No app on your phone can open that yet.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     when (val state = boot) {
         is EditorBootState.Ready -> {
-            // ponytail: the project title is not on the editor boot state today (it lives in the Room
-            // project metadata, ADR-042). B1 is the frame only; the real title threads through with Act
-            // content in a later batch. A neutral fallback keeps the topbar honest until then.
+            val uiState by state.store.uiState.collectAsStateWithLifecycle()
+            val exportState by exportViewModel.state.collectAsStateWithLifecycle()
+            // The Proof-local paper choice (ADR-052): seeded from the document, threaded into the export as
+            // a copy so `export == what you see` without writing through the single-writer store (ADR-026).
+            val paper = rememberSaveable { mutableStateOf(uiState.document.paperSize) }
             ProofScreen(
+                // ponytail: the project title is not on the editor boot state today (it lives in the Room
+                // project metadata, ADR-042). A neutral fallback keeps the topbar honest until the real
+                // title threads through in a later batch.
                 zineName = "Your zine",
                 onBack = onBack,
+                paper = paper.value,
+                onPaperSelected = { paper.value = it },
+                onExportPdf = { target ->
+                    pending.value = target
+                    exportViewModel.export(
+                        uiState.document.copy(paperSize = paper.value),
+                        state.pageSizePt,
+                        state.imageBytes,
+                        ExportFormat.PDF,
+                    )
+                },
+                // Single-flight: disable the export row while a render is in flight.
+                exportBusy = exportState is ExportUiState.Working,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -162,6 +235,25 @@ private fun ProofDestination(
         }
     }
 }
+
+/** A share-sheet Intent for a finished export: the scoped, read-granted `content://` URI as an attachment. */
+private fun shareIntent(uri: Uri, mime: String): Intent =
+    Intent(Intent.ACTION_SEND).apply {
+        type = mime
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+/**
+ * An open-in-viewer Intent for a finished export. `ClipData` alongside `setDataAndType` + the read grant
+ * makes more viewers accept the scoped cache URI; the caller catches `ActivityNotFoundException`.
+ */
+private fun openIntent(resolver: ContentResolver, uri: Uri, mime: String): Intent =
+    Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mime)
+        clipData = ClipData.newUri(resolver, "zine", uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
 
 /**
  * Hosts one [EditorViewModel] and renders its [EditorBootState]. The VM owns the store/binder for the

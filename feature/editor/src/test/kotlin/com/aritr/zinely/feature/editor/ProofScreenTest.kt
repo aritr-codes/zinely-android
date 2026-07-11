@@ -1,13 +1,22 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -121,5 +130,77 @@ class ProofScreenTest {
         setProof()
         composeRule.onNodeWithContentDescription("Back to the bench (your work is saved)").performClick()
         assertEquals(1, backCount)
+    }
+
+    // ---- Act 2 — Print (B3, ADR-052) ----------------------------------------------------------
+
+    private var lastExport: ProofExportTarget? = null
+
+    /** Mount the Proof, hoist a paper state, and advance to the Print act. */
+    private fun setProofOnPrint(exportBusy: Boolean = false) {
+        composeRule.setContent {
+            var paper by remember { mutableStateOf(PaperSize.A4) }
+            ZinelyTheme {
+                ProofScreen(
+                    zineName = "Corner Store Poems",
+                    onBack = {},
+                    paper = paper,
+                    onPaperSelected = { paper = it },
+                    onExportPdf = { lastExport = it },
+                    exportBusy = exportBusy,
+                )
+            }
+        }
+        composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // Sheet → Print
+    }
+
+    @Test
+    fun `print act shows the four recipe rows and both honest export actions - no print button`() {
+        setProofOnPrint()
+
+        composeRule.onNodeWithText("Scale").assertExists()
+        composeRule.onNodeWithText("Orientation").assertExists()
+        composeRule.onNodeWithText("Paper").assertExists()
+        composeRule.onNodeWithText("Sides").assertExists()
+        // The export row is below the recipe fold — scroll it into view before asserting.
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofShareTestTag).assertIsDisplayed()
+        // ADR-052: the frozen third export action "Print" is dropped — no such button remains.
+        composeRule.onNodeWithText("Print").assertDoesNotExist()
+    }
+
+    @Test
+    fun `change opens the paper chooser and picking Letter updates the recipe`() {
+        setProofOnPrint()
+
+        composeRule.onNodeWithTag(ProofChangePaperTestTag).performScrollTo().performClick()
+        composeRule.onNodeWithText("Paper size").assertIsDisplayed() // the chooser sheet
+        composeRule.onNodeWithText("Letter").performClick() // one match (menu); recipe still reads A4
+
+        // The recipe's Paper value now reads Letter (the chosen size flows back through onPaperSelected).
+        // onAllNodes: the chooser item may still be animating out, so match the first of possibly two.
+        composeRule.onAllNodesWithText("Letter").onFirst().assertExists()
+    }
+
+    @Test
+    fun `share opens the share chooser sheet`() {
+        setProofOnPrint()
+        composeRule.onNodeWithTag(ProofShareTestTag).performScrollTo().performClick()
+        composeRule.onNodeWithText("Share your zine").assertIsDisplayed()
+    }
+
+    @Test
+    fun `save pdf requests an OPEN-target export`() {
+        lastExport = null
+        setProofOnPrint()
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).performScrollTo().performClick()
+        assertEquals(ProofExportTarget.OPEN, lastExport)
+    }
+
+    @Test
+    fun `the export row disables while a render is in flight`() {
+        setProofOnPrint(exportBusy = true)
+        composeRule.onNodeWithTag(ProofSavePdfTestTag).assertIsNotEnabled()
+        composeRule.onNodeWithTag(ProofShareTestTag).assertIsNotEnabled()
     }
 }

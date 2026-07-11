@@ -1140,3 +1140,36 @@ Alternatives rejected: **(A′)** keep three routes and animate between them —
 ### Review
 
 B1 (this ADR + the scaffold) is independently reviewed by a Review Agent before merge, per the [multi-agent workflow](../CLAUDE.md#multi-agent-workflow); the outcome is recorded here on reconciliation.
+
+## ADR-052 {#adr-052}
+
+**The V1 Proof export row drops the in-app "Print" button; the honest home-print handoff is Save PDF + Share (PDF → the user's own printer app). A first-class in-app print (Android `PrintManager`) is deferred to its own future ADR + batch.** The DESIGN-FROZEN [`proof.html`](design/v1/proof.html) Act 2 originally showed three export actions (Save PDF · Share · Print); the frozen `#printNow` was a prototype stub ("Sent to printer — check the tray"). This ADR records dropping the Print button when implementing Act 2 in Compose (M5 batch **B3**, [m5-proof-batching.md](spikes/m5-proof-batching.md)).
+
+*Status: Accepted (2026-07-11).* Builds on [ADR-039](#adr-039) (export path), [ADR-041](#adr-041) (post-export payoff), [ADR-051](#adr-051) (the Proof surface + a precedent for a recorded frozen-element supersession); upholds [PRD principle #6 "Honest claims"](PRD.md#5-product-principles-non-negotiable).
+
+### Context
+
+The shipped app has **no OS print path** — `PrintManager`/`android.print`/`PrintDocumentAdapter` appear nowhere in production source. The export architecture ([ADR-039](#adr-039)) is: `ExportViewModel.export` renders a PDF/PNG to a cache file via `ZineExporter`, returns a `FileProvider content://` URI, and emits a delivery-agnostic `ExportReady`; the host maps it to `ACTION_SEND` (share) or `ACTION_VIEW` (open). The two real backends are **Save PDF** and **Share** — both local, no network.
+
+The frozen Act 2 export row has **three** buttons; the third, **Print**, has no honest realization in the shipped architecture. The batch flagged this as an explicit scope call (B3 §3): does Print invoke a net-new `PrintManager` integration, or map onto the existing share edge? Two independent advisory agents (an Android-platform lens and a product-governance lens) were consulted, and the user authorized the decision below.
+
+**The decisive platform fact:** Android's system print dialog (the only surface `PrintManager` reaches) exposes copies/paper/color/orientation/range but **no "actual size vs fit-to-page" control**. It scales content to the selected `MediaSize` implicitly. The Proof's entire thesis — "print at **100% / Actual size — not Fit to page**", pre-empting the #1 home-print failure — would be **silently undermined** by routing through the framework. So a naive `PrintManager` Print button is not just out of scope; it is *hostile to this screen's purpose*.
+
+### Decision
+
+**Drop the Print button.** Act 2's export row ships the two buttons with honest backends: **Save PDF** (`export(PDF) → ACTION_VIEW`, open the finished PDF) and **Share** (`export(PDF) → ACTION_SEND`, the OS chooser). The print *recipe* (100%/Actual, Landscape, paper-match, single-sided), the single-sided note, and the Act title "Print it just like this" are unchanged — the print **framing** and its confidence-building job survive intact. Real in-app print (`PrintManager` + a `PrintDocumentAdapter` that pins `MediaSize` to the zine geometry to preserve actual-size, plus device-only QA) is a **Future Enhancement** with its own ADR + batch.
+
+Per the HTML-first workflow, the frozen [`proof.html`](design/v1/proof.html) was amended **first** (Print button + `#printNow` handler removed, freeze-amendment note added), then Compose. This mirrors ADR-051 Decision B (retiring the reader-booklet as a recorded supersession) — a frozen element removed deliberately and recorded, never silently.
+
+Alternatives rejected: **(map Print → existing `ACTION_VIEW`/open edge)** — a button labeled "Print" that opens a document viewer overstates what it does (violating PRINT HONESTY / PRD #6), and on the existing seams it collapses into the same action as Save PDF; **(add real `PrintManager` now)** — net-new platform capability, out of a reskin batch's scope, and — per the decisive fact above — would reintroduce the fit-to-page scaling the recipe exists to prevent.
+
+### Consequences
+
+- Act 2's export row is **two** buttons (Save PDF · Share). Parity against the frozen spec is measured against the **amended** `proof.html` (two buttons), not the original three.
+- **Known Limitation** (not a Release Blocker): V1 ships no in-app print; PDF → the user's own printer app is the home-print path. Recorded in the [PRD scope note](PRD.md#8-core-user-workflow-mvp) and surfaced in release notes when V1 ships.
+- The privacy invariant is untouched: Save PDF / Share stay OS-delegated, local-file-only, no network.
+- Real Android print is a [ROADMAP](ROADMAP.md) **Future Enhancement**, gated on its own ADR that first resolves the actual-size-vs-system-scaling conflict.
+
+### Review
+
+B3 (this ADR + the Act 2 implementation) is independently reviewed by a Review Agent before merge, per the [multi-agent workflow](../CLAUDE.md#multi-agent-workflow); the outcome is recorded here on reconciliation.

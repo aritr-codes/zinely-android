@@ -19,6 +19,13 @@
           sheets, scrim, snackbar/toast, prototype-dock scaffolding. This surface is
           the emotional climax: where one printed sheet becomes a real little book.
           The whole delight budget lives here (the staged fold finish).
+          Freeze amendment (2026-07-11, ADR-052): the export-row **Print** button was removed. The
+          app has no OS PrintManager path, and Android's system print dialog exposes no "actual size vs
+          fit-to-page" control — routing through it would silently reintroduce the fit-to-page shrink the
+          recipe exists to prevent, contradicting PRINT HONESTY. PDF -> the user's own printer app (Save
+          PDF / Share) is the honest home-print handoff; a first-class in-app Print is deferred to its own
+          future ADR + batch (where the actual-size-vs-system-scaling conflict is designed properly). The
+          recipe, single-sided note, and the print *framing* are unchanged. DESIGN-FROZEN status retained.
           Post-freeze: only bug/parity/a11y/perf/theme fixes. Any visual or
           interaction change must update THIS spec first, then Compose — never the
           reverse.
@@ -528,7 +535,10 @@ body{
         <div class="exportrow">
           <button class="tool" id="savePdf"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v10m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 18h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Save PDF</button>
           <button class="tool" id="share"><svg viewBox="0 0 24 24" fill="none"><circle cx="6" cy="12" r="2.4" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="6" r="2.4" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="18" r="2.4" stroke="currentColor" stroke-width="2"/><path d="M8.1 11l7.8-4M8.1 13l7.8 4" stroke="currentColor" stroke-width="2"/></svg>Share</button>
-          <button class="tool" id="printNow"><svg viewBox="0 0 24 24" fill="none"><path d="M7 9V4h10v5M7 18H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M7 15h10v5H7z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Print</button>
+          <!-- Print button removed 2026-07-11 (freeze amendment, ADR-052): the app has no OS PrintManager
+               path and the system print dialog has no "actual size vs fit-to-page" control, which would
+               undermine the recipe's core honesty. PDF -> the user's own printer app (Save PDF / Share) is
+               the honest home-print handoff; a real in-app Print is deferred to its own future ADR + batch. -->
         </div>
         <div class="testline"><button id="testSheet">Print one test sheet first</button></div>
       </div>
@@ -913,8 +923,7 @@ body{
   }
   $("#savePdf").addEventListener("click", ()=> exporting("Making your PDF…", ()=>{ printed=true; buzz("snap");
     snack(`Saved “${name}.pdf” to this device`, "Fold now", ()=>{ setAct(2); }); }));
-  $("#printNow").addEventListener("click", ()=> exporting("Sending to your printer…", ()=>{ printed=true; buzz("snap");
-    snack("Sent to printer — check the tray", "Fold now", ()=>{ setAct(2); }); }));
+  // #printNow handler removed 2026-07-11 (freeze amendment, ADR-052) — see the export-row note above.
   $("#share").addEventListener("click", ()=> show($("#shareSheet")));
   $("#shareMenu").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return;
     closeSheets(false); exporting("Preparing your PDF…", ()=>{ printed=true; buzz("snap");
