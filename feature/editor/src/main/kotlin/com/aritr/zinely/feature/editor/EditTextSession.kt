@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.SolidColor
 // homes means bumping the graph-wide lifecycle version (catalog is on 2.6.1 ktx) — deferred to a dep-bump.
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -111,6 +113,10 @@ public fun EditTextSession(
             .fillMaxWidth()
             .padding(8.dp)
             .testTag(EditTextSessionTestTag)
+            // The empty edit box renders as only a caret (frozen bench.html spec), so it carries no text to
+            // name it — TalkBack would focus a bare "edit box". A non-visual name fixes that (WCAG 4.1.2)
+            // without touching the design; typed content still reads via the field's editableText value.
+            .semantics { contentDescription = "Zine text" }
             .focusRequester(focusRequester)
             .onFocusChanged { state ->
                 if (state.isFocused) hadFocus = true else if (hadFocus) commit()
