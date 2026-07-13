@@ -29,7 +29,7 @@ public object EditorA11y {
     /** A short spoken label for an element's semantic node (TalkBack reads this on focus). */
     public fun label(element: Element): String = when (element) {
         is TextElement -> if (element.text.isBlank()) "Empty text" else "Text: ${element.text}"
-        is ImageElement -> "Image"
+        is ImageElement -> "Photo"
     }
 
     /**
@@ -44,6 +44,15 @@ public object EditorA11y {
         return buildList {
             // Editing text is the primary action for a text box (the a11y twin of the double-tap seam).
             if (element is TextElement) add(CustomAccessibilityAction("Edit text") { dispatch(Intent.BeginEditText(id)); true })
+            // Reframe is the photo's primary in-place action (ADR-053, the a11y twin of the double-tap →
+            // Reframe seam and the affordance chip); Reset framing is the one-shot revert-to-placement
+            // (bench block-menu "Reset framing" → Intent.ResetFraming, one undoable command). Both are the
+            // authoritative Switch Access / TalkBack path — they drive the same reducer intents as the
+            // visual affordances. (Replace-picture defers to IF4: it needs a pick-for-replace effect.)
+            if (element is ImageElement) {
+                add(CustomAccessibilityAction("Reframe photo") { dispatch(Intent.BeginReframe(id)); true })
+                add(CustomAccessibilityAction("Reset framing") { dispatch(Intent.ResetFraming(id)); true })
+            }
             add(CustomAccessibilityAction("Move left") { selectThen { dispatch(Intent.Nudge(PtPoint(-NUDGE_STEP_PT, 0.0))) } })
             add(CustomAccessibilityAction("Move right") { selectThen { dispatch(Intent.Nudge(PtPoint(NUDGE_STEP_PT, 0.0))) } })
             add(CustomAccessibilityAction("Move up") { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, -NUDGE_STEP_PT))) } })

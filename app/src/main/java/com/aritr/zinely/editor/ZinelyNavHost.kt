@@ -348,6 +348,8 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
             // the persisted flag loads (the host hides the hint on `null`, so it can't flash before its
             // state is known), then the real `false`/`true`. Lifecycle-aware.
             val moveResizeHintSeen by viewModel.moveResizeHintSeen.collectAsStateWithLifecycle()
+            // The first-run Reframe coach-mark gate (ADR-053 RF2), same load-aware tri-state as the hint.
+            val reframeCoachSeen by viewModel.reframeCoachSeen.collectAsStateWithLifecycle()
             // The unresolved-save-failure kind (ADR-035/ADR-036): the honest correction to "Saved ✨",
             // derived from the app-scoped SaveFailureSink (ADR-026 §5) and mapped to a feature-local
             // SaveErrorKind (null = none). Lifecycle-aware; the host renders the warm banner (copy keyed by
@@ -364,6 +366,11 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 imageBytes = state.imageBytes,
                 moveResizeHintSeen = moveResizeHintSeen,
                 onMoveResizeHintSeen = viewModel::markMoveResizeHintSeen,
+                reframeCoachSeen = reframeCoachSeen,
+                onReframeCoachSeen = viewModel::markReframeCoachSeen,
+                // Reframe a11y announcements (ADR-053 IF3) ride the same announceForAccessibility drain as
+                // the reducer's selection/undo lines (bound at line ~302).
+                onReframeAnnounce = viewModel::announce,
                 // The autosave-event stream (ADR-034): each emission raises the transient "Saved ✨"
                 // reassurance in the host. Hot SharedFlow, collected inside EditorScreen.
                 savedSignals = viewModel.saved,

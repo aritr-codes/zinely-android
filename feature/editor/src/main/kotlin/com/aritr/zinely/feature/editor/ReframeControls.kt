@@ -1,5 +1,7 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,9 +32,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -186,12 +191,24 @@ private fun StepButton(icon: ImageVector, description: String, onClick: () -> Un
  * The persistent "Reframe" affordance chip (ADR-053 RF2, bench `.reframe-aff`): a selected photo always
  * advertises that it can be reframed, so the pan/zoom gesture is discoverable without a missing handle.
  * Tapping it enters Reframe ([Intent.BeginReframe]).
+ *
+ * @param teach the first-run coach-mark (bench `.reframe-aff.teach`): pulse twice to draw the eye the first
+ *   time a photo is selected on this install. The caller passes `false` under reduced motion (WCAG 2.3.3)
+ *   and once the coach has been seen — so the pulse is opt-in and never reaches an animation-averse user.
  */
 @Composable
-public fun ReframeAffordanceChip(onClick: () -> Unit, modifier: Modifier = Modifier) {
+public fun ReframeAffordanceChip(onClick: () -> Unit, modifier: Modifier = Modifier, teach: Boolean = false) {
+    // Two gentle scale pulses (bench affPulse ×2), then rest. Finite — not an infinite transition — so it
+    // teaches once and stops; `teach` is already reduced-motion-gated by the caller, so no motion here at all
+    // when animations are off.
+    val pulse = remember { Animatable(1f) }
+    LaunchedEffect(teach) {
+        if (teach) repeat(2) { pulse.animateTo(1.08f, tween(300)); pulse.animateTo(1f, tween(600)) }
+    }
     Surface(
         onClick = onClick,
         modifier = modifier
+            .graphicsLayer { scaleX = pulse.value; scaleY = pulse.value }
             .testTag(ReframeChipTestTag)
             .clearAndSetSemantics {
                 contentDescription = "Reframe this photo"

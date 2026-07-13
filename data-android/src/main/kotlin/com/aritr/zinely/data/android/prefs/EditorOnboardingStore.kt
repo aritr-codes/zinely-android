@@ -24,4 +24,15 @@ public interface EditorOnboardingStore {
 
     /** Persist that the move/resize hint has been seen. Idempotent (set-to-true); safe to call again. */
     public suspend fun markMoveResizeHintSeen()
+
+    /**
+     * Whether the first-run Reframe coach-mark (the pulsing "Reframe" affordance, ADR-053 RF2) has already
+     * taught on this install. Emits `false` until first marked (and on a corrupt/missing store — degrade by
+     * teaching, never by crashing). Re-emits on every change. The teach fires once so a returning user isn't
+     * re-pulsed at every photo selection.
+     */
+    public val reframeCoachSeen: Flow<Boolean>
+
+    /** Persist that the Reframe coach-mark has taught. Idempotent (set-to-true); safe to call again. */
+    public suspend fun markReframeCoachSeen()
 }
