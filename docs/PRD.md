@@ -124,7 +124,7 @@ MVP requirement**. Deferred **within MVP** (post-alpha, before `1.0.0`):
 |---|---|---|
 | Text **styling** (FR-3 style clause: font choice, size/color/align) | post-alpha S7.x | add/edit text ships; alpha text is single-style |
 | Per-page layout presets (FR-4, Should) | post-alpha | freeform place/move/resize is the alpha's layout model |
-| Image **fit/fill** control (the §7.1 photo-placement "basic fit" clause) | post-alpha S7.x | every placed photo stays `Fit.FIT` (the model default) — model + render have supported FILL since S3, but the alpha editor exposes no fit/fill affordance ([ADR-047 amendment](DECISIONS.md#adr-047)) |
+| Image **fit/fill** control (the §7.1 photo-placement "basic fit" clause) | designed & frozen → next Compose milestone (IF) | Absent from the packaged alpha, but no longer an open deferral: the DESIGN-FROZEN Bench adds a Reframe mode and makes **`Fit.FILL`** the new-placement default; existing documents are unchanged. Scheduled as Milestone IF ([ADR-053](DECISIONS.md#adr-053), un-defers the [ADR-047 amendment](DECISIONS.md#adr-047)) |
 | Calibration ruler | deferred with cause | [ADR-039](DECISIONS.md#adr-039): edge-to-edge tiling leaves no margin; the "Actual size" note carries the guidance |
 | Asset GC sweeper | deferred | [ADR-031 §2](DECISIONS.md#adr-031): **app storage grows with every import** — replaced/deleted photos are not yet reclaimed |
 

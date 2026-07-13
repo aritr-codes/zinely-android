@@ -7,8 +7,15 @@
 <!--
   ============================================================================
   ZINELY — THE BENCH  ·  V1 redesign, Surface 2 of 3 (Shelf / Bench / Proof)
-  STATUS: DESIGN-FROZEN (2026-07-08). Adversarial engineering+a11y review GO +
-          Design Director GO. Inherits the DESIGN-FROZEN Shelf (shelf.html) —
+  STATUS: DESIGN-FROZEN (2026-07-08; Image-Framing amendment frozen 2026-07-13).
+          Adversarial engineering+a11y review GO + Design Director GO. The
+          2026-07-13 amendment adds photo Reframe mode (frame vs movable content,
+          Fill/Whole-photo fit, discrete-stepper a11y) — passed design, adversarial
+          UX, a11y, engineering, self-falsification, Design Director, and a Release/
+          Architecture governance audit (GO-WITH-FIXES: two doc-reconciliation fixes
+          owed before Compose — an Image-Framing ADR, and un-deferring the ADR-047 /
+          PRD §7.3 FR-2 fit/fill deferral; NO visual/interaction change).
+          Inherits the DESIGN-FROZEN Shelf (shelf.html) —
           same tokens, type voices, motion, haptics, sheets, snackbar/toast,
           prototype-dock scaffolding. This surface is the editor: where a zine
           is actually made. It is the heart of the product.
@@ -38,8 +45,15 @@
     · CANVAS DOMINATES, CHROME DISAPPEARS. No heavy toolbars. Chrome for a block
       appears only when that block is live, in the thumb zone, then gets out of the way.
     · ONE GESTURE GRAMMAR, NEVER BROKEN. Tap selects · drag moves · pinch scales ·
-      double-tap edits · long-press = secondary only · two-finger/empty-drag pans.
-      Keyboard mirrors every one (a11y floor, not bolt-on).
+      double-tap edits (text → inline edit, photo → Reframe mode) · long-press =
+      secondary only · two-finger/empty-drag pans. Keyboard mirrors every one
+      (a11y floor, not bolt-on). In Reframe mode the SAME grammar retargets the
+      photo inside its fixed frame (drag pans it, pinch zooms it); discrete on-
+      screen steppers are the authoritative accessible path, gestures enhance.
+    · A PHOTO IS A FRAME + A MOVABLE PICTURE (2026-07-13). The panel slot is a
+      fixed frame; the photo moves/zooms within it. New photos default to
+      Fill (crop-to-cover, centered); "Whole photo" = contain. Replace keeps
+      framing. This un-defers the ADR-047 / PRD §7.3 FR-2 fit/fill clause.
     · DELIGHT ≈ ZERO HERE, ON PURPOSE. The bench protects flow. The whole delight
       budget is spent later, on the fold. The bench only makes the fold feel inevitable.
     · TEACH BY MAKING. Never a blank canvas — a starter mark on a new zine, a ghost
@@ -200,18 +214,44 @@ body{
 .block.text.body .surface{ font-family:var(--shell); font-weight:400; font-size:calc(var(--bfs,13) * 1px); line-height:1.42; letter-spacing:0; }
 .block.text .surface{ font-size:calc(var(--bfs,26) * 1px); }
 .block.text .surface[contenteditable="true"]{ outline:none; cursor:text; caret-color:var(--coral-strong); }
-/* image block — riso-inked art field (no stock photos; local + on-brand). Same archetype vocabulary as the Shelf covers. */
+/* image block — riso-inked art field (no stock photos; local + on-brand). Same archetype vocabulary as the Shelf covers.
+   THE FRAME vs THE PHOTO. `.surface` is the FRAME (fixed --bratio slot, clips). `.imgcontent` is the PHOTO inside it
+   (own --pratio aspect), positioned by --ox/--oy and scaled by --scale. Fit is chosen by which axis pins to the frame:
+   `fx-w` pins width (letterbox top/bottom in Whole; pan vertically in Fill), `fx-h` pins height (mirror). This is the
+   only structural change Image Framing needs — the photo becomes a movable layer instead of ink baked onto the frame. */
 .block.image .surface{ aspect-ratio:var(--bratio,1); border-radius:2px; overflow:hidden; position:relative;
-  background:var(--paper); mix-blend-mode:multiply; }
-.block.image .surface::before{ content:""; position:absolute; inset:-14%; background:var(--ink1,var(--coral)); opacity:.9; }
-.block.image .surface::after{ content:""; position:absolute; inset:-14%; background:var(--ink2,transparent); opacity:.5; transform:translate(3px,4px); }
-.block.image.a-sun   .surface::before,.block.image.a-sun .surface::after{ border-radius:50%; inset:-30% 12%; }
-.block.image.a-bars  .surface::before{ background:repeating-linear-gradient(180deg,var(--ink1,var(--coral)) 0 8px,transparent 8px 16px); }
-.block.image.a-bars  .surface::after{ background:repeating-linear-gradient(180deg,var(--ink2,transparent) 0 8px,transparent 8px 16px); }
-.block.image.a-tone  .surface::before{ background:radial-gradient(var(--ink1,var(--coral)) 30%,transparent 32%); background-size:8px 8px; }
-.block.image.a-tone  .surface::after{ display:none; }
-.block.image.a-split .surface::before{ clip-path:polygon(0 0,100% 0,100% 100%,42% 100%); }
-.block.image.a-split .surface::after{ clip-path:polygon(0 0,42% 0,0 100%,0 100%); background:var(--ink2,var(--teal)); opacity:.85; transform:none; }
+  background:var(--paper); }
+.imgcontent{ position:absolute; left:50%; top:50%; aspect-ratio:var(--pratio,1.5); mix-blend-mode:multiply;
+  transform:translate(-50%,-50%) translate(var(--ox,0%),var(--oy,0%)) scale(var(--scale,1)); transform-origin:center;
+  will-change:transform; transition:transform var(--fast) var(--ease); }
+.imgcontent.fx-w{ width:100%; height:auto; }
+.imgcontent.fx-h{ height:100%; width:auto; }
+.imgcontent::before{ content:""; position:absolute; inset:0; background:var(--ink1,var(--coral)); opacity:.9; }
+.imgcontent::after{ content:""; position:absolute; inset:0; background:var(--ink2,transparent); opacity:.5; transform:translate(3px,4px); }
+.block.image.a-sun   .imgcontent::before,.block.image.a-sun .imgcontent::after{ border-radius:50%; inset:12% 12%; }
+.block.image.a-bars  .imgcontent::before{ background:repeating-linear-gradient(180deg,var(--ink1,var(--coral)) 0 8px,transparent 8px 16px); }
+.block.image.a-bars  .imgcontent::after{ background:repeating-linear-gradient(180deg,var(--ink2,transparent) 0 8px,transparent 8px 16px); }
+.block.image.a-tone  .imgcontent::before{ background:radial-gradient(var(--ink1,var(--coral)) 30%,transparent 32%); background-size:8px 8px; }
+.block.image.a-tone  .imgcontent::after{ display:none; }
+.block.image.a-split .imgcontent::before{ clip-path:polygon(0 0,100% 0,100% 100%,42% 100%); }
+.block.image.a-split .imgcontent::after{ clip-path:polygon(0 0,42% 0,0 100%,0 100%); background:var(--ink2,var(--teal)); opacity:.85; transform:none; }
+
+/* ---- REFRAME (Image Framing): the photo pans/zooms inside a fixed frame; overflow shown dimmed (teaches "the picture moves") ---- */
+.block.image.reframing{ z-index:8; }
+.block.image.reframing .surface{ overflow:visible; }               /* let the cropped-away overflow show, dimmed */
+.block.image.reframing .imgcontent{ transition:none; }
+.reframe-shade{ position:absolute; inset:0; z-index:4; pointer-events:none; box-shadow:0 0 0 4000px var(--scrim); }
+.reframe-win{ position:absolute; inset:0; z-index:5; pointer-events:none; outline:2px solid var(--coral-strong); outline-offset:-1px; }
+.reframe-win::before,.reframe-win::after{ content:""; position:absolute; background:rgba(255,255,255,.34); }
+.reframe-win::before{ left:33.33%; right:33.33%; top:0; bottom:0; border-left:1px solid rgba(255,255,255,.34); border-right:1px solid rgba(255,255,255,.34); background:none; }
+.reframe-win::after{ top:33.33%; bottom:33.33%; left:0; right:0; border-top:1px solid rgba(255,255,255,.34); border-bottom:1px solid rgba(255,255,255,.34); background:none; }
+/* RF2: persistent draggable affordance — a selected photo always advertises that it can be reframed (no missing-handle reflex) */
+.reframe-aff{ position:absolute; left:50%; bottom:6px; transform:translateX(-50%); z-index:7; display:inline-flex; align-items:center;
+  gap:5px; padding:4px 9px; border:none; border-radius:11px; background:rgba(35,32,28,.62); color:#F4EFE6; cursor:pointer;
+  font-family:var(--shell); font-size:11px; font-weight:600; white-space:nowrap; box-shadow:var(--shadow-1); pointer-events:auto; }
+.reframe-aff svg{ opacity:.9; }
+.reframe-aff.teach{ animation:affPulse 1.8s var(--ease) 2; }   /* first-run coach-mark pulse (reduced-motion safe) */
+@keyframes affPulse{ 0%,100%{ box-shadow:var(--shadow-1); } 50%{ box-shadow:0 0 0 4px rgba(231,111,81,.5); } }
 
 /* selection: coral outline blooms + weighted lift (Delight #6 + #8). The one coral thing on the artifact. */
 .block.sel{ z-index:5; }
@@ -280,9 +320,18 @@ body{
 .proof svg{ width:19px; height:19px; }
 .proof:hover{ transform:translateY(-2px); box-shadow:0 12px 26px rgba(198,78,52,.4), 0 2px 0 rgba(0,0,0,.12); }
 .proof:active{ transform:translateY(1px) scale(.99); }
-/* the contextual (selection) toolbar swaps in over the add-tools */
-.toolbar[data-mode="add"] .sel-tools{ display:none; }
-.toolbar[data-mode="select"] .add-tools{ display:none; }
+/* the contextual (selection) toolbar swaps in over the add-tools; reframe swaps in over both */
+.toolbar[data-mode="add"] .sel-tools,.toolbar[data-mode="add"] .reframe-tools,.toolbar[data-mode="add"] #rfCancel,.toolbar[data-mode="add"] #rfDone{ display:none; }
+.toolbar[data-mode="select"] .add-tools,.toolbar[data-mode="select"] .reframe-tools,.toolbar[data-mode="select"] #rfCancel,.toolbar[data-mode="select"] #rfDone{ display:none; }
+.toolbar[data-mode="reframe"] .add-tools,.toolbar[data-mode="reframe"] .sel-tools,.toolbar[data-mode="reframe"] #proof{ display:none; }
+/* fit segmented control: two discrete, plain-language, labelled targets (Switch-Access friendly) — never a jargon dropdown */
+.fitseg{ display:inline-flex; border:1px solid var(--field-edge); border-radius:13px; overflow:hidden; background:var(--field); }
+.fitseg button{ border:none; background:none; cursor:pointer; font-family:var(--shell); color:var(--on-desk);
+  min-height:46px; padding:0 12px; font-size:13px; font-weight:600; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05; }
+.fitseg button small{ font-weight:500; font-size:10px; color:var(--on-desk-soft); }
+.fitseg button[aria-pressed="true"]{ background:var(--coral-strong); color:#fff; }
+.fitseg button[aria-pressed="true"] small{ color:rgba(255,255,255,.85); }
+.fitseg button+button{ border-left:1px solid var(--field-edge); }
 /* colour / ink popover */
 .inkbar{ position:absolute; bottom:calc(70px + env(safe-area-inset-bottom)); left:16px; z-index:30;
   background:var(--menu); border:1px solid var(--field-edge); border-radius:16px; padding:10px; display:none; gap:8px;
@@ -295,6 +344,26 @@ body{
   color:var(--on-desk); cursor:pointer; display:grid; place-items:center; box-shadow:var(--shadow-1); }
 .zoombar button svg{ width:18px; height:18px; }
 .zoombar.hide{ display:none; }
+
+/* RF1: the AUTHORITATIVE accessible motion path — discrete, purpose-labelled nudge + zoom steppers.
+   2D position is NOT modelled as one adjustable (adjustable is 1-D); it is two axes of discrete targets.
+   Gestures (drag/pinch) are an enhancement layered on top, never the only way in. */
+.reframebar{ position:absolute; left:50%; bottom:calc(74px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:30;
+  display:none; gap:16px; align-items:center; background:var(--menu); border:1px solid var(--field-edge); border-radius:16px;
+  padding:10px 14px; box-shadow:var(--shadow-2); max-width:calc(100% - 24px); }
+.reframebar.on{ display:flex; }
+.nudgepad{ display:grid; grid-template-columns:repeat(3,34px); grid-template-rows:repeat(3,34px); gap:3px; }
+.nudgepad button{ border:1px solid var(--field-edge); background:var(--field); color:var(--on-desk); border-radius:8px; cursor:pointer;
+  display:grid; place-items:center; font-size:14px; }
+.nudgepad button svg{ width:16px; height:16px; }
+.nudgepad .spacer{ border:none; background:none; cursor:default; }
+.zoomstep{ display:flex; align-items:center; gap:8px; }
+.zoomstep button{ width:40px; height:40px; border-radius:11px; border:1px solid var(--field-edge); background:var(--field);
+  color:var(--on-desk); cursor:pointer; font-size:20px; display:grid; place-items:center; }
+.zoomval{ min-width:50px; text-align:center; font-family:var(--shell); font-weight:600; font-size:13px; font-variant-numeric:tabular-nums; }
+
+/* screen-reader-only live region (reframe announcements) — present to AT, invisible on screen */
+.sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
 
 /* ============================ LOADING (calm skeleton bench) ============================ */
 .loadwrap{ position:absolute; inset:0; display:none; place-items:center; z-index:8; }
@@ -414,7 +483,7 @@ body{
   </header>
 
   <!-- THE STAGE -->
-  <div class="stage" id="stage" role="application" aria-label="Zine editing canvas. Tap a block to select it; drag to move; double-tap to edit; long-press for more.">
+  <div class="stage" id="stage" role="application" aria-label="Zine editing canvas. Tap a block to select it; drag to move; double-tap text to edit or a picture to reframe it; long-press for more.">
     <div class="zoombar" id="zoombar">
       <button id="zoomIn" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none"><path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       <button id="zoomOut" aria-label="Zoom out"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
@@ -466,6 +535,18 @@ body{
       <button class="tool icononly danger" id="tDel" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V4h4v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button class="tool icononly" id="tDone" aria-label="Done — deselect"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
+    <div class="toolgroup reframe-tools">
+      <div class="fitseg" role="group" aria-label="How the photo fills the frame">
+        <button id="fitFill" aria-pressed="true">Fill<small>crops edges</small></button>
+        <button id="fitWhole" aria-pressed="false">Whole photo<small>may add margins</small></button>
+      </div>
+      <button class="tool icononly" id="rfReset" aria-label="Reset framing"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 2.3 5.6M4 12V7m0 5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <button class="tool" id="rfCancel">Cancel</button>
+    <button class="proof" id="rfDone">
+      <span>Done</span>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12l5 5 9-11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
     <button class="proof" id="proof">
       <span>Proof</span>
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -474,6 +555,29 @@ body{
 
   <!-- INK POPOVER -->
   <div class="inkbar" id="inkbar" role="group" aria-label="Ink colour"></div>
+
+  <!-- REFRAME STEPPERS (authoritative accessible motion path — RF1) -->
+  <div class="reframebar" id="reframebar" role="group" aria-label="Photo position and zoom">
+    <div class="nudgepad" role="group" aria-label="Move photo">
+      <button class="spacer" tabindex="-1" aria-hidden="true"></button>
+      <button id="rfUp" aria-label="Move photo up"><svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M6 11l6-6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="spacer" tabindex="-1" aria-hidden="true"></button>
+      <button id="rfLeft" aria-label="Move photo left"><svg viewBox="0 0 24 24" fill="none"><path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="spacer" tabindex="-1" aria-hidden="true"></button>
+      <button id="rfRight" aria-label="Move photo right"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="spacer" tabindex="-1" aria-hidden="true"></button>
+      <button id="rfDown" aria-label="Move photo down"><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="spacer" tabindex="-1" aria-hidden="true"></button>
+    </div>
+    <div class="zoomstep" role="group" aria-label="Zoom photo">
+      <button id="rfZoomOut" aria-label="Zoom out">−</button>
+      <span class="zoomval" id="rfZoom" aria-hidden="true">100%</span>
+      <button id="rfZoomIn" aria-label="Zoom in">+</button>
+    </div>
+  </div>
+
+  <!-- reframe live-region (screen-reader announcements: position, zoom, fit, commit/cancel) -->
+  <div class="sr-only" id="rfLive" role="status" aria-live="polite"></div>
 </div>
 
 <!-- SCRIM + SHEETS -->
@@ -496,6 +600,8 @@ body{
   <h3 id="blockTitle">Block</h3>
   <div class="menu-list" id="blockMenu" role="menu">
     <button role="menuitem" data-act="edit"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 5l5 5L9 20H4v-5L14 5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span id="bmEdit">Edit text</span></button>
+    <button role="menuitem" data-act="replace" class="img-only"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8a8 8 0 0 1 13-2.5L20 8M20 8V4M20 8h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16a8 8 0 0 1-13 2.5L4 16M4 16v4M4 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Replace picture</button>
+    <button role="menuitem" data-act="reset" class="img-only"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 2.3 5.6M4 12V7m0 5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Reset framing</button>
     <button role="menuitem" data-act="front"><svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 14V6a2 2 0 0 1 2-2h8" stroke="currentColor" stroke-width="2"/></svg>Bring to front</button>
     <button role="menuitem" data-act="duplicate"><svg viewBox="0 0 24 24" fill="none"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="2"/></svg>Duplicate</button>
     <button role="menuitem" data-act="delete" class="danger"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V4h4v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Delete</button>
@@ -550,7 +656,7 @@ body{
           <button data-motion="reduce" aria-pressed="false">Reduced</button>
         </div>
       </div>
-      <p class="note">Tap a block to select · drag to move · double-tap to edit · pinch to scale · long-press for more. Keyboard: arrows nudge, Enter edits, Delete removes, ⌘/Ctrl+Z undo.</p>
+      <p class="note">Tap to select · drag to move · double-tap text to edit, a picture to reframe · pinch to scale · long-press for more. In reframe: drag/pinch or use the on-screen nudge + zoom steppers; arrows nudge, +/− zoom, Enter saves, Esc cancels. ⌘/Ctrl+Z undo.</p>
     </div>
   </details>
 </div>
@@ -606,10 +712,13 @@ body{
   let blocks = [], cur = 0, sel = null, name = "Corner Store Poems", stock = "";
   let history = [], hpos = -1, removed = null, undoTimer = null;
   let zoom = 1, panX = 0, panY = 0;
+  let reframe = null;      // image-framing session: {id, before:{ox,oy,scale,fit}}
+  let cdrag = null, cpinch = null;   // in-mode content drag / pinch
+  let taughtReframe = false;         // first-run coach-mark shown once
 
   /* ---------- els ---------- */
   const stage=$("#stage"), canvas=$("#canvas"), page=$("#page"), rail=$("#rail"),
-        toolbar=$("#toolbar"), inkbar=$("#inkbar"), zoombar=$("#zoombar"),
+        toolbar=$("#toolbar"), inkbar=$("#inkbar"), zoombar=$("#zoombar"), reframebar=$("#reframebar"),
         loadwrap=$("#loadwrap"), errwrap=$("#errwrap"), scrim=$("#scrim"),
         snackbar=$("#snackbar"), toastEl=$("#toast"), saveState=$("#saveState"), saveText=$("#saveText");
 
@@ -653,11 +762,30 @@ body{
       el.setAttribute("aria-label", `Text: “${b.text}”. Selected? Tap to select, double-tap to edit.`);
     } else {
       el.style.setProperty("--bratio", b.ratio||1);
+      el.style.setProperty("--pratio", b.pratio||1.5);
       el.style.setProperty("--ink1", FIELD[b.ink1]); if(b.ink2!=null) el.style.setProperty("--ink2", ACCENT[b.ink2]);
-      const s=document.createElement("div"); s.className="surface"; el.appendChild(s);
-      el.setAttribute("aria-label", "Picture. Tap to select.");
+      const s=document.createElement("div"); s.className="surface";
+      const c=document.createElement("div"); c.className="imgcontent "+fxClass(b);
+      c.style.setProperty("--ox",(b.ox||0)+"%"); c.style.setProperty("--oy",(b.oy||0)+"%"); c.style.setProperty("--scale",b.scale||1);
+      s.appendChild(c);
+      const rf = !!(reframe && reframe.id===b.id);
+      if(rf){ el.classList.add("reframing");
+        const shade=document.createElement("div"); shade.className="reframe-shade"; shade.setAttribute("aria-hidden","true");
+        const win=document.createElement("div"); win.className="reframe-win"; win.setAttribute("aria-hidden","true");
+        s.appendChild(shade); s.appendChild(win);
+      }
+      el.appendChild(s);
+      // RF2: persistent draggable affordance on a selected (not-yet-reframing) photo
+      if(b.id===sel && !rf){
+        const aff=document.createElement("button"); aff.type="button";
+        aff.className="reframe-aff" + (taughtReframe? "":" teach"); aff.setAttribute("aria-label","Reframe this photo");
+        aff.innerHTML='<svg viewBox="0 0 24 24" width="13" height="13" fill="none"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Reframe</span>';
+        el.appendChild(aff);
+      }
+      el.setAttribute("aria-label", rf ? "Reframing photo. Use the position and zoom controls." :
+        (b.id===sel ? "Picture, selected. Double-tap or press Reframe to adjust framing." : "Picture. Tap to select."));
     }
-    if(b.id===sel){
+    if(b.id===sel && !(reframe && reframe.id===b.id)){
       const h=document.createElement("div"); h.className="handles";
       h.innerHTML = `<div class="handle rot" data-h="rot" role="button" aria-label="Rotate"></div><div class="handle se" data-h="se" role="button" aria-label="Resize"></div>`;
       el.appendChild(h);
@@ -674,7 +802,12 @@ body{
     here.forEach((o,vi)=> page.appendChild(blockEl(o.b, vi)));
     renderRail(); syncToolbar();
     canvas.style.setProperty("--z", zoom); canvas.style.setProperty("--px", panX+"px"); canvas.style.setProperty("--py", panY+"px");
-    zoombar.classList.toggle("hide", false);
+    zoombar.classList.toggle("hide", !!reframe);   // canvas-zoom hidden while reframing (avoid two zooms on screen)
+    reframebar.classList.toggle("on", !!reframe);
+    if(reframe){ const rb=blocks.find(x=>x.id===reframe.id);
+      if(rb){ $("#fitFill").setAttribute("aria-pressed", String((rb.fit||"fill")==="fill"));
+              $("#fitWhole").setAttribute("aria-pressed", String(rb.fit==="whole"));
+              $("#rfZoom").textContent = Math.round((rb.scale||1)*100)+"%"; } }
   }
   function renderRail(){
     rail.innerHTML = PANELS.map((p,i)=>{
@@ -691,13 +824,78 @@ body{
   }
   function syncToolbar(){
     const b = blocks.find(x=>x.id===sel);
-    toolbar.dataset.mode = b ? "select" : "add";
-    if(b){
-      $("#tEditLabel").textContent = b.type==="text" ? "Edit" : "Replace";
+    toolbar.dataset.mode = reframe ? "reframe" : (b ? "select" : "add");
+    if(b && !reframe){
+      $("#tEditLabel").textContent = b.type==="text" ? "Edit" : "Reframe";   // image primary in-place action is Reframe (Replace demoted to the menu)
       $("#tInk").style.display = ""; // ink applies to both (text colour / image spot-ink)
     }
-    inkbar.classList.remove("on");
+    if(!reframe) inkbar.classList.remove("on");
   }
+
+  /* ---------- image framing (Reframe) ----------
+     THE FRAME is fixed; the PHOTO pans/zooms inside it. One reframe session = one atomic undo step (like a drag). */
+  function fxClass(b){ const pr=b.pratio||1.5, br=b.ratio||1;
+    // Fill(cover): pin the axis whose photo side is the tighter fit so the frame is always covered.
+    // Whole(contain): pin the opposite axis so the whole photo shows (letterbox/pillarbox on paper — honest).
+    if((b.fit||"fill")==="whole") return pr>=br ? "fx-w" : "fx-h";
+    return pr>=br ? "fx-h" : "fx-w";
+  }
+  function rfSay(m){ const l=$("#rfLive"); if(l){ l.textContent=""; l.textContent=m; } }
+  function contentEls(id){ const el=page.querySelector(`.block[data-id="${id}"]`); if(!el) return null;
+    return { el, c:el.querySelector(".imgcontent"), s:el.querySelector(".surface") }; }
+  function updateContent(b){ const g=contentEls(b.id); if(!g||!g.c) return;
+    g.c.classList.remove("fx-w","fx-h"); g.c.classList.add(fxClass(b));
+    g.c.style.setProperty("--ox",(b.ox||0)+"%"); g.c.style.setProperty("--oy",(b.oy||0)+"%"); g.c.style.setProperty("--scale",b.scale||1);
+    if(reframe && reframe.id===b.id) $("#rfZoom").textContent = Math.round((b.scale||1)*100)+"%";
+  }
+  // clamp offsets so Fill never reveals a gap; % are relative to the photo's unscaled layout box (matches CSS translate %).
+  function clampContent(b){ const g=contentEls(b.id); if(!g||!g.c||!g.s) return;
+    const ow=g.c.offsetWidth, oh=g.c.offsetHeight, sc=b.scale||1;
+    const maxox = ow ? Math.max(0,(ow*sc - g.s.offsetWidth )/2)/ow*100 : 0;
+    const maxoy = oh ? Math.max(0,(oh*sc - g.s.offsetHeight)/2)/oh*100 : 0;
+    b.ox = clamp(b.ox||0, -maxox, maxox); b.oy = clamp(b.oy||0, -maxoy, maxoy);
+  }
+  function clampLater(id){ const b=blocks.find(x=>x.id===id); if(!b) return;
+    requestAnimationFrame(()=>{ clampContent(b); updateContent(b); }); }
+  function enterReframe(id){ const b=blocks.find(x=>x.id===id); if(!b || b.type!=="image") return;
+    if(!b.fit) b.fit="fill"; if(b.ox==null) b.ox=0; if(b.oy==null) b.oy=0; if(b.scale==null) b.scale=1;
+    taughtReframe = true;   // affordance has now done its teaching job
+    reframe = { id, before:{ ox:b.ox, oy:b.oy, scale:b.scale, fit:b.fit } };
+    sel = id; buzz("tick"); inkbar.classList.remove("on"); render(); clampLater(id);
+    rfSay("Reframing photo. Drag to reposition, pinch to zoom, or use the on-screen move and zoom controls. Done saves, Cancel discards.");
+  }
+  function exitReframe(commit){ if(!reframe) return; const id=reframe.id; const b=blocks.find(x=>x.id===id); const bf=reframe.before;
+    if(b){ if(commit){ const changed = b.ox!==bf.ox||b.oy!==bf.oy||b.scale!==bf.scale||b.fit!==bf.fit;
+        if(changed){ snapshot(); rfSay("Framing saved."); } else rfSay("Framing unchanged."); }
+      else { b.ox=bf.ox; b.oy=bf.oy; b.scale=bf.scale; b.fit=bf.fit; rfSay("Reframing cancelled."); } }
+    reframe=null; cdrag=null; cpinch=null; buzz("tick"); render();
+    const nb=page.querySelector(`.block[data-id="${id}"]`); if(nb) nb.focus({preventScroll:true});
+  }
+  function setFit(fit){ const b=blocks.find(x=>x.id===(reframe&&reframe.id)); if(!b || b.fit===fit) return;
+    b.fit=fit; if(fit==="whole"){ b.ox=0; b.oy=0; b.scale=1; }   // Whole re-centers to a clean baseline
+    updateContent(b); clampLater(b.id);
+    $("#fitFill").setAttribute("aria-pressed", String(fit==="fill")); $("#fitWhole").setAttribute("aria-pressed", String(fit==="whole"));
+    rfSay(fit==="fill" ? "Filling the frame. Edges may be cropped." : "Showing the whole photo. Margins may appear on paper.");
+  }
+  function rfResetInMode(){ const b=blocks.find(x=>x.id===(reframe&&reframe.id)); if(!b) return;
+    b.ox=0; b.oy=0; b.scale=1; updateContent(b); rfSay("Framing reset. Cancel to undo."); }   // reversible via Cancel — nothing committed yet
+  function resetFramingCommit(b){ b.ox=0; b.oy=0; b.scale=1; snapshot(); render(); toast("Framing reset"); }
+  function rfNudge(dx,dy){ const b=blocks.find(x=>x.id===(reframe&&reframe.id)); if(!b) return;
+    b.ox=(b.ox||0)+dx; b.oy=(b.oy||0)+dy; clampContent(b); updateContent(b); buzz("tick");
+    rfSay(dx<0?"Moved left":dx>0?"Moved right":dy<0?"Moved up":"Moved down"); }
+  function rfZoom(f){ const b=blocks.find(x=>x.id===(reframe&&reframe.id)); if(!b) return;
+    b.scale=clamp((b.scale||1)*f,1,4); clampContent(b); updateContent(b); buzz("tick"); rfSay("Zoom "+Math.round(b.scale*100)+" percent"); }
+  // in-mode content gestures (enhancement layered over the discrete steppers)
+  function startContentDrag(e){ const b=blocks.find(x=>x.id===reframe.id); if(!b) return; const g=contentEls(b.id);
+    cdrag={ sx:e.clientX, sy:e.clientY, ox:b.ox||0, oy:b.oy||0, ow:(g&&g.c)?g.c.offsetWidth:1, oh:(g&&g.c)?g.c.offsetHeight:1 }; }
+  function moveContentDrag(e){ if(!cdrag) return; const b=blocks.find(x=>x.id===reframe.id); if(!b) return;
+    b.ox=cdrag.ox + (e.clientX-cdrag.sx)/zoom/cdrag.ow*100; b.oy=cdrag.oy + (e.clientY-cdrag.sy)/zoom/cdrag.oh*100;
+    clampContent(b); updateContent(b); }
+  function startContentPinch(){ const b=blocks.find(x=>x.id===reframe.id); if(!b) return; const p=Array.from(pointers.values());
+    cpinch={ sd:Math.hypot(p[0].clientX-p[1].clientX,p[0].clientY-p[1].clientY), os:b.scale||1 }; cdrag=null; }
+  function moveContentPinch(){ const b=blocks.find(x=>x.id===reframe.id); if(!b) return; const p=Array.from(pointers.values()); if(p.length<2) return;
+    const d=Math.hypot(p[0].clientX-p[1].clientX,p[0].clientY-p[1].clientY);
+    b.scale=clamp(cpinch.os*d/cpinch.sd,1,4); clampContent(b); updateContent(b); }
 
   /* ---------- selection ---------- */
   function select(id, haptic){
@@ -712,6 +910,7 @@ body{
 
   // tap empty canvas => deselect (but not when a drag/pinch just happened)
   stage.addEventListener("pointerdown", e=>{
+    if(reframe) return;   // reframing owns the stage; exit is via Done/Cancel/Esc, not a stray tap
     if(e.target===stage || e.target===canvas || e.target===page || e.target.classList.contains("safe") || e.target.classList.contains("ghost")){
       panStart(e);
     }
@@ -724,6 +923,14 @@ body{
   let lastTap = {id:null, t:0};
 
   page.addEventListener("pointerdown", e=>{
+    if(reframe){   // in reframe, only the reframing photo is interactive; drag repositions / pinch zooms the PHOTO
+      const rEl=e.target.closest(".block");
+      if(!rEl || rEl.dataset.id!==reframe.id) return;
+      e.stopPropagation(); pointers.set(e.pointerId,e);
+      if(pointers.size===2) startContentPinch(); else startContentDrag(e);
+      try{ page.setPointerCapture(e.pointerId); }catch(_){}
+      return;
+    }
     const hEl = e.target.closest(".handle");
     const bEl = e.target.closest(".block");
     if(!bEl && !hEl) return;
@@ -743,7 +950,8 @@ body{
     if(sel!==id) select(id);
     // double-tap => edit text
     const now = Date.now();
-    if(b.type==="text" && lastTap.id===id && now-lastTap.t < 300){ lastTap={id:null,t:0}; startEdit(b); return; }
+    if(lastTap.id===id && now-lastTap.t < 300){ lastTap={id:null,t:0};
+      if(b.type==="text") startEdit(b); else enterReframe(id); return; }   // double-tap: text→edit, picture→reframe
     lastTap = {id, t:now};
     // long-press => secondary menu
     clearTimeout(lp); lp = setTimeout(()=>{ drag=null; buzz("boundary"); openBlockSheet(id); }, 480);
@@ -764,6 +972,8 @@ body{
   }
 
   page.addEventListener("pointermove", e=>{
+    if(reframe){ if(pointers.has(e.pointerId)) pointers.set(e.pointerId, e);
+      if(cpinch) moveContentPinch(); else if(cdrag) moveContentDrag(e); return; }
     if(pointers.has(e.pointerId)) pointers.set(e.pointerId, e);
     if(pinch){ movePinch(); return; }
     if(!drag) return;
@@ -802,6 +1012,7 @@ body{
     el.style.setProperty("--bw", b.w+"%"); el.style.setProperty("--r", (b.r||0)+"deg");
   }
   function endDrag(e){
+    if(reframe){ if(e) pointers.delete(e.pointerId); if(cpinch && pointers.size<2) cpinch=null; if(pointers.size===0) cdrag=null; return; }
     if(e) pointers.delete(e.pointerId);
     clearTimeout(lp);
     if(pinch && pointers.size<2) endPinch();
@@ -860,7 +1071,21 @@ body{
   });
   $("#addImage").addEventListener("click", ()=> openImport());
   $("#tEdit").addEventListener("click", ()=>{ const b=blocks.find(x=>x.id===sel); if(!b) return;
-    if(b.type==="text") startEdit(b); else openImport(true); });
+    if(b.type==="text") startEdit(b); else enterReframe(b.id); });   // image "Edit" tool is now Reframe (Replace lives in the long-press menu)
+  // reframe contextbar + steppers
+  $("#fitFill").addEventListener("click", ()=> setFit("fill"));
+  $("#fitWhole").addEventListener("click", ()=> setFit("whole"));
+  $("#rfReset").addEventListener("click", rfResetInMode);
+  $("#rfCancel").addEventListener("click", ()=> exitReframe(false));
+  $("#rfDone").addEventListener("click", ()=> exitReframe(true));
+  $("#rfLeft").addEventListener("click", ()=> rfNudge(-3,0));
+  $("#rfRight").addEventListener("click", ()=> rfNudge(3,0));
+  $("#rfUp").addEventListener("click", ()=> rfNudge(0,-3));
+  $("#rfDown").addEventListener("click", ()=> rfNudge(0,3));
+  $("#rfZoomIn").addEventListener("click", ()=> rfZoom(1.15));
+  $("#rfZoomOut").addEventListener("click", ()=> rfZoom(1/1.15));
+  // tap the persistent affordance on a selected photo → enter reframe (discoverability without knowing the gesture)
+  page.addEventListener("click", e=>{ const a=e.target.closest(".reframe-aff"); if(a){ e.stopPropagation(); if(sel) enterReframe(sel); } });
   $("#tDup").addEventListener("click", ()=>{ const b=blocks.find(x=>x.id===sel); if(!b) return;
     const c={...b, id:nid(), x:clamp(b.x+6,9,91), y:clamp(b.y+6,9,91)}; blocks.push(c); buzz("snap"); snapshot(); select(c.id,false); });
   $("#tDel").addEventListener("click", ()=>{ const b=blocks.find(x=>x.id===sel); if(b) deleteBlock(b); });
@@ -900,6 +1125,7 @@ body{
   /* ---------- rail (panel nav) ---------- */
   rail.addEventListener("click", e=>{ const b=e.target.closest(".panelbtn"); if(!b) return;
     const p = +b.dataset.panel; if(p===cur) return;
+    if(reframe) exitReframe(true);   // leaving the panel commits the open framing (never strand a session on an off-screen photo)
     const dir = p>cur ? "from-right" : "from-left";   // travel toward the tapped panel's side of the sheet
     deselect(); cur=p; buzz("tick"); render();
     if(!reduced()){ page.classList.remove("from-right","from-left"); void page.offsetWidth; page.classList.add(dir); }
@@ -928,6 +1154,18 @@ body{
   function nudgeCommit(){ clearTimeout(nudgeTimer); nudgeTimer=setTimeout(()=>snapshot(), 400); }
   document.addEventListener("keydown", e=>{
     if(editing) return; // editing owns the keyboard
+    if(reframe){        // reframe owns the keyboard: arrows nudge · +/- zoom · Enter saves · Esc cancels (no R/F single-keys — avoids Rotate/Fit collisions)
+      if(e.key==="Escape"){ e.preventDefault(); exitReframe(false); return; }
+      if(e.key==="Enter"){ e.preventDefault(); exitReframe(true); return; }
+      const st = e.shiftKey ? 6 : 2;
+      if(e.key==="ArrowLeft"){ e.preventDefault(); rfNudge(-st,0); }
+      else if(e.key==="ArrowRight"){ e.preventDefault(); rfNudge(st,0); }
+      else if(e.key==="ArrowUp"){ e.preventDefault(); rfNudge(0,-st); }
+      else if(e.key==="ArrowDown"){ e.preventDefault(); rfNudge(0,st); }
+      else if(e.key==="+"||e.key==="="){ e.preventDefault(); rfZoom(1.15); }
+      else if(e.key==="-"||e.key==="_"){ e.preventDefault(); rfZoom(1/1.15); }
+      return;
+    }
     if(e.key==="Escape"){ if(inkbar.classList.contains("on")) inkbar.classList.remove("on"); else if(openSheet) closeSheets(false); else deselect(); return; }
     if(openSheet) return; // an open modal sheet owns the keyboard — don't nudge/delete the block behind the scrim (RI1)
     const meta = e.ctrlKey||e.metaKey;
@@ -964,20 +1202,26 @@ body{
   $$(".source").forEach(s=> s.addEventListener("click", ()=>{
     closeSheets(false); buzz("snap");
     const arch = Math.floor(Math.random()*ARCH.length), ink1=Math.floor(Math.random()*FIELD.length), ink2=Math.floor(Math.random()*ACCENT.length);
-    if(replaceMode && sel){ const b=blocks.find(x=>x.id===sel); if(b&&b.type==="image"){ b.arch=arch; b.ink1=ink1; b.ink2=ink2; } toast("Picture replaced"); }
-    else { const b={ id:nid(), panel:cur, type:"image", x:50, y:50, w:64, r:0, arch, ink1, ink2, ratio:1 }; blocks.push(b); select(b.id,false); toast("Added — kept on this device"); }
-    snapshot(); render();
+    const pratio = [0.72,1,1.5,0.85,1.33][Math.floor(Math.random()*5)];   // the incoming photo's own aspect (what makes Fit/Fill meaningful)
+    let addedId=null;
+    if(replaceMode && sel){ const b=blocks.find(x=>x.id===sel); if(b&&b.type==="image"){ b.arch=arch; b.ink1=ink1; b.ink2=ink2; b.pratio=pratio; addedId=b.id; } toast("Picture replaced — framing kept"); }
+    else { const b={ id:nid(), panel:cur, type:"image", x:50, y:50, w:64, r:0, arch, ink1, ink2, ratio:1, pratio, fit:"fill", ox:0, oy:0, scale:1 };
+      blocks.push(b); addedId=b.id; select(b.id,false); toast("Added — kept on this device"); }   // new photos default to Fill (look intentional immediately)
+    snapshot(); render(); if(addedId) clampLater(addedId);   // Replace-in-place: re-clamp kept offsets against the new photo's aspect
   }));
 
   function openBlockSheet(id){
     sel=id; render(); const b=blocks.find(x=>x.id===id); if(!b) return;
     $("#blockTitle").textContent = b.type==="text" ? "Text" : "Picture";
-    $("#bmEdit").textContent = b.type==="text" ? "Edit text" : "Replace picture";
+    $("#bmEdit").textContent = b.type==="text" ? "Edit text" : "Reframe";
+    $$(".img-only").forEach(n=> n.style.display = b.type==="image" ? "" : "none");
     show($("#blockSheet"));
   }
   $("#blockMenu").addEventListener("click", e=>{ const btn=e.target.closest("button"); if(!btn) return;
     const b=blocks.find(x=>x.id===sel); if(!b) return; const act=btn.dataset.act;
-    if(act==="edit"){ closeSheets(false); if(b.type==="text") startEdit(b); else openImport(true); }
+    if(act==="edit"){ closeSheets(false); if(b.type==="text") startEdit(b); else enterReframe(b.id); }
+    if(act==="replace"){ closeSheets(false); openImport(true); }        // Replace-in-place keeps crop + fit
+    if(act==="reset"){ closeSheets(false); resetFramingCommit(b); }
     if(act==="front"){ blocks.splice(blocks.indexOf(b),1); blocks.push(b); buzz("tick"); closeSheets(false); snapshot(); render(); }
     if(act==="duplicate"){ const c={...b,id:nid(),x:clamp(b.x+6,9,91),y:clamp(b.y+6,9,91)}; blocks.push(c); buzz("snap"); closeSheets(false); snapshot(); select(c.id,false); }
     if(act==="delete"){ closeSheets(false); deleteBlock(b); }
@@ -1002,7 +1246,7 @@ body{
       clearTimeout(setState._t); setState._t=setTimeout(()=>{ setState("existing"); }, 1400); return; }
     if(s==="error"){ canvas.style.visibility="hidden"; errwrap.classList.add("on"); return; }
     // build content
-    _bid=0; sel=null; cur=0; zoom=1; panX=0; panY=0;
+    _bid=0; sel=null; cur=0; zoom=1; panX=0; panY=0; reframe=null; cdrag=null; cpinch=null;
     if(s==="new"){ name="Untitled zine"; stock=""; blocks=seedNew(); }
     else if(s==="empty"){ name="Small Machines"; stock="p2"; blocks=[]; }   // start on an empty panel
     else { name="Corner Store Poems"; stock=""; blocks=seedExisting(); }
