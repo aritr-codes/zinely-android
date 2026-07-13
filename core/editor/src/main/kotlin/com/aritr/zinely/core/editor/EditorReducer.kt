@@ -1,5 +1,8 @@
 package com.aritr.zinely.core.editor
 
+import com.aritr.zinely.core.model.Crop
+import com.aritr.zinely.core.model.Fit
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtPoint
@@ -34,8 +37,12 @@ public object EditorReducer {
             // Mint the id reducer-side (single source of id allocation) so it can never collide with an
             // existing element — a duplicate id would make PlaceCommand.invertOn delete BOTH matches.
             val id = "el-${model.nextToken}"
+            // Placement-default policy (ADR-053 §2/§3): a newly placed photo covers its frame — Fit.FILL,
+            // full crop — applied HERE at placement time, not as a render-time default flip. The model's
+            // fallback stays Fit.FIT (Document.kt) so every already-saved zine renders byte-identically.
+            val placed = intent.element.copy(id = id, zIndex = nextZ(model), fit = Fit.FILL)
             committing(model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
-                PlaceCommand(model.currentPageIndex, intent.element.copy(id = id, zIndex = nextZ(model))))
+                PlaceCommand(model.currentPageIndex, placed))
         }
         is Intent.BeginEditText -> openTextSession(model, intent.id)
         is Intent.BeginEditTextAt -> openTextSession(model, HitTest.topmostAt(currentPage(model), intent.pagePoint))
@@ -49,6 +56,52 @@ public object EditorReducer {
             val tx = model.interaction as? Interaction.EditingText
             if (tx == null || tx.token != intent.token || tx.id != intent.id) Reduction(model)
             else endTextSession(model, intent.id, after = null)
+        }
+
+        // — double-tap seam: retarget by topmost element type (ADR-053 §4) —
+        is Intent.DoubleTapAt -> when (val hit = HitTest.topmostAt(currentPage(model), intent.pagePoint)
+            ?.let { id -> currentPage(model).elements.firstOrNull { it.id == id } }) {
+            is TextElement -> openTextSession(model, hit.id)
+            is ImageElement -> openReframeSession(model, hit.id)
+            else -> Reduction(model) // empty space / unknown ⇒ no-op
+        }
+
+        // — image reframe: begin/commit/cancel session + replace/reset one-shots (ADR-053) —
+        is Intent.BeginReframe -> openReframeSession(model, intent.id)
+        is Intent.CommitReframe -> {
+            val rx = model.interaction as? Interaction.Reframing
+            // Stale / mismatched commit (nav, cancel, or a newer session replaced ours) ⇒ no-op.
+            if (rx == null || rx.token != intent.token || rx.id != intent.id || rx.pageIndex != model.currentPageIndex) {
+                Reduction(model)
+            } else if (currentPage(model).elements.none { it.id == rx.id }) {
+                // The element was deleted mid-session (Delete doesn't close the interaction) ⇒ just close,
+                // never push a command that matches no id (mirrors endTextSession's vanished-element bail).
+                Reduction(model.copy(interaction = Interaction.Idle))
+            } else {
+                // Take ONLY crop/fit from the draft (clamped valid); keep before's assetId/geometry/zIndex so a
+                // malformed draft can neither swap the photo nor move the element (mirrors EditTextCommand).
+                val committed = rx.before.copy(crop = FramingMath.clampCrop(intent.after.crop), fit = intent.after.fit)
+                val idle = model.copy(interaction = Interaction.Idle)
+                if (committed == rx.before) Reduction(idle) // no change ⇒ close, no command/autosave
+                else committing(idle, EditImageCommand(rx.pageIndex, rx.id, rx.before, committed))
+            }
+        }
+        is Intent.CancelReframe -> {
+            val rx = model.interaction as? Interaction.Reframing
+            if (rx == null || rx.token != intent.token) Reduction(model)
+            else Reduction(model.copy(interaction = Interaction.Idle))
+        }
+        is Intent.ReplaceImage -> {
+            val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? ImageElement
+            // Preserve framing (crop/fit/transform/zIndex) — only the bytes change (ADR-053 §6).
+            if (el == null || el.assetId == intent.assetId) Reduction(model)
+            else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, el.copy(assetId = intent.assetId)))
+        }
+        is Intent.ResetFraming -> {
+            val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? ImageElement
+            val reset = el?.copy(crop = Crop.FULL, fit = Fit.FILL)
+            if (el == null || reset == el) Reduction(model) // absent or already at default ⇒ no-op
+            else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, reset!!))
         }
 
         // — transform: begin/commit/cancel + a11y twins —
@@ -168,6 +221,18 @@ public object EditorReducer {
         )
     }
 
+    /** Open a Reframe session on [id] iff it names an [ImageElement] on the current page; else a no-op. */
+    private fun openReframeSession(model: EditorModel, id: String?): Reduction {
+        val el = id?.let { currentPage(model).elements.firstOrNull { e -> e.id == it } } as? ImageElement
+        return if (el == null) Reduction(model) else Reduction(
+            model.copy(
+                selection = setOf(el.id),
+                nextToken = model.nextToken + 1,
+                interaction = Interaction.Reframing(model.currentPageIndex, el.id, el, model.nextToken),
+            ),
+        )
+    }
+
     /**
      * End a text-edit session (§5.6). [after] == null means **discard** (cancel); a non-null [after] is the
      * committed draft. Either way the session closes to [Interaction.Idle]. No empty `TextElement` ever
@@ -256,6 +321,7 @@ public object EditorReducer {
         is DeleteCommand -> pageIndex
         is PlaceCommand -> pageIndex
         is EditTextCommand -> pageIndex
+        is EditImageCommand -> pageIndex
         is AddPageCommand, is DeletePageCommand -> null
     }
 }

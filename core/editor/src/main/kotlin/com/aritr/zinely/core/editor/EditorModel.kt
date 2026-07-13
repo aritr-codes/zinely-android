@@ -46,6 +46,18 @@ public sealed interface Interaction {
 
     /** A text-edit session; draft text lives in the feature layer until [Intent.CommitText] (§5.6). */
     public data class EditingText(val id: String, val token: Long) : Interaction
+
+    /**
+     * An image Reframe session (ADR-053) open on [id] of page [pageIndex]. The reducer owns the pre-session
+     * [before] snapshot (single source of truth, mirroring [Transforming]); the live pan/zoom preview stays
+     * ephemeral in the feature layer and bakes on [Intent.CommitReframe]. [token] rejects a stale commit.
+     */
+    public data class Reframing(
+        val pageIndex: Int,
+        val id: String,
+        val before: com.aritr.zinely.core.model.ImageElement,
+        val token: Long,
+    ) : Interaction
 }
 
 /** History-free projection exposed to Compose (Codex rec #1). */
