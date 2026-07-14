@@ -47,8 +47,25 @@ public class DataStoreEditorOnboardingStore(
         }
     }
 
+    override val reframeCoachSeen: Flow<Boolean> =
+        dataStore.data
+            .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
+            .map { prefs -> prefs[REFRAME_COACH_SEEN] ?: false }
+
+    override suspend fun markReframeCoachSeen() {
+        try {
+            dataStore.edit { prefs -> prefs[REFRAME_COACH_SEEN] = true }
+        } catch (_: IOException) {
+            // Best-effort, non-critical flag (same policy as the move/resize hint). Worst case: the coach
+            // re-teaches once next launch.
+        }
+    }
+
     private companion object {
         /** The "move/resize hint already seen" flag. Stable key — renaming it would re-show the hint. */
         val MOVE_RESIZE_HINT_SEEN = booleanPreferencesKey("move_resize_hint_seen")
+
+        /** The "Reframe coach-mark already taught" flag. Stable key — renaming it would re-teach it. */
+        val REFRAME_COACH_SEEN = booleanPreferencesKey("reframe_coach_seen")
     }
 }

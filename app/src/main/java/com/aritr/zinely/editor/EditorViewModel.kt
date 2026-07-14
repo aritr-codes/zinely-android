@@ -107,6 +107,16 @@ internal class EditorViewModel @Inject constructor(
     val announcements: SharedFlow<String> = _announcements.asSharedFlow()
 
     /**
+     * A UI-originated a11y announcement (WCAG 4.1.3) — the Reframe surface's position/zoom/fit/commit lines
+     * (ADR-053, IF3). Routed through the SAME channel the reducer's [com.aritr.zinely.feature.editor.Announcer]
+     * uses, so every editor announcement reaches TalkBack via the one `announceForAccessibility` drain; the
+     * platform re-announces even identical consecutive text, so a repeated nudge is never silent.
+     */
+    fun announce(text: String) {
+        _announcements.tryEmit(text)
+    }
+
+    /**
      * Autosave-confirmation channel (ADR-034): the effect runner emits one `Unit` per `Effect.Autosave`,
      * the editor host collects it and surfaces the transient "Saved ✨" reassurance. Replay-free
      * (`replay = 0`) with a small extra buffer so `tryEmit` from the runner never blocks. A signal emitted
@@ -178,6 +188,19 @@ internal class EditorViewModel @Inject constructor(
     /** Persist that the move/resize hint has been seen (idempotent). Fire-and-forget on [viewModelScope]. */
     fun markMoveResizeHintSeen() {
         viewModelScope.launch { onboardingStore.markMoveResizeHintSeen() }
+    }
+
+    /**
+     * The across-sessions "already taught the Reframe coach-mark" gate (ADR-053 RF2), read as the same
+     * load-aware tri-state as [moveResizeHintSeen]: `null` until loaded, then `false` (teach) / `true`.
+     */
+    val reframeCoachSeen: StateFlow<Boolean?> =
+        onboardingStore.reframeCoachSeen
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = null)
+
+    /** Persist that the Reframe coach-mark has taught (idempotent). Fire-and-forget on [viewModelScope]. */
+    fun markReframeCoachSeen() {
+        viewModelScope.launch { onboardingStore.markReframeCoachSeen() }
     }
 
     init {

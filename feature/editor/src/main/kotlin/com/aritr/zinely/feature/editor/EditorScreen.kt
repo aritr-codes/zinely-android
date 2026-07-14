@@ -1,6 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,24 +16,41 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.IntOffset
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aritr.zinely.ui.theme.rememberReduceMotion
 import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
@@ -41,6 +59,7 @@ import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -54,6 +73,7 @@ public const val EditorPaperSurfaceTestTag: String = "editor-paper"
 
 /** Test tag on the top "Preview" entry point (shown only when the host provides an `onPreview`). */
 public const val EditorPreviewActionTestTag: String = "editor-preview-action"
+
 
 /**
  * The S4 editor host (ADR-029 §5, §6) — the screen that assembles every interaction layer over one
@@ -122,6 +142,9 @@ public fun EditorScreen(
     imageBytes: AssetBytesSource = EmptyAssetBytes,
     moveResizeHintSeen: Boolean? = false,
     onMoveResizeHintSeen: () -> Unit = {},
+    reframeCoachSeen: Boolean? = false,
+    onReframeCoachSeen: () -> Unit = {},
+    onReframeAnnounce: (String) -> Unit = {},
     savedSignals: Flow<Unit> = emptyFlow(),
     saveError: SaveErrorKind? = null,
     onDismissSaveError: () -> Unit = {},
@@ -167,6 +190,136 @@ public fun EditorScreen(
     var live by remember { mutableStateOf<LiveTransform?>(null) }
     var resizeOverride by remember { mutableStateOf<Map<String, Transform>?>(null) }
 
+    // Feature-ephemeral Reframe session state (ADR-053 §5.1): the fit/zoom/pan draft + the decoded photo
+    // aspect, held here for the life of one Interaction.Reframing and baked to the document only on Done
+    // (Intent.CommitReframe) — the reducer never sees the live pan/zoom, exactly like the transform `live`.
+    val reframing = uiState.interaction as? Interaction.Reframing
+    var reframeDraft by remember { mutableStateOf<FramingDraft?>(null) }
+    var reframePratio by remember { mutableStateOf<Double?>(null) }
+    var reframeAdjusted by remember { mutableStateOf(false) }
+    // The Reframe screen-reader announcements (bench `#rfLive` / `rfSay`): every discrete adjustment, fit
+    // change, and session end speaks (WCAG 4.1.3). Routed through [onReframeAnnounce] to the host's
+    // `announceForAccessibility` drain — the SAME channel the reducer's selection/undo announcements use.
+    // The platform re-announces even identical consecutive text (so a repeated ← nudge is never silent,
+    // Review finding #1) and leaves no lingering live-region node to become a stale focus stop (#2).
+    val latestAnnounce by rememberUpdatedState(onReframeAnnounce)
+    val sayReframe = { msg: String -> latestAnnounce(msg) }
+    // Hardware-keyboard receiver for the Reframe session (bench: arrows nudge · +/− zoom · Enter saves ·
+    // Esc cancels). Focus is requested when a session opens so keystrokes route here without a prior tap.
+    val reframeKeyFocus = remember { FocusRequester() }
+    val reduceMotion = rememberReduceMotion()
+    val bratioOf = { el: ImageElement -> el.transform.widthPt / el.transform.heightPt }
+    val adjustDraft = { d: FramingDraft? -> reframeDraft = d; reframeAdjusted = true }
+
+    // Open/refresh the draft when a session begins (keyed on token): seed from the current framing so
+    // reframing continues from the present look, then re-seed once the true photo aspect decodes — unless
+    // the user already adjusted the draft. Clears when the session ends.
+    LaunchedEffect(reframing?.token) {
+        val rf = reframing
+        reframeAdjusted = false
+        reframePratio = null
+        reframeDraft = rf?.let { Framing.seedDraft(it.before, bratioOf(it.before), bratioOf(it.before)) }
+        if (rf != null) {
+            // Announce entry + hand the keyboard to the reframe receiver. The coach-mark has now done its
+            // teaching job (bench `taughtReframe = true`), so persist it unless already positively seen.
+            sayReframe(
+                "Reframing photo. Drag to reposition, pinch to zoom, or use the on-screen " +
+                    "move and zoom controls. Done saves, Cancel discards.",
+            )
+            if (reframeCoachSeen != true) onReframeCoachSeen()
+            runCatching { reframeKeyFocus.requestFocus() }
+        }
+    }
+    LaunchedEffect(reframing?.token, reframePratio) {
+        val rf = reframing
+        val pr = reframePratio
+        if (rf != null && pr != null && !reframeAdjusted) reframeDraft = Framing.seedDraft(rf.before, pr, bratioOf(rf.before))
+    }
+
+    // Bake the current draft to the document (Done, page-switch, or backgrounding) via the token-gated
+    // Intent.CommitReframe — reading the LATEST draft/aspect (they change every gesture frame). A stale
+    // token (after cancel/new session) is rejected by the reducer, so an over-fire is a safe no-op.
+    val latestReframe by rememberUpdatedState(reframing)
+    val latestDraft by rememberUpdatedState(reframeDraft)
+    val latestPratio by rememberUpdatedState(reframePratio)
+    val commitReframe = {
+        val rf = latestReframe
+        val d = latestDraft
+        if (rf != null && d != null) {
+            val br = bratioOf(rf.before)
+            val after = Framing.toImage(rf.before, d, latestPratio ?: br, br)
+            // Speak the outcome (bench: "Framing saved." vs "Framing unchanged.") — the same crop/fit
+            // comparison the reducer uses to decide whether a command is recorded.
+            sayReframe(
+                if (after.crop != rf.before.crop || after.fit != rf.before.fit) "Framing saved." else "Framing unchanged.",
+            )
+            dispatch(Intent.CommitReframe(rf.id, after, rf.token))
+        }
+    }
+
+    // The Reframe adjustment verbs, shared by the on-screen controls AND the hardware keyboard so the two
+    // paths can never diverge (they mutate the same ephemeral draft and speak the same live-region line).
+    val reframeNudge = { dx: Int, dy: Int ->
+        val rf = reframing
+        val d = reframeDraft
+        if (rf != null && d != null) {
+            val br = bratioOf(rf.before)
+            adjustDraft(Framing.nudged(d, dx, dy, reframePratio ?: br, br))
+            sayReframe(
+                when {
+                    dx < 0 -> "Moved left"; dx > 0 -> "Moved right"; dy < 0 -> "Moved up"; else -> "Moved down"
+                },
+            )
+        }
+        Unit
+    }
+    val reframeZoom = { factor: Double ->
+        val rf = reframing
+        val d = reframeDraft
+        if (rf != null && d != null) {
+            val br = bratioOf(rf.before)
+            val nd = Framing.clampPan(Framing.zoomed(d, factor), reframePratio ?: br, br)
+            adjustDraft(nd)
+            sayReframe("Zoom ${(nd.zoom * 100).roundToInt()} percent")
+        }
+        Unit
+    }
+    val reframeSetFit = { f: FrameFit ->
+        val d = reframeDraft
+        if (d != null) {
+            adjustDraft(applyFit(d, f))
+            sayReframe(
+                if (f == FrameFit.FILL) {
+                    "Filling the frame. Edges may be cropped."
+                } else {
+                    "Showing the whole photo. Margins may appear on paper."
+                },
+            )
+        }
+        Unit
+    }
+    val reframeReset = {
+        adjustDraft(Framing.DEFAULT_FILL)
+        sayReframe("Framing reset. Cancel to undo.")
+    }
+    val reframeCancel = {
+        val rf = reframing
+        if (rf != null) {
+            sayReframe("Reframing cancelled.")
+            dispatch(Intent.CancelReframe(rf.token))
+        }
+        Unit
+    }
+
+    // Durability force-commit (ADR-009, mirroring EditTextSession): backgrounding the editor flushes the
+    // open framing so the autosave the commit emits runs before the process can be killed.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, reframing?.token) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_PAUSE) commitReframe() }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     // One-time move/resize hint, now persisted **across sessions** (ADR-032): [moveResizeHintSeen] is the
     // load-aware across-install gate (null=loading / false=unseen / true=seen) hoisted from the app's
     // preferences store, [moveResizeHintDismissed] is the within-session latch. The hint shows only when
@@ -209,7 +362,29 @@ public fun EditorScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .testTag(EditorCanvasTestTag),
+                .testTag(EditorCanvasTestTag)
+                // The Reframe hardware-keyboard grammar (bench: reframe owns the keyboard). Arrows nudge
+                // (Shift = a coarser step), +/− zoom, Enter saves, Esc cancels — every branch routes through
+                // the SAME shared verbs the on-screen controls use, so keyboard and touch never diverge.
+                .focusRequester(reframeKeyFocus)
+                // Focusable ONLY during a Reframe session, so the canvas is a keyboard target then (and never
+                // a stray TalkBack stop over the element nodes otherwise).
+                .focusable(enabled = reframing != null)
+                .onPreviewKeyEvent { ev ->
+                    if (reframing == null || ev.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    val step = if (ev.isShiftPressed) 3 else 1
+                    when (ev.key) {
+                        Key.Escape -> { reframeCancel(); true }
+                        Key.Enter, Key.NumPadEnter -> { commitReframe(); true }
+                        Key.DirectionLeft -> { reframeNudge(-step, 0); true }
+                        Key.DirectionRight -> { reframeNudge(step, 0); true }
+                        Key.DirectionUp -> { reframeNudge(0, -step); true }
+                        Key.DirectionDown -> { reframeNudge(0, step); true }
+                        Key.Plus, Key.Equals -> { reframeZoom(Framing.ZOOM_STEP); true }
+                        Key.Minus -> { reframeZoom(1.0 / Framing.ZOOM_STEP); true }
+                        else -> false
+                    }
+                },
         ) {
             // Fit the whole page into the measured canvas (contain), top-left anchored (pan stays zero for
             // the MVP host; true centring/zoom is a follow-up). The scale is the single px-per-point source.
@@ -264,7 +439,10 @@ public fun EditorScreen(
                 // RF1): otherwise a stray long-press/double-tap replaces `EditingText`, and the session's
                 // onDispose commits a now-stale token → the draft is silently dropped. The handles also yield
                 // to an in-flight page drag (`live != null`) so the two never run concurrent sessions (RF2).
-                if (!editing) {
+                // The page gesture surface + handles are inert while a text session OR a Reframe session is
+                // open: during reframe the ReframeOverlay owns pointer input (drag pans / pinch zooms the
+                // photo), and a stray page long-press/double-tap must not replace the session.
+                if (!editing && reframing == null) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -275,7 +453,9 @@ public fun EditorScreen(
                                 currentState = currentState,
                                 dispatch = dispatch,
                                 onPreview = { live = it },
-                                onDoubleTap = { pagePoint -> dispatch(Intent.BeginEditTextAt(pagePoint)) },
+                                // The single double-tap seam (ADR-053 §4): the reducer retargets by the
+                                // topmost element type — text → inline edit, image → Reframe.
+                                onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
                             ),
                     )
                     if (live == null) {
@@ -288,11 +468,59 @@ public fun EditorScreen(
                         )
                     }
                 }
-                ElementSemanticsLayer(
-                    uiState = uiState,
-                    dispatch = dispatch,
-                    modifier = Modifier.fillMaxSize(),
-                )
+
+                // The Reframe preview overlay (ADR-053): the movable photo layer + scrim + rule-of-thirds,
+                // driven by the ephemeral draft. Only while a session is open and its photo still exists (a
+                // delete races it closed; the token guard then no-ops any trailing commit).
+                val reframeEl = reframing?.let { rf ->
+                    uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == rf.id } as? ImageElement
+                }
+                val currentDraft = reframeDraft
+                if (reframeEl != null && currentDraft != null) {
+                    ReframeOverlay(
+                        element = reframeEl,
+                        draft = currentDraft,
+                        screenPxPerPt = uiState.view.screenPxPerPt,
+                        pageOffset = uiState.view.pageOffset,
+                        imageBytes = imageBytes,
+                        onAspect = { reframePratio = it },
+                        onDraft = { adjustDraft(it) },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                // The persistent "Reframe" affordance chip (RF2): a single-selected photo, not editing/
+                // reframing, always advertises that it can be reframed. Positioned just below the photo box.
+                val selectedImage = uiState.selection.singleOrNull()?.let { id ->
+                    uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id } as? ImageElement
+                }
+                if (reframing == null && !editing && selectedImage != null) {
+                    val spp = uiState.view.screenPxPerPt
+                    val off = uiState.view.pageOffset
+                    val chipX = (selectedImage.transform.xPt + selectedImage.transform.widthPt / 2.0 + off.x) * spp
+                    val chipY = (selectedImage.transform.yPt + selectedImage.transform.heightPt + off.y) * spp
+                    ReframeAffordanceChip(
+                        onClick = { dispatch(Intent.BeginReframe(selectedImage.id)) },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .offset { IntOffset((chipX - 44.dp.toPx()).roundToInt(), (chipY - 36.dp.toPx()).roundToInt()) },
+                        // First-run coach-mark: pulse only when the flag is loaded-unseen AND motion is
+                        // allowed (WCAG 2.3.3). `null` (still loading) or seen ⇒ no pulse, never a flash.
+                        teach = reframeCoachSeen == false && !reduceMotion,
+                    )
+                }
+                // The accessible element mirror is suppressed during a Reframe session: its custom actions
+                // (move/scale/rotate/delete) act on the underlying photo's geometry, which the reframe
+                // commit rebuilds from `before` — so a mid-reframe element action would be silently
+                // reverted. The Reframe controls carry the a11y path (nudge/zoom/fit/reset) while it's open,
+                // matching how the page gesture surface is already inert here.
+                if (reframing == null) {
+                    ElementSemanticsLayer(
+                        uiState = uiState,
+                        dispatch = dispatch,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
 
                 // First-run invitation: when the current page is blank and no text session is open, a
                 // blank sheet reads as a void — so we overlay the cozy empty state (DESIGN-LANGUAGE §8/§9).
@@ -402,15 +630,32 @@ public fun EditorScreen(
         // FAB. Every primary action lives here in the thumb zone — add a photo (the old FAB's
         // Intent.RequestAddImage), add words (the empty-state add-text behavior), and undo/redo bound to
         // the real canUndo/canRedo so a disabled supply is visibly inert, not a dead tap.
-        EditorSupplyTray(
-            canUndo = uiState.canUndo,
-            canRedo = uiState.canRedo,
-            onAddPhoto = { dispatch(Intent.RequestAddImage) },
-            onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
-            onUndo = { dispatch(Intent.Undo) },
-            onRedo = { dispatch(Intent.Redo) },
-            modifier = Modifier.fillMaxWidth(),
-        )
+        // Reframe swaps its chrome in over the supply tray + context bar (bench `toolbar[data-mode="reframe"]`).
+        if (reframing != null) {
+            ReframeControls(
+                fit = reframeDraft?.fit ?: FrameFit.FILL,
+                zoomPercent = ((reframeDraft?.zoom ?: 1.0) * 100).roundToInt(),
+                // Same shared verbs the keyboard uses (they announce + mutate the one draft) — parity by
+                // construction, not by two copies of the math.
+                onFit = reframeSetFit,
+                onNudge = reframeNudge,
+                onZoom = reframeZoom,
+                onReset = reframeReset,
+                onCancel = reframeCancel,
+                onDone = { commitReframe() },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            EditorSupplyTray(
+                canUndo = uiState.canUndo,
+                canRedo = uiState.canRedo,
+                onAddPhoto = { dispatch(Intent.RequestAddImage) },
+                onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
+                onUndo = { dispatch(Intent.Undo) },
+                onRedo = { dispatch(Intent.Redo) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
         // The page navigator: makes all pages of the SINGLE_SHEET_8 document reachable (before this
         // only page 0 was). Each card mini-renders its page through the SAME render path the canvas
@@ -422,17 +667,34 @@ public fun EditorScreen(
             currentPageIndex = uiState.currentPageIndex,
             pageSizePt = pageSizePt,
             defaults = uiState.document.defaults,
-            onSelectPage = { dispatch(Intent.GoToPage(it)) },
+            // Leaving the panel commits the open framing first (bench: never strand a session on an
+            // off-screen photo), then navigates.
+            onSelectPage = { idx ->
+                if (reframing != null) commitReframe()
+                dispatch(Intent.GoToPage(idx))
+            },
             modifier = Modifier.fillMaxWidth(),
             imageBytes = imageBytes,
         )
 
-        EditorContextBar(
-            selection = uiState.selection,
-            dispatch = dispatch,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        // The transform context bar is hidden during a Reframe session — the Reframe controls take over.
+        if (reframing == null) {
+            EditorContextBar(
+                selection = uiState.selection,
+                dispatch = dispatch,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
+}
+
+/**
+ * Apply a fit choice to the working [FramingDraft] (bench `setFit`): choosing "Whole photo" re-centres to
+ * a clean baseline (zoom 1, no pan); choosing "Fill" keeps the current pan/zoom.
+ */
+private fun applyFit(draft: FramingDraft, fit: FrameFit): FramingDraft = when (fit) {
+    FrameFit.WHOLE -> draft.copy(fit = FrameFit.WHOLE, zoom = Framing.MIN_ZOOM, panX = 0.0, panY = 0.0)
+    FrameFit.FILL -> draft.copy(fit = FrameFit.FILL)
 }
 
 /**

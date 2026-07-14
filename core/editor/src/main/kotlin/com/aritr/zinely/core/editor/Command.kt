@@ -1,6 +1,7 @@
 package com.aritr.zinely.core.editor
 
 import com.aritr.zinely.core.model.Element
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
@@ -75,6 +76,26 @@ public data class EditTextCommand(
     override fun applyTo(doc: ZineDocument): ZineDocument = replace(doc, after)
     override fun invertOn(doc: ZineDocument): ZineDocument = replace(doc, before)
     private fun replace(doc: ZineDocument, value: TextElement): ZineDocument =
+        doc.mapPage(pageIndex) { page ->
+            page.copy(elements = page.elements.map { if (it.id == id) value else it })
+        }
+}
+
+/**
+ * Reframe / replace / reset a single image element (ADR-053): field memento = the before/after
+ * [ImageElement]. One session or one-shot = one command, so undo reverses a whole reframe (not each
+ * nudge). Replace differs in `assetId`; reframe/reset differ in `crop`/`fit`; geometry is preserved by
+ * the reducer, never by this command.
+ */
+public data class EditImageCommand(
+    val pageIndex: Int,
+    val id: String,
+    val before: ImageElement,
+    val after: ImageElement,
+) : Command {
+    override fun applyTo(doc: ZineDocument): ZineDocument = replace(doc, after)
+    override fun invertOn(doc: ZineDocument): ZineDocument = replace(doc, before)
+    private fun replace(doc: ZineDocument, value: ImageElement): ZineDocument =
         doc.mapPage(pageIndex) { page ->
             page.copy(elements = page.elements.map { if (it.id == id) value else it })
         }

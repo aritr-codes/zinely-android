@@ -60,6 +60,21 @@ class DataStoreEditorOnboardingStoreTest {
     }
 
     @Test
+    fun the_reframe_coach_flag_is_an_independent_round_trip() = runTest {
+        // The Reframe coach-mark flag (ADR-053 RF2) shares the store but its own key: untouched ⇒ teach
+        // (false); marking one flag must not flip the other (distinct keys).
+        val fake = FakeDataStore()
+        val store = DataStoreEditorOnboardingStore(fake)
+
+        assertEquals(false, store.reframeCoachSeen.first())
+
+        store.markReframeCoachSeen()
+        assertEquals(true, store.reframeCoachSeen.first())
+        // The move/resize flag is untouched by the coach write — separate keys.
+        assertEquals(false, store.moveResizeHintSeen.first())
+    }
+
+    @Test
     fun a_failed_write_is_swallowed_rather_than_crashing() = runTest {
         // The VM launches the write fire-and-forget; an uncaught IOException would reach the default
         // handler and crash. A best-effort hint flag must degrade quietly (Codex RF2).
