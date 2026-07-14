@@ -14,7 +14,7 @@ plugins {
 // version bump is one line and the APK renames itself. "0.6.0-alpha.1" = the first installable
 // alpha (Step 4, 2026-07-07): the physical print/fold verification cleared the ADR-047 gate and
 // the preview-text report was triaged to the ADR-028 Latin-first charset limitation.
-val zinelyVersionName = "0.6.0-alpha.1"
+val zinelyVersionName = "0.7.0"
 
 // Artifact naming: every APK/bundle is "zinely-<versionName>-<variant>.apk" (e.g.
 // zinely-1.0-release.apk) so testers always see the app name + version in the file, never

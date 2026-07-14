@@ -14,9 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.7.0] — 2026-07-14 — Image Framing
+
 ### Added — Image Framing (Reframe) · [ADR-053](docs/DECISIONS.md#adr-053)
 
-Complete on branch `feat/if1-image-framing-core` (IF1–IF5, final commit `685f753`); ready to merge into `main`, not yet in a packaged build.
+Merged to `main` as IF1–IF5 (final implementation commit `685f753`); device pixel-parity (P1–P5, M1) and accessibility semantics both re-verified on-device — PASS. Not yet in a packaged build.
 
 - **Reframe a photo in place.** Double-tap a photo (or its "Reframe photo" action) to open a dedicated Reframe surface: pan and pinch-zoom the picture inside its fixed frame, over a live scrim + rule-of-thirds guide.
 - **Fill / Whole photo fit control.** Fill (crop-to-cover) is the new default for newly placed photos; "Whole photo" fits the whole image with margins. Existing documents are byte-identical — new placements only.
