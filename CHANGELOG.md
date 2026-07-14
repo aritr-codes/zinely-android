@@ -14,7 +14,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Nothing yet — next up: post-alpha S7.x (save-a-copy export, text styling)._
+### Added — Image Framing (Reframe) · [ADR-053](docs/DECISIONS.md#adr-053)
+
+Complete on branch `feat/if1-image-framing-core` (IF1–IF5, final commit `685f753`); ready to merge into `main`, not yet in a packaged build.
+
+- **Reframe a photo in place.** Double-tap a photo (or its "Reframe photo" action) to open a dedicated Reframe surface: pan and pinch-zoom the picture inside its fixed frame, over a live scrim + rule-of-thirds guide.
+- **Fill / Whole photo fit control.** Fill (crop-to-cover) is the new default for newly placed photos; "Whole photo" fits the whole image with margins. Existing documents are byte-identical — new placements only.
+- **One reframe = one undo.** A whole Reframe session bakes to a single undoable edit; leaving the panel commits, Cancel discards, switching pages commits then navigates. **Reset framing** returns a photo to its placement default.
+
+**Accessibility.** Every Reframe control is labeled and reachable in a logical traversal order; the fit toggle exposes selected state; zoom exposes a spoken readout; a full hardware-keyboard path (arrows nudge, Shift = coarser, +/− zoom, Enter save, Esc cancel) drives the same actions as touch; announcements force-speak on repeat and the first-run coach-mark respects reduced-motion.
+
+**Implementation.** Framing persists via the existing `ImageElement.crop`/`fit` — no `:core:model` or `:core:render` change; the live draft is preview-only and never enters the reducer mid-gesture (`preview == commit` by shared pure math). The visual surface implements the DESIGN-FROZEN [`bench.html`](docs/design/v1/bench.html), re-verified on-device (pixel-parity P1–P5/M1 and accessibility semantics both PASS).
+
+**Compatibility.** Offline/privacy invariants intact — no network, account, or new dependency; no document-format migration (existing zines open unchanged; only new photos default to Fill).
+
+_Next up: post-alpha S7.x (save-a-copy export, text styling)._
 
 ## [0.6.0-alpha.1] — 2026-07-07 — First installable alpha
 
