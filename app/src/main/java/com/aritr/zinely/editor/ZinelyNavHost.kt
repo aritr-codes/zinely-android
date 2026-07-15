@@ -158,10 +158,11 @@ private fun ProofDestination(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // One emission per successful Save-PDF render — drives the Proof's "Fold now" hand-off snackbar (the
-    // ADR-041 post-export → fold payoff, now intra-screen). extraBufferCapacity so the collector's tryEmit
-    // never suspends. A transient nudge, so it is not persisted across config change.
-    val saved = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
+    // One emission per successful Save-PDF render, carrying the actual saved display name — drives the
+    // Proof's "Fold now" hand-off snackbar, whose copy names that file (the ADR-041 post-export → fold
+    // payoff, now intra-screen). extraBufferCapacity so the collector's tryEmit never suspends. A
+    // transient nudge, so it is not persisted across config change.
+    val saved = remember { MutableSharedFlow<String>(extraBufferCapacity = 1) }
 
     // Route each finished export purely by its ExportOutcome subtype (ADR-054) — no remembered target.
     // Collect only while STARTED so an export finishing while backgrounded doesn't launch at a stopped
@@ -179,10 +180,10 @@ private fun ProofDestination(
                     } catch (e: ActivityNotFoundException) {
                         Toast.makeText(context, "No app on your phone can open that yet.", Toast.LENGTH_SHORT).show()
                     }
-                    // Save PDF → a durable copy is already on the device (ADR-054): raise the "Fold now"
-                    // hand-off (ADR-041). No Intent, so no ActivityNotFound path here. The final "Saved to
-                    // Downloads" confirmation copy is a later batch.
-                    is ExportSaved -> saved.tryEmit(Unit)
+                    // Save PDF → a durable copy is already in Downloads (ADR-054): raise the "Fold now"
+                    // hand-off (ADR-041), naming the file actually written. No Intent, so no
+                    // ActivityNotFound path here.
+                    is ExportSaved -> saved.tryEmit(outcome.displayName)
                 }
             }
         }
