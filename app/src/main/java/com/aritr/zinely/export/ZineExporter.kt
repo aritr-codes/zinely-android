@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
 import javax.inject.Inject
 
 /** The two home-print export targets (ADR-039). [ext]/[mime] drive the cache filename + the share intent. */
@@ -54,6 +55,39 @@ internal class ZineExporter @Inject constructor(
         imageBytes: AssetBytesSource,
         format: ExportFormat,
     ): Uri = withContext(io) {
+        val dir = File(context.cacheDir, EXPORTS_DIR).apply { mkdirs() }
+        val file = File(dir, "zine-${System.currentTimeMillis()}.${format.ext}")
+        // export() OWNS this transport stream and closes it (the stream-ownership invariant, ADR-054
+        // Decision 7); writeSheet only writes into it. On any render/IO failure, delete the just-created
+        // (possibly 0-byte) cache file before rethrowing, so a failed export leaves nothing behind —
+        // identical to the pre-writeSheet-extraction behaviour, where the file was opened only after a
+        // successful compose.
+        try {
+            FileOutputStream(file).use { out -> writeSheet(out, document, pageSizePt, imageBytes, format) }
+        } catch (t: Throwable) {
+            file.delete()
+            throw t
+        }
+        // Prune AFTER writing, so exactly the most-recent KEEP_RECENT files survive (the just-written one
+        // is newest, so it is never the file pruned) — bounds cache growth without racing the live URI.
+        pruneOldExports(dir)
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
+
+    /**
+     * The shared compose→stream path (ADR-054 Decision 1): imposes [document], renders each booklet page
+     * to a tape, and composites all panels onto one sheet written into [out]. Stream-ownership invariant
+     * — this NEVER closes [out]; the caller owns and closes the stream it supplies (the cache
+     * `FileOutputStream` here; the Downloads stream in a later batch). Keeping the render ceremony in one
+     * place means no destination duplicates it.
+     */
+    private fun writeSheet(
+        out: OutputStream,
+        document: ZineDocument,
+        pageSizePt: PtSize,
+        imageBytes: AssetBytesSource,
+        format: ExportFormat,
+    ) {
         val replayer = CanvasReplayer(
             fontResolver = BundledFontResolver(context.assets),
             imageBlitter = ImageBlitter(imageBytes),
@@ -70,18 +104,10 @@ internal class ZineExporter @Inject constructor(
             SheetPanel(contentToSheet = panel.contentToSheet, clip = panel.clipLocalBounds, tape = tape)
         }
 
-        val dir = File(context.cacheDir, EXPORTS_DIR).apply { mkdirs() }
-        val file = File(dir, "zine-${System.currentTimeMillis()}.${format.ext}")
-        FileOutputStream(file).use { out ->
-            when (format) {
-                ExportFormat.PDF -> composer.writePdf(layout.sheet, panels, overlay, out)
-                ExportFormat.PNG -> composer.writePng(layout.sheet, panels, overlay, out)
-            }
+        when (format) {
+            ExportFormat.PDF -> composer.writePdf(layout.sheet, panels, overlay, out)
+            ExportFormat.PNG -> composer.writePng(layout.sheet, panels, overlay, out)
         }
-        // Prune AFTER writing, so exactly the most-recent KEEP_RECENT files survive (the just-written one
-        // is newest, so it is never the file pruned) — bounds cache growth without racing the live URI.
-        pruneOldExports(dir)
-        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     }
 
     /**
