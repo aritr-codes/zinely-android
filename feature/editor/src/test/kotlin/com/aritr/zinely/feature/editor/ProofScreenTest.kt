@@ -194,11 +194,11 @@ class ProofScreenTest {
     }
 
     @Test
-    fun `save pdf requests an OPEN-target export`() {
+    fun `save pdf requests a SAVE-target export`() {
         lastExport = null
         setProofOnPrint()
         composeRule.onNodeWithTag(ProofSavePdfTestTag).performScrollTo().performClick()
-        assertEquals(ProofExportTarget.OPEN, lastExport)
+        assertEquals(ProofExportTarget.SAVE, lastExport)
     }
 
     @Test
@@ -351,11 +351,10 @@ class ProofScreenTest {
     }
 
     @Test
-    fun `a successful save-pdf raises the fold-now snackbar whose action jumps to the fold`() {
+    fun `a successful save-pdf raises the fold-now snackbar naming the saved file, whose action jumps to the fold`() {
         // Instant snackbar: without the enter slide, the action sits at its final hit-testable position.
         forceReduceMotion()
-        val saved = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-        // A short name keeps the (width-unconstrained) snackbar's action on-screen in the test surface.
+        val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
         composeRule.setContent {
             ZinelyTheme {
                 ProofScreen(zineName = "Zine", onBack = {}, savedSignals = saved)
@@ -363,10 +362,14 @@ class ProofScreenTest {
         }
         // The save happens on the Print act; the hand-off nudges forward to the Fold.
         composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // Sheet → Print
-        saved.tryEmit(Unit) // the host's signal after a successful Save-PDF render
+        // The host's signal after a successful Save-PDF render carries the ACTUAL saved display name
+        // (ExportSaved.displayName, ext included) — the snackbar must name that file, not zineName.
+        saved.tryEmit("zine.pdf")
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(ProofFoldSnackTestTag).assertIsDisplayed()
+        // Frozen copy (proof.html savePdf → snack): names the file + the Downloads destination.
+        composeRule.onNodeWithText("Saved “zine.pdf” to Downloads").assertIsDisplayed()
         // Click the action node itself (the sole clickable under the snackbar) — a positional tap on the
         // label text alone doesn't reliably propagate to the parent clickable under Robolectric.
         composeRule.onNode(hasClickAction() and hasAnyAncestor(hasTestTag(ProofFoldSnackTestTag)))

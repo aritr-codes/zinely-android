@@ -60,11 +60,12 @@ public const val ProofPaperSheetTestTag: String = "proof-paper-sheet"
 public const val ProofShareSheetTestTag: String = "proof-share-sheet"
 
 /**
- * Which OS edge the host hands a finished Proof export to. The host maps [OPEN] → `ACTION_VIEW` (open the
- * PDF in the user's viewer) and [SEND] → `ACTION_SEND` (the OS share chooser). Kept feature-local so the
- * screen never imports the app's export types (ADR-039 delivery-agnostic seam).
+ * Which delivery the host gives a finished Proof export. The host maps [SEND] → the OS share chooser
+ * (`ACTION_SEND`) and [SAVE] → a durable copy in shared Downloads (ADR-054). Kept feature-local so the
+ * screen never imports the app's export types (ADR-039 delivery-agnostic seam); the host maps this onto its
+ * app-level `ExportDestination`.
  */
-public enum class ProofExportTarget { OPEN, SEND }
+public enum class ProofExportTarget { SEND, SAVE }
 
 /**
  * **Act 2 — Print** (M5 B3, `proof.html` `#act1`, DESIGN-FROZEN, freeze-amended per [ADR-052]). The
@@ -74,7 +75,7 @@ public enum class ProofExportTarget { OPEN, SEND }
  * Per [ADR-052] the frozen third export action **Print** is dropped: the app has no OS `PrintManager`
  * path, and the system print dialog has no actual-size control (it would silently reintroduce the
  * fit-to-page shrink the recipe exists to prevent). The export row ships the two honest backends —
- * **Save PDF** ([ProofExportTarget.OPEN]) and **Share** (the paper/share sheets → [ProofExportTarget.SEND]).
+ * **Save PDF** ([ProofExportTarget.SAVE]) and **Share** (the paper/share sheets → [ProofExportTarget.SEND]).
  *
  * Stateless beyond the two sheet toggles: [paper] + [onPaperSelected] are hoisted (the host threads the
  * chosen size into the export so `export == what you see`); [onExportPdf] fires the shipped
@@ -175,7 +176,7 @@ internal fun ProofPrintAct(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 ZToolButton(
-                    onClick = { haptics.perform(ZinelyHaptic.Tick); onExportPdf(ProofExportTarget.OPEN) },
+                    onClick = { haptics.perform(ZinelyHaptic.Tick); onExportPdf(ProofExportTarget.SAVE) },
                     metrics = ZToolButtonMetrics.ProofExport,
                     text = "Save PDF",
                     enabled = !exportBusy,

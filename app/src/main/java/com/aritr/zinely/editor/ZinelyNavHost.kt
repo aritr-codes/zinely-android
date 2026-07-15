@@ -21,8 +21,6 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import android.content.ActivityNotFoundException
-import android.content.ClipData
-import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -34,7 +32,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.aritr.zinely.export.ExportDestination
 import com.aritr.zinely.export.ExportFormat
+import com.aritr.zinely.export.ExportReady
+import com.aritr.zinely.export.ExportSaved
 import com.aritr.zinely.export.ExportUiState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import com.aritr.zinely.export.ExportViewModel
@@ -137,14 +138,15 @@ private fun HomeDestination(onOpenZine: (String) -> Unit) {
  * The single **Proof** host (M5, [ADR-051](../../../../../../docs/DECISIONS.md#adr-051)) — the collapse
  * of the former Preview + Export + Completion triad into one 3-act surface ([ProofScreen]). It boots the
  * *shared* editor VM (the ADR-026 single-writer seam, same back-stack-entry resolution the triad used)
- * and, from B3, hosts its own read-only [ExportViewModel] over that shared document so `export == preview`
- * ([ADR-039]) without touching the single-writer autosave path. This composable owns the Android edges
- * the VM must not: it maps each finished [ExportFormat.PDF] to the right intent — a viewer ([ProofExportTarget.OPEN]
- * → `ACTION_VIEW`) or the OS share chooser ([ProofExportTarget.SEND] → `ACTION_SEND`).
+ * and hosts its own read-only [ExportViewModel] over that shared document so `export == preview`
+ * ([ADR-039]) without touching the single-writer autosave path. This composable owns the Android edges the
+ * VM must not: it routes each finished export purely by the emitted [com.aritr.zinely.export.ExportOutcome]
+ * subtype (ADR-054) — [ExportReady] → the OS share chooser (`ACTION_SEND`), [ExportSaved] → the post-save
+ * Fold hand-off. It never remembers which button started the export; the subtype decides.
  *
- * Per [ADR-052] there is **no OS print path** — the honest home-print handoff is Save PDF + Share. The
- * chosen paper size is Proof-local UI state threaded into the export as a document copy (no store write),
- * so a paper change flows to the file without mutating the single-writer document.
+ * Per [ADR-052] there is **no OS print path** — the honest home-print handoff is Save PDF (a durable copy
+ * to Downloads, ADR-054) + Share. The chosen paper size is Proof-local UI state threaded into the export as
+ * a document copy (no store write), so a paper change flows to the file without mutating the document.
  */
 @Composable
 private fun ProofDestination(
@@ -156,39 +158,32 @@ private fun ProofDestination(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // The edge the in-flight export is destined for (single-flight → at most one). rememberSaveable so a
-    // config change mid-render can't reset it and misroute the buffered file (the old CompletionDestination
-    // learned this — Codex RF1).
-    val pending = rememberSaveable { mutableStateOf(ProofExportTarget.OPEN) }
+    // One emission per successful Save-PDF render, carrying the actual saved display name — drives the
+    // Proof's "Fold now" hand-off snackbar, whose copy names that file (the ADR-041 post-export → fold
+    // payoff, now intra-screen). extraBufferCapacity so the collector's tryEmit never suspends. A
+    // transient nudge, so it is not persisted across config change.
+    val saved = remember { MutableSharedFlow<String>(extraBufferCapacity = 1) }
 
-    // One emission per successful Save-PDF render — drives the Proof's "Fold now" hand-off snackbar (the
-    // ADR-041 post-export → fold payoff, now intra-screen). extraBufferCapacity so the collector's tryEmit
-    // never suspends. A transient nudge, so it is not persisted across config change.
-    val saved = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
-
-    // Hand each finished export to the right OS edge (ADR-039 §4): a scoped, read-granted content:// URI.
+    // Route each finished export purely by its ExportOutcome subtype (ADR-054) — no remembered target.
     // Collect only while STARTED so an export finishing while backgrounded doesn't launch at a stopped
     // lifecycle — the buffered Channel holds the event until resume.
     LaunchedEffect(exportViewModel, lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            exportViewModel.ready.collect { ready ->
-                try {
-                    when (pending.value) {
-                        // Save PDF → open the finished PDF in the user's viewer (from which they print/save).
-                        // The render succeeded (the file is on-device), so raise the "Fold now" hand-off
-                        // first — even if no viewer is installed, the save is real and folding is next.
-                        ProofExportTarget.OPEN -> {
-                            saved.tryEmit(Unit)
-                            context.startActivity(openIntent(context.contentResolver, ready.uri, ready.mime))
-                        }
-                        // Share → the OS chooser.
-                        ProofExportTarget.SEND -> context.startActivity(
-                            Intent.createChooser(shareIntent(ready.uri, ready.mime), "Share your zine"),
+            exportViewModel.outcomes.collect { outcome ->
+                when (outcome) {
+                    // Share → the OS chooser (ACTION_SEND, ADR-039 §4). This is the only Intent path now,
+                    // so the no-app-installed failure is narrowed to it.
+                    is ExportReady -> try {
+                        context.startActivity(
+                            Intent.createChooser(shareIntent(outcome.uri, outcome.mime), "Share your zine"),
                         )
+                    } catch (e: ActivityNotFoundException) {
+                        Toast.makeText(context, "No app on your phone can open that yet.", Toast.LENGTH_SHORT).show()
                     }
-                } catch (e: ActivityNotFoundException) {
-                    // ACTION_VIEW is stricter than SEND; no viewer installed is the honest failure here.
-                    Toast.makeText(context, "No app on your phone can open that yet.", Toast.LENGTH_SHORT).show()
+                    // Save PDF → a durable copy is already in Downloads (ADR-054): raise the "Fold now"
+                    // hand-off (ADR-041), naming the file actually written. No Intent, so no
+                    // ActivityNotFound path here.
+                    is ExportSaved -> saved.tryEmit(outcome.displayName)
                 }
             }
         }
@@ -210,12 +205,12 @@ private fun ProofDestination(
                 paper = paper.value,
                 onPaperSelected = { paper.value = it },
                 onExportPdf = { target ->
-                    pending.value = target
                     exportViewModel.export(
                         uiState.document.copy(paperSize = paper.value),
                         state.pageSizePt,
                         state.imageBytes,
                         ExportFormat.PDF,
+                        target.toDestination(),
                     )
                 },
                 // Single-flight: disable the export row while a render is in flight.
@@ -226,7 +221,7 @@ private fun ProofDestination(
                 exportFailed = exportState is ExportUiState.Error,
                 onRetryExport = {
                     exportViewModel.dismissError()
-                    exportViewModel.export(
+                    exportViewModel.retry(
                         uiState.document.copy(paperSize = paper.value),
                         state.pageSizePt,
                         state.imageBytes,
@@ -273,15 +268,15 @@ private fun shareIntent(uri: Uri, mime: String): Intent =
     }
 
 /**
- * An open-in-viewer Intent for a finished export. `ClipData` alongside `setDataAndType` + the read grant
- * makes more viewers accept the scoped cache URI; the caller catches `ActivityNotFoundException`.
+ * Map the Proof export button (the feature-local [ProofExportTarget]) to the app-level [ExportDestination]:
+ * [ProofExportTarget.SEND] → [ExportDestination.TRANSPORT] (share the cache file), [ProofExportTarget.SAVE]
+ * → [ExportDestination.DOWNLOADS] (a durable copy). The feature enum never reaches the VM/exporter — the
+ * host does this one mapping (ADR-054 Decision 3).
  */
-private fun openIntent(resolver: ContentResolver, uri: Uri, mime: String): Intent =
-    Intent(Intent.ACTION_VIEW).apply {
-        setDataAndType(uri, mime)
-        clipData = ClipData.newUri(resolver, "zine", uri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
+private fun ProofExportTarget.toDestination(): ExportDestination = when (this) {
+    ProofExportTarget.SEND -> ExportDestination.TRANSPORT
+    ProofExportTarget.SAVE -> ExportDestination.DOWNLOADS
+}
 
 /**
  * Hosts one [EditorViewModel] and renders its [EditorBootState]. The VM owns the store/binder for the

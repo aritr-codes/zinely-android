@@ -25,45 +25,57 @@ internal sealed interface ExportUiState {
 }
 
 /**
- * A one-shot "the file is ready" event (ADR-039 §4, ADR-040): a scoped, read-granted `content://` [uri]
- * and its [mime]. Deliberately delivery-agnostic — *what* the host does with it (an `ACTION_SEND` share
- * or an `ACTION_VIEW` open) is UI consumption the VM has no business knowing; each host tracks its own
- * pending action and maps this event to the right Intent.
+ * The delivery-agnostic result of one export (ADR-054 Decision 2). The VM emits it and the host routes on
+ * the **subtype** — never on a remembered "which button started this" flag:
+ *  - [ExportReady] — a scoped, read-granted `content://` [uri] + [mime] for Intent delivery (Share via
+ *    `ACTION_SEND`). Semantics unchanged from ADR-039 §4 / ADR-040.
+ *  - [ExportSaved] — a durable copy already written to the device (in [location], e.g. "Downloads") under
+ *    [displayName]; there is no Intent and no URI, so the host only raises the post-save hand-off.
  */
-internal data class ExportReady(val uri: Uri, val mime: String)
+internal sealed interface ExportOutcome
+internal data class ExportReady(val uri: Uri, val mime: String) : ExportOutcome
+internal data class ExportSaved(val displayName: String, val location: String) : ExportOutcome
 
 /**
- * Drives one export (ADR-039 §5). Reads no document of its own — the host passes the *live shared editor*
- * document/pageSize/imageBytes (so `export == preview`) into [export]; this VM only renders + shares, so
- * it never touches the single-writer autosave factory (ADR-026) and is safe to scope to the export route.
+ * Drives one export (ADR-039 §5, ADR-054). Reads no document of its own — the host passes the *live shared
+ * editor* document/pageSize/imageBytes (so `export == preview`) plus the [ExportDestination] into [export];
+ * this VM only renders + delivers, so it never touches the single-writer autosave factory (ADR-026) and is
+ * safe to scope to the Proof route. Depends on the [SheetExporter] seam (not the concrete exporter) so it
+ * is unit-testable with a fake, per the repository-pattern convention.
  *
- * Single-flight: taps while a render is in flight are ignored. Success emits an [ExportReady] event the
- * host collects to launch a share/open Intent; any failure (IO, or an `OutOfMemoryError` on the ~33 MB
- * sheet) becomes a friendly [ExportUiState.Error].
+ * Single-flight: taps while a render is in flight are ignored. Success emits an [ExportOutcome] the host
+ * collects and routes by subtype (ExportReady → share Intent; ExportSaved → the post-save Fold hand-off);
+ * any failure (IO, or an `OutOfMemoryError` on the ~33 MB sheet) becomes a friendly [ExportUiState.Error].
  */
 @HiltViewModel
 internal class ExportViewModel @Inject constructor(
-    private val exporter: ZineExporter,
+    private val exporter: SheetExporter,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<ExportUiState>(ExportUiState.Idle)
     val state: StateFlow<ExportUiState> = _state.asStateFlow()
 
-    private val _ready = Channel<ExportReady>(Channel.BUFFERED)
-    val ready: Flow<ExportReady> = _ready.receiveAsFlow()
+    private val _outcomes = Channel<ExportOutcome>(Channel.BUFFERED)
+    val outcomes: Flow<ExportOutcome> = _outcomes.receiveAsFlow()
+
+    // The destination of the last export, so "Try again" reproduces the same attempt (a Save retries a
+    // Save; a Share retries a Share). This is retry *input*, NOT delivery routing — routing is decided
+    // solely by the emitted [ExportOutcome] subtype in the host (ADR-054 Decision 2/3).
+    private var lastDestination: ExportDestination? = null
 
     fun export(
         document: ZineDocument,
         pageSizePt: PtSize,
         imageBytes: AssetBytesSource,
         format: ExportFormat,
+        destination: ExportDestination,
     ) {
         if (_state.value is ExportUiState.Working) return // ignore taps while a render is in flight
+        lastDestination = destination
         viewModelScope.launch {
             _state.value = ExportUiState.Working(format)
             _state.value = try {
-                val uri = exporter.export(document, pageSizePt, imageBytes, format)
-                _ready.send(ExportReady(uri, format.mime))
+                _outcomes.send(exporter.export(document, pageSizePt, imageBytes, format, destination))
                 ExportUiState.Idle
             } catch (ce: CancellationException) {
                 throw ce
@@ -75,6 +87,17 @@ internal class ExportViewModel @Inject constructor(
                 ExportUiState.Error("Couldn’t make your file just now. Please try again.")
             }
         }
+    }
+
+    /** Re-run the last export after a failure — same destination, against the freshly-passed live document. */
+    fun retry(
+        document: ZineDocument,
+        pageSizePt: PtSize,
+        imageBytes: AssetBytesSource,
+        format: ExportFormat,
+    ) {
+        val destination = lastDestination ?: return
+        export(document, pageSizePt, imageBytes, format, destination)
     }
 
     /** Dismiss a transient export error (user acknowledged the banner). */

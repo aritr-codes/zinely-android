@@ -14,7 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added — Save a copy to your phone · [ADR-054](docs/DECISIONS.md#adr-054)
+
+Implemented across batches B1–B3 (branch `feat/m-save-b1-downloads-backend`); independently reviewed (GO WITH FIXES, reconciled). Not yet in a packaged build.
+
+- **Save PDF writes to Downloads.** "Save PDF" now saves a permanent copy of your zine into the device's shared **Downloads** — one tap, no chooser — where it stays, visible in the Files/Downloads app, after Zinely closes. A confirmation names the file: _Saved “…” to Downloads_, with the "Fold now" hand-off.
+- **Share is unchanged.** "Share" still sends a copy through the OS share sheet (`ACTION_SEND`) exactly as before.
+
+**Accessibility.** Existing behaviour preserved — the confirmation stays a `role=status` announcement; focus, keyboard flow, and reduced-motion behaviour are unchanged.
+
+**Compatibility.** API 29+ writes through MediaStore (no permission needed); API 24–28 uses the legacy public-Downloads File path. Offline/privacy invariants intact — no network, no account, no new dependency; Zinely writes only its own export file.
+
+### Known limitations
+
+- **API 24–28 asks for a storage permission.** On Android 7–9 the first save triggers a one-time runtime permission prompt (`WRITE_EXTERNAL_STORAGE`); later saves are one-tap. A denial routes to the existing "Couldn't make the PDF" surface.
+- **Broad legacy storage permission.** On API ≤28 that permission grants broad shared-storage access rather than Downloads-scoped; Zinely only ever writes its own export file there.
+- **Replace Picture UI still absent** — Reframe's replace-photo affordance is not yet wired (Future Enhancement).
+- **Long-press context menu still absent** — the element long-press visual menu is not yet built (Future Enhancement).
 
 ## [0.7.0] — 2026-07-14 — Image Framing
 
@@ -32,7 +48,7 @@ Merged to `main` as IF1–IF5 (final implementation commit `685f753`); device pi
 
 **Compatibility.** Offline/privacy invariants intact — no network, account, or new dependency; no document-format migration (existing zines open unchanged; only new photos default to Fill).
 
-_Next up: post-alpha S7.x (save-a-copy export, text styling)._
+_Next up: post-alpha S7.x — save-a-copy export landed (see [Unreleased]); text styling next._
 
 ## [0.6.0-alpha.1] — 2026-07-07 — First installable alpha
 

@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Save-to-phone durable Downloads write (ADR-054): needed only pre-API-29, where there is no
+         MediaStore.Downloads. API 29+ writes via MediaStore with no permission, so this is capped at 28. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
     <application
         android:name=".ZinelyApplication"
         android:allowBackup="false"

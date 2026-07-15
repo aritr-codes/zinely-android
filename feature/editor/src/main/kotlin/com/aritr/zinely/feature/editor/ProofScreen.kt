@@ -136,8 +136,9 @@ private const val PROOF_ACT_MILLIS: Int = 340
  *   never silent; the loss-safe back stays available in the top bar.
  * @param onRetryExport the error overlay's "Try again" — the host clears the error and re-fires the last
  *   export (same target + document).
- * @param savedSignals one emission per **successful Save-PDF** render. Each raises the frozen "Fold now"
- *   snackbar — the [ADR-041] post-export → fold hand-off, preserved as an intra-screen nudge to Act 3.
+ * @param savedSignals one emission per **successful Save-PDF** render, carrying the actual saved display
+ *   name (e.g. `zine.pdf`) the exporter wrote to Downloads. Each raises the frozen "Fold now" snackbar —
+ *   the [ADR-041] post-export → fold hand-off — whose copy NAMES that file and the Downloads destination.
  * @param onMakeAnother Act 3 finished — the "Make another" exit (the single-project MVP returns to the bench).
  * @param modifier sizing/placement for the whole surface.
  */
@@ -152,7 +153,7 @@ public fun ProofScreen(
     exportBusy: Boolean = false,
     exportFailed: Boolean = false,
     onRetryExport: () -> Unit = {},
-    savedSignals: Flow<Unit> = emptyFlow(),
+    savedSignals: Flow<String> = emptyFlow(),
     onMakeAnother: () -> Unit = {},
 ) {
     val colors = ZinelyTheme.colors
@@ -175,12 +176,13 @@ public fun ProofScreen(
     // beat schedule below; saved so a rotation mid-reveal resumes rather than restarts the moment.
     var climaxBeat by rememberSaveable { mutableStateOf(0) }
 
-    // The frozen "Fold now" snackbar (`savePdf → snack`): raised once per successful Save-PDF export. It
-    // is the ADR-041 post-export → fold hand-off, now an intra-screen nudge (its action jumps to Fold).
-    // NOT rememberSaveable: a transient nudge should not survive a rotation and re-announce itself.
-    var foldSnack by remember { mutableStateOf(false) }
+    // The frozen "Fold now" snackbar (`savePdf → snack`): raised once per successful Save-PDF export,
+    // holding the actual saved display name so the copy can NAME the file. It is the ADR-041 post-export →
+    // fold hand-off, now an intra-screen nudge (its action jumps to Fold). NOT rememberSaveable: a
+    // transient nudge should not survive a rotation and re-announce itself.
+    var savedName by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(savedSignals) {
-        savedSignals.collect { foldSnack = true }
+        savedSignals.collect { savedName = it }
     }
 
     fun go(target: ProofAct) {
@@ -325,12 +327,15 @@ public fun ProofScreen(
 
         // The "Fold now" hand-off snackbar (frozen bottom offset 104dp), above the action bar. Its action
         // is the ADR-041 nudge to the fold; the 5s timeout dismisses it (ZSnackbar owns the timer).
-        if (foldSnack && !exportFailed) {
-            ZSnackbar(
-                message = "Saved “$zineName.pdf” to this device",
+        savedName?.let { name ->
+            if (!exportFailed) ZSnackbar(
+                // Frozen copy (`proof.html` savePdf → snack): NAMES the saved file and its Downloads
+                // destination so the "keep a copy" promise is verifiable. [name] already carries the
+                // extension (e.g. `zine.pdf`) — the actual name the exporter wrote (ADR-054).
+                message = "Saved “$name” to Downloads",
                 actionLabel = "Fold now",
-                onAction = { foldSnack = false; go(ProofAct.FOLD) },
-                onTimeout = { foldSnack = false },
+                onAction = { savedName = null; go(ProofAct.FOLD) },
+                onTimeout = { savedName = null },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 104.dp)
