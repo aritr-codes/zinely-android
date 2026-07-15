@@ -194,11 +194,11 @@ class ProofScreenTest {
     }
 
     @Test
-    fun `save pdf requests an OPEN-target export`() {
+    fun `save pdf requests a SAVE-target export`() {
         lastExport = null
         setProofOnPrint()
         composeRule.onNodeWithTag(ProofSavePdfTestTag).performScrollTo().performClick()
-        assertEquals(ProofExportTarget.OPEN, lastExport)
+        assertEquals(ProofExportTarget.SAVE, lastExport)
     }
 
     @Test

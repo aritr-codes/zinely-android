@@ -14,7 +14,11 @@ import com.aritr.zinely.render.android.CanvasReplayer
 import com.aritr.zinely.render.android.ImageBlitter
 import com.aritr.zinely.render.android.SheetComposer
 import com.aritr.zinely.render.android.SheetPanel
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -26,6 +30,29 @@ import javax.inject.Inject
 internal enum class ExportFormat(val ext: String, val mime: String) {
     PDF(ext = "pdf", mime = "application/pdf"),
     PNG(ext = "png", mime = "image/png"),
+}
+
+/**
+ * Where a finished export goes (ADR-054 Decision 3/4) — the delivery-agnostic destination the host maps
+ * the Proof button onto: [TRANSPORT] = the ephemeral cache file shared via a FileProvider `content://` URI
+ * (Share); [DOWNLOADS] = a durable copy the user keeps in the shared Downloads collection (Save PDF).
+ */
+internal enum class ExportDestination { TRANSPORT, DOWNLOADS }
+
+/**
+ * The export use-case seam (ADR-054 Decision 1): renders the live document once and delivers it to
+ * [destination], returning the delivery-agnostic [ExportOutcome]. One funnel — the destination selects the
+ * sink, never a second render path. The ViewModel depends on this interface (not the concrete exporter) so
+ * it is unit-testable with a fake, per the repository-pattern convention.
+ */
+internal interface SheetExporter {
+    suspend fun export(
+        document: ZineDocument,
+        pageSizePt: PtSize,
+        imageBytes: AssetBytesSource,
+        format: ExportFormat,
+        destination: ExportDestination,
+    ): ExportOutcome
 }
 
 /**
@@ -42,26 +69,41 @@ internal enum class ExportFormat(val ext: String, val mime: String) {
 internal class ZineExporter @Inject constructor(
     @param:ApplicationContext private val context: Context,
     @param:IoDispatcher private val io: CoroutineDispatcher,
-) {
+    private val downloadsWriter: DownloadsWriter,
+) : SheetExporter {
 
     /**
-     * Renders [document] to a [format] file and returns its shareable URI. Throws on render/IO failure
-     * (including `OutOfMemoryError` from the ~33 MB sheet bitmap — ADR-011); the caller maps it to a
-     * friendly export error.
+     * Renders [document] once and delivers it to [destination] (ADR-054 Decision 1), off-main on the IO
+     * dispatcher. Throws on render/IO failure (including `OutOfMemoryError` from the ~33 MB sheet bitmap —
+     * ADR-011); the caller maps it to a friendly export error.
      */
-    suspend fun export(
+    override suspend fun export(
         document: ZineDocument,
         pageSizePt: PtSize,
         imageBytes: AssetBytesSource,
         format: ExportFormat,
-    ): Uri = withContext(io) {
+        destination: ExportDestination,
+    ): ExportOutcome = withContext(io) {
+        when (destination) {
+            ExportDestination.TRANSPORT -> writeTransport(document, pageSizePt, imageBytes, format)
+            ExportDestination.DOWNLOADS -> writeToDownloads(document, pageSizePt, imageBytes, format)
+        }
+    }
+
+    /**
+     * TRANSPORT (ADR-054 Decision 4): the existing ephemeral cache write (ADR-039) — a uniquely-named file
+     * under `cacheDir/exports`, shared as a scoped [FileProvider] `content://` URI. Behaviourally identical
+     * to the prior `export()`: this owns and closes its cache stream (ADR-054 Decision 7), and on failure it
+     * deletes the just-created (possibly 0-byte) file so a failed export leaves nothing behind.
+     */
+    private fun writeTransport(
+        document: ZineDocument,
+        pageSizePt: PtSize,
+        imageBytes: AssetBytesSource,
+        format: ExportFormat,
+    ): ExportReady {
         val dir = File(context.cacheDir, EXPORTS_DIR).apply { mkdirs() }
         val file = File(dir, "zine-${System.currentTimeMillis()}.${format.ext}")
-        // export() OWNS this transport stream and closes it (the stream-ownership invariant, ADR-054
-        // Decision 7); writeSheet only writes into it. On any render/IO failure, delete the just-created
-        // (possibly 0-byte) cache file before rethrowing, so a failed export leaves nothing behind —
-        // identical to the pre-writeSheet-extraction behaviour, where the file was opened only after a
-        // successful compose.
         try {
             FileOutputStream(file).use { out -> writeSheet(out, document, pageSizePt, imageBytes, format) }
         } catch (t: Throwable) {
@@ -71,7 +113,31 @@ internal class ZineExporter @Inject constructor(
         // Prune AFTER writing, so exactly the most-recent KEEP_RECENT files survive (the just-written one
         // is newest, so it is never the file pruned) — bounds cache growth without racing the live URI.
         pruneOldExports(dir)
-        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        return ExportReady(
+            uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file),
+            mime = format.mime,
+        )
+    }
+
+    /**
+     * DOWNLOADS (ADR-054 Decision 4/6): a durable copy the user keeps, in the shared Downloads collection.
+     * [DownloadsWriter] owns the destination stream + the API split; [writeSheet] supplies the bytes. Returns
+     * the final display name actually written (a legacy collision may have added a `" (N)"` suffix).
+     *
+     * ponytail: the display base is a neutral default until the real project title (Room metadata, ADR-042)
+     * threads through — the same deferral the Proof topbar carries (`zineName = "Your zine"`). The saved name
+     * is not surfaced yet (the Fold hand-off is a bare signal); the final "Saved to …" copy is a later batch.
+     */
+    private fun writeToDownloads(
+        document: ZineDocument,
+        pageSizePt: PtSize,
+        imageBytes: AssetBytesSource,
+        format: ExportFormat,
+    ): ExportSaved {
+        val name = downloadsWriter.write(DEFAULT_SAVE_TITLE, format.ext, format.mime) { out ->
+            writeSheet(out, document, pageSizePt, imageBytes, format)
+        }
+        return ExportSaved(displayName = name, location = DOWNLOADS_LOCATION)
     }
 
     /**
@@ -123,5 +189,16 @@ internal class ZineExporter @Inject constructor(
     private companion object {
         const val EXPORTS_DIR = "exports"
         const val KEEP_RECENT = 6
+        // Neutral durable-save base until the real project title threads through (see writeToDownloads).
+        const val DEFAULT_SAVE_TITLE = "zine"
+        const val DOWNLOADS_LOCATION = "Downloads"
     }
+}
+
+/** Binds [ZineExporter] as the [SheetExporter] the ExportViewModel injects; test doubles implement the interface directly. */
+@Module
+@InstallIn(SingletonComponent::class)
+internal abstract class ExportModule {
+    @Binds
+    abstract fun bindSheetExporter(impl: ZineExporter): SheetExporter
 }
