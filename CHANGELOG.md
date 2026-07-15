@@ -14,9 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.8.0] — 2026-07-15 — Save to your phone
+
 ### Added — Save a copy to your phone · [ADR-054](docs/DECISIONS.md#adr-054)
 
-Implemented across batches B1–B3 (branch `feat/m-save-b1-downloads-backend`); independently reviewed (GO WITH FIXES, reconciled). Not yet in a packaged build.
+Merged to `main` as B1–B4 (merge `7e2fa74`; Downloads backend · export-flow wiring · frozen Proof behaviour · doc reconciliation), each batch independently reviewed (GO / GO WITH FIXES, reconciled). Packaged as a debug-signed side-load build (a real release keystore is still deferred, per [ADR-047](docs/DECISIONS.md#adr-047)).
 
 - **Save PDF writes to Downloads.** "Save PDF" now saves a permanent copy of your zine into the device's shared **Downloads** — one tap, no chooser — where it stays, visible in the Files/Downloads app, after Zinely closes. A confirmation names the file: _Saved “…” to Downloads_, with the "Fold now" hand-off.
 - **Share is unchanged.** "Share" still sends a copy through the OS share sheet (`ACTION_SEND`) exactly as before.
@@ -262,7 +266,9 @@ The riskiest, most isolatable thing first: the math that makes a folded zine cor
   SVG proof sheet); pure Kotlin, golden-tested against the imposition oracle
   ([ADR-007](docs/DECISIONS.md#adr-007)). Tagged `v0.1.0-imposition-engine`.
 
-[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.6.0-alpha.1...HEAD
+[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/aritr-codes/zinely-android/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/aritr-codes/zinely-android/compare/v0.6.0-alpha.1...v0.7.0
 [0.6.0-alpha.1]: https://github.com/aritr-codes/zinely-android/compare/v0.4.0...v0.6.0-alpha.1
 [0.4.0]: https://github.com/aritr-codes/zinely-android/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/aritr-codes/zinely-android/compare/v0.2.0...v0.3.0
