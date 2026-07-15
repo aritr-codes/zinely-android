@@ -223,8 +223,11 @@ stateDiagram-v2
 > Limitation).** The frozen Proof Act 2 originally showed three export actions (Save PDF · Share · Print).
 > The app has no OS `PrintManager` path, and Android's system print dialog offers no "actual size vs
 > fit-to-page" control — routing through it would silently reintroduce the fit-to-page shrink the recipe
-> exists to prevent. So the V1 Proof ships **Save PDF + Share** (PDF → the user's own printer app is the
-> honest home-print handoff); the print *recipe* and framing are unchanged. A first-class in-app print
+> exists to prevent. So the V1 Proof ships **Save PDF + Share**: **Save PDF writes a permanent copy to the
+> device's shared Downloads** (one tap, no chooser — [ADR-054](DECISIONS.md#adr-054), realised 2026-07-15),
+> and **Share sends a copy** via the OS chooser (`ACTION_SEND`). The earlier `ACTION_VIEW` / open-in-a-
+> printer-app phrasing for Save PDF is superseded — see the [ADR-052](DECISIONS.md#adr-052) closure note.
+> The print *recipe* and framing are unchanged. A first-class in-app print
 > (Android `PrintManager`) is a **Future Enhancement** ([ROADMAP](ROADMAP.md)) with its own ADR + batch —
 > a **Known Limitation** for V1, not a blocker, surfaced in release notes when V1 ships.
 

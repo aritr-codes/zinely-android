@@ -1186,6 +1186,15 @@ B3 (this ADR + the Act 2 implementation) is independently reviewed by a Review A
 
 The **Save PDF `→ ACTION_VIEW` (open the finished PDF)** backend recorded above is **superseded**. The DESIGN-FROZEN [`proof.html`](design/v1/proof.html) received a Save-to-phone reconciliation freeze amendment (2026-07-15) pinning Save PDF to write a real, lasting copy to the device's shared Downloads — not an open-in-viewer handoff. The frozen Proof specification is now **authoritative for Save PDF behaviour**; the original `ACTION_VIEW` phrasing here is retained for history only. The backend itself will be replaced by the implementation ADR authored during the Save-to-phone milestone. **Share (`export(PDF) → ACTION_SEND`, the OS chooser) is unchanged.** This note records the supersession only and makes no implementation decision.
 
+### Closure note (2026-07-15)
+
+The supersession above is now **closed**. [ADR-054](#adr-054) is the implementation ADR it anticipated, realised across batches B1–B3:
+
+- Save PDF `→ ACTION_VIEW` is **historical only** — the `ACTION_VIEW` / open-in-viewer Save-PDF backend recorded in this ADR no longer exists in the repository; Save PDF now writes a permanent copy to shared Downloads ([ADR-054](#adr-054)).
+- **[ADR-054](#adr-054) supersedes this ADR's Save-PDF backend.** Save-PDF behaviour is decided there and specified by the frozen `proof.html`.
+- **Share (`ACTION_SEND`, the OS chooser) remains unchanged** — this closure touches only the Save-PDF path.
+- Implementation **completed by B1–B3** (Downloads backend · export wiring · frozen Proof behaviour); this ADR remains an unaltered historical record of the retired design.
+
 ## ADR-053 {#adr-053}
 
 **Bench image framing — a placed photo is a fixed frame plus a movable picture; new photos default to `Fit.FILL` (crop-to-cover, centered, full crop); double-tap enters a Reframe mode whose discrete on-screen controls are the authoritative accessible path and whose gestures are enhancements; Replace preserves framing and one framing session is one undo command. This un-defers the [ADR-047 amendment](#adr-047) / [PRD §7.3](PRD.md#73-alpha-release-scope--v060-alpha1-adr-047) FR-2 fit/fill clause.** Records the product-policy and editor-architecture decisions the DESIGN-FROZEN [`bench.html`](design/v1/bench.html) Image-Framing amendment (frozen 2026-07-13) introduces, ahead of the Compose Milestone IF implementation. Implementation detail (clamp math, the 3×3 nudge-pad layout, fit-axis CSS classes, coach-mark motion) is spec/PR-owned, not decided here.
@@ -1314,3 +1323,13 @@ The architecture was authored, then independently falsified across four reconcil
 - **Placement** (`:app/export`, not `:data-android`) confirmed consistent with ADR-036 (best-effort shared storage is outside the `FileSystemOps` durability core) and the ADR-039 precedent.
 
 **All Required Fixes were accepted; no findings were rejected.** Final architecture verdict: **GO WITH FIXES** — the fixes are folded into this ADR; the only items left for the implementation change are the two Documentation-Rule reconciliations (PRD FR-6 wording, ADR-052 backend closure) noted in Consequences. The Compose implementation of this ADR is itself independently reviewed before merge; its outcome is recorded here on reconciliation.
+
+### Implementation outcome (2026-07-15)
+
+This ADR is **implemented**. No architectural decision above is altered — this section records the realised state only. Delivered in three independently-reviewed batches:
+
+- **B1 — Downloads backend complete.** `:app/export` `DownloadsWriter` (MediaStore on API 29+, `getExternalStoragePublicDirectory` + `WRITE_EXTERNAL_STORAGE maxSdkVersion=28` + `MediaScannerConnection` on API 24–28, owning its own stream lifecycle) and the pure `ExportNaming` (sanitize · display name · `" (N)"` collision suffix); `ZineExporter` funnelled through one shared `writeSheet`; manifest permission added. Unit-tested (`ExportNamingTest`, `DownloadsWriterTest`).
+- **B2 — export wiring complete.** Sealed `ExportOutcome` (`ExportReady` retained for Intent transport + `ExportSaved` for durable saves); `ExportDestination { TRANSPORT, DOWNLOADS }`; `ZineExporter.export(…, destination): ExportOutcome`; `ExportViewModel` emits `Flow<ExportOutcome>` and routes by subtype at the host — the remembered-target `pending` is retired (Decision 2). `ExportViewModelTest` green.
+- **B3 — Proof behaviour complete.** Save PDF performs a real one-tap save (no chooser, no `ACTION_VIEW`); the success snackbar matches the frozen `proof.html` exactly — `Saved “<name>” to Downloads`, naming the file actually written (threaded from `ExportSaved.displayName`) — with the [ADR-041](#adr-041) "Fold now" hand-off. `ProofScreenTest` green.
+
+Realised invariants (all as decided): **Save PDF writes a permanent Downloads copy**; **Share (`ACTION_SEND`) behaviour is unchanged**; **no `:render-android` changes**; **no `:core:*` changes**; **`export == preview` preserved** (the destination is chosen after the live document is imposed and rendered — identical bytes per sink). The two Documentation-Rule reconciliations flagged in Consequences ([PRD FR-6](PRD.md#73-alpha-release-scope--v060-alpha1-adr-047) wording, [ADR-052](#adr-052) backend closure) are completed in this same documentation change. Each implementation batch was independently reviewed (**GO WITH FIXES**, all Required Fixes reconciled) per the [multi-agent workflow](../CLAUDE.md#multi-agent-workflow).
