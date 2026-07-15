@@ -26,6 +26,38 @@
           PDF / Share) is the honest home-print handoff; a first-class in-app Print is deferred to its own
           future ADR + batch (where the actual-size-vs-system-scaling conflict is designed properly). The
           recipe, single-sided note, and the print *framing* are unchanged. DESIGN-FROZEN status retained.
+          Freeze amendment (2026-07-15, Save-to-phone reconciliation — behaviour clarification only):
+          "Save PDF" is pinned to its literal promise. It writes a real, permanent copy of the zine PDF
+          into the device's shared **Downloads**, where it stays — visible in the Files/Downloads app —
+          after Zinely is closed. This resolves a spec-vs-behaviour divergence: the frozen snackbar
+          already promised a saved copy ("…to this device"), while ADR-052 had explicitly specified the
+          Save PDF backend as `export(PDF) -> ACTION_VIEW` (open the finished PDF in a viewer), which saves
+          nothing permanent. This freeze SUPERSEDES that ADR-052 backend: Save PDF = a real save.
+          >> REQUIRED RECONCILIATION (out of scope for this spec-only milestone, which may touch only this
+          file): DECISIONS.md ADR-052 still authoritatively records "Save PDF -> ACTION_VIEW". Freezing this
+          spec makes that a contradictory second source of truth, so ADR-052 MUST get a one-line supersession
+          note (pointing here) as part of accepting this amendment. This is flagged, not silently frozen. <<
+          Pinned meaning:
+            · Save PDF  = keep a copy (one tap → Downloads, no chooser). The success snackbar NAMES the
+              destination ("Saved to Downloads") so the promise is verifiable; the "Fold now" action is
+              retained (no new control, no second action slot).
+            · Share     = send a copy (unchanged: opens the Share sheet → "Save to Files" [you pick the
+              folder] or "Send to an app"). Save PDF and Share stay distinct verbs: keep vs send.
+            · "Save to Files" (inside the Share sheet) is unchanged and NOT redundant with Save PDF — it
+              is the choose-your-own-folder path; Save PDF is the zero-choice fast path to Downloads.
+          Failure reuses the existing "Couldn't make the PDF" surface (compose OR save failure → same
+          honest overlay + Try again); NO new error state is introduced. Privacy/offline invariant holds:
+          the write is entirely local, nothing is uploaded (Zinely has no network). Accessibility, keyboard,
+          and reduced-motion are UNCHANGED by design — Save PDF was never animated (the fold owns the whole
+          motion budget), the button keeps its text label, and the snackbar stays role="status" with its
+          action focused on show (RI-4 known limitation unchanged). Only the *meaning* and the
+          destination-naming of the success copy change; no layout, spacing, typography, colour, motion,
+          Act structure, or control is touched. DESIGN-FROZEN status retained. The implementation ADR
+          (which supersedes ADR-052's ACTION_VIEW backend and specifies the real save — incl. the minSdk-24
+          Downloads-write split: MediaStore on API 29+, legacy File API + WRITE_EXTERNAL_STORAGE maxSdk 29
+          below) belongs to the implementation milestone, NOT this spec. NB: ADR-039 shipped share via
+          ACTION_SEND only; save-to-device was never in ADR-039's deferral list, so this closes an
+          unstated gap, not a named ADR-039 deferral.
           Post-freeze: only bug/parity/a11y/perf/theme fixes. Any visual or
           interaction change must update THIS spec first, then Compose — never the
           reverse.
@@ -65,6 +97,10 @@
       already fits"), the unprintable band is shown but calm. The recipe pre-empts
       the three silent home-print bugs: Fit-to-Page shrink, A4/Letter mismatch,
       portrait default. Stated plainly at the export handoff.
+    · SAVE MEANS KEEP A COPY, NOT "OPEN IT ONCE." "Save PDF" writes a real, lasting copy to the
+      device's shared Downloads and says so ("Saved to Downloads") — it never means a throwaway
+      open-in-viewer. Keep (Save PDF → Downloads) and send (Share → chooser) are two distinct verbs;
+      the copy is verifiable in Files after the app closes. Pinned 2026-07-15 (see the freeze log).
 
   IMPOSITION GRID (the core geometry). Single-sided, one landscape sheet, ONE center
   cut, fold-and-collapse. Sheet viewed print-side up, 4 columns x 2 rows:
@@ -537,8 +573,14 @@ body{
           <button class="tool" id="share"><svg viewBox="0 0 24 24" fill="none"><circle cx="6" cy="12" r="2.4" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="6" r="2.4" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="18" r="2.4" stroke="currentColor" stroke-width="2"/><path d="M8.1 11l7.8-4M8.1 13l7.8 4" stroke="currentColor" stroke-width="2"/></svg>Share</button>
           <!-- Print button removed 2026-07-11 (freeze amendment, ADR-052): the app has no OS PrintManager
                path and the system print dialog has no "actual size vs fit-to-page" control, which would
-               undermine the recipe's core honesty. PDF -> the user's own printer app (Save PDF / Share) is
-               the honest home-print handoff; a real in-app Print is deferred to its own future ADR + batch. -->
+               undermine the recipe's core honesty. A real in-app Print is deferred to its own future ADR + batch.
+               The two export verbs (pinned 2026-07-15, Save-to-phone reconciliation — see the freeze log):
+                 Save PDF = KEEP a copy — writes the PDF to the device's shared Downloads (one tap, no chooser),
+                            then offers "Fold now". The copy persists in Files after Zinely closes.
+                 Share    = SEND a copy — opens the Share sheet (Save to Files / Send to an app).
+               NOTE for the implementer: "Save PDF" is NOT an open-in-viewer handoff (ACTION_VIEW). It is a
+               real save to Downloads. This SUPERSEDES ADR-052's explicit `export(PDF) -> ACTION_VIEW`
+               backend for Save PDF (DECISIONS.md ADR-052 must get a one-line supersession note). -->
         </div>
         <div class="testline"><button id="testSheet">Print one test sheet first</button></div>
       </div>
@@ -922,7 +964,7 @@ body{
     exporting._t = setTimeout(()=>{ loadwrap.classList.remove("on"); then&&then(); }, 1500);
   }
   $("#savePdf").addEventListener("click", ()=> exporting("Making your PDF…", ()=>{ printed=true; buzz("snap");
-    snack(`Saved “${name}.pdf” to this device`, "Fold now", ()=>{ setAct(2); }); }));
+    snack(`Saved “${name}.pdf” to Downloads`, "Fold now", ()=>{ setAct(2); }); }));
   // #printNow handler removed 2026-07-11 (freeze amendment, ADR-052) — see the export-row note above.
   $("#share").addEventListener("click", ()=> show($("#shareSheet")));
   $("#shareMenu").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return;
