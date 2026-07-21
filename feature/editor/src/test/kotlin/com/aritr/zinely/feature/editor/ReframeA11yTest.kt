@@ -29,6 +29,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import com.aritr.zinely.render.android.AssetBytesSource
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -80,7 +81,11 @@ class ReframeA11yTest {
     private var coachSeenCalls = 0
     private val announced = mutableListOf<String>()
 
-    private fun render(s: EditorStore, coachSeen: Boolean? = true) {
+    // A real decodable photo at the element's own 1.25 box aspect: Reframe verbs are inert until the photo
+    // is genuinely on screen (M7-01), and every announcement below is the response to a verb.
+    private val photo = reframeTestPhoto()
+
+    private fun render(s: EditorStore, coachSeen: Boolean? = true, bytes: AssetBytesSource = photo) {
         coachSeenCalls = 0
         announced.clear()
         composeRule.setContent {
@@ -88,6 +93,7 @@ class ReframeA11yTest {
                 EditorScreen(
                     store = s,
                     pageSizePt = pageSizePt,
+                    imageBytes = bytes,
                     reframeCoachSeen = coachSeen,
                     onReframeCoachSeen = { coachSeenCalls++ },
                     onReframeAnnounce = { announced += it },
@@ -162,6 +168,33 @@ class ReframeA11yTest {
         composeRule.waitForIdle()
         // 100% × 1.15 → 115%.
         assertEquals("Zoom 115 percent", announced.last())
+    }
+
+    /**
+     * **The host-side gate, pinned on its own (M7-01).** When the photo is measurable but cannot be
+     * displayed, every adjustment verb must be inert. This asserts that strand independently of the
+     * commit-side guard: if the `reframePratio != null` gate is removed from `reframeZoom`, the zoom runs
+     * and speaks, and this fails — even though the commit would still write nothing.
+     *
+     * Silence is asserted rather than a spoken line because M7-01 deliberately added no new copy: what to
+     * say (or whether to disable the controls outright) is a founder/designer decision, still open. This
+     * test therefore pins the *current* behaviour honestly and will need updating when that lands — which
+     * is the point of writing it down rather than leaving the strand untested.
+     */
+    @Test
+    fun an_undisplayable_photo_leaves_the_adjustment_verbs_inert_and_silent() {
+        val s = store()
+        val id = imageId(s)
+        render(s, bytes = reframeTestPhotoMeasurableOnly())
+        s.dispatch(Intent.BeginReframe(id))
+        composeRule.waitForIdle()
+
+        announced.clear() // drop the session-entry announcement; we are testing the verbs
+        composeRule.onNodeWithContentDescription("Zoom in").performClick()
+        composeRule.onNodeWithContentDescription("Zoom out").performClick()
+        composeRule.waitForIdle()
+
+        assertTrue("no verb may act or speak while the photo is undisplayable", announced.isEmpty())
     }
 
     @Test

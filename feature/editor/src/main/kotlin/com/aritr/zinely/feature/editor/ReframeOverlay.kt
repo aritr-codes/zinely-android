@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.render.android.AssetBytesSource
+import com.aritr.zinely.render.android.readImageIntrinsics
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.roundToInt
 
@@ -49,8 +50,10 @@ public const val ReframeOverlayTestTag: String = "reframe-overlay"
  *
  * @param element the reframing photo (the session `before`; supplies assetId + the frame box).
  * @param draft the ephemeral working fit/zoom/pan.
- * @param onAspect reports the decoded photo aspect (`w/h`) up so the host can seed/commit with the true
- *   ratio; fires once per successful decode.
+ * @param onAspect reports the photo's intrinsic aspect (`w/h`) up so the host can seed/commit with the
+ *   true ratio. Fires **only when the photo is both measurable and displayable**, so it doubles as the
+ *   host's "the user may adjust" signal (M7-01): while it has not fired, the frame is inert and the
+ *   session commits the element unchanged. One signal, so the two gates cannot drift apart.
  * @param onDraft receives a gesture-updated [draft] (host stores it; never the reducer).
  */
 @Composable
@@ -68,21 +71,37 @@ public fun ReframeOverlay(
     val outline = ZinelyTheme.colors.coralStrong
     val bratio = element.transform.widthPt / element.transform.heightPt
 
-    // Decode the canonical master to an ImageBitmap once per (asset, source). A missing/undecodable asset
-    // (the default EmptyAssetBytes, or a TOCTOU delete) yields null → the frame + scrim still draw so the
-    // controls remain usable; the render path shows its own placeholder for the committed result.
+    // Aspect and pixels come from two DIFFERENT decodes, deliberately (M7-01).
+    //
+    // **Aspect** comes from the shared [readImageIntrinsics] seam (ADR-056) — the *same function* the
+    // renderer's `ImageBlitter` calls, not a second implementation that happens to agree. The committed
+    // crop is resolved against `pratio` while the page resolves the same geometry against the intrinsic
+    // size; deriving them separately is what broke `preview == export` before (INV-01 failure mode 3),
+    // because the overlay's full-resolution decode could fail where a header read cannot, and its
+    // fallback to the box ratio then disagreed with the renderer's true one.
+    val intrinsic = remember(element.assetId, imageBytes) { readImageIntrinsics(imageBytes, element.assetId) }
+    // **Pixels** are what the user actually frames against; a missing/undecodable asset (the default
+    // EmptyAssetBytes, or a TOCTOU delete) yields null.
     val decoded: DecodedPhoto? = remember(element.assetId, imageBytes) { decodePhoto(imageBytes, element.assetId) }
-    val pratio = decoded?.aspect ?: bratio
-    LaunchedEffect(decoded) { if (decoded != null) onAspect(decoded.aspect) }
+    val pratio = intrinsic?.aspect ?: bratio
+    // The frame is adjustable ONLY while the photo is genuinely on screen. Framing blind is what produced
+    // the divergence above: the controls stayed live, the draft moved, and the commit baked a crop against
+    // a photo the user could not see. `onAspect` is therefore the single signal for BOTH "the true aspect
+    // is known" and "the user may adjust", so the host's gate and this one cannot drift apart.
+    val framable = intrinsic != null && decoded != null
+    LaunchedEffect(intrinsic, decoded) { if (intrinsic != null && decoded != null) onAspect(intrinsic.aspect) }
 
     val latestDraft by rememberUpdatedState(draft)
 
     Canvas(
         modifier = modifier
             .testTag(ReframeOverlayTestTag)
-            .pointerInput(element.id, screenPxPerPt) {
+            .pointerInput(element.id, screenPxPerPt, framable) {
                 detectTransformGestures { _, pan, zoomChange, _ ->
                     var d = latestDraft
+                    // No photo on screen ⇒ no framing. Gestures are inert rather than silently moving a
+                    // crop the user cannot see (M7-01); the host gates its keyboard/button verbs the same way.
+                    if (!framable) return@detectTransformGestures
                     if (d.fit != FrameFit.FILL) return@detectTransformGestures // Whole is static (bench parity)
                     if (zoomChange != 1f) d = Framing.zoomed(d, zoomChange.toDouble())
                     // Device px → image-fraction: the frame width shows `coverW/zoom` of the image, so
@@ -100,8 +119,12 @@ public fun ReframeOverlay(
         val center = frame.center
         rotate(degrees = element.transform.rotationDegrees.toFloat(), pivot = center) {
             // 1) The movable photo (unclipped: overflow spills out to be dimmed by the scrim).
-            if (decoded != null) {
-                val dst = photoDestPx(draft, frame, decoded, pratio, bratio)
+            // Gated on `framable`, not merely on `decoded`: without a measured intrinsic the aspect is the
+            // box-ratio fallback, and painting the photo through it would show a distorted picture the page
+            // will never render. Unreachable in practice (a master that decodes has a readable header), but
+            // drawing nothing beats drawing a lie (Observation O-1).
+            if (framable && decoded != null) {
+                val dst = photoDestPx(draft, frame, pratio, bratio)
                 if (dst.width >= 1f && dst.height >= 1f) {
                     drawImage(
                         image = decoded.bitmap,
@@ -157,7 +180,7 @@ private fun frameRectPx(element: ImageElement, screenPxPerPt: Double, pageOffset
  * Where to draw the whole photo so the [draft]'s framing lands inside [frame]. FILL maps the resolved crop
  * rect onto the frame (so the crop fills it, the rest overflows); WHOLE contains the whole photo centred.
  */
-private fun photoDestPx(draft: FramingDraft, frame: Rect, photo: DecodedPhoto, pratio: Double, bratio: Double): Rect {
+internal fun photoDestPx(draft: FramingDraft, frame: Rect, pratio: Double, bratio: Double): Rect {
     if (draft.fit == FrameFit.WHOLE) {
         // Contain: fit the whole photo inside the frame, preserving aspect, centred.
         val dstW: Float

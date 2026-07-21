@@ -67,18 +67,13 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
         }
     }
 
-    /** Open #1: `inJustDecodeBounds` for the intrinsic px (the ground truth, seam A). */
-    private fun decodeBounds(assetId: String): Pair<Int, Int>? {
-        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-        val opened = assetBytes.open(assetId) ?: return null // null open ⇒ missing
-        // A hostile/IO-failing stream must not crash the page (§5.4) — swallow and treat as unreadable.
-        runCatching { opened.use { BitmapFactory.decodeStream(it, null, options) } }
-        return if (options.outWidth > 0 && options.outHeight > 0) {
-            options.outWidth to options.outHeight
-        } else {
-            null // unreadable/corrupt ⇒ missing
-        }
-    }
+    /**
+     * Open #1: the intrinsic px (the ground truth, seam A) — via the shared [readImageIntrinsics]
+     * (ADR-056), which the editor's Reframe overlay also calls, so no surface can resolve framing against
+     * a different intrinsic than the one drawn here.
+     */
+    private fun decodeBounds(assetId: String): Pair<Int, Int>? =
+        readImageIntrinsics(assetBytes, assetId)?.let { it.widthPx to it.heightPx }
 
     /**
      * Open #2: decode the visible source region `srcFraction × intrinsic` to roughly the device px the
