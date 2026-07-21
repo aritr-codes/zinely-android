@@ -29,6 +29,8 @@ import com.aritr.zinely.render.android.CanvasReplayer
 import com.aritr.zinely.render.android.ExportScale
 import com.aritr.zinely.render.android.FontResolver
 import com.aritr.zinely.render.android.ImageBlitter
+import com.github.takahirom.roborazzi.RoborazziOptions
+import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -69,6 +71,7 @@ class PagePreviewParityTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private companion object {
+        const val GOLDEN_DIR = "src/test/roborazzi"
         const val SCREEN_PX_PER_PT = 2.5f
 
         val RED = ColorRgba(255, 0, 0, 255)
@@ -343,6 +346,84 @@ class PagePreviewParityTest {
         assertTrue(
             "preview host must inject BundledFontResolver, not FontResolver.Default (ADR-028 §4.2)",
             previewFontResolver(assets) is BundledFontResolver,
+        )
+    }
+
+    /**
+     * A **styled** block — bold + italic + centered + coloured + a non-default ramp size — the FR-3 case
+     * ADR-055 §5 names: "a Roborazzi golden of a styled block … renders identically in preview and in the
+     * imposed PDF/PNG (single `CanvasReplayer` path)".
+     *
+     * Every field the Type bar can write is off its default at once, deliberately: a per-attribute sweep
+     * would pass while the *combination* dropped one (Compose's own text stack has shipped
+     * bold-lost-under-italic-synthesis bugs), and this tape is the whole styling surface in one frame.
+     * 24pt is the ramp value the [TypeBarGoldenTest] card is pinned at; Teal is the frozen `.tyinks` token.
+     */
+    private fun styledTape(): List<DrawCommand> = listOf(
+        FillRect(PtRect(0.0, 0.0, sheet.width, sheet.height), WHITE),
+        DrawTextBox(
+            text = "Zine 42",
+            style = TextStyle(
+                fontFamily = "sans-serif",
+                sizePt = 24.0,
+                color = ColorRgba(0x2A, 0x9D, 0x8F),
+                align = TextAlign.CENTER,
+                bold = true,
+                italic = true,
+            ),
+            boxWidthPt = TEXT_BOX_W_PT,
+            boxHeightPt = TEXT_BOX_H_PT,
+            localToPage = AffineTransform2D.translate(TEXT_BOX_X_PT, TEXT_BOX_Y_PT),
+            localClip = PtRect(0.0, 0.0, TEXT_BOX_W_PT, TEXT_BOX_H_PT),
+        ),
+    )
+
+    @Test
+    fun styledBlock_previewMatchesExportReplay_andGoldens() {
+        // ADR-055 §5 "Preview == export parity". Preview and export are the SAME CanvasReplayer over the
+        // SAME tape, so this is a proof that no styling attribute leaks in on the host side only (or is
+        // dropped on the export side only) — the failure mode a preview-only screenshot cannot see.
+        val reference = directReplayBitmap(styledTape())
+        val host = hostPageBitmap(styledTape())
+
+        // Crop to the text box's device-px region, as the sibling font proof does: styled glyph ink is a
+        // tiny fraction of the 72pt sheet, and a whole-frame differing-fraction dilutes it below any
+        // useful bar.
+        val rx = (TEXT_BOX_X_PT * SCREEN_PX_PER_PT).toInt()
+        val ry = (TEXT_BOX_Y_PT * SCREEN_PX_PER_PT).toInt()
+        val rw = (TEXT_BOX_W_PT * SCREEN_PX_PER_PT).toInt()
+        val rh = (TEXT_BOX_H_PT * SCREEN_PX_PER_PT).toInt()
+        val hostRegion = Bitmap.createBitmap(host, rx, ry, rw, rh)
+        val referenceRegion = Bitmap.createBitmap(reference, rx, ry, rw, rh)
+
+        // Non-vacuity: styled text actually rendered (not two blank crops agreeing perfectly).
+        assertTrue("styled host produced no ink in the text region", inkCount(hostRegion) > 20)
+
+        // DISCRIMINATOR: the styling must actually change pixels vs the unstyled tape — otherwise a
+        // replayer that silently ignored bold/italic/colour/size/align would make the parity proof below
+        // vacuous (both sides identically unstyled). Fails loudly rather than passing empty.
+        val unstyledRegion = Bitmap.createBitmap(directReplayBitmap(textTape()), rx, ry, rw, rh)
+        assertTrue(
+            "the styled tape renders the same as the unstyled one (" +
+                "${"%.4f".format(differingFraction(referenceRegion, unstyledRegion))} of the region differ" +
+                "); the replayer is ignoring the style, so this parity proof would be vacuous.",
+            differingFraction(referenceRegion, unstyledRegion) > AA_THRESHOLD,
+        )
+
+        // PRIMARY: the styled preview matches the export-side replay within the committed AA tolerance
+        // (glyph edges are AA; the teal ink is dark and saturated, so its edges blend run-to-run).
+        val fraction = differingFraction(hostRegion, referenceRegion)
+        assertTrue(
+            "styled preview drifted from the export replay (${"%.4f".format(fraction)} of the text region " +
+                "differ > $AA_THRESHOLD) — preview and export must be one CanvasReplayer path.",
+            fraction <= AA_THRESHOLD,
+        )
+
+        // The committed golden (ADR-055 §5). A no-op under a plain unit run; recorded on the pinned CI
+        // image (`record-goldens.yml`) and gated by `verifyRoborazziDebug`.
+        hostRegion.captureRoboImage(
+            "$GOLDEN_DIR/styled_block_preview.png",
+            RoborazziOptions(compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.02f)),
         )
     }
 

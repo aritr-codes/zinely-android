@@ -14,6 +14,7 @@ import com.aritr.zinely.core.editor.SnapGuide
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.render.SceneRenderer
 import com.aritr.zinely.render.android.AssetBytesSource
@@ -42,6 +43,9 @@ import com.aritr.zinely.render.android.AssetBytesSource
  * @param live the ephemeral pan/pinch/rotate accumulator for this frame, or `null` when inactive.
  * @param resizeOverride directly-baked transforms for an active **handle-resize** drag (opposite-anchor,
  *   §5.3), or `null`. When non-null it takes precedence over [live] (a handle drag is its own session).
+ * @param styleOverride the in-flight text style of a settling Type-bar size burst (ADR-055), or `null`.
+ *   Orthogonal to the transform overrides — composed on top of whichever of them is active, never
+ *   competing with them.
  * @param modifier sized by the caller; both the preview and the chrome fill it so their device-px
  *   coordinates align.
  * @param imageBytes import-master byte source for image elements; defaults to the missing-asset placeholder.
@@ -54,6 +58,7 @@ public fun EditorPagePreview(
     live: LiveTransform?,
     modifier: Modifier = Modifier,
     resizeOverride: Map<String, Transform>? = null,
+    styleOverride: Map<String, TextStyle>? = null,
     imageBytes: AssetBytesSource = EmptyAssetBytes,
 ) {
     val page = uiState.document.pages[uiState.currentPageIndex]
@@ -93,10 +98,17 @@ public fun EditorPagePreview(
         }
     }
 
+    // A settling Type-bar size burst is orthogonal to the gesture overrides above — a burst can settle
+    // while nothing is dragging, and a drag can run while one settles. So it composes on top of whichever
+    // branch won rather than joining the `when`. This is the frozen `applyTextStyle` half of bench's
+    // apply-now/commit-later split (ADR-055): the glyphs move with the readout, the undo entry still lands
+    // once, on settle.
+    val renderedPage = styleOverride?.let { LivePreview.applyStyleOverride(effectivePage, it) } ?: effectivePage
+
     // Recomputed only when the effective page / defaults / size change — i.e. per frame during a drag
-    // (effectivePage changes), never on unrelated recompositions.
-    val tape = remember(effectivePage, defaults, pageSizePt) {
-        SceneRenderer.render(effectivePage, pageSizePt, defaults)
+    // (effectivePage changes) or per step during a size burst, never on unrelated recompositions.
+    val tape = remember(renderedPage, defaults, pageSizePt) {
+        SceneRenderer.render(renderedPage, pageSizePt, defaults)
     }
     val selectedTransforms = remember(effectivePage, uiState.selection) {
         effectivePage.elements.filter { it.id in uiState.selection }.map { it.transform }
