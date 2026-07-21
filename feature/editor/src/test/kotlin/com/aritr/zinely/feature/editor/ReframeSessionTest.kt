@@ -56,6 +56,10 @@ class ReframeSessionTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
+    /** The CI image's decoder fails at random under these suites; a real regression still fails twice. */
+    @get:Rule
+    val retryFlakyDecode = RetryFlakyDecode()
+
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val pageSizePt = PtSize(300.0, 300.0)
     // `by lazy`, not a field initializer: the fixture carries an assumption (a runtime without a full

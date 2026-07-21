@@ -71,22 +71,20 @@ android {
             all { test ->
                 test.maxParallelForks = 1
 
-                // Recycle the test JVM periodically — Robolectric NATIVE's image decoder on the Linux
-                // CI image is *exhaustible*, not merely absent. Past roughly a hundred decodes it stops
-                // being able to create one at all ("Failed to create image decoder with message
-                // 'unimplemented'"), and because `maxParallelForks = 1` puts all 300+ tests in a single
-                // JVM, everything after that point is at risk. The signature is a failing set that
-                // ROTATES between runs — {106,120,188}, then {106,131}, then {165,264} — which is what
-                // a running-out resource looks like and what a genuine test defect does not.
+                // Recycle the test JVM periodically. This was added believing Robolectric NATIVE's image
+                // decoder was *exhaustible* — consumed past a threshold, never to return. **That was
+                // wrong**, and the record is kept here rather than quietly rewritten: the runs show one
+                // or two failures and three hundred passes, including later tests that decode fine. A
+                // resource that ran out does not recover inside the same JVM; this one does. The
+                // rotating failure set is randomness landing somewhere new each run, not a ceiling.
                 //
-                // Caching the fixture's encoded bytes (ReframeTestPhoto) cut the pressure enough for a
-                // run to pass, which is what made it look fixed; the very next run failed again. This is
-                // the actual lever: a fresh JVM gets a fresh decoder, so no single process accumulates
-                // enough to run dry. 50 is comfortably below the ~100 where failures first appeared, and
-                // costs a handful of Robolectric restarts.
+                // So the real remedy is RetryFlakyDecode (feature/editor test sources), not this. This
+                // stays only because it is nearly free and lowering decodes per process is a plausible
+                // hedge against any per-process component of the flake — but it is NOT load-bearing and
+                // should be the first thing removed if CI time matters.
                 //
-                // A mitigation for a CI-image limitation, NOT a product fix — nothing here is wrong on a
-                // real device. Remove it if Robolectric's decoder stops being exhaustible.
+                // Either way a mitigation for a CI-image limitation, never a product fix: nothing here
+                // is wrong on a real device, where the surface was exercised by hand for the device gates.
                 test.forkEvery = 50
             }
         }
