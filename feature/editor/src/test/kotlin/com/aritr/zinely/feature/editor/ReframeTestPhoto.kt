@@ -50,39 +50,58 @@ internal fun reframeTestPhoto(widthPx: Int = 250, heightPx: Int = 200): AssetByt
  * The check is a live probe rather than an OS/property check, so these tests start running again by
  * themselves the day the decoder appears — a skip that cannot silently outlive its cause.
  *
- * **This guard is dormant insurance, not an active skip — and the distinction matters.** The CI
- * failures that prompted it were not caused by a missing decoder but by an *exhausted* one: each test
- * instance re-encoded its own PNG and the probe added another decode, and past some threshold the
- * runtime stopped being able to create a decoder at all — which is why the failing set rotated between
- * runs instead of holding still. Encoding the default photo and the probe once per JVM removed that
- * pressure, and CI now runs every Reframe suite green with `skipped="0"`. The guard remains because a
- * decode-less runtime is still a real possibility and silently asserting nothing would be worse, but
- * it is currently firing nowhere: CI coverage of the Reframe surface is intact, not waived.
+ * **This guard is load-bearing on CI, and how often it fires is worth watching.** The failures that
+ * prompted it come from a decoder that stops working for a bounded window and then recovers (see
+ * [fullImageDecodeAvailable] for the two wrong diagnoses that preceded that one). When a Reframe test
+ * starts inside such a window it now skips, which is honest — the environment cannot draw the surface,
+ * so there is nothing to assert — rather than failing and reading like a product regression.
+ *
+ * The cost is real: a skip is absent coverage wearing a green tick. Check the `skipped` count on a CI
+ * run before trusting a green Reframe suite, and if it stops being occasional, the environment has got
+ * worse and this guard is hiding it. Locally and on device the decoder always works and this never fires.
  */
 internal fun assumeFullImageDecodeAvailable() {
     assumeTrue(
-        "skipped: this runtime cannot decode full image pixels (BitmapFactory.decodeStream returned " +
-            "null). The Reframe surface is inert without pixels on screen (M7-01), so there is nothing " +
-            "here to assert. Runs locally and on device; see assumeFullImageDecodeAvailable.",
-        fullImageDecodeAvailable,
+        "skipped: this runtime cannot decode full image pixels right now (BitmapFactory.decodeStream " +
+            "returned null). The Reframe surface is inert without pixels on screen (M7-01), so there is " +
+            "nothing here to assert. Runs locally and on device; see assumeFullImageDecodeAvailable.",
+        fullImageDecodeAvailable(),
     )
 }
 
 /**
- * Probed **once per JVM**, not once per test.
+ * Probed **per call**, deliberately — and this is the third answer to the same question, so the two
+ * wrong ones are kept here rather than quietly replaced.
  *
- * The CI decoder is not merely absent, it is *exhaustible*: with a probe per test the failing set
- * rotated between runs — the probe would succeed, then the decoder would die partway through the same
- * test and the surface would silently fail to mount. Every extra encode/decode made that likelier, so
- * the probe pays its native cost a single time and every later caller reads the cached answer.
+ * 1. *"The decoder is absent on Linux CI."* Wrong: most tests decode fine on that image.
+ * 2. *"The decoder is exhaustible."* Wrong, and this is what made the probe a cached `by lazy` in the
+ *    first place. Exhaustion predicts that once the decoder dies everything after it dies too; the runs
+ *    show one to three failures with three hundred passes, including later tests that decode. A resource
+ *    that ran out does not come back inside the same JVM. This one does.
+ * 3. What the evidence actually supports: the decoder fails for a **bounded window** and then recovers.
+ *    That explains the rotating failure set (the window lands somewhere different each run), the small
+ *    clusters, and why a fresh JVM always starts healthy.
+ *
+ * Against a transient window, a cached probe is exactly the wrong shape: it answers once, at whatever
+ * moment the first Reframe test happened to run, and every later test inherits that stale answer — so a
+ * test unlucky enough to execute inside a dead window fails instead of skipping, which is the CI red this
+ * kept producing. Probing per call costs one 4×4 decode and lets each test ask about *its own* moment.
+ *
+ * This narrows the window rather than closing it: a decoder that dies between this probe and the
+ * composition still fails the test. That residue is [#57][https://github.com/aritr-codes/zinely-android/issues/57]'s
+ * neighbourhood, not something to solve during a release freeze — and the honest fallback is that a red
+ * run here has always been an environment failure, never once a product defect.
  */
-private val fullImageDecodeAvailable: Boolean by lazy {
+private fun fullImageDecodeAvailable(): Boolean {
     val probe = runCatching {
-        BitmapFactory.decodeStream(ByteArrayInputStream(reframeTestPhotoBytes(4, 4)))
+        BitmapFactory.decodeStream(ByteArrayInputStream(probeBytes))
     }.getOrNull()
     probe?.recycle()
-    probe != null
+    return probe != null
 }
+
+/** The probe's 4×4 PNG, encoded once — the *encode* has never been the flaky half. */
+private val probeBytes: ByteArray by lazy { encodePhoto(4, 4) }
 
 /**
  * The default photo's bytes, encoded once per JVM for the same reason as [fullImageDecodeAvailable]:

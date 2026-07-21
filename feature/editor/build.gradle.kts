@@ -71,20 +71,16 @@ android {
             all { test ->
                 test.maxParallelForks = 1
 
-                // Recycle the test JVM periodically. This was added believing Robolectric NATIVE's image
-                // decoder was *exhaustible* — consumed past a threshold, never to return. **That was
-                // wrong**, and the record is kept here rather than quietly rewritten: the runs show one
-                // or two failures and three hundred passes, including later tests that decode fine. A
-                // resource that ran out does not recover inside the same JVM; this one does. The
-                // rotating failure set is randomness landing somewhere new each run, not a ceiling.
+                // Recycle the test JVM periodically. Added on the belief that Robolectric NATIVE's image
+                // decoder was *exhaustible*; that was wrong (see ReframeTestPhoto.fullImageDecodeAvailable
+                // for the evidence that killed it, and the two diagnoses before this one). It is kept
+                // because a fresh JVM demonstrably starts with a healthy decoder, so bounding how long any
+                // one process runs bounds how much a bad window can affect — but it is a hedge, not the
+                // remedy, and the per-test probe in that file is what actually keeps CI honest.
                 //
-                // So the real remedy is RetryFlakyDecode (feature/editor test sources), not this. This
-                // stays only because it is nearly free and lowering decodes per process is a plausible
-                // hedge against any per-process component of the flake — but it is NOT load-bearing and
-                // should be the first thing removed if CI time matters.
-                //
-                // Either way a mitigation for a CI-image limitation, never a product fix: nothing here
-                // is wrong on a real device, where the surface was exercised by hand for the device gates.
+                // First thing to drop if CI time ever matters. Either way this is a mitigation for a
+                // CI-image limitation, never a product fix: nothing here is wrong on a real device, where
+                // the whole surface was exercised by hand for the ADR-053/ADR-055 device gates.
                 test.forkEvery = 50
             }
         }
