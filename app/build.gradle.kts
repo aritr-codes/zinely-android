@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -14,7 +16,27 @@ plugins {
 // version bump is one line and the APK renames itself. "0.6.0-alpha.1" = the first installable
 // alpha (Step 4, 2026-07-07): the physical print/fold verification cleared the ADR-047 gate and
 // the preview-text report was triaged to the ADR-028 Latin-first charset limitation.
-val zinelyVersionName = "0.8.0"
+// "0.9.0-beta.1" = the first build put in front of the named beta cohort.
+val zinelyVersionName = "0.9.0-beta.1"
+
+// Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
+// or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
+//
+// Why this exists: through 0.8.0 the release build was signed with the machine-local *debug*
+// keystore, which cannot be reproduced on another machine. A build signed by a different key
+// cannot be installed over the previous one, so a tester would have to uninstall to take an
+// update — and uninstalling destroys their zines, because backup/restore does not exist yet.
+// A stable release key is what makes a beta patchable.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use(::load)
+}
+
+/** Reads a signing credential from `keystore.properties` first, then the environment (CI). */
+fun signingCredential(propertyKey: String, environmentKey: String): String? =
+    keystoreProperties.getProperty(propertyKey) ?: System.getenv(environmentKey)
+
+val releaseKeystorePath: String? = signingCredential("storeFile", "ZINELY_KEYSTORE_FILE")
 
 // Artifact naming: every APK/bundle is "zinely-<versionName>-<variant>.apk" (e.g.
 // zinely-1.0-release.apk) so testers always see the app name + version in the file, never
@@ -33,18 +55,46 @@ android {
         applicationId = "com.aritr.zinely"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
+        // Monotonic, and independent of versionName: Android compares only this when deciding
+        // whether an APK is an upgrade. It stayed at 1 through 0.6.0-alpha.1 .. 0.8.0 (no build
+        // was ever distributed with an upgrade path); 2 is the first beta.
+        versionCode = 2
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        // Registered unconditionally so the DSL stays valid on a fresh clone; only populated when
+        // the credentials are actually present. `releaseKeystorePath == null` is the "this machine
+        // has no release key" case.
+        create("release") {
+            releaseKeystorePath?.let { path ->
+                storeFile = file(path)
+                storePassword = signingCredential("storePassword", "ZINELY_KEYSTORE_PASSWORD")
+                keyAlias = signingCredential("keyAlias", "ZINELY_KEY_ALIAS")
+                keyPassword = signingCredential("keyPassword", "ZINELY_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Alpha side-load signing only: the machine-local debug keystore keeps the release
-            // build installable for testers (and signature-stable across rebuilds from this
-            // machine). A real release keystore must replace this before any store distribution.
-            signingConfig = signingConfigs.getByName("debug")
+            // Falls back to debug signing when no release key is configured, so `assembleRelease`
+            // still works on a fresh clone or a contributor's machine. Such a build is runnable but
+            // NOT distributable — the gate below is what keeps the two from being confused.
+            signingConfig =
+                if (releaseKeystorePath != null) {
+                    signingConfigs.getByName("release")
+                } else {
+                    logger.warn(
+                        "zinely: no release keystore configured (keystore.properties / " +
+                            "ZINELY_KEYSTORE_FILE) — signing $zinelyVersionName with the debug key. " +
+                            "This APK must not be distributed: testers could not install an update " +
+                            "over it without uninstalling, which destroys their zines."
+                    )
+                    signingConfigs.getByName("debug")
+                }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
