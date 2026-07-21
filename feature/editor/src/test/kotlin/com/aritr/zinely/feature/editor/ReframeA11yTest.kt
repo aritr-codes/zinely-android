@@ -83,7 +83,9 @@ class ReframeA11yTest {
 
     // A real decodable photo at the element's own 1.25 box aspect: Reframe verbs are inert until the photo
     // is genuinely on screen (M7-01), and every announcement below is the response to a verb.
-    private val photo = reframeTestPhoto()
+    // `by lazy` for the reason given in ReframeSessionTest: the fixture's assumption must be thrown
+    // from inside the test body, not from the constructor, to be honoured as a skip.
+    private val photo by lazy { reframeTestPhoto() }
 
     private fun render(s: EditorStore, coachSeen: Boolean? = true, bytes: AssetBytesSource = photo) {
         coachSeenCalls = 0

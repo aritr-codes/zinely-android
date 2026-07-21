@@ -58,7 +58,11 @@ class ReframeSessionTest {
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val pageSizePt = PtSize(300.0, 300.0)
-    private val photo = reframeTestPhoto()
+    // `by lazy`, not a field initializer: the fixture carries an assumption (a runtime without a full
+    // image decoder cannot draw this surface at all — see assumeFullImageDecodeAvailable), and an
+    // assumption thrown while the test class is being *constructed* is not reliably honoured as a skip.
+    // Deferring the first touch into the test body makes the skip deterministic.
+    private val photo by lazy { reframeTestPhoto() }
 
     private fun store(pages: Int = 1): EditorStore {
         val runner = object : EditorEffectRunner {
