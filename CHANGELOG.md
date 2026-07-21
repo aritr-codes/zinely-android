@@ -26,6 +26,14 @@ Implemented as B1–B4 (style intent · Type bar · keyboard + haptics · parity
 
 **Compatibility.** Existing zines are unaffected and open unchanged at their current styling — no file-format change, no migration. Offline/privacy invariants intact: no network, no account, no new dependency.
 
+### Fixed — reopening a zine and adding to it could make it unopenable
+
+Found during the on-device accessibility pass, on a physical phone, and fixed before the beta.
+
+- **Adding an element to a reopened zine could permanently break it.** Every element gets an id, and the counter those ids come from was rebuilt from scratch each time a project was opened instead of continuing from what the project already contained. So the first photo or text box added after reopening a zine reused an id that was already in use. The result was silent at the time and fatal afterwards: the zine saved normally, and then would not open again — the editor showed "Couldn't open this project." from that point on, with no way back through the app. It also made the two elements sharing an id behave as one: both read as selected to a screen reader, and undo would have removed both.
+
+  It is fixed at the source — the counter now starts past every id the zine already holds — so **an affected zine repairs itself the next time it is opened, with no file-format change and nothing for you to do**. A zine that was *already* saved with duplicate ids stays unopenable, because the damage is on disk rather than in the code; no beta tester can be carrying one, because the beta requires a fresh install (see the signing note in the release notes).
+
 ### Known limitations
 
 - **Font choice is not in this milestone.** Text renders in the single bundled Inter family; choosing a font is planned for V1 and needs more families bundled first. Bold and italic use real bundled Inter faces, not synthesised ones.

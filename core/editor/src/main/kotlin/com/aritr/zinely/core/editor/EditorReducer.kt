@@ -36,6 +36,8 @@ public object EditorReducer {
         is Intent.CommitAddImage -> {
             // Mint the id reducer-side (single source of id allocation) so it can never collide with an
             // existing element — a duplicate id would make PlaceCommand.invertOn delete BOTH matches.
+            // That holds only because `nextToken` starts past every id the document already carries
+            // (EditorModel.firstFreeToken); a constant seed silently broke it on every reopen.
             val id = "el-${model.nextToken}"
             // Placement-default policy (ADR-053 §2/§3): a newly placed photo covers its frame — Fit.FILL,
             // full crop — applied HERE at placement time, not as a render-time default flip. The model's
