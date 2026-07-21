@@ -43,11 +43,46 @@ class BundledFontResolverTest {
     }
 
     @Test
-    fun mapsEveryFamilyNameToTheBundledDefault() {
-        // MVP bundles one family, so a known and an unknown family resolve to the same style instance.
+    fun anUnregisteredFamilyFallsBackToTheRegistryDefault() {
+        // Renamed at F3: this assertion used to be titled "maps every family name to the bundled
+        // default", which described the pre-registry behaviour of discarding `fontFamily` outright. The
+        // assertion itself is unchanged and still holds — but now for the right reason. Both names below
+        // are unregistered, so both resolve to the registry's default family.
         assertSame(
             resolver.resolve("sans-serif", bold = false, italic = false),
             resolver.resolve("Totally Unknown Family", bold = false, italic = false),
+        )
+    }
+
+    @Test
+    fun resolvesPerFamilyThroughTheRegistry() {
+        // Family routing must be real, not incidental. With only Inter bundled, a same-assets second
+        // family would prove nothing, so the probe family points at a DIFFERENT face of the same TTF set:
+        // if `fontFamily` were still discarded, both calls below would return the same Typeface.
+        val probe = DocumentFontRegistry(
+            families = listOf(
+                DocumentFontRegistry.Bundled.resolve(DocumentFontRegistry.INTER),
+                DocumentFontFamily(
+                    name = "ProbeFamily",
+                    regularAsset = "fonts/Inter-Bold.ttf",
+                    boldAsset = "fonts/Inter-Bold.ttf",
+                    italicAsset = "fonts/Inter-BoldItalic.ttf",
+                    boldItalicAsset = "fonts/Inter-BoldItalic.ttf",
+                ),
+            ),
+            defaultFamilyName = DocumentFontRegistry.INTER,
+        )
+        val r = BundledFontResolver(RuntimeEnvironment.getApplication().assets, probe)
+
+        assertNotSame(
+            "the two families must not resolve to the same face",
+            r.resolve(DocumentFontRegistry.INTER, bold = false, italic = false),
+            r.resolve("ProbeFamily", bold = false, italic = false),
+        )
+        // ...and the probe's regular face IS Inter-Bold, proving the asset came from the family row.
+        assertSame(
+            r.resolve("ProbeFamily", bold = false, italic = false),
+            r.resolve(DocumentFontRegistry.INTER, bold = true, italic = false),
         )
     }
 }
