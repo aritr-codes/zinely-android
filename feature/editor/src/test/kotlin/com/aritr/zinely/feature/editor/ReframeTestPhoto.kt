@@ -50,10 +50,14 @@ internal fun reframeTestPhoto(widthPx: Int = 250, heightPx: Int = 200): AssetByt
  * The check is a live probe rather than an OS/property check, so these tests start running again by
  * themselves the day the decoder appears — a skip that cannot silently outlive its cause.
  *
- * **Coverage consequence, stated rather than absorbed:** every Reframe *surface* test is therefore
- * unverified in CI, and is gated instead by the local run and the on-device pass. This mirrors the
- * ADR-028 §G5 escalation, where `PdfDocument` proved ungeneratable under Robolectric and its proof
- * moved to an instrumented test that CI compiles but does not execute.
+ * **This guard is dormant insurance, not an active skip — and the distinction matters.** The CI
+ * failures that prompted it were not caused by a missing decoder but by an *exhausted* one: each test
+ * instance re-encoded its own PNG and the probe added another decode, and past some threshold the
+ * runtime stopped being able to create a decoder at all — which is why the failing set rotated between
+ * runs instead of holding still. Encoding the default photo and the probe once per JVM removed that
+ * pressure, and CI now runs every Reframe suite green with `skipped="0"`. The guard remains because a
+ * decode-less runtime is still a real possibility and silently asserting nothing would be worse, but
+ * it is currently firing nowhere: CI coverage of the Reframe surface is intact, not waived.
  */
 internal fun assumeFullImageDecodeAvailable() {
     assumeTrue(
