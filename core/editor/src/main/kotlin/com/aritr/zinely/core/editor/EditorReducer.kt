@@ -57,6 +57,7 @@ public object EditorReducer {
             if (tx == null || tx.token != intent.token || tx.id != intent.id) Reduction(model)
             else endTextSession(model, intent.id, after = null)
         }
+        is Intent.StyleText -> styleText(model, intent)
 
         // — double-tap seam: retarget by topmost element type (ADR-053 §4) —
         is Intent.DoubleTapAt -> when (val hit = HitTest.topmostAt(currentPage(model), intent.pagePoint)
@@ -219,6 +220,32 @@ public object EditorReducer {
                 interaction = Interaction.EditingText(el.id, model.nextToken),
             ),
         )
+    }
+
+    /**
+     * Immediate style commit (FR-3, ADR-055). Patches only the supplied fields onto the element's current
+     * [com.aritr.zinely.core.model.TextStyle] via copy-on-copy, so every untouched field — including
+     * `fontFamily`, which has no patch — plus the element's text/geometry/id/zIndex are preserved. One
+     * committed change ⇒ one undoable [EditTextCommand]. Absent / non-text id or an unchanged style ⇒ no-op.
+     */
+    private fun styleText(model: EditorModel, intent: Intent.StyleText): Reduction {
+        val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? TextElement
+            ?: return Reduction(model)
+        // No style on a blank box: a still-blank freshly-placed box keeps its PlaceCommand as the last undo
+        // entry, which endTextSession's fresh-blank-place coalescing relies on (ADR-055 §3). Styling it would
+        // push an EditTextCommand and break "add text, type nothing, dismiss ⇒ no undo cruft".
+        if (el.text.isBlank()) return Reduction(model)
+        val after = el.copy(
+            style = el.style.copy(
+                sizePt = intent.sizePt ?: el.style.sizePt,
+                color = intent.color ?: el.style.color,
+                align = intent.align ?: el.style.align,
+                bold = intent.bold ?: el.style.bold,
+                italic = intent.italic ?: el.style.italic,
+            ),
+        )
+        return if (after == el) Reduction(model)
+        else committing(model, EditTextCommand(model.currentPageIndex, el.id, el, after))
     }
 
     /** Open a Reframe session on [id] iff it names an [ImageElement] on the current page; else a no-op. */

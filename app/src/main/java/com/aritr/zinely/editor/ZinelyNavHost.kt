@@ -366,6 +366,7 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 // Reframe a11y announcements (ADR-053 IF3) ride the same announceForAccessibility drain as
                 // the reducer's selection/undo lines (bound at line ~302).
                 onReframeAnnounce = viewModel::announce,
+                onStyleAnnounce = viewModel::announce,
                 // The autosave-event stream (ADR-034): each emission raises the transient "Saved ✨"
                 // reassurance in the host. Hot SharedFlow, collected inside EditorScreen.
                 savedSignals = viewModel.saved,

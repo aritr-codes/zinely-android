@@ -1,6 +1,8 @@
 package com.aritr.zinely.core.editor
 
+import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 
@@ -66,6 +68,21 @@ public sealed interface Intent {
     /** Discard the session's draft (back/dismiss); a still-empty box is removed (§5.6). [token] rejects a
      *  stale cancel after a newer session opened (D5). */
     public data class CancelText(val id: String, val token: Long) : Intent
+
+    /**
+     * Immediate-commit style change to a [TextElement] by id (FR-3, ADR-055) — like [Nudge]/[Reorder],
+     * not a session: each committed change is one undoable [EditTextCommand]. Every field is a nullable
+     * patch; `null` keeps the element's current value, so an untouched field (and `fontFamily`, which has
+     * no patch here) is always preserved. No-op if [id] is absent / not text, or the style is unchanged.
+     */
+    public data class StyleText(
+        val id: String,
+        val sizePt: Double? = null,
+        val color: ColorRgba? = null,
+        val align: TextAlign? = null,
+        val bold: Boolean? = null,
+        val italic: Boolean? = null,
+    ) : Intent
 
     // — transform (gesture + a11y twins share the commit path, §6) —
     public data class BeginTransform(val ids: Set<String>) : Intent

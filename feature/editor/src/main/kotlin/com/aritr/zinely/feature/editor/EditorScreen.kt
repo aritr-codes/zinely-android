@@ -1,7 +1,6 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,8 +32,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -55,15 +57,19 @@ import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.AssetBytesSource
+import com.aritr.zinely.render.android.readImageIntrinsics
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.withContext
 
 /** Test tag on the editor canvas Box (the measured, gesture-bearing area). */
 public const val EditorCanvasTestTag: String = "editor-canvas"
@@ -129,6 +135,9 @@ public const val EditorPreviewActionTestTag: String = "editor-preview-action"
  * @param onRetrySaveError invoked when the user taps the failure banner's "Try now" ([ADR-038](../DECISIONS.md#adr-038))
  *   — the app forces an immediate save; the outcome flows through the ADR-037 path (clears on success,
  *   re-reports on failure). Defaults to a no-op.
+ * @param onStyleAnnounce speaks a discrete Type-bar style change (FR-3, [ADR-055](../DECISIONS.md#adr-055),
+ *   WCAG 4.1.3). Same contract and same host drain as [onReframeAnnounce] — a separate parameter only so
+ *   the two surfaces stay independently testable. Defaults to a no-op (previews/tests).
  * @param onPreview invoked by the "Preview" entry point to open the unified Proof surface (M5,
  *   [ADR-051](../DECISIONS.md#adr-051) — the reader's-booklet PreviewScreen it once opened is retired,
  *   superseded by the imposed-sheet-first Proof). `null` (the default) hides the affordance entirely, so a
@@ -145,6 +154,7 @@ public fun EditorScreen(
     reframeCoachSeen: Boolean? = false,
     onReframeCoachSeen: () -> Unit = {},
     onReframeAnnounce: (String) -> Unit = {},
+    onStyleAnnounce: (String) -> Unit = {},
     savedSignals: Flow<Unit> = emptyFlow(),
     saveError: SaveErrorKind? = null,
     onDismissSaveError: () -> Unit = {},
@@ -190,12 +200,24 @@ public fun EditorScreen(
     var live by remember { mutableStateOf<LiveTransform?>(null) }
     var resizeOverride by remember { mutableStateOf<Map<String, Transform>?>(null) }
 
+    // The same feature-ephemeral idiom for a settling Type-bar size burst (ADR-055): the in-flight style
+    // the canvas paints while the 400ms settle coalesces the undo entry. Like the two above it never
+    // reaches the reducer — only the one Intent.StyleText on settle does — and the Type bar clears it on
+    // dispose, so it cannot outlive the bar that owns it.
+    var styleOverride by remember { mutableStateOf<Map<String, TextStyle>?>(null) }
+
     // Feature-ephemeral Reframe session state (ADR-053 §5.1): the fit/zoom/pan draft + the decoded photo
     // aspect, held here for the life of one Interaction.Reframing and baked to the document only on Done
     // (Intent.CommitReframe) — the reducer never sees the live pan/zoom, exactly like the transform `live`.
     val reframing = uiState.interaction as? Interaction.Reframing
     var reframeDraft by remember { mutableStateOf<FramingDraft?>(null) }
     var reframePratio by remember { mutableStateOf<Double?>(null) }
+    // Whether this session's photo can be read at all: `null` until resolved, then true/false. Reframe
+    // chrome is presented **only** on `true` (M7-01 / RF-4). Gating presentation rather than cancelling
+    // after it is what makes "do not enter Reframe for an undisplayable photo" literal: an unreadable
+    // photo never reaches `true`, so no overlay and no controls are ever composed — where previously the
+    // session rendered for the duration of the readability read before being cancelled.
+    var reframeReadable by remember { mutableStateOf<Boolean?>(null) }
     var reframeAdjusted by remember { mutableStateOf(false) }
     // The Reframe screen-reader announcements (bench `#rfLive` / `rfSay`): every discrete adjustment, fit
     // change, and session end speaks (WCAG 4.1.3). Routed through [onReframeAnnounce] to the host's
@@ -204,12 +226,47 @@ public fun EditorScreen(
     // Review finding #1) and leaves no lingering live-region node to become a stale focus stop (#2).
     val latestAnnounce by rememberUpdatedState(onReframeAnnounce)
     val sayReframe = { msg: String -> latestAnnounce(msg) }
-    // Hardware-keyboard receiver for the Reframe session (bench: arrows nudge · +/− zoom · Enter saves ·
-    // Esc cancels). Focus is requested when a session opens so keystrokes route here without a prior tap.
-    val reframeKeyFocus = remember { FocusRequester() }
+    // The editor's hardware-keyboard receiver (installed on the root Column below), shared by the two
+    // grammars that need one: the Reframe session (bench: arrows nudge · +/− zoom · Enter saves · Esc
+    // cancels) and the FR-3 bold/italic shortcuts (ADR-055 §4). Focus is requested when either becomes
+    // live, so keystrokes route here without a prior tap.
+    val editorKeyFocus = remember { FocusRequester() }
     val reduceMotion = rememberReduceMotion()
     val bratioOf = { el: ImageElement -> el.transform.widthPt / el.transform.heightPt }
     val adjustDraft = { d: FramingDraft? -> reframeDraft = d; reframeAdjusted = true }
+
+    // ── FR-3 Text styling (ADR-055) ────────────────────────────────────────────────────────────────
+    // The one text box the Type bar can act on, or null. Derived from the store every recomposition —
+    // never cached — so undo/redo and any document change re-sync the open bar automatically. The
+    // guards mirror the reducer's own StyleText no-ops (absent / not text / blank), so the surface
+    // never offers a control the reducer would silently refuse; the inline editor owns styling of its
+    // own session, so Style stands down while one is open (ADR-055 §4).
+    val styleTarget = uiState.selection.singleOrNull()
+        ?.let { id -> uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id } }
+        ?.let { it as? TextElement }
+        ?.takeIf { it.text.isNotBlank() && uiState.interaction !is Interaction.EditingText }
+    // Type-bar visibility is surface-only state (a disclosure flag, not a styling draft): the bar is
+    // non-modal and the reducer neither knows nor needs to know it is open.
+    var typeBarOpen by remember { mutableStateOf(false) }
+    // Any change of the styleable element closes the bar (ADR-055 §3: "a selection change to a non-text
+    // or empty element closes the Type bar"). Keyed on the id, so committing a style through the bar —
+    // which changes the element but not its id — leaves it open, exactly as the frozen prototype does.
+    // Entering an inline edit session nulls `styleTarget` too, so the bar closes for the session and
+    // reopens closed on exit — the same key, one rule.
+    //
+    // The same effect hands the canvas the keyboard whenever a styleable box becomes the target, so
+    // Ctrl/Cmd+B works on a fresh selection without a prior tap on the canvas (the Reframe session does
+    // exactly this at its own entry). It cannot fight the inline editor for focus: `styleTarget` is null
+    // for the whole of an EditingText session, which is when the text field owns focus.
+    LaunchedEffect(styleTarget?.id) {
+        typeBarOpen = false
+        if (styleTarget != null) runCatching { editorKeyFocus.requestFocus() }
+    }
+    // Style announcements ride the host's existing announceForAccessibility drain — the same channel
+    // Reframe and the reducer's selection/undo announcements use (no second live-region mechanism).
+    val latestStyleAnnounce by rememberUpdatedState(onStyleAnnounce)
+    val sayStyle = { msg: String -> latestStyleAnnounce(msg) }
+    val styleBuzz = rememberStyleBuzz()
 
     // Open/refresh the draft when a session begins (keyed on token): seed from the current framing so
     // reframing continues from the present look, then re-seed once the true photo aspect decodes — unless
@@ -218,16 +275,51 @@ public fun EditorScreen(
         val rf = reframing
         reframeAdjusted = false
         reframePratio = null
+        reframeReadable = null // nothing is presented until this resolves true
         reframeDraft = rf?.let { Framing.seedDraft(it.before, bratioOf(it.before), bratioOf(it.before)) }
         if (rf != null) {
-            // Announce entry + hand the keyboard to the reframe receiver. The coach-mark has now done its
-            // teaching job (bench `taughtReframe = true`), so persist it unless already positively seen.
+            // **Refuse a session we cannot honour (M7-01 / RF-4, founder Choice 1).** A photo whose
+            // intrinsic size cannot be read is a photo that cannot be framed, so the session is declined
+            // rather than opened inert.
+            //
+            // Refusal lives here, at the surface, rather than in the reducer: `Intent.DoubleTapAt` opens
+            // the session inside the pure `:core:editor` reducer, which cannot read asset bytes without
+            // breaking core purity. Doing it here also covers all three entry paths — double-tap, the
+            // Reframe chip, and the a11y custom action — under one rule. It runs *before* the entry
+            // announcement, so a refused session never announces that it started.
+            //
+            // This catches the common cases (absent / corrupt master) cheaply, with a header read that
+            // allocates no pixels. It cannot predict a pixel decode that fails later, so the in-session
+            // gate below remains as the second layer for that rarer case.
+            //
+            // **Keyboard ownership is claimed BEFORE the read (M7-01-R1).** Focus is keystroke *routing*,
+            // not presentation: the receiver is the root Column, which is composed either way, and every
+            // reframe verb it serves is independently gated (adjustments on `reframePratio`, chrome on
+            // `reframeReadable`), so nothing becomes reachable early. Claiming it after the read left a
+            // window where the session existed but keystrokes went nowhere — Escape pressed immediately
+            // on entry was simply lost, because `withContext(Dispatchers.IO)` suspends past the point
+            // Compose considers the effect idle. Escape during the window now cancels, which is exactly
+            // what the user asked for.
+            runCatching { editorKeyFocus.requestFocus() }
+            val measurable = withContext(Dispatchers.IO) {
+                readImageIntrinsics(imageBytes, rf.before.assetId)
+            }
+            if (measurable == null) {
+                if (ReframeUnavailableAnnouncement.isNotBlank()) sayReframe(ReframeUnavailableAnnouncement)
+                dispatch(Intent.CancelReframe(rf.token))
+                return@LaunchedEffect
+            }
+            // Readable: release the chrome. Nothing above this line has presented anything, so a refused
+            // session is never seen — the session exists in the reducer for as long as this read takes,
+            // but it has no surface until here.
+            reframeReadable = true
+            // Announce entry. The coach-mark has now done its teaching job (bench `taughtReframe = true`),
+            // so persist it unless already positively seen. (The keyboard was claimed before the read.)
             sayReframe(
                 "Reframing photo. Drag to reposition, pinch to zoom, or use the on-screen " +
                     "move and zoom controls. Done saves, Cancel discards.",
             )
             if (reframeCoachSeen != true) onReframeCoachSeen()
-            runCatching { reframeKeyFocus.requestFocus() }
         }
     }
     LaunchedEffect(reframing?.token, reframePratio) {
@@ -247,7 +339,12 @@ public fun EditorScreen(
         val d = latestDraft
         if (rf != null && d != null) {
             val br = bratioOf(rf.before)
-            val after = Framing.toImage(rf.before, d, latestPratio ?: br, br)
+            val pr = latestPratio
+            // A null aspect means the overlay never displayed this photo, so the session was inert and
+            // there is nothing to bake. Committing `before` unchanged still ends the session through the
+            // same token-gated intent, and makes it impossible for a blind session to rewrite framing —
+            // the divergence INV-01 found was exactly a crop baked against a photo nobody could see.
+            val after = if (pr != null) Framing.toImage(rf.before, d, pr, br) else rf.before
             // Speak the outcome (bench: "Framing saved." vs "Framing unchanged.") — the same crop/fit
             // comparison the reducer uses to decide whether a command is recorded.
             sayReframe(
@@ -259,12 +356,17 @@ public fun EditorScreen(
 
     // The Reframe adjustment verbs, shared by the on-screen controls AND the hardware keyboard so the two
     // paths can never diverge (they mutate the same ephemeral draft and speak the same live-region line).
+    // Every adjustment verb is gated on `reframePratio`, which the overlay reports only when the photo is
+    // both measurable and displayed (M7-01). Until it arrives the frame is inert — keyboard, on-screen
+    // controls, and pointer gestures alike — so no draft can ever be built against a photo the user cannot
+    // see, and `reframePratio` is guaranteed non-null wherever the commit resolves geometry.
     val reframeNudge = { dx: Int, dy: Int ->
         val rf = reframing
         val d = reframeDraft
-        if (rf != null && d != null) {
+        val pr = reframePratio
+        if (rf != null && d != null && pr != null) {
             val br = bratioOf(rf.before)
-            adjustDraft(Framing.nudged(d, dx, dy, reframePratio ?: br, br))
+            adjustDraft(Framing.nudged(d, dx, dy, pr, br))
             sayReframe(
                 when {
                     dx < 0 -> "Moved left"; dx > 0 -> "Moved right"; dy < 0 -> "Moved up"; else -> "Moved down"
@@ -276,9 +378,10 @@ public fun EditorScreen(
     val reframeZoom = { factor: Double ->
         val rf = reframing
         val d = reframeDraft
-        if (rf != null && d != null) {
+        val pr = reframePratio
+        if (rf != null && d != null && pr != null) {
             val br = bratioOf(rf.before)
-            val nd = Framing.clampPan(Framing.zoomed(d, factor), reframePratio ?: br, br)
+            val nd = Framing.clampPan(Framing.zoomed(d, factor), pr, br)
             adjustDraft(nd)
             sayReframe("Zoom ${(nd.zoom * 100).roundToInt()} percent")
         }
@@ -286,7 +389,7 @@ public fun EditorScreen(
     }
     val reframeSetFit = { f: FrameFit ->
         val d = reframeDraft
-        if (d != null) {
+        if (d != null && reframePratio != null) {
             adjustDraft(applyFit(d, f))
             sayReframe(
                 if (f == FrameFit.FILL) {
@@ -299,13 +402,21 @@ public fun EditorScreen(
         Unit
     }
     val reframeReset = {
-        adjustDraft(Framing.DEFAULT_FILL)
-        sayReframe("Framing reset. Cancel to undo.")
+        if (reframePratio != null) {
+            adjustDraft(Framing.DEFAULT_FILL)
+            sayReframe("Framing reset. Cancel to undo.")
+        }
+        Unit
     }
     val reframeCancel = {
         val rf = reframing
         if (rf != null) {
-            sayReframe("Reframing cancelled.")
+            // Announce only a session the user was actually told had started (M7-01-R1). Escape is live
+            // from the instant the session exists — before the readability read resolves — so a cancel
+            // can land while the entry line has not been spoken. Saying "Reframing cancelled." then
+            // would report the end of something a screen-reader user never heard begin. The cancel
+            // itself still happens; only the announcement is conditioned on the entry announcement.
+            if (reframeReadable == true) sayReframe("Reframing cancelled.")
             dispatch(Intent.CancelReframe(rf.token))
         }
         Unit
@@ -337,7 +448,64 @@ public fun EditorScreen(
         }
     }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+            // The editor's keyboard receiver, serving the two grammars that need one: the Reframe session
+            // (bench: reframe owns the keyboard) and the FR-3 bold/italic shortcuts. Every branch routes
+            // through the SAME shared verbs the on-screen controls use, so keyboard and touch never diverge.
+            //
+            // It sits on the WHOLE screen, not on the canvas, for the reason the prototype binds its
+            // handler to `document`: focus moves around inside the editor — tapping the Style hat with a
+            // mouse focuses that button — and a canvas-scoped receiver would go silently dead the moment
+            // focus left the canvas subtree, which is precisely when a hardware-keyboard user is working.
+            // As an ancestor of every control, its *preview* pass runs before the focused node whatever
+            // holds focus.
+            .focusRequester(editorKeyFocus)
+            // focusTarget, NOT focusable(). Two deliberate differences, both wanted here:
+            //  · No focus SEMANTICS — `focusable` installs a `focused` property + requestFocus action,
+            //    i.e. exactly the stray TalkBack stop that the old Reframe-only gate existed to avoid.
+            //    `focusTarget` is the focus half without the semantics half, so the receiver can be
+            //    permanent (a shortcut is live most of the time, not just during a Reframe session)
+            //    without adding a screen-reader stop.
+            //  · Focusability.Always rather than `focusable`'s SystemDefined (keyboard-input-mode only),
+            //    so the receiver holds focus in touch mode too — which is what keeps the shortcut alive
+            //    across a selection change. The cost is one unindicated Tab stop on the editor root.
+            .focusTarget()
+            .onPreviewKeyEvent { ev ->
+                if (ev.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                if (reframing == null) {
+                    // Industry-standard bold/italic (bench: `meta && b|i` while a text block is selected),
+                    // ADR-055 §4. `styleTarget` IS the specified precondition — a single, non-blank text
+                    // box, no inline edit session open — so the "suppressed inside the inline editor" rule
+                    // is structural here rather than a second check that could drift: an open session nulls
+                    // the target and this branch falls through to the focused text field. Returning true
+                    // consumes the event (bench's `preventDefault`); the fall-through cannot inject rich
+                    // text either way, because the Compose editor is plain-text — hence no Ctrl+U arm
+                    // (bench needs one only to stop `contenteditable` from writing a `<u>`).
+                    val target = styleTarget
+                    if (target != null && (ev.isCtrlPressed || ev.isMetaPressed)) {
+                        when (ev.key) {
+                            Key.B -> { toggleBold(target, dispatch, sayStyle, styleBuzz); return@onPreviewKeyEvent true }
+                            Key.I -> { toggleItalic(target, dispatch, sayStyle, styleBuzz); return@onPreviewKeyEvent true }
+                            else -> Unit
+                        }
+                    }
+                    return@onPreviewKeyEvent false
+                }
+                val step = if (ev.isShiftPressed) 3 else 1
+                when (ev.key) {
+                    Key.Escape -> { reframeCancel(); true }
+                    Key.Enter, Key.NumPadEnter -> { commitReframe(); true }
+                    Key.DirectionLeft -> { reframeNudge(-step, 0); true }
+                    Key.DirectionRight -> { reframeNudge(step, 0); true }
+                    Key.DirectionUp -> { reframeNudge(0, -step); true }
+                    Key.DirectionDown -> { reframeNudge(0, step); true }
+                    Key.Plus, Key.Equals -> { reframeZoom(Framing.ZOOM_STEP); true }
+                    Key.Minus -> { reframeZoom(1.0 / Framing.ZOOM_STEP); true }
+                    else -> false
+                }
+            },
+    ) {
         // The "Preview" entry to the unified Proof surface (M5, ADR-051). A quiet top-end nav
         // action (not a thumb-zone craft supply — it advances the journey, it doesn't place content);
         // shown only when the host supplies a destination, so the editor's tested layout is unchanged
@@ -362,29 +530,7 @@ public fun EditorScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .testTag(EditorCanvasTestTag)
-                // The Reframe hardware-keyboard grammar (bench: reframe owns the keyboard). Arrows nudge
-                // (Shift = a coarser step), +/− zoom, Enter saves, Esc cancels — every branch routes through
-                // the SAME shared verbs the on-screen controls use, so keyboard and touch never diverge.
-                .focusRequester(reframeKeyFocus)
-                // Focusable ONLY during a Reframe session, so the canvas is a keyboard target then (and never
-                // a stray TalkBack stop over the element nodes otherwise).
-                .focusable(enabled = reframing != null)
-                .onPreviewKeyEvent { ev ->
-                    if (reframing == null || ev.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    val step = if (ev.isShiftPressed) 3 else 1
-                    when (ev.key) {
-                        Key.Escape -> { reframeCancel(); true }
-                        Key.Enter, Key.NumPadEnter -> { commitReframe(); true }
-                        Key.DirectionLeft -> { reframeNudge(-step, 0); true }
-                        Key.DirectionRight -> { reframeNudge(step, 0); true }
-                        Key.DirectionUp -> { reframeNudge(0, -step); true }
-                        Key.DirectionDown -> { reframeNudge(0, step); true }
-                        Key.Plus, Key.Equals -> { reframeZoom(Framing.ZOOM_STEP); true }
-                        Key.Minus -> { reframeZoom(1.0 / Framing.ZOOM_STEP); true }
-                        else -> false
-                    }
-                },
+                .testTag(EditorCanvasTestTag),
         ) {
             // Fit the whole page into the measured canvas (contain), top-left anchored (pan stays zero for
             // the MVP host; true centring/zoom is a follow-up). The scale is the single px-per-point source.
@@ -433,6 +579,7 @@ public fun EditorScreen(
                     live = live,
                     modifier = Modifier.fillMaxSize(),
                     resizeOverride = resizeOverride,
+                    styleOverride = styleOverride,
                     imageBytes = imageBytes,
                 )
                 // The page gesture surface and resize handles are inert while a text session is open (Codex
@@ -476,7 +623,7 @@ public fun EditorScreen(
                     uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == rf.id } as? ImageElement
                 }
                 val currentDraft = reframeDraft
-                if (reframeEl != null && currentDraft != null) {
+                if (reframeEl != null && currentDraft != null && reframeReadable == true) {
                     ReframeOverlay(
                         element = reframeEl,
                         draft = currentDraft,
@@ -597,6 +744,35 @@ public fun EditorScreen(
                     kind = lastSaveErrorKind,
                 )
 
+                // The Type bar (FR-3, ADR-055, bench `.typebar`): a floating card pinned to the bottom of
+                // the canvas — bench `position:absolute; bottom:calc(74px + safe-area)`, i.e. it FLOATS
+                // OVER the page, above the bottom chrome. It is an overlay here for the same reason it is
+                // absolutely positioned there: at four rows it is ~240dp tall, and putting it in the
+                // bottom Column's flow steals that height from the weight(1f) canvas — on a short screen
+                // the canvas collapses toward zero and the measure→Intent.SetView→remeasure scale
+                // feedback never settles (an infinite recomposition, caught by TypeBarTest).
+                //
+                // It holds no styling state — it reads [styleTarget]'s live style and dispatches
+                // Intent.StyleText — so an undo/redo that restores a different style re-syncs it for free
+                // on the next recomposition (ADR-055 §3). Reveals without motion, deliberately: no
+                // enter/exit animation to gate on reduced motion (ADR-055 §4).
+                if (styleTarget != null && typeBarOpen && reframing == null) {
+                    TypeBar(
+                        element = styleTarget,
+                        dispatch = dispatch,
+                        onAnnounce = sayStyle,
+                        onPreview = { styleOverride = it },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            // bench `.typebar{max-width:calc(100% - 24px)}` — the frozen cap, which the
+                            // first port dropped. On a centred max-content card a symmetric 12dp padding
+                            // IS that cap: it lowers the incoming max constraint, which is what the card's
+                            // `width(IntrinsicSize.Max)` clamps against. Without it the bar has no floor
+                            // under it on a narrow screen or a large font scale.
+                            .padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
+                    )
+                }
+
                 // The text-edit overlay: only while a session is open and its element still exists (a delete
                 // races it closed; the session's onDispose/token guard then no-ops the trailing commit).
                 if (interaction is Interaction.EditingText) {
@@ -631,7 +807,9 @@ public fun EditorScreen(
         // Intent.RequestAddImage), add words (the empty-state add-text behavior), and undo/redo bound to
         // the real canUndo/canRedo so a disabled supply is visibly inert, not a dead tap.
         // Reframe swaps its chrome in over the supply tray + context bar (bench `toolbar[data-mode="reframe"]`).
-        if (reframing != null) {
+        // Gated on `reframeReadable == true` alongside the overlay, so the controls and the photo layer
+        // appear together or not at all — a refused session shows neither (M7-01 / RF-4).
+        if (reframing != null && reframeReadable == true) {
             ReframeControls(
                 fit = reframeDraft?.fit ?: FrameFit.FILL,
                 zoomPercent = ((reframeDraft?.zoom ?: 1.0) * 100).roundToInt(),
@@ -678,11 +856,19 @@ public fun EditorScreen(
         )
 
         // The transform context bar is hidden during a Reframe session — the Reframe controls take over.
-        if (reframing == null) {
+        // "During a session" means a *presented* one: while readability is still resolving, and for a
+        // session that is refused outright, the bar stays put so the editor is visually untouched by a
+        // session the user never sees (M7-01 / RF-4).
+        if (reframing == null || reframeReadable != true) {
             EditorContextBar(
                 selection = uiState.selection,
                 dispatch = dispatch,
                 modifier = Modifier.fillMaxWidth(),
+                // Style is offered only where it can act (FR-3, ADR-055): a single, non-blank text box,
+                // outside an inline edit session. Anything else — a photo, a multi-selection, a
+                // still-blank box the reducer would refuse anyway — gets the bar exactly as before.
+                onStyle = styleTarget?.let { { typeBarOpen = !typeBarOpen } },
+                styleOpen = typeBarOpen,
             )
         }
     }
@@ -692,6 +878,19 @@ public fun EditorScreen(
  * Apply a fit choice to the working [FramingDraft] (bench `setFit`): choosing "Whole photo" re-centres to
  * a clean baseline (zoom 1, no pan); choosing "Fill" keeps the current pan/zoom.
  */
+/**
+ * **FOUNDER-OWNED COPY — AWAITING WORDING (M7-01 / RF-4).**
+ *
+ * The line spoken when Reframe is declined because the photo cannot be read. Deliberately empty: M7-01
+ * was not authorised to invent user-facing text, and the founder is supplying it separately. While it is
+ * empty the refusal is silent — which is a *known, temporary* Article 5 gap, not the intended end state:
+ * declining without saying why is honest about the framing but not about the reason.
+ *
+ * Replace the empty string with the founder's wording; no other change is needed, as the refusal path
+ * already speaks it through the same `announceForAccessibility` drain every other Reframe line uses.
+ */
+internal const val ReframeUnavailableAnnouncement: String = ""
+
 private fun applyFit(draft: FramingDraft, fit: FrameFit): FramingDraft = when (fit) {
     FrameFit.WHOLE -> draft.copy(fit = FrameFit.WHOLE, zoom = Framing.MIN_ZOOM, panX = 0.0, panY = 0.0)
     FrameFit.FILL -> draft.copy(fit = FrameFit.FILL)

@@ -1,6 +1,8 @@
 package com.aritr.zinely.core.editor
 
 import com.aritr.zinely.core.model.Page
+import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 
 /**
@@ -50,6 +52,32 @@ public object LivePreview {
             elements = page.elements.map { element ->
                 val newTransform = overrides[element.id] ?: return@map element
                 element.withTransform(newTransform)
+            },
+        )
+    }
+
+    /**
+     * The page rendered while a Type-bar size burst is still settling (ADR-055, frozen `bench.html`
+     * `applyTextStyle`) — the **style** analogue of [applyOverride].
+     *
+     * The frozen prototype repaints the block synchronously on every size step and defers only
+     * `snapshot()` (its history push) behind the 400 ms `sizeCommit` timer, so "the styled block on the
+     * live canvas IS the preview" holds *during* the burst. That split is what this reproduces: the Type
+     * bar hands the in-flight [TextStyle] here for the render, and still dispatches exactly one
+     * `Intent.StyleText` on settle — one undo step per burst, unchanged.
+     *
+     * Like [applyOverride] this is a **render-time projection, not a second document state**: nothing is
+     * stored, the reducer stays the sole owner of `document`, and the frame goes through the same
+     * `SceneRenderer` → `PagePreview` path the commit does (preview == commit == export). Non-text
+     * elements and unlisted ids are returned untouched; list/z-order is preserved; empty ⇒ unchanged.
+     */
+    public fun applyStyleOverride(page: Page, overrides: Map<String, TextStyle>): Page {
+        if (overrides.isEmpty()) return page
+        return page.copy(
+            elements = page.elements.map { element ->
+                if (element !is TextElement) return@map element
+                val newStyle = overrides[element.id] ?: return@map element
+                element.copy(style = newStyle)
             },
         )
     }

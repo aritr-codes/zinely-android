@@ -1,9 +1,13 @@
 package com.aritr.zinely.core.data.serialization
 
+import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.Page
+import com.aritr.zinely.core.model.TextAlign
+import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.ZineDocument
@@ -47,6 +51,37 @@ class JsonDocumentSerializerTest {
     @Test
     fun `serialize then deserialize round-trips`() {
         val doc = sample()
+        assertEquals(doc, serializer.deserialize(serializer.serialize(doc)))
+    }
+
+    @Test
+    fun `a fully-styled text element round-trips through JSON (FR-3, ADR-055)`() {
+        val doc = ZineDocument(
+            format = ZineFormat.SINGLE_SHEET_8,
+            paperSize = PaperSize.LETTER,
+            pages = listOf(
+                Page(
+                    index = 0,
+                    role = PageRole.INTERIOR,
+                    elements = listOf(
+                        TextElement(
+                            id = "t-1",
+                            transform = Transform(1.0, 2.0, 30.0, 40.0),
+                            zIndex = 5,
+                            text = "styled",
+                            style = TextStyle(
+                                fontFamily = "serif",
+                                sizePt = 18.0,
+                                color = ColorRgba(10, 20, 30, 200),
+                                align = TextAlign.END,
+                                bold = true,
+                                italic = true,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
         assertEquals(doc, serializer.deserialize(serializer.serialize(doc)))
     }
 

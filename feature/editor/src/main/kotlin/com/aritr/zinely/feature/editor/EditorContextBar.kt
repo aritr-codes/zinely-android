@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.RotateLeft
 import androidx.compose.material.icons.filled.RotateRight
+import androidx.compose.material.icons.filled.TextFormat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -36,6 +37,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.editor.Intent
@@ -69,9 +71,19 @@ public const val EditorContextBarTestTag: String = "editor-context-bar"
  * any target below 48dp (DESIGN-RULES 1, 7). Scrolling changes layout only — no action, intent, gating,
  * or semantic label changes.
  *
+ * **Style (FR-3, [ADR-055]).** A selected **text** box additionally gets a Style (`Aa`) control that
+ * toggles the [TypeBar]. The frozen bench toolbar spells this as one "two hats" tool — `Ink` for a photo,
+ * `Style` for text — but that select toolbar (and its Ink popover) was never built in Compose, so there
+ * is no Ink hat here to swap against; the control lands on this bar instead, gated to text. It is not a
+ * general control: it is `null` for a photo, for a multi-selection, and for a still-blank box (which the
+ * reducer refuses to style anyway), so the bar a photo shows is byte-for-byte what it showed before.
+ *
  * @param selection the current selection; empty ⇒ nothing rendered.
  * @param dispatch forwards an [Intent] into the store.
  * @param modifier sizing/placement applied by the host.
+ * @param onStyle toggles the Type bar for the selected text box. `null` (the default) omits the control
+ *   entirely — the host passes it only for a single, non-blank text selection.
+ * @param styleOpen whether the Type bar is currently showing, for the Style control's spoken state.
  */
 // The directional/rotation glyphs use the non-AutoMirrored Filled icons on purpose: these controls are
 // spatial (page-space "left" is screen-left in any layout direction), so RTL auto-mirroring would point
@@ -83,6 +95,8 @@ public fun EditorContextBar(
     selection: Set<String>,
     dispatch: (Intent) -> Unit,
     modifier: Modifier = Modifier,
+    onStyle: (() -> Unit)? = null,
+    styleOpen: Boolean = false,
 ) {
     if (selection.isEmpty()) return
     val singleId = selection.singleOrNull()
@@ -113,6 +127,17 @@ public fun EditorContextBar(
                 BarButton(Icons.Filled.FlipToFront, "Bring forward", -1.5f) { dispatch(Intent.Reorder(singleId, ReorderOp.BRING_FORWARD)) }
                 BarButton(Icons.Filled.FlipToBack, "Send backward", 1.5f) { dispatch(Intent.Reorder(singleId, ReorderOp.SEND_BACKWARD)) }
             }
+            if (onStyle != null) {
+                // A disclosure, not a plain action: it says whether the Type bar is showing, so a
+                // screen-reader user knows what the tap did without hunting for the bar.
+                BarButton(
+                    icon = Icons.Filled.TextFormat,
+                    description = "Text style",
+                    tilt = -2f,
+                    state = if (styleOpen) "Showing" else "Hidden",
+                    onClick = onStyle,
+                )
+            }
             BarButton(Icons.Filled.Delete, "Delete", -2.5f) { dispatch(Intent.Delete(selection)) }
         }
     }
@@ -122,9 +147,18 @@ public fun EditorContextBar(
  * One ≥48dp control: a stamped paper craft-chip carrying a decorative [icon] with the spoken
  * [description] as the button's a11y label. The chip + [tilt] sit *inside* the [IconButton], so the
  * touch target stays the standard axis-aligned 48dp box while only the paper stamp leans.
+ *
+ * @param state an optional spoken state for a control that has one (a disclosure's Showing/Hidden).
+ *   `null` — every transform control — leaves the semantics exactly as they were.
  */
 @Composable
-private fun BarButton(icon: ImageVector, description: String, tilt: Float, onClick: () -> Unit) {
+private fun BarButton(
+    icon: ImageVector,
+    description: String,
+    tilt: Float,
+    state: String? = null,
+    onClick: () -> Unit,
+) {
     IconButton(
         onClick = onClick,
         modifier = Modifier
@@ -132,6 +166,7 @@ private fun BarButton(icon: ImageVector, description: String, tilt: Float, onCli
             .clearAndSetSemantics {
                 contentDescription = description
                 role = Role.Button
+                if (state != null) stateDescription = state
             },
     ) {
         Box(

@@ -1,8 +1,10 @@
 package com.aritr.zinely.core.editor
 
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
@@ -51,5 +53,40 @@ class LivePreviewTest {
         val previewTransform = LivePreview.apply(page(a), before, live, s).elements[0].transform
         val committedAfter = before.mapValues { (_, t) -> live.bake(t, s) }["a"]
         assertEquals(committedAfter, previewTransform)
+    }
+
+    // --- applyStyleOverride (ADR-055): the settling size burst's canvas half ---
+
+    @Test
+    fun style_override_replaces_only_the_listed_text_element() {
+        val a = text("a", Transform(0.0, 0.0, 10.0, 10.0))
+        val b = text("b", Transform(0.0, 0.0, 10.0, 10.0))
+        val bigger = a.style.copy(sizePt = 48.0)
+
+        val out = LivePreview.applyStyleOverride(page(a, b), mapOf("a" to bigger))
+
+        assertEquals(bigger, (out.elements[0] as TextElement).style)
+        assertSame(b, out.elements[1])
+        assertEquals(listOf("a", "b"), out.elements.map { it.id })
+        // The override is style-only: the box the selection chrome draws must not move.
+        assertEquals(a.transform, out.elements[0].transform)
+    }
+
+    @Test
+    fun style_override_leaves_non_text_elements_alone() {
+        // An id collision between an image and an override must be a no-op, not a crash: the Type bar
+        // only ever targets a text box, but the projection must not assume it.
+        val image = ImageElement(id = "a", transform = Transform(0.0, 0.0, 10.0, 10.0), assetId = "sha")
+        val p = Page(index = 0, role = PageRole.INTERIOR, elements = listOf(image))
+
+        val out = LivePreview.applyStyleOverride(p, mapOf("a" to TextStyle(sizePt = 48.0)))
+
+        assertSame(image, out.elements[0])
+    }
+
+    @Test
+    fun empty_style_override_returns_page_unchanged() {
+        val p = page(text("a", Transform(1.0, 2.0, 3.0, 4.0)))
+        assertSame(p, LivePreview.applyStyleOverride(p, emptyMap()))
     }
 }
