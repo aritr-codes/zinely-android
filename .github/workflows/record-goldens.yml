@@ -49,6 +49,11 @@ jobs:
             --rerun-tasks --no-daemon --stacktrace
 
       - name: Upload recorded goldens
+        # always(): a golden written by a test that PASSED is still a valid golden when some unrelated
+        # test in the same module fails. Without this the recorder is hostage to every other suite —
+        # one flaky failure and the run yields nothing at all, which is exactly what blocked the
+        # ADR-055 Type-bar goldens. Review the recorded PNGs before committing them, as ever.
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           # Both module trees preserved under their paths; commit each set to its module's

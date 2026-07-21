@@ -56,17 +56,39 @@ internal fun reframeTestPhoto(widthPx: Int = 250, heightPx: Int = 200): AssetByt
  * moved to an instrumented test that CI compiles but does not execute.
  */
 internal fun assumeFullImageDecodeAvailable() {
-    val probe = runCatching {
-        BitmapFactory.decodeStream(ByteArrayInputStream(reframeTestPhotoBytes(4, 4)))
-    }.getOrNull()
-    probe?.recycle()
     assumeTrue(
         "skipped: this runtime cannot decode full image pixels (BitmapFactory.decodeStream returned " +
             "null). The Reframe surface is inert without pixels on screen (M7-01), so there is nothing " +
             "here to assert. Runs locally and on device; see assumeFullImageDecodeAvailable.",
-        probe != null,
+        fullImageDecodeAvailable,
     )
 }
+
+/**
+ * Probed **once per JVM**, not once per test.
+ *
+ * The CI decoder is not merely absent, it is *exhaustible*: with a probe per test the failing set
+ * rotated between runs — the probe would succeed, then the decoder would die partway through the same
+ * test and the surface would silently fail to mount. Every extra encode/decode made that likelier, so
+ * the probe pays its native cost a single time and every later caller reads the cached answer.
+ */
+private val fullImageDecodeAvailable: Boolean by lazy {
+    val probe = runCatching {
+        BitmapFactory.decodeStream(ByteArrayInputStream(reframeTestPhotoBytes(4, 4)))
+    }.getOrNull()
+    probe?.recycle()
+    probe != null
+}
+
+/**
+ * The default photo's bytes, encoded once per JVM for the same reason as [fullImageDecodeAvailable]:
+ * every test instance used to re-encode its own copy. Non-default sizes still encode on demand — they
+ * are rare, and caching them would need a key for a handful of callers.
+ */
+private val defaultPhotoBytes: ByteArray by lazy { encodePhoto(DEFAULT_WIDTH_PX, DEFAULT_HEIGHT_PX) }
+
+private const val DEFAULT_WIDTH_PX = 250
+private const val DEFAULT_HEIGHT_PX = 200
 
 /**
  * A photo that is **measurable but not displayable**: the first `open` yields the bytes, every later one
@@ -91,7 +113,11 @@ internal fun reframeTestPhotoMeasurableOnly(widthPx: Int = 250, heightPx: Int = 
     return AssetBytesSource { if (served) null else ByteArrayInputStream(bytes).also { served = true } }
 }
 
-private fun reframeTestPhotoBytes(widthPx: Int, heightPx: Int): ByteArray {
+private fun reframeTestPhotoBytes(widthPx: Int, heightPx: Int): ByteArray =
+    if (widthPx == DEFAULT_WIDTH_PX && heightPx == DEFAULT_HEIGHT_PX) defaultPhotoBytes
+    else encodePhoto(widthPx, heightPx)
+
+private fun encodePhoto(widthPx: Int, heightPx: Int): ByteArray {
     val bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)
     val bytes = ByteArrayOutputStream()
         .also { bitmap.compress(Bitmap.CompressFormat.PNG, /* quality (lossless) = */ 100, it) }
