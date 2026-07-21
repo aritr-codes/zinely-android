@@ -42,8 +42,11 @@ public data class EditorModel(
  * deleted **both** matches on undo.
  *
  * Seeding here fixes it at the point the invariant is actually established — the model is the only thing
- * that knows both the document and the counter — and needs no schema change or migration, so an already
- * saved document heals itself the next time it is opened. Ids that are not of the `el-<n>` shape (a
+ * that knows both the document and the counter — and needs no schema change or migration, so a document
+ * saved before the fix stops *acquiring* duplicates the next time it is opened. It does not repair a
+ * document that already contains them: that damage is on disk, the load-side validator still rejects it,
+ * and `isLoadable` treats the payload as decodable so the `.bak` beside it is never offered either. Such
+ * a file stays unopenable (see ARCHITECTURE §7.0). Ids that are not of the `el-<n>` shape (a
  * document authored elsewhere) are ignored rather than parsed: they cannot collide with a generated id,
  * because a generated one always has that shape.
  *

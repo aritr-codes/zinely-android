@@ -267,6 +267,15 @@ stateDiagram-v2
 
 The drag preview is transient state (`activeGesture`) — never undoable, never persisted. Only the committed command enters history and the document.
 
+### 7.0 Element ids cross the persistence boundary
+
+The reducer is the **single allocator of element ids**, minting `el-<n>` from `EditorModel.nextToken` — the same monotonic counter that issues session tokens, which is how the reducer stays pure without a clock or RNG. `nextToken` is reducer state; `ZineDocument` is what gets saved. **The counter must therefore be seeded from the document it is about to edit** (`EditorModel.firstFreeToken`), because "the counter only ever advances" guarantees uniqueness *within* a session and nothing at all *across* one. Seeding at construction is what makes the reducer's no-collision claim true; a constant seed made every reopen mint an id the document already held.
+
+Two related gaps are **accepted for the beta and tracked, not fixed**:
+
+- **Validation is asymmetric.** `DefaultDocumentValidator` runs on load and not on save, so an invalid document can be written and then refused on the way back. Fail-closed autosave is *not* the remedy — there is no UI to recover an edit autosave refuses to write, which trades a rare corruption for routine silent loss. The sequencing is: make load survivable first, then report (never block) on save.
+- **`.bak` does not cover this class.** `DocumentRepositoryImpl.isLoadable` treats a *decodable* payload as intact, so a semantically invalid document never triggers the [ADR-021](DECISIONS.md#adr-021) rollback and the good backup beside it is never offered. Repairing duplicate ids at load — or downgrading `element.id.duplicate` to a repairable warning — would rescue an already-damaged file and make the whole class non-fatal. That is a decision, so it needs an ADR before code.
+
 ### 7.1 Text styling — `StyleText` and the Type bar ([ADR-055](DECISIONS.md#adr-055))
 
 `Intent.StyleText` is **not a session**. Unlike inline text edit (`Editing` above) and Reframe — which open, commit, and can cancel — a style change is a self-transition on `ElementSelected`: it commits immediately, one `EditTextCommand` per change, with no session token and no cancel (cancel is undo). It reuses the existing before/after `TextElement` memento, so no new command type and no reducer merge logic exist. Every field is a **nullable patch** (`null` keeps the current value), which is what preserves `fontFamily` — the editor never writes it, and since F3 that preservation carries real weight: the `DocumentFontRegistry` (§5) resolves a declared family rather than collapsing every family to Inter, so a `fontFamily` this style path leaves untouched is one the renderer will honour. It no-ops on an absent, non-text, blank, or unchanged element; the blank guard is load-bearing, defending `endTextSession`'s assumption that a fresh blank box's `PlaceCommand` is the last undo entry.
