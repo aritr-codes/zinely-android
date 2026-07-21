@@ -44,12 +44,28 @@ CI reads the same four values from `ZINELY_KEYSTORE_FILE`, `ZINELY_KEYSTORE_PASS
 (password manager + one offline copy). This is the single highest-consequence artifact in the
 project.
 
-### The fallback is deliberate
+All four values are required together. Supplying only some of them is a configuration error and
+fails the build naming the missing ones — half-configured signing used to fail deep inside AGP with
+a message that named neither the missing credential nor this file.
 
-With no keystore configured, `assembleRelease` still succeeds — it signs with the debug key and logs
-a warning. That keeps a fresh clone buildable. **A debug-signed APK must never be distributed**: it
-cannot be updated in place from any other machine. Check the build log for the warning before
-handing an APK to anyone.
+### The fallback, and the gate on it
+
+With no keystore configured, the release build falls back to the debug key so a fresh clone stays
+buildable — but `packageRelease` then **fails**, and no APK is produced:
+
+> `zinely: refusing to package a <version> release APK signed with the debug key.`
+
+To get an undistributable debug-signed release build on purpose (CI smoke, perf profiling), opt out
+explicitly:
+
+```bash
+./gradlew :app:assembleRelease -PallowDebugSignedRelease
+```
+
+**This gate runs at execution time, deliberately.** The first version of it was a configuration-phase
+`logger.warn`, and with `org.gradle.configuration-cache=true` a cached configuration is not re-run —
+so the warning silently never printed and the build produced a debug-signed APK under the release
+filename with a clean log. A human reading build output is not a gate; a failing task is.
 
 ## 2. Cutting a build
 
@@ -78,6 +94,18 @@ handing an APK to anyone.
 Testers install an APK directly, which Android treats as an unknown source. The tester note must say,
 in plain words: what to tap to allow the install, that the app never touches the network, and — until
 backup exists — **that uninstalling deletes their zines, so export anything they care about first**.
+
+### The one-time break at 0.9.0-beta.1
+
+Every build up to and including 0.8.0 was signed with a *debug* key. `0.9.0-beta.1` is the first
+signed with the real release key, and Android will not install it over a differently-signed app —
+anyone still holding `0.6.0-alpha.1` gets `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+
+Those testers must **export anything they want to keep (Save PDF to Downloads), then uninstall,
+then install the beta**. Their zines do not survive; there is no backup/restore yet. This was
+already flagged as a known limitation of the alpha, and it is a one-time cost that ends here — every
+build from the beta onward installs cleanly over its predecessor. The tester note must say so
+explicitly rather than let someone discover it as an install error.
 
 Play Store distribution is not in use yet. It would additionally need an upload key, a Play Console
 listing, a privacy policy, a content rating and a data-safety declaration.

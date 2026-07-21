@@ -27,16 +27,51 @@ val zinelyVersionName = "0.9.0-beta.1"
 // cannot be installed over the previous one, so a tester would have to uninstall to take an
 // update — and uninstalling destroys their zines, because backup/restore does not exist yet.
 // A stable release key is what makes a beta patchable.
-val keystorePropertiesFile = rootProject.file("keystore.properties")
+// Read through a *tracked* provider, not File.exists(): an untracked configuration-time file read is
+// invisible to the configuration cache, so creating keystore.properties would not invalidate a cached
+// configuration and the build would go on believing no key exists.
+val keystorePropertiesText: String? =
+    providers.fileContents(rootProject.layout.projectDirectory.file("keystore.properties"))
+        .asText
+        .orNull
+
 val keystoreProperties = Properties().apply {
-    if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use(::load)
+    keystorePropertiesText?.let { load(it.reader()) }
 }
 
 /** Reads a signing credential from `keystore.properties` first, then the environment (CI). */
 fun signingCredential(propertyKey: String, environmentKey: String): String? =
-    keystoreProperties.getProperty(propertyKey) ?: System.getenv(environmentKey)
+    keystoreProperties.getProperty(propertyKey)?.takeIf(String::isNotBlank)
+        ?: System.getenv(environmentKey)?.takeIf(String::isNotBlank)
 
-val releaseKeystorePath: String? = signingCredential("storeFile", "ZINELY_KEYSTORE_FILE")
+/**
+ * All four credentials, or null. Partial configuration counts as *unconfigured* rather than
+ * half-signing: supplying only `storeFile` used to activate the signing config and then fail deep
+ * inside AGP's signing task with a message that named neither the missing key nor this file.
+ */
+val releaseSigning: Map<String, String>? = run {
+    val credentials = listOf(
+        "storeFile" to signingCredential("storeFile", "ZINELY_KEYSTORE_FILE"),
+        "storePassword" to signingCredential("storePassword", "ZINELY_KEYSTORE_PASSWORD"),
+        "keyAlias" to signingCredential("keyAlias", "ZINELY_KEY_ALIAS"),
+        "keyPassword" to signingCredential("keyPassword", "ZINELY_KEY_PASSWORD"),
+    )
+    val missing = credentials.filter { it.second == null }.map { it.first }
+    when {
+        missing.size == credentials.size -> null // nothing configured at all — the ordinary case
+        missing.isNotEmpty() -> error(
+            "zinely: release signing is partially configured — missing ${missing.joinToString()}. " +
+                "Supply all four (storeFile, storePassword, keyAlias, keyPassword) in " +
+                "keystore.properties / ZINELY_KEYSTORE_*, or none. See docs/RELEASING.md."
+        )
+        else -> credentials.associate { it.first to it.second!! }
+    }
+}
+
+// The deliberate escape hatch for a debug-signed release build (CI smoke, local perf profiling).
+// Read as a Gradle property so it is a tracked configuration input.
+val allowDebugSignedRelease: Boolean =
+    providers.gradleProperty("allowDebugSignedRelease").isPresent
 
 // Artifact naming: every APK/bundle is "zinely-<versionName>-<variant>.apk" (e.g.
 // zinely-1.0-release.apk) so testers always see the app name + version in the file, never
@@ -66,14 +101,16 @@ android {
 
     signingConfigs {
         // Registered unconditionally so the DSL stays valid on a fresh clone; only populated when
-        // the credentials are actually present. `releaseKeystorePath == null` is the "this machine
-        // has no release key" case.
+        // all four credentials are present. `releaseSigning == null` is the "this machine has no
+        // release key" case.
         create("release") {
-            releaseKeystorePath?.let { path ->
-                storeFile = file(path)
-                storePassword = signingCredential("storePassword", "ZINELY_KEYSTORE_PASSWORD")
-                keyAlias = signingCredential("keyAlias", "ZINELY_KEY_ALIAS")
-                keyPassword = signingCredential("keyPassword", "ZINELY_KEY_PASSWORD")
+            releaseSigning?.let { credentials ->
+                // Resolved against the repo root, so a relative storeFile in keystore.properties
+                // means what it looks like it means (`file(...)` alone would resolve against app/).
+                storeFile = rootProject.file(credentials.getValue("storeFile"))
+                storePassword = credentials.getValue("storePassword")
+                keyAlias = credentials.getValue("keyAlias")
+                keyPassword = credentials.getValue("keyPassword")
             }
         }
     }
@@ -82,17 +119,11 @@ android {
         release {
             // Falls back to debug signing when no release key is configured, so `assembleRelease`
             // still works on a fresh clone or a contributor's machine. Such a build is runnable but
-            // NOT distributable — the gate below is what keeps the two from being confused.
+            // NOT distributable — the packageRelease gate below is what stops it leaving the machine.
             signingConfig =
-                if (releaseKeystorePath != null) {
+                if (releaseSigning != null) {
                     signingConfigs.getByName("release")
                 } else {
-                    logger.warn(
-                        "zinely: no release keystore configured (keystore.properties / " +
-                            "ZINELY_KEYSTORE_FILE) — signing $zinelyVersionName with the debug key. " +
-                            "This APK must not be distributed: testers could not install an update " +
-                            "over it without uninstalling, which destroys their zines."
-                    )
                     signingConfigs.getByName("debug")
                 }
             isMinifyEnabled = false
@@ -118,6 +149,41 @@ android {
             // S6.5 (ADR-046): the ZinelyNavHost back-stack-policy tests run the real graph under
             // Robolectric — merged resources/manifest give the test the debug-only HiltTestActivity.
             isIncludeAndroidResources = true
+        }
+    }
+}
+
+// The gate that makes the debug-signing fallback safe.
+//
+// This MUST fail at execution time, not configuration time. The first version of this guard was a
+// configuration-phase `logger.warn`, and with `org.gradle.configuration-cache=true` a cached
+// configuration is not re-run — so the warning silently never printed and `assembleRelease` produced
+// a debug-signed APK carrying the release filename, with a clean build log. A `doFirst` capturing
+// only a Boolean and a String is configuration-cache safe and runs on every build.
+//
+// Escape hatch for a deliberately debug-signed release build (CI smoke, perf profiling):
+//   ./gradlew :app:assembleRelease -PallowDebugSignedRelease
+if (releaseSigning == null) {
+    val version = zinelyVersionName
+    val optedOut = allowDebugSignedRelease
+    tasks.matching { it.name == "packageRelease" }.configureEach {
+        doFirst {
+            if (optedOut) {
+                logger.warn(
+                    "zinely: building $version release with the DEBUG key (-PallowDebugSignedRelease). " +
+                        "Do not distribute this APK."
+                )
+            } else {
+                error(
+                    "zinely: refusing to package a $version release APK signed with the debug key.\n" +
+                        "No release keystore is configured (keystore.properties / ZINELY_KEYSTORE_*).\n" +
+                        "A debug-signed build cannot be installed as an update over a properly signed " +
+                        "one, so shipping it would force testers to uninstall — which destroys their " +
+                        "zines, since backup/restore does not exist yet.\n" +
+                        "Configure the key (docs/RELEASING.md), or pass -PallowDebugSignedRelease if " +
+                        "you deliberately want an undistributable build."
+                )
+            }
         }
     }
 }
