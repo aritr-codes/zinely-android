@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — Style your text · [ADR-055](docs/DECISIONS.md#adr-055)
 
-Implemented as B1–B4 (style intent · Type bar · keyboard + haptics · parity fix and doc reconciliation), each batch independently reviewed. **Not yet released or packaged**, and **not yet signed off**: the on-device accessibility pass and the pixel-parity pass against the frozen design are still outstanding, so [ADR-055](docs/DECISIONS.md#adr-055) remains Proposed.
+Implemented as B1–B4 (style intent · Type bar · keyboard + haptics · parity fix and doc reconciliation), each batch independently reviewed. Signed off on 2026-07-21: the pixel-parity goldens were recorded on the pinned CI image and reviewed against the frozen design, and the accessibility pass was run on a physical phone against this exact signed build — so [ADR-055](docs/DECISIONS.md#adr-055) is Accepted.
 
 - **Text can be styled.** Select a text block and tap the new **Text style** (`Aa`) control to open the Type bar: set the **size**, the **alignment** (left / center / right), **bold**, **italic**, and the **colour** from the five Zinely text inks. The block updates live on the page — what you see is what prints.
 - **Every change is one undo.** Any style change can be undone in a single step, including a whole run of size taps. There is no "apply" or "cancel" — undo is the cancel.

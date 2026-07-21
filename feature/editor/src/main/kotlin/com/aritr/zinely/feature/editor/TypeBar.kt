@@ -360,6 +360,34 @@ internal fun TypeBar(
     }
 }
 
+/*
+ * A NOTE ON HOW THESE CONTROLS LOOK IN THE PLATFORM ACCESSIBILITY TREE — so nobody "fixes" it twice.
+ *
+ * Read on a physical device (Galaxy A17, Android 16) during the ADR-055 gate, every Type bar control
+ * except the swatches dumps like this:
+ *
+ *     View      desc=''      click=true  focusable=true    <- the node a screen reader focuses
+ *       View    desc='Bold'  click=false                   <- the label
+ *       CheckBox desc=''     click=false                   <- the role
+ *
+ * The label and the click action sit on *different* nodes, which looks alarming — an unlabelled
+ * interactive node is exactly the IF5 lesson §4 cites. It is not that. This is simply how Compose
+ * exposes any clickable that has child content: the touch-target expansion supplies the focusable
+ * wrapper and the content stays beneath it. `Add a photo`, `Add words` and the page strip dump in the
+ * identical shape, and **those passed an on-device TalkBack pass by ear** (M6/F3, verdict GO), so the
+ * shape is known-good on this app, on this device. TalkBack focuses the wrapper and takes the name from
+ * the subtree. [Swatch] differs only because it has no child to split off, not because it is more correct.
+ *
+ * Reordering the modifiers to force the label onto the wrapper was tried and measured: the emitted tree
+ * is byte-identical, so it changes nothing and was reverted rather than left in place asserting a fix
+ * that is not one.
+ *
+ * The reason to write this down: the machine tests cannot see any of it — `onNodeWithContentDescription`
+ * reads the *merged* tree and passes under every arrangement — so the only way to know is to dump the
+ * platform tree on a device, and the only way to know it is *fine* is to have heard it. Both are now on
+ * the record; don't spend the afternoon rediscovering it.
+ */
+
 /**
  * One labelled Type bar row (bench `.tyrow` + `.tylab`): a soft caption, then the control cluster.
  *
