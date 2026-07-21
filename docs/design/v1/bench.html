@@ -7,7 +7,27 @@
 <!--
   ============================================================================
   ZINELY — THE BENCH  ·  V1 redesign, Surface 2 of 3 (Shelf / Bench / Proof)
-  STATUS: DESIGN-FROZEN (2026-07-08; Image-Framing amendment frozen 2026-07-13).
+  STATUS: DESIGN-FROZEN (2026-07-08; Image-Framing amendment frozen 2026-07-13; FR-3 Text-Styling amendment frozen 2026-07-16).
+          FR-3 amendment (2026-07-16) adds block-level text styling — SIZE (discrete pt stepper), text COLOUR, ALIGNMENT
+          (Left/Center/Right), BOLD, ITALIC — via a non-modal Type bar opened by a single "Style" control offered only for a
+          text selection: no second colour popover, no styling session (each change is one undo step; a size run
+          coalesces). Styled text now renders in Inter to stay
+          truthful to production (Inter-only; the old Fraunces heading/body VOICE was prototype chrome that never printed and
+          is retired). Explicitly OUT of scope and NOT added: font choice, underline, strikethrough, rich/per-character text,
+          line-height, letter-spacing, presets. Passed HTML-mapping + independent adversarial review; reconciled to GO.
+          KNOWN LIMITATION (carried, not a gate): styling makes colour more discoverable, so a beginner can pick a sub-AA
+          authorial ink (e.g. teal-as-text ~2.9:1) for body copy; a beginner-safe default remains a next-pass call (as at
+          the original freeze), not a freeze gate.
+          REPOSITORY RECONCILIATION (2026-07-16, post-implementation; ENTRY POINT ONLY — the Type bar itself is unchanged):
+          this prototype opens the Type bar from the select-toolbar tool wearing a second "Style" hat (Ink for an image,
+          Style for text). That select toolbar and its Ink popover DO NOT EXIST in the shipped Compose editor and never did —
+          the prototype's select toolbar was never built, so there is no Ink hat there to swap against. Compose therefore
+          opens the SAME Type bar from a "Text style" (Aa) control on the shipped EditorContextBar, offered only for a single
+          non-blank text box outside an inline edit session and absent for a photo/multi-selection. The select toolbar, the
+          Ink popover, and the two-hats routing below are retained as PROTOTYPE MECHANICS for the unbuilt image spot-ink
+          design; they are NOT a contract on Compose. Load-bearing and unchanged: the Type bar is non-modal, one control
+          opens it, opening it never co-opens a colour popover, a selection change closes it, and undo re-syncs it.
+          See ADR-055 Decision 2. If an Ink tool is ever built, the two-hats swap re-enters via an amendment here first.
           Adversarial engineering+a11y review GO + Design Director GO. The
           2026-07-13 amendment adds photo Reframe mode (frame vs movable content,
           Fill/Whole-photo fit, discrete-stepper a11y) — passed design, adversarial
@@ -73,7 +93,7 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400;1,14..32,500;1,14..32,600;1,14..32,700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
 <style>
 /* ============================ TOKENS (inherited verbatim from the frozen Shelf) ============================ */
 :root{
@@ -209,10 +229,14 @@ body{
 .block.dragging{ z-index:4; }
 .block .surface{ position:relative; width:100%; }
 /* text block */
-.block.text .surface{ font-family:var(--voice); color:var(--btext,var(--ink)); line-height:1.14; letter-spacing:-.01em;
-  font-weight:600; word-break:break-word; }
-.block.text.body .surface{ font-family:var(--shell); font-weight:400; font-size:calc(var(--bfs,13) * 1px); line-height:1.42; letter-spacing:0; }
-.block.text .surface{ font-size:calc(var(--bfs,26) * 1px); }
+/* FR-3: styled text renders in Inter — production is Inter-only (fontFamily collapses to Inter), so the earlier Fraunces
+   voice was prototype-only chrome that never printed. Weight/slant/alignment come from the block's bold/italic/align style;
+   the only weights production ships are Inter 400 (regular) and 700 (bold). Keeping the canonical source truthful to export. */
+.block.text .surface{ font-family:var(--shell); color:var(--btext,var(--ink)); line-height:1.25; letter-spacing:0;
+  font-weight:var(--fw,400); font-style:var(--fst,normal); text-align:var(--ta,left); word-break:break-word;
+  font-size:calc(var(--bfs,26) * 1px); }
+/* one line-height for ALL text: the old heading/body VOICE (and its line-height split) is retired. line-height is fixed, not a
+   styled attribute — out of FR-3 scope and not in the production TextStyle model, so nothing here can fail to round-trip. */
 .block.text .surface[contenteditable="true"]{ outline:none; cursor:text; caret-color:var(--coral-strong); }
 /* image block — riso-inked art field (no stock photos; local + on-brand). Same archetype vocabulary as the Shelf covers.
    THE FRAME vs THE PHOTO. `.surface` is the FRAME (fixed --bratio slot, clips). `.imgcontent` is the PHOTO inside it
@@ -344,6 +368,40 @@ body{
   color:var(--on-desk); cursor:pointer; display:grid; place-items:center; box-shadow:var(--shadow-1); }
 .zoombar button svg{ width:18px; height:18px; }
 .zoombar.hide{ display:none; }
+
+/* ============================ TYPE BAR (FR-3 text styling — size · align · bold · italic · colour) ============================
+   Non-modal popover (inkbar mechanics): the canvas stays live behind it, so the styled block IS the preview (preview == export).
+   No styling session, no commit/cancel — each change is one undo step (undo over confirm); a run of size steps coalesces into one.
+   Opened by ONE "Style" control offered only for a text selection — one control, no second colour popover. In this prototype that
+   control is the select-toolbar tool wearing its "Style" hat; in Compose (no select toolbar exists) it is the EditorContextBar
+   "Text style" (Aa) control. Same Type bar either way — see the header's REPOSITORY RECONCILIATION note and ADR-055 D2. */
+.typebar{ position:absolute; left:50%; bottom:calc(74px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:30;
+  display:none; flex-direction:column; gap:10px; align-items:stretch; background:var(--menu); border:1px solid var(--field-edge);
+  border-radius:16px; padding:12px 14px; box-shadow:var(--shadow-2); max-width:calc(100% - 24px); width:max-content; }
+.typebar.on{ display:flex; }
+.typebar .tyrow{ display:flex; align-items:center; gap:14px; justify-content:space-between; }
+.typebar .tylab{ font-size:11px; font-weight:600; color:var(--on-desk-soft); letter-spacing:.02em; min-width:46px; }
+/* size stepper reuses the shipped reframe zoom-stepper idiom (−/+ buttons + readout + an announce on change) — the honest 1-D adjustable.
+   The announce MECHANISM is per-platform: this prototype uses an aria-live region (the web idiom); Compose reuses the shipped editor
+   announce drain (announceForAccessibility), as Reframe already does — same spoken result, no second live-region mechanism. */
+.tysize{ display:flex; align-items:center; gap:8px; }
+.tysize button{ width:40px; height:40px; border-radius:11px; border:1px solid var(--field-edge); background:var(--field);
+  color:var(--on-desk); cursor:pointer; font-size:20px; display:grid; place-items:center; }
+.tysize button:disabled{ opacity:.4; cursor:default; }
+.tyval{ min-width:58px; text-align:center; font-family:var(--shell); font-weight:600; font-size:13px; font-variant-numeric:tabular-nums; }
+/* alignment reuses the frozen .fitseg segmented idiom — VISUALLY identical to the fit control. The SEMANTIC role is per-platform:
+   aria-pressed here (the web idiom), single-select selectableGroup/Role.RadioButton in Compose, because alignment is one-of-three
+   and three pressed-toggles would announce as three independent switches (ADR-055 §4). Visual parity unaffected. */
+/* bold / italic = two INDEPENDENT toggles (bold+italic is a real Inter BoldItalic face, not synthesised) */
+.tytog{ display:inline-flex; gap:6px; }
+.tytog button{ min-width:46px; min-height:46px; border-radius:11px; border:1px solid var(--field-edge); background:var(--field);
+  color:var(--on-desk); cursor:pointer; font-size:17px; display:grid; place-items:center; font-family:var(--shell); }
+.tytog button#tyBold{ font-weight:700; }
+.tytog button#tyItalic{ font-style:italic; }
+.tytog button[aria-pressed="true"]{ background:var(--coral-strong); color:#fff; border-color:var(--coral-strong); }
+/* colour row = the shipped 5-ink swatch component, embedded here (not a second popover) */
+.tyinks{ display:flex; gap:8px; }
+.tyinks .swatch{ width:32px; height:32px; }
 
 /* RF1: the AUTHORITATIVE accessible motion path — discrete, purpose-labelled nudge + zoom steppers.
    2D position is NOT modelled as one adjustable (adjustable is 1-D); it is two axes of discrete targets.
@@ -553,8 +611,44 @@ body{
     </button>
   </div>
 
-  <!-- INK POPOVER -->
+  <!-- INK POPOVER (image spot-ink) -->
   <div class="inkbar" id="inkbar" role="group" aria-label="Ink colour"></div>
+
+  <!-- TYPE BAR (FR-3 text styling) — non-modal; opened by the Style control offered on a text selection (prototype: the
+       select-tool's Style hat · Compose: the EditorContextBar "Text style" control — see header reconciliation note) -->
+  <div class="typebar" id="typebar" role="group" aria-label="Text style">
+    <div class="tyrow">
+      <span class="tylab">Size</span>
+      <div class="tysize" role="group" aria-label="Text size">
+        <button id="tySizeDown" aria-label="Smaller">−</button>
+        <span class="tyval" id="tySizeVal" aria-hidden="true">24 pt</span>
+        <button id="tySizeUp" aria-label="Larger">+</button>
+      </div>
+    </div>
+    <div class="tyrow">
+      <span class="tylab">Align</span>
+      <div class="fitseg" role="group" aria-label="Text alignment">
+        <button id="alLeft" aria-pressed="true">Left</button>
+        <button id="alCenter" aria-pressed="false">Center</button>
+        <button id="alRight" aria-pressed="false">Right</button>
+      </div>
+    </div>
+    <div class="tyrow">
+      <span class="tylab">Style</span>
+      <div class="tytog" role="group" aria-label="Bold and italic">
+        <button id="tyBold" aria-pressed="false" aria-label="Bold">B</button>
+        <button id="tyItalic" aria-pressed="false" aria-label="Italic">I</button>
+      </div>
+    </div>
+    <div class="tyrow">
+      <span class="tylab">Colour</span>
+      <div class="tyinks" id="tyInks" role="group" aria-label="Text colour"></div>
+    </div>
+  </div>
+
+  <!-- text-style live-region (screen-reader announcements: size, alignment, bold, italic, colour).
+       Prototype mechanism only — Compose speaks the same strings through the shipped editor announce drain (ADR-055 §4). -->
+  <div class="sr-only" id="tyLive" role="status" aria-live="polite"></div>
 
   <!-- REFRAME STEPPERS (authoritative accessible motion path — RF1) -->
   <div class="reframebar" id="reframebar" role="group" aria-label="Photo position and zoom">
@@ -656,7 +750,7 @@ body{
           <button data-motion="reduce" aria-pressed="false">Reduced</button>
         </div>
       </div>
-      <p class="note">Tap to select · drag to move · double-tap text to edit, a picture to reframe · pinch to scale · long-press for more. In reframe: drag/pinch or use the on-screen nudge + zoom steppers; arrows nudge, +/− zoom, Enter saves, Esc cancels. ⌘/Ctrl+Z undo.</p>
+      <p class="note">Tap to select · drag to move · double-tap text to edit, a picture to reframe · pinch to scale · long-press for more. Select text, then Style for size · alignment · bold · italic · colour — ⌘/Ctrl+B bold, ⌘/Ctrl+I italic. In reframe: drag/pinch or use the on-screen nudge + zoom steppers; arrows nudge, +/− zoom, Enter saves, Esc cancels. ⌘/Ctrl+Z undo.</p>
     </div>
   </details>
 </div>
@@ -681,31 +775,36 @@ body{
     {k:"stamp", v:"var(--stamp)", lab:"Blue"},
     {k:"yellow",v:"#7A5E12",      lab:"Ochre"}   /* yellow-as-text darkened: ~5.3:1 light / ~4.9:1 dark paper (AA both) (RF4) */
   ];
+  /* ---------- FR-3 text size ramp (discrete, beginner-safe pt targets; model stores sizePt) ---------- */
+  const SIZES = [10,12,14,16,20,24,28,32,40,48];
   const FIELD = ["var(--coral)","var(--teal)","var(--stamp)","var(--yellow)"];
   const ACCENT= ["var(--yellow)","var(--coral)","var(--teal)","var(--stamp)"];
   const ARCH  = ["a-sun","a-bars","a-tone","a-split"];
 
   /* ---------- data model ----------
      A block lives on one panel, positioned by CENTER as a % of the page, width as % of page width.
-     x,y in %; w in %; r rotation deg. Text: {text, ink, size, body}. Image: {arch, ink1, ink2, ratio}. */
+     x,y in %; w in %; r rotation deg. Text: {text, ink, size, align, bold, italic, body}. Image: {arch, ink1, ink2, ratio}.
+     FR-3 style fields — align:'left'|'center'|'right' (→ model TextAlign START/CENTER/END), bold/italic booleans (→ Inter 400/700
+     + Regular/Italic faces). The old heading/body VOICE is retired (production is Inter-only); line-height is fixed for all text,
+     NOT a styled attribute (out of FR-3 scope / not in the model). Any residual `body:` in seeds is inert. */
   let _bid = 0; const nid = () => "b" + (++_bid);
   function seedExisting(){
     return [
-      { id:nid(), panel:0, type:"text",  x:50, y:30, w:74, r:-2, text:"Corner Store Poems", ink:"ink",   size:30, body:false },
+      { id:nid(), panel:0, type:"text",  x:50, y:30, w:74, r:-2, text:"Corner Store Poems", ink:"ink",   size:32, align:"center", bold:true, body:false },
       { id:nid(), panel:0, type:"image", x:50, y:64, w:56, r:1.5, arch:0, ink1:0, ink2:0, ratio:1 },
-      { id:nid(), panel:0, type:"text",  x:50, y:88, w:60, r:0, text:"a tiny zine", ink:"coral", size:13, body:true },
-      { id:nid(), panel:1, type:"text",  x:50, y:24, w:78, r:0, text:"Morning, and the kettle is the loudest thing for miles.", ink:"ink", size:15, body:true },
+      { id:nid(), panel:0, type:"text",  x:50, y:88, w:60, r:0, text:"a tiny zine", ink:"coral", size:14, align:"center", italic:true, body:true },
+      { id:nid(), panel:1, type:"text",  x:50, y:24, w:78, r:0, text:"Morning, and the kettle is the loudest thing for miles.", ink:"ink", size:16, body:true },
       { id:nid(), panel:1, type:"image", x:50, y:70, w:64, r:-2, arch:2, ink1:1, ink2:0, ratio:1.2 },
       { id:nid(), panel:2, type:"image", x:50, y:44, w:80, r:1, arch:3, ink1:2, ink2:1, ratio:1 },
-      { id:nid(), panel:2, type:"text",  x:50, y:86, w:70, r:0, text:"No. 12 — the aisle of small machines", ink:"stamp", size:13, body:true },
-      { id:nid(), panel:5, type:"text",  x:50, y:50, w:70, r:-1, text:"Fold here.", ink:"coral", size:22, body:false },
-      { id:nid(), panel:7, type:"text",  x:50, y:80, w:66, r:0, text:"made by hand · kept on this device", ink:"ink", size:11, body:true }
+      { id:nid(), panel:2, type:"text",  x:50, y:86, w:70, r:0, text:"No. 12 — the aisle of small machines", ink:"stamp", size:14, body:true },
+      { id:nid(), panel:5, type:"text",  x:50, y:50, w:70, r:-1, text:"Fold here.", ink:"coral", size:24, align:"center", bold:true, body:false },
+      { id:nid(), panel:7, type:"text",  x:50, y:80, w:66, r:0, text:"made by hand · kept on this device", ink:"ink", size:12, body:true }
     ];
   }
   function seedNew(){
     return [
-      { id:nid(), panel:0, type:"text", x:50, y:40, w:72, r:-2, text:"Your title", ink:"ink", size:30, body:false, starter:true },
-      { id:nid(), panel:0, type:"text", x:50, y:60, w:60, r:0, text:"tap to make it yours", ink:"coral", size:13, body:true, starter:true }
+      { id:nid(), panel:0, type:"text", x:50, y:40, w:72, r:-2, text:"Your title", ink:"ink", size:32, body:false, starter:true },
+      { id:nid(), panel:0, type:"text", x:50, y:60, w:60, r:0, text:"tap to make it yours", ink:"coral", size:14, body:true, starter:true }
     ];
   }
 
@@ -718,7 +817,7 @@ body{
 
   /* ---------- els ---------- */
   const stage=$("#stage"), canvas=$("#canvas"), page=$("#page"), rail=$("#rail"),
-        toolbar=$("#toolbar"), inkbar=$("#inkbar"), zoombar=$("#zoombar"), reframebar=$("#reframebar"),
+        toolbar=$("#toolbar"), inkbar=$("#inkbar"), typebar=$("#typebar"), zoombar=$("#zoombar"), reframebar=$("#reframebar"),
         loadwrap=$("#loadwrap"), errwrap=$("#errwrap"), scrim=$("#scrim"),
         snackbar=$("#snackbar"), toastEl=$("#toast"), saveState=$("#saveState"), saveText=$("#saveText");
 
@@ -731,6 +830,7 @@ body{
 
   /* ---------- history (undo over confirm; real stack) ---------- */
   function snapshot(){
+    clearTimeout(sizeCoalesce); clearTimeout(nudgeTimer);   // this commit absorbs any pending coalesced size/nudge snapshot — no dead undo step
     history = history.slice(0, hpos+1);
     history.push(JSON.stringify(blocks));
     if(history.length > 60) history.shift();
@@ -738,7 +838,8 @@ body{
     updateUndo(); markSaving();
   }
   function updateUndo(){ $("#undo").disabled = hpos<=0; $("#redo").disabled = hpos>=history.length-1; }
-  function restore(){ blocks = JSON.parse(history[hpos]); if(sel && !blocks.find(b=>b.id===sel)) sel=null; render(); updateUndo(); markSaving(); }
+  function restore(){ blocks = JSON.parse(history[hpos]); if(sel && !blocks.find(b=>b.id===sel)) sel=null; render(); updateUndo(); markSaving();
+    if(typebar.classList.contains("on")){ const b=blocks.find(x=>x.id===sel); if(b&&b.type==="text") syncTypeBar(b); else typebar.classList.remove("on"); } }
   $("#undo").addEventListener("click", () => { if(hpos>0){ hpos--; buzz("tick"); restore(); } });
   $("#redo").addEventListener("click", () => { if(hpos<history.length-1){ hpos++; buzz("tick"); restore(); } });
 
@@ -752,12 +853,15 @@ body{
   function blockEl(b, idx){
     const el = document.createElement("div");
     el.setAttribute("role","button");
-    el.className = "block " + b.type + (b.type==="text" && b.body ? " body":"") + (b.type==="image" ? " "+ARCH[b.arch]:"") + (b.id===sel?" sel":"");
+    el.className = "block " + b.type + (b.type==="image" ? " "+ARCH[b.arch]:"") + (b.id===sel?" sel":"");
     el.dataset.id = b.id; el.style.setProperty("--bx", b.x+"%"); el.style.setProperty("--by", b.y+"%");
     el.style.setProperty("--bw", b.w+"%"); el.style.setProperty("--r", (b.r||0)+"deg"); el.style.setProperty("--bi", idx);
     el.tabIndex = 0;
     if(b.type==="text"){
       el.style.setProperty("--btext", inkVal(b.ink)); el.style.setProperty("--bfs", b.size);
+      el.style.setProperty("--fw", b.bold ? 700 : 400);
+      el.style.setProperty("--fst", b.italic ? "italic" : "normal");
+      el.style.setProperty("--ta", b.align || "left");
       const s = document.createElement("div"); s.className="surface"; s.textContent=b.text; el.appendChild(s);
       el.setAttribute("aria-label", `Text: “${b.text}”. Selected? Tap to select, double-tap to edit.`);
     } else {
@@ -827,9 +931,19 @@ body{
     toolbar.dataset.mode = reframe ? "reframe" : (b ? "select" : "add");
     if(b && !reframe){
       $("#tEditLabel").textContent = b.type==="text" ? "Edit" : "Reframe";   // image primary in-place action is Reframe (Replace demoted to the menu)
-      $("#tInk").style.display = ""; // ink applies to both (text colour / image spot-ink)
+      const isText = b.type==="text";
+      // PROTOTYPE MECHANIC (not a Compose contract — see header reconciliation note): here one tool wears two hats — "Style"
+      // (Type bar) for text · "Ink" (spot-ink popover) for image. Compose has neither this toolbar nor an Ink tool, so it
+      // offers the Style control on its EditorContextBar instead, gated to text. Load-bearing either way: ONE control opens
+      // the Type bar, it is offered only for text, and it never co-opens a colour popover.
+      $("#tInk").style.display = "";
+      $("#tInk").setAttribute("aria-label", isText ? "Text style" : "Ink colour");
+      $("#tInk").dataset.role = isText ? "style" : "ink";
+      $("#tInk").innerHTML = isText   // icon reads as its job: an "Aa" type glyph for Style, the ink circle for Ink
+        ? '<span aria-hidden="true" style="font-family:var(--shell);font-weight:700;font-size:16px;letter-spacing:-.02em">A<span style="font-style:italic">a</span></span>'
+        : '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16" fill="currentColor"/></svg>';
     }
-    if(!reframe) inkbar.classList.remove("on");
+    if(!reframe){ inkbar.classList.remove("on"); if(!b || b.type!=="text") typebar.classList.remove("on"); }
   }
 
   /* ---------- image framing (Reframe) ----------
@@ -1051,7 +1165,8 @@ body{
     const rng=document.createRange(); rng.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(rng);
     el.addEventListener("blur", commitEdit, {once:true});
     el.addEventListener("keydown", ev=>{ if(ev.key==="Enter" && !ev.shiftKey){ ev.preventDefault(); el.blur(); }
-      if(ev.key==="Escape"){ ev.preventDefault(); el.blur(); } });
+      if(ev.key==="Escape"){ ev.preventDefault(); el.blur(); }
+      if((ev.ctrlKey||ev.metaKey) && ["b","i","u"].includes(ev.key.toLowerCase())) ev.preventDefault(); });   // no <b>/<i>/<u> injection — styling is block-level, not rich text
   }
   function commitEdit(){
     const b = blocks.find(x=>x.id===editing); if(!b){ editing=null; return; }
@@ -1066,7 +1181,7 @@ body{
 
   /* ---------- toolbar actions ---------- */
   $("#addText").addEventListener("click", ()=>{
-    const b = { id:nid(), panel:cur, type:"text", x:50, y:34, w:70, r:0, text:"New text", ink:"ink", size:22, body:false };
+    const b = { id:nid(), panel:cur, type:"text", x:50, y:34, w:70, r:0, text:"New text", ink:"ink", size:24, align:"left", bold:false, italic:false };
     blocks.push(b); buzz("snap"); select(b.id,false); snapshot(); render(); const nb=blocks.find(x=>x.id===b.id); startEdit(nb);
   });
   $("#addImage").addEventListener("click", ()=> openImport());
@@ -1090,18 +1205,74 @@ body{
     const c={...b, id:nid(), x:clamp(b.x+6,9,91), y:clamp(b.y+6,9,91)}; blocks.push(c); buzz("snap"); snapshot(); select(c.id,false); });
   $("#tDel").addEventListener("click", ()=>{ const b=blocks.find(x=>x.id===sel); if(b) deleteBlock(b); });
   $("#tDone").addEventListener("click", ()=>{ buzz("tick"); deselect(); });
-  $("#tInk").addEventListener("click", ()=> toggleInk());
+  // Prototype routing (see header reconciliation note): one select-tool, routed by type — text → Type bar (Style) · image →
+  // ink popover (Ink). Compose routes by offering the Style control only when the selection is a single non-blank text box.
+  $("#tInk").addEventListener("click", ()=>{ const b=blocks.find(x=>x.id===sel); if(!b) return;
+    if(b.type==="text") toggleType(); else toggleInk(); });
 
   function toggleInk(){
     const b = blocks.find(x=>x.id===sel); if(!b){ inkbar.classList.remove("on"); return; }
     if(inkbar.classList.contains("on")){ inkbar.classList.remove("on"); return; }
-    inkbar.innerHTML = INKS.map(ink=>`<button class="swatch" data-ink="${ink.k}" aria-label="${ink.lab}" aria-pressed="${b.type==='text'? b.ink===ink.k : false}" style="background:${ink.v}"></button>`).join("");
+    typebar.classList.remove("on");
+    inkbar.innerHTML = INKS.map(ink=>`<button class="swatch" data-ink="${ink.k}" aria-label="${ink.lab}" aria-pressed="false" style="background:${ink.v}"></button>`).join("");
     inkbar.classList.add("on");
   }
+
+  /* ---------- FR-3 text styling (Type bar) ----------
+     Non-modal popover; the styled block on the live canvas IS the preview. Each change = one undo step (undo over confirm);
+     a run of size steps coalesces into one — a SURFACE settle-debounce (400 ms), NOT a reducer history-merge: the shipped
+     :core:editor reducer has no arrow-nudge merge to mirror (ADR-055 D4). Colour reuses the ink vocabulary; size snaps to the discrete ramp. */
+  let sizeCoalesce=null;
+  function sizeCommit(){ clearTimeout(sizeCoalesce); sizeCoalesce=setTimeout(()=>snapshot(), 400); }
+  function tySay(m){ const l=$("#tyLive"); if(l){ l.textContent=""; l.textContent=m; } }
+  function nearestSize(v){ let bi=0,bd=Infinity; SIZES.forEach((s,i)=>{ const d=Math.abs(s-v); if(d<bd){bd=d;bi=i;} }); return bi; }
+  function applyTextStyle(b){ const el=page.querySelector(`.block[data-id="${b.id}"]`); if(!el) return;
+    el.style.setProperty("--bfs", b.size);
+    el.style.setProperty("--fw", b.bold?700:400);
+    el.style.setProperty("--fst", b.italic?"italic":"normal");
+    el.style.setProperty("--ta", b.align||"left");
+    el.style.setProperty("--btext", inkVal(b.ink)); }
+  function syncTypeBar(b){
+    let i = SIZES.indexOf(b.size); if(i<0) i=nearestSize(b.size);
+    $("#tySizeVal").textContent = SIZES[i] + " pt";
+    $("#tySizeDown").disabled = i<=0; $("#tySizeUp").disabled = i>=SIZES.length-1;
+    const al = b.align || "left";
+    $("#alLeft").setAttribute("aria-pressed", String(al==="left"));
+    $("#alCenter").setAttribute("aria-pressed", String(al==="center"));
+    $("#alRight").setAttribute("aria-pressed", String(al==="right"));
+    $("#tyBold").setAttribute("aria-pressed", String(!!b.bold));
+    $("#tyItalic").setAttribute("aria-pressed", String(!!b.italic));
+    $("#tyInks").innerHTML = INKS.map(ink=>`<button class="swatch" data-ink="${ink.k}" aria-label="${ink.lab}" aria-pressed="${b.ink===ink.k}" style="background:${ink.v}"></button>`).join("");
+  }
+  function toggleType(){
+    const b=blocks.find(x=>x.id===sel); if(!b||b.type!=="text"){ typebar.classList.remove("on"); return; }
+    if(typebar.classList.contains("on")){ typebar.classList.remove("on"); return; }
+    inkbar.classList.remove("on"); syncTypeBar(b); typebar.classList.add("on");
+  }
+  function setSize(dir){ const b=blocks.find(x=>x.id===sel); if(!b||b.type!=="text") return;
+    let idx=SIZES.indexOf(b.size); if(idx<0) idx=nearestSize(b.size);
+    const ni=clamp(idx+dir,0,SIZES.length-1); if(ni===idx){ buzz("boundary"); return; }
+    b.size=SIZES[ni]; buzz("tick"); applyTextStyle(b); syncTypeBar(b); sizeCommit(); tySay("Size "+b.size+" point"); }
+  function setAlign(al){ const b=blocks.find(x=>x.id===sel); if(!b||b.type!=="text"||(b.align||"left")===al) return;
+    b.align=al; buzz("tick"); applyTextStyle(b); syncTypeBar(b); snapshot(); tySay(al==="left"?"Left aligned":al==="center"?"Centered":"Right aligned"); }
+  function toggleBold(){ const b=blocks.find(x=>x.id===sel); if(!b||b.type!=="text") return;
+    b.bold=!b.bold; buzz("tick"); applyTextStyle(b); syncTypeBar(b); snapshot(); tySay(b.bold?"Bold on":"Bold off"); }
+  function toggleItalic(){ const b=blocks.find(x=>x.id===sel); if(!b||b.type!=="text") return;
+    b.italic=!b.italic; buzz("tick"); applyTextStyle(b); syncTypeBar(b); snapshot(); tySay(b.italic?"Italic on":"Italic off"); }
+  $("#tySizeDown").addEventListener("click", ()=> setSize(-1));
+  $("#tySizeUp").addEventListener("click", ()=> setSize(1));
+  $("#alLeft").addEventListener("click", ()=> setAlign("left"));
+  $("#alCenter").addEventListener("click", ()=> setAlign("center"));
+  $("#alRight").addEventListener("click", ()=> setAlign("right"));
+  $("#tyBold").addEventListener("click", toggleBold);
+  $("#tyItalic").addEventListener("click", toggleItalic);
+  $("#tyInks").addEventListener("click", e=>{ const s=e.target.closest(".swatch"); if(!s) return;
+    const b=blocks.find(x=>x.id===sel); if(!b||b.type!=="text") return;
+    b.ink=s.dataset.ink; buzz("tick"); applyTextStyle(b); syncTypeBar(b); snapshot();
+    tySay("Colour "+((INKS.find(i=>i.k===b.ink)||INKS[0]).lab)); });
   inkbar.addEventListener("click", e=>{ const s=e.target.closest(".swatch"); if(!s) return;
-    const b=blocks.find(x=>x.id===sel); if(!b) return; const k=s.dataset.ink;
-    if(b.type==="text"){ b.ink=k; }
-    else { const idx=INKS.findIndex(i=>i.k===k); b.ink1=clamp(idx,0,FIELD.length-1); } // recolour the spot ink
+    const b=blocks.find(x=>x.id===sel); if(!b || b.type!=="image") return;   // inkbar is image spot-ink only; text colour lives in the Type bar
+    const idx=INKS.findIndex(i=>i.k===s.dataset.ink); b.ink1=clamp(idx,0,FIELD.length-1);   // recolour the spot ink
     buzz("tick"); inkbar.classList.remove("on"); snapshot(); render();
   });
 
@@ -1166,10 +1337,14 @@ body{
       else if(e.key==="-"||e.key==="_"){ e.preventDefault(); rfZoom(1/1.15); }
       return;
     }
-    if(e.key==="Escape"){ if(inkbar.classList.contains("on")) inkbar.classList.remove("on"); else if(openSheet) closeSheets(false); else deselect(); return; }
+    if(e.key==="Escape"){ if(typebar.classList.contains("on")) typebar.classList.remove("on"); else if(inkbar.classList.contains("on")) inkbar.classList.remove("on"); else if(openSheet) closeSheets(false); else deselect(); return; }
     if(openSheet) return; // an open modal sheet owns the keyboard — don't nudge/delete the block behind the scrim (RI1)
     const meta = e.ctrlKey||e.metaKey;
     if(meta && e.key.toLowerCase()==="z"){ e.preventDefault(); if(e.shiftKey){ if(hpos<history.length-1){ hpos++; buzz("tick"); restore(); } } else if(hpos>0){ hpos--; buzz("tick"); restore(); } return; }
+    // industry-standard bold/italic while a text block is SELECTED (not editing — edit mode suppresses these to block rich-text injection)
+    if(meta && (e.key.toLowerCase()==="b"||e.key.toLowerCase()==="i")){ const tb=blocks.find(x=>x.id===sel);
+      if(tb && tb.type==="text"){ e.preventDefault(); if(e.key.toLowerCase()==="b") toggleBold(); else toggleItalic();
+        if(typebar.classList.contains("on")) syncTypeBar(tb); } return; }
     if(!sel) return;
     const b = blocks.find(x=>x.id===sel); if(!b) return;
     const step = e.shiftKey ? 5 : 1;
@@ -1188,7 +1363,7 @@ body{
   const SHEETS = ["#importSheet","#blockSheet","#renameSheet"].map(s=>$(s));
   let openSheet=null, lastFocus=null, replaceMode=false;
   function show(el){
-    lastFocus = document.activeElement; closeSheets(true); openSheet=el; scrim.classList.add("on");
+    lastFocus = document.activeElement; closeSheets(true); inkbar.classList.remove("on"); typebar.classList.remove("on"); openSheet=el; scrim.classList.add("on");
     SHEETS.forEach(s=> s.inert=(s!==el)); el.classList.add("on"); dev.inert=true; protoEl.inert=true;
     setTimeout(()=>{ const t=Array.from(el.querySelectorAll("button,input,[tabindex]")).find(n=>n.offsetParent!==null); if(t) t.focus(); }, 60);
   }

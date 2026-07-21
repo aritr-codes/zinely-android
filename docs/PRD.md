@@ -101,7 +101,7 @@ flowchart TB
 - **Paper:** US **Letter** and **A4**.
 - **Pages:** 8 logical pages; front/back cover + 6 interior.
 - **Photo placement:** import via Photo Picker, place, move/resize/rotate, basic fit (fit/fill). Photos copied-in ([ADR-004](DECISIONS.md#adr-004)).
-- **Text placement:** add/edit text, choose from bundled fonts, size/color/align.
+- **Text placement:** add/edit text, block-level size/color/align/bold/italic ([ADR-055](DECISIONS.md#adr-055)). Text renders in the single bundled Inter family ([ADR-028](DECISIONS.md#adr-028)); **font *choice* is V1**, not MVP — offering one requires bundling more families ([ROADMAP V1](ROADMAP.md#v1--a-real-editor)).
 - **Layouts:** per-page single / double / full options (à la DLZ).
 - **Automatic imposition:** logical pages → correctly placed/rotated panels ([ADR-007](DECISIONS.md#adr-007)).
 - **Export:** **PDF** (vector text) + **image** (PNG/JPG) at exact paper size; raster 300 DPI ([ADR-011](DECISIONS.md#adr-011)).
@@ -122,7 +122,7 @@ MVP requirement**. Deferred **within MVP** (post-alpha, before `1.0.0`):
 
 | Deferred from the alpha | Status | Note |
 |---|---|---|
-| Text **styling** (FR-3 style clause: font choice, size/color/align) | post-alpha S7.x | add/edit text ships; alpha text is single-style |
+| Text **styling** (FR-3 style clause: size/color/align + bold/italic) | **implemented and machine-verified (B1–B4); pending the two [ADR-055](DECISIONS.md#adr-055) §5 human gates** — not yet in the packaged alpha | The DESIGN-FROZEN Bench FR-3 amendment adds a non-modal **Type bar** opened by one "Text style" (`Aa`) control offered only for a single non-blank text selection. Each change (align/bold/italic/colour) is one undoable command; a size run is surface-coalesced to one. No model/render/persistence/export/schema change — style already round-tripped and already satisfied `preview == export`. **Font choice is excluded and reclassified to V1** (it needs multi-family bundling beyond the [ADR-028](DECISIONS.md#adr-028) single-family MVP), so FR-3's MVP Must is **size · colour · alignment · bold · italic**. Outstanding: the on-device a11y pass and the pixel-parity pass (fresh goldens, none yet recorded). The §8 touch-target-vs-frozen-paint divergence is **resolved** (2026-07-17), as is the size-step live-preview divergence ([ADR-055 §8, D4](DECISIONS.md#adr-055)) |
 | Per-page layout presets (FR-4, Should) | post-alpha | freeform place/move/resize is the alpha's layout model |
 | Image **fit/fill** control (the §7.1 photo-placement "basic fit" clause) | **complete on branch `feat/if1-image-framing-core` (IF1–IF5); ready to merge** — not yet in the packaged alpha | The DESIGN-FROZEN Bench adds a Reframe mode and makes **`Fit.FILL`** the new-placement default; existing documents are unchanged. Milestone IF shipped as IF1 core state / IF2 Compose surface / IF3 accessibility / IF5 parity restoration ([ADR-053](DECISIONS.md#adr-053), un-defers the [ADR-047 amendment](DECISIONS.md#adr-047)). IF4 verification returned GO WITH FIXES; the on-device pixel-parity pass found five Reframe-chrome divergences from frozen `bench.html`, all restored by **IF5** (`685f753`). Device pixel-parity (P1–P5, M1) and accessibility semantics both **re-verified — PASS**; final engineering verdict **GO**. See [ADR-053](DECISIONS.md#adr-053) Implementation outcome + [ROADMAP](ROADMAP.md) IF rows |
 | Calibration ruler | deferred with cause | [ADR-039](DECISIONS.md#adr-039): edge-to-edge tiling leaves no margin; the "Actual size" note carries the guidance |

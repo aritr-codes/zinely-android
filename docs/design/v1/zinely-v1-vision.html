@@ -1,0 +1,330 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zinely v1 Product Vision</title>
+<style>
+:root{
+  --paper:#F4EFE6; --ink:#23201C; --ink-soft:#6B6358; --line:#DCD3C3;
+  --coral:#E76F51; --teal:#2A9D8F; --yellow:#E9C46A; --stamp:#264653;
+  --card:#FBF8F1; --code:#EDE6D8;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --paper:#201F1E; --ink:#EDE7DC; --ink-soft:#A89F91; --line:#3A3733;
+         --coral:#F08A6F; --teal:#4DB6A9; --yellow:#E9C46A; --stamp:#7FA8BC;
+         --card:#282624; --code:#2E2B28; }
+}
+:root[data-theme="dark"]{ --paper:#201F1E; --ink:#EDE7DC; --ink-soft:#A89F91; --line:#3A3733;
+         --coral:#F08A6F; --teal:#4DB6A9; --yellow:#E9C46A; --stamp:#7FA8BC;
+         --card:#282624; --code:#2E2B28; }
+:root[data-theme="light"]{ --paper:#F4EFE6; --ink:#23201C; --ink-soft:#6B6358; --line:#DCD3C3;
+         --coral:#E76F51; --teal:#2A9D8F; --yellow:#E9C46A; --stamp:#264653;
+         --card:#FBF8F1; --code:#EDE6D8; }
+html{background:var(--paper)}
+body{
+  background:var(--paper); color:var(--ink);
+  font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  margin:0; padding:2.5rem 1.25rem 6rem;
+}
+main{max-width:72ch; margin:0 auto}
+h1,h2,h3,.serif{font-family:Georgia,"Times New Roman",serif}
+h1{font-size:2.4rem; line-height:1.15; margin:0 0 .25rem; text-wrap:balance; font-weight:600}
+h2{font-size:1.55rem; line-height:1.25; margin:3rem 0 .75rem; text-wrap:balance; font-weight:600;
+   border-top:3px solid var(--ink); padding-top:1rem}
+h2 .no{color:var(--coral); font-variant-numeric:tabular-nums; margin-right:.4rem}
+h3{font-size:1.15rem; margin:1.75rem 0 .5rem; font-weight:600}
+p{margin:.75rem 0}
+a{color:var(--teal)}
+strong{color:var(--ink)}
+em{color:inherit}
+.kicker{font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:var(--coral); font-weight:600; margin-bottom:.75rem}
+.meta{color:var(--ink-soft); font-size:.9rem; margin:.75rem 0 0; border-bottom:1px solid var(--line); padding-bottom:1.5rem}
+.meta b{color:var(--ink); font-weight:600}
+ul,ol{padding-left:1.35rem; margin:.75rem 0}
+li{margin:.45rem 0}
+li::marker{color:var(--coral)}
+.legend{display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0}
+.chip{display:inline-block; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  padding:.15rem .55rem; border-radius:2px; white-space:nowrap; vertical-align:baseline}
+.must{background:var(--coral); color:#fff}
+.should{background:var(--yellow); color:#3A3123}
+.nice{background:var(--teal); color:#fff}
+.game{background:var(--stamp); color:#fff}
+.done{background:var(--line); color:var(--ink)}
+.assume{background:transparent; color:var(--ink-soft); border:1px dashed var(--ink-soft)}
+.tablewrap{overflow-x:auto; margin:1rem 0}
+table{border-collapse:collapse; width:100%; font-size:.92rem}
+th{font-size:.75rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-soft); text-align:left}
+th,td{padding:.5rem .75rem; border-bottom:1px solid var(--line); vertical-align:top}
+td:first-child,th:first-child{padding-left:0}
+.grade{font-family:Georgia,serif; font-size:1.05rem; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+.gA{color:var(--teal)} .gB{color:var(--stamp)} .gC{color:#B07D2B} .gD{color:var(--coral)} .gF{color:var(--coral)}
+blockquote{margin:1.25rem 0; padding:.75rem 1rem; background:var(--card); border-left:3px solid var(--coral); font-size:.95rem}
+pre{background:var(--code); padding:1rem; overflow-x:auto; font-size:.85rem; line-height:1.5; border-radius:2px}
+code{font-family:ui-monospace,Consolas,monospace; font-size:.9em; background:var(--code); padding:.08em .3em; border-radius:2px}
+pre code{background:none; padding:0}
+.callout{background:var(--card); border:1px solid var(--line); padding:1rem 1.25rem; margin:1.25rem 0; border-radius:2px}
+.toc{background:var(--card); border:1px solid var(--line); padding:1rem 1.5rem; margin:2rem 0; border-radius:2px; columns:2; column-gap:2rem; font-size:.9rem}
+.toc a{color:var(--ink); text-decoration:none}
+.toc a:hover{color:var(--coral)}
+.toc li{margin:.25rem 0; break-inside:avoid}
+.toc li::marker{color:var(--ink-soft)}
+@media (max-width:560px){ .toc{columns:1} h1{font-size:1.9rem} }
+hr{border:0; border-top:1px solid var(--line); margin:2.5rem 0}
+.review-note{font-size:.85rem; color:var(--ink-soft); font-style:italic}
+:focus-visible{outline:2px solid var(--coral); outline-offset:2px}
+</style>
+<main>
+<div class="kicker">Product vision · guiding document</div>
+<h1>Zinely v1 Product Vision</h1>
+<p class="meta"><b>Role:</b> Lead Product Designer / UX Researcher / Creative Director &nbsp;·&nbsp; <b>Date:</b> 2026-07-18 &nbsp;·&nbsp; <b>Status:</b> Proposal — nothing here is frozen. Every UX change must pass the HTML-first pipeline (prototype → critique → freeze) before any Compose work. &nbsp;·&nbsp; <b>Ground rules:</b> the fold is sacred; privacy/offline invariants intact (one carefully-scoped amendment proposed in §11); ADR constraints in Appendix A treated as immovable unless explicitly challenged.</p>
+
+<div class="legend">
+  <span class="chip must">Must have</span>
+  <span class="chip should">Should have</span>
+  <span class="chip nice">Nice to have</span>
+  <span class="chip game">Game changer</span>
+  <span class="chip assume">🟨 assumption</span>
+</div>
+
+<ol class="toc">
+<li><a href="#s1">Executive critique</a></li>
+<li><a href="#s2">Current UX scorecard</a></li>
+<li><a href="#s3">Biggest pain points</a></li>
+<li><a href="#s4">Biggest opportunities</a></li>
+<li><a href="#s5">Competitive research</a></li>
+<li><a href="#s6">Interaction improvements</a></li>
+<li><a href="#s7">Visual improvements</a></li>
+<li><a href="#s8">Information architecture</a></li>
+<li><a href="#s9">Editor redesign</a></li>
+<li><a href="#s10">Home redesign</a></li>
+<li><a href="#s11">Asset ecosystem — “Supplies”</a></li>
+<li><a href="#s12">Typography system</a></li>
+<li><a href="#s13">Sticker system</a></li>
+<li><a href="#s14">Multi-page system</a></li>
+<li><a href="#s15">Print workflow</a></li>
+<li><a href="#s16">Roadmap</a></li>
+</ol>
+
+<h2 id="s1"><span class="no">1</span>Executive critique</h2>
+<p>Zinely today is a <strong>technically honest print pipeline wearing a product’s clothes</strong>. The engineering is genuinely excellent — atomic saves, parity rendering, pure-Kotlin imposition, real TalkBack passes — and the design <em>documents</em> (VOICE.md, DESIGN-RULES.md, EXPERIENCE-MAP.md) describe a warm, handmade, emotionally intelligent product. But the shipped experience betrays both, in five structural ways:</p>
+<p><strong>1. The product teaches its central idea last.</strong> The fold — the single concept that makes Zinely exist — is explained in Proof Act 3, <em>after</em> the user has designed eight panels and exported a PDF. A first-time user edits a “scrambled on purpose” sheet with no mental model of why it’s scrambled. This is like a chess app that explains checkmate after your first game ends. Blank-start research is unambiguous: unstructured, unexplained starting points are the top driver of first-session abandonment. The fold must move from epilogue to prologue.</p>
+<p><strong>2. The editor never shows the user the object they’re making.</strong> The Bench correctly edits in reading order (cover → pages → back), but the rail is a flat list of panels: nothing inside the editor conveys which pages <em>face each other</em> when folded, and ADR-051 (Decision B) retired the reading-order booklet preview entirely. The user designs eight isolated rectangles and only discovers how they behave as a <em>book</em> after export. The fold — the product’s central idea — is invisible in the room where all the work happens, and is formally taught only in Proof Act 3, after the fact.</p>
+<p><strong>3. The riskiest moment is outsourced at its peak.</strong> ADR-052 removed the in-app Print button, so the entire promise (“printed at home”) depends on a beginner correctly setting four fields (100% scale, landscape, single-sided, paper size) inside an OEM print dialog we don’t control — the documented rage-point of every printer app store listing. We can’t take the dialog back, but we currently do almost nothing to de-risk it: no test-fold sheet, no calibration ruler (deferred despite ADR-012 promising it), no post-print recovery guidance. Save-to-phone (ADR-054, shipped in v0.8.0) fixed the <em>export destination</em> honestly; the <em>print settings gauntlet</em> remains de-risked by copy alone.</p>
+<p><strong>4. The craft-table metaphor is a promise the supplies can’t keep.</strong> The design language says workbench, supplies, tape, stamps, handmade. The actual supply tray contains <strong>two items</strong>: text and photo. There are no stickers, no tape, no textures, no fonts to choose, no templates, no prompts. Meanwhile the shipped visual identity is flatter than the frozen prototypes (hatch fills and cover art ponytail-flattened to solid swatches and page numbers). A user who arrives expecting a zine kit finds a form with two field types. The emotional gap between what the brand promises and what the tray delivers is the product’s biggest strategic hole — and its biggest opportunity, because the fold + print pipeline (the hard part) is already built.</p>
+<p><strong>5. The shelf is a file manager, not a bookshelf.</strong> Covers render as generated stand-ins, not the user’s own page-1 artwork — even though the real thumbnail pipeline (ADR-045) is built and deliberately left unwired. There is no “continue where you left off,” no prompt to start from, no record that a zine was ever <em>printed</em>. The screen that should say “look at these little books you made” currently says “here are your documents.”</p>
+<p>None of this is fatal. The foundation under it — parity render, imposition, durability, a11y — is exactly what lets us now spend a year on love instead of correctness.</p>
+
+<h2 id="s2"><span class="no">2</span>Current UX scorecard</h2>
+<div class="tablewrap"><table>
+<tr><th>Area</th><th>Grade</th><th>One-line verdict</th></tr>
+<tr><td>Engineering honesty (saves, parity, a11y)</td><td class="grade gA">A</td><td>Genuinely best-in-class for an indie app.</td></tr>
+<tr><td>Voice &amp; copywriting</td><td class="grade gA">A−</td><td>VOICE.md is a real asset; copy warmth survives into shipped strings.</td></tr>
+<tr><td>Print pipeline correctness</td><td class="grade gB">B+</td><td>Imposition + 300 DPI + safe areas solid; the <em>handoff</em> is the gap.</td></tr>
+<tr><td>First-run / onboarding</td><td class="grade gD">D</td><td>None shipped. Empty shelf + a button. Core concept untaught.</td></tr>
+<tr><td>Editor mental model</td><td class="grade gC">C</td><td>Reading-order editing is right; but no fold/facing-pair awareness in Bench (booklet preview retired by ADR-051).</td></tr>
+<tr><td>Editor ergonomics</td><td class="grade gC">C</td><td>Steppers-as-primary for photo framing; two-item tray; no snapping.</td></tr>
+<tr><td>Text &amp; typography</td><td class="grade gC">C−</td><td>One font, block-level style only, silent non-Latin blank rendering (data loss).</td></tr>
+<tr><td>Media handling</td><td class="grade gB">B−</td><td>Photo Picker flow + Reframe model is right; the <em>controls</em> are tedious.</td></tr>
+<tr><td>Creative supplies (stickers, textures, templates)</td><td class="grade gF">F</td><td>Do not exist. The metaphor is unbacked.</td></tr>
+<tr><td>Home / Shelf</td><td class="grade gC">C</td><td>Correct skeleton, zero emotion: stand-in covers, no continue, no prompts.</td></tr>
+<tr><td>Print payoff moment</td><td class="grade gB">B−</td><td>Act 3 fold guide + haptic is lovely; arrives cold, no test sheet, no ritual.</td></tr>
+<tr><td>Error experience</td><td class="grade gD">D+</td><td>Warm dead-ends: every failure is “Try again” forever.</td></tr>
+<tr><td>Brand-to-build fidelity</td><td class="grade gC">C−</td><td>Frozen prototypes are noticeably richer than the shipped app.</td></tr>
+</table></div>
+
+<h2 id="s3"><span class="no">3</span>Biggest pain points (ranked)</h2>
+<ol>
+<li><span class="chip must">Must</span> <strong>Silent non-Latin text loss</strong> — non-Latin/emoji text renders <em>blank</em> in preview and export (ADR-028 Latin-first cmap guard), with no warning at input time. Already reported by a real tester (alpha triage 2026-07-04, findings B3/C1) and carried as a known limitation. For the poet persona this is data loss.</li>
+<li><span class="chip must">Must</span> <strong>Fold taught last</strong> — the core mental model arrives after the work is done; nothing in first-run or the Bench conveys it.</li>
+<li><span class="chip must">Must</span> <strong>The user’s work is shown as placeholders</strong> — the Shelf renders a generated stand-in cover, not the zine’s real page 1 (the ADR-045 thumbnail pipeline exists but is deliberately unwired — HomeScreen.kt documents it as an open owner decision); Proof renders schematic page numbers.</li>
+<li><span class="chip should">Should</span> <strong>Print handoff de-risking absent</strong> — no test-fold sheet, no calibration ruler (ADR-012 promised it; deferred by ADR-047), no “it printed wrong, now what?” path.</li>
+<li><span class="chip should">Should</span> <strong>Two-item supply tray</strong> — the creative ceiling is text + photo.</li>
+<li><span class="chip should">Should</span> <strong>Gesture ergonomics thin at the emotional peak</strong> — ADR-053 correctly makes steppers the authoritative accessible path and frames gestures as enhancements; the enhancements (drag/pinch inside Reframe, snapping) are the part not yet shipped.</li>
+<li><span class="chip should">Should</span> <strong>No fold awareness in the Bench</strong> — facing pairs invisible; booklet preview retired (ADR-051 Decision B) with nothing replacing it.</li>
+<li><span class="chip nice">Nice</span> <strong>Warm dead-end errors</strong> — kindness without an exit; every failure resolves to “Try again” forever.</li>
+<li><span class="chip nice">Nice</span> <strong>No settings surface</strong> — theme, fold-help, licenses have no home; paper locked at creation (ADR-047).</li>
+</ol>
+
+<h2 id="s4"><span class="no">4</span>Biggest opportunities</h2>
+<ol>
+<li><span class="chip game">Game changer</span> <strong>Own the fold as theater.</strong> No competitor (Canva, Express, none) has a moment where digital work becomes a physical object in your hands. The imposition reveal + fold ritual is Zinely’s un-copyable peak — currently played as a settings page.</li>
+<li><span class="chip game">Game changer</span> <strong>The zine that teaches Zinely.</strong> Onboarding as a printable tutorial zine — the medium teaching the medium. Nobody else can do this; it <em>is</em> the product demo, the tutorial, and the first print all at once.</li>
+<li><span class="chip game">Game changer</span> <strong>A real supplies ecosystem, offline.</strong> Zinnia’s top complaint is stickers-need-internet. An offline-first craft app with generous bundled packs + explicit-download extras turns the privacy stance into a <em>feature</em> users can feel.</li>
+<li><span class="chip should">Should</span> <strong>Prompts kill the blank page.</strong> Day One proved the mechanism; zine prompt packs (8 prompts = 8 pages) are a perfect-fit adaptation, fully local.</li>
+<li><span class="chip should">Should</span> <strong>The shelf as a record of made objects.</strong> Printed-zine “graduation” (worn edge, print date, “printed ×3”) leverages the IKEA effect with zero cloud.</li>
+<li><span class="chip nice">Nice</span> <strong>Share-as-image.</strong> One rendered “look what I made” card to the OS share sheet: distribution with zero accounts or network.</li>
+</ol>
+
+<h2 id="s5"><span class="no">5</span>Competitive research (principles, not clones)</h2>
+<p>Full sourced reports accompany this document; distilled here. ✅ = VERIFIED (sourced) · 🟨 = ASSUMPTION.</p>
+<h3>Editor (Canva mobile, Paper/FiftyThree, Procreate Pocket, Bazaart, M3, HIG, NN/g)</h3>
+<ul>
+<li>✅ Canvas is the product; default chrome near zero (Paper added zoom with <em>no</em> new persistent UI).</li>
+<li>✅ Nothing selected → insertion tools; object selected → that object’s verbs only (Canva’s contextual quick-actions).</li>
+<li>✅ Floating bar for verbs; ≤50%-height bottom sheet for property sets, object stays visible and live-updates (M3 guidance).</li>
+<li>✅ ~5 ranked actions visible, rest under More — ranking is where design opinion lives.</li>
+<li>✅ Snapping + flash guides + haptic tick substitute for the precision fingers lack; objects snap on finger-lift.</li>
+<li>✅ Keyboard and rich tools never fight: style strip above keyboard; opening a sheet dismisses the keyboard (Canva).</li>
+<li>✅ Font names rendered in their own face, grouped by mood; curation (15–30 fonts) beats catalog.</li>
+<li>✅ Style presets before raw controls: presets encode taste, sliders demand it.</li>
+<li>✅ Double-tap = enter the frame (crop/reframe); Replace is a first-class verb preserving transform (matches ADR-053 — keep).</li>
+<li>✅ Undo ever-present + gesture (Procreate: two-finger tap; toast names what was undone — teaches the system model).</li>
+<li>✅ Figma mobile is the negative proof: desktop interaction models don’t shrink — validates HTML-first-for-thumb.</li>
+<li>✅ Gesture vocabulary must fit one line; every gesture needs a button equivalent (a11y).</li>
+</ul>
+<h3>Assets (Canva elements, GoodNotes, Zinnia, WhatsApp/Signal packs, F-Droid, Obsidian, Google Fonts)</h3>
+<ul>
+<li>✅ Packs are the unit of meaning (20–40 assets, named, covered, installable/deletable as one thing) — never a flat 5,000-item grid (choice-overload literature).</li>
+<li>✅ Recents row beats any taxonomy; Favorites make it <em>my</em> library. Both computable locally, zero analytics.</li>
+<li>✅ User-imported packs (transparent PNGs) are how GoodNotes/Zinnia ecosystems actually thrive — the privacy-safest growth path.</li>
+<li>✅ Zinnia’s cautionary tale: stickers gated on connectivity = top user complaint. Bundle generously; downloads are additive only.</li>
+<li>✅ Catalog = routing info only (F-Droid/Obsidian model): tiny static JSON, per-pack hash, explicit user-initiated fetch, verify-then-install.</li>
+<li>✅ Version packs with a monotonic int + <code>minAppVersion</code> compat gate (WhatsApp/Obsidian).</li>
+<li>⚠️ <strong>License landmine found: unDraw explicitly forbids redistribution “in packs” or “in an app.”</strong> The brief’s assumption was wrong. Safe seeds: Google Fonts (OFL), Humaaans (CC0), MIT icon sets, Library of Congress free-to-use sets, museum open access (CC0), rawpixel CC0 subset. Most texture sites also forbid repackaging — commission or scan originals.</li>
+</ul>
+<h3>Onboarding &amp; print (Canva/Notion/Express onboarding, Electric Zine Maker, Day One, Procreate gallery, zine-culture guides, printer-app reviews)</h3>
+<ul>
+<li>✅ Never open on a truly blank state; the empty state is the one screen every user sees — make it <em>do</em> something.</li>
+<li>✅ Teach inside a real document, not tour overlays (Canva’s “Learn the Basics” file; Express drops you into the tool).</li>
+<li>✅ One question → personalized starting content is the strongest cheap activation lever (Canva/Notion), executable 100% locally.</li>
+<li>✅ Electric Zine Maker proves the anti-polish position works <em>for zines specifically</em>: visually disarming lowers creative pressure; “ugly is a genre.”</li>
+<li>🟨 Scaffolds beat showpieces: a too-finished template inhibits like a blank page; prefer structural skeletons and rough starters.</li>
+<li>✅ Prompts remove “what do I even make?” (Day One’s stated rationale); themed packs of 8 map one-prompt-per-page.</li>
+<li>✅ Imposition is the documented #1 zine-printing confusion; the classic fix is <em>physical</em> (fold a blank sheet and number it) — replicable as animation.</li>
+<li>✅ Printer previews must earn trust: state assumptions explicitly; wasted paper is the anger driver in every printer-app review.</li>
+<li>✅ Peak-end rule: Zinely’s peak is physical — no cloud app can match it; spend the delight budget after “Print.”</li>
+<li>✅ IKEA effect + goal gradient: 8 pages is a perfect finite ladder; celebrate micro-completions; count “zines made,” not day-streaks (streaks-as-guilt is off-brand).</li>
+</ul>
+
+<h2 id="s6"><span class="no">6</span>Interaction improvements</h2>
+<div class="tablewrap"><table>
+<tr><th>#</th><th>Change</th><th>Priority</th></tr>
+<tr><td>I1</td><td><strong>Direct manipulation first, steppers as parity path.</strong> Drag to move photo in frame, pinch to zoom, double-tap to enter Reframe. ADR-053’s steppers remain as the accessible equivalent — additive, not replaced.</td><td><span class="chip must">Must</span></td></tr>
+<tr><td>I2</td><td><strong>Contextual verb bar.</strong> Nothing selected → tray shows Add verbs. Block selected → floating bar: (text) Edit · Style · Duplicate · Delete · More; (photo) Reframe · Replace · Duplicate · Delete · More. Z-order verbs under More.</td><td><span class="chip must">Must</span></td></tr>
+<tr><td>I3</td><td><strong>Snapping + guides.</strong> Snap to panel center, margins, safe-area, sibling edges; flash guide + light haptic. Print punishes “almost straight” — snap rotation to 0/90/180/270 when rotation ships.</td><td><span class="chip should">Should</span></td></tr>
+<tr><td>I4</td><td><strong>Keyboard handoff.</strong> Style chips strip above keyboard while typing; tapping Font/Colour dismisses keyboard, opens half-sheet, text stays visible and live-updates.</td><td><span class="chip should">Should</span></td></tr>
+<tr><td>I5</td><td><strong>Undo everywhere.</strong> Keep top-bar undo/redo; add two-finger-tap undo; transient toast names the undone action (“Undid: moved photo”).</td><td><span class="chip nice">Nice</span></td></tr>
+<tr><td>I6</td><td><strong>Gesture contract (one line, frozen):</strong> tap select · drag move · double-tap reframe/edit-text · pinch zoom canvas / scale block · long-press select-behind · two-finger-tap undo. Nothing else, ever; every gesture has a button twin.</td><td><span class="chip should">Should</span></td></tr>
+<tr><td>I7</td><td><strong>Errors get exits.</strong> Every error surface offers: retry · an alternate path (e.g., export image instead of PDF) · “copy details” for bug reports. Warmth stays; dead-ends go.</td><td><span class="chip should">Should</span></td></tr>
+</table></div>
+
+<h2 id="s7"><span class="no">7</span>Visual improvements</h2>
+<div class="tablewrap"><table>
+<tr><th>#</th><th>Change</th><th>Priority</th></tr>
+<tr><td>V1</td><td><strong>Close the brand-to-build gap.</strong> Restore the frozen trilogy’s hatch fills, vignettes, tape/paper textures in Compose. The prototypes are the spec; the flattening was expedient, not a decision.</td><td><span class="chip should">Should</span></td></tr>
+<tr><td>V2</td><td><strong>Real covers everywhere.</strong> Shelf: wire the existing, deliberately-unwired ADR-045 page-1 thumbnail pipeline (cheap — an open owner decision, per HomeScreen.kt). Proof: thread the document through the Proof VM seam to replace schematic page numbers with real art.</td><td><span class="chip must">Must</span></td></tr>
+<tr><td>V3</td><td><strong>Ship the marker/display face.</strong> The “friendly handmade face” has been “a follow-up” since the design language was written. Pick one OFL face, freeze it, ship it. Brand-in-type is not optional garnish.</td><td><span class="chip should">Should</span></td></tr>
+<tr><td>V4</td><td><strong>Printed-zine graduation.</strong> Printed + folded zines get physical treatment on the shelf: worn edge, print-date stamp, “printed ×N”.</td><td><span class="chip should">Should</span></td></tr>
+<tr><td>V5</td><td><strong>Dark theme gets a product home</strong> (Settings) — it exists only in the prototype dock today.</td><td><span class="chip nice">Nice</span></td></tr>
+</table></div>
+
+<h2 id="s8"><span class="no">8</span>Information architecture</h2>
+<p>Answering the brief’s direct questions:</p>
+<ul>
+<li><strong>Should the logo always be visible?</strong> No. The wordmark belongs on first-run and About. The shelf’s header should be <em>your</em> shelf (“Your zines”), not our brand. Brand recall comes from the paper/ink identity, not a persistent logotype.</li>
+<li><strong>Should “On this device” exist after onboarding?</strong> Not as a persistent pill. Privacy reassurance is most valuable at <em>moments of doubt</em> (photo import, export, share) — exactly where the copy already does this well. On the shelf it becomes wallpaper that costs hierarchy. Move it: first-run + moments-of-doubt + About. (DESIGN-RULES R12 says privacy is reassurance, never a wall — a permanent badge is closer to a wall.)</li>
+<li><strong>Is the hierarchy correct?</strong> No. Today: brand → privacy pill → search → grid → FAB. Proposed: <strong>Continue card</strong> (your in-flight zine, “page 5 of 8”) → <strong>Start something</strong> (blank / prompt / starter) → <strong>Your shelf</strong> (finished + printed) → search/sort only at <code>many</code>.</li>
+</ul>
+<p>Surface map stays three-plus-two:</p>
+<pre><code>Shelf (root)
+ ├─ Continue card → Bench
+ ├─ Start: blank · prompt-of-the-day · starter gallery
+ ├─ Shelf grid → per-zine sheet (Open · Rename · Duplicate · Share · Delete)
+ └─ Settings (NEW): theme · fold help · licenses · about
+Bench (editor, reading-order) ⇄ Proof (3 acts, sheet-order shown here ONLY)
+First-run (NEW, once): fold animation (4s) → one question → seeded shelf + tutorial zine</code></pre>
+
+<h2 id="s9"><span class="no">9</span>Editor redesign</h2>
+<p><strong>The structural foundation is already right — build the missing fold-awareness on top.</strong> The Bench already edits in reading order with imposition confined to Proof (bench.html and the shipped EditorPageStrip both confirm it). What’s missing is the <em>book</em>:</p>
+<ul>
+<li><span class="chip game">Game changer</span> <strong>Facing-pairs strip:</strong> evolve the rail from a flat list of eight cards into paired spreads showing which pages sit next to each other in the folded booklet — the fold made visible in the room where the work happens, and the foundation for panoramic spreads later (§14). This partially revisits ADR-051 Decision B (which retired the booklet preview); the lightweight strip is the honest middle ground between “full reader nobody used” and “no fold awareness at all.” <span class="chip must">Must</span> as a concept to prototype.</li>
+<li><span class="chip should">Should</span> <strong>Cover status:</strong> first and last rail cards badged “Cover” / “Back” with distinct framing (§14).</li>
+<li>Constraint check: imposition stays pure-Kotlin and untouched; this is presentation only. ADR-007/018 unaffected.</li>
+</ul>
+<p><strong>Canvas &amp; chrome:</strong> page fills the width; bars condense on scroll/interaction; a “peek” long-press hides all chrome to admire the page. The brief’s “unused horizontal space” complaint is solved by reading-order single-page focus + pinch to see the sheet neighborhood.</p>
+<p><strong>Empty panel:</strong> keep ADR-033’s invitation-only rule but make the invitation <em>specific and rotating</em>: “This is page 3. A photo of something you love would look good here.” The decorative arrow gains a semantic sibling for screen readers (“Supplies below: add text or a picture”). <span class="chip should">Should</span></p>
+<p><strong>Text:</strong> insert → type immediately in a sensible default; style later (never font-first). Presets before sliders: 6–10 zine-flavored text styles (ransom cut-out, typewriter, marker, neat caption). TypeBar’s discrete a11y model stays; presets sit in front of it. <span class="chip should">Should</span></p>
+<p><strong>Photos:</strong> ≤3 taps to placed; lands pre-fit to tapped panel; Replace preserves frame/transform/z-order (already right per ADR-053 — extend to the verb bar). <span class="chip must">Must</span> (I1)</p>
+
+<h2 id="s10"><span class="no">10</span>Home redesign</h2>
+<ol>
+<li><span class="chip must">Must</span> <strong>Continue card</strong> at top: cover thumbnail + “Continue <em>Corner Store Poems</em> — page 5 of 8.” One tap resumes. The 8-page format is a natural goal-gradient progress bar.</li>
+<li><span class="chip must">Must</span> <strong>Real cover thumbnails</strong> rendered as little physical booklets (fold shadow, paper edge) — the shelf shows <em>objects</em>, not files (V2).</li>
+<li><span class="chip should">Should</span> <strong>Three on-ramps:</strong> Blank zine (confident) · Today’s prompt (unsure what) · Starters (unsure how). Never just a naked “+”.</li>
+<li><span class="chip should">Should</span> <strong>Prompt-of-the-day card:</strong> one rotating local prompt; tap = new project pre-titled with it. No notifications, ever — the calm is the brand.</li>
+<li><span class="chip should">Should</span> <strong>Printed graduation</strong> (V4): the shelf becomes a record of things you <em>made</em>, not files you own.</li>
+<li><span class="chip nice">Nice</span> Search/sort stay gated behind <code>many</code> (current behavior is right).</li>
+<li>Logo &amp; privacy pill: per §8, demoted to first-run/About/moments-of-doubt.</li>
+</ol>
+
+<h2 id="s11"><span class="no">11</span>Asset ecosystem — “Supplies”</h2>
+<div class="callout"><p><strong>The honest constraint first:</strong> the offline invariant is stronger than a principle — PRD <strong>NFR-1</strong> and §6 say no network calls outright, and PRD <strong>§7’s out-of-scope list explicitly excludes “networking of any kind” and a templates marketplace</strong>. Downloadable packs therefore <em>reverse an explicit scope exclusion</em>, not merely amend a principle. That demands <strong>a new ADR + PRD §5/§7 change</strong>, scoped hard: <em>explicit, user-initiated HTTPS GETs of static, hash-verified asset catalogs and packs; never automatic, never carrying device data, no accounts, no analytics.</em> If the team declines, everything below still works with bundled + user-imported packs only — the catalog tier is strictly additive. <span class="chip must">Must</span> decision to make either way.</p></div>
+<p><strong>Architecture</strong> (proven models: WhatsApp pack format, F-Droid signed index, Obsidian compat gating):</p>
+<ul>
+<li><strong>Pack = the atomic unit.</strong> Zip: <code>pack.json</code> (id, name, version int, minAppVersion, license + attribution, category, per-asset keywords), cover, thumbnails, assets (transparent PNG/vector; WebP textures). Same format for bundled, downloaded, and user-created packs — one registry, one UI.</li>
+<li><span class="chip must">Must</span> <strong>Bundled core (ships in APK):</strong> 6–8 sticker/graphic packs, 2–3 tape/texture packs, 10–16 OFL fonts, prompt packs. The app must feel complete in airplane mode forever (Zinnia’s failure inverted into our feature).</li>
+<li><span class="chip should">Should</span> <strong>Catalog tier (post-amendment):</strong> one static <code>catalog.json</code> on dumb HTTPS hosting — id, description, size, version, minAppVersion, sha256, URL, <code>featured</code>/<code>season</code> flags. Fetched only when the user opens “Get more supplies” and taps refresh. Download → verify hash → unpack to app-private storage → register. Failed hash = delete + honest error. Incompatible packs shown greyed (“needs app update”), never hidden.</li>
+<li><span class="chip must">Must</span> <strong>Self-contained projects invariant:</strong> placing an asset <strong>copies its bytes into the project document store</strong> (extends ADR-022’s content-addressed model). Deleting a pack never breaks a zine; <code>.zine</code> backups stay portable. Non-negotiable if packs ship.</li>
+<li><strong>Storage UX:</strong> MB shown pre-download; Manage Supplies screen with per-pack sizes + delete; soft advisory at ~200 MB; never auto-evict user choices.</li>
+<li><span class="chip should">Should</span> <strong>Drawer UX:</strong> opens on Recents → Favorites → installed packs by category (6–10 named categories, e.g. Cutouts · Tape &amp; frames · Doodles · Paper bits). Search covers installed asset keywords only. Small opinionated packs, never an endless grid.</li>
+<li><span class="chip game">Game changer</span> <strong>User packs:</strong> “New pack from my photos” (transparent PNGs via Photo Picker). This is how GoodNotes’ ecosystem actually grew, it’s zero-infrastructure, and it’s the most on-brand feature possible: <em>your</em> supplies, on <em>your</em> device.</li>
+<li><span class="chip must">Must</span> <strong>Licensing seeds (vetted):</strong> Google Fonts OFL · Humaaans CC0 · Bootstrap/Feather/Phosphor MIT (verify LICENSE at bundle time) · Library of Congress free-to-use sets · Smithsonian/Met/NYPL CC0 · rawpixel CC0 subset. <strong>Not usable: unDraw (license forbids app/pack redistribution); most free-texture sites likewise.</strong> Offline “Licenses” screen renders attribution from pack metadata. (Legal hygiene.)</li>
+</ul>
+
+<h2 id="s12"><span class="no">12</span>Typography system</h2>
+<ol>
+<li><span class="chip must">Must</span> <strong>Fix silent non-Latin blank rendering.</strong> Non-Latin/emoji characters render blank in preview and export (ADR-028’s Latin-first cmap guard; carried as a known limitation; tester-reported — alpha triage 2026-07-04, finding C1, whose own recommendation this matches). Minimum: detect uncovered characters at input time and say so honestly (“This font can’t print ‘ñ’ yet”). Better: bundle a Noto fallback subset. Silent data loss for poets — a named persona — is the worst live bug in the product. (Latin-first can stand; <em>silence</em> cannot.)</li>
+<li><span class="chip should">Should</span> <strong>Ship font choice as vibe groups</strong> (already V1 roadmap): 8–12 groups (“Typewriter”, “Riot grrrl”, “Neat &amp; tidy”, “Loud”), 3–6 faces each, every name rendered in its own face, recents on top. Family names demoted to a detail view.</li>
+<li><span class="chip should">Should</span> <strong>Pairings, not fonts:</strong> named heading+body duos (“Zine Classic: Special Elite + Inter”) as the primary choice; single-font selection is the advanced path.</li>
+<li><span class="chip should">Should</span> <strong>Text style presets</strong> (§9) sit in front of the TypeBar.</li>
+<li><span class="chip nice">Nice</span> <strong>Font packs</strong> ride the supplies pipeline (<code>type: "font"</code>, OFL text shipped inside the pack; self-hosted, never hotlinked — privacy + OFL compliance).</li>
+<li>Constraint note: block-level styling (ADR-055) is <em>fine</em> for v1 — zine text is short. Per-span styling is V2 at the earliest; don’t spend here yet.</li>
+</ol>
+
+<h2 id="s13"><span class="no">13</span>Sticker system</h2>
+<ul>
+<li><span class="chip should">Should</span> Stickers, tape, frames, doodles, paper scraps are all just <strong>image blocks from packs</strong> — they reuse the existing block model, Reframe, z-order, and render parity. No new element type needed for v1 of supplies. (Deliberate scope control.)</li>
+<li><span class="chip nice">Nice</span> <strong>Tape/washi as a placement behavior</strong>, not a new engine: a tape asset dropped near a photo corner suggests a rotation snap across the corner.</li>
+<li><span class="chip nice">Nice</span> <strong>Stamps:</strong> one-tap placement at a sensible default size (no drag-drawing), matching the craft metaphor.</li>
+<li><strong>Drawing/handwriting layer stays V2</strong> (already roadmapped). It’s a different input pipeline (ink capture, smoothing, its own undo semantics) and shouldn’t block the sticker win. Honest sequencing beats a half-baked brush.</li>
+<li><span class="chip must">Must</span> Every sticker respects print reality: raster assets sized so 300 DPI export never upscales past 1:1. (Quality gate.)</li>
+</ul>
+
+<h2 id="s14"><span class="no">14</span>Multi-page system</h2>
+<ul>
+<li><span class="chip must">Must</span> <strong>8 pages stays sacred for v1.</strong> The single-sheet fold is the identity, the constraint that makes beginners finish, and the entire correctness story. 16-page saddle-stitch stays V2 (per roadmap); 12-page formats need a physically honest fold story before they exist at all — no page-count option ships without a real paper prototype. (Restraint as a feature.)</li>
+<li><span class="chip should">Should</span> <strong>Page duplication &amp; reordering</strong> in reading order (rail long-press → drag; imposition recomputes silently — the engine’s whole point).</li>
+<li><span class="chip game">Game changer</span> <strong>Panoramic spreads:</strong> one image across a facing pair (validated against the <em>post-fold</em> physical adjacency — research flagged that no mini-zine tool offers this; genuine differentiator). 🟨 ASSUMPTION on cost: pages render independently per panel today, and a facing pair lands on non-adjacent, possibly differently-rotated sheet panels — cross-panel slicing is real render + document-model + parity-test work, not a toggle. Prototype on paper first, budget as a feature, not a tweak.</li>
+<li><span class="chip nice">Nice</span> <strong>Smart photo slicing:</strong> panoramic photo → auto-suggested spread placement.</li>
+<li><span class="chip should">Should</span> <strong>Cover gets special status:</strong> distinct frame in the rail (“your face to the world”), drives the shelf thumbnail live, and is where the tutorial zine begins.</li>
+</ul>
+
+<h2 id="s15"><span class="no">15</span>Print workflow</h2>
+<p>The fold is sacred; everything around it gets staged as theater:</p>
+<ol>
+<li><span class="chip done">Shipped</span> <strong>Save-to-phone: already solved.</strong> ADR-054 shipped in v0.8.0 (merge <code>7e2fa74</code>): Save PDF writes a real copy to Downloads; Share sends elsewhere; the frozen proof.html amendment explicitly keeps “Save to Files” as a distinct, non-redundant path. No action — noted here so the vision builds on the current honest baseline, not a stale one.</li>
+<li><span class="chip game">Game changer</span> <strong>The imposition reveal:</strong> on entering Proof, the user’s pages animate onto the flat sheet — some rotating upside-down — then the sheet folds itself into a booklet and flips open. Act 1’s static “scrambled on purpose” copy becomes a 4-second proof-by-animation. This is the signature moment of the product; it converts the scariest step into the magic trick.</li>
+<li><span class="chip should">Should</span> <strong>Test-fold sheet:</strong> near-blank print (fold guides + tiny alignment mark + calibration ruler, finally shipping ADR-012’s promise). The first wasted sheet becomes a cheap, deliberate one. Checklist stated in plain words: A4/Letter · landscape · 100% · single-sided.</li>
+<li><span class="chip should">Should</span> <strong>Fold-along mode:</strong> Act 3 grows into a full-screen, tap-through ritual sized for paper-in-hand, ending on “You made a zine.” Keep the Success haptic; it’s earned here.</li>
+<li><span class="chip should">Should</span> <strong>Post-print recovery path:</strong> “It came out wrong” → visual triage (shrunk? → scale was Fit-to-page; sideways? → portrait default) instead of a dead-end.</li>
+<li><span class="chip nice">Nice</span> <strong>Share-as-image:</strong> render a “look what I made” card (cover + ‘made with paper, scissors &amp; Zinely’) to the OS share sheet. Distribution with zero network from us.</li>
+<li><span class="chip nice">Nice</span> <strong>Printed-count tracking</strong> feeds shelf graduation (§10.5) — a local counter, nothing more.</li>
+</ol>
+
+<h2 id="s16"><span class="no">16</span>Roadmap</h2>
+<p><strong>Phase 0 — Repair trust (weeks, not months)</strong> — all <span class="chip must">Must</span><br>
+Non-Latin honesty (input-time warning, per triage C1) · real shelf covers (wire the existing ADR-045 thumbnail pipeline — the plumbing is already in place) · Reframe drag/pinch enhancements (ADR-053 steppers stay authoritative) · error exits.</p>
+<p><strong>Phase 1 — Teach the fold (the model year’s core)</strong> — <span class="chip must">Must</span> / <span class="chip game">Game changer</span><br>
+First-run fold animation + one-question seeding · the tutorial zine (“retype me / swap this photo / … / now print me”) · facing-pairs strip in the Bench rail · imposition reveal in Proof · Continue card + three on-ramps on Shelf · Settings surface.</p>
+<p><strong>Phase 2 — Stock the bench</strong> — <span class="chip should">Should</span> / <span class="chip game">Game changer</span><br>
+Bundled supplies (stickers/tape/textures) + drawer with Recents/Favorites · font choice (vibe groups + pairings) + text presets · prompt-of-the-day + prompt packs · user-created packs · snapping/guides · contextual verb bar · test-fold sheet + fold-along mode · printed graduation.</p>
+<p><strong>Phase 3 — Open the ecosystem</strong> — <span class="chip should">Should</span> / <span class="chip nice">Nice</span> (gated on the network-amendment ADR)<br>
+Catalog + downloadable packs (hash-verified, explicit fetch) · seasonal spotlights · font packs · panoramic spreads + smart slicing · page duplication/reordering · share-as-image.</p>
+<p><strong>Deliberately NOT in this vision:</strong> accounts, cloud sync, community/social features, AI generation, 12/16-page options before a physical prototype, per-span rich text, a drawing engine before stickers prove the supplies model.</p>
+
+<hr>
+<h2 id="appendix">Appendix A — Constraints honored (ADR-backed)</h2>
+<p>Imposition pure-Kotlin &amp; canonical 8-page (ADR-007/018) · MVI editor (ADR-005) · parity renderer (ADR-006/027/028) · content-addressed private asset store, Photo Picker only (ADR-004/022/023) · atomic durability (ADR-009/021/026) · 300 DPI + safe areas (ADR-011/012) · Proof = one screen, three acts (ADR-051) · no in-app Print button (ADR-052) · fixed-frame Reframe with accessible steppers (ADR-053) · paper at creation (ADR-047) · invitation-only empty pages (ADR-033) · beginner-first progressive disclosure (ADR-008) · privacy invariant (PRD §5) — with exactly one proposed, explicitly-flagged amendment (§11).</p>
+<p><strong>Explicitly challenged:</strong> ADR-051 Decision B’s total retirement of in-editor booklet/fold awareness (the facing-pairs strip revisits it in lightweight form) · the persistent shelf privacy pill · the always-visible wordmark · PRD §7’s “networking of any kind” exclusion (§11’s gated amendment) · the absence of any onboarding as an acceptable state (ADR-046 made Home the start destination; it didn’t decide that <em>nothing</em> teaches the fold).</p>
+<p class="review-note">Review note: this document was independently reviewed (verdict GO WITH FIXES); both Required Fixes — a stale Save-PDF claim and a false sheet-order-editing claim — were accepted and corrected against v0.8.0 <code>main</code>, along with four evidence-precision improvements.</p>
+</main>

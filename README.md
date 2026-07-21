@@ -48,6 +48,11 @@ Start here, then follow links. Each document is the **single source of truth** f
 | Document | Purpose |
 |---|---|
 | [CLAUDE.md](CLAUDE.md) | Working conventions, documentation rule, review workflow |
+| [docs/zinely-constitution.md](docs/zinely-constitution.md) | **Highest authority** — the articles every other document is subordinate to |
+| [docs/zinely-v1.md](docs/zinely-v1.md) | What v1 *is*: feature tribunal, Definition of Done, ship blockers |
+| [docs/zinely-v1-execution-plan.md](docs/zinely-v1-execution-plan.md) | v1 dependency graph, work streams, ship gates (order, never scope) |
+| [docs/zinely-v1-product-vision.md](docs/zinely-v1-product-vision.md) | The v1 product vision narrative |
+| [docs/zinely-hostile-review.md](docs/zinely-hostile-review.md) | Adversarial review of the v1 definition |
 | [docs/PRD.md](docs/PRD.md) | Product vision, users, scope, requirements |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical source of truth — architecture, pipelines, models, diagrams |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phased plan: MVP → V1 → V2 → Future |

@@ -14,7 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added — Style your text · [ADR-055](docs/DECISIONS.md#adr-055)
+
+Implemented as B1–B4 (style intent · Type bar · keyboard + haptics · parity fix and doc reconciliation), each batch independently reviewed. **Not yet released or packaged**, and **not yet signed off**: the on-device accessibility pass and the pixel-parity pass against the frozen design are still outstanding, so [ADR-055](docs/DECISIONS.md#adr-055) remains Proposed.
+
+- **Text can be styled.** Select a text block and tap the new **Text style** (`Aa`) control to open the Type bar: set the **size**, the **alignment** (left / center / right), **bold**, **italic**, and the **colour** from the five Zinely text inks. The block updates live on the page — what you see is what prints.
+- **Every change is one undo.** Any style change can be undone in a single step, including a whole run of size taps. There is no "apply" or "cancel" — undo is the cancel.
+- **Keyboard.** `Ctrl/Cmd + B` and `Ctrl/Cmd + I` toggle bold and italic on a selected text block.
+
+**Accessibility.** Every control is a real labelled button — no jargon dropdowns, no gesture-only affordances. Alignment announces as a single-select group, bold and italic as independent toggles, and each change is spoken. Every control is tappable well beyond its painted size, so the frozen layout is kept without shrinking any target: the steppers and toggles reach a full 48dp, and the closely-spaced colour swatches reach 48dp tall by at least 40dp wide. The Type bar buzzes on each accepted change (silent when reduced motion is on).
+
+**Compatibility.** Existing zines are unaffected and open unchanged at their current styling — no file-format change, no migration. Offline/privacy invariants intact: no network, no account, no new dependency.
+
+### Known limitations
+
+- **Font choice is not in this milestone.** Text renders in the single bundled Inter family; choosing a font is planned for V1 and needs more families bundled first. Bold and italic use real bundled Inter faces, not synthesised ones.
+- **Some text inks are low-contrast.** The five inks include authorial values (teal in particular) that fall below AA as body text on white. They are offered as-is; a beginner-safe default is a later call.
+- **Non-Latin text still renders blank** — unchanged, and tied to the existing Latin-first font bundle.
+- **Styling is per-block, not per-character.** A block has one size, colour, alignment, and weight; mixed styling inside one block is not supported.
 
 ## [0.8.0] — 2026-07-15 — Save to your phone
 
