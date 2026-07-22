@@ -216,5 +216,72 @@ Use **Mermaid** diagrams aggressively — prefer a diagram over long prose where
 - **Testing:** pure-JVM unit tests for `core` + mappers; ViewModel integration with fakes; Compose UI tests; Roborazzi screenshot/diff tests for render fidelity. Follow Given-When-Then.
 - Use the `android-skills:` skills (`android-dev`, `compose`, `kotlin-flows`, etc.) for implementation detail.
 
+## Device Verification (MANDATORY)
+
+**Every physical-device verification is performed twice, by two different readers of the same screen.**
+Pass 1 asks whether we built it right. Pass 2 asks whether it is right. A build can pass one and fail the
+other, and each failure is a different kind of bug — so neither pass substitutes for the other, and
+"it works" is not an answer to "would I understand it?".
+
+**When it is required:** any UI feature or UX change, before merge. Also any change to accessibility,
+rendering, persistence, or export. Not required for pure-logic changes with no user-visible surface.
+
+**Start from doubt:** assume the implementation is wrong until the device proves otherwise. Record the
+device, OS version, build (and TalkBack version, if the pass touches accessibility).
+
+---
+
+### Pass 1 — Developer Verification
+
+*Does the implementation behave exactly as specified?*
+
+Verify: correctness · regressions · accessibility · rendering parity · persistence · performance ·
+platform behaviour.
+
+**Read the platform's own state, not the framework's.** This is the pass's sharpest tool and the one most
+often skipped. A Compose semantics test asserts against the *merged* semantics tree; TalkBack reads the
+*platform* `AccessibilityNodeInfo` tree, and the two are not the same thing. A control can pass
+`assertIsNotEnabled` in Robolectric while telling the platform it is enabled — that exact defect shipped
+through a green suite and was caught only here ([ADR-058](docs/DECISIONS.md#adr-058) branch,
+`ReframeControls.ZoomButton`). Dump the real tree and read the attributes:
+
+```
+adb shell uiautomator dump /sdcard/ui.xml   # then check class / clickable / enabled / bounds per node
+```
+
+The recipe (and the environment traps that waste an hour) is in the device-verification notes.
+
+---
+
+### Pass 2 — First-Time User Verification
+
+*Would I naturally understand what this screen wants me to do?*
+
+Reset assumptions. Pretend you have never seen the codebase. Do not think like an engineer. Attempt to
+accomplish ordinary user goals, in the order a real person would meet them.
+
+Actively look for: broken mental models · confusing wording · missing affordances · misleading UI ·
+false expectations · discoverability failures · emotional friction · trust loss · absent delight.
+
+**Confusion is itself evidence.** Do not excuse a design because you know the implementation — knowing why
+a screen behaves as it does disqualifies you from judging whether it explains itself. If something feels
+wrong, write down *why it felt wrong before you knew the reason*; that sentence is the finding, and it is
+usually more valuable than the fix.
+
+Cross-check each screen against the question it is supposed to answer
+([above](#product-principle-every-screen-answers-the-users-current-question)). A screen answering a
+different question — even a good one — is a Pass 2 failure however correct its code.
+
+---
+
+### Acceptance
+
+A feature is accepted only when **both** passes succeed.
+
+**If the two passes disagree, the disagreement is the finding.** Document both readings and resolve them
+before acceptance — never average them, and never let Pass 1 overrule Pass 2 on the grounds that the
+behaviour is correct. "Correct but misleading" is a defect with a known cause, which makes it cheaper to
+fix than most, not safer to ship. The `0.9.0-beta.1` "Preview" screen passed Pass 1 completely.
+
 ## Definition of done (for a change)
-1. Code + tests pass. 2. Docs updated per the Documentation Rule. 3. Major decisions recorded as ADRs (independently reviewed by the Review Agent). 4. UI features: HTML spec frozen + pixel parity verified. 5. No new network/account/cloud dependency. 6. Privacy & offline invariants intact.
+1. Code + tests pass. 2. Docs updated per the Documentation Rule. 3. Major decisions recorded as ADRs (independently reviewed by the Review Agent). 4. UI features: HTML spec frozen + pixel parity verified + [both device-verification passes](#device-verification-mandatory) accepted. 5. No new network/account/cloud dependency. 6. Privacy & offline invariants intact.
