@@ -14,6 +14,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Read your zine · [ADR-058](docs/DECISIONS.md#adr-058)
+
+From the [beta UX review](docs/BETA-UX-REVIEW.md), whose one-sentence finding was: **you could not see your zine.**
+
+- **"Preview" now opens your zine.** It lands on **Read** — your pages, one per screen, in reading order, with nothing else on them. Swipe to turn the page. Previously the only thing labelled "Preview" opened straight onto the printer's imposed sheet: eight numbered rectangles, four of them upside-down, and none of them showing your work. It was doing its job — explaining how a folded sheet works — but answering a question you had not asked yet.
+- **The printing steps are now behind a button that says so.** **Print & fold** leads to the same three steps as before, unchanged: the sheet, the print recipe, and the fold guide.
+
+### Fixed — the page, and the controls that act on it
+
+- **A blank page's invitation is drawn on the page.** It was centred on the whole canvas rather than on the sheet, so on a portrait page it sat off the paper with its lines running off the screen. This is what looked like undo corrupting the layout — undo had emptied a page and revealed it.
+- **The sheet and its contents are always drawn at the same size.** They could briefly disagree while you were dragging something or typing — most noticeably when the keyboard opened — leaving the paper in one place and your photos and words in another until you finished.
+- **Reframe controls now show when they cannot do anything.** In "Whole photo" the whole photo is shown, so moving and zooming do nothing; in "Fill" you cannot zoom out past the point where the photo fills the frame, and a photo that already fills it edge to edge cannot be moved. Those buttons were lit and tappable and did nothing, which read as the app having frozen. They are now dimmed and unavailable — and if you are using a screen reader or a keyboard, they say why, and how to get back to adjusting.
+
 ### Added — Style your text · [ADR-055](docs/DECISIONS.md#adr-055)
 
 Implemented as B1–B4 (style intent · Type bar · keyboard + haptics · parity fix and doc reconciliation), each batch independently reviewed. Signed off on 2026-07-21: the pixel-parity goldens were recorded on the pinned CI image and reviewed against the frozen design, and the accessibility pass was run on a physical phone against this exact signed build — so [ADR-055](docs/DECISIONS.md#adr-055) is Accepted.

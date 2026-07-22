@@ -47,13 +47,15 @@ class ProofScreenTest {
     private fun setProof() {
         composeRule.setContent {
             ZinelyTheme {
-                ProofScreen(zineName = "Corner Store Poems", onBack = { backCount++ })
+                ProofScreen(zineName = "Corner Store Poems", onBack = { backCount++ }, startAct = ProofAct.SHEET)
             }
         }
     }
 
     @Test
-    fun `opens on the sheet act - step 1 caption, print-setup primary, no secondary`() {
+    fun `the sheet act - step 1 caption, print-setup primary, no secondary`() {
+        // Pinned to the Sheet by `startAct`: since ADR-058 the surface *lands* on Read, and these climb
+        // tests are about the climb, not about where the door opens. The landing has its own tests below.
         setProof()
 
         composeRule.onNodeWithTag(ProofScreenTestTag).assertIsDisplayed()
@@ -129,9 +131,21 @@ class ProofScreenTest {
         composeRule.onNodeWithTag(ProofProgressTestTag).assertIsDisplayed()
     }
 
+    /**
+     * The loss-safe exit, and the one place ADR-058 narrows it: from the **Sheet** — the first step of the
+     * print climb — the top-bar back steps back to Read instead of leaving, because that is otherwise a
+     * one-way door. Everywhere else it is the unchanged exit to the bench. The ADR-051 invariant that
+     * matters ("leaving never destroys work") is untouched; what changed is that from the Sheet it takes
+     * one more tap, and the control's spoken label says which of the two it is about to do.
+     */
     @Test
-    fun `loss-safe back invokes onBack`() {
-        setProof()
+    fun `loss-safe back invokes onBack - except on the sheet, where it steps back to read`() {
+        setProof() // startAct = SHEET
+        composeRule.onNodeWithContentDescription("Back to your zine").performClick()
+        composeRule.waitForIdle()
+        assertEquals("stepping back inside the surface is not leaving it", 0, backCount)
+        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Your zine")
+
         composeRule.onNodeWithContentDescription("Back to the bench (your work is saved)").performClick()
         assertEquals(1, backCount)
     }
@@ -152,6 +166,7 @@ class ProofScreenTest {
                     onPaperSelected = { paper = it },
                     onExportPdf = { lastExport = it },
                     exportBusy = exportBusy,
+                    startAct = ProofAct.SHEET,
                 )
             }
         }
@@ -216,7 +231,7 @@ class ProofScreenTest {
     private fun setProofOnFold() {
         composeRule.setContent {
             ZinelyTheme {
-                ProofScreen(zineName = "Corner Store Poems", onBack = { backCount++ }, onMakeAnother = { madeAnother++ })
+                ProofScreen(zineName = "Corner Store Poems", onBack = { backCount++ }, onMakeAnother = { madeAnother++ }, startAct = ProofAct.SHEET)
             }
         }
         composeRule.onNodeWithTag(ProofPrimaryTestTag).performClick() // Sheet → Print
@@ -357,7 +372,7 @@ class ProofScreenTest {
         val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
         composeRule.setContent {
             ZinelyTheme {
-                ProofScreen(zineName = "Zine", onBack = {}, savedSignals = saved)
+                ProofScreen(zineName = "Zine", onBack = {}, savedSignals = saved, startAct = ProofAct.SHEET)
             }
         }
         // The save happens on the Print act; the hand-off nudges forward to the Fold.

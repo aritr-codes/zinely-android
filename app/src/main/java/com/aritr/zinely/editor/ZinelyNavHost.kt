@@ -234,6 +234,15 @@ private fun ProofDestination(
                 // layer (the retired CompletionScreen's onKeepEditing carried the same honest deferral);
                 // for the single-project MVP it returns to the bench, where the work is already saved.
                 onMakeAnother = onBack,
+                // The Read act (ADR-058) — the finished zine, page by page. Everything it needs was
+                // already resolved here for the export path (the ADR-051 shared-VM seam), so this is
+                // three existing values threaded one level down, not a new seam: the SAME document,
+                // page size and image source the PDF is rendered from, which is what makes
+                // `read == export` structural rather than a claim.
+                pages = uiState.document.pages,
+                pageSizePt = state.pageSizePt,
+                defaults = uiState.document.defaults,
+                imageBytes = state.imageBytes,
                 modifier = Modifier.fillMaxSize(),
             )
         }
