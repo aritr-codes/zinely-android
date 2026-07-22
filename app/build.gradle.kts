@@ -92,8 +92,11 @@ android {
         targetSdk = 36
         // Monotonic, and independent of versionName: Android compares only this when deciding
         // whether an APK is an upgrade. It stayed at 1 through 0.6.0-alpha.1 .. 0.8.0 (no build
-        // was ever distributed with an upgrade path); 2 is the first beta.
-        versionCode = 2
+        // was ever distributed with an upgrade path); 2 was the first beta *build*, which was
+        // assembled and smoke-tested but never cut — and it was already installed on a verification
+        // device, so shipping the real beta under 2 would be an install that silently refuses to
+        // update. 3 is the artifact actually distributed as 0.9.0-beta.1.
+        versionCode = 3
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

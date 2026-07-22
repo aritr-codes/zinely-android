@@ -44,6 +44,52 @@ CI reads the same four values from `ZINELY_KEYSTORE_FILE`, `ZINELY_KEYSTORE_PASS
 (password manager + one offline copy). This is the single highest-consequence artifact in the
 project.
 
+### Backing it up — founder instructions
+
+**No agent, script, or CI job can do this or verify it was done.** The passwords exist only in
+`keystore.properties` on this machine; they were generated in a shell and never printed, so there is
+no second copy anywhere, and nothing in the repository or the build output would reveal that the
+backup is missing. The first symptom of having skipped it is a build that cannot be shipped.
+
+**What must be backed up — two files, both untracked, both required together:**
+
+| File | Where it is now | What it is |
+|---|---|---|
+| `zinely-release.jks` | `C:\Users\HP\zinely-release.jks` (the path named by `storeFile`) | The private key. Irreplaceable. |
+| `keystore.properties` | the repository root | The two passwords that open it, plus the alias. **The only copy of those passwords.** |
+
+Neither file is in git — `.gitignore` excludes them deliberately, and that is correct. It also means
+`git clone` on a new machine gets you a repository that cannot produce a shippable build.
+
+**Where to put them — at least two places that fail independently:**
+
+1. **A password manager** (1Password, Bitwarden, KeePass). Store the two passwords as fields, and
+   attach the `.jks` file itself to the same entry. Note the alias (`zinely`) with them.
+2. **One offline copy** — an encrypted USB stick or an external drive kept somewhere other than
+   where this laptop lives. Both files together.
+
+Do not email them to yourself, put them in a repository (public *or* private), or leave the only
+copy in a cloud drive that is signed in on this same machine. Each of those fails at the same moment
+the laptop does, or leaks the key while looking like a backup.
+
+**Verify the backup rather than assuming it.** On another machine, or after deliberately renaming
+the local copies, the credentials should still produce a signed build. The cheap version of that
+check, run anywhere with a JDK:
+
+```bash
+keytool -list -v -keystore <path to the backed-up .jks> -alias zinely
+```
+
+If it prints a certificate with `Owner: CN=Zinely, O=Zinely, C=IN`, the backed-up file and the
+backed-up password agree. If it asks again or errors, the backup is not a backup.
+
+**Why it is irreversible.** Android identifies an app by its signing key, not by its name. Lose the
+key and no build you ever make again can install as an update over the Zinely on a tester's phone —
+the only route is a new key, which means every tester uninstalls, and **uninstalling deletes their
+zines**, because backup/restore does not exist. There is no recovery process, no appeal, and no
+support channel that can reissue it: the key is not registered with anyone. It is a file you either
+have or do not.
+
 All four values are required together. Supplying only some of them is a configuration error and
 fails the build naming the missing ones — half-configured signing used to fail deep inside AGP with
 a message that named neither the missing credential nor this file.

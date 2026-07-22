@@ -14,6 +14,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [0.9.0-beta.1] — 2026-07-22 — Read your zine
+
+The first build handed to the named beta cohort, and the first signed with the real Zinely release
+key. Cut from `main` at the UX-P0 merge; `versionCode 3`. Readiness assessed in
+[the release readiness review](docs/reviews/2026-07-22-beta-release-readiness.md).
+
+### Installing this build — please read first
+
+- **This build cannot install over an older Zinely.** Every build up to `0.8.0` was signed with a
+  throwaway debug key; this one is signed with the real release key, and Android refuses to replace
+  an app with a differently-signed one (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`).
+- **So if you have an older Zinely: save anything you want to keep first** (open the zine →
+  **Print & fold** → **Save PDF**, which writes a PDF into your Downloads), then uninstall, then
+  install this one. **Uninstalling deletes your zines** — there is no backup or restore yet.
+- **This is the last build that will ask you to do that.** Every build after this one installs
+  straight over it and keeps your work.
+
 ### Added — Read your zine · [ADR-058](docs/DECISIONS.md#adr-058)
 
 From the [beta UX review](docs/BETA-UX-REVIEW.md), whose one-sentence finding was: **you could not see your zine.**
@@ -29,7 +48,7 @@ From the [beta UX review](docs/BETA-UX-REVIEW.md), whose one-sentence finding wa
 
 ### Added — Style your text · [ADR-055](docs/DECISIONS.md#adr-055)
 
-Implemented as B1–B4 (style intent · Type bar · keyboard + haptics · parity fix and doc reconciliation), each batch independently reviewed. Signed off on 2026-07-21: the pixel-parity goldens were recorded on the pinned CI image and reviewed against the frozen design, and the accessibility pass was run on a physical phone against this exact signed build — so [ADR-055](docs/DECISIONS.md#adr-055) is Accepted.
+Implemented as B1–B4 (style intent · Type bar · keyboard + haptics · parity fix and doc reconciliation), each batch independently reviewed. Signed off on 2026-07-21: the pixel-parity goldens were recorded on the pinned CI image and reviewed against the frozen design, and the accessibility pass was run on a physical phone against a release-signed build of this version — so [ADR-055](docs/DECISIONS.md#adr-055) is Accepted. (That pass ran on the 2026-07-21 assembly, `versionCode 2`; the artifact distributed as `0.9.0-beta.1` is `versionCode 3`, which adds the Read work below and changes nothing in the text-styling surface.)
 
 - **Text can be styled.** Select a text block and tap the new **Text style** (`Aa`) control to open the Type bar: set the **size**, the **alignment** (left / center / right), **bold**, **italic**, and the **colour** from the five Zinely text inks. The block updates live on the page — what you see is what prints.
 - **Every change is one undo.** Any style change can be undone in a single step, including a whole run of size taps. There is no "apply" or "cancel" — undo is the cancel.
@@ -49,10 +68,30 @@ Found during the on-device accessibility pass, on a physical phone, and fixed be
 
 ### Known limitations
 
+**Your work is not backed up.**
+
+- **No backup or restore.** Your zines live only on this phone, in Zinely's own storage. Uninstalling
+  Zinely — or losing the phone — deletes them. Save a PDF of anything you care about.
+- **Deleting a photo does not reclaim its space.** Storage only grows for now; there is no sweeper yet
+  ([ADR-031 §2](docs/DECISIONS.md#adr-031)).
+
+**Text.**
+
 - **Font choice is not in this milestone.** Text renders in the single bundled Inter family; choosing a font is planned for V1 and needs more families bundled first. Bold and italic use real bundled Inter faces, not synthesised ones.
-- **Some text inks are low-contrast.** The five inks include authorial values (teal in particular) that fall below AA as body text on white. They are offered as-is; a beginner-safe default is a later call.
-- **Non-Latin text still renders blank** — unchanged, and tied to the existing Latin-first font bundle.
+- **Non-Latin text renders blank** — tied to the Latin-first font bundle ([ADR-028](docs/DECISIONS.md#adr-028)). Bengali, Hindi, CJK and emoji will not appear.
 - **Styling is per-block, not per-character.** A block has one size, colour, alignment, and weight; mixed styling inside one block is not supported.
+- **Some text inks are low-contrast.** The five inks include authorial values (teal in particular) that fall below AA as body text on white. They are offered as-is; a beginner-safe default is a later call.
+
+**Printing and saving.**
+
+- **No in-app print.** Zinely hands the finished sheet to your phone (Save PDF, or Share) rather than
+  driving the printer itself ([ADR-052](docs/DECISIONS.md#adr-052)). Print at **100% / Actual size** —
+  a printer's "fit to page" breaks the fold alignment.
+- **The imposed print sheet shows page numbers, not your artwork.** The sheet under **Print & fold**
+  is a map of where each page lands, not a picture of the zine. Read is where you see the zine
+  ([ADR-058](docs/DECISIONS.md#adr-058) Decision 7).
+- **On Android 7–9, the first save asks for a storage permission**, and on those versions it is a
+  broad legacy permission rather than a Downloads-scoped one. Zinely writes only its own export file.
 
 ## [0.8.0] — 2026-07-15 — Save to your phone
 
@@ -304,7 +343,8 @@ The riskiest, most isolatable thing first: the math that makes a folded zine cor
   SVG proof sheet); pure Kotlin, golden-tested against the imposition oracle
   ([ADR-007](docs/DECISIONS.md#adr-007)). Tagged `v0.1.0-imposition-engine`.
 
-[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.1...HEAD
+[0.9.0-beta.1]: https://github.com/aritr-codes/zinely-android/compare/v0.8.0...v0.9.0-beta.1
 [0.8.0]: https://github.com/aritr-codes/zinely-android/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/aritr-codes/zinely-android/compare/v0.6.0-alpha.1...v0.7.0
 [0.6.0-alpha.1]: https://github.com/aritr-codes/zinely-android/compare/v0.4.0...v0.6.0-alpha.1

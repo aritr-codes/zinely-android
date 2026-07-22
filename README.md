@@ -65,6 +65,7 @@ Start here, then follow links. Each document is the **single source of truth** f
 | [docs/design/mockups/index.html](docs/design/mockups/index.html) | Interactive HTML prototypes — working design reference |
 | [CHANGELOG.md](CHANGELOG.md) | Release history (Keep a Changelog · SemVer) |
 | [docs/RELEASING.md](docs/RELEASING.md) | Release mechanics — signing key, cutting a build, beta distribution |
+| [docs/releases/](docs/releases/) | Per-release tester packages — what ships alongside an APK (install, warnings, limitations, how to report) |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Cited evidence base (verified / recommendation / assumption / future) |
 | [docs/BETA-UX-REVIEW.md](docs/BETA-UX-REVIEW.md) | Time-stamped UX review of `0.9.0-beta.1` from a first-time user's position — a dated record, **not** a source of truth; approved findings move into the PRD / ROADMAP / ADRs |
 | [docs/spikes/imposition-engine.md](docs/spikes/imposition-engine.md) | First spike: the imposition engine design (S1) |
