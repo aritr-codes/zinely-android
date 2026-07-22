@@ -234,6 +234,16 @@ public fun EditorScreen(
     val reduceMotion = rememberReduceMotion()
     val bratioOf = { el: ImageElement -> el.transform.widthPt / el.transform.heightPt }
     val adjustDraft = { d: FramingDraft? -> reframeDraft = d; reframeAdjusted = true }
+    // What the open draft can still change ([ReframeAbilities]) — computed once and used for BOTH the
+    // stepper pill's enabled state and the verbs below. One truth, so a control painted unavailable is also
+    // refused by the hardware keyboard, and no announcement can claim a move that did not happen (the old
+    // nudge said "Moved left" whether or not anything moved). `NONE` until the photo's aspect resolves,
+    // which is the same inert state M7-01 already required.
+    val reframeAbilities = reframing?.let { rf ->
+        val d = reframeDraft
+        val pr = reframePratio
+        if (d != null && pr != null) Framing.abilities(d, pr, bratioOf(rf.before)) else null
+    } ?: ReframeAbilities.NONE
 
     // ── FR-3 Text styling (ADR-055) ────────────────────────────────────────────────────────────────
     // The one text box the Type bar can act on, or null. Derived from the store every recomposition —
@@ -366,12 +376,20 @@ public fun EditorScreen(
         val pr = reframePratio
         if (rf != null && d != null && pr != null) {
             val br = bratioOf(rf.before)
-            adjustDraft(Framing.nudged(d, dx, dy, pr, br))
-            sayReframe(
-                when {
-                    dx < 0 -> "Moved left"; dx > 0 -> "Moved right"; dy < 0 -> "Moved up"; else -> "Moved down"
-                },
-            )
+            // Pan room is per axis, and an arrow with none is a no-op: the on-screen cell is disabled, but
+            // the keyboard can still ask, so refuse here and say why rather than announce a phantom move.
+            val allowed =
+                if (dx != 0) reframeAbilities.panHorizontally else reframeAbilities.panVertically
+            if (allowed) {
+                adjustDraft(Framing.nudged(d, dx, dy, pr, br))
+                sayReframe(
+                    when {
+                        dx < 0 -> "Moved left"; dx > 0 -> "Moved right"; dy < 0 -> "Moved up"; else -> "Moved down"
+                    },
+                )
+            } else {
+                sayReframe(if (d.fit == FrameFit.WHOLE) WholePhotoInertLine else "No room to move that way.")
+            }
         }
         Unit
     }
@@ -381,9 +399,22 @@ public fun EditorScreen(
         val pr = reframePratio
         if (rf != null && d != null && pr != null) {
             val br = bratioOf(rf.before)
-            val nd = Framing.clampPan(Framing.zoomed(d, factor), pr, br)
-            adjustDraft(nd)
-            sayReframe("Zoom ${(nd.zoom * 100).roundToInt()} percent")
+            val zoomingIn = factor > 1.0
+            if (if (zoomingIn) reframeAbilities.zoomIn else reframeAbilities.zoomOut) {
+                val nd = Framing.clampPan(Framing.zoomed(d, factor), pr, br)
+                adjustDraft(nd)
+                sayReframe("Zoom ${(nd.zoom * 100).roundToInt()} percent")
+            } else {
+                // Same as the nudge: the button is disabled, the keystroke is not, so it gets a reason
+                // instead of a repeated "Zoom 100 percent" that sounds like a stuck control.
+                sayReframe(
+                    when {
+                        d.fit == FrameFit.WHOLE -> WholePhotoInertLine
+                        zoomingIn -> "Already at the largest zoom."
+                        else -> "Already at the smallest zoom."
+                    },
+                )
+            }
         }
         Unit
     }
@@ -561,11 +592,24 @@ public fun EditorScreen(
                 // instead of the bare desk showing through. Purely a host backing UNDER the render: the
                 // SceneRenderer contract
                 // is untouched (a document background still paints over it; Background.None now shows
-                // paper, matching export onto a white sheet). Sized to the page at the fitted scale,
-                // top-left anchored like the render itself (pan is zero in the MVP host).
+                // paper, matching export onto a white sheet). Top-left anchored like the render itself.
+                //
+                // Sized from `uiState.view.screenPxPerPt` — the SAME viewport every content layer reads —
+                // and deliberately NOT from the locally measured `scale`. Those two are not always equal:
+                // the push above is deferred while a gesture or text session is open, so a canvas resize
+                // mid-session (most obviously the soft keyboard opening under an inline edit) moved the
+                // paper immediately and left the render behind, until the session ended. Both now lag
+                // together, which is invisible, instead of diverging, which reads as the app losing the
+                // page. Same shape as EditorPageStrip's thumbnails, where one scale drives both the output
+                // box and the render and they cannot disagree.
+                //
+                // The remaining coupling is `pageOffset`: the render translates by it, this backing does
+                // not. Harmless while the MVP host pins pan at zero (both read the same zero) — but the
+                // day pan becomes real, this offset must be applied here too or the two diverge again.
                 val density = LocalDensity.current
-                val paperWidth = with(density) { (pageSizePt.width * scale).toFloat().toDp() }
-                val paperHeight = with(density) { (pageSizePt.height * scale).toFloat().toDp() }
+                val paperScale = uiState.view.screenPxPerPt
+                val paperWidth = with(density) { (pageSizePt.width * paperScale).toFloat().toDp() }
+                val paperHeight = with(density) { (pageSizePt.height * paperScale).toFloat().toDp() }
                 Box(
                     modifier = Modifier
                         .size(paperWidth, paperHeight)
@@ -683,10 +727,21 @@ public fun EditorScreen(
                     // "First" is the page's own identity (front cover, or index 0), not just the cursor, so
                     // it stays correct if roles ever diverge from list position (Codex review); today's
                     // all-INTERIOR docs fall back to index 0.
-                    EditorEmptyState(
-                        modifier = Modifier.align(Alignment.Center),
-                        firstPage = currentPage.role == PageRole.FRONT_COVER || currentPage.index == 0,
-                    )
+                    // Centred on the **paper**, not on the canvas. `Modifier.align(Alignment.Center)`
+                    // centres on the canvas Box — but the paper is top-left anchored and, on a portrait
+                    // page, narrower than the canvas, so the invitation sat to the right of the sheet and
+                    // its lines ran off the screen edge. Copy that straddles the paper's edge reads as the
+                    // app having lost track of where the page is, which is why an undo that merely revealed
+                    // this was reported as undo corrupting the layout. A paper-sized box also *constrains*
+                    // the text, so the lines wrap to the sheet instead of being clipped by the display.
+                    Box(
+                        modifier = Modifier.size(paperWidth, paperHeight),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        EditorEmptyState(
+                            firstPage = currentPage.role == PageRole.FRONT_COVER || currentPage.index == 0,
+                        )
+                    }
                 }
 
                 // One-time move/resize hint: the moment a placed element is single-selected (handles up,
@@ -813,6 +868,8 @@ public fun EditorScreen(
             ReframeControls(
                 fit = reframeDraft?.fit ?: FrameFit.FILL,
                 zoomPercent = ((reframeDraft?.zoom ?: 1.0) * 100).roundToInt(),
+                // The bar paints exactly what the verbs will accept — same value, one source.
+                abilities = reframeAbilities,
                 // Same shared verbs the keyboard uses (they announce + mutate the one draft) — parity by
                 // construction, not by two copies of the math.
                 onFit = reframeSetFit,
@@ -890,6 +947,18 @@ public fun EditorScreen(
  * already speaks it through the same `announceForAccessibility` drain every other Reframe line uses.
  */
 internal const val ReframeUnavailableAnnouncement: String = ""
+
+/**
+ * The line spoken when an adjustment is asked for in "Whole photo", where pan and zoom do nothing.
+ *
+ * **Wording written here, not sourced from a frozen spec — replaceable.** It exists because gating the
+ * verbs (so the keyboard refuses what the disabled buttons refuse) would otherwise make the keystroke
+ * *silent*, which is a worse accessibility outcome than the phantom "Moved left" it replaces. It names the
+ * way out rather than only the refusal, so a screen-reader user is not left guessing why the pad went
+ * quiet. Same for the three zoom-limit lines at their call site.
+ */
+internal const val WholePhotoInertLine: String =
+    "Whole photo can’t be moved or zoomed. Choose Fill to adjust it."
 
 private fun applyFit(draft: FramingDraft, fit: FrameFit): FramingDraft = when (fit) {
     FrameFit.WHOLE -> draft.copy(fit = FrameFit.WHOLE, zoom = Framing.MIN_ZOOM, panX = 0.0, panY = 0.0)

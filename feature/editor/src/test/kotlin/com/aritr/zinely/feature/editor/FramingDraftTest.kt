@@ -103,6 +103,62 @@ class FramingDraftTest {
         }
     }
 
+    // ── abilities: which adjustments can still change anything (D3) ────────────────────────────────
+
+    @Test
+    fun `whole photo can do nothing at all — it ignores pan and zoom`() {
+        val whole = FramingDraft(FrameFit.WHOLE, 2.0, 0.1, 0.1)
+        assertEquals(ReframeAbilities.NONE, Framing.abilities(whole, pratio, bratio))
+    }
+
+    @Test
+    fun `a fresh fill can only zoom in`() {
+        // The floor is MIN_ZOOM (a smaller crop would gap the frame), and at the floor the cover crop spans
+        // the image on the axis it fills — here full-height, so there is no vertical travel.
+        val a = Framing.abilities(Framing.DEFAULT_FILL, pratio, bratio)
+        assertEquals(true, a.zoomIn)
+        assertEquals("MIN_ZOOM is the floor", false, a.zoomOut)
+        assertEquals("a wide photo in a square frame still slides sideways", true, a.panHorizontally)
+        assertEquals("…but the cover crop is already full-height", false, a.panVertically)
+    }
+
+    @Test
+    fun `a photo matching its frame has nowhere to go until it is zoomed`() {
+        // pratio == bratio: the cover crop IS the whole image, so both axes are pinned. This is the case the
+        // old bar painted as four live arrows — the nudge did nothing and announced "Moved left" anyway.
+        val square = Framing.abilities(Framing.DEFAULT_FILL, pratio = 1.0, bratio = 1.0)
+        assertEquals(false, square.panHorizontally)
+        assertEquals(false, square.panVertically)
+
+        val zoomed = Framing.abilities(Framing.zoomed(Framing.DEFAULT_FILL, Framing.ZOOM_STEP), 1.0, 1.0)
+        assertEquals(true, zoomed.panHorizontally)
+        assertEquals(true, zoomed.panVertically)
+    }
+
+    @Test
+    fun `the ceiling closes zoom in and no further`() {
+        val topped = FramingDraft(FrameFit.FILL, Framing.MAX_ZOOM, 0.0, 0.0)
+        val a = Framing.abilities(topped, pratio, bratio)
+        assertEquals(false, a.zoomIn)
+        assertEquals(true, a.zoomOut)
+    }
+
+    @Test
+    fun `an ability is claimed only where the clamp would actually let the draft move`() {
+        // The contract that makes the enabled-state honest: if panRange says there is room, nudging must
+        // change the draft; if it says there is none, nudging must be a no-op. One arithmetic, two readers.
+        val ratios = listOf(0.4, 0.85, 1.0, 1.5, 2.5)
+        val zooms = listOf(1.0, 1.3, 2.0, 4.0)
+        for (pr in ratios) for (br in ratios) for (z in zooms) {
+            val draft = FramingDraft(FrameFit.FILL, z, 0.0, 0.0)
+            val a = Framing.abilities(draft, pr, br)
+            val movedX = Framing.nudged(draft, 1, 0, pr, br) != draft
+            val movedY = Framing.nudged(draft, 0, 1, pr, br) != draft
+            assertEquals("horiz $pr/$br z$z", a.panHorizontally, movedX)
+            assertEquals("vert $pr/$br z$z", a.panVertically, movedY)
+        }
+    }
+
     private fun assertCrop(expected: Crop, actual: Crop) {
         assertEquals("left", expected.left, actual.left, 1e-9)
         assertEquals("top", expected.top, actual.top, 1e-9)

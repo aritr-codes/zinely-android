@@ -33,6 +33,31 @@ public data class FramingDraft(
 )
 
 /**
+ * Which Reframe adjustments can currently change anything — the honest enabled-state of the stepper pill.
+ *
+ * Three rules make an adjustment a no-op, and none of them used to be visible: [FrameFit.WHOLE] discards
+ * pan *and* zoom entirely ([Framing.toImage] rewrites it to `Fit.FIT` + the full crop); a Fill cannot zoom
+ * below [Framing.MIN_ZOOM], because a smaller crop would gap the frame; and a Fill whose crop already spans
+ * the image on an axis has nowhere to pan on that axis ([Framing.clampPan] pins it). A lit, tappable,
+ * haptic control that does nothing reads as *the app has frozen*, not as *this control is unavailable* —
+ * so the bar asks this first and paints the dead verbs disabled.
+ *
+ * Per-axis, because the middle case is genuinely per-axis: a 100% Fill of a photo wider than its frame can
+ * still slide left/right while up/down is pinned.
+ */
+public data class ReframeAbilities(
+    val zoomIn: Boolean,
+    val zoomOut: Boolean,
+    val panHorizontally: Boolean,
+    val panVertically: Boolean,
+) {
+    public companion object {
+        /** Nothing can move — the state before the photo's aspect is known (the session is inert, M7-01). */
+        public val NONE: ReframeAbilities = ReframeAbilities(false, false, false, false)
+    }
+}
+
+/**
  * Pure, platform-free framing math (ADR-053) shared by the Reframe **preview overlay** and the **commit**
  * so `preview == commit` by construction: the same [FramingDraft] resolves to the same crop the overlay
  * paints and the reducer persists.
@@ -127,16 +152,42 @@ public object Framing {
         draft.copy(zoom = clampZoom(draft.zoom * factor))
 
     /**
+     * How far the crop may travel from centre on each axis at [draft]'s zoom, as image fractions. Zero on
+     * an axis means the crop already spans the image there — the photo cannot move that way at all.
+     * The basis for both [clampPan] (which pins it) and [abilities] (which says so), so the enabled-state
+     * of a nudge arrow and the clamp it would hit are one piece of arithmetic, not two that can drift.
+     */
+    public fun panRange(draft: FramingDraft, pratio: Double, bratio: Double): Pair<Double, Double> {
+        val (cw0, ch0) = coverExtent(pratio, bratio)
+        val maxX = ((1.0 - cw0 / draft.zoom) / 2.0).coerceAtLeast(0.0)
+        val maxY = ((1.0 - ch0 / draft.zoom) / 2.0).coerceAtLeast(0.0)
+        return maxX to maxY
+    }
+
+    /**
      * Clamp the pan so the resolved crop stays wholly inside the image (Fill never gaps). Derived from the
      * current zoom's crop extent; a wider (less-zoomed) crop has a smaller pan range.
      */
     public fun clampPan(draft: FramingDraft, pratio: Double, bratio: Double): FramingDraft {
-        val (cw0, ch0) = coverExtent(pratio, bratio)
-        val cw = cw0 / draft.zoom
-        val ch = ch0 / draft.zoom
-        val maxX = ((1.0 - cw) / 2.0).coerceAtLeast(0.0)
-        val maxY = ((1.0 - ch) / 2.0).coerceAtLeast(0.0)
+        val (maxX, maxY) = panRange(draft, pratio, bratio)
         return draft.copy(panX = draft.panX.coerceIn(-maxX, maxX), panY = draft.panY.coerceIn(-maxY, maxY))
+    }
+
+    /**
+     * What [draft] can still be adjusted to do — see [ReframeAbilities]. The single place that knows
+     * "[FrameFit.WHOLE] ignores pan and zoom": until now that rule lived only inside [toImage], where the
+     * controls could not see it, which is exactly how the bar came to paint four arrows and two steppers
+     * that were all incapable of moving anything.
+     */
+    public fun abilities(draft: FramingDraft, pratio: Double, bratio: Double): ReframeAbilities {
+        if (draft.fit == FrameFit.WHOLE) return ReframeAbilities.NONE
+        val (maxX, maxY) = panRange(draft, pratio, bratio)
+        return ReframeAbilities(
+            zoomIn = draft.zoom < MAX_ZOOM - EPS,
+            zoomOut = draft.zoom > MIN_ZOOM + EPS,
+            panHorizontally = maxX > EPS,
+            panVertically = maxY > EPS,
+        )
     }
 
     /** Translate the pan by fractions of the image (drag), clamped so Fill can't reveal a gap. */

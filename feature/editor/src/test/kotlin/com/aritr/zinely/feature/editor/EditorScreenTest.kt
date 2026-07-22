@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -92,6 +93,7 @@ class EditorScreenTest {
         savedSignals: Flow<Unit> = emptyFlow(),
         saveError: SaveErrorKind? = null,
         onDismissSaveError: () -> Unit = {},
+        pageSizePt: PtSize = this.pageSizePt,
     ) {
         composeRule.setContent {
             ZinelyTheme {
@@ -117,6 +119,55 @@ class EditorScreenTest {
         // Then the page-footprint paper backing is present under the render (the canvas page must
         // read as paper like Preview/export/thumbnails, never the bare desk).
         composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).assertExists()
+    }
+
+    /**
+     * D2 — the paper backing and the render must never be drawn at two different scales.
+     *
+     * The viewport push is deliberately deferred until the interaction is `Idle` (a mid-gesture re-key
+     * strands the session), and every content layer reads `view.screenPxPerPt`. The paper used to be sized
+     * from the freshly measured local scale instead, so any canvas resize during a session — the soft
+     * keyboard opening under an inline edit is the everyday one — moved the sheet and left its contents
+     * behind until the session ended. Pinning the paper to the *shared* viewport is what makes them lag
+     * together rather than diverge.
+     */
+    @Test
+    fun the_paper_is_sized_from_the_viewport_the_content_reads() {
+        val store = store()
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        val spp = store.uiState.value.view.screenPxPerPt
+        val paper = composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).fetchSemanticsNode().boundsInRoot
+        assertEquals((pageSizePt.width * spp).toFloat(), paper.width, 1f)
+        assertEquals((pageSizePt.height * spp).toFloat(), paper.height, 1f)
+    }
+
+    /**
+     * D1 — the blank-page invitation belongs on the sheet, not on the desk around it.
+     *
+     * It was placed with `Modifier.align(Alignment.Center)`, which centres on the *canvas*; the paper is
+     * top-left anchored and, for a portrait page, much narrower. The copy therefore sat to the right of the
+     * sheet with its lines running off the display — which reads as the app having lost track of the page,
+     * and is why an undo that merely revealed a blank page was reported as undo corrupting the layout.
+     */
+    @Test
+    fun the_blank_page_invitation_stays_within_the_paper() {
+        // A portrait page in a 300×400dp host: the paper is materially narrower than the canvas, so
+        // canvas-centred and paper-centred are far apart. With a square page they would coincide and this
+        // test would prove nothing.
+        setScreen(store(), pageSizePt = PtSize(50.0, 100.0))
+        composeRule.waitForIdle()
+
+        val paper = composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).fetchSemanticsNode().boundsInRoot
+        val invitation = composeRule.onNodeWithTag(EditorEmptyStateTestTag).fetchSemanticsNode().boundsInRoot
+
+        assertTrue("paper is narrower than the canvas, or this proves nothing", paper.width < 300f)
+        assertTrue(
+            "the invitation ran off the paper: paper=$paper invitation=$invitation",
+            invitation.left >= paper.left - 1f && invitation.right <= paper.right + 1f,
+        )
+        assertEquals("centred on the paper", paper.center.x, invitation.center.x, 1f)
     }
 
     @Test

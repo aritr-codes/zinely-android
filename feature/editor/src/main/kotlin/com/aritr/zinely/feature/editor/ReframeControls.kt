@@ -40,6 +40,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -51,6 +52,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -77,14 +79,20 @@ public const val ReframeChipTestTag: String = "reframe-chip"
  * Done, which end the session ([Intent.CancelReframe] / [Intent.CommitReframe]). Reset is the *in-session*
  * draft reset to the centred-Fill baseline — distinct from the one-shot [Intent.ResetFraming] menu action.
  *
+ * Every adjustment control is painted from [abilities], so a verb that cannot change anything is visibly
+ * and audibly unavailable rather than lit, tappable and inert (the fit segments, Reset, Cancel and Done
+ * always work — they are the ways *out* of a state where nothing else can move).
+ *
  * @param fit the current draft fit (drives the segmented selected-state).
  * @param zoomPercent the current zoom as a whole percent, for the stepper readout.
+ * @param abilities which adjustments can currently change anything — see [ReframeAbilities].
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 public fun ReframeControls(
     fit: FrameFit,
     zoomPercent: Int,
+    abilities: ReframeAbilities,
     onFit: (FrameFit) -> Unit,
     onNudge: (dx: Int, dy: Int) -> Unit,
     onZoom: (factor: Double) -> Unit,
@@ -101,7 +109,12 @@ public fun ReframeControls(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         // Surface 1 — the floating stepper pill (bench `.reframebar`): cross nudge pad + zoom steppers.
-        ReframeStepperBar(zoomPercent = zoomPercent, onNudge = onNudge, onZoom = onZoom)
+        ReframeStepperBar(
+            zoomPercent = zoomPercent,
+            abilities = abilities,
+            onNudge = onNudge,
+            onZoom = onZoom,
+        )
 
         // Surface 2 — the bottom desk toolbar: fit segmented control + reset · Cancel · Done. A FlowRow so
         // the frozen single bar holds on a real phone but wraps (never crushes an off-screen action) on a
@@ -134,7 +147,12 @@ public fun ReframeControls(
  * authoritative accessible motion path — a cross-shaped 2D nudge pad and a zoom stepper.
  */
 @Composable
-private fun ReframeStepperBar(zoomPercent: Int, onNudge: (Int, Int) -> Unit, onZoom: (Double) -> Unit) {
+private fun ReframeStepperBar(
+    zoomPercent: Int,
+    abilities: ReframeAbilities,
+    onNudge: (Int, Int) -> Unit,
+    onZoom: (Double) -> Unit,
+) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = ZinelyTheme.colors.menu,
@@ -147,8 +165,8 @@ private fun ReframeStepperBar(zoomPercent: Int, onNudge: (Int, Int) -> Unit, onZ
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NudgePad(onNudge)
-            ZoomStep(zoomPercent = zoomPercent, onZoom = onZoom)
+            NudgePad(abilities = abilities, onNudge = onNudge)
+            ZoomStep(zoomPercent = zoomPercent, abilities = abilities, onZoom = onZoom)
         }
     }
 }
@@ -158,23 +176,27 @@ private fun ReframeStepperBar(zoomPercent: Int, onNudge: (Int, Int) -> Unit, onZ
  * the corners left as inert spacers. 2D position is two axes of discrete targets — not one 1-D adjustable.
  */
 @Composable
-private fun NudgePad(onNudge: (Int, Int) -> Unit) {
+private fun NudgePad(abilities: ReframeAbilities, onNudge: (Int, Int) -> Unit) {
+    // Per axis, not per arrow: pan room is symmetric about the centre, and the clamp that would stop a
+    // rightward nudge is the same one that stops a leftward one.
+    val h = abilities.panHorizontally
+    val v = abilities.panVertically
     // No group-level semantics wrapper: each cell carries its own spoken label (a parent
     // clearAndSetSemantics would clear the children TalkBack + the a11y tests navigate to).
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowUpward, "Move photo up") { onNudge(0, -1) }
+            NudgeCell(Icons.Filled.ArrowUpward, "Move photo up", v) { onNudge(0, -1) }
             NudgeSpacer()
         }
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-            NudgeCell(Icons.Filled.ArrowBack, "Move photo left") { onNudge(-1, 0) }
+            NudgeCell(Icons.Filled.ArrowBack, "Move photo left", h) { onNudge(-1, 0) }
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowForward, "Move photo right") { onNudge(1, 0) }
+            NudgeCell(Icons.Filled.ArrowForward, "Move photo right", h) { onNudge(1, 0) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowDownward, "Move photo down") { onNudge(0, 1) }
+            NudgeCell(Icons.Filled.ArrowDownward, "Move photo down", v) { onNudge(0, 1) }
             NudgeSpacer()
         }
     }
@@ -182,16 +204,24 @@ private fun NudgePad(onNudge: (Int, Int) -> Unit) {
 
 /** A 34dp cross cell (bench `.nudgepad button`): field fill, hairline edge, decorative glyph + spoken label. */
 @Composable
-private fun NudgeCell(icon: ImageVector, description: String, onClick: () -> Unit) {
+private fun NudgeCell(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .testTag("reframe-$description")
             .size(34.dp)
+            // Fade the WHOLE chip — edge, fill and glyph — as the Type bar's stepper does (bench
+            // `:disabled{opacity:.4}`). Ahead of the paint modifiers so the layer wraps them all.
+            .alpha(if (enabled) 1f else 0.4f)
             .clip(RoundedCornerShape(8.dp))
             .background(ZinelyTheme.colors.field)
             .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
-            .clearAndSetSemantics {
+            .clickable(enabled = enabled, onClick = onClick)
+            // `semantics`, NOT `clearAndSetSemantics`: the latter wipes the `disabled` flag that
+            // `clickable(enabled = false)` sets, so an unavailable control would still announce itself as
+            // actionable — a screen-reader user would be told to tap something that cannot respond. Same
+            // shape as the Type bar's StepButton, which passed the ADR-055 device gate. The child glyph is
+            // decorative (contentDescription = null), so the merged node still speaks exactly [description].
+            .semantics {
                 contentDescription = description
                 role = Role.Button
             },
@@ -209,12 +239,12 @@ private fun NudgeSpacer() {
 
 /** The zoom stepper (bench `.zoomstep`): − · readout · + . */
 @Composable
-private fun ZoomStep(zoomPercent: Int, onZoom: (Double) -> Unit) {
+private fun ZoomStep(zoomPercent: Int, abilities: ReframeAbilities, onZoom: (Double) -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ZoomButton("−", "Zoom out") { onZoom(1.0 / Framing.ZOOM_STEP) }
+        ZoomButton("−", "Zoom out", abilities.zoomOut) { onZoom(1.0 / Framing.ZOOM_STEP) }
         Text(
             text = "$zoomPercent%",
             fontWeight = FontWeight.SemiBold,
@@ -223,22 +253,27 @@ private fun ZoomStep(zoomPercent: Int, onZoom: (Double) -> Unit) {
                 .width(50.dp)
                 .clearAndSetSemantics { contentDescription = "Zoom $zoomPercent percent" },
         )
-        ZoomButton("+", "Zoom in") { onZoom(Framing.ZOOM_STEP) }
+        ZoomButton("+", "Zoom in", abilities.zoomIn) { onZoom(Framing.ZOOM_STEP) }
     }
 }
 
-/** A 40dp zoom step button (bench `.zoomstep button`): field fill, hairline edge, a plain +/− glyph. */
+/**
+ * A 40dp zoom step button (bench `.zoomstep button`): field fill, hairline edge, a plain +/− glyph.
+ * Disabled exactly like [NudgeCell] — see the semantics note there for why this is not
+ * `clearAndSetSemantics`.
+ */
 @Composable
-private fun ZoomButton(glyph: String, description: String, onClick: () -> Unit) {
+private fun ZoomButton(glyph: String, description: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .testTag("reframe-$description")
             .size(40.dp)
+            .alpha(if (enabled) 1f else 0.4f)
             .clip(RoundedCornerShape(11.dp))
             .background(ZinelyTheme.colors.field)
             .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(11.dp))
-            .clickable(onClick = onClick)
-            .clearAndSetSemantics {
+            .clickable(enabled = enabled, onClick = onClick)
+            .semantics {
                 contentDescription = description
                 role = Role.Button
             },
