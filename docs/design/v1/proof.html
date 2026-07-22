@@ -26,6 +26,31 @@
           PDF / Share) is the honest home-print handoff; a first-class in-app Print is deferred to its own
           future ADR + batch (where the actual-size-vs-system-scaling conflict is designed properly). The
           recipe, single-sided note, and the print *framing* are unchanged. DESIGN-FROZEN status retained.
+          Freeze amendment (2026-07-22, ADR-058 — Act 0 "Read" ADDED, and this one is a BACK-FILL):
+          The surface gains a fourth act at position 0 — Read: the finished zine, one page per screen, in
+          reading order, swiped horizontally, with none of the printer's furniture on it. It is the
+          landing; the three-step climb it opens is reached by a primary labelled "Print & fold" and is
+          otherwise UNTOUCHED (same copy, same step numbering, same three progress creases, same fold
+          guide, same goldens).
+          >> HONEST PROVENANCE: this amendment was written AFTER the Compose implementation shipped, which
+          inverts the HTML-first workflow. It is a transcription of what was built, not a specification
+          that was then built — recorded as an accepted deviation rather than disguised as a freeze. Every
+          value here was read off the merged implementation (ProofRead.kt / ProofScreen.kt); where the two
+          could differ, the Compose is authoritative until the next change, which returns to HTML-first. <<
+          Why the act exists: the beta UX review found that the only entry out of the editor was labelled
+          "Preview" and opened on the imposed print sheet — a good answer to "how is this imposed?" given
+          to a user who had not yet seen their zine, which reads as "it lost my work". Read answers the
+          question they actually hold: "what did I make?" (see docs/BETA-UX-REVIEW.md, RESEARCH.md R11 for
+          the reader-spread vs printer-spread vocabulary this restores.)
+          Transcribed behaviour: pages walk DOCUMENT order (which is reading order — imposition rearranges
+          for the press and stays in the print acts); a sliver of the neighbouring pages shows at each edge;
+          the caption "Page N of M" is a live region because the rendered page is a canvas with no readable
+          nodes; from the SHEET act the top-bar back steps to Read rather than leaving, and its label says
+          so (ADR-058 Decision 6 — the better answer, a "Back" secondary in the Sheet action bar, is
+          deferred because that act has a committed Roborazzi golden).
+          NOT added, and deliberately: zoom/pinch inside Read, two-page spreads, page-turn animation, and
+          per-panel artwork on the imposed sheet (still the documented deferral it was).
+          DESIGN-FROZEN status retained.
           Freeze amendment (2026-07-15, Save-to-phone reconciliation — behaviour clarification only):
           "Save PDF" is pinned to its literal promise. It writes a real, permanent copy of the zine PDF
           into the device's shared **Downloads**, where it stays — visible in the Files/Downloads app —
@@ -219,6 +244,30 @@ body{
 .lead{ text-align:center; padding:2px 6px 10px; }
 .lead h2{ font-family:var(--voice); font-weight:600; font-size:21px; letter-spacing:-.01em; margin:0 0 3px; color:var(--on-desk); }
 .lead p{ margin:0 auto; font-size:13.5px; line-height:1.5; color:var(--on-desk-soft); max-width:34ch; }
+
+/* ---------------- ACT 0 — READ (ADR-058): the finished zine, page by page ---------------- */
+/* A snap rail, not a carousel: one whole page per screen, and a sliver of the neighbours showing so
+   "there is more this way" needs no hint chip. Matches the Compose HorizontalPager
+   (contentPadding 34dp each side, pageSpacing 14dp). */
+.reader{ flex:1 1 auto; min-height:0; display:flex; align-items:center; gap:14px;
+  padding:0 34px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory;
+  scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+.reader::-webkit-scrollbar{ display:none; }
+.reader:focus-visible{ outline:2px solid var(--coral-strong); outline-offset:3px; border-radius:6px; }
+/* the page itself — the same paper treatment the front/back cover cards use, so a page in Read and a
+   page on the sheet are recognisably the same object */
+.rpage{ flex:0 0 100%; scroll-snap-align:center; aspect-ratio:210/297; max-height:100%;
+  margin:0 auto; background:var(--paper); border-radius:3px;
+  box-shadow:var(--shadow-lift), 0 2px 0 var(--paper-edge);
+  display:flex; align-items:center; justify-content:center; overflow:hidden; }
+/* stand-in for the rendered page: the real surface replays the SceneRenderer tape through the same
+   CanvasReplayer the export uses (read == preview == export). Nothing is drawn here that the engine
+   would not draw. */
+.rp-ink{ font-family:var(--voice); font-size:34px; color:var(--paper-edge); user-select:none; }
+/* position readout — a live region, because the rendered page is a canvas with no readable nodes:
+   without this a screen-reader user turning pages hears nothing at all */
+.rcap{ flex:0 0 auto; text-align:center; margin:10px 0 4px; font-size:12px; font-weight:500;
+  color:var(--on-desk-soft); }
 
 /* ---------------- ACT 1 — THE SHEET (imposed print preview) ---------------- */
 .sheetwrap{ display:flex; flex-direction:column; align-items:center; gap:14px; }
@@ -513,8 +562,29 @@ body{
   <!-- ACTS -->
   <div class="acts" id="acts">
 
+    <!-- ============ ACT 0 — READ (ADR-058) ============ -->
+    <!-- The landing. Answers "what did I make?"; every other act answers a printer's question.
+         Deliberately carries NO lead copy: the top-bar act label is the orientation, and a reader
+         that explains itself over the top of the zine is not a reader. -->
+    <section class="act on" id="act0" aria-label="Your zine, page by page">
+      <div class="reader" id="reader" tabindex="0" role="group"
+           aria-label="Your zine, page by page. Swipe to turn the page.">
+        <!-- one .rpage per document page, in DOCUMENT order — which is reading order.
+             Imposition rearranges pages for the press and stays in the print acts. -->
+        <div class="rpage"><div class="rp-ink">1</div></div>
+        <div class="rpage"><div class="rp-ink">2</div></div>
+        <div class="rpage"><div class="rp-ink">3</div></div>
+        <div class="rpage"><div class="rp-ink">4</div></div>
+        <div class="rpage"><div class="rp-ink">5</div></div>
+        <div class="rpage"><div class="rp-ink">6</div></div>
+        <div class="rpage"><div class="rp-ink">7</div></div>
+        <div class="rpage"><div class="rp-ink">8</div></div>
+      </div>
+      <p class="rcap" id="readCap" role="status">Page 1 of 8</p>
+    </section>
+
     <!-- ============ ACT 1 — THE SHEET ============ -->
-    <section class="act on" id="act0" aria-label="The printed sheet">
+    <section class="act" id="act1" aria-label="The printed sheet">
       <div class="lead">
         <h2>This is your sheet</h2>
         <p>One page, printed on one side. It looks scrambled on purpose — the fold puts every page in order.</p>
@@ -539,7 +609,7 @@ body{
     </section>
 
     <!-- ============ ACT 2 — PRINT ============ -->
-    <section class="act" id="act1" aria-label="Print settings">
+    <section class="act" id="act2" aria-label="Print settings">
       <div class="lead">
         <h2>Print it just like this</h2>
         <p>These four settings keep your zine the right size and in the right order. Most printers already default to them.</p>
@@ -587,7 +657,7 @@ body{
     </section>
 
     <!-- ============ ACT 3 — THE FOLD ============ -->
-    <section class="act" id="act2" aria-label="How to fold">
+    <section class="act" id="act3" aria-label="How to fold">
       <div class="foldwrap" id="foldGuide">
         <div class="lead" style="padding-bottom:4px;">
           <h2 id="foldHead">Fold it into a book</h2>
@@ -676,9 +746,10 @@ body{
     <div class="body">
       <div class="row"><span class="lab">Act</span>
         <div class="seg" id="segAct">
-          <button data-act="0" aria-pressed="true">Sheet</button>
-          <button data-act="1" aria-pressed="false">Print</button>
-          <button data-act="2" aria-pressed="false">Fold</button>
+          <button data-act="0" aria-pressed="true">Read</button>
+          <button data-act="1" aria-pressed="false">Sheet</button>
+          <button data-act="2" aria-pressed="false">Print</button>
+          <button data-act="3" aria-pressed="false">Fold</button>
         </div>
       </div>
       <div class="row"><span class="lab">State</span>
@@ -921,40 +992,63 @@ body{
   }
 
   /* ---------- act navigation ---------- */
-  const ACTLABELS = ["Step 1 of 3 · The sheet","Step 2 of 3 · Print","Step 3 of 3 · Fold"];
+  const ACTLABELS = ["Read · swipe to turn the page","Step 1 of 3 · The sheet","Step 2 of 3 · Print","Step 3 of 3 · Fold"];
   function setAct(n, back){
     (finishFold._t||[]).forEach(clearTimeout);   // any pending climax reveal is void once we leave/enter an act
-    n = clamp(n,0,2); const prev = act; act = n;
+    n = clamp(n,0,3); const prev = act; act = n;
     $$(".act").forEach((el,i)=>{ el.classList.toggle("on", i===n);
       el.classList.remove("enter","enter-back");
       if(i===n && !reduced() && prev!==n){ el.classList.add(back?"enter-back":"enter"); } });
     // progress dots
-    Array.from(progress.children).forEach((d,i)=>{ d.className = i<n?"done":(i===n?"cur":""); });
+    // Three creases for the three PRINT steps only — Read is where you arrive, not a step you
+    // complete, so on Read every crease is un-lit (the climb has not started). Climb-relative index.
+    Array.from(progress.children).forEach((d,i)=>{ d.className = i<n-1?"done":(i===n-1?"cur":""); });
     actLabel.textContent = ACTLABELS[n];
+    $("#back").setAttribute("aria-label", n===1 ? "Back to your zine" : "Back to the bench (your work is saved)");
     $$("#segAct button").forEach(b=> b.setAttribute("aria-pressed", String(+b.dataset.act===n)));
     // reset fold act view when entering it
-    if(n===2){ $("#finished").classList.remove("on","shelf-in","words-h","words-p"); $("#book").classList.remove("close","settled");
+    if(n===3){ $("#finished").classList.remove("on","shelf-in","words-h","words-p"); $("#book").classList.remove("close","settled");
       $("#foldGuide").classList.remove("hide"); step=0; renderStep(); }
     configurePrimary();
     acts.scrollTop = 0; $$(".act").forEach(a=>a.scrollTop=0);
   }
   function configurePrimary(){
     secondary.classList.add("hide"); primary.onclick = onPrimary;
-    if(act===0){ setPrimary("Print setup","arrow", false); }
-    else if(act===1){ setPrimary("Now fold it","fold", false);
+    // Read's one forward action names the whole climb it opens, so the imposed sheet arrives as
+    // "the first step of printing" rather than as the thing the word "Preview" used to promise.
+    if(act===0){ setPrimary("Print & fold","fold", false); }
+    else if(act===1){ setPrimary("Print setup","arrow", false); }
+    else if(act===2){ setPrimary("Now fold it","fold", false);
       secondary.classList.remove("hide"); secondary.innerHTML = "Back";
     }
-    else if(act===2){ renderStep(); } // step logic owns the primary here (hidden until last step handled by stepNext)
+    else if(act===3){ renderStep(); } // step logic owns the primary here (hidden until last step handled by stepNext)
     // on the fold act the primary is driven by the step nav, hide the global one until finished
-    primary.classList.toggle("hide", act===2);
+    primary.classList.toggle("hide", act===3);
   }
   function onPrimary(){
-    if(act===0){ buzz("tick"); setAct(1); }
+    if(act===0){ buzz("tick"); setAct(1); }        // Read -> the print climb
     else if(act===1){ buzz("tick"); setAct(2); }
+    else if(act===2){ buzz("tick"); setAct(3); }
   }
   secondary.addEventListener("click", ()=>{
     if($("#finished").classList.contains("on")){ buzz("tick"); toast("Saved — back to the bench"); return; }
     if(act>0){ buzz("tick"); setAct(act-1, true); }
+  });
+
+  /* ---------- Act 0 — Read (ADR-058) ---------- */
+  // The caption is the ONLY thing that can tell a screen-reader user which page they turned to, since
+  // the page render is a canvas with no readable nodes — hence role="status" on #readCap.
+  const reader = $("#reader"), readCap = $("#readCap");
+  function readPage(){ const w = reader.clientWidth; return w ? Math.round(reader.scrollLeft / w) + 1 : 1; }
+  reader.addEventListener("scroll", ()=>{
+    clearTimeout(reader._t);
+    reader._t = setTimeout(()=>{ readCap.textContent = `Page ${readPage()} of ${reader.children.length}`; }, 90);
+  }, {passive:true});
+  // Keyboard parity with the swipe (the Compose pager is focusable and arrow-navigable).
+  reader.addEventListener("keydown", e=>{
+    if(e.key!=="ArrowLeft" && e.key!=="ArrowRight") return;
+    e.preventDefault();
+    reader.scrollBy({ left: (e.key==="ArrowRight"?1:-1) * reader.clientWidth, behavior: reduced()?"auto":"smooth" });
   });
 
   /* ---------- export / share (Act 2) ---------- */
@@ -964,7 +1058,7 @@ body{
     exporting._t = setTimeout(()=>{ loadwrap.classList.remove("on"); then&&then(); }, 1500);
   }
   $("#savePdf").addEventListener("click", ()=> exporting("Making your PDF…", ()=>{ printed=true; buzz("snap");
-    snack(`Saved “${name}.pdf” to Downloads`, "Fold now", ()=>{ setAct(2); }); }));
+    snack(`Saved “${name}.pdf” to Downloads`, "Fold now", ()=>{ setAct(3); }); }));
   // #printNow handler removed 2026-07-11 (freeze amendment, ADR-052) — see the export-row note above.
   $("#share").addEventListener("click", ()=> show($("#shareSheet")));
   $("#shareMenu").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return;
@@ -1011,11 +1105,22 @@ body{
   scrim.addEventListener("click", ()=> closeSheets(false));
 
   /* ---------- back / keyboard ---------- */
-  $("#back").addEventListener("click", ()=>{ buzz("tick"); toast("Saved — back to the bench"); });
+  // Act-aware at exactly one boundary (ADR-058 Decision 6): from the SHEET — the first step of the
+  // print climb — back steps to Read instead of leaving, because Read is otherwise reachable only by
+  // leaving the surface and coming back. Every other act keeps the loss-safe exit unchanged (Print
+  // carries its own "Back" secondary; the Fold is forward-only). The label says which of the two it
+  // is about to do: a back button that does two things must not describe itself as doing one.
+  $("#back").addEventListener("click", ()=>{
+    buzz("tick");
+    if(act===1){ setAct(0, true); return; }
+    toast("Saved — back to the bench");
+  });
   document.addEventListener("keydown", e=>{
     if(e.key==="Escape"){ if(openSheet) closeSheets(false); return; }
     if(openSheet) return; // an open modal owns the keyboard
-    if(act===2 && !$("#finished").classList.contains("on")){
+    // The fold guide's step nav (now act 3). Read owns the same two keys on act 0, but that handler is
+    // bound to #reader and preventDefaults, so the two never both fire.
+    if(act===3 && !$("#finished").classList.contains("on")){
       if(e.key==="ArrowRight"){ e.preventDefault(); $("#stepNext").click(); }
       if(e.key==="ArrowLeft"){ e.preventDefault(); $("#stepPrev").click(); }
     }
