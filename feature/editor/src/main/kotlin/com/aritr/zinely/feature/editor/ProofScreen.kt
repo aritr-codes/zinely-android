@@ -194,7 +194,11 @@ public fun ProofScreen(
     val haptics = ZinelyTheme.haptics
 
     var actOrdinal by rememberSaveable { mutableStateOf(startAct.ordinal) }
-    val act = ProofAct.entries[actOrdinal]
+    // Coerced, because the saved ordinal outlives the enum that produced it. A Bundle written before
+    // ADR-058 added READ at ordinal 0 restores one act *behind* where the user was — harmless, since the
+    // enum only grew and the fold's own state is saved separately. Shrinking or reordering it later would
+    // throw on exactly that stale value, in a restore path nobody exercises by hand.
+    val act = ProofAct.entries[actOrdinal.coerceIn(0, ProofAct.entries.lastIndex)]
     // The frozen slide is a fixed 16px nudge (translateX 16px), not a width fraction.
     val slidePx = with(LocalDensity.current) { 16.dp.roundToPx() }
     // Capture reduced-motion here: transitionSpec runs outside composition and can't read ZinelyTheme.

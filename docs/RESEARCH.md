@@ -259,3 +259,52 @@ Two of these are **AA blockers** invisible in the HTML — they are architectura
 - 🟦 **Semantics & structure (WCAG 1.3.1).** Project tiles must be real buttons (not `div`s); galleries/layers as collection semantics; one heading per screen; nav/main containers. In Compose: `Modifier.clickable(role=Role.Button)` + `contentDescription`, `semantics { heading() }`, list/collection semantics. **Source:** [WCAG 2.2 1.3.1](https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html).
 - 🟦 **Edge-to-edge + WindowInsets (Android 15+).** Mockups fake the status bar; the real app must enable edge-to-edge and pad bars/FAB/sheets with `WindowInsets.systemBars`/`navigationBars` (+ `imePadding` for the text sheet) so the bottom bar/FAB never sit under the gesture-nav handle. **Source:** [Compose insets / edge-to-edge](https://developer.android.com/develop/ui/compose/system/insets).
 - 🟦 Minor: contextbar TalkBack traversal order (`isTraversalGroup`/`traversalIndex`) + selection-change announcement; drive all colors from `MaterialTheme.colorScheme` (support dynamic color + dark theme), mapping the dark contextbar to a named M3 role (e.g. `inverseSurface`).
+
+---
+
+## R11. Reading a zine vs. printing one — reader spreads, printer spreads, and the preview triad — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+Gathered 2026-07-21 for the [Beta UX Review](BETA-UX-REVIEW.md), which found that Zinely showed users the
+imposed print sheet and never the finished zine. Landed here because the distinction is durable and
+outlives that review; [ADR-058](DECISIONS.md#adr-058) cites it.
+
+### R11.1 The print world already separates the two views — ✅ VERIFIED
+
+- ✅ **Reader spreads vs printer spreads is the standing vocabulary**, and the rule is stated as a slogan:
+  *"Always design in reader spreads. Always print from printer spreads."*
+  **Source:** [PDF Press — how to create a zine](https://pdfpress.app/blog/how-to-create-zine).
+- ✅ **InDesign keeps the same split structurally**: you author in reader spreads, and imposition is a
+  separate *Print Booklet* step rather than a view of the document.
+  **Source:** [Adobe — impose documents for booklet printing](https://helpx.adobe.com/indesign/desktop/print/print-booklets/impose-documents-for-booklet-printing.html).
+- 🟦 **Implication for Zinely:** the imposed sheet answers *"what comes out of the printer?"*. It cannot
+  also answer *"what did I make?"*, and a product with only the printer spread has no answer to the second
+  question at all.
+
+### R11.2 The three-mode triad, and the advisory framing worth stealing — ✅ VERIFIED
+
+- ✅ **Blurb's BookWright separates Edit / Preview / Review**, and Preview's job is defined by what it
+  *removes*: *"there are no trim areas visible in Preview mode."* Review then lists pre-print warnings the
+  user *"can choose to ignore."*
+  **Source:** [Blurb — Preview vs online preview](https://support.blurb.com/hc/en-us/articles/360015822551-What-s-the-difference-between-BookWright-s-Preview-feature-and-my-book-s-online-preview-on-Blurb-s-website).
+- 🟦 **Advisory-not-blocking is the transferable idea**: production warnings inform without gating, which
+  suits a beginner-first tool that must never make a first zine feel like a compliance exercise.
+
+### R11.3 A page-by-page reading view is absent from comparable zine tools — ✅ VERIFIED
+
+- ✅ **Zeenster (`zine-maker`) has no reading mode**: a canvas editor plus an "Export Zine for Printing"
+  modal, with the imposed sheet shown only at the moment of committing to print.
+  **Source:** [zine-maker user guide](https://github.com/virgilvox/zine-maker/blob/main/docs/03-user-guide.md).
+  (Same product studied in [R9](#r9-editor-reference--zine-maker-cross-product-study----verified--recommendation).)
+- ✅ Page-by-page preview is standard in **photo-book** tools and absent from **zine** tools.
+- 🟦 **Therefore a swipeable reader is a differentiator rather than catch-up** — the basis for
+  [ADR-058](DECISIONS.md#adr-058) treating Read as a feature, not a gap-fill.
+
+### R11.4 Framing vocabulary — 🟦 RECOMMENDATION
+
+- ✅ **Figma's fill/fit wording is the clearest in the field**: *Fill* "may clip the image", *Fit* "ensures
+  the entire image is visible"; and Figma must separately reassure users that *"the cropped area does not
+  get deleted."*
+  **Source:** [Figma — crop and adjust images](https://help.figma.com/hc/en-us/articles/360040028034-Crop-and-adjust-images).
+- 🟦 **A verb about the *frame* ("Reframe") reads as safer than one about the *image* ("Crop")** — the
+  reassurance Figma has to write is the cost of the other choice. Zinely's *Fill / Whole photo* labels are
+  a good plain-English rendering of the same distinction; keep them.
