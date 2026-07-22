@@ -376,12 +376,20 @@ public fun EditorScreen(
         val pr = reframePratio
         if (rf != null && d != null && pr != null) {
             val br = bratioOf(rf.before)
-            // Pan room is per axis, and an arrow with none is a no-op: the on-screen cell is disabled, but
-            // the keyboard can still ask, so refuse here and say why rather than announce a phantom move.
+            // Two separate questions, and answering only the first is what let the phantom survive:
+            //   · CAN this axis move at all? — that is [reframeAbilities], and it drives the button's
+            //     enabled state, which must stay stable per axis rather than flickering off at each edge.
+            //   · DID this particular step move anything? — only the resulting draft can say. A photo
+            //     already pressed against the clamp has a live axis and a dead step, so the ability alone
+            //     would still announce "Moved right" for a photo that did not move.
+            // The announcement follows the second question; the paint follows the first.
             val allowed =
                 if (dx != 0) reframeAbilities.panHorizontally else reframeAbilities.panVertically
-            if (allowed) {
-                adjustDraft(Framing.nudged(d, dx, dy, pr, br))
+            val nudged = Framing.nudged(d, dx, dy, pr, br)
+            // `allowed` is still required: Framing.nudged does not know about fit, so in Whole photo it
+            // would happily move a pan the commit then discards.
+            if (allowed && nudged != d) {
+                adjustDraft(nudged)
                 sayReframe(
                     when {
                         dx < 0 -> "Moved left"; dx > 0 -> "Moved right"; dy < 0 -> "Moved up"; else -> "Moved down"

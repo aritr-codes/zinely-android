@@ -239,8 +239,14 @@ class ReframeA11yTest {
         // both axes — the pad is correctly disabled there. Before the D3 fix this test passed *without* the
         // zoom, counting three "Moved left"s for a photo that had not moved at all: the phantom
         // announcement was the very defect, and the test had pinned it.
-        composeRule.onNodeWithContentDescription("Zoom in").performClick()
-        composeRule.waitForIdle()
+        //
+        // Twice, not once: one step leaves ±0.065 of travel against a 0.05 nudge, so the third nudge would
+        // hit the clamp and correctly refuse instead of speaking. Three announcements need three real
+        // moves — which is the point of the test, and is now something the fixture has to earn.
+        repeat(2) {
+            composeRule.onNodeWithContentDescription("Zoom in").performClick()
+            composeRule.waitForIdle()
+        }
 
         repeat(3) {
             composeRule.onNodeWithContentDescription("Move photo left").performClick()
@@ -311,6 +317,20 @@ class ReframeA11yTest {
         composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.Minus) }
         composeRule.waitForIdle()
         assertEquals("Already at the smallest zoom.", announced.last())
+
+        // The clamp edge, which is the subtle case: the axis is live (so the arrow stays enabled and does
+        // not flicker), but this particular step has nowhere left to go. Announcing the direction here
+        // would be the same phantom move D3 exists to remove, one state further in. Zoom once for a little
+        // travel, then walk left until it runs out.
+        composeRule.onNodeWithContentDescription("Zoom in").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Move photo left").assertIsEnabled()
+        repeat(3) {
+            composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.DirectionLeft) }
+            composeRule.waitForIdle()
+        }
+        assertEquals("No room to move that way.", announced.last())
+        composeRule.onNodeWithContentDescription("Move photo left").assertIsEnabled()
 
         composeRule.onNodeWithContentDescription("Whole photo").performClick()
         composeRule.waitForIdle()
