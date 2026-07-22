@@ -163,11 +163,20 @@ Every build up to and including 0.8.0 was signed with a *debug* key. `0.9.0-beta
 signed with the real release key, and Android will not install it over a differently-signed app —
 anyone still holding `0.6.0-alpha.1` gets `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
 
-Those testers must **export anything they want to keep (Save PDF to Downloads), then uninstall,
-then install the beta**. Their zines do not survive; there is no backup/restore yet. This was
-already flagged as a known limitation of the alpha, and it is a one-time cost that ends here — every
-build from the beta onward installs cleanly over its predecessor. The tester note must say so
-explicitly rather than let someone discover it as an install error.
+Those testers must **export anything they want to keep, then uninstall, then install the beta**.
+Their zines do not survive; there is no backup/restore yet. This was already flagged as a known
+limitation of the alpha, and it is a one-time cost that ends here — every build from the beta onward
+installs cleanly over its predecessor. The tester note must say so explicitly rather than let someone
+discover it as an install error.
+
+**Write the escape route in the words of the build they are holding, not the one you are shipping.**
+This is the trap that nearly shipped in the `0.9.0-beta.1` package: the rescue step said
+*"Print & fold → Save PDF"*, which are this build's labels. In `0.8.0` the same path reads
+**Preview › → Print setup → Save PDF**, and in `0.6.0-alpha.1` **there is no save at all** — sharing
+to somewhere permanent is the only export ([CHANGELOG alpha known-limitation #1](../CHANGELOG.md)).
+An instruction naming a button the reader cannot find is worse than no instruction: it is the one
+document standing between them and irreversible data loss, and it reads as authoritative. Check the
+old tags (`git show v0.8.0:…/ProofScreen.kt`) rather than remembering.
 
 Play Store distribution is not in use yet. It would additionally need an upload key, a Play Console
 listing, a privacy policy, a content rating and a data-safety declaration.
