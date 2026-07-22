@@ -129,10 +129,26 @@ filename with a clean log. A human reading build output is not a gate; a failing
    ```
    Output: `app/build/outputs/apk/release/zinely-<versionName>-release.apk` — the artifact name
    carries the version so testers never see an anonymous `app-release.apk`.
-5. **Verify on a clean device** — install the artifact you are about to send, on a phone that does
+5. **Copy it out of `build/`, then checksum the copy** — `dist/zinely-<versionName>-release.apk`
+   (git-ignored). **The APK is not byte-reproducible**: `packageRelease` can re-run and re-sign an
+   unchanged source tree, producing a different file with a different SHA-256 and identical
+   contents. So a published checksum identifies *one copy*, not a version — and if the copy you
+   publish it for still lives under `build/`, the next build silently invalidates it. Verify the
+   version and the signer from the file you are about to send, not from `output-metadata.json`:
+   ```bash
+   "$LOCALAPPDATA/Android/Sdk/build-tools/36.1.0/aapt2" dump badging dist/<apk> | head -1
+   "$LOCALAPPDATA/Android/Sdk/build-tools/36.1.0/apksigner" verify --print-certs dist/<apk>
+   ```
+   `versionCode`, `versionName`, and `Signer #1 certificate DN: CN=Zinely, O=Zinely, C=IN` must all
+   be what you intended. A build that verified an artifact it then rebuilt has verified nothing.
+6. **Prove the artifact matches committed source** — commit the version bump and changelog first,
+   then re-run the assemble: every task must report `UP-TO-DATE`. That is the cheap, honest form of
+   "the APK is this commit"; a clean re-run that *executes* work means the artifact predates
+   something in the tree.
+7. **Verify on a clean device** — install the artifact you are about to send, on a phone that does
    not already have Zinely, and complete the full journey. A build that has only ever been verified
    as an upgrade has not been verified.
-6. **Tag** — `git tag -a v<version> -m "<version> — <headline>"` on the exact commit the artifact was
+8. **Tag** — `git tag -a v<version> -m "<version> — <headline>"` on the exact commit the artifact was
    built from, and push both.
 
 ## 3. Beta distribution (side-load)
