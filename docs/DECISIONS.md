@@ -1593,3 +1593,50 @@ The typography **picker** and the **warning surface** are Middle-phase work, gat
 - **Answer coverage with `Paint.hasGlyph`.** Rejected — see decision 5. It passes on the developer's phone and blanks on the user's.
 - **Ask the font at typing time** (resolve coverage from the actual TTF rather than a stated script set). Rejected: it needs an Android `AssetManager` on the editor's hot path, and it makes the user-facing promise drift silently whenever a font is swapped. The promise must be a stated product decision the font is then held to.
 - **Exclude the 140 missing code points from the guard.** Rejected as dishonest: it turns the test green while leaving characters that reach paper blank. The promise was narrowed instead.
+
+---
+
+## ADR-058 {#adr-058}
+
+**The Proof surface opens on Read — a swipeable, chrome-free view of the finished zine in reading order — and the imposed sheet becomes the first step of an explicitly-labelled "Print & fold" climb.** The document is threaded into `ProofScreen`, which un-defers the artwork gap `ProofSheet` recorded, and Read reuses the existing `SceneRenderer` → `PagePreview` path rather than introducing a second way to draw a page.
+
+*Status: **Accepted (2026-07-22)** — earned at the device gate, not by passing tests.* Verified on a physical Galaxy A17 5G (Android 16) against a debug build of this branch: the Proof surface lands on Read with the user's own page rendered (not the imposed sheet), the caption tracks a swipe (`Page 1 of 8` → `Page 2 of 8`), `Print & fold` reaches the unchanged `Step 1 of 3 · The sheet`, back from the Sheet returns to Read while back from Read leaves to the bench. The same pass caught and fixed a platform-only accessibility defect in the sibling Reframe bar (`f4faaa4`) that the Compose test tree structurally could not see. **Outstanding, named rather than implied:** there is no Roborazzi golden for the Read act — goldens are recordable only on the pinned CI image — so Read has behavioural and device coverage but no pixel gate; and the HTML specification is back-filled *after* implementation, an accepted deviation from the [HTML-first workflow](../CLAUDE.md#html-first-ui-workflow-mandatory) rather than a silent one. Builds on [ADR-051](#adr-051) (the single 3-act Proof surface and its shared-ViewModel seam), [ADR-028](#adr-028) (the one `CanvasReplayer` every surface replays through), [ADR-006](#adr-006) (structural `preview == export`), and [ADR-052](#adr-052) (no OS print path — the honest home-print hand-off). Arises from the approved [Beta UX Review](BETA-UX-REVIEW.md) §0 and §2. Supersedes nothing; it un-defers the "real per-panel artwork needs the document tree threaded through the Proof VM seam" note in `ProofSheet.kt`.
+
+### Context
+
+The one-sentence finding of the beta UX review was: **you cannot see your zine.** You can see one page at a time while editing, and a schematic of where the folds go, but at no point does the app show you the thing you are making.
+
+The single entry point out of the editor is labelled **Preview**, and it leads to *Step 1 of 3 · The sheet*: an imposition diagram with page numbers, fold lines, and blank panels — four of them upside-down. That is not a rendering bug; `ProofSheet.kt` documents the blank panels as a deliberate deferral. But the user has just placed a photo and typed a caption, tapped the only thing labelled "Preview", and been shown eight empty rectangles. The honest reading from their chair is *"it lost my work."*
+
+The screen is a genuinely good explanation of **how a folded sheet works**. It is answering a question nobody has asked yet.
+
+The print world already separates these: **reader spreads** (what the reader sees) from **printer spreads** (what goes through the press), with the rule stated as a slogan — *design in reader spreads, print from printer spreads*. InDesign keeps the same split; Blurb's Edit / Preview / Review triad strips production furniture in Preview specifically (*"there are no trim areas visible in Preview mode"*). Zinely shipped only the printer spread. Notably, **Zeenster — the closest comparable — has no reading mode at all**, so this is a differentiator rather than catch-up. The evidence, with citations, is [RESEARCH.md §R11](RESEARCH.md#r11-reading-a-zine-vs-printing-one--reader-spreads-printer-spreads-and-the-preview-triad----verified--recommendation); the review that gathered it is [Beta UX Review §8](BETA-UX-REVIEW.md).
+
+The enabling fact is that the cost is far lower than the `ProofSheet` deferral implies. `ProofDestination` **already holds** `uiState.document`, `state.pageSizePt` and `state.imageBytes` — the ADR-051 shared-VM seam resolved them for the export path. `EditorPageStrip.PageThumbnail` already renders any page at any scale through `SceneRenderer.render` → `PagePreview`. Read mode is those components at full size behind a pager.
+
+### Decision
+
+1. **`ProofAct.READ` is added at ordinal 0 and is the default act.** The editor's existing entry point lands there. Read answers *"what did I make?"*; the sheet answers *"what comes out of the printer?"*; the fold guide answers *"how do I turn that into a book?"* One surface, four acts — not a fourth screen ([ADR-051](#adr-051) holds).
+2. **Read renders through the existing path — `SceneRenderer.render(page, …)` → `PagePreview` — with no geometry of its own.** It is the same replay `EditorPageStrip` and the export use, so `read == preview == export` stays structural. A second page-drawing implementation is the one thing this ADR forbids.
+3. **Pages are shown in document order, one per screen, swiped horizontally.** Document order *is* reading order; imposition is what rearranges it, and imposition stays confined to the print acts. Read shows no page numbers of the imposed sheet, no fold lines, no cut line, no editing chrome.
+4. **`ProofScreen` takes the document, page size and image source as parameters.** It stays stateless. No new ViewModel, no new route, no `:core:*` change, and no change to the module graph — `:feature:editor` already depends on everything required.
+5. **The climb from Read forward is labelled "Print & fold".** The three existing acts and the fold guide are otherwise untouched: same copy, same step numbering, same recorded goldens.
+6. **From the Sheet, the top-bar back steps to Read rather than leaving the surface** — and its spoken label says so. This narrows [ADR-051](#adr-051)'s "the back exits everywhere" by exactly one act, deliberately: without it the Sheet is a one-way door, since Read is reachable only by leaving the surface and re-entering. The invariant that matters — *leaving never destroys work* — is untouched; from the Sheet it is one tap further away. Print already carries its own "Back" secondary and the Fold is forward-only by design, so no other act needed changing. **The better answer is a "Back" secondary in the Sheet's action bar, matching Print**; it is deferred only because that is a pixel change to an act with a committed Roborazzi golden, and goldens are recordable solely on the pinned CI image — so it could not be verified in the change that introduced it. Queued for a pass that can re-record.
+7. **The imposed sheet's blank panels stay blank in this ADR.** Threading the document in makes real per-panel artwork *possible*, and it is now the obvious next step, but drawing eight rotated miniatures on the sheet is a separate change with its own parity question. Naming it here stops it being smuggled in.
+
+### Consequences
+
+**Positive.** The product's central artefact becomes visible for the first time, on the screen a user reaches by tapping the one button that promised it. The word "Preview" stops being a false promise without needing to be renamed away. The `ProofSheet` artwork deferral is un-blocked as a side effect of a change made for a different reason.
+
+**Negative / accepted.** `ProofScreen`'s parameter list grows by three, and the Proof surface now depends on the document rather than only on export plumbing — a real widening of what that screen knows. Accepted: the alternative is a fourth route with its own ViewModel resolution, which [ADR-051](#adr-051) exists to prevent.
+
+**Recorded goldens.** Nothing visible on Sheet / Print / Fold changes, and the golden tests pass their act explicitly rather than relying on the default landing — which is what they always meant. Roborazzi goldens are recordable only on the pinned CI image, so a change that shifted them would have been unverifiable locally.
+
+**Not decided here.** Per-panel artwork on the imposed sheet (see Decision 7); a two-page spread layout on wide screens; page-turn animation; any zoom or pinch inside Read.
+
+### Alternatives considered
+
+- **Rename "Preview" to "Print & fold" and ship nothing else.** This was the review's recommended *beta* stopgap and it is the honest minimum — it removes the false promise for the cost of one string. Rejected now only because the release has already shipped and the enabling data is already in `ProofDestination`; the rename alone leaves the central finding ("you cannot see your zine") standing.
+- **A separate Read route.** Rejected: it re-fragments the surface [ADR-051](#adr-051) deliberately collapsed, and it would need its own shared-ViewModel resolution against the editor's back-stack entry.
+- **Render Read from the imposed sheet, cropping each panel.** Rejected: it inherits rotation and page-order transforms that exist for the printer, to answer a question the printer is not asking — and it would make Read depend on `:core:imposition` for nothing.
+- **Show reader spreads (two facing pages) rather than single pages.** Deferred, not rejected. A mini-zine has no binding gutter, so facing pairs are genuinely contiguous — but on a phone held portrait, two pages per screen is smaller than either page deserves.

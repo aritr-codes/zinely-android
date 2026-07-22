@@ -51,7 +51,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.model.DocumentDefaults
+import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.ui.components.ZIconButton
 import com.aritr.zinely.ui.components.ZPrimaryButton
 import com.aritr.zinely.ui.components.ZPrimaryButtonMetrics
@@ -78,13 +82,28 @@ public const val ProofRetryTestTag: String = "proof-retry"
 public const val ProofFoldSnackTestTag: String = "proof-fold-snack"
 
 /**
- * The three acts of the frozen Proof surface, in climb order (`proof.html` `setAct(0..2)`).
- * Sheet → Print → Fold: one surface, three internal acts, never three screens ([ADR-051]).
+ * The acts of the Proof surface. [READ] is the landing ([ADR-058]) — the finished zine, in reading order —
+ * and answers *what did I make?*; [SHEET] → [PRINT] → [FOLD] are the unchanged three-step **Print & fold**
+ * climb from the frozen `proof.html` (`setAct(0..2)`), which answer *what comes out of the printer?* and
+ * *how do I turn that into a book?*. One surface, four internal acts, never four screens ([ADR-051]).
  */
-public enum class ProofAct { SHEET, PRINT, FOLD }
+public enum class ProofAct { READ, SHEET, PRINT, FOLD }
 
-// The topbar act-status captions — `proof.html` ACTLABELS, announced on every act change.
+/**
+ * The print climb, in order — the three acts the progress creases and the step numbering describe.
+ * Read is deliberately outside it: it is where you arrive, not a step you complete, and folding it into
+ * "Step 1 of 4" would make a reader who never intends to print feel behind on a task they never started.
+ */
+private val CLIMB_ACTS = listOf(ProofAct.SHEET, ProofAct.PRINT, ProofAct.FOLD)
+
+// The topbar act-status captions — `proof.html` ACTLABELS, announced on every act change. The three climb
+// labels are the frozen strings, unchanged.
 private val ACT_LABELS = mapOf(
+    // Not "Your zine": on device that collided with the top bar's own title directly above it (the
+    // project-title placeholder is literally "Your zine"), so the bar read the same two words twice. The
+    // label's job is to say what this act *is* and how to work it — and it is a live region, so it is also
+    // the line a screen-reader user hears on arriving.
+    ProofAct.READ to "Read · swipe to turn the page",
     ProofAct.SHEET to "Step 1 of 3 · The sheet",
     ProofAct.PRINT to "Step 2 of 3 · Print",
     ProofAct.FOLD to "Step 3 of 3 · Fold",
@@ -125,8 +144,18 @@ private const val PROOF_ACT_MILLIS: Int = 340
  * Stateless except for the act pointer + fold sub-state: the act is [rememberSaveable] so a rotation keeps
  * the climb position. [onBack] is the loss-safe exit to the bench (the work is already autosaved).
  *
+ * ADR-058 adds **Act 0, Read** ([ProofReadAct]) — the finished zine page by page — and makes it the
+ * landing. The document is threaded in for it ([pages] / [pageSizePt] / [defaults] / [imageBytes]); the
+ * surface stays stateless and gains no ViewModel.
+ *
  * @param zineName the project title shown in the top bar.
  * @param onBack loss-safe back to the editor (the bench) — the work is saved.
+ * @param pages the document's pages in reading order, for the Read act. Empty renders no reader.
+ * @param defaults document defaults the Read act's renderer folds in; the same value the canvas uses.
+ * @param pageSizePt the page size in points — the hoisted size the editor canvas renders at.
+ * @param imageBytes import-master byte source, so Read shows the user's photos and not placeholders.
+ * @param startAct the act to land on. Production takes the default ([ProofAct.READ]); the print-climb
+ *   tests and goldens pass the act they actually mean rather than depending on the landing.
  * @param paper the paper size shown in Act 2's recipe (the host threads it into the export).
  * @param onPaperSelected the user picked a paper size in Act 2's chooser.
  * @param onExportPdf Act 2 export — the host renders the PDF and hands it to the [ProofExportTarget] edge.
@@ -155,12 +184,21 @@ public fun ProofScreen(
     onRetryExport: () -> Unit = {},
     savedSignals: Flow<String> = emptyFlow(),
     onMakeAnother: () -> Unit = {},
+    pages: List<Page> = emptyList(),
+    pageSizePt: PtSize = PtSize(0.0, 0.0),
+    defaults: DocumentDefaults = DocumentDefaults(),
+    imageBytes: AssetBytesSource = EmptyAssetBytes,
+    startAct: ProofAct = ProofAct.READ,
 ) {
     val colors = ZinelyTheme.colors
     val haptics = ZinelyTheme.haptics
 
-    var actOrdinal by rememberSaveable { mutableStateOf(ProofAct.SHEET.ordinal) }
-    val act = ProofAct.entries[actOrdinal]
+    var actOrdinal by rememberSaveable { mutableStateOf(startAct.ordinal) }
+    // Coerced, because the saved ordinal outlives the enum that produced it. A Bundle written before
+    // ADR-058 added READ at ordinal 0 restores one act *behind* where the user was — harmless, since the
+    // enum only grew and the fold's own state is saved separately. Shrinking or reordering it later would
+    // throw on exactly that stale value, in a restore path nobody exercises by hand.
+    val act = ProofAct.entries[actOrdinal.coerceIn(0, ProofAct.entries.lastIndex)]
     // The frozen slide is a fixed 16px nudge (translateX 16px), not a width fraction.
     val slidePx = with(LocalDensity.current) { 16.dp.roundToPx() }
     // Capture reduced-motion here: transitionSpec runs outside composition and can't read ZinelyTheme.
@@ -249,7 +287,22 @@ public fun ProofScreen(
             .testTag(ProofScreenTestTag),
     ) {
         Column(Modifier.fillMaxSize()) {
-            ProofTopBar(zineName = zineName, act = act, actLabel = actLabel, onBack = onBack)
+            // The top bar's back is act-aware at exactly one boundary: on the Sheet — the first step of the
+            // print climb — it returns to Read rather than leaving the surface. Every other act keeps the
+            // loss-safe exit to the bench unchanged (Print already carries its own "Back" secondary, and
+            // the Fold is forward-only by design), so the ADR-051 "you can always leave, nothing is lost"
+            // invariant holds everywhere; from the Sheet it is simply one tap further away.
+            //
+            // Why not a "Back" secondary in the Sheet's action bar, matching Print? Because that is a pixel
+            // change to an act with a committed Roborazzi golden, and goldens are recordable only on the
+            // pinned CI image — so it could not be verified here. It is the better answer and is queued for
+            // a pass that can re-record (ADR-058).
+            ProofTopBar(
+                zineName = zineName,
+                act = act,
+                actLabel = actLabel,
+                onBack = { if (act == ProofAct.SHEET) go(ProofAct.READ) else onBack() },
+            )
 
             if (exportFailed) {
                 // The recoverable export error (frozen `#errwrap`) replaces the acts + action bar so there
@@ -282,6 +335,14 @@ public fun ProofScreen(
                     label = "proofAct",
                 ) { target ->
                     when (target) {
+                        // Act 0 — the finished zine, page by page (ADR-058).
+                        ProofAct.READ -> ProofReadAct(
+                            pages = pages,
+                            pageSizePt = pageSizePt,
+                            defaults = defaults,
+                            imageBytes = imageBytes,
+                            modifier = Modifier.fillMaxSize(),
+                        )
                         // Act 1 — the imposed sheet (B2).
                         ProofAct.SHEET -> ProofSheetAct(Modifier.fillMaxSize())
                         // Act 2 — the honest print recipe + export (B3).
@@ -309,6 +370,7 @@ public fun ProofScreen(
                     act = act,
                     onPrimary = {
                         when (act) {
+                            ProofAct.READ -> go(ProofAct.SHEET)
                             ProofAct.SHEET -> go(ProofAct.PRINT)
                             ProofAct.PRINT -> go(ProofAct.FOLD)
                             ProofAct.FOLD -> Unit // the fold owns its own actions (finish / exits) below
@@ -395,8 +457,14 @@ private fun ProofTopBar(
     ) {
         ZIconButton(
             onClick = onBack,
-            // Loss-safe: the work is autosaved, so leaving is never destructive (`proof.html` #back).
-            contentDescription = "Back to the bench (your work is saved)",
+            // Loss-safe: the work is autosaved, so leaving is never destructive (`proof.html` #back). On the
+            // Sheet this steps back to Read instead of leaving, and says so — a back button that does two
+            // different things must not describe itself as doing only one.
+            contentDescription = if (act == ProofAct.SHEET) {
+                "Back to your zine"
+            } else {
+                "Back to the bench (your work is saved)"
+            },
             modifier = Modifier.testTag(ProofBackTestTag),
         ) { tint -> ProofVectorIcon(ICON_BACK, tint) }
 
@@ -449,7 +517,11 @@ private fun ProgressCreases(act: ProofAct) {
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.End),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ProofAct.entries.forEach { crease ->
+        // The three **climb** acts only — Read is where you arrive, not a step you complete, so it gets no
+        // crease. On Read every crease is therefore un-reached and un-current: the climb has not started,
+        // which is exactly what the row should say. This also keeps the frozen three-dot row byte-identical
+        // on Sheet/Print/Fold, where it has a committed golden.
+        CLIMB_ACTS.forEach { crease ->
             val current = crease == act
             // opacity: .4 base, .55 reached (done), 1 current — `proof.html` .progress i states.
             val color = when {
@@ -499,6 +571,15 @@ private fun ProofActionBar(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         when (act) {
+            // Read's one forward action names the whole climb it opens, so the imposed sheet arrives as
+            // "the first step of printing" rather than as the thing the word "Preview" had promised.
+            ProofAct.READ -> ZPrimaryButton(
+                text = "Print & fold",
+                onClick = onPrimary,
+                metrics = ZPrimaryButtonMetrics.Proof,
+                modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
+                icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
+            )
             ProofAct.SHEET -> ZPrimaryButton(
                 text = "Print setup",
                 onClick = onPrimary,

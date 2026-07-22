@@ -6,6 +6,8 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -232,11 +234,109 @@ class ReframeA11yTest {
         s.dispatch(Intent.BeginReframe(id))
         composeRule.waitForIdle()
 
+        // Zoom in first to give the photo somewhere to go. This fixture's photo is sized to the element's
+        // own box aspect, so at 100% Fill the crop spans the whole image and the pan is clamped to zero on
+        // both axes — the pad is correctly disabled there. Before the D3 fix this test passed *without* the
+        // zoom, counting three "Moved left"s for a photo that had not moved at all: the phantom
+        // announcement was the very defect, and the test had pinned it.
+        //
+        // Twice, not once: one step leaves ±0.065 of travel against a 0.05 nudge, so the third nudge would
+        // hit the clamp and correctly refuse instead of speaking. Three announcements need three real
+        // moves — which is the point of the test, and is now something the fixture has to earn.
+        repeat(2) {
+            composeRule.onNodeWithContentDescription("Zoom in").performClick()
+            composeRule.waitForIdle()
+        }
+
         repeat(3) {
             composeRule.onNodeWithContentDescription("Move photo left").performClick()
             composeRule.waitForIdle()
         }
         assertEquals(3, announced.count { it == "Moved left" })
+    }
+
+    /**
+     * D3 — an adjustment that cannot change anything must not be painted as a live control.
+     *
+     * The three rules that make a verb inert ([Framing.abilities]) are invisible in the UI: the Fill zoom
+     * floor, the pan clamp, and "Whole photo ignores pan and zoom" entirely. A lit, tappable, haptic button
+     * that does nothing reads as *the app has frozen*, which is why the reported symptom was "reframe is
+     * broken after reopening" — a photo saved as Whole photo reopens in the one mode where every adjustment
+     * verb is dead.
+     */
+    @Test
+    fun an_adjustment_that_cannot_act_is_disabled_rather_than_lit() {
+        val s = store()
+        val id = imageId(s)
+        render(s)
+        s.dispatch(Intent.BeginReframe(id))
+        composeRule.waitForIdle()
+
+        // A fresh Fill sits at the zoom floor, and this photo matches its frame's aspect, so the cover crop
+        // already spans the image: only "zoom in" can do anything at all.
+        composeRule.onNodeWithContentDescription("Zoom in").assertIsEnabled()
+        composeRule.onNodeWithContentDescription("Zoom out").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Move photo left").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Move photo up").assertIsNotEnabled()
+
+        // Zooming in opens pan room on both axes and lifts the floor.
+        composeRule.onNodeWithContentDescription("Zoom in").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Zoom out").assertIsEnabled()
+        composeRule.onNodeWithContentDescription("Move photo left").assertIsEnabled()
+
+        // Whole photo discards pan and zoom, so the entire stepper pill goes unavailable together — the
+        // fit segments remain live, because switching back to Fill is the way out.
+        composeRule.onNodeWithContentDescription("Whole photo").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Zoom in").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Zoom out").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Move photo left").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Move photo down").assertIsNotEnabled()
+        composeRule.onNodeWithContentDescription("Fill").assertIsEnabled()
+    }
+
+    /**
+     * The hardware keyboard reaches the same verbs the disabled buttons do, so it must refuse the same
+     * adjustments — but silently refusing is worse for a screen-reader user than the phantom "Moved left"
+     * it replaces. It says why, and names the way out.
+     */
+    @Test
+    fun a_refused_keystroke_says_why_instead_of_claiming_a_move() {
+        val s = store()
+        val id = imageId(s)
+        render(s)
+        s.dispatch(Intent.BeginReframe(id))
+        composeRule.waitForIdle()
+
+        announced.clear() // drop the session-entry line; we are testing the refusal
+        composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.DirectionLeft) }
+        composeRule.waitForIdle()
+        assertEquals("No room to move that way.", announced.last())
+
+        composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.Minus) }
+        composeRule.waitForIdle()
+        assertEquals("Already at the smallest zoom.", announced.last())
+
+        // The clamp edge, which is the subtle case: the axis is live (so the arrow stays enabled and does
+        // not flicker), but this particular step has nowhere left to go. Announcing the direction here
+        // would be the same phantom move D3 exists to remove, one state further in. Zoom once for a little
+        // travel, then walk left until it runs out.
+        composeRule.onNodeWithContentDescription("Zoom in").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithContentDescription("Move photo left").assertIsEnabled()
+        repeat(3) {
+            composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.DirectionLeft) }
+            composeRule.waitForIdle()
+        }
+        assertEquals("No room to move that way.", announced.last())
+        composeRule.onNodeWithContentDescription("Move photo left").assertIsEnabled()
+
+        composeRule.onNodeWithContentDescription("Whole photo").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorCanvasTestTag).performKeyInput { pressKey(Key.Equals) }
+        composeRule.waitForIdle()
+        assertEquals(WholePhotoInertLine, announced.last())
     }
 
     @Test

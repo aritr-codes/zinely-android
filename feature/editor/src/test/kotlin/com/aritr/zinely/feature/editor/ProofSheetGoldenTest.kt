@@ -47,7 +47,7 @@ class ProofSheetGoldenTest {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
                 Box(Modifier.size(w, h)) {
-                    ProofScreen(zineName = "Corner Store Poems", onBack = {})
+                    ProofScreen(zineName = "Corner Store Poems", onBack = {}, startAct = ProofAct.SHEET)
                 }
             }
         }

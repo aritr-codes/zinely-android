@@ -155,6 +155,24 @@ Before any release, the Release Agent verifies:
 
 ---
 
+## Product principle: every screen answers the user's current question
+
+Before a screen is designed, name the question the user is holding when they arrive. The screen answers **that** question; anything else it wants to say is either later or elsewhere.
+
+| Screen | The question |
+|---|---|
+| **Library** | "Which zine do I want?" |
+| **Editor** | "How do I change this page?" |
+| **Read** | "What have I made?" |
+| **Print** | "How do I print it correctly?" |
+| **Fold** | "How do I turn this into a booklet?" |
+
+A screen that answers a *good* question at the *wrong* moment reads as a malfunction, not as a lesson. That is exactly how "Preview" failed in `0.9.0-beta.1`: it answered "how is this imposed?" — correctly, and well — to a user who had not yet seen their finished zine, and the honest reading from their chair was *"it lost my work"* ([ADR-058](docs/DECISIONS.md#adr-058), [Beta UX Review](docs/BETA-UX-REVIEW.md)).
+
+Fixing the *order* of the questions is usually cheaper, and moves perceived quality further, than adding features.
+
+---
+
 ## House conventions
 
 - **Pure helper extraction** — where logic allows, extract pure (platform-free, unit-testable) helpers rather than embedding logic in framework code.

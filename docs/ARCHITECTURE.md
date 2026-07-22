@@ -290,12 +290,12 @@ The **Type bar** (`:feature:editor`) is the surface: four rows — size stepper 
 
 Single Activity (`MainActivity`) + `navigation-compose` with type-safe `@Serializable` routes; navigation triggered from UI via `NavController`, never from a ViewModel. One-shot ViewModel events use `Channel`+`receiveAsFlow()` where exactly-once delivery matters, else `SharedFlow(replay=0)`. User-facing *target* flow map: [PRD §9](PRD.md#9-navigation-map-mvp).
 
-**The wired graph today** (`ZinelyNavHost`, [ADR-030](DECISIONS.md#adr-030)/[ADR-039](DECISIONS.md#adr-039)/[ADR-041](DECISIONS.md#adr-041)/[ADR-046](DECISIONS.md#adr-046)/[ADR-051](DECISIONS.md#adr-051)) — start destination `HomeRoute`, the single back-stack root. The former Preview → Export → Completion triad collapsed into the **one** `ProofRoute`/`ProofScreen` (Sheet → Print → Fold internal acts, [ADR-051](DECISIONS.md#adr-051)); the ADR-041 post-export → fold payoff is preserved as an intra-screen act nudge, not a route:
+**The wired graph today** (`ZinelyNavHost`, [ADR-030](DECISIONS.md#adr-030)/[ADR-039](DECISIONS.md#adr-039)/[ADR-041](DECISIONS.md#adr-041)/[ADR-046](DECISIONS.md#adr-046)/[ADR-051](DECISIONS.md#adr-051)) — start destination `HomeRoute`, the single back-stack root. The former Preview → Export → Completion triad collapsed into the **one** `ProofRoute`/`ProofScreen` (Read → Sheet → Print → Fold internal acts, [ADR-051](DECISIONS.md#adr-051) + [ADR-058](DECISIONS.md#adr-058)); the ADR-041 post-export → fold payoff is preserved as an intra-screen act nudge, not a route. **Act 0 is Read** — the finished zine, one page per screen in reading order, and the surface's landing; it is the only act that needs the *document*, which `ProofDestination` already resolved for the export path, so it renders through the same `SceneRenderer` → `PagePreview` replay as the canvas and the export ([ADR-058](DECISIONS.md#adr-058)) rather than a second page-drawing path:
 
 ```mermaid
 flowchart LR
     Home["HomeRoute — start, single root"] -->|"open card / start a zine (launchSingleTop)"| Editor["EditorRoute(projectId)"]
-    Editor -->|"Preview → Proof"| Proof["ProofRoute(projectId) — Sheet · Print · Fold"]
+    Editor -->|"Preview → Proof"| Proof["ProofRoute(projectId) — Read · Sheet · Print · Fold"]
     Editor -->|"back / boot-error back"| Home
     Proof -->|"back / make another"| Editor
 ```

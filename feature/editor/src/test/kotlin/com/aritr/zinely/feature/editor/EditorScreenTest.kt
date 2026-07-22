@@ -2,6 +2,9 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -27,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -92,6 +96,7 @@ class EditorScreenTest {
         savedSignals: Flow<Unit> = emptyFlow(),
         saveError: SaveErrorKind? = null,
         onDismissSaveError: () -> Unit = {},
+        pageSizePt: PtSize = this.pageSizePt,
     ) {
         composeRule.setContent {
             ZinelyTheme {
@@ -117,6 +122,117 @@ class EditorScreenTest {
         // Then the page-footprint paper backing is present under the render (the canvas page must
         // read as paper like Preview/export/thumbnails, never the bare desk).
         composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).assertExists()
+    }
+
+    /**
+     * D2 — the paper backing and the render must never be drawn at two different scales.
+     *
+     * The viewport push is deliberately deferred until the interaction is `Idle` (a mid-gesture re-key
+     * strands the session), and every content layer reads `view.screenPxPerPt`. The paper used to be sized
+     * from the freshly measured local scale instead, so any canvas resize during a session — the soft
+     * keyboard opening under an inline edit is the everyday one — moved the sheet and left its contents
+     * behind until the session ended. Pinning the paper to the *shared* viewport is what makes them lag
+     * together rather than diverge.
+     */
+    @Test
+    fun the_paper_is_sized_from_the_viewport_the_content_reads() {
+        val store = store()
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        val spp = store.uiState.value.view.screenPxPerPt
+        val paper = composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).fetchSemanticsNode().boundsInRoot
+        assertEquals((pageSizePt.width * spp).toFloat(), paper.width, 1f)
+        assertEquals((pageSizePt.height * spp).toFloat(), paper.height, 1f)
+    }
+
+    /**
+     * The one that actually tests D2 — and the reason it is worth its length.
+     *
+     * At rest the two scales are equal **by construction**, so the assertion above passes whichever of
+     * them the paper is sized from: a review mutation-tested it and it stayed green against the original
+     * defect. The divergence only exists while the interaction is *not* Idle, because that is exactly when
+     * the viewport push is withheld. So this test has to get into that state and resize the canvas — which
+     * is the everyday case, the soft keyboard opening under an inline text edit.
+     */
+    @Test
+    fun a_canvas_resize_during_a_session_moves_neither_the_paper_nor_the_content() {
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 40.0, 20.0), "hi")) // auto-selects
+        val id = store.uiState.value.selection.single()
+
+        // A portrait page in a comfortably wide host, so the *height* is what the fit is limited by — then
+        // changing the host height certainly changes the fitted scale, which is what this test needs to be
+        // true for the mutation to be caught.
+        val portraitPage = PtSize(50.0, 100.0)
+        var canvasHeight by mutableStateOf(400.dp)
+        composeRule.setContent {
+            ZinelyTheme {
+                EditorScreen(
+                    store = store,
+                    pageSizePt = portraitPage,
+                    modifier = Modifier.size(300.dp, canvasHeight),
+                    moveResizeHintSeen = true,
+                    onMoveResizeHintSeen = {},
+                    savedSignals = emptyFlow(),
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        // Open a text session: from here the host deliberately stops pushing the measured scale into the
+        // model, because re-keying the gesture pointerInput mid-session would strand it.
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+        assertTrue("session open", store.uiState.value.interaction is Interaction.EditingText)
+        val frozen = store.uiState.value.view.screenPxPerPt
+
+        // The host resizes under the open session. Grown rather than shrunk, deliberately: shrinking far
+        // enough to force a scale change collapses the weighted canvas toward zero, and every node's
+        // clipped bounds go to zero with it — which fails the assertion for the wrong reason.
+        canvasHeight = 700.dp
+        composeRule.waitForIdle()
+
+        assertEquals("the viewport is deliberately frozen mid-session", frozen, store.uiState.value.view.screenPxPerPt)
+        val canvas = composeRule.onNodeWithTag(EditorCanvasTestTag).fetchSemanticsNode().boundsInRoot
+        assertTrue(
+            "the canvas must actually have grown, or the mutation cannot be caught: $canvas",
+            canvas.height > portraitPage.height * frozen + 1f,
+        )
+        val paper = composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).fetchSemanticsNode().boundsInRoot
+        assertEquals(
+            "the paper must freeze with the content it backs, not follow the new canvas",
+            (portraitPage.width * frozen).toFloat(),
+            paper.width,
+            1f,
+        )
+    }
+
+    /**
+     * D1 — the blank-page invitation belongs on the sheet, not on the desk around it.
+     *
+     * It was placed with `Modifier.align(Alignment.Center)`, which centres on the *canvas*; the paper is
+     * top-left anchored and, for a portrait page, much narrower. The copy therefore sat to the right of the
+     * sheet with its lines running off the display — which reads as the app having lost track of the page,
+     * and is why an undo that merely revealed a blank page was reported as undo corrupting the layout.
+     */
+    @Test
+    fun the_blank_page_invitation_stays_within_the_paper() {
+        // A portrait page in a 300×400dp host: the paper is materially narrower than the canvas, so
+        // canvas-centred and paper-centred are far apart. With a square page they would coincide and this
+        // test would prove nothing.
+        setScreen(store(), pageSizePt = PtSize(50.0, 100.0))
+        composeRule.waitForIdle()
+
+        val paper = composeRule.onNodeWithTag(EditorPaperSurfaceTestTag).fetchSemanticsNode().boundsInRoot
+        val invitation = composeRule.onNodeWithTag(EditorEmptyStateTestTag).fetchSemanticsNode().boundsInRoot
+
+        assertTrue("paper is narrower than the canvas, or this proves nothing", paper.width < 300f)
+        assertTrue(
+            "the invitation ran off the paper: paper=$paper invitation=$invitation",
+            invitation.left >= paper.left - 1f && invitation.right <= paper.right + 1f,
+        )
+        assertEquals("centred on the paper", paper.center.x, invitation.center.x, 1f)
     }
 
     @Test
