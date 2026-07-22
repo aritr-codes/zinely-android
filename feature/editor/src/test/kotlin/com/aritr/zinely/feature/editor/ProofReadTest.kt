@@ -84,7 +84,7 @@ class ProofReadTest {
         setProof()
 
         composeRule.onNodeWithTag(ProofReadPagerTestTag).assertIsDisplayed()
-        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Your zine")
+        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Read · swipe to turn the page")
         composeRule.onNodeWithTag(ProofReadCaptionTestTag).assertTextEquals("Page 1 of 8")
     }
 
@@ -149,7 +149,7 @@ class ProofReadTest {
         composeRule.onNodeWithTag(ProofBackTestTag).performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Your zine")
+        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Read · swipe to turn the page")
         org.junit.Assert.assertEquals("stepping back to Read is not leaving the surface", 0, backs)
 
         // …and from Read the same control is the loss-safe exit it has always been, and says so.

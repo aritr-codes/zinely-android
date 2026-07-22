@@ -99,7 +99,11 @@ private val CLIMB_ACTS = listOf(ProofAct.SHEET, ProofAct.PRINT, ProofAct.FOLD)
 // The topbar act-status captions — `proof.html` ACTLABELS, announced on every act change. The three climb
 // labels are the frozen strings, unchanged.
 private val ACT_LABELS = mapOf(
-    ProofAct.READ to "Your zine",
+    // Not "Your zine": on device that collided with the top bar's own title directly above it (the
+    // project-title placeholder is literally "Your zine"), so the bar read the same two words twice. The
+    // label's job is to say what this act *is* and how to work it — and it is a live region, so it is also
+    // the line a screen-reader user hears on arriving.
+    ProofAct.READ to "Read · swipe to turn the page",
     ProofAct.SHEET to "Step 1 of 3 · The sheet",
     ProofAct.PRINT to "Step 2 of 3 · Print",
     ProofAct.FOLD to "Step 3 of 3 · Fold",

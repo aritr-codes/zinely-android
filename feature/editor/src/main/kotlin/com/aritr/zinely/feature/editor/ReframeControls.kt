@@ -29,6 +29,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Refresh
@@ -215,16 +217,15 @@ private fun NudgeCell(icon: ImageVector, description: String, enabled: Boolean, 
             .clip(RoundedCornerShape(8.dp))
             .background(ZinelyTheme.colors.field)
             .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(8.dp))
-            .clickable(enabled = enabled, onClick = onClick)
             // `semantics`, NOT `clearAndSetSemantics`: the latter wipes the `disabled` flag that
             // `clickable(enabled = false)` sets, so an unavailable control would still announce itself as
-            // actionable — a screen-reader user would be told to tap something that cannot respond. Same
-            // shape as the Type bar's StepButton, which passed the ADR-055 device gate. The child glyph is
-            // decorative (contentDescription = null), so the merged node still speaks exactly [description].
-            .semantics {
-                contentDescription = description
-                role = Role.Button
-            },
+            // actionable — a screen-reader user would be told to tap something that cannot respond.
+            // Verified on a physical device: this reaches the platform as
+            // `class=android.widget.Button, clickable=true, enabled=false`. The role rides the clickable
+            // (see [ZoomButton] for what happens when it does not), and the glyph is an
+            // `Icon(contentDescription = null)`, so nothing forces a second node.
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = null, tint = ZinelyTheme.colors.onDesk, modifier = Modifier.size(16.dp))
@@ -244,7 +245,7 @@ private fun ZoomStep(zoomPercent: Int, abilities: ReframeAbilities, onZoom: (Dou
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ZoomButton("−", "Zoom out", abilities.zoomOut) { onZoom(1.0 / Framing.ZOOM_STEP) }
+        ZoomButton(Icons.Filled.Remove, "Zoom out", abilities.zoomOut) { onZoom(1.0 / Framing.ZOOM_STEP) }
         Text(
             text = "$zoomPercent%",
             fontWeight = FontWeight.SemiBold,
@@ -253,17 +254,30 @@ private fun ZoomStep(zoomPercent: Int, abilities: ReframeAbilities, onZoom: (Dou
                 .width(50.dp)
                 .clearAndSetSemantics { contentDescription = "Zoom $zoomPercent percent" },
         )
-        ZoomButton("+", "Zoom in", abilities.zoomIn) { onZoom(Framing.ZOOM_STEP) }
+        ZoomButton(Icons.Filled.Add, "Zoom in", abilities.zoomIn) { onZoom(Framing.ZOOM_STEP) }
     }
 }
 
 /**
- * A 40dp zoom step button (bench `.zoomstep button`): field fill, hairline edge, a plain +/− glyph.
- * Disabled exactly like [NudgeCell] — see the semantics note there for why this is not
- * `clearAndSetSemantics`.
+ * A 40dp zoom step button (bench `.zoomstep button`): field fill, hairline edge, a +/− glyph.
+ *
+ * **The glyph is an [Icon], not a `Text`, and that is an accessibility decision rather than a visual one.**
+ * A physical-device check of the platform tree found this control arriving as *three* nodes — the click
+ * and its `disabled` flag on one, the spoken label on a second, the button role on a third — because a
+ * `Text` child contributes semantics of its own and stops the chain collapsing. TalkBack lands on the
+ * labelled node, which reports `enabled=true`, so a disabled zoom step announced itself as available: D3's
+ * whole point, lost at the last hop. Marking the `Text` decorative was not enough; a cleared node is still
+ * a node. [NudgeCell] never had the fault because `Icon(contentDescription = null)` contributes nothing,
+ * so this now uses exactly that shape and collapses to one `android.widget.Button` carrying label, role
+ * and disabled state together.
+ *
+ * The Compose test tree cannot see any of this — it reports the merged node, where everything resolves
+ * correctly, which is why `assertIsNotEnabled` passed throughout against a control that was telling the
+ * platform otherwise. The bench's `+`/`−` are rendered as the Material `Add`/`Remove` vectors at the same
+ * weight; there is no committed golden for this bar, and post-freeze accessibility fixes are permitted.
  */
 @Composable
-private fun ZoomButton(glyph: String, description: String, enabled: Boolean, onClick: () -> Unit) {
+private fun ZoomButton(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .testTag("reframe-$description")
@@ -272,14 +286,24 @@ private fun ZoomButton(glyph: String, description: String, enabled: Boolean, onC
             .clip(RoundedCornerShape(11.dp))
             .background(ZinelyTheme.colors.field)
             .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(11.dp))
-            .clickable(enabled = enabled, onClick = onClick)
-            .semantics {
-                contentDescription = description
-                role = Role.Button
-            },
+            // `role` on the clickable itself, and the glyph explicitly stripped of semantics.
+            //
+            // Both are load-bearing, and a physical-device check is what found it: with the role in a
+            // trailing `semantics {}` block and a plain `Text` child, this button reached the platform as
+            // `class=android.view.View, clickable=false, enabled=true` — no button role, no click action
+            // and, fatally for D3, **no disabled state** — while the `−` glyph leaked as its own
+            // traversable TextView. The Compose test tree showed none of that: it reports the merged node,
+            // where the description and the disabled flag both resolve correctly, so `assertIsNotEnabled`
+            // passed against a control that told TalkBack it was enabled.
+            //
+            // [NudgeCell] never had the fault because its `Icon(contentDescription = null)` contributes no
+            // semantics at all, so nothing forced the extra node. The difference was the child, not the
+            // modifier chain — which is why the two looked identical and behaved differently.
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Text(glyph, fontSize = 20.sp, color = ZinelyTheme.colors.onDesk)
+        Icon(icon, contentDescription = null, tint = ZinelyTheme.colors.onDesk, modifier = Modifier.size(20.dp))
     }
 }
 

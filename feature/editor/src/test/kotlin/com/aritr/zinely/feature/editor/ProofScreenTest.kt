@@ -144,7 +144,7 @@ class ProofScreenTest {
         composeRule.onNodeWithContentDescription("Back to your zine").performClick()
         composeRule.waitForIdle()
         assertEquals("stepping back inside the surface is not leaving it", 0, backCount)
-        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Your zine")
+        composeRule.onNodeWithTag(ProofActLabelTestTag).assertTextEquals("Read · swipe to turn the page")
 
         composeRule.onNodeWithContentDescription("Back to the bench (your work is saved)").performClick()
         assertEquals(1, backCount)
