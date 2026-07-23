@@ -44,6 +44,12 @@ if (providers.environmentVariable("ZINELY_CORE_ONLY").orNull != "true") {
     // NATIVE + Roborazzi), so it is gated out with :app / :data-android / :render-android. Preview
     // host only this step — no MVI store / gestures / undo yet.
     include(":feature:editor")
+    // C2 (CI-34 / roadmap §C2): the shared design system (tokens + Z* components), extracted verbatim
+    // out of :feature:editor keeping package com.aritr.zinely.ui.* unchanged. Unlike the pure-Kotlin
+    // :core:* modules below, :core:ui is a Compose/Android library (needs the SDK for the merged font
+    // resources + Roborazzi), so it is gated with the Android set here and excluded from the core-only
+    // CI job, NOT included unconditionally alongside :core:model/imposition/render/data.
+    include(":core:ui")
 }
 // Pure-Kotlin, Android-independent core (imposition engine spike).
 include(":core:model")

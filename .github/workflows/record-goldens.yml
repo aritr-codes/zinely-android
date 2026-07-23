@@ -46,6 +46,7 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew :render-android:recordRoborazziDebug :feature:editor:recordRoborazziDebug \
+            :core:ui:recordRoborazziDebug \
             --rerun-tasks --no-daemon --stacktrace
 
       - name: Upload recorded goldens
@@ -62,4 +63,5 @@ jobs:
           path: |
             render-android/src/test/roborazzi/**/*.png
             feature/editor/src/test/roborazzi/**/*.png
+            core/ui/src/test/roborazzi/**/*.png
           if-no-files-found: error

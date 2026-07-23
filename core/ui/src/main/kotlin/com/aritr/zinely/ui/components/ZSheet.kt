@@ -1,5 +1,6 @@
 package com.aritr.zinely.ui.components
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
@@ -122,9 +123,16 @@ public fun ZSheet(
 /**
  * The sheet body without the Dialog window — split out so goldens can rasterize it in a plain host
  * (a Dialog's window is invisible to the decor-view capture harness; pre-M1 review, Required Fix 4).
+ *
+ * Visibility widened `internal → public` for C2 (CI-34) as the mechanical consequence of the
+ * `:core:ui` split: [ZComponentGoldenTest] rasterizes this surface but is structurally pinned in
+ * `:feature:editor` (its shared `rasterizeToBitmap` golden host lives there), so it must reach this
+ * across the module boundary. [VisibleForTesting] marks it as a test-visibility exposure, not a new
+ * design-system entry point.
  */
+@VisibleForTesting
 @Composable
-internal fun ZSheetSurface(
+public fun ZSheetSurface(
     title: String,
     sub: String?,
     modifier: Modifier = Modifier,

@@ -115,6 +115,7 @@ jobs:
           ./gradlew :app:compileDebugKotlin :app:testDebugUnitTest \
             :data-android:testDebugUnitTest \
             :feature:editor:testDebugUnitTest \
+            :core:ui:testDebugUnitTest \
             :render-android:compileDebugAndroidTestKotlin \
             --no-daemon --stacktrace
 
@@ -129,8 +130,15 @@ jobs:
         # record-goldens.yml workflow on this pinned image and committed under feature/editor/src/test/
         # roborazzi/. This step is RED until those PNGs are committed — that transient is the deliberate,
         # reviewed golden-landing dance, not drift.
+        #
+        # :core:ui (C2, CI-34): the extracted design-system module. It owns no golden of its own yet
+        # (the z_components_* goldens stay under feature/editor/src/test/roborazzi/ with their shared
+        # rasterizeToBitmap host helper), so its verifyRoborazziDebug runs the moved token/contrast
+        # unit tests in verify mode with nothing to pixel-diff — a green no-op that keeps the task wired
+        # for when a golden is co-located here later.
         run: |
           ./gradlew :render-android:verifyRoborazziDebug :feature:editor:verifyRoborazziDebug \
+            :core:ui:verifyRoborazziDebug \
             --rerun-tasks --no-daemon --stacktrace
 
       - name: Upload test reports
@@ -143,6 +151,7 @@ jobs:
             data-android/build/test-results/testDebugUnitTest/*.xml
             render-android/build/test-results/testDebugUnitTest/*.xml
             feature/editor/build/test-results/testDebugUnitTest/*.xml
+            core/ui/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn
 
       # On a Roborazzi verify failure, the actual/compare/diff PNGs let a reviewer see the drift
