@@ -20,9 +20,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.feature.editor.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -223,6 +225,26 @@ class ProofScreenTest {
         composeRule.onNodeWithTag(ProofShareTestTag).assertIsNotEnabled()
     }
 
+    /**
+     * CI-93 on the **platform** tree: the busy export row (two [com.aritr.zinely.ui.components.ZToolButton]s
+     * with `enabled = !exportBusy`) must report `enabled = false` to TalkBack, not merely to the merged
+     * semantics tree the assertion above reads — the `f4faaa4` defect was exactly that disagreement. Reads
+     * the platform `AccessibilityNodeInfo` via the CI-26 harness and asserts the disabled bit an
+     * accessibility service consumes. (Class is not asserted: a ZToolButton's `Role.Button` is set via
+     * `clickable()` over merged content, so it surfaces as `android.view.View`, not `android.widget.Button`
+     * — the reported CI-30 divergence; see `ZButtonPlatformA11yTest`.)
+     */
+    @Test
+    fun `the busy export row reports disabled buttons on the platform tree`() {
+        setProofOnPrint(exportBusy = true)
+
+        val save = composeRule.onNodeWithTag(ProofSavePdfTestTag).performScrollTo().platformNode(composeRule.activity)
+        assertFalse("Save PDF must be disabled to the platform while a render is in flight", save.isEnabled)
+
+        val share = composeRule.onNodeWithTag(ProofShareTestTag).platformNode(composeRule.activity)
+        assertFalse("Share must be disabled to the platform while a render is in flight", share.isEnabled)
+    }
+
     // ---- Act 3 — The Fold (B4, ADR-051) -------------------------------------------------------
 
     private var madeAnother = 0
@@ -250,6 +272,10 @@ class ProofScreenTest {
         composeRule.onNodeWithTag(ProofFoldGuideTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ProofStepTitleTestTag).assertTextEquals("1. Crease into eight")
         composeRule.onNodeWithTag(ProofStepPrevTestTag).assertIsNotEnabled()
+        // CI-93: the disabled Previous step-nav (a ZToolButton, enabled = step > 0) must report disabled to
+        // the PLATFORM tree TalkBack reads, not merely to the merged tree the line above checks (f4faaa4).
+        val prev = composeRule.onNodeWithTag(ProofStepPrevTestTag).performScrollTo().platformNode(composeRule.activity)
+        assertFalse("Previous must be disabled to the platform on the first fold step", prev.isEnabled)
         // Mid-guide the shared action bar is empty — the in-body step nav owns navigation.
         composeRule.onNodeWithTag(ProofPrimaryTestTag).assertDoesNotExist()
     }

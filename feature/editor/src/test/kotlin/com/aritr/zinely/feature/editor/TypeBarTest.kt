@@ -43,6 +43,7 @@ import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.feature.editor.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -274,6 +275,43 @@ class TypeBarTest {
         composeRule.onNodeWithContentDescription("Right").performClick()
         composeRule.waitForIdle()
         assertEquals(TextAlign.END, textOf(s).style.align)
+    }
+
+    /**
+     * CI-30 — extend the Role coverage past alignment (the only Role asserted before, at
+     * [alignment_commits_and_reads_as_a_single_select_radio_group]) to the bold/italic toggles and the size
+     * steppers, and cross the merged/platform boundary the `f4faaa4` defect exposed.
+     *
+     * The Type-bar controls each merge a glyph child, and a role on a node that merges child content does
+     * not carry its Role-derived class onto the platform node: the platform `className` is a deterministic
+     * `android.view.View` for these controls (the leaf/cleared-vs-merged rule that governs every role
+     * uniformly — see [com.aritr.zinely.feature.editor.a11y.ZButtonPlatformA11yTest]). This test does not
+     * assert any platform className — that would be neither meaningful nor load-bearing here — so Role is
+     * asserted on the merged tree; the only stable platform-tree Role assertions in this milestone are on
+     * the `clearAndSetSemantics` Reframe controls
+     * ([com.aritr.zinely.feature.editor.a11y.ReframeControlsRolePlatformA11yTest]). The attribute the
+     * platform **does** carry faithfully — the enabled bit (the `f4faaa4` property) — is asserted on the
+     * platform node.
+     */
+    @Test
+    fun type_bar_roles_are_declared_and_the_stepper_enabled_bit_reaches_the_platform_tree() {
+        val s = storeWithText()
+        render(s)
+        openTypeBar()
+
+        // Alignment — one-of-three ⇒ RadioButton. Bold/Italic — independent toggles ⇒ Checkbox.
+        composeRule.onNodeWithContentDescription("Left").assert(hasRole(Role.RadioButton))
+        composeRule.onNodeWithContentDescription("Center").assert(hasRole(Role.RadioButton))
+        composeRule.onNodeWithContentDescription("Bold").assert(hasRole(Role.Checkbox))
+        composeRule.onNodeWithContentDescription("Italic").assert(hasRole(Role.Checkbox))
+
+        // Size steppers — Role.Button; and the enabled bit carries to the platform tree (a live stepper is
+        // enabled to TalkBack — the property f4faaa4 got wrong on a sibling stepper).
+        composeRule.onNodeWithContentDescription("Larger").assert(hasRole(Role.Button))
+        assertTrue(
+            "an active stepper must be enabled to the platform",
+            composeRule.onNodeWithContentDescription("Larger").platformNode(composeRule.activity).isEnabled,
+        )
     }
 
     // ── Bold / Italic ──────────────────────────────────────────────────────────────────────────────
