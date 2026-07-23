@@ -77,6 +77,7 @@ class TokenDisciplineTest {
             if (pkg !in enrolled) continue
             val sanitized = sanitizeKotlin(file.readText())
             sanitized.lineSequence().forEachIndexed { idx, line ->
+                if (!isScannableCodeLine(line)) return@forEachIndexed
                 for (rule in rules) {
                     if (rule.regex.containsMatchIn(line)) {
                         violations += Violation(file, idx + 1, rule.label, line.trim())
@@ -141,9 +142,25 @@ class TokenDisciplineTest {
         assertTrue(".dpi must not match .dp", hits("val x = screen.dpi").isEmpty())
         assertTrue("ColorFilter must not match Color(", hits("val f = ColorFilter.tint(c)").isEmpty())
         assertTrue("MyColor( must not match Color(", hits("val c = MyColor(1, 2, 3)").isEmpty())
+
+        // import/package declarations are skipped before rules ever run, even though `.dp`/`.sp`
+        // appear at the end of the unit imports.
+        assertTrue(isScannableCodeLine("    Modifier.padding(16.dp)"))
+        assertTrue("import must be skipped", !isScannableCodeLine("import androidx.compose.ui.unit.dp"))
+        assertTrue("import must be skipped", !isScannableCodeLine("import androidx.compose.ui.unit.sp"))
+        assertTrue("package must be skipped", !isScannableCodeLine("package com.aritr.zinely.ui.components"))
     }
 
     // --- helpers -------------------------------------------------------------------------------
+
+    /**
+     * `import`/`package` declarations are not usage literals: an `import androidx.compose.ui.unit.dp`
+     * line ends in `.dp` but constructs nothing. Excluding them keeps the gate to real code only.
+     */
+    private fun isScannableCodeLine(line: String): Boolean {
+        val t = line.trimStart()
+        return !t.startsWith("import ") && !t.startsWith("package ")
+    }
 
     private fun parseEnrolment(file: File): Set<String> =
         file.readLines()
