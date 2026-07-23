@@ -70,9 +70,13 @@ class EditorMoveResizeHintGoldenTest {
 
     private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
         host(darkTheme, content)
+        // Non-vacuity (the real guard): the component's own node must be present. A blanked component
+        // in a later re-record fails here — a desk-pixel count on a desk-backed host would still pass.
+        composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertExists()
         val bmp = hostBitmap()
+        // Secondary sanity: the host raster is non-empty (the desk ground painted).
         assertTrue(
-            "the desk did not paint behind the move/resize hint ($name)",
+            "the host desk did not paint ($name)",
             bmp.pixelCountOf(deskArgb) > 100,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())

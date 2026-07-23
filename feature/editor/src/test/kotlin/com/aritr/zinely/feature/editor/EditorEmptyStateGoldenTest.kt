@@ -25,9 +25,11 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * **CI-25** golden net for [EditorEmptyState], light + dark (roadmap §C1; the two-proof shape of the frozen
- * [TypeBarGoldenTest]). `captureRoboImage` is a no-op under a plain `testDebugUnitTest`; the desk
- * non-vacuity assertion (below) runs green then, so a golden can never be recorded off a blank capture, and
- * `:feature:editor:recordRoborazziDebug` on the pinned CI image (`record-goldens.yml`) produces the PNG.
+ * [TypeBarGoldenTest]). `captureRoboImage` is a no-op under a plain `testDebugUnitTest`; the structural
+ * assertion (below) that the component's own node rendered runs green then — the real non-vacuity guard on
+ * a desk-backed host, where a desk-pixel count could not tell a blanked component from a drawn one — so a
+ * golden can never be recorded off a blank component, and `:feature:editor:recordRoborazziDebug` on the
+ * pinned CI image (`record-goldens.yml`) produces the PNG.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -73,10 +75,13 @@ class EditorEmptyStateGoldenTest {
 
     private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
         host(darkTheme, content)
+        // Non-vacuity (the real guard): the component's own node must be present. A blanked component
+        // in a later re-record fails here — a desk-pixel count on a desk-backed host would still pass.
+        composeRule.onNodeWithTag(EditorEmptyStateTestTag).assertExists()
         val bmp = hostBitmap()
-        // Non-vacuity: the desk ground must actually paint behind the surface (a blank capture leaves none).
+        // Secondary sanity: the host raster is non-empty (the desk ground painted).
         assertTrue(
-            "the desk did not paint behind the empty state ($name)",
+            "the host desk did not paint ($name)",
             bmp.pixelCountOf(deskArgb) > 100,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())

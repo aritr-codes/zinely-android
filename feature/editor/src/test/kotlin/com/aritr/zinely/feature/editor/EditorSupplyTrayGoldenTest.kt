@@ -26,8 +26,9 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * **CI-25** golden net for [EditorSupplyTray], light + dark (roadmap §C1; the frozen [TypeBarGoldenTest]
  * two-proof shape). The tray is captured with Undo live and Redo disabled, so the golden pins both a lit
- * and a faded (opacity) supply chip. `captureRoboImage` is a no-op under a plain unit run; the desk
- * non-vacuity assertion guards against recording a blank capture.
+ * and a faded (opacity) supply chip. `captureRoboImage` is a no-op under a plain unit run; the structural
+ * assertion that the tray's own node rendered is the non-vacuity guard (a desk-pixel count on a desk-backed
+ * host cannot tell a blanked component from a drawn one), so a golden can never be recorded off a blank tray.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -71,9 +72,13 @@ class EditorSupplyTrayGoldenTest {
 
     private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
         host(darkTheme, content)
+        // Non-vacuity (the real guard): the component's own node must be present. A blanked component
+        // in a later re-record fails here — a desk-pixel count on a desk-backed host would still pass.
+        composeRule.onNodeWithTag(EditorSupplyTrayTestTag).assertExists()
         val bmp = hostBitmap()
+        // Secondary sanity: the host raster is non-empty (the desk ground painted).
         assertTrue(
-            "the desk did not paint behind the supply tray ($name)",
+            "the host desk did not paint ($name)",
             bmp.pixelCountOf(deskArgb) > 100,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())
