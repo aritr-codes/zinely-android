@@ -78,11 +78,21 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Validate Hilt graph (compile :app) + run :data-android, :render-android & :feature:editor JVM tests
+      - name: Validate Hilt graph + run :app, :data-android & :feature:editor unit suites (CI-28)
         # :app:compileDebugKotlin is the minimum graph gate (KSP/Hilt run during Kotlin compilation
         # and fail the build on any missing/duplicate/cyclic binding). :data-android:testDebugUnitTest
         # is the justified stronger equivalent — it additionally runs the pure-JVM binding tests
         # (@AutosaveScope shape, EditorAutosaveBinderFactory wiring) in the same SDK-provisioned job.
+        #
+        # CI-28 (docs/V1-CONFORMANCE-INVENTORY.md · roadmap §10.3): :app:testDebugUnitTest and
+        # :feature:editor:testDebugUnitTest run here as NAMED tasks — this is the SDK-provisioned job
+        # (Android SDK present, ZINELY_CORE_ONLY unset, so the Hilt graph and :app compile). Before
+        # this, :app's 96-test unit suite was never invoked by any workflow, and :feature:editor's 323
+        # tests were reached only as a side effect of the verifyRoborazziDebug step below — so a change
+        # to that Roborazzi step could silently drop all 323. Naming both tasks decouples the suites
+        # from the golden-verify step; verifyRoborazziDebug still runs (in verify mode, --rerun-tasks)
+        # and is not weakened. :app:compileDebugKotlin is kept explicit so the graph-gate wording above
+        # stays literally true (:app:testDebugUnitTest depends on it, but the named gate is preserved).
         #
         # :render-android (ADR-028 S3): the Robolectric NATIVE unit proofs run in the next step via
         # verifyRoborazziDebug (which runs testDebugUnitTest in verify mode — real-Skia raster provider +
@@ -102,7 +112,9 @@ jobs:
         # depends on :feature:editor yet, so that verify step is what actually gates it in CI.
         run: |
           chmod +x ./gradlew
-          ./gradlew :app:compileDebugKotlin :data-android:testDebugUnitTest \
+          ./gradlew :app:compileDebugKotlin :app:testDebugUnitTest \
+            :data-android:testDebugUnitTest \
+            :feature:editor:testDebugUnitTest \
             :render-android:compileDebugAndroidTestKotlin \
             --no-daemon --stacktrace
 
@@ -127,6 +139,7 @@ jobs:
         with:
           name: android-graph-test-results
           path: |
+            app/build/test-results/testDebugUnitTest/*.xml
             data-android/build/test-results/testDebugUnitTest/*.xml
             render-android/build/test-results/testDebugUnitTest/*.xml
             feature/editor/build/test-results/testDebugUnitTest/*.xml
