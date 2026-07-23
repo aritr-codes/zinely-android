@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import com.aritr.zinely.feature.editor.FrameFit
+import com.aritr.zinely.feature.editor.ReframeAbilities
 import com.aritr.zinely.feature.editor.ReframeControls
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
@@ -39,6 +40,9 @@ class ReframeControlsPlatformA11yTest {
                 ReframeControls(
                     fit = FrameFit.FILL,
                     zoomPercent = 100,
+                    // This demo asserts the zoom-in stepper's ENABLED bit on the platform tree, so it must
+                    // be renderable-enabled: zoomIn = true. All-true keeps the rest of the band lit too.
+                    abilities = ReframeAbilities(zoomIn = true, zoomOut = true, panHorizontally = true, panVertically = true),
                     onFit = {},
                     onNudge = { _, _ -> },
                     onZoom = {},

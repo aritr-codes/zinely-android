@@ -86,6 +86,10 @@ class ReframeControlsGoldenTest {
     private fun controls() = ReframeControls(
         fit = FrameFit.FILL,
         zoomPercent = 100,
+        // A fully-available bar (all verbs lit): the golden pins the frozen chrome, not a
+        // capability-gated state — the disabled/alpha path is proven on the platform tree by
+        // ReframeControlsRolePlatformA11yTest's zoom-disabled case, not by a picture.
+        abilities = ReframeAbilities(zoomIn = true, zoomOut = true, panHorizontally = true, panVertically = true),
         onFit = {},
         onNudge = { _, _ -> },
         onZoom = {},
