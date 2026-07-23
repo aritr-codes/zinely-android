@@ -196,7 +196,7 @@ private fun SupplyButton(
             .heightIn(min = 64.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(container)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .clickable(enabled = true, role = Role.Button, onClick = onClick)
             .testTag(testTag)
             // One clean merged label for TalkBack (the glyph is decorative). Role.Button comes from
             // clickable; the disabled flag it sets is preserved by this plain (non-clearing) semantics.
