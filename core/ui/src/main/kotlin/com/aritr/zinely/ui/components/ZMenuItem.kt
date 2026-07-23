@@ -1,5 +1,6 @@
 package com.aritr.zinely.ui.components
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -128,9 +129,18 @@ public fun ZMenuItem(
     }
 }
 
-/** The spec's check: `M5 12l4 4 10-10`, stroke 2.2, round caps, on a 24-unit viewBox. */
+/**
+ * The spec's check: `M5 12l4 4 10-10`, stroke 2.2, round caps, on a 24-unit viewBox.
+ *
+ * Visibility widened `internal → public` for C2 (CI-34) as the mechanical consequence of the
+ * `:core:ui` split: [ZComponentGoldenTest] composes this glyph but is structurally pinned in
+ * `:feature:editor` (it depends on that module's shared `rasterizeToBitmap` golden host), so it must
+ * reach this across the module boundary. [VisibleForTesting] documents that this is a test-visibility
+ * exposure, not a new design-system entry point.
+ */
+@VisibleForTesting
 @Composable
-internal fun CheckGlyph(tint: Color) {
+public fun CheckGlyph(tint: Color) {
     Canvas(Modifier.fillMaxSize()) {
         val u = size.width / 24f
         val path = Path().apply {

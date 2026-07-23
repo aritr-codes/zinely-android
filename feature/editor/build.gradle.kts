@@ -96,6 +96,13 @@ kotlin {
 }
 
 dependencies {
+    // The shared design system (C2, CI-34): ZinelyTheme + tokens + the Z* component primitives, plus
+    // the bundled Inter/Fraunces font resources, extracted verbatim into :core:ui (package
+    // com.aritr.zinely.ui.* unchanged). The editor's screens and its component/golden tests consume
+    // these from here now. Internal-only use (no com.aritr.zinely.ui type appears in this module's
+    // public API), so `implementation`.
+    implementation(project(":core:ui"))
+
     // The render backend: ExportScale.previewPageToDevice + CanvasReplayer + BundledFontResolver +
     // AssetBytesSource/ImageBlitter. PagePreview's PUBLIC signature exposes DrawCommand / PtSize /
     // PtPoint (and AssetBytesSource), so this must be `api` — it re-exports api(:core:render) ->

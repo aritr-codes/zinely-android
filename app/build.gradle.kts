@@ -200,6 +200,10 @@ dependencies {
     // the store's effect seams, and derives pageSizePt from :core:imposition. :core:editor types
     // (EditorModel/Intent) appear in the wiring; :core:imposition supplies the panel size.
     implementation(project(":feature:editor"))
+    // C2 (CI-34): MainActivity applies ZinelyTheme, now homed in the extracted :core:ui design system.
+    // :feature:editor depends on :core:ui only as `implementation`, so the theme is not on :app's
+    // classpath transitively — declare it directly (package com.aritr.zinely.ui.* is unchanged).
+    implementation(project(":core:ui"))
     implementation(project(":core:editor"))
     implementation(project(":core:imposition"))
     // S5 export (ADR-039): the app owns the export product path — it runs the Imposer + SceneRenderer and
