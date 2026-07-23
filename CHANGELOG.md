@@ -14,7 +14,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added — V1 conformance guardrails (C1)
+
+Merged to `main` (`a139fac`; completion record `ed4c46c`) on 2026-07-23. The first milestone of the
+[V1 conformance programme](docs/ROADMAP.md#v1-conformance-programme-c0c10) — eleven milestones (C0–C10)
+that migrate the shipped app onto the accepted V1 design corpus.
+
+- **The regression net before the migration.** Editor golden coverage, a platform-`AccessibilityNodeInfo`
+  assertion harness, a static token-discipline gate, CI wiring for two previously never-run test suites,
+  and WCAG-AA contrast assertions — so that when later milestones start changing drawn values, a moved
+  pixel or a broken semantic is loud.
+
+**No user-visible change.** This is **test infrastructure only** — `git diff main -- '**/src/main/**'`
+is empty; no behavioural or visual difference, no file-format change, offline/privacy invariants intact.
+C1 is not *fully* closed until C0 (specification reconciliation) resolves two parked items. See
+[the C1 milestone record](docs/reviews/C1-conformance-guardrails.md) and
+[ADR-059](docs/DECISIONS.md#adr-059).
 
 ## [0.9.0-beta.1] — 2026-07-22 — Read your zine
 

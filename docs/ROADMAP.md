@@ -147,6 +147,29 @@ flowchart LR
 
 ---
 
+## V1 conformance programme (C0–C10)
+
+The [Compose V1 parity re-skin](COMPOSE-V1-PARITY-PLAN.md) (M0–M6, merged) landed a complete,
+golden-verified implementation of the frozen HTML trilogy — but against the *earlier* specification.
+The **conformance programme** is the next layer: it migrates the shipped app onto the accepted V1
+design corpus. Its order, shape, dependencies, and **per-milestone scope are owned by**
+[V1-IMPLEMENTATION-ROADMAP.md](V1-IMPLEMENTATION-ROADMAP.md) — the authority; this section links
+rather than restates (per the [Documentation Rule](../CLAUDE.md#documentation-rule-mandatory)). The
+item-level gaps are catalogued in the [V1 conformance inventory](V1-CONFORMANCE-INVENTORY.md). There
+are **eleven milestones, C0–C10**, each leaving the app shippable.
+
+- **C0 — specification reconciliation** (owner/designer track, no code) is the **critical path**: it
+  turns the accepted corpus into repository authority before any drawn value changes. **Not started** —
+  and it parks C1's two remaining items until it lands.
+- **C1 — conformance guardrails** (no visual change) is **merged to `main`**: the regression net built
+  *before* the migration — Editor goldens, a platform-`AccessibilityNodeInfo` assertion harness, a
+  static token-discipline gate, CI wiring for two never-run suites, and WCAG-AA contrast assertions.
+  **Test infrastructure only — zero `src/main` change.** See the change-log row below,
+  [the C1 milestone record](reviews/C1-conformance-guardrails.md), and [ADR-059](DECISIONS.md#adr-059).
+- **C2 — the `:core:ui` extraction** (a pure move, no visual change) is **in progress**.
+
+---
+
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
@@ -210,6 +233,7 @@ flowchart LR
 | 2026-07-18 | **FR-3 acceptance blockers cleared — two parity defects, no new scope** (still uncommitted working tree, `main`). (1) **Live preview restored to the freeze**: the 400 ms settle was debouncing the whole `Intent.StyleText` dispatch, so the canvas trailed the readout, announcement and haptic for the entire burst; bench's `sizeCommit()` defers only `snapshot()`. Fixed by projecting the in-flight style through the new `LivePreview.applyStyleOverride` — the style analogue of the `resizeOverride` seam an open drag already uses — so the block repaints per step while the settle still yields one undo entry. No reducer, `Intent`, model, schema or HTML change; `preview == export` preserved by construction. (2) **Type-bar typography**: the bar inherited `MaterialTheme`'s un-reskinned `bodyLarge`, painting Roboto with 0.5sp tracking where the frozen rules pin `--shell` (Inter), zero tracking, `.tylab` 0.02em and `.tyval` tabular figures — corrected with one `ProvideTextStyle` in `TypeBar` plus two per-site overrides. Documentation reconciled (ADR-055 D4 explanation, ARCHITECTURE §7.1, PRD, CHANGELOG, two stale §8 status lines, one false KDoc). `:core:editor` + `:feature:editor` green. **ADR-055 still Proposed** — the §5 human gates (goldens recorded/reviewed in CI; on-device a11y) remain unmet. Not packaged/versioned. | [ADR-055](DECISIONS.md#adr-055), [ADR-029](DECISIONS.md#adr-029) | [ADR-055](DECISIONS.md#adr-055), [ADR-047](DECISIONS.md#adr-047) |
 | 2026-07-22 | **UX P0 — the canvas fixes + Read mode** (branch `feat/ux-p0-canvas-and-read`). The three code defects from the approved [Beta UX Review](BETA-UX-REVIEW.md) — D1 the blank-page invitation drawn off the paper (centred on the canvas, not the sheet), D2 the paper sized from the locally measured scale while all content read the deferred `view.screenPxPerPt` (they diverged whenever the keyboard opened mid-session), D3 the Reframe steppers painted live while incapable of acting (`Framing.abilities` is now the one place that knows the fit/zoom/pan-clamp rules, feeding both the enabled state and the verbs). Then **Read**: the Proof surface gains Act 0 and lands on it — the finished zine, one page per screen in reading order, swiped horizontally, rendered through the same `SceneRenderer` → `PagePreview` replay as the canvas and the export, so `read == preview == export` stays structural. The climb forward is labelled **Print & fold** and is otherwise untouched (same copy, same step numbering, same committed goldens). Answers the review's one-sentence finding — *you cannot see your zine*. **Device-verified twice** (Galaxy A17 5G / Android 16); the pass caught a platform-only a11y defect the Compose test tree structurally cannot see (the zoom steppers reported `enabled=true` to TalkBack while correctly disabled). Three review rounds, all Required Fixes reconciled. **Deferred, named:** no Roborazzi golden for Read; the HTML spec is back-filled after implementation. | [ADR-058](DECISIONS.md#adr-058), [RESEARCH §R11](RESEARCH.md), [Beta UX Review](BETA-UX-REVIEW.md) |
 | 2026-07-22 | **`0.9.0-beta.1` cut and tagged** — the first build distributed to the named beta cohort, and the first ever signed with the real Zinely release key. `versionCode` 3 (2 was assembled on 2026-07-21 and smoke-tested but never cut, and predates the whole UX-P0 cycle above; it was also already installed on a verification device, so reusing it would have been an install that silently refuses to update). Changelog cut from `[Unreleased]`, with the known-limitation set widened from the font-only list to the honest one (no backup/restore, no asset GC, non-Latin blank, no in-app print, the imposed sheet showing page numbers rather than artwork). Tester package written for a first-time reader — install, the one-time signature break and its data-loss trap, what is missing on purpose, and how to report. Readiness and residual debt: [the readiness review](reviews/2026-07-22-beta-release-readiness.md) and [the release candidate report](reviews/2026-07-22-beta-release-candidate.md). | [ADR-058](DECISIONS.md#adr-058), [RELEASING.md](RELEASING.md) |
+| 2026-07-23 | **V1 conformance programme opened — C1 conformance guardrails merged** (`a139fac`; completion record `ed4c46c`), the first of eleven milestones (**C0–C10**) that migrate the shipped app onto the accepted V1 design corpus (see the new [conformance-programme section](#v1-conformance-programme-c0c10)). C1 builds the **regression net before the migration**: Editor goldens, a platform-`AccessibilityNodeInfo` assertion harness, a static token-discipline gate, CI wiring for two never-run suites, and WCAG-AA contrast assertions. **Test infrastructure only — `git diff main -- '**/src/main/**'` is empty; no visual or behavioural change.** C1 is not *fully* closed until **C0** (specification reconciliation — the critical path) resolves two parked items; **C2** (`:core:ui` extraction) is in progress. Scope authority: [V1-IMPLEMENTATION-ROADMAP.md](V1-IMPLEMENTATION-ROADMAP.md); record: [the C1 milestone record](reviews/C1-conformance-guardrails.md). | [ADR-059](DECISIONS.md#adr-059), [V1-IMPLEMENTATION-ROADMAP](V1-IMPLEMENTATION-ROADMAP.md) |
 
 > When phase contents change, add a row here and update the affected phase section + any new [ADR](DECISIONS.md).
 
