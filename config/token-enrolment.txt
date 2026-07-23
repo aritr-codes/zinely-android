@@ -1,0 +1,35 @@
+# Design-token enrolment list  (conformance item CI-27, milestone C1)
+# =====================================================================
+#
+# THE DEFINED TERM.  A package is "enrolled" when its fully-qualified Kotlin
+# package name appears on a non-comment line in this file.  The token-discipline
+# check (feature/editor/src/test/.../TokenDisciplineTest.kt) fails the build on a
+# raw  .dp / .sp / Color( / RoundedCornerShape(  literal in the production
+# (src/main) sources of any enrolled package.  "Enrolled" is therefore a
+# committed fact in this file, not a judgement about what has been migrated.
+#   -- roadmap V1-IMPLEMENTATION-ROADMAP.md Section 10.2 / inventory CI-27.
+#
+# ENROLMENT <-> MIGRATION COUPLING (mandatory).  A package joins this list in the
+# SAME commit that migrates it off raw literals and onto the design tokens
+# (:core:ui spacing/radius/colour, ZinelyColors, Type.kt).  Enrolling a package
+# that still contains any of the four literal forms will (correctly) FAIL the
+# build -- that failure is the whole point of the gate.  Do not add a package
+# here "in advance".
+#
+# GRANULARITY.  Matching is by EXACT package name.  Sub-packages are NOT pulled
+# in transitively: enrolling  com.aritr.zinely.ui  does not enrol
+# com.aritr.zinely.ui.components -- each package enrols on its own line, in the
+# commit that migrates it.  (This is why the palette itself, which lives in
+# com.aritr.zinely.ui.theme / ZinelyColors.kt with 34 legitimate Color()
+# literals, is never enrolled: the check is scoped by enrolment, not by file.)
+#
+# FORMAT.  One fully-qualified package name per line.  Blank lines and lines
+# beginning with '#' are ignored.
+#
+# ---------------------------------------------------------------------
+# INITIAL CONTENTS AT C1: EMPTY, BY DESIGN.
+# No package has been migrated to the token system yet, so no package can be
+# enrolled without failing the build.  The deliverable of CI-27 is the MECHANISM
+# and the defined term -- not coverage.  Packages are added below as later
+# milestones (C3a/C6/C7 ...) migrate them.
+# ---------------------------------------------------------------------
