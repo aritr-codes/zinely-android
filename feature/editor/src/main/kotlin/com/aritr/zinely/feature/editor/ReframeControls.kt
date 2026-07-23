@@ -299,7 +299,11 @@ private fun ZoomButton(icon: ImageVector, description: String, enabled: Boolean,
             // [NudgeCell] never had the fault because its `Icon(contentDescription = null)` contributes no
             // semantics at all, so nothing forced the extra node. The difference was the child, not the
             // modifier chain — which is why the two looked identical and behaved differently.
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            // CI-93 INJECTED DEFECT (proof pair, reverted in the next commit): hard-wire the click enabled
+            // so the platform tree reports enabled=true even when `abilities` say the stepper is disabled —
+            // the exact f4faaa4 lie. The `.alpha(if (enabled)…)` above is untouched, so the golden is
+            // unchanged and only the platform-tree assertion catches it.
+            .clickable(enabled = true, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
