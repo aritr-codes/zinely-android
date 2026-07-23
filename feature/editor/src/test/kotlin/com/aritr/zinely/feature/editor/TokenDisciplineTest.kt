@@ -38,7 +38,17 @@ import java.io.File
  *
  * Matching is by **exact** package name; sub-packages are not pulled in transitively (each enrols on
  * its own line). Comments and string-literal contents are ignored, so KDoc that merely *mentions*
- * `.dp` does not trip the gate -- see [sanitizeKotlin].
+ * `.dp` does not trip the gate -- see [sanitizeKotlin]. `import`/`package` declaration lines are
+ * skipped ([isScannableCodeLine]) -- an `import ...unit.dp` line ends in `.dp` but constructs nothing.
+ *
+ * ## Gradle up-to-date caveat (by design; enforcement is CI)
+ * The enrolment file lives at the repository root and is read from the filesystem at runtime, so it is
+ * **not** a declared Gradle input of `testDebugUnitTest`. A purely local, warm-cache build that changes
+ * *only* the enrolment file may therefore see this task reported UP-TO-DATE and skip it. This does not
+ * weaken the gate: (a) the intended action -- a package joins the list **in the same commit that
+ * migrates its sources** -- edits production `.kt` files, which invalidates compilation and reruns the
+ * test; and (b) CI runners are fresh, so `testDebugUnitTest` has no prior outputs and always runs (the
+ * roadmap requires the check "exists and runs in CI"). Locally, force a check with `--rerun-tasks`.
  */
 class TokenDisciplineTest {
 
