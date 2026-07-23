@@ -28,14 +28,14 @@ import org.robolectric.annotation.GraphicsMode
  * selection state. That announcement had no assertion before (CI-29); a re-skin could have dropped it
  * silently. It is pinned here on the merged semantics tree.
  *
- * **Role.Tab and the platform tree (CI-30).** The cards are `Role.Tab`. Unlike `Role.Button` /
- * `RadioButton` / `Checkbox` — which Compose surfaces to the platform as a distinct
- * `AccessibilityNodeInfo.className` (`android.widget.Button`, …) — `Role.Tab` is carried by the platform
- * node's **`roleDescription`** ("Tab"), and its `className` stays `android.widget.TextView`. The CI-26
- * [PlatformA11yNode] snapshot captures class / clickable / enabled / bounds / contentDescription (the
- * enabled-bit defect it exists for) and does **not** read `roleDescription`; and the card is a merged
- * multi-child `selectable`, which does not faithfully carry its derived attributes onto the platform node
- * in the JVM harness (the same merged/platform divergence documented in [ZButtonPlatformA11yTest]). The
+ * **Role.Tab and the platform tree (CI-30).** The cards are `Role.Tab`, asserted on the merged tree, for
+ * two compounding reasons. First, `Role.Tab` never surfaces a distinct `AccessibilityNodeInfo.className`
+ * even on a leaf: it is carried by the platform node's **`roleDescription`** ("Tab") while `className` stays
+ * `android.widget.TextView`, and the CI-26 [PlatformA11yNode] snapshot does not read `roleDescription`.
+ * Second — and this is the rule that governs every role, not just Tab — the class a role derives survives
+ * on the platform node **only on a leaf or a `clearAndSetSemantics` node**; a role on a node that merges
+ * child content collapses to `android.view.View` (`Role.Button`, `RadioButton`, `Checkbox` alike — see
+ * [ZButtonPlatformA11yTest]), and each card is a merged multi-child `selectable`. The
  * authoritative Tab-role assertion is therefore the merged-tree `SemanticsProperties.Role` check below; the
  * on-device platform tree is covered by the mandatory device passes.
  */

@@ -282,14 +282,16 @@ class TypeBarTest {
      * [alignment_commits_and_reads_as_a_single_select_radio_group]) to the bold/italic toggles and the size
      * steppers, and cross the merged/platform boundary the `f4faaa4` defect exposed.
      *
-     * The Type-bar controls each merge a glyph child, so on the JVM harness the platform
-     * `AccessibilityNodeInfo` a control produces is **not** a stable carrier of its Role-derived class:
-     * `fetchSemanticsNode()` resolves flakily between the role-bearing node and a merged wrapper, so the
-     * platform `className` for a merged control oscillates between its role class and `android.view.View`.
-     * (The stable platform-tree Role assertions in this milestone are on the `clearAndSetSemantics` Reframe
-     * controls — [com.aritr.zinely.feature.editor.a11y.ReframeControlsRolePlatformA11yTest].) Role is
-     * therefore asserted on the merged tree here; the attribute the platform **does** carry faithfully — the
-     * enabled bit (the `f4faaa4` property) — is asserted on the platform node.
+     * The Type-bar controls each merge a glyph child, and a role on a node that merges child content does
+     * not carry its Role-derived class onto the platform node: the platform `className` is a deterministic
+     * `android.view.View` for these controls (the leaf/cleared-vs-merged rule that governs every role
+     * uniformly — see [com.aritr.zinely.feature.editor.a11y.ZButtonPlatformA11yTest]). This test does not
+     * assert any platform className — that would be neither meaningful nor load-bearing here — so Role is
+     * asserted on the merged tree; the only stable platform-tree Role assertions in this milestone are on
+     * the `clearAndSetSemantics` Reframe controls
+     * ([com.aritr.zinely.feature.editor.a11y.ReframeControlsRolePlatformA11yTest]). The attribute the
+     * platform **does** carry faithfully — the enabled bit (the `f4faaa4` property) — is asserted on the
+     * platform node.
      */
     @Test
     fun type_bar_roles_are_declared_and_the_stepper_enabled_bit_reaches_the_platform_tree() {

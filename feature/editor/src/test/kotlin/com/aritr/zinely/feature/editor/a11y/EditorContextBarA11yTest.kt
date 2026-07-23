@@ -23,8 +23,9 @@ import org.robolectric.annotation.GraphicsMode
  * The bar's "Text style" control is a **disclosure**: it publishes a `stateDescription` of "Showing" /
  * "Hidden" so a screen-reader user knows what the tap did. That announcement (CI-29) had **no** assertion
  * before — a re-skin (C6 restyles this file) could drop it with every test still green. Here it is pinned:
- * the state on the merged semantics tree, and `Role.Button` on the **platform** tree (CI-26 [platformNode]),
- * because Role is what TalkBack announces the control *as*.
+ * both the state and `Role.Button` are asserted on the **merged** semantics tree (see the Role paragraph
+ * below for why the platform node is not the vehicle here), because Role is what TalkBack announces the
+ * control *as*.
  *
  * `stateDescription` is asserted on the merged semantics tree rather than through [PlatformA11yNode]: the
  * CI-26 harness snapshots class / clickable / enabled / bounds / contentDescription — the enabled-bit
@@ -37,8 +38,10 @@ import org.robolectric.annotation.GraphicsMode
  * row; the platform `AccessibilityNodeInfo` a control produces is position-dependent (a control scrolled
  * off-screen materialises an empty platform node), so a stable per-control platform-class assertion is not
  * reliable in the JVM harness — the on-device platform tree is covered by the mandatory device passes. The
- * platform-tree Role assertions that carry weight in this milestone live where they are stable:
- * [ReframeControlsRolePlatformA11yTest] (Button) and the Type-bar radios/checkboxes.
+ * only platform-tree Role assertions that hold in this milestone are on descendant-*clearing* controls:
+ * [ReframeControlsRolePlatformA11yTest] (Button). (The Type-bar radios/checkboxes assert Role on the
+ * **merged** tree, not the platform className — their controls merge a glyph child, which collapses any
+ * role's platform class to `android.view.View`; see [ZButtonPlatformA11yTest].)
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

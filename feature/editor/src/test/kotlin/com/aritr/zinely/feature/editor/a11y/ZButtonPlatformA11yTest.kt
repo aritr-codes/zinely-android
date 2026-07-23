@@ -49,9 +49,16 @@ import org.robolectric.annotation.GraphicsMode
  * asserted as `android.widget.Button` on the platform tree, because they do not surface that way: a
  * `Role.Button` set via `clickable()` on a control that **merges child content** (every Z* button wraps a
  * `BasicText`/icon) reaches the platform `AccessibilityNodeInfo` as `className = android.view.View` with a
- * null `roleDescription` — the Role-derived class is dropped for merged nodes. (Distinct-class roles —
- * `RadioButton`, `CheckBox` — and descendant-*clearing* Button controls — Reframe's `clearAndSetSemantics`
- * cells — DO surface their class; verified in [ReframeControlsRolePlatformA11yTest] and the Type-bar tests.)
+ * null `roleDescription` — the Role-derived class is dropped for merged nodes.
+ *
+ * The rule is **leaf/cleared vs merged, and it is identical for every role**: on the platform tree a Role's
+ * class survives only on a leaf node or one carrying `clearAndSetSemantics`; a role on a node that merges
+ * child content collapses to `android.view.View` — `Role.Button`, `Role.RadioButton`, and `Role.Checkbox`
+ * alike (a merged RadioButton and a merged Checkbox collapse exactly as a merged Button does). The only
+ * platform-tree Role assertions in this milestone that hold are therefore on descendant-*clearing* controls
+ * — Reframe's `clearAndSetSemantics` cells surface `android.widget.Button`
+ * ([ReframeControlsRolePlatformA11yTest]). The Type-bar tests assert Role on the **merged** tree only (never
+ * the platform className), because their controls merge a glyph child.
  *
  * This is a genuine merged-vs-platform divergence in the same class as `f4faaa4`, surfaced by CI-30/§11.3
  * ("the platform's tree is the truth"). It is **reported, not fixed** here (STOP-condition: a production
