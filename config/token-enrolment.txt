@@ -33,3 +33,4 @@
 # and the defined term -- not coverage.  Packages are added below as later
 # milestones (C3a/C6/C7 ...) migrate them.
 # ---------------------------------------------------------------------
+com.aritr.zinely.ui.components
