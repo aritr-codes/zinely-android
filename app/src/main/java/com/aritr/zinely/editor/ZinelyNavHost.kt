@@ -32,6 +32,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.export.ExportDestination
 import com.aritr.zinely.export.ExportFormat
 import com.aritr.zinely.export.ExportReady
@@ -175,10 +176,10 @@ private fun ProofDestination(
                     // so the no-app-installed failure is narrowed to it.
                     is ExportReady -> try {
                         context.startActivity(
-                            Intent.createChooser(shareIntent(outcome.uri, outcome.mime), "Share your zine"),
+                            Intent.createChooser(shareIntent(outcome.uri, outcome.mime), Copy.Nav.SHARE_CHOOSER_TITLE),
                         )
                     } catch (e: ActivityNotFoundException) {
-                        Toast.makeText(context, "No app on your phone can open that yet.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, Copy.Nav.NO_APP_TO_OPEN, Toast.LENGTH_SHORT).show()
                     }
                     // Save PDF → a durable copy is already in Downloads (ADR-054): raise the "Fold now"
                     // hand-off (ADR-041), naming the file actually written. No Intent, so no
@@ -200,7 +201,7 @@ private fun ProofDestination(
                 // ponytail: the project title is not on the editor boot state today (it lives in the Room
                 // project metadata, ADR-042). A neutral fallback keeps the topbar honest until the real
                 // title threads through in a later batch.
-                zineName = "Your zine",
+                zineName = Copy.Nav.ZINE_NAME_FALLBACK,
                 onBack = onBack,
                 paper = paper.value,
                 onPaperSelected = { paper.value = it },
@@ -262,7 +263,7 @@ private fun ProofDestination(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(state.message)
-                androidx.compose.material3.TextButton(onClick = onBack) { Text("‹  Back to editing") }
+                androidx.compose.material3.TextButton(onClick = onBack) { Text(Copy.Nav.BACK_TO_EDITING) }
             }
         }
     }
@@ -335,7 +336,7 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(state.message)
-                androidx.compose.material3.TextButton(onClick = onBack) { Text("‹  Back to your shelf") }
+                androidx.compose.material3.TextButton(onClick = onBack) { Text(Copy.Nav.BACK_TO_SHELF) }
             }
         }
 

@@ -1,6 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.ui.semantics.CustomAccessibilityAction
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ReorderOp
 import com.aritr.zinely.core.model.Element
@@ -28,8 +29,8 @@ public object EditorA11y {
 
     /** A short spoken label for an element's semantic node (TalkBack reads this on focus). */
     public fun label(element: Element): String = when (element) {
-        is TextElement -> if (element.text.isBlank()) "Empty text" else "Text: ${element.text}"
-        is ImageElement -> "Photo"
+        is TextElement -> if (element.text.isBlank()) Copy.A11y.EMPTY_TEXT else Copy.A11y.textLabel(element.text)
+        is ImageElement -> Copy.A11y.PHOTO
     }
 
     /**
@@ -43,27 +44,27 @@ public object EditorA11y {
         fun selectThen(action: () -> Unit): Boolean { dispatch(Intent.Select(id)); action(); return true }
         return buildList {
             // Editing text is the primary action for a text box (the a11y twin of the double-tap seam).
-            if (element is TextElement) add(CustomAccessibilityAction("Edit text") { dispatch(Intent.BeginEditText(id)); true })
+            if (element is TextElement) add(CustomAccessibilityAction(Copy.A11y.EDIT_TEXT) { dispatch(Intent.BeginEditText(id)); true })
             // Reframe is the photo's primary in-place action (ADR-053, the a11y twin of the double-tap →
             // Reframe seam and the affordance chip); Reset framing is the one-shot revert-to-placement
             // (bench block-menu "Reset framing" → Intent.ResetFraming, one undoable command). Both are the
             // authoritative Switch Access / TalkBack path — they drive the same reducer intents as the
             // visual affordances. (Replace-picture defers to IF4: it needs a pick-for-replace effect.)
             if (element is ImageElement) {
-                add(CustomAccessibilityAction("Reframe photo") { dispatch(Intent.BeginReframe(id)); true })
-                add(CustomAccessibilityAction("Reset framing") { dispatch(Intent.ResetFraming(id)); true })
+                add(CustomAccessibilityAction(Copy.A11y.REFRAME_PHOTO) { dispatch(Intent.BeginReframe(id)); true })
+                add(CustomAccessibilityAction(Copy.A11y.RESET_FRAMING) { dispatch(Intent.ResetFraming(id)); true })
             }
-            add(CustomAccessibilityAction("Move left") { selectThen { dispatch(Intent.Nudge(PtPoint(-NUDGE_STEP_PT, 0.0))) } })
-            add(CustomAccessibilityAction("Move right") { selectThen { dispatch(Intent.Nudge(PtPoint(NUDGE_STEP_PT, 0.0))) } })
-            add(CustomAccessibilityAction("Move up") { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, -NUDGE_STEP_PT))) } })
-            add(CustomAccessibilityAction("Move down") { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, NUDGE_STEP_PT))) } })
-            add(CustomAccessibilityAction("Make larger") { selectThen { dispatch(Intent.ScaleBy(SCALE_STEP_FACTOR)) } })
-            add(CustomAccessibilityAction("Make smaller") { selectThen { dispatch(Intent.ScaleBy(1.0 / SCALE_STEP_FACTOR)) } })
-            add(CustomAccessibilityAction("Rotate clockwise") { selectThen { dispatch(Intent.RotateBy(ROTATE_STEP_DEGREES)) } })
-            add(CustomAccessibilityAction("Rotate counterclockwise") { selectThen { dispatch(Intent.RotateBy(-ROTATE_STEP_DEGREES)) } })
-            add(CustomAccessibilityAction("Bring forward") { dispatch(Intent.Reorder(id, ReorderOp.BRING_FORWARD)); true })
-            add(CustomAccessibilityAction("Send backward") { dispatch(Intent.Reorder(id, ReorderOp.SEND_BACKWARD)); true })
-            add(CustomAccessibilityAction("Delete") { dispatch(Intent.Delete(setOf(id))); true })
+            add(CustomAccessibilityAction(Copy.A11y.MOVE_LEFT) { selectThen { dispatch(Intent.Nudge(PtPoint(-NUDGE_STEP_PT, 0.0))) } })
+            add(CustomAccessibilityAction(Copy.A11y.MOVE_RIGHT) { selectThen { dispatch(Intent.Nudge(PtPoint(NUDGE_STEP_PT, 0.0))) } })
+            add(CustomAccessibilityAction(Copy.A11y.MOVE_UP) { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, -NUDGE_STEP_PT))) } })
+            add(CustomAccessibilityAction(Copy.A11y.MOVE_DOWN) { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, NUDGE_STEP_PT))) } })
+            add(CustomAccessibilityAction(Copy.A11y.MAKE_LARGER) { selectThen { dispatch(Intent.ScaleBy(SCALE_STEP_FACTOR)) } })
+            add(CustomAccessibilityAction(Copy.A11y.MAKE_SMALLER) { selectThen { dispatch(Intent.ScaleBy(1.0 / SCALE_STEP_FACTOR)) } })
+            add(CustomAccessibilityAction(Copy.A11y.ROTATE_CLOCKWISE) { selectThen { dispatch(Intent.RotateBy(ROTATE_STEP_DEGREES)) } })
+            add(CustomAccessibilityAction(Copy.A11y.ROTATE_COUNTERCLOCKWISE) { selectThen { dispatch(Intent.RotateBy(-ROTATE_STEP_DEGREES)) } })
+            add(CustomAccessibilityAction(Copy.A11y.BRING_FORWARD) { dispatch(Intent.Reorder(id, ReorderOp.BRING_FORWARD)); true })
+            add(CustomAccessibilityAction(Copy.A11y.SEND_BACKWARD) { dispatch(Intent.Reorder(id, ReorderOp.SEND_BACKWARD)); true })
+            add(CustomAccessibilityAction(Copy.A11y.DELETE) { dispatch(Intent.Delete(setOf(id))); true })
         }
     }
 }

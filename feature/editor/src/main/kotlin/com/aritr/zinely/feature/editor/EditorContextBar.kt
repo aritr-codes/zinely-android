@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ReorderOp
 import com.aritr.zinely.core.model.PtPoint
@@ -115,30 +116,30 @@ public fun EditorContextBar(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BarButton(Icons.Filled.KeyboardArrowLeft, "Move left", -2.5f) { dispatch(Intent.Nudge(PtPoint(-EditorA11y.NUDGE_STEP_PT, 0.0))) }
-            BarButton(Icons.Filled.KeyboardArrowRight, "Move right", 2f) { dispatch(Intent.Nudge(PtPoint(EditorA11y.NUDGE_STEP_PT, 0.0))) }
-            BarButton(Icons.Filled.KeyboardArrowUp, "Move up", -2f) { dispatch(Intent.Nudge(PtPoint(0.0, -EditorA11y.NUDGE_STEP_PT))) }
-            BarButton(Icons.Filled.KeyboardArrowDown, "Move down", 2.5f) { dispatch(Intent.Nudge(PtPoint(0.0, EditorA11y.NUDGE_STEP_PT))) }
-            BarButton(Icons.Filled.Add, "Make larger", -1.5f) { dispatch(Intent.ScaleBy(EditorA11y.SCALE_STEP_FACTOR)) }
-            BarButton(Icons.Filled.Remove, "Make smaller", 1.5f) { dispatch(Intent.ScaleBy(1.0 / EditorA11y.SCALE_STEP_FACTOR)) }
-            BarButton(Icons.Filled.RotateRight, "Rotate clockwise", -2f) { dispatch(Intent.RotateBy(EditorA11y.ROTATE_STEP_DEGREES)) }
-            BarButton(Icons.Filled.RotateLeft, "Rotate counterclockwise", 2f) { dispatch(Intent.RotateBy(-EditorA11y.ROTATE_STEP_DEGREES)) }
+            BarButton(Icons.Filled.KeyboardArrowLeft, Copy.A11y.MOVE_LEFT, -2.5f) { dispatch(Intent.Nudge(PtPoint(-EditorA11y.NUDGE_STEP_PT, 0.0))) }
+            BarButton(Icons.Filled.KeyboardArrowRight, Copy.A11y.MOVE_RIGHT, 2f) { dispatch(Intent.Nudge(PtPoint(EditorA11y.NUDGE_STEP_PT, 0.0))) }
+            BarButton(Icons.Filled.KeyboardArrowUp, Copy.A11y.MOVE_UP, -2f) { dispatch(Intent.Nudge(PtPoint(0.0, -EditorA11y.NUDGE_STEP_PT))) }
+            BarButton(Icons.Filled.KeyboardArrowDown, Copy.A11y.MOVE_DOWN, 2.5f) { dispatch(Intent.Nudge(PtPoint(0.0, EditorA11y.NUDGE_STEP_PT))) }
+            BarButton(Icons.Filled.Add, Copy.A11y.MAKE_LARGER, -1.5f) { dispatch(Intent.ScaleBy(EditorA11y.SCALE_STEP_FACTOR)) }
+            BarButton(Icons.Filled.Remove, Copy.A11y.MAKE_SMALLER, 1.5f) { dispatch(Intent.ScaleBy(1.0 / EditorA11y.SCALE_STEP_FACTOR)) }
+            BarButton(Icons.Filled.RotateRight, Copy.A11y.ROTATE_CLOCKWISE, -2f) { dispatch(Intent.RotateBy(EditorA11y.ROTATE_STEP_DEGREES)) }
+            BarButton(Icons.Filled.RotateLeft, Copy.A11y.ROTATE_COUNTERCLOCKWISE, 2f) { dispatch(Intent.RotateBy(-EditorA11y.ROTATE_STEP_DEGREES)) }
             if (singleId != null) {
-                BarButton(Icons.Filled.FlipToFront, "Bring forward", -1.5f) { dispatch(Intent.Reorder(singleId, ReorderOp.BRING_FORWARD)) }
-                BarButton(Icons.Filled.FlipToBack, "Send backward", 1.5f) { dispatch(Intent.Reorder(singleId, ReorderOp.SEND_BACKWARD)) }
+                BarButton(Icons.Filled.FlipToFront, Copy.A11y.BRING_FORWARD, -1.5f) { dispatch(Intent.Reorder(singleId, ReorderOp.BRING_FORWARD)) }
+                BarButton(Icons.Filled.FlipToBack, Copy.A11y.SEND_BACKWARD, 1.5f) { dispatch(Intent.Reorder(singleId, ReorderOp.SEND_BACKWARD)) }
             }
             if (onStyle != null) {
                 // A disclosure, not a plain action: it says whether the Type bar is showing, so a
                 // screen-reader user knows what the tap did without hunting for the bar.
                 BarButton(
                     icon = Icons.Filled.TextFormat,
-                    description = "Text style",
+                    description = Copy.Editor.TEXT_STYLE,
                     tilt = -2f,
-                    state = if (styleOpen) "Showing" else "Hidden",
+                    state = if (styleOpen) Copy.Editor.SHOWING else Copy.Editor.HIDDEN,
                     onClick = onStyle,
                 )
             }
-            BarButton(Icons.Filled.Delete, "Delete", -2.5f) { dispatch(Intent.Delete(selection)) }
+            BarButton(Icons.Filled.Delete, Copy.A11y.DELETE, -2.5f) { dispatch(Intent.Delete(selection)) }
         }
     }
 }

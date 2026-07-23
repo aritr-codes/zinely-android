@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextAlign as ComposeTextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.TextAlign
@@ -83,11 +84,11 @@ internal val TypeSizesPt: List<Double> = listOf(10.0, 12.0, 14.0, 16.0, 20.0, 24
  * Distinct from the image spot-ink field set — the two must not be conflated (ADR-055 Decision 6).
  */
 internal enum class TextInk(val label: String, val rgba: ColorRgba) {
-    Ink("Ink", ColorRgba(0x23, 0x20, 0x1C)),
-    Coral("Coral", ColorRgba(0xA6, 0x3C, 0x22)),
-    Teal("Teal", ColorRgba(0x2A, 0x9D, 0x8F)),
-    Blue("Blue", ColorRgba(0x26, 0x46, 0x53)),
-    Ochre("Ochre", ColorRgba(0x7A, 0x5E, 0x12)),
+    Ink(Copy.Type.INK_INK, ColorRgba(0x23, 0x20, 0x1C)),
+    Coral(Copy.Type.INK_CORAL, ColorRgba(0xA6, 0x3C, 0x22)),
+    Teal(Copy.Type.INK_TEAL, ColorRgba(0x2A, 0x9D, 0x8F)),
+    Blue(Copy.Type.INK_BLUE, ColorRgba(0x26, 0x46, 0x53)),
+    Ochre(Copy.Type.INK_OCHRE, ColorRgba(0x7A, 0x5E, 0x12)),
 }
 
 /** The settle window the size stepper coalesces a tap burst into one commit over (bench `sizeCommit`). */
@@ -139,7 +140,7 @@ internal fun toggleBold(
     val on = !element.style.bold
     dispatch(Intent.StyleText(id = element.id, bold = on))
     buzz()
-    announce(if (on) "Bold on" else "Bold off")
+    announce(if (on) Copy.Type.BOLD_ON else Copy.Type.BOLD_OFF)
 }
 
 /** The Italic verb (bench `toggleItalic`) — [toggleBold]'s twin; same shared-verb contract. */
@@ -152,7 +153,7 @@ internal fun toggleItalic(
     val on = !element.style.italic
     dispatch(Intent.StyleText(id = element.id, italic = on))
     buzz()
-    announce(if (on) "Italic on" else "Italic off")
+    announce(if (on) Copy.Type.ITALIC_ON else Copy.Type.ITALIC_OFF)
 }
 
 /** Nearest ramp index to an arbitrary `sizePt` (bench `nearestSize`) — the ramp need not contain it. */
@@ -303,7 +304,7 @@ internal fun TypeBar(
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                TypeRow("Size") {
+                TypeRow(Copy.Type.ROW_SIZE) {
                     SizeStepper(
                         index = sizeIndex,
                         onStep = { dir ->
@@ -311,12 +312,12 @@ internal fun TypeBar(
                             if (next != sizeIndex) {
                                 pendingSizeIndex = next
                                 buzz()
-                                onAnnounce("Size ${TypeSizesPt[next].toInt()} point")
+                                onAnnounce(Copy.Type.sizePointAnnouncement(TypeSizesPt[next].toInt()))
                             }
                         },
                     )
                 }
-                TypeRow("Align") {
+                TypeRow(Copy.Type.ROW_ALIGN) {
                     AlignSegment(
                         align = style.align,
                         onAlign = { al ->
@@ -324,34 +325,34 @@ internal fun TypeBar(
                             buzz()
                             onAnnounce(
                                 when (al) {
-                                    TextAlign.START -> "Left aligned"
-                                    TextAlign.CENTER -> "Centered"
-                                    TextAlign.END -> "Right aligned"
+                                    TextAlign.START -> Copy.Type.LEFT_ALIGNED
+                                    TextAlign.CENTER -> Copy.Type.CENTERED
+                                    TextAlign.END -> Copy.Type.RIGHT_ALIGNED
                                 },
                             )
                         },
                     )
                 }
-                TypeRow("Style") {
+                TypeRow(Copy.Type.ROW_STYLE) {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         // Both toggles route through the shared verb the Ctrl/Cmd+B/I shortcuts also call,
                         // so the pointer and keyboard paths are one implementation (ADR-055 §4). The
                         // toggleable `on` is ignored: the verb re-reads `element.style`, the same flip.
-                        StyleToggle("Bold", "B", style.bold, FontWeight.Bold, FontStyle.Normal) {
+                        StyleToggle(Copy.Type.STYLE_BOLD, "B", style.bold, FontWeight.Bold, FontStyle.Normal) {
                             toggleBold(element, dispatch, onAnnounce, buzz)
                         }
-                        StyleToggle("Italic", "I", style.italic, FontWeight.Normal, FontStyle.Italic) {
+                        StyleToggle(Copy.Type.STYLE_ITALIC, "I", style.italic, FontWeight.Normal, FontStyle.Italic) {
                             toggleItalic(element, dispatch, onAnnounce, buzz)
                         }
                     }
                 }
-                TypeRow("Colour") {
+                TypeRow(Copy.Type.ROW_COLOUR) {
                     InkRow(
                         color = style.color,
                         onInk = { ink ->
                             dispatch(Intent.StyleText(id = id, color = ink.rgba))
                             buzz()
-                            onAnnounce("Colour ${ink.label}")
+                            onAnnounce(Copy.Type.colourAnnouncement(ink.label))
                         },
                     )
                 }
@@ -447,12 +448,12 @@ private fun SizeStepper(index: Int, onStep: (Int) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StepButton("−", "Smaller", enabled = index > 0) { onStep(-1) }
+        StepButton("−", Copy.Type.SMALLER, enabled = index > 0) { onStep(-1) }
         Text(
-            text = "${TypeSizesPt[index].toInt()} pt",
+            text = Copy.Type.sizePtLabel(TypeSizesPt[index].toInt()),
             modifier = Modifier
                 .width(58.dp)
-                .clearAndSetSemantics { contentDescription = "Size ${TypeSizesPt[index].toInt()} point" },
+                .clearAndSetSemantics { contentDescription = Copy.Type.sizePointAnnouncement(TypeSizesPt[index].toInt()) },
             textAlign = ComposeTextAlign.Center,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
@@ -463,7 +464,7 @@ private fun SizeStepper(index: Int, onStep: (Int) -> Unit) {
             // the Inter family it sets is preserved.
             style = LocalTextStyle.current.copy(fontFeatureSettings = "tnum"),
         )
-        StepButton("+", "Larger", enabled = index < TypeSizesPt.lastIndex) { onStep(1) }
+        StepButton("+", Copy.Type.LARGER, enabled = index < TypeSizesPt.lastIndex) { onStep(1) }
     }
 }
 
@@ -536,11 +537,11 @@ private fun AlignSegment(align: TextAlign, onAlign: (TextAlign) -> Unit) {
             .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(13.dp))
             .selectableGroup(),
     ) {
-        AlignOption("Left", TextAlign.START, align, onAlign)
+        AlignOption(Copy.Type.ALIGN_LEFT, TextAlign.START, align, onAlign)
         SegmentDivider()
-        AlignOption("Center", TextAlign.CENTER, align, onAlign)
+        AlignOption(Copy.Type.ALIGN_CENTER, TextAlign.CENTER, align, onAlign)
         SegmentDivider()
-        AlignOption("Right", TextAlign.END, align, onAlign)
+        AlignOption(Copy.Type.ALIGN_RIGHT, TextAlign.END, align, onAlign)
     }
 }
 

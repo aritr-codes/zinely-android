@@ -113,6 +113,10 @@ dependencies {
     // (params + dispatch + uiState), so this is `api`, not implementation.
     api(project(":core:editor"))
 
+    // The pure-Kotlin copy layer (C9, ADR-060): every user-facing string this module renders comes from
+    // the `Copy` object. Internal use only, so `implementation`.
+    implementation(project(":core:copy"))
+
     // The canonical imposition convention (pure Kotlin, zero Android): the Proof Act 1 imposed
     // sheet derives its panel order/rotation from SingleSheet8.TOP_ROW_ROTATED instead of keeping a
     // second hardcoded truth that can drift (it did — the checkpoint caught 5·4·3·6/8·1·2·7).

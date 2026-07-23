@@ -1,5 +1,6 @@
 package com.aritr.zinely.feature.editor
 
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.model.ImageElement
@@ -76,7 +77,7 @@ public fun interface ImagePickDecodePipeline {
  */
 public object UnavailableImagePipeline : ImagePickDecodePipeline {
     override suspend fun pickAndDecode(): ImagePickResult =
-        ImagePickResult.Failure("Adding images isn’t available yet")
+        ImagePickResult.Failure(Copy.Effects.ADDING_IMAGES_UNAVAILABLE)
 }
 
 /**

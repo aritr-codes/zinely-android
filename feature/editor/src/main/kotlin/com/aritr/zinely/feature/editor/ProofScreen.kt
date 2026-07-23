@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PaperSize
@@ -103,10 +104,10 @@ private val ACT_LABELS = mapOf(
     // project-title placeholder is literally "Your zine"), so the bar read the same two words twice. The
     // label's job is to say what this act *is* and how to work it — and it is a live region, so it is also
     // the line a screen-reader user hears on arriving.
-    ProofAct.READ to "Read · swipe to turn the page",
-    ProofAct.SHEET to "Step 1 of 3 · The sheet",
-    ProofAct.PRINT to "Step 2 of 3 · Print",
-    ProofAct.FOLD to "Step 3 of 3 · Fold",
+    ProofAct.READ to Copy.Proof.ACT_READ,
+    ProofAct.SHEET to Copy.Proof.ACT_SHEET,
+    ProofAct.PRINT to Copy.Proof.ACT_PRINT,
+    ProofAct.FOLD to Copy.Proof.ACT_FOLD,
 )
 
 // `proof.html` primary/back icon path data (24×24 viewport), consumed verbatim so the chrome
@@ -262,7 +263,7 @@ public fun ProofScreen(
 
     // The topbar live caption switches to the payoff once the fold is finished (`actLabel` = "Done …").
     val actLabel = if (act == ProofAct.FOLD && foldFinished) {
-        "Done · Your zine is ready"
+        Copy.Proof.DONE_READY
     } else {
         ACT_LABELS.getValue(act)
     }
@@ -394,8 +395,8 @@ public fun ProofScreen(
                 // Frozen copy (`proof.html` savePdf → snack): NAMES the saved file and its Downloads
                 // destination so the "keep a copy" promise is verifiable. [name] already carries the
                 // extension (e.g. `zine.pdf`) — the actual name the exporter wrote (ADR-054).
-                message = "Saved “$name” to Downloads",
-                actionLabel = "Fold now",
+                message = Copy.Proof.savedToDownloads(name),
+                actionLabel = Copy.Proof.FOLD_NOW,
                 onAction = { savedName = null; go(ProofAct.FOLD) },
                 onTimeout = { savedName = null },
                 modifier = Modifier
@@ -417,8 +418,8 @@ private fun ProofErrorPane(onRetry: () -> Unit, modifier: Modifier = Modifier) {
     val colors = ZinelyTheme.colors
     Box(modifier, contentAlignment = Alignment.Center) {
         ZStatusPane(
-            title = "Couldn’t make the PDF",
-            body = "Your zine is safe on this device — the export just didn’t finish. Try once more.",
+            title = Copy.Proof.COULDNT_MAKE_PDF,
+            body = Copy.Proof.ERROR_BODY,
             badgeBackground = colors.coral.copy(alpha = 0.14f),
             badgeContent = colors.coralText,
             modifier = Modifier
@@ -427,7 +428,7 @@ private fun ProofErrorPane(onRetry: () -> Unit, modifier: Modifier = Modifier) {
             badgeIcon = { tint -> ProofWarnBadge(tint) },
             cta = {
                 ZPrimaryButton(
-                    text = "Try again",
+                    text = Copy.Common.TRY_AGAIN,
                     onClick = onRetry,
                     metrics = ZPrimaryButtonMetrics.Proof,
                     fill = ZPrimaryFill.Stamp,
@@ -461,9 +462,9 @@ private fun ProofTopBar(
             // Sheet this steps back to Read instead of leaving, and says so — a back button that does two
             // different things must not describe itself as doing only one.
             contentDescription = if (act == ProofAct.SHEET) {
-                "Back to your zine"
+                Copy.Proof.BACK_TO_YOUR_ZINE
             } else {
-                "Back to the bench (your work is saved)"
+                Copy.Proof.BACK_TO_BENCH_SAVED
             },
             modifier = Modifier.testTag(ProofBackTestTag),
         ) { tint -> ProofVectorIcon(ICON_BACK, tint) }
@@ -574,14 +575,14 @@ private fun ProofActionBar(
             // Read's one forward action names the whole climb it opens, so the imposed sheet arrives as
             // "the first step of printing" rather than as the thing the word "Preview" had promised.
             ProofAct.READ -> ZPrimaryButton(
-                text = "Print & fold",
+                text = Copy.Proof.PRINT_AND_FOLD,
                 onClick = onPrimary,
                 metrics = ZPrimaryButtonMetrics.Proof,
                 modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
                 icon = { tint -> ProofVectorIcon(ICON_FOLD, tint) },
             )
             ProofAct.SHEET -> ZPrimaryButton(
-                text = "Print setup",
+                text = Copy.Proof.PRINT_SETUP,
                 onClick = onPrimary,
                 metrics = ZPrimaryButtonMetrics.Proof,
                 modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
@@ -591,11 +592,11 @@ private fun ProofActionBar(
                 ZToolButton(
                     onClick = onSecondary,
                     metrics = ZToolButtonMetrics.ProofGhost,
-                    text = "Back",
+                    text = Copy.Proof.BACK,
                     modifier = Modifier.testTag(ProofSecondaryTestTag),
                 )
                 ZPrimaryButton(
-                    text = "Now fold it",
+                    text = Copy.Proof.NOW_FOLD_IT,
                     onClick = onPrimary,
                     metrics = ZPrimaryButtonMetrics.Proof,
                     modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),
@@ -605,7 +606,7 @@ private fun ProofActionBar(
             ProofAct.FOLD -> when {
                 // The last step hands off to ONE prominent finish action (the `.primary.stamp`).
                 !foldFinished && foldOnLastStep -> ZPrimaryButton(
-                    text = "It’s folded — show me",
+                    text = Copy.Proof.ITS_FOLDED,
                     onClick = onFoldFinish,
                     metrics = ZPrimaryButtonMetrics.Proof,
                     fill = ZPrimaryFill.Stamp,
@@ -617,11 +618,11 @@ private fun ProofActionBar(
                     ZToolButton(
                         onClick = onBackToBench,
                         metrics = ZToolButtonMetrics.ProofGhost,
-                        text = "Back to bench",
+                        text = Copy.Proof.BACK_TO_BENCH,
                         modifier = Modifier.testTag(ProofSecondaryTestTag),
                     )
                     ZPrimaryButton(
-                        text = "Make another",
+                        text = Copy.Proof.MAKE_ANOTHER,
                         onClick = onMakeAnother,
                         metrics = ZPrimaryButtonMetrics.Proof,
                         modifier = Modifier.weight(1f).testTag(ProofPrimaryTestTag),

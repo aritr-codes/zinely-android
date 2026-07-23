@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the move/resize hint container. */
@@ -30,10 +31,10 @@ public const val EditorMoveResizeHintTestTag: String = "editor-move-resize-hint"
 public const val MoveResizeHintDismissTag: String = "move-resize-hint-dismiss"
 
 /** The teaching line (canonical, docs/design/VOICE.md §3 "Hints"). */
-public const val MoveResizeHintText: String = "Drag to move it. Pinch to resize."
+public const val MoveResizeHintText: String = Copy.MoveResizeHint.TEXT
 
 /** The dismiss affordance label (the implicit/explicit "got it" VOICE requires for a one-time hint). */
-public const val MoveResizeHintDismissLabel: String = "Got it"
+public const val MoveResizeHintDismissLabel: String = Copy.Common.GOT_IT
 
 /**
  * The one-time **move/resize hint** (docs/design/VOICE.md §3 "Hints"; editor-visual-direction.md §6

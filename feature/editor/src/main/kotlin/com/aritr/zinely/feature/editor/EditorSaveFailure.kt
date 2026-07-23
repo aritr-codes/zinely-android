@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the warm save-failure banner. */
@@ -36,7 +37,7 @@ public const val SaveFailureDismissTag: String = "editor-save-failure-dismiss"
 public const val SaveFailureRetryTag: String = "editor-save-failure-retry"
 
 /** The manual-retry affordance label ([ADR-038](../DECISIONS.md#adr-038); VOICE §Errors). */
-public const val SaveFailureRetryLabel: String = "Try now"
+public const val SaveFailureRetryLabel: String = Copy.SaveFailure.RETRY_LABEL
 
 /**
  * Which honest save-failure copy the banner shows ([ADR-036](../DECISIONS.md#adr-036)). A **feature-local**
@@ -61,8 +62,7 @@ public enum class SaveErrorKind {
  * re-ticks the coordinator) or a lifecycle/explicit flush — so the copy points at making another change,
  * not at an imagined self-retry.
  */
-public const val SaveFailureText: String =
-    "Couldn’t save your latest change just now. Tap Try now, or keep editing — it’ll try again."
+public const val SaveFailureText: String = Copy.SaveFailure.GENERIC
 
 /**
  * The storage-specific failure line ([ADR-036](../DECISIONS.md#adr-036); VOICE §Errors). Shown only when
@@ -72,8 +72,7 @@ public const val SaveFailureText: String =
  * is no background retry, so it names the real trigger ("then keep editing — it'll save"), never implying
  * the save will happen on its own once space is freed.
  */
-public const val SaveFailureOutOfSpaceText: String =
-    "Your phone is low on storage. Free up a little space, then tap Try now — or keep editing to retry."
+public const val SaveFailureOutOfSpaceText: String = Copy.SaveFailure.OUT_OF_SPACE
 
 /** The honest line for [kind] (VOICE §Errors). */
 private fun saveFailureText(kind: SaveErrorKind): String = when (kind) {
@@ -82,7 +81,7 @@ private fun saveFailureText(kind: SaveErrorKind): String = when (kind) {
 }
 
 /** The dismiss affordance label — the same gentle "Got it" idiom as the move/resize hint. */
-public const val SaveFailureDismissLabel: String = "Got it"
+public const val SaveFailureDismissLabel: String = Copy.SaveFailure.DISMISS_LABEL
 
 /**
  * The warm, honest **save-failure** banner ([ADR-035](../DECISIONS.md#adr-035); VOICE §Errors;

@@ -31,6 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PtSize
@@ -105,7 +106,7 @@ public fun ProofReadAct(
                 .weight(1f)
                 .fillMaxWidth()
                 .testTag(ProofReadPagerTestTag)
-                .semantics { contentDescription = "Your zine, page by page. Swipe to turn the page." },
+                .semantics { contentDescription = Copy.ProofRead.CONTENT_DESCRIPTION },
             // A slice of the neighbouring pages peeks in at each edge: it says "there is more this way"
             // without a hint chip, and it is what makes the surface read as a booklet rather than a slide
             // deck. The pager still snaps one whole page at a time.
@@ -125,7 +126,7 @@ public fun ProofReadAct(
         // The position readout. `liveRegion` so a swipe is announced — the page render is a Canvas with
         // no readable nodes, so without this a screen-reader user turning pages hears nothing at all.
         BasicText(
-            text = "Page ${pagerState.currentPage + 1} of ${pages.size}",
+            text = Copy.ProofRead.pageOf(pagerState.currentPage + 1, pages.size),
             modifier = Modifier
                 .padding(top = 10.dp, bottom = 4.dp)
                 .testTag(ProofReadCaptionTestTag)

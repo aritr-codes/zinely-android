@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.components.ZMenuItem
 import com.aritr.zinely.ui.components.ZSelectedStyle
@@ -114,7 +115,7 @@ internal fun ProofPrintAct(
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             BasicText(
-                text = "Print it just like this",
+                text = Copy.ProofPrint.TITLE,
                 style = TextStyle(
                     color = colors.onDesk,
                     fontFamily = ZinelyTheme.typography.voice,
@@ -123,8 +124,7 @@ internal fun ProofPrintAct(
                 ),
             )
             BasicText(
-                text = "These four settings keep your zine the right size and in the right order. " +
-                    "Most printers already default to them.",
+                text = Copy.ProofPrint.BODY,
                 style = TextStyle(
                     color = colors.onDeskSoft,
                     fontFamily = ZinelyTheme.typography.shell,
@@ -140,19 +140,19 @@ internal fun ProofPrintAct(
         ) {
             RecipeRow(
                 warn = true,
-                label = "Scale",
-                value = emphasised("100% · Actual size", " — not “Fit to page”"),
+                label = Copy.ProofPrint.SCALE_LABEL,
+                value = emphasised(Copy.ProofPrint.SCALE_VALUE, Copy.ProofPrint.SCALE_EMPHASIS),
                 icon = { tint -> StrokedGlyph(ICON_SCALE, tint) },
             )
             RecipeRow(
                 warn = true,
-                label = "Orientation",
-                value = emphasised("Landscape", " — a portrait default breaks the fold"),
+                label = Copy.ProofPrint.ORIENTATION_LABEL,
+                value = emphasised(Copy.ProofPrint.LANDSCAPE, Copy.ProofPrint.ORIENTATION_EMPHASIS),
                 icon = { tint -> StrokedGlyph(ICON_LANDSCAPE, tint) },
             )
             RecipeRow(
                 warn = false,
-                label = "Paper",
+                label = Copy.ProofPrint.PAPER_LABEL,
                 value = plain(paper.displayName),
                 icon = { tint -> StrokedGlyph(ICON_PAPER, tint) },
                 trailing = {
@@ -163,8 +163,8 @@ internal fun ProofPrintAct(
             )
             RecipeRow(
                 warn = false,
-                label = "Sides",
-                value = plain("Single-sided — one side only"),
+                label = Copy.ProofPrint.SIDES_LABEL,
+                value = plain(Copy.ProofPrint.SIDES_VALUE),
                 icon = { tint -> StrokedGlyph(ICON_SIDES, tint) },
             )
 
@@ -178,7 +178,7 @@ internal fun ProofPrintAct(
                 ZToolButton(
                     onClick = { haptics.perform(ZinelyHaptic.Tick); onExportPdf(ProofExportTarget.SAVE) },
                     metrics = ZToolButtonMetrics.ProofExport,
-                    text = "Save PDF",
+                    text = Copy.ProofPrint.SAVE_PDF,
                     enabled = !exportBusy,
                     modifier = Modifier.weight(1f).testTag(ProofSavePdfTestTag),
                     icon = { tint -> StrokedGlyph(ICON_SAVE, tint) },
@@ -186,7 +186,7 @@ internal fun ProofPrintAct(
                 ZToolButton(
                     onClick = { haptics.perform(ZinelyHaptic.Tick); showShare = true },
                     metrics = ZToolButtonMetrics.ProofExport,
-                    text = "Share",
+                    text = Copy.ProofPrint.SHARE,
                     enabled = !exportBusy,
                     modifier = Modifier.weight(1f).testTag(ProofShareTestTag),
                     icon = { tint -> ShareGlyph(tint) },
@@ -199,8 +199,8 @@ internal fun ProofPrintAct(
     ZSheet(
         visible = showPaper,
         onDismiss = { showPaper = false },
-        title = "Paper size",
-        sub = "Match this to the paper in your printer, so nothing gets clipped or shrunk.",
+        title = Copy.ProofPrint.PAPER_SIZE_TITLE,
+        sub = Copy.ProofPrint.PAPER_SIZE_SUB,
         modifier = Modifier.testTag(ProofPaperSheetTestTag),
     ) {
         PaperSize.entries.forEach { option ->
@@ -224,17 +224,17 @@ internal fun ProofPrintAct(
     ZSheet(
         visible = showShare,
         onDismiss = { showShare = false },
-        title = "Share your zine",
-        sub = "The PDF stays on your device — you choose where it goes. Nothing is uploaded by Zinely.",
+        title = Copy.Nav.SHARE_CHOOSER_TITLE,
+        sub = Copy.ProofPrint.SHARE_SUB,
         modifier = Modifier.testTag(ProofShareSheetTestTag),
     ) {
         ZMenuItem(
-            label = "Save to Files",
+            label = Copy.ProofPrint.SAVE_TO_FILES,
             icon = { tint -> StrokedGlyph(ICON_FOLDER, tint) },
             onClick = { haptics.perform(ZinelyHaptic.Tick); showShare = false; onExportPdf(ProofExportTarget.SEND) },
         )
         ZMenuItem(
-            label = "Send to an app",
+            label = Copy.ProofPrint.SEND_TO_AN_APP,
             icon = { tint -> ShareGlyph(tint) },
             onClick = { haptics.perform(ZinelyHaptic.Tick); showShare = false; onExportPdf(ProofExportTarget.SEND) },
         )
@@ -310,7 +310,7 @@ private fun ChangeButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         BasicText(
-            text = "Change",
+            text = Copy.ProofPrint.CHANGE,
             style = TextStyle(
                 color = colors.coralText,
                 fontFamily = ZinelyTheme.typography.shell,
@@ -332,9 +332,9 @@ private fun SingleSidedNote() {
         Box(Modifier.size(17.dp)) { InfoGlyph(colors.onDeskFaint) }
         BasicText(
             text = buildAnnotatedString {
-                append("If your printer asks about double-sided, choose ")
-                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append("single-sided") }
-                append(" (or “off”). A mini-zine prints on one side, then folds.")
+                append(Copy.ProofPrint.SIDES_HELP_PREFIX)
+                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold)) { append(Copy.ProofPrint.SIDES_HELP_BOLD) }
+                append(Copy.ProofPrint.SIDES_HELP_SUFFIX)
             },
             style = TextStyle(
                 color = colors.onDeskSoft,
@@ -360,14 +360,14 @@ private fun plain(text: String) = buildAnnotatedString { append(text) }
 
 private val PaperSize.displayName: String
     get() = when (this) {
-        PaperSize.A4 -> "A4"
-        PaperSize.LETTER -> "Letter"
+        PaperSize.A4 -> Copy.Paper.A4
+        PaperSize.LETTER -> Copy.Paper.LETTER
     }
 
 private val PaperSize.paperSub: String
     get() = when (this) {
-        PaperSize.A4 -> "210 × 297 mm — most of the world"
-        PaperSize.LETTER -> "8.5 × 11 in — US & Canada"
+        PaperSize.A4 -> Copy.Paper.A4_DIMENSIONS_LONG
+        PaperSize.LETTER -> Copy.Paper.LETTER_DIMENSIONS_LONG
     }
 
 // ---- glyphs (frozen 24×24 SVGs; decorative, aria-hidden via the chip's clear) ----------------
