@@ -201,6 +201,7 @@ dependencies {
     // (EditorModel/Intent) appear in the wiring; :core:imposition supplies the panel size.
     implementation(project(":feature:editor"))
     implementation(project(":core:editor"))
+    implementation(project(":core:copy"))          // C9/ADR-060: the Copy object for the nav host's user-facing strings
     implementation(project(":core:imposition"))
     // S5 export (ADR-039): the app owns the export product path — it runs the Imposer + SceneRenderer and
     // hands per-panel tapes to :render-android's SheetComposer (the multi-panel PDF/PNG composer over the

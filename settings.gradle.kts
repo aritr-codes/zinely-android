@@ -62,4 +62,9 @@ include(":core:data-storage")
 // tree, command/field-memento undo, and pure hit-test/snap/transform-bake geometry. Only dep
 // :core:model; zero Android. The Android store/gestures/contextbar live in :feature:editor.
 include(":core:editor")
+// C9 copy layer (ADR-060): the pure-Kotlin, Android-free home for every user-facing string — the
+// `Copy` object (String consts + parameterised funcs) machine-embodying docs/design/VOICE.md,
+// consumed by :app and :feature:editor. Included UNCONDITIONALLY so its no-prose-literal guard runs
+// in the pure-JVM core-tests job. Zero deps; zero Android. Depends only on C1, never on C2's :core:ui.
+include(":core:copy")
  

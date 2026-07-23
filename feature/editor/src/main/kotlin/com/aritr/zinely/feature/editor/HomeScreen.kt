@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.components.ZSnackbar
 import com.aritr.zinely.ui.components.ZToast
@@ -38,7 +39,7 @@ public const val HomeLoadingTestTag: String = "home-loading"
 public const val HomeEmptyStateTestTag: String = "home-empty-state"
 
 /** `.empty h2` — the invitation, which teaches rather than reports (`shelf.html:399`). */
-public const val HomeEmptyHeadline: String = "Make your first little zine."
+public const val HomeEmptyHeadline: String = Copy.Shelf.HOME_EMPTY_HEADLINE
 
 /** Test tags on the rename row inside the action sheet (`.rename input`, `.rename .save`). */
 public const val HomeRenameFieldTestTag: String = "home-rename-field"
@@ -58,7 +59,7 @@ public fun homeCardTestTag(id: String): String = "home-card-$id"
 public fun homeCardMenuTestTag(id: String): String = "home-card-menu-$id"
 
 /** `Deleted “X”` — `$("#snackText").textContent` (`shelf.html:723`). */
-public fun homeDeletedMessage(title: String): String = "Deleted “$title”"
+public fun homeDeletedMessage(title: String): String = Copy.Shelf.deletedMessage(title)
 
 /**
  * One zine on the shelf — the feature-local UI model, carrying only what the card shows
@@ -255,7 +256,7 @@ public fun HomeScreen(
         undo?.let { request ->
             ZSnackbar(
                 message = request.message,
-                actionLabel = "Undo",
+                actionLabel = Copy.Shelf.UNDO,
                 onAction = { haptics.perform(ZinelyHaptic.Tick); request.outcome.complete(true) },
                 onTimeout = { request.outcome.complete(false) },
                 modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 96.dp),

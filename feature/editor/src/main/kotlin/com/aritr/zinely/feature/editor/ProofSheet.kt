@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.imposition.ConventionSpec
 import com.aritr.zinely.core.imposition.SingleSheet8
 import com.aritr.zinely.core.model.GridCell
@@ -117,7 +118,7 @@ internal fun ProofSheetAct(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             BasicText(
-                text = "This is your sheet",
+                text = Copy.ProofSheet.TITLE,
                 style = TextStyle(
                     color = colors.onDesk,
                     fontFamily = ZinelyTheme.typography.voice,
@@ -127,8 +128,7 @@ internal fun ProofSheetAct(modifier: Modifier = Modifier) {
                 ),
             )
             BasicText(
-                text = "One page, printed on one side. It looks scrambled on purpose — " +
-                    "the fold puts every page in order.",
+                text = Copy.ProofSheet.BODY,
                 style = TextStyle(
                     color = colors.onDeskSoft,
                     fontFamily = ZinelyTheme.typography.shell,
@@ -170,8 +170,7 @@ private fun ImposedSheet() {
             // role="img" with ONE label; every decorative child below is thereby cleared from a11y.
             .clearAndSetSemantics {
                 role = Role.Image
-                contentDescription = "Your zine imposed on one landscape sheet: eight panels, " +
-                    "the top row upside-down, with one cut line across the centre."
+                contentDescription = Copy.ProofSheet.CONTENT_DESCRIPTION
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -196,7 +195,7 @@ private fun ImposedSheet() {
                 .padding(horizontal = 6.dp, vertical = 1.dp),
         ) {
             BasicText(
-                text = "ONE CUT",
+                text = Copy.ProofSheet.ONE_CUT,
                 style = TextStyle(
                     color = colors.coralStrong,
                     fontFamily = ZinelyTheme.typography.shell,
@@ -266,7 +265,7 @@ private fun HonestyLegend() {
         horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        LegendItem("fold lines") {
+        LegendItem(Copy.ProofSheet.LEGEND_FOLD_LINES) {
             Canvas(Modifier.size(16.dp, 8.dp)) {
                 drawLine(
                     colors.inkFaint.copy(alpha = 0.5f),
@@ -275,12 +274,12 @@ private fun HonestyLegend() {
                 )
             }
         }
-        LegendItem("the one cut") {
+        LegendItem(Copy.ProofSheet.LEGEND_ONE_CUT) {
             Canvas(Modifier.size(16.dp, 8.dp)) {
                 drawLine(colors.coralStrong, Offset(0f, size.height / 2f), Offset(size.width, size.height / 2f), 2.dp.toPx())
             }
         }
-        LegendItem("printer can’t reach here") {
+        LegendItem(Copy.ProofSheet.LEGEND_PRINTER_REACH) {
             // ponytail: solid swatch — the frozen 45° hatch fill (proof.html:235) is flattened to the
             // same translucent fill as the sheet dead-band; a 16×10 texture no one reads. Matches above.
             Box(
@@ -318,8 +317,8 @@ private fun CoverCards() {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
     ) {
-        CoverCard("Front cover", pageNumber = 1, testTag = ProofFrontCoverTestTag)
-        CoverCard("Back cover", pageNumber = 8, testTag = ProofBackCoverTestTag)
+        CoverCard(Copy.ProofSheet.FRONT_COVER, pageNumber = 1, testTag = ProofFrontCoverTestTag)
+        CoverCard(Copy.ProofSheet.BACK_COVER, pageNumber = 8, testTag = ProofBackCoverTestTag)
     }
 }
 

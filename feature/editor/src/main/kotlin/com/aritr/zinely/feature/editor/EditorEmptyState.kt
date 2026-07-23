@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the empty-state container. */
@@ -29,17 +30,17 @@ public const val EditorEmptyStateTestTag: String = "editor-empty-state"
 
 /** The two add-action labels — owned by the supply tray (the single action home, [ADR-033]). Shared as
  *  the tray's visible + spoken labels; the empty state references them only to *name* what's below. */
-public const val AddPhotoActionLabel: String = "Add a photo"
-public const val AddWordsActionLabel: String = "Add words"
+public const val AddPhotoActionLabel: String = Copy.EmptyState.ADD_A_PHOTO
+public const val AddWordsActionLabel: String = Copy.EmptyState.ADD_WORDS
 
 /** Test tag on the decorative downward cue that ties the invitation to the supply shelf below. */
 public const val EmptyStateTrayCueTag: String = "empty-state-tray-cue"
 
 /** Headline for the **first** blank page — the warm welcome (VOICE empty states). */
-public const val FirstPageInvitationHeadline: String = "Let's make something cute ✨"
+public const val FirstPageInvitationHeadline: String = Copy.EmptyState.FIRST_PAGE_HEADLINE
 
 /** Headline for a **later** blank page — the lighter "fresh page" variant (VOICE empty states). */
-public const val LaterPageInvitationHeadline: String = "A fresh page. What goes here?"
+public const val LaterPageInvitationHeadline: String = Copy.EmptyState.LATER_PAGE_HEADLINE
 
 /**
  * The cozy first-run invitation (docs/design/DESIGN-LANGUAGE.md §8/§9) — shown on the canvas when the
@@ -101,7 +102,7 @@ public fun EditorEmptyState(
         // Names the two ways to start AND points to where they live (the supply shelf just below), so the
         // button-less invitation still answers "what do I do next?" without re-presenting the actions.
         Text(
-            text = "Grab a photo or a few words from the supplies below.",
+            text = Copy.EmptyState.SUPPLY_CUE,
             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = type.shell),
             color = colors.inkSoft,
             textAlign = TextAlign.Center,
@@ -109,7 +110,7 @@ public fun EditorEmptyState(
 
         Spacer(Modifier.size(4.dp))
         Text(
-            text = "works offline · stays on your phone",
+            text = Copy.EmptyState.OFFLINE_NOTE,
             style = MaterialTheme.typography.labelSmall.copy(fontFamily = type.shell),
             color = colors.inkSoft,
             textAlign = TextAlign.Center,

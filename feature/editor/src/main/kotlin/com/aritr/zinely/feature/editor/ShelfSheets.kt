@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.ui.components.ZMenuItem
 import com.aritr.zinely.ui.components.ZSheet
@@ -54,9 +55,9 @@ internal const val ShelfSortSheetTestTag: String = "shelf-sort-sheet"
 /** The frozen `#sortMenu` options, in the spec's order. */
 internal enum class ShelfSort(val menuLabel: String, val buttonLabel: String) {
     /** `data-sort="recent"` — the spec's default. */
-    Recent("Recently opened", "Recent"),
-    Name("Name (A–Z)", "Name"),
-    Oldest("Oldest first", "Oldest"),
+    Recent(Copy.Shelf.SORT_RECENT_LONG, Copy.Shelf.SORT_RECENT_SHORT),
+    Name(Copy.Shelf.SORT_NAME_LONG, Copy.Shelf.SORT_NAME_SHORT),
+    Oldest(Copy.Shelf.SORT_OLDEST_LONG, Copy.Shelf.SORT_OLDEST_SHORT),
 }
 
 /** `#createSheet .paper[data-paper]` — A4 leads, as the frozen markup orders them. */
@@ -79,8 +80,8 @@ internal fun ShelfCreateSheet(
     ZSheet(
         visible = visible,
         onDismiss = onDismiss,
-        title = "Start a zine",
-        sub = "Choose your paper. You can print it at home on either.",
+        title = Copy.Common.START_A_ZINE,
+        sub = Copy.Shelf.CHOOSE_PAPER_SUB,
         modifier = Modifier.testTag(HomePaperChooserTestTag),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -93,7 +94,7 @@ internal fun ShelfCreateSheet(
             }
         }
         BasicText(
-            text = "Eight pages from one folded sheet.",
+            text = Copy.Shelf.EIGHT_PAGES_FROM_SHEET,
             modifier = Modifier.padding(top = 14.dp).fillMaxWidth(),
             style = TextStyle(
                 color = ZinelyTheme.colors.onDeskSoft,
@@ -161,9 +162,9 @@ private fun PaperChoice(paper: PaperSize, onClick: () -> Unit, modifier: Modifie
 /** `.paper.a4 .stock{52×74}` / `.paper.letter .stock{56×72}`. */
 private val PaperSize.stockWidth: Dp get() = if (this == PaperSize.A4) 52.dp else 56.dp
 private val PaperSize.stockHeight: Dp get() = if (this == PaperSize.A4) 74.dp else 72.dp
-private val PaperSize.choiceName: String get() = if (this == PaperSize.A4) "A4" else "Letter"
+private val PaperSize.choiceName: String get() = if (this == PaperSize.A4) Copy.Paper.A4 else Copy.Paper.LETTER
 private val PaperSize.choiceDimensions: String
-    get() = if (this == PaperSize.A4) "210 × 297 mm" else "8.5 × 11 in"
+    get() = if (this == PaperSize.A4) Copy.Paper.A4_DIMENSIONS else Copy.Paper.LETTER_DIMENSIONS
 
 /**
  * `#actionSheet` — one zine's actions, titled with its name.
@@ -234,22 +235,22 @@ internal fun ShelfActionSheet(
 
         Column {
             ZMenuItem(
-                label = "Open on the bench",
+                label = Copy.Shelf.OPEN_ON_THE_BENCH,
                 onClick = { onDismiss(); onOpen(card.id) },
                 icon = { OpenGlyph(it) },
             )
             ZMenuItem(
-                label = "Rename",
+                label = Copy.Shelf.RENAME,
                 onClick = { draft = card.title; renaming = true },
                 icon = { RenameGlyph(it) },
             )
             ZMenuItem(
-                label = "Duplicate",
+                label = Copy.Shelf.DUPLICATE,
                 onClick = { haptics.perform(ZinelyHaptic.Snap); onDismiss(); onDuplicate(card.id) },
                 icon = { DuplicateGlyph(it) },
             )
             ZMenuItem(
-                label = "Delete",
+                label = Copy.Shelf.DELETE,
                 onClick = { haptics.perform(ZinelyHaptic.Boundary); onDismiss(); onDelete(card.id) },
                 icon = { DeleteGlyph(it) },
                 danger = true,
@@ -280,7 +281,7 @@ private fun RenameSaveButton(onClick: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         BasicText(
-            text = "Save",
+            text = Copy.Shelf.SAVE,
             style = TextStyle(
                 color = Color.White,
                 fontFamily = ZinelyTheme.typography.shell,
@@ -306,7 +307,7 @@ internal fun ShelfSortSheet(
     ZSheet(
         visible = visible,
         onDismiss = onDismiss,
-        title = "Sort",
+        title = Copy.Shelf.SORT,
         modifier = Modifier.testTag(ShelfSortSheetTestTag),
     ) {
         ShelfSort.entries.forEach { sort ->

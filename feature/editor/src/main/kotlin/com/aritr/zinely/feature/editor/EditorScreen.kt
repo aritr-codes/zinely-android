@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aritr.zinely.ui.theme.rememberReduceMotion
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
@@ -325,10 +326,7 @@ public fun EditorScreen(
             reframeReadable = true
             // Announce entry. The coach-mark has now done its teaching job (bench `taughtReframe = true`),
             // so persist it unless already positively seen. (The keyboard was claimed before the read.)
-            sayReframe(
-                "Reframing photo. Drag to reposition, pinch to zoom, or use the on-screen " +
-                    "move and zoom controls. Done saves, Cancel discards.",
-            )
+            sayReframe(Copy.Editor.REFRAMING_PHOTO)
             if (reframeCoachSeen != true) onReframeCoachSeen()
         }
     }
@@ -358,7 +356,7 @@ public fun EditorScreen(
             // Speak the outcome (bench: "Framing saved." vs "Framing unchanged.") — the same crop/fit
             // comparison the reducer uses to decide whether a command is recorded.
             sayReframe(
-                if (after.crop != rf.before.crop || after.fit != rf.before.fit) "Framing saved." else "Framing unchanged.",
+                if (after.crop != rf.before.crop || after.fit != rf.before.fit) Copy.Editor.FRAMING_SAVED else Copy.Editor.FRAMING_UNCHANGED,
             )
             dispatch(Intent.CommitReframe(rf.id, after, rf.token))
         }
@@ -392,11 +390,11 @@ public fun EditorScreen(
                 adjustDraft(nudged)
                 sayReframe(
                     when {
-                        dx < 0 -> "Moved left"; dx > 0 -> "Moved right"; dy < 0 -> "Moved up"; else -> "Moved down"
+                        dx < 0 -> Copy.Editor.MOVED_LEFT; dx > 0 -> Copy.Editor.MOVED_RIGHT; dy < 0 -> Copy.Editor.MOVED_UP; else -> Copy.Editor.MOVED_DOWN
                     },
                 )
             } else {
-                sayReframe(if (d.fit == FrameFit.WHOLE) WholePhotoInertLine else "No room to move that way.")
+                sayReframe(if (d.fit == FrameFit.WHOLE) WholePhotoInertLine else Copy.Editor.NO_ROOM_TO_MOVE)
             }
         }
         Unit
@@ -411,15 +409,15 @@ public fun EditorScreen(
             if (if (zoomingIn) reframeAbilities.zoomIn else reframeAbilities.zoomOut) {
                 val nd = Framing.clampPan(Framing.zoomed(d, factor), pr, br)
                 adjustDraft(nd)
-                sayReframe("Zoom ${(nd.zoom * 100).roundToInt()} percent")
+                sayReframe(Copy.Reframe.zoomPercentAnnouncement((nd.zoom * 100).roundToInt()))
             } else {
                 // Same as the nudge: the button is disabled, the keystroke is not, so it gets a reason
                 // instead of a repeated "Zoom 100 percent" that sounds like a stuck control.
                 sayReframe(
                     when {
                         d.fit == FrameFit.WHOLE -> WholePhotoInertLine
-                        zoomingIn -> "Already at the largest zoom."
-                        else -> "Already at the smallest zoom."
+                        zoomingIn -> Copy.Editor.ALREADY_LARGEST_ZOOM
+                        else -> Copy.Editor.ALREADY_SMALLEST_ZOOM
                     },
                 )
             }
@@ -432,9 +430,9 @@ public fun EditorScreen(
             adjustDraft(applyFit(d, f))
             sayReframe(
                 if (f == FrameFit.FILL) {
-                    "Filling the frame. Edges may be cropped."
+                    Copy.Editor.FILLING_THE_FRAME
                 } else {
-                    "Showing the whole photo. Margins may appear on paper."
+                    Copy.Editor.SHOWING_WHOLE_PHOTO
                 },
             )
         }
@@ -443,7 +441,7 @@ public fun EditorScreen(
     val reframeReset = {
         if (reframePratio != null) {
             adjustDraft(Framing.DEFAULT_FILL)
-            sayReframe("Framing reset. Cancel to undo.")
+            sayReframe(Copy.Editor.FRAMING_RESET)
         }
         Unit
     }
@@ -455,7 +453,7 @@ public fun EditorScreen(
             // can land while the entry line has not been spoken. Saying "Reframing cancelled." then
             // would report the end of something a screen-reader user never heard begin. The cancel
             // itself still happens; only the announcement is conditioned on the entry announcement.
-            if (reframeReadable == true) sayReframe("Reframing cancelled.")
+            if (reframeReadable == true) sayReframe(Copy.Editor.REFRAMING_CANCELLED)
             dispatch(Intent.CancelReframe(rf.token))
         }
         Unit
@@ -561,8 +559,8 @@ public fun EditorScreen(
                     colors = ButtonDefaults.textButtonColors(contentColor = ZinelyTheme.colors.coral),
                     modifier = Modifier
                         .testTag(EditorPreviewActionTestTag)
-                        .semantics { contentDescription = "Preview" },
-                ) { Text("Preview  ›") }
+                        .semantics { contentDescription = Copy.Editor.PREVIEW },
+                ) { Text(Copy.Editor.PREVIEW_LABEL) }
             }
         }
         BoxWithConstraints(
@@ -965,8 +963,7 @@ internal const val ReframeUnavailableAnnouncement: String = ""
  * way out rather than only the refusal, so a screen-reader user is not left guessing why the pad went
  * quiet. Same for the three zoom-limit lines at their call site.
  */
-internal const val WholePhotoInertLine: String =
-    "Whole photo can’t be moved or zoomed. Choose Fill to adjust it."
+internal const val WholePhotoInertLine: String = Copy.Editor.WHOLE_PHOTO_INERT
 
 private fun applyFit(draft: FramingDraft, fit: FrameFit): FramingDraft = when (fit) {
     FrameFit.WHOLE -> draft.copy(fit = FrameFit.WHOLE, zoom = Framing.MIN_ZOOM, panX = 0.0, panY = 0.0)

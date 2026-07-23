@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.components.zinelyFocusRing
 import com.aritr.zinely.ui.components.zinelyShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
@@ -158,7 +159,7 @@ internal fun ShelfCard(
                 )
                 .semantics {
                     role = Role.Button
-                    contentDescription = "${card.title}, finished zine. Open on the bench."
+                    contentDescription = Copy.Shelf.cardOpenLabel(card.title)
                 },
             lifted = hovered || focused,
             pressed = pressed,
@@ -236,10 +237,10 @@ private fun MoreButton(title: String, onClick: () -> Unit, modifier: Modifier = 
                 interactionSource = interaction,
                 indication = null,
                 role = Role.Button,
-                onClickLabel = "Actions for $title",
+                onClickLabel = Copy.Shelf.actionsFor(title),
                 onClick = onClick,
             )
-            .semantics { contentDescription = "Actions for $title" },
+            .semantics { contentDescription = Copy.Shelf.actionsFor(title) },
         contentAlignment = Alignment.Center,
     ) {
         val plate = RoundedCornerShape(9.dp)

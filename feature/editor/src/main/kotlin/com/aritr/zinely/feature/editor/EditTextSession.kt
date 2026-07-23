@@ -30,6 +30,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.model.TextElement
@@ -116,7 +117,7 @@ public fun EditTextSession(
             // The empty edit box renders as only a caret (frozen bench.html spec), so it carries no text to
             // name it — TalkBack would focus a bare "edit box". A non-visual name fixes that (WCAG 4.1.2)
             // without touching the design; typed content still reads via the field's editableText value.
-            .semantics { contentDescription = "Zine text" }
+            .semantics { contentDescription = Copy.EditText.ZINE_TEXT }
             .focusRequester(focusRequester)
             .onFocusChanged { state ->
                 if (state.isFocused) hadFocus = true else if (hadFocus) commit()

@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the Reframe controls band (present only during a Reframe session). */
@@ -136,7 +137,7 @@ public fun ReframeControls(
                 itemVerticalAlignment = Alignment.CenterVertically,
             ) {
                 FitSegment(fit = fit, onFit = onFit)
-                ToolIconButton(Icons.Filled.Refresh, "Reset framing") { onReset() }
+                ToolIconButton(Icons.Filled.Refresh, Copy.A11y.RESET_FRAMING) { onReset() }
                 CancelButton(onCancel)
                 DoneButton(onDone)
             }
@@ -188,17 +189,17 @@ private fun NudgePad(abilities: ReframeAbilities, onNudge: (Int, Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowUpward, "Move photo up", v) { onNudge(0, -1) }
+            NudgeCell(Icons.Filled.ArrowUpward, Copy.Reframe.MOVE_PHOTO_UP, v) { onNudge(0, -1) }
             NudgeSpacer()
         }
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-            NudgeCell(Icons.Filled.ArrowBack, "Move photo left", h) { onNudge(-1, 0) }
+            NudgeCell(Icons.Filled.ArrowBack, Copy.Reframe.MOVE_PHOTO_LEFT, h) { onNudge(-1, 0) }
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowForward, "Move photo right", h) { onNudge(1, 0) }
+            NudgeCell(Icons.Filled.ArrowForward, Copy.Reframe.MOVE_PHOTO_RIGHT, h) { onNudge(1, 0) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowDownward, "Move photo down", v) { onNudge(0, 1) }
+            NudgeCell(Icons.Filled.ArrowDownward, Copy.Reframe.MOVE_PHOTO_DOWN, v) { onNudge(0, 1) }
             NudgeSpacer()
         }
     }
@@ -245,16 +246,16 @@ private fun ZoomStep(zoomPercent: Int, abilities: ReframeAbilities, onZoom: (Dou
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ZoomButton(Icons.Filled.Remove, "Zoom out", abilities.zoomOut) { onZoom(1.0 / Framing.ZOOM_STEP) }
+        ZoomButton(Icons.Filled.Remove, Copy.Reframe.ZOOM_OUT, abilities.zoomOut) { onZoom(1.0 / Framing.ZOOM_STEP) }
         Text(
-            text = "$zoomPercent%",
+            text = Copy.Reframe.zoomPercentText(zoomPercent),
             fontWeight = FontWeight.SemiBold,
             fontSize = 13.sp,
             modifier = Modifier
                 .width(50.dp)
-                .clearAndSetSemantics { contentDescription = "Zoom $zoomPercent percent" },
+                .clearAndSetSemantics { contentDescription = Copy.Reframe.zoomPercentAnnouncement(zoomPercent) },
         )
-        ZoomButton(Icons.Filled.Add, "Zoom in", abilities.zoomIn) { onZoom(Framing.ZOOM_STEP) }
+        ZoomButton(Icons.Filled.Add, Copy.Reframe.ZOOM_IN, abilities.zoomIn) { onZoom(Framing.ZOOM_STEP) }
     }
 }
 
@@ -316,10 +317,10 @@ private fun FitSegment(fit: FrameFit, onFit: (FrameFit) -> Unit) {
             .clip(RoundedCornerShape(13.dp))
             .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(13.dp)),
     ) {
-        FitOption("Fill", "crops edges", FrameFit.FILL, fit, onFit)
+        FitOption(Copy.Reframe.FILL, Copy.Reframe.CROPS_EDGES, FrameFit.FILL, fit, onFit)
         // The inter-segment hairline (bench `.fitseg button+button{border-left:…}`).
         Box(Modifier.width(1.dp).fillMaxHeight().background(ZinelyTheme.colors.fieldEdge))
-        FitOption("Whole photo", "may add margins", FrameFit.WHOLE, fit, onFit)
+        FitOption(Copy.Reframe.WHOLE_PHOTO, Copy.Reframe.MAY_ADD_MARGINS, FrameFit.WHOLE, fit, onFit)
     }
 }
 
@@ -391,13 +392,13 @@ private fun CancelButton(onCancel: () -> Unit) {
             .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(14.dp))
             .clickable(onClick = onCancel)
             .clearAndSetSemantics {
-                contentDescription = "Cancel reframing"
+                contentDescription = Copy.Reframe.CANCEL_REFRAMING
                 role = Role.Button
             }
             .padding(horizontal = 15.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text("Cancel", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = ZinelyTheme.colors.onDesk)
+        Text(Copy.Reframe.CANCEL, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = ZinelyTheme.colors.onDesk)
     }
 }
 
@@ -416,14 +417,14 @@ private fun DoneButton(onDone: () -> Unit) {
             .background(ZinelyTheme.colors.coralStrong)
             .clickable(onClick = onDone)
             .clearAndSetSemantics {
-                contentDescription = "Done reframing"
+                contentDescription = Copy.Reframe.DONE_REFRAMING
                 role = Role.Button
             }
             .padding(horizontal = 22.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(9.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Done", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+        Text(Copy.Reframe.DONE, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
         Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(19.dp))
     }
 }
@@ -454,7 +455,7 @@ public fun ReframeAffordanceChip(onClick: () -> Unit, modifier: Modifier = Modif
             .testTag(ReframeChipTestTag)
             .clickable(onClick = onClick)
             .clearAndSetSemantics {
-                contentDescription = "Reframe this photo"
+                contentDescription = Copy.Reframe.REFRAME_THIS_PHOTO
                 role = Role.Button
             },
         // bench `.reframe-aff`: ink at 62% over the photo, paper text, tight 11dp corners.
@@ -468,7 +469,7 @@ public fun ReframeAffordanceChip(onClick: () -> Unit, modifier: Modifier = Modif
             horizontalArrangement = Arrangement.spacedBy(5.dp),
         ) {
             Icon(Icons.Filled.CropFree, contentDescription = null, modifier = Modifier.size(13.dp))
-            Text("Reframe", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text(Copy.Reframe.REFRAME, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }

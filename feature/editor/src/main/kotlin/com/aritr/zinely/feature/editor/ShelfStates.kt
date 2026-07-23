@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.components.ZPaperSurface
 import com.aritr.zinely.ui.components.zinelyShadow
 import com.aritr.zinely.ui.components.ZPrimaryButton
@@ -108,7 +109,7 @@ internal fun ShelfAppBar(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.Bottom,
     ) {
         ShelfWordmark()
-        ShelfPrivacyPill("On this device")
+        ShelfPrivacyPill(Copy.Shelf.ON_THIS_DEVICE)
     }
 }
 
@@ -118,10 +119,10 @@ private fun ShelfWordmark() {
     val colors = ZinelyTheme.colors
     BasicText(
         text = buildAnnotatedString {
-            append("Zinely")
+            append(Copy.Common.BRAND)
             withStyle(SpanStyle(color = colors.coral)) { append(".") }
         },
-        modifier = Modifier.semantics { contentDescription = "Zinely" },
+        modifier = Modifier.semantics { contentDescription = Copy.Common.BRAND },
         style = TextStyle(
             color = colors.onDesk,
             fontFamily = ZinelyTheme.typography.voice,
@@ -209,7 +210,7 @@ private fun ShelfSearchField(query: String, onQueryChange: (String) -> Unit, mod
         onValueChange = onQueryChange,
         modifier = modifier
             .testTag(ShelfSearchFieldTestTag)
-            .semantics { contentDescription = "Search your zines" },
+            .semantics { contentDescription = Copy.Shelf.SEARCH_YOUR_ZINES },
         textStyle = textStyle,
         cursorBrush = SolidColor(colors.coralStrong),
         singleLine = true,
@@ -229,7 +230,7 @@ private fun ShelfSearchField(query: String, onQueryChange: (String) -> Unit, mod
                 Box(Modifier.size(17.dp)) { SearchGlyph(colors.onDeskFaint) }
                 Box(Modifier.weight(1f)) {
                     if (query.isEmpty()) {
-                        BasicText("Search your zines", style = textStyle.copy(color = colors.onDeskFaint))
+                        BasicText(Copy.Shelf.SEARCH_YOUR_ZINES, style = textStyle.copy(color = colors.onDeskFaint))
                     }
                     field()
                 }
@@ -250,7 +251,7 @@ internal fun ShelfHead(count: Int, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.Bottom,
     ) {
         BasicText(
-            text = "Your zines",
+            text = Copy.Shelf.YOUR_ZINES,
             style = TextStyle(
                 color = colors.onDesk,
                 fontFamily = ZinelyTheme.typography.voice,
@@ -297,7 +298,7 @@ internal fun ShelfDock(onStart: () -> Unit, wide: Boolean, modifier: Modifier = 
         contentAlignment = if (wide) Alignment.CenterEnd else Alignment.Center,
     ) {
         ZPrimaryButton(
-            text = "Start a zine",
+            text = Copy.Common.START_A_ZINE,
             onClick = onStart,
             metrics = ZPrimaryButtonMetrics.Shelf,
             modifier = Modifier.testTag(ShelfStartButtonTestTag),
@@ -326,7 +327,7 @@ internal fun ShelfLoadingSkeleton(columns: Int, roomy: Boolean, modifier: Modifi
         modifier = modifier
             .fillMaxWidth()
             .testTag(HomeLoadingTestTag)
-            .clearAndSetSemantics { contentDescription = "Loading your zines" }
+            .clearAndSetSemantics { contentDescription = Copy.Shelf.LOADING_YOUR_ZINES }
             .padding(
                 horizontal = if (roomy) 28.dp else 20.dp,
                 vertical = if (roomy) 22.dp else 16.dp,
@@ -410,8 +411,7 @@ internal fun ShelfEmptyState(modifier: Modifier = Modifier) {
             ),
         )
         BasicText(
-            text = "One sheet of paper, printed at home and folded by hand into a small book. " +
-                "Start one and the bench will teach you the rest.",
+            text = Copy.Shelf.EMPTY_BODY,
             modifier = Modifier.padding(top = 8.dp).widthIn(max = 300.dp),
             style = TextStyle(
                 color = colors.onDeskSoft,
@@ -422,7 +422,7 @@ internal fun ShelfEmptyState(modifier: Modifier = Modifier) {
             ),
         )
         ShelfPrivacyPill(
-            text = "Kept on this device — no account, nothing uploaded",
+            text = Copy.Shelf.KEPT_ON_DEVICE,
             modifier = Modifier.padding(top = 22.dp),
         )
     }
@@ -556,15 +556,15 @@ internal fun ShelfErrorState(onRetry: () -> Unit, modifier: Modifier = Modifier)
         contentAlignment = Alignment.Center,
     ) {
         ZStatusPane(
-            title = "Couldn't open your shelf",
-            body = "Your zines are safe on this device — we just couldn't read them this time.",
+            title = Copy.Shelf.COULDNT_OPEN_SHELF,
+            body = Copy.Shelf.ERROR_BODY,
             // `.errorstate .badge{ background:rgba(198,78,52,.14) }` — coral-strong at 14%.
             badgeBackground = colors.coralStrong.copy(alpha = 0.14f),
             badgeContent = colors.coralText,
             badgeIcon = { ErrorGlyph(it) },
         ) {
             ZPrimaryButton(
-                text = "Try again",
+                text = Copy.Common.TRY_AGAIN,
                 onClick = onRetry,
                 metrics = ZPrimaryButtonMetrics.Shelf,
                 modifier = Modifier.testTag(ShelfRetryButtonTestTag),
@@ -579,7 +579,7 @@ internal fun ShelfErrorState(onRetry: () -> Unit, modifier: Modifier = Modifier)
 @Composable
 internal fun ShelfSearchMiss(modifier: Modifier = Modifier) {
     BasicText(
-        text = "Nothing here by that name.",
+        text = Copy.Shelf.NOTHING_BY_THAT_NAME,
         modifier = modifier
             .fillMaxWidth()
             .testTag(ShelfSearchMissTestTag)

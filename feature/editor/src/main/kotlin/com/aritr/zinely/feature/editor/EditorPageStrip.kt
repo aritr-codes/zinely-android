@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PtSize
@@ -148,8 +149,8 @@ private fun PageCard(
             )
             .testTag(editorPageCardTag(pageNumber))
             .semantics {
-                contentDescription = "Page $pageNumber"
-                stateDescription = if (current) "Current page" else "Not selected"
+                contentDescription = Copy.PageStrip.pageNumber(pageNumber)
+                stateDescription = if (current) Copy.PageStrip.CURRENT_PAGE else Copy.PageStrip.NOT_SELECTED
             },
         contentAlignment = Alignment.Center,
     ) {

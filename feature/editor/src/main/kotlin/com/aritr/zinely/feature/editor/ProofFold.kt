@@ -63,6 +63,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyEasing
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
@@ -83,30 +84,11 @@ internal data class FoldStepSpec(val title: String, val caption: String)
  * the exact order and copy of the spec. The last step is where the guide hands off to the climax.
  */
 internal val PROOF_FOLD_STEPS: List<FoldStepSpec> = listOf(
-    FoldStepSpec(
-        "Crease into eight",
-        "Fold the sheet in half three times, then open it flat. You’ll see eight panels. " +
-            "All folds are valleys.",
-    ),
-    FoldStepSpec(
-        "One cut — the only cut",
-        "Fold in half short-end to short-end. Cut the slit across the two middle panels, " +
-            "and stop at the quarter lines.",
-    ),
-    FoldStepSpec(
-        "Open it back up",
-        "Lay the sheet flat again. The cut has become a small slot right through the middle.",
-    ),
-    FoldStepSpec(
-        "Fold the long way",
-        "Fold the sheet in half so the long edges meet — one wide strip. The cut opens into a " +
-            "diamond right on the fold.",
-    ),
-    FoldStepSpec(
-        "Push in and wrap",
-        "Push the two ends toward the middle so the panels pop into a plus, then wrap them flat — " +
-            "front cover facing out.",
-    ),
+    FoldStepSpec(Copy.ProofFold.STEP1_TITLE, Copy.ProofFold.STEP1_BODY),
+    FoldStepSpec(Copy.ProofFold.STEP2_TITLE, Copy.ProofFold.STEP2_BODY),
+    FoldStepSpec(Copy.ProofFold.STEP3_TITLE, Copy.ProofFold.STEP3_BODY),
+    FoldStepSpec(Copy.ProofFold.STEP4_TITLE, Copy.ProofFold.STEP4_BODY),
+    FoldStepSpec(Copy.ProofFold.STEP5_TITLE, Copy.ProofFold.STEP5_BODY),
 )
 
 internal const val FOLD_LAST_STEP: Int = 4 // PROOF_FOLD_STEPS.lastIndex — the finish-hand-off step.
@@ -175,7 +157,7 @@ private fun FoldGuide(
             modifier = Modifier.padding(bottom = 4.dp),
         ) {
             BasicText(
-                text = "Fold it into a book",
+                text = Copy.ProofFold.INTRO_TITLE,
                 style = TextStyle(
                     color = colors.onDesk,
                     fontFamily = ZinelyTheme.typography.voice,
@@ -185,7 +167,7 @@ private fun FoldGuide(
                 ),
             )
             BasicText(
-                text = "Five steps. Take them one at a time — tap the arrow when a step is done.",
+                text = Copy.ProofFold.INTRO_BODY,
                 style = TextStyle(
                     color = colors.onDeskSoft,
                     fontFamily = ZinelyTheme.typography.shell,
@@ -208,7 +190,7 @@ private fun FoldGuide(
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             BasicText(
-                text = "${step + 1}. ${spec.title}",
+                text = Copy.ProofFold.stepHeading(step + 1, spec.title),
                 modifier = Modifier.testTag(ProofStepTitleTestTag),
                 style = TextStyle(
                     color = colors.onDesk,
@@ -237,7 +219,7 @@ private fun FoldGuide(
         ) {
             StepNavButton(
                 pathData = ICON_STEP_PREV,
-                contentDescription = "Previous step",
+                contentDescription = Copy.ProofFold.PREVIOUS_STEP,
                 enabled = step > 0,
                 onClick = onPrev,
                 testTag = ProofStepPrevTestTag,
@@ -247,7 +229,7 @@ private fun FoldGuide(
             if (step < FOLD_LAST_STEP) {
                 StepNavButton(
                     pathData = ICON_STEP_NEXT,
-                    contentDescription = "Next step",
+                    contentDescription = Copy.ProofFold.NEXT_STEP,
                     enabled = true,
                     onClick = onNext,
                     testTag = ProofStepNextTestTag,
@@ -474,7 +456,7 @@ private fun FinishedBook(climaxBeat: Int, reduceMotion: Boolean, modifier: Modif
 
             // .done-h — the payoff line; takes focus when it lands.
             BasicText(
-                text = "Your zine is a book.",
+                text = Copy.ProofFold.DONE_HEADING,
                 modifier = Modifier
                     .focusRequester(headingFocus)
                     .focusProperties { canFocus = wordsH }
@@ -498,7 +480,7 @@ private fun FinishedBook(climaxBeat: Int, reduceMotion: Boolean, modifier: Modif
             )
             // .done-p — the calm coda.
             BasicText(
-                text = "Eight pages, made by hand, kept on this device. It’s on your shelf whenever you want it.",
+                text = Copy.ProofFold.DONE_BODY,
                 modifier = Modifier
                     .widthIn(max = 260.dp)
                     .graphicsLayer {
@@ -641,7 +623,7 @@ private class FoldDiagramScope(
         sheet(20f, 25f, 160f, 100f)
         vx.forEach { crease(it, y0, y1, active = true) }
         hLine(hy, x0, x1, active = true)
-        label("eight panels", 100f, 18f, valley = true)
+        label(Copy.ProofFold.DIAGRAM_EIGHT_PANELS, 100f, 18f, valley = true)
     }
 
     fun step2() {
@@ -653,7 +635,7 @@ private class FoldDiagramScope(
         cut(vx[0], vx[2], hy)
         arrow(o(100f, 44f), o(100f, 66f))
         fill(listOf(o(96f, 44f), o(100f, 36f), o(104f, 44f)))
-        label("CUT HERE", 100f, 98f, valley = false)
+        label(Copy.ProofFold.DIAGRAM_CUT_HERE, 100f, 98f, valley = false)
     }
 
     fun step3() {
@@ -678,7 +660,7 @@ private class FoldDiagramScope(
             listOf(o(85f, 50f), o(100f, 43f), o(115f, 50f), o(100f, 57f)),
             colors.teal, 2.4f, closed = true,
         )
-        label("one wide strip", 100f, 42f, valley = true)
+        label(Copy.ProofFold.DIAGRAM_ONE_WIDE_STRIP, 100f, 42f, valley = true)
     }
 
     fun step5() {
@@ -690,7 +672,7 @@ private class FoldDiagramScope(
         sheet(78f, 40f, 44f, 70f)
         crease(100f, 40f, 110f, active = false)
         hLine(75f, 78f, 122f, active = true)
-        label("wrap to a book", 100f, 30f, valley = true)
+        label(Copy.ProofFold.DIAGRAM_WRAP_TO_A_BOOK, 100f, 30f, valley = true)
     }
 }
 
