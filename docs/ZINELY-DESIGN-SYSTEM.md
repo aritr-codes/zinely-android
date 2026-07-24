@@ -679,25 +679,24 @@ Roles, not sizes. The implementation derives the scale; the scale never derives 
 > caps, because a small-capped filename is a wrong filename. **No role enters this table without a
 > register**, and **the five registers are frozen**: a role
 > that genuinely cannot be expressed by Display · Subhead · Body · Metadata · Caption is an **owner
-> decision and a new inventory item**, never a quietly added sixth. *(Registers are named here **only for the five roles
-> added by [ADR-067](DECISIONS.md#adr-067)**. The original eleven do **not** yet carry one — five of
-> their names coincide with a register, and **Heading, Button, Label, Instruction, Warning and Empty
-> state have none recorded.** That gap is [CI-99](V1-CONFORMANCE-INVENTORY.md), not something this
-> table has already solved.)*
+> decision and a new inventory item**, never a quietly added sixth. **A role's register is part of the
+> system and is never selected during implementation** ([ADR-068](DECISIONS.md#adr-068)). *(All sixteen
+> roles now carry one: five named by [ADR-067](DECISIONS.md#adr-067), six by
+> [ADR-068](DECISIONS.md#adr-068), and five whose name is their register.)*
 
 | Role | Its job | Rules |
 |---|---|---|
-| **Display** | Identity, and endings | Serif. Rare, therefore heavy when it lands. Reserved for the wordmark, the ending, and the one sentence per screen that carries the product's voice. Never used for a label |
-| **Heading** | Names the surface the user is on | One per screen. Answers *where am I*, never *what should I do* |
+| **Display** | Identity, endings, **and the title of a primary surface** | Serif. Rare, therefore heavy when it lands. **Reserved for four uses** ⚠️ *amended by [ADR-068](DECISIONS.md#adr-068)*: the product **wordmark**; an **editorial ending**; the **one sentence per screen that carries the product's voice**; and **the title of a primary product surface, where that title forms part of the product's editorial identity**. **Never used for a label** |
+| **Heading** *(Display)* | Names the surface the user is on | One per screen. Answers *where am I*, never *what should I do* |
 | **Subhead** | The missing register — third-most-important | Carries emphasis that would otherwise be expressed with bold and colour. Groups content; introduces a step |
 | **Body** | Everything the user reads to act | The clean sans, at comfortable measure. Never justified, never below the contrast floor, never grey-on-grey for "softness" |
 | **Metadata** | Quiet facts about the artifact | Small caps, wide-tracked, on a baseline shared with what it describes. The product already has this right in its `8-PAGE MINI · A4` line — everything else matches *it* |
 | **Caption** | A note attached to something visible | Adjacent, aligned to its subject, never floating |
-| **Button** | The action | Verb-first, from [VOICE](design/VOICE.md). Sentence case. Never a glyph alone; never an emoji standing in for an icon |
-| **Label** | Names a control | Shortest true noun or verb. If a label needs a qualifier, the control is wrong |
-| **Instruction** | Tells the user what to do at the moment they need it | Present tense, second person, one idea per line. Appears at the moment of need and is dismissible. Shows before it says, and says before it instructs (P7) |
-| **Warning** | Names something that will actually go wrong | Plain, specific, non-punitive; states the way forward in the same breath. Never carries an error code, never uses colour as its only signal |
-| **Empty state** | Invites | An invitation, never a report of absence. The action lives where actions live — the empty state does not sprout its own buttons if a tray already owns them ([ADR-033](DECISIONS.md#adr-033)) |
+| **Button** *(Body)* | The action | Verb-first, from [VOICE](design/VOICE.md). Sentence case. Never a glyph alone; never an emoji standing in for an icon |
+| **Label** *(Body)* | Names a control | Shortest true noun or verb. If a label needs a qualifier, the control is wrong |
+| **Instruction** *(Body)* | Tells the user what to do at the moment they need it | Present tense, second person, one idea per line. Appears at the moment of need and is dismissible. Shows before it says, and says before it instructs (P7) |
+| **Warning** *(Body)* | Names something that will actually go wrong | Plain, specific, non-punitive; states the way forward in the same breath. Never carries an error code, never uses colour as its only signal |
+| **Empty state** *(Display)* | Invites | An invitation, never a report of absence. The action lives where actions live — the empty state does not sprout its own buttons if a tray already owns them ([ADR-033](DECISIONS.md#adr-033)) |
 | **Value** *(Body)* | The answer to a labelled setting — *"A4"* beside *"Paper size"* | Sits on a shared baseline with the Label it answers (§2.1); never a different size from that label, or the row stops being a row. States the current truth, never the available options |
 | **Input** *(Body)* | Text the user is typing, and its placeholder | The placeholder is the **same register**, quieter in colour and **never smaller** — a field that changes size when typing begins is the page resizing in miniature. The placeholder shows the shape of the answer, never repeats the label |
 | **Technical** *(Metadata)* | A machine-facing fact the user may need to quote — filename, size, date, version | Takes Metadata's **size**, not its small-caps wide-tracking, which corrupts a filename. Numerals are tabular **where they align in columns** (§13 #16); a lone value in a dialog needs no column. Set exactly as the system would show it; never prettified, never truncated where the whole value is the point |
