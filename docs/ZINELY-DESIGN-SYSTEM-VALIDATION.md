@@ -443,10 +443,18 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > **None settles rule vs. rule inside the design system**, which is this case. Missing: that order,
 > and a stated class of screen exempt from R3.
 >
-> **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
-> Resolved at **rank 4, the specific over the general**: SCREEN-INVENTORY's Settings entry is written
-> for this screen; R3 is written for all screens. The *stated exempt class* remains a separate question
-> and is still owed by **A-7 / CI-11** — ADR-064 supplies the order, not the class.
+> **🟡 PARTIALLY RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md),
+> 2026-07-24. The remainder is ESCALATED to CI-11, by §1.7's own escalation clause.**
+> §1.7 supplies the missing axis, and that much is closed: the collision is no longer *undecidable for
+> want of an order*. But the order does **not** uniquely decide this one, and saying it did would be
+> the error this section exists to prevent. Rank 4 (the specific over the general) appears to hand it to
+> SCREEN-INVENTORY — except that doing so would let SCREEN-INVENTORY, which its own header calls *"not
+> a parallel source of truth"*, defeat [R3](design/DESIGN-RULES.md), which
+> [§0.2](ZINELY-DESIGN-SYSTEM.md)'s ADR-061 table records as keeping **everything** and giving up
+> **nothing**. That is a document-vs-document re-ranking, which §1.7 explicitly refuses to perform.
+> **Therefore it escalates**, and its remaining half already has an owner: **A-7 / CI-11**, which
+> requires the exempt class be *"recorded as a narrow exemption from P1 rather than a gap closure."*
+> Marking D-1 fully closed here would have granted Settings that exemption ahead of the CI-11 ruling.
 
 > **D-2 · The accent on the user's page.** *Severity: **low** — narrowed under review.*
 > §7.2 forbids our accent on the artifact's surface. An earlier draft claimed §3.2 and R1 *require* it
@@ -467,8 +475,11 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > chrome vs. an About surface).
 >
 > **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
-> Resolved at **rank 1, the constitution**: Article 5's honesty duty outranks a VOICE style
-> preference, so a version number is permitted where honesty requires one and forbidden as chrome
+> Resolved at **rank 1, and resolved *inside* it.** VOICE is not a style preference to be outranked —
+> [§0.2](ZINELY-DESIGN-SYSTEM.md) anchors it in **Sacred Thing 4**, so this is rank 1 against rank 1,
+> which §1.7 would ordinarily escalate. It does not need to: Sacred Thing 4 *itself* reads **"honest
+> before kind (Article 5)"**, so the constitution settles its own collision. A version number is
+> permitted where honesty requires one (an About surface, a bug report) and forbidden as product chrome
 > everywhere else. The scope note is now derivable rather than missing.
 
 > **D-4 · The three motion jobs exclude motion the product already ships.** *Severity: medium.*
@@ -502,19 +513,29 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > **carrying between scenes.**
 >
 > **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
-> Resolved at **rank 4, the specific over the general**: §3.6 is written for the one transition where a
-> card becomes the page; §8.2 is written for every surface. Continuity wins in that transition and
-> nowhere else — which is the distinguishing clause, arrived at by rank.
+> Resolved at **rank 4, the specific over the general**: [§3.6](ZINELY-DESIGN-SYSTEM.md) governs one
+> narrow case — *"when a thing exists on both sides of a **navigation**, it moves"* — while §8.2
+> governs every surface at all times. The narrower rule wins inside its case and nowhere else, which
+> *is* the missing clause: **moving within a scene** is §8.2's and stays forbidden; **carrying between
+> scenes** is §3.6's and is not moving the work at all. Arrived at by rank, not by writing a new rule.
 
 > **D-8 · Template loudness.** *Severity: medium.* §7.4 makes chrome quieter than "any content the user
 > brings"; §1.5 has only two columns. Our artifact-register material is in neither. Missing: a third
 > column — **material we supply** — displayed at artifact strength, chosen at tool precision.
 >
 > **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
-> Resolved at **rank 3, the artifact's truth**: material we supply *becomes* the user's artifact the
-> moment it is placed, so it is displayed at artifact strength and §7.4's chrome-quietness rule does not
-> reach it. The third column is now derivable; writing it into §1.5 is an editorial follow-on, not a
-> further ruling.
+> Resolved at **rank 3, the artifact's truth**: material we supply is shown *as it will appear in the
+> artifact*, so it is displayed at artifact strength and §7.4's chrome-quietness rule does not reach it.
+> **The reasoning does not depend on the material having been placed** — a font name set in anything but
+> its own face, or a template card muted to chrome strength, misrepresents what will print, which is
+> what rank 3 forbids. That is why it also decides audit row 19, where nothing has been placed.
+> **This does not presuppose [A-5](#a-5--the-artifact--representation-distinction--amendment):** rank 3
+> answers *how loudly a sample is drawn*, which is a question about honesty; A-5 answers *whether a
+> representation is the artifact*, which is a question about identity. D-6 needs the second; D-8 needs
+> only the first.
+> **Still owed (editorial, not a ruling):** §1.5's two columns are not yet three. The rank decides the
+> loudness; writing **material we supply** into the split table is a docs edit that rides the next §1.5
+> pass, and until it lands a reader of §1.5 alone still finds two columns.
 
 ### 3.3 Circular and unfalsifiable rules
 
@@ -697,7 +718,7 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 6 | Should paper rotate? | Derivable for the page (**no**, §8.3); contradicted for its thumbnail (**yes**, §5.10) | ❌ | D-5 / D-6 |
 | 7 | May the accent appear on user content? | Derivable for handles (**no** — §3.2 prefers depth over outline); undecidable for the caret | ❌ | D-2, narrowly |
 | 8 | May two primary actions exist? | Derivable — **no.** §4.2 and Premium #58; and every shipped multi-action screen ranks them (SCREEN-INVENTORY: Export = PDF primary, PNG secondary) | ✅ | — |
-| 9 | Does Settings have a primary action? | ~~**Contradiction** — R2/R3/§4.2/#58 vs. SCREEN-INVENTORY~~ **Decidable** — §1.7 rank 4 (specific over general): SCREEN-INVENTORY wins for Settings | ✅ [ADR-064](DECISIONS.md#adr-064) | D-1 |
+| 9 | Does Settings have a primary action? | **Contradiction** — R2/R3/§4.2/#58 vs. SCREEN-INVENTORY. §1.7 supplies the axis but does not decide it: rank 4 would re-rank two documents, so it **escalates** | 🟡 escalated to CI-11 | D-1 |
 | 10 | What is the subject of About? | Undecidable — §4.1 admits only the user's work | ❌ | Tool-subject screen class |
 | 11 | Is a search field chrome or content? | Undecidable — no Field object | ❌ | D-12 |
 | 12 | What colour is Delete? | Undecidable — Premium #30 presupposes semantic colours; §7.1's job table has no row for consequence | ❌ | D-22 |
@@ -707,16 +728,21 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 16 | May a progress indicator use the accent? | Undecidable — accent means "your next action" | ❌ | D-22 / D-24 |
 | 17 | Does "no results" use the empty-state invitation? | Ambiguous — §9.10 and Premium #102 read literally give the wrong answer | ❌ | Filtered-empty vs. new-empty |
 | 18 | Does the page resize when a tablet side panel opens? | Ambiguous — §8.2's list omits the case; §4.7's remedy is impossible in two panes | ❌ | §5 longevity |
-| 19 | Is a font name set in its own font? | ~~Undecidable — §1.1 and §1.5 disagree~~ **Decidable** — §1.7 rank 3 (the artifact's truth): material we supply reads at artifact strength | ✅ [ADR-064](DECISIONS.md#adr-064) | D-8 |
+| 19 | Is a font name set in its own font? | ~~Undecidable — §1.1 and §1.5 disagree~~ **Decidable — yes.** §1.7 rank 3 (the artifact's truth): a sample is drawn as it will print, placed or not | ✅ [ADR-064](DECISIONS.md#adr-064) | D-8 |
 | 20 | Which type role is "2.4 MB"? | **Invention** | ❌ | D-21 |
 
-**Five of twenty would produce agreement** — rows 1, 4, 5, 8 and 14. *(Two moved from ❌ to ✅ under
-review, and both moves were corrections of mine rather than the system's: row 8 asserted that Export
-ships PDF and PNG as peers, when SCREEN-INVENTORY ranks them — **"Primary action: Print at home (PDF)"
-/ "Secondary: Save as image (PNG)"**; row 14 called hover an absence when
-[ADR-049](DECISIONS.md#adr-049) decides it.)*
+**Six of twenty would produce agreement** — rows 1, 4, 5, 8, 14 and **19**. *(Row 19 moved under
+[ADR-064](DECISIONS.md#adr-064) — §1.7 rank 3 decides it. Row 9 moved from ❌ to **🟡 escalated**: §1.7
+supplies the axis its "Contradiction" verdict was missing, but the order does not decide it and the
+remainder is owed by CI-11. **Recount, 2026-07-24: 6 ✅ / 1 🟡 / 13 ❌.** This paragraph is recounted
+whenever the table moves — the original said "five" and "fifteen", and leaving those standing after two
+rows changed is precisely the failure §0.1 was written about.)*
+*(Two further rows moved from ❌ to ✅ during the original review, and both moves were corrections of
+mine rather than the system's: row 8 asserted that Export ships PDF and PNG as peers, when
+SCREEN-INVENTORY ranks them — **"Primary action: Print at home (PDF)" / "Secondary: Save as image
+(PNG)"**; row 14 called hover an absence when [ADR-049](DECISIONS.md#adr-049) decides it.)*
 
-**Fifteen would not.** The shape matters more than the count: **every agreement is about light, depth,
+**Thirteen still would not, and one escalates.** The shape matters more than the count: **every agreement is about light, depth,
 paper, ranking, or a decision recorded in an ADR** — and **every failure is about furniture, states, or
 screens with no artifact in them.** The system has a well-built centre and no edges.
 

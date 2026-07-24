@@ -62,10 +62,12 @@ and no numbers. That is not a two-hub conflict — it is intent (owned here) ove
 baseline exists, the numbers move here too ([ADR-063](DECISIONS.md#adr-063) defers them to
 [CI-14](reviews/CI-14-motion-baseline-protocol.md)).
 
-**This section settles document vs. document, and nothing else.** The collision between two *rules
-inside this document* is a different axis and is settled by [§1.7](#17-when-two-rules-collide)
-([ADR-064](DECISIONS.md#adr-064)), which operates inside the authority chain established here and does
-not re-rank it.
+**This section settles document vs. document, and nothing else.** The collision between two *accepted
+design-system rules* — wherever they are written, including across two of the documents in the table
+above — is a different axis, and is settled by [§1.7](#17-when-two-rules-collide)
+([ADR-064](DECISIONS.md#adr-064)). §1.7 operates inside the authority chain established here and does
+not re-rank it: where applying its order would have the effect of re-ranking these documents against
+each other, §1.7's escalation clause applies instead.
 
 ### 0.3 Where these rules came from
 
@@ -202,7 +204,7 @@ settles **rule vs. rule**, which is this. Resolved by [ADR-064](DECISIONS.md#adr
 | Rank | Wins | Because |
 |---|---|---|
 | **1** | **The constitution** — Articles 1–7, the Sacred Things | Nothing in this document outranks the thing it was written to serve. |
-| **2** | **Accessibility** — perceivable, operable, understandable | The one design defect this product has shipped to a device was one a green suite could not see ([ADR-059](DECISIONS.md#adr-059)); [§11.3](#11-accessibility-rules) already ranks the platform's tree above our account of it. |
+| **2** | **Accessibility** — perceivable, operable, understandable | The one shipped defect a green test suite **structurally could not see** was an accessibility defect ([ADR-059](DECISIONS.md#adr-059)); [§11.3](#11-accessibility-rules) already ranks the platform's tree above our account of it. *(This product has shipped other design defects — the beta Preview screen, the shelf card in §12.2 — and they were visible to a reader. This rank is about the class of defect no test can report.)* |
 | **3** | **The artifact's truth** — the work shown as it is, and as it will print | The product exists to make a thing; a rule that misrepresents the thing has lost its own argument. |
 | **4** | **The specific over the general** | A rule written for this case knows something the rule written for all cases does not. |
 | **5** | **The object's rule ([§5](#5-object-rules)) over the composition rule ([§4](#4-composition-rules))** | The object is the smaller claim and the one a reader can check. |
@@ -217,10 +219,15 @@ fall cleanly on any rank, **it is recorded as a defect and escalated to an [ADR]
 **never** resolved locally by whoever hit it first, and never inside a PR. A collision resolved silently
 is the failure this section exists to prevent; a collision escalated is this section working.
 
-> **Scope.** This order applies only to conflicts between accepted design-system rules. It does not alter
-> the existing authority chain governing product requirements, roadmap sequencing, document authority, or
-> statutory accessibility obligations. **§0.2 settles document vs. document; §1.7 settles rule vs. rule.**
-> Every authority relationship established by [ADR-061](DECISIONS.md#adr-061) is retained unchanged.
+> **Scope.** *This precedence order applies only to conflicts between accepted design-system rules. It
+> does not alter the existing authority chain governing product requirements, roadmap sequencing,
+> document authority, or statutory accessibility obligations.* **§0.2 settles document vs. document;
+> §1.7 settles rule vs. rule** — and "rule" means any accepted design-system rule, wherever it is
+> written: here, in [DESIGN-RULES](design/DESIGN-RULES.md), in [VOICE](design/VOICE.md), or in
+> [SCREEN-INVENTORY](design/SCREEN-INVENTORY.md). Every authority relationship established by
+> [ADR-061](DECISIONS.md#adr-061) is retained unchanged. **Where applying this order would have the
+> effect of re-ranking those documents against each other, the order does not decide it — the
+> escalation clause does.**
 
 ---
 
@@ -691,7 +698,10 @@ to consume ([ADR-062](DECISIONS.md#adr-062)) — as intent, not as dp/hex; the K
 - **As the sole carrier of any meaning** — state, category, validity, selection, or availability. There
   is always a second signal: a label, a shape, a position, an icon (P6, [R9](design/DESIGN-RULES.md)).
 - **On the artifact's own surface**, unless the user put it there. Our accent never appears on their
-  page.
+  page. *One exception, by rank rather than by taste: a **transient tool overlay present only during a
+  gesture** — the text caret, a crop frame — may be drawn to stay perceivable against an arbitrary user
+  photo, because accessibility outranks the artifact's truth ([§1.7](#17-when-two-rules-collide),
+  [ADR-064](DECISIONS.md#adr-064)). It leaves with the gesture.*
 - **As decoration.** A colour with no job is deleted, not muted ([R10](design/DESIGN-RULES.md)).
 - **Encoding a distinction with no legend.** Two chips in one colour and two in another, meaning
   something, with nothing on screen to decode it, is a good idea rendered invisible — and it costs the
@@ -733,7 +743,9 @@ Motion has exactly four jobs, and a motion that does none of them is deleted:
   pick up a tool near them, and almost every other physicality claim is downstream of this one being
   true.
 - **The work never moves unless the user moves it** (P3). Auto-scroll, auto-centre, and helpful
-  repositioning are all the same defect wearing different names.
+  repositioning are all the same defect wearing different names. *Carrying the work **between** surfaces
+  is not moving it within one: §3.6's continuity applies to that navigation and to nothing else
+  ([§1.7](#17-when-two-rules-collide) rank 4, [ADR-064](DECISIONS.md#adr-064)).*
 - **The room does not move.** Backgrounds are still. Parallax on a workbench is the app performing.
 
 ### 8.3 What may stretch, rotate, or settle

@@ -30,6 +30,8 @@ else.**
 
 ```
 #### CI-nn · <the discrepancy, in one line>
+- Status      OPTIONAL, present only on closed items — the ruling or merge that closed it, dated,
+              plus anything expressly NOT closed by it. An item with no Status line is open.
 - Location    file:line — every site of the one logical change
 - Current     what the repository does today
 - Required    what the corpus requires
@@ -88,7 +90,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 > Twenty-four items. **Not one touches `src/main`.** Every one of them is a decision the repository
 > does not currently record, and every downstream milestone spends authority these create.
 
-#### CI-01 · The design-system hub collision is unadjudicated
+#### CI-01 · The design-system hub collision is unadjudicated — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-061](DECISIONS.md#adr-061)**, owner ruling **Option (a)**: ZINELY-DESIGN-SYSTEM.md is the authoritative design-system source of truth, DESIGN-LANGUAGE.md is a companion reference, and §0.2's split table owns per-area authority. The *Current* paragraph below describes the pre-ruling state and is retained as the record of what was adjudicated. **One deferral rides the owner's README pass:** `README.md:60`'s index row still names the old hub, and this programme does not edit README.
 - **Location** `docs/ZINELY-DESIGN-SYSTEM.md` §0.2 · `docs/design/DESIGN-LANGUAGE.md:3-11` · `README.md:60` · `docs/DECISIONS.md`
 - **Current** `README.md:60` indexes `DESIGN-LANGUAGE.md` as the **"Design system hub"**, unqualified, while `ZINELY-DESIGN-SYSTEM.md` §0.2 declares *itself* **subordinate until an ADR adjudicates**. So the repository's index names one authority and the newer document defers to it — leaving no document that claims the role. *(An earlier draft of this item said both documents "describe themselves as the design authority." They do not: `DESIGN-LANGUAGE.md:3-11` explicitly calls itself "a companion reference… **not a parallel source of truth**" — as CI-02 quotes correctly. The collision is real; the characterisation was a rank error, in the first item every other C0 item depends on.)*
 - **Required** Exactly one authoritative location per decision.
@@ -125,7 +128,7 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Verify** `grep -n "design/v1" README.md` returns ≥1 match; no row describes `docs/design/mockups/` as the working reference.
 
 #### CI-05 · No precedence order for rule-versus-rule inside the design system (A-1) — ✅ **DONE**
-- **Status** ✅ **CLOSED 2026-07-24 — [ADR-064](DECISIONS.md#adr-064)**, owner ruling **Option (b)**: the ordered list with **accessibility ranked above the artifact's truth**; escalation clause mandatory, covering same-rank collisions. Landed as [§1.7](ZINELY-DESIGN-SYSTEM.md). Closes D-1, D-2's remainder, D-3, D-7, D-8. **D-6 expressly NOT closed** — the A-1/A-5 duplicate claim is corrected in the validation report and D-6 stays open under **CI-09**. **Unblocks CI-09**, its last outstanding prerequisite.
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-064](DECISIONS.md#adr-064)**, owner ruling **Option (b)**: the ordered list with **accessibility ranked above the artifact's truth**; escalation clause mandatory, covering same-rank collisions. Landed as [§1.7](ZINELY-DESIGN-SYSTEM.md). Closes **D-2's remainder, D-3, D-7, D-8**. **D-1 is partial** — §1.7 supplies the missing axis, but deciding it at rank 4 would re-rank SCREEN-INVENTORY against DESIGN-RULES, so it **escalates** and its remainder is owed by **CI-11** (A-7's exempt screen class). **D-6 expressly NOT closed** — the A-1/A-5 duplicate claim is corrected in the validation report and D-6 stays open under **CI-09**. Two editorial follow-ons owed: §1.5's third column, and the §7.2/§8.2 pointers (the latter landed with this change). **Unblocks CI-09**, its last outstanding prerequisite.
 - **Location** `docs/ZINELY-DESIGN-SYSTEM.md` (absent) · `docs/DECISIONS.md`
 - **Current** Three precedence rules exist, each on a different axis (DESIGN-RULES: rule vs feature; SCREEN-INVENTORY: itself vs PRD/ROADMAP; §0.2: document vs document). **None settles rule vs rule.**
 - **Required** One ordered list, plus the instruction that an unresolved collision is recorded as a defect and escalated, never resolved locally.
