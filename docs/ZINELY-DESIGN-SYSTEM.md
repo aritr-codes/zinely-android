@@ -6,12 +6,13 @@
 >
 > **Its purpose is consistency, not discussion.** When implementation begins, every visual decision
 > should be derivable from here. A future contributor should be able to design a screen this document
-> has never seen, and arrive somewhere the rest of the product recognises. It is written **to become
-> canonical** and is not canonical yet — see §0.2 and §0.3.
+> has never seen, and arrive somewhere the rest of the product recognises. It is **the authoritative
+> design-system source of truth** for the areas §0.2 assigns it ([ADR-061](DECISIONS.md#adr-061)) — see
+> §0.2 and §0.3.
 >
-> **Status:** design-rank specification · 2026-07-22 · **proposed, pending the adjudication in §0.2.**
-> Subordinate to [the constitution](zinely-constitution.md), which it may never contradict and never
-> amends.
+> **Status:** design-rank specification · 2026-07-22 · **authoritative for the design-system layer per
+> [ADR-061](DECISIONS.md#adr-061)** (CI-01 hub adjudication, Option a — §0.2 resolved). Subordinate only
+> to [the constitution](zinely-constitution.md), which it may never contradict and never amends.
 
 ---
 
@@ -35,13 +36,15 @@ level of intent, so that the specification outlives the toolkit implementing it.
 
 ### 0.2 The rank collision, stated rather than created
 
-[DESIGN-LANGUAGE.md](design/DESIGN-LANGUAGE.md) currently self-describes as *"the design-system hub."*
-This document claims the same ground for the visual and interaction layer. **Two hubs is precisely the
-failure the [Documentation Rule](../CLAUDE.md#documentation-rule-mandatory) exists to prevent**, and I
-am not going to resolve it by quietly writing a second one and leaving both standing.
+[DESIGN-LANGUAGE.md](design/DESIGN-LANGUAGE.md) once self-described as *"the design-system hub."*
+This document claimed the same ground for the visual and interaction layer. **Two hubs is precisely the
+failure the [Documentation Rule](../CLAUDE.md#documentation-rule-mandatory) exists to prevent**, and it
+was not resolved by quietly writing a second one and leaving both standing.
 
-The proposed resolution — **a docs-rank decision for the maintainer, not something this document may
-enact:**
+**Resolved by [ADR-061](DECISIONS.md#adr-061) (CI-01, Option a), 2026-07-24:** *this* document is the
+authoritative design-system source of truth; DESIGN-LANGUAGE is a companion reference; and the table
+below is now the authoritative per-area map, not a proposal. It was recorded — as it had to be — by an
+ADR that edited DESIGN-LANGUAGE in the same change, never by this document promoting itself:
 
 | Document | Keeps | Gives up |
 |---|---|---|
@@ -50,11 +53,14 @@ enact:**
 | [DESIGN-RULES.md](design/DESIGN-RULES.md) | **Everything.** It remains the live per-screen merge gate | Nothing. §13 below *extends* it and never replaces a rule in it |
 | [VOICE.md](design/VOICE.md) | **Every string, and the register.** Tone is architecture ([Sacred Thing 4](zinely-constitution.md#v-the-sacred-things-change--never)) | Nothing. §10 below governs *when the interface speaks*, never *what it says* |
 
-Until that adjudication happens — by ADR, in one change that edits DESIGN-LANGUAGE — **the older
-document is still canonical where the two overlap.** The most consequential overlap is motion: §10
-there carries specific durations and easings; §8 here carries intent and no numbers. They are
-compatible today because intent does not contradict a number. They will conflict the moment a motion
-baseline is recorded, and that is the right moment to resolve it, with frames on the table.
+With that adjudication now made ([ADR-061](DECISIONS.md#adr-061)), **authority follows the table above,
+per area** — this document is authoritative for the visual and interaction layer, and the areas
+DESIGN-LANGUAGE gives up are pointers here. One overlap is deliberately left *layered* rather than
+overwritten: motion. §10 there still carries specific durations and easings; §3.8 here carries intent
+and no numbers. That is not a two-hub conflict — it is intent (owned here) over an implementation detail
+(DESIGN-LANGUAGE's durations) that stands until a motion baseline is recorded on device. The moment that
+baseline exists, the numbers move here too ([ADR-063](DECISIONS.md#adr-063) defers them to
+[CI-14](reviews/CI-14-motion-baseline-protocol.md)).
 
 ### 0.3 Where these rules came from
 
@@ -73,8 +79,9 @@ flowchart TD
 ```
 
 Three of the sources are **proposals under review**, and this document inherits that status: it is
-worth no more than its parents. It becomes canonical when the parents are accepted and §0.2 is
-adjudicated — not by being written.
+worth no more than its parents. **§0.2 is now adjudicated ([ADR-061](DECISIONS.md#adr-061))** — it is
+the authoritative design-system hub, and it becomes fully canonical when its parents are accepted, not
+by being written.
 
 ### 0.4 How to read it, and how to break it
 
@@ -369,22 +376,29 @@ the second half of a feedback that is already complete visually.
 
 ### 3.8 Timing, without numbers
 
-Three bands, named by what they are for:
+Four bands, named by what they are for:
 
 | Band | For | Feels like |
 |---|---|---|
 | **Instant** | Acknowledgement of touch; state flips; anything the user is currently touching | Causation. Not perceived as animation at all |
 | **Brief** | An element settling, a tray arriving, a control revealing | An object with a little weight coming to rest |
 | **Deliberate** | Exactly one thing: the reveal at the ending (§9.4) | A moment, watched on purpose |
+| **Underway** | Real work the user is waiting on — an operation in progress (export, save, load) | Honest work happening, not a decorative wait |
 
 Rules that hold whatever the numbers turn out to be: **nothing in the Deliberate band exists outside
 the ending**; a beginner must never wait on an animation to continue; and every band degrades to an
-instant, already-correct static state under reduced motion (§11).
+instant, already-correct static state under reduced motion (§11). **The Underway band carries its own
+rule** ([ADR-063](DECISIONS.md#adr-063), accepting [validation A-4](ZINELY-DESIGN-SYSTEM-VALIDATION.md)):
+*progress is truthful or absent — never decorative, never faked, and cancellable where the operation can
+be stopped.*
 
 > **Open:** the existing durations and easings in [DESIGN-LANGUAGE §10](design/DESIGN-LANGUAGE.md)
 > remain the implementation of these bands until a motion baseline is recorded on device. That
 > recording is a **precondition** for changing any of them — see §0.2 and
-> [V1-DESIGN-REFINEMENT](V1-DESIGN-REFINEMENT.md), *"Where this document stops."*
+> [V1-DESIGN-REFINEMENT](V1-DESIGN-REFINEMENT.md), *"Where this document stops."* The **Underway** band
+> is new and inherits no §10 duration; its timing (band length, easing, minimum-visible window) is
+> **deferred to the [CI-14](reviews/CI-14-motion-baseline-protocol.md) motion baseline** —
+> [ADR-063](DECISIONS.md#adr-063) decides the band's *existence* only and sets no number.
 
 ---
 
@@ -619,8 +633,18 @@ Cross-cutting:
 | **The user's next action** | The accent | **One accent, one meaning.** If it is orange, the user should be able to learn in a single session that orange means *this is your move* |
 | **State that must be decoded** | The secondary accent | Permitted **only where a legend is present in the same view** |
 | **The hand** | The tape colours | The artifact's register (§1.5). Chrome does not borrow them |
+| **Consequence** | A consequence colour — semantic, **not** an accent | *"This will remove / this has broken"* — destructive confirmation and error only. It never marks a next action, so it does **not** count against the two-accent rule stated below ([ADR-062](DECISIONS.md#adr-062), accepting [validation A-3](ZINELY-DESIGN-SYSTEM-VALIDATION.md); satisfies Premium Checklist #30) |
 
 There is **no third accent role**, and no colour whose job is "to look nice here."
+
+**Control states carry colour jobs too**, stated authoritatively here for [C3a/CI-36](V1-IMPLEMENTATION-ROADMAP.md)
+to consume ([ADR-062](DECISIONS.md#adr-062)) — as intent, not as dp/hex; the Kotlin tokens are C3a/S5's to add (§0.4):
+
+- **Disabled** — held above the contrast floor (§7.3); reads *unavailable*, never *broken* (Checklist #37).
+- **Focused** — a designed, non-inherited focus indication, never the platform default (#107).
+- **Pressed** — an immediate change on touch-down, before any disk or computation (#108).
+- **Selected** — visible on the object itself, not only in the chrome, in all three cases it occurs: on the page,
+  in a list, and in a gallery (#106).
 
 ### 7.2 Where colour is forbidden
 
@@ -653,10 +677,14 @@ brightest area is ours, it is wrong.
 
 ### 8.1 When things move
 
-Motion has exactly three jobs, and a motion that does none of them is deleted:
+Motion has exactly four jobs, and a motion that does none of them is deleted:
 1. **To show causation** — you did this, and this happened.
 2. **To preserve continuity** — this thing is the same thing, moved (§3.6).
 3. **To mark the ending** — once, at the end, on purpose (§9.4).
+4. **To announce a change the user did not cause** — a system-initiated arrival, or a running operation
+   the user is waiting on (the *Underway* band, §3.8). Progress here is truthful or absent — never
+   decorative, never faked, and cancellable where the operation can be stopped
+   ([ADR-063](DECISIONS.md#adr-063)).
 
 ### 8.2 What never moves
 
@@ -983,6 +1011,11 @@ it as a defect; a defect nobody fixed is still a defect.
 > Two boxes below (copy-from-VOICE, contrast-over-texture) **echo** items DESIGN-RULES already owns.
 > They are repeated deliberately so this list is runnable in one pass, and they are owned there: if the
 > two ever differ, DESIGN-RULES is right and this list is stale.
+>
+> **§13.1 carries the 140-item [Premium Checklist](#131-the-premium-checklist-140-finish-details)** —
+> relocated here from V1-DESIGN-REFINEMENT by [CI-13](V1-CONFORMANCE-INVENTORY.md) (2026-07-24) so the
+> product's *finish* gate is discoverable from the authoritative design system. This section asks *is it
+> allowed to ship?*; that one asks *is it finished?*
 
 **Subject and hierarchy**
 - [ ] The screen's subject is named, and it is the user's work unless there is a stated reason.
@@ -1037,6 +1070,203 @@ it as a defect; a defect nobody fixed is still a defect.
 - [ ] Someone who has never seen the screen has looked at it.
 - [ ] Anything left deliberately unpolished is written down, with the reason (§1.3, and
       [V1-DESIGN-REFINEMENT](V1-DESIGN-REFINEMENT.md), *"Things I would leave exactly as they are"*).
+
+### 13.1 The Premium Checklist (140 finish details)
+
+> **Relocated here 2026-07-24 by [CI-13](V1-CONFORMANCE-INVENTORY.md) (Option a)** from
+> [V1-DESIGN-REFINEMENT](V1-DESIGN-REFINEMENT.md), so a finish gate meant to outlive any one milestone is
+> discoverable from the authoritative design system rather than buried in a milestone critique. The list
+> is reproduced unchanged.
+
+**140 details that separate an excellent creative application from an average one.**
+Implementation-independent, product-independent, and meant to outlive this milestone. It sits *beneath*
+[DESIGN-RULES](design/DESIGN-RULES.md) — that checklist is the merge gate and asks *is this allowed to
+ship?*; this one asks *is this finished?* A surface can pass every rule and fail forty of these.
+
+#### Optical alignment & spacing
+
+1. Optical centring beats mathematical centring — a triangle, a glyph with a descender, and a shape with
+   a shadow all need correcting by eye.
+2. Icons inside buttons are optically centred, not box-centred.
+3. Text is aligned on baselines, not on bounding boxes.
+4. Cap-height alignment for headings sitting beside other headings; baseline for text beside text.
+5. Punctuation hangs outside the measure where it should (quotes, bullets).
+6. Spacing comes from one scale; no value exists that is not on it.
+7. Space between groups always exceeds space within a group — no exceptions, on any screen.
+8. Padding is symmetric unless asymmetry is a decision someone can explain.
+9. Optical padding around round shapes is larger than around square ones.
+10. Nothing touches a screen edge unless it is deliberately bleeding off it.
+
+#### Type
+
+11. One type scale, five steps or fewer, used everywhere.
+12. There is a register between "display" and "body," and it is used.
+13. Emphasis is size, weight and space before it is ever colour.
+14. Line length stays inside a readable measure at every text size.
+15. Line height scales with size — tight for display, open for body.
+16. Numerals are consistent (lining or old-style, tabular where they align in columns).
+17. Metadata has one treatment across the whole product.
+18. Typographic apostrophes, quotes, dashes and ellipses — always.
+19. No orphans or widows in interface copy at any supported text size.
+20. Text never relies on a specific line break to make sense.
+21. All-caps is letterspaced; nothing else is.
+22. Only one typeface family carries the identity; a second exists only for a stated reason.
+23. Type never renders in the platform default face by accident.
+24. The user's own content is set in a face chosen *for their content*, not inherited from chrome.
+25. Font sizes survive the system's largest accessibility text setting without clipping.
+
+#### Colour
+
+26. Every colour has a role, and the role is stated.
+27. No colour appears once.
+28. If colour carries meaning, either a legend exists or a label does.
+29. There is exactly one accent for "your next action."
+30. Semantic colours (destructive, warning) are never reused decoratively.
+31. Contrast is checked over the darkest and lightest background each colour can land on.
+32. Contrast is checked over texture, not just over flat fill.
+33. Both themes are designed as different rooms, not inverted values.
+34. Shadows are re-tuned per theme — a shadow tuned on dark disappears on light.
+35. System bars are themed in every theme.
+36. Nothing depends on colour alone to be understood.
+37. Disabled is distinguishable from enabled *and* from absent.
+38. The palette does not recolour to the user's wallpaper — a creative tool owns its identity
+    ([ADR-048](DECISIONS.md#adr-048)).
+
+#### Shape, depth & surface
+
+39. A radius family of three values, no more.
+40. Radius is proportional to size — a large surface and a small chip do not share a radius.
+41. Nested radii are concentric (inner = outer minus padding), never parallel.
+42. One light source for the whole product, in one direction.
+43. Three elevation tiers at most, each with a stated meaning.
+44. Shadows are soft, low-opacity, and never doubled by a border doing the same job.
+45. Borders and shadows do not both express the same edge.
+46. Hairlines are true hairlines at every density.
+47. Nothing has a shadow that could not cast one.
+48. Depth encodes hierarchy, never decoration.
+49. Blur is used only where something is genuinely behind something else, and never where it costs
+    frames on a mid-range device.
+
+#### Iconography
+
+50. One stroke weight across the whole set.
+51. One optical size — icons are balanced by area, not by bounding box.
+52. One corner treatment and one terminal style.
+53. Icons are drawn on a shared grid.
+54. No platform emoji inside a control, ever.
+55. No mixed icon sets — one hand drew all of them.
+56. Every icon-only control has a label available to assistive technology and, where space allows, to
+    everyone.
+57. Icons that represent physical things resemble those things, not their abstractions.
+
+#### Hierarchy & composition
+
+58. One primary action per screen; the second-most-important is visibly quieter.
+59. The primary action is the user's next *act*, not the app's next *screen*.
+60. The subject of the screen is the largest thing on it.
+61. Explanation never outranks content in size or position.
+62. Empty space is a proportion someone chose, not the space content did not fill.
+63. Captions sit below or beside what they caption, never orphaned above.
+64. Reading order matches visual order matches focus order.
+65. No two elements compete for the same rank.
+66. Metadata is quiet and consistent; it never looks like a control.
+67. Nothing on screen looks tappable that is not.
+68. Nothing tappable fails to look tappable.
+
+#### Motion
+
+69. One motion system: shared durations, shared easing, shared spring constants.
+70. Every animation is interruptible and retargets from current position and velocity.
+71. Motion originates from where the user touched.
+72. What moves together belongs together; what stays still is the fixed point.
+73. Motion never gates input — the user can always act during it.
+74. Nothing animates purely because it can.
+75. Enter and exit are asymmetric — arrivals are slower than departures.
+76. Duration scales with distance and size, not with importance.
+77. There is exactly one celebratory motion in the product, and it is at the ending.
+78. No animation is the *only* signal that something happened.
+79. Reduced-motion is a designed path, not a disabled one.
+80. Transitions preserve object identity — a thing that becomes another thing keeps its shape.
+81. Nothing cross-fades where something could move.
+82. Loading is avoided by design; where unavoidable, it shows the shape of what is coming.
+83. Nothing that finishes in under 100ms animates at all.
+
+#### Gesture & touch
+
+84. Touch targets are always larger than their paint.
+85. Destructive and non-destructive targets never share a hit boundary.
+86. Every gesture has a visible, labelled twin — always ([R1](design/DESIGN-RULES.md)).
+87. Drag tracks the finger 1:1 with no lag, under any content load.
+88. Gestures have a rubber-band boundary; they never simply stop.
+89. Velocity carries — release throws, it does not halt.
+90. A half-completed gesture that is abandoned returns; it does not complete itself.
+91. Long-press gives immediate continuous feedback before it commits.
+92. Primary actions sit in the thumb zone; nothing important is in a top corner.
+93. Scroll boundaries are visible — content that continues looks continued, not clipped.
+94. Nothing important is discoverable only by scrolling a row horizontally.
+
+#### Haptics
+
+95. Haptics punctuate physical events only.
+96. Never on drag frames, scroll, typing, or routine taps.
+97. Frequency scales inversely with strength — frequent means faint.
+98. The strongest haptic in the product happens once, at the ending.
+99. Haptics are never the only feedback for anything.
+100. The system haptic setting is honoured absolutely.
+
+#### States
+
+101. Empty, loading, error, offline, first-run, and full states are all designed.
+102. Empty states invite; they never report.
+103. Error copy names what happened and the way out.
+104. Nothing fails silently.
+105. Disabled controls explain their condition where the reason is not obvious.
+106. Selected states are visible on the object, not only in the chrome.
+107. Focus states exist and are designed, not inherited.
+108. Pressed states are immediate — before any network, disk or computation.
+109. Optimistic states are only shown where the operation cannot fail.
+110. Nothing claims success it has not achieved.
+
+#### Copy
+
+111. Every string comes from the voice reference; none is invented at the call site.
+112. Buttons are named for what happens, not for where you land.
+113. No jargon from the implementation ever reaches the surface.
+114. Nothing is explained twice on the same screen.
+115. Instructions expire; they are not permanent furniture.
+116. One idea per line.
+117. Second person, present tense, active voice.
+118. Numbers in copy are formatted for the locale.
+119. Nothing shouts unless it earned it.
+120. The product uses one name per concept, everywhere, including accessibility labels.
+
+#### The artifact (specific to a tool that makes things)
+
+121. The user's work appears on every screen where it could appear.
+122. No illustration ever stands where the user's own work could stand.
+123. Previews are true — what is shown is what is produced.
+124. Previews are deterministic — the same document previews the same way twice.
+125. Bad news appears before the irreversible step, in the place the user commits.
+126. Physical constraints of the output medium are visible while working, not explained afterwards.
+127. The output is identifiable as having come from this tool, without the tool's name on it.
+128. Nothing about the artifact requires the app to exist in order to be opened later.
+129. Assistance corrects execution, never intent — and it offers rather than applies.
+130. Nothing is auto-corrected silently.
+
+#### Craft discipline
+
+131. Every value in the design system exists because something needed it.
+132. No component is used in a role it was not designed for.
+133. A component that travelled from another screen brings its state with it, or it does not travel.
+134. Defects are filed as defects; they never become intended behaviour by survival.
+135. The lowest-finish surface sets the perceived quality of the whole product — find it, and raise it.
+136. Every screen is checked at the smallest supported width and the largest text size.
+137. Every screen is checked in both themes on a real device, in daylight.
+138. The platform's own accessibility tree is read, not the framework's semantics
+     ([device verification](../CLAUDE.md#device-verification-mandatory)).
+139. Anything the team has stopped noticing gets looked at by someone who has never seen it.
+140. Polishing stops where further change stops being demonstrably better — and that point is written
+     down.
 
 ---
 
@@ -1113,7 +1343,10 @@ into a second constitution:
 **Open items this document deliberately leaves open**, because closing them here would be deciding
 something at the wrong rank:
 
-1. **The §0.2 hub adjudication.** Needs an ADR and one edit to DESIGN-LANGUAGE.
+1. **The §0.2 hub adjudication.** ~~Needs an ADR and one edit to DESIGN-LANGUAGE.~~ **Resolved
+   ([ADR-061](DECISIONS.md#adr-061), CI-01, Option a, 2026-07-24):** this document is authoritative,
+   DESIGN-LANGUAGE is a companion, §0.2's table owns per-area authority. The [README](../README.md) hub
+   row is the one residue, deferred to the owner README pass.
 2. **The motion baseline.** §3.8's bands have no numbers until motion is recorded on a device. The
    existing durations stand until then.
 3. **The editor empty state.** Frozen by [ADR-033](DECISIONS.md#adr-033) and disputed by the critique.
