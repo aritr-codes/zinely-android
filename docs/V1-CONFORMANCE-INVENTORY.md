@@ -176,7 +176,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** **This is the one C0 item an engineer will be tempted to decide.** ~~It reverses accepted text and needs an ADR that supersedes SYS-5, not a clarification.~~ **Superseded by the ruling:** that sentence assumed A-5 would be *accepted*. It was **rejected**, so nothing was reversed and nothing supersedes SYS-5. It does still set the [roadmap's](V1-IMPLEMENTATION-ROADMAP.md) shape-count condition — the answer being *no radius on the artifact or any representation of it*, which is a rule rather than a number.
 - **Verify** ~~An ADR that names which resolution and supersedes the §2.7 clause; the §13 checklist echo edited to match.~~ **Restated to match the ruling that was made:** an ADR that names which resolution — done, [ADR-065](DECISIONS.md#adr-065) — and, because the resolution was rejection, that **supersedes nothing and edits neither §2.7 nor the §13 echo.** Applying the original criterion to ADR-065 would fail it for doing exactly what the owner ruled.
 
-#### CI-10 · Ruling owed on A-6 — five type roles (Value · Input · Technical · Link · Section header)
+#### CI-10 · Ruling owed on A-6 — five type roles (Value · Input · Technical · Link · Section header) — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-067](DECISIONS.md#adr-067)**, owner ruling **Option (d)**: all five roles accepted, **each naming its §2.1 register** — Value → Body, Input → Body, Technical → Metadata, Link → Body, Section header → Metadata. **No role enters without a register; no new size; NO SIXTH REGISTER — the five-register architecture is frozen** and §2.1 is textually unchanged. A-6's unnamed "fifth role" was **identified rather than deferred**: it is **Section header**, the only one with two live claims pointing in opposite directions (Subhead sits *above* Body, a list band sits *below* it), resolved to **Metadata**. §6 goes eleven roles → **sixteen**. Closes **D-21** and audit **row 20**. **Unblocks CI-21 — the last of the three HTML re-freezes still gated.**
 - **Location** `docs/DECISIONS.md` · gates CI-41
 - **Current** Not ruled. §6 defines eleven roles; A-6 adds five, *"roles only… no new sizes."*
 - **Authority** [validation A-6](ZINELY-DESIGN-SYSTEM-VALIDATION.md); [§6](ZINELY-DESIGN-SYSTEM.md)
@@ -275,9 +276,10 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 #### CI-21 · The frozen HTML must be re-frozen with the type registers
 - **Location** `docs/design/v1/{shelf,bench,proof}.html`
 - **Current** The HTML's sizes are the source of the 25 distinct `.sp` values in Compose.
-- **Required** [§2.1](ZINELY-DESIGN-SYSTEM.md) five registers; [§6](ZINELY-DESIGN-SYSTEM.md) eleven roles (sixteen if CI-10 accepts A-6); [§13](ZINELY-DESIGN-SYSTEM.md) *"No sizes invented for this screen."*
+- **Required** [§2.1](ZINELY-DESIGN-SYSTEM.md) five registers — **frozen, and no sixth** ([ADR-067](DECISIONS.md#adr-067)); [§6](ZINELY-DESIGN-SYSTEM.md) ~~eleven roles (sixteen if CI-10 accepts A-6)~~ **sixteen roles, each with its register named**; [§13](ZINELY-DESIGN-SYSTEM.md) *"No sizes invented for this screen."*
 - **Authority** as CI-20
-- **Milestone** C0 · **Prereq** CI-10 · **Kind** documentation · **Changes** docs
+- **Milestone** C0 · **Prereq** ~~CI-10~~ **satisfied** ([ADR-067](DECISIONS.md#adr-067) — **sixteen** roles, each with its register named) — **UNBLOCKED** · **Kind** documentation · **Changes** docs
+- **Re-freeze set complete 2026-07-24:** CI-20 (radius) freed by [ADR-065](DECISIONS.md#adr-065), CI-22 (spacing) by [ADR-066](DECISIONS.md#adr-066), CI-21 (type) by [ADR-067](DECISIONS.md#adr-067). **All three are now gated on nothing but the owner's own pass and may proceed together as one coordinated change** rather than three sequential ones.
 - **Risk** Eleven roles cannot be derived from 25 sizes without deciding which sizes die, and **every death is a visual change on a goldened surface**. Deciding that in Compose is deciding it at the wrong rank.
 - **Verify** Re-freeze date later than the CI-10 ADR; every register traceable to a line in the HTML.
 
@@ -519,8 +521,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 
 #### CI-41 · Eleven type roles are specified; zero are implemented
 - **Location** `ui/theme/Type.kt` — `ZinelyTypography` carries **two `FontFamily` values and no roles**; the Material3 `Typography` at `:68-76` defines exactly one style (`bodyLarge`, `FontFamily.Default`). Against **80 `.sp` literals across 25 distinct sizes**: `9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 17, 19, 19.5, 20, 21, 22, 23, 24, 26` plus `0.sp` and `0.5.sp` tracking
-- **Required** [§6](ZINELY-DESIGN-SYSTEM.md) eleven roles by purpose (sixteen if CI-10 accepts A-6); [§2.1](ZINELY-DESIGN-SYSTEM.md) five registers; [§13](ZINELY-DESIGN-SYSTEM.md) *"No sizes invented for this screen."*
-- **Milestone** C3b · **Prereq** **CI-21**, CI-10, CI-34 · **Kind** architectural · **Changes** render, a11y, tests
+- **Required** [§6](ZINELY-DESIGN-SYSTEM.md) ~~eleven roles by purpose (sixteen if CI-10 accepts A-6)~~ **sixteen roles by purpose** ([ADR-067](DECISIONS.md#adr-067)), **each already mapped to a §2.1 register** — this item maps roles onto registers, it does not negotiate them; [§2.1](ZINELY-DESIGN-SYSTEM.md) five registers, **frozen**; [§13](ZINELY-DESIGN-SYSTEM.md) *"No sizes invented for this screen."*
+- **Milestone** C3b · **Prereq** **CI-21**, ~~CI-10~~ **satisfied** ([ADR-067](DECISIONS.md#adr-067)), CI-34 · **Kind** architectural · **Changes** render, a11y, tests
 - **Risk** **High, and different in kind from spacing:** type changes reflow, and reflow changes clipping, ellipsis and line counts — failures a golden diff shows but a human must judge. Compounded by Fraunces shipping as the static 9pt optical cut, because `FontVariation`'s `opsz` is ignored below API 26 and minSdk is 24 (`Type.kt:38-45`). **Collides with execution-plan F3** — coordinate, do not duplicate.
 - **Verify** Every role traceable to a register in the re-frozen HTML; CI-33's large-text goldens re-checked; goldens otherwise byte-identical.
 
