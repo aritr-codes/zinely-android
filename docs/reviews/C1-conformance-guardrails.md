@@ -26,11 +26,14 @@ each **independently review-agent verified** before integration.
 | **CI-32** WCAG AA contrast test | ✅ Closed |
 | **CI-93** disabled/enabled platform-tree assertions | ✅ Closed — **stronger than planned**: covers the real f4faaa4 `ReframeControls` stepper on `main` |
 | **CI-30** Role | ⚠️ **Partial** — platform-tree Role on leaf controls (Reframe); merged-tree Role elsewhere; the platform-tree remainder is **deferred to the on-device passes** (forced by ADR-059's Compose behaviour, disclosed in the tests) |
-| **CI-31** keyboard/traversal-order test | ⛔ **C0-blocked** — prereq CI-13 (Premium-Checklist location) unresolved |
-| **CI-33** large-text / smallest-width golden | ⛔ **C0-blocked** — prereq CI-12 (A-8's **modality** clause — an earlier draft of this line said *density*, which is not one of A-8's two clauses) — **resolved 2026-07-24, [ADR-066](../DECISIONS.md#adr-066); CI-33 is no longer blocked** |
+| **CI-31** keyboard/traversal-order test | ◑ **Partial, merged 2026-07-24** (`main@b20f7b5`) — the **traversal** half is delivered; the **keyboard-focus** half was blocked on A-8's §11 clause, which now exists ([ADR-066](../DECISIONS.md#adr-066) rule 8), so it is **unblocked and schedulable** and still needs a focus-traversal harness. Prereq CI-13 landed in `6b46d0f`. |
+| **CI-33** large-text / smallest-width golden | ✅ **Unblocked 2026-07-24** — prereq CI-12 resolved by [ADR-066](../DECISIONS.md#adr-066). *(The prerequisite is A-8's **modality** clause; an earlier draft of this line said *density*, which is not one of A-8's two clauses.)* Not yet implemented. |
 
-**7 fully closed · 1 partial (device-deferred) · 2 C0-blocked.** C1 cannot be declared *fully* closed
-until C0 resolves CI-12 and CI-13.
+**7 fully closed · 2 partial (CI-30 device-deferred, CI-31 keyboard half) · 0 C0-blocked · 1 unblocked
+and unimplemented (CI-33).** *(Recounted 2026-07-24: this line read "2 C0-blocked … until C0 resolves
+CI-12 and CI-13". **Both are now resolved** — CI-13 landed in `6b46d0f`, CI-12 in
+[ADR-066](../DECISIONS.md#adr-066).)* C1 cannot be declared *fully* closed until CI-33 is implemented
+and CI-31's keyboard half lands.
 
 ## Verification evidence
 

@@ -781,12 +781,16 @@ Motion has exactly four jobs, and a motion that does none of them is deleted:
   > the governing sentence.** Where the two could ever be read apart, **the sentence above wins**, and
   > [§4.7](#47-the-page-is-the-fixed-point) wins with it.
   >
-  > **What counts as the available space changing:** the *display or window* the app is given changes —
-  > rotation, a fold opening, a multi-window drag. **What does not:** anything the app itself puts on
-  > screen. A side panel, a sheet, a pane divider and a tray are all *"equivalent interface
-  > affordances"* in the clause above, so **the page does not resize for them** — the scene offsets as
-  > one rigid body, exactly as §4.7 requires. The clause **narrows** what may move the page; it never
-  > widens it.
+  > **What counts as the available space changing:** the display or window the app is given changes
+  > **size or shape** — rotation, a fold opening, a multi-window drag. **What does not:** anything that
+  > appears **within** that space, **whether the app draws it or the system does.** A side panel, a
+  > sheet, a pane divider and a tray are *"equivalent interface affordances"* in the clause above — and
+  > so are the **software keyboard**, the system bars and a display cutout, which the sentence above
+  > already names or implies. **The page does not resize for any of them**; the scene offsets as one
+  > rigid body, exactly as §4.7 requires. *(The keyboard is the case to get right: the platform may
+  > shrink the app's window when it appears, and that is a platform mechanism, not the available space
+  > changing. §8.2 names the keyboard explicitly, and it wins.)* The clause **narrows** what may move
+  > the page; it never widens it.
 - **The work never moves unless the user moves it** (P3). Auto-scroll, auto-centre, and helpful
   repositioning are all the same defect wearing different names. *Carrying the work **between** surfaces
   is not moving it within one: §3.6's continuity applies to that navigation and to nothing else
