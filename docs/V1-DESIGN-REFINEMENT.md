@@ -606,6 +606,11 @@ lives: not in any one screen, but in the defaults every screen inherits.
 > **Refine:** Real edge, cast shadow, a visible stack behind (thin, honest — eight pages is thin), and
 > the next page peeking as it already does.
 > **Gain:** The single largest pride delta available on this screen for the least risk.
+> **✅ CONFIRMED — [ADR-065](DECISIONS.md#adr-065), 2026-07-24.** [Validation A-5](ZINELY-DESIGN-SYSTEM-VALIDATION.md)
+> proposed a rule under which a *representation* of paper would take the chrome radius — which would
+> have made this finding's *"rounded cream rectangle"* compliant and retired RD-4's radius point.
+> **A-5 was rejected.** The artifact and every representation of it are square-cornered, so this finding
+> stands as written and is cited as evidence in the ruling. **Confirmed, not superseded.**
 
 > **RD-5 · The loudest element pushes the user out of the screen.** 🟩
 > **Costs:** *"Print & fold"* is the primary action on a screen whose job is to let you look — and on a
