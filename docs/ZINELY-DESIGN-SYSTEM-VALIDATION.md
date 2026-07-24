@@ -734,7 +734,7 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 19 | Is a font name set in its own font? | ~~Undecidable — §1.1 and §1.5 disagree~~ **Decidable — yes.** §1.7 rank 3 (the artifact's truth): a sample is drawn as it will print, placed or not | ✅ [ADR-064](DECISIONS.md#adr-064) | D-8 |
 | 20 | Which type role is "2.4 MB"? | **Invention** | ❌ | D-21 |
 
-**Seven of twenty would produce agreement** — rows 1, 4, 5, 8, 14, **7** and **19**. *(Rows 7 and 19
+**Seven of twenty would produce agreement** — rows 1, 4, 5, **7**, 8, 14 and **19**. *(Rows 7 and 19
 moved under [ADR-064](DECISIONS.md#adr-064) — §1.7 rank 2 decides the caret, rank 3 decides the font
 sample. Row 9 moved from ❌ to **🟡 escalated**: §1.7
 supplies the axis its "Contradiction" verdict was missing, but the order does not decide it and the
