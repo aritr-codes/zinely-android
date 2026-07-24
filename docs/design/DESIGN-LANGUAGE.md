@@ -1,17 +1,24 @@
 # Zinely — Design Language
 
-> **The design-system hub — the companion design reference for how Zinely should *feel*.** Visual
-> identity, interaction philosophy, onboarding, emotional goals, progressive disclosure,
-> accessibility, motion, haptics, sound, and the first-time user journey. This is a **companion
-> reference under the canonical doc system in [CLAUDE.md](../../CLAUDE.md)**, not a parallel
-> source of truth: product scope (what & why) stays owned by [PRD.md](../PRD.md), the technical
-> source of truth by [ARCHITECTURE.md](../ARCHITECTURE.md), and decisions by
-> [DECISIONS.md](../DECISIONS.md) — this elaborates the *feel*, it does not redefine scope. The
-> editor-surface specifics live in [editor-visual-direction.md](editor-visual-direction.md); the
-> beginner-first decision in [ADR-008](../DECISIONS.md#adr-008). Status: design reference · 2026-06-28.
+> **A companion design reference for how Zinely should *feel* — subordinate to the authoritative
+> design system, [ZINELY-DESIGN-SYSTEM.md](../ZINELY-DESIGN-SYSTEM.md)** ([ADR-061](../DECISIONS.md#adr-061),
+> CI-01 hub adjudication, Option a). This document owns the *feel* layer: onboarding, emotional goals,
+> UX principles, progressive disclosure, the first-time user journey, sound, and brand personality. Its
+> visual identity, interaction philosophy, accessibility, motion and haptics sections are **companions
+> that now point into** [ZINELY-DESIGN-SYSTEM.md](../ZINELY-DESIGN-SYSTEM.md), which is authoritative for
+> them per its [§0.2](../ZINELY-DESIGN-SYSTEM.md#02-the-rank-collision-stated-rather-than-created)
+> split table. It is a **companion reference under the canonical doc system in
+> [CLAUDE.md](../../CLAUDE.md)**, not a parallel source of truth: product scope (what & why) stays owned
+> by [PRD.md](../PRD.md), the technical source of truth by [ARCHITECTURE.md](../ARCHITECTURE.md), and
+> decisions by [DECISIONS.md](../DECISIONS.md) — this elaborates the *feel*, it does not redefine scope.
+> The editor-surface specifics live in [editor-visual-direction.md](editor-visual-direction.md); the
+> beginner-first decision in [ADR-008](../DECISIONS.md#adr-008). Status: design reference · 2026-06-28
+> (companion status recorded by [ADR-061](../DECISIONS.md#adr-061), 2026-07-24).
 
-> **This document is the hub of the Zinely design references.** Focused companions each cover one
-> area and are linked, not restated (per the [Documentation Rule](../../CLAUDE.md)). They are
+> **This document indexes the Zinely *feel*-layer design references; the authoritative design system is
+> [ZINELY-DESIGN-SYSTEM.md](../ZINELY-DESIGN-SYSTEM.md)** ([ADR-061](../DECISIONS.md#adr-061)). Focused
+> companions each cover one area and are linked, not restated (per the
+> [Documentation Rule](../../CLAUDE.md)). They are
 > design references, not canonical owners — where they touch product scope or technical decisions,
 > the [PRD](../PRD.md) / [ARCHITECTURE](../ARCHITECTURE.md) / [DECISIONS](../DECISIONS.md) win:
 >
