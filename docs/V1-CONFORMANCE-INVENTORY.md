@@ -176,7 +176,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** **This is the one C0 item an engineer will be tempted to decide.** ~~It reverses accepted text and needs an ADR that supersedes SYS-5, not a clarification.~~ **Superseded by the ruling:** that sentence assumed A-5 would be *accepted*. It was **rejected**, so nothing was reversed and nothing supersedes SYS-5. It does still set the [roadmap's](V1-IMPLEMENTATION-ROADMAP.md) shape-count condition — the answer being *no radius on the artifact or any representation of it*, which is a rule rather than a number.
 - **Verify** ~~An ADR that names which resolution and supersedes the §2.7 clause; the §13 checklist echo edited to match.~~ **Restated to match the ruling that was made:** an ADR that names which resolution — done, [ADR-065](DECISIONS.md#adr-065) — and, because the resolution was rejection, that **supersedes nothing and edits neither §2.7 nor the §13 echo.** Applying the original criterion to ADR-065 would fail it for doing exactly what the owner ruled.
 
-#### CI-10 · Ruling owed on A-6 — five type roles (Value · Input · Technical · Link · Section header)
+#### CI-10 · Ruling owed on A-6 — five type roles (Value · Input · Technical · Link · Section header) — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-067](DECISIONS.md#adr-067)**, owner ruling **Option (d)**: all five roles accepted, **each naming its §2.1 register** — Value → Body, Input → Body, Technical → Metadata, Link → Body, Section header → Metadata. **No role enters without a register; no new size; NO SIXTH REGISTER — the five-register architecture is frozen** and §2.1 is textually unchanged. A-6's unnamed "fifth role" was **identified rather than deferred**: it is **Section header**, the only one with two live claims pointing in opposite directions (Subhead sits *above* Body, a list band sits *below* it), resolved to **Metadata**. §6 goes eleven roles → **sixteen**. Closes **D-21** and audit **row 20**. **Unblocks CI-21 — the last of the three HTML re-freezes still gated.**
 - **Location** `docs/DECISIONS.md` · gates CI-41
 - **Current** Not ruled. §6 defines eleven roles; A-6 adds five, *"roles only… no new sizes."*
 - **Authority** [validation A-6](ZINELY-DESIGN-SYSTEM-VALIDATION.md); [§6](ZINELY-DESIGN-SYSTEM.md)
@@ -275,10 +276,11 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 #### CI-21 · The frozen HTML must be re-frozen with the type registers
 - **Location** `docs/design/v1/{shelf,bench,proof}.html`
 - **Current** The HTML's sizes are the source of the 25 distinct `.sp` values in Compose.
-- **Required** [§2.1](ZINELY-DESIGN-SYSTEM.md) five registers; [§6](ZINELY-DESIGN-SYSTEM.md) eleven roles (sixteen if CI-10 accepts A-6); [§13](ZINELY-DESIGN-SYSTEM.md) *"No sizes invented for this screen."*
+- **Required** [§2.1](ZINELY-DESIGN-SYSTEM.md) five registers — **frozen, and no sixth** ([ADR-067](DECISIONS.md#adr-067)); [§6](ZINELY-DESIGN-SYSTEM.md) ~~eleven roles (sixteen if CI-10 accepts A-6)~~ **sixteen roles**, of which **five carry a named register** ([ADR-067](DECISIONS.md#adr-067)) and eleven do not ([CI-99](#ci-99--six-type-roles-have-no-register-and-heading-is-genuinely-ambiguous)); [§13](ZINELY-DESIGN-SYSTEM.md) *"No sizes invented for this screen."*
 - **Authority** as CI-20
-- **Milestone** C0 · **Prereq** CI-10 · **Kind** documentation · **Changes** docs
-- **Risk** Eleven roles cannot be derived from 25 sizes without deciding which sizes die, and **every death is a visual change on a goldened surface**. Deciding that in Compose is deciding it at the wrong rank.
+- **Milestone** C0 · **Prereq** ~~CI-10~~ **satisfied** ([ADR-067](DECISIONS.md#adr-067) — **sixteen** roles; the five new ones carry a register, the eleven older ones are [CI-99](#ci-99--six-type-roles-have-no-register-and-heading-is-genuinely-ambiguous)) — **UNBLOCKED** · **Kind** documentation · **Changes** docs
+- **Re-freeze set complete 2026-07-24:** CI-20 (radius) freed by [ADR-065](DECISIONS.md#adr-065), CI-22 (spacing) by [ADR-066](DECISIONS.md#adr-066), CI-21 (type) by [ADR-067](DECISIONS.md#adr-067). **All three are now gated on nothing but the owner's own pass and may proceed together as one coordinated change** rather than three sequential ones.
+- **Risk** **Sixteen** roles ([ADR-067](DECISIONS.md#adr-067)) cannot be derived from 25 sizes without deciding which sizes die, and **every death is a visual change on a goldened surface**. Deciding that in Compose is deciding it at the wrong rank.
 - **Verify** Re-freeze date later than the CI-10 ADR; every register traceable to a line in the HTML.
 
 #### CI-22 · The frozen HTML must be re-frozen with the spacing unit
@@ -307,6 +309,17 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Milestone** C0 · **Prereq** none — CI-09's closure removed its last dependency · **Kind** documentation · **Changes** docs
 - **Risk** **Filed so CI-09's closure cannot orphan it.** D-6 was owned by CI-09 while it was believed to be a radius question; [ADR-065](DECISIONS.md#adr-065) settled corner geometry identically for page and thumbnail, which removed the radius half and left the rotation half with no owner. A defect that loses its owner by being half-solved is exactly the drift this inventory exists to prevent. Note it binds **C6/C7** — `ShelfCover.kt` and the page strip both draw the rotation today.
 - **Verify** An ADR distinguishing placement from effect, or recording §5.10 as a stated exception; audit row 6 decidable afterwards.
+
+#### CI-99 · Six type roles have no register, and Heading is genuinely ambiguous
+> *Numbered 99 but filed here, in C0, because that is its milestone — numbering follows creation order,
+> placement follows milestone.*
+- **Location** [§6](ZINELY-DESIGN-SYSTEM.md)'s role table · [§2.1](ZINELY-DESIGN-SYSTEM.md)'s five registers · `docs/DECISIONS.md`
+- **Current** [ADR-067](DECISIONS.md#adr-067) required every role it *added* to name its §2.1 register, and five did. **The original eleven were out of its scope and carry none.** Five of their names coincide with a register (Display, Subhead, Body, Metadata, Caption); **Heading, Button, Label, Instruction, Warning and Empty state have no register recorded anywhere in the corpus.**
+- **Required** A register for each of the six — or an explicit ruling that a role may take its register from context. **Heading is the one that cannot be guessed:** [§6](ZINELY-DESIGN-SYSTEM.md) reserves **Display** for *"the wordmark, the ending, and the one sentence per screen that carries the product's voice"* — which would exclude Heading, **except that the product already sets screen titles in the display serif**, so ruling Heading away from Display is itself a visible change. Its candidates are therefore **Display**, **Subhead** or **Body** — and [§2.1](ZINELY-DESIGN-SYSTEM.md) places Subhead *above* Body, so the candidates sit on **opposite sides of Body**. That is the same opposite-direction ambiguity ADR-067's decision 3 was written to eliminate, left standing for the role that names every screen.
+- **Authority** [ADR-067](DECISIONS.md#adr-067) decision 2 (*"Every role names its register, and no role may enter §6 without one"*) and decision 4 (**the five-register architecture is frozen — a role that cannot be expressed by the five is an owner decision, never a sixth register**); [§6](ZINELY-DESIGN-SYSTEM.md); [§2.1](ZINELY-DESIGN-SYSTEM.md)
+- **Milestone** C0 · **Prereq** none — this item was *created by* [ADR-067](DECISIONS.md#adr-067) and never had one · **Kind** documentation · **Changes** docs
+- **Risk** **Filed because ADR-067's first draft claimed this was already done.** Three separate lines asserted *"sixteen roles, each with its register named"* and *"C3b maps roles onto registers instead of negotiating them"* — false for eleven of the sixteen, and it would have told a [CI-41](#ci-41--sixteen-type-roles-are-specified-zero-are-implemented) engineer the mapping work was finished. **CI-41 cannot map rather than negotiate until this closes**, and Heading's register is a visible size change on every goldened surface that has a title.
+- **Verify** An ADR records a register for each of the six, or the context rule; §6's table carries a register for **every** role, not five of sixteen.
 
 #### CI-24 · The conformance track is not on the roadmap
 - **Location** `docs/ROADMAP.md` · `CHANGELOG.md`
@@ -517,10 +530,10 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** As CI-39. `ZinelyDimens`'s KDoc says the trilogy takes *"sixteen distinct values"*; it now takes 22 — the KDoc is **dated, not wrong**, and is itself the drift this programme exists to end.
 - **Verify** The count of distinct forms equals what CI-09 ruled; every form resolves to a named token.
 
-#### CI-41 · Eleven type roles are specified; zero are implemented
+#### CI-41 · Sixteen type roles are specified; zero are implemented
 - **Location** `ui/theme/Type.kt` — `ZinelyTypography` carries **two `FontFamily` values and no roles**; the Material3 `Typography` at `:68-76` defines exactly one style (`bodyLarge`, `FontFamily.Default`). Against **80 `.sp` literals across 25 distinct sizes**: `9.5, 10, 10.5, 11, 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 17, 19, 19.5, 20, 21, 22, 23, 24, 26` plus `0.sp` and `0.5.sp` tracking
-- **Required** [§6](ZINELY-DESIGN-SYSTEM.md) eleven roles by purpose (sixteen if CI-10 accepts A-6); [§2.1](ZINELY-DESIGN-SYSTEM.md) five registers; [§13](ZINELY-DESIGN-SYSTEM.md) *"No sizes invented for this screen."*
-- **Milestone** C3b · **Prereq** **CI-21**, CI-10, CI-34 · **Kind** architectural · **Changes** render, a11y, tests
+- **Required** [§6](ZINELY-DESIGN-SYSTEM.md) ~~eleven roles by purpose (sixteen if CI-10 accepts A-6)~~ **sixteen roles by purpose** ([ADR-067](DECISIONS.md#adr-067)), **five of the sixteen already mapped to a §2.1 register** ([ADR-067](DECISIONS.md#adr-067)); **the other eleven are not** — see [CI-99](#ci-99--six-type-roles-have-no-register-and-heading-is-genuinely-ambiguous), which must close before this item can map rather than negotiate; [§2.1](ZINELY-DESIGN-SYSTEM.md) five registers, **frozen**; [§13](ZINELY-DESIGN-SYSTEM.md) *"No sizes invented for this screen."*
+- **Milestone** C3b · **Prereq** **CI-21**, ~~CI-10~~ **satisfied** ([ADR-067](DECISIONS.md#adr-067)), CI-34 · **Kind** architectural · **Changes** render, a11y, tests
 - **Risk** **High, and different in kind from spacing:** type changes reflow, and reflow changes clipping, ellipsis and line counts — failures a golden diff shows but a human must judge. Compounded by Fraunces shipping as the static 9pt optical cut, because `FontVariation`'s `opsz` is ignored below API 26 and minSdk is 24 (`Type.kt:38-45`). **Collides with execution-plan F3** — coordinate, do not duplicate.
 - **Verify** Every role traceable to a register in the re-frozen HTML; CI-33's large-text goldens re-checked; goldens otherwise byte-identical.
 
@@ -988,7 +1001,7 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 
 | Milestone | Items | Count | Visual impact | The gate that closes it |
 |---|---|---|---|---|
-| **C0** Specification reconciliation | CI-01 … CI-24, **CI-98** | **25** | none | Every §2 conflict has a dated ADR; `docs/design/v1/*.html` re-frozen later than those ADRs; a device motion baseline exists |
+| **C0** Specification reconciliation | CI-01 … CI-24, **CI-98**, **CI-99** | **26** | none | Every §2 conflict has a dated ADR; `docs/design/v1/*.html` re-frozen later than those ADRs; a device motion baseline exists |
 | **C1** Conformance guardrails | CI-25 … CI-33, **CI-93** | **10** | none (the criterion) | Goldens byte-identical **and** an injected defect makes each new net fail |
 | **C2** `:core:ui` extraction | CI-34 | **1** | none | The diff contains renames and import lines only |
 | **C3a** Tokens — ADR-gated | CI-35 … CI-38, **CI-94** | **5** | none (tokens added, call sites not migrated) | Every token traceable to a C0 ADR; goldens byte-identical |
@@ -1000,9 +1013,9 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 | **C8** Navigation continuity | CI-79 … CI-80 | **2** | high, invisible in a still | Device only; TalkBack unaffected; reduced motion loses no information |
 | **C9** Copy layer | CI-81 … CI-86 | **6** | **none intended** — any diff is a bug | Goldens byte-identical; a no-prose-literal test green in CI |
 | **C10** Audit and sign-off | CI-87 … CI-92 | **6** | none | A committed Review Agent **GO** with no open Required Fixes |
-| | | **98** | | |
+| | | **99** | | |
 
-**Where the weight is.** C0 holds 25 of 98 items — **a quarter of the programme and none of the code**.
+**Where the weight is.** C0 holds 26 of 99 items — **a quarter of the programme and none of the code**.
 C6 holds 14 and the largest share of the risk. C1 + C2 + C9 — **seventeen items** — have no dependency on
 C0 at all and are the correct first engineering acts.
 
@@ -1012,7 +1025,7 @@ C0 at all and are the correct first engineering acts.
 
 | Subsystem | Items | Count |
 |---|---|---|
-| **Specification & authority** (ADRs, HTML, corpus documents) | CI-01 … CI-24, **CI-98** | 25 |
+| **Specification & authority** (ADRs, HTML, corpus documents) | CI-01 … CI-24, **CI-98**, **CI-99** | 26 |
 | **Test & CI infrastructure** | CI-25 … CI-33, CI-91, CI-93 | 11 |
 | **Module structure** | CI-34 | 1 |
 | **Theme / token layer** (`ui/theme/`) | CI-35 … CI-43, CI-69, CI-94 | 11 |
@@ -1024,9 +1037,9 @@ C0 at all and are the correct first engineering acts.
 | **Copy** | CI-81, CI-84, CI-85, CI-86 | 4 |
 | **Render / export pipeline** | CI-42, CI-77 | 2 |
 | **Release documentation** | CI-87 … CI-90, CI-92 | 5 |
-| | | **100*** |
+| | | **101*** |
 
-<sub>\* Exceeds 98 by **two**: CI-42 is counted under typography **and** render, CI-77 under Shelf **and** render. Every item appears exactly once in [§2](#2-summary--inventory-by-milestone), which is the authoritative count. *(This footnote has now been wrong twice — four double-counts, then three, once with a total that did not match its own rows. Both errors had the same shape: a summary asserted from memory rather than counted from the rows above it. It is now counted.)*</sub>
+<sub>\* Exceeds 99 by **two**: CI-42 is counted under typography **and** render, CI-77 under Shelf **and** render. Every item appears exactly once in [§2](#2-summary--inventory-by-milestone), which is the authoritative count. *(This footnote has now been wrong twice — four double-counts, then three, once with a total that did not match its own rows. Both errors had the same shape: a summary asserted from memory rather than counted from the rows above it. It is now counted.)*</sub>
 
 **The reading that matters.** The **specification** subsystem is the largest, and it contains no code.
 The **`:core:editor` MVI reducer, `:core:imposition`, `:core:render`, `:core:model`, `:core:data`,
@@ -1039,7 +1052,7 @@ invariant across the whole programme.
 
 | Path | Items touching it | Count |
 |---|---|---|
-| `docs/` (DECISIONS, design/*, ROADMAP, README, reviews) | CI-01 … CI-24, CI-38, CI-87 … CI-92, **CI-98** | 32 |
+| `docs/` (DECISIONS, design/*, ROADMAP, README, reviews) | CI-01 … CI-24, CI-38, CI-87 … CI-92, **CI-98**, **CI-99** | 33 |
 | `feature/editor/src/main/.../ui/theme/` | CI-35 … CI-41, CI-43, CI-69, CI-94 | 10 |
 | `feature/editor/src/main/.../ui/components/` | CI-44 … CI-53, CI-74, CI-75, CI-78, CI-93, CI-94, CI-95 | 16 |
 | `feature/editor/src/main/.../feature/editor/` — Editor family (14 files) | CI-49, CI-54, CI-57, CI-58, CI-60 … CI-68, CI-85, CI-96 | 15 |
@@ -1067,7 +1080,7 @@ that must never be split.
 
 | Method | Items | Count |
 |---|---|---|
-| **Documentation review** (an ADR, a dated deferral, a committed record) | CI-01 … CI-13, CI-15 … CI-24, CI-38, CI-86 … CI-89, CI-91, CI-92, **CI-98** | 31 |
+| **Documentation review** (an ADR, a dated deferral, a committed record) | CI-01 … CI-13, CI-15 … CI-24, CI-38, CI-86 … CI-89, CI-91, CI-92, **CI-98**, **CI-99** | 32 |
 | **Golden — byte-identical required** (a diff is a defect) | CI-25, CI-34, CI-35, CI-36, CI-37, CI-39 … CI-43, CI-52, CI-69, CI-76, CI-81, CI-94 | 15 |
 | **Golden — re-recorded, each diff reviewed individually** | CI-44 … CI-51, CI-53, CI-60, CI-61, CI-64, CI-65, CI-66, CI-72 … CI-75, CI-78, CI-83, CI-95 | 21 |
 | **Unit / instrumentation test** | CI-27, CI-28, CI-29, CI-30, CI-32, CI-56, CI-67, CI-82, CI-84 | 9 |
@@ -1081,7 +1094,7 @@ that must never be split.
 
 **Three readings worth stating.**
 
-1. **Thirty-one items — just under a third of the programme — are verified by reading a document, not by
+1. **Thirty-two items — just under a third of the programme — are verified by reading a document, not by
    running anything.** That is not overhead. It is the measure of how much of this work is authority the
    repository does not yet record.
 2. **Fourteen items can only be verified on a physical device**, and every one of them is invisible to
@@ -1105,7 +1118,7 @@ gaps in this document**, and both were found by an independent reader rather tha
 candidate to be determined, recorded in the item). The first conditional this section named is now
 unconditional, and it resolved by ruling rather than by engineering, which is the whole argument of
 §6.1. **The rest remain conditional:** CI-40's radius count,
-CI-41's role count (eleven or sixteen), CI-51's existence, and every item gated on the eight additions
+~~CI-41's role count (eleven or sixteen)~~ **— resolved 2026-07-24, sixteen ([ADR-067](DECISIONS.md#adr-067))** — CI-51's existence, and every item gated on the eight additions
 are the same: written against a decision C0 has not made. **They are counted once, but their *size* is
 not yet knowable.** A ruling that rejects an addition deletes its items; a ruling that accepts A-7
 creates items for screens that do not exist. This is the correct state — the alternative is an

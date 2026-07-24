@@ -665,6 +665,14 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > placeholder), **Technical** (filename, size, date, version), **Link**, or **List section header**.
 > Metadata is defined narrowly as facts about the artifact and does not stretch to cover them.
 > Premium Checklist #11–#25 constrain the scale's *discipline* and add no roles.
+>
+> **✅ RESOLVED — [ADR-067](DECISIONS.md#adr-067), 2026-07-24.** All five roles enter §6, **each naming
+> the §2.1 register it belongs to**: Value → **Body**, Input → **Body**, Technical → **Metadata**,
+> Link → **Body**, Section header → **Metadata**. **No sixth register and no new size** — the
+> five-register architecture is frozen by the same ruling, and a future role that cannot be expressed
+> by the five becomes an owner decision rather than a quiet addition. This defect's own wording is worth
+> keeping in view: it says §6 *"has no **register**"* for these, and the fix was to give each one — the
+> ruling took the word literally.
 
 ### 3.8 Colour
 
@@ -775,15 +783,17 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 17 | Does "no results" use the empty-state invitation? | Ambiguous — §9.10 and Premium #102 read literally give the wrong answer | ❌ | Filtered-empty vs. new-empty |
 | 18 | Does the page resize when a tablet side panel opens? | **Half decided — no, it does not resize.** ~~§8.2's list omits the case~~ — the derivation clause names a side panel an *"equivalent interface affordance"*, so §8.2 and §4.7 both govern it unchanged. **The second ground stands:** *"§4.7's remedy is impossible in two panes"* — a rigid body has nowhere to offset to. **Escalated** per §1.7 | 🟡 escalated | §5 longevity |
 | 19 | Is a font name set in its own font? | ~~Undecidable — §1.1 and §1.5 disagree~~ **Decidable — yes.** §1.7 rank 3 (the artifact's truth): a sample is drawn as it will print, placed or not | ✅ [ADR-064](DECISIONS.md#adr-064) | D-8 |
-| 20 | Which type role is "2.4 MB"? | **Invention** | ❌ | D-21 |
+| 20 | Which type role is "2.4 MB"? | ~~**Invention**~~ **Decidable — Technical, at the Metadata register.** Tabular numerals, no small-caps | ✅ [ADR-067](DECISIONS.md#adr-067) | D-21 |
 
-**Eight of twenty would produce agreement** — rows 1, **3**, 4, 5, **7**, 8, 14 and **19**. *(Row 18
+**Nine of twenty would produce agreement** — rows 1, **3**, 4, 5, **7**, 8, 14, **19** and **20**.
+*(Row 20 moved under [ADR-067](DECISIONS.md#adr-067) — "2.4 MB" is the **Technical** role at the
+**Metadata** register, which is what "Invention" meant it lacked. Row 18
 moved under [ADR-066](DECISIONS.md#adr-066) to **🟡** — the derivation clause decides the *resize*
 question, **no**, but the row cited a second ground the clause does not reach: §4.7's rigid-body remedy
 has nowhere to offset to in two panes. An earlier draft of this recount stamped row 18 ✅ and silently
 dropped that second ground; caught under review. Row 3 moved under [ADR-065](DECISIONS.md#adr-065) — a template
 card is square, because where §2.7's two rows both claim an object the paper row governs. **Recount,
-2026-07-24: 8 ✅ / 2 🟡 / 10 ❌.** Row 6 stays ❌:
+2026-07-24: 9 ✅ / 2 🟡 / 9 ❌.** Row 6 stays ❌:
 ADR-065 removed its radius half, and its rotation half is now D-6's whole content, owned by CI-98.
 Rows 7 and 19
 moved under [ADR-064](DECISIONS.md#adr-064) — §1.7 rank 2 decides the caret, rank 3 decides the font
@@ -798,7 +808,7 @@ mine rather than the system's: row 8 asserted that Export ships PDF and PNG as p
 SCREEN-INVENTORY ranks them — **"Primary action: Print at home (PDF)" / "Secondary: Save as image
 (PNG)"**; row 14 called hover an absence when [ADR-049](DECISIONS.md#adr-049) decides it.)*
 
-**Ten still would not, and two escalate.** The shape matters more than the count: **every agreement is about light, depth,
+**Nine still would not, and two escalate.** The shape matters more than the count: **every agreement is about light, depth,
 paper, ranking, or a decision recorded in an ADR** — and **every failure is about furniture, states, or
 screens with no artifact in them.** The system has a well-built centre and no edges.
 
@@ -1035,8 +1045,8 @@ defect is the ambiguity, not the direction.**
 >   both rows — chrome *and* representing paper — the **paper row governs the corner**.
 > - The rejected direction is not reserved for later. It was ruled on, and the ruling was *no*.
 
-### A-6 · Five type roles: **Value · Input · Technical · Link · Section header**
-*Closes D-21 and six invention events across four screens.*
+### A-6 · Five type roles: **Value · Input · Technical · Link · Section header** — ✅ **ACCEPTED**
+*Closes D-21 and six invention events across four screens.* **✅ ACCEPTED — [ADR-067](DECISIONS.md#adr-067), 2026-07-24 (CI-10, Option d).**
 Roles only, in §6's purpose-not-size form. No new sizes: four of the five can be expressed with the
 registers that already exist once their *purpose* is named.
 
