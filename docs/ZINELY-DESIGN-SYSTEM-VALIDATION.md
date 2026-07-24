@@ -497,15 +497,36 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > calls thumbnails *"small paper cards."* Five reviewers will not agree, and the disagreement is not
 > about taste but about which half of one sentence applies. Missing: a rule distinguishing **the
 > artifact from a representation of the artifact** — which also settles D-6.
+>
+> **✅ RESOLVED — [ADR-065](DECISIONS.md#adr-065), 2026-07-24. A-5 REJECTED; §2.7 re-affirmed.**
+> The ambiguity is closed in the direction the accepted text already pointed: **the artifact is square,
+> and every representation of the artifact is square.** No exception on the ground of being a
+> representation, no size threshold, no per-surface carve-out. Where both §2.7 rows claim an object, the
+> **paper row governs the corner**. §2.7, §5.1 and §13's checklist are confirmed rather than edited, and
+> [RD-4](V1-DESIGN-REFINEMENT.md) — which filed *"a rounded cream rectangle on black"* as a defect — is
+> **confirmed rather than superseded.** The four production sites that round the artifact
+> (`ProofSheet.kt:156`/`:194`, `ShelfCover.kt:158`, `ShelfCard.kt:245`) are recorded as
+> **non-conformant** and corrected in CI-73 at C7.
+>
+> **Note the correction to this section's own claim:** *"which also settles D-6"* is **false as
+> written**. Settling the radius question does not settle D-6, because D-6 was never only about radius.
+> See D-6 below.
 
 > **D-6 · Paper may not rotate; page cards are hand-rotated.** *Severity: medium.* §8.3 forbids "the
 > page rotates for effect"; §5.10, §4.3 and [R10](design/DESIGN-RULES.md) require the page strip be
 > hand-placed and rotated. Same missing rule as D-5.
 >
-> **🟡 OPEN — intentionally deferred to CI-09 (A-5).** [ADR-064](DECISIONS.md#adr-064) does **not**
-> close this, and an earlier draft of A-1 wrongly claimed it did. The question is whether a rotated page
-> card is the **artifact** or a **representation** of it — a content gap, not a procedure gap. No rank
-> order can settle it; the A-5 ruling can. Owner: **CI-09**.
+> **🟡 OPEN — and RE-SCOPED by [ADR-065](DECISIONS.md#adr-065), 2026-07-24: this is no longer a radius
+> question.** [ADR-064](DECISIONS.md#adr-064) did not close it (an earlier draft of A-1 wrongly claimed
+> it did), and **ADR-065 does not close it either** — but ADR-065 removes half of it. With the artifact
+> and every representation of it now square, page and thumbnail have **identical corner geometry**, so
+> nothing about D-6 turns on whether a page card *is* the artifact. What survives is solely a
+> **rotation / placement semantics** question: [§8.3](ZINELY-DESIGN-SYSTEM.md) forbids *"the page
+> rotates for effect"* while [§5.10](ZINELY-DESIGN-SYSTEM.md), [§4.3](ZINELY-DESIGN-SYSTEM.md) and
+> [R10](design/DESIGN-RULES.md) require the page strip be hand-placed and rotated — is hand-placement
+> *rotation for effect*, or is it placement? **By explicit owner ruling this gets its own decision and
+> is not resolved by extending ADR-065.** New owner: **CI-98** (CI-09 is closed and can no longer hold
+> it).
 
 > **D-7 · Continuity moves the work; the work may not move unless the user moves it.** *Severity: low.*
 > §3.6 requires a card to *become* the editor page; §8.2 says the work never moves unless the user
@@ -715,10 +736,10 @@ Would five independent reviewers, with only these documents, reach the same answ
 |---|---|---|---|---|
 | 1 | Does a new template card cast a shadow? | Derivable — §2.4, one light source; Premium #42, #47 | ✅ | — |
 | 2 | Which elevation tier is a template card in? | Ambiguous — neither "on the page" nor obviously "above the room" | ❌ | Tier assignment for new objects |
-| 3 | Is a template card square-cornered or radiused? | **Undecidable** — §2.7's two clauses both apply | ❌ | D-5 |
+| 3 | Is a template card square-cornered or radiused? | ~~**Undecidable** — §2.7's two clauses both apply~~ **Decidable — square.** The paper row governs when both apply | ✅ [ADR-065](DECISIONS.md#adr-065) | D-5 |
 | 4 | Does a dialog move with the page? | Derivable — §2.4 tier 3, §8.2. **No** | ✅ | — |
 | 5 | May a toolbar scroll? | Derivable — yes if it peeks (§3.5, Premium #93); never with an invisible edge (§5.9, Premium #94) | ✅ | — |
-| 6 | Should paper rotate? | Derivable for the page (**no**, §8.3); contradicted for its thumbnail (**yes**, §5.10) | ❌ | D-5 / D-6 |
+| 6 | Should paper rotate? | Derivable for the page (**no**, §8.3); contradicted for its thumbnail (**yes**, §5.10). **Radius half removed by [ADR-065](DECISIONS.md#adr-065); the rotation half stands** | ❌ | D-6 (CI-98) |
 | 7 | May the accent appear on user content? | Derivable for handles (**no** — §3.2 prefers depth over outline); ~~undecidable for the caret~~ **decidable for the caret — yes, transiently.** §1.7 rank 2 (accessibility over the artifact's truth); §7.2 now states the exception | ✅ [ADR-064](DECISIONS.md#adr-064) | D-2, narrowly |
 | 8 | May two primary actions exist? | Derivable — **no.** §4.2 and Premium #58; and every shipped multi-action screen ranks them (SCREEN-INVENTORY: Export = PDF primary, PNG secondary) | ✅ | — |
 | 9 | Does Settings have a primary action? | **Contradiction** — R2/R3/§4.2/#58 vs. SCREEN-INVENTORY. §1.7 supplies the axis but does not decide it: rank 4 would re-rank two documents, so it **escalates** | 🟡 escalated to CI-11 | D-1 |
@@ -734,11 +755,15 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 19 | Is a font name set in its own font? | ~~Undecidable — §1.1 and §1.5 disagree~~ **Decidable — yes.** §1.7 rank 3 (the artifact's truth): a sample is drawn as it will print, placed or not | ✅ [ADR-064](DECISIONS.md#adr-064) | D-8 |
 | 20 | Which type role is "2.4 MB"? | **Invention** | ❌ | D-21 |
 
-**Seven of twenty would produce agreement** — rows 1, 4, 5, **7**, 8, 14 and **19**. *(Rows 7 and 19
+**Eight of twenty would produce agreement** — rows 1, **3**, 4, 5, **7**, 8, 14 and **19**. *(Row 3
+moved under [ADR-065](DECISIONS.md#adr-065) — a template card is square, because where §2.7's two rows
+both claim an object the paper row governs. **Recount, 2026-07-24: 8 ✅ / 1 🟡 / 11 ❌.** Row 6 stays ❌:
+ADR-065 removed its radius half, and its rotation half is now D-6's whole content, owned by CI-98.
+Rows 7 and 19
 moved under [ADR-064](DECISIONS.md#adr-064) — §1.7 rank 2 decides the caret, rank 3 decides the font
 sample. Row 9 moved from ❌ to **🟡 escalated**: §1.7
 supplies the axis its "Contradiction" verdict was missing, but the order does not decide it and the
-remainder is owed by CI-11. **Recount, 2026-07-24: 7 ✅ / 1 🟡 / 12 ❌.** This paragraph is recounted
+remainder is owed by CI-11. This paragraph is recounted
 whenever the table moves — the original said "five" and "fifteen", and leaving those standing after
 three rows changed is precisely the failure §0.1 was written about. Row 7 was missed on the first
 recount and caught on review, three lines below this sentence promising it would not be.)*
@@ -747,7 +772,7 @@ mine rather than the system's: row 8 asserted that Export ships PDF and PNG as p
 SCREEN-INVENTORY ranks them — **"Primary action: Print at home (PDF)" / "Secondary: Save as image
 (PNG)"**; row 14 called hover an absence when [ADR-049](DECISIONS.md#adr-049) decides it.)*
 
-**Twelve still would not, and one escalates.** The shape matters more than the count: **every agreement is about light, depth,
+**Eleven still would not, and one escalates.** The shape matters more than the count: **every agreement is about light, depth,
 paper, ranking, or a decision recorded in an ADR** — and **every failure is about furniture, states, or
 screens with no artifact in them.** The system has a well-built centre and no edges.
 

@@ -165,13 +165,14 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** The band's **existence** is ADR-gated; its **duration** is separately gated on CI-14. Conflating them re-serialises C3a behind a device recording for no reason.
 - **Verify** ADR; the duration explicitly deferred to CI-14 in the same ADR.
 
-#### CI-09 · Ruling owed on A-5 — artifact versus representation ⚠️ *amendment*
-- **Location** `docs/DECISIONS.md` · gates CI-42, CI-73 · determines whether CI-73 touches **four files or zero**
+#### CI-09 · Ruling owed on A-5 — artifact versus representation ~~⚠️ *amendment*~~ — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-065](DECISIONS.md#adr-065)**, owner ruling **Option (b)**: **A-5 REJECTED.** The artifact is square and **every representation of the artifact is square**; no exception for being a representation, no size threshold, no per-surface carve-out. Where §2.7's two rows both claim an object, the **paper row governs the corner**. **Not an amendment after all** — §2.7, §5.1 and §13's checklist are *re-affirmed*, RD-4 is *confirmed*, and the ADR supersedes nothing. **CI-73 therefore touches four files, as conformance rather than as a reversal.** Closes **D-5** and audit row 3. **D-6 stays open by owner intent and is re-scoped — it is no longer a radius question**, only rotation/placement semantics; re-owned by **CI-98** so CI-09's closure cannot orphan it. **Unblocks CI-20 and CI-12.**
+- **Location** `docs/DECISIONS.md` · gates CI-42, CI-73 · ~~determines whether CI-73 touches **four files or zero**~~ **ruled: four files**
 - **Current** Not ruled. [§2.7](ZINELY-DESIGN-SYSTEM.md) says *"Paper, and anything representing paper: square"*; [§5.1](ZINELY-DESIGN-SYSTEM.md) says paper never takes a corner radius; four production sites round it anyway (CI-73).
 - **Required** A ruling in one direction. A-5 proposes the distinction; A-5 *also* states *"the alternative resolution — make every representation square too — is equally valid and cheaper; the defect is the ambiguity, not the direction."*
 - **Authority** [validation A-5](ZINELY-DESIGN-SYSTEM-VALIDATION.md) — the report's *"most reviewer-visible defect"*; [V1-DESIGN-REFINEMENT RD-4](V1-DESIGN-REFINEMENT.md), which files a rounded cream rectangle as a defect
-- **Also owns D-6** — *"paper may not rotate; page cards are hand-rotated."* A-1 wrongly claimed it too; [ADR-064](DECISIONS.md#adr-064) records D-6 as **intentionally deferred here**, because it asks whether a rotated page card *is* the artifact — a content question no rank order can settle.
-- **Milestone** C0 · **Prereq** ~~CI-01, CI-05~~ **both satisfied** ([ADR-061](DECISIONS.md#adr-061), [ADR-064](DECISIONS.md#adr-064)) — **RULABLE NOW** · **Kind** documentation · **Changes** docs
+- ~~**Also owns D-6**~~ — D-6 was deferred here by [ADR-064](DECISIONS.md#adr-064) on the reasoning that it asks whether a rotated page card *is* the artifact. [ADR-065](DECISIONS.md#adr-065) settles the corner geometry identically for both, so that identity question no longer arises for D-6, and **what remains is rotation semantics, not radius**. D-6 moves to **CI-98**.
+- **Milestone** C0 · **Prereq** ~~CI-01, CI-05~~ **both satisfied** ([ADR-061](DECISIONS.md#adr-061), [ADR-064](DECISIONS.md#adr-064)) · **Kind** documentation · **Changes** docs
 - **Risk** **This is the one C0 item an engineer will be tempted to decide.** It reverses accepted text and needs an ADR that supersedes SYS-5, not a clarification. It also sets §10.2's shape-count condition, which is why the roadmap refuses to fix that number.
 - **Verify** An ADR that names which resolution and supersedes the §2.7 clause; the §13 checklist echo edited to match.
 
@@ -195,7 +196,7 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 #### CI-12 · Ruling owed on A-8 — modality and the scale clause ⚠️ *the scale clause is an amendment*
 - **Location** `docs/DECISIONS.md` · gates CI-40 (spacing), CI-33
 - **Authority** [validation A-8](ZINELY-DESIGN-SYSTEM-VALIDATION.md)
-- **Milestone** C0 · **Prereq** CI-01, CI-09 · **Kind** documentation · **Changes** docs
+- **Milestone** C0 · **Prereq** ~~CI-01, CI-09~~ **both satisfied** ([ADR-061](DECISIONS.md#adr-061), [ADR-065](DECISIONS.md#adr-065)) — **RULABLE NOW** · **Kind** documentation · **Changes** docs
 - **Risk** The scale clause changes accepted text; A-8 also closes four of §5's eight ❌ cells including page-resize ×2 — which is CI-68's authority.
 - **Verify** ADR, with the amendment half flagged as an amendment.
 
@@ -266,7 +267,7 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Current** 22 distinct `border-radius` values across the three files (`grep -oh "border-radius:[^;}]*" docs/design/v1/*.html | sed 's/border-radius://' | tr -d ' ' | sort -u | wc -l`).
 - **Required** [§2.7](ZINELY-DESIGN-SYSTEM.md): *"Three radii exist. Nothing else does."*
 - **Authority** [CLAUDE.md · HTML-first](../CLAUDE.md#html-first-ui-workflow-mandatory) — *"first update the HTML specification, then be implemented in Compose — never the reverse"*
-- **Milestone** C0 · **Prereq** CI-09 · **Kind** documentation · **Changes** docs
+- **Milestone** C0 · **Prereq** ~~CI-09~~ **satisfied** ([ADR-065](DECISIONS.md#adr-065) — three radii, and **no radius on the artifact or any representation of it**) — **UNBLOCKED** · **Kind** documentation · **Changes** docs
 - **Risk** **The single most expensive sequencing mistake available** is starting CI-42 before this. Inverting the workflow makes Compose the specification and silently overrules `ZinelyDimens.kt:8-13`, whose refusal cites that same workflow.
 - **Verify** The three files carry a re-freeze date **later than** the CI-09 ADR; the distinct-radius count equals what CI-09 ruled.
 
@@ -787,6 +788,15 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** The [ADR-059](DECISIONS.md#adr-059) Role→View family, met on a further surface — and the one place in the Print recipe where the user is invited to *change* something they were told to match. Found by CI-31 only incidentally: CI-31 asserts order, not role, so nothing in this programme was looking here.
 - **Verify** `Role.Button` set and asserted on the **platform** tree per CI-26/CI-30 — a `clearAndSetSemantics`/leaf node, since [ZButtonPlatformA11yTest](../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/a11y/ZButtonPlatformA11yTest.kt) records that a merged node's Role collapses to `android.view.View` on the platform tree; goldens byte-identical.
 
+#### CI-98 · Ruling owed on D-6 — is hand-placement *rotation for effect*, or is it placement?
+- **Location** `docs/DECISIONS.md` · [§8.3](ZINELY-DESIGN-SYSTEM.md) vs [§5.10](ZINELY-DESIGN-SYSTEM.md), [§4.3](ZINELY-DESIGN-SYSTEM.md), [R10](design/DESIGN-RULES.md)
+- **Current** Not ruled. §8.3 forbids *"the page rotates for effect"*; §5.10 describes the page strip as *"small paper cards, **hand-placed with slight rotation**"*, and §4.3 and R10 require it. Both accepted.
+- **Required** One clause distinguishing **rotation as placement** (a resting angle the object was set down at) from **rotation as effect** (the page turning because the interface is performing) — or an explicit ruling that §5.10's hand-placement is an exception to §8.3.
+- **Authority** [validation D-6](ZINELY-DESIGN-SYSTEM-VALIDATION.md); [§8.3](ZINELY-DESIGN-SYSTEM.md); [ADR-065](DECISIONS.md#adr-065), which re-scoped this item to rotation semantics and **explicitly declined to extend itself over it**
+- **Milestone** C0 · **Prereq** none — CI-09's closure removed its last dependency · **Kind** documentation · **Changes** docs
+- **Risk** **Filed so CI-09's closure cannot orphan it.** D-6 was owned by CI-09 while it was believed to be a radius question; [ADR-065](DECISIONS.md#adr-065) settled corner geometry identically for page and thumbnail, which removed the radius half and left the rotation half with no owner. A defect that loses its owner by being half-solved is exactly the drift this inventory exists to prevent. Note it binds **C6/C7** — `ShelfCover.kt` and the page strip both draw the rotation today.
+- **Verify** An ADR distinguishing placement from effect, or recording §5.10 as a stated exception; audit row 6 decidable afterwards.
+
 ---
 
 ### C7 · Shelf and Proof residuals
@@ -800,7 +810,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 #### CI-73 · Four production sites draw the artifact with rounded corners
 - **Location** `ProofSheet.kt:156` — `RoundedCornerShape(3.dp)`, **the imposed sheet itself** · `ProofSheet.kt:194` — `RoundedCornerShape(6.dp)`, the sheet's inner face · `ShelfCover.kt:158` — `RoundedCornerShape(topStart = 3.dp, topEnd = 5.dp, bottomEnd = 5.dp, bottomStart = 3.dp)`, the booklet · `ShelfCard.kt:245` — `RoundedCornerShape(9.dp)`, the card plate
 - **Current** [§5.1](ZINELY-DESIGN-SYSTEM.md): paper **"Never: … takes a corner radius."** [§2.7](ZINELY-DESIGN-SYSTEM.md): *"Paper, and anything representing paper: **Square**."*
-- **Milestone** C7 · **Prereq** **CI-09**, CI-40 · **Kind** visual · **Changes** render, tests
+- **RULED — [ADR-065](DECISIONS.md#adr-065), 2026-07-24:** A-5 rejected; the artifact **and every representation of it** are square. **All four sites are non-conformant and are squared.** No site is exempt for being a representation, and the sheet's inner face is not exempt for being inside the sheet. The "or zero" branch is gone.
+- **Milestone** C7 · **Prereq** ~~**CI-09**~~ **satisfied** ([ADR-065](DECISIONS.md#adr-065)), CI-40 · **Kind** visual · **Changes** render, tests
 - **Risk** **Four files change under one A-5 resolution and zero under the other** — which is why the ruling is CI-09's and not this item's. **Never split across the four sites:** rounding the sheet but not the cover is worse than either consistent answer, because the inconsistency *is* the defect A-5 names.
 - **Verify** All four match the CI-09 ruling in one commit; the 28 shelf+proof goldens re-recorded with each diff reviewed individually.
 

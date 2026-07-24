@@ -343,6 +343,15 @@ Neither theme is the "real" one. Both are checked on a device, in daylight (§13
 | Chrome — trays, dialogs, cards, sheets | **One shared radius** | Radius is a design system's signature; unrelated radii read as unrelated designers |
 | Pills, chips, and round controls | **Fully rounded** | A separate category the eye reads as "a small stateful token," not a container |
 
+> **Which row wins when both apply** ([ADR-065](DECISIONS.md#adr-065), 2026-07-24). A shelf card, a page
+> thumbnail and a template card are claimed by **both** rows — they are chrome, and they represent paper
+> (§5.4 calls the card *"a small paper object"*; §5.10 calls thumbnails *"small paper cards"*). **The
+> paper row governs the corner.** The artifact is square, and every representation of the artifact is
+> square: there is no exception on the ground that something is *a representation*, no size threshold,
+> and no per-surface carve-out. This states which half of the sentence above applies. **It changes
+> nothing** — the rule reads as it always did, and this note exists because five reviewers did not agree
+> on it.
+
 **Borders are for the edges of materials, not for grouping.** A hairline says *this is where this
 material ends*. Grouping is done with space (§2.2) and surface (§2.4). A box drawn around related things
 is what a design does when it has not decided where things go.
