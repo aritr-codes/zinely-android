@@ -193,12 +193,13 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** No current screen needs it — **it binds screens that do not exist yet** (Settings, About, Backup, Recovery). Deferring it is legitimate; deferring it silently is not.
 - **Verify** ADR recording accept/reject **and** that it is an exemption.
 
-#### CI-12 · Ruling owed on A-8 — modality and the scale clause ⚠️ *the scale clause is an amendment*
+#### CI-12 · Ruling owed on A-8 — modality and the scale clause ~~⚠️ *the scale clause is an amendment*~~ — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-066](DECISIONS.md#adr-066)**, owner ruling **Option (d)**, ruling A-8's two clauses **separately**. **Modality accepted in full:** §11 gains an eighth rule — keyboard focus order follows the design's order, focus is **visibly** indicated by design not inheritance; touch-assuming rules must name their **keyboard and pointer** equivalents; **hover is out of scope** by decision, *unless a future ADR introduces hover-specific behaviour*. **Scale accepted as a *clarification and derivation*, not a restatement — so it was never an amendment:** §8.2's governing sentence is **retained verbatim and remains authoritative**, with the derivation rule added beneath it and **subordinate by construction** (where they could be read apart, the sentence above wins). **§5.3 growth guidance approved.** Closes **D-26**, **D-20**, the **hover** half of **D-16**, audit **row 18**, and **four of the longevity table's five ❌ cells**. **Unblocks CI-22 → CI-40 → C3b, CI-33, and CI-31's keyboard half.**
 - **Location** `docs/DECISIONS.md` · gates CI-40 (spacing), CI-33
 - **Authority** [validation A-8](ZINELY-DESIGN-SYSTEM-VALIDATION.md)
 - **Milestone** C0 · **Prereq** ~~CI-01, CI-09~~ **both satisfied** ([ADR-061](DECISIONS.md#adr-061), [ADR-065](DECISIONS.md#adr-065)) — **RULABLE NOW** · **Kind** documentation · **Changes** docs
-- **Risk** The scale clause changes accepted text; A-8 also closes four of §5's eight ❌ cells including page-resize ×2 — which is CI-68's authority.
-- **Verify** ADR, with the amendment half flagged as an amendment.
+- **Risk** ~~The scale clause changes accepted text~~ — **superseded by the ruling:** the scale clause was accepted as a *derivation*, so no accepted text changed and **[CI-68](V1-CONFORMANCE-INVENTORY.md)'s authority is untouched** — it still measures against §8.2's original sentence, byte-identical. A-8 also closes four of the longevity table's ❌ cells including page-resize ×2. *(A-8 says "four of §5's **eight** ❌ cells"; the table has **five**. A-8's count was wrong, not the cells.)*
+- **Verify** ~~ADR, with the amendment half flagged as an amendment.~~ **Restated to match the ruling made:** an ADR ruling both clauses — done, [ADR-066](DECISIONS.md#adr-066) — and, because the scale clause was accepted as a derivation rather than a restatement, one that **flags no amendment and leaves §8.2's sentence unedited**. Applying the original criterion would fail ADR-066 for doing what the owner ruled.
 
 #### CI-13 · The 140-item Premium Checklist is filed where nobody looks
 - **Location** `docs/V1-DESIGN-REFINEMENT.md` (inside a critique of a past release)
@@ -284,7 +285,7 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Location** `docs/design/v1/{shelf,bench,proof}.html`
 - **Required** [§2.2](ZINELY-DESIGN-SYSTEM.md): *"One spacing unit; every gap is a multiple of it."*
 - **Authority** as CI-20; [§13](ZINELY-DESIGN-SYSTEM.md)
-- **Milestone** C0 · **Prereq** CI-12 (A-8's scale clause) · **Kind** documentation · **Changes** docs
+- **Milestone** C0 · **Prereq** ~~CI-12 (A-8's scale clause)~~ **satisfied** ([ADR-066](DECISIONS.md#adr-066) — the scale clause was accepted as a derivation of §8.2, which is the clause this item waited on) — **UNBLOCKED** · **Kind** documentation · **Changes** docs
 - **Risk** This is the gate on the programme's long pole (CI-40 → CI-64 → CI-74). It is the **longest designer chain** and the critical path runs through it.
 - **Verify** Re-freeze date later than the CI-12 ADR; every gap in the three files a multiple of the named unit.
 
@@ -375,12 +376,14 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Location** repository-wide: absent
 - **Current** `assertIsNotEnabled` appears in 4 test files (and 2 production sources), `assertIsEnabled` in 3, `onNodeWithContentDescription` in 12 — no ordering assertion anywhere.
 - **Required** [Premium Checklist #64](ZINELY-DESIGN-SYSTEM.md) (§13.1, relocated there by CI-13 under [ADR-061](DECISIONS.md#adr-061)); [DESIGN-RULES per-screen checklist](design/DESIGN-RULES.md) — *"order logical"*
-- **Authority note** [validation A-8](ZINELY-DESIGN-SYSTEM-VALIDATION.md) records that §11 does not mention **keyboard focus** order while the Premium Checklist requires focus order, and proposes adding it. **That amendment has not been made, and the traversal half never depended on it:** §4.5 and §11.6 already bind reading/traversal order in the accepted text. The traversal half is therefore delivered *additively*, asserting only what §4.5/§11.6 bind; the keyboard half stays blocked on A-8, not on CI-13.
+- **Authority note** [validation A-8](ZINELY-DESIGN-SYSTEM-VALIDATION.md) records that §11 did not mention **keyboard focus** order while the Premium Checklist requires focus order, and proposed adding it. **That addition is now made — [ADR-066](DECISIONS.md#adr-066), §11 rule 8 — and the traversal half never depended on it:** §4.5 and §11.6 already bind reading/traversal order in the accepted text. The traversal half is therefore delivered *additively*, asserting only what §4.5/§11.6 bind; the keyboard half stays blocked on A-8, not on CI-13.
 - **Milestone** C1 · **Prereq** CI-13 — **landed** (`6b46d0f`, merged `6e55ab6`) · **Kind** mechanical · **Changes** a11y, tests
 - **Verify** A traversal-order assertion per surface entry point.
 - **Status** ◑ **Partially done** — the **traversal half is delivered; the keyboard-focus half named in this
-  item's own title is not**, and is not scheduled here: it needs a focus-traversal harness *and* A-8's §11
-  clause to assert against. `focusTarget()` on `EditorScreen`'s root is deliberately a focus stop with no
+  item's own title is not**, and was not scheduled here: it needs a focus-traversal harness *and* A-8's §11
+  clause to assert against. **The clause now exists — [ADR-066](DECISIONS.md#adr-066) added §11 rule 8
+  (2026-07-24), so the keyboard half is UNBLOCKED and schedulable.** What it still needs is the harness,
+  and the `focusTarget()` caveat below still applies to `EditorScreen`'s root. `focusTarget()` on `EditorScreen`'s root is deliberately a focus stop with no
   accessibility semantics, so it can never appear in the tree this item asserts against.
   **Delivered:** `SurfaceTraversalOrderTest` (`:feature:editor`, test-only, zero `src/main`) asserts traversal
   order on **six** entry states across the three top-level destinations — Shelf, Editor, and the Proof's four
@@ -423,7 +426,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 #### CI-33 · No golden is captured at a large text size or the smallest supported width
 - **Location** All 43 `:feature:editor` goldens are captured at default font scale; widths are `phone`/`tablet` only (`git ls-files 'feature/editor/src/test/roborazzi/*'`)
 - **Required** [roadmap §10.3](V1-IMPLEMENTATION-ROADMAP.md) — a golden *"at the smallest supported width and the largest text size"*; [§11](ZINELY-DESIGN-SYSTEM.md)
-- **Milestone** C1 · **Prereq** CI-12 (A-8's density clause) · **Kind** mechanical · **Changes** a11y, tests
+- **Milestone** C1 · **Prereq** ~~CI-12 (A-8's *density* clause)~~ **CI-12 (A-8's *modality* clause) — satisfied** ([ADR-066](DECISIONS.md#adr-066)) · **Kind** mechanical · **Changes** a11y, tests
+- **Terminology corrected 2026-07-24 (owner ruling):** A-8 has **two** clauses, *Modality* and *Scale*. There is no "density clause" — *density* is one of the longevity cells A-8 closes, not a clause. What a smallest-width / large-text golden needs is **modality**. **This item is now unblocked.**
 - **Risk** C3b's type work changes reflow, and **reflow changes clipping, ellipsis and line counts** — failures a golden diff shows but only if a golden exists at the size where they occur.
 - **Verify** Each surface entry point has a large-text and smallest-width golden.
 
