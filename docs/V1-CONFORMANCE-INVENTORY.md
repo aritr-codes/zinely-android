@@ -360,6 +360,22 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Authority note** [validation A-8](ZINELY-DESIGN-SYSTEM-VALIDATION.md) records that §11 does **not** require this while the Premium Checklist does — a live disagreement between accepted documents, which is why CI-13 blocks it.
 - **Milestone** C1 · **Prereq** CI-13 · **Kind** mechanical · **Changes** a11y, tests
 - **Verify** A traversal-order assertion per surface entry point.
+- **Status** ✅ **Done** — `SurfaceTraversalOrderTest` (`:feature:editor`, test-only, zero `src/main`) asserts
+  traversal order on **six** entry states across the three top-level destinations: Shelf, Editor, and the
+  Proof's four acts (Read · Sheet · Print · Fold). Asserted on the **platform `AccessibilityNodeInfo` tree**
+  per [§11.3](ZINELY-DESIGN-SYSTEM.md), reusing the CI-26 harness — extended with `platformTraversalStops`,
+  which walks the platform tree's own child order. Each surface makes **two** assertions, because #64 names
+  three orders: the stop sequence *is* the design's order, and that sequence is monotonic in the platform's
+  own reported `boundsInScreen` (§4.5, *"the visual order and the accessibility order are the same order"*).
+  Non-vacuity is permanent, not a one-off: two guard tests inject a control declared out of order and a
+  control moved without being re-declared, and the second guard asserts the sequence check **passes** on that
+  broken layout — the sequence half alone would ship it. **Additive to §11; A-8 is not adopted here** — what
+  is asserted is traversal order (§4.5/§11.6, already accepted), not keyboard focus order.
+  **Not covered:** keyboard Tab order (`focusTarget()` is deliberately semantics-free); the `ZSheet` `Dialog`
+  surfaces (separate windows); non-entry conditional states. **Reported, not fixed** (`src/main` out of
+  scope): the blank-page invitation's three decorative sticker glyphs reach the tree as spoken stops, against
+  DESIGN-RULES' *"decoration not announced"*; and `ProofChangePaperTestTag` is clickable with no `Role` and no
+  `contentDescription`.
 
 #### CI-32 · No contrast test exists
 - **Location** repository-wide: absent

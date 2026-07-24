@@ -5,6 +5,7 @@ import android.graphics.Rect
 import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityNodeProvider
 import androidx.compose.ui.test.SemanticsNodeInteraction
 
 /**
@@ -52,6 +53,12 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
  *
  * Reusable, no new dependency, no `src/main` seam: everything here is standard test-support that CI-29 /
  * CI-30 / CI-93 can consume as-is.
+ *
+ * ## Two views of the same tree
+ *
+ * [platformNode] answers *"what does the platform say about **this** control?"* — the per-node view CI-26/29/
+ * 30/93 need. [platformTraversalStops] answers *"in what **order** does the platform present this surface?"*
+ * — the whole-surface view CI-31 needs. Same provider, same framework attributes; only the question differs.
  */
 public data class PlatformA11yNode(
     /** `AccessibilityNodeInfo.getClassName()` — e.g. `android.widget.Button` for a `Role.Button` control. */
@@ -110,6 +117,148 @@ public fun SemanticsNodeInteraction.platformNode(activity: Activity): PlatformA1
         boundsInScreen = bounds,
         contentDescription = info.contentDescription?.toString(),
     )
+}
+
+/**
+ * One stop an accessibility service lands on while traversing a surface, as the **platform** tree reports it.
+ *
+ * A "stop" is a node the platform itself flags `isScreenReaderFocusable` — the public `AccessibilityNodeInfo`
+ * bit a service reads to decide what it may land on. It is *not* every named node: Compose publishes a merged
+ * control as a focusable but **unnamed** parent whose name lives on a synthetic `contentDescription` child,
+ * alongside the control's own glyph and label children and a synthetic role child, none of which are focusable.
+ * Using the platform's own flag rather than "has a name" is what keeps a four-button tray four stops instead
+ * of twelve. See [platformTraversalStops] for how the name is then resolved.
+ *
+ * @property label the name a service would speak — see [platformTraversalStops]'s resolution order.
+ * @property className `AccessibilityNodeInfo.getClassName()`, kept for cross-checking identity.
+ * @property boundsInScreen the on-screen rect the platform reports for this stop — the control's own focus
+ *   rect, not its label's. This is the geometry a reading-order assertion compares against (CI-31).
+ */
+public data class PlatformA11yStop(
+    val label: String,
+    val className: String?,
+    val boundsInScreen: Rect,
+)
+
+/**
+ * The ordered list of traversal stops the **platform** `AccessibilityNodeInfo` tree presents for the
+ * composition hosted by [activity] — CI-31's raw material.
+ *
+ * ## What this reads, and what that does and does not prove
+ *
+ * The walk is a pre-order depth-first traversal of the platform tree, visiting each node's children **in the
+ * order the tree itself reports them** (`AccessibilityNodeInfo.getChildId(index)`), starting from
+ * [AccessibilityNodeProvider.HOST_VIEW_ID]. It is therefore the order an accessibility service sees when it
+ * walks the tree — not Compose's merged semantics tree, per §11.3 *"the platform's tree is the truth"*.
+ *
+ * **Two honest bounds, measured on this repo's Robolectric host rather than assumed:**
+ *
+ * 1. **Child order here is the composition's declaration order, not a geometry-sorted order.** Compose
+ *    publishes children in declaration order and expresses any *re-sorting* separately, through
+ *    `AccessibilityNodeInfo.setTraversalBefore/setTraversalAfter` hints. On this host those hints are
+ *    **`UNDEFINED` on every node of every surface probed** — so the sequence returned here is exactly what a
+ *    service would follow, but it carries no evidence about how a device's TalkBack might additionally
+ *    re-sort. A test that only asserted this sequence would prove the declaration order and nothing about the
+ *    *visual* order; that is why CI-31's assertion pairs the sequence with the geometry check over
+ *    [PlatformA11yStop.boundsInScreen].
+ * 2. **`getChildId` is reached by reflection.** `getChildCount()` is public but the per-index child *id*
+ *    accessor is a hidden framework method. It resolves under Robolectric (which runs the real
+ *    `android-all` framework classes); it would be blocked by hidden-API enforcement in an instrumentation
+ *    test on a device. This harness is therefore JVM-only, and an on-device confirmation remains the
+ *    `adb shell uiautomator dump` pass in CLAUDE.md's device verification.
+ *
+ * ## Which nodes become stops, and where each one's name comes from
+ *
+ * A node is a stop when **no ancestor of it is already a stop** and either
+ *
+ * - the platform flags it `isScreenReaderFocusable` (public API since API 28), **or**
+ * - it speaks for itself — it carries its own non-blank `contentDescription` or `text`.
+ *
+ * This is a deliberate approximation of TalkBack's own rule, and the shape of the approximation is worth
+ * stating because each half exists to correct the other:
+ *
+ * - `isScreenReaderFocusable` **alone is too narrow**. Compose does not set it on a node that merely carries
+ *   a `contentDescription` over children it did not merge — the Proof Read act's pager is exactly that, and a
+ *   focusable-only rule drops the one stop that names the user's zine. TalkBack focuses "speaking" nodes,
+ *   not only flagged ones.
+ * - "has a name" **alone is too wide**. Compose publishes a merged control as a focusable but *unnamed*
+ *   parent whose name lives on a synthetic `contentDescription` child, beside the control's own glyph and
+ *   label children and a synthetic role child. A name-only rule turns a four-button supply tray into twelve
+ *   stops, none of which a service would land on separately.
+ *
+ * The ancestor rule is what makes the union safe: once a control is a stop, nothing inside it can be one.
+ *
+ * The name is then resolved over the stop's **own subtree, excluding any nested focusable subtree**, in this
+ * order: the first non-blank `contentDescription` found (the stop's own, else the synthetic
+ * content-description child Compose attaches to a merged control), else the first non-blank `text`. A stop
+ * for which neither exists is still returned, with an empty label, so an unnamed focusable control fails
+ * loudly in a caller's diff instead of silently disappearing from the sequence.
+ *
+ * @param activity the Activity hosting the composition — typically `composeRule.activity`.
+ * @throws IllegalStateException if the hosting `AndroidComposeView`, its provider, its root node, or the
+ *   hidden child accessor cannot be obtained — each naming what was missing, so a harness failure never reads
+ *   as a silent empty pass.
+ */
+public fun platformTraversalStops(activity: Activity): List<PlatformA11yStop> {
+    val composeView = findAndroidComposeView(activity.window.decorView)
+        ?: error(
+            "No AndroidComposeView found in the Activity view hierarchy — the composition must be hosted " +
+                "in a real Android view for its platform AccessibilityNodeInfo tree to exist.",
+        )
+    val provider = composeView.accessibilityNodeProvider
+        ?: error(
+            "AndroidComposeView returned no AccessibilityNodeProvider — the platform accessibility bridge " +
+                "is not installed, so there is no tree for TalkBack (or this harness) to walk.",
+        )
+    val root = provider.createAccessibilityNodeInfo(AccessibilityNodeProvider.HOST_VIEW_ID)
+        ?: error(
+            "AccessibilityNodeProvider produced no root AccessibilityNodeInfo (HOST_VIEW_ID) — there is no " +
+                "tree to traverse.",
+        )
+    val getChildId = runCatching {
+        AccessibilityNodeInfo::class.java.getMethod("getChildId", Int::class.javaPrimitiveType)
+    }.getOrElse {
+        error(
+            "AccessibilityNodeInfo.getChildId(int) is not reachable on this runtime (${it.javaClass.name}). " +
+                "It is a hidden framework method this harness reflects into to read the platform tree's own " +
+                "child ORDER; without it there is no traversal order to assert.",
+        )
+    }
+
+    // AccessibilityNodeInfo packs a source id as (virtualDescendantId shl 32) or accessibilityViewId.
+    fun childrenOf(node: AccessibilityNodeInfo): List<AccessibilityNodeInfo> =
+        (0 until node.childCount).mapNotNull { index ->
+            val packed = getChildId.invoke(node, index) as Long
+            provider.createAccessibilityNodeInfo((packed shr 32).toInt())
+        }
+
+    /** Names inside [node]'s own subtree, stopping at any nested focusable stop, in tree order. */
+    fun namesUnder(node: AccessibilityNodeInfo, into: MutableList<Pair<String?, String?>>) {
+        into += node.contentDescription?.toString()?.takeIf { it.isNotBlank() } to
+            node.text?.toString()?.takeIf { it.isNotBlank() }
+        childrenOf(node).forEach { if (!it.isScreenReaderFocusable) namesUnder(it, into) }
+    }
+
+    fun labelOf(node: AccessibilityNodeInfo): String {
+        val names = mutableListOf<Pair<String?, String?>>().also { namesUnder(node, it) }
+        return names.firstNotNullOfOrNull { it.first } ?: names.firstNotNullOfOrNull { it.second } ?: ""
+    }
+
+    val stops = mutableListOf<PlatformA11yStop>()
+    fun walk(node: AccessibilityNodeInfo, insideStop: Boolean) {
+        val speaksForItself = !node.contentDescription.isNullOrBlank() || !node.text.isNullOrBlank()
+        val isStop = !insideStop && (node.isScreenReaderFocusable || speaksForItself)
+        if (isStop) {
+            stops += PlatformA11yStop(
+                label = labelOf(node),
+                className = node.className?.toString(),
+                boundsInScreen = Rect().also { node.getBoundsInScreen(it) },
+            )
+        }
+        childrenOf(node).forEach { walk(it, insideStop || isStop) }
+    }
+    walk(root, insideStop = false)
+    return stops
 }
 
 /**
