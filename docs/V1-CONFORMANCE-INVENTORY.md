@@ -124,11 +124,12 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** An engineer told "the HTML is the specification" and following the index arrives at three retired screens. This is the cheapest item in the programme and one of the most expensive to leave.
 - **Verify** `grep -n "design/v1" README.md` returns ≥1 match; no row describes `docs/design/mockups/` as the working reference.
 
-#### CI-05 · No precedence order for rule-versus-rule inside the design system (A-1)
+#### CI-05 · No precedence order for rule-versus-rule inside the design system (A-1) — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-064](DECISIONS.md#adr-064)**, owner ruling **Option (b)**: the ordered list with **accessibility ranked above the artifact's truth**; escalation clause mandatory, covering same-rank collisions. Landed as [§1.7](ZINELY-DESIGN-SYSTEM.md). Closes D-1, D-2's remainder, D-3, D-7, D-8. **D-6 expressly NOT closed** — the A-1/A-5 duplicate claim is corrected in the validation report and D-6 stays open under **CI-09**. **Unblocks CI-09**, its last outstanding prerequisite.
 - **Location** `docs/ZINELY-DESIGN-SYSTEM.md` (absent) · `docs/DECISIONS.md`
 - **Current** Three precedence rules exist, each on a different axis (DESIGN-RULES: rule vs feature; SCREEN-INVENTORY: itself vs PRD/ROADMAP; §0.2: document vs document). **None settles rule vs rule.**
 - **Required** One ordered list, plus the instruction that an unresolved collision is recorded as a defect and escalated, never resolved locally.
-- **Authority** [validation A-1](ZINELY-DESIGN-SYSTEM-VALIDATION.md) — *closes D-1, D-3, D-6, D-7, D-8*
+- **Authority** [validation A-1](ZINELY-DESIGN-SYSTEM-VALIDATION.md) — *closes D-1, D-3, D-7, D-8; narrows D-2* (**corrected**: the source draft also claimed D-6, which A-5 claims too; D-6 is a content gap and belongs to CI-09)
 - **Milestone** C0 · **Prereq** none · **Kind** documentation · **Changes** docs
 - **Risk** Without it, every C4–C7 item that hits two competing rules is decided by whoever hit it first — silently, in a PR.
 - **Verify** An ADR records accept/reject; if accepted, the ordered list is in the design system.
@@ -165,7 +166,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Current** Not ruled. [§2.7](ZINELY-DESIGN-SYSTEM.md) says *"Paper, and anything representing paper: square"*; [§5.1](ZINELY-DESIGN-SYSTEM.md) says paper never takes a corner radius; four production sites round it anyway (CI-73).
 - **Required** A ruling in one direction. A-5 proposes the distinction; A-5 *also* states *"the alternative resolution — make every representation square too — is equally valid and cheaper; the defect is the ambiguity, not the direction."*
 - **Authority** [validation A-5](ZINELY-DESIGN-SYSTEM-VALIDATION.md) — the report's *"most reviewer-visible defect"*; [V1-DESIGN-REFINEMENT RD-4](V1-DESIGN-REFINEMENT.md), which files a rounded cream rectangle as a defect
-- **Milestone** C0 · **Prereq** CI-01, CI-05 · **Kind** documentation · **Changes** docs
+- **Also owns D-6** — *"paper may not rotate; page cards are hand-rotated."* A-1 wrongly claimed it too; [ADR-064](DECISIONS.md#adr-064) records D-6 as **intentionally deferred here**, because it asks whether a rotated page card *is* the artifact — a content question no rank order can settle.
+- **Milestone** C0 · **Prereq** ~~CI-01, CI-05~~ **both satisfied** ([ADR-061](DECISIONS.md#adr-061), [ADR-064](DECISIONS.md#adr-064)) — **RULABLE NOW** · **Kind** documentation · **Changes** docs
 - **Risk** **This is the one C0 item an engineer will be tempted to decide.** It reverses accepted text and needs an ADR that supersedes SYS-5, not a clarification. It also sets §10.2's shape-count condition, which is why the roadmap refuses to fix that number.
 - **Verify** An ADR that names which resolution and supersedes the §2.7 clause; the §13 checklist echo edited to match.
 

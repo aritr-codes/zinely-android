@@ -442,6 +442,11 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > SCREEN-INVENTORY settles **itself vs. PRD/ROADMAP**, §0.2 settles **document vs. document**.
 > **None settles rule vs. rule inside the design system**, which is this case. Missing: that order,
 > and a stated class of screen exempt from R3.
+>
+> **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
+> Resolved at **rank 4, the specific over the general**: SCREEN-INVENTORY's Settings entry is written
+> for this screen; R3 is written for all screens. The *stated exempt class* remains a separate question
+> and is still owed by **A-7 / CI-11** — ADR-064 supplies the order, not the class.
 
 > **D-2 · The accent on the user's page.** *Severity: **low** — narrowed under review.*
 > §7.2 forbids our accent on the artifact's surface. An earlier draft claimed §3.2 and R1 *require* it
@@ -450,10 +455,21 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > better than the objection. The genuine remainder is narrow but real: **the text caret and a crop
 > frame** must be visible against arbitrary user photos, where ink alone may not carry. Missing: a
 > stated exemption for **transient tool overlays present only during a gesture**.
+>
+> **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
+> Resolved **by rank rather than by exemption**: accessibility (rank 2) outranks the artifact's truth
+> (rank 3), so a caret or crop frame that must remain perceivable against an arbitrary user photo is
+> permitted for the duration of the gesture. §1.7 names this case explicitly. This is the clause A-1
+> declined to write, obtained by ordering instead — which is the reason the amended rank order was taken.
 
 > **D-3 · Version numbers are forbidden and required.** *Severity: low, but exact.* VOICE §4 lists them
 > as do-not-ship; Article 5's honesty duty and any bug report need one. Missing: a scope note (product
 > chrome vs. an About surface).
+>
+> **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
+> Resolved at **rank 1, the constitution**: Article 5's honesty duty outranks a VOICE style
+> preference, so a version number is permitted where honesty requires one and forbidden as chrome
+> everywhere else. The scope note is now derivable rather than missing.
 
 > **D-4 · The three motion jobs exclude motion the product already ships.** *Severity: medium.*
 > §8.1: motion exists to show **causation**, preserve **continuity**, or mark **the ending**. The
@@ -474,15 +490,31 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > **D-6 · Paper may not rotate; page cards are hand-rotated.** *Severity: medium.* §8.3 forbids "the
 > page rotates for effect"; §5.10, §4.3 and [R10](design/DESIGN-RULES.md) require the page strip be
 > hand-placed and rotated. Same missing rule as D-5.
+>
+> **🟡 OPEN — intentionally deferred to CI-09 (A-5).** [ADR-064](DECISIONS.md#adr-064) does **not**
+> close this, and an earlier draft of A-1 wrongly claimed it did. The question is whether a rotated page
+> card is the **artifact** or a **representation** of it — a content gap, not a procedure gap. No rank
+> order can settle it; the A-5 ruling can. Owner: **CI-09**.
 
 > **D-7 · Continuity moves the work; the work may not move unless the user moves it.** *Severity: low.*
 > §3.6 requires a card to *become* the editor page; §8.2 says the work never moves unless the user
 > moves it. Navigating is not moving. Missing: one clause distinguishing **moving within a scene** from
 > **carrying between scenes.**
+>
+> **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
+> Resolved at **rank 4, the specific over the general**: §3.6 is written for the one transition where a
+> card becomes the page; §8.2 is written for every surface. Continuity wins in that transition and
+> nowhere else — which is the distinguishing clause, arrived at by rank.
 
 > **D-8 · Template loudness.** *Severity: medium.* §7.4 makes chrome quieter than "any content the user
 > brings"; §1.5 has only two columns. Our artifact-register material is in neither. Missing: a third
 > column — **material we supply** — displayed at artifact strength, chosen at tool precision.
+>
+> **✅ RESOLVED — [ADR-064](DECISIONS.md#adr-064) / [§1.7](ZINELY-DESIGN-SYSTEM.md), 2026-07-24.**
+> Resolved at **rank 3, the artifact's truth**: material we supply *becomes* the user's artifact the
+> moment it is placed, so it is displayed at artifact strength and §7.4's chrome-quietness rule does not
+> reach it. The third column is now derivable; writing it into §1.5 is an editorial follow-on, not a
+> further ruling.
 
 ### 3.3 Circular and unfalsifiable rules
 
@@ -665,7 +697,7 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 6 | Should paper rotate? | Derivable for the page (**no**, §8.3); contradicted for its thumbnail (**yes**, §5.10) | ❌ | D-5 / D-6 |
 | 7 | May the accent appear on user content? | Derivable for handles (**no** — §3.2 prefers depth over outline); undecidable for the caret | ❌ | D-2, narrowly |
 | 8 | May two primary actions exist? | Derivable — **no.** §4.2 and Premium #58; and every shipped multi-action screen ranks them (SCREEN-INVENTORY: Export = PDF primary, PNG secondary) | ✅ | — |
-| 9 | Does Settings have a primary action? | **Contradiction** — R2/R3/§4.2/#58 vs. SCREEN-INVENTORY | ❌ | D-1 |
+| 9 | Does Settings have a primary action? | ~~**Contradiction** — R2/R3/§4.2/#58 vs. SCREEN-INVENTORY~~ **Decidable** — §1.7 rank 4 (specific over general): SCREEN-INVENTORY wins for Settings | ✅ [ADR-064](DECISIONS.md#adr-064) | D-1 |
 | 10 | What is the subject of About? | Undecidable — §4.1 admits only the user's work | ❌ | Tool-subject screen class |
 | 11 | Is a search field chrome or content? | Undecidable — no Field object | ❌ | D-12 |
 | 12 | What colour is Delete? | Undecidable — Premium #30 presupposes semantic colours; §7.1's job table has no row for consequence | ❌ | D-22 |
@@ -675,7 +707,7 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 16 | May a progress indicator use the accent? | Undecidable — accent means "your next action" | ❌ | D-22 / D-24 |
 | 17 | Does "no results" use the empty-state invitation? | Ambiguous — §9.10 and Premium #102 read literally give the wrong answer | ❌ | Filtered-empty vs. new-empty |
 | 18 | Does the page resize when a tablet side panel opens? | Ambiguous — §8.2's list omits the case; §4.7's remedy is impossible in two panes | ❌ | §5 longevity |
-| 19 | Is a font name set in its own font? | Undecidable — §1.1 and §1.5 disagree | ❌ | D-8 |
+| 19 | Is a font name set in its own font? | ~~Undecidable — §1.1 and §1.5 disagree~~ **Decidable** — §1.7 rank 3 (the artifact's truth): material we supply reads at artifact strength | ✅ [ADR-064](DECISIONS.md#adr-064) | D-8 |
 | 20 | Which type role is "2.4 MB"? | **Invention** | ❌ | D-21 |
 
 **Five of twenty would produce agreement** — rows 1, 4, 5, 8 and 14. *(Two moved from ❌ to ✅ under
@@ -810,7 +842,8 @@ the constitution. Ordered by defects closed.
 > text, and are flagged.
 
 ### A-1 · A precedence order for rules
-*Closes D-1, D-3, D-6, D-7, D-8; narrows D-2.*
+*Closes D-1, D-3, D-7, D-8; narrows D-2.* **✅ ACCEPTED — [ADR-064](DECISIONS.md#adr-064), 2026-07-24
+(CI-05, Option b).**
 Three precedence rules exist and each covers a different axis: DESIGN-RULES settles rule vs. feature,
 SCREEN-INVENTORY settles itself vs. PRD/ROADMAP, §0.2 settles document vs. document. **None settles
 rule vs. rule inside the design system.** The addition is one ordered list — roughly constitution →
@@ -818,6 +851,18 @@ the artifact's truth → accessibility → the specific over the general → the
 composition rule — plus the instruction that an unresolved collision is **recorded as a defect and
 escalated**, never resolved locally by whoever hit it first. The shortest item here and the highest
 value.
+
+> **As ruled ([ADR-064](DECISIONS.md#adr-064)):** accepted with **ranks 2 and 3 transposed** —
+> **accessibility outranks the artifact's truth**, on the evidence of [ADR-059](DECISIONS.md#adr-059)
+> and §11.3. The escalation clause is mandatory and covers same-rank collisions. The order lands as
+> [§1.7](ZINELY-DESIGN-SYSTEM.md).
+>
+> **Correction — this draft over-claimed D-6.** A-1 above and [A-5](#a-5--the-artifact--representation-distinction--amendment)
+> below *both* claimed to close **D-6**, and they cannot both be its closer. **D-6 is not closed by
+> A-1** and is not closed by ADR-064: it asks whether a rotated page card is the artifact or a
+> representation of it, which is a **content** gap, not a **procedure** gap — no rank order can settle
+> it. **D-6 is intentionally deferred to CI-09 (A-5)** and remains open. The duplicate claim is removed
+> from this section's *Closes* line above.
 
 ### A-2 · Four objects: **Field · Row · Notice · Menu**
 *Closes D-12; supplies the container the Switch, the sample gallery and both section headers need.*

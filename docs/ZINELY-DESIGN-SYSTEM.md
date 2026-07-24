@@ -62,6 +62,11 @@ and no numbers. That is not a two-hub conflict — it is intent (owned here) ove
 baseline exists, the numbers move here too ([ADR-063](DECISIONS.md#adr-063) defers them to
 [CI-14](reviews/CI-14-motion-baseline-protocol.md)).
 
+**This section settles document vs. document, and nothing else.** The collision between two *rules
+inside this document* is a different axis and is settled by [§1.7](#17-when-two-rules-collide)
+([ADR-064](DECISIONS.md#adr-064)), which operates inside the authority chain established here and does
+not re-rank it.
+
 ### 0.3 Where these rules came from
 
 ```mermaid
@@ -182,6 +187,40 @@ flowchart TD
 The load-bearing branch is the last one. **Every new token — a size, a radius, a colour, an elevation, an
 easing — is a permanent tax on every future screen.** The system is small on purpose; growing it is a
 decision, not a convenience.
+
+### 1.7 When two rules collide
+
+§1.6 covers a decision no rule has made. This covers the harder case: **two accepted rules that give
+opposite answers to the same question.** Three precedence rules already exist in the corpus and each
+settles a different axis — [DESIGN-RULES](design/DESIGN-RULES.md) settles rule vs. *feature*,
+[SCREEN-INVENTORY](design/SCREEN-INVENTORY.md) settles itself vs. *PRD/ROADMAP*, and
+[§0.2](#02-the-rank-collision-stated-rather-than-created) settles *document* vs. document. None of them
+settles **rule vs. rule**, which is this. Resolved by [ADR-064](DECISIONS.md#adr-064).
+
+**The order.** Higher rank wins:
+
+| Rank | Wins | Because |
+|---|---|---|
+| **1** | **The constitution** — Articles 1–7, the Sacred Things | Nothing in this document outranks the thing it was written to serve. |
+| **2** | **Accessibility** — perceivable, operable, understandable | The one design defect this product has shipped to a device was one a green suite could not see ([ADR-059](DECISIONS.md#adr-059)); [§11.3](#11-accessibility-rules) already ranks the platform's tree above our account of it. |
+| **3** | **The artifact's truth** — the work shown as it is, and as it will print | The product exists to make a thing; a rule that misrepresents the thing has lost its own argument. |
+| **4** | **The specific over the general** | A rule written for this case knows something the rule written for all cases does not. |
+| **5** | **The object's rule ([§5](#5-object-rules)) over the composition rule ([§4](#4-composition-rules))** | The object is the smaller claim and the one a reader can check. |
+
+**Rank 2 above rank 3 is deliberate**, and it is the one place this order departs from the proposal that
+produced it. Where making the work perceivable and making it truthful genuinely collide — the text
+caret and the crop frame that must stay visible against an arbitrary user photo — perceivability wins,
+and the transient overlay is permitted for the duration of the gesture.
+
+**When the order does not decide it.** If two rules of the *same* rank collide, or the collision does not
+fall cleanly on any rank, **it is recorded as a defect and escalated to an [ADR](DECISIONS.md)**. It is
+**never** resolved locally by whoever hit it first, and never inside a PR. A collision resolved silently
+is the failure this section exists to prevent; a collision escalated is this section working.
+
+> **Scope.** This order applies only to conflicts between accepted design-system rules. It does not alter
+> the existing authority chain governing product requirements, roadmap sequencing, document authority, or
+> statutory accessibility obligations. **§0.2 settles document vs. document; §1.7 settles rule vs. rule.**
+> Every authority relationship established by [ADR-061](DECISIONS.md#adr-061) is retained unchanged.
 
 ---
 
