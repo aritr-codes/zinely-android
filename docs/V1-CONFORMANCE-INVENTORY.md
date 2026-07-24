@@ -173,8 +173,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Authority** [validation A-5](ZINELY-DESIGN-SYSTEM-VALIDATION.md) — the report's *"most reviewer-visible defect"*; [V1-DESIGN-REFINEMENT RD-4](V1-DESIGN-REFINEMENT.md), which files a rounded cream rectangle as a defect
 - ~~**Also owns D-6**~~ — D-6 was deferred here by [ADR-064](DECISIONS.md#adr-064) on the reasoning that it asks whether a rotated page card *is* the artifact. [ADR-065](DECISIONS.md#adr-065) settles the corner geometry identically for both, so that identity question no longer arises for D-6, and **what remains is rotation semantics, not radius**. D-6 moves to **CI-98**.
 - **Milestone** C0 · **Prereq** ~~CI-01, CI-05~~ **both satisfied** ([ADR-061](DECISIONS.md#adr-061), [ADR-064](DECISIONS.md#adr-064)) · **Kind** documentation · **Changes** docs
-- **Risk** **This is the one C0 item an engineer will be tempted to decide.** It reverses accepted text and needs an ADR that supersedes SYS-5, not a clarification. It also sets §10.2's shape-count condition, which is why the roadmap refuses to fix that number.
-- **Verify** An ADR that names which resolution and supersedes the §2.7 clause; the §13 checklist echo edited to match.
+- **Risk** **This is the one C0 item an engineer will be tempted to decide.** ~~It reverses accepted text and needs an ADR that supersedes SYS-5, not a clarification.~~ **Superseded by the ruling:** that sentence assumed A-5 would be *accepted*. It was **rejected**, so nothing was reversed and nothing supersedes SYS-5. It does still set the [roadmap's](V1-IMPLEMENTATION-ROADMAP.md) shape-count condition — the answer being *no radius on the artifact or any representation of it*, which is a rule rather than a number.
+- **Verify** ~~An ADR that names which resolution and supersedes the §2.7 clause; the §13 checklist echo edited to match.~~ **Restated to match the ruling that was made:** an ADR that names which resolution — done, [ADR-065](DECISIONS.md#adr-065) — and, because the resolution was rejection, that **supersedes nothing and edits neither §2.7 nor the §13 echo.** Applying the original criterion to ADR-065 would fail it for doing exactly what the owner ruled.
 
 #### CI-10 · Ruling owed on A-6 — five type roles (Value · Input · Technical · Link · Section header)
 - **Location** `docs/DECISIONS.md` · gates CI-41
@@ -295,6 +295,17 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Milestone** C0 (ruling) → CI-52 (execution) · **Prereq** CI-06 · **Kind** documentation · **Changes** docs, tests
 - **Risk** **Deleting either also deletes golden cases** (`z_components_light.png`, `z_components_dark.png` are the only goldens exercising them), which is why the ruling cannot be an engineer's.
 - **Verify** An ADR records delete-or-adopt per component.
+
+#### CI-98 · Ruling owed on D-6 — is hand-placement *rotation for effect*, or is it placement?
+> *Numbered 98 but filed here, in C0, because that is its milestone. It was created after CI-97 and the
+> inventory numbers by creation order, not by position.*
+- **Location** `docs/DECISIONS.md` · [§8.3](ZINELY-DESIGN-SYSTEM.md) vs [§5.10](ZINELY-DESIGN-SYSTEM.md), [§4.3](ZINELY-DESIGN-SYSTEM.md), [R10](design/DESIGN-RULES.md)
+- **Current** Not ruled. §8.3 forbids *"the page rotates for effect"*; §5.10 describes the page strip as *"small paper cards, **hand-placed with slight rotation**"*, and §4.3 and R10 require it. Both accepted.
+- **Required** A ruling. At least three resolutions are live and this item decides none of them: (1) one clause distinguishing **rotation as placement** (a resting angle the object was set down at) from **rotation as effect** (the page turning because the interface is performing); (2) an explicit ruling that §5.10's hand-placement is a **stated exception** to §8.3; (3) an **identity** ruling that a strip thumbnail is not *"the page"* for §8.3's purposes — [ADR-065](DECISIONS.md#adr-065) rejected the artifact/representation distinction **for corner geometry only**, so this route remains open here.
+- **Authority** [validation D-6](ZINELY-DESIGN-SYSTEM-VALIDATION.md); [§8.3](ZINELY-DESIGN-SYSTEM.md); [ADR-065](DECISIONS.md#adr-065), which re-scoped this item to rotation semantics and **explicitly declined to extend itself over it**
+- **Milestone** C0 · **Prereq** none — CI-09's closure removed its last dependency · **Kind** documentation · **Changes** docs
+- **Risk** **Filed so CI-09's closure cannot orphan it.** D-6 was owned by CI-09 while it was believed to be a radius question; [ADR-065](DECISIONS.md#adr-065) settled corner geometry identically for page and thumbnail, which removed the radius half and left the rotation half with no owner. A defect that loses its owner by being half-solved is exactly the drift this inventory exists to prevent. Note it binds **C6/C7** — `ShelfCover.kt` and the page strip both draw the rotation today.
+- **Verify** An ADR distinguishing placement from effect, or recording §5.10 as a stated exception; audit row 6 decidable afterwards.
 
 #### CI-24 · The conformance track is not on the roadmap
 - **Location** `docs/ROADMAP.md` · `CHANGELOG.md`
@@ -788,15 +799,6 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** The [ADR-059](DECISIONS.md#adr-059) Role→View family, met on a further surface — and the one place in the Print recipe where the user is invited to *change* something they were told to match. Found by CI-31 only incidentally: CI-31 asserts order, not role, so nothing in this programme was looking here.
 - **Verify** `Role.Button` set and asserted on the **platform** tree per CI-26/CI-30 — a `clearAndSetSemantics`/leaf node, since [ZButtonPlatformA11yTest](../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/a11y/ZButtonPlatformA11yTest.kt) records that a merged node's Role collapses to `android.view.View` on the platform tree; goldens byte-identical.
 
-#### CI-98 · Ruling owed on D-6 — is hand-placement *rotation for effect*, or is it placement?
-- **Location** `docs/DECISIONS.md` · [§8.3](ZINELY-DESIGN-SYSTEM.md) vs [§5.10](ZINELY-DESIGN-SYSTEM.md), [§4.3](ZINELY-DESIGN-SYSTEM.md), [R10](design/DESIGN-RULES.md)
-- **Current** Not ruled. §8.3 forbids *"the page rotates for effect"*; §5.10 describes the page strip as *"small paper cards, **hand-placed with slight rotation**"*, and §4.3 and R10 require it. Both accepted.
-- **Required** One clause distinguishing **rotation as placement** (a resting angle the object was set down at) from **rotation as effect** (the page turning because the interface is performing) — or an explicit ruling that §5.10's hand-placement is an exception to §8.3.
-- **Authority** [validation D-6](ZINELY-DESIGN-SYSTEM-VALIDATION.md); [§8.3](ZINELY-DESIGN-SYSTEM.md); [ADR-065](DECISIONS.md#adr-065), which re-scoped this item to rotation semantics and **explicitly declined to extend itself over it**
-- **Milestone** C0 · **Prereq** none — CI-09's closure removed its last dependency · **Kind** documentation · **Changes** docs
-- **Risk** **Filed so CI-09's closure cannot orphan it.** D-6 was owned by CI-09 while it was believed to be a radius question; [ADR-065](DECISIONS.md#adr-065) settled corner geometry identically for page and thumbnail, which removed the radius half and left the rotation half with no owner. A defect that loses its owner by being half-solved is exactly the drift this inventory exists to prevent. Note it binds **C6/C7** — `ShelfCover.kt` and the page strip both draw the rotation today.
-- **Verify** An ADR distinguishing placement from effect, or recording §5.10 as a stated exception; audit row 6 decidable afterwards.
-
 ---
 
 ### C7 · Shelf and Proof residuals
@@ -808,9 +810,10 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Verify** The tag still resolves; the golden set re-recorded with each diff reviewed.
 
 #### CI-73 · Four production sites draw the artifact with rounded corners
-- **Location** `ProofSheet.kt:156` — `RoundedCornerShape(3.dp)`, **the imposed sheet itself** · `ProofSheet.kt:194` — `RoundedCornerShape(6.dp)`, the sheet's inner face · `ShelfCover.kt:158` — `RoundedCornerShape(topStart = 3.dp, topEnd = 5.dp, bottomEnd = 5.dp, bottomStart = 3.dp)`, the booklet · `ShelfCard.kt:245` — `RoundedCornerShape(9.dp)`, the card plate
+- **Location** `ProofSheet.kt:156` — `RoundedCornerShape(3.dp)`, **the imposed sheet itself** · `ProofSheet.kt:192-193` — `RoundedCornerShape(6.dp)` ×2 (shadow + clip), the sheet's inner face · `ShelfCover.kt:158` — `RoundedCornerShape(topStart = 3.dp, topEnd = 5.dp, bottomEnd = 5.dp, bottomStart = 3.dp)`, the booklet · `ShelfCard.kt:246` — `RoundedCornerShape(9.dp)`, the card plate
 - **Current** [§5.1](ZINELY-DESIGN-SYSTEM.md): paper **"Never: … takes a corner radius."** [§2.7](ZINELY-DESIGN-SYSTEM.md): *"Paper, and anything representing paper: **Square**."*
 - **RULED — [ADR-065](DECISIONS.md#adr-065), 2026-07-24:** A-5 rejected; the artifact **and every representation of it** are square. **All four sites are non-conformant and are squared.** No site is exempt for being a representation, and the sheet's inner face is not exempt for being inside the sheet. The "or zero" branch is gone.
+- **Candidate fifth site — determination owed, not decided here.** `ProofSheet.kt:288-289` draws the *printer-reach* legend key as a 16×10dp `Box` with `RoundedCornerShape(2.dp)` on both its border and its fill. Its own comment says it stands in for *"the same translucent fill as the sheet dead-band"* — i.e. a key **depicting a region of the sheet**. Whether a legend key is chrome (a token in a legend, §2.7 row 2 or row 3) or a representation of paper (row 1, and therefore square) is a **design determination this item may not make**: ADR-065 forbids per-surface carve-outs, so it cannot be excluded silently, and it forbids inventing thresholds, so it cannot be excluded for being small. Raised because the enumeration above would otherwise read as exhaustive. **Resolve before CI-73 executes.**
 - **Milestone** C7 · **Prereq** ~~**CI-09**~~ **satisfied** ([ADR-065](DECISIONS.md#adr-065)), CI-40 · **Kind** visual · **Changes** render, tests
 - **Risk** **Four files change under one A-5 resolution and zero under the other** — which is why the ruling is CI-09's and not this item's. **Never split across the four sites:** rounding the sheet but not the cover is worse than either consistent answer, because the inconsistency *is* the defect A-5 names.
 - **Verify** All four match the CI-09 ruling in one commit; the 28 shelf+proof goldens re-recorded with each diff reviewed individually.
@@ -981,7 +984,7 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 
 | Milestone | Items | Count | Visual impact | The gate that closes it |
 |---|---|---|---|---|
-| **C0** Specification reconciliation | CI-01 … CI-24 | **24** | none | Every §2 conflict has a dated ADR; `docs/design/v1/*.html` re-frozen later than those ADRs; a device motion baseline exists |
+| **C0** Specification reconciliation | CI-01 … CI-24, **CI-98** | **25** | none | Every §2 conflict has a dated ADR; `docs/design/v1/*.html` re-frozen later than those ADRs; a device motion baseline exists |
 | **C1** Conformance guardrails | CI-25 … CI-33, **CI-93** | **10** | none (the criterion) | Goldens byte-identical **and** an injected defect makes each new net fail |
 | **C2** `:core:ui` extraction | CI-34 | **1** | none | The diff contains renames and import lines only |
 | **C3a** Tokens — ADR-gated | CI-35 … CI-38, **CI-94** | **5** | none (tokens added, call sites not migrated) | Every token traceable to a C0 ADR; goldens byte-identical |
@@ -993,9 +996,9 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 | **C8** Navigation continuity | CI-79 … CI-80 | **2** | high, invisible in a still | Device only; TalkBack unaffected; reduced motion loses no information |
 | **C9** Copy layer | CI-81 … CI-86 | **6** | **none intended** — any diff is a bug | Goldens byte-identical; a no-prose-literal test green in CI |
 | **C10** Audit and sign-off | CI-87 … CI-92 | **6** | none | A committed Review Agent **GO** with no open Required Fixes |
-| | | **97** | | |
+| | | **98** | | |
 
-**Where the weight is.** C0 holds 24 of 97 items — **a quarter of the programme and none of the code**.
+**Where the weight is.** C0 holds 25 of 98 items — **a quarter of the programme and none of the code**.
 C6 holds 14 and the largest share of the risk. C1 + C2 + C9 — **seventeen items** — have no dependency on
 C0 at all and are the correct first engineering acts.
 
@@ -1005,7 +1008,7 @@ C0 at all and are the correct first engineering acts.
 
 | Subsystem | Items | Count |
 |---|---|---|
-| **Specification & authority** (ADRs, HTML, corpus documents) | CI-01 … CI-24 | 24 |
+| **Specification & authority** (ADRs, HTML, corpus documents) | CI-01 … CI-24, **CI-98** | 25 |
 | **Test & CI infrastructure** | CI-25 … CI-33, CI-91, CI-93 | 11 |
 | **Module structure** | CI-34 | 1 |
 | **Theme / token layer** (`ui/theme/`) | CI-35 … CI-43, CI-69, CI-94 | 11 |
@@ -1017,9 +1020,9 @@ C0 at all and are the correct first engineering acts.
 | **Copy** | CI-81, CI-84, CI-85, CI-86 | 4 |
 | **Render / export pipeline** | CI-42, CI-77 | 2 |
 | **Release documentation** | CI-87 … CI-90, CI-92 | 5 |
-| | | **99*** |
+| | | **100*** |
 
-<sub>\* Exceeds 97 by **two**: CI-42 is counted under typography **and** render, CI-77 under Shelf **and** render. Every item appears exactly once in [§2](#2-summary--inventory-by-milestone), which is the authoritative count. *(This footnote has now been wrong twice — four double-counts, then three, once with a total that did not match its own rows. Both errors had the same shape: a summary asserted from memory rather than counted from the rows above it. It is now counted.)*</sub>
+<sub>\* Exceeds 98 by **two**: CI-42 is counted under typography **and** render, CI-77 under Shelf **and** render. Every item appears exactly once in [§2](#2-summary--inventory-by-milestone), which is the authoritative count. *(This footnote has now been wrong twice — four double-counts, then three, once with a total that did not match its own rows. Both errors had the same shape: a summary asserted from memory rather than counted from the rows above it. It is now counted.)*</sub>
 
 **The reading that matters.** The **specification** subsystem is the largest, and it contains no code.
 The **`:core:editor` MVI reducer, `:core:imposition`, `:core:render`, `:core:model`, `:core:data`,
@@ -1032,7 +1035,7 @@ invariant across the whole programme.
 
 | Path | Items touching it | Count |
 |---|---|---|
-| `docs/` (DECISIONS, design/*, ROADMAP, README, reviews) | CI-01 … CI-24, CI-38, CI-87 … CI-92 | 31 |
+| `docs/` (DECISIONS, design/*, ROADMAP, README, reviews) | CI-01 … CI-24, CI-38, CI-87 … CI-92, **CI-98** | 32 |
 | `feature/editor/src/main/.../ui/theme/` | CI-35 … CI-41, CI-43, CI-69, CI-94 | 10 |
 | `feature/editor/src/main/.../ui/components/` | CI-44 … CI-53, CI-74, CI-75, CI-78, CI-93, CI-94, CI-95 | 16 |
 | `feature/editor/src/main/.../feature/editor/` — Editor family (14 files) | CI-49, CI-54, CI-57, CI-58, CI-60 … CI-68, CI-85, CI-96 | 15 |
@@ -1060,7 +1063,7 @@ that must never be split.
 
 | Method | Items | Count |
 |---|---|---|
-| **Documentation review** (an ADR, a dated deferral, a committed record) | CI-01 … CI-13, CI-15 … CI-24, CI-38, CI-86 … CI-89, CI-91, CI-92 | 30 |
+| **Documentation review** (an ADR, a dated deferral, a committed record) | CI-01 … CI-13, CI-15 … CI-24, CI-38, CI-86 … CI-89, CI-91, CI-92, **CI-98** | 31 |
 | **Golden — byte-identical required** (a diff is a defect) | CI-25, CI-34, CI-35, CI-36, CI-37, CI-39 … CI-43, CI-52, CI-69, CI-76, CI-81, CI-94 | 15 |
 | **Golden — re-recorded, each diff reviewed individually** | CI-44 … CI-51, CI-53, CI-60, CI-61, CI-64, CI-65, CI-66, CI-72 … CI-75, CI-78, CI-83, CI-95 | 21 |
 | **Unit / instrumentation test** | CI-27, CI-28, CI-29, CI-30, CI-32, CI-56, CI-67, CI-82, CI-84 | 9 |
@@ -1074,7 +1077,7 @@ that must never be split.
 
 **Three readings worth stating.**
 
-1. **Thirty items — just under a third of the programme — are verified by reading a document, not by
+1. **Thirty-one items — just under a third of the programme — are verified by reading a document, not by
    running anything.** That is not overhead. It is the measure of how much of this work is authority the
    repository does not yet record.
 2. **Fourteen items can only be verified on a physical device**, and every one of them is invisible to
@@ -1093,7 +1096,11 @@ gaps in this document**, and both were found by an independent reader rather tha
 
 ### 6.1 Conditional items — the inventory's shape depends on rulings that do not exist
 
-**CI-73 touches four files under one A-5 resolution and zero under the other.** CI-40's radius count,
+~~**CI-73 touches four files under one A-5 resolution and zero under the other.**~~ **RESOLVED
+2026-07-24 — [ADR-065](DECISIONS.md#adr-065) rejected A-5, so CI-73 touches four files** (with a fifth
+candidate to be determined, recorded in the item). The first conditional this section named is now
+unconditional, and it resolved by ruling rather than by engineering, which is the whole argument of
+§6.1. **The rest remain conditional:** CI-40's radius count,
 CI-41's role count (eleven or sixteen), CI-51's existence, and every item gated on the eight additions
 are the same: written against a decision C0 has not made. **They are counted once, but their *size* is
 not yet knowable.** A ruling that rejects an addition deletes its items; a ruling that accepts A-7

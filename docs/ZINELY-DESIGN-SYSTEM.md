@@ -348,9 +348,9 @@ Neither theme is the "real" one. Both are checked on a device, in daylight (§13
 > (§5.4 calls the card *"a small paper object"*; §5.10 calls thumbnails *"small paper cards"*). **The
 > paper row governs the corner.** The artifact is square, and every representation of the artifact is
 > square: there is no exception on the ground that something is *a representation*, no size threshold,
-> and no per-surface carve-out. This states which half of the sentence above applies. **It changes
-> nothing** — the rule reads as it always did, and this note exists because five reviewers did not agree
-> on it.
+> and no per-surface carve-out. This states which half of the sentence above applies — it **adds no rule
+> and reverses none**. It is not, however, a no-op: before it, the rule above was genuinely undecidable
+> for these objects, which the validation report filed as its highest-severity finding.
 
 **Borders are for the edges of materials, not for grouping.** A hairline says *this is where this
 material ends*. Grouping is done with space (§2.2) and surface (§2.4). A box drawn around related things

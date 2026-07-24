@@ -520,7 +520,8 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > question.** [ADR-064](DECISIONS.md#adr-064) did not close it (an earlier draft of A-1 wrongly claimed
 > it did), and **ADR-065 does not close it either** — but ADR-065 removes half of it. With the artifact
 > and every representation of it now square, page and thumbnail have **identical corner geometry**, so
-> nothing about D-6 turns on whether a page card *is* the artifact. What survives is solely a
+> D-6 can no longer be resolved *by* the radius answer — though an identity ruling remains **one
+> available route** to resolving the rotation question, which is why CI-98 lists it. What survives is a
 > **rotation / placement semantics** question: [§8.3](ZINELY-DESIGN-SYSTEM.md) forbids *"the page
 > rotates for effect"* while [§5.10](ZINELY-DESIGN-SYSTEM.md), [§4.3](ZINELY-DESIGN-SYSTEM.md) and
 > [R10](design/DESIGN-RULES.md) require the page strip be hand-placed and rotated — is hand-placement
@@ -894,7 +895,7 @@ the constitution. Ordered by defects closed.
 
 > **These are additions to [ZINELY-DESIGN-SYSTEM.md](ZINELY-DESIGN-SYSTEM.md) for the owner to accept
 > or reject. This document does not make them.** Each is a system change and needs an ADR under
-> §1.6. **Two are amendments rather than additions** — A-5 and the scale clause in A-8 change accepted
+> §1.6. **Two were proposed as amendments rather than additions** — A-5 and the scale clause in A-8 *(A-5 was subsequently **rejected**, so it amended nothing; see [ADR-065](DECISIONS.md#adr-065))* change accepted
 > text, and are flagged.
 
 ### A-1 · A precedence order for rules
@@ -917,7 +918,7 @@ value.
 > below *both* claimed to close **D-6**, and they cannot both be its closer. **D-6 is not closed by
 > A-1** and is not closed by ADR-064: it asks whether a rotated page card is the artifact or a
 > representation of it, which is a **content** gap, not a **procedure** gap — no rank order can settle
-> it. **D-6 is intentionally deferred to CI-09 (A-5)** and remains open. The duplicate claim is removed
+> it. **D-6 is intentionally deferred** and remains open — deferred to CI-09 when written, and **re-owned by CI-98** once [ADR-065](DECISIONS.md#adr-065) closed CI-09 and removed D-6's radius half. The duplicate claim is removed
 > from this section's *Closes* line above.
 
 ### A-2 · Four objects: **Field · Row · Notice · Menu**
@@ -943,8 +944,10 @@ cancellable where the operation can be stopped.** The Deliberate band's ring-fen
 same addition supplies §8.1's missing fourth job — **to announce a change the user did not cause** —
 because a system-initiated arrival and a system-initiated operation are the same family.
 
-### A-5 · The artifact / representation distinction ⚠️ *amendment*
-*Closes D-5, D-6, and audit rows 3 and 6 — the most reviewer-visible defect in the report.*
+### A-5 · The artifact / representation distinction ~~⚠️ *amendment*~~ — ❌ **REJECTED**
+*Closes D-5 and audit row 3 — the most reviewer-visible defect in the report.* **❌ REJECTED —
+[ADR-065](DECISIONS.md#adr-065), 2026-07-24 (CI-09, Option b).** *(The "closes D-6 / row 6" half of
+this line is **withdrawn** — see below.)*
 One clause: **the artifact is square-cornered; a representation of the artifact is chrome and takes the
 chrome radius** — and a representation may be hand-placed, rotated and stacked in ways the artifact
 itself may not.
@@ -954,6 +957,23 @@ itself may not.
 black"* as a defect — all say the opposite. It needs an ADR that supersedes SYS-5, not a clarification.
 The alternative resolution (make every representation square too) is equally valid and cheaper; **the
 defect is the ambiguity, not the direction.**
+
+> **❌ REJECTED — [ADR-065](DECISIONS.md#adr-065), 2026-07-24.** The owner took **the alternative
+> resolution this section itself offered**: the artifact is square, and **every representation of the
+> artifact is square too**. There is no exception on the ground of being a representation, no size
+> threshold, no per-surface carve-out. The distinction proposed above is rejected **for corner
+> geometry**.
+>
+> **Consequences for this section's own claims:**
+> - **It is not an amendment.** Nothing was superseded. §2.7, §5.1 and §13's checklist are re-affirmed
+>   unedited, and [RD-4](V1-DESIGN-REFINEMENT.md) is **confirmed**, not superseded — it is cited as
+>   evidence *for* the ruling. The ⚠️ flag above is struck.
+> - **It does not close D-6 or audit row 6.** *"Closes … D-6"* is withdrawn. See D-6, which is open and
+>   re-scoped: with page and thumbnail now sharing corner geometry, D-6's **radius** half is gone and
+>   only **rotation / placement semantics** remain. New owner: **CI-98**.
+> - **§2.7's row conflict is resolved by precedence, not by new text:** where an object is claimed by
+>   both rows — chrome *and* representing paper — the **paper row governs the corner**.
+> - The rejected direction is not reserved for later. It was ruled on, and the ruling was *no*.
 
 ### A-6 · Five type roles: **Value · Input · Technical · Link · Section header**
 *Closes D-21 and six invention events across four screens.*
@@ -999,7 +1019,7 @@ Stated because a report claiming completeness would be repeating the failure it 
 | **D-10** — the lowest-finish rule cannot fail a review | An earlier draft claimed A-7 closed it; A-7 was rewritten and the claim was not. Nothing closes it, and §3.11's remedy — label it a judgement item — is the whole fix |
 | **D-13** — no object owns the top of the screen | Might belong to an extended Toolbar rather than a new object. Pre-deciding would be inventing |
 | **D-15** — the tray's "nesting" valve | The only sanctioned growth mechanism under Article 1, and designing it is a design task with real stakes |
-| **Tier assignment for a new object** (1 event, §2.6) | A-5 settles the *radius* of a template card; which of §2.4's three tiers a brand-new object belongs to is audit row 2, and no addition supplies it |
+| **Tier assignment for a new object** (1 event, §2.6) | A-5's *ruling* settles the *radius* of a template card — **square**, [ADR-065](DECISIONS.md#adr-065), which rejected A-5 — while which of §2.4's three tiers a brand-new object belongs to is audit row 2, and no addition supplies it |
 | **Destructive-but-necessary framing** (1 event, §2.10) | §9.2 assumes destruction is user-initiated and undoable. Recovery's discards are neither, and the copy pattern is VOICE's as much as the drawing is ours |
 | **A platform surface we do not own** (2 events) | §12.5 cannot be obeyed or waived on the OS picker and share sheet. A scope note would fix it; I decline to write the rule for a collision I only observed |
 | **Filtered-empty vs. new-empty** (1 event) | One clause in §9.10 and Premium #102. Small, real, and a copy decision as much as a drawing one |
