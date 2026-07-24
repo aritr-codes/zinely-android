@@ -27,7 +27,7 @@ each **independently review-agent verified** before integration.
 | **CI-93** disabled/enabled platform-tree assertions | ✅ Closed — **stronger than planned**: covers the real f4faaa4 `ReframeControls` stepper on `main` |
 | **CI-30** Role | ⚠️ **Partial** — platform-tree Role on leaf controls (Reframe); merged-tree Role elsewhere; the platform-tree remainder is **deferred to the on-device passes** (forced by ADR-059's Compose behaviour, disclosed in the tests) |
 | **CI-31** keyboard/traversal-order test | ⛔ **C0-blocked** — prereq CI-13 (Premium-Checklist location) unresolved |
-| **CI-33** large-text / smallest-width golden | ⛔ **C0-blocked** — prereq CI-12 (A-8 density clause) unresolved |
+| **CI-33** large-text / smallest-width golden | ⛔ **C0-blocked** — prereq CI-12 (A-8's **modality** clause — an earlier draft of this line said *density*, which is not one of A-8's two clauses) — **resolved 2026-07-24, [ADR-066](../DECISIONS.md#adr-066); CI-33 is no longer blocked** |
 
 **7 fully closed · 1 partial (device-deferred) · 2 C0-blocked.** C1 cannot be declared *fully* closed
 until C0 resolves CI-12 and CI-13.

@@ -773,15 +773,17 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 15 | What does a 30-second backup show? | Required (#82, #101) and **unplaceable** — no band | ❌ | D-18 |
 | 16 | May a progress indicator use the accent? | Undecidable — accent means "your next action" | ❌ | D-22 / D-24 |
 | 17 | Does "no results" use the empty-state invitation? | Ambiguous — §9.10 and Premium #102 read literally give the wrong answer | ❌ | Filtered-empty vs. new-empty |
-| 18 | Does the page resize when a tablet side panel opens? | ~~Ambiguous — §8.2's list omits the case~~ **Decidable — yes.** A side panel changes the *available space*; §8.2's derivation clause governs the case its list omits | ✅ [ADR-066](DECISIONS.md#adr-066) | §5 longevity |
+| 18 | Does the page resize when a tablet side panel opens? | **Half decided — no, it does not resize.** ~~§8.2's list omits the case~~ — the derivation clause names a side panel an *"equivalent interface affordance"*, so §8.2 and §4.7 both govern it unchanged. **The second ground stands:** *"§4.7's remedy is impossible in two panes"* — a rigid body has nowhere to offset to. **Escalated** per §1.7 | 🟡 escalated | §5 longevity |
 | 19 | Is a font name set in its own font? | ~~Undecidable — §1.1 and §1.5 disagree~~ **Decidable — yes.** §1.7 rank 3 (the artifact's truth): a sample is drawn as it will print, placed or not | ✅ [ADR-064](DECISIONS.md#adr-064) | D-8 |
 | 20 | Which type role is "2.4 MB"? | **Invention** | ❌ | D-21 |
 
-**Nine of twenty would produce agreement** — rows 1, **3**, 4, 5, **7**, 8, 14, **18** and **19**.
-*(Row 18 moved under [ADR-066](DECISIONS.md#adr-066) — a tablet side panel changes the available space,
-which §8.2's derivation clause governs. Row 3 moved under [ADR-065](DECISIONS.md#adr-065) — a template
+**Eight of twenty would produce agreement** — rows 1, **3**, 4, 5, **7**, 8, 14 and **19**. *(Row 18
+moved under [ADR-066](DECISIONS.md#adr-066) to **🟡** — the derivation clause decides the *resize*
+question, **no**, but the row cited a second ground the clause does not reach: §4.7's rigid-body remedy
+has nowhere to offset to in two panes. An earlier draft of this recount stamped row 18 ✅ and silently
+dropped that second ground; caught under review. Row 3 moved under [ADR-065](DECISIONS.md#adr-065) — a template
 card is square, because where §2.7's two rows both claim an object the paper row governs. **Recount,
-2026-07-24: 9 ✅ / 1 🟡 / 10 ❌.** Row 6 stays ❌:
+2026-07-24: 8 ✅ / 2 🟡 / 10 ❌.** Row 6 stays ❌:
 ADR-065 removed its radius half, and its rotation half is now D-6's whole content, owned by CI-98.
 Rows 7 and 19
 moved under [ADR-064](DECISIONS.md#adr-064) — §1.7 rank 2 decides the caret, rank 3 decides the font
@@ -796,7 +798,7 @@ mine rather than the system's: row 8 asserted that Export ships PDF and PNG as p
 SCREEN-INVENTORY ranks them — **"Primary action: Print at home (PDF)" / "Secondary: Save as image
 (PNG)"**; row 14 called hover an absence when [ADR-049](DECISIONS.md#adr-049) decides it.)*
 
-**Ten still would not, and one escalates.** The shape matters more than the count: **every agreement is about light, depth,
+**Ten still would not, and two escalate.** The shape matters more than the count: **every agreement is about light, depth,
 paper, ranking, or a decision recorded in an ADR** — and **every failure is about furniture, states, or
 screens with no artifact in them.** The system has a well-built centre and no edges.
 
@@ -813,11 +815,11 @@ Does each principle survive, or survive only by accumulating exceptions?
 | One light source (§2.4) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Three elevation tiers | ✅ | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ | ⚠️ |
 | Radius family (§2.7) | ⚠️ | ⚠️ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| The page never resizes (§8.2) | ✅ | ⚠️ | ✅ᵃ | ✅ᵃ | ✅ | ✅ | ⚠️ |
+| The page never resizes (§8.2) | ✅ | ⚠️ | ⚠️ᵃ | ⚠️ᵃ | ✅ | ✅ | ⚠️ |
 | One accent, one meaning (§7.1) | ⚠️ | ⚠️ | ⚠️ | ✅ | ✅ | ❌ | ⚠️ |
 | One primary per screen (§4.2) | ⚠️ | ⚠️ | ⚠️ | ✅ | ⚠️ | ✅ | ⚠️ |
 | Density per surface (§2.2) | ✅ | ⚠️ | ⚠️ | ⚠️ | ✅ᵇ | ⚠️ | ⚠️ |
-| Thumb zone (§4.6) | ✅ | ✅ | ✅ᶜ | ⚠️ | ✅ | ⚠️ | ✅ |
+| Thumb zone (§4.6) | ✅ | ✅ | ⚠️ᶜ | ⚠️ | ✅ | ⚠️ | ✅ |
 | Immediacy on touch-down (§3.1) | ✅ | ✅ | ⚠️ | ✅ | ✅ | ⚠️ | ✅ |
 | Interruptibility (§3.1) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Honesty of preview (§5.11) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -825,13 +827,22 @@ Does each principle survive, or survive only by accumulating exceptions?
 | Ornament must do a job (§12) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ~~**Five ❌ cells, in four principles** — page-resize ×2, one-accent ×1, density ×1, thumb zone ×1.~~
-**One ❌ cell remains, in one principle** — one-accent ×1 (the accessibility column). **Four closed by
-[ADR-066](DECISIONS.md#adr-066), 2026-07-24**, each by a different clause and marked in the table:
-**ᵃ** page-resize ×2, by §8.2's derivation clause — a side panel or a hinge changes the *available
-space*, so the page may resize; chrome within that space still may not. **ᵇ** density at large library,
-by §5.3's growth guidance — the shelf gets *longer*, not denser. **ᶜ** thumb zone on tablet/desktop, by
-the modality clause — the rule now names its pointer and keyboard equivalents instead of assuming a
-thumb. *(A-8 described these as "four of §5's **eight** ❌ cells"; the table has and had **five**. The
+**One ❌ cell remains, in one principle** — one-accent ×1 (the accessibility column). **Four ❌ cells
+were moved by [ADR-066](DECISIONS.md#adr-066), 2026-07-24 — one to ✅ and three to ⚠️**, each by a
+different clause and each marked in the table. *(The ⚠️ ratings are deliberate: ⚠️ in this table means
+"survives, but by exception or with work owed", and that is exactly the state these three are in. An
+earlier draft of this recount flipped all four to ✅ and was corrected under review — a cell is not
+green because a ruling pointed at it.)*
+**ᵃ** page-resize ×2 → **⚠️**, by §8.2's derivation clause. The clause **narrows** what may move the
+page rather than widening it: a side panel, pane divider or tray is an *"equivalent interface
+affordance"*, so the page does **not** resize for it and §4.7's rigid-body remedy still governs. What
+survives by exception is the remedy, not the rule — *where* a rigid body offsets to in a two-pane
+layout is the open half of audit row 18.
+**ᵇ** density at large library → **✅**, by §5.3's growth guidance: the shelf gets *longer*, not denser,
+which is the scaling clause the cell said no accepted document owned.
+**ᶜ** thumb zone on tablet/desktop → **⚠️**, by the modality clause, which makes naming a pointer and
+keyboard equivalent an **obligation**. §4.6, §3.1 and §3.7 **do not yet carry their equivalents** —
+writing them in is an owed editorial follow-on, so the cell is not green. *(A-8 described these as "four of §5's **eight** ❌ cells"; the table has and had **five**. The
 count in A-8's line was wrong, not the cells.)* Everything else survives or bends. *(The accent row was four ❌ in an earlier draft, on the mistaken
 reading corrected in D-22. A consequence colour is not an accent, so the rule is not carrying the
 exceptions I charged it with; the one surviving failure is the accessibility column, below.)*
@@ -854,12 +865,28 @@ future examined. That is the system's real achievement and it should be said bef
   width. The rule's *intent* survives; its *letter* does not, and letters are what new designers
   follow. Needs restating as: **the page's size changes only when the space itself changes, never when
   chrome within the space changes.**
+  **✅ ADDRESSED — [ADR-066](DECISIONS.md#adr-066), 2026-07-24 — though not by *restating* it.** The
+  owner accepted that principle as a **derivation placed beneath §8.2**, leaving §8.2's letter
+  byte-identical, which answers this entry's own objection (*"letters are what new designers follow"*)
+  by giving the letter a derivation rather than replacing it. **The remaining half is real and is not
+  closed:** the clause classifies a permanent-width panel as chrome, so the page still may not resize —
+  and *where §4.7's rigid body offsets to* in two panes is unanswered. That half is **audit row 18**,
+  now 🟡 escalated.
 - **"Density per surface" has no scaling clause.** A shelf of three and a shelf of three hundred are
-  the same surface and cannot be the same density. §5.3 never mentions quantity, and
+  the same surface and cannot be the same density. ~~§5.3 never mentions quantity~~, and
   V1-DESIGN-REFINEMENT explicitly declares the cliff at thirty zines out of scope — correctly for a
-  refinement pass, but **no accepted document owns it.**
+  refinement pass, but ~~**no accepted document owns it.**~~
+  **✅ CLOSED — [ADR-066](DECISIONS.md#adr-066), 2026-07-24.** §5.3 now mentions quantity: the shelf
+  gets **longer, not denser and not different**, growth is absorbed by scrolling a longer surface, and
+  finding-at-scale is a search problem rather than a licence to re-lay out the room. An accepted
+  document owns it.
 - **Thumb zone and touch-down immediacy are input-modality rules stated as universals.** They do not
-  survive a pointer, and the system has no way to say "this rule is about touch."
+  survive a pointer, and ~~the system has no way to say "this rule is about touch."~~
+  **◑ PARTLY CLOSED — [ADR-066](DECISIONS.md#adr-066), 2026-07-24.** The system now *has* the way to
+  say it: §11 rule 8 requires a touch-assuming rule to say so and to name its keyboard and pointer
+  equivalents. **The rules themselves have not yet been updated** — §4.6, §3.1 and §3.7 carry no
+  equivalents — so this is an obligation created, not an obligation discharged. That is why the
+  longevity cell moved to ⚠️ rather than ✅.
 - **"One primary per screen" bends rather than breaks.** It has no ❌ — every shipped multi-action
   screen ranks its actions (audit row 8). Its only real failure is the utility-screen case (D-1).
 
@@ -926,8 +953,10 @@ the constitution. Ordered by defects closed.
 > **These are additions to [ZINELY-DESIGN-SYSTEM.md](ZINELY-DESIGN-SYSTEM.md) for the owner to accept
 > or reject. This document does not make them.** Each is a system change and needs an ADR under
 > §1.6. **Two were proposed as amendments rather than additions** — A-5 and the scale clause in A-8 *(A-5 was
-> subsequently **rejected**, so it amended nothing; see [ADR-065](DECISIONS.md#adr-065))*. The scale
-> clause changes accepted text, and both are flagged below.
+> subsequently **rejected**, so it amended nothing; see [ADR-065](DECISIONS.md#adr-065))*. **Both were
+> ruled, and neither amended anything:** A-8's scale clause was accepted as a **derivation beneath
+> §8.2** rather than a restatement ([ADR-066](DECISIONS.md#adr-066)), leaving §8.2's sentence
+> byte-identical. **Neither heading carries a live ⚠️ flag any more** — both are struck below.
 
 ### A-1 · A precedence order for rules
 *Closes D-1, D-3, D-7, D-8; narrows D-2.* **✅ ACCEPTED — [ADR-064](DECISIONS.md#adr-064), 2026-07-24

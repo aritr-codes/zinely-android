@@ -78,7 +78,11 @@ pretending otherwise would repeat the rank error this milestone has now made six
    owner to accept or reject. This document does not make them."* Accepting the validation therefore
    accepts a *finding that additions are needed* — it does not accept the additions. Two of them
    (A-5, A-8's scale clause) are **amendments that reverse accepted text**, and A-5's own entry says
-   the opposite resolution is equally valid.
+   the opposite resolution is equally valid. **Both were subsequently ruled, and NEITHER amended
+   anything:** A-5 was **rejected** ([ADR-065](DECISIONS.md#adr-065) — the owner took the opposite
+   resolution this paragraph anticipated), and A-8's scale clause was accepted as a **derivation
+   beneath §8.2** rather than a restatement ([ADR-066](DECISIONS.md#adr-066)). The design system
+   carries **zero deletions** from either ruling.
 
 **Consequence, and it is the single most important sentence in this document: C0 is not paperwork.
 It is the milestone that creates the authority the token and surface milestones spend.** A
@@ -485,8 +489,9 @@ in this document, matching the execution plan's law.
   - **`stateDescription` is produced and never asserted** (`EditorContextBar.kt:169`,
     `EditorPageStrip.kt:152`).
   - **`Role` is asserted in exactly one file** (`TypeBarTest.kt:258-260`).
-  - **No keyboard-focus-order test**, which A-8 notes §11 does not even require while Premium
-    Checklist #64 does.
+  - **No keyboard-focus-order test**, which A-8 notes §11 did not even require while Premium
+    Checklist #64 does. *(§11 requires it as of [ADR-066](DECISIONS.md#adr-066) rule 8; the test is
+    [CI-31](V1-CONFORMANCE-INVENTORY.md)'s keyboard half, now unblocked.)*
   - No contrast, font-scale, or traversal-order test.
 - **Why it is not a milestone.** [§11.7](ZINELY-DESIGN-SYSTEM.md): *"Accessibility is a merge gate,
   not a backlog… a screen that fails it is not done."* A milestone node would be scheduled, and a
@@ -1018,7 +1023,12 @@ not against a judgement about what has been migrated.
 - [ ] An ADR in [DECISIONS.md](DECISIONS.md) adjudicates the [§0.2](ZINELY-DESIGN-SYSTEM.md) hub
       collision, and `DESIGN-LANGUAGE.md` plus the [README](../README.md) index row are edited to match.
 - [ ] Each of the eight additions and the checklist relocation has an ADR recording **accept or
-      reject**, with A-5 and A-8's scale clause recorded as amendments.
+      reject**. ~~with A-5 and A-8's scale clause recorded as amendments.~~ **Criterion corrected
+      2026-07-24:** that clause presumed both would be *accepted as* amendments. A-5 was **rejected**
+      ([ADR-065](DECISIONS.md#adr-065)) and A-8's scale clause was accepted as a **derivation**
+      ([ADR-066](DECISIONS.md#adr-066)); neither amended accepted text, so **neither is recorded as an
+      amendment** — and applying the original wording would fail both ADRs for doing exactly what the
+      owner ruled.
 - [ ] Each of [§15](ZINELY-DESIGN-SYSTEM.md)'s seven open items has an ADR or a dated deferral.
 - [ ] Shelf covers: an ADR records **wire or delete**, and
       [zinely-v1.md §7](zinely-v1.md) blocker #3 is closed or explicitly re-scoped.

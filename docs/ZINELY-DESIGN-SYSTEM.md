@@ -526,6 +526,12 @@ The most important compositional rule in the product, stated once here and enfor
 changes move the chrome around the work, never the work around the chrome.** If space must be claimed,
 the whole scene offsets as one rigid body; the artifact does not resize.
 
+> **This rule is not narrowed by §8.2's derivation clause** ([ADR-066](DECISIONS.md#adr-066)). That
+> clause distinguishes *the available space changing* — the display or window the app is given — from
+> *chrome within that space*, and a side panel, sheet, pane divider or tray is the latter. So the
+> remedy stated here still governs every one of them: **the scene offsets, the artifact does not
+> resize.** Where the derivation and this rule could ever be read apart, **this rule wins.**
+
 ---
 
 ## 5. Object Rules
@@ -771,10 +777,16 @@ Motion has exactly four jobs, and a motion that does none of them is deleted:
   > page to resize. This clause derives from, and does not supersede, the rule above.*
   >
   > **Subordinate by construction.** This clause exists **only** to make new layouts mechanically
-  > derivable — a tablet side panel, a foldable hinge, an affordance the list above could not enumerate
-  > — **without amending the governing sentence.** Where the two could ever be read apart, **the
-  > sentence above wins.** It answers the case the list omits: a side panel changes the *available
-  > space*, so the page may resize; a tray is *chrome within* that space, so it may not.
+  > derivable — a foldable hinge, an affordance the list above could not enumerate — **without amending
+  > the governing sentence.** Where the two could ever be read apart, **the sentence above wins**, and
+  > [§4.7](#47-the-page-is-the-fixed-point) wins with it.
+  >
+  > **What counts as the available space changing:** the *display or window* the app is given changes —
+  > rotation, a fold opening, a multi-window drag. **What does not:** anything the app itself puts on
+  > screen. A side panel, a sheet, a pane divider and a tray are all *"equivalent interface
+  > affordances"* in the clause above, so **the page does not resize for them** — the scene offsets as
+  > one rigid body, exactly as §4.7 requires. The clause **narrows** what may move the page; it never
+  > widens it.
 - **The work never moves unless the user moves it** (P3). Auto-scroll, auto-centre, and helpful
   repositioning are all the same defect wearing different names. *Carrying the work **between** surfaces
   is not moving it within one: §3.6's continuity applies to that navigation and to nothing else
@@ -980,9 +992,12 @@ the same screen.
    order, three ways of moving through it — and the focused control is **visibly** so, with a designed
    indication rather than an inherited one (§13 checklist **#64**, **#107**). Until this rule, §11 named
    neither, while the checklist that gates a merge required both.
-   - **A rule that assumes touch says so, and names its equivalents.** The thumb zone, touch-down
-     immediacy and haptics are **touch** rules; each states what it means for a **keyboard** user and a
-     **pointer** user, because a rule that cannot name its equivalents is incomplete, not universal.
+   - **A rule that assumes touch must say so, and must name its equivalents.** The thumb zone (§4.6),
+     touch-down immediacy (§3.1) and haptics (§3.7) are **touch** rules; each **must state** what it
+     means for a **keyboard** user and a **pointer** user, because a rule that cannot name its
+     equivalents is incomplete, not universal. *This is an obligation entering the system now, not a
+     description of it: **§4.6, §3.1 and §3.7 do not yet carry their equivalents**, and writing them in
+     is the editorial follow-on this rule creates ([ADR-066](DECISIONS.md#adr-066)).*
    - **Hover is out of scope**, by decision rather than by omission ([ADR-049](DECISIONS.md#adr-049)
      decision 4, recorded here where a reader will look) — **unless a future ADR introduces
      hover-specific behaviour.** Nothing may be reachable, discoverable or legible only on hover.
