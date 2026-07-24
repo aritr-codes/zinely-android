@@ -54,12 +54,14 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * CI-31 — **a traversal-order assertion per surface entry point**. Before this file the repository had none:
- * `assertIsNotEnabled` appeared in four test files, `assertIsEnabled` in three, `onNodeWithContentDescription`
- * in twelve, and not one of them asserted the *order* anything is reached in.
+ * CI-31 — **a traversal-order assertion per surface entry point**. Before this file the repository had no
+ * ordering assertion anywhere; the counts of what it *did* assert instead live in
+ * [CI-31](../../../../../../../../../docs/V1-CONFORMANCE-INVENTORY.md) and are deliberately not restated
+ * here, per the Documentation Rule — they are a measurement of a moving tree and had already drifted once.
  *
  * ## What "logical order" means here, quoted from the documents that bind it
  *
@@ -99,9 +101,17 @@ import org.robolectric.annotation.GraphicsMode
  *
  * ### Two assertions, because #64 names three orders
  *
- * 1. [assertTraversalOrder] — the **accessibility order** is exactly the design's order: the ordered list of
- *    spoken stops the platform tree presents, compared element-by-element against the order the surface's
- *    specification puts them in. Catches a reorder, an insertion, and a disappearance.
+ * 1. [assertTraversalOrder] — the ordered list of spoken stops the platform tree presents, compared
+ *    element-by-element against a pinned list. Catches a reorder, an insertion, and a disappearance.
+ *
+ *    **Be exact about what that list is: it was read off the running composition, not lifted from a
+ *    specification artifact.** No frozen prototype is parsed here and none is diffed against; the frozen
+ *    `proof.html` that `ProofFold.kt:83` cites is the authority for the Proof's *content* and was not
+ *    consulted by this file. So assertion 1 pins the **observed** order and detects that it *changed* — it
+ *    does not, on its own, prove the observed order was ever the right one. Its value is regression
+ *    detection plus the fact that each list below is small enough to read against the design and argue with;
+ *    the clause that carries independent weight is assertion 2, which compares the order against the
+ *    surface's own geometry rather than against a previous reading of itself.
  * 2. [assertReadingOrderIsVisualOrder] — that same accessibility order is **monotonic in visual reading
  *    order**, using the platform tree's *own* reported `boundsInScreen`: each stop is either on the same row
  *    as its predecessor and further right, or on a later row. This is the assertion with teeth — it is what
@@ -123,22 +133,41 @@ import org.robolectric.annotation.GraphicsMode
  *   `Dialog` windows — a separate window with its own root, which [platformTraversalStops] (scoped to the
  *   Activity's hosted composition) does not reach. Their traversal order is uncovered; see the report.
  * - **Not every conditional state.** One representative state per entry point is pinned, chosen to be the
- *   state that entry point opens in.
+ *   state that entry point opens in. Later Fold steps, the Proof error pane, the Shelf's loading / empty /
+ *   error branches and any selection-active Editor state are uncovered.
+ * - **Not anything outside the window.** Every assertion below is bounded by the `@Config` window: content
+ *   that does not fit is not in the platform tree, and its absence looks exactly like a stop that does not
+ *   exist. This is not hypothetical — it is what the first revision of this file got wrong (see the `@Config`
+ *   note). One phone window is asserted; a tablet, a fold, and a large text scale are not.
  *
- * ### Two things this test *observed* and deliberately does not fix (`src/main` is out of scope for CI-31)
+ * ### Two `src/main` defects this test *found* and deliberately does not fix
  *
- * - The blank-page invitation's three decorative sticker glyphs (`EditorEmptyState.kt:89-91`) reach the
- *   platform tree as three spoken stops — `✿`, `❀`, `★`. DESIGN-RULES' per-screen checklist asks for
- *   *"decoration not announced"*. They are pinned below as the current truth, with this note, rather than
- *   silently filtered out: a test that hid them would make the checklist's third clause unfalsifiable.
- * - `ProofChangePaperTestTag` ("Change", `ProofPrint.kt`) is clickable with no `Role` and no
- *   `contentDescription`; it is a stop only because its child text names it.
+ * `src/main` is out of scope for CI-31, so both are **reported, not fixed** — the same STOP-condition
+ * [ZButtonPlatformA11yTest] applied to the merged-vs-platform `Role` divergence it found. Each now has its
+ * own item in [the inventory](../../../../../../../../../docs/V1-CONFORMANCE-INVENTORY.md) so that ticking
+ * CI-31 cannot close them by association:
  *
- * Both are **reported, not fixed** — the same STOP-condition [ZButtonPlatformA11yTest] applies to the
- * merged-vs-platform `Role` divergence it found.
+ * - **CI-96 — the blank-page invitation's sticker cluster is announced.** `EditorEmptyState.kt:89-91`'s three
+ *   glyphs (`✿`, `❀`, `★`) reach the platform tree as three separate spoken stops. The sharp part is not the
+ *   DESIGN-RULES deviation (*"decoration not announced"*) but that `EditorEmptyState.kt:86-87` carries an
+ *   in-code comment stating the cluster is *"not announced to screen readers (purely ornamental)"* — **the
+ *   platform tree falsifies the invariant the code documents about itself.** They are pinned below as the
+ *   current truth rather than filtered out: a test that hid them would make both the checklist clause and
+ *   that comment unfalsifiable, which is how the defect survived this long.
+ * - **CI-97 — `ProofPrint.kt:300-309`'s "Change" is an unroled control.** A `Box` with `.clickable()` and no
+ *   `Role`, so the platform reports `android.view.View` rather than `android.widget.Button`. It *is* a
+ *   traversal stop — the platform flags it `isScreenReaderFocusable` because it is clickable; only its
+ *   *label* comes from the child text. This is the [ADR-059](../../../../../../../../../docs/DECISIONS.md)
+ *   Role→View family, met on a third surface.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
+// The same phone window every golden test in this module is captured at. Robolectric's default window is
+// 320x470dp, which is smaller than any shipped phone and silently ignores a `Modifier.size` asking for more:
+// content simply falls outside it and never reaches the accessibility tree at all. An earlier revision of
+// this file ran at that default and the Proof Fold act's step navigation — the control its own asserted copy
+// tells the user to tap — was below the viewport and therefore absent from every assertion here.
+@Config(qualifiers = "w430dp-h932dp-xhdpi")
 class SurfaceTraversalOrderTest {
 
     @get:Rule
@@ -205,9 +234,27 @@ class SurfaceTraversalOrderTest {
         return overlap * 2 > shorter
     }
 
-    /** Run both assertions — the pair is the CI-31 check; neither half is the check on its own. */
+    /**
+     * Run both assertions — the pair is the CI-31 check; neither half is the check on its own — and then
+     * assert the geometry half was **not vacuous on this surface**.
+     *
+     * [assertReadingOrderIsVisualOrder] has two branches, and a surface laid out as one strict column would
+     * only ever take the vertical one: every check would reduce to "each stop is lower than the last", which
+     * a broken left-right ordering cannot fail. The two guards at the top of this class prove the *helpers*
+     * have teeth on synthetic fixtures; they say nothing about whether the teeth engage *here*. So each
+     * surface must contain at least one consecutive pair that shares a row — a top bar, a grid row, an action
+     * bar. If a future layout change flattens a surface into a single column, this fails loudly and asks for
+     * a decision, rather than leaving a green assertion that has quietly stopped testing anything.
+     */
     private fun assertLogicalTraversalOrder(surface: String, expected: List<String>) {
-        assertReadingOrderIsVisualOrder(surface, assertTraversalOrder(surface, expected))
+        val stops = assertTraversalOrder(surface, expected)
+        assertReadingOrderIsVisualOrder(surface, stops)
+        assertTrue(
+            "$surface: no two consecutive stops share a row, so the horizontal branch of the reading-order " +
+                "check never ran and this surface's geometry assertion proves only that stops descend. " +
+                "Either the layout lost its rows or the fixture is not showing them.",
+            stops.zipWithNext().any { (a, b) -> sharesRow(a.boundsInScreen, b.boundsInScreen) },
+        )
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -327,7 +374,6 @@ class SurfaceTraversalOrderTest {
                 EditorScreen(
                     store = store,
                     pageSizePt = PtSize(100.0, 100.0),
-                    modifier = Modifier.size(340.dp, 640.dp),
                     // Pin the two one-shot coach marks off: this asserts the steady state of the surface,
                     // not the first-run overlay, which has its own tests.
                     moveResizeHintSeen = true,
@@ -346,6 +392,8 @@ class SurfaceTraversalOrderTest {
                 // pinned, not filtered; see the class KDoc.
                 "✿", "❀", "★",
                 FirstPageInvitationHeadline,
+                Copy.EmptyState.SUPPLY_CUE,
+                Copy.EmptyState.OFFLINE_NOTE,
                 // The supply tray: its `heading()` first, then the four supplies left-to-right.
                 TraySectionLabel,
                 AddPhotoActionLabel,
@@ -380,16 +428,14 @@ class SurfaceTraversalOrderTest {
     private fun setProof(startAct: ProofAct) {
         composeRule.setContent {
             ZinelyTheme {
-                Box(Modifier.size(420.dp, 820.dp)) {
-                    ProofScreen(
-                        zineName = "Corner Store Poems",
-                        onBack = {},
-                        pages = proofPages(),
-                        pageSizePt = PtSize(200.0, 300.0),
-                        defaults = DocumentDefaults(),
-                        startAct = startAct,
-                    )
-                }
+                ProofScreen(
+                    zineName = "Corner Store Poems",
+                    onBack = {},
+                    pages = proofPages(),
+                    pageSizePt = PtSize(200.0, 300.0),
+                    defaults = DocumentDefaults(),
+                    startAct = startAct,
+                )
             }
         }
         composeRule.waitForIdle()
@@ -432,6 +478,9 @@ class SurfaceTraversalOrderTest {
                 Copy.ProofSheet.BODY,
                 // The imposed sheet: one Image stop; the eight panels, creases and legend are cleared.
                 Copy.ProofSheet.CONTENT_DESCRIPTION,
+                // The two panel labels drawn under the sheet, left then right.
+                Copy.ProofSheet.FRONT_COVER,
+                Copy.ProofSheet.BACK_COVER,
                 Copy.Proof.PRINT_SETUP,
             ),
         )
@@ -458,6 +507,14 @@ class SurfaceTraversalOrderTest {
                 Copy.Paper.A4,
                 // "Change" is trailing *within* the Paper row — same row, further right.
                 Copy.ProofPrint.CHANGE,
+                Copy.ProofPrint.SIDES_LABEL,
+                Copy.ProofPrint.SIDES_VALUE,
+                // One TextView built from three spans; the platform reads the flattened string.
+                Copy.ProofPrint.SIDES_HELP_PREFIX + Copy.ProofPrint.SIDES_HELP_BOLD +
+                    Copy.ProofPrint.SIDES_HELP_SUFFIX,
+                // The two export affordances, left then right, below the recipe.
+                Copy.ProofPrint.SAVE_PDF,
+                Copy.ProofPrint.SHARE,
                 // Secondary precedes primary in the action bar, and is drawn to its left.
                 Copy.Proof.BACK,
                 Copy.Proof.NOW_FOLD_IT,
@@ -482,6 +539,11 @@ class SurfaceTraversalOrderTest {
                 Copy.ProofFold.STEP1_TITLE,
                 Copy.ProofFold.stepHeading(1, Copy.ProofFold.STEP1_TITLE),
                 Copy.ProofFold.STEP1_BODY,
+                // The step navigation — "tap the arrow when a step is done" names these two. On step 1 the
+                // prev arrow is present but disabled, and the next arrow gives way to the action bar's
+                // finish button only on the last step (`ProofFold.kt:215-236`).
+                Copy.ProofFold.PREVIOUS_STEP,
+                Copy.ProofFold.NEXT_STEP,
             ),
         )
     }

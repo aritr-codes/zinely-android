@@ -356,26 +356,44 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 #### CI-31 · No keyboard-focus-order or traversal-order test exists
 - **Location** repository-wide: absent
 - **Current** `assertIsNotEnabled` appears in 4 test files (and 2 production sources), `assertIsEnabled` in 3, `onNodeWithContentDescription` in 12 — no ordering assertion anywhere.
-- **Required** [Premium Checklist #64](V1-DESIGN-REFINEMENT.md); [DESIGN-RULES per-screen checklist](design/DESIGN-RULES.md) — *"order logical"*
-- **Authority note** [validation A-8](ZINELY-DESIGN-SYSTEM-VALIDATION.md) records that §11 does **not** require this while the Premium Checklist does — a live disagreement between accepted documents, which is why CI-13 blocks it.
-- **Milestone** C1 · **Prereq** CI-13 · **Kind** mechanical · **Changes** a11y, tests
+- **Required** [Premium Checklist #64](ZINELY-DESIGN-SYSTEM.md) (§13.1, relocated there by CI-13 under [ADR-061](DECISIONS.md#adr-061)); [DESIGN-RULES per-screen checklist](design/DESIGN-RULES.md) — *"order logical"*
+- **Authority note** [validation A-8](ZINELY-DESIGN-SYSTEM-VALIDATION.md) records that §11 does not mention **keyboard focus** order while the Premium Checklist requires focus order, and proposes adding it. **That amendment has not been made, and the traversal half never depended on it:** §4.5 and §11.6 already bind reading/traversal order in the accepted text. The traversal half is therefore delivered *additively*, asserting only what §4.5/§11.6 bind; the keyboard half stays blocked on A-8, not on CI-13.
+- **Milestone** C1 · **Prereq** CI-13 — **landed** (`6b46d0f`, merged `6e55ab6`) · **Kind** mechanical · **Changes** a11y, tests
 - **Verify** A traversal-order assertion per surface entry point.
-- **Status** ✅ **Done** — `SurfaceTraversalOrderTest` (`:feature:editor`, test-only, zero `src/main`) asserts
-  traversal order on **six** entry states across the three top-level destinations: Shelf, Editor, and the
-  Proof's four acts (Read · Sheet · Print · Fold). Asserted on the **platform `AccessibilityNodeInfo` tree**
-  per [§11.3](ZINELY-DESIGN-SYSTEM.md), reusing the CI-26 harness — extended with `platformTraversalStops`,
-  which walks the platform tree's own child order. Each surface makes **two** assertions, because #64 names
-  three orders: the stop sequence *is* the design's order, and that sequence is monotonic in the platform's
-  own reported `boundsInScreen` (§4.5, *"the visual order and the accessibility order are the same order"*).
-  Non-vacuity is permanent, not a one-off: two guard tests inject a control declared out of order and a
-  control moved without being re-declared, and the second guard asserts the sequence check **passes** on that
-  broken layout — the sequence half alone would ship it. **Additive to §11; A-8 is not adopted here** — what
-  is asserted is traversal order (§4.5/§11.6, already accepted), not keyboard focus order.
-  **Not covered:** keyboard Tab order (`focusTarget()` is deliberately semantics-free); the `ZSheet` `Dialog`
-  surfaces (separate windows); non-entry conditional states. **Reported, not fixed** (`src/main` out of
-  scope): the blank-page invitation's three decorative sticker glyphs reach the tree as spoken stops, against
-  DESIGN-RULES' *"decoration not announced"*; and `ProofChangePaperTestTag` is clickable with no `Role` and no
-  `contentDescription`.
+- **Status** ◑ **Partially done** — the **traversal half is delivered; the keyboard-focus half named in this
+  item's own title is not**, and is not scheduled here: it needs a focus-traversal harness *and* A-8's §11
+  clause to assert against. `focusTarget()` on `EditorScreen`'s root is deliberately a focus stop with no
+  accessibility semantics, so it can never appear in the tree this item asserts against.
+  **Delivered:** `SurfaceTraversalOrderTest` (`:feature:editor`, test-only, zero `src/main`) asserts traversal
+  order on **six** entry states across the three top-level destinations — Shelf, Editor, and the Proof's four
+  acts (Read · Sheet · Print · Fold) — on the **platform `AccessibilityNodeInfo` tree** per
+  [§11.3](ZINELY-DESIGN-SYSTEM.md), reusing the CI-26 harness, which gains `platformTraversalStops` to walk
+  the platform tree's own child order. Each surface makes **two** assertions, because #64 names three orders:
+  the stop sequence is pinned, and that sequence is monotonic in the platform's own reported `boundsInScreen`
+  (§4.5, *"the visual order and the accessibility order are the same order"*). The second exists because the
+  first cannot stand alone — the tree publishes children in declaration order and sets no re-sorting hints
+  (measured: `UNDEFINED` on every node), so a sequence assertion alone is a declaration-order snapshot.
+  Note plainly that the pinned sequences are **observed**, not lifted from a specification artifact: they
+  detect that an order *changed*, and it is assertion 2 that judges an order against the surface's geometry.
+  **Non-vacuity is permanent, not a reverted one-off:** two guards inject a control declared out of order and
+  a control moved without being re-declared — the second asserting the sequence check **passes** on that
+  broken layout — and every surface additionally asserts that at least one consecutive pair shares a row, so
+  the geometry check's horizontal branch cannot quietly stop running.
+- **Owed before final acceptance** ⚠ **On-device platform-tree verification is still owed.** §11.3 is quoted
+  in full here because the second half of it is the part this item cannot satisfy: *"Read the real
+  accessibility tree **on a real device** …; **a green suite is not evidence.**"* This is a Robolectric JVM
+  check, and it reaches the platform tree through `getChildId`, a hidden framework method that resolves under
+  Robolectric and is blocked by hidden-API enforcement on a device. It runs *before* a device is involved; it
+  does not replace the `adb shell uiautomator dump` pass ([device verification](../CLAUDE.md#device-verification-mandatory)).
+  Same posture as [CI-85](#ci-85--fourteen-accessibility-action-labels-are-hardcoded-in-the-editor).
+- **Also not covered** The `ZSheet` `Dialog` surfaces (Shelf's three sheets, the Proof's paper/share
+  choosers) — separate windows with their own roots, outside the Activity composition the harness walks.
+  Non-entry conditional states (later Fold steps, error/loading/empty branches, selection-active Editor).
+  One phone window only (`w430dp-h932dp-xhdpi`) — no tablet, no large text scale; content outside the window
+  is absent from the tree and its absence is indistinguishable from a stop that does not exist.
+- **Found, filed, not fixed** Two `src/main` defects this item surfaced now have their own items so that
+  ticking CI-31 cannot close them by association: [CI-96](#ci-96--the-blank-page-invitations-sticker-cluster-is-announced-contradicting-the-comment-above-it)
+  and [CI-97](#ci-97--the-print-recipes-change-affordance-is-an-unroled-control).
 
 #### CI-32 · No contrast test exists
 - **Location** repository-wide: absent
@@ -747,6 +765,22 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** Low to fix; it produces a light flash on cold start in dark mode — the first frame of the product, in the wrong theme, before any Compose code runs. **Never split from CI-70**: fixing one and not the other leaves the same defect with a different cause.
 - **Verify** A `values-night/` theme exists or the window background is theme-neutral; **device only** — a cold start in dark mode, recorded.
 
+#### CI-96 · The blank-page invitation's sticker cluster is announced, contradicting the comment above it
+- **Location** `EditorEmptyState.kt:88-92` — the decorative `Row` of three `StickerBlob`s (`✿`, `❀`, `★`); the comment asserting the invariant is `:86-87`
+- **Current** All three glyphs reach the **platform accessibility tree as three separate traversal stops**, on the first screen a new user meets with an empty page. Measured by `SurfaceTraversalOrderTest` (CI-31), which pins them as the current truth rather than filtering them out — a test that hid them would make this item unfalsifiable, which is how it survived.
+- **Required** [DESIGN-RULES per-screen checklist](design/DESIGN-RULES.md) — *"decoration not announced"*; [§11.2](ZINELY-DESIGN-SYSTEM.md) — *"announce the artifact, not the chrome"*
+- **Milestone** C6 · **Prereq** none · **Kind** mechanical · **Changes** a11y, tests
+- **Risk** **The defect is not the deviation; it is that the code documents the opposite.** `:86-87` reads *"not announced to screen readers (purely ornamental)"* — an invariant stated where the code lives, per [CLAUDE.md](../CLAUDE.md#house-conventions), and **falsified by the platform tree**. A wrong comment is worse than no comment: every subsequent reader, human or agent, took it as settled and never checked. Filed apart from CI-31 because CI-31 closes when the *test* exists; this closes when the *cluster is silent*.
+- **Verify** `clearAndSetSemantics {}` (or equivalent) on the cluster; the three glyphs disappear from CI-31's Editor sequence **in the same commit**, which is what makes the fix self-proving; goldens byte-identical (nothing drawn changes).
+
+#### CI-97 · The Print recipe's "Change" affordance is an unroled control
+- **Location** `ProofPrint.kt:300-309` (`ChangeButton`) — a `Box` with `.clickable()`, `ProofChangePaperTestTag`, and no `Role`
+- **Current** The platform reports it as `android.view.View`, not `android.widget.Button`. It **is** a traversal stop — the platform flags it `isScreenReaderFocusable` because it is clickable — and its spoken label comes only from its child `BasicText`; there is no `contentDescription` and no role. A screen-reader user reaches it and is told "Change", not "Change, button".
+- **Required** [§11.3](ZINELY-DESIGN-SYSTEM.md); [DESIGN-RULES R9](design/DESIGN-RULES.md); [ADR-059](DECISIONS.md#adr-059)
+- **Milestone** C7 · **Prereq** none · **Kind** mechanical · **Changes** a11y, tests
+- **Risk** The [ADR-059](DECISIONS.md#adr-059) Role→View family, met on a further surface — and the one place in the Print recipe where the user is invited to *change* something they were told to match. Found by CI-31 only incidentally: CI-31 asserts order, not role, so nothing in this programme was looking here.
+- **Verify** `Role.Button` set and asserted on the **platform** tree per CI-26/CI-30 — a `clearAndSetSemantics`/leaf node, since [ZButtonPlatformA11yTest](../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/a11y/ZButtonPlatformA11yTest.kt) records that a merged node's Role collapses to `android.view.View` on the platform tree; goldens byte-identical.
+
 ---
 
 ### C7 · Shelf and Proof residuals
@@ -937,15 +971,15 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 | **C3b** Tokens — HTML-gated | CI-39 … CI-42 | **4** | none | Every token traceable to a line in the **re-frozen** HTML |
 | **C4** Object layer | CI-44 … CI-53, **CI-95** | **11** | low, localised | `ZComponentGoldenTest` extended per object, light **and** dark; a11y gate on every new control |
 | **C5** Motion and haptics | CI-54 … CI-59 | **6** | high, and almost invisible in a screenshot | **Device only** — recordings at the frozen beats; both passes |
-| **C6** Editor conformance | CI-60 … CI-71, **CI-43** | **13** | **the largest in the programme** | C1's Editor goldens light/dark, 323 tests green, both device passes, platform tree on Reframe and Type |
-| **C7** Shelf and Proof residuals | CI-72 … CI-78 | **7** | medium | Goldens re-recorded with **each diff reviewed individually**; physical print if geometry moved |
+| **C6** Editor conformance | CI-60 … CI-71, **CI-43**, **CI-96** | **14** | **the largest in the programme** | C1's Editor goldens light/dark, 323 tests green, both device passes, platform tree on Reframe and Type |
+| **C7** Shelf and Proof residuals | CI-72 … CI-78, **CI-97** | **8** | medium | Goldens re-recorded with **each diff reviewed individually**; physical print if geometry moved |
 | **C8** Navigation continuity | CI-79 … CI-80 | **2** | high, invisible in a still | Device only; TalkBack unaffected; reduced motion loses no information |
 | **C9** Copy layer | CI-81 … CI-86 | **6** | **none intended** — any diff is a bug | Goldens byte-identical; a no-prose-literal test green in CI |
 | **C10** Audit and sign-off | CI-87 … CI-92 | **6** | none | A committed Review Agent **GO** with no open Required Fixes |
-| | | **95** | | |
+| | | **97** | | |
 
-**Where the weight is.** C0 holds 24 of 95 items — **a quarter of the programme and none of the code**.
-C6 holds 13 and the largest share of the risk. C1 + C2 + C9 — **seventeen items** — have no dependency on
+**Where the weight is.** C0 holds 24 of 97 items — **a quarter of the programme and none of the code**.
+C6 holds 14 and the largest share of the risk. C1 + C2 + C9 — **seventeen items** — have no dependency on
 C0 at all and are the correct first engineering acts.
 
 ---
@@ -960,15 +994,15 @@ C0 at all and are the correct first engineering acts.
 | **Theme / token layer** (`ui/theme/`) | CI-35 … CI-43, CI-69, CI-94 | 11 |
 | **Shared component layer** (`ui/components/`) | CI-44 … CI-53, CI-95 | 11 |
 | **Motion & haptics** | CI-54 … CI-59 | 6 |
-| **Editor surface** (`:feature:editor` editor family) | CI-60 … CI-68 | 9 |
+| **Editor surface** (`:feature:editor` editor family) | CI-60 … CI-68, CI-96 | 10 |
 | **Application shell** (`:app` — Activity, window theme, nav host) | CI-70, CI-71, CI-79, CI-80, CI-82, CI-83 | 6 |
-| **Shelf & Proof surfaces** | CI-72 … CI-78 | 7 |
+| **Shelf & Proof surfaces** | CI-72 … CI-78, CI-97 | 8 |
 | **Copy** | CI-81, CI-84, CI-85, CI-86 | 4 |
 | **Render / export pipeline** | CI-42, CI-77 | 2 |
 | **Release documentation** | CI-87 … CI-90, CI-92 | 5 |
-| | | **97*** |
+| | | **99*** |
 
-<sub>\* Exceeds 95 by **two**: CI-42 is counted under typography **and** render, CI-77 under Shelf **and** render. Every item appears exactly once in [§2](#2-summary--inventory-by-milestone), which is the authoritative count. *(This footnote has now been wrong twice — four double-counts, then three, once with a total that did not match its own rows. Both errors had the same shape: a summary asserted from memory rather than counted from the rows above it. It is now counted.)*</sub>
+<sub>\* Exceeds 97 by **two**: CI-42 is counted under typography **and** render, CI-77 under Shelf **and** render. Every item appears exactly once in [§2](#2-summary--inventory-by-milestone), which is the authoritative count. *(This footnote has now been wrong twice — four double-counts, then three, once with a total that did not match its own rows. Both errors had the same shape: a summary asserted from memory rather than counted from the rows above it. It is now counted.)*</sub>
 
 **The reading that matters.** The **specification** subsystem is the largest, and it contains no code.
 The **`:core:editor` MVI reducer, `:core:imposition`, `:core:render`, `:core:model`, `:core:data`,
@@ -984,9 +1018,9 @@ invariant across the whole programme.
 | `docs/` (DECISIONS, design/*, ROADMAP, README, reviews) | CI-01 … CI-24, CI-38, CI-87 … CI-92 | 31 |
 | `feature/editor/src/main/.../ui/theme/` | CI-35 … CI-41, CI-43, CI-69, CI-94 | 10 |
 | `feature/editor/src/main/.../ui/components/` | CI-44 … CI-53, CI-74, CI-75, CI-78, CI-93, CI-94, CI-95 | 16 |
-| `feature/editor/src/main/.../feature/editor/` — Editor family (14 files) | CI-49, CI-54, CI-57, CI-58, CI-60 … CI-68, CI-85 | 14 |
+| `feature/editor/src/main/.../feature/editor/` — Editor family (14 files) | CI-49, CI-54, CI-57, CI-58, CI-60 … CI-68, CI-85, CI-96 | 15 |
 | `feature/editor/src/main/.../feature/editor/` — Shelf family (7 files) | CI-54, CI-59, CI-73, CI-74, CI-75, CI-76, CI-77, CI-80 | 8 |
-| `feature/editor/src/main/.../feature/editor/` — Proof family (5 files) | CI-19, CI-54, CI-59, CI-72, CI-73, CI-74, CI-75, CI-78 | 8 |
+| `feature/editor/src/main/.../feature/editor/` — Proof family (5 files) | CI-19, CI-54, CI-59, CI-72, CI-73, CI-74, CI-75, CI-78, CI-97 | 9 |
 | `feature/editor/src/test/` + `roborazzi/` | CI-25, CI-29 … CI-33, CI-52, CI-93 | 8 |
 | `app/src/main/java/.../editor/ZinelyNavHost.kt` | CI-48, CI-53, CI-64, CI-79, CI-82, CI-83, CI-84 | 7 |
 | `app/src/main/java/.../MainActivity.kt` | CI-70 | 1 |
@@ -1013,11 +1047,11 @@ that must never be split.
 | **Golden — byte-identical required** (a diff is a defect) | CI-25, CI-34, CI-35, CI-36, CI-37, CI-39 … CI-43, CI-52, CI-69, CI-76, CI-81, CI-94 | 15 |
 | **Golden — re-recorded, each diff reviewed individually** | CI-44 … CI-51, CI-53, CI-60, CI-61, CI-64, CI-65, CI-66, CI-72 … CI-75, CI-78, CI-83, CI-95 | 21 |
 | **Unit / instrumentation test** | CI-27, CI-28, CI-29, CI-30, CI-32, CI-56, CI-67, CI-82, CI-84 | 9 |
-| **Accessibility — platform `AccessibilityNodeInfo` tree** | CI-26, CI-30, CI-31, CI-63, CI-85, CI-93 | 6 |
+| **Accessibility — platform `AccessibilityNodeInfo` tree** | CI-26, CI-30, CI-31, CI-63, CI-85, CI-93, CI-96, CI-97 | 8 |
 | **Device verification — both passes, no screenshot can see it** | CI-14, CI-54, CI-55, CI-57, CI-58, CI-59, CI-62, CI-63, CI-68, CI-70, CI-71, CI-79, CI-80, CI-90 | 14 |
 | **Golden at a non-default configuration** (large text, smallest width, reduced motion) | CI-33, CI-41, CI-65, CI-78 | 4 |
 | **Physical print validation** | CI-74, CI-77, CI-90 | 3 |
-| **Injected-defect proof** (the net must be shown to catch something) | CI-26, CI-27 | 2 |
+| **Injected-defect proof** (the net must be shown to catch something) | CI-26, CI-27, CI-31 | 3 |
 
 <sub>Items appear under more than one method where more than one is required; [§2](#2-summary--inventory-by-milestone) remains the authoritative count.</sub>
 

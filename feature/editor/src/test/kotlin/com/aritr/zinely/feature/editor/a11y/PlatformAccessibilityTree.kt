@@ -226,13 +226,30 @@ public fun platformTraversalStops(activity: Activity): List<PlatformA11yStop> {
     }
 
     // AccessibilityNodeInfo packs a source id as (virtualDescendantId shl 32) or accessibilityViewId.
+    // A child the provider refuses to build is an error, never a silent omission: swallowing it would
+    // shorten the traversal sequence and a caller would read the gap as "that stop is not there".
     fun childrenOf(node: AccessibilityNodeInfo): List<AccessibilityNodeInfo> =
-        (0 until node.childCount).mapNotNull { index ->
+        (0 until node.childCount).map { index ->
             val packed = getChildId.invoke(node, index) as Long
-            provider.createAccessibilityNodeInfo((packed shr 32).toInt())
+            val virtualViewId = (packed shr 32).toInt()
+            provider.createAccessibilityNodeInfo(virtualViewId)
+                ?: error(
+                    "AccessibilityNodeProvider produced no AccessibilityNodeInfo for child $index of " +
+                        "${node.className} (virtualViewId=$virtualViewId), though the parent reports " +
+                        "${node.childCount} children. Dropping it would silently shorten the traversal " +
+                        "sequence.",
+                )
         }
 
-    /** Names inside [node]'s own subtree, stopping at any nested focusable stop, in tree order. */
+    /**
+     * Names inside [node]'s own subtree, in tree order, stopping only at a nested **focusable** child.
+     *
+     * The recursion rule here is deliberately *narrower* than [walk]'s stop rule (focusable **or** named),
+     * and the asymmetry is load-bearing rather than an oversight: a merged control's own name lives on a
+     * *named* child — the synthetic content-description node Compose attaches — so excluding named children
+     * here would discard the very node the label is read from. Nothing is double-counted, because a named
+     * child of a stop can never become a stop itself ([walk] refuses any node with a stop ancestor).
+     */
     fun namesUnder(node: AccessibilityNodeInfo, into: MutableList<Pair<String?, String?>>) {
         into += node.contentDescription?.toString()?.takeIf { it.isNotBlank() } to
             node.text?.toString()?.takeIf { it.isNotBlank() }
