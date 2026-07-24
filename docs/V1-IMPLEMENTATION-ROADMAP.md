@@ -166,9 +166,9 @@ equally valid and cheaper; the defect is the ambiguity, not the direction."* **F
 under one resolution and zero under the other.** No engineer should be the one to pick, and §10 must
 not pre-empt the pick either — see §10.2.
 
-### 2.3 Typography — eleven roles, zero implemented
+### 2.3 Typography — sixteen roles, zero implemented
 
-[§6](ZINELY-DESIGN-SYSTEM.md) defines eleven roles by purpose; [§2.1](ZINELY-DESIGN-SYSTEM.md) requires
+[§6](ZINELY-DESIGN-SYSTEM.md) defines **sixteen** roles by purpose ([ADR-067](DECISIONS.md#adr-067) added five to the original eleven; **five of the sixteen carry a named register, eleven do not — [CI-99](V1-CONFORMANCE-INVENTORY.md)**); [§2.1](ZINELY-DESIGN-SYSTEM.md) requires
 **five registers**; [§13](ZINELY-DESIGN-SYSTEM.md) requires *"No sizes invented for this screen."*
 
 `ZinelyTypography` carries **two `FontFamily` values and no roles at all**. The Material3 `Typography`
@@ -185,7 +185,7 @@ happened: **16 production `MaterialTheme.colorScheme`/`typography` reads remain*
 
 Measured type in production: **80 `.sp` literals across 25 distinct sizes** — `9.5, 10, 10.5, 11,
 11.5, 12, 12.5, 13, 13.5, 14, 14.5, 15, 15.5, 16, 17, 19, 19.5, 20, 21, 22, 23, 24, 26` plus `0.sp`
-and `0.5.sp` tracking. Eleven roles cannot be derived from twenty-five sizes without deciding which
+and `0.5.sp` tracking. **Sixteen** roles cannot be derived from twenty-five sizes without deciding which
 sizes die, and every death is a visual change on a goldened surface.
 
 ### 2.4 Spacing — one unit, versus 591 literals
@@ -332,8 +332,7 @@ in this document, matching the execution plan's law.
 - **Current:** two families bundled locally (Inter 400/500/600/700, Fraunces 600, no italics — the
   prototypes' `fonts.googleapis.com` pulls are deliberately unreachable at `:18-22`, since a CDN font
   is a network request and the privacy invariant forbids one). One M3 `bodyLarge`. No roles.
-- **Required:** eleven roles / five registers, plus [A-6](ZINELY-DESIGN-SYSTEM-VALIDATION.md)'s five
-  more (Value, Input, Technical, Link, Section header) if accepted.
+- **Required:** **sixteen** roles / five registers — A-6's five (Value, Input, Technical, Link, List section header) were **accepted** by [ADR-067](DECISIONS.md#adr-067), each with its register named, and **the five-register architecture is frozen**.
 - **Gap:** the entire role layer, and the reduction of 25 sizes.
 - **Risk:** **high**, and *different* from spacing: type changes reflow, and reflow changes clipping,
   ellipsis and line counts — failures a golden diff shows but a human must judge. Compounded by

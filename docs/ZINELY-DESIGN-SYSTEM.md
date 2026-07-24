@@ -673,11 +673,17 @@ object is written back into that object's entry in the same change.
 Roles, not sizes. The implementation derives the scale; the scale never derives the roles.
 
 > **Every role names its register** ([ADR-067](DECISIONS.md#adr-067)). The parenthesis after a role name
-> is the [§2.1](#21-typography--scale-and-rhythm) register it belongs to — a **size slot**, not a
-> treatment. **No role enters this table without one**, and **the five registers are frozen**: a role
+> is the [§2.1](#21-typography--scale-and-rhythm) register it belongs to — which fixes its **size
+> slot**. §2.1 says *"the register defines the treatment"*, and it does; **a role may nonetheless
+> decline a treatment its own purpose forbids** — Technical takes Metadata's size and not its small
+> caps, because a small-capped filename is a wrong filename. **No role enters this table without a
+> register**, and **the five registers are frozen**: a role
 > that genuinely cannot be expressed by Display · Subhead · Body · Metadata · Caption is an **owner
-> decision and a new inventory item**, never a quietly added sixth. *(Registers are named here only for
-> the five roles added by ADR-067; the original eleven take theirs from §2.1 as they always did.)*
+> decision and a new inventory item**, never a quietly added sixth. *(Registers are named here **only for the five roles
+> added by [ADR-067](DECISIONS.md#adr-067)**. The original eleven do **not** yet carry one — five of
+> their names coincide with a register, and **Heading, Button, Label, Instruction, Warning and Empty
+> state have none recorded.** That gap is [CI-99](V1-CONFORMANCE-INVENTORY.md), not something this
+> table has already solved.)*
 
 | Role | Its job | Rules |
 |---|---|---|
@@ -694,9 +700,9 @@ Roles, not sizes. The implementation derives the scale; the scale never derives 
 | **Empty state** | Invites | An invitation, never a report of absence. The action lives where actions live — the empty state does not sprout its own buttons if a tray already owns them ([ADR-033](DECISIONS.md#adr-033)) |
 | **Value** *(Body)* | The answer to a labelled setting — *"A4"* beside *"Paper size"* | Sits on a shared baseline with the Label it answers (§2.1); never a different size from that label, or the row stops being a row. States the current truth, never the available options |
 | **Input** *(Body)* | Text the user is typing, and its placeholder | The placeholder is the **same register**, quieter in colour and **never smaller** — a field that changes size when typing begins is the page resizing in miniature. The placeholder shows the shape of the answer, never repeats the label |
-| **Technical** *(Metadata)* | A machine-facing fact the user may need to quote — filename, size, date, version | Takes Metadata's **size**, not its small-caps wide-tracking, which corrupts a filename. Numerals are tabular so stacked figures align (§2.1). Set exactly as the system would show it; never prettified, never truncated where the whole value is the point |
+| **Technical** *(Metadata)* | A machine-facing fact the user may need to quote — filename, size, date, version | Takes Metadata's **size**, not its small-caps wide-tracking, which corrupts a filename. Numerals are tabular **where they align in columns** (§13 #16); a lone value in a dialog needs no column. Set exactly as the system would show it; never prettified, never truncated where the whole value is the point |
 | **Link** *(Body)* | Leaves for somewhere else | Lives inside running text at Body's own measure and rhythm. Names its destination, never *"here"* or *"more"*. A link that performs an action is a Button that has been mislabelled |
-| **Section header** *(Metadata)* | Bands a list into groups | Above its group, not inside it; the smallest reading size, quiet. **Not a Subhead** — Subhead introduces a *step* in a reading flow and sits above Body; this sits below it ([ADR-067](DECISIONS.md#adr-067)). Never the only thing that separates two groups — space does that (§2.2) |
+| **List section header** *(Metadata)* | Bands a **list** into groups | Above its group, not inside it; quiet, below Body — the frozen HTML already sets this register there (`shelf.html` `.kicker`). **Not a Subhead** — Subhead introduces a *step* in a reading flow and sits *above* Body; a list band sits below it ([ADR-067](DECISIONS.md#adr-067)). **Scoped to lists**: a section header on a non-list surface is not this role and is not decided here. Never the only thing that separates two groups — space does that (§2.2) |
 
 Cross-cutting:
 - **One idea per line.** Beginners scan. No paragraphs inside the interface.
