@@ -1,6 +1,5 @@
 package com.aritr.zinely.home
 
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aritr.zinely.core.data.repository.DataError
@@ -63,17 +62,10 @@ internal sealed interface HomeUiState {
 @HiltViewModel
 internal class HomeViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
-    private val shelfThumbnails: ShelfThumbnails,
 ) : ViewModel() {
 
     /** Ids hidden from the shelf while their undo window is open (ADR-044 §3). */
     private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
-
-    /** Delivered page-1 thumbnails by project id (ADR-045); absent = warm placeholder on the card. */
-    private val thumbnails = MutableStateFlow<Map<String, ImageBitmap>>(emptyMap())
-
-    /** Ids with an ensure() in flight — one request per id at a time; emissions re-ask when done. */
-    private val thumbnailsInFlight = java.util.Collections.synchronizedSet(mutableSetOf<String>())
 
     /** Queued one-shot events; the buffer absorbs emissions while the screen is between collects. */
     private val eventQueue = Channel<HomeShelfEvent>(Channel.BUFFERED)
@@ -112,15 +104,15 @@ internal class HomeViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<HomeUiState> = retries.flatMapLatest { shelfStateFlow() }
         // WhileSubscribed(0), not 5_000 (ADR-046 §6): every return to the shelf re-collects the
-        // upstream, so max(row, doc mtime) recency and thumbnails re-derive after an editor round-trip
-        // — the store emits nothing on autosave mtime changes, so a warm subscription shows stale
-        // cards on exactly the most common flow. stateIn keeps the last value: no Loading flash.
+        // upstream, so max(row, doc mtime) recency re-derives after an editor round-trip — the store
+        // emits nothing on autosave mtime changes, so a warm subscription shows stale cards on
+        // exactly the most common flow. stateIn keeps the last value: no Loading flash.
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), HomeUiState.Loading)
 
     /**
      * One subscription's worth of shelf state.
      *
-     * `catch` is **outside** the combine, so a throw from any of the three sources lands here; it
+     * `catch` is **outside** the combine, so a throw from either source lands here; it
      * swallows nothing silently — [HomeUiState.Error] is a visible, recoverable state with [retry]
      * behind it.
      *
@@ -137,8 +129,7 @@ internal class HomeViewModel @Inject constructor(
         combine(
             projectRepository.observeProjects(),
             pendingDeletes,
-            thumbnails,
-        ) { projects, pending, thumbs ->
+        ) { projects, pending ->
             if (projects.isEmpty()) {
                 HomeUiState.Empty
             } else {
@@ -152,12 +143,7 @@ internal class HomeViewModel @Inject constructor(
                     pendingDeletes.update { current -> current.filterTo(mutableSetOf()) { it in projectIds } }
                 }
                 val visible = projects.filterNot { it.id in pending }
-                // Ask for every visible card's thumbnail on every emission (ADR-045 §2): the
-                // producer's mtime stamp makes a fresh ask a cheap no-op, delivery lands in
-                // [thumbnails] which re-runs this combine, and identical results change nothing —
-                // the loop converges. Hidden pending-delete cards are never asked for.
-                visible.forEach { requestThumbnail(it.id) }
-                HomeUiState.Content(visible.map { it.toCard(now, thumbs[it.id]) })
+                HomeUiState.Content(visible.map { it.toCard(now) })
             }
         }.catch { emit(HomeUiState.Error) }
 
@@ -168,21 +154,6 @@ internal class HomeViewModel @Inject constructor(
      */
     fun retry() {
         retries.update { it + 1 }
-    }
-
-    /** Launch one ensure() per id at a time; the map updates only when the bitmap actually changes. */
-    private fun requestThumbnail(id: String) {
-        if (!thumbnailsInFlight.add(id)) return
-        viewModelScope.launch {
-            try {
-                when (val bitmap = shelfThumbnails.ensure(id)) {
-                    null -> thumbnails.update { if (id in it) it - id else it }
-                    else -> thumbnails.update { if (it[id] === bitmap) it else it + (id to bitmap) }
-                }
-            } finally {
-                thumbnailsInFlight.remove(id)
-            }
-        }
     }
 
     /**
@@ -296,16 +267,14 @@ internal const val BUSY_MESSAGE: String = "That zine is still saving — try aga
 /** Any other mutation failure (VOICE: warm, recoverable, no jargon). */
 internal const val GENERIC_FAILURE_MESSAGE: String = "That didn't work — try again?"
 
-/** `ProjectSummary` → the card the shelf shows: only display data past this point (ADR-043/045). */
+/** `ProjectSummary` → the card the shelf shows: only display data past this point (ADR-043). */
 internal fun ProjectSummary.toCard(
     nowEpochMs: Long,
-    thumbnail: ImageBitmap? = null,
 ): HomeZineCard = HomeZineCard(
     id = id,
     title = title,
     formatLabel = "${format.shelfLabel()} · ${paperSize.shelfLabel()}",
     editedLabel = editedLabel(updatedAtEpochMs, nowEpochMs),
-    thumbnail = thumbnail,
 )
 
 /** Warm, jargon-free format name (never the enum's SCREAMING_SNAKE identity). */

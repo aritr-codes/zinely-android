@@ -246,7 +246,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Milestone** C0 · **Prereq** CI-01, CI-14 · **Kind** documentation · **Changes** docs, motion
 - **Verify** ADR or dated deferral in `DECISIONS.md`.
 
-#### CI-18 · Real shelf covers — wire or delete (**ship blocker #3, currently running unread**)
+#### CI-18 · Real shelf covers — wire or delete (**ship blocker #3**) — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-069](DECISIONS.md#adr-069): DELETE.** Owner ruling. The pipeline is removed, not wired — with `ThumbnailRenderer`, `ShelfThumbnails`, `AndroidThumbnailRaster`, `ShelfThumbnailProducer`, `HomeModule` and their tests, plus the second-order dead `ProjectDocumentLayout` and its DI provider, which existed only to serve the producer. `HomeZineCard.thumbnail` and `HomeViewModel`'s thumbnail machinery are unwired. **`CanvasReplayer` and the export path are untouched**, as are `ShelfCover.kt`/`ShelfCoverRecipe.kt` — the riso cover the shelf actually draws. **CI-77 is executed by the same change** (see its Status). **Ship blocker #3 is closed.**
 - **Location** `app/.../home/ShelfThumbnailProducer.kt` (118), `app/.../home/AndroidThumbnailRaster.kt` (42), `app/.../home/HomeModule.kt` (61), `app/.../home/ShelfThumbnails.kt` (35), `feature/editor/.../ShelfCover.kt` (336), `ShelfCoverRecipe.kt` (84)
 - **Current** `HomeModule` wires the full `ThumbnailRenderer(CanvasReplayer(...))` stack into the production graph **unconditionally**, so the app *"renders, encodes and caches a PNG per zine per document edit — plus a decode per zine per cold start and up to 24 bitmaps in an LRU — **for output no surface displays**."* The shelf draws a title-hashed riso cover instead.
 - **Required** *"It is dead weight either way: wire it or delete it, but do not leave it running unread."*
@@ -858,7 +859,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** Trivial. Listed because [roadmap §10.2](V1-IMPLEMENTATION-ROADMAP.md)'s condition is repository-wide and one import fails it.
 - **Verify** The import is gone; the shelf goldens byte-identical.
 
-#### CI-77 · Execute the shelf-cover ruling
+#### CI-77 · Execute the shelf-cover ruling — ✅ **DONE**
+- **Status** ✅ **EXECUTED 2026-07-24 with the ruling** ([ADR-069](DECISIONS.md#adr-069)) rather than deferred to C7. The deletion is mechanical and its Verify criterion for the delete branch is met: `HomeModule` no longer exists, so it cannot construct the renderer; no PNG is written on edit; and because the thumbnail was **never drawn**, the shelf goldens are **byte-identical rather than re-recorded** — the Verify line below anticipated a re-record, which turned out to be unnecessary precisely because the field was unread.
 - **Location** as CI-18, plus `HomeViewModel.kt` (341 lines)
 - **Milestone** C7 · **Prereq** **CI-18** · **Kind** architectural · **Changes** pub, render, persist (cache only), tests
 - **Risk** Touches `ShelfThumbnailProducer`/`AndroidThumbnailRaster` and therefore the render stack — **this is the one item in the programme that lands on the feature axis's F1/F4 as well as this one.** It is still not a schema change: the cache is `cacheDir/thumbnails/<id>.png`, *"derived like the Room index, never authoritative"* ([ADR-045](DECISIONS.md#adr-045) decision 3), so deletion loses nothing a user owns.

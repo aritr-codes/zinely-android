@@ -1,9 +1,5 @@
 package com.aritr.zinely.home
 
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.ImageBitmapConfig
-import androidx.compose.ui.graphics.colorspace.ColorSpace
-import androidx.compose.ui.graphics.colorspace.ColorSpaces
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectRepository
@@ -107,51 +103,16 @@ class HomeViewModelTest {
         }
     }
 
-    /**
-     * Recording thumbnail fake (S6.4, ADR-045): scripts [ensure] per id and records every ask, so
-     * the "hidden cards are never asked for" and delivery-mapping assertions are direct.
-     */
-    private class FakeShelfThumbnails : ShelfThumbnails {
-        val asked = mutableListOf<String>()
-        var bitmaps: Map<String, ImageBitmap> = emptyMap()
-
-        override suspend fun ensure(projectId: String): ImageBitmap? {
-            asked += projectId
-            return bitmaps[projectId]
-        }
-    }
-
-    /** A JVM-pure [ImageBitmap] — the VM never reads pixels, it only carries the reference. */
-    private class FakeImageBitmap : ImageBitmap {
-        override val width: Int = 1
-        override val height: Int = 1
-        override val config: ImageBitmapConfig = ImageBitmapConfig.Argb8888
-        override val hasAlpha: Boolean = false
-        override val colorSpace: ColorSpace = ColorSpaces.Srgb
-        override fun prepareToDraw() = Unit
-        override fun readPixels(
-            buffer: IntArray,
-            startX: Int,
-            startY: Int,
-            width: Int,
-            height: Int,
-            bufferOffset: Int,
-            stride: Int,
-        ) = Unit
-    }
-
     private val dispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: FakeProjectRepository
-    private lateinit var thumbnails: FakeShelfThumbnails
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         repository = FakeProjectRepository()
-        thumbnails = FakeShelfThumbnails()
     }
 
-    private fun viewModel() = HomeViewModel(repository, thumbnails)
+    private fun viewModel() = HomeViewModel(repository)
 
     @After
     fun tearDown() {
@@ -560,60 +521,6 @@ class HomeViewModelTest {
         stateJob.cancel()
     }
 
-    // --- S6.4 shelf thumbnails (ADR-045) ---
-
-    @Test
-    fun `a delivered thumbnail rides its card`() = runTest {
-        // Given a thumbnail the producer can deliver for z1
-        val bitmap = FakeImageBitmap()
-        thumbnails.bitmaps = mapOf("z1" to bitmap)
-        val viewModel = viewModel()
-        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
-
-        // When the store emits the project
-        repository.projects.emit(listOf(summary("z1", "One", System.currentTimeMillis())))
-
-        // Then the card carries exactly that bitmap
-        val card = (viewModel.state.value as HomeUiState.Content).cards.single()
-        assertSame(bitmap, card.thumbnail)
-        job.cancel()
-    }
-
-    @Test
-    fun `no thumbnail is a null card slot - the warm placeholder, never a broken shelf`() = runTest {
-        // Given a producer with nothing to give (unreadable document, render failure)
-        val viewModel = viewModel()
-        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
-
-        // When
-        repository.projects.emit(listOf(summary("z1", "One", System.currentTimeMillis())))
-
-        // Then
-        assertNull((viewModel.state.value as HomeUiState.Content).cards.single().thumbnail)
-        assertTrue("the shelf still asked" , thumbnails.asked.contains("z1"))
-        job.cancel()
-    }
-
-    @Test
-    fun `every visible card is asked for - hidden pending-delete cards are not`() = runTest {
-        // Given two zines on the shelf
-        val now = System.currentTimeMillis()
-        val viewModel = viewModel()
-        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
-        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
-        assertTrue(thumbnails.asked.containsAll(listOf("z1", "z2")))
-
-        // When z1 is hidden by a pending delete and the shelf re-emits
-        viewModel.delete("z1")
-        thumbnails.asked.clear()
-        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
-
-        // Then only the visible card is asked for (ADR-045 §2 / ADR-044 pending-delete interplay)
-        assertTrue(thumbnails.asked.contains("z2"))
-        assertTrue("hidden card must not be asked for", "z1" !in thumbnails.asked)
-        job.cancel()
-    }
-
     // --- S6.5 nav re-root (ADR-046) ---
 
     @Test
@@ -804,7 +711,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `returning to the shelf re-collects the store - fresh labels and thumbnails`() = runTest {
+    fun `returning to the shelf re-collects the store - fresh labels`() = runTest {
         // Given a first shelf visit (ADR-046 §6: WhileSubscribed(0) — a warm 5 s window used to keep
         // the stale upstream alive across the most common edit → back round-trip, ADR-045 §6)
         val viewModel = viewModel()
@@ -816,7 +723,7 @@ class HomeViewModelTest {
         firstVisit.cancel()
         val secondVisit = launch(Dispatchers.Main) { viewModel.state.collect {} }
 
-        // Then the upstream was re-collected: the store is re-read, labels/thumbnails re-derived
+        // Then the upstream was re-collected: the store is re-read and labels re-derived
         assertEquals(2, repository.observeCollections)
         secondVisit.cancel()
     }

@@ -120,7 +120,19 @@ Ordered; each cites the truth it unblocks:
 
 1. Non-Latin fallback + input-time honesty → DoD 4 (worst standing violation)
 2. Backup/restore/migration → DoD 2
-3. Real shelf covers (wire ADR-045 pipeline) → DoD 3, 7
+3. ~~Real shelf covers (wire ADR-045 pipeline)~~ **RE-SCOPED 2026-07-24 — [ADR-069](DECISIONS.md#adr-069) deleted the pipeline rather than wiring it** → DoD 3, 7
+   - **What was decided:** the ADR-045 producer was rendering, encoding, caching and decoding a
+     page-1 PNG per zine on every edit and every cold start, into a field **no composable read**.
+     That cost was being paid on every device. It is now deleted, and ADR-045's closure instruction —
+     *"wire it or delete it, but do not leave it running unread"* — is discharged.
+   - **What is NOT decided:** whether the shelf should eventually show the user's real page 1 instead
+     of a title-hashed riso cover. That is a **product question against DoD 3 and 7**, and it is now
+     **open with no implementation waiting**. If it is wanted, it is designed against the corpus of
+     its day and built fresh; the ADR-045 rationale (a thumbnail is a miniature export, drawn by the
+     shared replayer) is preserved in [ADR-045](DECISIONS.md#adr-045) and [ADR-069](DECISIONS.md#adr-069)
+     for whoever picks it up.
+   - **The blocker as written is closed:** nothing is running unread, and the riso cover the shelf
+     draws today is a deliberate, frozen design choice rather than a placeholder awaiting a pipeline.
 4. Read mode + page-image export → DoD 6
 5. First-run (fold moment, question, seeded starter) + 6–8 starters → DoD 1, 7
 6. Direct-manipulation reframe/move + verb bar + snapping (twins kept) → DoD 1, 8
