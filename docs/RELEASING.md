@@ -180,3 +180,142 @@ old tags (`git show v0.8.0:…/ProofScreen.kt`) rather than remembering.
 
 Play Store distribution is not in use yet. It would additionally need an upload key, a Play Console
 listing, a privacy policy, a content rating and a data-safety declaration.
+
+---
+
+## 4. Play Store — closed testing
+
+> Added 2026-07-24 for the first Play submission. §3 above remains the record for side-load
+> distribution; this section owns Play. **The build is unchanged** — the Play artifact is the same
+> code as `0.9.0-beta.1`, delivered as an App Bundle instead of an APK.
+
+### 4.1 The gate that is not code
+
+**A new Play Console account needs identity verification, which takes 1–3 business days.** It costs
+$25 once. Nothing in this repository shortens it, and it is the only step that can miss a ship date on
+its own. Start it before touching anything else.
+
+**Closed testing publishes immediately** once the account is verified and the release is reviewed.
+**Production does not:** a new *personal* developer account must first run a closed test with **12
+testers for 14 continuous days**. A beta wants closed testing anyway, so this is not a constraint worth
+fighting — it is a reason to start the 14 days now if production is ever the goal.
+
+### 4.2 The artifact
+
+Play requires an **App Bundle**, not an APK:
+
+```
+./gradlew :app:bundleRelease        # -> app/build/outputs/bundle/release/zinely-<version>-release.aab
+```
+
+It is signed by the same release key as the APK (§1), read from `keystore.properties` or the
+`ZINELY_KEYSTORE_*` environment variables. **Enrol in Play App Signing at upload and keep this key as
+the upload key** — Play then holds the app signing key and this one only proves the upload is yours.
+Back it up exactly as §1 requires; losing the upload key is recoverable, losing an un-enrolled app
+signing key is not.
+
+`versionCode` does not need bumping for the first Play upload: nothing has been uploaded to Play, so
+`3` is free, and reusing it keeps the Play build honestly identified as the same build the side-load
+cohort received.
+
+### 4.3 The console checklist
+
+| # | Item | Notes |
+|---|---|---|
+| 1 | **App name** | `Zinely` (30 char limit) |
+| 2 | **Short description** | 80 char limit — see §4.4 |
+| 3 | **Full description** | 4000 char limit — see §4.4 |
+| 4 | **App icon** | 512×512 PNG, 32-bit, no alpha |
+| 5 | **Feature graphic** | **1024×500** PNG or JPEG — mandatory, and the one asset with no source in this repo |
+| 6 | **Phone screenshots** | 2–8, min 320px, max 3840px, 16:9 or 9:16. Shelf · Editor · Read · Print & fold is the honest four |
+| 7 | **Privacy policy URL** | [docs/PRIVACY-POLICY.md](PRIVACY-POLICY.md), hosted anywhere public (GitHub Pages, a gist, any static host) |
+| 8 | **Data safety form** | See §4.5 — every answer is "no" |
+| 9 | **Content rating questionnaire** | No user-generated content *sharing*, no ads, no data collection |
+| 10 | **Target audience** | 13+ is the safe answer; the app has no child-directed content |
+| 11 | **Ads declaration** | **No ads** |
+| 12 | **Government app / financial features** | No |
+| 13 | **Release notes** | 500 char limit per language — see §4.4 |
+
+### 4.4 Listing copy
+
+**Short description** (73 / 80):
+
+```
+Make a printable zine on your phone. No account, no cloud, works offline.
+```
+
+**Full description:**
+
+```
+Zinely turns your phone into a small printing press.
+
+Make an eight-page zine, add your photos and words, and print it on one sheet of ordinary
+A4 or Letter paper. Fold it, cut one slit, and you are holding a booklet.
+
+WHAT IT DOES
+
+• Eight pages on one sheet. Zinely works out the imposition — which page goes where, and
+  which way up — so a single-sided print folds into a booklet in the right order.
+• Your photos, framed how you want. Pick photos with the Android photo picker, then move
+  and zoom them inside the frame.
+• Words, styled. Set size, alignment, bold, italic, and colour. What you see is what prints.
+• Read your zine. Page through your own work, one page per screen, before you print it.
+• Print and fold, guided. A print recipe that tells you the settings that matter, and a fold
+  guide for the cut.
+• Save a PDF to your phone, or share it wherever you like.
+
+PRIVACY, PLAINLY
+
+Zinely has no account, no cloud, and no analytics. It does not ask for internet access at all,
+so your zines cannot leave your phone unless you export them yourself. Your work lives in
+Zinely's own private storage and nowhere else.
+
+BEFORE YOU START — THIS IS A BETA
+
+• There is no backup or restore yet. Your zines live only on this phone. Uninstalling Zinely
+  deletes them. Save a PDF of anything you care about.
+• Print at 100% or "Actual size". A printer's "fit to page" shifts everything and breaks the
+  fold alignment.
+• Text renders in the bundled Inter family only. Non-Latin scripts — Bengali, Hindi, CJK — and
+  emoji will not appear yet.
+• Choosing a font is not in this build.
+• Deleting a photo does not yet reclaim its storage.
+
+Zinely is made for beginners. If something confuses you, that is a bug — please tell us.
+```
+
+**Release notes for `0.9.0-beta.1`** (< 500 chars):
+
+```
+The first Zinely beta.
+
+NEW: "Read" opens your zine — your pages, one per screen, in reading order. Print & fold now
+lives behind its own button.
+
+NEW: Style your text — size, alignment, bold, italic, and five inks, live on the page.
+
+FIXED: a reopened zine could be permanently broken by adding to it. Affected zines repair
+themselves on next open.
+
+Please note: there is no backup yet. Uninstalling deletes your zines — save a PDF first.
+```
+
+### 4.5 Data safety declaration
+
+Every answer is the same, and each is verifiable from the manifest:
+
+- **Does your app collect or share any of the required user data types?** — **No.**
+- **Is all of the user data collected by your app encrypted in transit?** — n/a (no data leaves the
+  device; the app declares no `INTERNET` permission).
+- **Do you provide a way for users to request that their data is deleted?** — **Yes**, in-app deletion
+  and uninstall; state that the app stores data only on-device.
+
+The single declared permission is `WRITE_EXTERNAL_STORAGE` with `android:maxSdkVersion="28"`, needed
+only to write an exported PDF into Downloads on Android 9 and older. It is not a data-collection
+mechanism and does not change any answer above.
+
+### 4.6 What is still owed before submitting
+
+- **The feature graphic (1024×500)** — the only listing asset with no source in this repository.
+- **Screenshots** from a real device on a release build.
+- **A public URL for the privacy policy.**
