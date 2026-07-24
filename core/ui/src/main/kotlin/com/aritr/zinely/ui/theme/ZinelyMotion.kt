@@ -35,6 +35,17 @@ public data class ZinelyMotion(val reduceMotion: Boolean) {
     /** `--base`, or 0 when the user asked for reduced motion. */
     public val baseMillis: Int = if (reduceMotion) 0 else ZINELY_BASE_MILLIS
 
+    /**
+     * The **Underway** band — the motion for "something is in progress"
+     * ([ADR-063](docs/DECISIONS.md#adr-063), A-4). The band **exists**; its real duration is
+     * **explicitly deferred to CI-14** (the motion-baseline recording protocol). This value is
+     * therefore **PROVISIONAL**: it tracks [baseMillis] as a placeholder and introduces **no new
+     * number**. Do not read a real "underway" timing into it — CI-14 sets the true value, and until
+     * then treating this as `base` is the deliberate, documented stand-in. Reduced-motion-aware for
+     * free, since it tracks [baseMillis] (0 under reduce).
+     */
+    public val underwayMillis: Int = baseMillis
+
     /** A `--fast var(--ease)` tween. */
     public fun <T> fast(): TweenSpec<T> = tween(durationMillis = fastMillis, easing = ZinelyEasing)
 

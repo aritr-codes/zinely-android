@@ -17,53 +17,155 @@ import androidx.compose.ui.graphics.Color
  * Note the split between *paper* and *desk*: `ink*` is what sits on a sheet of paper, `onDesk*` is
  * what sits on the surface behind it. They coincide in light (`--on-desk:var(--ink)`) and diverge in
  * dark (the paper stays lit and warm, so ink on it stays dark). Do not collapse them.
+ *
+ * ### §7.1 job coverage (CI-94)
+ *
+ * Every token below names the job [ZINELY-DESIGN-SYSTEM §7.1](docs/ZINELY-DESIGN-SYSTEM.md) assigns
+ * it ("every colour has a job; every job has one colour"). §7.1 defines **seven** jobs — *the
+ * artifact's surface · the room · the artifact's ink · the user's next action · the secondary accent ·
+ * the hand · consequence*. The mapping is:
+ *
+ * | §7.1 job | Tokens |
+ * |---|---|
+ * | The artifact's surface | `paper`, `paper2`, `paperEdge` |
+ * | The room | `desk`, `deskEdge` |
+ * | The artifact's ink | `ink`, `inkSoft` |
+ * | The user's next action (the accent) | `coral`, `coralStrong`, `coralText` |
+ * | The secondary accent | *— no token; the job exists in §7.1 with nothing implementing it* |
+ * | The hand (the tape colours) | `teal`, `yellow`, `stamp` |
+ * | Consequence | [consequence] |
+ *
+ * **Disclosed §7.1 coverage gap — not fabricated into jobs.** §7.1 assigns **no job** to these nine
+ * tokens, and each says so in its own KDoc rather than borrowing a job it does not do: `inkFaint`,
+ * `shelfLine`, `onDesk`, `onDeskSoft`, `onDeskFaint`, `scrim`, `field`, `fieldEdge`, `menu`. Two of
+ * these are live *tensions* with §7.1 rather than mere omissions, and are recorded for the owner (C0),
+ * not resolved here:
+ *
+ *  - §7.1's ink row reads "Ink, ink-soft. **Two values, not four**" — but the palette ships four text
+ *    values (`ink`, `inkSoft`, `onDesk`, `onDeskSoft`) plus two faint ones, because of the deliberate
+ *    paper/desk split described above. §7.1 has no row for *text on the room*.
+ *  - §7.1's room row says the room is "everything that is not the artifact", coloured desk charcoal —
+ *    but `field`/`fieldEdge`/`menu` are chrome in a light cream, so that row does not cover them.
+ *
+ * This is documentation only: no token's value changes, and nothing here migrates a call site.
  */
 @Immutable
 public data class ZinelyColors(
-    /** `--paper` — the sheet. */
+    /** `--paper` — the sheet. §7.1 job: **the artifact's surface** ("only the artifact and things
+     *  standing in for it"). */
     val paper: Color,
-    /** `--paper-2` — a second, slightly deeper sheet (stacked cards, inner faces). */
+    /** `--paper-2` — a second, slightly deeper sheet (stacked cards, inner faces). §7.1 job: **the
+     *  artifact's surface** — §7.1 names one colour ("Paper cream") for that job; this is its deeper
+     *  value, not a second job. */
     val paper2: Color,
-    /** `--paper-edge` — the cut edge of a sheet. */
+    /** `--paper-edge` — the cut edge of a sheet. §7.1 job: **the artifact's surface** (the edge is
+     *  still the artifact) — §7.1 defines no separate edge/border job, so this is a boundary value of
+     *  the surface job rather than a job of its own. */
     val paperEdge: Color,
-    /** `--ink` — primary text **on paper**. */
+    /** `--ink` — primary text **on paper**. §7.1 job: **the artifact's ink** ("text the user reads");
+     *  the first of the two values §7.1 allows. */
     val ink: Color,
-    /** `--ink-soft` — secondary text on paper. */
+    /** `--ink-soft` — secondary text on paper. §7.1 job: **the artifact's ink**; the second of the two
+     *  values §7.1 allows ("Ink, ink-soft — two values, not four"). */
     val inkSoft: Color,
-    /** `--ink-faint` — tertiary/decorative on paper. Never load-bearing text. */
+    /**
+     * `--ink-faint` — tertiary/decorative on paper. Never load-bearing text.
+     *
+     * **§7.1 defines no job for this token** — see the §7.1 coverage gap in the class KDoc. It is a
+     * *third* ink value, where §7.1's ink row allows two ("Ink, ink-soft. Two values, not four"). Its
+     * existence is a live tension with §7.1, not a job §7.1 assigns; recorded, not resolved, here.
+     */
     val inkFaint: Color,
-    /** `--coral` — the accent. Decorative / large / fills only, never small text. */
+    /** `--coral` — §7.1 job: **the user's next action** (the one accent, one meaning). Decorative /
+     *  large / fills only, never small text. */
     val coral: Color,
-    /** `--coral-strong` — coral FILL under white text (AA 4.6:1). The primary button, and the focus ring. */
+    /** `--coral-strong` — §7.1 job: **the user's next action**; the accent's FILL rendering, under
+     *  white text (AA 4.6:1). The primary button, and the focus ring. Not a second accent — one
+     *  accent rendered for a different ground. */
     val coralStrong: Color,
-    /** `--coral-text` — coral as TEXT on light shell surfaces (paper/field/menu), AA ≥5:1. */
+    /** `--coral-text` — §7.1 job: **the user's next action**; the accent's TEXT rendering on light
+     *  shell surfaces (paper/field/menu), AA ≥5:1. Also the value [consequence] borrows. */
     val coralText: Color,
-    /** `--teal` — authorial ink. Sub-AA as text (2.9:1); a documented artist choice, not a default. */
+    /** `--teal` — §7.1 job: **the hand** (the tape colours — the artifact's register, §1.5; chrome
+     *  does not borrow them). Sub-AA as text (2.9:1); a documented artist choice, not a default. */
     val teal: Color,
-    /** `--yellow` — authorial ink. */
+    /** `--yellow` — §7.1 job: **the hand** (a tape colour / authorial ink; chrome must not borrow it). */
     val yellow: Color,
-    /** `--stamp` — authorial ink. */
+    /** `--stamp` — §7.1 job: **the hand** (a tape colour / authorial ink; chrome must not borrow it). */
     val stamp: Color,
-    /** `--desk` — the surface the sheets sit on. */
+    /** `--desk` — the surface the sheets sit on. §7.1 job: **the room** ("everything that is not the
+     *  artifact"). */
     val desk: Color,
-    /** `--desk-edge` — the desk's far edge. */
+    /** `--desk-edge` — the desk's far edge. §7.1 job: **the room** — its boundary value; §7.1 defines
+     *  no separate edge job. */
     val deskEdge: Color,
-    /** `--shelf-line` — the hairline a sheet rests on. */
+    /**
+     * `--shelf-line` — the hairline a sheet rests on.
+     *
+     * **§7.1 defines no job for this token** — see the §7.1 coverage gap in the class KDoc. §7.1 has
+     * no hairline/divider job; this is structural chrome that borrows ink at low alpha.
+     */
     val shelfLine: Color,
-    /** `--on-desk` — primary text **on the desk**. */
+    /**
+     * `--on-desk` — primary text **on the desk**.
+     *
+     * **§7.1 defines no job for this token** — see the §7.1 coverage gap in the class KDoc. §7.1's
+     * only text job is "the artifact's ink"; it names no colour for text on *the room*, and the
+     * paper/desk split this palette depends on has no §7.1 row.
+     */
     val onDesk: Color,
-    /** `--on-desk-soft` — secondary text on the desk (≥5:1). */
+    /**
+     * `--on-desk-soft` — secondary text on the desk (≥5:1).
+     *
+     * **§7.1 defines no job for this token** — as [onDesk]: chrome text on the room is unassigned.
+     */
     val onDeskSoft: Color,
-    /** `--on-desk-faint` — tertiary/decorative on the desk. Never load-bearing text. */
+    /**
+     * `--on-desk-faint` — tertiary/decorative on the desk. Never load-bearing text.
+     *
+     * **§7.1 defines no job for this token** — as [onDesk]. (It is, separately, the colour
+     * [ZinelyControlStates.disabledContent] references.)
+     */
     val onDeskFaint: Color,
-    /** `--scrim` — dims everything behind an open sheet. */
+    /**
+     * `--scrim` — dims everything behind an open sheet.
+     *
+     * **§7.1 defines no job for this token** — see the §7.1 coverage gap in the class KDoc. §7.1
+     * assigns no job to a dimming overlay.
+     */
     val scrim: Color,
-    /** `--field` — text-input fill. */
+    /**
+     * `--field` — text-input fill.
+     *
+     * **§7.1 defines no job for this token** — see the §7.1 coverage gap in the class KDoc. By §7.1's
+     * rule a field is "not the artifact", so it would fall to **the room** — but the room's colour is
+     * desk charcoal and this is a light cream, so the row does not actually cover it. Recorded rather
+     * than forced into a job whose colour it does not use.
+     */
     val field: Color,
-    /** `--field-edge` — text-input border. */
+    /**
+     * `--field-edge` — text-input border.
+     *
+     * **§7.1 defines no job for this token** — as [field].
+     */
     val fieldEdge: Color,
-    /** `--menu` — popup-menu fill. */
+    /**
+     * `--menu` — popup-menu fill.
+     *
+     * **§7.1 defines no job for this token** — as [field].
+     */
     val menu: Color,
+    /**
+     * The **consequence** colour — the one *non-accent semantic role* §7.1 defines
+     * ([ADR-062](docs/DECISIONS.md#adr-062), A-3). Its single job is "**this will remove / this has
+     * broken**": a destructive action's label, an error. It is **explicitly not a third accent** —
+     * §7.1's two-accent rule (coral + one authorial ink) stands exactly as written; this token names
+     * a *job*, not a new hue. It reuses the existing coral family: the frozen destructive menu row
+     * transcribes `color:var(--coral-text)` (shelf.html:303, delete button :456), so
+     * `consequence == coralText` in both themes (pinned in `ZinelyTokensTest`). A caller can now name
+     * the consequence ("remove") without reaching for a colour named after its appearance.
+     */
+    val consequence: Color,
 )
 
 // The literals below are the frozen `:root` bytes. rgba() tokens are expressed as base × alpha so
@@ -93,6 +195,7 @@ public fun zinelyLightColors(): ZinelyColors = ZinelyColors(
     field = Color(0xFFFBF8F1),
     fieldEdge = Color(0xFFDED4C2),
     menu = Color(0xFFFBF8F1),
+    consequence = Color(0xFFA63C22), // == --coral-text (the destructive/consequence role); pinned == coralText
 )
 
 /**
@@ -117,4 +220,73 @@ public fun zinelyDarkColors(): ZinelyColors = zinelyLightColors().copy(
     fieldEdge = Color(0xFF413E39),
     menu = Color(0xFF2B2A28),
     coralText = Color(0xFFE76F51), // coral as text on the dark menu — AA 5.4:1
+    consequence = Color(0xFFE76F51), // tracks --coral-text into dark; pinned == coralText
+)
+
+/**
+ * The interactive control states §7.1 defines ([ADR-062](docs/DECISIONS.md#adr-062), A-3) —
+ * **disabled / focused / pressed / selected** — each stated for the three surfaces a control can sit
+ * on: **on the page** (a sheet / bench chrome), **in a list** (a menu), **in a gallery** (the cover
+ * grid / panel strip). The authority for these values is the relocated Premium Checklist (CI-13,
+ * inside [ZINELY-DESIGN-SYSTEM §7.1](docs/ZINELY-DESIGN-SYSTEM.md)); the DESIGN-FROZEN HTML trilogy is
+ * their transcription source.
+ *
+ * Every value is a **reference to an existing palette colour** — this design deliberately spends *no
+ * new hue* on interaction. The single coral accent carries focus, press and selection alike; that
+ * coincidence is itself the decision this holder pins (a future "selected-blue" would fail
+ * `ZinelyTokensTest`). Where a state is expressed by **motion, not colour**, that is said so and no
+ * colour is invented.
+ *
+ * | State    | on the page                                   | in a list                              | in a gallery                       | source |
+ * |----------|-----------------------------------------------|----------------------------------------|------------------------------------|--------|
+ * | disabled | [disabledContent] + call-site alpha (≈.4–.5)  | (menu rows do not disable)             | cover art dims                     | bench.html:166 / :390, shelf.html:184 |
+ * | focused  | [focusRing] 3px ring                          | same ring                              | same ring (+ panel `.cur`)         | bench.html:143, shelf.html:88, proof.html:199 |
+ * | pressed  | **motion only** — `translateY(1px) scale(.99)`| —                                      | —                                  | bench.html:346, shelf.html:266, proof.html:446 |
+ * | selected | [selected] fill (toggle) / inset ring (panel) | **[selectedInList] + check, *not* coral** | [selected] 2px inset ring       | bench.html:356 / :318, shelf.html:305 |
+ *
+ * Not wired into [ZinelyTheme]: these tokens are *added*, not yet consumed — call-site adoption is a
+ * later milestone (C4/C6/C7), and wiring them here would risk moving a golden.
+ */
+@Immutable
+public data class ZinelyControlStates(
+    /**
+     * **disabled** foreground — the surface's faint ink, dimmed further by alpha at the call site.
+     * References `onDeskFaint` (the one concrete disabled rule in the spec, `.iconbtn:disabled`,
+     * bench.html:166); a control on a *sheet* dims its own `inkFaint` analogously. The exact alpha
+     * (.4 for compact steppers bench.html:390, .5 for icon buttons bench.html:166) is owned by the
+     * Premium Checklist (CI-13), so it is applied at the call site rather than baked in here.
+     */
+    val disabledContent: Color,
+    /** **focused** — the 3px focus ring; the coral accent (bench.html:143 / shelf.html:88 / proof.html:199). */
+    val focusRing: Color,
+    /**
+     * **pressed** — recorded for completeness. The press is carried by **motion, not colour**
+     * (`:active{ transform:translateY(1px) scale(.99) }`, bench.html:346 / shelf.html:266 /
+     * proof.html:446); there is no separate pressed hue, so the colour role coincides with the accent.
+     */
+    val pressed: Color,
+    /**
+     * **selected** on a page/gallery control — the coral accent, as a toggle *fill* (bench.html:356)
+     * or a 2px inset *ring* on a panel (`.cur`, bench.html:318). In a **list** selection is
+     * [selectedInList] instead.
+     */
+    val selected: Color,
+    /**
+     * **selected in a list** — a menu carries selection by a check glyph + weight on `onDesk`,
+     * **deliberately not coral** ("selection carried by the check glyph + weight, not coral",
+     * shelf.html:305).
+     */
+    val selectedInList: Color,
+)
+
+/**
+ * Binds [ZinelyControlStates] to a resolved [ZinelyColors]. Every value references an existing
+ * palette colour, so this introduces **no new literal — and no golden**.
+ */
+public fun zinelyControlStates(colors: ZinelyColors): ZinelyControlStates = ZinelyControlStates(
+    disabledContent = colors.onDeskFaint,
+    focusRing = colors.coralStrong,
+    pressed = colors.coralStrong,
+    selected = colors.coralStrong,
+    selectedInList = colors.onDesk,
 )

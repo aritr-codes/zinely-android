@@ -14,7 +14,16 @@ public data class ZinelyShadowLayer(val dy: Dp, val blur: Dp, val color: Color)
 
 /**
  * The frozen depth ladder — `--shadow-1` / `--shadow-2` / `--shadow-lift` from the DESIGN-FROZEN
- * trilogy. "Flat 2.0": a sheet lifts off the desk, nothing floats.
+ * trilogy. "Flat 2.0" (§2.4): **depth is drawn by a cast shadow only.** There is **no tonal
+ * elevation** in this system — a raised object does not lighten its own surface the way Material 3
+ * does; it casts a shadow onto the desk and nothing more. Each tier below names the §2.4 role it
+ * plays; the *colour* of the shadow is theme-dependent (warm ink in light, pure black in dark) but
+ * the *ladder* (which tier means what) is fixed.
+ *
+ * **Open gap (audit row 2, stays OPEN):** §2.4 assigns a role to each *existing* tier, but the design
+ * system does not yet answer "which tier does a *new* object belong to?" — there is no rule mapping an
+ * object's kind to shadow1/shadow2/shadowLift. Recorded here so the gap is visible at the code; its
+ * resolution is not part of CI-38 (documentation-only, no value change).
  *
  * These are **data, not a Modifier**. Compose has no multi-layer coloured shadow, so the modifier
  * that draws them lands with the first component that needs it (M1). Shipping the draw code here,
@@ -22,15 +31,17 @@ public data class ZinelyShadowLayer(val dy: Dp, val blur: Dp, val color: Color)
  */
 @Immutable
 public data class ZinelyElevation(
-    /** `--shadow-1` — a resting sheet. */
+    /** `--shadow-1` — §2.4 role: **a resting sheet**, flat on the desk. The default, barely-lifted tier. */
     val shadow1: List<ZinelyShadowLayer>,
-    /** `--shadow-2` — a raised card. */
+    /** `--shadow-2` — §2.4 role: **a raised card** — a surface a step above the desk (a stacked card). */
     val shadow2: List<ZinelyShadowLayer>,
-    /** `--shadow-lift` — the picked-up sheet (drag, open sheet). */
+    /** `--shadow-lift` — §2.4 role: **the picked-up sheet** — actively lifted (a drag, an open sheet). */
     val shadowLift: List<ZinelyShadowLayer>,
 )
 
-private val LightShadow = Color(0xFF23201C)
+// The shadow tint in light theme is the `ink` token (theme-invariant literal 0xFF23201C); referenced
+// here rather than re-spelt so the palette owns the value (CI-94, both-theme-identical rename).
+private val LightShadow = zinelyLightColors().ink
 
 /** Light `:root` shadows (shelf.html:44-46). */
 public fun zinelyLightElevation(): ZinelyElevation = ZinelyElevation(

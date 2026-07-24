@@ -44,6 +44,42 @@ class ZinelyTokensTest {
         assertEquals(Color(0xFFFBF8F1), c.menu)
         assertEquals(Color(0xFF5E574C), c.onDeskSoft)
         assertEquals(Color(0xFF726A5C), c.onDeskFaint)
+        assertEquals(Color(0xFFA63C22), c.consequence)
+    }
+
+    // ----- CI-35: the consequence colour (ADR-062, A-3) -------------------------------------
+
+    @Test
+    fun `consequence is the coral-text role, not a third accent, in both themes`() {
+        // §7.1: the one non-accent semantic role. It reuses --coral-text (the destructive .danger
+        // row, shelf.html:303), so it must track coralText exactly — light and dark — and must NOT be
+        // a new hue. If these ever diverge, someone made consequence a third accent: fail the build.
+        assertEquals(zinelyLightColors().coralText, zinelyLightColors().consequence)
+        assertEquals(zinelyDarkColors().coralText, zinelyDarkColors().consequence)
+        // ...and it genuinely differs between themes, exactly as coralText does (A63C22 -> E76F51).
+        assertNotEquals(zinelyLightColors().consequence, zinelyDarkColors().consequence)
+    }
+
+    // ----- CI-36: interactive control states (ADR-062, A-3) ---------------------------------
+
+    @Test
+    fun `control states reference existing palette colours - no new hue on interaction`() {
+        for (colors in listOf(zinelyLightColors(), zinelyDarkColors())) {
+            val s = zinelyControlStates(colors)
+            assertEquals(colors.onDeskFaint, s.disabledContent) // .iconbtn:disabled (bench.html:166)
+            assertEquals(colors.coralStrong, s.focusRing)       // outline coral-strong (bench.html:143)
+            assertEquals(colors.coralStrong, s.pressed)         // press is motion; colour = accent
+            assertEquals(colors.coralStrong, s.selected)        // toggle fill / panel ring (bench.html:356/318)
+            assertEquals(colors.onDesk, s.selectedInList)       // menu selection is NOT coral (shelf.html:305)
+        }
+    }
+
+    @Test
+    fun `list selection is deliberately not the accent`() {
+        // The one context where selection diverges: a menu row carries selection by weight + a check
+        // glyph on onDesk, never coral (shelf.html:305). Pin the divergence so it cannot regress.
+        val s = zinelyControlStates(zinelyLightColors())
+        assertNotEquals(s.selected, s.selectedInList)
     }
 
     @Test
@@ -77,6 +113,7 @@ class ZinelyTokensTest {
         assertEquals(Color(0xFF413E39), c.fieldEdge)
         assertEquals(Color(0xFF2B2A28), c.menu)
         assertEquals(Color(0xFFE76F51), c.coralText)
+        assertEquals(Color(0xFFE76F51), c.consequence)
         assertEquals(Color.White.copy(alpha = 0.06f), c.shelfLine)
         assertEquals(Color.Black.copy(alpha = 0.58f), c.scrim)
     }
@@ -158,8 +195,20 @@ class ZinelyTokensTest {
         val m = ZinelyMotion(reduceMotion = true)
         assertEquals(0, m.fastMillis)
         assertEquals(0, m.baseMillis)
+        assertEquals(0, m.underwayMillis)
         assertEquals(0, m.fast<Float>().durationMillis)
         assertEquals(0, m.base<Float>().durationMillis)
+    }
+
+    @Test
+    fun `the Underway band exists and is provisionally base, pending CI-14`() {
+        // CI-37 / ADR-063 (A-4): the band EXISTS; its real timing is deferred to CI-14. Until then it
+        // must track --base and introduce no new number. This test pins EXISTENCE + the provisional
+        // equality; when CI-14 sets a real value, this assertion is the one that will (correctly) fail
+        // and force the update.
+        val m = ZinelyMotion(reduceMotion = false)
+        assertEquals(m.baseMillis, m.underwayMillis)
+        assertEquals(ZINELY_BASE_MILLIS, m.underwayMillis)
     }
 
     @Test
