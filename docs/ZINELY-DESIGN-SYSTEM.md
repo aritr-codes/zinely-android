@@ -62,6 +62,13 @@ and no numbers. That is not a two-hub conflict — it is intent (owned here) ove
 baseline exists, the numbers move here too ([ADR-063](DECISIONS.md#adr-063) defers them to
 [CI-14](reviews/CI-14-motion-baseline-protocol.md)).
 
+**This section settles document vs. document, and nothing else.** The collision between two *accepted
+design-system rules* — wherever they are written, including across two of the documents in the table
+above — is a different axis, and is settled by [§1.7](#17-when-two-rules-collide)
+([ADR-064](DECISIONS.md#adr-064)). §1.7 operates inside the authority chain established here and does
+not re-rank it: where applying its order would have the effect of re-ranking these documents against
+each other, §1.7's escalation clause applies instead.
+
 ### 0.3 Where these rules came from
 
 ```mermaid
@@ -182,6 +189,52 @@ flowchart TD
 The load-bearing branch is the last one. **Every new token — a size, a radius, a colour, an elevation, an
 easing — is a permanent tax on every future screen.** The system is small on purpose; growing it is a
 decision, not a convenience.
+
+### 1.7 When two rules collide
+
+§1.6 covers a decision no rule has made. This covers the harder case: **two accepted rules that give
+opposite answers to the same question.** Three precedence rules already exist in the corpus and each
+settles a different axis — [DESIGN-RULES](design/DESIGN-RULES.md) settles rule vs. *feature*,
+[SCREEN-INVENTORY](design/SCREEN-INVENTORY.md) settles itself vs. *PRD/ROADMAP*, and
+[§0.2](#02-the-rank-collision-stated-rather-than-created) settles *document* vs. document. None of them
+settles **rule vs. rule**, which is this. Resolved by [ADR-064](DECISIONS.md#adr-064).
+
+**The order.** Higher rank wins:
+
+| Rank | Wins | Because |
+|---|---|---|
+| **1** | **The constitution** — Articles 1–7, the Sacred Things | Nothing in this document outranks the thing it was written to serve. |
+| **2** | **Accessibility** — perceivable, operable, understandable | The one shipped defect that **neither a reader nor a test** could report was an accessibility defect ([ADR-059](DECISIONS.md#adr-059)); [§11.3](#11-accessibility-rules) already ranks the platform's tree above our account of it. *(This product has shipped other design defects — the beta Preview screen, the shelf card in §12.2 — and a **test** could not see those either; a **reader** could. Both halves of the criterion are load-bearing.)* |
+| **3** | **The artifact's truth** — the user's work shown as it is and as it will print, **and anything shown as it will appear in that work** (a font sample, a template's layout, a cover). *This governs the **fidelity of what is depicted**, not the shape or framing of the object depicting it — that is [CI-09](V1-CONFORMANCE-INVENTORY.md)'s question and is not decided here.* | The product exists to make a thing; a rule that misrepresents the thing — or misrepresents what the thing will become — has lost its own argument. |
+| **4** | **The specific over the general** | A rule written for this case knows something the rule written for all cases does not. |
+| **5** | **The object's rule ([§5](#5-object-rules)) over the composition rule ([§4](#4-composition-rules))** | The object is the smaller claim and the one a reader can check. |
+
+**Rank 2 above rank 3 is deliberate**, and it is the one place this order departs from the proposal that
+produced it. Where making the work perceivable and making it truthful genuinely collide — the text
+caret and the crop frame that must stay visible against an arbitrary user photo — perceivability wins,
+and the transient overlay is permitted for the duration of the gesture.
+
+**When the order does not decide it.** If two rules of the *same* rank collide, or the collision does not
+fall cleanly on any rank, **it is recorded as a defect and escalated to an [ADR](DECISIONS.md)**. It is
+**never** resolved locally by whoever hit it first, and never inside a PR. A collision resolved silently
+is the failure this section exists to prevent; a collision escalated is this section working.
+
+> **Scope.** *This precedence order applies only to conflicts between accepted design-system rules. It
+> does not alter the existing authority chain governing product requirements, roadmap sequencing,
+> document authority, or statutory accessibility obligations.* **§0.2 settles document vs. document;
+> §1.7 settles rule vs. rule** — and "rule" means any accepted design-system rule, wherever it is
+> written: here, in [DESIGN-RULES](design/DESIGN-RULES.md), in [VOICE](design/VOICE.md), or in
+> [SCREEN-INVENTORY](design/SCREEN-INVENTORY.md). Every authority relationship established by
+> [ADR-061](DECISIONS.md#adr-061) is retained unchanged. **Where applying this order would have the
+> effect of re-ranking those documents against each other, the order does not decide it — the
+> escalation clause does.**
+>
+> **In practice that line falls between rank 3 and rank 4.** Ranks 1–3 carry subject matter — the
+> constitution, perceivability, the truth of the work — so they decide a collision on its merits no
+> matter which document each rule is written in. Ranks 4 and 5 are structural tiebreakers with no
+> subject matter of their own; applying one *across* two documents is not deciding the collision, it is
+> re-ranking the documents, which [§0.2](#02-the-rank-collision-stated-rather-than-created) owns and
+> this section does not. So a cross-document collision that reaches rank 4 **escalates**.
 
 ---
 
@@ -652,7 +705,11 @@ to consume ([ADR-062](DECISIONS.md#adr-062)) — as intent, not as dp/hex; the K
 - **As the sole carrier of any meaning** — state, category, validity, selection, or availability. There
   is always a second signal: a label, a shape, a position, an icon (P6, [R9](design/DESIGN-RULES.md)).
 - **On the artifact's own surface**, unless the user put it there. Our accent never appears on their
-  page.
+  page. *One exception, by rank rather than by taste: a **transient tool overlay present only during a
+  gesture** — the text caret, a crop frame — **may use the accent** where ink alone will not carry
+  against an arbitrary user photo, because accessibility outranks the artifact's truth
+  ([§1.7](#17-when-two-rules-collide), [ADR-064](DECISIONS.md#adr-064)). It leaves with the gesture, and
+  nothing persistent claims this exception.*
 - **As decoration.** A colour with no job is deleted, not muted ([R10](design/DESIGN-RULES.md)).
 - **Encoding a distinction with no legend.** Two chips in one colour and two in another, meaning
   something, with nothing on screen to decode it, is a good idea rendered invisible — and it costs the
@@ -694,7 +751,9 @@ Motion has exactly four jobs, and a motion that does none of them is deleted:
   pick up a tool near them, and almost every other physicality claim is downstream of this one being
   true.
 - **The work never moves unless the user moves it** (P3). Auto-scroll, auto-centre, and helpful
-  repositioning are all the same defect wearing different names.
+  repositioning are all the same defect wearing different names. *Carrying the work **between** surfaces
+  is not moving it within one: §3.6's continuity applies to that navigation and to nothing else
+  ([§1.7](#17-when-two-rules-collide) rank 4, [ADR-064](DECISIONS.md#adr-064)).*
 - **The room does not move.** Backgrounds are still. Parallax on a workbench is the app performing.
 
 ### 8.3 What may stretch, rotate, or settle

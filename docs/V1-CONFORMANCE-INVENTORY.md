@@ -30,6 +30,9 @@ else.**
 
 ```
 #### CI-nn · <the discrepancy, in one line>
+- Status      OPTIONAL — the ruling or merge that closed it, dated, plus anything expressly NOT
+              closed by it. An item with no Status line has no closure recorded *here*; that is
+              not proof it is open (CI-13 landed in 6b46d0f and carries none).
 - Location    file:line — every site of the one logical change
 - Current     what the repository does today
 - Required    what the corpus requires
@@ -88,7 +91,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 > Twenty-four items. **Not one touches `src/main`.** Every one of them is a decision the repository
 > does not currently record, and every downstream milestone spends authority these create.
 
-#### CI-01 · The design-system hub collision is unadjudicated
+#### CI-01 · The design-system hub collision is unadjudicated — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-061](DECISIONS.md#adr-061)**, owner ruling **Option (a)**: ZINELY-DESIGN-SYSTEM.md is the authoritative design-system source of truth, DESIGN-LANGUAGE.md is a companion reference, and §0.2's split table owns per-area authority. The *Current* paragraph below describes the pre-ruling state and is retained as the record of what was adjudicated. **One deferral rides the owner's README pass:** `README.md:60`'s index row still names the old hub, and this programme does not edit README.
 - **Location** `docs/ZINELY-DESIGN-SYSTEM.md` §0.2 · `docs/design/DESIGN-LANGUAGE.md:3-11` · `README.md:60` · `docs/DECISIONS.md`
 - **Current** `README.md:60` indexes `DESIGN-LANGUAGE.md` as the **"Design system hub"**, unqualified, while `ZINELY-DESIGN-SYSTEM.md` §0.2 declares *itself* **subordinate until an ADR adjudicates**. So the repository's index names one authority and the newer document defers to it — leaving no document that claims the role. *(An earlier draft of this item said both documents "describe themselves as the design authority." They do not: `DESIGN-LANGUAGE.md:3-11` explicitly calls itself "a companion reference… **not a parallel source of truth**" — as CI-02 quotes correctly. The collision is real; the characterisation was a rank error, in the first item every other C0 item depends on.)*
 - **Required** Exactly one authoritative location per decision.
@@ -124,11 +128,12 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Risk** An engineer told "the HTML is the specification" and following the index arrives at three retired screens. This is the cheapest item in the programme and one of the most expensive to leave.
 - **Verify** `grep -n "design/v1" README.md` returns ≥1 match; no row describes `docs/design/mockups/` as the working reference.
 
-#### CI-05 · No precedence order for rule-versus-rule inside the design system (A-1)
+#### CI-05 · No precedence order for rule-versus-rule inside the design system (A-1) — ✅ **DONE**
+- **Status** ✅ **CLOSED 2026-07-24 — [ADR-064](DECISIONS.md#adr-064)**, owner ruling **Option (b)**: the ordered list with **accessibility ranked above the artifact's truth**; escalation clause mandatory, covering same-rank collisions. Landed as [§1.7](ZINELY-DESIGN-SYSTEM.md). Closes **D-2's remainder, D-3, D-7, D-8**. **D-1 is partial** — §1.7 supplies the missing axis, but deciding it at rank 4 would re-rank SCREEN-INVENTORY against DESIGN-RULES, so it **escalates** and its remainder is owed by **CI-11** (A-7's exempt screen class). **D-6 expressly NOT closed** — the A-1/A-5 duplicate claim is corrected in the validation report and D-6 stays open under **CI-09**. Two editorial follow-ons owed: §1.5's third column, and the §7.2/§8.2 pointers (the latter landed with this change). **Unblocks CI-09**, its last outstanding prerequisite.
 - **Location** `docs/ZINELY-DESIGN-SYSTEM.md` (absent) · `docs/DECISIONS.md`
 - **Current** Three precedence rules exist, each on a different axis (DESIGN-RULES: rule vs feature; SCREEN-INVENTORY: itself vs PRD/ROADMAP; §0.2: document vs document). **None settles rule vs rule.**
 - **Required** One ordered list, plus the instruction that an unresolved collision is recorded as a defect and escalated, never resolved locally.
-- **Authority** [validation A-1](ZINELY-DESIGN-SYSTEM-VALIDATION.md) — *closes D-1, D-3, D-6, D-7, D-8*
+- **Authority** [validation A-1](ZINELY-DESIGN-SYSTEM-VALIDATION.md) — *closes D-1, D-3, D-7, D-8; narrows D-2* (**corrected**: the source draft also claimed D-6, which A-5 claims too; D-6 is a content gap and belongs to CI-09)
 - **Milestone** C0 · **Prereq** none · **Kind** documentation · **Changes** docs
 - **Risk** Without it, every C4–C7 item that hits two competing rules is decided by whoever hit it first — silently, in a PR.
 - **Verify** An ADR records accept/reject; if accepted, the ordered list is in the design system.
@@ -165,7 +170,8 @@ page-preview** goldens; **384 test methods across 49 files in the `:core:*` modu
 - **Current** Not ruled. [§2.7](ZINELY-DESIGN-SYSTEM.md) says *"Paper, and anything representing paper: square"*; [§5.1](ZINELY-DESIGN-SYSTEM.md) says paper never takes a corner radius; four production sites round it anyway (CI-73).
 - **Required** A ruling in one direction. A-5 proposes the distinction; A-5 *also* states *"the alternative resolution — make every representation square too — is equally valid and cheaper; the defect is the ambiguity, not the direction."*
 - **Authority** [validation A-5](ZINELY-DESIGN-SYSTEM-VALIDATION.md) — the report's *"most reviewer-visible defect"*; [V1-DESIGN-REFINEMENT RD-4](V1-DESIGN-REFINEMENT.md), which files a rounded cream rectangle as a defect
-- **Milestone** C0 · **Prereq** CI-01, CI-05 · **Kind** documentation · **Changes** docs
+- **Also owns D-6** — *"paper may not rotate; page cards are hand-rotated."* A-1 wrongly claimed it too; [ADR-064](DECISIONS.md#adr-064) records D-6 as **intentionally deferred here**, because it asks whether a rotated page card *is* the artifact — a content question no rank order can settle.
+- **Milestone** C0 · **Prereq** ~~CI-01, CI-05~~ **both satisfied** ([ADR-061](DECISIONS.md#adr-061), [ADR-064](DECISIONS.md#adr-064)) — **RULABLE NOW** · **Kind** documentation · **Changes** docs
 - **Risk** **This is the one C0 item an engineer will be tempted to decide.** It reverses accepted text and needs an ADR that supersedes SYS-5, not a clarification. It also sets §10.2's shape-count condition, which is why the roadmap refuses to fix that number.
 - **Verify** An ADR that names which resolution and supersedes the §2.7 clause; the §13 checklist echo edited to match.
 
