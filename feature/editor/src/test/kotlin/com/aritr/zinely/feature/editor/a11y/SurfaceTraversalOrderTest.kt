@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -296,11 +294,10 @@ class SurfaceTraversalOrderTest {
                 Copy.Shelf.ON_THIS_DEVICE,
                 Copy.Shelf.YOUR_ZINES,
                 "2",
-                // INJECTED DIVERGENCE (CI-31 non-vacuity): the two cards transposed. Assertion 1 must fail.
-                Copy.Shelf.cardOpenLabel("Cat facts"),
-                Copy.Shelf.actionsFor("Cat facts"),
                 Copy.Shelf.cardOpenLabel("Summer scraps"),
                 Copy.Shelf.actionsFor("Summer scraps"),
+                Copy.Shelf.cardOpenLabel("Cat facts"),
+                Copy.Shelf.actionsFor("Cat facts"),
                 Copy.Common.START_A_ZINE,
             ),
         )
@@ -327,10 +324,6 @@ class SurfaceTraversalOrderTest {
         )
         composeRule.setContent {
             ZinelyTheme {
-                // INJECTED DIVERGENCE (CI-31 non-vacuity): mirror the surface. Declaration order is
-                // untouched, so the sequence assertion still passes; the supply tray now reads
-                // Redo, Undo, Add words, Add photo left-to-right. Assertion 2 must fail.
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                 EditorScreen(
                     store = store,
                     pageSizePt = PtSize(100.0, 100.0),
@@ -342,7 +335,6 @@ class SurfaceTraversalOrderTest {
                     // null, which silently removes the top row. The entry point's real order includes it.
                     onPreview = {},
                 )
-                }
             }
         }
         assertLogicalTraversalOrder(
