@@ -526,6 +526,12 @@ The most important compositional rule in the product, stated once here and enfor
 changes move the chrome around the work, never the work around the chrome.** If space must be claimed,
 the whole scene offsets as one rigid body; the artifact does not resize.
 
+> **This rule is not narrowed by §8.2's derivation clause** ([ADR-066](DECISIONS.md#adr-066)). That
+> clause distinguishes *the available space changing* — the display or window the app is given — from
+> *chrome within that space*, and a side panel, sheet, pane divider or tray is the latter. So the
+> remedy stated here still governs every one of them: **the scene offsets, the artifact does not
+> resize.** Where the derivation and this rule could ever be read apart, **this rule wins.**
+
 ---
 
 ## 5. Object Rules
@@ -565,6 +571,12 @@ object is written back into that object's entry in the same change.
   edge, a slot, a labelled surface — rather than from a floating button hovering over it.
 - **Never:** reads as "not loaded yet" when nearly empty · sorts or regroups itself without the user ·
   presents a count as a score (§12.13).
+- **As it grows** ([ADR-066](DECISIONS.md#adr-066)): an order of magnitude more zines makes the shelf
+  **longer, not denser and not different.** The card keeps its size, the surface keeps its edge and its
+  light, and the user keeps their arrangement — growth is absorbed by scrolling a longer surface, never
+  by shrinking cards, adding a compact mode, or regrouping into a grid. A shelf of two hundred is the
+  same room as a shelf of five, further along. If *finding* becomes the problem at that scale, that is a
+  search problem and is solved by a search surface — not by a licence to re-lay out the room.
 
 ### 5.4 Card
 
@@ -759,6 +771,26 @@ Motion has exactly four jobs, and a motion that does none of them is deleted:
   single most damaging violation available in this product: physical objects do not change size when you
   pick up a tool near them, and almost every other physicality claim is downstream of this one being
   true.
+  > **Derivation ([ADR-066](DECISIONS.md#adr-066), 2026-07-24).** *The governing principle is that the
+  > page changes size only when the available space itself changes. Chrome within that space — including
+  > trays, keyboards, selections, toolbars, and equivalent interface affordances — must never cause the
+  > page to resize. This clause derives from, and does not supersede, the rule above.*
+  >
+  > **Subordinate by construction.** This clause exists **only** to make new layouts mechanically
+  > derivable — a foldable hinge, an affordance the list above could not enumerate — **without amending
+  > the governing sentence.** Where the two could ever be read apart, **the sentence above wins**, and
+  > [§4.7](#47-the-page-is-the-fixed-point) wins with it.
+  >
+  > **What counts as the available space changing:** the display or window the app is given changes
+  > **size or shape** — rotation, a fold opening, a multi-window drag. **What does not:** anything that
+  > appears **within** that space, **whether the app draws it or the system does.** A side panel, a
+  > sheet, a pane divider and a tray are *"equivalent interface affordances"* in the clause above — and
+  > so are the **software keyboard**, the system bars and a display cutout, which the sentence above
+  > already names or implies. **The page does not resize for any of them**; the scene offsets as one
+  > rigid body, exactly as §4.7 requires. *(The keyboard is the case to get right: the platform may
+  > shrink the app's window when it appears, and that is a platform mechanism, not the available space
+  > changing. §8.2 names the keyboard explicitly, and it wins.)* The clause **narrows** what may move
+  > the page; it never widens it.
 - **The work never moves unless the user moves it** (P3). Auto-scroll, auto-centre, and helpful
   repositioning are all the same defect wearing different names. *Carrying the work **between** surfaces
   is not moving it within one: §3.6's continuity applies to that navigation and to nothing else
@@ -959,6 +991,20 @@ the same screen.
    symptom.
 7. **Accessibility is a merge gate, not a backlog** ([Article 6](zinely-constitution.md)). A screen that
    fails it is not done, in the same sense that a screen with the wrong colours is not done.
+8. **Keyboard focus order is the design's order, and focus is visible** ([ADR-066](DECISIONS.md#adr-066)).
+   Focus traversal follows the same order as reading and screen-reader traversal (§4.5, rule 6) — one
+   order, three ways of moving through it — and the focused control is **visibly** so, with a designed
+   indication rather than an inherited one (§13 checklist **#64**, **#107**). Until this rule, §11 named
+   neither, while the checklist that gates a merge required both.
+   - **A rule that assumes touch must say so, and must name its equivalents.** The thumb zone (§4.6),
+     touch-down immediacy (§3.1) and haptics (§3.7) are **touch** rules; each **must state** what it
+     means for a **keyboard** user and a **pointer** user, because a rule that cannot name its
+     equivalents is incomplete, not universal. *This is an obligation entering the system now, not a
+     description of it: **§4.6, §3.1 and §3.7 do not yet carry their equivalents**, and writing them in
+     is the editorial follow-on this rule creates ([ADR-066](DECISIONS.md#adr-066)).*
+   - **Hover is out of scope**, by decision rather than by omission ([ADR-049](DECISIONS.md#adr-049)
+     decision 4, recorded here where a reader will look) — **unless a future ADR introduces
+     hover-specific behaviour.** Nothing may be reachable, discoverable or legible only on hover.
 
 Craft consequence worth stating plainly: **every one of these rules makes the product better for
 everyone.** Bigger hit areas, honest states, a static state that already works, one name per thing —
