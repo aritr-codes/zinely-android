@@ -532,7 +532,10 @@ are worse than the gap they replaced, because an obligation that contradicts a r
 > **This does not presuppose [A-5](#a-5--the-artifact--representation-distinction--amendment):** rank 3
 > answers *how loudly a sample is drawn*, which is a question about honesty; A-5 answers *whether a
 > representation is the artifact*, which is a question about identity. D-6 needs the second; D-8 needs
-> only the first.
+> only the first. **The corpus already separates them:** [§12.2](ZINELY-DESIGN-SYSTEM.md) files the
+> shelf card — a pure *representation* — as a live violation for showing a generated cover where the
+> user's page 1 belongs. That judgement is "does this depiction tell the truth about what will print?",
+> reached **without** settling whether the card *is* the artifact. Rank 3 does the same work for D-8.
 > **Still owed (editorial, not a ruling):** §1.5's two columns are not yet three. The rank decides the
 > loudness; writing **material we supply** into the split table is a docs edit that rides the next §1.5
 > pass, and until it lands a reader of §1.5 alone still finds two columns.
@@ -716,7 +719,7 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 4 | Does a dialog move with the page? | Derivable — §2.4 tier 3, §8.2. **No** | ✅ | — |
 | 5 | May a toolbar scroll? | Derivable — yes if it peeks (§3.5, Premium #93); never with an invisible edge (§5.9, Premium #94) | ✅ | — |
 | 6 | Should paper rotate? | Derivable for the page (**no**, §8.3); contradicted for its thumbnail (**yes**, §5.10) | ❌ | D-5 / D-6 |
-| 7 | May the accent appear on user content? | Derivable for handles (**no** — §3.2 prefers depth over outline); undecidable for the caret | ❌ | D-2, narrowly |
+| 7 | May the accent appear on user content? | Derivable for handles (**no** — §3.2 prefers depth over outline); ~~undecidable for the caret~~ **decidable for the caret — yes, transiently.** §1.7 rank 2 (accessibility over the artifact's truth); §7.2 now states the exception | ✅ [ADR-064](DECISIONS.md#adr-064) | D-2, narrowly |
 | 8 | May two primary actions exist? | Derivable — **no.** §4.2 and Premium #58; and every shipped multi-action screen ranks them (SCREEN-INVENTORY: Export = PDF primary, PNG secondary) | ✅ | — |
 | 9 | Does Settings have a primary action? | **Contradiction** — R2/R3/§4.2/#58 vs. SCREEN-INVENTORY. §1.7 supplies the axis but does not decide it: rank 4 would re-rank two documents, so it **escalates** | 🟡 escalated to CI-11 | D-1 |
 | 10 | What is the subject of About? | Undecidable — §4.1 admits only the user's work | ❌ | Tool-subject screen class |
@@ -731,18 +734,20 @@ Would five independent reviewers, with only these documents, reach the same answ
 | 19 | Is a font name set in its own font? | ~~Undecidable — §1.1 and §1.5 disagree~~ **Decidable — yes.** §1.7 rank 3 (the artifact's truth): a sample is drawn as it will print, placed or not | ✅ [ADR-064](DECISIONS.md#adr-064) | D-8 |
 | 20 | Which type role is "2.4 MB"? | **Invention** | ❌ | D-21 |
 
-**Six of twenty would produce agreement** — rows 1, 4, 5, 8, 14 and **19**. *(Row 19 moved under
-[ADR-064](DECISIONS.md#adr-064) — §1.7 rank 3 decides it. Row 9 moved from ❌ to **🟡 escalated**: §1.7
+**Seven of twenty would produce agreement** — rows 1, 4, 5, 8, 14, **7** and **19**. *(Rows 7 and 19
+moved under [ADR-064](DECISIONS.md#adr-064) — §1.7 rank 2 decides the caret, rank 3 decides the font
+sample. Row 9 moved from ❌ to **🟡 escalated**: §1.7
 supplies the axis its "Contradiction" verdict was missing, but the order does not decide it and the
-remainder is owed by CI-11. **Recount, 2026-07-24: 6 ✅ / 1 🟡 / 13 ❌.** This paragraph is recounted
-whenever the table moves — the original said "five" and "fifteen", and leaving those standing after two
-rows changed is precisely the failure §0.1 was written about.)*
+remainder is owed by CI-11. **Recount, 2026-07-24: 7 ✅ / 1 🟡 / 12 ❌.** This paragraph is recounted
+whenever the table moves — the original said "five" and "fifteen", and leaving those standing after
+three rows changed is precisely the failure §0.1 was written about. Row 7 was missed on the first
+recount and caught on review, three lines below this sentence promising it would not be.)*
 *(Two further rows moved from ❌ to ✅ during the original review, and both moves were corrections of
 mine rather than the system's: row 8 asserted that Export ships PDF and PNG as peers, when
 SCREEN-INVENTORY ranks them — **"Primary action: Print at home (PDF)" / "Secondary: Save as image
 (PNG)"**; row 14 called hover an absence when [ADR-049](DECISIONS.md#adr-049) decides it.)*
 
-**Thirteen still would not, and one escalates.** The shape matters more than the count: **every agreement is about light, depth,
+**Twelve still would not, and one escalates.** The shape matters more than the count: **every agreement is about light, depth,
 paper, ranking, or a decision recorded in an ADR** — and **every failure is about furniture, states, or
 screens with no artifact in them.** The system has a well-built centre and no edges.
 

@@ -30,8 +30,9 @@ else.**
 
 ```
 #### CI-nn · <the discrepancy, in one line>
-- Status      OPTIONAL, present only on closed items — the ruling or merge that closed it, dated,
-              plus anything expressly NOT closed by it. An item with no Status line is open.
+- Status      OPTIONAL — the ruling or merge that closed it, dated, plus anything expressly NOT
+              closed by it. An item with no Status line has no closure recorded *here*; that is
+              not proof it is open (CI-13 landed in 6b46d0f and carries none).
 - Location    file:line — every site of the one logical change
 - Current     what the repository does today
 - Required    what the corpus requires

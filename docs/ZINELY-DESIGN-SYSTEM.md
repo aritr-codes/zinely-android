@@ -204,8 +204,8 @@ settles **rule vs. rule**, which is this. Resolved by [ADR-064](DECISIONS.md#adr
 | Rank | Wins | Because |
 |---|---|---|
 | **1** | **The constitution** — Articles 1–7, the Sacred Things | Nothing in this document outranks the thing it was written to serve. |
-| **2** | **Accessibility** — perceivable, operable, understandable | The one shipped defect a green test suite **structurally could not see** was an accessibility defect ([ADR-059](DECISIONS.md#adr-059)); [§11.3](#11-accessibility-rules) already ranks the platform's tree above our account of it. *(This product has shipped other design defects — the beta Preview screen, the shelf card in §12.2 — and they were visible to a reader. This rank is about the class of defect no test can report.)* |
-| **3** | **The artifact's truth** — the work shown as it is, and as it will print | The product exists to make a thing; a rule that misrepresents the thing has lost its own argument. |
+| **2** | **Accessibility** — perceivable, operable, understandable | The one shipped defect that **neither a reader nor a test** could report was an accessibility defect ([ADR-059](DECISIONS.md#adr-059)); [§11.3](#11-accessibility-rules) already ranks the platform's tree above our account of it. *(This product has shipped other design defects — the beta Preview screen, the shelf card in §12.2 — and a **test** could not see those either; a **reader** could. Both halves of the criterion are load-bearing.)* |
+| **3** | **The artifact's truth** — the user's work shown as it is and as it will print, **and anything shown as it will appear in that work** (a font sample, a template card, a cover) | The product exists to make a thing; a rule that misrepresents the thing — or misrepresents what the thing will become — has lost its own argument. |
 | **4** | **The specific over the general** | A rule written for this case knows something the rule written for all cases does not. |
 | **5** | **The object's rule ([§5](#5-object-rules)) over the composition rule ([§4](#4-composition-rules))** | The object is the smaller claim and the one a reader can check. |
 
@@ -228,6 +228,13 @@ is the failure this section exists to prevent; a collision escalated is this sec
 > [ADR-061](DECISIONS.md#adr-061) is retained unchanged. **Where applying this order would have the
 > effect of re-ranking those documents against each other, the order does not decide it — the
 > escalation clause does.**
+>
+> **In practice that line falls between rank 3 and rank 4.** Ranks 1–3 carry subject matter — the
+> constitution, perceivability, the truth of the work — so they decide a collision on its merits no
+> matter which document each rule is written in. Ranks 4 and 5 are structural tiebreakers with no
+> subject matter of their own; applying one *across* two documents is not deciding the collision, it is
+> re-ranking the documents, which [§0.2](#02-the-rank-collision-stated-rather-than-created) owns and
+> this section does not. So a cross-document collision that reaches rank 4 **escalates**.
 
 ---
 
@@ -699,9 +706,10 @@ to consume ([ADR-062](DECISIONS.md#adr-062)) — as intent, not as dp/hex; the K
   is always a second signal: a label, a shape, a position, an icon (P6, [R9](design/DESIGN-RULES.md)).
 - **On the artifact's own surface**, unless the user put it there. Our accent never appears on their
   page. *One exception, by rank rather than by taste: a **transient tool overlay present only during a
-  gesture** — the text caret, a crop frame — may be drawn to stay perceivable against an arbitrary user
-  photo, because accessibility outranks the artifact's truth ([§1.7](#17-when-two-rules-collide),
-  [ADR-064](DECISIONS.md#adr-064)). It leaves with the gesture.*
+  gesture** — the text caret, a crop frame — **may use the accent** where ink alone will not carry
+  against an arbitrary user photo, because accessibility outranks the artifact's truth
+  ([§1.7](#17-when-two-rules-collide), [ADR-064](DECISIONS.md#adr-064)). It leaves with the gesture, and
+  nothing persistent claims this exception.*
 - **As decoration.** A colour with no job is deleted, not muted ([R10](design/DESIGN-RULES.md)).
 - **Encoding a distinction with no legend.** Two chips in one colour and two in another, meaning
   something, with nothing on screen to decode it, is a good idea rendered invisible — and it costs the
