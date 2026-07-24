@@ -895,8 +895,9 @@ the constitution. Ordered by defects closed.
 
 > **These are additions to [ZINELY-DESIGN-SYSTEM.md](ZINELY-DESIGN-SYSTEM.md) for the owner to accept
 > or reject. This document does not make them.** Each is a system change and needs an ADR under
-> §1.6. **Two were proposed as amendments rather than additions** — A-5 and the scale clause in A-8 *(A-5 was subsequently **rejected**, so it amended nothing; see [ADR-065](DECISIONS.md#adr-065))* change accepted
-> text, and are flagged.
+> §1.6. **Two were proposed as amendments rather than additions** — A-5 and the scale clause in A-8 *(A-5 was
+> subsequently **rejected**, so it amended nothing; see [ADR-065](DECISIONS.md#adr-065))*. The scale
+> clause changes accepted text, and both are flagged below.
 
 ### A-1 · A precedence order for rules
 *Closes D-1, D-3, D-7, D-8; narrows D-2.* **✅ ACCEPTED — [ADR-064](DECISIONS.md#adr-064), 2026-07-24
