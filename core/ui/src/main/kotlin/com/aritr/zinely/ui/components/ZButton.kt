@@ -111,8 +111,8 @@ public fun ZPrimaryButton(
             dy = 8.dp,
             blur = 20.dp,
             color = when (fill) {
-                ZPrimaryFill.Coral -> Color(0xFFC64E34).copy(alpha = metrics.restShadowAlpha)
-                ZPrimaryFill.Stamp -> Color(0xFF264653).copy(alpha = 0.3f)
+                ZPrimaryFill.Coral -> colors.coralStrong.copy(alpha = metrics.restShadowAlpha)
+                ZPrimaryFill.Stamp -> colors.stamp.copy(alpha = 0.3f)
             },
         ),
         ZinelyShadowLayer(dy = 2.dp, blur = 0.dp, color = Color.Black.copy(alpha = 0.12f)),

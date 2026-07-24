@@ -64,6 +64,17 @@ public data class ZinelyColors(
     val fieldEdge: Color,
     /** `--menu` — popup-menu fill. */
     val menu: Color,
+    /**
+     * The **consequence** colour — the one *non-accent semantic role* §7.1 defines
+     * ([ADR-062](docs/DECISIONS.md#adr-062), A-3). Its single job is "**this will remove / this has
+     * broken**": a destructive action's label, an error. It is **explicitly not a third accent** —
+     * §7.1's two-accent rule (coral + one authorial ink) stands exactly as written; this token names
+     * a *job*, not a new hue. It reuses the existing coral family: the frozen destructive menu row
+     * transcribes `color:var(--coral-text)` (shelf.html:303, delete button :456), so
+     * `consequence == coralText` in both themes (pinned in `ZinelyTokensTest`). A caller can now name
+     * the consequence ("remove") without reaching for a colour named after its appearance.
+     */
+    val consequence: Color,
 )
 
 // The literals below are the frozen `:root` bytes. rgba() tokens are expressed as base × alpha so
@@ -93,6 +104,7 @@ public fun zinelyLightColors(): ZinelyColors = ZinelyColors(
     field = Color(0xFFFBF8F1),
     fieldEdge = Color(0xFFDED4C2),
     menu = Color(0xFFFBF8F1),
+    consequence = Color(0xFFA63C22), // == --coral-text (the destructive/consequence role); pinned == coralText
 )
 
 /**
@@ -117,4 +129,73 @@ public fun zinelyDarkColors(): ZinelyColors = zinelyLightColors().copy(
     fieldEdge = Color(0xFF413E39),
     menu = Color(0xFF2B2A28),
     coralText = Color(0xFFE76F51), // coral as text on the dark menu — AA 5.4:1
+    consequence = Color(0xFFE76F51), // tracks --coral-text into dark; pinned == coralText
+)
+
+/**
+ * The interactive control states §7.1 defines ([ADR-062](docs/DECISIONS.md#adr-062), A-3) —
+ * **disabled / focused / pressed / selected** — each stated for the three surfaces a control can sit
+ * on: **on the page** (a sheet / bench chrome), **in a list** (a menu), **in a gallery** (the cover
+ * grid / panel strip). The authority for these values is the relocated Premium Checklist (CI-13,
+ * inside [ZINELY-DESIGN-SYSTEM §7.1](docs/ZINELY-DESIGN-SYSTEM.md)); the DESIGN-FROZEN HTML trilogy is
+ * their transcription source.
+ *
+ * Every value is a **reference to an existing palette colour** — this design deliberately spends *no
+ * new hue* on interaction. The single coral accent carries focus, press and selection alike; that
+ * coincidence is itself the decision this holder pins (a future "selected-blue" would fail
+ * `ZinelyTokensTest`). Where a state is expressed by **motion, not colour**, that is said so and no
+ * colour is invented.
+ *
+ * | State    | on the page                                   | in a list                              | in a gallery                       | source |
+ * |----------|-----------------------------------------------|----------------------------------------|------------------------------------|--------|
+ * | disabled | [disabledContent] + call-site alpha (≈.4–.5)  | (menu rows do not disable)             | cover art dims                     | bench.html:166 / :390, shelf.html:184 |
+ * | focused  | [focusRing] 3px ring                          | same ring                              | same ring (+ panel `.cur`)         | bench.html:143, shelf.html:88, proof.html:199 |
+ * | pressed  | **motion only** — `translateY(1px) scale(.99)`| —                                      | —                                  | bench.html:346, shelf.html:266, proof.html:446 |
+ * | selected | [selected] fill (toggle) / inset ring (panel) | **[selectedInList] + check, *not* coral** | [selected] 2px inset ring       | bench.html:356 / :318, shelf.html:305 |
+ *
+ * Not wired into [ZinelyTheme]: these tokens are *added*, not yet consumed — call-site adoption is a
+ * later milestone (C4/C6/C7), and wiring them here would risk moving a golden.
+ */
+@Immutable
+public data class ZinelyControlStates(
+    /**
+     * **disabled** foreground — the surface's faint ink, dimmed further by alpha at the call site.
+     * References `onDeskFaint` (the one concrete disabled rule in the spec, `.iconbtn:disabled`,
+     * bench.html:166); a control on a *sheet* dims its own `inkFaint` analogously. The exact alpha
+     * (.4 for compact steppers bench.html:390, .5 for icon buttons bench.html:166) is owned by the
+     * Premium Checklist (CI-13), so it is applied at the call site rather than baked in here.
+     */
+    val disabledContent: Color,
+    /** **focused** — the 3px focus ring; the coral accent (bench.html:143 / shelf.html:88 / proof.html:199). */
+    val focusRing: Color,
+    /**
+     * **pressed** — recorded for completeness. The press is carried by **motion, not colour**
+     * (`:active{ transform:translateY(1px) scale(.99) }`, bench.html:346 / shelf.html:266 /
+     * proof.html:446); there is no separate pressed hue, so the colour role coincides with the accent.
+     */
+    val pressed: Color,
+    /**
+     * **selected** on a page/gallery control — the coral accent, as a toggle *fill* (bench.html:356)
+     * or a 2px inset *ring* on a panel (`.cur`, bench.html:318). In a **list** selection is
+     * [selectedInList] instead.
+     */
+    val selected: Color,
+    /**
+     * **selected in a list** — a menu carries selection by a check glyph + weight on `onDesk`,
+     * **deliberately not coral** ("selection carried by the check glyph + weight, not coral",
+     * shelf.html:305).
+     */
+    val selectedInList: Color,
+)
+
+/**
+ * Binds [ZinelyControlStates] to a resolved [ZinelyColors]. Every value references an existing
+ * palette colour, so this introduces **no new literal — and no golden**.
+ */
+public fun zinelyControlStates(colors: ZinelyColors): ZinelyControlStates = ZinelyControlStates(
+    disabledContent = colors.onDeskFaint,
+    focusRing = colors.coralStrong,
+    pressed = colors.coralStrong,
+    selected = colors.coralStrong,
+    selectedInList = colors.onDesk,
 )
