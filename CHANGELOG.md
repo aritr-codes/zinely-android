@@ -14,6 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed — the shelf-thumbnail pipeline that nothing displayed · [ADR-069](docs/DECISIONS.md#adr-069)
+
+**No visible change, and that is the point.** The app was rendering a page-1 thumbnail for every zine
+— replay the page, encode a PNG, write it to the cache, read it back, decode it — **on every document
+edit**, plus a decode per zine on **every cold start** and up to 24 bitmaps held in memory. Nothing on
+screen ever showed the result: the shelf draws a generated riso cover per zine, and the field the
+thumbnail landed in was read by no part of the interface.
+
+- **What you get:** less battery and less storage used on every edit, and a faster cold start on a
+  full shelf. The shelf looks exactly as it did — verified: all 65 screenshot goldens are
+  byte-identical.
+- **Your zines are untouched.** The deleted cache was derived and rebuildable, never your work. No
+  file-format change, no migration, nothing to do.
+- **Existing installs keep an inert `thumbnails` folder in the app's cache** — Android reclaims it
+  under storage pressure, and "Clear cache" removes it. Nothing writes to it any more.
+
+Closes **ship blocker #3** as written — nothing runs unread. Whether the shelf should one day show
+your real page 1 instead of the generated cover is now an open product question with no
+half-implementation waiting behind it.
+
 ### Added — V1 conformance guardrails (C1)
 
 Merged to `main` (`a139fac`; completion record `ed4c46c`) on 2026-07-23. The first milestone of the
