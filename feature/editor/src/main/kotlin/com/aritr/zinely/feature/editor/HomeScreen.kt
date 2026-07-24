@@ -17,7 +17,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -71,15 +70,6 @@ public data class HomeZineCard(
     val title: String,
     val formatLabel: String,
     val editedLabel: String,
-    /**
-     * The rendered page-1 thumbnail (ADR-045).
-     *
-     * **Not rendered.** The frozen Shelf prints a generated riso cover per zine instead of a page
-     * preview — an owner decision, taken with the pipeline left in place. The producer, its ADR and
-     * its tests are untouched; nothing on this surface reads this field. Retiring or reviving the
-     * pipeline is an M6 owner decision.
-     */
-    val thumbnail: ImageBitmap? = null,
 )
 
 /**
