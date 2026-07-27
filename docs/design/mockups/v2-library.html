@@ -1,4 +1,4 @@
-<title>Zinely V2 — Library</title>
+<title>Zinely V2 — Library (revised)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
@@ -6,8 +6,8 @@
     --ink:#2A251E; --ink-soft:#5B5347; --ink-faint:#8C8269;
     --matcha:#5E6B2F; --matcha-text:#4C5826; --matcha-tint:#DCE3C0;
     --straw:#E98F97; --straw-text:#A6474F; --straw-tint:#F6DAD3;
-    --consequence:#A6382A; --hair:rgba(42,37,30,.12); --shadow:rgba(60,52,36,.30);
-    --stage:#E4DAC4;
+    --consequence:#A6382A; --hair:rgba(42,37,30,.12); --shadow:rgba(60,52,36,.34);
+    --stage:#E4DAC4; --ledge:#DFD4BC; --ledge-hi:rgba(255,255,255,.55);
   }
   @media (prefers-color-scheme:dark){
     :root{
@@ -15,137 +15,167 @@
       --ink:#ECE4D3; --ink-soft:#B4AB97; --ink-faint:#857C69;
       --matcha:#93A257; --matcha-text:#B7C47C; --matcha-tint:#363826;
       --straw:#D98289; --straw-text:#E8A6AB; --straw-tint:#3C2C2A;
-      --consequence:#E0857A; --hair:rgba(236,228,211,.14); --shadow:rgba(0,0,0,.55);
-      --stage:#171410;
+      --consequence:#E0857A; --hair:rgba(236,228,211,.13); --shadow:rgba(0,0,0,.6);
+      --stage:#171410; --ledge:#151210; --ledge-hi:rgba(236,228,211,.08);
     }
   }
-  :root[data-theme="light"]{--paper:#F7F2E7;--paper-edge:#EEE6D4;--desk:#ECE3D1;--desk-edge:#E1D6BF;--ink:#2A251E;--ink-soft:#5B5347;--ink-faint:#8C8269;--matcha:#5E6B2F;--matcha-text:#4C5826;--matcha-tint:#DCE3C0;--straw:#E98F97;--straw-text:#A6474F;--straw-tint:#F6DAD3;--consequence:#A6382A;--hair:rgba(42,37,30,.12);--shadow:rgba(60,52,36,.30);--stage:#E4DAC4;}
-  :root[data-theme="dark"]{--paper:#2F2A22;--paper-edge:#39322A;--desk:#201D18;--desk-edge:#2A261F;--ink:#ECE4D3;--ink-soft:#B4AB97;--ink-faint:#857C69;--matcha:#93A257;--matcha-text:#B7C47C;--matcha-tint:#363826;--straw:#D98289;--straw-text:#E8A6AB;--straw-tint:#3C2C2A;--consequence:#E0857A;--hair:rgba(236,228,211,.14);--shadow:rgba(0,0,0,.55);--stage:#171410;}
+  :root[data-theme="light"]{--paper:#F7F2E7;--paper-edge:#EEE6D4;--desk:#ECE3D1;--desk-edge:#E1D6BF;--ink:#2A251E;--ink-soft:#5B5347;--ink-faint:#8C8269;--matcha:#5E6B2F;--matcha-text:#4C5826;--matcha-tint:#DCE3C0;--straw:#E98F97;--straw-text:#A6474F;--straw-tint:#F6DAD3;--consequence:#A6382A;--hair:rgba(42,37,30,.12);--shadow:rgba(60,52,36,.34);--stage:#E4DAC4;--ledge:#DFD4BC;--ledge-hi:rgba(255,255,255,.55);}
+  :root[data-theme="dark"]{--paper:#2F2A22;--paper-edge:#39322A;--desk:#201D18;--desk-edge:#2A261F;--ink:#ECE4D3;--ink-soft:#B4AB97;--ink-faint:#857C69;--matcha:#93A257;--matcha-text:#B7C47C;--matcha-tint:#363826;--straw:#D98289;--straw-text:#E8A6AB;--straw-tint:#3C2C2A;--consequence:#E0857A;--hair:rgba(236,228,211,.13);--shadow:rgba(0,0,0,.6);--stage:#171410;--ledge:#151210;--ledge-hi:rgba(236,228,211,.08);}
 
   *{box-sizing:border-box}
   body{margin:0;background:var(--stage);min-height:100vh;
     font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);
-    display:flex;flex-direction:column;align-items:center;gap:18px;padding:26px 16px 60px;
-    transition:background .4s ease}
+    display:flex;flex-direction:column;align-items:center;gap:18px;padding:26px 16px 60px;transition:background .4s}
   .serif{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
-  .caption{max-width:392px;width:100%;color:var(--ink);opacity:.62;font-size:.82rem;line-height:1.5}
-  .caption b{opacity:1;font-weight:600}
+  .cap{max-width:392px;width:100%;font-size:.82rem;line-height:1.5;color:var(--ink);opacity:.62}
+  .cap b{opacity:1;font-weight:600}
+  .cap.lead{opacity:1;font-size:1.04rem}
 
-  /* device */
-  .phone{width:392px;max-width:100%;height:812px;max-height:86vh;border-radius:40px;overflow:hidden;
-    position:relative;background:var(--desk);box-shadow:0 40px 90px -40px var(--shadow),0 0 0 1px var(--hair);
-    display:flex;flex-direction:column;transition:background .4s ease}
+  .phone{width:392px;max-width:100%;height:812px;max-height:86vh;border-radius:40px;overflow:hidden;position:relative;
+    background:var(--desk);box-shadow:0 40px 90px -40px var(--shadow),0 0 0 1px var(--hair);
+    display:flex;flex-direction:column;transition:background .4s}
 
-  /* top bar — quiet: small wordmark + sort. No wordmark ROW eating space (beta finding). */
-  .top{display:flex;align-items:center;justify-content:space-between;
-    padding:22px 22px 12px;flex:0 0 auto}
-  .brand{font-size:1.32rem;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
-  .brand .dot{color:var(--straw-text)}
-  .sort{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--ink-soft);
-    background:transparent;border:1px solid var(--hair);border-radius:20px;padding:7px 13px;cursor:pointer}
-  .sort:focus-visible{outline:2px solid var(--matcha-text);outline-offset:2px}
-  .count{padding:0 24px 12px;font-size:.78rem;color:var(--ink-faint);letter-spacing:.02em}
-
-  /* shelf */
-  .shelf{flex:1 1 auto;overflow-y:auto;padding:2px 20px 120px;
-    display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;align-content:start}
+  /* NO header chrome — the collection leads. Just quiet breathing room. */
+  .shelf{flex:1 1 auto;overflow-y:auto;padding:34px 22px 132px}
   .shelf::-webkit-scrollbar{width:0}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:6px}
+  /* the shelf the books rest on */
+  .ledge{height:12px;margin:0 -4px 30px;border-radius:2px;
+    background:linear-gradient(to bottom,var(--ledge) 0 3px,transparent 3px);
+    box-shadow:inset 0 2px 0 var(--ledge-hi);}
+  .ledge:last-of-type{display:none}
 
-  .zine{cursor:pointer;display:flex;flex-direction:column;gap:9px;
-    transform:rotate(var(--tilt,0deg));transition:transform .18s ease}
-  .zine:hover{transform:rotate(0deg) translateY(-3px)}
-  .zine:nth-child(odd){--tilt:-.8deg}
-  .zine:nth-child(even){--tilt:.7deg}
+  .zine{position:relative;text-align:left;background:none;border:none;padding:0;cursor:pointer;
+    display:flex;flex-direction:column;gap:11px;font-family:inherit;color:inherit;
+    transition:transform .16s ease}
+  .zine:active{transform:translateY(2px) scale(.985)}
+  .zine:focus-visible{outline:2px solid var(--matcha-text);outline-offset:5px;border-radius:8px}
 
-  .cover{aspect-ratio:3/4;border-radius:10px;position:relative;overflow:hidden;
-    box-shadow:0 16px 26px -18px var(--shadow),0 2px 0 rgba(0,0,0,.04);
-    display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
-  /* the spine fold */
-  .cover::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:1px;
-    background:rgba(255,255,255,.16)}
-  /* the archetype band */
-  .cover .band{position:absolute;left:0;right:0;top:34%;height:15%;opacity:.92}
-  .cover .stamp{position:absolute;top:11px;right:12px;font-size:1.05rem;line-height:1;
-    filter:saturate(.9)}
-  .cover .ct{position:relative;z-index:1;font-size:1.16rem;font-weight:600;line-height:1.08;
-    letter-spacing:-.01em;max-width:9ch;text-wrap:balance}
+  /* cover = a paper object resting on the shelf */
+  .cover{aspect-ratio:3/4;border-radius:7px 9px 9px 7px;position:relative;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:flex-end;padding:15px 15px 16px;
+    box-shadow:0 1px 0 rgba(0,0,0,.05), 0 18px 22px -16px var(--shadow);
+    transition:box-shadow .16s ease}
+  .zine:active .cover{box-shadow:0 1px 0 rgba(0,0,0,.05),0 8px 12px -10px var(--shadow)}
+  /* the fold spine */
+  .cover::before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:1px;
+    background:linear-gradient(rgba(255,255,255,.02),rgba(255,255,255,.22),rgba(255,255,255,.02))}
+  /* one folded sheet: a whisper of thickness at the fore-edge, not a fat book */
+  .cover::after{content:"";position:absolute;right:0;top:5px;bottom:5px;width:3px;
+    background:linear-gradient(90deg,rgba(0,0,0,.10),rgba(0,0,0,0));border-top-right-radius:9px;border-bottom-right-radius:9px}
+  .band{position:absolute;left:0;right:0;top:33%;height:14%;opacity:.9}
+  .ct{position:relative;z-index:1;font-size:1.14rem;font-weight:600;line-height:1.1;letter-spacing:-.01em;
+    max-width:9ch;text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  /* printed ink stamp — belongs to the paper, not an emoji */
+  .stamp{position:absolute;top:12px;right:13px;width:22px;height:22px;z-index:1;opacity:.82;
+    transform:rotate(-8deg)}
+  .stamp svg{width:100%;height:100%;display:block}
 
-  /* cover variants — the MAKER's inks; theme-independent (the artifact doesn't invert) */
-  .ink-matcha{background:#7C8A3F}   .ink-matcha .ct{color:#F7F2E7}   .ink-matcha .band{background:#5E6B2F}
-  .ink-teal{background:#47857B}     .ink-teal .ct{color:#F7F2E7}     .ink-teal .band{background:#356258}
-  .ink-straw{background:#E27F89}    .ink-straw .ct{color:#4A211F}    .ink-straw .band{background:#C85F6C}
-  .ink-ochre{background:#D19A3C}    .ink-ochre .ct{color:#3A2A0E}    .ink-ochre .band{background:#B27E28}
-  .paper-m{background:#F3EEDF}      .paper-m .ct{color:#2A251E}      .paper-m .band{background:#7C8A3F}
-  .paper-s{background:#F3EEDF}      .paper-s .ct{color:#2A251E}      .paper-s .band{background:#E27F89}
+  /* maker inks — theme-independent (the artifact doesn't invert) */
+  .ink-matcha{background:#7C8A3F;color:#F7F2E7}   .ink-matcha .band{background:#5E6B2F}
+  .ink-teal{background:#47857B;color:#F7F2E7}     .ink-teal .band{background:#356258}
+  .ink-straw{background:#E27F89;color:#4A211F}    .ink-straw .band{background:#C85F6C}
+  .ink-ochre{background:#D19A3C;color:#3A2A0E}    .ink-ochre .band{background:#B27E28}
+  .paper-c{background:#F1EBDA;color:#2A251E}      .paper-c .band{background:#7C8A3F}
+  .paper-s{background:#F1EBDA;color:#2A251E}      .paper-s .band{background:#E27F89}
 
-  .meta{display:flex;flex-direction:column;gap:1px;padding:0 2px}
-  .zt{font-size:.94rem;font-weight:600;color:var(--ink);line-height:1.15}
-  .zm{font-size:.74rem;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+  /* quiet meta — only what varies and matters; no title (it's on the cover), no page count (always 8) */
+  .meta{display:flex;align-items:center;justify-content:space-between;padding:0 3px;gap:8px}
+  .mm{font-size:.76rem;color:var(--ink-faint);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .more{flex:0 0 auto;width:30px;height:30px;margin:-6px -4px -6px 0;border:none;background:none;cursor:pointer;
+    color:var(--ink-faint);border-radius:50%;font-size:1.1rem;line-height:1;display:flex;align-items:center;justify-content:center}
+  .more:hover{background:var(--hair);color:var(--ink-soft)}
+  .more:focus-visible{outline:2px solid var(--matcha-text);outline-offset:1px}
 
-  /* dock */
-  .dock{position:absolute;left:0;right:0;bottom:0;padding:16px 20px calc(20px + env(safe-area-inset-bottom));
-    display:flex;justify-content:center;pointer-events:none;
-    background:linear-gradient(to top,var(--desk) 55%,transparent)}
+  /* create — a fresh sheet, in the thumb zone */
+  .dock{position:absolute;left:0;right:0;bottom:0;padding:16px 20px calc(22px + env(safe-area-inset-bottom));
+    display:flex;justify-content:center;pointer-events:none;background:linear-gradient(to top,var(--desk) 60%,transparent)}
   .start{pointer-events:auto;background:var(--matcha);color:var(--paper);border:none;border-radius:16px;
     font-weight:600;font-size:1rem;padding:15px 26px;display:flex;align-items:center;gap:10px;cursor:pointer;
-    box-shadow:0 14px 28px -12px var(--shadow);font-family:inherit}
-  :root[data-theme="dark"] .start,@media (prefers-color-scheme:dark){}
+    box-shadow:0 16px 30px -12px var(--shadow);font-family:inherit;transition:transform .14s}
+  .start:active{transform:translateY(2px)}
   .start .plus{font-size:1.2rem;line-height:0;margin-top:-2px}
   .start:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
-  /* empty state (toggled) */
+  /* empty state */
   .empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;padding:40px 40px 130px;gap:14px}
-  .empty .art{width:104px;height:104px;border-radius:14px;background:var(--paper);border:1px solid var(--paper-edge);
-    box-shadow:0 18px 30px -18px var(--shadow);position:relative;transform:rotate(-4deg);margin-bottom:8px}
-  .empty .art::before{content:"";position:absolute;left:50%;top:0;width:1px;height:100%;background:var(--hair)}
-  .empty .art .b1{position:absolute;left:14px;right:14px;top:34%;height:10px;border-radius:3px;background:var(--matcha-tint)}
-  .empty .art .b2{position:absolute;left:14px;right:34px;top:52%;height:8px;border-radius:3px;background:var(--straw-tint)}
-  .empty h2{font-size:1.7rem;margin:0;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
-  .empty p{margin:0;color:var(--ink-soft);max-width:26ch;line-height:1.55;font-size:.95rem}
-  .empty .privacy{font-size:.76rem;color:var(--matcha-text);font-weight:600;letter-spacing:.02em;margin-top:2px}
-  body.is-empty .shelf,body.is-empty .count{display:none}
-  body.is-empty .empty{display:flex}
+    text-align:center;padding:40px 44px 140px;gap:14px}
+  .empty .art{width:106px;height:132px;border-radius:6px 9px 9px 6px;background:var(--paper);
+    box-shadow:0 22px 30px -18px var(--shadow);position:relative;margin-bottom:10px;overflow:hidden}
+  .empty .art::before{content:"";position:absolute;left:8px;top:5px;bottom:5px;width:1px;background:var(--hair)}
+  .empty .art .b{position:absolute;left:16px;right:14px;border-radius:3px}
+  .empty .art .b1{top:44%;height:11px;background:var(--matcha-tint)}
+  .empty .art .b2{top:58%;right:30px;height:9px;background:var(--straw-tint)}
+  .empty h2{font-size:1.72rem;margin:0;font-weight:600;letter-spacing:-.01em}
+  .empty p{margin:0;color:var(--ink-soft);max-width:27ch;line-height:1.55;font-size:.95rem}
+  .empty .pv{font-size:.76rem;color:var(--matcha-text);font-weight:600;margin-top:2px}
+  body.is-empty .shelf{display:none} body.is-empty .empty{display:flex}
 
-  /* controls */
-  .controls{display:flex;gap:8px;flex-wrap:wrap;max-width:392px;width:100%;justify-content:center;margin-top:2px}
+  /* action sheet — the discoverable path to a zine's actions */
+  .scrim{position:absolute;inset:0;background:var(--scrim,rgba(30,25,18,.34));opacity:0;visibility:hidden;
+    transition:opacity .2s;z-index:5}
+  .sheet{position:absolute;left:10px;right:10px;bottom:10px;background:var(--paper);border-radius:20px;
+    box-shadow:0 30px 60px -20px var(--shadow),0 0 0 1px var(--hair);transform:translateY(110%);
+    transition:transform .24s cubic-bezier(.2,.8,.2,1);z-index:6;overflow:hidden}
+  body.sheet-open .scrim{opacity:1;visibility:visible}
+  body.sheet-open .sheet{transform:translateY(0)}
+  .sheet .sh-ttl{padding:18px 20px 6px;font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:1.05rem;font-weight:600}
+  .sheet button{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:none;border:none;
+    padding:15px 20px;font-size:1rem;font-family:inherit;color:var(--ink);cursor:pointer;border-top:1px solid var(--hair)}
+  .sheet button:hover{background:var(--matcha-tint)}
+  .sheet button.danger{color:var(--consequence)}
+  .sheet button.danger:hover{background:var(--straw-tint)}
+  .sheet .ic{width:20px;text-align:center;opacity:.8}
+
+  .controls{display:flex;gap:8px;max-width:392px;width:100%;justify-content:center}
   .ctl{font-size:.78rem;font-weight:600;background:var(--paper);color:var(--ink);border:1px solid var(--hair);
     border-radius:20px;padding:8px 14px;cursor:pointer}
   .ctl:focus-visible{outline:2px solid var(--matcha-text);outline-offset:2px}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<p class="caption serif" style="font-size:1.04rem;color:var(--ink)"><b>Library — “which zine is mine?”</b></p>
-<p class="caption">The shelf leads with your covers, not a wordmark row. Each cover is <b>maker-chosen</b> —
-a title, an ink, an optional little stamp — so the shelf reads as <b>your</b> objects. Covers keep their inks
-in both rooms (the artifact doesn't invert); only the room, cards and chrome follow the theme.</p>
+<p class="cap lead serif"><b>Library — “which zine is mine?”</b> · revised</p>
+<p class="cap">No wordmark, no count, no sort, no duplicated titles. The covers <b>are</b> the screen — paper
+objects resting on shelves, each with a printed stamp and its title. The only text below a cover is what the
+cover can't say. Tap a book to open it; the quiet <b>⋯</b> holds its actions. Try day / night, and the empty state.</p>
 
-<div class="phone" role="img" aria-label="Zinely Library screen mockup">
-  <div class="top">
-    <div class="brand serif">Zinely<span class="dot">.</span></div>
-    <button class="sort" aria-label="Sort your zines">Recent ▾</button>
+<div class="phone">
+  <div class="shelf" id="shelf">
+    <div class="row">
+      <button class="zine"><div class="cover ink-matcha"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.2"/><g stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></g></svg></span><div class="band"></div><div class="ct serif">Sunday market</div></div><div class="meta"><span class="mm">A4 · 2 days ago</span><button class="more" aria-label="Actions for Sunday market" onclick="openSheet('Sunday market')">⋯</button></div></button>
+      <button class="zine"><div class="cover paper-s"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 6.5h17v11h-17z"/><path d="M3.5 7l8.5 6 8.5-6"/></svg></span><div class="band"></div><div class="ct serif">Letters home</div></div><div class="meta"><span class="mm">Letter · today</span><button class="more" aria-label="Actions for Letters home" onclick="openSheet('Letters home')">⋯</button></div></button>
+    </div>
+    <div class="ledge"></div>
+    <div class="row">
+      <button class="zine"><div class="cover ink-teal"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2.5 15c3-4 5.5-4 8.5 0s5.5 4 8.5 0"/><path d="M2.5 9.5c3-4 5.5-4 8.5 0s5.5 4 8.5 0"/></svg></span><div class="band"></div><div class="ct serif">Riso tests</div></div><div class="meta"><span class="mm">A4 · 5 days ago</span><button class="more" aria-label="Actions for Riso tests" onclick="openSheet('Riso tests')">⋯</button></div></button>
+      <button class="zine"><div class="cover paper-c"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c0-6 0-9 0-9M12 12c-4 0-6-2-6-5 3 0 6 1 6 5zM12 12c4 0 6-1.5 6-4.5-3 0-6 .5-6 4.5z"/></svg></span><div class="band"></div><div class="ct serif">Mum's garden</div></div><div class="meta"><span class="mm">A4 · 1 week ago</span><button class="more" aria-label="Actions for Mum's garden" onclick="openSheet('Mum&#39;s garden')">⋯</button></div></button>
+    </div>
+    <div class="ledge"></div>
+    <div class="row">
+      <button class="zine"><div class="cover ink-ochre"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 6.2H20l-4.8 3.7 1.9 6.1L12 15.3 6.9 19l1.9-6.1L4 9.2h5.8z"/></svg></span><div class="band"></div><div class="ct serif">Tiny poems</div></div><div class="meta"><span class="mm">Letter · 2 wks ago</span><button class="more" aria-label="Actions for Tiny poems" onclick="openSheet('Tiny poems')">⋯</button></div></button>
+      <button class="zine"><div class="cover ink-straw"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 13.5c1 1.4 2 2 3.5 2s2.5-.6 3.5-2" stroke-linecap="round"/><circle cx="9.3" cy="10" r=".7" fill="currentColor" stroke="none"/><circle cx="14.7" cy="10" r=".7" fill="currentColor" stroke="none"/></svg></span><div class="band"></div><div class="ct serif">Coffee log</div></div><div class="meta"><span class="mm">A4 · 3 wks ago</span><button class="more" aria-label="Actions for Coffee log" onclick="openSheet('Coffee log')">⋯</button></div></button>
+    </div>
+    <div class="ledge"></div>
   </div>
-  <div class="count">6 little books</div>
 
-  <div class="shelf">
-    <div class="zine"><div class="cover ink-matcha"><span class="stamp">🍵</span><div class="band"></div><div class="ct serif">Sunday market</div></div><div class="meta"><span class="zt">Sunday market</span><span class="zm">8 pages · A4 · 2 days ago</span></div></div>
-    <div class="zine"><div class="cover paper-s"><span class="stamp">✉️</span><div class="band"></div><div class="ct serif">Letters home</div></div><div class="meta"><span class="zt">Letters home</span><span class="zm">8 pages · Letter · today</span></div></div>
-    <div class="zine"><div class="cover ink-teal"><span class="stamp">◆</span><div class="band"></div><div class="ct serif">Riso tests</div></div><div class="meta"><span class="zt">Riso tests</span><span class="zm">8 pages · A4 · 5 days ago</span></div></div>
-    <div class="zine"><div class="cover paper-m"><span class="stamp">🌿</span><div class="band"></div><div class="ct serif">Mum's garden</div></div><div class="meta"><span class="zt">Mum's garden</span><span class="zm">8 pages · A4 · 1 week ago</span></div></div>
-    <div class="zine"><div class="cover ink-ochre"><span class="stamp">✦</span><div class="band"></div><div class="ct serif">Tiny poems</div></div><div class="meta"><span class="zt">Tiny poems</span><span class="zm">8 pages · Letter · 2 weeks ago</span></div></div>
-    <div class="zine"><div class="cover ink-straw"><span class="stamp">☕</span><div class="band"></div><div class="ct serif">Coffee log</div></div><div class="meta"><span class="zt">Coffee log</span><span class="zm">8 pages · A4 · 3 weeks ago</span></div></div>
-  </div>
-
-  <!-- empty state -->
   <div class="empty">
-    <div class="art"><span class="b1"></span><span class="b2"></span></div>
+    <div class="art"><span class="b b1"></span><span class="b b2"></span></div>
     <h2 class="serif">Make your first little zine.</h2>
-    <p>One sheet of paper, printed at home and folded by hand into a small book. Start one and the bench
-    will teach you the rest.</p>
-    <p class="privacy">Kept on this device — no account, nothing uploaded</p>
+    <p>One sheet of paper, printed at home and folded by hand into a small book. Start one and the bench will teach you the rest.</p>
+    <p class="pv">Kept on this device — no account, nothing uploaded</p>
   </div>
 
   <div class="dock"><button class="start"><span class="plus">＋</span> Start a zine</button></div>
+
+  <!-- discoverable actions -->
+  <div class="scrim" id="scrim" onclick="closeSheet()"></div>
+  <div class="sheet" role="dialog" aria-label="Zine actions" aria-modal="true">
+    <div class="sh-ttl" id="shTtl">Sunday market</div>
+    <button><span class="ic">↗</span> Open on the bench</button>
+    <button><span class="ic">✎</span> Rename</button>
+    <button><span class="ic">⧉</span> Duplicate</button>
+    <button class="danger"><span class="ic">⌫</span> Delete</button>
+  </div>
 </div>
 
 <div class="controls">
@@ -154,15 +184,15 @@ in both rooms (the artifact doesn't invert); only the room, cards and chrome fol
 </div>
 
 <script>
-  (function(){
-    var r=document.documentElement, tg=document.getElementById('tg'), em=document.getElementById('em');
-    tg.addEventListener('click',function(){
-      var cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
-      r.setAttribute('data-theme',cur==='dark'?'light':'dark');
-    });
-    em.addEventListener('click',function(){
-      var on=document.body.classList.toggle('is-empty');
-      em.textContent=on?'Show my shelf':'Show empty state';
-    });
-  })();
+  var r=document.documentElement, body=document.body;
+  document.getElementById('tg').addEventListener('click',function(){
+    var cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+    r.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  });
+  var em=document.getElementById('em');
+  em.addEventListener('click',function(){
+    var on=body.classList.toggle('is-empty'); em.textContent=on?'Show my shelf':'Show empty state';
+  });
+  function openSheet(name){document.getElementById('shTtl').textContent=name; body.classList.add('sheet-open');}
+  function closeSheet(){body.classList.remove('sheet-open');}
 </script>
