@@ -9,6 +9,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,7 +34,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
+import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.analyzeTextCoverage
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tag on the edit-session text field. */
@@ -59,10 +62,21 @@ public const val EditTextSessionTestTag: String = "edit-text-session"
  * otherwise: [session] + [element] are hoisted; keying the drafts on [Interaction.EditingText.token]
  * resets them when a new session opens.
  *
+ * **Unsupported-character coverage ([ADR-070](../DECISIONS.md#adr-070)).** The draft is the earliest
+ * place an unprintable character can be *seen*, so coverage is analysed **here** — on the seed (catching
+ * text opened from an import or a prior session) and on every keystroke — and reported out via
+ * [onCoverageChanged] for the host to surface as the [EditorCoverageNotice]. This stays out of the
+ * reducer for the same reason the draft does: it is per-keystroke feature state, not a document mutation.
+ * The analysis ([analyzeTextCoverage]) is pure and allocation-light, so running it per key is cheap and
+ * touches no font, canvas, or device. On dispose the report resets to [TextCoverage.Covered] so the
+ * notice clears with the session; the character itself is **never stripped** from the draft.
+ *
  * @param session the open edit session (its `id`/`token` scope the commit).
  * @param element the document [TextElement] being edited (the `before`; seeds the draft + carries style).
  * @param dispatch forwards an [Intent] into the store.
  * @param modifier sizing/placement applied by the host (e.g. an IME-padded sheet).
+ * @param onCoverageChanged reports the draft's current [TextCoverage] (ADR-070): on the seed, on every
+ *   keystroke, and [TextCoverage.Covered] on dispose. The host raises the [EditorCoverageNotice] from it.
  */
 @Composable
 public fun EditTextSession(
@@ -70,6 +84,7 @@ public fun EditTextSession(
     element: TextElement,
     dispatch: (Intent) -> Unit,
     modifier: Modifier = Modifier,
+    onCoverageChanged: (TextCoverage) -> Unit = {},
 ) {
     var draft by remember(session.token) { mutableStateOf(TextFieldValue(element.text)) }
     var committed by remember(session.token) { mutableStateOf(false) }
@@ -79,6 +94,16 @@ public fun EditTextSession(
     // rememberUpdatedState so the lifecycle/dispose effects always read the LATEST draft, not the value
     // captured when the effect first ran (the draft mutates every keystroke).
     val latestDraft by rememberUpdatedState(draft)
+    // Same reason for the coverage callback: the dispose-clear below must call whatever the host passed
+    // most recently, not the lambda captured when the effect first ran.
+    val latestOnCoverage by rememberUpdatedState(onCoverageChanged)
+
+    // ADR-070: analyse the draft's script coverage on the seed (this runs on first composition, catching
+    // pre-existing/imported unprintable text) and on every keystroke (`draft.text` re-keys it). Pure and
+    // allocation-light, so per-key is cheap; the host raises the EditorCoverageNotice from the result.
+    LaunchedEffect(session.token, draft.text) {
+        latestOnCoverage(analyzeTextCoverage(draft.text))
+    }
 
     fun commit() {
         if (committed) return
@@ -99,6 +124,9 @@ public fun EditTextSession(
             // Leaving composition without an explicit commit (e.g. the session was navigated away) ⇒ commit
             // the draft so a tap-away is never lost; the token guard no-ops if the store already moved on.
             commit()
+            // Clear the coverage notice with the session (ADR-070): the draft is gone, so there is no
+            // longer any unprintable-in-progress text to warn about.
+            latestOnCoverage(TextCoverage.Covered)
         }
     }
 

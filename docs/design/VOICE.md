@@ -125,6 +125,7 @@ expose a code.
 | photo won't load | **"That photo didn't want to come in. Try another?"** |
 | autosave couldn't save (transient) | **"Couldn't save your latest change just now. It'll try again next time you make a change."** |
 | out of storage on save | **"Your phone is low on storage. Free up a little space, then keep editing — it'll save."** |
+| a character can't be printed (unsupported script) | **"Bengali characters can't print yet — but they're saved with your zine, so nothing's lost."** (the script name is filled in from what was typed; two or more read "Bengali and Tamil …", "Bengali, Tamil and Thai …") |
 | export couldn't write file | **"Couldn't finish the file just now. Try Print & fold again?"** |
 | unexpected hiccup | **"Something hiccuped. Your work is safe — try that again?"** |
 
@@ -145,6 +146,18 @@ false-negative-biased: a missed case degrades safely to the generic line, never 
 strictly honest to the implementation: the live system runs **no autonomous retry loop** — a failed
 autosave leaves the document dirty and reattempts on the user's next change (or a lifecycle flush), so
 the line points at making another change rather than implying a background retry.
+
+The **unsupported-character** line is permanent product behaviour per
+[ADR-070](../DECISIONS.md#adr-070): the document renderer prints only the ratified script set
+([`SupportedScripts.BUNDLED_SCRIPTS`](../../core/model/src/main/kotlin/com/aritr/zinely/core/model/SupportedScripts.kt)),
+so a character outside it would otherwise reach paper blank with no warning — a silent loss of the user's
+words, which for this audience is the worst thing the app can do. The notice is **live and non-blocking**:
+it appears while the current text contains an unprintable character and clears itself the moment that
+character is removed; it never blocks typing and the character is **never stripped** (so it prints the day
+its script is supported). It *names the script* — "Bengali", not "some characters" — because a specific
+refusal is a kindness and a vague one teaches people to ignore warnings. It attributes the limit to
+printing ("can't print yet"), never to the user, and the **"yet"** is honest: the wording stays correct if
+a future release widens the supported set, because it is derived from the script names, not a frozen list.
 
 Every error names the safety net ("your work is safe") when true, because for this audience the
 real fear is *losing what they made*.

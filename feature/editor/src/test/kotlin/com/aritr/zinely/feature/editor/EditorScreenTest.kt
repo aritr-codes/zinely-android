@@ -663,4 +663,49 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
     }
+
+    // --- ADR-070: the live unsupported-character coverage notice, host gating ---
+
+    /** U+0985 BENGALI LETTER A — out of the bundled set, built from its code point (encoding-safe). */
+    private val bengaliA = String(Character.toChars(0x0985))
+
+    @Test
+    fun an_unsupported_character_in_the_open_session_raises_the_coverage_notice() {
+        // The honesty seam (ADR-070): opening a session on text the renderer can't print must surface the
+        // notice at the top of the canvas, so the character can't vanish to paper without a warning.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), bengaliA))
+        val id = store.uiState.value.selection.single()
+        setScreen(store)
+        composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertDoesNotExist()
+
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun the_coverage_notice_stays_hidden_with_no_open_session() {
+        // The notice is a status of the *current draft*: with no text session open there is no draft to
+        // warn about, so it must be absent even though the canvas is live.
+        val store = store()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertDoesNotExist()
+    }
+
+    @Test
+    fun a_save_failure_suppresses_the_coverage_notice() {
+        // Precedence (ADR-070): a real "couldn't save" is more urgent than a render-coverage warning, and
+        // both live in the TopCenter slot — so while the failure banner is up the coverage notice yields.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), bengaliA))
+        val id = store.uiState.value.selection.single()
+        store.dispatch(Intent.BeginEditText(id))
+        setScreen(store, saveError = SaveErrorKind.Generic)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertDoesNotExist()
+    }
 }

@@ -55,6 +55,7 @@ import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PageRole
+import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextElement
@@ -173,6 +174,12 @@ public fun EditorScreen(
     // returns to null on dismissal, `saveErrorVisible` flips false but the text must not flip too).
     var lastSaveErrorKind by remember { mutableStateOf(SaveErrorKind.Generic) }
     if (saveError != null) lastSaveErrorKind = saveError
+
+    // The open text session's live script coverage (ADR-070). Fed by EditTextSession on the seed and on
+    // every keystroke, reset to Covered on its dispose — so this holds only the *current* session's draft
+    // coverage. The notice is additionally gated on `editing` below, so a stale value can never outlive
+    // the session that produced it.
+    var editCoverage by remember { mutableStateOf(TextCoverage.Covered) }
 
     // Transient "Saved ✨" reassurance (ADR-034). Driven solely by the existing autosave event stream — no
     // new save logic. `collectLatest` coalesces a burst of saves (e.g. several quick commits) into one
@@ -805,6 +812,19 @@ public fun EditorScreen(
                     kind = lastSaveErrorKind,
                 )
 
+                // The live unsupported-character notice (ADR-070) — the honesty half of the typography
+                // work: it names any script the document renderer can't print so nothing reaches paper
+                // blank without warning. Shown only while a text session is open (its coverage is live)
+                // and only when no save failure is up: a real "couldn't save" outranks it and they share
+                // the TopCenter slot, so gating on `!saveErrorVisible` keeps them from ever stacking.
+                // Passing Covered when gated collapses the notice via its own AnimatedVisibility.
+                EditorCoverageNotice(
+                    coverage = if (editing && !saveErrorVisible) editCoverage else TextCoverage.Covered,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp),
+                )
+
                 // The Type bar (FR-3, ADR-055, bench `.typebar`): a floating card pinned to the bottom of
                 // the canvas — bench `position:absolute; bottom:calc(74px + safe-area)`, i.e. it FLOATS
                 // OVER the page, above the bottom chrome. It is an overlay here for the same reason it is
@@ -856,6 +876,7 @@ public fun EditorScreen(
                                 session = interaction,
                                 element = editing,
                                 dispatch = dispatch,
+                                onCoverageChanged = { editCoverage = it },
                             )
                         }
                     }
