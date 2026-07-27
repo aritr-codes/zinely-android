@@ -98,7 +98,19 @@ corpus leaves free — which is exactly why it is bold *and* safe.
 
 Two decisions are genuinely the owner's, and the panel proved they change what the next phases build.
 
-### ⬥ Q-A — The palette (the identity crux)
+> **OWNER RULINGS — 2026-07-27.**
+> - **Q-A → FULL RE-DERIVE to the reference.** V2's identity is re-derived to **matcha (primary) +
+>   strawberry (punctuation) on a warm-cream room**, replacing coral-on-charcoal outright. This is a
+>   deliberate, owner-chosen bold identity move — the palette is now itself a signature move, not just the
+>   artifact-side ones. It is executed with discipline (OKLCH derivation, CI contrast gates, HTML-first
+>   re-freeze, floor-before-ceiling sequencing), and formalised in a colour ADR + a full golden
+>   re-baseline. The "conservative in the tool, bold in the artifact" principle still governs *structure
+>   and interaction*; the palette is the one chrome-level boldness the owner has explicitly sanctioned.
+> - **Q-B → FUSE + reopen only as needed.** The token migration is delivered once, as the design
+>   front-end of the conformance programme (no two-hubs double-touch). The accepted corpus (ADR-061…068)
+>   stays closed **except** the colour-system rules the Q-A re-derivation reopens, each via a governed ADR.
+
+### ⬥ Q-A — The palette (the identity crux) — RESOLVED: full re-derive
 Does V2 move the palette toward the **matcha / strawberry / cream** reference image, or keep the shipped
 **coral-on-charcoal** identity? Three coherent options:
 - **Keep incumbent** — warm-cream paper on charcoal desk, coral accent. Most trust-safe; spends boldness
