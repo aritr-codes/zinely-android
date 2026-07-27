@@ -119,6 +119,13 @@ V1 ships when every sentence below is true, verified with real people (the conse
 Ordered; each cites the truth it unblocks:
 
 1. Non-Latin fallback + input-time honesty → DoD 4 (worst standing violation)
+   - **Input-time honesty: DONE 2026-07-27 — [ADR-070](DECISIONS.md#adr-070) (Direction A).** The
+     editor now warns, at typing time and before any character is lost, when a character falls outside
+     the printable set — a live, non-blocking notice that names the script; the character is never
+     stripped. This is the *honesty* half, and it is permanent product behaviour.
+   - **Non-Latin fallback / widening the printable set is NOT this** — it is deferred to a separate,
+     per-family owner decision ([Direction B proposal](proposals/expanded-script-support.md)). ADR-070
+     does not widen coverage; it guarantees the user is never silently failed by its current bounds.
 2. Backup/restore/migration → DoD 2
 3. ~~Real shelf covers (wire ADR-045 pipeline)~~ **RE-SCOPED 2026-07-24 — [ADR-069](DECISIONS.md#adr-069) deleted the pipeline rather than wiring it** → DoD 3, 7
    - **What was decided:** the ADR-045 producer was rendering, encoding, caching and decoding a

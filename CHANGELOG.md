@@ -14,6 +14,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — nothing you type disappears without a word · [ADR-070](docs/DECISIONS.md#adr-070)
+
+Zinely prints a defined set of scripts (Latin, Cyrillic, Greek). Type a character outside it — Bengali,
+Tamil, an emoji — and until now it would quietly vanish when the page was drawn, with nothing to warn
+you. That silent loss is fixed.
+
+- **You're told, the moment it matters.** While you're editing, a calm, non-blocking note appears and
+  **names the script** — "Bengali characters can't print yet…" — so a refusal is specific, never a
+  vague shrug. It clears itself the instant you remove the character.
+- **Your text is kept, always.** The character is **never deleted** — it stays in your zine, so it
+  will simply print if that script is supported in a future version. Nothing you write is thrown away.
+- **It stays honest as Zinely grows.** The note is built from what you actually typed, so when more
+  scripts are added later it stops warning about them on its own — no stale message left behind.
+
+This is permanent behaviour, not a stopgap: the promise is that **you never lose work silently**.
+Bundling more script families is a separate, deliberate decision
+([proposal](docs/proposals/expanded-script-support.md)), evaluated one family at a time.
+
 ### Removed — the shelf-thumbnail pipeline that nothing displayed · [ADR-069](docs/DECISIONS.md#adr-069)
 
 **No visible change, and that is the point.** The app was rendering a page-1 thumbnail for every zine

@@ -144,6 +144,38 @@ public object Copy {
         public const val ZINE_TEXT: String = "Zine text"
     }
 
+    /**
+     * The live unsupported-character notice (`EditorCoverageNotice.kt`,
+     * [ADR-070](../../../../../../../docs/DECISIONS.md#adr-070); VOICE §Errors). Permanent product
+     * behaviour: when the user types a character the document renderer cannot print, this names the
+     * script(s) — so the refusal is *specific* — attributes the limit to printing rather than to the
+     * user, and reassures the text is kept, so nothing is ever silently lost.
+     *
+     * The message is keyed off the human [com.aritr.zinely.core.model.Script] names, not off a hardcoded
+     * list, so it **auto-narrows** the day a script is added to the bundled set: that script stops being
+     * reported and the sentence simply stops naming it — no copy change required.
+     */
+    public object Coverage {
+        /**
+         * The notice line for [scripts] — the distinct human script names present that cannot print,
+         * in first-appearance order (e.g. `["Bengali"]`, `["Bengali", "Tamil"]`). The caller passes a
+         * de-duplicated list; [joinScripts] only handles the grammar of stitching them together.
+         */
+        public fun unsupported(scripts: List<String>): String =
+            "${joinScripts(scripts)} characters can’t print yet — " +
+                "but they’re saved with your zine, so nothing’s lost."
+
+        /** English list grammar: `A` · `A and B` · `A, B and C`. */
+        private fun joinScripts(scripts: List<String>): String = when (scripts.size) {
+            // Defensive only — the notice is hidden whenever the text is fully covered, so an empty
+            // list never reaches paint. A neutral word keeps the sentence grammatical if it ever does.
+            0 -> "Some"
+            1 -> scripts[0]
+            2 -> "${scripts[0]} and ${scripts[1]}"
+            else -> scripts.dropLast(1).joinToString(", ") + " and " + scripts.last()
+        }
+    }
+
     /** The text Type bar (`TypeBar.kt`). */
     public object Type {
         // Ink swatch names.
