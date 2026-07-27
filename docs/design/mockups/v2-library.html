@@ -1,0 +1,168 @@
+<title>Zinely V2 — Library</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --paper:#F7F2E7; --paper-edge:#EEE6D4; --desk:#ECE3D1; --desk-edge:#E1D6BF;
+    --ink:#2A251E; --ink-soft:#5B5347; --ink-faint:#8C8269;
+    --matcha:#5E6B2F; --matcha-text:#4C5826; --matcha-tint:#DCE3C0;
+    --straw:#E98F97; --straw-text:#A6474F; --straw-tint:#F6DAD3;
+    --consequence:#A6382A; --hair:rgba(42,37,30,.12); --shadow:rgba(60,52,36,.30);
+    --stage:#E4DAC4;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#2F2A22; --paper-edge:#39322A; --desk:#201D18; --desk-edge:#2A261F;
+      --ink:#ECE4D3; --ink-soft:#B4AB97; --ink-faint:#857C69;
+      --matcha:#93A257; --matcha-text:#B7C47C; --matcha-tint:#363826;
+      --straw:#D98289; --straw-text:#E8A6AB; --straw-tint:#3C2C2A;
+      --consequence:#E0857A; --hair:rgba(236,228,211,.14); --shadow:rgba(0,0,0,.55);
+      --stage:#171410;
+    }
+  }
+  :root[data-theme="light"]{--paper:#F7F2E7;--paper-edge:#EEE6D4;--desk:#ECE3D1;--desk-edge:#E1D6BF;--ink:#2A251E;--ink-soft:#5B5347;--ink-faint:#8C8269;--matcha:#5E6B2F;--matcha-text:#4C5826;--matcha-tint:#DCE3C0;--straw:#E98F97;--straw-text:#A6474F;--straw-tint:#F6DAD3;--consequence:#A6382A;--hair:rgba(42,37,30,.12);--shadow:rgba(60,52,36,.30);--stage:#E4DAC4;}
+  :root[data-theme="dark"]{--paper:#2F2A22;--paper-edge:#39322A;--desk:#201D18;--desk-edge:#2A261F;--ink:#ECE4D3;--ink-soft:#B4AB97;--ink-faint:#857C69;--matcha:#93A257;--matcha-text:#B7C47C;--matcha-tint:#363826;--straw:#D98289;--straw-text:#E8A6AB;--straw-tint:#3C2C2A;--consequence:#E0857A;--hair:rgba(236,228,211,.14);--shadow:rgba(0,0,0,.55);--stage:#171410;}
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--stage);min-height:100vh;
+    font-family:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;gap:18px;padding:26px 16px 60px;
+    transition:background .4s ease}
+  .serif{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}
+  .caption{max-width:392px;width:100%;color:var(--ink);opacity:.62;font-size:.82rem;line-height:1.5}
+  .caption b{opacity:1;font-weight:600}
+
+  /* device */
+  .phone{width:392px;max-width:100%;height:812px;max-height:86vh;border-radius:40px;overflow:hidden;
+    position:relative;background:var(--desk);box-shadow:0 40px 90px -40px var(--shadow),0 0 0 1px var(--hair);
+    display:flex;flex-direction:column;transition:background .4s ease}
+
+  /* top bar — quiet: small wordmark + sort. No wordmark ROW eating space (beta finding). */
+  .top{display:flex;align-items:center;justify-content:space-between;
+    padding:22px 22px 12px;flex:0 0 auto}
+  .brand{font-size:1.32rem;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+  .brand .dot{color:var(--straw-text)}
+  .sort{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--hair);border-radius:20px;padding:7px 13px;cursor:pointer}
+  .sort:focus-visible{outline:2px solid var(--matcha-text);outline-offset:2px}
+  .count{padding:0 24px 12px;font-size:.78rem;color:var(--ink-faint);letter-spacing:.02em}
+
+  /* shelf */
+  .shelf{flex:1 1 auto;overflow-y:auto;padding:2px 20px 120px;
+    display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;align-content:start}
+  .shelf::-webkit-scrollbar{width:0}
+
+  .zine{cursor:pointer;display:flex;flex-direction:column;gap:9px;
+    transform:rotate(var(--tilt,0deg));transition:transform .18s ease}
+  .zine:hover{transform:rotate(0deg) translateY(-3px)}
+  .zine:nth-child(odd){--tilt:-.8deg}
+  .zine:nth-child(even){--tilt:.7deg}
+
+  .cover{aspect-ratio:3/4;border-radius:10px;position:relative;overflow:hidden;
+    box-shadow:0 16px 26px -18px var(--shadow),0 2px 0 rgba(0,0,0,.04);
+    display:flex;flex-direction:column;justify-content:flex-end;padding:14px}
+  /* the spine fold */
+  .cover::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:1px;
+    background:rgba(255,255,255,.16)}
+  /* the archetype band */
+  .cover .band{position:absolute;left:0;right:0;top:34%;height:15%;opacity:.92}
+  .cover .stamp{position:absolute;top:11px;right:12px;font-size:1.05rem;line-height:1;
+    filter:saturate(.9)}
+  .cover .ct{position:relative;z-index:1;font-size:1.16rem;font-weight:600;line-height:1.08;
+    letter-spacing:-.01em;max-width:9ch;text-wrap:balance}
+
+  /* cover variants — the MAKER's inks; theme-independent (the artifact doesn't invert) */
+  .ink-matcha{background:#7C8A3F}   .ink-matcha .ct{color:#F7F2E7}   .ink-matcha .band{background:#5E6B2F}
+  .ink-teal{background:#47857B}     .ink-teal .ct{color:#F7F2E7}     .ink-teal .band{background:#356258}
+  .ink-straw{background:#E27F89}    .ink-straw .ct{color:#4A211F}    .ink-straw .band{background:#C85F6C}
+  .ink-ochre{background:#D19A3C}    .ink-ochre .ct{color:#3A2A0E}    .ink-ochre .band{background:#B27E28}
+  .paper-m{background:#F3EEDF}      .paper-m .ct{color:#2A251E}      .paper-m .band{background:#7C8A3F}
+  .paper-s{background:#F3EEDF}      .paper-s .ct{color:#2A251E}      .paper-s .band{background:#E27F89}
+
+  .meta{display:flex;flex-direction:column;gap:1px;padding:0 2px}
+  .zt{font-size:.94rem;font-weight:600;color:var(--ink);line-height:1.15}
+  .zm{font-size:.74rem;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+
+  /* dock */
+  .dock{position:absolute;left:0;right:0;bottom:0;padding:16px 20px calc(20px + env(safe-area-inset-bottom));
+    display:flex;justify-content:center;pointer-events:none;
+    background:linear-gradient(to top,var(--desk) 55%,transparent)}
+  .start{pointer-events:auto;background:var(--matcha);color:var(--paper);border:none;border-radius:16px;
+    font-weight:600;font-size:1rem;padding:15px 26px;display:flex;align-items:center;gap:10px;cursor:pointer;
+    box-shadow:0 14px 28px -12px var(--shadow);font-family:inherit}
+  :root[data-theme="dark"] .start,@media (prefers-color-scheme:dark){}
+  .start .plus{font-size:1.2rem;line-height:0;margin-top:-2px}
+  .start:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+  /* empty state (toggled) */
+  .empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:40px 40px 130px;gap:14px}
+  .empty .art{width:104px;height:104px;border-radius:14px;background:var(--paper);border:1px solid var(--paper-edge);
+    box-shadow:0 18px 30px -18px var(--shadow);position:relative;transform:rotate(-4deg);margin-bottom:8px}
+  .empty .art::before{content:"";position:absolute;left:50%;top:0;width:1px;height:100%;background:var(--hair)}
+  .empty .art .b1{position:absolute;left:14px;right:14px;top:34%;height:10px;border-radius:3px;background:var(--matcha-tint)}
+  .empty .art .b2{position:absolute;left:14px;right:34px;top:52%;height:8px;border-radius:3px;background:var(--straw-tint)}
+  .empty h2{font-size:1.7rem;margin:0;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+  .empty p{margin:0;color:var(--ink-soft);max-width:26ch;line-height:1.55;font-size:.95rem}
+  .empty .privacy{font-size:.76rem;color:var(--matcha-text);font-weight:600;letter-spacing:.02em;margin-top:2px}
+  body.is-empty .shelf,body.is-empty .count{display:none}
+  body.is-empty .empty{display:flex}
+
+  /* controls */
+  .controls{display:flex;gap:8px;flex-wrap:wrap;max-width:392px;width:100%;justify-content:center;margin-top:2px}
+  .ctl{font-size:.78rem;font-weight:600;background:var(--paper);color:var(--ink);border:1px solid var(--hair);
+    border-radius:20px;padding:8px 14px;cursor:pointer}
+  .ctl:focus-visible{outline:2px solid var(--matcha-text);outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<p class="caption serif" style="font-size:1.04rem;color:var(--ink)"><b>Library — “which zine is mine?”</b></p>
+<p class="caption">The shelf leads with your covers, not a wordmark row. Each cover is <b>maker-chosen</b> —
+a title, an ink, an optional little stamp — so the shelf reads as <b>your</b> objects. Covers keep their inks
+in both rooms (the artifact doesn't invert); only the room, cards and chrome follow the theme.</p>
+
+<div class="phone" role="img" aria-label="Zinely Library screen mockup">
+  <div class="top">
+    <div class="brand serif">Zinely<span class="dot">.</span></div>
+    <button class="sort" aria-label="Sort your zines">Recent ▾</button>
+  </div>
+  <div class="count">6 little books</div>
+
+  <div class="shelf">
+    <div class="zine"><div class="cover ink-matcha"><span class="stamp">🍵</span><div class="band"></div><div class="ct serif">Sunday market</div></div><div class="meta"><span class="zt">Sunday market</span><span class="zm">8 pages · A4 · 2 days ago</span></div></div>
+    <div class="zine"><div class="cover paper-s"><span class="stamp">✉️</span><div class="band"></div><div class="ct serif">Letters home</div></div><div class="meta"><span class="zt">Letters home</span><span class="zm">8 pages · Letter · today</span></div></div>
+    <div class="zine"><div class="cover ink-teal"><span class="stamp">◆</span><div class="band"></div><div class="ct serif">Riso tests</div></div><div class="meta"><span class="zt">Riso tests</span><span class="zm">8 pages · A4 · 5 days ago</span></div></div>
+    <div class="zine"><div class="cover paper-m"><span class="stamp">🌿</span><div class="band"></div><div class="ct serif">Mum's garden</div></div><div class="meta"><span class="zt">Mum's garden</span><span class="zm">8 pages · A4 · 1 week ago</span></div></div>
+    <div class="zine"><div class="cover ink-ochre"><span class="stamp">✦</span><div class="band"></div><div class="ct serif">Tiny poems</div></div><div class="meta"><span class="zt">Tiny poems</span><span class="zm">8 pages · Letter · 2 weeks ago</span></div></div>
+    <div class="zine"><div class="cover ink-straw"><span class="stamp">☕</span><div class="band"></div><div class="ct serif">Coffee log</div></div><div class="meta"><span class="zt">Coffee log</span><span class="zm">8 pages · A4 · 3 weeks ago</span></div></div>
+  </div>
+
+  <!-- empty state -->
+  <div class="empty">
+    <div class="art"><span class="b1"></span><span class="b2"></span></div>
+    <h2 class="serif">Make your first little zine.</h2>
+    <p>One sheet of paper, printed at home and folded by hand into a small book. Start one and the bench
+    will teach you the rest.</p>
+    <p class="privacy">Kept on this device — no account, nothing uploaded</p>
+  </div>
+
+  <div class="dock"><button class="start"><span class="plus">＋</span> Start a zine</button></div>
+</div>
+
+<div class="controls">
+  <button class="ctl" id="tg">◑ Toggle day / night</button>
+  <button class="ctl" id="em">Show empty state</button>
+</div>
+
+<script>
+  (function(){
+    var r=document.documentElement, tg=document.getElementById('tg'), em=document.getElementById('em');
+    tg.addEventListener('click',function(){
+      var cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+      r.setAttribute('data-theme',cur==='dark'?'light':'dark');
+    });
+    em.addEventListener('click',function(){
+      var on=document.body.classList.toggle('is-empty');
+      em.textContent=on?'Show my shelf':'Show empty state';
+    });
+  })();
+</script>
