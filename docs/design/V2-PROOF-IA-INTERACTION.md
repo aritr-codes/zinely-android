@@ -240,6 +240,45 @@ canonical HTML and the spec stay in step.
   drops the clinical raw filename for *"In Downloads — print it whenever, then fold it up"* (which also makes the
   Save → Print → Fold order feel inevitable rather than procedural).
 
+## Part E — 🔒 DESIGN FREEZE (owner-approved 2026-07-28)
+
+**[`docs/design/mockups/v2-proof.html`](mockups/v2-proof.html) is the canonical, frozen specification for the
+Proof surface** — the third and final primary V2 surface, joining the frozen [Library](mockups/v2-library.html)
+and [Bench](mockups/v2-bench.html). Written authority: [V2-PROOF-PRINCIPLES.md](V2-PROOF-PRINCIPLES.md)
+(PP-1..9 / PF-1..5) + this document + [V2-PROOF-CRITIQUE.md](V2-PROOF-CRITIQUE.md), on the evidence base
+[V2-PROOF-RESEARCH.md](V2-PROOF-RESEARCH.md).
+
+The freeze followed the full ten-phase discipline: research → critique → principles → IA → journeys →
+interaction → HTML prototype → independent Review Agent (**GO WITH FIXES**, all fixes reconciled) → owner
+refinement pass (Part D) → freeze. It was approved after the owner's progressive-disclosure / reassurance /
+warmth / hidden-machinery audit, whose minimum changes are recorded in Part D.
+
+**Post-freeze rule (identical to Library/Bench):** the HTML specification is authoritative and stable. Allowed
+after freeze — bug fixes · accessibility improvements · performance work · implementation-parity fixes · theme
+compatibility. **Not** allowed — visual redesign · interaction redesign · feature additions. Any UX change
+**updates this HTML spec first**, then Compose — never the reverse.
+
+**Build invariants carried into Compose** (a static prototype cannot demonstrate these; they are binding on the
+implementation):
+- One engine → `read == preview == export`; **no second draw path**, including for booklet preview ([ADR-028](../DECISIONS.md)/[ADR-058](../DECISIONS.md#adr-058); PC§1).
+- Never-silent export failure + loss-safe back; **print honesty** — no control claims to print while doing
+  otherwise ([ADR-051](../DECISIONS.md)/[ADR-052](../DECISIONS.md); PP-7).
+- READ-first; the finished-book *reveal* stays Read's, not Proof's ([ADR-058](../DECISIONS.md#adr-058); PP-8).
+- The duplex default flip is a **device-verification (Pass-2) item**, requested not asserted, with the test
+  sheet as the safety net (PP-5); **"ceremony"/felt-completion is a Pass-2 hypothesis to validate**, not an
+  assumed truth (PP-8).
+
+**Staged build (owner scope ruling).** Single-sheet mini-zine ships first; the saddle-stitch **booklet + duplex**
+path is frozen in design and built as the V2-roadmap follow-up. Its build-time debts are the governed ledger in
+[critique Part E](V2-PROOF-CRITIQUE.md#part-e--build-time-debts-the-scope-ruling-creates-categorized-never-conflated):
+the `SaddleStitchImposer`, the duplex/flip-edge ADR, the OS-print decision, the **ADR that records retiring the
+SHEET act / restructuring the ADR-051/058 act model**, the **multiple-of-4 Bench precondition**, and the PRD/
+ROADMAP updates — none of which block this freeze; each is authored and independently reviewed at build time.
+
+**Compose implementation of all three frozen primary surfaces may now begin.**
+
+---
+
 ## Cross-references & what feeds Phase 7 (the HTML prototype)
 
 The canonical prototype must demonstrate, at minimum:
