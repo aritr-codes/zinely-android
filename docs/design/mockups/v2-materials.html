@@ -1,0 +1,381 @@
+<title>Zinely V2 — Materials & Cover System (study)</title>
+<!--
+  Zinely V2 — Product Identity: materials, riso craft signature & the Maker's Cover system — a STUDY, not a screen.
+  Companion to V2-IDENTITY.md. Purpose: make the creative-content direction visible before Compose. Reopens no frozen screen.
+  Palette: V2-TOKENS.md chrome (verbatim) + the maker-ink content palette (riso spot inks). Type: Fraunces + Inter (Georgia/system stand-ins).
+  Shows: chrome-quiet/colour-in-content, the ~5 paper stocks (+heavier cover role), riso two-layer overprint with independent offset+grain,
+  tintable "coverage-not-colour" assets (1 asset x N inks), and the frozen-grid cover recipe yielding a distinct-but-related collection.
+  NOT frozen; for owner sign-off of the direction.
+-->
+<style>
+  :root{
+    --paper:#F7F2E7; --paper-edge:#EEE6D4; --desk:#ECE3D1; --desk-edge:#E1D6BF;
+    --ink:#2A251E; --ink-soft:#5B5347; --ink-faint:#8C8269;
+    --matcha:#5E6B2F; --matcha-text:#4C5826; --matcha-tint:#DCE3C0;
+    --strawberry:#E98F97; --strawberry-text:#A6474F;
+    --consequence:#A6382A; --on-matcha:#fff;
+    --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --chrome:#FBF7EE; --chrome-line:#E4DAC6;
+    --serif:'Fraunces',Georgia,'Times New Roman',serif;
+    --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --settle:cubic-bezier(.05,.7,.1,1);
+    --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+    --fleck:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><g fill='%23000' opacity='.5'><circle cx='12' cy='20' r='.7'/><circle cx='44' cy='9' r='.6'/><circle cx='70' cy='28' r='.8'/><circle cx='27' cy='52' r='.6'/><circle cx='60' cy='63' r='.7'/><circle cx='82' cy='74' r='.6'/><circle cx='16' cy='79' r='.7'/><circle cx='39' cy='38' r='.5'/></g></svg>");
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#2F2A22; --paper-edge:#39322A; --desk:#201D18; --desk-edge:#2A261F;
+    --ink:#ECE4D3; --ink-soft:#B4AB97; --ink-faint:#857C69;
+    --matcha:#93A257; --matcha-text:#B7C47C; --matcha-tint:#363826;
+    --strawberry:#D98289; --strawberry-text:#E8A6AB; --consequence:#E0857A; --on-matcha:#20240E;
+    --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5); --chrome:#252017; --chrome-line:#3A332A;
+  }}
+  :root[data-theme="dark"]{
+    --paper:#2F2A22; --paper-edge:#39322A; --desk:#201D18; --desk-edge:#2A261F;
+    --ink:#ECE4D3; --ink-soft:#B4AB97; --ink-faint:#857C69;
+    --matcha:#93A257; --matcha-text:#B7C47C; --matcha-tint:#363826;
+    --strawberry:#D98289; --strawberry-text:#E8A6AB; --consequence:#E0857A; --on-matcha:#20240E;
+    --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5); --chrome:#252017; --chrome-line:#3A332A;
+  }
+  :root[data-theme="light"]{
+    --paper:#F7F2E7; --paper-edge:#EEE6D4; --desk:#ECE3D1; --desk-edge:#E1D6BF;
+    --ink:#2A251E; --ink-soft:#5B5347; --ink-faint:#8C8269;
+    --matcha:#5E6B2F; --matcha-text:#4C5826; --matcha-tint:#DCE3C0;
+    --strawberry:#E98F97; --strawberry-text:#A6474F; --consequence:#A6382A; --on-matcha:#fff;
+    --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28); --chrome:#FBF7EE; --chrome-line:#E4DAC6;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--desk);
+    background-image:radial-gradient(120% 80% at 50% -10%,var(--desk-edge),var(--desk) 60%);
+    min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  body::before{content:"";position:fixed;inset:0;background-image:var(--grain);background-size:180px 180px;
+    mix-blend-mode:soft-light;opacity:.5;pointer-events:none;z-index:0;}
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:40px 22px 90px;}
+
+  .masthead{max-width:680px;margin:0 auto 30px;text-align:center;}
+  .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--matcha-text);font-weight:600;margin:0 0 8px;}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,5vw,40px);margin:0;letter-spacing:-.01em;text-wrap:balance;}
+  .sub{color:var(--ink-soft);font-size:15px;margin:12px auto 0;max-width:60ch;text-wrap:pretty;}
+  .ctlbar{display:flex;gap:8px;justify-content:center;margin-top:18px;}
+  .seg{display:inline-flex;background:var(--chrome);border:1px solid var(--chrome-line);border-radius:999px;padding:3px;gap:2px;}
+  .seg button{border:none;background:none;font:inherit;font-size:12.5px;color:var(--ink-soft);cursor:pointer;padding:6px 13px;border-radius:999px;line-height:1;}
+  .seg button[aria-pressed="true"]{background:var(--matcha);color:var(--on-matcha);font-weight:600;}
+
+  section{margin:44px 0;}
+  .shead{display:flex;align-items:baseline;gap:12px;margin:0 0 4px;flex-wrap:wrap;}
+  .snum{font-family:var(--serif);font-size:13px;color:var(--matcha-text);font-weight:600;font-variant-numeric:tabular-nums;}
+  .shead h2{font-family:var(--serif);font-weight:500;font-size:23px;margin:0;letter-spacing:-.005em;}
+  .sdesc{color:var(--ink-soft);font-size:13.5px;margin:0 0 20px;max-width:66ch;}
+  .sdesc b{color:var(--ink);font-weight:600;}
+
+  /* paper stocks */
+  .stocks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;}
+  .stock{border-radius:10px;overflow:hidden;border:1px solid var(--paper-edge);box-shadow:0 6px 16px -10px var(--frame-shadow);}
+  .swatch{height:110px;position:relative;background:var(--sw);}
+  .swatch::after{content:"";position:absolute;inset:0;background-image:var(--grain);background-size:120px 120px;mix-blend-mode:soft-light;opacity:.5;}
+  .swatch.fleck::before{content:"";position:absolute;inset:0;background-image:var(--fleck);background-size:70px 70px;opacity:.55;mix-blend-mode:multiply;}
+  .swatch.grid::before{content:"";position:absolute;inset:0;background-image:radial-gradient(currentColor .8px,transparent .8px);background-size:11px 11px;color:var(--ink-faint);opacity:.35;}
+  .swatch.cover{height:126px;box-shadow:0 10px 20px -8px var(--frame-shadow) inset,0 0 0 3px rgba(0,0,0,.04) inset;}
+  .swatch .wt{position:absolute;left:9px;bottom:8px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.4);font-weight:700;}
+  .stock .lab{padding:9px 11px;background:var(--chrome);}
+  .stock .lab b{font-size:13px;display:block;} .stock .lab span{font-size:11px;color:var(--ink-faint);}
+
+  /* riso ink layering */
+  .risowrap{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start;}
+  @media (max-width:720px){.risowrap{grid-template-columns:1fr;}}
+  .risostage{background:var(--paper);border:1px solid var(--paper-edge);border-radius:12px;padding:26px;position:relative;
+    box-shadow:0 8px 20px -12px var(--frame-shadow);display:flex;flex-direction:column;align-items:center;gap:16px;}
+  .risostage::after{content:"";position:absolute;inset:0;border-radius:12px;background-image:var(--grain);background-size:120px 120px;mix-blend-mode:soft-light;opacity:.4;pointer-events:none;}
+  .overprint{position:relative;width:150px;height:150px;}
+  .layer{position:absolute;inset:0;mix-blend-mode:multiply;}
+  .layer svg{width:100%;height:100%;display:block;}
+  .layer.a{transform:translate(-2.5px,-1.5px);color:var(--inkA);} /* independent misregistration per layer */
+  .layer.b{transform:translate(2px,2.5px);color:var(--inkB);}
+  .layer::after{content:"";position:absolute;inset:0;background-image:var(--grain);background-size:80px 80px;mix-blend-mode:screen;opacity:.22;}
+  .riso-cap{font-size:12px;color:var(--ink-faint);text-align:center;max-width:30ch;}
+  .risonote ul{margin:6px 0 0;padding-left:1.1em;font-size:13px;color:var(--ink-soft);line-height:1.7;}
+  .risonote b{color:var(--ink);}
+  .laytoggle{display:flex;gap:8px;margin-top:4px;}
+  .laytoggle button{font:inherit;font-size:12px;border:1px solid var(--chrome-line);background:var(--chrome);color:var(--ink-soft);border-radius:8px;padding:6px 11px;cursor:pointer;}
+  .laytoggle button.on{border-color:var(--matcha);color:var(--matcha-text);}
+
+  /* coverage-not-colour: one motif x N inks */
+  .tintrow{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;}
+  .tintchip{width:58px;height:58px;border-radius:9px;background:var(--paper);border:1px solid var(--paper-edge);display:grid;place-items:center;position:relative;box-shadow:0 3px 8px -5px var(--frame-shadow);}
+  .tintchip svg{width:64%;height:64%;}
+
+  /* maker inks */
+  .inkbands{display:flex;flex-direction:column;gap:12px;}
+  .band{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .bandname{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;width:70px;flex:none;}
+  .ink{display:inline-flex;align-items:center;gap:7px;background:var(--chrome);border:1px solid var(--chrome-line);border-radius:999px;padding:4px 11px 4px 5px;cursor:pointer;transition:transform .1s;}
+  .ink:active{transform:scale(.95);}
+  .ink[aria-pressed="true"]{border-color:var(--ink);}
+  .ink i{width:18px;height:18px;border-radius:50%;position:relative;box-shadow:0 0 0 1px rgba(0,0,0,.08) inset;}
+  .ink i::after{content:"";position:absolute;inset:0;border-radius:50%;background-image:var(--grain);background-size:40px 40px;mix-blend-mode:soft-light;opacity:.7;}
+  .ink span{font-size:12px;color:var(--ink-soft);}
+
+  /* cover recipe -> collection */
+  .recipe-note{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .pill{font-size:11.5px;background:var(--matcha-tint);color:var(--matcha-text);border-radius:999px;padding:4px 11px;font-weight:600;}
+  .shuffle{font:inherit;font-size:13px;font-weight:600;background:var(--matcha);color:var(--on-matcha);border:none;border-radius:10px;padding:9px 16px;cursor:pointer;box-shadow:0 6px 14px -8px var(--matcha);}
+  .shuffle:active{transform:scale(.97);}
+  .shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px;margin-top:8px;}
+  .cover{aspect-ratio:3/4;border-radius:3px 6px 6px 3px;position:relative;overflow:hidden;padding:16px 14px;display:flex;flex-direction:column;
+    background:var(--cvpaper);border:1px solid rgba(0,0,0,.08);box-shadow:0 12px 24px -12px var(--frame-shadow),0 2px 4px rgba(58,48,32,.14);
+    transition:transform .35s var(--settle),box-shadow .35s;}
+  .cover.settle{animation:settle .45s var(--settle);}
+  @keyframes settle{from{transform:translateY(-10px) rotate(-1deg);opacity:.5;}to{transform:none;opacity:1;}}
+  .cover::after{content:"";position:absolute;inset:0;background-image:var(--grain);background-size:110px 110px;mix-blend-mode:soft-light;opacity:.5;pointer-events:none;}
+  .cover.fleck::before{content:"";position:absolute;inset:0;background-image:var(--fleck);background-size:66px 66px;opacity:.5;mix-blend-mode:multiply;pointer-events:none;}
+  .cover .spine{position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cvink);opacity:.5;}
+  .cv-motif{position:absolute;right:10px;bottom:34px;width:52px;height:52px;color:var(--cvink);opacity:.9;}
+  .cv-motif svg{width:100%;height:100%;}
+  .cv-title{font-family:var(--serif);font-weight:500;font-size:18px;line-height:1.1;color:var(--cvink);letter-spacing:-.01em;margin-top:6px;z-index:1;}
+  .cv-sub{font-family:var(--serif);font-style:italic;font-size:11px;color:var(--cvink);opacity:.75;margin-top:4px;z-index:1;}
+  .cv-stamp{position:absolute;left:13px;bottom:12px;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--cvstamp);color:var(--cvstamp);
+    display:grid;place-items:center;font-family:var(--serif);font-size:12px;font-weight:600;opacity:.9;z-index:1;}
+  .cv-stamp::after{content:"";position:absolute;inset:0;border-radius:50%;background-image:var(--grain);background-size:30px 30px;mix-blend-mode:soft-light;opacity:.6;}
+
+  /* starter pack */
+  .packgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;}
+  .packcard{background:var(--chrome);border:1px solid var(--chrome-line);border-radius:11px;padding:14px;}
+  .packcard .n{font-size:22px;font-family:var(--serif);color:var(--matcha-text);font-weight:500;}
+  .packcard b{display:block;font-size:13px;margin:2px 0 3px;} .packcard span{font-size:11.5px;color:var(--ink-faint);line-height:1.4;}
+
+  .guard{background:var(--strawberry-tint,rgba(233,143,151,.14));border:1px solid var(--strawberry);border-radius:12px;padding:16px 18px;}
+  .guard h3{font-family:var(--serif);font-weight:500;font-size:16px;margin:0 0 6px;color:var(--strawberry-text);}
+  .guard p{margin:0;font-size:13px;color:var(--ink-soft);}.guard b{color:var(--ink);}
+  .foot{text-align:center;color:var(--ink-faint);font-size:12px;margin-top:40px;max-width:60ch;margin-left:auto;margin-right:auto;line-height:1.6;}
+
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <p class="kicker">Zinely V2 · Product Identity</p>
+    <h1>Materials &amp; the Maker's Cover</h1>
+    <p class="sub">The interface stays quiet — so the <b>creations</b> carry the warmth. This is where the café's colour lives: in paper, ink, and the covers people make. A study, not a screen. Nothing frozen is reopened.</p>
+    <div class="ctlbar">
+      <div class="seg" role="group" aria-label="Theme">
+        <button aria-pressed="true" onclick="setTheme('auto',this)">Auto</button>
+        <button aria-pressed="false" onclick="setTheme('light',this)">Light</button>
+        <button aria-pressed="false" onclick="setTheme('dark',this)">Dark</button>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="shead"><span class="snum">01</span><h2>Paper stocks</h2></div>
+    <p class="sdesc">A short, named set of stocks — the maker's <b>first</b> creative choice. Grain and fleck evoke paper; the <b>cover is heavier than the pages</b>, which is the single strongest “real little object” cue. No embossing, no skeuomorphism.</p>
+    <div class="stocks" id="stocks"></div>
+  </section>
+
+  <section>
+    <div class="shead"><span class="snum">02</span><h2>The riso signature — print the process, not a filter</h2></div>
+    <p class="sdesc">Riso is <b>separate translucent ink layers</b> that physically overprint into a third hue — each layer with its <b>own</b> slight misregistration and grain. That independence is the anti-kitsch rule: a single global “riso filter” is the tell. Keep the soul (offset + grain), drop the damage (no smudges, no streaks). Colours stay muted so a home printer can actually make them.</p>
+    <div class="risowrap">
+      <div class="risostage">
+        <div class="overprint" id="overprint">
+          <div class="layer a" id="layA"></div>
+          <div class="layer b" id="layB"></div>
+        </div>
+        <div class="riso-cap">Two inks, two drums — overlapping where they meet. Toggle a layer to see it is really two.</div>
+        <div class="laytoggle">
+          <button id="tA" class="on" onclick="toggleLayer('a')">Ink A</button>
+          <button id="tB" class="on" onclick="toggleLayer('b')">Ink B</button>
+        </div>
+      </div>
+      <div class="risonote">
+        <p class="sdesc" style="margin:0 0 10px">Pick two inks from §04 to re-drum this print. Because the art is <b>coverage, not colour</b>, the same motif takes any ink:</p>
+        <div class="tintrow" id="tintrow"></div>
+        <ul>
+          <li><b>Soul:</b> layer offset ≤ 2–3 mm, grain, overprint blend.</li>
+          <li><b>Not damage:</b> never smudges, roller-marks, streaks.</li>
+          <li><b>Home-honest:</b> muted inks, not neon — they print on any inkjet/laser.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="shead"><span class="snum">03</span><h2>Maker inks — where the café's colour lives</h2></div>
+    <p class="sdesc">~15 muted riso spot inks in three bands, held in a <b>content</b> namespace separate from the interface. Click any ink to re-drum the print above and re-tint the collection below — proof that <b>one asset × N inks = N looks</b>. This is the colour the frozen chrome deliberately withholds.</p>
+    <div class="inkbands" id="inkbands"></div>
+  </section>
+
+  <section>
+    <div class="shead"><span class="snum">04</span><h2>The Maker's Cover — a recipe that makes a collection</h2></div>
+    <p class="sdesc">The Penguin/Marber move: <b>freeze the grid, vary the ingredients.</b> Each cover = <b>{ title × ink × mark × paper × motif }</b> on one fixed layout. Every cover looks unmistakably Zinely <b>and</b> unmistakably theirs — a row reads as a <b>collection</b>, not a list. (Extends the frozen Library cover; honours ADR-069, no per-edit render.)</p>
+    <div class="recipe-note">
+      <span class="pill">grid · frozen</span>
+      <span class="pill">title × ink × mark × paper × motif · variable</span>
+      <button class="shuffle" onclick="shuffleCovers()">↻ New batch</button>
+    </div>
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <section>
+    <div class="shead"><span class="snum">05</span><h2>The Starter Creative Pack</h2></div>
+    <p class="sdesc">So the <b>first</b> zine feels made, not configured — generous but scannable (one glanceable row per category), good defaults over a big library. All <b>CC0 / OFL</b>, tintable, print-and-sell-safe; notices live in-app, the exported zine stays clean.</p>
+    <div class="packgrid" id="packgrid"></div>
+  </section>
+
+  <section>
+    <div class="guard">
+      <h3>The twee line — the whole guardrail</h3>
+      <p>Texture reads <b>warm</b> when it is a believable <b>consequence of a process</b> — ink soaking paper, layers drifting, a heavier cover. It reads <b>kitsch</b> when imperfection is <b>pasted on as decoration</b> — deckle edges, coffee rings, faux-handwriting, random tilt, a uniform “vintage” filter. Restraint + physical plausibility is the line, and it holds across every material above.</p>
+    </div>
+  </section>
+
+  <p class="foot">A Product-Identity study for owner sign-off — companion to V2-IDENTITY.md. No frozen screen is reopened; the token proposal and the H3/H4 asset ADRs (with legal sign-off) are where this direction hardens into decisions.</p>
+</div>
+
+<script>
+  // ---- maker inks (muted riso spot inks, 3 bands) ----
+  var INKS=[
+    {n:'Matcha',   h:'#5E6B2F', band:'Greens & earth'},
+    {n:'Sage',     h:'#7C8A3F', band:'Greens & earth'},
+    {n:'Moss',     h:'#4C5826', band:'Greens & earth'},
+    {n:'Olive',    h:'#6E6A32', band:'Greens & earth'},
+    {n:'Ochre',    h:'#C98F35', band:'Warm'},
+    {n:'Clay',     h:'#B96B43', band:'Warm'},
+    {n:'Strawberry',h:'#E08A92', band:'Warm'},
+    {n:'Coral',    h:'#DB7A72', band:'Warm'},
+    {n:'Plum',     h:'#8E5A6B', band:'Warm'},
+    {n:'Teal',     h:'#47857B', band:'Cool'},
+    {n:'Denim',    h:'#4E6E8C', band:'Cool'},
+    {n:'Slate',    h:'#5E6674', band:'Cool'},
+    {n:'Sky',      h:'#7BA6B2', band:'Cool'},
+    {n:'Cocoa',    h:'#6B5240', band:'Neutral'},
+    {n:'Charcoal', h:'#3E382E', band:'Neutral'}
+  ];
+  var BANDS=['Greens & earth','Warm','Cool','Neutral'];
+
+  // ---- paper stocks ----
+  var STOCKS=[
+    {n:'Cream',   d:'the café default', sw:'#F5EFE0', cls:''},
+    {n:'Kraft',   d:'earthy brown',     sw:'#C9A878', cls:''},
+    {n:'Recycled fleck', d:'visible specks · archival', sw:'#E9E2CE', cls:'fleck'},
+    {n:'Dot-grid',d:'the notebook register', sw:'#F3EEDF', cls:'grid'},
+    {n:'Cover stock', d:'heavier · the object cue', sw:'#EBE0C6', cls:'cover', wt:'300 gsm'}
+  ];
+
+  // ---- motifs (single-path, tintable = currentColor) ----
+  var MOTIFS=[
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c7-1 9-7 9-14-7 0-13 2-14 9"/><path d="M12 21C8 16 8 10 8 6"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/><g stroke="currentColor" stroke-width="1.3"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></g></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 18c3-8 13-8 16 0"/><circle cx="12" cy="8" r="3"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M6 4v16M6 6h9l-2 3 2 3H6"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 20c4-2 4-14 0-16M20 20c-4-2-4-14 0-16M9 12h6"/></svg>'
+  ];
+  function motifSvg(i){return MOTIFS[i%MOTIFS.length];}
+
+  var TITLES=[
+    ['Tiny Green Things','a windowsill zine'],['Rainy Days','and what to make'],['Six Cups','a coffee diary'],
+    ['The Slow Way','notes on going nowhere'],['Paper Boats','for the gutter stream'],['Kitchen Weather','soups & small storms'],
+    ['Moth Hours','a night walk'],['Two Ferns','a very short book']
+  ];
+  var STAMPS=['Z','✦','✽','◷','❧','✜'];
+
+  var activeInk='#5E6B2F', inkA='#5E6B2F', inkB='#E08A92';
+
+  function el(id){return document.getElementById(id);}
+
+  // build paper stocks
+  el('stocks').innerHTML=STOCKS.map(function(s){
+    return '<div class="stock"><div class="swatch '+s.cls+'" style="--sw:'+s.sw+';color:'+s.sw+'">'+(s.wt?'<span class="wt">'+s.wt+'</span>':'')+'</div>'+
+      '<div class="lab"><b>'+s.n+'</b><span>'+s.d+'</span></div></div>';
+  }).join('');
+
+  // build ink bands
+  el('inkbands').innerHTML=BANDS.map(function(b){
+    var chips=INKS.filter(function(k){return k.band===b;}).map(function(k){
+      return '<button class="ink" aria-pressed="false" onclick="pickInk(\''+k.h+'\',this)"><i style="background:'+k.h+'"></i><span>'+k.n+'</span></button>';
+    }).join('');
+    return '<div class="band"><span class="bandname">'+b+'</span>'+chips+'</div>';
+  }).join('');
+
+  // riso overprint layers use motif 3 (the sun) as two-drum art
+  function renderRiso(){
+    el('layA').innerHTML=motifSvg(1);
+    el('layB').innerHTML=motifSvg(1);
+    el('overprint').style.setProperty('--inkA',inkA);
+    el('overprint').style.setProperty('--inkB',inkB);
+  }
+  var showA=true, showB=true;
+  function toggleLayer(x){
+    if(x==='a'){showA=!showA; el('layA').style.display=showA?'block':'none'; el('tA').classList.toggle('on',showA);}
+    else{showB=!showB; el('layB').style.display=showB?'block':'none'; el('tB').classList.toggle('on',showB);}
+  }
+
+  // coverage-not-colour: one motif across 6 inks
+  function renderTintRow(){
+    var picks=[INKS[0],INKS[4],INKS[6],INKS[9],INKS[11],INKS[13]];
+    el('tintrow').innerHTML=picks.map(function(k){
+      return '<div class="tintchip" title="'+k.n+'" style="color:'+k.h+'">'+motifSvg(2)+'</div>';
+    }).join('');
+  }
+
+  function pickInk(h,btn){
+    activeInk=h;
+    // alternate which drum the picked ink feeds, so two picks make a duotone
+    inkB=inkA; inkA=h; renderRiso();
+    document.querySelectorAll('.ink').forEach(function(b){b.setAttribute('aria-pressed','false');});
+    if(btn) btn.setAttribute('aria-pressed','true');
+    recolorCovers();
+  }
+
+  // ---- covers: frozen grid x variable ingredients ----
+  var LCG=1234; function rnd(){LCG=(LCG*1103515245+12345)&0x7fffffff; return LCG/0x7fffffff;}
+  function pick(a){return a[Math.floor(rnd()*a.length)];}
+  var covers=[];
+  function makeBatch(){
+    covers=[];
+    for(var i=0;i<5;i++){
+      var t=pick(TITLES), ink=pick(INKS), stock=pick(STOCKS), motif=Math.floor(rnd()*MOTIFS.length),
+          stamp=pick(STAMPS), stampInk=pick(INKS), fleck=stock.cls==='fleck';
+      covers.push({t:t[0],s:t[1],ink:ink.h,paper:stock.sw,motif:motif,stamp:stamp,stampInk:stampInk.h,fleck:fleck});
+    }
+    renderCovers(true);
+  }
+  function renderCovers(animate){
+    el('shelf').innerHTML=covers.map(function(c,i){
+      return '<div class="cover '+(c.fleck?'fleck':'')+(animate?' settle':'')+'" style="--cvpaper:'+c.paper+';--cvink:'+c.ink+';--cvstamp:'+c.stampInk+';animation-delay:'+(i*60)+'ms">'+
+        '<div class="spine"></div>'+
+        '<div class="cv-title">'+c.t+'</div>'+
+        '<div class="cv-sub">'+c.s+'</div>'+
+        '<div class="cv-motif">'+motifSvg(c.motif)+'</div>'+
+        '<div class="cv-stamp">'+c.stamp+'</div>'+
+      '</div>';
+    }).join('');
+  }
+  function recolorCovers(){ // active ink re-inks the newest cover's ink, showing "re-theme re-inks"
+    if(covers.length){ covers[0].ink=activeInk; renderCovers(false); }
+  }
+  function shuffleCovers(){ makeBatch(); }
+
+  // starter pack
+  var PACK=[
+    {n:'3–4',t:'Templates',d:'the one filtering choice — an instant made zine'},
+    {n:'~5',t:'Papers',d:'the stock set above'},
+    {n:'4–5',t:'Riso textures',d:'grain overlays, tinted by any ink'},
+    {n:'8–10',t:'Stickers / motifs',d:'the personal layer, most-used'},
+    {n:'6–8',t:'Dividers',d:'structural polish, duotone pairs'},
+    {n:'4–6',t:'Cover elements',d:'marks, badges, mastheads'},
+    {n:'2+2',t:'Fonts',d:'OFL display + text (proven in-repo)'}
+  ];
+  el('packgrid').innerHTML=PACK.map(function(p){
+    return '<div class="packcard"><div class="n">'+p.n+'</div><b>'+p.t+'</b><span>'+p.d+'</span></div>';
+  }).join('');
+
+  function setTheme(t,btn){
+    btn.parentNode.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed','false');});
+    btn.setAttribute('aria-pressed','true');
+    if(t==='auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme',t);
+  }
+
+  renderRiso(); renderTintRow(); makeBatch();
+</script>
