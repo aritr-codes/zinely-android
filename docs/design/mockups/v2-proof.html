@@ -1,0 +1,692 @@
+<title>Zinely V2 — Proof (prototype)</title>
+<!--
+  Zinely V2 — the Proof (the final room) — canonical HTML prototype. NOT frozen; for owner critique.
+  Spec: V2-PROOF-PRINCIPLES.md (PP-1..9 / PF-1..5) + V2-PROOF-IA-INTERACTION.md + V2-PROOF-CRITIQUE.md + V2-PROOF-RESEARCH.md.
+  Palette: V2-TOKENS.md (chrome) — reused verbatim from the frozen Library + Bench so Proof belongs to the same world.
+  Type: Fraunces (voice) + Inter (work); Georgia / system-sans stand in here (matching the frozen siblings) pending real faces at parity.
+  Owner scope ruling (2026-07-28): designed + frozen for the full 1->32 range, STAGED build (single-sheet mini-zine ships first, saddle-stitch booklet follows).
+  The room, not a wizard: your zine is the hero (READ); the reassurance line replaces the old SHEET step; Details + Fold are PULLED drawers; one weighted commit.
+  Prototype-only controls (the model toggle, theme) sit OUTSIDE the phone and are labelled as such — they are not product UI.
+-->
+<style>
+  :root{
+    --paper:#F7F2E7; --paper-edge:#EEE6D4; --desk:#ECE3D1; --desk-edge:#E1D6BF;
+    --ink:#2A251E; --ink-soft:#5B5347; --ink-faint:#8C8269;
+    --matcha:#5E6B2F; --matcha-text:#4C5826; --matcha-tint:#DCE3C0;
+    --strawberry:#E98F97; --strawberry-text:#A6474F; --strawberry-tint:#F6DAD3;
+    --consequence:#A6382A; --on-matcha:#fff; --accent-on-ink:#B7C47C;
+    --ink-teal:#47857B; --ink-ochre:#D19A3C; --ink-straw:#E27F89; --ink-matcha:#7C8A3F;
+    --phone:#F7F2E7; --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --chrome:#FBF7EE; --chrome-line:#E4DAC6; --sheet:#FBF7EE; --scrim:rgba(42,37,30,.42);
+    --serif:'Fraunces',Georgia,'Times New Roman',serif;
+    --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --r:18px; --settle:cubic-bezier(.05,.7,.1,1); --standard:cubic-bezier(.2,0,0,1);
+    --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#2F2A22; --paper-edge:#39322A; --desk:#201D18; --desk-edge:#2A261F;
+      --ink:#ECE4D3; --ink-soft:#B4AB97; --ink-faint:#857C69;
+      --matcha:#93A257; --matcha-text:#B7C47C; --matcha-tint:#363826;
+      --strawberry:#D98289; --strawberry-text:#E8A6AB; --strawberry-tint:#3C2C2A;
+      --consequence:#E0857A; --on-matcha:#20240E; --accent-on-ink:#4C5826;
+      --phone:#2F2A22; --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5);
+      --chrome:#252017; --chrome-line:#3A332A; --sheet:#252017; --scrim:rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#2F2A22; --paper-edge:#39322A; --desk:#201D18; --desk-edge:#2A261F;
+    --ink:#ECE4D3; --ink-soft:#B4AB97; --ink-faint:#857C69;
+    --matcha:#93A257; --matcha-text:#B7C47C; --matcha-tint:#363826;
+    --strawberry:#D98289; --strawberry-text:#E8A6AB; --strawberry-tint:#3C2C2A;
+    --consequence:#E0857A; --on-matcha:#20240E; --accent-on-ink:#4C5826;
+    --phone:#2F2A22; --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5);
+    --chrome:#252017; --chrome-line:#3A332A; --sheet:#252017; --scrim:rgba(0,0,0,.55);
+  }
+  :root[data-theme="light"]{
+    --paper:#F7F2E7; --paper-edge:#EEE6D4; --desk:#ECE3D1; --desk-edge:#E1D6BF;
+    --ink:#2A251E; --ink-soft:#5B5347; --ink-faint:#8C8269;
+    --matcha:#5E6B2F; --matcha-text:#4C5826; --matcha-tint:#DCE3C0;
+    --strawberry:#E98F97; --strawberry-text:#A6474F; --strawberry-tint:#F6DAD3;
+    --consequence:#A6382A; --on-matcha:#fff; --accent-on-ink:#B7C47C;
+    --phone:#F7F2E7; --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --chrome:#FBF7EE; --chrome-line:#E4DAC6; --sheet:#FBF7EE; --scrim:rgba(42,37,30,.42);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--desk);
+    background-image:radial-gradient(120% 80% at 50% -10%,var(--desk-edge),var(--desk) 60%);
+    min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  body::before{content:"";position:fixed;inset:0;background-image:var(--grain);
+    background-size:180px 180px;mix-blend-mode:soft-light;opacity:.5;pointer-events:none;z-index:0;}
+  .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:34px 20px 72px;
+    display:flex;flex-direction:column;align-items:center;gap:20px;}
+  .masthead{width:100%;max-width:580px;text-align:center;}
+  .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--matcha-text);font-weight:600;margin:0 0 6px;}
+  .masthead h1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,5vw,36px);margin:0;letter-spacing:-.01em;text-wrap:balance;}
+  .masthead p{color:var(--ink-soft);font-size:14.5px;margin:8px auto 0;max-width:56ch;text-wrap:pretty;}
+
+  /* prototype-only controls — deliberately OUTSIDE the phone */
+  .protoctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;font-size:12.5px;color:var(--ink-soft);}
+  .seg{display:inline-flex;background:var(--chrome);border:1px solid var(--chrome-line);border-radius:999px;padding:3px;gap:2px;}
+  .seg button{border:none;background:none;font:inherit;color:var(--ink-soft);cursor:pointer;padding:5px 13px;border-radius:999px;line-height:1;}
+  .seg button[aria-pressed="true"]{background:var(--matcha);color:var(--on-matcha);font-weight:600;}
+  .protoctl .tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);}
+
+  .stage{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .phone{width:344px;max-width:92vw;height:748px;max-height:86vh;border-radius:44px;background:var(--phone);
+    border:10px solid var(--phone-frame);box-shadow:0 26px 60px -18px var(--frame-shadow),0 4px 0 rgba(255,255,255,.15) inset;
+    position:relative;overflow:hidden;display:flex;flex-direction:column;}
+  .phone::after{content:"";position:absolute;inset:0;background-image:var(--grain);background-size:150px 150px;
+    mix-blend-mode:soft-light;opacity:.35;pointer-events:none;z-index:60;}
+
+  .status{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:11px;color:var(--ink-faint);flex:none;z-index:5;}
+  .topbar{height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px;z-index:5;}
+  .iconbtn{width:38px;height:38px;border-radius:12px;border:none;background:none;color:var(--ink-soft);display:grid;place-items:center;cursor:pointer;}
+  .iconbtn:hover{background:var(--paper-edge);}
+  .iconbtn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+  .pcount{font-size:12px;color:var(--ink-faint);letter-spacing:.06em;font-variant-numeric:tabular-nums;}
+  .backlbl{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--ink-soft);}
+
+  /* the hero — your zine, readable */
+  .reader{flex:1;position:relative;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden;}
+  .tapz{position:absolute;top:0;bottom:0;width:26%;z-index:3;cursor:pointer;background:none;border:none;}
+  .tapz.l{left:0;} .tapz.r{right:0;}
+  .pageStage{position:relative;width:206px;height:300px;}
+  .zpage{position:absolute;inset:0;background:var(--paper);border:1px solid var(--paper-edge);border-radius:5px;
+    box-shadow:0 16px 34px -16px rgba(58,48,32,.44),0 2px 5px rgba(58,48,32,.14);
+    padding:26px 22px;display:flex;flex-direction:column;opacity:0;transform:translateX(14px) scale(.99);
+    transition:opacity .28s var(--standard),transform .34s var(--settle);pointer-events:none;overflow:hidden;}
+  .zpage::after{content:"";position:absolute;inset:0;border-radius:5px;background-image:var(--grain);
+    background-size:120px 120px;mix-blend-mode:soft-light;opacity:.42;pointer-events:none;}
+  .zpage.cur{opacity:1;transform:none;pointer-events:auto;}
+  .zpage.prev{opacity:0;transform:translateX(-14px) scale(.99);}
+  .zpn{position:absolute;bottom:9px;right:12px;font-size:8.5px;color:var(--ink-faint);letter-spacing:.05em;}
+  /* zine content (real, not lorem) */
+  .zt{font-family:var(--serif);color:var(--ink);}
+  .cover{align-items:center;justify-content:center;text-align:center;gap:14px;}
+  .cover .leaf{width:44px;height:44px;color:var(--matcha);}
+  .cover h2{font-family:var(--serif);font-weight:500;font-size:27px;line-height:1.08;margin:0;letter-spacing:-.01em;}
+  .cover .sub{font-family:var(--serif);font-style:italic;font-size:13px;color:var(--ink-soft);margin:0;}
+  .h{font-family:var(--serif);font-weight:500;font-size:19px;line-height:1.15;margin:0 0 10px;letter-spacing:-.005em;}
+  .b{font-family:var(--serif);font-size:12.5px;line-height:1.55;color:var(--ink-soft);margin:0;max-width:24ch;}
+  .pull{font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.25;color:var(--ink);margin:auto 0;}
+  .zlist{font-family:var(--serif);font-size:13px;color:var(--ink-soft);margin:8px 0 0;padding-left:1em;line-height:1.7;}
+  .zphoto{position:absolute;inset:0;border-radius:5px;}
+  .zphoto.g1{background:linear-gradient(150deg,var(--ink-teal),var(--ink-matcha));}
+  .zphoto.g2{background:linear-gradient(160deg,var(--ink-matcha),var(--ink-ochre));}
+  .zcap{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;color:#fff;font-family:var(--serif);font-size:12px;
+    background:linear-gradient(0deg,rgba(20,18,12,.6),transparent);}
+  .backc{align-items:center;justify-content:center;text-align:center;gap:10px;}
+  .backc .leaf{width:24px;height:24px;color:var(--ink-faint);}
+  .backc p{font-family:var(--serif);font-style:italic;font-size:12px;color:var(--ink-faint);margin:0;}
+
+  /* the resting "ready" band at the foot */
+  .band{flex:none;background:var(--chrome);border-top:1px solid var(--chrome-line);padding:12px 16px 16px;position:relative;z-index:20;
+    box-shadow:0 -10px 24px -18px var(--frame-shadow);}
+  .ready{display:flex;align-items:center;gap:9px;width:100%;background:var(--paper);border:1px solid var(--paper-edge);
+    border-radius:13px;padding:10px 12px;cursor:pointer;text-align:left;color:var(--ink);font:inherit;transition:background .15s;}
+  .ready:hover{background:var(--paper-edge);}
+  .ready .tick{flex:none;width:22px;height:22px;border-radius:50%;background:var(--matcha);display:grid;place-items:center;}
+  .ready .tick svg{width:13px;height:13px;stroke:var(--on-matcha);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+  .ready .rl{flex:1;min-width:0;}
+  .ready .rl b{display:block;font-size:13px;font-weight:600;line-height:1.3;}
+  .ready .rl span{display:block;font-size:11.5px;color:var(--ink-faint);line-height:1.35;margin-top:1px;}
+  .ready .chev{flex:none;color:var(--ink-faint);width:18px;height:18px;}
+  .ready .chev svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+
+  .commit{display:flex;gap:10px;margin-top:11px;}
+  .btn{font:inherit;border-radius:13px;cursor:pointer;border:1px solid transparent;display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 14px;line-height:1;transition:transform .1s,background .15s,box-shadow .2s;}
+  .btn:active{transform:scale(.975);}
+  .btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+  .btn-save{flex:1;background:var(--matcha);color:var(--on-matcha);font-weight:600;font-size:15px;flex-direction:column;gap:3px;padding:11px 14px;
+    box-shadow:0 8px 18px -8px var(--matcha);}
+  .btn-save small{font-weight:500;font-size:11px;opacity:.85;letter-spacing:.01em;}
+  .btn-share{flex:none;background:transparent;border-color:var(--chrome-line);color:var(--ink-soft);font-size:14px;font-weight:500;padding:0 18px;}
+  .foldlink{display:block;width:100%;margin-top:10px;background:none;border:none;font:inherit;color:var(--matcha-text);font-size:13px;font-weight:500;
+    cursor:pointer;padding:6px;text-align:center;border-radius:9px;}
+  .foldlink:hover{background:var(--matcha-tint);}
+
+  /* drawers (bottom sheets) */
+  .scrim{position:absolute;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .25s var(--standard);z-index:40;}
+  .scrim.show{opacity:1;pointer-events:auto;}
+  .drawer{position:absolute;left:0;right:0;bottom:0;background:var(--sheet);border-radius:22px 22px 0 0;z-index:50;
+    transform:translateY(102%);transition:transform .34s var(--settle);box-shadow:0 -20px 50px -20px var(--frame-shadow);
+    max-height:82%;display:flex;flex-direction:column;}
+  .drawer.show{transform:none;}
+  .drawer::after{content:"";position:absolute;inset:0;border-radius:22px 22px 0 0;background-image:var(--grain);background-size:150px 150px;
+    mix-blend-mode:soft-light;opacity:.3;pointer-events:none;}
+  .grab{width:38px;height:4px;border-radius:2px;background:var(--chrome-line);margin:10px auto 4px;flex:none;}
+  .dhead{display:flex;align-items:center;justify-content:space-between;padding:4px 18px 10px;flex:none;}
+  .dhead h3{font-family:var(--serif);font-weight:500;font-size:18px;margin:0;}
+  .dclose{width:30px;height:30px;border-radius:9px;border:none;background:var(--paper-edge);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;}
+  .dclose svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;}
+  .dbody{padding:2px 18px 20px;overflow-y:auto;position:relative;z-index:1;}
+
+  /* details drawer */
+  .sect{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;margin:14px 0 8px;}
+  .paperseg{display:flex;background:var(--paper);border:1px solid var(--paper-edge);border-radius:11px;padding:3px;gap:3px;}
+  .paperseg button{flex:1;border:none;background:none;font:inherit;font-size:13px;color:var(--ink-soft);padding:9px;border-radius:8px;cursor:pointer;}
+  .paperseg button[aria-pressed="true"]{background:var(--matcha);color:var(--on-matcha);font-weight:600;}
+  .paperhint{font-size:11.5px;color:var(--ink-faint);margin:7px 2px 0;line-height:1.45;}
+  .check{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:9px;}
+  .check li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--ink);line-height:1.4;}
+  .check .ok{flex:none;width:18px;height:18px;border-radius:50%;background:var(--matcha-tint);display:grid;place-items:center;margin-top:1px;}
+  .check .ok svg{width:11px;height:11px;stroke:var(--matcha-text);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
+  .check small{display:block;color:var(--ink-faint);font-size:11.5px;margin-top:1px;}
+  /* filled true-render sheet reassurance (NEVER blank panels) */
+  .sheetcard{margin-top:8px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:13px;padding:13px;}
+  .sheetcard .cardh{font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;line-height:1.45;}
+  .minisheet{width:100%;aspect-ratio:11/8.5;border-radius:6px;background:var(--paper-edge);position:relative;overflow:hidden;
+    box-shadow:0 6px 14px -8px var(--frame-shadow);border:1px solid var(--paper-edge);}
+  .minisheet .panel{position:absolute;background:var(--paper);}
+  .minisheet .pv{color:var(--ink-soft);}
+  .testcard{margin-top:12px;background:var(--strawberry-tint);border:1px solid var(--strawberry);border-radius:13px;padding:12px 13px;display:none;gap:10px;align-items:flex-start;}
+  .testcard.show{display:flex;}
+  .testcard .ti{flex:none;width:22px;height:22px;color:var(--strawberry-text);}
+  .testcard .ti svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
+  .testcard p{margin:0;font-size:12.5px;line-height:1.5;color:var(--ink);}
+  .testcard b{color:var(--strawberry-text);}
+  .duplex{display:none;} .duplex.show{display:block;}
+  .privacyline{display:flex;align-items:center;gap:7px;margin-top:16px;font-size:12px;color:var(--ink-faint);}
+  .privacyline svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;}
+
+  /* fold drawer */
+  .foldstage{background:var(--paper);border:1px solid var(--paper-edge);border-radius:14px;padding:16px;position:relative;}
+  .foldsvg{display:block;width:100%;height:auto;}
+  .foldsvg .sheetln{fill:var(--paper);stroke:var(--ink-faint);stroke-width:1.4;}
+  .foldsvg .crease{stroke:var(--ink-faint);stroke-width:1;stroke-dasharray:4 3;opacity:.5;}
+  .foldsvg .active{stroke:var(--matcha);stroke-width:2.2;stroke-dasharray:none;opacity:1;}
+  .foldsvg .cut{stroke:var(--consequence);stroke-width:2.4;stroke-linecap:round;}
+  .foldsvg .arrow{stroke:var(--matcha);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .foldsvg .arrowhead{fill:var(--matcha);}
+  .foldsvg .coverfill{fill:var(--matcha-tint);stroke:var(--matcha);stroke-width:1.4;}
+  .foldsvg .stopdot{fill:var(--consequence);}
+  .foldsvg .lbl{font-family:var(--sans);font-size:9px;fill:var(--ink-soft);font-weight:600;}
+  .foldsvg .lblc{font-family:var(--sans);font-size:8.5px;fill:var(--consequence);font-weight:700;}
+  .foldsvg .lblm{font-family:var(--sans);font-size:8.5px;fill:var(--matcha-text);font-weight:700;}
+  .foldcap{font-family:var(--serif);font-size:14px;color:var(--ink);text-align:center;margin:13px 6px 2px;line-height:1.4;min-height:2.6em;}
+  .foldnav{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:10px;}
+  .stepdots{display:flex;gap:6px;align-items:center;}
+  .stepdots i{width:7px;height:7px;border-radius:50%;background:var(--chrome-line);transition:background .2s,transform .2s;}
+  .stepdots i.on{background:var(--matcha);transform:scale(1.25);}
+  .fnav{width:40px;height:40px;border-radius:12px;border:1px solid var(--chrome-line);background:transparent;color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;}
+  .fnav:disabled{opacity:.35;cursor:default;}
+  .fnav svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .animtoggle{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:12px;background:none;border:1px solid var(--chrome-line);
+    border-radius:11px;padding:9px;font:inherit;font-size:12.5px;color:var(--ink-soft);cursor:pointer;}
+  .animtoggle svg{width:15px;height:15px;stroke:currentColor;fill:var(--ink-soft);stroke-width:1;}
+  .animtoggle.playing{color:var(--matcha-text);border-color:var(--matcha);}
+  .animnote{font-size:11px;color:var(--ink-faint);text-align:center;margin-top:8px;line-height:1.4;}
+
+  /* completion (felt closure) — replaces the band after Save */
+  .done{display:none;flex-direction:column;align-items:center;text-align:center;gap:3px;padding:6px 0 2px;}
+  .band.saved .ready,.band.saved .commit,.band.saved .foldlink{display:none;}
+  .band.saved .done{display:flex;}
+  .done .seal{width:52px;height:52px;border-radius:50%;background:var(--matcha);display:grid;place-items:center;margin-bottom:4px;
+    animation:seal .4s var(--settle);}
+  .done .seal svg{width:26px;height:26px;stroke:var(--on-matcha);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
+  @keyframes seal{from{transform:scale(.7);opacity:.4}to{transform:scale(1);opacity:1}}
+  .done h4{font-family:var(--serif);font-weight:500;font-size:19px;margin:2px 0 0;}
+  .done p{font-size:12.5px;color:var(--ink-faint);margin:0;}
+  .done .row{display:flex;gap:10px;margin-top:12px;width:100%;}
+  .done .row button{flex:1;font:inherit;border-radius:12px;padding:12px;cursor:pointer;font-size:13.5px;font-weight:600;}
+  .done .row .foldit{background:var(--matcha);color:var(--on-matcha);border:none;}
+  .done .row .shelf{background:transparent;border:1px solid var(--chrome-line);color:var(--ink-soft);font-weight:500;}
+
+  .caption{max-width:560px;font-size:12.5px;color:var(--ink-faint);text-align:center;line-height:1.55;}
+  .caption b{color:var(--ink-soft);font-weight:600;}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;margin-top:2px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-faint);}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.01ms !important;animation-duration:.01ms !important;}
+  }
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <p class="kicker">Zinely V2 · Proof</p>
+    <h1>The final room</h1>
+    <p>Not “Export.” The place you slow down, see your book, trust it’s ready for the fold — and press print knowing exactly what will happen. Your zine is the hero; the machinery stays out of sight.</p>
+  </div>
+
+  <div class="protoctl" role="group" aria-label="Prototype controls (not product UI)">
+    <span class="tag">Prototype</span>
+    <div class="seg" role="group" aria-label="Zine model">
+      <button id="mMini" aria-pressed="true" onclick="setModel('mini')">Mini-zine · 8</button>
+      <button id="mBook" aria-pressed="false" onclick="setModel('booklet')">Booklet · 16</button>
+    </div>
+    <div class="seg" role="group" aria-label="Theme">
+      <button id="tAuto" aria-pressed="true" onclick="setTheme('auto')">Auto</button>
+      <button id="tLight" aria-pressed="false" onclick="setTheme('light')">Light</button>
+      <button id="tDark" aria-pressed="false" onclick="setTheme('dark')">Dark</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>Zinely</span></div>
+
+      <div class="topbar">
+        <button class="iconbtn" aria-label="Back to the Bench" onclick="flash('Back to the Bench — nothing is lost')">
+          <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <span class="pcount" id="pcount">1 / 8</span>
+        <button class="iconbtn" aria-label="Fold instructions" onclick="openDrawer('fold')">
+          <svg viewBox="0 0 24 24"><path d="M4 7l8-3 8 3v10l-8 3-8-3z"/><path d="M12 4v16"/></svg>
+        </button>
+      </div>
+
+      <!-- HERO: your zine, readable (READ) -->
+      <div class="reader">
+        <button class="tapz l" aria-label="Previous page" onclick="turn(-1)"></button>
+        <button class="tapz r" aria-label="Next page" onclick="turn(1)"></button>
+        <div class="pageStage" id="pageStage"><!-- pages injected --></div>
+      </div>
+
+      <!-- the resting READY band -->
+      <div class="band" id="band">
+        <button class="ready" id="ready" aria-label="Print details" onclick="openDrawer('details')">
+          <span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
+          <span class="rl"><b id="readyTitle">Ready to print</b><span id="readySub">8 pages · one sheet, one cut · A4 · stays on your phone</span></span>
+          <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+        </button>
+
+        <div class="commit">
+          <button class="btn btn-save" onclick="doSave()">
+            <span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7"/><path d="M8 20v-6h8v6"/></svg>Save PDF</span>
+            <small id="saveSub">8 pages · A4</small>
+          </button>
+          <button class="btn btn-share" onclick="flash('Opens your share sheet — the same PDF')">
+            <svg viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/><path d="M12 3v13"/><path d="M8 7l4-4 4 4"/></svg>Share
+          </button>
+        </div>
+
+        <button class="foldlink" onclick="openDrawer('fold')">How do I fold this?</button>
+
+        <!-- felt closure (after Save) -->
+        <div class="done">
+          <span class="seal"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
+          <h4 id="doneTitle">Saved to your phone</h4>
+          <p id="doneSub">zinely-tiny-green-things.pdf · in Downloads</p>
+          <div class="row">
+            <button class="foldit" onclick="openDrawer('fold')">Fold it up</button>
+            <button class="shelf" onclick="flash('Back to your shelf — the finished book lives in Read')">Back to shelf</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- DRAWERS -->
+      <div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+
+      <!-- details -->
+      <div class="drawer" id="drawer-details" role="dialog" aria-label="Print details">
+        <div class="grab"></div>
+        <div class="dhead"><h3>Print details</h3>
+          <button class="dclose" aria-label="Close" onclick="closeDrawer()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <div class="dbody">
+          <div class="sect">What paper is in your printer?</div>
+          <div class="paperseg" role="group" aria-label="Paper size">
+            <button id="pA4" aria-pressed="true" onclick="setPaper('A4')">A4</button>
+            <button id="pLetter" aria-pressed="false" onclick="setPaper('Letter')">US Letter</button>
+          </div>
+          <p class="paperhint">We lay your zine out for this exact size, so it prints at 100% — nothing shrinks to fit.</p>
+
+          <div class="sect">All set</div>
+          <ul class="check" id="checklist"><!-- injected --></ul>
+
+          <div class="duplex" id="duplexBlock">
+            <div class="sect">Printing both sides</div>
+            <ul class="check">
+              <li><span class="ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
+                <span>Print on both sides · <b>flip on short edge</b><small>Keeps the back pages the right way up for a folded booklet.</small></span></li>
+            </ul>
+            <div class="testcard show">
+              <span class="ti"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-3-6 3z"/></svg></span>
+              <p><b>New printer?</b> Print one test sheet first and fold it — check the cover’s on top and the text is upright. Printers flip pages differently; one sheet saves the whole run.</p>
+            </div>
+          </div>
+
+          <div class="sect">Your sheet</div>
+          <div class="sheetcard">
+            <p class="cardh" id="sheetCardH">We arranged your 8 pages on one sheet so it folds into a booklet in the right order.</p>
+            <div class="minisheet" id="minisheet"></div>
+          </div>
+
+          <div class="privacyline">
+            <svg viewBox="0 0 24 24"><path d="M6 11V8a6 6 0 0112 0v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg>
+            <span>Everything happens on your phone. Nothing is uploaded.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- fold guide -->
+      <div class="drawer" id="drawer-fold" role="dialog" aria-label="How to fold">
+        <div class="grab"></div>
+        <div class="dhead"><h3 id="foldTitle">Fold it up</h3>
+          <button class="dclose" aria-label="Close" onclick="closeDrawer()"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        </div>
+        <div class="dbody">
+          <div class="foldstage">
+            <div id="foldDiagram"></div>
+          </div>
+          <p class="foldcap" id="foldCap"></p>
+          <div class="foldnav">
+            <button class="fnav" id="fPrev" aria-label="Previous fold step" onclick="foldStep(-1)"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+            <div class="stepdots" id="foldDots" aria-hidden="true"></div>
+            <button class="fnav" id="fNext" aria-label="Next fold step" onclick="foldStep(1)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+          </div>
+          <button class="animtoggle" id="animBtn" onclick="toggleAnim()">
+            <svg viewBox="0 0 24 24" id="animIcon"><path d="M7 4v16l13-8z"/></svg>
+            <span id="animLbl">Play the fold</span>
+          </button>
+          <p class="animnote">Optional — the steps stay put whether or not it plays.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="caption"><b>Reading the room.</b> Land on your own zine (swipe or tap the sides). The one green line replaces the old imposition step — it <b>reassures</b>, it doesn’t show the machinery. Tap it for paper, the all-green check, and (for booklets) the duplex + test-sheet truth. “How do I fold this?” and the fold guide are <b>pulled</b>, never forced. One weighted commit; reversible until you press it.</p>
+    <div class="legend">
+      <span><i style="background:var(--matcha)"></i> primary / ready</span>
+      <span><i style="background:var(--strawberry)"></i> the one honest caution (test sheet)</span>
+      <span><i style="background:var(--consequence)"></i> the cut — where the blade stops</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- model + content state ----
+  var MODEL='mini';
+  var MODELS={
+    mini:   {pages:8,  paperN:8,  readySub:function(p){return '8 pages · one sheet, one cut · '+p+' · stays on your phone';},
+             saveSub:function(p){return '8 pages · '+p;}, sheetCardH:'We arranged your 8 pages on one sheet so it folds into a booklet in the right order.',
+             duplex:false, foldTitle:'Fold it up', fold:'miniFold'},
+    booklet:{pages:16, paperN:16, readySub:function(p){return '16 pages · 4 sheets, folded & stapled · '+p+' · stays on your phone';},
+             saveSub:function(p){return '16 pages · '+p;}, sheetCardH:'We arranged your 16 pages across 4 sheets so, folded and nested, they read in order.',
+             duplex:true, foldTitle:'Fold & staple', fold:'bookFold'}
+  };
+  var PAPER='A4';
+  var page=0;
+
+  // real zine content
+  var PAGES=[
+    {cls:'cover', html:'<div class="leaf">'+leafSvg()+'</div><h2>Tiny Green<br>Things</h2><p class="sub">a windowsill zine</p>'},
+    {html:'<h3 class="h">Why grow small?</h3><p class="b">A pot on the sill asks little and gives back every morning. You don’t need a garden. You need one green thing and a Sunday.</p>'},
+    {photo:'g1', cap:'Basil · day nine'},
+    {html:'<p class="pull">“Water on Sundays. Forgive the rest.”</p>'},
+    {html:'<h3 class="h">Three that forgive you</h3><ul class="zlist"><li>Pothos — thrives on neglect</li><li>Snake plant — the north-sill friend</li><li>Mint — cut it back, it thanks you</li></ul>'},
+    {photo:'g2', cap:'Mint, cut back hard'},
+    {html:'<h3 class="h">Give them the north sill</h3><p class="b">Bright, never blazing. If a leaf pales, move it a hand’s width from the glass and wait a week.</p>'},
+    {cls:'backc', html:'<div class="leaf">'+leafSvg()+'</div><p>made on a rainy Tuesday</p>'}
+  ];
+
+  function leafSvg(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c7-1 9-7 9-14-7 0-13 2-14 9"/><path d="M12 21C8 16 8 10 8 6"/></svg>';}
+
+  function buildPages(){
+    var st=document.getElementById('pageStage'); st.innerHTML='';
+    var n=MODELS[MODEL].pages;
+    for(var i=0;i<n;i++){
+      var src=PAGES[i%PAGES.length];
+      var d=document.createElement('div'); d.className='zpage '+(src.cls||'')+(src.photo?' zt':'');
+      if(src.photo){ d.innerHTML='<div class="zphoto '+src.photo+'"></div><div class="zcap">'+src.cap+'</div>'; }
+      else { d.innerHTML=src.html; }
+      d.innerHTML+='<span class="zpn">'+(i+1)+'</span>';
+      st.appendChild(d);
+    }
+    page=0; showPage();
+  }
+  function showPage(){
+    var kids=document.getElementById('pageStage').children;
+    for(var i=0;i<kids.length;i++){
+      kids[i].classList.remove('cur','prev');
+      if(i===page) kids[i].classList.add('cur');
+      else if(i<page) kids[i].classList.add('prev');
+    }
+    document.getElementById('pcount').textContent=(page+1)+' / '+MODELS[MODEL].pages;
+  }
+  function turn(d){
+    var n=MODELS[MODEL].pages, np=page+d;
+    if(np<0||np>=n) return;
+    page=np; showPage();
+  }
+
+  function setModel(m){
+    MODEL=m;
+    document.getElementById('mMini').setAttribute('aria-pressed', m==='mini');
+    document.getElementById('mBook').setAttribute('aria-pressed', m==='booklet');
+    var cfg=MODELS[m];
+    document.getElementById('readySub').textContent=cfg.readySub(PAPER);
+    document.getElementById('saveSub').textContent=cfg.saveSub(PAPER);
+    document.getElementById('sheetCardH').textContent=cfg.sheetCardH;
+    document.getElementById('foldTitle').textContent=cfg.foldTitle;
+    document.getElementById('duplexBlock').classList.toggle('show', cfg.duplex);
+    document.getElementById('band').classList.remove('saved');
+    buildPages(); buildChecklist(); buildMiniSheet(); resetFold();
+  }
+  function setPaper(p){
+    PAPER=p;
+    document.getElementById('pA4').setAttribute('aria-pressed', p==='A4');
+    document.getElementById('pLetter').setAttribute('aria-pressed', p==='Letter');
+    var cfg=MODELS[MODEL];
+    document.getElementById('readySub').textContent=cfg.readySub(p);
+    document.getElementById('saveSub').textContent=cfg.saveSub(p);
+  }
+
+  function buildChecklist(){
+    var ul=document.getElementById('checklist'); ul.innerHTML='';
+    var items=[
+      ['Pages arranged for the fold','We reordered them for the printer — you never had to.'],
+      ['Printing at 100% (actual size)','Nothing shrinks to fit the page.'],
+      (MODEL==='booklet'
+        ? ['16 pages — a multiple of 4','Booklets fold in fours; yours lands exactly right.']
+        : ['8 pages on one sheet','One sheet, folded and cut once.'])
+    ];
+    items.forEach(function(it){
+      var li=document.createElement('li');
+      li.innerHTML='<span class="ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span><span>'+it[0]+'<small>'+it[1]+'</small></span>';
+      ul.appendChild(li);
+    });
+  }
+
+  // filled true-render sheet reassurance (NEVER blank panels)
+  function buildMiniSheet(){
+    var el=document.getElementById('minisheet'); el.innerHTML='';
+    // draw a small 2x4 filled sheet for mini; for booklet draw a stack of 4 nested sheets
+    if(MODEL==='mini'){
+      for(var r=0;r<2;r++) for(var c=0;c<4;c++){
+        var p=document.createElement('div'); p.className='panel pv';
+        p.style.cssText='left:'+(2+c*24.5)+'%;top:'+(3+r*47)+'%;width:23%;height:44%;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:8px;'+(r===0?'transform:rotate(180deg);':'');
+        p.style.background='var(--paper)';
+        p.textContent='•';
+        el.appendChild(p);
+      }
+      // the one cut
+      var cut=document.createElement('div');
+      cut.style.cssText='position:absolute;left:27%;right:27%;top:calc(50% - 1px);height:2px;background:var(--consequence);border-radius:2px;';
+      el.appendChild(cut);
+    } else {
+      el.style.background='transparent';
+      for(var i=0;i<4;i++){
+        var s=document.createElement('div');
+        s.style.cssText='position:absolute;left:'+(8+i*3)+'%;top:'+(10+i*4)+'%;width:70%;height:64%;background:var(--paper);border:1px solid var(--paper-edge);border-radius:3px;box-shadow:0 4px 10px -6px var(--frame-shadow);';
+        el.appendChild(s);
+      }
+      var lbl=document.createElement('div');
+      lbl.style.cssText='position:absolute;right:6%;bottom:6%;font-size:8px;color:var(--ink-faint);';
+      lbl.textContent='4 sheets, nested';
+      el.appendChild(lbl);
+    }
+  }
+
+  // ---- fold guide ----
+  var fStep=0, animTimer=null;
+  var MINI=[
+    {cap:'Fold in half three times to crease eight little pages.', svg:foldSVG_creases},
+    {cap:'Open flat. Cut the middle slit — stop at the centre.', svg:foldSVG_cut},
+    {cap:'Fold the long way. Push the ends in — the slit opens.', svg:foldSVG_push},
+    {cap:'Let the pages collapse and stack into a booklet.', svg:foldSVG_stack},
+    {cap:'Crease the spine. Your cover is on top.', svg:foldSVG_cover}
+  ];
+  var BOOK=[
+    {cap:'Fold each of the 4 printed sheets in half.', svg:bookSVG_fold},
+    {cap:'Nest them one inside another — cover sheet outside.', svg:bookSVG_nest},
+    {cap:'Staple through the spine fold, twice.', svg:bookSVG_staple},
+    {cap:'Optional: trim the fore-edge flush. Done.', svg:bookSVG_trim}
+  ];
+  function foldSet(){return MODEL==='booklet'?BOOK:MINI;}
+
+  function renderFold(){
+    var set=foldSet(), s=set[fStep];
+    document.getElementById('foldDiagram').innerHTML=s.svg(animTimer!==null);
+    document.getElementById('foldCap').textContent=s.cap;
+    var dots=document.getElementById('foldDots'); dots.innerHTML='';
+    for(var i=0;i<set.length;i++){var d=document.createElement('i'); if(i===fStep)d.className='on'; dots.appendChild(d);}
+    document.getElementById('fPrev').disabled=(fStep===0);
+    document.getElementById('fNext').disabled=(fStep===set.length-1);
+  }
+  function foldStep(d){
+    stopAnim();
+    var set=foldSet(), n=fStep+d;
+    if(n<0||n>=set.length) return;
+    fStep=n; renderFold();
+  }
+  function resetFold(){ stopAnim(); fStep=0; renderFold(); }
+  function toggleAnim(){ animTimer===null ? startAnim() : stopAnim(); }
+  function startAnim(){
+    var btn=document.getElementById('animBtn');
+    btn.classList.add('playing');
+    document.getElementById('animLbl').textContent='Playing…';
+    document.getElementById('animIcon').innerHTML='<rect x="7" y="5" width="3.5" height="14"/><rect x="13.5" y="5" width="3.5" height="14"/>';
+    animTimer=setInterval(function(){
+      var set=foldSet(); fStep=(fStep+1)%set.length; renderFold();
+    }, 1300);
+    renderFold();
+  }
+  function stopAnim(){
+    if(animTimer!==null){clearInterval(animTimer); animTimer=null;}
+    var btn=document.getElementById('animBtn');
+    if(btn){btn.classList.remove('playing');
+      document.getElementById('animLbl').textContent='Play the fold';
+      document.getElementById('animIcon').innerHTML='<path d="M7 4v16l13-8z"/>';}
+  }
+
+  // fold diagram SVGs — one flat camera angle, arrow + crease, caption on the diagram, cut stop-point + cover marked
+  function frame(inner){return '<svg class="foldsvg" viewBox="0 0 200 150" role="img">'+inner+'</svg>';}
+  function sheetRect(){return '<rect class="sheetln" x="24" y="34" width="152" height="82" rx="2"/>';}
+  function creases(active){
+    var v1=44+ (active?'':''); // static verticals
+    var s='';
+    [24,62,100,138,176].forEach(function(x){ s+='<line class="crease" x1="'+x+'" y1="34" x2="'+x+'" y2="116"/>';});
+    s+='<line class="crease" x1="24" y1="75" x2="176" y2="75"/>';
+    return s;
+  }
+  function foldSVG_creases(){
+    return frame(sheetRect()+creases()+
+      '<line class="active" x1="100" y1="30" x2="100" y2="120"/>'+
+      '<text class="lblm" x="104" y="28">fold here first</text>');
+  }
+  function foldSVG_cut(){
+    return frame(sheetRect()+creases()+
+      '<line class="cut" x1="62" y1="75" x2="138" y2="75"/>'+
+      '<circle class="stopdot" cx="62" cy="75" r="3.2"/><circle class="stopdot" cx="138" cy="75" r="3.2"/>'+
+      '<text class="lblc" x="70" y="70">cut — stop at the dots</text>');
+  }
+  function foldSVG_push(){
+    return frame(sheetRect()+
+      '<line class="active" x1="24" y1="75" x2="176" y2="75"/>'+
+      '<path class="arrow" d="M40 128 Q60 118 78 128"/><path class="arrowhead" d="M78 128l-6-3 1 6z"/>'+
+      '<path class="arrow" d="M160 128 Q140 118 122 128"/><path class="arrowhead" d="M122 128l6-3-1 6z"/>'+
+      '<text class="lblm" x="66" y="140">push the ends together</text>');
+  }
+  function foldSVG_stack(){
+    return frame(
+      '<rect class="sheetln" x="70" y="40" width="60" height="70" rx="2"/>'+
+      '<rect class="sheetln" x="64" y="46" width="60" height="70" rx="2"/>'+
+      '<rect class="sheetln" x="58" y="52" width="60" height="70" rx="2"/>'+
+      '<path class="arrow" d="M150 60 Q160 87 150 112"/><path class="arrowhead" d="M150 112l4-6-6 1z"/>'+
+      '<text class="lbl" x="60" y="132">stack into a book</text>');
+  }
+  function foldSVG_cover(){
+    return frame(
+      '<rect class="coverfill" x="66" y="34" width="68" height="84" rx="2"/>'+
+      '<path d="M92 66c9-1 12-5 12-11-8 0-15 2-16 10" fill="none" stroke="var(--matcha-text)" stroke-width="1.6"/>'+
+      '<text class="lblm" x="70" y="130">this panel is your cover</text>');
+  }
+  // booklet
+  function bookSVG_fold(){
+    return frame(sheetRect()+
+      '<line class="active" x1="100" y1="30" x2="100" y2="120"/>'+
+      '<path class="arrow" d="M150 60 Q160 75 150 90"/><path class="arrowhead" d="M150 90l4-6-6 1z"/>'+
+      '<text class="lblm" x="104" y="28">fold each sheet in half</text>');
+  }
+  function bookSVG_nest(){
+    return frame(
+      '<path class="sheetln" d="M100 38 q-40 6 -40 40 v0 q0 34 40 40" fill="none"/>'+
+      '<path class="sheetln" d="M100 46 q-30 5 -30 32 q0 27 30 32" fill="none"/>'+
+      '<path class="sheetln" d="M100 54 q-20 4 -20 24 q0 20 20 24" fill="none"/>'+
+      '<line class="crease" x1="100" y1="34" x2="100" y2="120"/>'+
+      '<text class="lbl" x="108" y="80">nest, cover outside</text>');
+  }
+  function bookSVG_staple(){
+    return frame(
+      '<rect class="sheetln" x="60" y="36" width="80" height="82" rx="2"/>'+
+      '<line class="crease" x1="100" y1="34" x2="100" y2="120"/>'+
+      '<rect x="97" y="58" width="6" height="10" rx="1" fill="var(--ink-soft)"/>'+
+      '<rect x="97" y="86" width="6" height="10" rx="1" fill="var(--ink-soft)"/>'+
+      '<text class="lbl" x="108" y="120">two staples, on the spine</text>');
+  }
+  function bookSVG_trim(){
+    return frame(
+      '<rect class="sheetln" x="60" y="36" width="76" height="82" rx="2"/>'+
+      '<line class="cut" x1="136" y1="30" x2="136" y2="124"/>'+
+      '<text class="lblc" x="60" y="130">trim the open edge (optional)</text>');
+  }
+
+  // ---- drawers ----
+  var openName=null;
+  function openDrawer(name){
+    closeDrawer(true);
+    openName=name;
+    document.getElementById('scrim').classList.add('show');
+    document.getElementById('drawer-'+name).classList.add('show');
+    if(name==='fold') resetFold();
+  }
+  function closeDrawer(silent){
+    document.getElementById('scrim').classList.remove('show');
+    ['details','fold'].forEach(function(n){document.getElementById('drawer-'+n).classList.remove('show');});
+    stopAnim();
+    openName=null;
+  }
+
+  // ---- commit + closure ----
+  function doSave(){
+    var cfg=MODELS[MODEL];
+    document.getElementById('doneTitle').textContent='Saved to your phone';
+    document.getElementById('doneSub').textContent='zinely-tiny-green-things.pdf · in Downloads';
+    document.getElementById('band').classList.add('saved');
+  }
+  function flash(msg){
+    var s=document.getElementById('status-toast');
+    if(!s){s=document.createElement('div');s.id='status-toast';
+      s.style.cssText='position:absolute;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:12px;padding:8px 14px;border-radius:10px;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none;max-width:80%;text-align:center;';
+      document.querySelector('.phone').appendChild(s);}
+    s.textContent=msg; s.style.opacity='1';
+    clearTimeout(s._t); s._t=setTimeout(function(){s.style.opacity='0';},1900);
+  }
+
+  // ---- theme ----
+  function setTheme(t){
+    document.getElementById('tAuto').setAttribute('aria-pressed', t==='auto');
+    document.getElementById('tLight').setAttribute('aria-pressed', t==='light');
+    document.getElementById('tDark').setAttribute('aria-pressed', t==='dark');
+    if(t==='auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', t);
+  }
+
+  // ---- init ----
+  buildPages(); buildChecklist(); buildMiniSheet(); resetFold();
+</script>
