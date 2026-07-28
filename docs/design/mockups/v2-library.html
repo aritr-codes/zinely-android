@@ -36,8 +36,10 @@
     display:flex;flex-direction:column;transition:background .4s}
 
   /* no header chrome, no metadata line — the covers ARE the screen. */
-  .shelf{flex:1 1 auto;overflow-y:auto;padding:36px 22px 128px;display:grid;grid-template-columns:1fr 1fr;gap:30px 20px;align-content:start}
+  .shelf{flex:1 1 auto;overflow-y:auto;padding:30px 22px 128px;display:grid;grid-template-columns:1fr 1fr;gap:28px 20px;align-content:start}
   .shelf::-webkit-scrollbar{width:0}
+  .shelf-head{grid-column:1 / -1;padding:2px 2px 0}
+  .shelf-head h1{margin:0;font-size:1.62rem;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
 
   .zine{position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent;
     transition:transform .16s ease}
@@ -133,6 +135,7 @@ sheet. Format &amp; date are disclosed there, not stamped on every card. Try day
 
 <div class="phone">
   <div class="shelf" id="shelf">
+    <div class="shelf-head"><h1 class="serif">Your shelf</h1></div>
     <div class="zine" data-name="Sunday market" data-sub="A4 · 2 days ago"><div class="cover ink-matcha"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.2"/><g stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></g></svg></span><div class="band"></div><div class="ct serif">Sunday market</div><button class="more" aria-label="Actions for Sunday market">⋯</button></div></div>
     <div class="zine" data-name="Letters home" data-sub="Letter · today"><div class="cover paper-s"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 6.5h17v11h-17z"/><path d="M3.5 7l8.5 6 8.5-6"/></svg></span><div class="band"></div><div class="ct serif">Letters home</div><button class="more" aria-label="Actions for Letters home">⋯</button></div></div>
     <div class="zine" data-name="Riso tests" data-sub="A4 · 5 days ago"><div class="cover ink-teal"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2.5 15c3-4 5.5-4 8.5 0s5.5 4 8.5 0"/><path d="M2.5 9.5c3-4 5.5-4 8.5 0s5.5 4 8.5 0"/></svg></span><div class="band"></div><div class="ct serif">Riso tests</div><button class="more" aria-label="Actions for Riso tests">⋯</button></div></div>
@@ -148,8 +151,8 @@ sheet. Format &amp; date are disclosed there, not stamped on every card. Try day
       <div class="col"><div class="book-ill"></div><span class="lbl">a little book</span></div>
     </div>
     <h2 class="serif">Make your first little zine.</h2>
-    <p>Print one sheet at home, make a few folds and one cut, and it becomes a small eight-page book. The bench will show you every step.</p>
-    <p class="pv">Kept on this device — no account, nothing uploaded</p>
+    <p>One sheet of paper becomes a little eight-page book you print and fold yourself — we’ll show you each step.</p>
+    <p class="pv">Everything you make stays on your phone — no account, nothing uploaded.</p>
   </div>
 
   <div class="dock"><button class="start"><span class="plus">＋</span> Start a zine</button></div>
