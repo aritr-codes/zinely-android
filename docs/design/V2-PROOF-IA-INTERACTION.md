@@ -127,10 +127,11 @@ journey
 Identical arc, with the two honest additions the booklet model forces (PP-5):
 
 - **Trust** line reads *"16 pages · 4 sheets, folded & stapled · A4 · stays on your phone."*
-- Pulling **Details** shows the **duplex** guidance: *"Print both sides · flip on short edge"* — stated as the
-  likely-correct setting, **paired with the test-sheet nudge**: *"New printer? Print one test sheet first and
-  fold it — check the cover's on top."* This is the flip-edge safety net (PR§ Part 3, PC§5), and the exact
-  default flip is a **device-verification item**, not asserted as certain.
+- Pulling **Details** shows the **duplex** guidance: *"Print both sides · **usually** flip on short edge"* — the
+  hedge word carries the "likely-correct, not certain" truth in the line itself, **paired with the test-sheet
+  nudge**: *"New printer? Print one test sheet first and fold it — check the cover's on top."* This is the
+  flip-edge safety net (PR§ Part 3, PC§5), and the exact default flip is a **device-verification item**, not
+  asserted as certain.
 - The **fold drawer** is the nest-and-staple guide (fold each sheet, nest, staple the spine, optional trim).
 
 ### B.3 — Whole-product review (the owner's one final objective)
@@ -203,6 +204,12 @@ position; both drawers are reachable, self-paced, and dismissible by screen-read
 announce their physical outcome; the duplex/test-sheet guidance (booklets) is fully readable, not image-only
 (PR§D6 — captions are real text on/beside the diagram). The fold guide's information must **not** live only in an
 animation.
+
+**Pass-2 watch item (from review OB-1):** the filled imposed-sheet reassurance keeps the top row rotated 180°
+(true to the fold). With placeholder content this reads fine, but with *real* rendered artwork the rotated-but-
+filled panels must be checked on device that they do not re-trigger the "some pages are upside-down = it's
+broken" reaction (PR§F1) — the very reaction PP-3 exists to avoid. If they do, the reassurance sheet shows
+upright thumbnails with the rotation implied, not applied.
 
 ---
 

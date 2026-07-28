@@ -218,6 +218,8 @@ incurs debts that are **not** freeze blockers but **must** be recorded now so sc
 | OS-print hand-off (`PrintManager`) decision | **Future Enhancement**, gated | Only if it resolves the actual-size conflict [ADR-052](../DECISIONS.md) deferred; may stay Save+Share |
 | PRD §7 scope + ROADMAP rows updated to reflect 1→32 design intent | **Documentation** (ship with the ADR) | Design freeze does not change PRD; the *build* stage does |
 | New ADRs: booklet imposition; duplex/flip-edge; (maybe) OS-print | **Documentation / decision** | Authored + independently reviewed when the booklet stage starts, not at freeze |
+| **ADR retiring the SHEET act + restructuring the act model** (room-with-drawers supersedes ADR-051's 3-act `Sheet→Print→Fold` and ADR-058's device-verified 4-act climb) | **Documentation / decision** | **Recorded, never silent** (the ADR-051/052 house precedent for frozen-element supersession); authored + independently reviewed when the Compose build starts. This supersedes a *device-gated* structure — it must be on the ledger, not only in PP-3/PC§3 prose |
+| Multiple-of-4 page model in the (frozen) Bench | **Future Enhancement / precondition** | **Hard precondition for the booklet build** — the frozen Bench has *no* multiple-of-4 model (verified); Proof only *confirms* it (PC§6). Land as an allowed post-freeze Bench spec clarification before the booklet stage, never as a Proof-time surprise |
 | ARCHITECTURE.md:5 triad text; ADR-054 Proposed→Accepted; ACTION_VIEW/KDoc staleness (PC§11) | **Technical Debt** | Reconcile in the first Proof change that touches those areas |
 
 Design/freeze proceeds on the *full* design; **none of these block the freeze** — they are the honest build
