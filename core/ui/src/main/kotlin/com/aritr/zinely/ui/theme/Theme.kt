@@ -59,6 +59,17 @@ public val LocalZinelyTypography: ProvidableCompositionLocal<ZinelyTypography> =
     staticCompositionLocalOf { error("No ZinelyTypography provided — wrap the tree in ZinelyTheme.") }
 
 /**
+ * The **V2** type foundation, provided alongside [LocalZinelyTypography] rather than replacing it, on
+ * the same additive terms as [LocalZinelyV2Colors].
+ *
+ * The V1 local names its families `shell`/`voice` and carries Fraunces at 600 alone, which is what the
+ * V1 trilogy froze; V2 renames them `work`/`voice` and needs 400/500/600. Retires with V1 at **C0**.
+ * See [ZinelyV2Typography].
+ */
+public val LocalZinelyV2Typography: ProvidableCompositionLocal<ZinelyV2Typography> =
+    staticCompositionLocalOf { error("No ZinelyV2Typography provided — wrap the tree in ZinelyTheme.") }
+
+/**
  * Convenience accessors, mirroring the shape of `MaterialTheme.colorScheme`.
  *
  * ```kotlin
@@ -88,6 +99,10 @@ public object ZinelyTheme {
 
     public val typography: ZinelyTypography
         @Composable get() = LocalZinelyTypography.current
+
+    /** The V2 type foundation. Additive during the migration — see [LocalZinelyV2Typography]. */
+    public val v2Typography: ZinelyV2Typography
+        @Composable get() = LocalZinelyV2Typography.current
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -167,6 +182,8 @@ public fun ZinelyTheme(
     val elevation = remember(darkTheme) { if (darkTheme) zinelyDarkElevation() else zinelyLightElevation() }
     val motion = remember(reduceMotion) { ZinelyMotion(reduceMotion = reduceMotion) }
     val typography = remember { ZinelyTypography() }
+    // Not keyed on darkTheme: type does not restyle with the room. Same reasoning as contentInks.
+    val v2Typography = remember { ZinelyV2Typography() }
     val haptics = rememberZinelyHaptics(reduceMotion)
 
     CompositionLocalProvider(
@@ -177,6 +194,7 @@ public fun ZinelyTheme(
         LocalZinelyMotion provides motion,
         LocalZinelyHaptics provides haptics,
         LocalZinelyTypography provides typography,
+        LocalZinelyV2Typography provides v2Typography,
     ) {
         MaterialTheme(
             colorScheme = if (darkTheme) LegacyDarkScheme else LegacyLightScheme,

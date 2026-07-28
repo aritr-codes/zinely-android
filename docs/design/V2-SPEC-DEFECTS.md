@@ -67,6 +67,12 @@ before Phase C begins.
 it as a documentation defect against the design repository… No implementation work depends on resolving
 it, but it should be cleaned up in the design corpus."*
 
+**Addendum (2026-07-28, A3).** There is a **second** copy of the stale note, in the page footer at
+`:367` — *"Fraunces + Inter stand in as Georgia / system-sans, pending real faces at Compose parity. Not
+frozen — for critique."* It is user-visible in the rendered prototype rather than buried in a comment, so
+the cleanup should strip both. Only the trailing "Not frozen — for critique" is stale: the stand-in
+clause is accurate and worth keeping (see D-005's closing note).
+
 ### D-002 — two frozen cover inks put their titles below AA for normal text
 
 | | |
@@ -189,6 +195,118 @@ than tokens and remain Phase C's.
   corpus states is the `consequence` exclusion.
 - **`Ink` legitimately appears in two bands** (spot ink *and* neutral), verbatim from source — pinned so
   it is never de-duplicated into one, which would silently change what the popover offers.
+
+### D-004 — the frozen zine content is set in Fraunces; the render engine can only draw Inter
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-proof.html`](mockups/v2-proof.html) lines 106-123, 210 · [`DocumentFontRegistry.kt`](../../render-android/src/main/kotlin/com/aritr/zinely/render/android/DocumentFontRegistry.kt) lines 101-113 |
+| **Found** | 2026-07-28, during Phase A / A3 (typography) |
+| **Severity** | **Capability gap between a frozen spec and the shipped engine** — does not block A3 or any of Phase A |
+| **Status** | Open — **owner ruling owed before Phase D**; explicitly *not* decided by A3 |
+
+**What the spec says.** The Proof's zine content — the block the file itself labels `/* zine content
+(real, not lorem) */` — is set entirely in `var(--serif)`, which `:22` defines as
+`'Fraunces',Georgia,'Times New Roman',serif`:
+
+| Selector | Role | Style |
+|---|---|---|
+| `.cover h2` (`:110`) | cover title | Fraunces 500, 27px |
+| `.cover .sub` (`:111`) | cover subtitle | Fraunces **italic**, 13px |
+| `.h` (`:112`) | page heading | Fraunces 500, 19px |
+| `.b` (`:113`) | page body | Fraunces 400, 12.5px |
+| `.pull` (`:114`) | pull-quote | Fraunces **italic**, 21px |
+| `.zlist` (`:115`) | list | Fraunces 400, 13px |
+| `.zcap` (`:119`) | photo caption | Fraunces 400, 12px |
+| `.backc p` (`:123`) | back cover | Fraunces **italic**, 12px |
+
+**What the engine carries.** `DocumentFontRegistry.Bundled` declares exactly one family — `Inter`, with
+regular/bold/italic/bold-italic assets — and `defaultFamilyName = INTER`. A document asking for Fraunces
+does not fail; `resolve()` falls back, and the page renders in Inter with no error surfaced. So the
+mismatch is invisible at runtime, which is what makes it worth logging now rather than discovering it in
+Phase D.
+
+**Why this is not A3's to fix.** A3 bundles Fraunces for **chrome**, under `core/ui/src/main/res/font/`.
+The render module has its own font pipeline reading `assets/fonts/` by design, because
+[ADR-028](../DECISIONS.md#adr-028)'s one-engine rule means preview, export and read must all draw from
+the *same* registry — adding a family there changes what every exported PDF can contain. That is a
+document-model decision with an on-disk format consequence, not a theming one.
+
+**It is also not a one-line addition.** The frozen content needs **italic** Fraunces (`:111`, `:114`),
+which chrome does not (`:111`, `:114`, `:123`) — so honouring the spec means bundling a cut A3 deliberately did not, and
+`DocumentFontFamily` has slots for regular/bold/italic/boldItalic but not for a 500 weight, while the
+frozen content asks for 500 at two of its seven roles.
+
+**Owner decision requested.** Three shapes, none of them implementation's to pick: (a) bundle Fraunces
+into the render registry, accepting the APK cost and deciding how 500 maps onto a four-slot family; (b)
+rule that the Proof's serif content is *mock illustration* of a user document rather than a spec for the
+default document style, in which case nothing is owed and the Proof's own note should say so; or (c)
+narrow it — e.g. Fraunces for cover titles only, where the product's voice actually shows.
+
+**A prior note this replaces.** `DocumentFontRegistry`'s KDoc already anticipates the question — *"One
+family today. That is a statement about what is bundled, not about what the registry supports"* — and
+correctly routes expansion to *"the designer's font/preset curation, gated on its freeze"*. That freeze
+has now happened, and it asks for a second family. The comment is still true; it is simply no longer
+waiting on anything.
+
+### D-005 — the Library and the Bench set the same role in two different serifs at two different weights
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 37, 125, 148, 163 · [`v2-bench.html`](mockups/v2-bench.html) lines 22, 180, 198, 236 · [`v2-proof.html`](mockups/v2-proof.html) lines 163, 210, 232 |
+| **Found** | 2026-07-28, during Phase A / A3 (typography) |
+| **Severity** | **Disagreement between two frozen files** — did not block A3; ruling owed before Phase B implements a Library heading |
+| **Status** | Open — **owner ruling requested** |
+
+**What they say.** The two files were frozen a day apart and declare the voice face differently.
+
+| | Library (frozen 2026-07-27) | Bench + Proof (frozen 2026-07-28) |
+|---|---|---|
+| **How the serif is declared** | a literal stack at each call site — `.serif{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif}` (`:37`) | a token — `--serif:'Fraunces',Georgia,'Times New Roman',serif` (`:22`) |
+| **Named face** | Iowan Old Style / Palatino / Georgia. **Fraunces appears nowhere in the file.** | Fraunces |
+| **Weight for a titled heading** | **600** — `.sh-ttl` (`:125`), 1.12rem | **500** — `.sheet h3` (`:198`, 17px), `.pgrid .pgh h3` (`:236`), `.inkpop h4` (`:180`), proof `.dhead h3` (`:163`), `.done h4` (`:232`) |
+
+**The family half is already settled; the weight half is not.**
+[V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III fixes *"Fraunces (voice) + Inter (work). Permanent."* —
+which makes the Library's Iowan stack **stale text from before the `--serif` token existed**, not a
+competing choice. That part needs no ruling, only a corpus cleanup.
+
+The weight does need one. `.sh-ttl` at 600 and `.sheet h3` at 500 are the same role — a short serif
+heading naming a thing, at ~17-18px — rendered two visibly different ways. And it is not the kind of
+difference that survives being guessed at: the Library's headings are the first type a user ever sees,
+so a Phase B session picking 500 "to match the Bench" or 600 "because the Library is frozen" is choosing
+the product's opening voice by coin-flip.
+
+Note also that the Library was authored against a *fallback* face. Iowan Old Style and Georgia are
+heavier on the page than Fraunces at the same nominal weight, so 600 may have been chosen to look right
+in Georgia and not because 600 is wanted in Fraunces. That is an argument for re-reading the Library at
+Fraunces before ruling, rather than for reading its number literally.
+
+**What implementation did, pending the ruling.** A3 bundles Fraunces at **400, 500 and 600** and
+prejudges nothing. Whichever way the ruling lands, the face is already present and Phase B is a
+per-component value, not a font-bundling change. 400 is independently required regardless (proof
+`.foldcap`, `:210`, is serif body text at 14px with no weight set), so only one of the three cuts is
+carried speculatively.
+
+**Owner decision requested.** Does the Library's serif heading render at **500** (harmonising with the
+Bench and Proof) or at **600** (as its own frozen file states)? And separately — a documentation
+cleanup, not a design question — the Library's literal `"Iowan Old Style",Palatino,Georgia` stack should
+become `var(--serif)` so a future reader is not told the product has two serifs.
+
+**A related note, not a defect.** The Bench and Proof both state that *"Georgia / system-sans stand in
+here pending real faces at parity"* (`v2-bench.html:7`, `v2-proof.html:7`). The Library carries no such
+note — but it does not need one, because it never names Fraunces at all: its Georgia is a genuine
+declared fallback rather than a stand-in, which is the same fact from the other direction. Either way
+**none of the three prototypes renders the shipping typefaces**, so a browser screenshot of them is not
+a type-parity target — only their declared families, sizes, weights and line-heights are. A9's Roborazzi
+baselines and any Phase B parity pass must compare against the CSS, not against a rendering of it.
+
+**Where else the split shows.** The disagreement is not confined to sheet headings. The Library's zine
+cover title (`.ct`, `:68`, taking its family from `.serif` at `:37` via the markup at `:150`) is serif at
+**600**; the Proof's cover title (`.cover h2`, `:110`) is serif at **500**. Those two are not strictly the
+same object — one is a shelf card drawn by chrome, the other is mock zine content drawn by the render
+engine (D-004) — so this is listed as corroboration that 500-vs-600 is a systematic split across the two
+freeze dates, not as a fourth independent defect.
 
 ---
 
