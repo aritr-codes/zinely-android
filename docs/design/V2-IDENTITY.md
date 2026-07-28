@@ -107,8 +107,13 @@ A single repeated "cream paper + grain" is calm; a small set of *chosen* stocks 
 The café's colours are **inks and materials of the creations**, held in a content namespace separate from chrome
 (the Bench's frozen `content.*` H4 model). Direction, from RA-2:
 
-- **~12–18 named riso spot inks** in three bands (muted, home-honest), plus harmonious presets — the Bench's H4
-  palette is the source of truth.
+- **The 10 named riso spot inks the Bench already froze** are the source of truth — verbatim, no invention:
+  Matcha `#7C8A3F`, Forest `#3E5E3A`, Strawberry `#E27F89`, Brick `#B0503F`, Sunflower `#E7B53C`,
+  Ochre `#D19A3C`, Aqua `#57B0A9`, Cornflower `#6E86C9`, Plum `#8A5A9B`, Ink `#2A251E` (v2-bench.html H4).
+  Grouped for study into four bands — greens & earth · warm · cool · neutral — plus the Bench's presets
+  (Two-colour, Warm zine, Cool zine). The materials study renders this exact set; any future widening is a
+  Bench-H4 decision, not an Identity one. Note the maker palette is deliberately **broader and cooler** than the
+  brand's warm chrome: the interface stays warm, the maker gets range.
 - **Author coverage, not colour (RA-2 §4.2 — load-bearing).** Every tintable asset is **geometry + single-
   channel coverage**; the *ink* is resolved from the maker's palette at render. **One asset × N inks = N looks**,
   and re-theming a zine re-inks every asset for free.
@@ -173,11 +178,15 @@ Confirms and consolidates the Bench's governed asset architecture (H3), now with
 - **Three layers:** (1) **Product Identity** — always bundled (the app's own marks/fonts); (2) **Starter
   Creative Pack** — bundled (§6); (3) **optional online asset library** — future, opt-in, **sends a keyword
   only, never user content**. Fully usable offline; user content never leaves the device.
-- **CC0 / PD / OFL / MIT-first, merchandising-safe (RA-2 §2 — CONFIRMED, no correction).** CC0 is the gold
-  standard (zero conditions, zero notice in the export). **Disqualified:** CC-BY-SA (viral copyleft would infect
-  the user's own sellable zine), CC-NC, CC-ND, and merchandising-restricted providers (Blush, unDraw,
-  Streamline, Storyset). Fonts OFL/Apache with an **in-app** notice; the **exported zine carries no attribution**
-  — that clean export is what makes it sell-safe.
+- **CC0 / PD-first, merchandising-safe (RA-2 §2 — RA-2-confirmed; legal sign-off pending).** CC0 is the gold
+  standard (zero conditions, zero notice in the export) and the **preferred licence for embedded art**. OFL and
+  MIT are acceptable but **not attribution-free the way CC0 is** — both require their licence text to travel with
+  the work; route those notices to an **in-app credits screen**, never into the exported zine. (OFL additionally
+  forbids selling the font file alone — fine here, we embed glyphs, we don't resell fonts.) **Disqualified:**
+  CC-BY-SA (viral copyleft would infect the user's own sellable zine), CC-NC, CC-ND, and merchandising-restricted
+  providers (Blush, unDraw, Streamline, Storyset). The rule that makes it sell-safe: **the exported zine carries
+  no attribution** — so anything with a travelling notice (OFL/MIT/Apache) is credited in-app only, and embedded
+  art is CC0/PD by preference.
 - **Own the riso *look*; don't buy riso *packs* (RA-2 §3.5 — the one refinement).** There is no reliable CC0
   supply of ready-made riso art; Zinely gets the look by **tinting CC0 line-art through the maker inks** (§2, §4)
   — legally cleaner and infinitely re-inkable.

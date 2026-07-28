@@ -6,6 +6,7 @@
   Shows: chrome-quiet/colour-in-content, the ~5 paper stocks (+heavier cover role), riso two-layer overprint with independent offset+grain,
   tintable "coverage-not-colour" assets (1 asset x N inks), and the frozen-grid cover recipe yielding a distinct-but-related collection.
   NOT frozen; for owner sign-off of the direction.
+  Note: --chrome / --phone-frame here are demo-board scaffolding, not proposed app tokens. Maker inks are the frozen Bench H4 set (v2-bench.html), verbatim.
 -->
 <style>
   :root{
@@ -200,7 +201,7 @@
 
   <section>
     <div class="shead"><span class="snum">03</span><h2>Maker inks — where the café's colour lives</h2></div>
-    <p class="sdesc">~15 muted riso spot inks in three bands, held in a <b>content</b> namespace separate from the interface. Click any ink to re-drum the print above and re-tint the collection below — proof that <b>one asset × N inks = N looks</b>. This is the colour the frozen chrome deliberately withholds.</p>
+    <p class="sdesc">The <b>same 10 muted riso spot inks the Bench froze</b> (H4), held in a <b>content</b> namespace separate from the interface. Click any ink to re-drum the print above and re-tint the collection below — proof that <b>one asset × N inks = N looks</b>. This is the colour the frozen chrome deliberately withholds. (The maker's palette is intentionally broader and cooler than the brand's warm chrome — the interface stays warm; the maker gets range.)</p>
     <div class="inkbands" id="inkbands"></div>
   </section>
 
@@ -233,22 +234,18 @@
 
 <script>
   // ---- maker inks (muted riso spot inks, 3 bands) ----
+  // the maker inks — the SAME set the frozen Bench H4 uses (v2-bench.html), verbatim. Source of truth; no invention.
   var INKS=[
-    {n:'Matcha',   h:'#5E6B2F', band:'Greens & earth'},
-    {n:'Sage',     h:'#7C8A3F', band:'Greens & earth'},
-    {n:'Moss',     h:'#4C5826', band:'Greens & earth'},
-    {n:'Olive',    h:'#6E6A32', band:'Greens & earth'},
-    {n:'Ochre',    h:'#C98F35', band:'Warm'},
-    {n:'Clay',     h:'#B96B43', band:'Warm'},
-    {n:'Strawberry',h:'#E08A92', band:'Warm'},
-    {n:'Coral',    h:'#DB7A72', band:'Warm'},
-    {n:'Plum',     h:'#8E5A6B', band:'Warm'},
-    {n:'Teal',     h:'#47857B', band:'Cool'},
-    {n:'Denim',    h:'#4E6E8C', band:'Cool'},
-    {n:'Slate',    h:'#5E6674', band:'Cool'},
-    {n:'Sky',      h:'#7BA6B2', band:'Cool'},
-    {n:'Cocoa',    h:'#6B5240', band:'Neutral'},
-    {n:'Charcoal', h:'#3E382E', band:'Neutral'}
+    {n:'Matcha',    h:'#7C8A3F', band:'Greens & earth'},
+    {n:'Forest',    h:'#3E5E3A', band:'Greens & earth'},
+    {n:'Strawberry',h:'#E27F89', band:'Warm'},
+    {n:'Brick',     h:'#B0503F', band:'Warm'},
+    {n:'Sunflower', h:'#E7B53C', band:'Warm'},
+    {n:'Ochre',     h:'#D19A3C', band:'Warm'},
+    {n:'Aqua',      h:'#57B0A9', band:'Cool'},
+    {n:'Cornflower',h:'#6E86C9', band:'Cool'},
+    {n:'Plum',      h:'#8A5A9B', band:'Cool'},
+    {n:'Ink',       h:'#2A251E', band:'Neutral'}
   ];
   var BANDS=['Greens & earth','Warm','Cool','Neutral'];
 
@@ -279,7 +276,7 @@
   ];
   var STAMPS=['Z','✦','✽','◷','❧','✜'];
 
-  var activeInk='#5E6B2F', inkA='#5E6B2F', inkB='#E08A92';
+  var activeInk='#7C8A3F', inkA='#7C8A3F', inkB='#E27F89';
 
   function el(id){return document.getElementById(id);}
 
@@ -312,7 +309,7 @@
 
   // coverage-not-colour: one motif across 6 inks
   function renderTintRow(){
-    var picks=[INKS[0],INKS[4],INKS[6],INKS[9],INKS[11],INKS[13]];
+    var picks=[INKS[0],INKS[2],INKS[4],INKS[6],INKS[7],INKS[8]];
     el('tintrow').innerHTML=picks.map(function(k){
       return '<div class="tintchip" title="'+k.n+'" style="color:'+k.h+'">'+motifSvg(2)+'</div>';
     }).join('');
