@@ -275,7 +275,7 @@
           <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
         </button>
         <span class="pcount" id="pcount">1 / 8</span>
-        <button class="iconbtn" aria-label="Fold instructions" onclick="openDrawer('fold')">
+        <button class="iconbtn" aria-label="How to fold" onclick="openDrawer('fold')">
           <svg viewBox="0 0 24 24"><path d="M4 7l8-3 8 3v10l-8 3-8-3z"/><path d="M12 4v16"/></svg>
         </button>
       </div>
@@ -291,7 +291,7 @@
       <div class="band" id="band">
         <button class="ready" id="ready" aria-label="Print details" onclick="openDrawer('details')">
           <span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
-          <span class="rl"><b id="readyTitle">Ready to print</b><span id="readySub">8 pages · one sheet, one cut · A4 · stays on your phone</span></span>
+          <span class="rl"><b id="readyTitle">Ready when you are</b><span id="readySub">8 pages · one sheet, one cut · A4 · stays on your phone</span></span>
           <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
         </button>
 
@@ -305,13 +305,11 @@
           </button>
         </div>
 
-        <button class="foldlink" onclick="openDrawer('fold')">How do I fold this?</button>
-
         <!-- felt closure (after Save) -->
         <div class="done">
           <span class="seal"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
           <h4 id="doneTitle">Saved to your phone</h4>
-          <p id="doneSub">zinely-tiny-green-things.pdf · in Downloads</p>
+          <p id="doneSub">In Downloads — print it whenever, then fold it up.</p>
           <div class="row">
             <button class="foldit" onclick="openDrawer('fold')">Fold it up</button>
             <button class="shelf" onclick="flash('Back to your shelf — the finished book lives in Read')">Back to shelf</button>
@@ -351,16 +349,12 @@
             </div>
           </div>
 
-          <div class="sect">Your sheet</div>
+          <div class="sect">How it becomes a booklet</div>
           <div class="sheetcard">
-            <p class="cardh" id="sheetCardH">We arranged your 8 pages on one sheet so it folds into a booklet in the right order.</p>
+            <p class="cardh" id="sheetCardH">We lay your 8 pages onto one sheet, already in the order that makes a booklet once it's folded — so you never rearrange a thing.</p>
             <div class="minisheet" id="minisheet"></div>
           </div>
 
-          <div class="privacyline">
-            <svg viewBox="0 0 24 24"><path d="M6 11V8a6 6 0 0112 0v3"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg>
-            <span>Everything happens on your phone. Nothing is uploaded.</span>
-          </div>
         </div>
       </div>
 
@@ -389,7 +383,7 @@
       </div>
     </div>
 
-    <p class="caption"><b>Reading the room.</b> Land on your own zine (swipe or tap the sides). The one green line replaces the old imposition step — it <b>reassures</b>, it doesn’t show the machinery. Tap it for paper, the all-green check, and (for booklets) the duplex + test-sheet truth. “How do I fold this?” and the fold guide are <b>pulled</b>, never forced. One weighted commit; reversible until you press it.</p>
+    <p class="caption"><b>Reading the room.</b> Land on your own zine (swipe or tap the sides). The one green line replaces the old imposition step — it <b>reassures</b>, it doesn’t show the machinery. Tap it for paper, the all-green check, and (for booklets) the duplex + test-sheet truth. The fold guide is <b>pulled</b>, never forced — quietly available from the top the whole time, and offered by name once you’ve saved (when you’ll actually fold). One weighted commit; reversible until you press it.</p>
     <div class="legend">
       <span><i style="background:var(--matcha)"></i> primary / ready</span>
       <span><i style="background:var(--strawberry)"></i> the one honest caution (test sheet)</span>
@@ -403,10 +397,10 @@
   var MODEL='mini';
   var MODELS={
     mini:   {pages:8,  paperN:8,  readySub:function(p){return '8 pages · one sheet, one cut · '+p+' · stays on your phone';},
-             saveSub:function(p){return '8 pages · '+p;}, sheetCardH:'We arranged your 8 pages on one sheet so it folds into a booklet in the right order.',
+             saveSub:function(p){return '8 pages · '+p;}, sheetCardH:'We lay your 8 pages onto one sheet, already in the order that makes a booklet once it’s folded — so you never rearrange a thing.',
              duplex:false, foldTitle:'Fold it up', fold:'miniFold'},
     booklet:{pages:16, paperN:16, readySub:function(p){return '16 pages · 4 sheets, folded & stapled · '+p+' · stays on your phone';},
-             saveSub:function(p){return '16 pages · '+p;}, sheetCardH:'We arranged your 16 pages across 4 sheets so, folded and nested, they read in order.',
+             saveSub:function(p){return '16 pages · '+p;}, sheetCardH:'We spread your 16 pages across 4 sheets, already in the order that reads right once they’re folded and nested — nothing for you to rearrange.',
              duplex:true, foldTitle:'Fold & staple', fold:'bookFold'}
   };
   var PAPER='A4';
@@ -479,7 +473,7 @@
   function buildChecklist(){
     var ul=document.getElementById('checklist'); ul.innerHTML='';
     var items=[
-      ['Pages arranged for the fold','We reordered them for the printer — you never had to.'],
+      ['Everything sits safely inside the edges','Nothing important gets cut off.'],
       ['Printing at 100% (actual size)','Nothing shrinks to fit the page.'],
       (MODEL==='booklet'
         ? ['16 pages — a multiple of 4','Booklets fold in fours; yours lands exactly right.']
@@ -666,7 +660,7 @@
   function doSave(){
     var cfg=MODELS[MODEL];
     document.getElementById('doneTitle').textContent='Saved to your phone';
-    document.getElementById('doneSub').textContent='zinely-tiny-green-things.pdf · in Downloads';
+    document.getElementById('doneSub').textContent='In Downloads — print it whenever, then fold it up.';
     document.getElementById('band').classList.add('saved');
   }
   function flash(msg){

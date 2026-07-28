@@ -213,6 +213,33 @@ upright thumbnails with the rotation implied, not applied.
 
 ---
 
+## Part D — pre-freeze refinement pass (owner audit, 2026-07-28)
+
+A refinement pass (no redesign; the direction, philosophy, architecture and visual language were affirmed)
+tightened three things against the progressive-disclosure, reassurance and warmth audits. Recorded here so the
+canonical HTML and the spec stay in step.
+
+- **Folding entry points: 3 → 2.** The persistent *"How do I fold this?"* text link under the commit was
+  **removed** — a standing question implies the maker is expected to need help. The guide now has exactly two
+  entries: an **ambient** top-of-room control (available the whole time, never a question) and the **prominent,
+  named** *"Fold it up"* invitation in the completion state, at the natural moment — after Save, when the maker
+  will actually fold. Help always available; never imposed; experts never slowed; first-timers caught at the
+  right moment (Save → Print → Fold ordering). This matches [PP-6](V2-PROOF-PRINCIPLES.md).
+- **Reassurance de-duplicated.** *Privacy* now has one home — the always-visible reassurance line
+  (*"stays on your phone"*, [PP-9](V2-PROOF-PRINCIPLES.md)); the duplicate lock-line inside the Details drawer
+  was removed. The *"we arranged your pages"* reassurance was consolidated: the checklist no longer repeats it
+  (that tick became a distinct, useful one — *"everything sits safely inside the edges"*, the positive form of
+  the edge/gutter check, PR§F#7); the explanation lives once, in the sheet card (next point).
+- **Hidden machinery — a lighter-weight explanation, no new step.** The Details sheet card was warmed from a
+  bare statement into the calm answer to *"what happens between my pages and the paper?"* — *"We lay your 8 pages
+  onto one sheet, already in the order that makes a booklet once it's folded — so you never rearrange a thing"*
+  (booklet: across 4 sheets, folded and nested). Paired with the **filled** true-render mini-sheet, this
+  replaces mystery with trust in the calmest possible place — pulled, optional, invisible to the confident —
+  **without** resurrecting a dedicated imposition step ([PP-3](V2-PROOF-PRINCIPLES.md), the defended position).
+- **Warmth (copy only, no decoration).** *"Ready to print"* → **"Ready when you are"** (PF-1); the completion
+  drops the clinical raw filename for *"In Downloads — print it whenever, then fold it up"* (which also makes the
+  Save → Print → Fold order feel inevitable rather than procedural).
+
 ## Cross-references & what feeds Phase 7 (the HTML prototype)
 
 The canonical prototype must demonstrate, at minimum:

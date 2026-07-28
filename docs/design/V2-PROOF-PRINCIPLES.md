@@ -70,7 +70,12 @@ recallable drawer invisible to anyone who already knows ([PC§8](V2-PROOF-CRITIQ
 PR§D2), an **arrow + the crease line** rather than origami's dashed/dash-dot alphabet (PR§D5), the caption **on**
 the diagram at the point of action (PR§D6), a marked **cut stop-point** and a marked **cover panel** so nobody
 overcuts or mistakes the cover (PR§F#6), and an **opt-in looping animation** for the motion with a **persistent
-static end-state** (PR§D4). For booklets it becomes fold-**nest-staple**-trim (PR§B8).
+static end-state** (PR§D4). For booklets it becomes fold-**nest-staple**-trim (PR§B8). **The guide has exactly two entry points, never a
+persistent question:** one *ambient* affordance available the whole time (a quiet top-of-room control — help
+that is *there*, not *asked*), and one *prominent, named* invitation at the natural moment — after Save, when
+the maker will actually fold. The interface never stands up a recurring "need help folding?" prompt, because a
+repeated offer implies the maker is expected to need it (the [progressive-disclosure refinement](V2-PROOF-IA-INTERACTION.md),
+2026-07-28).
 
 ### PP-7 — One deliberate commit, labelled with the physical outcome; reversible until the button
 Printing consumes paper and ink — genuinely irreversible — so it earns the **one** confirmation the product
