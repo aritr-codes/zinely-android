@@ -229,6 +229,31 @@ the earlier corpus.)
 
 ---
 
+## 8. DESIGN FREEZE — Library (2026-07-27)
+
+**The Library HTML spec ([mockups/v2-library.html](mockups/v2-library.html)) is FROZEN** on owner
+direction. Per the [HTML-first workflow](../../CLAUDE.md), the prototype is now the authoritative,
+stable design source for the Library; Compose implements it to pixel parity.
+
+- **Allowed after freeze:** bug fixes · accessibility improvements · performance · implementation-parity
+  fixes · theme compatibility.
+- **Not allowed:** visual redesign · interaction redesign · feature additions. Any post-freeze UX change
+  updates *this HTML spec first*, then Compose — never the reverse.
+- **What was frozen:** covers-only shelf with a quiet "Your shelf" header; riso-grain paper covers with a
+  grounded shadow, fold spine and fore-edge (material, no literal ledges); metadata disclosed on
+  interaction (in the action-sheet header), not stamped per card; long-press context menu + a quiet
+  visible ⋯ fallback; action sheet (Open · Share & export · Rename · Duplicate · separated Delete); the
+  transformation empty state; "Make a zine" CTA; day + warm-night rooms.
+- **Implementation-time gates (P3, verified in Compose, not blockers to the freeze):** AA contrast of
+  cover titles on each maker ink · long-title truncation · screen-reader path for the long-press actions ·
+  8pt vertical-rhythm audit · both mandatory device-verification passes. These are carried into the build,
+  where the colour re-derivation lands as a governed ADR ([V2-TOKENS](V2-TOKENS.md)).
+- **Deferred to V2 (not part of this freeze):** signature "your book comes home" settle · drag-to-reorder ·
+  richer cover recipes · cover editing from the library.
+
+Next: **the Bench (Editor)**, carrying this freeze's discipline — material, subtraction, metadata-on-
+interaction, content-over-chrome.
+
 ## Cross-references
 [mockups/v2-library.html](mockups/v2-library.html) · [V2-LIBRARY-CRITIQUE.md](V2-LIBRARY-CRITIQUE.md) (first
 pass) · [V2-TOKENS.md](V2-TOKENS.md) · [V2-PRINCIPLES.md](V2-PRINCIPLES.md) · [V2-RESEARCH.md](V2-RESEARCH.md)

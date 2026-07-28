@@ -1,5 +1,12 @@
-<title>Zinely V2 — Library (revised 2)</title>
+<title>Zinely V2 — Library (frozen)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- ┌─────────────────────────────────────────────────────────────────────────┐
+     │  DESIGN FROZEN — 2026-07-27.  This is the canonical Library spec.          │
+     │  Allowed after freeze: bug fixes · a11y · perf · parity · theme fixes.    │
+     │  Not allowed: visual/interaction redesign · feature additions.            │
+     │  Implementation-time gates (P3): AA contrast per ink · title truncation · │
+     │  screen-reader path for long-press · 8pt rhythm · both device passes.     │
+     └─────────────────────────────────────────────────────────────────────────┘ -->
 <style>
   :root{
     --paper:#F7F2E7; --paper-edge:#EEE6D4; --desk:#ECE3D1; --desk-edge:#E1D6BF;
@@ -76,11 +83,11 @@
   .paper-c{background-color:#F1EBDA;color:#2A251E}    .paper-c .band{background:#7C8A3F}
   .paper-s{background-color:#F1EBDA;color:#2A251E}    .paper-s .band{background:#E27F89}
 
-  .dock{position:absolute;left:0;right:0;bottom:0;padding:16px 20px calc(22px + env(safe-area-inset-bottom));
+  /* Tall, full-width solid "landing zone": content fades into the desk well ABOVE the button, so no
+     cover title or ... can ever sit against it. Solid to 80% of the taller dock, gentle fade above. */
+  .dock{position:absolute;left:0;right:0;bottom:0;padding:52px 20px calc(22px + env(safe-area-inset-bottom));
     display:flex;justify-content:center;pointer-events:none;
-    background:linear-gradient(to top,var(--desk) 86%,transparent);
-    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
-    -webkit-mask-image:linear-gradient(to top,#000 86%,transparent);mask-image:linear-gradient(to top,#000 86%,transparent)}
+    background:linear-gradient(to top,var(--desk) 80%,transparent)}
   .start{pointer-events:auto;background:var(--matcha);color:var(--paper);border:none;border-radius:16px;
     font-weight:600;font-size:1rem;padding:15px 26px;display:flex;align-items:center;gap:10px;cursor:pointer;
     box-shadow:0 16px 30px -12px var(--shadow);font-family:inherit;transition:transform .14s}
@@ -131,7 +138,7 @@
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<p class="cap lead serif"><b>Library — “which zine is mine?”</b> · revised 2</p>
+<p class="cap lead serif"><b>Library — “which zine is mine?”</b> · frozen spec</p>
 <p class="cap">Covers only — no metadata line. Each cover is a <b>printed paper object</b> (riso grain, a
 grounded shadow, a fold and a fore-edge) sitting on the surface. Details live in the <b>⋯</b> / long-press
 sheet. Format &amp; date are disclosed there, not stamped on every card. Try day / night and the empty state.</p>
