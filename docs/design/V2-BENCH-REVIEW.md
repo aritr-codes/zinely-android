@@ -252,3 +252,102 @@ default?), the iteration scope should be **owner-approved**, not assumed. That q
 
 *Phase 9 of the Bench initiative. Review only — the RF fixes are applied; no new design frozen. Awaiting the
 owner's scope call on the pre-freeze iteration.*
+
+---
+
+## Part E — the "handmade studio" physicality gate (Phase 10.5) → **DESIGN FREEZE**
+
+> **The owner's final question before freeze:** the Studio architecture is correct and must be preserved —
+> but *"does it feel like a **little handmade studio**, or still like a beautifully designed application?"*
+> Method: one more independent research pass, this time on **physical** creative spaces (stationery shops,
+> letterpress/riso/printmaking studios, artists' desks, junk journals, archive drawers, index-card
+> catalogues, collections) — extracting **principles, not aesthetics** — then a physicality audit of the
+> prototype and a defended freeze-or-iterate call. Brief constraint: *do not chase novelty, add features, or
+> increase complexity.*
+
+### E.1 — What physical making actually teaches (principles, not decoration)
+
+Six cited findings ([full research in the session record]; labelled per [research standards](../../CLAUDE.md)):
+
+- ✅ **Permission before capability.** A good studio *invites* before you touch anything — the paper is out,
+  the tools are within reach, nothing is locked behind a setup. Warmth is felt at rest, not on first action.
+- ✅ **The single highest-leverage move is the opening.** Open onto *the user's own page*, resting like paper
+  on a warm surface, exactly where they left it — and make that page the loudest thing in the room. Everything
+  else is secondary.
+- ⚠️ **Warmth lives in surface properties, never in added objects.** Honest translations: warm off-white
+  (never `#FFF`), soft *contact* shadows, discrete card edges with faint stacking depth, weighty unhurried
+  motion, an ink-warm palette. **Kitsch traps to refuse:** deckle/torn-paper edges, coffee-ring stains,
+  faux-handwriting chrome fonts, random tilt/jitter, visible paper grain. These *cost* trust — they read as a
+  costume, not a craft.
+- ✅ **Cards and drawers beat lists and grids.** Physical navigation is little sheets you riffle, with real
+  edges and peeking neighbours — *never a contact sheet.* A grid overview "turns a desk into a database": it
+  relocates the answer from *"here is your page"* to *"here is your inventory."*
+- ✅ **A tray is arranged by reach and use, not stored.** It sits comfortably partly-empty, orders by recency,
+  accepts a thing in one gesture, and **never renders an empty slot as something missing** (no dashed
+  placeholders).
+- ✅ **Human, gesture-based naming.** *shelf, tray, bits, spread, set it down, print it* — not
+  *asset / library / manage / import*.
+
+### E.2 — Physicality audit of the prototype (does this feel like paper or software?)
+
+| Surface | Read before | Verdict | Action taken (all within the frozen architecture) |
+|---|---|---|---|
+| **The opening** | Opens on a made page (*"Mum's garden"*), warm desk ground, contact shadow, page is loudest | ✅ **Paper** | Kept. Real **persistence** (reopen exactly where you left off) is the load-bearing signal — a Compose-build guarantee, recorded in E.4, not showable in a static proto. |
+| **Page navigation** | Filmstrip *pips* — rounded rects with three lines; read as slider controls | ❌ **Software** — the gap the owner named | **Rebuilt as little paper sheets**: real edges, a spine, faint text lines, soft contact shadow; the current page lifts and scales like *the one in your hand*, neighbours peek. Slider → riffled cards. |
+| **Scale overview (⊞)** | Full-screen page-grid | ⚠️ near the "database" line | **Kept but justified**: cells are paper sheets (cover/back labelled), and it is **summoned**, never the default. The default nav stays sheets-in-a-row, so charm and 1→32 scalability coexist — exactly the owner's ask. |
+| **The shelf/tray** | Uniform 44px rounded tiles + a **dashed** "＋" slot | ❌ **Software** — retail rack + empty-slot-as-missing | **Retuned to a maker's tray**: warm paper bits with contact shadow, set down by hand (slight organic offsets, not a matrix); the dashed slot became a soft **"＋ keep"** action (an action, not a missing thing). |
+| **Copy** | *"Would add from your photos"*, *"Gather from your photos"* | ⚠️ software register | Human/gesture pass: *"Pick a photo to keep on your shelf"*, *"Keep a photo on your shelf"*. (Destructive verbs like **Delete** kept literal — clarity and a11y outrank cuteness; [BP-6](V2-BENCH-PRINCIPLES.md).) |
+| **Material honesty** | Warm paper (`#F7F2E7`, not white), soft contact shadows, settle-easing, subtle grain; **no** deckle/coffee/handwriting/tilt | ✅ **Paper** | Kept. The new sheets and tray bits inherit the one shadow language and the one settle motion — no new material vocabulary introduced. |
+
+### E.3 — The one iteration, and why it was justified (not novelty)
+
+Two audit rows came back **software, not paper** — and both were exactly what the owner felt: the page-nav
+"lost the feeling of tiny paper sheets," and the shelf read as storage. The fixes are **texture/material
+only** — no architecture touched, no feature added, no new interaction. They change *how the same components
+feel*, which is precisely the brief's permitted move (*"preserve this architecture… do not add features"*).
+This is why one pass was warranted rather than freezing over a known gap the owner had already named.
+
+Crucially, the research also **defended a decision I might have over-corrected**: it warned that a grid
+overview turns the desk into a database — validating that the page-grid stays *summoned and sheet-shaped*, and
+that the default must remain riffled cards. And it named the twee line precisely (peeking neighbours + any
+visible grain sit closest to it), so the sheets carry edges and depth but **no grain, no tilt, no torn
+edges** — warmth from surface properties, not costume.
+
+### E.4 — The one thing the prototype cannot show, promoted to a build invariant
+
+🟦 **RECOMMENDATION (freeze-blocking for the Compose build, not the HTML):** the strongest handmade signal is
+**persistence of place** — reopening the Bench lands on the user's page, at the same page number, materials
+still on the shelf, exactly as left. A static prototype can only *depict* this. It becomes a **verified
+acceptance criterion** for the Compose implementation (and folds naturally into the existing
+`AutosaveCoordinator` + session-restore path; see [BC§1](V2-BENCH-CRITIQUE.md), and the open undo-survives-kill
+question in [EP-4](V2-BENCH-PRINCIPLES.md)). Recorded here so freeze does not silently drop it.
+
+### E.5 — Freeze decision
+
+**Recommendation: DESIGN FREEZE the Bench**, after this final texture pass.
+
+Evidence it has reached the bar:
+1. **Every audit row now reads *paper*** or is a justified, bounded exception (the summoned grid).
+2. **The two named gaps are closed** with the owner's own constraint honoured — no architecture change, no new
+   feature, no added complexity. The diff is surface properties and six words of copy.
+3. **The kitsch line was found by research and deliberately not crossed** — the warmth is structural (tone,
+   shadow, weight, edge, motion), which is the durable kind, not the costume kind that erodes trust.
+4. **The remaining unshowable signal (persistence) is captured as a build invariant** (E.4), so it cannot be
+   lost between freeze and Compose.
+5. Continuing past here would mean *adding* — the exact move the brief forbids, and the move [BP-1 / the
+   subtraction test](V2-BENCH-PRINCIPLES.md) exists to refuse.
+
+**Benchmark answer** (*remembered for efficiency, or as a wonderful place to create?*): the page is the hero
+and opens as your own paper; you riffle little sheets, not a slider; you set bits down on a tray, not into
+storage; motion settles like paper and never bounces; nothing is a costume. That is a place, not a tool.
+
+**Freeze scope.** Frozen: [`mockups/v2-bench.html`](mockups/v2-bench.html) as the canonical Bench spec, with
+[principles](V2-BENCH-PRINCIPLES.md) BP/EP and [IA & interaction](V2-BENCH-IA-INTERACTION.md) as its written
+authority. Per [CLAUDE.md](../../CLAUDE.md), post-freeze allows only bug/a11y/perf/parity/theme fixes; any UX
+change updates the HTML spec first. **Two items stay governed and do not freeze into implementation until they
+clear a review + legal pass:** the [asset layer ADR](V2-BENCH-IA-INTERACTION.md) (H3, online-search licensing)
+and the colour-namespace ADR (H4, `content.*` maker inks). Compose implementation may begin on the frozen
+core; those two land behind their ADRs.
+
+*Phase 10.5 of the Bench initiative. The physicality iteration is applied to the canonical prototype and
+republished to the same artifact URL; JS re-validated. Recommendation to the owner: **FREEZE**.*

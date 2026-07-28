@@ -123,24 +123,28 @@
   .trayrow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
   .trayrow::-webkit-scrollbar{display:none;}
   .tray.collapsed .trayrow{display:none;} .tray.collapsed{padding-bottom:9px;}
-  .mat-item{flex:none;width:44px;height:44px;border-radius:9px;background:var(--paper);border:1px solid var(--desk-edge);
-    display:grid;place-items:center;cursor:pointer;overflow:hidden;transition:transform .1s;position:relative;}
-  .mat-item:active{transform:scale(.93);}
-  .mat-item svg{width:70%;height:70%;} .mat-item.photo0{background:linear-gradient(150deg,var(--ink-teal),var(--ink-matcha));}
-  .mat-item.gather{border-style:dashed;color:var(--ink-faint);font-size:18px;}
+  /* the tray: bits gathered and resting by reach, not a grid of storage slots */
+  .mat-item{flex:none;width:46px;height:46px;border-radius:8px;background:var(--paper);border:1px solid var(--paper-edge);
+    display:grid;place-items:center;cursor:pointer;overflow:hidden;transition:transform .12s;position:relative;box-shadow:0 2px 5px -3px var(--frame-shadow);}
+  .mat-item:nth-child(2){transform:translateY(2px);} .mat-item:nth-child(3){transform:translateY(-1px);} /* set down by hand, not snapped to a matrix */
+  .mat-item:active{transform:scale(.9);}
+  .mat-item svg{width:68%;height:68%;} .mat-item.photo0{background:linear-gradient(150deg,var(--ink-teal),var(--ink-matcha));}
+  .mat-item.gather{width:auto;padding:0 13px;gap:6px;background:transparent;border:1px solid var(--chrome-line);color:var(--ink-soft);font-size:12.5px;font-weight:500;box-shadow:none;} /* an action, not an empty slot */
 
-  .navrow{flex:none;height:46px;display:flex;align-items:center;gap:8px;padding:0 10px;background:var(--chrome);
+  .navrow{flex:none;height:56px;display:flex;align-items:center;gap:8px;padding:0 10px;background:var(--chrome);
     border-top:1px solid var(--chrome-line);position:relative;z-index:20;}
   .gridbtn{flex:none;width:34px;height:34px;border-radius:9px;border:1px solid var(--chrome-line);background:transparent;color:var(--ink-soft);display:grid;place-items:center;cursor:pointer;}
   .gridbtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;}
-  .filmstrip{flex:1;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:6px 2px;}
+  .filmstrip{flex:1;display:flex;gap:7px;overflow-x:auto;overflow-y:visible;scrollbar-width:none;padding:9px 4px;align-items:center;}
   .filmstrip::-webkit-scrollbar{display:none;}
-  .pthumb{flex:none;width:22px;height:29px;border-radius:2.5px;background:var(--paper-edge);border:1px solid var(--desk-edge);
-    cursor:pointer;position:relative;transition:transform .16s var(--standard);}
-  .pthumb[data-cover]{border-color:var(--matcha);}
-  .pthumb.cur{background:var(--paper);border-color:var(--matcha);transform:translateY(-2px);box-shadow:0 3px 8px -3px var(--frame-shadow);}
-  .pthumb.cur::after{content:"";position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--strawberry);}
-  .pthumb i{position:absolute;left:2px;right:2px;top:3px;height:1.5px;background:var(--ink-faint);opacity:.5;border-radius:1px;box-shadow:0 3px 0 var(--ink-faint),0 6px 0 var(--ink-faint);}
+  /* page-nav as little paper sheets — tiny printed pages resting in a row, not slider pips */
+  .pthumb{flex:none;width:26px;height:34px;border-radius:1.5px 3px 3px 1.5px;background:var(--paper);border:1px solid var(--paper-edge);
+    cursor:pointer;position:relative;box-shadow:0 2px 5px -2px var(--frame-shadow);transition:transform .2s var(--settle),box-shadow .2s;}
+  .pthumb::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--desk-edge);border-radius:1.5px 0 0 1.5px;} /* the sheet's spine edge */
+  .pthumb[data-cover]::before{background:var(--matcha);}
+  .pthumb i{position:absolute;left:6px;right:4px;top:6px;height:1px;background:var(--ink-faint);opacity:.4;box-shadow:0 3px 0 var(--ink-faint),0 6px 0 var(--ink-faint),0 9px 0 var(--ink-faint);}
+  .pthumb.cur{transform:scale(1.16) translateY(-2px);box-shadow:0 9px 16px -6px var(--frame-shadow);border-color:var(--matcha);z-index:2;} /* the one in your hand */
+  .pthumb.cur::after{content:"";position:absolute;left:50%;top:-7px;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--strawberry);}
 
   .bar{flex:none;height:66px;display:flex;align-items:center;gap:10px;padding:0 16px 4px;background:var(--chrome);border-top:1px solid var(--chrome-line);position:relative;z-index:20;}
   .icon-btn{flex:none;width:44px;height:44px;border-radius:12px;border:1px solid var(--chrome-line);background:transparent;color:var(--ink-soft);display:grid;place-items:center;cursor:pointer;transition:background .15s,transform .1s;}
@@ -525,8 +529,8 @@
     var r=$('trayrow'); r.innerHTML='';
     TRAY.forEach(function(it,idx){
       var d=document.createElement('button'); d.className='mat-item '+(it[0]==='photo0'?'photo0':it[0]==='gather'?'gather':'');
-      if(it[0]==='gather'){d.innerHTML='＋'; d.setAttribute('aria-label','Gather from your photos');
-        d.onclick=function(e){e.stopPropagation();snackText.textContent='Would add from your photos';snack.querySelector('button').style.display='none';snack.classList.add('show');setTimeout(function(){snack.classList.remove('show');snack.querySelector('button').style.display='';},1600);};}
+      if(it[0]==='gather'){d.innerHTML='＋ keep'; d.setAttribute('aria-label','Keep a photo on your shelf');
+        d.onclick=function(e){e.stopPropagation();snackText.textContent='Pick a photo to keep on your shelf';snack.querySelector('button').style.display='none';snack.classList.add('show');setTimeout(function(){snack.classList.remove('show');snack.querySelector('button').style.display='';},1600);};}
       else{d.setAttribute('aria-label','Place '+it[2]+' from shelf');
         if(it[0]==='photo0'){d.innerHTML='<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 28 L16 18 L22 24 L27 19 L32 28Z" fill="rgba(255,255,255,.85)"/><circle cx="14" cy="14" r="3" fill="rgba(255,255,255,.9)"/></svg>';}
         else{d.innerHTML='<svg viewBox="0 0 40 40" aria-hidden="true">'+(DECOR[it[0]]||DECOR.leaf)+'</svg>';}
