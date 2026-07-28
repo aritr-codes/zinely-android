@@ -223,5 +223,54 @@ contextual toolbars (C.3); and the paper-settle motion (C.5) — all in the warm
 ([V2-TOKENS.md](V2-TOKENS.md)). Representative creative assets (fonts, icons, sample stickers, paper grain)
 may stand in to express the vision; they are not shipping commitments ([BR§7](V2-BENCH-RESEARCH.md)).
 
-*Phases 4, 6 & 7 of the Bench initiative. Structure, flows and mechanics — no code changed. Next: the
-canonical HTML prototype (Phase 8), then internal critique → refinement → DESIGN FREEZE.*
+---
+
+## Part D — Studio additions (owner-approved 2026-07-28, from the [pre-freeze review](V2-BENCH-REVIEW.md))
+
+The review reframed the Bench as a **studio, not a document editor** and the owner approved folding four
+additions into the canonical prototype before freeze. These **supersede** the corresponding earlier
+sub-sections where noted.
+
+### D.1 — Holding shelf ("Your shelf") — H1 *(new; the studio's defining element)*
+A persistent, collapsible **tray** below the canvas holds materials **gathered but not yet placed** (photos,
+bits). "Collect now, arrange later" separates gathering from committing — the behavioural core of a studio
+and a second antidote to blank-page paralysis (BR-studio §1). Rules: one edge strip, **never covers the
+page**, collapsible to a handle; tapping a shelf item **places it at page centre, pre-selected, with a
+materialise-at-spot animation** (D.4); a "＋ gather" slot pulls from the device photo picker (content stays
+on device). This is a **new holding zone distinct from the page** — the fifth "state" the four-state model
+([A.1](#a1-the-four-states-of-the-screen-chrome-is-a-function-of-intent)) now sits within.
+
+### D.2 — Page navigation that morphs 1→32 — H2 *(supersedes [A.3](#a3-the-page-ribbon-orientation-without-a-pages-panel))*
+Zines now scale to ~32 pages, so the fixed dot-ribbon is replaced by **one component with three shapes**
+(BR-studio §2): **dots** (≤8 pages) → **horizontally scrolling filmstrip of small page-thumbnails** (9–32) →
+a **summoned full-screen page-grid** (the ⊞ button; jump / drag-reorder / add / delete) for whole-zine
+management. Small thumbnails navigate better than large. Front cover (1) and back (N) stay differentiated;
+the current page stays lit with the strawberry dot. Still orientation only — the finished-book reveal
+remains Read's ([BP-7](V2-BENCH-PRINCIPLES.md)).
+
+### D.3 — One "Art" drawer — H3 *(supersedes [A.5](#a5-where-the-asset-picker-lives-and-where-the-network-line-is))*
+"Add" stays **three verbs** (Text · Photo · Art). **Art is one surface**, not a tab-per-noun: a single
+**search field spanning bundled + online**, a **Recent + ⭐Favourites** rail (the only management —
+recognition over recall, long-session reuse), **chips** (Illustrations · Icons · Frames · Patterns) that
+*filter* not navigate, a finite curated **bundled grid**, and **"Search online"** as the single opt-in step =
+the privacy seam (keyword only, never content; downloaded items join Recent, print-safe CC0/PD-first).
+Maker content (Photo/Text) ranks above art; art is garnish (IKEA effect). Licensing stated once globally, not
+per tile. Full architecture: [V2-BENCH-REVIEW §7](V2-BENCH-REVIEW.md).
+
+### D.4 — Maker "ink" palette — H4 *(new; a separate content colour system)*
+Makers get real colour to make *with*: a **riso spot-ink palette** — ~12–18 **named** inks in **three bands**
+(**inks · paper tints · neutrals**), **swatch-first** picker with **3–5 ready-made harmonious presets** (so a
+beginner can't make mud) and a full custom picker one step deeper; a gentle "1–3 inks per zine" nudge. It
+lives in a **separate `content.*` token namespace** that **no chrome component may read**, and `consequence`
+red stays chrome-only — the interface palette stays restrained *so the maker's ink reads true*
+([V2-BENCH-REVIEW §8](V2-BENCH-REVIEW.md)). The 4 cover inks (ADR-069) remain for *cover identity*; this
+in-page set is distinct. Reached from the text/decor contextual toolbar's **Ink** verb. Insertion of any
+element **materialises at its landing spot, pre-selected** (no fly-in), with a no-bounce spring and one
+snap-tick on alignment ([V2-BENCH-REVIEW §9](V2-BENCH-REVIEW.md)).
+
+> **Governed follow-ups:** D.3 hardens into the **asset ADR** and D.4 into the **colour-namespace ADR** —
+> both need the standard review + (for D.3) legal sign-off before Compose, per [BR§7](V2-BENCH-RESEARCH.md).
+
+*Phases 4, 6 & 7 of the Bench initiative + the owner-approved studio additions (Part D). Structure, flows and
+mechanics — no code changed. The canonical prototype implements all of the above; next is owner critique →
+DESIGN FREEZE, then the asset + colour ADRs, then Compose.*
