@@ -26,6 +26,17 @@ import androidx.compose.ui.graphics.Color
 public val LocalZinelyColors: ProvidableCompositionLocal<ZinelyColors> =
     staticCompositionLocalOf { error("No ZinelyColors provided — wrap the tree in ZinelyTheme.") }
 
+/**
+ * The **V2** chrome palette, provided alongside [LocalZinelyColors] rather than replacing it.
+ *
+ * Both palettes are live during the V2 migration: V1 screens keep reading [LocalZinelyColors] (whose
+ * values are pinned to the V1 frozen trilogy and guard 65 editor goldens), while V2 surfaces read
+ * this one. The V1 local retires when **C0** lands, not as a side-effect of this change. See
+ * [ZinelyV2Colors].
+ */
+public val LocalZinelyV2Colors: ProvidableCompositionLocal<ZinelyV2Colors> =
+    staticCompositionLocalOf { error("No ZinelyV2Colors provided — wrap the tree in ZinelyTheme.") }
+
 public val LocalZinelyElevation: ProvidableCompositionLocal<ZinelyElevation> =
     staticCompositionLocalOf { error("No ZinelyElevation provided — wrap the tree in ZinelyTheme.") }
 
@@ -48,6 +59,10 @@ public val LocalZinelyTypography: ProvidableCompositionLocal<ZinelyTypography> =
 public object ZinelyTheme {
     public val colors: ZinelyColors
         @Composable get() = LocalZinelyColors.current
+
+    /** The V2 chrome palette. Additive during the migration — see [LocalZinelyV2Colors]. */
+    public val v2Colors: ZinelyV2Colors
+        @Composable get() = LocalZinelyV2Colors.current
 
     public val elevation: ZinelyElevation
         @Composable get() = LocalZinelyElevation.current
@@ -133,6 +148,7 @@ public fun ZinelyTheme(
 ) {
     val reduceMotion = rememberReduceMotion()
     val colors = remember(darkTheme) { if (darkTheme) zinelyDarkColors() else zinelyLightColors() }
+    val v2Colors = remember(darkTheme) { if (darkTheme) zinelyV2DarkColors() else zinelyV2LightColors() }
     val elevation = remember(darkTheme) { if (darkTheme) zinelyDarkElevation() else zinelyLightElevation() }
     val motion = remember(reduceMotion) { ZinelyMotion(reduceMotion = reduceMotion) }
     val typography = remember { ZinelyTypography() }
@@ -140,6 +156,7 @@ public fun ZinelyTheme(
 
     CompositionLocalProvider(
         LocalZinelyColors provides colors,
+        LocalZinelyV2Colors provides v2Colors,
         LocalZinelyElevation provides elevation,
         LocalZinelyMotion provides motion,
         LocalZinelyHaptics provides haptics,
