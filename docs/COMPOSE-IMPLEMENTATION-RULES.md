@@ -54,6 +54,11 @@ These are constitutional; violating one is a NO-GO regardless of how good the sc
 3. Still unsure, or the frozen artifact itself looks wrong? **Stop and raise it with the owner** — don't guess, and
    don't quietly diverge. A silent divergence creates a second source of truth, which is the one thing this whole
    workflow exists to prevent.
+4. Then **log it in [V2-SPEC-DEFECTS.md](design/V2-SPEC-DEFECTS.md)** — the register for defects found *in* the
+   frozen artifacts (contradictions, stale text, two frozen files disagreeing). Raising it in a session is not
+   enough; the session ends and the finding goes with it. Entries are not blockers by default — most are logged,
+   classified, and left for the design corpus to clean up — but an entry that genuinely blocks says so, and names
+   the phase it blocks.
 
 ---
 

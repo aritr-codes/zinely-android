@@ -37,6 +37,15 @@ public val LocalZinelyColors: ProvidableCompositionLocal<ZinelyColors> =
 public val LocalZinelyV2Colors: ProvidableCompositionLocal<ZinelyV2Colors> =
     staticCompositionLocalOf { error("No ZinelyV2Colors provided — wrap the tree in ZinelyTheme.") }
 
+/**
+ * The `content.*` maker inks — the art supplies, kept in their own local so that reaching for them
+ * from chrome is a deliberate act rather than an accident of autocomplete. Deliberately **not** keyed
+ * on the theme: a printed cover does not restyle itself when the room goes dark. See
+ * [ZinelyContentInks].
+ */
+public val LocalZinelyContentInks: ProvidableCompositionLocal<ZinelyContentInks> =
+    staticCompositionLocalOf { error("No ZinelyContentInks provided — wrap the tree in ZinelyTheme.") }
+
 public val LocalZinelyElevation: ProvidableCompositionLocal<ZinelyElevation> =
     staticCompositionLocalOf { error("No ZinelyElevation provided — wrap the tree in ZinelyTheme.") }
 
@@ -63,6 +72,10 @@ public object ZinelyTheme {
     /** The V2 chrome palette. Additive during the migration — see [LocalZinelyV2Colors]. */
     public val v2Colors: ZinelyV2Colors
         @Composable get() = LocalZinelyV2Colors.current
+
+    /** The `content.*` maker inks — for the artifact, never for chrome. See [ZinelyContentInks]. */
+    public val contentInks: ZinelyContentInks
+        @Composable get() = LocalZinelyContentInks.current
 
     public val elevation: ZinelyElevation
         @Composable get() = LocalZinelyElevation.current
@@ -149,6 +162,8 @@ public fun ZinelyTheme(
     val reduceMotion = rememberReduceMotion()
     val colors = remember(darkTheme) { if (darkTheme) zinelyDarkColors() else zinelyLightColors() }
     val v2Colors = remember(darkTheme) { if (darkTheme) zinelyV2DarkColors() else zinelyV2LightColors() }
+    // Not keyed on darkTheme: the maker's inks are theme-invariant by design (ZinelyContentInks).
+    val contentInks = remember { zinelyContentInks() }
     val elevation = remember(darkTheme) { if (darkTheme) zinelyDarkElevation() else zinelyLightElevation() }
     val motion = remember(reduceMotion) { ZinelyMotion(reduceMotion = reduceMotion) }
     val typography = remember { ZinelyTypography() }
@@ -157,6 +172,7 @@ public fun ZinelyTheme(
     CompositionLocalProvider(
         LocalZinelyColors provides colors,
         LocalZinelyV2Colors provides v2Colors,
+        LocalZinelyContentInks provides contentInks,
         LocalZinelyElevation provides elevation,
         LocalZinelyMotion provides motion,
         LocalZinelyHaptics provides haptics,
