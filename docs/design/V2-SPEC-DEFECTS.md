@@ -203,7 +203,7 @@ than tokens and remain Phase C's.
 | **Artifacts** | [`v2-proof.html`](mockups/v2-proof.html) lines 106-123, 210 · [`DocumentFontRegistry.kt`](../../render-android/src/main/kotlin/com/aritr/zinely/render/android/DocumentFontRegistry.kt) lines 101-113 |
 | **Found** | 2026-07-28, during Phase A / A3 (typography) |
 | **Severity** | **Capability gap between a frozen spec and the shipped engine** — does not block A3 or any of Phase A |
-| **Status** | Open — **owner ruling owed before Phase D**; explicitly *not* decided by A3 |
+| **Status** | Open — **deferred to Phase D by owner ruling (2026-07-28)**; explicitly *not* decided by A3 |
 
 **What the spec says.** The Proof's zine content — the block the file itself labels `/* zine content
 (real, not lorem) */` — is set entirely in `var(--serif)`, which `:22` defines as
@@ -232,8 +232,8 @@ The render module has its own font pipeline reading `assets/fonts/` by design, b
 the *same* registry — adding a family there changes what every exported PDF can contain. That is a
 document-model decision with an on-disk format consequence, not a theming one.
 
-**It is also not a one-line addition.** The frozen content needs **italic** Fraunces (`:111`, `:114`),
-which chrome does not (`:111`, `:114`, `:123`) — so honouring the spec means bundling a cut A3 deliberately did not, and
+**It is also not a one-line addition.** The frozen content needs **italic** Fraunces (`:111`, `:114`,
+`:123`), which chrome nowhere does — so honouring the spec means bundling a cut A3 deliberately did not, and
 `DocumentFontFamily` has slots for regular/bold/italic/boldItalic but not for a 500 weight, while the
 frozen content asks for 500 at two of its seven roles.
 
@@ -249,6 +249,29 @@ correctly routes expansion to *"the designer's font/preset curation, gated on it
 has now happened, and it asks for a second family. The comment is still true; it is simply no longer
 waiting on anything.
 
+**✓ OWNER RULING — 2026-07-28: deferred to Phase D. Entry stays open; no work is owed before then.**
+
+> *"Do not solve this during Phase A. Leave the current engine unchanged. This is an architectural
+> decision governed by the one-engine rule ([ADR-028](../DECISIONS.md#adr-028)) and belongs to Phase D
+> when the rendering/export pipeline is implemented. **No workaround. No temporary font substitution. No
+> second rendering path.**"*
+
+The three prohibitions are the operative part and are worth restating for the Phase B and C sessions that
+will meet this defect before Phase D does. Each names a shortcut that would look locally reasonable:
+
+- **No workaround** — do not paper over the silent fallback at the call site, and in particular do not
+  "fix" it by making `resolve()` throw or warn. The silence is a symptom of the real decision, not the
+  decision itself.
+- **No temporary font substitution** — do not map Fraunces onto Inter, onto a system serif, or onto the
+  chrome font resources A3 bundled. `:core:ui`'s `res/font/` and the render module's `assets/fonts/` are
+  separate pipelines by design, and bridging them "just for now" is exactly how a second path starts.
+- **No second rendering path** — [ADR-028](../DECISIONS.md#adr-028) requires preview, export and read to
+  draw through one engine. A serif-capable path added anywhere short of the registry breaks that
+  invariant, and it breaks it invisibly, since all three surfaces would still *render*.
+
+So the correct behaviour until Phase D is that zine content continues to draw in Inter, and this entry
+— not a code comment, not a TODO — is where that is recorded.
+
 ### D-005 — the Library and the Bench set the same role in two different serifs at two different weights
 
 | | |
@@ -256,7 +279,7 @@ waiting on anything.
 | **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 37, 125, 148, 163 · [`v2-bench.html`](mockups/v2-bench.html) lines 22, 180, 198, 236 · [`v2-proof.html`](mockups/v2-proof.html) lines 163, 210, 232 |
 | **Found** | 2026-07-28, during Phase A / A3 (typography) |
 | **Severity** | **Disagreement between two frozen files** — did not block A3; ruling owed before Phase B implements a Library heading |
-| **Status** | Open — **owner ruling requested** |
+| **Status** | ✅ **RESOLVED** 2026-07-28 by owner ruling — see the resolution at the end of this entry |
 
 **What they say.** The two files were frozen a day apart and declare the voice face differently.
 
@@ -293,6 +316,39 @@ Bench and Proof) or at **600** (as its own frozen file states)? And separately �
 cleanup, not a design question — the Library's literal `"Iowan Old Style",Palatino,Georgia` stack should
 become `var(--serif)` so a future reader is not told the product has two serifs.
 
+**✅ RESOLUTION — owner ruling, 2026-07-28.**
+
+> *"The Constitution is the higher authority. The canonical serif family for V2 is **Fraunces**. The
+> canonical weight is **500**. The Library's earlier 600 weight reflects its original fallback stack
+> (Iowan/Georgia), not a lasting design decision. When Phase B implements the Library, use **Fraunces 500
+> for the shared serif role** unless a specific frozen component explicitly requires another weight."*
+
+The ruling resolves the question by **authority rather than by arbitration**, which is why it settles
+cleanly: two frozen files disagreeing is not a tie to be broken on the merits, because
+[V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III already sits above both. It also confirms the reading this
+entry raised on its own evidence — that 600 was chosen to look right *in Georgia*, and does not transfer
+to Fraunces at the same nominal number.
+
+**What Phase B does.** The Library's serif headings (`.sh-ttl`, `.shelf-head h1`, `.empty h2`) render in
+**Fraunces 500**, matching the Bench and Proof. The escape clause is deliberately narrow: *"unless a
+specific frozen component explicitly requires another weight"* means a component whose frozen CSS states
+a weight for a reason of its own — not a component that merely happens to sit in the Library and
+therefore inherits 600 from `.sh-ttl`. If a Phase B session believes it has found such a component, that
+belief is a new register entry, not a local decision.
+
+**What implementation does now: nothing.** A3 already bundles 400/500/600 and selects between them
+nowhere, so the ruling requires **no code change** — which is what "bundling both prejudges nothing"
+meant when it was claimed. The 600 cut **stays bundled** and is not now dead weight: V1's
+`ZinelyFonts.Voice` is built on it and remains live until **C0** retires the V1 layer. Whether V2 chrome
+still needs a 600 cut after C0 is a question for C0, not for this entry.
+
+**Still owed to the design corpus** (documentation, not implementation): the Library's literal
+`"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif` stack at `:37` should become `var(--serif)`,
+and `.sh-ttl`'s `font-weight:600` at `:125` should become `500`, so that the frozen file stops stating a
+family and a weight the Constitution has overruled. Until that lands, **this entry is the authority and
+the Library HTML is stale on both counts** — which is precisely the situation the register exists to make
+visible rather than leave to be rediscovered.
+
 **A related note, not a defect.** The Bench and Proof both state that *"Georgia / system-sans stand in
 here pending real faces at parity"* (`v2-bench.html:7`, `v2-proof.html:7`). The Library carries no such
 note — but it does not need one, because it never names Fraunces at all: its Georgia is a genuine
@@ -308,6 +364,240 @@ same object — one is a shelf card drawn by chrome, the other is mock zine cont
 engine (D-004) — so this is listed as corroboration that 500-vs-600 is a systematic split across the two
 freeze dates, not as a fourth independent defect.
 
+### D-006 — the only shape token in V2 is declared and never used
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) line 24 · [`v2-proof.html`](mockups/v2-proof.html) line 24 |
+| **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
+| **Severity** | Dead specification — **does not block A4** |
+| **Status** | Open |
+
+**What it says.** Both files declare `--r:18px` in `:root`, alongside `--serif`, `--sans`, `--settle`
+and `--standard`. The Library declares no `--r` at all.
+
+**Why it is wrong.** `--r` is referenced **zero times** in either file, and **no `border-radius` of
+18px exists anywhere in V2** — not through the token and not as a literal. Every one of the sixteen
+distinct chrome radii is written out at its use site: `50%`, 22, 20, 16, 14, 13, 12, 11, 10, 9, 8, 6,
+5, 4, 3 and 2px, plus five asymmetric values such as the Library cover's `6px 9px 9px 6px`, whose
+tighter left corners read as the spine of a printed thing. The three files do not even agree with one
+another: the Library's bottom sheet is 20px where the Bench's is 22px, for the same kind of object.
+
+So `--r` is a leftover from a revision in which a shared corner radius existed and was then designed
+away, one component at a time, without the token being deleted.
+
+**Does implementation depend on it?** No, and A4 deliberately did **not** port it. A token naming a
+value that nothing uses is worse than no token: it invites a Phase B session to "restore consistency"
+by applying an 18px radius the design never had, and it would pass review, because a token in the
+foundation looks like an intention. `ZinelyV2Dimens` therefore carries no radius at all, and the
+absence is documented at the code with a pointer here.
+
+**Owner decision requested** (low stakes, but it should be answered rather than left): delete `--r`
+from both `:root` blocks as dead, **or** state which components it was meant to govern — in which case
+it is not dead and Phase B needs to know which ones.
+
+### D-007 — the constitutional 8pt rhythm is not observable in the frozen CSS
+
+| | |
+|---|---|
+| **Artifacts** | [V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III *Spacing* · [V2-RESEARCH.md](V2-RESEARCH.md) §2.4, §3.9 · [COMPOSE-V2-ROADMAP.md](../COMPOSE-V2-ROADMAP.md) Phase A deliverables · all three frozen mockups |
+| **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
+| **Severity** | **Conflict with the highest authority in the corpus** — holds A4's spacing deliverable and **blocks Phase B**, since no component can be laid out without spacing; does not block the rest of A4 |
+| **Status** | Open — **owner ruling required before the spacing scale can be written** |
+
+**What the governing documents say.** [V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III, under the
+invariants that are *"fixed for the life of V2"*:
+
+> *"An **8pt rhythm** governs layout. Spacing is calm and generous; the page is given room."*
+
+[V2-RESEARCH.md](V2-RESEARCH.md) §2.4 defines it concretely — *"Adopt an **8pt spacing scale**
+(4/8/16/24/32/48…), tokenized"* — and §3.9 asks for *"one tokenized 8pt `space.*` scale for all
+margin/padding/gap"*. [COMPOSE-V2-ROADMAP.md](../COMPOSE-V2-ROADMAP.md) lists A4's deliverable as
+*"the 8pt rhythm and the calm elevation model as reusable primitives"*.
+
+**What the frozen CSS does.** Every `padding`, `margin` and `gap` value across the three files:
+
+| | multiples of 8 | multiples of 4 | neither |
+|---|---|---|---|
+| Chrome only (hand-classified, N=204) | **16.7%** | 38.2% | 61.8% |
+| All CSS incl. scaffolding (N=252) | **17.1%** | 37.3% | 62.7% |
+
+The two measurements were taken independently and agree, so the finding does not depend on where the
+chrome/scaffolding line is drawn. The most frequent values are **12** (25), **8** (23) and **2** (19),
+followed by a continuous tail of 6, 7, 9, 10, 13 and 14 that no 4pt reading accommodates — 2, 6, 7, 9,
+13 and 14px together account for more chrome spacing than every multiple of 8 combined. A distribution
+with no gaps between 1 and 20px is the signature of hand-tuned optical spacing, not a stepped scale.
+
+**Why this is not the same call A3 made.** A3 declined to publish a *type* scale on the same kind of
+evidence, and that was safe: no document mandates one, so "there is no scale" contradicted nothing.
+Here the invariant is stated by the **Constitution**, which outranks the frozen HTML. Both available
+readings are therefore decisions, and both are expensive:
+
+- **Transcribe the frozen literals.** Pixel-parity passes. The constitutional invariant is violated on
+  every screen, and the foundation ships a "spacing scale" that is 62% off-grid.
+- **Snap to 8pt.** The invariant holds. Roughly three in five spacing values in the frozen trilogy
+  change, which is a **visual redesign of three DESIGN-FROZEN surfaces** — an owner amendment under
+  [COMPOSE-IMPLEMENTATION-GUIDE.md §4](../COMPOSE-IMPLEMENTATION-GUIDE.md), and it would guarantee
+  Phase B fails its own pixel-parity gate against the HTML it is implementing.
+
+**The freeze appears to have anticipated this.** `v2-library.html:8`, *inside* the DESIGN FROZEN
+banner, lists **"8pt rhythm"** among the *implementation-time gates (P3)* — alongside AA contrast per
+ink and screen-reader paths. So the frozen file does not claim to satisfy the rhythm; it defers it to
+implementation. That is a strong hint that the intended answer is "snap at implementation time" — but
+it is a hint, and acting on it would silently redesign three frozen surfaces, which is precisely the
+act the implementation rules reserve for the owner.
+
+**What implementation did, pending the ruling.** **Nothing.** `ZinelyV2Dimens` publishes no spacing
+value at all. This is not the A3 pattern of shipping a minimum defensible gate — here there is no
+minimum: any scale published now *is* the answer, since Phase B would build against it. The rest of
+A4 (the hairline, the focus stroke, the shadow primitive, the radius finding) does not depend on the
+ruling and shipped normally.
+
+**Owner decision requested.** Does V2 spacing (a) transcribe the frozen literals, accepting that the
+constitutional 8pt invariant describes an aspiration the frozen surfaces do not meet; (b) snap to the
+4/8/16/24/32/48 scale at implementation time, accepting that this amends three frozen surfaces and
+that Phase B's parity gate must then compare against an amended HTML rather than today's; or (c)
+something narrower — e.g. 8pt governs *layout* spacing (page margins, section gaps, the rhythm a user
+perceives) while component-internal padding stays as frozen, which would reconcile the Constitution's
+own wording (*"governs **layout**"*) with the measurement, since the off-grid values are concentrated
+in component internals?
+
+*(Recorded for the record, not as a resolution: (c) is the reading that requires the fewest documents
+to be wrong. It is not adopted, because "which values are layout and which are component-internal" is
+itself a design judgement across three frozen surfaces.)*
+
+### D-008 — two of the three frozen surfaces specify no focus appearance, and one removes it
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 54, 77, 95, 137 · [`v2-bench.html`](mockups/v2-bench.html) lines 99, 209 · [`v2-proof.html`](mockups/v2-proof.html) — no focus rule anywhere |
+| **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
+| **Severity** | **Accessibility gap in the frozen specification** — does not block A4; owner ruling owed before Phase C |
+| **Status** | Open — **owner ruling requested** |
+
+**What exists.** The Library specifies focus on three product controls (and one prototype-only control), all at **2px**:
+
+| Control | Line | Rule |
+|---|---|---|
+| `.zine:focus-visible` | 54 | `outline:2px solid var(--matcha-text); outline-offset:6px; border-radius:9px` |
+| `.more:focus-visible` | 77 | `outline:2px solid currentColor; outline-offset:0` |
+| `.start:focus-visible` | 95 | `outline:2px solid var(--ink); outline-offset:3px` |
+| `.ctl:focus-visible` | 137 | `outline:2px solid var(--matcha-text); outline-offset:2px` — **prototype-only control**, not product UI; listed for completeness because it is the fourth and last focus rule in the corpus |
+
+**What does not exist.** The **Bench and the Proof contain no `:focus`, `:focus-within` or
+`:focus-visible` rule at all** — between them roughly two dozen interactive controls, including every
+control in the editor. The Proof alone has some fourteen `<button>` elements with no specified focus
+appearance.
+
+**Worse than an omission, in one place.** The Bench sets `outline:none` on `.el` (`:99`) and
+`.search input` (`:209`). `.el` is not decorative: it carries `tabindex="0"`, `role="button"` and an
+Enter/Space `keydown` handler (`:503-504`), so it is a deliberately keyboard-operable control whose
+focus indicator is deliberately removed, with nothing put in its place. A keyboard or switch-access
+user can move focus through the Bench's elements and see nothing at all.
+
+**Why this is the register's and not a code review's.** The frozen HTML is the specification. An
+implementer who invents a focus ring for the Bench is designing a visual treatment for the product's
+most complex surface — colour, offset, radius and how it reads against a user's own artwork — which
+is a design act, not a parity act. An implementer who faithfully reproduces `outline:none` ships an
+accessibility defect knowingly. Neither is implementation's call.
+
+**Does implementation depend on it?** Not in A4 — `ZinelyV2Dimens.FocusRingWidth` carries the 2px all
+four rules agree on, and no offset, since the Library's three product rules use three different
+offsets (6px, 3px, 0). It binds in **Phase C**, when the Bench's controls are built.
+
+**Owner decision requested.** What is the focus appearance for the Bench and the Proof? The narrowest
+answer that resolves it is to extend the Library's treatment (2px `matchaText`, per-component offset)
+across all three surfaces and delete the two `outline:none` rules — but that is a change to a frozen
+surface and so belongs to the owner.
+
+### D-009 — no control in the frozen trilogy declares a minimum touch target, and most measure well under 48dp
+
+| | |
+|---|---|
+| **Artifacts** | all three frozen mockups (control sizing throughout) · [V2-RESEARCH.md](V2-RESEARCH.md) §2.4 |
+| **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
+| **Severity** | **Accessibility gap in the frozen specification** — does not block A4; owner ruling owed before Phase B |
+| **Status** | Open — **owner ruling requested** |
+
+**Measured.** Not one selector in any of the three files declares `min-height` or `min-width` on an
+interactive control. Every `min-*` in the trilogy is either `min-height:100vh` on `body`, a
+`min-width:0` flexbox overflow fix, or the Proof's `min-height:2.6em` reserving two lines of fold
+caption. Control sizes are set with explicit `width`/`height` or fall out of padding, and they land
+mostly below the 48dp floor:
+
+| Surface | Control | Declared box |
+|---|---|---|
+| Bench | `.mat-item` / `.icon-btn` / `.add` | 46×46 · 44×44 · h44 |
+| Bench | `.gridbtn` · `.styletb .chip` · `.chip2` | 34×34 · h34 · h32 |
+| Bench | `.pthumb` · `.sw2` · `.toggle` | 26×34 · 26×26 · 38×22 |
+| Bench | `.tray .fold` | ≈23×19 — the smallest control in V2 |
+| Proof | `.fnav` · `.iconbtn` · `.dclose` | 40×40 · 38×38 · 30×30 |
+| Library | `.more` | 34×34 |
+| Library | `.start` · `.sheet .act` | ≈49 · ≈50 — the only controls that clear the floor by construction |
+
+**Why this is one finding with D-007 and still needs its own answer.** [V2-RESEARCH.md](V2-RESEARCH.md)
+§2.4 predicts exactly this coupling — *"generous 8pt spacing gives 48dp targets for free"*. The
+frozen surfaces did not take the 8pt spacing, and did not get the targets. So the two defects share a
+cause. They do **not** share a fix: if the owner rules under D-007 that the frozen literals stand, the
+targets are still below the floor and still need an answer, so this is logged separately rather than
+folded in.
+
+**Why implementation must not quietly fix it.** The Android floor is 48dp and is not negotiable, but
+the two ways to reach it are both design changes: grow the controls (which reflows three frozen
+layouts — the Bench's filmstrip and swatch grid could not hold their current counts at 48dp), or keep
+the visual size and extend the *touch* area beyond the drawn bounds. The second is invisible in a
+screenshot and is very likely the intended answer, but it is a decision about overlapping hit regions
+in a dense editor, and getting it wrong produces controls that steal each other's taps.
+
+**Does implementation depend on it?** Not for the *fix*, but A4 does now publish the floor:
+`ZinelyV2Dimens.MinTouchTarget = 48.dp`. An earlier draft withheld it on the grounds that the V2 spec
+states no minimum and asserting one would be implementation inventing a design value. The independent
+review falsified that, and correctly: **48dp is a platform floor, not a design value** — V1's
+`ZinelyDimens` says so in as many words — and the V2 spec's silence is not a contradiction of it. It
+also prejudges nothing, because *both* answers below presuppose the number; withholding it would only
+have meant Phase B building 26×26 controls with nothing in the foundation naming what they must clear.
+The defect is the gap between that floor and the frozen sizes, and it binds in **Phase B**.
+
+**Owner decision requested.** Do the frozen control sizes stand with the touch area extended beyond
+the drawn bounds to 48dp, or do the controls themselves grow (and the layouts that hold them change)?
+
+### D-010 — the page shadow is hard-coded to the light theme and does not adapt in the dark
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) line 85 · [`v2-proof.html`](mockups/v2-proof.html) line 98 |
+| **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
+| **Severity** | Theme defect in the frozen specification — **does not block A4** |
+| **Status** | Open |
+
+**What it says.** Every other shadow in the Bench and the Proof takes its colour from
+`var(--frame-shadow)`, which is re-derived for dark (`rgba(58,48,32,.28)` → `rgba(0,0,0,.5)`). Two do
+not:
+
+- `v2-bench.html:85` — `.page` — `0 14px 30px -14px rgba(58,48,32,.4), 0 2px 5px rgba(58,48,32,.14)`
+- `v2-proof.html:98` — `.zpage` — `0 16px 34px -16px rgba(58,48,32,.44), 0 2px 5px rgba(58,48,32,.14)`
+
+`rgb(58,48,32)` is the **light-theme** value of `--frame-shadow`, spelled out rather than referenced.
+
+**Why it is wrong.** The dark-theme blocks in all three files change colour tokens only — so these two
+rules keep a warm-brown shadow on a dark desk, while every neighbouring surface switches to black.
+`.page` and `.zpage` are the *zine itself*: the single most important object on both screens. This is
+also the one place the two-layer cast-plus-contact composition the Library expresses with two tokens
+(`--shadow` + `--contact`) is reproduced by hand, which is plausibly how the tokens were lost.
+
+Note this is a **theme** defect, not a value defect: the light-theme rendering is correct and the
+prototypes are usually read in light, which is why it survived the freeze.
+
+**Does implementation depend on it?** Not in A4 — no shadow values are transcribed yet; A4 ships only
+the [`ZinelyV2ShadowLayer`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Shadow.kt)
+primitive. It binds in **Phase C** and **Phase D**, when the page and the proof page are drawn. Flagged
+now because a faithful transcription would carry the bug into Compose and it would then be invisible:
+the Compose page would look right in light and subtly wrong in dark, which is the failure mode nobody
+screenshots.
+
+**Owner decision requested** (or simply a corpus fix): should both rules use `var(--frame-shadow)`,
+and if the two-layer composition is wanted in dark as well, does the Bench/Proof palette need a
+`--contact` equivalent the way the Library has one?
 ---
 
 ## Resolved
@@ -315,6 +605,7 @@ freeze dates, not as a fourth independent defect.
 | ID | Defect | Resolved |
 |---|---|---|
 | **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
+| **D-005** | The Library and the Bench set the same role in two different serifs at two different weights | 2026-07-28 — owner ruling: the Constitution outranks both frozen files. Canonical serif is **Fraunces at 500**; the Library's 600 reflected its Georgia fallback. No code change owed. Entry kept above. |
 
 *(Resolved entries stay in place rather than being deleted — the record of what was once contradictory
 is what stops it being reintroduced.)*

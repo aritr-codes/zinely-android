@@ -61,15 +61,20 @@ public object ZinelyV2Fonts {
     /**
      * `--serif` / the voice face — **Fraunces**, at 400 / 500 / 600.
      *
-     * All three weights are real requirements of the frozen chrome, and the split between them is
-     * itself an open question (**D-005** in [V2-SPEC-DEFECTS.md](docs/design/V2-SPEC-DEFECTS.md)):
-     * the Bench and Proof set every serif heading at **500**, while the Library — frozen a day
-     * earlier, before the `--serif` token existed — sets its headings at **600**. Both files are
-     * frozen. Shipping all three weights lets Phase B proceed either way and **prejudges nothing**;
-     * whichever way the owner rules, the face is already present.
+     * **500 is the canonical weight for the shared serif role** — owner ruling, 2026-07-28, closing
+     * **D-005** in [V2-SPEC-DEFECTS.md](docs/design/V2-SPEC-DEFECTS.md). The Bench and Proof already
+     * set every serif heading at 500; the Library — frozen a day earlier, before the `--serif` token
+     * existed — sets its headings at **600**, and that 600 reflects its original Iowan/Georgia
+     * fallback stack rather than a lasting decision. The Constitution outranks both frozen files, so
+     * Phase B renders Library headings at 500 too, unless a specific frozen component explicitly
+     * states a weight for a reason of its own.
      *
-     * `400` is not speculative either — the Proof's fold-step caption (`.foldcap`, `:210`) is serif
+     * `400` is required independently — the Proof's fold-step caption (`.foldcap`, `:210`) is serif
      * body text at 14px with no weight set.
+     *
+     * `600` stays bundled and is not dead weight: V1's [ZinelyFonts.Voice] is built on it and stays
+     * live until **C0** retires the V1 layer. Whether V2 chrome still wants a 600 cut after that is
+     * C0's question.
      *
      * **Optical size.** All three are the static **9pt** cut. The variable face would let `opsz`
      * track the point size, but Compose drives that through `FontVariation`, which the platform

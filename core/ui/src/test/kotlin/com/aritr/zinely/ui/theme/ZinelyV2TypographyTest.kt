@@ -47,8 +47,11 @@ class ZinelyV2TypographyTest {
         // 400: proof.html:210 `.foldcap` (serif, 14px, no weight).
         // 500: bench.html `.inkpop h4` / `.sheet h3` / `.pgrid .pgh h3`; proof `.dhead h3` / `.done h4`.
         // 600: library.html `.sh-ttl` / `.shelf-head h1` / `.empty h2`.
+        // D-005 is closed: 500 is canonical for the shared serif role (owner ruling 2026-07-28), so
+        // Phase B renders the Library's headings at 500 rather than the 600 its own frozen CSS states.
+        // 600 stays bundled because V1's ZinelyFonts.Voice is built on it until C0.
         assertEquals(
-            "Fraunces ships at 400/500/600 — see D-005 for why both 500 and 600 are required",
+            "Fraunces ships at 400/500/600 — 500 canonical (D-005), 600 held for V1 until C0",
             listOf(FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold),
             voice.map { it.weight },
         )
