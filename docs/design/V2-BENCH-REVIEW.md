@@ -351,3 +351,22 @@ core; those two land behind their ADRs.
 
 *Phase 10.5 of the Bench initiative. The physicality iteration is applied to the canonical prototype and
 republished to the same artifact URL; JS re-validated. Recommendation to the owner: **FREEZE**.*
+
+### E.6 — 🔒 DESIGN FREEZE (owner-approved 2026-07-28)
+
+The owner reviewed the republished prototype and approved the freeze.
+**[`mockups/v2-bench.html`](mockups/v2-bench.html) is the frozen, canonical Bench specification**, with
+[V2-BENCH-PRINCIPLES.md](V2-BENCH-PRINCIPLES.md) (BP-1..7 / EP-1..5) and
+[V2-BENCH-IA-INTERACTION.md](V2-BENCH-IA-INTERACTION.md) as its written authority.
+
+- **Post-freeze rule** ([CLAUDE.md](../../CLAUDE.md)): only bug / accessibility / performance / implementation-
+  parity / theme fixes are allowed. Any UX change updates the **HTML spec first**, never Compose first.
+- **Compose may begin** on the frozen core.
+- **Carried into the build as invariants:** persistence-of-place (§E.4); in-place caret + rigid whole-page
+  pan for text editing, conditioned on device Pass-2 proving pixel-identical return + small-text editability
+  ([EP-1](V2-BENCH-PRINCIPLES.md)), fallback = harden the bottom sheet.
+- **Still governed — do NOT freeze into implementation until a review + legal pass clears them:** the asset-
+  layer ADR (H3 online-search licensing, CC0/MIT-first) and the colour-namespace ADR (H4 `content.*` maker
+  inks). These land behind their ADRs; the rest of the Bench does not wait on them.
+
+*Bench initiative Phases 1–10.5 complete. **The Bench is design-frozen.***
