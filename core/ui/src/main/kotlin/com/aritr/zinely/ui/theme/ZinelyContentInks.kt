@@ -31,6 +31,34 @@ import androidx.compose.ui.graphics.Color
  * draws **with** inside a page. `teal #47857B` is a cover ink and is deliberately **not** in the
  * maker set; `Aqua #57B0A9` is a maker ink and is deliberately **not** a cover ink.
  *
+ * ### The in-page palette is three bands, and they are three categories — not nineteen inks
+ *
+ * The frozen ink popover renders `bandHTML('Inks',INKS) + bandHTML('Paper tints',TINTS) +
+ * bandHTML('Neutrals',NEUT)` (`v2-bench.html:460`), and `applyInk` (`:463-470`) applies **any** of
+ * the nineteen swatches. That sat awkwardly against the Constitution's "10-ink Bench H4 set" until
+ * the owner ruled (2026-07-28, closing **D-003**):
+ *
+ * > *"The frozen HTML is the authority. The complete maker palette consists of: Inks · Paper Tints ·
+ * > Neutrals. The constitutional '10 maker inks' refers only to the INKS band. Paper Tints and
+ * > Neutrals are separate categories, not additional inks. Do not merge them. Do not rename them.
+ * > Model them as three distinct collections so the architecture reflects the product language
+ * > rather than flattening everything into a single list."*
+ *
+ * Hence [makerInks], [paperTints] and [neutrals] are three collections of three distinct types. The
+ * types are the enforcement: there is no `List<Color>` anyone can concatenate them into, so
+ * "flatten the palette" is a compile error rather than a tempting one-liner. **A neutral is not an
+ * ink and a paper tint is not an ink** — that is product language, and the model says so.
+ *
+ * Two consequences worth knowing before you write a lint against this namespace. `Ink #2A251E`
+ * appears in **both** [makerInks] and [neutrals] — that is verbatim in the frozen source, not a
+ * transcription slip. And [neutrals] `Slate #5B5347` / `Stone #8C8269` are byte-identical to
+ * light-theme chrome `inkSoft` / `inkFaint`, which — with `Ink` — makes **three** sanctioned
+ * chrome/content value coincidences. Any future "no content value equals a chrome value" check
+ * would be wrong; the only value-level rule the corpus states is the `consequence` exclusion.
+ *
+ * The three **presets** (`v2-bench.html:394`) are *recipes over* these bands rather than tokens, and
+ * belong to the Bench UI in Phase C.
+ *
  * ### These are theme-invariant, and that is a design truth rather than an oversight
  *
  * The frozen Library declares its cover inks as plain CSS classes (`v2-library.html:79-84`) sitting
@@ -62,39 +90,48 @@ public data class ZinelyContentInks(
     /** The un-inked **paper cover stock** — the alternative to an ink cover (`v2-library.html:83-84`). */
     val coverStock: ZinelyCoverStock,
     /**
-     * The **ten named riso spot inks** — the `INKS` band, in the frozen order the ink popover
-     * presents them (`v2-bench.html:391`). This is what the maker draws *with*.
-     *
-     * **This is one band of three, and is NOT the complete maker palette.** The frozen ink popover
-     * renders `bandHTML('Inks',INKS) + bandHTML('Paper tints',TINTS) + bandHTML('Neutrals',NEUT)`
-     * (`v2-bench.html:460`) — nineteen swatches, and `applyInk` (`:463-470`) applies **any** of them
-     * as an ink. Only the `INKS` band is modelled here, because the corpus does not agree on whether
-     * the other two belong to `content.*`: [V2-CONSTITUTION.md](docs/design/V2-CONSTITUTION.md) §III
-     * and [V2-IDENTITY.md](docs/design/V2-IDENTITY.md) §4 both say the maker set *is* these ten
-     * ("verbatim, no invention"), while the frozen Bench offers nineteen. That contradiction is
-     * **D-003** in [V2-SPEC-DEFECTS.md](docs/design/V2-SPEC-DEFECTS.md) and is owner-owed.
-     *
-     * **Do not read this field as "the maker's supplies" when building the Phase C ink popover** —
-     * read D-003 first. Porting the other two bands unilaterally would contradict the Constitution;
-     * treating ten as complete would contradict the frozen prototype. Neither is implementation's
-     * call to make.
+     * Band 1 of 3 — the **ten named riso spot inks** (`INKS`, `v2-bench.html:391`), in frozen order.
+     * This is what the maker draws *with*, and it is the band
+     * [V2-CONSTITUTION.md](docs/design/V2-CONSTITUTION.md) §III means by "the 10-ink Bench H4 set".
      */
     val makerInks: List<ZinelyMakerInk>,
+    /**
+     * Band 2 of 3 — the **paper tints** (`TINTS`, `v2-bench.html:392`), in frozen order. A separate
+     * *category*, not five more inks — see the class KDoc.
+     */
+    val paperTints: List<ZinelyPaperTint>,
+    /**
+     * Band 3 of 3 — the **neutrals** (`NEUT`, `v2-bench.html:393`), in frozen order. A separate
+     * *category*, not four more inks — see the class KDoc.
+     */
+    val neutrals: List<ZinelyNeutral>,
 ) {
     /** Look up a cover ink by identity. Phase B resolves one of these per cover render. */
     public operator fun get(id: ZinelyCoverInkId): ZinelyCoverInk = coverInks.single { it.id == id }
 
     /** Look up a maker ink by identity. */
     public operator fun get(id: ZinelyMakerInkId): ZinelyMakerInk = makerInks.single { it.id == id }
+
+    /** Look up a paper tint by identity. */
+    public operator fun get(id: ZinelyPaperTintId): ZinelyPaperTint = paperTints.single { it.id == id }
+
+    /** Look up a neutral by identity. */
+    public operator fun get(id: ZinelyNeutralId): ZinelyNeutral = neutrals.single { it.id == id }
 }
 
 /** Stable identity for a cover ink. Human labels live in `:core:copy` — see [ZinelyContentInks]. */
 public enum class ZinelyCoverInkId { Matcha, Teal, Strawberry, Ochre }
 
-/** Stable identity for an in-page maker ink. Human labels live in `:core:copy`. */
+/** Stable identity for an in-page maker ink (band 1). Human labels live in `:core:copy`. */
 public enum class ZinelyMakerInkId {
     Matcha, Forest, Strawberry, Brick, Sunflower, Ochre, Aqua, Cornflower, Plum, Ink,
 }
+
+/** Stable identity for a paper tint (band 2). Human labels live in `:core:copy`. */
+public enum class ZinelyPaperTintId { Cream, Blush, Sky, Sage, Kraft }
+
+/** Stable identity for a neutral (band 3). Human labels live in `:core:copy`. */
+public enum class ZinelyNeutralId { Ink, Slate, Stone, Fog }
 
 /**
  * A cover ink is a **frozen triple**, not a single colour: the sheet's [fill], the title colour that
@@ -132,6 +169,26 @@ public data class ZinelyMakerInk(
 )
 
 /**
+ * A paper tint — a pale ground from the second band. A **separate category from an ink**, and a
+ * distinct type so the two can never be concatenated into one palette.
+ */
+@Immutable
+public data class ZinelyPaperTint(
+    val id: ZinelyPaperTintId,
+    val value: Color,
+)
+
+/**
+ * A neutral — a grey-warm value from the third band. A **separate category from an ink**, and a
+ * distinct type for the same reason as [ZinelyPaperTint].
+ */
+@Immutable
+public data class ZinelyNeutral(
+    val id: ZinelyNeutralId,
+    val value: Color,
+)
+
+/**
  * The frozen `content.*` set. Takes **no theme parameter** by design — see [ZinelyContentInks].
  *
  * Sources: `v2-library.html:79-84` (cover inks + stock), `v2-bench.html:391` (the maker set).
@@ -160,5 +217,20 @@ public fun zinelyContentInks(): ZinelyContentInks = ZinelyContentInks(
         ZinelyMakerInk(ZinelyMakerInkId.Cornflower, Color(0xFF6E86C9)),
         ZinelyMakerInk(ZinelyMakerInkId.Plum, Color(0xFF8A5A9B)),
         ZinelyMakerInk(ZinelyMakerInkId.Ink, Color(0xFF2A251E)),
+    ),
+    // TINTS, v2-bench.html:392
+    paperTints = listOf(
+        ZinelyPaperTint(ZinelyPaperTintId.Cream, Color(0xFFF1E9D6)),
+        ZinelyPaperTint(ZinelyPaperTintId.Blush, Color(0xFFF0DED9)),
+        ZinelyPaperTint(ZinelyPaperTintId.Sky, Color(0xFFDDE9EE)),
+        ZinelyPaperTint(ZinelyPaperTintId.Sage, Color(0xFFE1E9D2)),
+        ZinelyPaperTint(ZinelyPaperTintId.Kraft, Color(0xFFE4D3B4)),
+    ),
+    // NEUT, v2-bench.html:393. `Ink` repeats the maker ink of the same name, verbatim from source.
+    neutrals = listOf(
+        ZinelyNeutral(ZinelyNeutralId.Ink, Color(0xFF2A251E)),
+        ZinelyNeutral(ZinelyNeutralId.Slate, Color(0xFF5B5347)),
+        ZinelyNeutral(ZinelyNeutralId.Stone, Color(0xFF8C8269)),
+        ZinelyNeutral(ZinelyNeutralId.Fog, Color(0xFFB7AD93)),
     ),
 )

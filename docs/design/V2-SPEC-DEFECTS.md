@@ -121,8 +121,8 @@ should the frozen Library adopt? Needed before Phase B's *"AA contrast per ink"*
 |---|---|
 | **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) lines 391-394, 460, 463-470 · [V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III · [V2-IDENTITY.md](V2-IDENTITY.md) §4 · [V2-BENCH-REVIEW.md](V2-BENCH-REVIEW.md) §H4 |
 | **Found** | 2026-07-28, during Phase A / A2 (independent review of the `content.*` namespace) |
-| **Severity** | **Specification conflict** — does not block A2; **blocks the Phase C ink popover** |
-| **Status** | Open — **owner ruling requested** |
+| **Severity** | **Specification conflict** — did not block A2; would have blocked the Phase C ink popover |
+| **Status** | ✅ **RESOLVED** 2026-07-28 by owner ruling — see the resolution at the end of this entry |
 
 **The conflict.** Four governing documents describe the maker's palette, and they do not describe the
 same thing.
@@ -162,18 +162,44 @@ would contradict the Constitution, and treating ten as complete would contradict
 so the field is documented as *one band of three* and `ZinelyContentInks.makerInks` carries an explicit
 "do not read this as the maker's supplies — read D-003 first" warning for the Phase C session.
 
-**Owner decision requested:** is `content.*` the ten `INKS`, or all nineteen across three bands? If
-nineteen, the Constitution §III and V2-IDENTITY.md §4 need amending to match the frozen Bench, and the
-three `NEUT` values need adding to the token record. If ten, the frozen Bench's `TINTS` and `NEUT`
-bands need removing from the ink popover — a change to what the Bench *does*, and therefore an owner
-amendment to the frozen HTML. **This must be settled before Phase C builds the ink popover**, since the
-two answers produce visibly different products.
+**✅ RESOLUTION — owner ruling, 2026-07-28.**
+
+> *"The frozen HTML is the authority. The complete maker palette consists of: **Inks · Paper Tints ·
+> Neutrals**. The constitutional '10 maker inks' refers only to the INKS band. Paper Tints and Neutrals
+> are **separate categories, not additional inks**. Do not merge them. Do not rename them. Implement all
+> three groups exactly as frozen when Phase C arrives. Model them as three distinct collections so the
+> architecture reflects the product language rather than flattening everything into a single list."*
+
+Neither document was wrong; the question was miscast. The Constitution's "10 maker inks" was never a
+claim about the size of the palette — it names **one band within it**. "Ten inks" and "nineteen
+swatches" are both true because *ink* is a category, not a synonym for *swatch*.
+
+**Implemented** in [`ZinelyContentInks`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyContentInks.kt)
+as `makerInks` / `paperTints` / `neutrals` — three collections of three **distinct types**, which is
+what makes "do not merge them" enforceable rather than merely written down: there is no `List<Color>`
+the three can be concatenated into, so flattening the palette is a compile error. Recorded as
+[ADR-072](../DECISIONS.md#adr-072) Decision 6. The three `PRESETS` are recipes over the bands rather
+than tokens and remain Phase C's.
+
+**Two things this surfaced that outlive the defect**, both now pinned by test:
+
+- **Three sanctioned chrome/content value coincidences.** Neutral `Ink #2A251E`, `Slate #5B5347` and
+  `Stone #8C8269` are byte-identical to light chrome `ink`, `inkSoft` and `inkFaint`. A future "no
+  content value equals a chrome value" lint would therefore be **wrong**; the only value-level rule the
+  corpus states is the `consequence` exclusion.
+- **`Ink` legitimately appears in two bands** (spot ink *and* neutral), verbatim from source — pinned so
+  it is never de-duplicated into one, which would silently change what the popover offers.
 
 ---
 
 ## Resolved
 
-*(none yet)*
+| ID | Defect | Resolved |
+|---|---|---|
+| **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
+
+*(Resolved entries stay in place rather than being deleted — the record of what was once contradictory
+is what stops it being reintroduced.)*
 
 ---
 

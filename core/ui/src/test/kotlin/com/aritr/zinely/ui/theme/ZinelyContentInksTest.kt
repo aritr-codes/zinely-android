@@ -3,6 +3,7 @@ package com.aritr.zinely.ui.theme
 import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -99,6 +100,75 @@ class ZinelyContentInksTest {
         assertEquals(Color(0xFF6E86C9), ink(ZinelyMakerInkId.Cornflower))
         assertEquals(Color(0xFF8A5A9B), ink(ZinelyMakerInkId.Plum))
         assertEquals(Color(0xFF2A251E), ink(ZinelyMakerInkId.Ink))
+    }
+
+    // ----- band 2: paper tints, v2-bench.html:392 ---------------------------------------------
+
+    @Test
+    fun `the paper tint band is exactly the five frozen tints, in the frozen order`() {
+        assertEquals(
+            listOf(
+                ZinelyPaperTintId.Cream,
+                ZinelyPaperTintId.Blush,
+                ZinelyPaperTintId.Sky,
+                ZinelyPaperTintId.Sage,
+                ZinelyPaperTintId.Kraft,
+            ),
+            inks.paperTints.map { it.id },
+        )
+        assertEquals(Color(0xFFF1E9D6), inks[ZinelyPaperTintId.Cream].value)
+        assertEquals(Color(0xFFF0DED9), inks[ZinelyPaperTintId.Blush].value)
+        assertEquals(Color(0xFFDDE9EE), inks[ZinelyPaperTintId.Sky].value)
+        assertEquals(Color(0xFFE1E9D2), inks[ZinelyPaperTintId.Sage].value)
+        assertEquals(Color(0xFFE4D3B4), inks[ZinelyPaperTintId.Kraft].value)
+    }
+
+    @Test
+    fun `the Cream paper tint is not the cover stock, near as they look`() {
+        // Cream #F1E9D6 (an in-page tint) and the cover stock #F1EBDA differ by two channels. They
+        // are separate values for separate jobs, and a near-miss like this is exactly the kind of
+        // thing a transcription pass "corrects" into a single token by accident.
+        assertNotEquals(inks.coverStock.fill, inks[ZinelyPaperTintId.Cream].value)
+    }
+
+    // ----- band 3: neutrals, v2-bench.html:393 ------------------------------------------------
+
+    @Test
+    fun `the neutral band is exactly the four frozen neutrals, in the frozen order`() {
+        assertEquals(
+            listOf(
+                ZinelyNeutralId.Ink,
+                ZinelyNeutralId.Slate,
+                ZinelyNeutralId.Stone,
+                ZinelyNeutralId.Fog,
+            ),
+            inks.neutrals.map { it.id },
+        )
+        assertEquals(Color(0xFF2A251E), inks[ZinelyNeutralId.Ink].value)
+        assertEquals(Color(0xFF5B5347), inks[ZinelyNeutralId.Slate].value)
+        assertEquals(Color(0xFF8C8269), inks[ZinelyNeutralId.Stone].value)
+        assertEquals(Color(0xFFB7AD93), inks[ZinelyNeutralId.Fog].value)
+    }
+
+    @Test
+    fun `the three sanctioned chrome-content value coincidences are pinned as intentional`() {
+        // These are the values that would break a naive "no content value equals a chrome value"
+        // lint. They are verbatim in the frozen source and are pinned here so that a future author
+        // writing such a lint finds the exception list already documented and tested, rather than
+        // discovering it as three mysterious failures and "fixing" a frozen value to make them go
+        // away. See the D-003 ruling in the ZinelyContentInks KDoc.
+        val chrome = zinelyV2LightColors()
+        assertEquals(chrome.ink, inks[ZinelyNeutralId.Ink].value)          // #2A251E
+        assertEquals(chrome.inkSoft, inks[ZinelyNeutralId.Slate].value)    // #5B5347
+        assertEquals(chrome.inkFaint, inks[ZinelyNeutralId.Stone].value)   // #8C8269
+    }
+
+    @Test
+    fun `Ink appears in both the ink and neutral bands, verbatim from the frozen source`() {
+        // The frozen popover lists 'Ink' twice — once as a spot ink, once as a neutral. Not a
+        // transcription slip; pinned so nobody de-duplicates it into one band and quietly changes
+        // what the popover offers.
+        assertEquals(inks[ZinelyMakerInkId.Ink].value, inks[ZinelyNeutralId.Ink].value)
     }
 
     // ----- the two sets are genuinely distinct axes, not one set drifting apart ---------------
