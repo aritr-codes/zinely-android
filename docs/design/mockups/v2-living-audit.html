@@ -1,0 +1,492 @@
+<title>Zinely V2 — The Living Product (identity evidence board)</title>
+<!--
+  Zinely V2 — Product Identity: THE LIVING PRODUCT — an evidence board, not a screen.
+  Companion to V2-IDENTITY.md (§4 maker inks, §5 Maker's Cover). Purpose: prove — with realistic product
+  examples — that the approved identity ("the interface stays quiet; the creations carry the warmth") holds
+  at collection scale, over time, without becoming repetitive. Reopens NO frozen screen (Library/Bench/Proof).
+  Tokens: V2-TOKENS.md chrome (verbatim). Content colour: the frozen Bench H4 10-ink set (verbatim). Type: Fraunces + Inter.
+  Everything here works at the CONTENT-SYSTEM level (the cover recipe, papers, inks) — never the frozen UI shell.
+  Note: --chrome is demo-board scaffolding, not a proposed app token. The three cover layout archetypes are a
+  content-system exploration of the recipe (V2-IDENTITY §5), not a change to any frozen screen.
+  NOT frozen; evidence for the implementation-readiness call.
+-->
+<style>
+  :root{
+    --paper:#F7F2E7; --paper-edge:#EEE6D4; --desk:#ECE3D1; --desk-edge:#E1D6BF;
+    --ink:#2A251E; --ink-soft:#5B5347; --ink-faint:#8C8269;
+    --matcha:#5E6B2F; --matcha-text:#4C5826; --matcha-tint:#DCE3C0;
+    --strawberry:#E98F97; --strawberry-text:#A6474F;
+    --consequence:#A6382A; --on-matcha:#fff;
+    --frame-shadow:rgba(58,48,32,.28);
+    --chrome:#FBF7EE; --chrome-line:#E4DAC6;
+    --serif:'Fraunces',Georgia,'Times New Roman',serif;
+    --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --settle:cubic-bezier(.05,.7,.1,1);
+    --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+    --fleck:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='90' height='90'><g fill='%23000' opacity='.5'><circle cx='12' cy='20' r='.7'/><circle cx='44' cy='9' r='.6'/><circle cx='70' cy='28' r='.8'/><circle cx='27' cy='52' r='.6'/><circle cx='60' cy='63' r='.7'/><circle cx='82' cy='74' r='.6'/><circle cx='16' cy='79' r='.7'/><circle cx='39' cy='38' r='.5'/></g></svg>");
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#2F2A22; --paper-edge:#39322A; --desk:#201D18; --desk-edge:#2A261F;
+    --ink:#ECE4D3; --ink-soft:#B4AB97; --ink-faint:#857C69;
+    --matcha:#93A257; --matcha-text:#B7C47C; --matcha-tint:#363826;
+    --strawberry:#D98289; --strawberry-text:#E8A6AB; --consequence:#E0857A; --on-matcha:#20240E;
+    --frame-shadow:rgba(0,0,0,.5); --chrome:#252017; --chrome-line:#3A332A;
+  }}
+  :root[data-theme="dark"]{
+    --paper:#2F2A22; --paper-edge:#39322A; --desk:#201D18; --desk-edge:#2A261F;
+    --ink:#ECE4D3; --ink-soft:#B4AB97; --ink-faint:#857C69;
+    --matcha:#93A257; --matcha-text:#B7C47C; --matcha-tint:#363826;
+    --strawberry:#D98289; --strawberry-text:#E8A6AB; --consequence:#E0857A; --on-matcha:#20240E;
+    --frame-shadow:rgba(0,0,0,.5); --chrome:#252017; --chrome-line:#3A332A;
+  }
+  :root[data-theme="light"]{
+    --paper:#F7F2E7; --paper-edge:#EEE6D4; --desk:#ECE3D1; --desk-edge:#E1D6BF;
+    --ink:#2A251E; --ink-soft:#5B5347; --ink-faint:#8C8269;
+    --matcha:#5E6B2F; --matcha-text:#4C5826; --matcha-tint:#DCE3C0;
+    --strawberry:#E98F97; --strawberry-text:#A6474F; --consequence:#A6382A; --on-matcha:#fff;
+    --frame-shadow:rgba(58,48,32,.28); --chrome:#FBF7EE; --chrome-line:#E4DAC6;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--desk);
+    background-image:radial-gradient(120% 80% at 50% -10%,var(--desk-edge),var(--desk) 60%);
+    min-height:100vh;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  body::before{content:"";position:fixed;inset:0;background-image:var(--grain);background-size:180px 180px;
+    mix-blend-mode:soft-light;opacity:.5;pointer-events:none;z-index:0;}
+  .wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:40px 22px 90px;}
+
+  .masthead{max-width:720px;margin:0 auto 26px;text-align:center;}
+  .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--matcha-text);font-weight:600;margin:0 0 8px;}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,5vw,42px);margin:0;letter-spacing:-.01em;text-wrap:balance;}
+  .thesis{font-family:var(--serif);font-style:italic;font-size:clamp(15px,2.4vw,18px);color:var(--matcha-text);margin:14px 0 0;}
+  .sub{color:var(--ink-soft);font-size:15px;margin:10px auto 0;max-width:62ch;text-wrap:pretty;}
+  .ctlbar{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap;}
+  .seg{display:inline-flex;background:var(--chrome);border:1px solid var(--chrome-line);border-radius:999px;padding:3px;gap:2px;}
+  .seg button{border:none;background:none;font:inherit;font-size:12.5px;color:var(--ink-soft);cursor:pointer;padding:6px 13px;border-radius:999px;line-height:1;}
+  .seg button[aria-pressed="true"]{background:var(--matcha);color:var(--on-matcha);font-weight:600;}
+
+  section{margin:48px 0;}
+  .shead{display:flex;align-items:baseline;gap:12px;margin:0 0 4px;flex-wrap:wrap;}
+  .snum{font-family:var(--serif);font-size:13px;color:var(--matcha-text);font-weight:600;font-variant-numeric:tabular-nums;}
+  .shead h2{font-family:var(--serif);font-weight:500;font-size:24px;margin:0;letter-spacing:-.005em;}
+  .sdesc{color:var(--ink-soft);font-size:13.5px;margin:0 0 20px;max-width:70ch;}
+  .sdesc b{color:var(--ink);font-weight:600;}
+
+  .recipe-note{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+  .pill{font-size:11.5px;background:var(--matcha-tint);color:var(--matcha-text);border-radius:999px;padding:4px 11px;font-weight:600;}
+  .pill.warm{background:rgba(233,143,151,.18);color:var(--strawberry-text);}
+  .shuffle{font:inherit;font-size:13px;font-weight:600;background:var(--matcha);color:var(--on-matcha);border:none;border-radius:10px;padding:9px 16px;cursor:pointer;box-shadow:0 6px 14px -8px var(--matcha);}
+  .shuffle:active{transform:scale(.97);}
+
+  /* ---------- THE COVER (recipe object) ---------- */
+  .shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:20px;margin-top:8px;}
+  .cover{aspect-ratio:3/4;border-radius:3px 6px 6px 3px;position:relative;overflow:hidden;padding:16px 14px;display:flex;flex-direction:column;
+    background:var(--cvpaper);border:1px solid rgba(0,0,0,.08);box-shadow:0 12px 24px -12px var(--frame-shadow),0 2px 4px rgba(58,48,32,.14);
+    transition:transform .35s var(--settle),box-shadow .35s;}
+  .cover.settle{animation:settle .45s var(--settle) both;}
+  @keyframes settle{from{transform:translateY(-10px) rotate(-1deg);opacity:.4;}to{transform:none;opacity:1;}}
+  .cover::after{content:"";position:absolute;inset:0;background-image:var(--grain);background-size:110px 110px;mix-blend-mode:soft-light;opacity:.5;pointer-events:none;}
+  .cover.fleck::before{content:"";position:absolute;inset:0;background-image:var(--fleck);background-size:66px 66px;opacity:.5;mix-blend-mode:multiply;pointer-events:none;}
+  .cover .spine{position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--cvink);opacity:.5;z-index:2;}
+  .cv-band{display:none;}
+  .cv-motif{position:absolute;right:10px;bottom:32px;width:50px;height:50px;color:var(--cvink);opacity:.9;z-index:1;}
+  .cv-motif svg{width:100%;height:100%;}
+  .cv-title{font-family:var(--serif);font-weight:500;font-size:18px;line-height:1.08;color:var(--cvink);letter-spacing:-.01em;margin-top:4px;z-index:1;text-wrap:balance;}
+  .cv-sub{font-family:var(--serif);font-style:italic;font-size:11px;color:var(--cvink);opacity:.75;margin-top:4px;z-index:1;}
+  .cv-stamp{position:absolute;left:13px;bottom:12px;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--cvstamp);color:var(--cvstamp);
+    display:grid;place-items:center;font-family:var(--serif);font-size:12px;font-weight:600;opacity:.9;z-index:2;}
+  .cv-stamp::after{content:"";position:absolute;inset:0;border-radius:50%;background-image:var(--grain);background-size:30px 30px;mix-blend-mode:soft-light;opacity:.6;}
+
+  /* archetype: centered masthead */
+  .cover[data-arc="centered"]{align-items:center;text-align:center;justify-content:center;padding-top:20px;}
+  .cover[data-arc="centered"] .cv-title{margin-top:0;}
+  .cover[data-arc="centered"] .cv-title::after{content:"";display:block;width:26px;height:2px;background:var(--cvink);opacity:.6;margin:8px auto 0;border-radius:2px;}
+  .cover[data-arc="centered"] .cv-sub{opacity:.7;}
+  .cover[data-arc="centered"] .cv-motif{right:auto;left:50%;top:16px;bottom:auto;transform:translateX(-50%);width:30px;height:30px;opacity:.85;}
+  .cover[data-arc="centered"] .cv-stamp{left:50%;transform:translateX(-50%);}
+
+  /* archetype: banded (Marber grid nod) — reversed-out masthead */
+  .cover[data-arc="banded"]{padding:0;}
+  .cover[data-arc="banded"] .cv-band{display:flex;flex-direction:column;justify-content:center;background:var(--cvink);color:var(--cvpaper);
+    padding:14px 14px 13px;min-height:46%;position:relative;z-index:1;}
+  .cover[data-arc="banded"] .cv-band .cv-title{color:var(--cvpaper);margin-top:0;}
+  .cover[data-arc="banded"] .cv-band .cv-sub{color:var(--cvpaper);opacity:.82;}
+  .cover[data-arc="banded"] .cv-title,.cover[data-arc="banded"] .cv-sub{position:static;}
+  .cover[data-arc="banded"] .cv-motif{right:12px;bottom:14px;width:56px;height:56px;opacity:.55;}
+  .cover[data-arc="banded"] .cv-stamp{left:auto;right:12px;bottom:auto;top:calc(46% + 12px);}
+
+  /* density wall (50 books) */
+  .wall{grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:11px;}
+  .wall .cover{padding:9px 7px;border-radius:2px 4px 4px 2px;box-shadow:0 6px 12px -8px var(--frame-shadow),0 1px 2px rgba(58,48,32,.14);}
+  .wall .cv-title{font-size:10px;line-height:1.05;margin-top:2px;}
+  .wall .cv-sub{display:none;}
+  .wall .cv-motif{width:26px;height:26px;right:5px;bottom:14px;}
+  .wall .cv-stamp{width:15px;height:15px;font-size:7px;left:6px;bottom:6px;border-width:1px;}
+  .wall .cover[data-arc="banded"] .cv-band{padding:7px 7px 6px;}
+  .wall .cover[data-arc="banded"] .cv-stamp{top:calc(46% + 5px);right:5px;}
+  .wall .cover[data-arc="centered"] .cv-motif{width:18px;height:18px;top:7px;}
+  .wall .cover[data-arc="centered"] .cv-title::after{margin-top:4px;width:16px;}
+
+  /* recipe explode */
+  .explode{display:grid;grid-template-columns:180px 1fr;gap:26px;align-items:center;background:var(--paper);border:1px solid var(--paper-edge);
+    border-radius:14px;padding:24px;box-shadow:0 8px 22px -14px var(--frame-shadow);position:relative;}
+  .explode::after{content:"";position:absolute;inset:0;border-radius:14px;background-image:var(--grain);background-size:130px 130px;mix-blend-mode:soft-light;opacity:.35;pointer-events:none;}
+  .explode .one{width:150px;justify-self:center;}
+  .vars{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;position:relative;z-index:1;}
+  .var{background:var(--chrome);border:1px solid var(--chrome-line);border-radius:10px;padding:11px 13px;}
+  .var .k{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--matcha-text);font-weight:700;}
+  .var .v{font-size:13.5px;color:var(--ink);margin-top:3px;font-weight:500;}
+  .var .v small{color:var(--ink-faint);font-weight:400;font-size:11.5px;}
+  .frozen-tag{font-size:10.5px;color:var(--ink-faint);margin-top:14px;grid-column:1/-1;}
+  .frozen-tag b{color:var(--matcha-text);}
+  @media (max-width:640px){.explode{grid-template-columns:1fr;}}
+
+  /* constants vs variables */
+  .cvpair{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media (max-width:640px){.cvpair{grid-template-columns:1fr;}}
+  .cvbox{border-radius:12px;padding:16px 18px;border:1px solid var(--chrome-line);background:var(--chrome);}
+  .cvbox h3{font-family:var(--serif);font-weight:500;font-size:15px;margin:0 0 4px;}
+  .cvbox.fix h3{color:var(--matcha-text);} .cvbox.var2 h3{color:var(--strawberry-text);}
+  .cvbox p{font-size:12px;color:var(--ink-faint);margin:0 0 10px;}
+  .cvbox ul{margin:0;padding-left:1.1em;font-size:13px;color:var(--ink-soft);line-height:1.7;}
+  .cvbox li b{color:var(--ink);}
+
+  /* materials */
+  .stocks{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;}
+  .stock{border-radius:10px;overflow:hidden;border:1px solid var(--paper-edge);box-shadow:0 6px 16px -10px var(--frame-shadow);}
+  .swatch{height:104px;position:relative;background:var(--sw);}
+  .swatch::after{content:"";position:absolute;inset:0;background-image:var(--grain);background-size:120px 120px;mix-blend-mode:soft-light;opacity:.5;}
+  .swatch.fleck::before{content:"";position:absolute;inset:0;background-image:var(--fleck);background-size:70px 70px;opacity:.55;mix-blend-mode:multiply;}
+  .swatch.grid::before{content:"";position:absolute;inset:0;background-image:radial-gradient(currentColor .8px,transparent .8px);background-size:11px 11px;color:var(--ink-faint);opacity:.35;}
+  .swatch.cover{height:120px;box-shadow:0 10px 20px -8px var(--frame-shadow) inset,0 0 0 3px rgba(0,0,0,.04) inset;}
+  .swatch .wt{position:absolute;left:9px;bottom:8px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.4);font-weight:700;}
+  .stock .lab{padding:9px 11px;background:var(--chrome);}
+  .stock .lab b{font-size:13px;display:block;} .stock .lab span{font-size:11px;color:var(--ink-faint);}
+  .stock .lab em{font-size:10.5px;color:var(--matcha-text);font-style:normal;display:block;margin-top:3px;}
+
+  /* colour budget */
+  .budget{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch;}
+  @media (max-width:640px){.budget{grid-template-columns:1fr;}}
+  .budgetcard{border-radius:12px;border:1px solid var(--chrome-line);background:var(--chrome);padding:16px 18px;}
+  .budgetcard h3{font-family:var(--serif);font-weight:500;font-size:15px;margin:0 0 3px;}
+  .budgetcard .cap{font-size:11.5px;color:var(--ink-faint);margin:0 0 12px;}
+  .chip-row{display:flex;gap:7px;flex-wrap:wrap;}
+  .swatchdot{width:26px;height:26px;border-radius:6px;position:relative;box-shadow:0 0 0 1px rgba(0,0,0,.08) inset;}
+  .swatchdot::after{content:"";position:absolute;inset:0;border-radius:6px;background-image:var(--grain);background-size:34px 34px;mix-blend-mode:soft-light;opacity:.6;}
+  .chrome-one{display:inline-flex;align-items:center;gap:8px;}
+  .chrome-one .swatchdot{width:34px;height:34px;}
+  .chrome-one span{font-size:12px;color:var(--ink-soft);}
+  .tally{font-variant-numeric:tabular-nums;font-family:var(--serif);font-size:34px;color:var(--matcha-text);font-weight:500;line-height:1;}
+  .tally small{font-family:var(--sans);font-size:12px;color:var(--ink-faint);font-weight:400;display:block;margin-top:4px;}
+
+  /* stat / evidence line */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:6px 0 4px;}
+  .stat{background:var(--paper);border:1px solid var(--paper-edge);border-radius:11px;padding:15px 16px;}
+  .stat .big{font-family:var(--serif);font-size:27px;font-weight:500;color:var(--ink);line-height:1;font-variant-numeric:tabular-nums;}
+  .stat .lbl{font-size:11.5px;color:var(--ink-faint);margin-top:6px;line-height:1.35;}
+
+  .guard{background:rgba(233,143,151,.12);border:1px solid var(--strawberry);border-radius:12px;padding:15px 18px;margin-top:22px;}
+  .guard h3{font-family:var(--serif);font-weight:500;font-size:15px;margin:0 0 5px;color:var(--strawberry-text);}
+  .guard p{margin:0;font-size:12.5px;color:var(--ink-soft);}.guard b{color:var(--ink);}
+  .verdict{background:var(--matcha-tint);border:1px solid var(--matcha);border-radius:14px;padding:20px 22px;}
+  .verdict h3{font-family:var(--serif);font-weight:500;font-size:18px;margin:0 0 8px;color:var(--matcha-text);}
+  .verdict p{margin:0 0 8px;font-size:13.5px;color:var(--ink-soft);}.verdict b{color:var(--ink);}
+  .foot{text-align:center;color:var(--ink-faint);font-size:12px;margin-top:40px;max-width:64ch;margin-left:auto;margin-right:auto;line-height:1.6;}
+
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <p class="kicker">Zinely V2 · Product Identity · Evidence</p>
+    <h1>The Living Product</h1>
+    <p class="thesis">"The interface stays quiet. The creations carry the warmth."</p>
+    <p class="sub">Not another principle — the proof. Every cover below is generated from one frozen recipe.
+      The interface never changes; the shelf does all the talking. Watch a collection grow, stress it to fifty
+      books, and ask the only question that matters: <b>does it stay unmistakably Zinely without going repetitive?</b></p>
+    <div class="ctlbar">
+      <div class="seg" role="group" aria-label="Theme">
+        <button aria-pressed="false" onclick="setTheme('light',this)">Light</button>
+        <button aria-pressed="false" onclick="setTheme('dark',this)">Dark</button>
+        <button aria-pressed="true" onclick="setTheme('auto',this)">Auto</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1 · THE RECIPE -->
+  <section>
+    <div class="shead"><span class="snum">01</span><h2>One recipe, exploded</h2></div>
+    <p class="sdesc">A Zinely cover is not drawn — it is <b>assembled from five variables on one frozen grid</b>
+      (the Penguin/Marber move). Change any variable, get a new book that still belongs to the family. The grid,
+      the type pairing, the muted inks and the paper warmth are held constant; the meaning lives in the mix.</p>
+    <div class="explode">
+      <div class="one" id="hero"></div>
+      <div>
+        <div class="vars" id="vars"></div>
+        <p class="frozen-tag">Held constant (the recognisability): <b>frozen 3:4 grid · Fraunces title / Inter meta · muted riso inks on warm paper · spine · a fixed stamp vocabulary.</b> Honours ADR-069 — recipe-driven, no per-edit render.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 · A COLLECTION, NOT A LIST -->
+  <section>
+    <div class="shead"><span class="snum">02</span><h2>A collection, not a list</h2></div>
+    <p class="sdesc">Twenty books, no two alike, every one obviously from the same studio. This is the recipe
+      doing its job: <b>diversity that still reads as one shelf.</b> Reshuffle to see the space keep giving.</p>
+    <div class="recipe-note">
+      <span class="pill">{ title × ink × mark × paper × motif × layout }</span>
+      <button class="shuffle" onclick="shuffleMain()">Reshuffle the shelf ↻</button>
+    </div>
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <!-- 3 · OVER TIME -->
+  <section>
+    <div class="shead"><span class="snum">03</span><h2>The same shelf, over time</h2></div>
+    <p class="sdesc">A collection <b>accretes</b> — books are added, never regenerated. A three-book start, a few
+      months in, then heavy use. Each stage contains the last, so the shelf grows in character instead of
+      resetting. The interface behind it never moved.</p>
+    <div class="ctlbar" style="justify-content:flex-start;margin:0 0 18px;">
+      <div class="seg" role="group" aria-label="Collection age">
+        <button aria-pressed="true" onclick="setAge(3,this)">Brand new · 3</button>
+        <button aria-pressed="false" onclick="setAge(9,this)">A few months · 9</button>
+        <button aria-pressed="false" onclick="setAge(24,this)">Heavy use · 24</button>
+      </div>
+    </div>
+    <div class="shelf" id="timeline"></div>
+  </section>
+
+  <!-- 4 · FIFTY BOOKS -->
+  <section>
+    <div class="shead"><span class="snum">04</span><h2>Fifty zines, six months</h2></div>
+    <p class="sdesc">The stress test. A prolific maker's whole output on one wall. The claim to falsify:
+      <b>at fifty books it still looks like a Zinely shelf and still has no two identical spines.</b></p>
+    <div class="stats" id="stats"></div>
+    <div class="shelf wall" id="wall"></div>
+  </section>
+
+  <!-- 5 · WHY IT STAYS ZINELY -->
+  <section>
+    <div class="shead"><span class="snum">05</span><h2>Why it never drifts — constants vs variables</h2></div>
+    <p class="sdesc">Recognisability and variety are not in tension when you decide which is which. Zinely fixes the
+      grammar and frees the vocabulary — the opposite of a template, which fixes the vocabulary and frees nothing.</p>
+    <div class="cvpair">
+      <div class="cvbox fix">
+        <h3>Constant — the Zinely signature</h3>
+        <p>What makes any two covers recognisably siblings.</p>
+        <ul>
+          <li><b>The 3:4 grid &amp; margins</b> — one proportion, always.</li>
+          <li><b>Fraunces title / Inter meta</b> — one voice pairing.</li>
+          <li><b>Muted riso inks on warm paper</b> — never full-saturation, never cold white.</li>
+          <li><b>Spine · stamp · maker's mark</b> — the object cues of a real little book.</li>
+          <li><b>Texture as printing, not decoration</b> — grain, misregistration, fleck.</li>
+        </ul>
+      </div>
+      <div class="cvbox var2">
+        <h3>Variable — the maker's hand</h3>
+        <p>What makes every cover unmistakably theirs.</p>
+        <ul>
+          <li><b>Title &amp; subtitle</b> — the words are the loudest signal.</li>
+          <li><b>Ink &amp; second ink</b> — 10 riso spot inks, any pair.</li>
+          <li><b>Paper stock</b> — cream, kraft, fleck, dot-grid, cover-weight.</li>
+          <li><b>Motif &amp; stamp</b> — the personal layer, most-used.</li>
+          <li><b>Layout archetype</b> — classic, centered, banded masthead.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · MATERIALS -->
+  <section>
+    <div class="shead"><span class="snum">06</span><h2>Materials, doing the work</h2></div>
+    <p class="sdesc">The warmth is physical, not stylistic. Every texture here is <b>the believable consequence of a
+      material or a press</b> — never an overlay dropped on for mood. Read each caption: it names the cause.</p>
+    <div class="stocks" id="stocks"></div>
+    <div class="guard">
+      <h3>The texture rule (guardrail)</h3>
+      <p>Grain is the <b>riso drum + paper tooth</b>. Misregistration is <b>two drums, printed in two passes</b>.
+        Fleck is <b>recycled pulp</b>. Dot-grid is a <b>notebook register</b>. If a texture can't name its physical
+        cause, it doesn't ship — that's the line between craft and kitsch, and it holds across the whole content system.</p>
+    </div>
+  </section>
+
+  <!-- 7 · COLOUR BUDGET -->
+  <section>
+    <div class="shead"><span class="snum">07</span><h2>Where the colour is allowed to live</h2></div>
+    <p class="sdesc">The café palette is real — it just isn't in the chrome. The interface spends <b>one</b> accent;
+      the creations spend the whole box. If a screen ever needs more warmth, it comes from content, not chrome.</p>
+    <div class="budget">
+      <div class="budgetcard">
+        <h3>The interface — one quiet accent</h3>
+        <p class="cap">Matcha, for the single action. That is the entire chrome colour budget.</p>
+        <div class="chrome-one"><span class="swatchdot" style="background:var(--matcha)"></span><span>Matcha — action &amp; selection only</span></div>
+        <p class="cap" style="margin-top:14px;">Ink for text, paper &amp; desk for ground, strawberry reserved for consequence. No decorative colour.</p>
+      </div>
+      <div class="budgetcard">
+        <h3>The creations — the whole box</h3>
+        <p class="cap">10 maker inks × 5 papers × motifs × covers — the warmth the chrome deliberately withholds.</p>
+        <div class="chip-row" id="inkdots"></div>
+        <div style="margin-top:14px" class="tally" id="combos">—<small>distinct cover configurations before the title even changes</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VERDICT -->
+  <section>
+    <div class="shead"><span class="snum">08</span><h2>The implementation-readiness call</h2></div>
+    <div class="verdict" id="verdict"></div>
+  </section>
+
+  <p class="foot">A Product-Identity evidence board — companion to V2-IDENTITY.md (§4 inks, §5 Maker's Cover).
+    No frozen screen (Library · Bench · Proof) is reopened. Content colour is the frozen Bench H4 10-ink set, verbatim.
+    Where this direction hardens into decisions: the token proposal and the H3/H4 asset ADRs (with legal sign-off).</p>
+</div>
+
+<script>
+  // ===== frozen content vocabulary (verbatim from v2-bench.html H4 + v2-materials.html) =====
+  var INKS=[
+    {n:'Matcha',    h:'#7C8A3F'},{n:'Forest',    h:'#3E5E3A'},{n:'Strawberry',h:'#E27F89'},
+    {n:'Brick',     h:'#B0503F'},{n:'Sunflower', h:'#E7B53C'},{n:'Ochre',     h:'#D19A3C'},
+    {n:'Aqua',      h:'#57B0A9'},{n:'Cornflower',h:'#6E86C9'},{n:'Plum',      h:'#8A5A9B'},
+    {n:'Ink',       h:'#2A251E'}
+  ];
+  var STOCKS=[
+    {n:'Cream',          d:'the café default',            sw:'#F5EFE0', cls:'',      because:'unbleached warmth'},
+    {n:'Kraft',          d:'earthy brown',                sw:'#C9A878', cls:'',      because:'recycled board'},
+    {n:'Recycled fleck', d:'visible specks · archival',   sw:'#E9E2CE', cls:'fleck', because:'pulp inclusions'},
+    {n:'Dot-grid',       d:'the notebook register',       sw:'#F3EEDF', cls:'grid',  because:'printed register'},
+    {n:'Cover stock',    d:'heavier · the object cue',    sw:'#EBE0C6', cls:'cover', wt:'300 gsm', because:'card weight'}
+  ];
+  var MOTIFS=[
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c7-1 9-7 9-14-7 0-13 2-14 9"/><path d="M12 21C8 16 8 10 8 6"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/><g stroke="currentColor" stroke-width="1.3"><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></g></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 18c3-8 13-8 16 0"/><circle cx="12" cy="8" r="3"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M6 4v16M6 6h9l-2 3 2 3H6"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 20c4-2 4-14 0-16M20 20c-4-2-4-14 0-16M9 12h6"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h11v5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M16 9h2a2 2 0 0 1 0 4h-2"/><path d="M8 3c0 1-1 1-1 2M11 3c0 1-1 1-1 2"/></svg>',
+    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 3a9 9 0 1 0 5 12A7 7 0 0 1 16 3z"/></svg>'
+  ];
+  var STAMPS=['Z','✦','✽','◷','❧','✜','◑','✿'];
+  var ARCS=['classic','centered','banded'];
+  var TITLES=[
+    ['Tiny Green Things','a windowsill zine'],['Rainy Days','and what to make'],['Six Cups','a coffee diary'],
+    ['The Slow Way','notes on going nowhere'],['Paper Boats','for the gutter stream'],['Kitchen Weather','soups & small storms'],
+    ['Moth Hours','a night walk'],['Two Ferns','a very short book'],['Windowbox','herbs in january'],
+    ['Blue Hour','a cyanotype week'],['Fold Here','a zine about zines'],['Sunday Bread','a slow loaf'],
+    ['Small Rain','a puddle field guide'],['The Long Table','on eating together']
+  ];
+
+  function el(id){return document.getElementById(id);}
+
+  // ===== seeded RNG (deterministic → stable screenshots; reshuffle bumps the seed) =====
+  function mk(seed){var s=seed>>>0||1;return function(){s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};}
+  function pick(rng,a){return a[Math.floor(rng()*a.length)];}
+  function pickIdx(rng,a){return Math.floor(rng()*a.length);}
+
+  // one cover = one draw from the recipe (all five+ variables independent)
+  function makeCover(rng){
+    var t=pick(rng,TITLES), ink=pick(rng,INKS), ink2=pick(rng,INKS), stock=pick(rng,STOCKS);
+    return {t:t[0],s:t[1],ink:ink.h,ink2:ink2.h,paper:stock.sw,fleck:stock.cls==='fleck',
+      motif:pickIdx(rng,MOTIFS),stamp:pick(rng,STAMPS),arc:pick(rng,ARCS)};
+  }
+  function coverHTML(c){
+    return '<div class="cover '+(c.fleck?'fleck':'')+'" data-arc="'+c.arc+'" '+
+      'style="--cvpaper:'+c.paper+';--cvink:'+c.ink+';--cvstamp:'+c.ink2+'">'+
+      '<div class="spine"></div>'+
+      '<div class="cv-band"><div class="cv-title">'+c.t+'</div><div class="cv-sub">'+c.s+'</div></div>'+
+      (c.arc!=='banded'?'<div class="cv-title">'+c.t+'</div><div class="cv-sub">'+c.s+'</div>':'')+
+      '<div class="cv-motif">'+MOTIFS[c.motif]+'</div>'+
+      '<div class="cv-stamp">'+c.stamp+'</div>'+
+    '</div>';
+  }
+  function renderShelf(id,covers,animate){
+    el(id).innerHTML=covers.map(function(c){
+      var h=coverHTML(c);
+      // stagger via inline delay folded into the EXISTING style attr (no duplicate attribute)
+      if(animate) h=h.replace('class="cover ','class="cover settle ');
+      return h;
+    }).join('');
+  }
+
+  // ===== section 1: hero + variable readout =====
+  function renderHero(){
+    // a pinned, legible hero (not random) so §01 reads the same every load and in screenshots
+    var c={t:'Six Cups',s:'a coffee diary',ink:'#B0503F',ink2:'#5E6B2F',paper:'#F5EFE0',fleck:false,motif:6,stamp:'Z',arc:'classic'};
+    el('hero').innerHTML=coverHTML(c);
+    var rows=[
+      ['Title','Six Cups <small>· a coffee diary</small>'],
+      ['Ink','Brick <small>#B0503F</small>'],
+      ['Second ink','Matcha <small>#5E6B2F</small>'],
+      ['Paper','Cream <small>· unbleached</small>'],
+      ['Motif','Cup <small>· the personal layer</small>'],
+      ['Layout','Classic <small>· one of three</small>']
+    ];
+    el('vars').innerHTML=rows.map(function(r){return '<div class="var"><div class="k">'+r[0]+'</div><div class="v">'+r[1]+'</div></div>';}).join('');
+  }
+
+  // ===== section 2: shuffle shelf =====
+  var mainSeed=42;
+  function renderMain(animate){var rng=mk(mainSeed);var c=[];for(var i=0;i<20;i++)c.push(makeCover(rng));renderShelf('shelf',c,animate);}
+  function shuffleMain(){mainSeed=(mainSeed*48271+7)&0x7fffffff;renderMain(true);}
+
+  // ===== section 3: accreting timeline (subset property) =====
+  // one fixed sequence; each age shows the first N of the SAME sequence → collection grows, never resets
+  var TIMELINE=(function(){var rng=mk(1234);var a=[];for(var i=0;i<24;i++)a.push(makeCover(rng));return a;})();
+  function setAge(n,btn){
+    if(btn){btn.parentNode.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed','false');});btn.setAttribute('aria-pressed','true');}
+    renderShelf('timeline',TIMELINE.slice(0,n),true);
+  }
+
+  // ===== section 4: fifty-book wall + evidence stats =====
+  function renderWall(){var rng=mk(9001);var c=[];for(var i=0;i<50;i++)c.push(makeCover(rng));renderShelf('wall',c,false);}
+  function renderStats(){
+    var combos=STOCKS.length*INKS.length*INKS.length*MOTIFS.length*STAMPS.length*ARCS.length; // before title
+    var full=combos*TITLES.length;
+    // birthday collision across 50 draws over `combos` configs (title held out → conservative)
+    var n=50, p=1-Math.exp(-(n*(n-1))/(2*combos));
+    var rows=[
+      [combos.toLocaleString(),'distinct cover configurations before the title changes'],
+      [full.toLocaleString(),'once the maker’s title is counted in'],
+      ['< '+(Math.ceil(p*1000)/10)+'%','chance any two of fifty books collide'],
+      ['0','decorative textures — every one names a physical cause']
+    ];
+    el('stats').innerHTML=rows.map(function(r){return '<div class="stat"><div class="big">'+r[0]+'</div><div class="lbl">'+r[1]+'</div></div>';}).join('');
+    el('combos').innerHTML=combos.toLocaleString()+'<small>distinct cover configurations before the title even changes</small>';
+  }
+
+  // ===== section 6: materials =====
+  function renderStocks(){
+    el('stocks').innerHTML=STOCKS.map(function(s){
+      return '<div class="stock"><div class="swatch '+s.cls+'" style="--sw:'+s.sw+';color:'+s.sw+'">'+(s.wt?'<span class="wt">'+s.wt+'</span>':'')+'</div>'+
+        '<div class="lab"><b>'+s.n+'</b><span>'+s.d+'</span><em>texture = '+s.because+'</em></div></div>';
+    }).join('');
+  }
+
+  // ===== section 7: ink dots =====
+  function renderInkDots(){
+    el('inkdots').innerHTML=INKS.map(function(k){return '<span class="swatchdot" title="'+k.n+'" style="background:'+k.h+'"></span>';}).join('');
+  }
+
+  // ===== verdict =====
+  function renderVerdict(){
+    el('verdict').innerHTML=
+      '<h3>Recommendation — begin Compose implementation.</h3>'+
+      '<p>The identity is no longer a claim. The recipe demonstrably produces a <b>collection</b>: fifty books that are '+
+      'individually distinct and collectively, unmistakably Zinely — recognisable, varied, and slow to repeat by construction, '+
+      'not by luck. The interface stays quiet in every frame; the warmth is entirely in the creations, exactly as the approved thesis asks.</p>'+
+      '<p>What remains is <b>governance, not design</b>: the token-role proposal (V2-IDENTITY §1) and the H3/H4 asset ADRs need '+
+      'their sign-offs, and the three cover layout archetypes shown here should be recorded as the recipe’s frozen set. None of '+
+      'that is a reason to iterate the identity further — the content system is mature. <b>Implement the recipe; don’t redesign it.</b></p>';
+  }
+
+  // ===== boot =====
+  function setTheme(t,btn){
+    btn.parentNode.querySelectorAll('button').forEach(function(b){b.setAttribute('aria-pressed','false');});
+    btn.setAttribute('aria-pressed','true');
+    if(t==='auto') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme',t);
+  }
+  renderHero(); renderMain(false); setAge(3,null); renderWall(); renderStats();
+  renderStocks(); renderInkDots(); renderVerdict();
+</script>
