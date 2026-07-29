@@ -698,8 +698,8 @@ light, subtly wrong in dark, which is the failure mode nobody screenshots.
 |---|---|
 | **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 36, 43, 52, 61, 93, 119, 122 · [`v2-bench.html`](mockups/v2-bench.html) line 24 · [`v2-proof.html`](mockups/v2-proof.html) line 24 |
 | **Found** | 2026-07-28, during Phase A / A5 (motion) |
-| **Severity** | Cross-file divergence — **does not block A5**; ruling owed before Phase B animates the Library |
-| **Status** | Open — **owner ruling requested** |
+| **Severity** | Cross-file divergence — did not block A5 |
+| **Status** | ✅ **RESOLVED** 2026-07-28 by owner ruling — see the resolution at the end of this entry |
 
 **What they say.** The Bench and Proof declare two easing tokens and use them throughout:
 `--settle:cubic-bezier(.05,.7,.1,1)` (nine uses) and `--standard:cubic-bezier(.2,0,0,1)` (eight).
@@ -737,14 +737,51 @@ in which case the third needs a name and a token. Separately — a documentation
 — the Library's `:root` should gain `--settle`/`--standard` so a future reader is not told the product
 has two motion systems.
 
+**✅ RESOLUTION — owner ruling, 2026-07-28.**
+
+> *"The Bench and Proof establish the **canonical V2 motion language**. The Library's unique easing
+> reflects its **earlier freeze state** rather than a lasting design decision. When Phase B implements
+> Library motion, use the **canonical V2 easing tokens** defined by Bench and Proof."*
+
+The same shape as the **D-005** ruling, and for the same reason: where the Library and the later-frozen
+pair disagree, the disagreement is chronology rather than intent. `cubic-bezier(.2,.8,.2,1)` was
+`--standard` on its way to becoming itself, and the bare `ease` keywords were never a choice at all —
+`ease` is the CSS default.
+
+**What Phase B does.** Library motion uses `ZinelyV2Settle` and `ZinelyV2Standard`. Applying the
+**paper-versus-chrome** axis that [ADR-075](../DECISIONS.md#adr-075) Decision 1 established from the
+Bench and Proof — which is now the canonical language, and so is the thing to apply — that reads as:
+
+| Library transition | Curve | Why |
+|---|---|---|
+| `.sheet` (`:122`) — the action sheet sliding up | **settle** | a surface coming to rest; the Bench's and Proof's equivalent sheets both use settle |
+| `.cover` (`:61`) — the cover's shadow response | **settle** | the cover is the paper object itself |
+| `.zine` (`:52`) — the card press | **settle** | the frozen Bench uses settle for `.pthumb`, the same gesture on the same kind of object |
+| `.start` (`:93`) — the primary button press | **standard** | chrome mechanism |
+| `.scrim` (`:119`) — the scrim fade | **standard** | pure opacity, and the Bench and Proof both use standard for their scrims |
+
+*(That table is the reading Phase B should start from, not an amendment: the ruling settles the
+**token set**, and the per-component assignment is transcription against the canonical axis. Any
+component where the axis genuinely does not decide is a new register entry, not a local judgement.)*
+
+**What implementation does now: nothing.** A5 deliberately did not port the Library's literals
+([ADR-075](../DECISIONS.md#adr-075) Decision 4, on the **D-006** precedent), so no stale curve entered
+the foundation and no code changes. Durations are unaffected — the ruling settles easings, and the
+Library's `.16s`, `.24s`, `.4s` and the rest remain per-component values transcribed as frozen.
+
+**Still owed to the design corpus** (documentation, not implementation): the Library's `:root` should
+gain `--settle` and `--standard`, `:122` should reference `var(--settle)` instead of
+`cubic-bezier(.2,.8,.2,1)`, and the bare/absent easings at `:52`, `:61`, `:93` and `:119` should name a
+token. Until that lands, **this entry is the authority and the Library HTML is stale**.
+
 ### D-012 — the three frozen files write three different reduced-motion rules, and one of them would strobe
 
 | | |
 |---|---|
 | **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 138 · [`v2-bench.html`](mockups/v2-bench.html) lines 110, 260 · [`v2-proof.html`](mockups/v2-proof.html) lines 245-247 |
 | **Found** | 2026-07-28, during Phase A / A5 (motion) |
-| **Severity** | **Accessibility inconsistency in the frozen specification** — does not block A5; the safe reading is implemented, disclosed as a choice, and free to reverse |
-| **Status** | Open — **owner ruling requested** (which of the three rules is the policy) |
+| **Severity** | **Accessibility inconsistency in the frozen specification** — does not block A5 |
+| **Status** | **Open by owner ruling** (2026-07-28) — deliberately unresolved in Phase A; the behavioural decision belongs to **Phase C**, on physical devices |
 
 **What they say.** Every file honours `prefers-reduced-motion`, which is the good news and is worth
 stating plainly — this is not a missing-accessibility defect like **D-008**. But no two files honour it
@@ -801,11 +838,156 @@ slow animation, it is an unbounded frame-rate loop, and `prefers-reduced-motion`
 photosensitivity setting. Refusing to ship that should not require a ruling. The choice is also **free
 to reverse**: the API is additive and has no callers, so a ruling either way costs one line.
 
+**✓ OWNER RULING — 2026-07-28: stays open. The behavioural decision belongs to Phase C.**
+
+> *"Leave open. Do not resolve this during Phase A. The implementation API is intentionally flexible
+> enough to support whichever policy ultimately governs. The final behavioural decision belongs to
+> **Phase C**, where motion can be evaluated on **physical devices against the implemented product**
+> rather than isolated prototypes. **Do not hard-code assumptions before then.**"*
+
+The ruling is right that the API's *shape* is policy-neutral, and it is worth being exact about why,
+since "flexible enough" is a claim implementation should be able to evidence rather than accept:
+
+- **`durationMillis(frozen)`** takes the component's own value and returns it or zero. Every candidate
+  policy is expressible by changing what it returns; no call site changes.
+- **`allowsContinuousMotion`** is a **question a call site asks**, not a policy it states. A call site
+  written as `if (motion.allowsContinuousMotion) { /* infiniteRepeatable */ }` is correct under all
+  three rules — only the answer moves.
+
+So what is currently Bench-flavoured is the **value**, not the shape, and Phase C changes the value in
+one place. Recorded plainly because *"the API is flexible"* is exactly the kind of claim that is assumed
+true and turns out not to be at the moment someone relies on it.
+
+**The one thing Phase C must not inherit unexamined.** The distinction itself — one-shot collapses,
+continuous stops — is **platform behaviour rather than design policy**, and the owner approved it on
+that basis at the A5 gate. What remains genuinely open is the narrower question the three files
+disagree on: whether a *transition* is cancelled mid-flight (the Library's `transition:none`) or
+completes instantly (the Bench's and Proof's `.01ms`), and which rule the corpus should state. Only the
+latter guarantees an element still reaches its end state, which is why implementation reads `.01ms` as
+zero rather than as "do not run" — but that too is a Phase C observation to confirm on a device, not a
+Phase A conclusion.
+
+**Why a device is the right venue.** Reduced motion is the one part of the motion system whose
+correctness cannot be read off a prototype: the failure modes are a control that never arrives at its
+end state, and a repeating animation that strobes. Neither is visible in a browser at rest, and neither
+appears in a screenshot.
+
 **Owner decision requested** (a corpus cleanup, not a design question): should all three `:root` blocks
 carry the Bench's rule — `transition-duration:.01ms; animation:none` — so the prototypes state one
 policy? Note that the Library's `transition:none` and the Bench's `.01ms` also differ in a subtler way:
 `transition:none` cancels a transition mid-flight, while a `.01ms` duration lets it complete instantly,
 and only the latter guarantees the element still reaches its end state.
+---
+
+### D-013 — the Library and the Bench bake different alpha into the same grain, so a cover shows it four to nearly seven times stronger
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 18 · [`v2-bench.html`](mockups/v2-bench.html) line 25 · [`v2-proof.html`](mockups/v2-proof.html) line 25 |
+| **Found** | 2026-07-28, during Phase A / A6 (paper / grain) |
+| **Severity** | Cross-file divergence in a **material** — does not block A6; ruling owed before Phase B draws a cover |
+| **Status** | Open — **owner ruling requested** |
+
+**The noise itself is identical in all three files** — same filter, same parameters, same tile:
+
+```
+<feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/>
+<feColorMatrix type='saturate' values='0'/>
+```
+
+on 140×140. What differs is one attribute on the `<rect>` the filter is applied to. The Bench and Proof
+write `opacity='.5'`; the Library writes none. That alpha is **baked into the data URI**, so it
+multiplies with the element's CSS `opacity` rather than replacing it, and only the product is
+observable:
+
+| Surface | Tile | Baked | CSS | **Effective** |
+|---|---|---|---|---|
+| Library `.cover` | 140px | 1.0 | — | **1.00** |
+| Library `.sheet-ill` | 90px | 1.0 | — | **1.00** |
+| Library `.book-ill` | 70px | 1.0 | — | **1.00** |
+| Bench / Proof `body::before` (the desk) | 180px | .5 | .5 | **0.25** |
+| Bench `.page::after` | 120px | .5 | .45 | **0.225** |
+| Proof `.zpage::after` | 120px | .5 | .42 | **0.21** |
+| Proof `.drawer::after` | 150px | .5 | .3 | **0.15** |
+| Bench / Proof `.phone::after` | 150px | .5 | .35 | 0.175 — *prototype bezel, not product UI* |
+
+Ten grain-drawing rules, and every one of them blends `soft-light`. The gap is **4× against the
+desk and 6.7× against the Proof's drawer** — an earlier draft of this entry said "four to five",
+which understated its own table.
+
+**Why this is a question rather than obviously a bug.** Two readings both survive the evidence, and
+implementation cannot choose between them from the corpus alone:
+
+1. **It is deliberate.** The Library's grain lands on *saturated cover inks*; the Bench's and Proof's
+   lands on near-white paper. `soft-light` is dramatically subtler over mid-tone colour than over a
+   near-white ground — the same alpha genuinely does not produce the same perceived texture. On this
+   reading the Library is compensating, and 1.00 over a cover may look like 0.25 over paper.
+2. **It is drift.** The Library froze first, before the `opacity='.5'` convention existed; the Bench
+   and Proof then established it, and the Library's `--grain` was never revisited. This is the same
+   shape as the **D-005** and **D-011** rulings, both of which resolved *"the Library reflects its
+   earlier freeze state."*
+
+Reading 2 has precedent on its side. Reading 1 has physics on its side. The difference matters: at
+1.00, soft-light noise over a mid-tone cover is a visible tooth; at 0.25 it is a suggestion. Getting
+this wrong makes covers either flat or dirty, and it is not the kind of thing a code review catches.
+
+**Owner decision requested.** Does a Library cover draw grain at its frozen effective **1.00**, or at
+the Bench/Proof register (≈0.2–0.25)? If the answer is 1.00, the Library's `--grain` should gain the
+same `opacity='.5'` as the others and the CSS opacities should carry the difference explicitly, so the
+corpus states one material with per-surface strengths rather than two materials that happen to share a
+filter.
+
+**What implementation does now: nothing.** [`ZinelyV2Grain`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Grain.kt)
+ships one tile at full strength and takes `alpha` per call site, exactly as
+[ADR-076](../DECISIONS.md#adr-076) records. Every value in the table above is expressible without a
+code change, so this ruling costs one argument at one call site whenever it lands. **No strength is
+tokenised and no average is taken** — under the **D-007** ruling, strength stays at the component.
+
+---
+
+### D-014 — the paper material cannot be drawn at all on API 24–28, and the design has no reading for those devices
+
+| | |
+|---|---|
+| **Artifacts** | Platform constraint against the whole frozen trilogy — every `--grain` rule (`v2-library.html` 59/105/110 · `v2-bench.html` 61/74/86 · `v2-proof.html` 61/81/101/159) |
+| **Found** | 2026-07-29, during Phase A / A6 review |
+| **Severity** | **Platform capability gap**, not a specification contradiction — does not block A6; a ruling is owed before Phase B ships a cover |
+| **Status** | Open — **owner ruling requested**; implementation has taken the safe floor and disclosed it |
+
+**What the platform does.** `android.graphics.BlendMode` is **API 29**. Below it Compose composites
+through `PorterDuffXfermode`, whose mode table contains no soft-light, so `BlendMode.Softlight` falls
+through to the default — **`SRC_OVER`**. The failure is not a subtler grain; it is the noise tile
+painted *opaquely* over the surface. At the Library cover's effective strength of **1.00** (see
+**D-013**) that is a flat grey rectangle where the artwork should be.
+
+This project's `minSdk` is **24**, so API 24–28 is inside the supported range.
+
+**Why this is a defect entry and not just an implementation note.** The frozen design describes one
+material and assumes it always renders. It has no second reading — no fallback texture, no "flat
+paper" variant, no statement about which surfaces matter enough to degrade differently. That absence
+is exactly the kind of thing the register exists to name rather than let implementation fill in
+silently, which is how a design decision gets made by a `when` branch.
+
+**What implementation does now — the safe floor.** On API 24–28,
+[`Modifier.zinelyV2Grain`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Grain.kt)
+draws **nothing** and the surface stays flat. Losing the paper texture is a smaller and more honest
+failure than replacing the artwork with grey, and unlike the grey it cannot be mistaken for a design
+choice. The same shape as the **D-012** call: implement the option that cannot ship something
+actively wrong, disclose it as a choice, and leave it free to reverse — here it is one branch with no
+callers yet.
+
+**Owner decision requested.** On API 24–28, should V2 paper surfaces (a) render flat, as now;
+(b) render a static warm tint approximating the grain's average effect, which is authoring a second
+material; or (c) be treated as out of scope, raising `minSdk` to 29? Note that (c) is not only a
+grain question — it would also retire the `RuntimeShader` and `fontVariationSettings` ceilings that
+shaped [ADR-073](../DECISIONS.md#adr-073) and [ADR-076](../DECISIONS.md#adr-076), so it is a product
+decision with a much wider blast radius than this entry.
+
+**This is verifiable, and was verified rather than assumed.** `AndroidPaint_androidKt.setNativeBlendMode`
+branches on `SDK_INT >= 29`, and `AndroidBlendMode_androidKt.toPorterDuffMode` has no `SOFT_LIGHT`
+case and returns `SRC_OVER` by default — read from the decompiled `ui-graphics` 1.10.4 artifact, not
+from documentation.
+
 ---
 
 ## Resolved
@@ -815,6 +997,7 @@ and only the latter guarantees the element still reaches its end state.
 | **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
 | **D-005** | The Library and the Bench set the same role in two different serifs at two different weights | 2026-07-28 — owner ruling: the Constitution outranks both frozen files. Canonical serif is **Fraunces at 500**; the Library's 600 reflected its Georgia fallback. No code change owed. Entry kept above. |
 | **D-007** | The constitutional 8pt rhythm is not observable in the frozen CSS | 2026-07-28 — owner ruling: §III is an implementation **aspiration**, not a token inventory. **No spacing scale is published**; spacing stays per-component exactly as frozen. Entry kept above. |
+| **D-011** | The Library declares neither easing token and animates on a curve found nowhere else | 2026-07-28 — owner ruling: the Bench and Proof are the **canonical V2 motion language**; the Library's curve reflects its earlier freeze. Phase B uses the canonical tokens. No code change owed. Entry kept above. |
 
 *(Resolved entries stay in place rather than being deleted — the record of what was once contradictory
 is what stops it being reintroduced.)*
