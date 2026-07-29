@@ -64,7 +64,7 @@ flowchart TD
 
 Multi-module Gradle build; the pure-Kotlin core is isolated from day one. The package tree below is the logical layout; modules are split out incrementally (the realised vs planned split is listed under it).
 
-> **Package root:** `com.aritr.zinely` — aligned with the existing app scaffold the project was created with (an earlier docs draft said `com.zinely`; the repo convention wins per [CLAUDE.md](../CLAUDE.md#engineering-conventions-summary-authority-is-docsarchitecturemd)).
+> **Package root:** `com.aritr.zinely` — aligned with the existing app scaffold the project was created with (an earlier docs draft said `com.zinely`; the repo convention wins per [CLAUDE.md](../CLAUDE.md#engineering-conventions-summary-authority-is-architecturemd)).
 
 ```
 com.aritr.zinely
@@ -88,7 +88,40 @@ com.aritr.zinely
 └── ui               // theme, design system, shared composables (M3)
 ```
 
-Module split (realised vs planned): **realised** — `:app` (Home-shelf nav root + per-project editor hosts, [ADR-046](DECISIONS.md#adr-046)), `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability core + content-addressed asset store, [ADR-025](DECISIONS.md#adr-025); GC/sweeper deferred — see [§4](#4-data-models--storage)), `:core:render` (S3 pure tier, [ADR-027](DECISIONS.md#adr-027)), `:render-android` (S3 Android replay/export tier, [ADR-028](DECISIONS.md#adr-028)), `:core:editor` (S4 pure MVI reducer, [ADR-029](DECISIONS.md#adr-029)), `:feature:editor` (S4 interaction surface — MVI store, gesture pipeline, selection chrome, snap guides, a11y contextbar, text-edit session, host `EditorScreen`; also hosts the unified `ProofScreen` — the S5 Preview/Export/Completion screens were retired and collapsed into it in M5 B5 ([ADR-051](DECISIONS.md#adr-051)) — and the S6.2 read-only `HomeScreen`, [ADR-043](DECISIONS.md#adr-043)), `:data-android` (S2B Android adapters: file-backed `DocumentRepository` over app-private storage + **the S6.1 Room-backed `ProjectRepository` index** (`projects` table + `meta.json` sidecar, files-as-truth, [ADR-042](DECISIONS.md#adr-042)); **WorkManager GC and SAF `.zine` restore not yet implemented**, [ADR-025](DECISIONS.md#adr-025)); **planned** — `:core:domain`, `:core:ui`, and `:feature:home|export|settings` as module *extractions* (their screens currently live in `:feature:editor`/future work; a `:feature:home` split is deferred until S6.5 or a second consumer justifies it, [ADR-043](DECISIONS.md#adr-043)).
+Module split (realised vs planned): **realised** — `:app` (Home-shelf nav root + per-project editor hosts, [ADR-046](DECISIONS.md#adr-046)), `:core:model`, `:core:imposition`, `:core:data` (S2A pure-Kotlin contracts), `:core:data-storage` (S2B pure-JVM durability core + content-addressed asset store, [ADR-025](DECISIONS.md#adr-025); GC/sweeper deferred — see [§4](#4-data-models--storage)), `:core:render` (S3 pure tier, [ADR-027](DECISIONS.md#adr-027)), `:render-android` (S3 Android replay/export tier, [ADR-028](DECISIONS.md#adr-028)), `:core:editor` (S4 pure MVI reducer, [ADR-029](DECISIONS.md#adr-029)), `:feature:editor` (S4 interaction surface — MVI store, gesture pipeline, selection chrome, snap guides, a11y contextbar, text-edit session, host `EditorScreen`; also hosts the unified `ProofScreen` — the S5 Preview/Export/Completion screens were retired and collapsed into it in M5 B5 ([ADR-051](DECISIONS.md#adr-051)) — and the S6.2 read-only `HomeScreen`, [ADR-043](DECISIONS.md#adr-043)), `:data-android` (S2B Android adapters: file-backed `DocumentRepository` over app-private storage + **the S6.1 Room-backed `ProjectRepository` index** (`projects` table + `meta.json` sidecar, files-as-truth, [ADR-042](DECISIONS.md#adr-042)); **WorkManager GC and SAF `.zine` restore not yet implemented**, [ADR-025](DECISIONS.md#adr-025)); `:core:ui` (**C2/CI-34 design-system extraction**, `8a80442` — the M3 theme, tokens and shared composables, and since Phase A the whole V2 foundation: see [§2.1](#21-the-v2-design-foundation-core-ui)); **planned** — `:core:domain` and `:feature:home|export|settings` as module *extractions* (their screens currently live in `:feature:editor`/future work; a `:feature:home` split is deferred until S6.5 or a second consumer justifies it, [ADR-043](DECISIONS.md#adr-043)).
+
+### 2.1 The V2 design foundation (`:core:ui`) {#21-the-v2-design-foundation-core-ui}
+
+Phase A of the [Compose V2 programme](COMPOSE-V2-ROADMAP.md) built a second, complete design foundation inside
+`:core:ui`, **additively** — every V2 type is new, and no V1 `src/main` file was modified. What each piece is and
+why it took the shape it did lives in its ADR; this section exists so the technical source of truth points at
+them rather than staying silent about nine packages of public API.
+
+| Area | Types | Decision |
+|---|---|---|
+| Chrome palette (light + warm-charcoal dark, re-derived) | `ZinelyV2Colors` | [ADR-071](DECISIONS.md#adr-071) |
+| Maker inks, on the artifact and never on chrome | `ZinelyContentInks` | [ADR-072](DECISIONS.md#adr-072) |
+| Typography — a two-family *foundation*, not a scale | `ZinelyV2Typography`, `ZinelyV2Fonts` | [ADR-073](DECISIONS.md#adr-073) |
+| Shape + elevation — two globals and one shadow primitive; **no spacing scale** | `ZinelyV2Dimens`, `ZinelyV2Shadow` | [ADR-074](DECISIONS.md#adr-074) |
+| Motion — two easings and a reduced-motion policy; no duration tokens | `ZinelyV2Motion` | [ADR-075](DECISIONS.md#adr-075) |
+| Paper grain as *material* — a pre-baked tile, `soft-light`, API-24-safe | `ZinelyV2Grain` | [ADR-076](DECISIONS.md#adr-076) |
+| 36 icons as geometry without a stroke | `ZinelyV2Icons` | [ADR-077](DECISIONS.md#adr-077) |
+| Accessibility — a control seam that survives the platform tree, and a canvas node tree | `Modifier.zinelyV2Control`, `ZinelyV2CanvasSemantics` | [ADR-078](DECISIONS.md#adr-078) |
+| Verification — a debug-only catalog, parity-tested against the frozen corpus | `ZinelyV2Catalog` (`src/debug`) | [ADR-079](DECISIONS.md#adr-079) |
+
+Three properties of this layer are load-bearing and easy to lose:
+
+- **The frozen corpus is the oracle.** `ZinelyV2CatalogParityTest` parses [V2-TOKENS.md](design/V2-TOKENS.md) at
+  run time and asserts rendered pixels equal the values the document states. The design document is a declared
+  Gradle input of `:core:ui:testDebugUnitTest`, so editing it re-runs the gate.
+- **The platform `AccessibilityNodeInfo` tree is the truth, not Compose's merged semantics tree.** A control keeps
+  its role and name on the platform only when it collapses to one node ([ADR-078](DECISIONS.md#adr-078)); the
+  harness that asserts this lives in `:core:ui`'s **test fixtures** so downstream modules share it without
+  inverting the module graph.
+- **V2 sits *beside* V1 rather than replacing it, deliberately and temporarily.** Convergence happens surface by
+  surface across Phases B–D, each package enrolling in [`config/token-enrolment.txt`](../config/token-enrolment.txt)
+  in the commit that migrates it — [ADR-080](DECISIONS.md#adr-080), which also records why Phase A could not do
+  this itself.
 
 ## 3. Data flow
 
@@ -388,7 +421,7 @@ See `android-skills:android-tdd`. The imposition engine is built **test-first** 
 
 ## 14. Decision & review trail
 
-All locked decisions and the Codex review outcomes are recorded as ADRs in [DECISIONS.md](DECISIONS.md). Major technical changes follow the [review workflow](../CLAUDE.md#review-workflow): propose → Codex review → reconcile → ADR.
+All locked decisions and the Codex review outcomes are recorded as ADRs in [DECISIONS.md](DECISIONS.md). Major technical changes follow the [review workflow](../CLAUDE.md#multi-agent-workflow): propose → Codex review → reconcile → ADR.
 
 ## 15. Subsystem dependency map, build order & critical path
 
@@ -511,7 +544,7 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    wants a bundled, app-owned, non-GC'd decoration. 🟦 The **recommended** path (an ADR choice, not a
    design-forced inevitability) is a dedicated sticker `Element` variant in
    [`core:model`](#4-data-models--storage): a **schema version bump** (`DocumentSerializer` + a
-   migration), a new `SceneRenderer` draw command in [`core:render`](#5-render-pipeline) with
+   migration), a new `SceneRenderer` draw command in [`core:render`](#5-rendering-pipeline--one-scene-two-backends) with
    **preview==export** parity, and a **bundled sticker catalog** kept distinct from the *user*
    content-addressed asset store ([ADR-031](DECISIONS.md#adr-031)) — program assets, license-clear, not
    GC'd. 🔭 V1 expression.

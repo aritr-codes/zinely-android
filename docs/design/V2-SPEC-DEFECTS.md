@@ -30,7 +30,39 @@ work stops until an owner ruling lands.
 
 ---
 
+## Register at a glance (verified 2026-07-29, at the close of Phase A)
+
+Sixteen defects raised during Phase A: **seven resolved by owner ruling, nine open.** None blocks Phase B's
+*implementation*; **D-016 gates the Phase A → B transition**, since it asks whether Phase A's review gate can
+be recorded as passed.
+
+| Open | Owing to | One line |
+|---|---|---|
+| [**D-001**](#d-001--v2-benchhtml-header-contradicts-the-freeze-record) | corpus cleanup | `v2-bench.html`'s header contradicts the freeze record — documentation only, no code impact |
+| [**D-002**](#d-002--two-frozen-cover-inks-put-their-titles-below-aa-for-normal-text) | **owner ruling requested** | two frozen cover inks put their titles below AA for normal text |
+| [**D-004**](#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) | **Phase D** (deferred by ruling) | the frozen zine content is set in Fraunces; the render engine can only draw Inter |
+| [**D-006**](#d-006--the-only-shape-token-in-v2-is-declared-and-never-used) | **owner decision requested** → Phase B | the only shape token in V2 is declared and never used |
+| [**D-008**](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) | **Phase C** (approach settled) | two surfaces specify no focus appearance and one removes it |
+| [**D-009**](#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) | **Phase B/C** (approach settled) | no control declares a minimum touch target; most measure under 48dp |
+| [**D-010**](#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark) | **Phase C** (deferred by ruling) | the page shadow is hard-coded to the light theme and does not adapt in the dark |
+| [**D-012**](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) | **Phase C** (deliberately unresolved) | three files write three different reduced-motion rules; one would strobe |
+
+| [**D-016**](#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface) | **owner ruling requested** | two of Phase A's acceptance criteria cannot be met by a phase forbidden to touch product surface |
+
+Resolved: **D-003 · D-005 · D-007 · D-011 · D-013 · D-014 · D-015** — full rows in [Resolved](#resolved) below.
+
+**Three of the open nine are open *by owner ruling*, not by neglect** (D-008, D-009, D-012): their approach
+is settled and they stay open until the phase that implements the affected surfaces can verify it. Reading
+them as unattended work is the misreading this table exists to prevent. **Three await an owner** (D-002,
+D-006, D-016); D-016 is the only one that gates a phase transition.
+
+---
+
 ## Open
+
+> Entries stay in this section after they are resolved, with a ✅ **RESOLVED** status line and the ruling
+> appended — see [How to use it](#how-to-use-it). So "Open" is where every defect *lives*; it is the
+> **Status** line, not the section, that tells you which are still open.
 
 ### D-001 — `v2-bench.html` header contradicts the freeze record
 
@@ -1052,8 +1084,8 @@ documented difference and belongs in release notes when V2 ships — as a **Know
 |---|---|
 | **Artifacts** | [`v2-proof.html`](mockups/v2-proof.html) lines 296 and 376 · [`v2-bench.html`](mockups/v2-bench.html) line 346 against [`v2-proof.html`](mockups/v2-proof.html) line 294 |
 | **Found** | 2026-07-29, during Phase A / A7 (icons) |
-| **Severity** | Cross-file (and intra-file) inconsistency — **does not block A7**; both are transcribed as found |
-| **Status** | Open — **owner ruling requested** |
+| **Severity** | Cross-file (and intra-file) inconsistency — did not block A7 |
+| **Status** | ✅ **RESOLVED** 2026-07-29 by owner ruling — see the resolution at the end of this entry |
 
 The trilogy contains 36 distinct icon marks across 42 placements. Two of those 36 are duplicates in
 meaning but not in drawing.
@@ -1098,6 +1130,96 @@ Bench's `Favourite` (`:599`) are also two stars with different geometry, but the
 `Shield` (`bench:461`) and `ShieldCheck` (`bench:605`) share an outline by design, the second adding a
 tick. Neither is a defect, and both are noted so a later reader does not re-open them.
 
+**✅ RESOLUTION — owner ruling, 2026-07-29: both pairs stand. Similarity is not identity.**
+
+> *"**Do not deduplicate. Do not canonicalize. Do not select a preferred version.** The frozen HTML is
+> authoritative. Treat each geometry as an **independent design asset** unless the design corpus
+> explicitly declares otherwise. **Similarity is not sufficient evidence of identity.** If, in the
+> future, the design intentionally converges those assets, that change belongs in the design corpus
+> first — not in implementation."*
+
+The ruling reframes the entry rather than answering the question it asked. This register was built to
+raise things that *look* wrong so an owner can decide; the finding here was framed as "two marks that
+ought to be one", and the ruling rejects the premise. Two geometries are two assets. The burden of proof
+runs the other way: implementation may treat two marks as one only where the corpus **says** they are
+one, and nothing in the corpus says it.
+
+That is a stricter rule than it first sounds, and it is worth stating plainly because the pull in the
+other direction is constant. A chevron that is nearly the mirror of another chevron is *nearly* — and
+"nearly" is where an implementer's judgement starts substituting for a designer's. `ChevronRightBand`
+sits on the resting READY band and `ChevronRight` on the fold navigator; that they differ by a unit of
+span may be intent, drift, or neither, and implementation cannot tell the difference from the outside.
+Keeping both costs two entries in a set. Merging them wrongly costs a surface that no longer matches
+its specification, silently.
+
+**What implementation does: nothing — which was already the case.** Both pairs were transcribed as
+found in [A7](../DECISIONS.md#adr-077), as `ChevronRight`/`ChevronRightBand` and `Tick`/`Done`. No code
+change, no asset change.
+
+**What changes is the tripwire's meaning.** `ZinelyV2IconsTest` asserts that the two chevron geometries
+remain distinct and that only `ChevronRight` mirrors `ChevronLeft`. Under this ruling that is no longer
+a defect marker waiting to be cleared — it guards the ruling. If it fails, either the corpus has
+converged the assets (a design act, which is legitimate and should be accompanied by a corpus change)
+or implementation has quietly merged them (which this ruling forbids).
+
+**No corpus cleanup is owed**, unlike D-005 and D-011. Nothing in the frozen HTML is stale here.
+
+---
+
+### D-016 — two of Phase A's acceptance criteria cannot be met by a phase forbidden to touch product surface
+
+| | |
+|---|---|
+| **Artifact** | [`docs/COMPOSE-V2-ROADMAP.md`](../COMPOSE-V2-ROADMAP.md), Phase A "Acceptance criteria" |
+| **Found** | 2026-07-29, during Phase A / A10 (documentation verification), and sharpened by its independent review |
+| **Status** | **Open — owner ruling requested.** Blocks recording Phase A's gate as *passed*; does not block Phase B implementation work |
+| **Depends on it** | [ADR-080](../DECISIONS.md#adr-080), whose Decision 1 is a **proposal** pending this ruling |
+
+**What the artifact says.** Phase A's acceptance criteria include:
+
+> *"No hard-coded colours, sizes, or fonts anywhere — everything routes through tokens."*
+> *"Foundation is confirmed to be the **same** migration as the conformance token work (no duplicate system)."*
+
+and its review gate requires *"Independent review confirms: exact token fidelity, **no parallel/duplicate
+design system**, a11y infra present, zero product surface."*
+
+**Why this is a defect in the plan, not in the implementation.** The same phase's Objective is *"nothing
+product-facing"*, its first acceptance criterion is *"No product screen exists yet"*, and its gate demands
+*"zero product surface"*. Routing an existing screen onto tokens means **editing that screen**; retiring a
+duplicate token system means **deleting the old one out of the components that use it**. Both are edits to
+V1 product code. The criteria are therefore not merely difficult inside Phase A — they are mutually
+exclusive with Phase A's own definition, and no ordering of the work resolves it.
+
+The repository state is unambiguous: [`config/token-enrolment.txt`](../../config/token-enrolment.txt) enrols
+**zero** packages, and `ZinelyColors`/`ZinelyV2Colors`, `ZinelyDimens`/`ZinelyV2Dimens` and
+`ZinelyTypography`/`ZinelyV2Typography` coexist.
+
+**What Phase A did instead**, under a standing owner instruction repeated at every package gate — *additive
+only · preserve V1* — was land V2 beside V1 without modifying a single V1 `src/main` file. That is a
+coherent strategy, and it is the one nine consecutive owner approvals endorsed. It was never written down
+as an interpretation of these criteria, which is the actual defect being logged.
+
+**The question for the owner.** Two readings, and the implementation session declines to choose:
+
+1. **Both criteria re-seat to Phase D's exit**, where the last surface is re-skinned and the last consumer
+   migrated. Phase A's gate passes on its other conditions.
+2. **Only criterion 4 re-seats.** Criterion 5's verb is *"confirmed to be"* — it asks for a recorded
+   confirmation that V2 *is* the migration vehicle and V1 retires through it, not for completed
+   convergence. On that reading [ADR-080](../DECISIONS.md#adr-080) Decision 2 already satisfies it, and it
+   should be marked **met**.
+
+Either way the convergence mechanism is the same and already exists: each of Phases B, C and D enrols its
+package in `token-enrolment.txt` **in the same commit that migrates it**, which is the coupling the
+enrolment file's own header already mandates — so convergence is continuously gated rather than deferred
+to one migration at the end.
+
+**Why this was not settled in-session.** [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md)
+says to *"stop and raise it with the owner"* and log it here; [V2-CONSTITUTION.md §VI](V2-CONSTITUTION.md)
+reserves amendment to the owner, *"never implicitly through implementation, and never by a design or
+engineering session on its own initiative."* A first draft of ADR-080 re-seated the criteria on its own
+authority and cited the Constitution for a stop-rule the Constitution does not contain. The review caught
+the misattribution; this entry is the correction.
+
 ---
 
 ## Resolved
@@ -1107,6 +1229,7 @@ tick. Neither is a defect, and both are noted so a later reader does not re-open
 | **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
 | **D-005** | The Library and the Bench set the same role in two different serifs at two different weights | 2026-07-28 — owner ruling: the Constitution outranks both frozen files. Canonical serif is **Fraunces at 500**; the Library's 600 reflected its Georgia fallback. No code change owed. Entry kept above. |
 | **D-007** | The constitutional 8pt rhythm is not observable in the frozen CSS | 2026-07-28 — owner ruling: §III is an implementation **aspiration**, not a token inventory. **No spacing scale is published**; spacing stays per-component exactly as frozen. Entry kept above. |
+| **D-015** | Two concepts are each drawn twice, with different geometry | 2026-07-29 — owner ruling: **do not deduplicate, canonicalize, or pick a preferred version**. Each geometry is an independent design asset; similarity is not evidence of identity. Convergence, if ever wanted, belongs in the corpus first. No code change owed. Entry kept above. |
 | **D-013** | The Library and the Bench bake different alpha into the same grain | 2026-07-29 — owner ruling: **deliberate, not drift**. Paper and printed covers are different physical materials; grain strength is **not** normalised and stays exactly as frozen. No code change owed, and no corpus cleanup owed either. Entry kept above. |
 | **D-014** | The paper material cannot be drawn at all on API 24–28 | 2026-07-29 — owner ruling: rendering **flat paper is correct**, not a fallback. No emulation, no approximation, no `minSdk` bump — where the platform cannot express the design, implementation omits and discloses. Ships as a Known Limitation. Entry kept above. |
 | **D-011** | The Library declares neither easing token and animates on a curve found nowhere else | 2026-07-28 — owner ruling: the Bench and Proof are the **canonical V2 motion language**; the Library's curve reflects its earlier freeze. Phase B uses the canonical tokens. No code change owed. Entry kept above. |
@@ -1116,6 +1239,7 @@ is what stops it being reintroduced.)*
 
 ---
 
-*Opened 2026-07-28 during the Compose V2 implementation programme. Governed by
+*Opened 2026-07-28 during the Compose V2 implementation programme; register verified against every entry's
+status line on 2026-07-29 at the close of Phase A (package A10). Governed by
 [V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
 [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*

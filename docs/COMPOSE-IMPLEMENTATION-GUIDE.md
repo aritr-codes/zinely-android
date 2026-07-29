@@ -36,7 +36,7 @@ V2-CONSTITUTION.md          (immutable truths — why)
 
 - If the **HTML** answers the question, the HTML is right. Match it.
 - If the HTML is silent and an **ADR** answers it, follow the ADR.
-- If both are silent, follow **ARCHITECTURE.md** and the [house conventions](#9-house-rules), and pick the calmest
+- If both are silent, follow **ARCHITECTURE.md** and the [house conventions](#11-house-rules), and pick the calmest
   option consistent with the constitution.
 - If you believe a **frozen artifact is itself wrong**, stop — see §4.
 

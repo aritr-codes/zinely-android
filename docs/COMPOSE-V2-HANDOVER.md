@@ -6,6 +6,34 @@
 
 ---
 
+## 0. Where the work actually is (2026-07-29)
+
+**Phase A — Foundation — is built, and its gate is pending one owner ruling.** Nine packages (A1–A9), nine
+ADRs ([ADR-071](DECISIONS.md#adr-071)…[ADR-079](DECISIONS.md#adr-079)), each independently reviewed and
+approved. Do not rebuild it. The full record of what was built, what was built
+*differently* than this document plans, and why, is the
+[Phase A completion record](COMPOSE-V2-ROADMAP.md#phase-a-completion-record-2026-07-29) — **read that
+before §6 below**, because §6 describes the plan and the record describes the outcome.
+
+**What exists now:** a V2 design foundation in `:core:ui` — colours, maker inks, typography, shape and
+elevation, motion, the paper grain, 36 icons, an accessibility control seam and canvas node tree, and a
+debug-only catalog verified pixel-by-pixel against [V2-TOKENS.md](design/V2-TOKENS.md). No product screen,
+no route, nothing user-facing.
+
+**Two things Phase A did not do:** V2 tokens currently sit **beside** V1's rather than replacing them, and
+`config/token-enrolment.txt` enrols zero packages. Convergence happens surface by surface across Phases
+B–D, each package enrolling in the same commit that migrates it.
+
+**The one thing still open before Phase B.** Two of Phase A's acceptance criteria — *"everything routes
+through tokens"* and *"no duplicate design system"* — require editing V1 product components, which Phase A
+forbids. They were not met, and whether they re-seat to Phase D's exit is an **owner ruling**, logged as
+[**D-016**](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface).
+[ADR-080](DECISIONS.md#adr-080) proposes a resolution and is `Proposed`, not `Accepted`, until it lands.
+
+**Next:** Phase B — Library, once D-016 is ruled on.
+
+---
+
 ## 1. The product
 
 **Zinely** is a **privacy-first, offline-first Android app for making small, printable zines** on your own phone.
@@ -73,10 +101,13 @@ each session: **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.m
 
 Sequence and gates: **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)**. In brief:
 
-- **A · Foundation** — theme, tokens, typography, motion, elevation, icons, CompositionLocals, paper system, a11y
-  infra. *No product screens.* (This foundation is the **same** migration as the V1 conformance token work — do it
-  once, not twice.)
-- **B · Library** — pixel parity to the frozen Library. The closest to a clean re-skin; sets the parity bar.
+- **A · Foundation** — **built 2026-07-29; gate pending [D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface)** — theme, tokens, typography, motion, elevation, icons,
+  CompositionLocals, paper system, a11y infra. *No product screens.* The parenthetical this list used to carry —
+  *"this foundation is the **same** migration as the V1 conformance token work — do it once, not twice"* — is the
+  intent, but it is **not what Phase A could deliver**: converging the two systems means editing V1 components,
+  which Phase A forbids. V2 landed additively; convergence is Phases B–D, package by package
+  ([ADR-080](DECISIONS.md#adr-080), `Proposed`). Do not read this line as a statement about the code today.
+- **B · Library** ◀ **next** — pixel parity to the frozen Library. The closest to a clean re-skin; sets the parity bar.
 - **C · Bench** — pixel + interaction + animation + editing-behaviour parity, on top of the **existing** engine.
   No feature additions.
 - **D · Proof** — pixel + print-flow + fold-guide + a11y parity, for the shipped single-sheet-8 stage.
@@ -117,13 +148,17 @@ independent Review Agent.
 ## Start here
 
 1. Read **[V2-CONSTITUTION.md](design/V2-CONSTITUTION.md)** (why) → **[COMPOSE-IMPLEMENTATION-GUIDE.md](COMPOSE-IMPLEMENTATION-GUIDE.md)** (how) → **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)** (what, in order).
-2. Keep **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md)** open as your checklist.
-3. Begin **Phase A — Foundation**. Open no product screen until Phase A's gate passes.
-4. For any screen, open its **frozen HTML** first; it is the spec.
+2. Read the **[Phase A completion record](COMPOSE-V2-ROADMAP.md#phase-a-completion-record-2026-07-29)** — what
+   already exists, and the four things a new engineer gets wrong that are not visible in the code.
+3. Keep **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md)** open as your checklist.
+4. Begin **Phase B — Library** once [D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface)
+   is ruled on. Phase A is built; building any of it again is the mistake this section exists to prevent.
+5. For any screen, open its **frozen HTML** first; it is the spec.
 
 *The design is done. Your job is faithful execution. If something feels like it should change, it goes into the
 frozen HTML first (owner gate) — not into the code.*
 
 ---
 
-*Handover written 2026-07-28 by the Design Custodian at the close of the V2 Design Program.*
+*Handover written 2026-07-28 by the Design Custodian at the close of the V2 Design Program. §0 and the Phase A
+status added 2026-07-29 at the close of Phase A (package A10).*

@@ -31,12 +31,24 @@
 
 ```mermaid
 flowchart LR
-    A["A · Foundation\n(no product screens)"] --> B["B · Library\n(pixel parity)"]
+    A["A · Foundation — work complete\ngate PENDING (D-016)"] --> B["B · Library\n(pixel parity)"]
     B --> C["C · Bench\n(pixel + interaction + motion + behaviour parity)"]
     C --> D["D · Proof\n(pixel + print-flow + fold + a11y parity)"]
     D --> E["E · Cross-product polish"]
     E --> F["F · Reality validation\n(physical devices)"]
+    style A fill:#DCE3C0,stroke:#5E6B2F
 ```
+
+> **Status (2026-07-29): Phase A's *work* is complete; its *gate* is pending an owner ruling.** All nine
+> implementation packages landed and were independently reviewed. But Phase A's gate requires *"no
+> parallel/duplicate design system"*, and the record below marks that criterion **❌ not met** — because it,
+> and *"everything routes through tokens"*, cannot be met by a phase forbidden to touch product surface.
+> That conflict is [**D-016**](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface),
+> and [ADR-080](DECISIONS.md#adr-080) is `Proposed` until it is ruled on.
+>
+> The record of what was actually built — deliverable by deliverable, criterion by criterion — is
+> [below](#phase-a-completion-record-2026-07-29). **Phase B has not started, and should not until D-016 is
+> ruled on**, because the ruling decides what Phase A's gate means and therefore whether it has passed.
 
 Each phase has an **Objective**, **Deliverables**, **Acceptance criteria**, and a **Review gate**. A phase is not
 started until the previous phase's gate has passed.
@@ -70,6 +82,101 @@ ends there are no zines, no shelves, no editor — only a faithful, tested desig
 
 **Review gate.** Independent review confirms: exact token fidelity, no parallel/duplicate design system, a11y
 infra present, zero product surface. **GO** required before Phase B.
+
+---
+
+## Phase A completion record (2026-07-29) {#phase-a-completion-record-2026-07-29}
+
+> **Why this section exists.** The plan above is what Phase A *set out* to do. This is what it did. They are
+> not the same, and the differences are decisions — recorded here so a new engineer inherits the outcome
+> rather than reconstructing it from nine ADRs and a commit log. Where a deliverable was met differently
+> than planned, the reason is an owner ruling or a defect entry, and it is linked.
+
+Phase A ran as nine packages, **A1–A9**, each additive, each independently reviewed, each ending at an owner
+gate. Every package is an ADR: [ADR-071](DECISIONS.md#adr-071) · [ADR-072](DECISIONS.md#adr-072) ·
+[ADR-073](DECISIONS.md#adr-073) · [ADR-074](DECISIONS.md#adr-074) · [ADR-075](DECISIONS.md#adr-075) ·
+[ADR-076](DECISIONS.md#adr-076) · [ADR-077](DECISIONS.md#adr-077) · [ADR-078](DECISIONS.md#adr-078) ·
+[ADR-079](DECISIONS.md#adr-079). Phase A's closure and the interpretation that made it possible are
+[ADR-080](DECISIONS.md#adr-080).
+
+### Deliverables
+
+| Planned | Delivered | Notes |
+|---|---|---|
+| **Theme + tokens** — every V2-TOKENS.md value, both themes, dynamic colour off; chrome only, maker inks in `content.*` | ✅ as planned | `ZinelyV2Colors` ([ADR-071](DECISIONS.md#adr-071)) + `ZinelyContentInks` ([ADR-072](DECISIONS.md#adr-072)). Dark re-derived, not inverted. |
+| **Typography** — "Fraunces + Inter **type scale**" | ⚠️ **delivered as a two-family *foundation*, not a scale** | The frozen trilogy does not contain a type scale to transcribe. Publishing one would have been design work. [ADR-073](DECISIONS.md#adr-073). |
+| **Spacing / elevation** — "the 8pt rhythm and the calm elevation model as reusable primitives" | ⚠️ **elevation yes; no spacing scale at all** | The frozen CSS is 16.7% on-grid. **D-007** owner ruling: §III is an aspiration, not a token inventory — nothing is published; spacing stays per-component as frozen. [ADR-074](DECISIONS.md#adr-074). |
+| **Motion** — "paper-settle, the calm durations/easings", reduced-motion aware | ⚠️ **two easings + a reduced-motion policy; no duration tokens** | The design declares no durations. The policy separates one-shot motion (collapses to 0) from continuous motion (does not run) — an infinite animation at 0ms strobes. [ADR-075](DECISIONS.md#adr-075), **D-012** deferred to Phase C. |
+| **Icons + resources** | ✅ as planned | 36 marks as geometry without a stroke, built into an `ImageVector` per call site, because the design makes stroke weight a property of the *container*. [ADR-077](DECISIONS.md#adr-077). |
+| **CompositionLocals** — theme, tokens, motion, haptics | ✅ as planned | Nine locals in `Theme.kt`. **Haptics is V1's `ZinelyHaptics`, shared rather than duplicated** — the correct outcome under "no duplicate system". |
+| **Paper system** — grain/fleck as *material* | ✅ as planned | Pre-baked 140×140 tile from the SVG 1.1 normative `feTurbulence` (`RuntimeShader` is API 33 against `minSdk` 24), drawn at `soft-light`. [ADR-076](DECISIONS.md#adr-076); **D-013**, **D-014** resolved. |
+| **Accessibility infrastructure** | ✅ as planned, and the survey changed what was owed | Of the four named items, the CI AA-contrast gate was **already complete**, the canvas node tree **already existed** (in `:feature:editor`), the platform-tree harness existed but was **unreachable** from `:core:ui`, and the device a11y-dump recipe **pointed at a document that did not exist**. [ADR-078](DECISIONS.md#adr-078) built the two that were genuinely missing and wrote [DEVICE-VERIFICATION.md](DEVICE-VERIFICATION.md). |
+
+### Acceptance criteria
+
+| Criterion | Verdict |
+|---|---|
+| Token values **byte-exact** to V2-TOKENS.md in both themes; AA ★ pairings pass the CI contrast gate | ✅ **Met, and now gated against the document itself.** `ZinelyV2CatalogParityTest` parses V2-TOKENS.md at run time and asserts rendered pixels equal the stated hex exactly, both themes ([ADR-079](DECISIONS.md#adr-079)). `ZinelyV2ContrastTest` gates all six ★ pairings. |
+| A tokens/typography/**motion** catalog screen (internal only) renders and is screenshot-tested | ⚠️ **Met for tokens, typography, icons and material; motion is not in the catalog.** Motion is not screenshottable — a still frame of an easing curve proves nothing. It is gated behaviourally by `ZinelyV2MotionTest` instead. The catalog lives in `core/ui/src/debug`, so it is absent from a release AAR entirely (verified: 0 of 87 `classes.jar` entries). |
+| **No product screen exists yet** | ✅ **Met.** No route, no navigation, no product surface. |
+| **No hard-coded colours, sizes, or fonts anywhere — everything routes through tokens** | ❌ **Not met, and not meetable in Phase A.** The gate exists (`TokenDisciplineTest`, CI-27) but [`config/token-enrolment.txt`](../config/token-enrolment.txt) enrols **zero packages**. Note the honest limit of that excuse: enrolling *most* packages means editing V1 product code, but `com.aritr.zinely.ui.a11y` was created by Phase A and carries none of the four banned literal forms — it could have been enrolled without touching V1 at all, and was not. See the conflict below. |
+| Foundation is confirmed to be the **same** migration as the conformance token work (no duplicate system) | ❌ **Not met, and not meetable in Phase A.** `ZinelyColors`/`ZinelyV2Colors`, `ZinelyDimens`/`ZinelyV2Dimens` and `ZinelyTypography`/`ZinelyV2Typography` coexist today. See the conflict below. |
+
+### The conflict this phase could not resolve, and did not resolve on its own authority
+
+Two of the four acceptance criteria above require **editing V1 product components** — that is what "no
+duplicate system" and "everything routes through tokens" mean in practice. Phase A's first criterion, its
+Objective (*"nothing product-facing"*) and its review gate (*"zero product surface"*) all forbid exactly
+that. **The criteria are mutually unsatisfiable within Phase A.**
+
+The strategy actually operated for nine consecutive packages, under a standing owner instruction —
+*additive only · preserve V1* — but was never written down: **V2 lands beside V1 in Phase A, and the two
+systems converge surface by surface in Phases B, C and D, as each V1 screen is re-skinned and its package
+is enrolled in `token-enrolment.txt` in the same commit that migrates it.**
+
+Whether that means the two criteria **re-seat to Phase D's exit** is an owner call, not this session's:
+[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md) says to stop and raise it, and
+[V2-CONSTITUTION.md §VI](design/V2-CONSTITUTION.md) reserves amendment to the owner *"never implicitly
+through implementation"*. So the conflict is logged as
+[**D-016**](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface)
+with **two readings put forward and neither chosen** — the second being that criterion 5's *"confirmed to
+be"* asks for a recorded confirmation rather than completed convergence, in which case only criterion 4
+re-seats. [ADR-080](DECISIONS.md#adr-080) proposes; it does not decide. **Nothing has been written into
+Phase D's acceptance criteria**, because a proposal must not acquire the force of a gate by being filed
+under one.
+
+Until then the duplication is real and should be read as *scheduled*, not accidental. Two guards exist so
+it cannot quietly become permanent: `ZinelyV2CanvasNodeMinSide` was collapsed into an alias of
+`ZinelyV2Dimens.MinTouchTarget` the moment a second independent `48.dp` appeared inside a single module
+([ADR-079](DECISIONS.md#adr-079)), and no V1 `src/main` file was modified in any of A1–A9.
+
+### Defect register at the close of Phase A
+
+Sixteen defects were raised against the frozen corpus during Phase A: **seven resolved by owner ruling, nine
+open**, of which three are open *by ruling* (approach settled, verification owed to a later phase) and three
+await an owner. None blocks Phase B's implementation; **D-016 gates the Phase A → B transition.**
+
+The per-defect table — status, owing phase, and a link to each entry — is
+[**V2-SPEC-DEFECTS.md § Register at a glance**](design/V2-SPEC-DEFECTS.md#register-at-a-glance-verified-2026-07-29-at-the-close-of-phase-a),
+which owns it. It is not reproduced here: this document owns *phasing*, the register owns *defects*, and a
+second copy is how the two start disagreeing.
+
+### What a new engineer should know that is not obvious from the code
+
+- **The frozen corpus is the oracle, not the implementation.** A verification artifact must be *derived*
+  from the design documents, never become a second source of design truth. This is the principle A9
+  established and it governs every debug or verification artifact added from here on.
+- **The platform `AccessibilityNodeInfo` tree is the source of truth, not Compose's merged semantics tree.**
+  A control keeps its role and name on the platform only when it collapses to **one** node; any child
+  contributing semantics splits it ([ADR-078](DECISIONS.md#adr-078)). Compose-level a11y tests cannot see
+  this defect class at all.
+- **Three packages in a row shipped an assertion blind to the defect class it claimed to gate** (A6, A7,
+  A8 — and A9 made it four on first submission). Every one was caught by independent review, none by the
+  suite. Assume the same failure is present in your own work until you have mutated the code and watched
+  the test go red.
+- **`grun`/Gradle reports `UP-TO-DATE` for inputs it does not know about.** `V2-TOKENS.md` is now a declared
+  input of `:core:ui:testDebugUnitTest`; `config/token-enrolment.txt` is *not* a declared input of
+  `:feature:editor`'s. Force with `--rerun-tasks` when a non-source file is what changed.
 
 ---
 
@@ -211,3 +318,6 @@ Release Agent review against [ROADMAP.md](ROADMAP.md)/[PRD.md](PRD.md) before an
 
 *Written 2026-07-28 by the Design Custodian. Phase scope is fixed; sequencing within a phase is the implementer's
 call, subject to the review gates.*
+
+*Phase A completion record added 2026-07-29 at the close of Phase A (package A10). The phase plans above are
+left exactly as written — a plan that is edited to match its outcome stops being evidence of anything.*
