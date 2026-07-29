@@ -127,7 +127,7 @@ class ZinelyV2DimensTest {
     // -- D-007: the 8pt rhythm --------------------------------------------------------------------
 
     @Test
-    fun `D-007 is still open — the frozen CSS does not keep the constitutional 8pt rhythm`() {
+    fun `the frozen CSS does not keep the constitutional 8pt rhythm — and by ruling, never has to`() {
         val values = all.flatMap { css ->
             Regex("""(?:padding|margin|gap|row-gap|column-gap)(?:-top|-bottom|-left|-right)?\s*:\s*([^;}]+)""")
                 .findAll(css)
@@ -142,11 +142,12 @@ class ZinelyV2DimensTest {
         // Measured 17.1% over the whole CSS (16.7% over chrome alone, classified by hand). The
         // assertion pins the *fact* that an 8pt grid is not observable, not a precise ratio.
         //
-        // Its reach is limited, and the limit is worth knowing: this fires only if the frozen HTML
-        // changes. D-007's option (a) — "the frozen literals stand" — needs no corpus change, so that
-        // ruling would leave this test green and is NOT guarded here. The threshold is also tighter
-        // than it looks: snapping the Bench alone would reach ~0.54 and the Proof alone ~0.49, but
-        // snapping only the Library lands at ~0.31 and clears 0.30 by a single point.
+        // D-007 is CLOSED: the owner ruled that §III is an implementation aspiration rather than a
+        // token inventory, so no spacing scale is published and spacing stays per-component exactly as
+        // frozen. This test therefore no longer guards an open question — it records the measurement
+        // the ruling was made on, so that a later corpus edit toward a real grid is visible rather
+        // than silent. The threshold is tighter than it looks: snapping the Bench alone reaches ~0.54
+        // and the Proof ~0.49, but snapping only the Library lands at ~0.31 and clears 0.30 by a point.
         assertTrue(
             "an 8pt grid is still not observable in the frozen CSS (%.1f%% on-grid) — if this has " +
                 "risen sharply, re-read D-007 before touching ZinelyV2Dimens".format(fraction * 100),

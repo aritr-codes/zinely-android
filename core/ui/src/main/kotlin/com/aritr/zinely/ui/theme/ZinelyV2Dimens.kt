@@ -18,17 +18,23 @@ import androidx.compose.ui.unit.dp
  * ported — a token that names a value nothing uses would invite Phase B to "restore" an 18px radius
  * the design never had. Logged as **D-006**.
  *
- * ### There is no spacing scale here either, and that one is not settled
+ * ### There is no spacing scale here either, and that is now a ruling rather than a gap
  *
  * [V2-CONSTITUTION.md](docs/design/V2-CONSTITUTION.md) §III states *"An **8pt rhythm** governs
- * layout"* as an invariant, and [V2-RESEARCH.md](docs/design/V2-RESEARCH.md) §2.4 defines the scale as
+ * layout"*, and [V2-RESEARCH.md](docs/design/V2-RESEARCH.md) §2.4 defines the scale as
  * 4/8/16/24/32/48. The frozen CSS does not keep it: **16.7%** of chrome spacing values are multiples
- * of 8 and **38.2%** are multiples of 4, with 2, 6, 7, 9, 10, 13 and 14px all common. Unlike the
- * radius question this is a conflict with the **highest** authority in the corpus, so it is not
- * implementation's to settle either way — see **D-007**, which is the one item of A4 held for an
- * owner ruling. Nothing is published here in the meantime, because both possible answers (transcribe
- * the frozen literals / snap to 8pt) produce a *different* spacing scale, and shipping either one now
- * would be choosing.
+ * of 8 and **38.2%** are multiples of 4, with 2, 6, 7, 9, 10, 13 and 14px all common. A4 raised this
+ * as **D-007** rather than resolving it, since it read as a conflict with the highest authority in
+ * the corpus.
+ *
+ * **Owner ruling, 2026-07-28 (D-007 closed):** §III is an implementation *aspiration*, not a token
+ * inventory, and **no global spacing token set is to be introduced**. Spacing lives at the component
+ * level exactly as frozen, and the frozen HTML stays canonical; macro layout still follows the
+ * constitutional guidance where it applies. So the absence here is permanent by decision — not a
+ * placeholder for a scale someone should add later. The V2 foundation consequently carries **no scale
+ * of any kind**: not type ([ZinelyV2Typography]), not radius, not spacing. The frozen trilogy is a
+ * hand-tuned optical design, and this layer's job is to hold what is genuinely shared rather than to
+ * impose a system the design does not have.
  *
  * ### What is left is genuinely global
  *
@@ -53,7 +59,10 @@ public object ZinelyV2Dimens {
      * `:focus-within` or `:focus-visible` rule between them, and the Bench additionally sets
      * `outline:none` on `.el` and `.search input`, both of which are keyboard-operable. So this
      * number is the *whole* of the frozen focus specification, and it covers one of three surfaces —
-     * logged as **D-008**.
+     * logged as **D-008**. Owner ruling, 2026-07-28: focus is a platform responsibility, added in
+     * Phases B and C **visually subordinate to the frozen design**, and the Bench's `outline:none` is
+     * **not** transcribed — reproducing it would ship a control that is keyboard-operable and
+     * invisibly focused.
      *
      * There is deliberately no `FocusRingOffset` companion to this: the Library's three *product*
      * rules use three different offsets (6px on a zine card, 3px on the start button, 0 on the
@@ -73,10 +82,15 @@ public object ZinelyV2Dimens {
      *
      * The frozen controls do not meet it. Most measure 26–46px, down to about 23×19 for the Bench's
      * tray fold, and **no selector in the trilogy declares a minimum touch target at all** — logged as
-     * **D-009**. That defect is real and owner-owed, but its question is *how* the floor is reached:
-     * grow the control, or extend the touch area past the drawn bounds. **Both answers presuppose
-     * this number**, so stating it prejudges nothing and leaving it out would only mean Phase B builds
-     * 26×26 controls with nothing in the foundation naming what they must clear.
+     * **D-009**, which stays open until the surfaces exist and are verified on-device.
+     *
+     * **Owner ruling, 2026-07-28:** accessibility here is a *platform responsibility*, implemented in
+     * Phases B and C **visually subordinate to the frozen design** — *"do not modify the visual design
+     * solely to satisfy these requirements"*. That rules out growing the controls, so the floor is
+     * reached by **extending the touch area beyond the drawn bounds**: a 26×26 swatch keeps its frozen
+     * appearance and gains 48dp of reachable area. Note the consequence D-009 records — extended
+     * regions in a dense editor overlap, and overlap is resolved by hit priority, never by shrinking a
+     * region back under this number.
      */
     public val MinTouchTarget: Dp = 48.dp
 }

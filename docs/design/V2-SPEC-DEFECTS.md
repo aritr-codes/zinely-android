@@ -402,8 +402,8 @@ it is not dead and Phase B needs to know which ones.
 |---|---|
 | **Artifacts** | [V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III *Spacing* · [V2-RESEARCH.md](V2-RESEARCH.md) §2.4, §3.9 · [COMPOSE-V2-ROADMAP.md](../COMPOSE-V2-ROADMAP.md) Phase A deliverables · all three frozen mockups |
 | **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
-| **Severity** | **Conflict with the highest authority in the corpus** — holds A4's spacing deliverable and **blocks Phase B**, since no component can be laid out without spacing; does not block the rest of A4 |
-| **Status** | Open — **owner ruling required before the spacing scale can be written** |
+| **Severity** | **Conflict with the highest authority in the corpus** — held A4's spacing deliverable; would have blocked Phase B |
+| **Status** | ✅ **RESOLVED** 2026-07-28 by owner ruling — see the resolution at the end of this entry |
 
 **What the governing documents say.** [V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III, under the
 invariants that are *"fixed for the life of V2"*:
@@ -466,14 +466,44 @@ in component internals?
 to be wrong. It is not adopted, because "which values are layout and which are component-internal" is
 itself a design judgement across three frozen surfaces.)*
 
+**✅ RESOLUTION — owner ruling, 2026-07-28. Close to option (c), and cleaner than the question assumed.**
+
+> *"**Do not publish a V2 spacing scale.** The Constitution expresses an implementation **aspiration**,
+> not a token inventory. The frozen HTML remains the canonical authority. Until the design corpus
+> explicitly defines a shared spacing scale, spacing continues to live at the component level exactly
+> as frozen. Macro layout rhythm should continue to follow the constitutional guidance where
+> appropriate, but **no global spacing token set should be introduced**."*
+
+The ruling dissolves the conflict rather than picking a side, by reading the two documents as
+different kinds of statement: §III is an **aspiration about layout**, not an inventory of tokens, so a
+frozen surface whose component padding is 13px is not in violation of it. That reading was available
+in the Constitution's own wording — *"an 8pt rhythm governs **layout**"* — and this entry reached for
+it as option (c) but declined to adopt it, because drawing the layout/component line across three
+frozen surfaces is itself a design judgement. The ruling makes the line unnecessary: **nothing is
+tokenised**, so there is no boundary to draw and no token for a component to route around.
+
+**What implementation does: nothing, and now permanently.** `ZinelyV2Dimens` publishes no spacing
+value, which is already its state — A4's held item is now its finished one. Phase B onward transcribes
+each component's frozen `padding` / `margin` / `gap` at its call site, exactly as
+[ADR-073](../DECISIONS.md#adr-073) established for type and [ADR-074](../DECISIONS.md#adr-074) for
+radius. The V2 foundation therefore carries **no scale of any kind** — not type, not radius, not
+spacing — and that consistency is the finding rather than an accident: the frozen trilogy is a
+hand-tuned optical design, and the foundation's job is to hold what is genuinely shared, not to impose
+a system the design does not have.
+
+**What would reopen it.** Only the design corpus explicitly defining a shared spacing scale — the
+ruling's own condition. The companion test does **not** guard this: a "literals stand" ruling needs no
+corpus change, so `ZinelyV2DimensTest` stays green either way, and that limitation is stated at the
+test. This entry is the record.
+
 ### D-008 — two of the three frozen surfaces specify no focus appearance, and one removes it
 
 | | |
 |---|---|
 | **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 54, 77, 95, 137 · [`v2-bench.html`](mockups/v2-bench.html) lines 99, 209 · [`v2-proof.html`](mockups/v2-proof.html) — no focus rule anywhere |
 | **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
-| **Severity** | **Accessibility gap in the frozen specification** — does not block A4; owner ruling owed before Phase C |
-| **Status** | Open — **owner ruling requested** |
+| **Severity** | **Accessibility gap in the frozen specification** — does not block A4 |
+| **Status** | **Open by owner ruling** (2026-07-28) — approach settled; stays open until Phase C implements and verifies the affected surfaces |
 
 **What exists.** The Library specifies focus on three product controls (and one prototype-only control), all at **2px**:
 
@@ -510,14 +540,41 @@ answer that resolves it is to extend the Library's treatment (2px `matchaText`, 
 across all three surfaces and delete the two `outline:none` rules — but that is a change to a frozen
 surface and so belongs to the owner.
 
+**✓ OWNER RULING — 2026-07-28: a platform responsibility, not a redesign. Entry stays open until Phase C.**
+
+> *"These are **platform responsibilities, not redesign opportunities**. Implement accessible focus
+> indicators … during Phase B and C in a manner that is **visually subordinate to the frozen design**.
+> **Do not modify the visual design solely to satisfy these requirements.** Where the platform requires
+> accessibility behaviour not represented in the HTML, the implementation guide already authorises
+> those additions. Keep these defects open until the affected product surfaces are implemented and
+> verified."*
+
+This settles the question the entry could not: whether inventing a focus ring for the Bench is a design
+act. It is not — it is a **platform obligation the HTML does not model**, in the same category as
+TalkBack ordering or a touch-exploration path, and
+[COMPOSE-IMPLEMENTATION-GUIDE.md](../COMPOSE-IMPLEMENTATION-GUIDE.md) already sanctions additions of
+that kind. What the ruling forbids is the *other* move: reaching for a visual change — recolouring,
+resizing or re-spacing a control — in order to make focus read well. **The indicator adapts to the
+design; the design does not adapt to the indicator.**
+
+**Consequence for Phase C.** The Bench's `outline:none` on `.el` and `.search input` is **not**
+transcribed: reproducing it would ship a control that is keyboard-operable and invisibly focused. The
+Library's own treatment (2px, `matchaText`, per-component offset) is the reference for what
+"subordinate" means here, since it is the only focus appearance the design ever authored.
+
+**Why it stays open.** The ruling settles the *approach*, not the outcome. The entry closes when Phase C
+has implemented focus on the Bench and Proof **and** both device-verification passes have confirmed it
+against the platform accessibility tree — the only place a focus indicator's real behaviour can be
+read.
+
 ### D-009 — no control in the frozen trilogy declares a minimum touch target, and most measure well under 48dp
 
 | | |
 |---|---|
 | **Artifacts** | all three frozen mockups (control sizing throughout) · [V2-RESEARCH.md](V2-RESEARCH.md) §2.4 |
 | **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
-| **Severity** | **Accessibility gap in the frozen specification** — does not block A4; owner ruling owed before Phase B |
-| **Status** | Open — **owner ruling requested** |
+| **Severity** | **Accessibility gap in the frozen specification** — does not block A4 |
+| **Status** | **Open by owner ruling** (2026-07-28) — approach settled; stays open until Phase B/C implements and verifies the affected surfaces |
 
 **Measured.** Not one selector in any of the three files declares `min-height` or `min-width` on an
 interactive control. Every `min-*` in the trilogy is either `min-height:100vh` on `body`, a
@@ -561,6 +618,27 @@ The defect is the gap between that floor and the frozen sizes, and it binds in *
 **Owner decision requested.** Do the frozen control sizes stand with the touch area extended beyond
 the drawn bounds to 48dp, or do the controls themselves grow (and the layouts that hold them change)?
 
+**✓ OWNER RULING — 2026-07-28: as D-008 — platform responsibility, visually subordinate.**
+
+> *"… Implement … minimum touch targets during Phase B and C in a manner that is **visually subordinate
+> to the frozen design**. **Do not modify the visual design solely to satisfy these requirements.**"*
+
+Read against this entry's two options the ruling is decisive: *"do not modify the visual design"* rules
+out **growing the controls**, so the floor is reached by **extending the touch area beyond the drawn
+bounds** — the invisible option. The Bench's filmstrip and swatch grid keep their frozen 26×34 and
+26×26 appearance and gain 48dp of reachable area around it.
+
+**The consequence Phase B and C must design for.** Extended hit regions in a dense editor **overlap**,
+and the frozen Bench places controls closer together than 48dp in several places — the swatch grid and
+filmstrip most obviously. Overlap is resolved by hit-region priority and proximity, **not** by shrinking
+a region back below the floor. Getting it wrong produces controls that steal each other's taps: a defect
+a screenshot cannot show and a semantics test will not catch, which makes it precisely a device-pass
+finding.
+
+**Why it stays open.** `ZinelyV2Dimens.MinTouchTarget = 48.dp` states the floor; nothing meets it yet,
+because no control exists. The entry closes when the affected surfaces are implemented **and** verified
+on-device against the platform accessibility tree.
+
 ### D-010 — the page shadow is hard-coded to the light theme and does not adapt in the dark
 
 | | |
@@ -598,6 +676,136 @@ screenshots.
 **Owner decision requested** (or simply a corpus fix): should both rules use `var(--frame-shadow)`,
 and if the two-layer composition is wanted in dark as well, does the Bench/Proof palette need a
 `--contact` equivalent the way the Library has one?
+
+**✓ OWNER RULING — 2026-07-28: deferred to Phase C. A product-surface concern, not a foundation one.**
+
+> *"Leave unchanged until Phase C. This is a **product-surface concern, not a foundation concern**. **Do
+> not create alternative shadow behaviour during Phase A.**"*
+
+The prohibition is the operative part. The tempting Phase A move would be to add a "correct" page-shadow
+definition to the foundation — a `pageShadow` token, or a dark variant of `frameShadow` — so Phase C
+inherits the fix for free. That is exactly *alternative shadow behaviour*, and it would put a second,
+unfrozen source of truth beside the HTML for the most important object on two screens. A4 therefore
+ships only the [`ZinelyV2ShadowLayer`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Shadow.kt)
+primitive, with no page shadow defined anywhere.
+
+Phase C draws the page and decides there, with this entry in hand — the point of logging it now being
+that a faithful transcription carries the bug into Compose, where it becomes invisible: correct in
+light, subtly wrong in dark, which is the failure mode nobody screenshots.
+### D-011 — the Library declares neither easing token and animates on a curve found nowhere else
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 36, 43, 52, 61, 93, 119, 122 · [`v2-bench.html`](mockups/v2-bench.html) line 24 · [`v2-proof.html`](mockups/v2-proof.html) line 24 |
+| **Found** | 2026-07-28, during Phase A / A5 (motion) |
+| **Severity** | Cross-file divergence — **does not block A5**; ruling owed before Phase B animates the Library |
+| **Status** | Open — **owner ruling requested** |
+
+**What they say.** The Bench and Proof declare two easing tokens and use them throughout:
+`--settle:cubic-bezier(.05,.7,.1,1)` (nine uses) and `--standard:cubic-bezier(.2,0,0,1)` (eight).
+
+The Library declares **neither**. Its **seven** transitions — five on product chrome, two on
+prototype scaffolding — use four different things instead:
+
+| Line | Selector | Easing |
+|---|---|---|
+| 122 | `.sheet` — the action sheet's slide | `cubic-bezier(.2,.8,.2,1)` — **a curve that appears nowhere else in V2** |
+| 52 | `.zine` — the card press | `ease` |
+| 61 | `.cover` — the shadow response | `ease` |
+| 93 | `.start` — the primary button press | *unspecified* → the CSS default, `ease` |
+| 119 | `.scrim` | *unspecified* → `ease` |
+| 36, 43 | `body`, `.phone` — **prototype scaffolding**, listed so the inventory is complete | *unspecified* → `ease` |
+
+**Why it is wrong.** This is the same staleness as **D-005** (the serif), from the same cause: the
+Library was **authored** a day earlier (`1b2e244`, 2026-07-27) and **frozen at 09:08 on 2026-07-28**,
+four and three-quarter hours before the Bench (`4494e95`, 13:52) — so it was written before the shared
+token layer existed and the freeze captured it mid-evolution. `cubic-bezier(.2,.8,.2,1)` is not a third design intention — it is what `--standard`
+was on its way to becoming. The bare `ease` keyword is the browser default rather than a choice at all,
+and it is the one curve the V2 system explicitly moved away from: `ease` is symmetric and slightly
+back-loaded, which is exactly the "generic UI" feel the settle/standard pair was chosen to avoid.
+
+**Does implementation depend on it?** Not in A5 — only the two tokenised easings are ported, and the
+Library's literals are not (porting `cubic-bezier(.2,.8,.2,1)` into the foundation would give a stale
+value the same standing as a frozen token, the mistake **D-006** avoided with `--r`). It binds in
+**Phase B**, which cannot animate the Library's sheet without choosing a curve.
+
+**Owner decision requested.** Does the Library's action sheet use **`--settle`** (it is a surface
+coming to rest, which is what settle is for, and it is what the Bench's and Proof's equivalent sheets
+use), and its remaining transitions **`--standard`**? That is the reading that makes the trilogy one
+system; the alternative is that the Library's curves are deliberate and the corpus has three easings,
+in which case the third needs a name and a token. Separately — a documentation cleanup, as with D-005
+— the Library's `:root` should gain `--settle`/`--standard` so a future reader is not told the product
+has two motion systems.
+
+### D-012 — the three frozen files write three different reduced-motion rules, and one of them would strobe
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 138 · [`v2-bench.html`](mockups/v2-bench.html) lines 110, 260 · [`v2-proof.html`](mockups/v2-proof.html) lines 245-247 |
+| **Found** | 2026-07-28, during Phase A / A5 (motion) |
+| **Severity** | **Accessibility inconsistency in the frozen specification** — does not block A5; the safe reading is implemented, disclosed as a choice, and free to reverse |
+| **Status** | Open — **owner ruling requested** (which of the three rules is the policy) |
+
+**What they say.** Every file honours `prefers-reduced-motion`, which is the good news and is worth
+stating plainly — this is not a missing-accessibility defect like **D-008**. But no two files honour it
+the same way:
+
+| File | Rule |
+|---|---|
+| `v2-library.html:138` | `*{transition:none!important}` — kills transitions; says nothing about animations (the Library has none) |
+| `v2-bench.html:260` | `*{transition-duration:.01ms!important; animation:none!important}` — collapses transitions, **disables animations outright** |
+| `v2-proof.html:246` | `*{transition-duration:.01ms!important; animation-duration:.01ms!important}` — collapses both |
+
+**Why it matters, given they currently agree.** For the three animations that exist today — the Bench's
+one-shot `mat` materialise, the Proof's one-shot `seal`, and nothing in the Library — all three rules
+produce an acceptable result, which is how the divergence survived the freeze. They are still not
+interchangeable, and the difference is not stylistic:
+
+The Bench contains the trilogy's only **looping** animation — the text caret's
+`animation:blink 1.05s steps(1) infinite` (`:110`). Collapsing an *infinite* animation's duration to
+`.01ms`, as the Proof's rule does, does not calm it: it makes it repeat at ten thousand hertz. The
+Bench's `animation:none` is the correct form, and it is correct precisely because the Bench is the file
+that has a loop. So the two files each wrote the rule that suited what they contained, and the Proof's
+rule is safe **only** because the Proof has no looping animation — a property of today's content, not
+of the rule.
+
+Since `prefers-reduced-motion` is in part a **photosensitivity** setting, "the rule that happens to be
+safe for the current content" is not a standard worth carrying into a codebase where a shimmer, a
+pulse or a progress indicator may be added later.
+
+**The fact that makes this a real decision, not a tidy-up.** The three files were frozen in this order:
+
+| File | Freeze commit | Frozen at | Rule |
+|---|---|---|---|
+| `v2-library.html` | `43a3cc9` | 2026-07-28 **09:08** | `transition:none` |
+| `v2-bench.html` | `4494e95` | 2026-07-28 **13:52** | `animation:none` |
+| `v2-proof.html` | `caf431c` | 2026-07-28 **15:53** | `animation-duration:.01ms` |
+
+So the corpus's **most recent** statement is the Proof's — the corpus moved *away* from
+`animation:none`, not toward it. That is very likely an oversight in a file that has no looping
+animation to worry about rather than a considered reversal, but it is exactly the fact an owner needs
+in order to rule, and it is the reason this entry cannot claim the matter is merely technical.
+
+**What implementation did, and it is a choice.** A5 implements the **Bench's** reading — the older of
+the two live statements — and makes the distinction explicit rather than implicit:
+[`ZinelyV2Motion`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Motion.kt) collapses
+one-shot durations to zero (*"arrive instantly, still arrive"*) via `durationMillis`, and exposes
+`allowsContinuousMotion`, which is **false** under reduced motion, so a looping animation is gated off
+entirely rather than run at zero duration.
+
+An earlier draft of this entry claimed *"this is not implementation choosing between two design
+options"*. That was wrong and is withdrawn: three written rules that are not equivalent, one of them the
+most recent, is precisely a choice. What justifies making it here is not that no choice exists but that
+one option is a **safety floor**: running an `infiniteRepeatable` at zero duration in Compose is not a
+slow animation, it is an unbounded frame-rate loop, and `prefers-reduced-motion` is in part a
+photosensitivity setting. Refusing to ship that should not require a ruling. The choice is also **free
+to reverse**: the API is additive and has no callers, so a ruling either way costs one line.
+
+**Owner decision requested** (a corpus cleanup, not a design question): should all three `:root` blocks
+carry the Bench's rule — `transition-duration:.01ms; animation:none` — so the prototypes state one
+policy? Note that the Library's `transition:none` and the Bench's `.01ms` also differ in a subtler way:
+`transition:none` cancels a transition mid-flight, while a `.01ms` duration lets it complete instantly,
+and only the latter guarantees the element still reaches its end state.
 ---
 
 ## Resolved
@@ -606,6 +814,7 @@ and if the two-layer composition is wanted in dark as well, does the Bench/Proof
 |---|---|---|
 | **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
 | **D-005** | The Library and the Bench set the same role in two different serifs at two different weights | 2026-07-28 — owner ruling: the Constitution outranks both frozen files. Canonical serif is **Fraunces at 500**; the Library's 600 reflected its Georgia fallback. No code change owed. Entry kept above. |
+| **D-007** | The constitutional 8pt rhythm is not observable in the frozen CSS | 2026-07-28 — owner ruling: §III is an implementation **aspiration**, not a token inventory. **No spacing scale is published**; spacing stays per-component exactly as frozen. Entry kept above. |
 
 *(Resolved entries stay in place rather than being deleted — the record of what was once contradictory
 is what stops it being reintroduced.)*

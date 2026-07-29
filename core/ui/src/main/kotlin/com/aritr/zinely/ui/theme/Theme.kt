@@ -52,6 +52,14 @@ public val LocalZinelyElevation: ProvidableCompositionLocal<ZinelyElevation> =
 public val LocalZinelyMotion: ProvidableCompositionLocal<ZinelyMotion> =
     staticCompositionLocalOf { error("No ZinelyMotion provided — wrap the tree in ZinelyTheme.") }
 
+/**
+ * The **V2** motion contract, provided alongside [LocalZinelyMotion] on the same additive terms as
+ * [LocalZinelyV2Colors]. V1 carries two duration tokens because the V1 spec declared them; V2 declares
+ * only easings, so the two are not interchangeable. Retires with V1 at **C0**. See [ZinelyV2Motion].
+ */
+public val LocalZinelyV2Motion: ProvidableCompositionLocal<ZinelyV2Motion> =
+    staticCompositionLocalOf { error("No ZinelyV2Motion provided — wrap the tree in ZinelyTheme.") }
+
 public val LocalZinelyHaptics: ProvidableCompositionLocal<ZinelyHaptics> =
     staticCompositionLocalOf { error("No ZinelyHaptics provided — wrap the tree in ZinelyTheme.") }
 
@@ -93,6 +101,10 @@ public object ZinelyTheme {
 
     public val motion: ZinelyMotion
         @Composable get() = LocalZinelyMotion.current
+
+    /** The V2 motion contract. Additive during the migration — see [LocalZinelyV2Motion]. */
+    public val v2Motion: ZinelyV2Motion
+        @Composable get() = LocalZinelyV2Motion.current
 
     public val haptics: ZinelyHaptics
         @Composable get() = LocalZinelyHaptics.current
@@ -181,6 +193,7 @@ public fun ZinelyTheme(
     val contentInks = remember { zinelyContentInks() }
     val elevation = remember(darkTheme) { if (darkTheme) zinelyDarkElevation() else zinelyLightElevation() }
     val motion = remember(reduceMotion) { ZinelyMotion(reduceMotion = reduceMotion) }
+    val v2Motion = remember(reduceMotion) { ZinelyV2Motion(reduceMotion = reduceMotion) }
     val typography = remember { ZinelyTypography() }
     // Not keyed on darkTheme: type does not restyle with the room. Same reasoning as contentInks.
     val v2Typography = remember { ZinelyV2Typography() }
@@ -192,6 +205,7 @@ public fun ZinelyTheme(
         LocalZinelyContentInks provides contentInks,
         LocalZinelyElevation provides elevation,
         LocalZinelyMotion provides motion,
+        LocalZinelyV2Motion provides v2Motion,
         LocalZinelyHaptics provides haptics,
         LocalZinelyTypography provides typography,
         LocalZinelyV2Typography provides v2Typography,
