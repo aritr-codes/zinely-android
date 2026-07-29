@@ -50,6 +50,17 @@ android {
         compose = true
     }
 
+    // A8 (accessibility infrastructure): the CI-26 platform-`AccessibilityNodeInfo` harness lives in
+    // `src/testFixtures` rather than `src/test`, because it must be readable from BOTH this module's own
+    // tests and :feature:editor's. It was written in :feature:editor's test source set, where a test
+    // source set is not published — so :core:ui, which is UPSTREAM of :feature:editor and cannot depend on
+    // it, had no way to assert the platform tree for its own components. That is why every existing
+    // platform-tree test for a :core:ui component (ZButtonPlatformA11yTest) sits in :feature:editor today.
+    // Test fixtures fix the direction of the dependency without duplicating the harness.
+    testFixtures {
+        enable = true
+    }
+
     testOptions {
         unitTests {
             // Merged Android resources/assets on the unit-test classpath — parity with :feature:editor's
@@ -94,7 +105,14 @@ dependencies {
     // Unit tests. The moved ZinelyTokensTest / ZinelyColorsContrastTest are plain JUnit on the JVM
     // (Color/dp are pure value classes); the Robolectric/Roborazzi stack is present for parity with
     // :feature:editor and for any golden co-located here later.
+    // Test fixtures (A8): the CI-26 platform-a11y harness. It touches only framework `View` /
+    // `AccessibilityNodeInfo` API plus compose-ui-test's `SemanticsNodeInteraction`, so those two are all
+    // it compiles against — `api`, because both types appear in its public signatures.
+    testFixturesApi(platform(libs.androidx.compose.bom))
+    testFixturesApi(libs.androidx.compose.ui.test.junit4)
+
     testImplementation(libs.junit)
+    testImplementation(testFixtures(project(":core:ui")))
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.junit.rule)

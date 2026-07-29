@@ -149,6 +149,10 @@ dependencies {
     // Unit tests run on the JVM via Robolectric NATIVE (real Skia) — no emulator, fits the existing
     // Android-SDK CI job. compose-ui-test drives the host composable; Roborazzi captures/diffs.
     testImplementation(libs.junit)
+    // The CI-26 platform-`AccessibilityNodeInfo` harness (`platformNode` / `platformTraversalStops`). It
+    // was authored here and moved to :core:ui's test fixtures in A8 so this module and :core:ui's own
+    // tests share ONE copy; the dependency runs downstream, the way the module graph already does.
+    testImplementation(testFixtures(project(":core:ui")))
     // Store wiring tests: pure-JVM coroutines test (TestScope/StandardTestDispatcher), no Robolectric.
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)

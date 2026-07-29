@@ -249,7 +249,8 @@ through a green suite and was caught only here ([ADR-058](docs/DECISIONS.md#adr-
 adb shell uiautomator dump /sdcard/ui.xml   # then check class / clickable / enabled / bounds per node
 ```
 
-The recipe (and the environment traps that waste an hour) is in the device-verification notes.
+The recipe (and the environment traps that waste an hour) is in
+[docs/DEVICE-VERIFICATION.md](docs/DEVICE-VERIFICATION.md).
 
 ---
 

@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import com.aritr.zinely.feature.editor.FrameFit
 import com.aritr.zinely.feature.editor.ReframeAbilities
 import com.aritr.zinely.feature.editor.ReframeControls
+import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

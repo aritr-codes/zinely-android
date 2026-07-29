@@ -13,8 +13,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
-import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.EditorModel
+import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
@@ -40,6 +40,8 @@ import com.aritr.zinely.feature.editor.ProofScreen
 import com.aritr.zinely.feature.editor.RedoActionLabel
 import com.aritr.zinely.feature.editor.TraySectionLabel
 import com.aritr.zinely.feature.editor.UndoActionLabel
+import com.aritr.zinely.ui.a11y.PlatformA11yStop
+import com.aritr.zinely.ui.a11y.platformTraversalStops
 import com.aritr.zinely.ui.components.ZStampButton
 import com.aritr.zinely.ui.theme.LocalZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyMotion

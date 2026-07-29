@@ -67,6 +67,8 @@ Start here, then follow links. Each document is the **single source of truth** f
 | [docs/RELEASING.md](docs/RELEASING.md) | Release mechanics — signing key, cutting a build, beta distribution |
 | [docs/releases/](docs/releases/) | Per-release tester packages — what ships alongside an APK (install, warnings, limitations, how to report) |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Cited evidence base (verified / recommendation / assumption / future) |
+| [docs/DEVICE-VERIFICATION.md](docs/DEVICE-VERIFICATION.md) | The on-device verification **recipe** — reference device, the `uiautomator` accessibility-tree dump, TalkBack, reading app-private files, and the environment traps. The *policy* (two passes, acceptance) stays in [CLAUDE.md](CLAUDE.md#device-verification-mandatory) |
+| [docs/design/V2-SPEC-DEFECTS.md](docs/design/V2-SPEC-DEFECTS.md) | The V2 **spec-defect register** — every place the frozen HTML is silent, self-contradictory or platform-impossible, each with its owner ruling or its open question. Implementation logs here instead of inventing a resolution |
 | [docs/BETA-UX-REVIEW.md](docs/BETA-UX-REVIEW.md) | Time-stamped UX review of `0.9.0-beta.1` from a first-time user's position — a dated record, **not** a source of truth; approved findings move into the PRD / ROADMAP / ADRs |
 | [docs/spikes/imposition-engine.md](docs/spikes/imposition-engine.md) | First spike: the imposition engine design (S1) |
 | [docs/spikes/data-storage-layer.md](docs/spikes/data-storage-layer.md) | Data & storage layer design + S2A implementation status (S2) |

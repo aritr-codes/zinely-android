@@ -2,6 +2,7 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEvent
@@ -18,6 +19,7 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -26,8 +28,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyPress
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.click
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
@@ -43,7 +43,7 @@ import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
-import com.aritr.zinely.feature.editor.a11y.platformNode
+import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

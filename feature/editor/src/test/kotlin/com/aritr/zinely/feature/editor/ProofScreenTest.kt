@@ -20,7 +20,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.aritr.zinely.core.model.PaperSize
-import com.aritr.zinely.feature.editor.a11y.platformNode
+import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals

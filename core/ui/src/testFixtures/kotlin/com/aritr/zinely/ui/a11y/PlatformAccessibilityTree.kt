@@ -1,4 +1,4 @@
-package com.aritr.zinely.feature.editor.a11y
+package com.aritr.zinely.ui.a11y
 
 import android.app.Activity
 import android.graphics.Rect
@@ -21,7 +21,8 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
  * **not the same object**, and they can disagree.
  *
  * That disagreement is a real, shipped defect class: in commit `f4faaa4` a zoom stepper
- * ([com.aritr.zinely.feature.editor.ReframeControls] `ZoomButton`) passed `assertIsNotEnabled` against the
+ * (`:feature:editor`'s `ReframeControls.ZoomButton` — named in prose, not linked, because this file now
+ * lives upstream of that module) passed `assertIsNotEnabled` against the
  * merged tree while the platform node it handed TalkBack reported `isEnabled == true`. A green Compose
  * suite, a control that lied to the screen reader. CLAUDE.md "Device Verification / Pass 1" names the same
  * trap and points at the on-device `adb shell uiautomator dump` recipe — this harness brings that platform

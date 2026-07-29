@@ -13,6 +13,7 @@ import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.feature.editor.EditorPageStrip
 import com.aritr.zinely.feature.editor.editorPageCardTag
+import com.aritr.zinely.ui.a11y.PlatformA11yNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Rule
 import org.junit.Test

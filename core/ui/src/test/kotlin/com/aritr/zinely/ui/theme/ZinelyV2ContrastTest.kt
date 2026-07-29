@@ -90,9 +90,15 @@ class ZinelyV2ContrastTest {
     // it does not mean a ceiling is imposed. The spec's actual rule is "accents, never actions",
     // which is a statement about what strawberry may *mean*, not about what contrast it may reach.
     // Dark paper is a warm charcoal, so a mid-pink legitimately pops against it; there is nothing to
-    // fix. Keeping `strawberry` out of running text is a call-site discipline (the token-discipline
-    // lint in A8), not a contrast fact, and encoding it as one here would have made the frozen HTML
-    // fail its own gate — which is the exact inversion of authority this workflow forbids.
+    // fix. Keeping `strawberry` out of running text is a call-site discipline, not a contrast fact, and
+    // encoding it as one here would have made the frozen HTML fail its own gate — which is the exact
+    // inversion of authority this workflow forbids.
+    //
+    // An earlier version of this comment promised that discipline as "the token-discipline lint in A8".
+    // A8 did not build it, and the promise was wrong rather than merely unkept: `TokenDisciplineTest`
+    // (CI-27) gates raw *literals* — `.dp`, `.sp`, `Color(`, `RoundedCornerShape(` — in enrolled
+    // packages. "This token is used for the wrong job" is a different question, needs a call site to be
+    // asked about, and there are none until Phase B. Whether it is answerable statically at all is open.
 
     @Test
     fun `inkFaint on paper stays decorative and never rises into body-text territory`() {

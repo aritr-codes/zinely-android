@@ -1,7 +1,6 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
-import com.aritr.zinely.ui.theme.ZinelyTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.semantics.Role
@@ -25,7 +24,8 @@ import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
-import com.aritr.zinely.feature.editor.a11y.platformNode
+import com.aritr.zinely.ui.a11y.platformNode
+import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
