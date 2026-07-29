@@ -11,6 +11,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.Crop
+import com.aritr.zinely.core.model.Fit
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.model.PtSize
@@ -20,18 +22,17 @@ import com.aritr.zinely.core.render.DrawCommand
 import com.aritr.zinely.core.render.DrawImage
 import com.aritr.zinely.core.render.DrawTextBox
 import com.aritr.zinely.core.render.FillRect
-import com.aritr.zinely.core.model.Crop
-import com.aritr.zinely.core.model.Fit
+import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
+import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
-import kotlin.math.roundToInt
 
 /**
  * **Editor-preview goldens (F4 Increment 1) — the fourth surface's committed reference images.**

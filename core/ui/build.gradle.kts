@@ -71,6 +71,15 @@ android {
             // Single-fork determinism, mirroring :feature:editor's convention.
             all { test ->
                 test.maxParallelForks = 1
+
+                // The frozen corpus is a real INPUT to this module's tests: ZinelyV2CatalogParityTest
+                // (ADR-079) parses V2-TOKENS.md at run time and asserts rendered pixels equal the values
+                // it states. Without declaring it, Gradle sees no input change when the design document
+                // is edited and reports the parity gate FROM-CACHE — the one edit the gate exists to
+                // catch is the one that would not re-run it.
+                test.inputs.file(rootProject.file("docs/design/V2-TOKENS.md"))
+                    .withPropertyName("v2TokensCorpus")
+                    .withPathSensitivity(PathSensitivity.RELATIVE)
             }
         }
     }

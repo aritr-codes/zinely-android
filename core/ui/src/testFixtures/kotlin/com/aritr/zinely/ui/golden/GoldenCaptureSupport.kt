@@ -1,4 +1,4 @@
-package com.aritr.zinely.feature.editor
+package com.aritr.zinely.ui.golden
 
 import android.graphics.Bitmap
 import androidx.compose.ui.geometry.Rect
@@ -17,7 +17,7 @@ import kotlin.math.roundToInt
  */
 
 /** Crop [full] to [bounds] (root px), clamped inside the bitmap. */
-internal fun cropToBounds(full: Bitmap, bounds: Rect): Bitmap {
+public fun cropToBounds(full: Bitmap, bounds: Rect): Bitmap {
     val x = bounds.left.roundToInt().coerceAtLeast(0)
     val y = bounds.top.roundToInt().coerceAtLeast(0)
     val w = bounds.width.roundToInt().coerceAtMost(full.width - x).coerceAtLeast(1)
@@ -26,7 +26,7 @@ internal fun cropToBounds(full: Bitmap, bounds: Rect): Bitmap {
 }
 
 /** Count of pixels exactly equal to [argb] — the flat-colour non-vacuity proof (pre-AA blend). */
-internal fun Bitmap.pixelCountOf(argb: Int): Int {
+public fun Bitmap.pixelCountOf(argb: Int): Int {
     var n = 0
     for (yy in 0 until height) for (xx in 0 until width) if (getPixel(xx, yy) == argb) n++
     return n

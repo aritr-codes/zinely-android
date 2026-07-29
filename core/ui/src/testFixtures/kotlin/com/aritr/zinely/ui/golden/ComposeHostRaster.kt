@@ -1,4 +1,4 @@
-package com.aritr.zinely.feature.editor
+package com.aritr.zinely.ui.golden
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -20,7 +20,7 @@ import android.view.View
  * composable is sized to the page in px, so its raster occupies the top-left `[0,w)×[0,h)` of the
  * decor view, pixel-aligned with the direct-replay reference bitmap.
  */
-internal fun View.rasterizeToBitmap(): Bitmap {
+public fun View.rasterizeToBitmap(): Bitmap {
     val w = width.coerceAtLeast(1)
     val h = height.coerceAtLeast(1)
     val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)

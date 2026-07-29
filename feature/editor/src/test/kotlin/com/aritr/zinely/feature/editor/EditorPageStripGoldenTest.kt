@@ -18,6 +18,9 @@ import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
+import com.aritr.zinely.ui.golden.cropToBounds
+import com.aritr.zinely.ui.golden.pixelCountOf
+import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage

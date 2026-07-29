@@ -14,6 +14,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.Script
 import com.aritr.zinely.core.model.TextCoverage
+import com.aritr.zinely.ui.golden.cropToBounds
+import com.aritr.zinely.ui.golden.pixelCountOf
+import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage

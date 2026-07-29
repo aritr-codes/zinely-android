@@ -29,8 +29,11 @@ import com.aritr.zinely.render.android.CanvasReplayer
 import com.aritr.zinely.render.android.ExportScale
 import com.aritr.zinely.render.android.FontResolver
 import com.aritr.zinely.render.android.ImageBlitter
+import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -38,8 +41,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
-import kotlin.math.ceil
-import kotlin.math.roundToInt
 
 /**
  * **S4 preview-host parity proof (ADR-028 §2.4 / §7.3, spike §2.4 "Codex Required-fix C").**

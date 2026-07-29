@@ -2,13 +2,20 @@ name: Record goldens
 
 # Manual (workflow_dispatch) Roborazzi golden recorder for :render-android AND :feature:editor (ADR-028 §7.5).
 #
-# Goldens MUST be recorded on the SAME pinned image that verifies them (ubuntu-24.04, JDK 21, pinned
-# Robolectric/Roborazzi/SDK, UTC/en_US) — see the android-graph verify steps in ci.yml. There is no local
-# Android build in this project (no SDK on dev machines), so this workflow is the only way to produce
-# the committed PNGs: run it, download the `roborazzi-goldens` artifact, commit the PNGs under
-#   * render-android/src/test/roborazzi/  (the :render-android raster goldens, G6a), and
-#   * feature/editor/src/test/roborazzi/  (the S4 selection-chrome goldens, ADR-029 §5),
+# Goldens SHOULD be recorded on the SAME pinned image that verifies them (ubuntu-24.04, JDK 21, pinned
+# Robolectric/Roborazzi/SDK, UTC/en_US) — see the android-graph verify steps in ci.yml. Run this workflow,
+# download the `roborazzi-goldens` artifact, and commit the PNGs under
+#   * render-android/src/test/roborazzi/  (the :render-android raster goldens, G6a),
+#   * feature/editor/src/test/roborazzi/  (the S4 selection-chrome goldens, ADR-029 §5), and
+#   * core/ui/src/test/roborazzi/         (the V2 foundation catalog goldens, ADR-079),
 # and the android-graph `verifyRoborazziDebug` steps then gate them.
+#
+# This header used to claim recording here was the ONLY way, "because there is no local Android build in
+# this project (no SDK on dev machines)". That premise is no longer true and was quietly load-bearing:
+# during A9 (ADR-079) every CI-recorded golden in the tree was verified GREEN on a Windows dev machine,
+# which also shows Roborazzi's comparison is symmetric across the two hosts for this stack. Local
+# recording is therefore viable. The pinned image remains PREFERRED — it is the host that gates — so a
+# locally recorded golden should be re-recorded here at the next opportunity and the diff reviewed.
 #
 # A re-record (toolchain bump or an intentional visual change) is a deliberate, reviewed refresh — never
 # ambient drift. This job only PRODUCES artifacts; it never commits, so golden changes stay code-reviewed.

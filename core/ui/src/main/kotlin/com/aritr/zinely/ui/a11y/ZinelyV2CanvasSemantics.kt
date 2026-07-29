@@ -21,7 +21,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
+import com.aritr.zinely.ui.theme.ZinelyV2Dimens
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -64,8 +64,15 @@ public const val ZinelyV2CanvasNodeTagPrefix: String = "zinely-v2-canvas-node-"
  * The minimum side of a canvas node's focus/hit area. WCAG 2.5.8: a target below this is hard to acquire,
  * and a canvas routinely draws things smaller than a fingertip. Not a design token — a platform floor, the
  * same one `minimumInteractiveComponentSize()` applies to a laid-out control.
+ *
+ * **An alias, deliberately, not a second number.** A canvas node and a laid-out control must reach the
+ * same floor or a service would find one of them easier to acquire than the other; two independent `48.dp`
+ * literals in one module is exactly the parallel design system Phase A's gate forbids, and it would let
+ * them drift apart silently. This name exists only because "the minimum side of a synthetic canvas node"
+ * reads more clearly at the call site than "the minimum touch target" — the value is
+ * [ZinelyV2Dimens.MinTouchTarget]'s, always.
  */
-public val ZinelyV2CanvasNodeMinSide: Dp = 48.dp
+public val ZinelyV2CanvasNodeMinSide: Dp = ZinelyV2Dimens.MinTouchTarget
 
 /**
  * A rectangle in device pixels, already inflated to the minimum target size — the output of
