@@ -106,10 +106,11 @@ import com.aritr.zinely.ui.R
  * | Bench/Proof `.phone::after` | 150px | .5 | .35 | 0.175 — *prototype bezel, not product UI* |
  *
  * So the Library asks for grain **four to nearly seven times** stronger than any Bench or Proof
- * surface (1.00 against 0.25 at the top of that range and 0.15 at the bottom). That is **not**
- * self-evidently a defect — the Library blends over saturated cover inks, where soft-light is far
- * subtler than over near-white paper — but it is a real question Phase B must answer to draw a cover,
- * and it is logged as **D-013** rather than averaged away.
+ * surface (1.00 against 0.25 at the top of that range and 0.15 at the bottom). That gap was raised as
+ * **D-013** and **ruled deliberate**: paper and a printed cover are different physical materials and
+ * take ink differently, so the table is the specification rather than a defect in it. Phase B
+ * transcribes these values literally. **Do not normalise them** — an implementation that made the two
+ * agree would be erasing the distinction, not fixing an inconsistency.
  */
 public object ZinelyV2Grain {
 
@@ -144,10 +145,15 @@ public object ZinelyV2Grain {
      * grain — it is the noise tile painted *opaquely* over the surface, and at the Library's
      * effective strength of 1.00 that is a flat grey rectangle where a cover should be.
      *
-     * So on API 24–28 [zinelyV2Grain] draws **nothing** and the surface stays flat. Losing the paper
-     * texture is a smaller, more honest failure than replacing the artwork with grey, and it is
-     * reversible: this is a platform floor, not a design decision. What the design should actually do
-     * on those devices is owner-owed and logged as **D-014**.
+     * So on API 24–28 [zinelyV2Grain] draws **nothing** and the surface stays flat. That was raised as
+     * **D-014** and ruled **correct behaviour rather than a fallback**: where the platform cannot
+     * express the frozen design, implementation omits and discloses rather than approximating, because
+     * an approximation of a material is a second material and V2 has one. Do not emulate soft-light
+     * with another blend mode, and do not add a static tint that stands in for the grain — both are
+     * explicitly refused. A device that cannot draw the paper shows paper it cannot draw.
+     *
+     * Users on those devices see V2's paper without its grain. That is a **Known Limitation** for the
+     * release notes, not a bug and not something to paper over.
      *
      * Asked of Compose rather than of `Build.VERSION` on purpose: `isSupported` is the same predicate
      * the compositing path itself branches on, so this cannot drift out of agreement with the thing it

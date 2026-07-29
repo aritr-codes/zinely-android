@@ -885,8 +885,8 @@ and only the latter guarantees the element still reaches its end state.
 |---|---|
 | **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 18 · [`v2-bench.html`](mockups/v2-bench.html) line 25 · [`v2-proof.html`](mockups/v2-proof.html) line 25 |
 | **Found** | 2026-07-28, during Phase A / A6 (paper / grain) |
-| **Severity** | Cross-file divergence in a **material** — does not block A6; ruling owed before Phase B draws a cover |
-| **Status** | Open — **owner ruling requested** |
+| **Severity** | Cross-file divergence in a **material** — did not block A6 |
+| **Status** | ✅ **RESOLVED** 2026-07-29 by owner ruling — see the resolution at the end of this entry |
 
 **The noise itself is identical in all three files** — same filter, same parameters, same tile:
 
@@ -943,6 +943,36 @@ ships one tile at full strength and takes `alpha` per call site, exactly as
 code change, so this ruling costs one argument at one call site whenever it lands. **No strength is
 tokenised and no average is taken** — under the **D-007** ruling, strength stays at the component.
 
+**✅ RESOLUTION — owner ruling, 2026-07-29: reading 1. The divergence is deliberate.**
+
+> *"The frozen HTML is authoritative. **Do not normalize grain strength across materials.** Paper and
+> printed covers are intentionally different physical materials, and their grain should remain exactly
+> as frozen."*
+
+The first ruling in this register to break the pattern the Library's other divergences established —
+and the reason is instructive. **D-005** (serif weight) and **D-011** (easing) were both resolved as
+*chronology*: the Library froze first, so where it disagrees with the later pair it is stale. The
+obvious move was to apply that a third time. The ruling declines to, on the grounds that this
+divergence is not a token that failed to get updated but a **statement about two materials**. Paper and
+a printed cover take ink differently; a value that is identical across them would be the drift, not the
+difference.
+
+So the table above is not a defect table. It is the specification, and Phase B transcribes it
+literally: `1.00` on the three Library surfaces, `0.15`–`0.25` on the Bench's and Proof's. The 4×–6.7×
+gap is the design.
+
+**What implementation does: nothing, and that was already true.**
+[`ZinelyV2Grain`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Grain.kt) ships one
+tile at full strength and takes `alpha` per call site, so every row above is already expressible. No
+code change, no asset change, and — under the **D-007** ruling — still no strength token.
+
+**One consequence worth naming for Phase B.** Because the ruling makes the Library's `--grain`
+correct rather than stale, the tripwire in `ZinelyV2GrainTest` (which fires if the Library's rect ever
+gains `opacity='.5'`) is now guarding the *right* behaviour rather than waiting for a fix: if that
+assertion ever breaks, it means someone has normalised the materials, which this ruling forbids. Its
+message should be read that way. **The frozen corpus is owed no cleanup here** — unlike D-005 and
+D-011, nothing in the HTML is stale.
+
 ---
 
 ### D-014 — the paper material cannot be drawn at all on API 24–28, and the design has no reading for those devices
@@ -951,8 +981,8 @@ tokenised and no average is taken** — under the **D-007** ruling, strength sta
 |---|---|
 | **Artifacts** | Platform constraint against the whole frozen trilogy — every `--grain` rule (`v2-library.html` 59/105/110 · `v2-bench.html` 61/74/86 · `v2-proof.html` 61/81/101/159) |
 | **Found** | 2026-07-29, during Phase A / A6 review |
-| **Severity** | **Platform capability gap**, not a specification contradiction — does not block A6; a ruling is owed before Phase B ships a cover |
-| **Status** | Open — **owner ruling requested**; implementation has taken the safe floor and disclosed it |
+| **Severity** | **Platform capability gap**, not a specification contradiction — did not block A6 |
+| **Status** | ✅ **RESOLVED** 2026-07-29 by owner ruling — the safe floor is the permanent behaviour; see the end of this entry |
 
 **What the platform does.** `android.graphics.BlendMode` is **API 29**. Below it Compose composites
 through `PorterDuffXfermode`, whose mode table contains no soft-light, so `BlendMode.Softlight` falls
@@ -988,6 +1018,86 @@ branches on `SDK_INT >= 29`, and `AndroidBlendMode_androidKt.toPorterDuffMode` h
 case and returns `SRC_OVER` by default — read from the decompiled `ui-graphics` 1.10.4 artifact, not
 from documentation.
 
+**✅ RESOLUTION — owner ruling, 2026-07-29: option (a). Flat paper is correct, not a fallback.**
+
+> *"The current implementation is approved. **Do not emulate Soft Light using another blend mode. Do
+> not invent an approximation.** For API 24–28, rendering flat paper is the correct constitutional
+> behaviour because it preserves **material honesty** rather than introducing an incorrect simulation."*
+
+Implementation proposed this as a *safe floor* — the least-bad option, held provisionally until an
+owner chose. The ruling accepts the behaviour and rejects the framing: it is not the least-bad option,
+it is the right one. Options (b) (a static warm tint approximating the grain) and (c) (raise `minSdk`
+to 29) are both refused, and (b) is refused on principle rather than on cost — an approximation of a
+material is a **second material**, and V2 has one. A device that cannot draw the paper shows paper it
+cannot draw rather than something that merely resembles it.
+
+That reasoning generalises past this entry, which is why it is worth stating plainly: where the
+platform cannot express the frozen design, **implementation omits rather than approximates**, and says
+so. Nothing here is a fallback texture in waiting.
+
+**What implementation does: nothing further.** `Modifier.zinelyV2Grain` is already a no-op below API
+29, gated on Compose's own `BlendMode.isSupported()` — see
+[ADR-076](../DECISIONS.md#adr-076) Decision 9. The gate stays; what changes is that its KDoc no longer
+describes itself as provisional, and no future package should treat it as an open question.
+
+**Not a limitation to hide.** API 24–28 users see V2's paper without its grain. That is a real,
+documented difference and belongs in release notes when V2 ships — as a **Known Limitation**, in the
+[CLAUDE.md](../../CLAUDE.md#release-categories--never-conflate) sense, not as a bug and not as silence.
+
+---
+
+### D-015 — two concepts are each drawn twice, with different geometry, and one pair is inside a single file
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-proof.html`](mockups/v2-proof.html) lines 296 and 376 · [`v2-bench.html`](mockups/v2-bench.html) line 346 against [`v2-proof.html`](mockups/v2-proof.html) line 294 |
+| **Found** | 2026-07-29, during Phase A / A7 (icons) |
+| **Severity** | Cross-file (and intra-file) inconsistency — **does not block A7**; both are transcribed as found |
+| **Status** | Open — **owner ruling requested** |
+
+The trilogy contains 36 distinct icon marks across 42 placements. Two of those 36 are duplicates in
+meaning but not in drawing.
+
+**1. Chevron-right, twice, in the same file.**
+
+| Where | Path | Used for |
+|---|---|---|
+| `v2-proof.html:376` | `M9 5l7 7-7 7` | the fold navigator's *next* button |
+| `v2-proof.html:296` | `M9 6l6 6-6 6` | the READY band's affordance chevron |
+
+They are not the same shape: the first spans 7 units and starts at y=5, the second spans 6 and starts
+at y=6. The tell is the **left** chevron at `:276`, `M15 5l-7 7 7 7` — an exact mirror of the first and
+not of the second. So `M9 6l6 6-6 6` is the one that does not belong to the pair, and its being the
+only chevron on the resting band is either a deliberately smaller mark or a transcription that drifted.
+
+**2. A check, twice, across two files.**
+
+| Where | Path | Used for |
+|---|---|---|
+| `v2-proof.html:294` | `M4 12l5 5 11-12` | the READY tick, and three more placements (`:311` seal, `:344`, `:485`) |
+| `v2-bench.html:346` | `M20 6 9 17l-5-5` | the Bench's *Done* button |
+
+Same mark, drawn from opposite ends, with different proportions. The Proof's is used four times and is
+the better-established of the two.
+
+**Why this is worth a ruling rather than a quiet fix.** Collapsing either pair is a **redesign** — it
+changes what a frozen surface renders — and choosing *which* geometry survives is a design judgement
+implementation has no standing to make. Both are therefore transcribed exactly as found, as
+[`ChevronRight`/`ChevronRightBand`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Icons.kt)
+and `Tick`/`Done`. The cost of leaving it is small and precise: two extra entries in the set, and two
+places where Phase B must pick the right one rather than the obvious one.
+
+**Owner decision requested.** For each pair: are these one icon or two? If one, which geometry is
+canonical — and the frozen file that loses should be amended, since the register does not permit
+implementation to amend it. Note the chevron pair is the sharper case, because a single file drawing
+the same affordance two ways is harder to read as intent than two files that froze at different times.
+
+**Explicitly *not* raised here, having been checked:** the Library's `StampStar` (`:153`) and the
+Bench's `Favourite` (`:599`) are also two stars with different geometry, but they are different things
+— one is stroked cover *artwork*, the other a filled UI mark rendered in ochre at 12px. Likewise
+`Shield` (`bench:461`) and `ShieldCheck` (`bench:605`) share an outline by design, the second adding a
+tick. Neither is a defect, and both are noted so a later reader does not re-open them.
+
 ---
 
 ## Resolved
@@ -997,6 +1107,8 @@ from documentation.
 | **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
 | **D-005** | The Library and the Bench set the same role in two different serifs at two different weights | 2026-07-28 — owner ruling: the Constitution outranks both frozen files. Canonical serif is **Fraunces at 500**; the Library's 600 reflected its Georgia fallback. No code change owed. Entry kept above. |
 | **D-007** | The constitutional 8pt rhythm is not observable in the frozen CSS | 2026-07-28 — owner ruling: §III is an implementation **aspiration**, not a token inventory. **No spacing scale is published**; spacing stays per-component exactly as frozen. Entry kept above. |
+| **D-013** | The Library and the Bench bake different alpha into the same grain | 2026-07-29 — owner ruling: **deliberate, not drift**. Paper and printed covers are different physical materials; grain strength is **not** normalised and stays exactly as frozen. No code change owed, and no corpus cleanup owed either. Entry kept above. |
+| **D-014** | The paper material cannot be drawn at all on API 24–28 | 2026-07-29 — owner ruling: rendering **flat paper is correct**, not a fallback. No emulation, no approximation, no `minSdk` bump — where the platform cannot express the design, implementation omits and discloses. Ships as a Known Limitation. Entry kept above. |
 | **D-011** | The Library declares neither easing token and animates on a curve found nowhere else | 2026-07-28 — owner ruling: the Bench and Proof are the **canonical V2 motion language**; the Library's curve reflects its earlier freeze. Phase B uses the canonical tokens. No code change owed. Entry kept above. |
 
 *(Resolved entries stay in place rather than being deleted — the record of what was once contradictory

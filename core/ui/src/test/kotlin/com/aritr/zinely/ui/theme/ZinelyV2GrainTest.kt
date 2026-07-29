@@ -161,20 +161,20 @@ class ZinelyV2GrainTest {
     }
 
     @Test
-    fun `D-013 is still open — the two grain definitions bake different alpha`() {
-        // The Bench and Proof bake opacity .5 into the SVG rect; the Library bakes none. Everything
-        // downstream — the 4-to-7x effective-strength gap between a Library cover and a Bench page —
-        // follows from this one difference, so it is the thing to watch rather than the CSS opacities.
+    fun `the two grain definitions bake different alpha, and D-013 ruled that deliberate`() {
+        // The Bench and Proof bake opacity .5 into the SVG rect; the Library bakes none. The
+        // 4-to-6.7x effective-strength gap between a Library cover and a Bench page follows entirely
+        // from this one difference — so it is the thing to pin, rather than the CSS opacities.
+        //
+        // D-013 ruled the divergence DELIBERATE: paper and a printed cover are different physical
+        // materials. So this is no longer a tripwire waiting for a fix; it guards the ruling. If it
+        // ever fails, someone has normalised the two materials, which the ruling forbids.
         assertTrue("bench bakes .5", frozen("v2-bench.html").contains("filter='url(%23n)' opacity='.5'"))
         assertTrue("proof bakes .5", frozen("v2-proof.html").contains("filter='url(%23n)' opacity='.5'"))
         val library = frozen("v2-library.html")
         assertTrue("the library declares grain", library.contains("--grain:"))
-        // Fires for two of the three possible rulings (Library gains .5, or Bench/Proof lose theirs).
-        // It cannot fire for the third — "the Library is deliberate, change nothing" — which is a
-        // known limit of this tripwire, not an oversight: that ruling closes D-013 by decision alone
-        // and must be closed in the register by hand.
         assertTrue(
-            "the library's rect carries no opacity — if it gains one, D-013 has been answered",
+            "the library's rect must stay opacity-free — D-013 ruled the materials deliberately differ",
             !library.contains("opacity='.5'") && !library.contains("opacity%3D"),
         )
     }
