@@ -46,10 +46,65 @@ the dead `--r:18px` token from the frozen Bench and Proof. Nothing from Phase A 
 with the covers** because the frozen markup makes it a full-width cell inside the scroll rather than a bar above
 it. It **paints no ground** — `.shelf` declares no background, so the desk is B5's screen to fill — and it
 defers `.zine` (press transform, focus ring, tap) whole to **B3**, which is safe because a resting `.zine`
-paints nothing. B2 raised **D-020** and it was **ruled the same day**, costing no rework. B3–B5 have not
-started.
+paints nothing. B2 raised **D-020** and it was **ruled the same day**, costing no rework.
 
-**Read [ADR-082's review outcome](DECISIONS.md#adr-082-review) before writing B3's tests.** B2's own
+**B3 — interaction — is built, independently reviewed (GO WITH FIXES, fixes applied) and committed**
+([ADR-083](DECISIONS.md#adr-083), `Accepted`). It adds `ZineOnShelf` (the two gestures, the press transform,
+the focus ring, and the always-visible `⋯`), `ZineActionSheet` + `ZineActionScrim` + `ZineAction` (five rows
+over a scrim, with the zine's format and date disclosed **there** rather than on every cover), and a second
+gesture on `:core:ui`'s `Modifier.zinelyV2Control`. **B4–B5 have not started.**
+
+**Two things about B3 a fresh session will otherwise re-derive the hard way.** First, the seam ends in
+`clearAndSetSemantics`, so **a control cannot contain another control** — the `⋯` is a sibling of the cover,
+and B1's `overlay` slot on `ZineCover` was *deleted* rather than worked around. Second, the sheet **does not
+dismiss when an action is chosen** — and that is a *deferral*, not a transcription: `:195-209` wires the scrim
+and the `⋯` and nothing else, so the frozen file specifies **nothing** here, and nothing is not "stays open".
+Each action's destination is **B5**'s, and holding still is the narrowest thing an implementation can do.
+
+**B3 raised two defects and both were ruled the same day — opposite ways, which is the lesson.**
+[**D-021**](design/V2-SPEC-DEFECTS.md#d-021-ruling): the six frozen marks are literal characters and three
+(`✎`, `⧉`, `⋯`) are absent from the bundled Inter, so the device's fallback draws them — **keep them exactly
+as frozen**, because *"bundled-font coverage does not justify changing the design"*. Their variation across
+devices is specified behaviour for the B5 passes to *record*, not fix.
+[**D-022**](design/V2-SPEC-DEFECTS.md#d-022-ruling): the Library's scrim is a theme-invariant literal while
+the corpus publishes a theme-aware `--scrim` — **the corpus is authoritative**, so `ZineActionScrim` takes the
+token. That makes the scrim **the only V2 value not taken from the frozen Library file**, and it is the third
+of a set with **D-005** (serif) and **D-011** (easings): where the Library contradicts a corpus token, the
+corpus wins. Both entries reported the same *kind* of finding, and the split is the precedent —
+**measuring something real licenses asking, not changing.**
+
+**Goldens in this repository were never assertions until B3.** B1 and B2 *recorded* rasters and never ran
+verify, and Roborazzi in record mode **overwrites** rather than compares — so `v2_cover_pressed_light.png` sat
+committed and stale, failing `-Proborazzi.test.verify=true` at HEAD. B3 corrected it on owner direction. Two
+habits follow: run `-Proborazzi.test.verify=true`, because it is the only run that proves a raster means
+anything; and record with a **narrow** `--tests` filter, because a broad `*GoldenTest` silently rewrites
+unrelated V1 rasters (it rewrote 37 during B3; all were restored). Two pre-existing verify failures are known
+and are not B3's: `EditorCoverageNoticeGoldenTest` has no committed references at all, and the intermittent
+V1 `ReframeSessionTest > an unreadable photo is refused entry to reframe`.
+
+**Read [ADR-083's review outcome](DECISIONS.md#adr-083-review) alongside ADR-082's before writing B4's tests.**
+B3 ran fourteen mutations against production and **two survived**, both of them B3's own tests: one that
+painted its own copy of the scrim literal instead of composing production's, and a `border-radius:20px` that
+had no test at all. Independent review then found **two more of the same kind**: the focus ring had no test
+whatsoever (offset 6→60dp and radius 9→0dp both survived the whole suite), and the D-021 tofu control was
+`U+E000` — **which the bundled Inter actually maps to a real glyph**, so the test that claimed to detect tofu
+passed on guaranteed tofu, and the false fact had reached a defect entry awaiting an owner ruling.
+
+Four rules for B4, in the order they cost the most:
+
+1. **Verify the assumption the assertion rests on, not just the assertion.** Every font fact in B3 was
+   measured except the control's; the control's was the one that broke.
+2. **A test that rebuilds the value it pins cannot fail.** Compose production, don't copy its constants.
+3. **A Roborazzi golden in record mode overwrites rather than compares** — it is not an assertion. Any
+   property visible only in a raster needs a pixel test of its own.
+4. **Ask which frozen properties have no test at all.** That question found the radius *and* the ring; it is
+   worth more than re-reading the ones that do.
+
+Two traps that cost an hour each and are not obvious: Compose **declines focus in touch mode**, so
+`requestFocus()` fails silently — request `InputMode.Keyboard` (which is what `:focus-visible` means anyway);
+and the ground outside a cover is **not** clean, because B1's shadow tints it about ten pixels out.
+
+**Read [ADR-082's review outcome](DECISIONS.md#adr-082-review) too.** B2's own
 ten-mutation battery passed while the grid was fed `zines.reversed()` — the sixth package in this programme
 whose assertions were blind to the defect class their names claimed to gate. The rule that came out of it:
 an ordering, mapping or identity claim cannot be tested by asserting that each element exists *and* that

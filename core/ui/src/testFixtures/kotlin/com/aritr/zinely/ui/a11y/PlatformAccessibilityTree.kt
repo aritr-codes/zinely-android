@@ -72,6 +72,22 @@ public data class PlatformA11yNode(
     val boundsInScreen: Rect,
     /** `AccessibilityNodeInfo.getContentDescription()` — the spoken label, for cross-checking identity. */
     val contentDescription: String?,
+    /**
+     * `AccessibilityNodeInfo.isLongClickable()` — whether the platform advertises a **second** gesture.
+     *
+     * Added for B3, whose shelf item is the first V2 control with one. Distinct from [longClickLabel] on
+     * purpose: a long press can be present and anonymous, which is the shape the implementation guide's
+     * *"every gesture has a named custom action twin"* rule exists to rule out, so a test that only checked
+     * this bit could not tell a discoverable gesture from a hidden one.
+     */
+    val isLongClickable: Boolean,
+    /**
+     * The label the platform reports for `ACTION_LONG_CLICK`, or `null` when the action is unnamed or absent.
+     *
+     * Read off `actionList` rather than a convenience getter because there is no getter: an action's label is
+     * carried by the `AccessibilityAction` entry itself.
+     */
+    val longClickLabel: String?,
 ) {
     /** True when the platform bounds have positive area — a laid-out, hit-testable control. */
     val hasNonEmptyBounds: Boolean
@@ -111,12 +127,15 @@ public fun SemanticsNodeInteraction.platformNode(activity: Activity): PlatformA1
         )
 
     val bounds = Rect().also { info.getBoundsInScreen(it) }
+    val longClick = info.actionList.firstOrNull { it.id == AccessibilityNodeInfo.ACTION_LONG_CLICK }
     return PlatformA11yNode(
         className = info.className?.toString(),
         isClickable = info.isClickable,
         isEnabled = info.isEnabled,
         boundsInScreen = bounds,
         contentDescription = info.contentDescription?.toString(),
+        isLongClickable = info.isLongClickable,
+        longClickLabel = longClick?.label?.toString(),
     )
 }
 

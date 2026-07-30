@@ -45,15 +45,15 @@ import org.robolectric.annotation.GraphicsMode
  * Two elements the frozen file draws at rest are legitimately absent, because they belong to later
  * packages — and both absences are **expected**, not deviations to be filed:
  *
- * - **The six `⋯` buttons.** `.more` (`:73-77`) is `display:flex` at `opacity:.5`, rendered
- *   *unconditionally* — the frozen shelf shows one on every cover at rest, as the *visible* fallback for
- *   long-press. It arrives with the gesture it is a fallback for, in **B3**.
+ * - ~~**The six `⋯` buttons.**~~ **B3 landed them**, so these rasters now show one on every cover, at the
+ *   frozen `opacity:.5` — `.more` (`:73-77`) is `display:flex` unconditionally, which is what makes it the
+ *   *visible* fallback for long-press rather than a hover reveal. The B2 rasters were re-recorded for it.
  * - **The dock and "Make a zine".** `.dock` (`:88-95`) overlays the foot of the frozen screen. **B4.**
  *   The `152px` of empty room these rasters show below the last cover is exactly the space it will fill.
  *
  * So the comparison these rasters support is *the shelf* against the frozen shelf — grid, gaps, heading,
- * covers, desk. A reviewer laying them beside `v2-library.html` should expect the two gaps above and
- * read everything else as parity.
+ * covers with their `⋯`, desk. A reviewer laying them beside `v2-library.html` should expect the dock's
+ * absence and read everything else as parity.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -71,21 +71,11 @@ class ZineShelfGoldenTest {
             compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.02f),
         )
 
-        /** The frozen shelf's own six objects, in its own order — `v2-library.html:149-154`. */
-        val FROZEN = listOf(
-            ZineShelfItem("Sunday market", ZineCoverRecipe(ZineCoverSurface.MatchaInk, ZineCoverStamp.Sun)),
-            ZineShelfItem(
-                "Letters home",
-                ZineCoverRecipe(ZineCoverSurface.PaperStrawberryBand, ZineCoverStamp.Letter),
-            ),
-            ZineShelfItem("Riso tests", ZineCoverRecipe(ZineCoverSurface.TealInk, ZineCoverStamp.Waves)),
-            ZineShelfItem(
-                "Mum's garden",
-                ZineCoverRecipe(ZineCoverSurface.PaperMatchaBand, ZineCoverStamp.Sprig),
-            ),
-            ZineShelfItem("Tiny poems", ZineCoverRecipe(ZineCoverSurface.OchreInk, ZineCoverStamp.Star)),
-            ZineShelfItem("Coffee log", ZineCoverRecipe(ZineCoverSurface.StrawberryInk, ZineCoverStamp.Face)),
-        )
+        /**
+         * The frozen six, from [ZineShelfGoldenFixture] — shared with B3's open-sheet raster so the two
+         * cannot drift apart while each still passes its own comparison.
+         */
+        val FROZEN = ZineShelfGoldenFixture.FROZEN
     }
 
     @Test
@@ -111,7 +101,7 @@ class ZineShelfGoldenTest {
                     .fillMaxSize()
                     .background(ZinelyTheme.v2Colors.desk),
             ) {
-                ZineShelf(FROZEN, Modifier.fillMaxSize())
+                ZineShelf(FROZEN, onOpen = {}, onActions = {}, modifier = Modifier.fillMaxSize())
             }
         }
     }

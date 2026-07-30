@@ -40,10 +40,22 @@ Sixteen defects were raised during Phase A: **ten resolved by owner ruling, six 
 awaited a ruling, and nothing from Phase A blocked Phase B.
 
 **Phase B / B1 raised three more (D-017, D-018, D-019) and Phase B / B2 raised one (D-020). All four were ruled
-the same day they were raised** — so the count is now **twenty: fourteen resolved, six open**, and the six open
-are the same six Phase A left. **Nothing is awaiting an owner ruling.** One item that is *not* a defect entry is
-still owed one and is recorded where it lives: Phase B's *"8pt"* spacing acceptance criterion contradicts the
-**D-007** ruling — see [COMPOSE-V2-ROADMAP.md Phase B](../COMPOSE-V2-ROADMAP.md#phase-b--library).
+the same day they were raised.** **Phase B / B3 then raised two — [D-021](#d-021--the-sheets-icons-are-unicode-characters-and-half-of-them-are-not-in-the-apps-own-font)
+and [D-022](#d-022--the-librarys-scrim-is-a-theme-invariant-literal-while-the-corpus-publishes-a-theme-aware-one)
+— and both were ruled the same day.** So the count is now **twenty-two: sixteen resolved, six open**, and the
+six open are once again the same six Phase A left. **Nothing is awaiting an owner ruling.**
+
+**The two B3 rulings went opposite ways, and the pair is the useful reading.** Both entries reported the same
+kind of finding — *the implementation measured something the frozen design did not account for* — and the
+answers diverge on whether the measurement bears on the **design** or on the **corpus**. D-021: a font's
+coverage is an implementation fact, so the frozen characters stand and platform fallback is accepted.
+D-022: the Library's scrim contradicts a token the corpus publishes, so the corpus wins and the code departs
+from the Library file. **Measuring something real does not by itself license changing what was designed** —
+it licenses asking, which is what B3 did in both cases.
+
+One item that is *not* a defect entry is still owed a ruling and is recorded where it lives: Phase B's *"8pt"*
+spacing acceptance criterion contradicts the **D-007** ruling — see
+[COMPOSE-V2-ROADMAP.md Phase B](../COMPOSE-V2-ROADMAP.md#phase-b--library).
 
 | Open | Owing to | One line |
 |---|---|---|
@@ -55,13 +67,19 @@ still owed one and is recorded where it lives: Phase B's *"8pt"* spacing accepta
 | [**D-012**](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) | **Phase C** (deliberately unresolved) | three files write three different reduced-motion rules; one would strobe |
 
 Resolved: **D-002 · D-003 · D-005 · D-006 · D-007 · D-011 · D-013 · D-014 · D-015 · D-016 · D-017 · D-018 ·
-D-019 · D-020** — full rows in [Resolved](#resolved) below.
+D-019 · D-020 · D-021 · D-022** — full rows in [Resolved](#resolved) below.
 
 **Four of the six Phase A entries are open *by owner ruling*, not by neglect** (D-008, D-009, **D-010**,
 D-012): their approach is settled and they stay open until the phase that implements the affected surfaces can
 verify it. Reading them as unattended work is the misreading this table exists to prevent. Of the remaining
 two, **D-004** is deferred to Phase D by ruling and **D-001** is a corpus-cleanup item owed before Phase C.
-That accounts for all six.
+That accounts for all six Phase A entries.
+
+**Both B3 entries were ruled the day they were raised, and one cost code.** D-021 confirmed B3 as built —
+the literal characters stand. D-022 did not: it replaced the Library's stale scrim literal with the corpus
+token, which is **the only value in B1, B2 or B3 that does not come from the frozen Library file**. That
+exception exists by ruling, and [D-022's entry](#d-022-ruling) is the record a future reader needs when the
+file and the code disagree.
 
 **D-020 was ruled on the day B2 raised it** and required no code change, because B2 had transcribed the freeze
 rather than closing the gap. Its ruling carries the register's broadest precedent so far — *"future adaptive
@@ -1604,6 +1622,192 @@ Three consequences worth naming, because each is a decision a later package migh
 3. **No maximum cover width.** The ruling closes the separable sub-question this entry raised, so a cover's
    size follows its column and nothing clamps it.
 
+### D-021 — the sheet's icons are Unicode characters, and half of them are not in the app's own font
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) lines 173–177 (`.ic` spans) and line 72 (the `⋯` on `.more`) |
+| **Found** | 2026-07-30, during Phase B / B3 (implementing the sheet and the cover's two gestures) |
+| **Severity** | Design gap — **did not block B3**, which transcribed the freeze literally |
+| **Status** | ✅ **RESOLVED 2026-07-30 by owner ruling** — keep the literal characters exactly as frozen; do not substitute icons, do not redesign the marks, and **bundled-font coverage does not justify changing the design**. Platform fallback is acceptable. Ruling at the [foot of this entry](#d-021-ruling). |
+
+**What it says.** Each action row's icon is a styled `<span class="ic">` holding a **literal character**:
+`↗` (Open), `⇪` (Share & export), `✎` (Rename), `⧉` (Duplicate), `⌫` (Delete) — and the shelf's overflow
+control is a sixth, `⋯`. None is an SVG, a path, or a named asset; the design specifies text.
+
+**The measurement, not the assumption.** The bundled font files were parsed directly — every `cmap` subtable
+of the app's Inter, including the format-12 table that carries its higher planes:
+
+| Glyph | Role | In bundled Inter? |
+|---|---|---|
+| `↗` U+2197 | Open on the bench | ✅ yes |
+| `⇪` U+21EA | Share & export | ✅ yes |
+| `⌫` U+232B | Delete | ✅ yes |
+| `✎` U+270E | Rename | ❌ **no** |
+| `⧉` U+29C9 | Duplicate | ❌ **no** |
+| `⋯` U+22EF | the shelf's `.more` | ❌ **no** |
+
+So **three of the six frozen marks are drawn by whatever font the device falls back to**, and their weight,
+width and optical size therefore vary by manufacturer and OS version. On a device with no fallback covering
+them, the user sees a tofu box. That is not a hypothetical class of defect for this design in particular:
+these six marks are the only iconography in the Library, and the `⋯` is the sole discoverable path to the
+sheet for a user who never tries a long press.
+
+**Why substituting is not available to an implementation.** A7 shipped a V2 icon set of thirty-six marks as
+geometry ([ADR-079](../DECISIONS.md#adr-079)), which is where a mark of this kind would normally come from.
+It has **no mark for *open* and none for *duplicate***. Choosing replacements — or drawing two new marks —
+would be authoring iconography, which is a design act, and the B1 rulings established that an implementation
+does not perform those quietly.
+
+**What B3 did, and did not do.** It transcribed all six as text, exactly as frozen, and pinned the risk with
+a test that renders each glyph beside **two tofu controls** and compares them pixel for pixel. Ink coverage
+alone cannot do this — a tofu box paints *more* ink than a thin ellipsis does, so a coverage test would have
+called tofu a successful render.
+
+> **The first version of that test could not fail, and independent review proved it rather than argued it.**
+> It used a single `U+E000` control on the reasoning that a Private Use Area codepoint is one no font
+> carries. **The bundled Inter maps `U+E000` to a real glyph** (id 1863, all four weights), so the "tofu"
+> control was an ordinary character and the comparison passed for any two glyphs that merely differed. The
+> reviewer demonstrated it by rendering a genuinely uncovered codepoint through the passing test. The fix
+> uses **two** codepoints verified absent from every bundled weight and asserts they render *identically*
+> first: distinct codepoints can only look the same because neither has a glyph, so that shared raster **is**
+> the tofu box, measured instead of assumed. Recorded here because this entry's rendering claim is the thing
+> the owner is being asked to rule on, and it briefly rested on nothing.
+On the test platform all six draw real marks; that is **one platform**, and it is the honest limit of what a
+unit test can say here.
+
+**The alternatives, each with its own cost.**
+
+| Rule | What it buys | What it costs |
+|---|---|---|
+| **Keep the literal characters** (what B3 ships) | literal parity; nothing invented | three of six marks look different on every device, and can be tofu |
+| **Extend the A7 icon set with *open* and *duplicate*, then use geometry throughout** | one controlled appearance everywhere; no fallback risk | authors two new design assets and departs from what the file specifies |
+| **Bundle a font subset covering all six** | the frozen characters, drawn identically everywhere | ships a second text family for six glyphs |
+| **Keep characters, accept a documented Known Limitation** | no work; honest | the limitation is *visual inconsistency*, which is harder to accept than D-014's flat paper |
+
+**Owner decision requested (answered below).** Are the six marks **characters** (as frozen, with
+device-dependent shape and a tofu risk), or are they **artwork** the design controls — and if artwork, does
+A7's set get the two marks it lacks, or does a bundled subset carry the frozen codepoints? This is the same
+question shape as
+[**D-018**](#d-018--the-covers-ink-band-specifies-multiply-which-android-cannot-honour-below-api-29) — a
+frozen visual the platform may not be able to honour — but its ruling does not answer it: omitting a glyph
+leaves a row with no icon, which is a different act than omitting a decorative band.
+
+### Owner ruling — 2026-07-30 {#d-021-ruling}
+
+> *"Keep the literal characters exactly as defined by the frozen HTML. Do not substitute icons. Do not
+> redesign the marks. Bundled-font coverage does not justify changing the design. Platform fallback is
+> acceptable. Future design revisions may replace the glyphs explicitly if desired."*
+
+**What changes in B3: nothing.** The six marks were already transcribed as text, so — like **D-020** before
+it — this entry resolves by confirming the package as built. It could only resolve that way because B3 raised
+the gap *instead of* closing it; had it substituted A7 marks and disclosed the substitution, the ruling would
+have been a rework.
+
+**The load-bearing sentence is the third**, and it is a general precedent about evidence rather than about
+glyphs: *"bundled-font coverage does not justify changing the design."* A measurement about the
+**implementation's own resources** is not, by itself, an argument about the **design**. B3 measured something
+real — three of six marks fall through to the platform — and the ruling accepts the measurement while
+rejecting the inference. Where the design specifies a character, the character is the specification; the
+font's coverage is an implementation fact that may inform a *future design revision*, and only a design act
+can change what is drawn.
+
+Three consequences worth naming:
+
+1. **`✎`, `⧉` and `⋯` will look different across devices, and that is the specified behaviour** — to be
+   *recorded* by the B5 device passes rather than fixed by them, exactly as **D-020**'s two large covers are.
+2. **A7's icon set is not extended for this.** Its lack of an *open* or *duplicate* mark is no longer a gap to
+   close, because nothing is asking it to supply one.
+3. **The tofu risk is accepted, not eliminated.** It stays pinned by
+   `ZineActionSheetTest.every frozen glyph draws a real mark, not a tofu box`, which now measures its own
+   control rather than assuming it (see the note above) — so if a future platform *does* draw tofu on the
+   test host, the suite says so instead of the design quietly degrading.
+
+### D-022 — the Library's scrim is a theme-invariant literal, while the corpus publishes a theme-aware one
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) line 119 — `.scrim{background:rgba(30,25,18,.36)}` — against the corpus's `--scrim` |
+| **Found** | 2026-07-30, during Phase B / B3 (implementing the action sheet) |
+| **Severity** | Design gap — **did not block B3**, which transcribed the freeze literally |
+| **Status** | ✅ **RESOLVED 2026-07-30 by owner ruling** — **the corpus is authoritative**; implement the published light and dark scrim values rather than the theme-invariant literal. **Code changed** — the only place B3 does not transcribe the Library file. Ruling at the [foot of this entry](#d-022-ruling). |
+
+**What it says.** The scrim's fill is written as a hard `rgba()` literal **outside the file's own `:root`**,
+so the `@media (prefers-color-scheme: dark)` block at `:20` — which redefines every other colour the Library
+uses — cannot reach it. The dark Library therefore dims with the same warm 36 % wash as the light one.
+
+**Why that is a gap rather than a detail.** A scrim's job is to push a surface back; how much wash it takes
+to do that depends entirely on what is behind it. Over the light desk, 36 % of a warm near-black reads as a
+clear separation. Over the dark desk — which is already close to that colour — the same wash removes far less
+contrast, so the sheet sits over a shelf that is still competing with it. The literal is not merely
+untokenised; it produces a *different amount of dimming* in the two themes while claiming to be one value.
+
+**The evidence this is staleness rather than intent.** The corpus already publishes a canonical, theme-aware
+`--scrim`: `rgba(42,37,30,.34)` light and `rgba(0,0,0,.5)` dark
+([`v2-bench.html:21,35`](mockups/v2-bench.html)) — note that the dark half is **stronger**, which is exactly
+the correction the Library's literal is missing. Stronger still: the two other frozen files **already
+disagreed** about this token (the Proof declares `.42`/`.55`) and that disagreement was **already ruled** —
+Bench-canonical, per Q1, recorded in `ZinelyV2Colors.kt:123-129`. So V2's scrim has been adjudicated once
+already, and the Library simply was not in the room, because its literal is not a token and nothing compared
+it. This is the same shape as
+[**D-005**](#d-005--the-library-and-the-bench-set-the-same-role-in-two-different-serifs-at-two-different-weights)
+and [**D-011**](#d-011--the-library-declares-neither-easing-token-and-animates-on-a-curve-found-nowhere-else):
+the Library was frozen earlier than the corpus it now sits beside, and carries pre-token values the rest of
+V2 has since replaced. Both of those were ruled **the corpus wins**. This one has never been put to the
+owner, which is the only reason it is open.
+
+**What B3 did, and did not do.** It transcribed `rgba(30,25,18,.36)` and raised this entry — it did not
+quietly adopt `ZinelyV2Colors.scrim` on the strength of the D-005/D-011 precedents. Two rulings pointing the
+same way are a strong hint, not a ruling, and a scrim is a visible surface rather than an internal token. The
+transcription is pinned by a test that samples the **production** scrim in both themes and asserts they are
+identical, naming D-022 in its own failure message so the ruling has something to flip.
+
+> The first version of that test painted its own copy of the literal, and a mutation that switched production
+> to the theme-aware token left it green. It was rewritten to compose the production scrim. Recording that
+> here because it is the register's own risk: an entry is only as honest as the test that pins it.
+
+**The alternatives, each with its own cost.**
+
+| Rule | What it buys | What it costs |
+|---|---|---|
+| **Keep the frozen literal** (what B3 ships) | literal parity; nothing invented | the dark Library is under-dimmed, and V2 has two scrims |
+| **Adopt the corpus `--scrim`** (the D-005/D-011 answer) | one scrim across V2; the dark theme dims properly | the Library's rendered appearance changes from its frozen file |
+| **Amend the frozen HTML to use the token, then implement** | the file and the code agree again | a design-track edit to a frozen artifact |
+
+**Owner decision requested (answered below).** Does the Library's scrim stay the frozen literal, or does the
+canonical theme-aware `--scrim` outrank it as the serif and the easings did? If the corpus wins, does the
+frozen HTML get corrected in the same act (as **D-006** required) or does the register carry the divergence?
+
+### Owner ruling — 2026-07-30 {#d-022-ruling}
+
+> *"The frozen corpus defines a theme-aware scrim. The corpus is authoritative. Implement the published light
+> and dark scrim values rather than a theme-invariant literal."*
+
+**What changes in B3: one paint site, and it is the first of its kind in this programme.** `ZineActionScrim`
+now takes `ZinelyV2Colors.scrim` — `rgba(42,37,30,.34)` light, `rgba(0,0,0,.5)` dark — and the Library's
+`rgba(30,25,18,.36)` is **not transcribed**. Every other value in B1, B2 and B3 comes from the frozen Library
+file; this is the single exception, and it is an exception **by ruling rather than by inference**, which is
+the distinction the register exists to preserve.
+
+**Why this is the third of a set, and the set is now a rule.** **D-005** (the serif), **D-011** (the easings)
+and now D-022 (the scrim) are the same defect with three faces: *the Library was frozen before the corpus it
+now sits beside, and carries pre-token values the rest of V2 has since replaced.* All three were ruled the
+same way. The general form is worth stating because a fourth will appear: **where the Library file contradicts
+a token the corpus publishes, the corpus wins** — the Library's value is evidence of *when* it was authored,
+not of what was intended.
+
+Two consequences, and one question the ruling deliberately leaves alone:
+
+1. **The dark Library now dims properly.** The published dark scrim is the *stronger* wash (`.50` against
+   `.34`), which is precisely the correction a theme-invariant literal could not express — the frozen literal
+   under-dimmed a desk already close to its own colour.
+2. **The rasters change.** `v2_sheet_dark.png` was re-recorded and the difference is plainly visible; that
+   raster is now evidence of the ruling rather than of the freeze.
+3. **The frozen HTML is *not* amended.** Unlike **D-006**, which had the dead `--r:18px` token deleted from
+   the frozen files, the ruling does not ask for `v2-library.html:119` to be corrected — so the file and the
+   code now legitimately disagree, and **this entry is the record of why**. A future reader diffing the two
+   should land here rather than filing it as drift.
+
 ---
 
 ## Resolved
@@ -1623,6 +1827,8 @@ Three consequences worth naming, because each is a decision a later package migh
 | **D-016** | Two of Phase A's acceptance criteria cannot be met by a phase forbidden to touch product surface | 2026-07-30 — owner ruling: **only the token-routing clause re-seats, to Phase D**; *"confirmed to be the same migration"* is **satisfied by confirmation** of the architecture and strategy ([ADR-080](../DECISIONS.md#adr-080), now `Accepted`). **Phase A passes its gate.** Entry kept above. |
 | **D-017** | The frozen Library shows six covers and states no rule for giving a cover to a seventh zine | 2026-07-30 — owner ruling: **assign once at creation and persist**; do **not** derive from the title, round-robin, or infer from neighbours. The assignment *is* part of the zine's identity. B1's title hash deleted; persistence owed at **B5**. Entry kept above. |
 | **D-018** | The cover's ink band specifies `multiply`, which Android cannot honour below API 29 | 2026-07-30 — owner ruling: **follow D-014 — omit the band**. No emulation, no substitute blend mode. Ships as one Known Limitation together with D-014's flat paper. Entry kept above. |
+| **D-021** | The sheet's icons are Unicode characters, and half of them are not in the app's own font | 2026-07-30 — owner ruling: **keep the literal characters exactly as frozen**; no substitution, no redesign, and **bundled-font coverage does not justify changing the design**. Platform fallback accepted; a future design revision may replace the glyphs explicitly. No code change owed — B3 had already transcribed them. Entry kept above. |
+| **D-022** | The Library's scrim is a theme-invariant literal, while the corpus publishes a theme-aware one | 2026-07-30 — owner ruling: **the corpus is authoritative**; implement the published light/dark values. **Code changed** (`ZineActionScrim` takes `ZinelyV2Colors.scrim`), making this the only V2 value not transcribed from the frozen Library file. Third of the D-005 / D-011 set: where the Library contradicts a corpus token, the corpus wins. Entry kept above. |
 | **D-019** | The frozen trilogy has no right-to-left reading, and a printed cover has a physical handedness | 2026-07-30 — owner ruling: **the printed artifact does not mirror**, in any locale; binding edge, fore-edge and crease stay exactly as frozen. Chrome may adapt to RTL; artifacts do not. Entry kept above. |
 
 *(Resolved entries stay in place rather than being deleted — the record of what was once contradictory
@@ -1635,6 +1841,8 @@ status line on 2026-07-29 (package A10) and again on 2026-07-30 at the **Phase A
 D-002, D-006 and D-016 owner rulings were recorded — and extended the same day by **D-017**, **D-018** and
 **D-019**, raised by Phase B / B1 and ruled on the same day ([ADR-081](../DECISIONS.md#adr-081)), then by
 **D-020**, raised by Phase B / B2 and likewise ruled the same day
-([ADR-082](../DECISIONS.md#adr-082)). Governed by
+([ADR-082](../DECISIONS.md#adr-082)), and finally by **D-021** and **D-022**, raised by Phase B / B3
+([ADR-083](../DECISIONS.md#adr-083)) and **both ruled the same day** — D-021 confirming the frozen characters,
+D-022 replacing the Library's scrim with the corpus token. Governed by
 [V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
 [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*

@@ -136,6 +136,9 @@ module split remains deferred per [ADR-043](DECISIONS.md#adr-043)).
 | The Maker's Cover — a printed paper object: stock, grain, band, stamp, clamped serif title, grounded shadow | `ZineCover` | [ADR-081](DECISIONS.md#adr-081) |
 | Which cover a zine gets — six surfaces × six stamps, **to be assigned once at creation and persisted by the caller** (never derived from the title) — B1 ships `ZineCoverSurface`/`ZineCoverStamp` only; the assigner itself lands in **B5**, next to the persisted field | `ZineCoverRecipe` | [ADR-081](DECISIONS.md#adr-081) + the **D-017** ruling; supersedes [ADR-069](DECISIONS.md#adr-069)'s hash for V2 |
 | The shelf — two fixed columns of covers, frozen gaps, and the quiet "Your shelf" heading **as a full-width cell inside the scroll**, so it scrolls away rather than pinning | `ZineShelf`, `ZineShelfItem` | [ADR-082](DECISIONS.md#adr-082); the fixed column count is the **[D-020](design/V2-SPEC-DEFECTS.md#d-020-ruling)** ruling — no breakpoint, no responsive behaviour, no maximum cover width, and none to be inferred here |
+| A cover *on* the shelf — the press transform, the focus ring, tap → open, long-press → actions, and the always-visible `⋯` that is the same door for anyone who never finds the gesture | `ZineOnShelf` | [ADR-083](DECISIONS.md#adr-083) |
+| The action sheet — five rows in the frozen order over a scrim, with the zine's format and date **disclosed here** rather than stamped on every cover | `ZineActionSheet`, `ZineActionSheetSurface`, `ZineActionScrim`, `ZineActionTarget` | [ADR-083](DECISIONS.md#adr-083) |
+| What the sheet can do — Open · Share & export · Rename · Duplicate · **Delete, set apart by a band of the desk and printed in the consequence ink** | `ZineAction` | [ADR-083](DECISIONS.md#adr-083); the sheet reports the choice and does **not** dismiss. The frozen file wires no handler to the five rows at all, so this is a **deferral to B5 rather than a transcription** — what follows each action is undesigned, and holding still is the narrowest thing an implementation can do |
 
 Several properties are load-bearing:
 
@@ -159,6 +162,25 @@ Several properties are load-bearing:
   to `.phone`, which is the app window and therefore **B5**'s screen. `ZineShelf` is transparent on purpose, so
   the room's colour is decided in one place rather than two. A `background(desk)` on the shelf would look
   correct in every raster until B5 disagreed with it.
+- **A control collapses to one node, so a second control cannot live inside it.** `Modifier.zinelyV2Control`
+  ends in `clearAndSetSemantics` — that is what carries role and name to the *platform* tree (A8), and it also
+  makes anything nested beneath unreachable by a screen reader. So the `⋯` is a **sibling** of the cover, not a
+  child of it, and B1's `overlay` slot on `ZineCover` was **deleted** rather than worked around: a fallback path
+  hidden from assistive technology is the opposite of a fallback. The seam now carries the long press itself
+  (`onLongClick` + a **required** `onLongClickLabel`), so gestures and their spoken names stay in one place.
+- **The Library's iconography is text, and it stays text.** `.ic` holds a literal character, and three of the
+  six frozen marks (`✎`, `⧉`, `⋯`) are absent from the bundled Inter, so the device's fallback draws them and
+  their shape varies by manufacturer. **[D-021](design/V2-SPEC-DEFECTS.md#d-021-ruling)**, ruled: keep them
+  exactly as frozen — *"bundled-font coverage does not justify changing the design"* — with platform fallback
+  accepted and no substitution from A7's icon set. Their variation is **specified behaviour** for the device
+  passes to record, not a defect to fix.
+- **The scrim is the one V2 value not taken from the frozen Library file.**
+  **[D-022](design/V2-SPEC-DEFECTS.md#d-022-ruling)**, ruled: the Library writes `rgba(30,25,18,.36)` as a
+  literal outside its own `:root`, so it could not vary by theme; the corpus publishes a theme-aware `--scrim`
+  (`ink@.34` light, `black@.50` dark) and **the corpus is authoritative**. `ZineActionScrim` takes the token.
+  Third of the same set as **D-005** (the serif) and **D-011** (the easings), and together they are a rule:
+  where the Library file contradicts a token the corpus publishes, the corpus wins — the Library's value
+  records *when* it was authored, not what was intended.
 
 ## 3. Data flow
 

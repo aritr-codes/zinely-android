@@ -24,7 +24,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -115,10 +115,14 @@ class ZineShelfTest {
                     surface = ZineCoverSurface.entries[i % ZineCoverSurface.entries.size],
                     stamp = ZineCoverStamp.entries[i % ZineCoverStamp.entries.size],
                 ),
+                subtitle = subtitleOf(i),
             )
         }
 
         fun titleOf(index: Int) = "Zine ${index + 1}"
+
+        /** The line the sheet discloses and the shelf must not — `data-sub`, B3's field. */
+        fun subtitleOf(index: Int) = "A4 · $index days ago"
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -289,7 +293,9 @@ class ZineShelfTest {
         // screenshot of the first screenful would show.
         composeRule.onNodeWithTag(SHELF).performScrollToIndex(many.lastIndex)
         composeRule.waitForIdle()
-        composeRule.onNodeWithText(titleOf(many.lastIndex)).assertIsDisplayed()
+        // Found by tag: B3 collapsed the cover's semantics into one control node, so the title is that
+        // node's own name rather than a `Text` beneath it.
+        composeRule.onNodeWithTag(zineShelfCoverTestTag(many.lastIndex)).assertIsDisplayed()
     }
 
     @Test
@@ -304,11 +310,17 @@ class ZineShelfTest {
         // since `cover(i)` finds the cover *placed* at index i whatever order the source list was
         // consumed in — and that each title existed *somewhere* on the shelf. Independent review broke it
         // by feeding the grid `zines.reversed()` and watching this test, the one whose name is the claim,
-        // stay green. Only the descendant match below couples the two.
+        // stay green. Only the coupled match below sees it.
+        //
+        // **B3 changed how the coupling is read, not what it claims.** Until B3 the cover's title was a
+        // `Text` node inside it and this matched `hasAnyDescendant(hasText(…))`. The cover is now a control
+        // whose semantics collapse to one node — the only shape that reaches TalkBack as a real button —
+        // so the title arrives as that node's own `contentDescription` instead. Same claim, same
+        // position-to-identity binding, and the same mutation (`zines.reversed()`) still turns it red.
         val placed = (0 until 6).map { cover(it) }
         for (i in 0 until 6) {
             composeRule.onNode(
-                hasTestTag(zineShelfCoverTestTag(i)) and hasAnyDescendant(hasText(titleOf(i))),
+                hasTestTag(zineShelfCoverTestTag(i)) and hasContentDescription(titleOf(i)),
             ).assertExists()
 
             if (i == 0) continue
@@ -416,15 +428,20 @@ class ZineShelfTest {
         // The same two surfaces `ZineCoverRenderTest` probes, so the crease reading below is the reading
         // that file already proved discriminates — a plain stock and a banded stock, both creased.
         val two = listOf(
-            ZineShelfItem(titleOf(0), ZineCoverRecipe(ZineCoverSurface.MatchaInk, ZineCoverStamp.Sun)),
+            ZineShelfItem(
+                titleOf(0),
+                ZineCoverRecipe(ZineCoverSurface.MatchaInk, ZineCoverStamp.Sun),
+                subtitleOf(0),
+            ),
             ZineShelfItem(
                 titleOf(1),
                 ZineCoverRecipe(ZineCoverSurface.PaperMatchaBand, ZineCoverStamp.Sprig),
+                subtitleOf(1),
             ),
         )
         composeRule.setContent {
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                Host(PROBE_GROUND) { ZineShelf(two, shelfModifier()) }
+                Host(PROBE_GROUND) { ZineShelf(two, onOpen = {}, onActions = {}, modifier = shelfModifier()) }
             }
         }
         composeRule.waitForIdle()
@@ -494,7 +511,7 @@ class ZineShelfTest {
     // ---------------------------------------------------------------------------------------------
 
     private fun shelf(zines: List<ZineShelfItem>, ground: Color = PROBE_GROUND) {
-        composeRule.setContent { Host(ground) { ZineShelf(zines, shelfModifier()) } }
+        composeRule.setContent { Host(ground) { ZineShelf(zines, onOpen = {}, onActions = {}, modifier = shelfModifier()) } }
         composeRule.waitForIdle()
     }
 
@@ -507,7 +524,7 @@ class ZineShelfTest {
     private fun shelfWithReferences(zines: List<ZineShelfItem>) {
         composeRule.setContent {
             Host(PROBE_GROUND) {
-                ZineShelf(zines, shelfModifier())
+                ZineShelf(zines, onOpen = {}, onActions = {}, modifier = shelfModifier())
                 Column(Modifier.align(Alignment.BottomStart)) {
                     Reference(REF_FROZEN, FontWeight.Medium, 25.92.sp)
                     Reference(REF_HEAVY, FontWeight.SemiBold, 25.92.sp)

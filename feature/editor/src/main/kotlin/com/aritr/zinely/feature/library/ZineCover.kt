@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -62,10 +61,17 @@ import com.aritr.zinely.ui.theme.rememberZinelyV2Icon
  *
  * It is the shelf's *atom* — paint only. It holds no gesture, no click, no semantics of its own beyond
  * the title it draws, and it takes [pressed] as state rather than detecting it: the press belongs to
- * the `.zine` container (`v2-library.html:51-53`), which is the shelf item, not the cover. The `⋯`
- * affordance (`.more`, `:73-77`) likewise belongs to the item and arrives through [overlay], which is
- * how it can be positioned inside the cover's bounds — as the frozen markup nests it — without this
- * file growing an interaction.
+ * the `.zine` container (`v2-library.html:51-53`), which is the shelf item, not the cover.
+ *
+ * **B1 shipped an `overlay` slot here for the `⋯` and B3 deleted it**, which is worth recording because the
+ * reason is not a change of taste. The frozen markup nests `.more` *inside* `.cover`, so a slot inside these
+ * bounds looked like the faithful shape. But the cover is also the tappable object, and the seam that gives
+ * it a real `android.widget.Button` in the platform tree ends in `clearAndSetSemantics` — which discards the
+ * semantics of everything beneath it, including a nested button's. An overlay slot could therefore hold only
+ * an affordance no screen reader could reach, which is the exact opposite of what `.more` exists for
+ * (`:72` calls it *"the fallback"*). [ZineOnShelf] places it as a **sibling** of the cover instead, in the
+ * same pixels. V1's `ShelfCard` reached the same arrangement from a different direction — its cover clips
+ * and tilts — which is some evidence the shape is right rather than convenient.
  *
  * ### Paint order is the CSS paint order, and it is load-bearing
  *
@@ -75,7 +81,8 @@ import com.aritr.zinely.ui.theme.rememberZinelyV2Icon
  *    background and below the children.
  * 3. the **fold spine** (`::before`), then the **band**, then the **fore-edge** (`::after`) — pseudo- and
  *    real children in DOM order, all at `z-index:auto`.
- * 4. the **title** and the **stamp** (`z-index:1`), then [overlay] (`.more`, `z-index:2`).
+ * 4. the **title** and the **stamp** (`z-index:1`). `.more` sits at `z-index:2` above them and is drawn by
+ *    [ZineOnShelf] as a sibling of this composable, for the reason given above.
  *
  * Steps 1–3 are **one draw scope**, and that is a correctness requirement rather than a tidiness one:
  * a blend mode composites against what is already in its own layer, so the band drawn as a separate
@@ -127,7 +134,6 @@ import com.aritr.zinely.ui.theme.rememberZinelyV2Icon
  *   next to the stored field it needs. See [ZineCoverRecipe]'s own note for why it is not here.
  * @param pressed `.zine:active` — flattens the shadow toward the desk. The cover does not rise: the
  *   frozen `:active` rule changes `box-shadow` only.
- * @param overlay content at `z-index:2` inside the cover's bounds; the shelf item's `⋯` lands here.
  */
 @Composable
 internal fun ZineCover(
@@ -135,7 +141,6 @@ internal fun ZineCover(
     recipe: ZineCoverRecipe,
     modifier: Modifier = Modifier,
     pressed: Boolean = false,
-    overlay: @Composable BoxScope.() -> Unit = {},
 ) {
     val palette = recipe.surface.palette(ZinelyTheme.contentInks)
     val colors = ZinelyTheme.v2Colors
@@ -197,8 +202,6 @@ internal fun ZineCover(
                 .widthIn(max = titleMaxWidth)
                 .padding(bottom = CoverTitlePaddingBottom),
         )
-
-        overlay()
     }
 }
 

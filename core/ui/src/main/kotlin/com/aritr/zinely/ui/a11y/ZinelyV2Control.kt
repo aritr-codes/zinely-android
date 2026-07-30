@@ -2,6 +2,7 @@ package com.aritr.zinely.ui.a11y
 
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.ui.Modifier
@@ -59,7 +60,28 @@ import androidx.compose.ui.semantics.selected
  * one. [interactionSource] is exposed for the same reason: the focus ring, when it is designed, hangs off it.
  *
  * **No haptics parameter**, on the same reasoning as V1's [com.aritr.zinely.ui.components.zinelyControl]:
- * the spec fires haptic verbs per *action*, never per widget, so callers own it inside [onClick].
+ * the spec fires haptic verbs per *action*, never per widget, so callers own it inside [onClick]. The one
+ * consequence of that stance is stated rather than left implicit: when [onLongClick] is supplied this
+ * modifier **suppresses the platform's own long-press buzz** (`hapticFeedbackEnabled = false`), because a
+ * caller that fires its own verb inside [onLongClick] would otherwise play two — the fifth, unnamed verb
+ * V1's `ShelfCard` had to silence for the same reason. A caller that wants the platform buzz fires it
+ * itself, so the vocabulary stays in one place.
+ *
+ * ## Long-press, and why it is here rather than at the call site
+ *
+ * B3's shelf item is the first V2 control with a second gesture, and the frozen Library states both on the
+ * same object: *"tap = open zine · long-press = actions"* (`v2-library.html:199`). Hand-rolling
+ * `combinedClickable` beside this seam would duplicate the collapse discipline above — the part that took a
+ * shipped defect to learn — so the seam grows the gesture instead. [onLongClickLabel] is not optional
+ * decoration: [COMPOSE-IMPLEMENTATION-GUIDE.md](docs/COMPOSE-IMPLEMENTATION-GUIDE.md) §6 requires that
+ * *"every gesture has a named custom action twin"*, and an unlabelled long-press reaches TalkBack as an
+ * anonymous `ACTION_LONG_CLICK` a user has no way to discover.
+ *
+ * **The long-press *timeout* is the platform's, not the frozen file's.** The mock script fires at 420ms
+ * (`:202`); `combinedClickable` uses `ViewConfiguration.getLongPressTimeout()`. The guide's own rule decides
+ * it — *"the HTML is a browser mock; the device is real … implement the platform's correct behaviour, and
+ * note the deviation"* — and this is the note. Reproducing 420ms would mean a hand-written gesture detector
+ * disagreeing with every other long-press on the device.
  *
  * ## One ordering constraint, and it bites quietly
  *
@@ -79,6 +101,10 @@ import androidx.compose.ui.semantics.selected
  *   than declaring "not selected", so a plain button does not tell a service it is an unselected something.
  * @param interactionSource press/focus/hover stream; supply one to hang a focus indicator off it.
  * @param indication the press/focus indication. Deliberately `null` by default — see above.
+ * @param onLongClick a second gesture on the same control, or `null` for a plain one-gesture button. Reaches
+ *   the platform as `ACTION_LONG_CLICK` on the same node as the click.
+ * @param onLongClickLabel the spoken name of that gesture, required whenever [onLongClick] is supplied —
+ *   the "named custom action twin" the implementation guide asks for.
  */
 public fun Modifier.zinelyV2Control(
     label: String,
@@ -88,17 +114,38 @@ public fun Modifier.zinelyV2Control(
     selected: Boolean? = null,
     interactionSource: MutableInteractionSource? = null,
     indication: Indication? = null,
+    onLongClick: (() -> Unit)? = null,
+    onLongClickLabel: String? = null,
 ): Modifier = this
     .minimumInteractiveComponentSize()
     // `clickable` sits OUTSIDE `clearAndSetSemantics` so its click action is not among the semantics the
     // clear discards — the ordering IF5 had to correct on the Reframe chip, where a cleared click stopped
-    // firing under assistive tech.
-    .clickable(
-        interactionSource = interactionSource,
-        indication = indication,
-        enabled = enabled,
-        role = role,
-        onClick = onClick,
+    // firing under assistive tech. `combinedClickable` sits in exactly the same place for the same reason.
+    .then(
+        if (onLongClick == null) {
+            Modifier.clickable(
+                interactionSource = interactionSource,
+                indication = indication,
+                enabled = enabled,
+                role = role,
+                onClick = onClick,
+            )
+        } else {
+            require(onLongClickLabel != null) {
+                "a long-press must be named: an unlabelled ACTION_LONG_CLICK is undiscoverable"
+            }
+            Modifier.combinedClickable(
+                interactionSource = interactionSource,
+                indication = indication,
+                enabled = enabled,
+                role = role,
+                // The caller fires its own verb inside onLongClick; the platform's would be a second one.
+                hapticFeedbackEnabled = false,
+                onLongClickLabel = onLongClickLabel,
+                onLongClick = onLongClick,
+                onClick = onClick,
+            )
+        },
     )
     // The collapse. Without this a container wrapping a text child reaches TalkBack as
     // `android.view.View` with no name at all. `role` and the `disabled` flag are NOT re-declared here:

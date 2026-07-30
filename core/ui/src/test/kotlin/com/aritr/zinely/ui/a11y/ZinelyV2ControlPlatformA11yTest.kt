@@ -211,4 +211,71 @@ class ZinelyV2ControlPlatformA11yTest {
             bounds.width() >= minPx - 1 && bounds.height() >= minPx - 1,
         )
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // The second gesture (B3) — a long press that survives the clear, and is named
+    // ---------------------------------------------------------------------------------------------
+
+    @Test
+    fun `a long press reaches the platform as a named ACTION_LONG_CLICK on the same node`() {
+        composeRule.setContent {
+            wrapped(
+                "v2-two-gestures",
+                "Sunday market",
+                Modifier.zinelyV2Control(
+                    label = "Sunday market",
+                    onClick = {},
+                    onLongClick = {},
+                    onLongClickLabel = "Actions",
+                ),
+            )
+        }
+        val n = node("v2-two-gestures")
+        // The gesture rides `combinedClickable`, which sits OUTSIDE `clearAndSetSemantics` — the same
+        // placement the click needed. Inside the clear it would be discarded and no service could fire it.
+        assertTrue("the platform must advertise the long press", n.isLongClickable)
+        assertEquals("and must name it, or it is undiscoverable", "Actions", n.longClickLabel)
+        // The pair lands on ONE node, which is the seam's whole claim: role, name and both gestures
+        // together, rather than a role on one node and a name on another.
+        assertEquals("android.widget.Button", n.className)
+        assertEquals("Sunday market", n.contentDescription)
+        assertTrue("the tap must still be there too", n.isClickable)
+    }
+
+    @Test
+    fun `a one-gesture control advertises no long press at all`() {
+        // The control for the test above. Without it, a seam that attached a long press to *every* control
+        // would pass — and a phantom long press on a plain button is a real defect: a service offers the
+        // user an action that does nothing.
+        setSeamControls()
+        val n = node("v2-on")
+        assertFalse("a plain button must not advertise a second gesture", n.isLongClickable)
+        assertEquals(null, n.longClickLabel)
+    }
+
+    @Test
+    fun `an unnamed long press is refused rather than shipped anonymous`() {
+        // `require`, not a silent default: an ACTION_LONG_CLICK with no label is present, invisible to a
+        // user exploring the control, and indistinguishable in a green suite from no gesture at all.
+        val thrown = runCatching {
+            composeRule.setContent {
+                wrapped(
+                    "v2-unnamed",
+                    "Anon",
+                    Modifier.zinelyV2Control(label = "Anon", onClick = {}, onLongClick = {}),
+                )
+            }
+        }.exceptionOrNull()
+        // The type and the message, not merely "something threw": a typo or a missing theme also throws,
+        // and would leave this test green while the `require` had been deleted.
+        assertTrue(
+            "an unlabelled long press must fail with IllegalArgumentException, not " +
+                "${thrown?.let { it::class.java.name }}",
+            thrown is IllegalArgumentException,
+        )
+        assertTrue(
+            "and must say why (message was ${thrown?.message})",
+            thrown?.message?.contains("unlabelled ACTION_LONG_CLICK") == true,
+        )
+    }
 }

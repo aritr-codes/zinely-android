@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -21,21 +20,24 @@ import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /**
- * One object standing on the shelf: the title it is called and the cover it is printed on.
+ * One object standing on the shelf: the title it is called, the cover it is printed on, and the line the
+ * shelf deliberately does not show.
  *
- * **Two fields, not three.** The frozen markup carries a `data-sub` on every `.zine` too
- * (`"A4 · 2 days ago"`, `v2-library.html:149-154`) — and the frozen design's whole point is that the
- * shelf **does not show it**: *"Covers only — no metadata line … Format & date are disclosed there, not
- * stamped on every card"* (`:142-144`). That string is read by the action sheet's header, which is
- * **B3**. Carrying a `subtitle` here that nothing draws would be scaffolding for a package that has not
- * been written, so B3 adds it when B3 has a reader for it.
+ * **Three fields now, and the third is drawn nowhere on this screen.** The frozen markup carries a
+ * `data-sub` on every `.zine` (`"A4 · 2 days ago"`, `v2-library.html:149-154`) and the frozen design's whole
+ * point is that the shelf **withholds** it: *"Covers only — no metadata line … Format & date are disclosed
+ * there, not stamped on every card"* (`:142-144`). B2 left the field out because nothing read it; **B3**
+ * adds it with the reader — [ZineActionTarget], the sheet's header. A test asserts the withholding directly
+ * (`the shelf shows no metadata under a cover`), because a subtitle that leaks onto the shelf is a
+ * one-line mistake that looks like a feature.
  *
- * No identity field either. [ZineShelf] leaves its grid keyed by position, which is correct for a list
+ * No identity field even so. [ZineShelf] leaves its grid keyed by position, which is correct for a list
  * that cannot yet reorder; **B5** brings real project data and, with it, the stable key.
  */
 internal data class ZineShelfItem(
     val title: String,
     val recipe: ZineCoverRecipe,
+    val subtitle: String,
 )
 
 /**
@@ -102,21 +104,25 @@ internal fun zineShelfCoverTestTag(index: Int): String = "shelf-cover-$index"
  * discover, so the frozen value is transcribed whole and the space below the last cover is simply empty
  * until B4 fills it.
  *
- * ### What this composable deliberately does not hold
+ * ### Each cell is a `.zine`, and B3 filled it
  *
- * `.zine` — the grid item wrapping each cover — carries the press transform
- * (`:active{transform:translateY(2px) scale(.985)}`), the focus ring
- * (`:focus-visible{outline:2px solid var(--matcha-text);outline-offset:6px}`), `cursor:pointer` and
- * `-webkit-tap-highlight-color` (`:51-54`). Every one of those is **interaction**, which is **B3** —
- * the package that also brings the long-press, the `⋯` button and the action sheet those states exist to
- * announce. At rest `.zine` paints nothing at all: no fill, no border, no padding, no transform. So a
- * cover placed straight into the grid is pixel-identical to a cover inside a resting `.zine`, and B3
- * adds the wrapper together with the gesture that gives it something to react to. [ZineCover] already
- * takes `pressed` as state for exactly this hand-off, so B3 wires a source to it rather than reworking
- * B1.
+ * B2 placed a bare [ZineCover] in every cell and recorded that `.zine` — the wrapper carrying the press
+ * transform, the focus ring, `cursor:pointer` and the tap-highlight suppression (`:51-54`) — was **B3**'s,
+ * because every one of those is *interaction*. **B3 landed it as [ZineOnShelf]**, together with the tap, the
+ * long-press, the `⋯` and the haptic that the states exist to announce. B2's claim that the deferral cost
+ * no parity held: at rest `.zine` paints nothing of its own, and the only thing these cells gained visually
+ * is the `⋯` — which the frozen file draws at rest on every cover, and which the B2 rasters therefore
+ * omitted and said so.
+ *
+ * The shelf still holds no sheet and no press state. Both belong to the objects and the screen, which is
+ * why the two callbacks below report a position rather than opening anything.
  *
  * @param zines the objects on the shelf, in the order they are given. The frozen file states no sort —
  *   V1's sort control was dropped, so ordering is the caller's, and B5's data layer answers for it.
+ * @param onOpen a cover was tapped, by its position. **B3** brought the gesture; where it leads is B5's.
+ * @param onActions a cover was long-pressed, or its `⋯` was used. The caller opens [ZineActionSheet] for
+ *   `zines[index]` — the shelf holds no sheet of its own, for the same reason it paints no desk: the sheet
+ *   is a `.phone` child in the frozen file, which is the screen.
  * @param modifier the caller's. `.shelf{flex:1 1 auto}` means **the shelf takes the space left over**,
  *   so a caller that gives it none gets a grid sized to its content and no scrolling; B5's screen passes
  *   `fillMaxSize()`.
@@ -124,6 +130,8 @@ internal fun zineShelfCoverTestTag(index: Int): String = "shelf-cover-$index"
 @Composable
 internal fun ZineShelf(
     zines: List<ZineShelfItem>,
+    onOpen: (Int) -> Unit,
+    onActions: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
@@ -140,11 +148,7 @@ internal fun ZineShelf(
         // No `key`: position is the identity a list that cannot reorder actually has. B5 supplies the
         // stable one with real projects — asserting a key here would be asserting B5's data model.
         itemsIndexed(zines) { index, zine ->
-            ZineCover(
-                title = zine.title,
-                recipe = zine.recipe,
-                modifier = Modifier.testTag(zineShelfCoverTestTag(index)),
-            )
+            ZineOnShelf(zine = zine, index = index, onOpen = onOpen, onActions = onActions)
         }
     }
 }

@@ -58,7 +58,12 @@ flowchart LR
 > `Accepted`). **B2 — the shelf — is built, independently reviewed (GO WITH FIXES, fixes applied) and
 > committed** ([ADR-082](DECISIONS.md#adr-082), `Accepted`); it raised **D-020**, which the owner **ruled
 > the same day** in favour of the fixed two columns B2 had transcribed — the first defect this programme
-> raised that cost no rework. B3–B5 have not
+> raised that cost no rework. **B3 — interaction — is built, independently reviewed (GO WITH FIXES, fixes applied) and
+> committed** ([ADR-083](DECISIONS.md#adr-083), `Accepted`); it raised **D-021** and **D-022**, and the owner
+> **ruled both the same day** — D-021 confirming the frozen literal characters at no code cost, D-022
+> replacing the Library's stale scrim literal with the corpus token, which is the **only** V2 value not taken
+> from the frozen Library file. B3 also corrected a stale B2 raster the repository was carrying
+> (`v2_cover_pressed_light.png`, which failed `verify` at HEAD). B4–B5 have not
 > started. B1 ships `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` and the
 > renderer only — **no assigner**: independent review found the assignment guard could not hold the D-017
 > ruling regardless of how it was written, so the assigner moves to **B5**, next to the persisted field it
@@ -235,13 +240,25 @@ redesign, no interpretation.** This is the closest surface to a clean re-skin an
 |---|---|---|---|
 | **B1** | **The Maker's Cover** — the printed object itself: stock, grain, band, stamp, clamped serif title, grounded rest/pressed shadow; `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` (no assigner — see B5); and `Modifier.zinelyV2Shadow` in `:core:ui` | Phase A foundation | ✅ built, independently reviewed (**GO WITH FIXES**, fixes applied), and committed 2026-07-30 ([ADR-081](DECISIONS.md#adr-081), `Accepted`) |
 | **B2** | **The shelf** — two-column grid (fixed at every width per the **D-020** ruling), frozen gaps, the quiet "Your shelf" header (a full-width cell *inside* the scroll, so it scrolls away), scroll. Paints no ground: the desk is B5's | B1 | ✅ built 2026-07-30, **at its review gate and owing an independent review pass** ([ADR-082](DECISIONS.md#adr-082)); raised **D-020**, ruled the same day with no code change owed |
-| **B3** | **Interaction** — long-press, the visible `⋯` fallback, the action sheet (Open · Share & export · Rename · Duplicate · separated Delete), metadata in the sheet header | B2 | not started |
+| **B3** | **Interaction** — long-press, the visible `⋯` fallback, the action sheet (Open · Share & export · Rename · Duplicate · separated Delete), metadata in the sheet header | B2 | ✅ **built, reviewed (GO WITH FIXES, applied) and committed 2026-07-30** ([ADR-083](DECISIONS.md#adr-083)); raised **D-021** and **D-022**, **both ruled the same day** — the scrim ruling cost one paint site, the glyph ruling cost nothing. The sheet reports a choice and does not dismiss: the frozen file wires no handler to the five rows at all, so that is a **deferral to B5**, not a transcription |
 | **B4** | **Empty state + "Make a zine"** — the transformation empty state and the CTA into the existing paper chooser | B2 | not started |
 | **B5** | **The screen** — real project data, navigation, route hand-over, `token-enrolment.txt`, both device passes. **Carries two hard prerequisites, both deferred whole from B1:** (1) the **cover assigner** itself (`newZineCoverRecipe`-equivalent) — B1 shipped no assigner at all, because independent review found no reflection guard could hold "never derived from the title" against an assigner with no caller to check; and (2) the **persisted cover assignment** the D-017 ruling requires (a surface + stamp field on the project index and its `meta.json` sidecar, [ADR-042](DECISIONS.md#adr-042)) — a shelf that assigns a cover without storing it reprints every cover on every launch. B5 builds both together, so the guard has an actual call site to check | B1–B4 | not started |
 
 B1 is the leaf: the cover is the only element the frozen file specifies completely on its own, and every later
 package draws it. It is **additive** — V1's shelf keeps its route and no V1 `src/main` file is touched — so the
 Library becomes the app's Library at **B5**, not before.
+
+**Raised by B3 and ruled the same day — and they went opposite ways, which is the useful reading:**
+
+| | The gap | Why it matters here |
+|---|---|---|
+| [**D-021**](design/V2-SPEC-DEFECTS.md#d-021--the-sheets-icons-are-unicode-characters-and-half-of-them-are-not-in-the-apps-own-font) | The sheet's five icons and the shelf's `⋯` are **literal characters**, and `✎`, `⧉` and `⋯` are **not in the bundled Inter** (measured by parsing the font's `cmap`). The device's fallback draws them; a device with none draws tofu. | A7's icon set has no mark for *open* or *duplicate*, so substituting is a **design act**, not a parity fix. The `⋯` is also the only discoverable path to the sheet. |
+| [**D-022**](design/V2-SPEC-DEFECTS.md#d-022--the-librarys-scrim-is-a-theme-invariant-literal-while-the-corpus-publishes-a-theme-aware-one) | `.scrim` is `rgba(30,25,18,.36)` written **outside** the file's `:root`, so the dark theme cannot reach it — while the corpus publishes a theme-aware `--scrim` whose dark half is *stronger*. | Same staleness shape as **D-005** and **D-011**, both ruled *the corpus wins*. Two precedents pointing one way are a hint, not a ruling, so B3 transcribed and asked. |
+
+B3 transcribed the freeze in both cases and invented nothing, so **neither owes code until it is ruled** and
+neither blocks the B3 review. Both are *visible*, which is what separates them from the register's other open
+entries: a ruling that goes the other way changes what a user sees, so the device passes at **B5** should not run
+before they are answered.
 
 **Raised by B2 and ruled the same day:** [**D-020**](design/V2-SPEC-DEFECTS.md#d-020--the-shelf-states-a-fixed-two-column-grid-with-no-breakpoint-and-phase-b-verifies-on-foldables)
 — the frozen shelf states `grid-template-columns:1fr 1fr` with **no media query anywhere in the file**, and was
