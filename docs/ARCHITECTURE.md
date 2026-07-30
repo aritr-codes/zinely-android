@@ -121,7 +121,8 @@ Three properties of this layer are load-bearing and easy to lose:
 - **V2 sits *beside* V1 rather than replacing it, deliberately and temporarily.** Convergence happens surface by
   surface across Phases B–D, each package enrolling in [`config/token-enrolment.txt`](../config/token-enrolment.txt)
   in the commit that migrates it — [ADR-080](DECISIONS.md#adr-080), which also records why Phase A could not do
-  this itself.
+  this itself. Confirmed as the migration architecture, and not a parallel design system, by the **D-016** owner
+  ruling of 2026-07-30; full token routing of the product surfaces is a **Phase D** exit criterion.
 
 ## 3. Data flow
 

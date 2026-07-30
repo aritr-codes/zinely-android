@@ -9,14 +9,17 @@ import androidx.compose.ui.unit.dp
  *
  * ### There is no radius scale, and the one radius token is dead
  *
- * `--r:18px` is declared at `v2-bench.html:24` and `v2-proof.html:24` and is **referenced zero
- * times**. No border-radius of 18px exists anywhere in V2; every one of the sixteen distinct chrome
+ * `--r:18px` *was* declared in the `:root` of `v2-bench.html` and `v2-proof.html` and was **referenced
+ * zero times**; the **D-006** owner ruling of 2026-07-30 confirmed it as dead specification and deleted
+ * it from both frozen files, so the corpus no longer declares a radius token at all.
+ * No border-radius of 18px exists anywhere in V2; every one of the sixteen distinct chrome
  * radii is a literal (50%, 22, 20, 16, 14, 13, 12, 11, 10, 9, 8, 6, 5, 4, 3, 2px, plus five
  * asymmetric ones such as the cover's `6px 9px 9px 6px`, whose tighter left corners are the spine of
  * a printed thing). Nor do the files agree: the Library's sheet is 20px, the Bench's is 22px, and the
  * Bench and Proof both put cards at 13px while the Library's cover is asymmetric. So `--r` is not
  * ported — a token that names a value nothing uses would invite Phase B to "restore" an 18px radius
- * the design never had. Logged as **D-006**.
+ * the design never had. Logged as **D-006**, and **resolved** in favour of the omission: the ruling
+ * forbids introducing an 18px radius token here.
  *
  * ### There is no spacing scale here either, and that is now a ruling rather than a gap
  *

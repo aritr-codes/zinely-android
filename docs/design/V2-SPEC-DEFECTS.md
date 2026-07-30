@@ -32,29 +32,30 @@ work stops until an owner ruling lands.
 
 ## Register at a glance (verified 2026-07-29, at the close of Phase A)
 
-Sixteen defects raised during Phase A: **seven resolved by owner ruling, nine open.** None blocks Phase B's
-*implementation*; **D-016 gates the Phase A → B transition**, since it asks whether Phase A's review gate can
-be recorded as passed.
+*Re-verified 2026-07-30 at the Phase A **closeout**, when the D-002, D-006 and D-016 rulings landed. The
+heading keeps its original date because its slug is linked from
+[COMPOSE-V2-ROADMAP.md](../COMPOSE-V2-ROADMAP.md); renaming it would break that link.*
+
+Sixteen defects raised during Phase A: **ten resolved by owner ruling, six open.** **Nothing is awaiting an
+owner ruling, and nothing blocks Phase B.**
 
 | Open | Owing to | One line |
 |---|---|---|
 | [**D-001**](#d-001--v2-benchhtml-header-contradicts-the-freeze-record) | corpus cleanup | `v2-bench.html`'s header contradicts the freeze record — documentation only, no code impact |
-| [**D-002**](#d-002--two-frozen-cover-inks-put-their-titles-below-aa-for-normal-text) | **owner ruling requested** | two frozen cover inks put their titles below AA for normal text |
 | [**D-004**](#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) | **Phase D** (deferred by ruling) | the frozen zine content is set in Fraunces; the render engine can only draw Inter |
-| [**D-006**](#d-006--the-only-shape-token-in-v2-is-declared-and-never-used) | **owner decision requested** → Phase B | the only shape token in V2 is declared and never used |
 | [**D-008**](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) | **Phase C** (approach settled) | two surfaces specify no focus appearance and one removes it |
 | [**D-009**](#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) | **Phase B/C** (approach settled) | no control declares a minimum touch target; most measure under 48dp |
 | [**D-010**](#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark) | **Phase C** (deferred by ruling) | the page shadow is hard-coded to the light theme and does not adapt in the dark |
 | [**D-012**](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) | **Phase C** (deliberately unresolved) | three files write three different reduced-motion rules; one would strobe |
 
-| [**D-016**](#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface) | **owner ruling requested** | two of Phase A's acceptance criteria cannot be met by a phase forbidden to touch product surface |
+Resolved: **D-002 · D-003 · D-005 · D-006 · D-007 · D-011 · D-013 · D-014 · D-015 · D-016** — full rows in
+[Resolved](#resolved) below.
 
-Resolved: **D-003 · D-005 · D-007 · D-011 · D-013 · D-014 · D-015** — full rows in [Resolved](#resolved) below.
-
-**Three of the open nine are open *by owner ruling*, not by neglect** (D-008, D-009, D-012): their approach
-is settled and they stay open until the phase that implements the affected surfaces can verify it. Reading
-them as unattended work is the misreading this table exists to prevent. **Three await an owner** (D-002,
-D-006, D-016); D-016 is the only one that gates a phase transition.
+**Four of the open six are open *by owner ruling*, not by neglect** (D-008, D-009, **D-010**, D-012): their
+approach is settled and they stay open until the phase that implements the affected surfaces can verify it.
+Reading them as unattended work is the misreading this table exists to prevent. Of the remaining two,
+**D-004** is deferred to Phase D by ruling and **D-001** is a corpus-cleanup item owed before Phase C. That
+accounts for all six.
 
 ---
 
@@ -111,8 +112,8 @@ clause is accurate and worth keeping (see D-005's closing note).
 |---|---|
 | **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) lines 68, 79-82 |
 | **Found** | 2026-07-28, during Phase A / A2 (modelling the `content.*` namespace) |
-| **Severity** | Accessibility question — **does not block A2**; owner ruling owed before Phase B's gate |
-| **Status** | Open — **owner ruling requested** |
+| **Severity** | Accessibility question — **did not block A2** |
+| **Status** | ✅ **RESOLVED** 2026-07-30 by owner ruling — see the resolution at the end of this entry |
 
 **Measured.** The cover title (`.ct`, `color` from the ink class) against its own ink fill:
 
@@ -150,8 +151,28 @@ threshold. All three alter what the shelf looks like, so all three are owner ame
 Library — [COMPOSE-IMPLEMENTATION-GUIDE.md §4](../COMPOSE-IMPLEMENTATION-GUIDE.md)'s golden rule
 applies: if the HTML is wrong, the HTML is fixed first.
 
-**Owner decision requested:** which floor governs cover titles, and if 4.5:1, which of the three fixes
-should the frozen Library adopt? Needed before Phase B's *"AA contrast per ink"* gate can be assessed.
+**✅ RESOLUTION — owner ruling, 2026-07-30.**
+
+> *"The governing floor for cover titles is **3.0:1**. No frozen colours change. No HTML changes. No design
+> amendment. If documentation wording implies otherwise, clarify the wording rather than changing the
+> design."*
+
+**What this settles.** The three-way disagreement is resolved in favour of the reading the corpus already
+supported: cover inks carry no ★, and [V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III gates AA on the
+★-marked pairings. Matcha (3.380:1) and Teal (3.832:1) both clear 3.0:1 and **stand exactly as frozen**.
+None of the three candidate fixes is adopted — no ink is darkened, no title colour lightened, no size or
+weight raised.
+
+**What changed in the repository.** Nothing in the design, and nothing in the implementation:
+`ZinelyContentInksTest` already asserts the 3.0:1 floor, so the ruling **confirms the gate that exists**
+rather than moving it. Per the ruling's wording clause, the one place that implied a stricter level —
+[COMPOSE-V2-ROADMAP.md](../COMPOSE-V2-ROADMAP.md) Phase B's impl-gate *"AA contrast per ink"*, which named
+no level — now states the 3.0:1 floor and cites this entry.
+
+**One in-code comment was corrected with the ruling** — comment text only, no assertion changed:
+`ZinelyContentInksTest` documented the floor as *"contested rather than settled"*, which the ruling makes
+false. It now records the ruling and keeps the two readings as the explanation of *why* a ruling was needed.
+The test name changed from `…clears the contested 3-to-1 floor…` to `…clears the ruled 3-to-1 floor…`.
 
 ### D-003 — the maker palette is ten inks or nineteen, depending on which document you read
 
@@ -402,8 +423,8 @@ freeze dates, not as a fourth independent defect.
 |---|---|
 | **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) line 24 · [`v2-proof.html`](mockups/v2-proof.html) line 24 |
 | **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
-| **Severity** | Dead specification — **does not block A4** |
-| **Status** | Open |
+| **Severity** | Dead specification — **did not block A4** |
+| **Status** | ✅ **RESOLVED** 2026-07-30 by owner ruling — see the resolution at the end of this entry |
 
 **What it says.** Both files declare `--r:18px` in `:root`, alongside `--serif`, `--sans`, `--settle`
 and `--standard`. The Library declares no `--r` at all.
@@ -424,9 +445,32 @@ by applying an 18px radius the design never had, and it would pass review, becau
 foundation looks like an intention. `ZinelyV2Dimens` therefore carries no radius at all, and the
 absence is documented at the code with a pointer here.
 
-**Owner decision requested** (low stakes, but it should be answered rather than left): delete `--r`
-from both `:root` blocks as dead, **or** state which components it was meant to govern — in which case
-it is not dead and Phase B needs to know which ones.
+**✅ RESOLUTION — owner ruling, 2026-07-30.**
+
+> *"The unused `--r` token is confirmed to be **dead specification**. **Delete it from the frozen HTML.** Do
+> not introduce an 18px radius token into the implementation. Record the ruling."*
+
+**Applied 2026-07-30.** `--r:18px;` is deleted from the `:root` block of both
+[`v2-bench.html`](mockups/v2-bench.html) and [`v2-proof.html`](mockups/v2-proof.html) — the only two
+declarations, and the token was referenced zero times in either file. This is an **owner-authorised
+amendment to a frozen artifact** under [V2-CONSTITUTION.md §VI](V2-CONSTITUTION.md); it is a deletion of
+dead specification, so no rendered pixel of either prototype changes and no parity target moves.
+
+**No implementation change is owed.** A4 never ported it, which the ruling confirms as correct:
+`ZinelyV2Dimens` publishes **no radius token**, and Phase B, C and D transcribe each component's radius at
+its use site exactly as frozen — including the Library cover's asymmetric `6px 9px 9px 6px`. The hazard the
+entry named is now closed at the source: there is no 18px token left for a later session to "restore
+consistency" from.
+
+**Two in-code corrections came with the ruling**, both mechanically required by it:
+
+- `ZinelyV2Dimens`' KDoc described `--r` as *declared* at `v2-bench.html:24` / `v2-proof.html:24` and D-006
+  as an open finding. It now records the deletion and the ruling. **KDoc only — no token added, no value
+  changed.**
+- `ZinelyV2DimensTest` **asserted the two declarations were present** (`assertEquals(… 2, declarations)`), so
+  the deletion turned it red. The assertion is **inverted, not deleted**: it now pins the declarations at
+  **zero**, so re-introducing `--r` fails the build. The zero-`var(--r)`-references and no-18px-literal
+  assertions are unchanged.
 
 ### D-007 — the constitutional 8pt rhythm is not observable in the frozen CSS
 
@@ -1172,8 +1216,8 @@ or implementation has quietly merged them (which this ruling forbids).
 |---|---|
 | **Artifact** | [`docs/COMPOSE-V2-ROADMAP.md`](../COMPOSE-V2-ROADMAP.md), Phase A "Acceptance criteria" |
 | **Found** | 2026-07-29, during Phase A / A10 (documentation verification), and sharpened by its independent review |
-| **Status** | **Open — owner ruling requested.** Blocks recording Phase A's gate as *passed*; does not block Phase B implementation work |
-| **Depends on it** | [ADR-080](../DECISIONS.md#adr-080), whose Decision 1 is a **proposal** pending this ruling |
+| **Status** | ✅ **RESOLVED** 2026-07-30 by owner ruling — see the resolution at the end of this entry. Phase A's gate **passes** |
+| **Depends on it** | [ADR-080](../DECISIONS.md#adr-080), whose Decision 1 this ruling settles — the ADR is now `Accepted` |
 
 **What the artifact says.** Phase A's acceptance criteria include:
 
@@ -1220,6 +1264,26 @@ engineering session on its own initiative."* A first draft of ADR-080 re-seated 
 authority and cited the Constitution for a stop-rule the Constitution does not contain. The review caught
 the misattribution; this entry is the correction.
 
+**✅ RESOLUTION — owner ruling, 2026-07-30. The second reading.**
+
+> *"ADR-080 is **Accepted**. Only the token-routing clause re-seats to Phase D. The 'confirmed to be the
+> same migration as the conformance token work (no duplicate system)' criterion is **satisfied by
+> confirmation of the migration architecture and strategy**. The requirement that existing product surfaces
+> route through V2 tokens **necessarily belongs to Phase D** because it requires modifying those product
+> surfaces. **Phase A therefore passes its gate.**"*
+
+**What this settles, clause by clause.**
+
+| Phase A criterion | Disposition |
+|---|---|
+| *"No hard-coded colours, sizes, or fonts anywhere — everything routes through tokens"* | **Re-seated to Phase D's acceptance criteria**, where the last surface is re-skinned and the last consumer migrated. Written into [COMPOSE-V2-ROADMAP.md](../COMPOSE-V2-ROADMAP.md) Phase D at closeout. |
+| *"Foundation is confirmed to be the **same** migration… (no duplicate system)"* | **Met**, by [ADR-080](../DECISIONS.md#adr-080) Decision 2 — the recorded confirmation of the migration architecture and strategy. |
+| Review gate — *"no parallel/duplicate design system"* | **Passed** on that reading: the coexistence of V1 and V2 token objects is *scheduled convergence* through a single migration, not a parallel system. |
+
+**Consequences applied at closeout.** ADR-080 → `Accepted`; the completion record's two ❌ rows become
+⏭️ *re-seated* and ✅ *met by confirmation*; Phase A's gate is recorded **passed**; Phase D gains the
+re-seated clause; **Phase A is CLOSED**. Phase B remains unstarted and begins only on an explicit owner GO.
+
 ---
 
 ## Resolved
@@ -1233,6 +1297,9 @@ the misattribution; this entry is the correction.
 | **D-013** | The Library and the Bench bake different alpha into the same grain | 2026-07-29 — owner ruling: **deliberate, not drift**. Paper and printed covers are different physical materials; grain strength is **not** normalised and stays exactly as frozen. No code change owed, and no corpus cleanup owed either. Entry kept above. |
 | **D-014** | The paper material cannot be drawn at all on API 24–28 | 2026-07-29 — owner ruling: rendering **flat paper is correct**, not a fallback. No emulation, no approximation, no `minSdk` bump — where the platform cannot express the design, implementation omits and discloses. Ships as a Known Limitation. Entry kept above. |
 | **D-011** | The Library declares neither easing token and animates on a curve found nowhere else | 2026-07-28 — owner ruling: the Bench and Proof are the **canonical V2 motion language**; the Library's curve reflects its earlier freeze. Phase B uses the canonical tokens. No code change owed. Entry kept above. |
+| **D-002** | Two frozen cover inks put their titles below AA for normal text | 2026-07-30 — owner ruling: the governing floor for cover titles is **3.0:1**. No frozen colour changes, no HTML change, no design amendment; wording that implied a stricter level was clarified instead. `ZinelyContentInksTest`'s existing 3.0 gate is confirmed. Entry kept above. |
+| **D-006** | The only shape token in V2 is declared and never used | 2026-07-30 — owner ruling: **dead specification — delete it from the frozen HTML**, and introduce no 18px radius token. `--r:18px` removed from `v2-bench.html` and `v2-proof.html`; `ZinelyV2Dimens` still publishes no radius. Entry kept above. |
+| **D-016** | Two of Phase A's acceptance criteria cannot be met by a phase forbidden to touch product surface | 2026-07-30 — owner ruling: **only the token-routing clause re-seats, to Phase D**; *"confirmed to be the same migration"* is **satisfied by confirmation** of the architecture and strategy ([ADR-080](../DECISIONS.md#adr-080), now `Accepted`). **Phase A passes its gate.** Entry kept above. |
 
 *(Resolved entries stay in place rather than being deleted — the record of what was once contradictory
 is what stops it being reintroduced.)*
@@ -1240,6 +1307,7 @@ is what stops it being reintroduced.)*
 ---
 
 *Opened 2026-07-28 during the Compose V2 implementation programme; register verified against every entry's
-status line on 2026-07-29 at the close of Phase A (package A10). Governed by
+status line on 2026-07-29 (package A10) and again on 2026-07-30 at the **Phase A closeout**, when the
+D-002, D-006 and D-016 owner rulings were recorded. Governed by
 [V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
 [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*

@@ -17,8 +17,10 @@ import org.junit.Test
  * HTML on every run, and they fail the moment the design corpus changes underneath a decision that
  * was made because of it.
  *
- * That also makes them the companions to the open defects: **D-006** and **D-007** are each pinned by
- * a test that will break the build the day the design answers them, so neither can quietly evaporate.
+ * That also makes them the companions to **D-006** and **D-007** — both now **resolved by owner ruling**
+ * (D-007 on 2026-07-28, D-006 at the Phase A closeout on 2026-07-30). Each is still pinned by a test, but
+ * the pin has inverted with the ruling: it used to break the build the day the design answered the
+ * question, and now breaks it the day someone undoes the answer.
  */
 class ZinelyV2DimensTest {
 
@@ -87,17 +89,21 @@ class ZinelyV2DimensTest {
         assertEquals("every declared outline width is 2px", setOf("2"), outlines.toSet())
     }
 
-    // -- D-006: the dead radius token -------------------------------------------------------------
+    // -- D-006: the dead radius token, deleted from the corpus by owner ruling --------------------
 
     @Test
-    fun `D-006 is still open — the only shape token is declared and never used`() {
+    fun `D-006 is resolved — the dead radius token is gone from the corpus and from here`() {
+        // Ruled 2026-07-30: --r:18px was dead specification. The owner ordered it deleted from the
+        // frozen Bench and Proof, and forbade an 18px radius token in the implementation. This test
+        // inverted with the ruling: it used to pin the two declarations in place, and now pins their
+        // absence, so a re-introduction fails the build instead of passing it.
         val declarations = all.count { it.contains("--r:18px") }
-        assertEquals("--r is declared in the Bench and the Proof", 2, declarations)
+        assertEquals("--r was deleted from the trilogy by the D-006 ruling", 0, declarations)
 
         val references = all.sumOf { css -> Regex("""var\(\s*--r\s*\)""").findAll(css).count() }
         assertEquals(
-            "--r is referenced nowhere; if this ever becomes non-zero, D-006 has been answered and " +
-                "ZinelyV2Dimens must gain the radius token it currently, deliberately, does not have",
+            "--r is referenced nowhere; if this ever becomes non-zero the deletion has been reverted, " +
+                "and reverting it is an owner act — not a licence for ZinelyV2Dimens to grow a radius",
             0,
             references,
         )

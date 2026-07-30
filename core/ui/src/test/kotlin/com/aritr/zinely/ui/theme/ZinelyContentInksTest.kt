@@ -236,28 +236,26 @@ class ZinelyContentInksTest {
     // ----- contrast: the roadmap's Phase B "AA contrast per ink" gate, measured here -----------
 
     @Test
-    fun `every cover title clears the contested 3-to-1 floor on its own ink — see D-002`() {
-        // COMPOSE-V2-ROADMAP Phase B lists "AA contrast per ink" as an impl-gate. The values live
-        // here, so the measurement lives here too and Phase B inherits a gate rather than a promise.
+    fun `every cover title clears the ruled 3-to-1 floor on its own ink — see D-002`() {
+        // COMPOSE-V2-ROADMAP Phase B lists contrast per ink as an impl-gate. The values live here, so
+        // the measurement lives here too and Phase B inherits a gate rather than a promise.
         //
         // Measured (onFill on fill): Matcha 3.380 · Teal 3.832 · Strawberry 4.992 · Ochre 5.535.
         //
-        // The floor asserted is AA_LARGE (3.0:1), and that choice is **contested rather than
-        // settled** — it is logged as D-002 in V2-SPEC-DEFECTS.md for an owner ruling, and this
-        // comment must not be read as having decided it:
+        // The floor is AA_LARGE (3.0:1), and it is now **settled by owner ruling** — D-002,
+        // 2026-07-30: "The governing floor for cover titles is 3.0:1. No frozen colours change. No
+        // HTML changes. No design amendment." So this assertion is the gate, not a placeholder for
+        // one. What made it contested, kept because it explains why the ruling was needed:
         //
         //  - `.ct` is `font-size:1.16rem; font-weight:600` (v2-library.html:68) = ~18.56px semibold.
         //    WCAG's large-text threshold is 18.66px **bold**. 18.56 < 18.66, and 600 is not
-        //    conventionally bold (700). So the cover title arguably does NOT qualify as large text,
-        //    in which case the floor is 4.5:1 and **Matcha and Teal fail it**.
-        //  - Cover inks carry no ★ in V2-TOKENS.md, and the Constitution gates AA on ★ pairings —
-        //    so there is a defensible reading in which no CI floor is owed here at all.
+        //    conventionally bold (700), so reading the cover title as large text was a stretch — on
+        //    the 4.5:1 reading, Matcha and Teal would have failed.
+        //  - Cover inks carry no ★ in V2-TOKENS.md, and the Constitution gates AA on ★ pairings.
+        //    That is the reading the ruling followed.
         //
-        // Asserting 3.0 is therefore the *minimum defensible* gate: it is strictly better than no
-        // gate (a real regression still fails), and it does not silently pass off a value the owner
-        // may want to change as though implementation had approved it. If the owner rules that the
-        // stricter floor applies, this becomes 4.5 and the two failing inks become a spec change —
-        // which is the owner's to make, in the HTML, not ours to make here.
+        // Raising this floor is an owner act, and it would make Matcha and Teal a spec change — in
+        // the HTML, not here.
         for (ink in inks.coverInks) {
             val ratio = WcagContrast.contrastRatio(ink.onFill, ink.fill)
             assertTrue(
@@ -269,28 +267,30 @@ class ZinelyContentInksTest {
     }
 
     @Test
-    fun `D-002 is still open — matcha and teal cover titles remain below the AA body floor`() {
-        // This test exists to make D-002 impossible to resolve *silently*, in either direction.
+    fun `D-002 is ruled — matcha and teal sit below the AA body floor and were deliberately left there`() {
+        // D-002 is RESOLVED (owner ruling, 2026-07-30): the governing floor for cover titles is
+        // 3.0:1, "no frozen colours change. No HTML changes. No design amendment." Matcha (3.380)
+        // and Teal (3.832) clear that floor and were deliberately NOT amended.
         //
-        // A logged defect that nothing enforces tends to evaporate: the suite stays green, a later
-        // session reads the green suite as "accessibility is fine", and the open question is quietly
-        // lost. So the current, known-imperfect state is pinned as a fact. The moment the owner rules
-        // — whether by darkening the fills, lightening the titles, or raising the title's
-        // size/weight — this test FAILS, forcing whoever makes that change to come back here, delete
-        // this test, raise the floor in the test above, and close D-002 in V2-SPEC-DEFECTS.md.
+        // So this test's job changed with the ruling. It used to pin an open question so it could not
+        // evaporate; it now pins the ruling's outcome so it cannot be undone by drift. The exact set
+        // of inks sitting between 3.0 and 4.5 is a fact the owner chose — if it changes, either a
+        // frozen value drifted (restore it) or someone amended the frozen Library without a new
+        // ruling (which is an owner act, not an implementation one).
         //
-        // A failure here is therefore not a regression. It is D-002 being answered, and the failure
-        // message says so.
+        // Raising the floor here to AA_NORMAL is NOT the fix for a failure. That would overturn the
+        // ruling from inside a test.
         val belowBodyFloor = inks.coverInks
             .filter { WcagContrast.contrastRatio(it.onFill, it.fill) < WcagContrast.AA_NORMAL }
             .map { it.id }
 
         assertEquals(
-            "The set of cover inks below the AA body floor has changed. If a frozen ink or title " +
-                "colour was deliberately amended to resolve D-002, that is the intended outcome: " +
-                "close D-002 in V2-SPEC-DEFECTS.md, raise the floor in the test above to " +
-                "${WcagContrast.AA_NORMAL}, and delete this test. If nothing was amended on purpose, " +
-                "a frozen value has drifted and must be restored.",
+            "The set of cover inks below the AA body floor has changed. The D-002 ruling of " +
+                "2026-07-30 fixed the cover-title floor at ${WcagContrast.AA_LARGE} and left these " +
+                "two inks exactly as frozen, so this set is a ruled outcome, not a pending question. " +
+                "Either a frozen value has drifted and must be restored, or the frozen Library was " +
+                "amended — which requires a NEW owner ruling recorded in V2-SPEC-DEFECTS.md. Do not " +
+                "raise the floor in the test above to make this pass.",
             listOf(ZinelyCoverInkId.Matcha, ZinelyCoverInkId.Teal),
             belowBodyFloor,
         )

@@ -6,11 +6,12 @@
 
 ---
 
-## 0. Where the work actually is (2026-07-29)
+## 0. Where the work actually is (2026-07-30)
 
-**Phase A — Foundation — is built, and its gate is pending one owner ruling.** Nine packages (A1–A9), nine
-ADRs ([ADR-071](DECISIONS.md#adr-071)…[ADR-079](DECISIONS.md#adr-079)), each independently reviewed and
-approved. Do not rebuild it. The full record of what was built, what was built
+**Phase A — Foundation — is CLOSED. Its gate passed on 2026-07-30 by owner ruling.** Nine implementation
+packages (A1–A9), nine ADRs ([ADR-071](DECISIONS.md#adr-071)…[ADR-079](DECISIONS.md#adr-079)), each
+independently reviewed and approved, plus A10 (documentation, [ADR-080](DECISIONS.md#adr-080)). Do not
+rebuild it. The full record of what was built, what was built
 *differently* than this document plans, and why, is the
 [Phase A completion record](COMPOSE-V2-ROADMAP.md#phase-a-completion-record-2026-07-29) — **read that
 before §6 below**, because §6 describes the plan and the record describes the outcome.
@@ -20,17 +21,20 @@ elevation, motion, the paper grain, 36 icons, an accessibility control seam and 
 debug-only catalog verified pixel-by-pixel against [V2-TOKENS.md](design/V2-TOKENS.md). No product screen,
 no route, nothing user-facing.
 
-**Two things Phase A did not do:** V2 tokens currently sit **beside** V1's rather than replacing them, and
-`config/token-enrolment.txt` enrols zero packages. Convergence happens surface by surface across Phases
-B–D, each package enrolling in the same commit that migrates it.
+**Two things Phase A did not do, by design:** V2 tokens currently sit **beside** V1's rather than replacing
+them, and `config/token-enrolment.txt` enrols zero packages. Convergence happens surface by surface across
+Phases B–D, each package enrolling in the same commit that migrates it. This is **scheduled duplication**,
+confirmed as the migration architecture by the D-016 ruling — not drift, and not a parallel design system.
 
-**The one thing still open before Phase B.** Two of Phase A's acceptance criteria — *"everything routes
-through tokens"* and *"no duplicate design system"* — require editing V1 product components, which Phase A
-forbids. They were not met, and whether they re-seat to Phase D's exit is an **owner ruling**, logged as
-[**D-016**](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface).
-[ADR-080](DECISIONS.md#adr-080) proposes a resolution and is `Proposed`, not `Accepted`, until it lands.
+**The gate, and how it closed.** Phase A's criterion *"everything routes through tokens"* requires editing
+V1 product components, which Phase A forbids; it is therefore **re-seated to Phase D** by owner ruling
+([**D-016**](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface),
+2026-07-30). The companion criterion *"no duplicate design system"* is **met by confirmation** of the
+migration architecture — [ADR-080](DECISIONS.md#adr-080), now `Accepted`. Two further rulings landed with
+it: **D-002** fixes the cover-title contrast floor at **3.0:1** with no design change, and **D-006** deleted
+the dead `--r:18px` token from the frozen Bench and Proof. **Nothing is awaiting an owner.**
 
-**Next:** Phase B — Library, once D-016 is ruled on.
+**Next:** Phase B — Library. It has not started and begins on an explicit owner GO.
 
 ---
 
@@ -101,12 +105,13 @@ each session: **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.m
 
 Sequence and gates: **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)**. In brief:
 
-- **A · Foundation** — **built 2026-07-29; gate pending [D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface)** — theme, tokens, typography, motion, elevation, icons,
+- **A · Foundation** — **✅ CLOSED 2026-07-30 (gate passed; [D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface) ruled)** — theme, tokens, typography, motion, elevation, icons,
   CompositionLocals, paper system, a11y infra. *No product screens.* The parenthetical this list used to carry —
   *"this foundation is the **same** migration as the V1 conformance token work — do it once, not twice"* — is the
   intent, but it is **not what Phase A could deliver**: converging the two systems means editing V1 components,
-  which Phase A forbids. V2 landed additively; convergence is Phases B–D, package by package
-  ([ADR-080](DECISIONS.md#adr-080), `Proposed`). Do not read this line as a statement about the code today.
+  which Phase A forbids. V2 landed additively; convergence is Phases B–D, package by package, and the
+  token-routing requirement is now a **Phase D** exit criterion ([ADR-080](DECISIONS.md#adr-080),
+  `Accepted`). Do not read this line as a statement about the code today.
 - **B · Library** ◀ **next** — pixel parity to the frozen Library. The closest to a clean re-skin; sets the parity bar.
 - **C · Bench** — pixel + interaction + animation + editing-behaviour parity, on top of the **existing** engine.
   No feature additions.
@@ -151,8 +156,8 @@ independent Review Agent.
 2. Read the **[Phase A completion record](COMPOSE-V2-ROADMAP.md#phase-a-completion-record-2026-07-29)** — what
    already exists, and the four things a new engineer gets wrong that are not visible in the code.
 3. Keep **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md)** open as your checklist.
-4. Begin **Phase B — Library** once [D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface)
-   is ruled on. Phase A is built; building any of it again is the mistake this section exists to prevent.
+4. Begin **Phase B — Library** on an explicit owner GO. Phase A is closed; building any of it again is the
+   mistake this section exists to prevent.
 5. For any screen, open its **frozen HTML** first; it is the spec.
 
 *The design is done. Your job is faithful execution. If something feels like it should change, it goes into the
@@ -161,4 +166,5 @@ frozen HTML first (owner gate) — not into the code.*
 ---
 
 *Handover written 2026-07-28 by the Design Custodian at the close of the V2 Design Program. §0 and the Phase A
-status added 2026-07-29 at the close of Phase A (package A10).*
+status added 2026-07-29 (package A10); updated 2026-07-30 at the **Phase A closeout**, when the D-002, D-006
+and D-016 owner rulings were recorded and Phase A's gate passed.*
