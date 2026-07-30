@@ -39,11 +39,11 @@ heading keeps its original date because its slug is linked from
 Sixteen defects were raised during Phase A: **ten resolved by owner ruling, six open.** Nothing from Phase A
 awaited a ruling, and nothing from Phase A blocked Phase B.
 
-**Phase B / B1 raised three more (D-017, D-018, D-019) and all three were ruled the same day** — so the count is
-now **nineteen: thirteen resolved, six open**, and the six open are the same six Phase A left. **Nothing is
-awaiting an owner ruling.** One item that is *not* a defect entry is still owed a ruling and is recorded where it
-lives: Phase B's *"8pt"* spacing acceptance criterion contradicts the **D-007** ruling — see
-[COMPOSE-V2-ROADMAP.md Phase B](../COMPOSE-V2-ROADMAP.md#phase-b--library).
+**Phase B / B1 raised three more (D-017, D-018, D-019) and Phase B / B2 raised one (D-020). All four were ruled
+the same day they were raised** — so the count is now **twenty: fourteen resolved, six open**, and the six open
+are the same six Phase A left. **Nothing is awaiting an owner ruling.** One item that is *not* a defect entry is
+still owed one and is recorded where it lives: Phase B's *"8pt"* spacing acceptance criterion contradicts the
+**D-007** ruling — see [COMPOSE-V2-ROADMAP.md Phase B](../COMPOSE-V2-ROADMAP.md#phase-b--library).
 
 | Open | Owing to | One line |
 |---|---|---|
@@ -55,13 +55,18 @@ lives: Phase B's *"8pt"* spacing acceptance criterion contradicts the **D-007** 
 | [**D-012**](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) | **Phase C** (deliberately unresolved) | three files write three different reduced-motion rules; one would strobe |
 
 Resolved: **D-002 · D-003 · D-005 · D-006 · D-007 · D-011 · D-013 · D-014 · D-015 · D-016 · D-017 · D-018 ·
-D-019** — full rows in [Resolved](#resolved) below.
+D-019 · D-020** — full rows in [Resolved](#resolved) below.
 
 **Four of the six Phase A entries are open *by owner ruling*, not by neglect** (D-008, D-009, **D-010**,
 D-012): their approach is settled and they stay open until the phase that implements the affected surfaces can
 verify it. Reading them as unattended work is the misreading this table exists to prevent. Of the remaining
 two, **D-004** is deferred to Phase D by ruling and **D-001** is a corpus-cleanup item owed before Phase C.
 That accounts for all six.
+
+**D-020 was ruled on the day B2 raised it** and required no code change, because B2 had transcribed the freeze
+rather than closing the gap. Its ruling carries the register's broadest precedent so far — *"future adaptive
+layouts require a future frozen design rather than implementation inference"* — which is why it is worth reading
+even by a package that never touches a column count.
 
 **The three B1 rulings are worth reading together**, because they answered the same kind of question three
 times: what is a printed object? A cover's look is **assigned data, not a derivation** (D-017); a mark the
@@ -1520,11 +1525,93 @@ it does in CSS: the text is content, not part of the printed object's geometry.
 
 ---
 
+### D-020 — the shelf states a fixed two-column grid with no breakpoint, and Phase B verifies on foldables
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) line 46 — `.shelf{…grid-template-columns:1fr 1fr;gap:28px 20px…}` |
+| **Found** | 2026-07-30, during Phase B / B2 (implementing the shelf) |
+| **Severity** | Design gap — **did not block B2**, which transcribed the freeze literally |
+| **Status** | ✅ **RESOLVED 2026-07-30 by owner ruling** — two columns, no breakpoint, no responsive behaviour, no maximum cover width, and **none of them to be invented**. Ruling at the [foot of this entry](#d-020-ruling). |
+
+**What it says.** `grid-template-columns:1fr 1fr`, and **no `@media` query anywhere in the file** — the only
+`@media` rules in `v2-library.html` are `prefers-color-scheme` (`:20`) and `prefers-reduced-motion` (`:138`).
+The frozen mockup is a `392px` phone (`.phone{width:392px}`, `:41`), so two columns is what the design was
+authored at and the only width it was ever read at.
+
+**Why that is a gap rather than a detail.** Two columns is not a proportion, it is a count, and a count that is
+right at 392dp is not automatically right at 1200dp. At a foldable's unfolded width a two-column shelf draws
+two covers roughly 580dp across — a "small printed object" rendered nearly half a metre tall in the hand's
+frame of reference, which is a different object than the design describes. And this is not hypothetical: Phase
+B's own device verification list names **foldables** explicitly
+([COMPOSE-V2-ROADMAP.md](../COMPOSE-V2-ROADMAP.md)), so the question gets asked by the gate whether or not it is
+answered before it.
+
+**The evidence that the count was never considered, rather than considered and fixed.** V1's shelf — the same
+product, the same screen — is **responsive**: `shelfColumns(width)` in `ShelfCard.kt` returns 2 · 3 · 4 · 5 at
+560 / 820 / 1180dp. So the product already knows this question exists and already has an answer for it. The V2
+freeze does not contradict that answer; it simply never states one, because it was authored as a single phone
+screen. That is the clearest single reading of the gap: V2 is not *choosing* a fixed grid over V1's responsive
+one, it is silent where V1 speaks.
+
+**What B2 did, and did not do.** It transcribed `1fr 1fr` as a fixed two columns and **raised this entry**. It
+did not port V1's breakpoints, average the two, or invent a threshold — the frozen design is unambiguous at the
+width it was drawn for, so there is no ambiguity for an implementation to resolve, only a range the design does
+not cover. Inventing a breakpoint would be inventing design, which is exactly what the B1 rulings established
+must not happen quietly.
+
+**The alternatives, each with its own cost.**
+
+| Rule | What it buys | What it costs |
+|---|---|---|
+| **Fixed two columns** (what B2 ships) | literal parity with the freeze at every width; nothing invented | covers grow without limit on tablets and unfolded foldables |
+| **Port V1's breakpoints** (2 · 3 · 4 · 5) | one consistent product behaviour; already shipped and understood | a V2 screen taking its layout rule from a V1 file the freeze does not reference |
+| **Cap the cover's width, keep two columns** | the object stays object-sized; the two-column *composition* survives | introduces a maximum the frozen file never states, and leaves the row's spare width to be designed |
+| **Declare V2 phone-only for now** | honest, and matches what was actually designed | the device-verification list already promises foldables |
+
+**Owner decision requested (answered below).** Does the V2 shelf stay a fixed two columns at every width, or
+does it adapt — and if it adapts, by V1's existing thresholds or by a rule stated for V2? A related and
+separable question: if covers may grow, is there a maximum cover width, given the whole design premise is
+*a small printed object*?
+
+### Owner ruling — 2026-07-30 {#d-020-ruling}
+
+> *"The frozen design defines a two-column shelf. No breakpoint exists. No responsive behaviour exists. No
+> maximum cover width exists. Do not invent any of them. Future adaptive layouts require a future frozen
+> design rather than implementation inference."*
+
+**What changes in B2: nothing.** `ShelfColumns = 2` and the absence of any width branch were already the
+literal transcription, so the ruling confirms the package as built rather than correcting it. This is the
+first entry in the register to resolve that way, and the reason it could is that B2 raised the gap *instead of*
+closing it — had it ported V1's breakpoints and disclosed them, the ruling would have been a rework.
+
+**The load-bearing half of the ruling is the last sentence**, and it reaches much further than this shelf.
+*"Future adaptive layouts require a future frozen design rather than implementation inference"* states the
+direction of authority for every gap of this shape: where the frozen corpus is **silent** rather than
+contradictory, silence is not an invitation to interpolate. An implementation may not derive a design rule
+from a neighbouring width, a neighbouring screen, or V1's answer to the same question — which is what makes
+this a general precedent and not a one-line fact about columns.
+
+Three consequences worth naming, because each is a decision a later package might otherwise re-open:
+
+1. **V1's `shelfColumns` (2 · 3 · 4 · 5) does not transfer.** It answers this question for V1's shelf and
+   stops there. That V1 already has an answer is evidence the question is real, not evidence of what V2's
+   answer should be.
+2. **A tablet or unfolded foldable shows two large covers, and that is the specified behaviour** — not a
+   defect for the device passes to file. It should be *recorded* by those passes rather than fixed by them;
+   if it reads badly on real hardware, that observation is a request for a **new frozen design**, which is a
+   design-track act, not an implementation one.
+3. **No maximum cover width.** The ruling closes the separable sub-question this entry raised, so a cover's
+   size follows its column and nothing clamps it.
+
+---
+
 ## Resolved
 
 | ID | Defect | Resolved |
 |---|---|---|
 | **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
+| **D-020** | The shelf states a fixed two-column grid with no breakpoint, and Phase B verifies on foldables | 2026-07-30 — owner ruling: two columns, no breakpoint, no responsive behaviour, no maximum cover width, **and none of them to be invented**; *"future adaptive layouts require a future frozen design rather than implementation inference"*. No code change owed — B2 had already transcribed the freeze. Entry kept above. |
 | **D-005** | The Library and the Bench set the same role in two different serifs at two different weights | 2026-07-28 — owner ruling: the Constitution outranks both frozen files. Canonical serif is **Fraunces at 500**; the Library's 600 reflected its Georgia fallback. No code change owed. Entry kept above. |
 | **D-007** | The constitutional 8pt rhythm is not observable in the frozen CSS | 2026-07-28 — owner ruling: §III is an implementation **aspiration**, not a token inventory. **No spacing scale is published**; spacing stays per-component exactly as frozen. Entry kept above. |
 | **D-015** | Two concepts are each drawn twice, with different geometry | 2026-07-29 — owner ruling: **do not deduplicate, canonicalize, or pick a preferred version**. Each geometry is an independent design asset; similarity is not evidence of identity. Convergence, if ever wanted, belongs in the corpus first. No code change owed. Entry kept above. |
@@ -1546,6 +1633,8 @@ is what stops it being reintroduced.)*
 *Opened 2026-07-28 during the Compose V2 implementation programme; register verified against every entry's
 status line on 2026-07-29 (package A10) and again on 2026-07-30 at the **Phase A closeout**, when the
 D-002, D-006 and D-016 owner rulings were recorded — and extended the same day by **D-017**, **D-018** and
-**D-019**, raised by Phase B / B1 and ruled on the same day ([ADR-081](../DECISIONS.md#adr-081)). Governed by
+**D-019**, raised by Phase B / B1 and ruled on the same day ([ADR-081](../DECISIONS.md#adr-081)), then by
+**D-020**, raised by Phase B / B2 and likewise ruled the same day
+([ADR-082](../DECISIONS.md#adr-082)). Governed by
 [V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
 [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*

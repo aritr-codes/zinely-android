@@ -55,7 +55,11 @@ flowchart LR
 >
 > **Phase B has begun (owner GO, 2026-07-30).** Its first package, **B1 — the Maker's Cover**, is built,
 > independently reviewed (GO WITH FIXES, fixes applied) and committed ([ADR-081](DECISIONS.md#adr-081),
-> `Accepted`); B2–B5 have not started. B1 ships `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` and the
+> `Accepted`). **B2 — the shelf — is built, independently reviewed (GO WITH FIXES, fixes applied) and
+> committed** ([ADR-082](DECISIONS.md#adr-082), `Accepted`); it raised **D-020**, which the owner **ruled
+> the same day** in favour of the fixed two columns B2 had transcribed — the first defect this programme
+> raised that cost no rework. B3–B5 have not
+> started. B1 ships `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` and the
 > renderer only — **no assigner**: independent review found the assignment guard could not hold the D-017
 > ruling regardless of how it was written, so the assigner moves to **B5**, next to the persisted field it
 > needs. See
@@ -230,7 +234,7 @@ redesign, no interpretation.** This is the closest surface to a clean re-skin an
 | # | Package | Depends on | Status |
 |---|---|---|---|
 | **B1** | **The Maker's Cover** — the printed object itself: stock, grain, band, stamp, clamped serif title, grounded rest/pressed shadow; `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` (no assigner — see B5); and `Modifier.zinelyV2Shadow` in `:core:ui` | Phase A foundation | ✅ built, independently reviewed (**GO WITH FIXES**, fixes applied), and committed 2026-07-30 ([ADR-081](DECISIONS.md#adr-081), `Accepted`) |
-| **B2** | **The shelf** — two-column grid, frozen gaps, the quiet "Your shelf" header, scroll | B1 | not started |
+| **B2** | **The shelf** — two-column grid (fixed at every width per the **D-020** ruling), frozen gaps, the quiet "Your shelf" header (a full-width cell *inside* the scroll, so it scrolls away), scroll. Paints no ground: the desk is B5's | B1 | ✅ built 2026-07-30, **at its review gate and owing an independent review pass** ([ADR-082](DECISIONS.md#adr-082)); raised **D-020**, ruled the same day with no code change owed |
 | **B3** | **Interaction** — long-press, the visible `⋯` fallback, the action sheet (Open · Share & export · Rename · Duplicate · separated Delete), metadata in the sheet header | B2 | not started |
 | **B4** | **Empty state + "Make a zine"** — the transformation empty state and the CTA into the existing paper chooser | B2 | not started |
 | **B5** | **The screen** — real project data, navigation, route hand-over, `token-enrolment.txt`, both device passes. **Carries two hard prerequisites, both deferred whole from B1:** (1) the **cover assigner** itself (`newZineCoverRecipe`-equivalent) — B1 shipped no assigner at all, because independent review found no reflection guard could hold "never derived from the title" against an assigner with no caller to check; and (2) the **persisted cover assignment** the D-017 ruling requires (a surface + stamp field on the project index and its `meta.json` sidecar, [ADR-042](DECISIONS.md#adr-042)) — a shelf that assigns a cover without storing it reprints every cover on every launch. B5 builds both together, so the guard has an actual call site to check | B1–B4 | not started |
@@ -238,6 +242,16 @@ redesign, no interpretation.** This is the closest surface to a clean re-skin an
 B1 is the leaf: the cover is the only element the frozen file specifies completely on its own, and every later
 package draws it. It is **additive** — V1's shelf keeps its route and no V1 `src/main` file is touched — so the
 Library becomes the app's Library at **B5**, not before.
+
+**Raised by B2 and ruled the same day:** [**D-020**](design/V2-SPEC-DEFECTS.md#d-020--the-shelf-states-a-fixed-two-column-grid-with-no-breakpoint-and-phase-b-verifies-on-foldables)
+— the frozen shelf states `grid-template-columns:1fr 1fr` with **no media query anywhere in the file**, and was
+authored at a single 392px phone, while V1's shelf is responsive (2 · 3 · 4 · 5) for the same screen. B2
+transcribed the freeze and invented no breakpoint; the owner ruled that reading correct: **two columns, no
+breakpoint, no responsive behaviour, no maximum cover width, and none of them to be invented** —
+*"future adaptive layouts require a future frozen design rather than implementation inference"*. **No code change
+was owed.** Two consequences for the device passes below: a tablet or unfolded foldable showing two large covers
+is the **specified** behaviour, to be *recorded* rather than fixed, and any wish to change it is a request for a
+new frozen design, not an implementation task.
 
 **Raised by B1 and ruled the same day** — all three applied, and each settles more than the cover:
 

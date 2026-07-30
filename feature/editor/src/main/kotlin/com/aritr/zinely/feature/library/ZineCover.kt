@@ -118,8 +118,13 @@ import com.aritr.zinely.ui.theme.rememberZinelyV2Icon
  *   spec's clothes. The 9ch measure and the two-line clamp are transcribed exactly; the balance is
  *   omitted and disclosed rather than faked.
  *
- * @param title the zine's own title. Drawn, measured, and hashed into the [recipe] by the caller.
- * @param recipe which surface and stamp this zine prints on — see [zineCoverRecipe].
+ * @param title the zine's own title. **Drawn and measured here, and nothing else** — no part of the
+ *   [recipe] is derived from it, on any path. An earlier draft of this file hashed the title into the
+ *   recipe and this `@param` still described that mechanism after **D-017** deleted it; the ruling is that
+ *   a cover is assigned once at creation and persisted, so that a rename cannot reprint a physical object.
+ * @param recipe which surface and stamp this zine prints on — see [ZineCoverRecipe]. Assigned by the
+ *   caller and persisted with the zine (**D-017**); B1 ships no assigner at all and **B5** brings one,
+ *   next to the stored field it needs. See [ZineCoverRecipe]'s own note for why it is not here.
  * @param pressed `.zine:active` — flattens the shadow toward the desk. The cover does not rise: the
  *   frozen `:active` rule changes `box-shadow` only.
  * @param overlay content at `z-index:2` inside the cover's bounds; the shelf item's `⋯` lands here.

@@ -38,8 +38,28 @@ the dead `--r:18px` token from the frozen Bench and Proof. Nothing from Phase A 
 ([Phase B packages](COMPOSE-V2-ROADMAP.md#phase-b-packages-sequencing-is-the-implementers-call-the-phases-criteria-above-are-unchanged)).
 **B1 — the Maker's Cover — is built, independently reviewed (GO WITH FIXES, fixes applied), and committed**
 ([ADR-081](DECISIONS.md#adr-081), `Accepted`): a new `com.aritr.zinely.feature.library` package plus
-`Modifier.zinelyV2Shadow` in `:core:ui`. B2–B5 have not started. B1 is **additive**: V1's shelf keeps its
-route, so nothing user-visible has changed and the V2 Library becomes the app's Library at **B5**.
+`Modifier.zinelyV2Shadow` in `:core:ui`.
+
+**B2 — the shelf — is built, independently reviewed (GO WITH FIXES, fixes applied) and committed**
+([ADR-082](DECISIONS.md#adr-082),
+`Accepted`): `ZineShelf` + `ZineShelfItem`, two fixed columns under a "Your shelf" heading that **scrolls away
+with the covers** because the frozen markup makes it a full-width cell inside the scroll rather than a bar above
+it. It **paints no ground** — `.shelf` declares no background, so the desk is B5's screen to fill — and it
+defers `.zine` (press transform, focus ring, tap) whole to **B3**, which is safe because a resting `.zine`
+paints nothing. B2 raised **D-020** and it was **ruled the same day**, costing no rework. B3–B5 have not
+started.
+
+**Read [ADR-082's review outcome](DECISIONS.md#adr-082-review) before writing B3's tests.** B2's own
+ten-mutation battery passed while the grid was fed `zines.reversed()` — the sixth package in this programme
+whose assertions were blind to the defect class their names claimed to gate. The rule that came out of it:
+an ordering, mapping or identity claim cannot be tested by asserting that each element exists *and* that
+positions ascend, because a permutation satisfies both. The element and its position must meet in one
+matcher. Two smaller traps from the same review: `assertEquals(expected, actual, delta)` passes at
+`|Δ| == delta`, so a `1f` tolerance accepts an off-by-one pixel; and a doc block that outlives the ruling it
+describes is a defect, which B2 both fixed in `ZineCover.kt` and reintroduced in `ZineShelf.kt`.
+
+Both packages are **additive**: V1's shelf keeps its route, so nothing user-visible has changed and the V2
+Library becomes the app's Library at **B5**.
 
 **B1 ships no cover assigner.** `ZineCoverSurface`, `ZineCoverStamp` and `ZineCoverRecipe` exist; the
 function that picks one for a real zine does not. Independent review found the reflection guard meant to
@@ -63,6 +83,21 @@ session most needs, because each states what a *printed object* is rather than h
 
 One item is still owed a ruling and is reported in the roadmap rather than the register: Phase B's *"8pt"*
 spacing criterion contradicts the **D-007** ruling that no spacing scale is published.
+
+**[D-020](design/V2-SPEC-DEFECTS.md#d-020--the-shelf-states-a-fixed-two-column-grid-with-no-breakpoint-and-phase-b-verifies-on-foldables)
+is the one to read before touching any layout**, because its ruling is general: *"future adaptive layouts require
+a future frozen design rather than implementation inference."* Where the frozen corpus is **silent** rather than
+contradictory, silence is not an invitation to interpolate — not from a neighbouring width, not from another
+screen, and not from V1's answer to the same question. Concretely for the Library: two columns at every width,
+no maximum cover width, and a foldable showing two large covers is *specified*, so the device passes record it
+rather than fix it.
+
+**Two defects B2 found. One was corrected by owner direction; one is still open:**
+- ✅ `ZineCover.kt`'s `@param` block described the title-hash mechanism **D-017** deleted, making committed code
+  contradict an accepted ruling. **Corrected** with B2, as documentation only.
+- ⏳ V1's `ReframeSessionTest > an_unreadable_photo_is_refused_entry_to_reframe` fails **intermittently** in
+  full-suite order — it passed in isolation with and without B2, failed one full `--rerun-tasks` run, and passed
+  the next. Pre-existing and order-dependent, not B2's, and **not yet triaged**.
 
 **B1's independent review is complete and reconciled** — [CLAUDE.md](../CLAUDE.md#multi-agent-workflow)'s
 *"never self-approves"* held: the review ran across a multi-hour provider outage, was resumed from its

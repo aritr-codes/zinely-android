@@ -135,6 +135,7 @@ module split remains deferred per [ADR-043](DECISIONS.md#adr-043)).
 |---|---|---|
 | The Maker's Cover — a printed paper object: stock, grain, band, stamp, clamped serif title, grounded shadow | `ZineCover` | [ADR-081](DECISIONS.md#adr-081) |
 | Which cover a zine gets — six surfaces × six stamps, **to be assigned once at creation and persisted by the caller** (never derived from the title) — B1 ships `ZineCoverSurface`/`ZineCoverStamp` only; the assigner itself lands in **B5**, next to the persisted field | `ZineCoverRecipe` | [ADR-081](DECISIONS.md#adr-081) + the **D-017** ruling; supersedes [ADR-069](DECISIONS.md#adr-069)'s hash for V2 |
+| The shelf — two fixed columns of covers, frozen gaps, and the quiet "Your shelf" heading **as a full-width cell inside the scroll**, so it scrolls away rather than pinning | `ZineShelf`, `ZineShelfItem` | [ADR-082](DECISIONS.md#adr-082); the fixed column count is the **[D-020](design/V2-SPEC-DEFECTS.md#d-020-ruling)** ruling — no breakpoint, no responsive behaviour, no maximum cover width, and none to be inferred here |
 
 Several properties are load-bearing:
 
@@ -154,6 +155,10 @@ Several properties are load-bearing:
   `ZinelyV2ShadowLayer` lists [ADR-074](DECISIONS.md#adr-074) published as data: multiple layers in painter's
   order, spread that is negative wherever it appears, dy without dx. The Bench and Proof need the same
   primitive in Phases C and D.
+- **The shelf paints no ground, and the screen owes it.** `.shelf` declares no `background` — the desk belongs
+  to `.phone`, which is the app window and therefore **B5**'s screen. `ZineShelf` is transparent on purpose, so
+  the room's colour is decided in one place rather than two. A `background(desk)` on the shelf would look
+  correct in every raster until B5 disagreed with it.
 
 ## 3. Data flow
 
