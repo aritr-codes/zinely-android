@@ -124,6 +124,37 @@ Three properties of this layer are load-bearing and easy to lose:
   this itself. Confirmed as the migration architecture, and not a parallel design system, by the **D-016** owner
   ruling of 2026-07-30; full token routing of the product surfaces is a **Phase D** exit criterion.
 
+### 2.2 The V2 Library surface (`:feature:editor` → `feature.library`) {#22-the-v2-library-surface}
+
+Phase B builds the V2 Library in a **new package**, `com.aritr.zinely.feature.library`, inside `:feature:editor`
+— additively, exactly as Phase A was: V1's `HomeScreen`/`ShelfCover` keep their route and are not edited, so the
+app still shows the V1 shelf while V2 is assembled beside it ([ADR-081](DECISIONS.md#adr-081); a `:feature:home`
+module split remains deferred per [ADR-043](DECISIONS.md#adr-043)).
+
+| Piece | Type | Decision |
+|---|---|---|
+| The Maker's Cover — a printed paper object: stock, grain, band, stamp, clamped serif title, grounded shadow | `ZineCover` | [ADR-081](DECISIONS.md#adr-081) |
+| Which cover a zine gets — six surfaces × six stamps, **to be assigned once at creation and persisted by the caller** (never derived from the title) — B1 ships `ZineCoverSurface`/`ZineCoverStamp` only; the assigner itself lands in **B5**, next to the persisted field | `ZineCoverRecipe` | [ADR-081](DECISIONS.md#adr-081) + the **D-017** ruling; supersedes [ADR-069](DECISIONS.md#adr-069)'s hash for V2 |
+
+Several properties are load-bearing:
+
+- **A printed cover draws in ONE layer.** Compose composites blend modes within the current layer, and a child
+  node's backdrop is transparent — so a `multiply` band in its own node silently becomes `SrcOver`. Stock, grain,
+  hairline, spine, band and fore-edge therefore share a single `DrawScope`, and the cover paints grain inline
+  rather than through `Modifier.zinelyV2Grain` (which draws noise *after* content — right for a page, wrong for ink).
+- **Its geometry is physical, not logical.** The frozen CSS states the cover's handedness physically (radii
+  `6px 9px 9px 6px`, crease `left:9px`, fore-edge `right:0`), so the shape is `AbsoluteRoundedCornerShape`:
+  logical corners would mirror under RTL while the `Brush`-drawn crease would not, creasing the cover down its
+  own cut edge. **D-019**, ruled: a *printed artifact* never mirrors, in any locale; chrome may. The title still
+  follows the layout direction — text is content, not the object's geometry.
+- **A cover the platform cannot print is short one mark, not approximated.** No grain below API 29 (**D-014**)
+  and no ink band either (**D-018** — `multiply` is missing on the same devices, and the ruling is omit, not
+  emulate). One platform ceiling, two absent marks, **one** Known Limitation for the release notes.
+- **CSS `box-shadow` lives in `:core:ui`, not here.** `Modifier.zinelyV2Shadow` renders the
+  `ZinelyV2ShadowLayer` lists [ADR-074](DECISIONS.md#adr-074) published as data: multiple layers in painter's
+  order, spread that is negative wherever it appears, dy without dx. The Bench and Proof need the same
+  primitive in Phases C and D.
+
 ## 3. Data flow
 
 ```mermaid

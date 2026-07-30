@@ -32,9 +32,42 @@ V1 product components, which Phase A forbids; it is therefore **re-seated to Pha
 2026-07-30). The companion criterion *"no duplicate design system"* is **met by confirmation** of the
 migration architecture — [ADR-080](DECISIONS.md#adr-080), now `Accepted`. Two further rulings landed with
 it: **D-002** fixes the cover-title contrast floor at **3.0:1** with no design change, and **D-006** deleted
-the dead `--r:18px` token from the frozen Bench and Proof. **Nothing is awaiting an owner.**
+the dead `--r:18px` token from the frozen Bench and Proof. Nothing from Phase A is awaiting an owner.
 
-**Next:** Phase B — Library. It has not started and begins on an explicit owner GO.
+**Where Phase B is.** It **started on 2026-07-30** by owner GO, split into five packages
+([Phase B packages](COMPOSE-V2-ROADMAP.md#phase-b-packages-sequencing-is-the-implementers-call-the-phases-criteria-above-are-unchanged)).
+**B1 — the Maker's Cover — is built, independently reviewed (GO WITH FIXES, fixes applied), and committed**
+([ADR-081](DECISIONS.md#adr-081), `Accepted`): a new `com.aritr.zinely.feature.library` package plus
+`Modifier.zinelyV2Shadow` in `:core:ui`. B2–B5 have not started. B1 is **additive**: V1's shelf keeps its
+route, so nothing user-visible has changed and the V2 Library becomes the app's Library at **B5**.
+
+**B1 ships no cover assigner.** `ZineCoverSurface`, `ZineCoverStamp` and `ZineCoverRecipe` exist; the
+function that picks one for a real zine does not. Independent review found the reflection guard meant to
+enforce D-017 ("never derived from the title") could not hold that ruling *regardless of how it was
+written* — it checked a parameter's type, and the ruling is about information flow, which no signature
+check decides. Rather than patch the guard a sixth time, the assigner and the guard both move to **B5**,
+where an actual create-and-persist call site exists to check directly. **Do not re-add an assigner to B1's
+package** — build it in B5, next to the persisted field.
+
+**B1 raised three defects and all three were ruled and applied on 2026-07-30** — and they are the rulings a new
+session most needs, because each states what a *printed object* is rather than how to draw one:
+
+- [**D-017**](design/V2-SPEC-DEFECTS.md#d-017-ruling) — a cover is **assigned once at creation and persisted**.
+  Not derived from the title (a rename must not repaint a physical object), not round-robin, not inferred from
+  neighbours. It supersedes [ADR-069](DECISIONS.md#adr-069)'s title-hash mechanism for V2 covers, and it makes
+  the persisted surface+stamp field a **hard prerequisite of B5**.
+- [**D-018**](design/V2-SPEC-DEFECTS.md#d-018-ruling) — **omit** the ink band below API 29; no emulation, no
+  substitute blend mode. Same ceiling as D-014's grain, so both are **one** Known Limitation.
+- [**D-019**](design/V2-SPEC-DEFECTS.md#d-019-ruling) — a **printed artifact never mirrors**; chrome may. Already
+  answers B2's grid, Phase C's page sheets and Phase D's imposed sheet.
+
+One item is still owed a ruling and is reported in the roadmap rather than the register: Phase B's *"8pt"*
+spacing criterion contradicts the **D-007** ruling that no spacing scale is published.
+
+**B1's independent review is complete and reconciled** — [CLAUDE.md](../CLAUDE.md#multi-agent-workflow)'s
+*"never self-approves"* held: the review ran across a multi-hour provider outage, was resumed from its
+preserved transcript rather than restarted, and was not replaced by self-review at any point. Verdict and
+finding-by-finding reconciliation are in [ADR-081](DECISIONS.md#adr-081)'s Decision 7.
 
 ---
 

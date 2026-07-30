@@ -51,8 +51,16 @@ flowchart LR
 > confirmation** of the migration architecture and strategy. [ADR-080](DECISIONS.md#adr-080) is `Accepted`.
 >
 > The record of what was actually built — deliverable by deliverable, criterion by criterion — is
-> [below](#phase-a-completion-record-2026-07-29). **Phase B is next and has not started**; it begins on an
-> explicit owner GO.
+> [below](#phase-a-completion-record-2026-07-29).
+>
+> **Phase B has begun (owner GO, 2026-07-30).** Its first package, **B1 — the Maker's Cover**, is built,
+> independently reviewed (GO WITH FIXES, fixes applied) and committed ([ADR-081](DECISIONS.md#adr-081),
+> `Accepted`); B2–B5 have not started. B1 ships `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` and the
+> renderer only — **no assigner**: independent review found the assignment guard could not hold the D-017
+> ruling regardless of how it was written, so the assigner moves to **B5**, next to the persisted field it
+> needs. See
+> [Phase B packages](#phase-b-packages-sequencing-is-the-implementers-call-the-phases-criteria-above-are-unchanged).
+> Nothing user-visible has changed yet: B1 is additive and V1's shelf is still the app's Library.
 
 Each phase has an **Objective**, **Deliverables**, **Acceptance criteria**, and a **Review gate**. A phase is not
 started until the previous phase's gate has passed.
@@ -216,6 +224,35 @@ redesign, no interpretation.** This is the closest surface to a clean re-skin an
 - **Both device passes** accepted.
 
 **Review gate.** Parity screenshots (light + dark) attached; deviations logged and resolved; **GO** before Phase C.
+
+### Phase B packages (sequencing is the implementer's call; the phase's criteria above are unchanged)
+
+| # | Package | Depends on | Status |
+|---|---|---|---|
+| **B1** | **The Maker's Cover** — the printed object itself: stock, grain, band, stamp, clamped serif title, grounded rest/pressed shadow; `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` (no assigner — see B5); and `Modifier.zinelyV2Shadow` in `:core:ui` | Phase A foundation | ✅ built, independently reviewed (**GO WITH FIXES**, fixes applied), and committed 2026-07-30 ([ADR-081](DECISIONS.md#adr-081), `Accepted`) |
+| **B2** | **The shelf** — two-column grid, frozen gaps, the quiet "Your shelf" header, scroll | B1 | not started |
+| **B3** | **Interaction** — long-press, the visible `⋯` fallback, the action sheet (Open · Share & export · Rename · Duplicate · separated Delete), metadata in the sheet header | B2 | not started |
+| **B4** | **Empty state + "Make a zine"** — the transformation empty state and the CTA into the existing paper chooser | B2 | not started |
+| **B5** | **The screen** — real project data, navigation, route hand-over, `token-enrolment.txt`, both device passes. **Carries two hard prerequisites, both deferred whole from B1:** (1) the **cover assigner** itself (`newZineCoverRecipe`-equivalent) — B1 shipped no assigner at all, because independent review found no reflection guard could hold "never derived from the title" against an assigner with no caller to check; and (2) the **persisted cover assignment** the D-017 ruling requires (a surface + stamp field on the project index and its `meta.json` sidecar, [ADR-042](DECISIONS.md#adr-042)) — a shelf that assigns a cover without storing it reprints every cover on every launch. B5 builds both together, so the guard has an actual call site to check | B1–B4 | not started |
+
+B1 is the leaf: the cover is the only element the frozen file specifies completely on its own, and every later
+package draws it. It is **additive** — V1's shelf keeps its route and no V1 `src/main` file is touched — so the
+Library becomes the app's Library at **B5**, not before.
+
+**Raised by B1 and ruled the same day** — all three applied, and each settles more than the cover:
+
+| | Ruling | Reach |
+|---|---|---|
+| [**D-017**](design/V2-SPEC-DEFECTS.md#d-017-ruling) | A cover is **assigned once at creation and persisted** — not derived from the title, not round-robin, not inferred from neighbours. The assignment is part of the zine's identity. | supersedes [ADR-069](DECISIONS.md#adr-069)'s title-hash *mechanism* for V2; B1 ships no assigner (review found no guard could hold the ruling without a persisted caller); B5 builds the assigner and the persistence together |
+| [**D-018**](design/V2-SPEC-DEFECTS.md#d-018-ruling) | **Omit** the ink band below API 29; do not emulate `multiply` or substitute a blend mode. | extends D-014 from a *material* to a *mark*; one Known Limitation covers both |
+| [**D-019**](design/V2-SPEC-DEFECTS.md#d-019-ruling) | A **printed artifact does not mirror** in any locale; chrome may. | answers B2's grid, Phase C's page sheets and Phase D's imposed sheet in advance |
+
+**One acceptance criterion above is stale and is left as written rather than quietly amended:** *"spacing (8pt)"*
+and *"8pt rhythm"* were superseded by the **D-007** owner ruling of 2026-07-28 — *no spacing scale is published;
+spacing stays per-component exactly as frozen* — and the frozen Library's own cover padding (`15px 15px 18px`)
+is not on an 8pt grid. Editing a phase's acceptance criteria is an owner act ([ADR-080](DECISIONS.md#adr-080)
+Decision 1 is the precedent), so it is reported here for a ruling. Parity against the frozen CSS is the operative
+bar B1 was built to.
 
 ---
 

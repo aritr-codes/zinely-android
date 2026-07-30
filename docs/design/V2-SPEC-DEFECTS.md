@@ -36,8 +36,14 @@ work stops until an owner ruling lands.
 heading keeps its original date because its slug is linked from
 [COMPOSE-V2-ROADMAP.md](../COMPOSE-V2-ROADMAP.md); renaming it would break that link.*
 
-Sixteen defects raised during Phase A: **ten resolved by owner ruling, six open.** **Nothing is awaiting an
-owner ruling, and nothing blocks Phase B.**
+Sixteen defects were raised during Phase A: **ten resolved by owner ruling, six open.** Nothing from Phase A
+awaited a ruling, and nothing from Phase A blocked Phase B.
+
+**Phase B / B1 raised three more (D-017, D-018, D-019) and all three were ruled the same day** — so the count is
+now **nineteen: thirteen resolved, six open**, and the six open are the same six Phase A left. **Nothing is
+awaiting an owner ruling.** One item that is *not* a defect entry is still owed a ruling and is recorded where it
+lives: Phase B's *"8pt"* spacing acceptance criterion contradicts the **D-007** ruling — see
+[COMPOSE-V2-ROADMAP.md Phase B](../COMPOSE-V2-ROADMAP.md#phase-b--library).
 
 | Open | Owing to | One line |
 |---|---|---|
@@ -48,14 +54,20 @@ owner ruling, and nothing blocks Phase B.**
 | [**D-010**](#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark) | **Phase C** (deferred by ruling) | the page shadow is hard-coded to the light theme and does not adapt in the dark |
 | [**D-012**](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) | **Phase C** (deliberately unresolved) | three files write three different reduced-motion rules; one would strobe |
 
-Resolved: **D-002 · D-003 · D-005 · D-006 · D-007 · D-011 · D-013 · D-014 · D-015 · D-016** — full rows in
-[Resolved](#resolved) below.
+Resolved: **D-002 · D-003 · D-005 · D-006 · D-007 · D-011 · D-013 · D-014 · D-015 · D-016 · D-017 · D-018 ·
+D-019** — full rows in [Resolved](#resolved) below.
 
-**Four of the open six are open *by owner ruling*, not by neglect** (D-008, D-009, **D-010**, D-012): their
-approach is settled and they stay open until the phase that implements the affected surfaces can verify it.
-Reading them as unattended work is the misreading this table exists to prevent. Of the remaining two,
-**D-004** is deferred to Phase D by ruling and **D-001** is a corpus-cleanup item owed before Phase C. That
-accounts for all six.
+**Four of the six Phase A entries are open *by owner ruling*, not by neglect** (D-008, D-009, **D-010**,
+D-012): their approach is settled and they stay open until the phase that implements the affected surfaces can
+verify it. Reading them as unattended work is the misreading this table exists to prevent. Of the remaining
+two, **D-004** is deferred to Phase D by ruling and **D-001** is a corpus-cleanup item owed before Phase C.
+That accounts for all six.
+
+**The three B1 rulings are worth reading together**, because they answered the same kind of question three
+times: what is a printed object? A cover's look is **assigned data, not a derivation** (D-017); a mark the
+platform cannot print is **omitted, not approximated** (D-018); and a physical artifact **does not mirror**
+however the chrome around it does (D-019). Phase A asked how to build the design system faithfully; these are
+product semantics, and they now hold for every surface Phases B–D touch, not just the cover.
 
 ---
 
@@ -1286,6 +1298,228 @@ re-seated clause; **Phase A is CLOSED**. Phase B remains unstarted and begins on
 
 ---
 
+### D-017 — the frozen Library shows six covers and states no rule for giving a cover to a seventh zine
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) lines 149–154; [V2-IDENTITY.md §5](V2-IDENTITY.md) |
+| **Found** | 2026-07-30, during Phase B / B1 (implementing the Maker's Cover) |
+| **Severity** | Design gap — **does not block implementation**; B1 shipped a disclosed interpretation that one pure function replaced |
+| **Status** | ✅ **RESOLVED 2026-07-30 by owner ruling** — assign at creation and persist; **do not** derive from the title. Ruling and consequences at the [foot of this entry](#d-017-ruling). |
+
+**What it says.** The frozen shelf hard-authors six covers: `class="cover ink-matcha"` … `paper-s`, one
+`.band` and one `.stamp` per cover, six titles. Every constant a cover needs is frozen — the four cover inks
+and two paper stocks (lines 79–84), the band's geometry (line 67), the stamp's rotation and size, the title's
+type. What is *not* anywhere in the trilogy is the sentence that decides **which** of those six surfaces a
+newly-created zine prints on, or which of the six stamps it carries.
+
+**Why that is a gap and not a detail.** A prototype's shelf is authored content; a product's shelf is user
+data. The moment the Library draws a real zine list, something must map a zine to a surface and a stamp, and
+the frozen corpus supplies no rule — so an implementation cannot transcribe this. It has to decide.
+
+[V2-IDENTITY.md §5](V2-IDENTITY.md) is the nearest thing to an answer and stops one step short of one: it
+names the model (*"a frozen grid × swappable ingredients"*, *"Freeze the grid; vary the ingredients"*) and the
+goal (*"per-object individuality"*, so a row reads as a collection), but not **what varies them**. It is also a
+design *proposal* document, not part of the frozen trilogy, so it could not settle this even if it did.
+
+**What B1 decided, and disclosed rather than buried.** The cover is derived from the zine's title, by the
+character-sum hash the **V1** shelf prototype states — [`docs/design/v1/shelf.html:527`](v1/shelf.html),
+`h=(h+c.charCodeAt(0))|0`, and the same shape V1's Kotlin `shelfCoverHash` uses over four archetypes — fed
+into two independent axes: `surface = h % 6`, `stamp = (h / 6) % 6`. (The V2 Library prototype has **no** hash
+at all; its six covers are authored classes. So even the derivation's *shape* comes from V1, which is the
+clearest single statement of this gap.) Deriving from the title
+is what [ADR-069](../DECISIONS.md#adr-069) already records for V1's shelf and what keeps a shelf reproducible
+with **no new persisted state**. Three properties follow, all asserted in `ZineCoverRecipeTest` so a future
+reader meets them as known behaviour:
+
+1. **A rename reprints the cover.** The look is a function of the title; change the title, get a new look.
+2. **An anagram prints the same cover.** A character sum cannot distinguish `"Tiny poems"` from `"poems Tiny"`.
+   (One deliberate divergence from the JS, shared with V1's Kotlin hash: `for (c in title)` sums both UTF-16
+   units of an astral character where JS's `c.charCodeAt(0)` sums only the leading surrogate. It changes which
+   cover an emoji-titled zine prints, nothing else, and is asserted rather than left to be discovered.)
+3. **There is no distinctness guarantee.** The frozen file's own six titles land on **three** surfaces, because
+   two pairs collide. So the Compose Library will not reproduce the frozen screenshot's six-way variety for
+   those exact six titles — the *grammar* matches the freeze; the particular sheet does not.
+
+**The alternatives, each with its own cost.**
+
+| Rule | What it buys | What it costs |
+|---|---|---|
+| **Title hash** (what B1 ships) | no persisted state; deterministic; a shelf is reproducible from titles alone | renames reprint; no distinctness guarantee |
+| **Persist the recipe at creation** | a cover survives a rename; distinctness can be enforced at insert | a data-model change (Room metadata / the [ADR-003](../DECISIONS.md#adr-003) document tree) and a migration |
+| **Assign by insertion order** (round-robin) | the first six zines are guaranteed six different covers, exactly as frozen | a zine's own look depends on its **neighbours** — delete one and others reprint |
+| **Let the maker choose** | no ambiguity at all | a feature that is not in the frozen design; belongs to the roadmap, not to Phase B |
+
+**Owner question (answered below).** Accept the title-hash derivation as B1 first shipped it (and with it:
+renames reprint, and one shelf may show a repeated surface), or rule for one of the other three?
+
+### Owner ruling — 2026-07-30 {#d-017-ruling}
+
+> *"Do not derive the cover surface from the title. Assign the cover surface once when the zine is created and
+> persist that assignment. A physical object should retain its identity across renames. Do not use round-robin
+> assignment. Do not infer from neighbouring zines. The persisted assignment becomes part of the zine's
+> identity."*
+
+**What changed in B1.** `zineCoverHash(title)` and `zineCoverRecipe(title)` are **deleted**. A second draft
+briefly shipped `newZineCoverRecipe(random: Random)` here — drawing each axis independently, guarded by a
+reflection test scanning for any function mapping a `String` to a cover. Independent review of B1 found the
+guard could not hold the ruling regardless of how it was written: it checked for an exact `String` parameter
+type, so a title-derived **seed** at a call site (`newZineCoverRecipe(Random(title.hashCode()))`) satisfies
+every version of it while the title still reaches the cover. That is not a fixable gap in one test; a
+signature check cannot decide an information-flow property, which is what "must the title never reach the
+cover, by any path" actually is. (The guard itself went through five wrong versions before this was found —
+each fix closing one bypass while opening or leaving another; the history is kept in this session's
+implementer/reviewer transcript rather than restated here.)
+
+**So B1 ships no assigner at all.** [ZineCoverSurface] and [ZineCoverStamp] vary independently — the frozen
+grid × swappable ingredients [V2-IDENTITY.md](V2-IDENTITY.md) §5 describes — but nothing in B1 draws one from
+the other or from anything else, because B1 has no caller to assign a cover *to*: it renders a given
+`ZineCoverRecipe`, it does not decide one. The assigner — and a guard that can finally see the whole path
+worth checking — land together in **Phase B / B5**, next to the persisted surface+stamp field the ruling
+requires ([ADR-042](../DECISIONS.md#adr-042)'s project index / `meta.json` sidecar): an assigner with nowhere
+to store its result "assigns" a cover that evaporates on the next recomposition, which is a different bug
+than a title leaking in, but a bug all the same, and B5 is where there is finally an actual call site whose
+one input can be checked directly instead of enumerated against.
+
+**What the ruling's four clauses become, once assignment lands in B5:**
+
+| Clause | Where it will be held |
+|---|---|
+| not from the title | the assigner's only parameter is the source of randomness, never the title — checked directly at its one call site, not by scanning the package |
+| retained across renames | the persisted field is written once, at creation; a rename touches a different field entirely |
+| no round-robin, no neighbours | assignment reads neither the shelf nor an index, so adding or deleting a zine cannot change another zine's cover |
+| assigned once | the assigner is called from the create path only, with **no** default/no-argument overload that composition could reach for |
+
+**One accepted consequence, to be recorded again at B5:** independent draws mean **two zines on one shelf may
+print the same surface**, where the frozen file's six examples are all different. Guaranteeing distinctness
+requires reading the shelf, which the ruling excludes twice over — so a repeat is the ruled behaviour.
+
+**What is still owed, and by whom.** The field holding a zine's assigned surface and stamp belongs to the
+project index and its `meta.json` sidecar ([ADR-042](../DECISIONS.md#adr-042)) and lands with the data wiring
+in **Phase B / B5**, which is a **hard prerequisite** for routing the V2 Library rather than an optional
+extra: a shelf that assigns without persisting would reprint every cover on every launch.
+
+**And one thing this supersedes.** [ADR-069](../DECISIONS.md#adr-069) describes the shelf as drawing *"a
+title-hashed riso cover … and keeps doing so"*. That mechanism is superseded **for V2 covers**; ADR-069's
+load-bearing rule — a cover is a *recipe*, never a rendered page thumbnail — is untouched, and is why
+assignment returns a recipe rather than anything raster. V1's shelf keeps its own title hash until C0.
+
+---
+
+### D-018 — the cover's ink band specifies `multiply`, which Android cannot honour below API 29
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) line 67 — `.band{…opacity:.9;mix-blend-mode:multiply}` |
+| **Found** | 2026-07-30, during Phase B / B1 (pixel-verifying the band at two API levels) |
+| **Severity** | Platform ceiling — the cover still draws; **the band's colour was wrong on API 24–28** |
+| **Status** | ✅ **RESOLVED 2026-07-30 by owner ruling** — follow D-014: **omit the band**, do not emulate `multiply` and do not substitute another blend mode. Ruling at the [foot of this entry](#d-018-ruling). |
+
+**What the platform does.** `BlendMode.Multiply` — like `BlendMode.Softlight` before it (D-014) — is
+unsupported by the hardware-accelerated canvas below **API 29**, and it fails *silently*: the draw succeeds
+and composites `SrcOver`. Verified at both levels in `ZineCoverRenderTest`, which reads the band's mean red
+channel: on API 29 the band multiplies (matcha `#4E5A26` over `#7C8A3F` → a distinctly darker band); on
+API 28 the same call lays the band's own colour at 90 % opacity instead.
+
+**Why this one is not simply D-014 again.** D-014's ruling is that where the platform cannot express the
+design, the implementation **omits and discloses** — flat paper is *correct*, not a fallback. Applied
+literally here, the band would not be drawn at all on API 24–28. But the band is a printed cover's **only
+printed mark** besides the stamp: omit it and a matcha cover becomes a flat matcha rectangle, which is a
+larger deviation from the frozen design than a band of the wrong darkness. So the two available readings
+disagree, and neither is obviously the owner's:
+
+| Reading | On API 24–28 | Argument |
+|---|---|---|
+| **Draw it `SrcOver`** (what B1 first shipped) | band present, lighter/flatter than frozen | the cover keeps its composition; the deviation is a shade, not a missing element |
+| **Omit the band** (D-014's precedent) | flat stock, no band | *"fail honestly rather than approximate"* — a `SrcOver` band **is** an approximation of a `multiply` band |
+
+**What B1 first shipped, stated plainly.** The band was drawn on every API level, compositing `SrcOver` below
+29. That is an approximation, which is the side of [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md)'s
+*"platform limitations must fail honestly rather than approximating the design"* that this register exists to
+flag rather than to hide — and it is what the ruling below reversed.
+
+**Owner question (answered below).** On API 24–28: draw the band `SrcOver` (accept a lighter band), or omit it
+(accept a flat stock)?
+
+**Not in scope of the question:** raising `minSdk`. D-014 already ruled that out for the same platform gap.
+
+### Owner ruling — 2026-07-30 {#d-018-ruling}
+
+> *"Follow the precedent established by D-014. Do not emulate Multiply. Do not substitute another blend mode.
+> If the platform cannot express the frozen design, omit the multiplied band rather than approximating it.
+> Record this interpretation."*
+
+**What changed in B1.** `drawInkBand` now returns early unless `BlendMode.Multiply.isSupported()` — the same
+predicate style as [ZinelyV2Grain.IsSupported](#d-014--the-paper-material-cannot-be-drawn-at-all-on-api-2428-and-the-design-has-no-reading-for-those-devices),
+asked of Compose rather than of `Build.VERSION` so the guard cannot drift from the compositing path it guards.
+On API 24–28 a cover is therefore **stock, crease, fore-edge, stamp and title, with no printed band**.
+
+**The interpretation, recorded as the ruling asks.** Two of the frozen cover's marks are now absent on those
+devices — the grain (D-014) and the band (D-018) — and both absences have the same cause: one platform ceiling
+at API 29, reached by two different blend modes. They are **one Known Limitation**, not two, and belong in the
+release notes as one sentence: *on Android 9 and older, printed covers show their stock, crease and stamp
+without the paper grain or the ink band.*
+
+**The tests moved with the ruling, in both directions.** `below API 29 the band is omitted rather than
+approximated` reads the same pixels the old assertion read and demands the opposite answer — every row the band
+would have covered must be *exactly* the stock, so a band of any kind fails it. And the band's geometry test
+(`the band spans exactly the frozen thirty-three to forty-seven percent`) moved to **sdk 29**, since that is now
+the only API level where the band exists at all; with the grain live it finds the band's edges from row means
+instead of single pixels, which is a stronger check than the one it replaced.
+
+---
+
+### D-019 — the frozen trilogy has no right-to-left reading, and a printed cover has a physical handedness
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) lines 57–68 (`border-radius`, `::before{left:9px}`, `::after{right:0}`); [`app/src/main/AndroidManifest.xml:19`](../../app/src/main/AndroidManifest.xml) — `android:supportsRtl="true"` |
+| **Found** | 2026-07-30, during Phase B / B1 (implementer self-review, before the gate) |
+| **Severity** | Localisation gap — the cover was internally *inconsistent* (logical corners, physical marks); that defect is fixed |
+| **Status** | ✅ **RESOLVED 2026-07-30 by owner ruling** — the printed artifact does **not** mirror, in any locale. Ruling at the [foot of this entry](#d-019-ruling). |
+
+**What the freeze says.** The cover's handedness is stated three times and always **physically**: the corner radii
+are `6px 9px 9px 6px` (a tight bound edge on the left, wider cut edges on the right), the scored fold is at
+`left:9px`, and the fore-edge shadow is at `right:0`. Nothing in the trilogy mentions direction, mirroring or
+locale — a browser prototype simply had no reason to.
+
+**Why it surfaced in code.** Compose's `RoundedCornerShape` takes **logical** corners that mirror under RTL, while
+a `Brush` drawn at an absolute offset does not. The first B1 implementation mixed the two, so an RTL device would
+have shown the bound edge's tight radius on the **right** while the crease stayed on the **left** — a cover creased
+down its own cut edge. That composes cleanly and no LTR screenshot shows it, which is why the check now exists
+(`ZineCoverRenderTest.a mirrored layout does not mirror the printed object`, verified to fail on the logical shape).
+
+**What B1 does now, and what is still unruled.** The whole printed object is transcribed **physically** and
+nothing mirrors — the literal reading of the frozen CSS — while the title continues to follow the layout
+direction, exactly as it does in CSS. That makes the object self-consistent. It does not answer the design
+question: **should an RTL shelf show right-bound books?** A real bookshelf in an RTL culture is bound on the
+right, so a fully mirrored cover is a defensible localisation; it is also a *design* change to a frozen artifact,
+which is not an implementer's call.
+
+**Owner question (answered below).** Leave the printed object physical in every locale, or specify a mirrored
+cover for RTL — in which case the frozen HTML gains an RTL reading first, per
+[COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md) ("if the HTML is wrong, fix the HTML first").
+The same question will return for the shelf grid (B2) and the Bench (Phase C), so ruling it once is cheaper.
+
+### Owner ruling — 2026-07-30 {#d-019-ruling}
+
+> *"The printed object is physical. Do not mirror the printed cover based on locale. The physical binding edge,
+> fore-edge and crease remain canonical exactly as frozen. Future UI chrome may adapt to RTL, but the printed
+> artifact itself does not."*
+
+**Confirms what B1 ships**, and settles the general rule rather than one component: the boundary is **chrome
+versus artifact**, not Library versus Bench. Chrome may mirror; a printed object never does — which extends
+the Constitution's own split (*the interface stays quiet; the creations carry the warmth*) into layout
+direction, and answers the same question in advance for the shelf grid (B2), the Bench's page sheets (Phase C)
+and the Proof's imposed sheet (Phase D).
+
+`CoverShape` is `AbsoluteRoundedCornerShape` for exactly this reason, and the guard is
+`ZineCoverRenderTest.a mirrored layout does not mirror the printed object` — verified to fail on the logical
+shape, so it is not one more assertion that cannot fail. The **title** still follows the layout direction, as
+it does in CSS: the text is content, not part of the printed object's geometry.
+
+---
+
 ## Resolved
 
 | ID | Defect | Resolved |
@@ -1300,6 +1534,9 @@ re-seated clause; **Phase A is CLOSED**. Phase B remains unstarted and begins on
 | **D-002** | Two frozen cover inks put their titles below AA for normal text | 2026-07-30 — owner ruling: the governing floor for cover titles is **3.0:1**. No frozen colour changes, no HTML change, no design amendment; wording that implied a stricter level was clarified instead. `ZinelyContentInksTest`'s existing 3.0 gate is confirmed. Entry kept above. |
 | **D-006** | The only shape token in V2 is declared and never used | 2026-07-30 — owner ruling: **dead specification — delete it from the frozen HTML**, and introduce no 18px radius token. `--r:18px` removed from `v2-bench.html` and `v2-proof.html`; `ZinelyV2Dimens` still publishes no radius. Entry kept above. |
 | **D-016** | Two of Phase A's acceptance criteria cannot be met by a phase forbidden to touch product surface | 2026-07-30 — owner ruling: **only the token-routing clause re-seats, to Phase D**; *"confirmed to be the same migration"* is **satisfied by confirmation** of the architecture and strategy ([ADR-080](../DECISIONS.md#adr-080), now `Accepted`). **Phase A passes its gate.** Entry kept above. |
+| **D-017** | The frozen Library shows six covers and states no rule for giving a cover to a seventh zine | 2026-07-30 — owner ruling: **assign once at creation and persist**; do **not** derive from the title, round-robin, or infer from neighbours. The assignment *is* part of the zine's identity. B1's title hash deleted; persistence owed at **B5**. Entry kept above. |
+| **D-018** | The cover's ink band specifies `multiply`, which Android cannot honour below API 29 | 2026-07-30 — owner ruling: **follow D-014 — omit the band**. No emulation, no substitute blend mode. Ships as one Known Limitation together with D-014's flat paper. Entry kept above. |
+| **D-019** | The frozen trilogy has no right-to-left reading, and a printed cover has a physical handedness | 2026-07-30 — owner ruling: **the printed artifact does not mirror**, in any locale; binding edge, fore-edge and crease stay exactly as frozen. Chrome may adapt to RTL; artifacts do not. Entry kept above. |
 
 *(Resolved entries stay in place rather than being deleted — the record of what was once contradictory
 is what stops it being reintroduced.)*
@@ -1308,6 +1545,7 @@ is what stops it being reintroduced.)*
 
 *Opened 2026-07-28 during the Compose V2 implementation programme; register verified against every entry's
 status line on 2026-07-29 (package A10) and again on 2026-07-30 at the **Phase A closeout**, when the
-D-002, D-006 and D-016 owner rulings were recorded. Governed by
+D-002, D-006 and D-016 owner rulings were recorded — and extended the same day by **D-017**, **D-018** and
+**D-019**, raised by Phase B / B1 and ruled on the same day ([ADR-081](../DECISIONS.md#adr-081)). Governed by
 [V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
 [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*
