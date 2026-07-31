@@ -139,6 +139,8 @@ module split remains deferred per [ADR-043](DECISIONS.md#adr-043)).
 | A cover *on* the shelf — the press transform, the focus ring, tap → open, long-press → actions, and the always-visible `⋯` that is the same door for anyone who never finds the gesture | `ZineOnShelf` | [ADR-083](DECISIONS.md#adr-083) |
 | The action sheet — five rows in the frozen order over a scrim, with the zine's format and date **disclosed here** rather than stamped on every cover | `ZineActionSheet`, `ZineActionSheetSurface`, `ZineActionScrim`, `ZineActionTarget` | [ADR-083](DECISIONS.md#adr-083) |
 | What the sheet can do — Open · Share & export · Rename · Duplicate · **Delete, set apart by a band of the desk and printed in the consequence ink** | `ZineAction` | [ADR-083](DECISIONS.md#adr-083); the sheet reports the choice and does **not** dismiss. The frozen file wires no handler to the five rows at all, so this is a **deferral to B5 rather than a transcription** — what follows each action is undesigned, and holding still is the narrowest thing an implementation can do |
+| The empty state — a loose sheet, an arrow and a little book, under a serif line and two of body copy. It **replaces** the shelf rather than sitting inside it (`body.is-empty .shelf{display:none}`), so the choice between them belongs to **B5** and its project data | `ZineShelfEmpty` | [ADR-084](DECISIONS.md#adr-084) |
+| The landing zone — a full-width band fading up into the desk, inert to touch, holding the one primary action on the screen | `ZineDock` | [ADR-084](DECISIONS.md#adr-084); the CTA **reports** the press and routes nowhere — the frozen file wires no handler to `.start`, so the paper chooser is B5's hand-over, on the same reading as the sheet's five rows |
 
 Several properties are load-bearing:
 
@@ -173,7 +175,24 @@ Several properties are load-bearing:
   their shape varies by manufacturer. **[D-021](design/V2-SPEC-DEFECTS.md#d-021-ruling)**, ruled: keep them
   exactly as frozen — *"bundled-font coverage does not justify changing the design"* — with platform fallback
   accepted and no substitution from A7's icon set. Their variation is **specified behaviour** for the device
-  passes to record, not a defect to fix.
+  passes to record, not a defect to fix. B4's `＋` (U+FF0B, the *fullwidth* plus) is the seventh such mark and
+  is absent from all seven bundled faces too — the same ruling, no new question.
+- **The dock is inert and the empty state is not a layer.** `.dock{pointer-events:none}` with
+  `pointer-events:auto` on the button alone: the band covers the bottom ~150dp of the shelf, so a `ZineDock`
+  that consumed touches would make the last row of covers unreachable through a region that looks like empty
+  desk. And `.empty` is the shelf's *alternative*, not its overlay — B4 ships both halves and B5 chooses
+  between them, exactly as B2 shipped a shelf and left the desk to the screen.
+- **A CSS margin on a centre-aligned flex item moves it by half its value.** `align-items:center` centres the
+  *margin box*, so `.plus{margin-top:-2px}` on a zero-height line box lifts the glyph **1px**, and
+  `.arrow{margin-bottom:18px}` lifts the arrow 9px. Transcribed as padding rather than `Modifier.offset`,
+  which would move it the whole way. Applied correctly to the two main-axis margins in `ZineShelfEmpty` and
+  wrongly to the one cross-axis margin in `ZineDock` until review caught it — see
+  [ADR-084](DECISIONS.md#adr-084) decision 6.
+- **A miniature of a printed object is drawn in a content ink, not a chrome one.** `.book-ill` hard-codes
+  `#7C8A3F`, which is `ZinelyMakerInkId.Matcha` — so the little book keeps its colour at night while every
+  chrome token around it inverts. Drawn from `v2Colors.matcha` instead it would be `#5E6B2F` by day and
+  `#93A257` by night, both plausible and both wrong. The same split **D-019** draws between artifact and
+  chrome, applied to colour rather than to handedness.
 - **The scrim is the one V2 value not taken from the frozen Library file.**
   **[D-022](design/V2-SPEC-DEFECTS.md#d-022-ruling)**, ruled: the Library writes `rgba(30,25,18,.36)` as a
   literal outside its own `:root`, so it could not vary by theme; the corpus publishes a theme-aware `--scrim`

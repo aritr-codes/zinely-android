@@ -42,8 +42,17 @@ awaited a ruling, and nothing from Phase A blocked Phase B.
 **Phase B / B1 raised three more (D-017, D-018, D-019) and Phase B / B2 raised one (D-020). All four were ruled
 the same day they were raised.** **Phase B / B3 then raised two — [D-021](#d-021--the-sheets-icons-are-unicode-characters-and-half-of-them-are-not-in-the-apps-own-font)
 and [D-022](#d-022--the-librarys-scrim-is-a-theme-invariant-literal-while-the-corpus-publishes-a-theme-aware-one)
-— and both were ruled the same day.** So the count is now **twenty-two: sixteen resolved, six open**, and the
-six open are once again the same six Phase A left. **Nothing is awaiting an owner ruling.**
+— and both were ruled the same day.** **Phase B / B4 raised one, [D-023](#d-023), and it is the first entry
+since Phase A to reach the owner unruled.** So the count is now **twenty-three: sixteen resolved, seven
+open** — the six Phase A left, plus D-023. **One item is awaiting an owner ruling.**
+
+**D-023 is the fourth of the D-005 / D-011 / D-022 set, which [D-022's ruling](#d-022-ruling) predicted in
+terms.** It is also the first entry raised by *review* rather than by implementation: B4 met the divergence,
+argued it closed, and shipped an ADR saying so. The argument was that the other three were **broken** while
+`--paper` works — and it does not survive contact with the rulings themselves, because D-005's font stack
+rendered fine and D-011's `ease` is a valid curve. All three were ruled stale on **authorship date**. The
+register's rule is the one B3 wrote when it declined to act on two converging precedents: *measuring
+something real licenses **asking**, not deciding.*
 
 **The two B3 rulings went opposite ways, and the pair is the useful reading.** Both entries reported the same
 kind of finding — *the implementation measured something the frozen design did not account for* — and the
@@ -59,6 +68,7 @@ spacing acceptance criterion contradicts the **D-007** ruling — see
 
 | Open | Owing to | One line |
 |---|---|---|
+| [**D-023**](#d-023) | ⏳ **an owner ruling** | the Library labels its primary button `--paper` where the corpus publishes `--on-matcha` — the fourth of the D-005/D-011/D-022 set |
 | [**D-001**](#d-001--v2-benchhtml-header-contradicts-the-freeze-record) | corpus cleanup | `v2-bench.html`'s header contradicts the freeze record — documentation only, no code impact |
 | [**D-004**](#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) | **Phase D** (deferred by ruling) | the frozen zine content is set in Fraunces; the render engine can only draw Inter |
 | [**D-008**](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) | **Phase C** (approach settled) | two surfaces specify no focus appearance and one removes it |
@@ -1810,6 +1820,61 @@ Two consequences, and one question the ruling deliberately leaves alone:
 
 ---
 
+### D-023 — the Library labels its primary button `--paper`, while the corpus publishes `--on-matcha` for exactly that job {#d-023}
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) line 91 — `.start{background:var(--matcha);color:var(--paper)}` — against the corpus's `--on-matcha` |
+| **Found** | 2026-07-31, during Phase B / B4 (implementing the dock), by **independent review** |
+| **Severity** | Design gap — **does not block B4**, which transcribes the freeze literally |
+| **Status** | ⏳ **OPEN — awaiting an owner ruling.** The fourth member of the D-005 / D-011 / D-022 set, which [D-022's ruling](#d-022-ruling) predicted in terms. |
+
+**What it says.** `.start` is the Library's one primary action: a `--matcha` fill with a `--paper` label. Every
+matcha fill in the **Bench** and the **Proof** takes `var(--on-matcha)` instead — a token the corpus declares
+in both themes (`#FFFFFF` light, `#20240E` dark) and marks **★ AA-critical on `matcha`**
+(`ZinelyV2Colors.kt:93`). The Library declares no `--on-matcha` at all, because it was frozen before the
+shared token layer existed.
+
+**Why this is the shape D-022 named.** That ruling stated the general form and said a fourth would appear:
+*"where the Library file contradicts a token the corpus publishes, the corpus wins — the Library's value is
+evidence of when it was authored, not of what was intended."* D-005 (the serif), D-011 (the easings) and
+D-022 (the scrim) are the same defect with three faces, and all three were ruled the same way.
+
+**Why it is nonetheless not obvious.** Unlike the other three, the Library's value here is **not broken**.
+`--paper` is a real token, declared in both themes, and it inverts correctly with them. Measured on the
+rendered pair rather than argued: **5.20:1** in light (`#F7F2E7` on `#5E6B2F`) and **5.12:1** in dark
+(`#2F2A22` on `#93A257`), against `--on-matcha`'s own 5.80 and 5.72. Both clear AA in both themes. A cream
+label is also the reading the rest of that screen supports, where nothing else is pure white — so the
+question is genuinely *which of two working values is intended*, not whether one of them fails.
+
+> **B4 first tried to settle this itself**, on the test *"a divergence earns a register entry when the
+> Library's version cannot work, not whenever the corpus differs"*. Independent review rejected it, and the
+> rejection is the useful part: that test does not describe the three rulings it claims to distinguish,
+> because **D-005's font stack rendered fine and D-011's `ease` is a valid curve** — neither was broken, and
+> both were ruled stale on *authorship date*, which is precisely the argument that applies here. B3, holding
+> two rulings pointing one way, wrote that *"two rulings pointing the same way are a strong hint, not a
+> ruling"* and raised D-022 rather than deciding. B4 held three rulings and a stated general rule. **The
+> register's own precedent is to ask.**
+
+**What B4 ships meanwhile.** The frozen `--paper`, transcribed, pinned by
+`ZineDockTest.the button is matcha and its label is paper` in both themes — which asserts that no pixel of
+the button is `--on-matcha`, and names this entry so the ruling has something to flip. Same shape B3 gave
+the scrim.
+
+**The alternatives.**
+
+| Rule | What it buys | What it costs |
+|---|---|---|
+| **Keep `--paper`** (what B4 ships) | literal parity; nothing invented; a warmer label consistent with the screen | V2 has two answers for text on matcha, and the Library's is the one not marked AA-critical |
+| **Adopt `--on-matcha`** (the D-005/D-011/D-022 answer) | one rule across V2 for the highest-traffic colour pair; slightly higher contrast | the Library's rendered appearance departs from its frozen file; one paint site, one assertion and two rasters change |
+| **Amend the frozen HTML, then implement** | file and code agree again | a design-track edit to a frozen artifact |
+
+**Owner decision requested.** Does `.start`'s label stay the frozen `--paper`, or does `--on-matcha` outrank
+it as the serif, the easings and the scrim did? And if the corpus wins, is the frozen HTML corrected in the
+same act (as **D-006** required) or does the register carry the divergence (as **D-022** chose)?
+
+---
+
 ## Resolved
 
 | ID | Defect | Resolved |
@@ -1843,6 +1908,8 @@ D-002, D-006 and D-016 owner rulings were recorded — and extended the same day
 **D-020**, raised by Phase B / B2 and likewise ruled the same day
 ([ADR-082](../DECISIONS.md#adr-082)), and finally by **D-021** and **D-022**, raised by Phase B / B3
 ([ADR-083](../DECISIONS.md#adr-083)) and **both ruled the same day** — D-021 confirming the frozen characters,
-D-022 replacing the Library's scrim with the corpus token. Governed by
+D-022 replacing the Library's scrim with the corpus token. Extended once more on **2026-07-31** by
+**[D-023](#d-023)**, raised against Phase B / B4 ([ADR-084](../DECISIONS.md#adr-084)) **by independent review
+rather than by implementation**, and the first entry since Phase A to reach the owner **unruled**. Governed by
 [V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
 [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*

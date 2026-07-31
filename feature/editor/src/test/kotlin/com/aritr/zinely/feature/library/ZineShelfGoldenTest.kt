@@ -48,8 +48,12 @@ import org.robolectric.annotation.GraphicsMode
  * - ~~**The six `⋯` buttons.**~~ **B3 landed them**, so these rasters now show one on every cover, at the
  *   frozen `opacity:.5` — `.more` (`:73-77`) is `display:flex` unconditionally, which is what makes it the
  *   *visible* fallback for long-press rather than a hover reveal. The B2 rasters were re-recorded for it.
- * - **The dock and "Make a zine".** `.dock` (`:88-95`) overlays the foot of the frozen screen. **B4.**
- *   The `152px` of empty room these rasters show below the last cover is exactly the space it will fill.
+ * - ~~**The dock and "Make a zine".**~~ **B4 built it** ([ZineDock]), and these rasters still do not show
+ *   it — deliberately, and this is now a scoping statement rather than a pending one. `.dock` is
+ *   `position:absolute;bottom:0` **inside `.phone`**, the app window, so it is the *screen*'s child and not
+ *   the shelf's; composing it here would assert an arrangement **B5** owns. The `152px` of empty room these
+ *   rasters show below the last cover is exactly the space it fills, and
+ *   [ZineEmptyGoldenTest]'s rasters are where the band is actually drawn.
  *
  * So the comparison these rasters support is *the shelf* against the frozen shelf — grid, gaps, heading,
  * covers with their `⋯`, desk. A reviewer laying them beside `v2-library.html` should expect the dock's

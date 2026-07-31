@@ -52,7 +52,43 @@ paints nothing. B2 raised **D-020** and it was **ruled the same day**, costing n
 ([ADR-083](DECISIONS.md#adr-083), `Accepted`). It adds `ZineOnShelf` (the two gestures, the press transform,
 the focus ring, and the always-visible `⋯`), `ZineActionSheet` + `ZineActionScrim` + `ZineAction` (five rows
 over a scrim, with the zine's format and date disclosed **there** rather than on every cover), and a second
-gesture on `:core:ui`'s `Modifier.zinelyV2Control`. **B4–B5 have not started.**
+gesture on `:core:ui`'s `Modifier.zinelyV2Control`.
+
+**B4 — the empty state and the dock — is built and at its review gate** ([ADR-084](DECISIONS.md#adr-084),
+`Proposed`). It adds `ZineShelfEmpty` (the loose sheet → arrow → little book transformation, a serif line and
+two of body copy) and `ZineDock` (the band that fades up into the desk, and the "Make a zine" button standing
+in it). **B5 has not started.**
+
+**Three things about B4 a fresh session will otherwise re-derive.** First, `.empty` **replaces** the shelf —
+`body.is-empty .shelf{display:none}` — so B4 ships both halves and **B5 chooses between them** with real
+project data; nothing here composes a grid or a slot. Second, the dock is **inert**: `pointer-events:none` on
+the band with `auto` on the button alone, because the band covers the bottom ~150dp of the shelf and a dock
+that consumed touches would make the last row of covers unreachable through what looks like empty desk.
+Third, `.start` has **no handler in the frozen file at all**, so the CTA reports the press and routes nowhere
+— the paper chooser is B5's hand-over, on exactly the reading ADR-083 applied to the sheet's five rows.
+
+**Three of B4's four design questions were already ruled**, which is what a working register looks like:
+**D-005** names `.empty h2` by selector (so the headline is Fraunces **500**, not the file's stale 600),
+**D-011** names `.start` by line (so the press rides `ZinelyV2Standard`, not the file's bare `ease`), and
+**D-021** covers the `＋` — U+FF0B, the *fullwidth* plus, absent from all seven bundled faces, drawn by the
+platform's fallback.
+
+**The fourth is [D-023](design/V2-SPEC-DEFECTS.md#d-023), it is open, and how it got there is the lesson.**
+`.start{color:var(--paper)}` where the Bench and Proof use `--on-matcha`. B4 **decided this itself** and wrote
+the reasoning into an ADR: unlike D-005/D-011/D-022 the value is not *broken* — declared in both themes,
+inverts with them, clears AA both ways at **5.20:1** light (`#F7F2E7` on `#5E6B2F`) and **5.12:1** dark
+(`#2F2A22` on `#93A257`) against `--on-matcha`'s own 5.80 and 5.72 — so, it argued, *a divergence is only a
+register entry when the Library's version cannot work.*
+
+Independent review rejected that, and a fresh session should read why rather than re-derive it. **The test
+does not describe the rulings it claims to distinguish.** D-005's Georgia stack rendered perfectly well and
+D-011's `ease` is a perfectly valid curve; neither was broken. Both were ruled stale on **authorship date** —
+the Library was frozen before the corpus it now sits beside. D-022's ruling then wrote the general form down
+(*"where the Library file contradicts a token the corpus publishes, the corpus wins"*) and said **a fourth
+will appear**. And B3, holding *two* rulings pointing one way, still declined to act on them: *"two rulings
+pointing the same way are a strong hint, not a ruling."* B4 held three and a stated rule. **The standing
+rule is that measuring something real licenses asking, not deciding** — if you find yourself writing a new
+test for when to raise an entry, that is the moment to raise one.
 
 **Two things about B3 a fresh session will otherwise re-derive the hard way.** First, the seam ends in
 `clearAndSetSemantics`, so **a control cannot contain another control** — the `⋯` is a sibling of the cover,
@@ -90,7 +126,7 @@ whatsoever (offset 6→60dp and radius 9→0dp both survived the whole suite), a
 `U+E000` — **which the bundled Inter actually maps to a real glyph**, so the test that claimed to detect tofu
 passed on guaranteed tofu, and the false fact had reached a defect entry awaiting an owner ruling.
 
-Four rules for B4, in the order they cost the most:
+Four rules — written for B4, carried to B5 — in the order they cost the most:
 
 1. **Verify the assumption the assertion rests on, not just the assertion.** Every font fact in B3 was
    measured except the control's; the control's was the one that broke.
@@ -103,6 +139,41 @@ Four rules for B4, in the order they cost the most:
 Two traps that cost an hour each and are not obvious: Compose **declines focus in touch mode**, so
 `requestFocus()` fails silently — request `InputMode.Keyboard` (which is what `:focus-visible` means anyway);
 and the ground outside a cover is **not** clean, because B1's shadow tints it about ten pixels out.
+
+**B4 added four more, and three of them are about the test harness rather than the design.** They are cheap
+to read and were not cheap to find:
+
+5. **`Modifier.padding` on a `Text` does not appear in that node's semantics bounds.** Compose reports the
+   bounds *inside* the padding, so a claim about a CSS margin has to be asserted as a **displacement** from
+   something else, never as a taller box. B4's arrow test was written the wrong way round first.
+6. **The Compose rule accepts one `setContent` per test.** Every yardstick a test needs — a reference
+   rendering, a second theme, a `ch` measure — must stand in the *same* composition as the subject, or be
+   its own `@Test`.
+7. **A CSS margin on a centre-aligned flex item moves it by half its value**, because it is the margin *box*
+   that gets centred. `Modifier.offset` would move it the whole way and be wrong by a factor of two.
+8. **Run one mutation driver, and do not edit the sources while it runs.** B4's first battery outlived an
+   aborted tool call and overlapped its own re-run: two processes editing the same two files reported a
+   survivor that was not one and two constant failures that belonged to the other process's edits. The
+   results looked exactly like findings. The script now takes a lock — but the lock only stops a *second
+   driver*, and B4 then hit the same class again from the other side by editing a KDoc **while** a driver
+   held the file, which left a live mutation (`.clickable {}` on the dock) in the tree. Two rules, not one:
+   a mutation result is only evidence if you know what was in the file when the test ran, and a driver's
+   files are **off-limits to you** until it exits. Docs are safe to edit; sources are not.
+
+**B4's review added three more, and the first is the most valuable thing the package produced.**
+
+9. **A pixel test that measures a bounding box cannot resolve one pixel.** `(firstInkRow + lastInkRow) / 2`
+   quantises — a 1px shift moves the first row by one and the last by zero once antialiasing is counted, so
+   it reports **half** the displacement. Use a **luminance-weighted centroid**, which moves continuously.
+10. **Never anchor two rendered subjects on their own containers' centres.** A container of odd height puts
+    `center.y` on a half-pixel and one of even height does not, so the comparison carries half a pixel of
+    pure parity noise. Give the reference the **subject's own structure** and measure each against something
+    inside itself — B4's plus is compared to the label beside it, in both rows, so every property of the
+    container cancels.
+11. **Distinguish an equivalent mutant from a gap.** Two of B4's survivors cannot be killed by any test:
+    Skia clamps an overflowing corner radius exactly as CSS does, and under `justify-content:center` only the
+    *difference* between a top and bottom padding reaches the layout. Record them as equivalent, with the
+    evidence — otherwise the next session writes a flaky test to chase a value that has no effect.
 
 **Read [ADR-082's review outcome](DECISIONS.md#adr-082-review) too.** B2's own
 ten-mutation battery passed while the grid was fed `zines.reversed()` — the sixth package in this programme

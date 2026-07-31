@@ -63,8 +63,14 @@ flowchart LR
 > **ruled both the same day** — D-021 confirming the frozen literal characters at no code cost, D-022
 > replacing the Library's stale scrim literal with the corpus token, which is the **only** V2 value not taken
 > from the frozen Library file. B3 also corrected a stale B2 raster the repository was carrying
-> (`v2_cover_pressed_light.png`, which failed `verify` at HEAD). B4–B5 have not
-> started. B1 ships `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` and the
+> (`v2_cover_pressed_light.png`, which failed `verify` at HEAD). **B4 — the empty state and the "Make a
+> zine" dock — is built, independently reviewed (GO WITH FIXES, applied) and committed**
+> ([ADR-084](DECISIONS.md#adr-084), `Accepted`). Three of the four design questions it met were already
+> ruled — **D-005** names `.empty h2` by selector, **D-011** names `.start` by line, and **D-021** covers
+> the `＋` the bundled fonts do not carry. The fourth is **[D-023](design/V2-SPEC-DEFECTS.md#d-023)**, which
+> B4 argued closed and **review sent to the owner**: it is the register's first entry since Phase A to reach
+> the owner unruled, and the fourth of the D-005/D-011/D-022 set that D-022's ruling predicted. It does not
+> block B4 — the code transcribes the freeze either way. **B5** has not started. B1 ships `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` and the
 > renderer only — **no assigner**: independent review found the assignment guard could not hold the D-017
 > ruling regardless of how it was written, so the assigner moves to **B5**, next to the persisted field it
 > needs. See
@@ -239,9 +245,9 @@ redesign, no interpretation.** This is the closest surface to a clean re-skin an
 | # | Package | Depends on | Status |
 |---|---|---|---|
 | **B1** | **The Maker's Cover** — the printed object itself: stock, grain, band, stamp, clamped serif title, grounded rest/pressed shadow; `ZineCoverSurface`/`ZineCoverStamp`/`ZineCoverRecipe` (no assigner — see B5); and `Modifier.zinelyV2Shadow` in `:core:ui` | Phase A foundation | ✅ built, independently reviewed (**GO WITH FIXES**, fixes applied), and committed 2026-07-30 ([ADR-081](DECISIONS.md#adr-081), `Accepted`) |
-| **B2** | **The shelf** — two-column grid (fixed at every width per the **D-020** ruling), frozen gaps, the quiet "Your shelf" header (a full-width cell *inside* the scroll, so it scrolls away), scroll. Paints no ground: the desk is B5's | B1 | ✅ built 2026-07-30, **at its review gate and owing an independent review pass** ([ADR-082](DECISIONS.md#adr-082)); raised **D-020**, ruled the same day with no code change owed |
+| **B2** | **The shelf** — two-column grid (fixed at every width per the **D-020** ruling), frozen gaps, the quiet "Your shelf" header (a full-width cell *inside* the scroll, so it scrolls away), scroll. Paints no ground: the desk is B5's | B1 | ✅ **built, independently reviewed (GO WITH FIXES, applied) and committed 2026-07-30** (`1e097ab`, [ADR-082](DECISIONS.md#adr-082), `Accepted`); raised **D-020**, ruled the same day with no code change owed |
 | **B3** | **Interaction** — long-press, the visible `⋯` fallback, the action sheet (Open · Share & export · Rename · Duplicate · separated Delete), metadata in the sheet header | B2 | ✅ **built, reviewed (GO WITH FIXES, applied) and committed 2026-07-30** ([ADR-083](DECISIONS.md#adr-083)); raised **D-021** and **D-022**, **both ruled the same day** — the scrim ruling cost one paint site, the glyph ruling cost nothing. The sheet reports a choice and does not dismiss: the frozen file wires no handler to the five rows at all, so that is a **deferral to B5**, not a transcription |
-| **B4** | **Empty state + "Make a zine"** — the transformation empty state and the CTA into the existing paper chooser | B2 | not started |
+| **B4** | **Empty state + "Make a zine"** — the transformation empty state (loose sheet → arrow → little book, three lines of copy) and the `.dock` band with its primary CTA. Ships `ZineShelfEmpty` and `ZineDock`; the CTA **reports** the press and routes nowhere, because the frozen file wires no handler to `.start` at all — the paper chooser is route hand-over and therefore **B5**'s. Which of shelf/empty is shown depends on real project data, so `body.is-empty` is B5's choice too | B2 | ✅ **built, independently reviewed (GO WITH FIXES, applied) and committed 2026-07-31** ([ADR-084](DECISIONS.md#adr-084), `Accepted`); D-005, D-011 and D-021 already answered three of its four questions, and review sent the fourth to the owner as **[D-023](design/V2-SPEC-DEFECTS.md#d-023)** |
 | **B5** | **The screen** — real project data, navigation, route hand-over, `token-enrolment.txt`, both device passes. **Carries two hard prerequisites, both deferred whole from B1:** (1) the **cover assigner** itself (`newZineCoverRecipe`-equivalent) — B1 shipped no assigner at all, because independent review found no reflection guard could hold "never derived from the title" against an assigner with no caller to check; and (2) the **persisted cover assignment** the D-017 ruling requires (a surface + stamp field on the project index and its `meta.json` sidecar, [ADR-042](DECISIONS.md#adr-042)) — a shelf that assigns a cover without storing it reprints every cover on every launch. B5 builds both together, so the guard has an actual call site to check | B1–B4 | not started |
 
 B1 is the leaf: the cover is the only element the frozen file specifies completely on its own, and every later
