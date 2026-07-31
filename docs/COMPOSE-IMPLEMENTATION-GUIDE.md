@@ -149,6 +149,48 @@ Follow the [ARCHITECTURE.md](ARCHITECTURE.md) testing strategy; the philosophy b
 - **The reproducibility guarantee is a test target:** preview == export == read is enforced by parity tests
   (`PagePreviewParityTest`), because a single engine ([ADR-028](DECISIONS.md#adr-028)) is a constitutional invariant.
 
+### 8.1 The frozen property table
+
+**Every implementation package opens with one, before any production code is written.** It is the pre-implementation
+artifact that turns *"which frozen properties have no test at all?"* — the question that has found more defects in
+this programme than any other — from a gate-time audit into the first thing you do.
+
+**It is subordinate to the frozen HTML and can never become a second source of design truth.** Every row's
+**Source** cell names a frozen file and a selector or line; a row that cannot name one is not a frozen property
+and does not belong in the table. The table *records* what the freeze says. It never decides it, and where the two
+disagree the freeze is right and the table is a bug. (This is A9's rule for verification artifacts, applied.)
+
+**Where it lives:** in the package's own ADR, under a `Frozen property table` heading — authored before
+implementation, closed out at the gate with actual results. It is evidence, and the ADR owns evidence; it gets no
+file of its own.
+
+**Format** — seven fields, six columns. The rows below are B4's, shown as the shape to copy:
+
+| # | Property | Source | Target | Planned assertion | Planned mutation | Note |
+|---|---|---|---|---|---|---|
+| 1 | `.start` fill `--matcha`, label `--paper` | `v2-library.html:91` `.start{}` | `ZineDock.kt` `StartButton` | `the button is matcha and its label is paper, by day` — pixel probe inside the fill and on the glyph | label takes `--on-matcha` instead | ⚠ *contested:* [D-023](design/V2-SPEC-DEFECTS.md#d-023) is **open** — pin the freeze, and say in the cell that a ruling may move it |
+| 2 | fore-edge corner radius | `v2-library.html:112` `.book-ill::after{border-radius:0 4px 4px 0}` on a 3px-wide element | `ZineShelfEmpty.kt` `ForeEdgeRadius` | fore-edge corner pixel probe | `1.5.dp` → the frozen literal `4.dp` | ≡ *candidate:* CSS clamps an overflowing radius to half the box, and **Skia applies the same clamp** — so both render identically |
+| 3 | `.start` click destination | `v2-library.html` — **no handler wired at all** | reports the press, routes nowhere | — | — | ∅ *the freeze specifies nothing here; the paper chooser is B5's route hand-over. Nothing is not "goes nowhere on purpose" — it is undecided, and the narrowest thing an implementation can do is hold still* |
+
+- **Property** — the frozen thing, in the freeze's own vocabulary.
+- **Source** — file + selector/line. Mandatory. No source, no row.
+- **Target** — the file and composable/constant that implements it, or `—` if intentionally unimplemented.
+- **Planned assertion** — the named test that will pin it, and *how* it discriminates. "There is a test" is not
+  an entry; a test that rebuilds the value it pins cannot fail.
+- **Planned mutation** — the specific edit to production that must break that test.
+- **Note** — one of two markers, or empty:
+  - **`≡` equivalent-mutant candidate** — a mutation you expect to survive because the platform collapses the
+    difference. Recording the suspicion up front is what stops the next session writing a flaky test to chase a
+    value that has no effect. A survivor is only *proven* equivalent with evidence (e.g. byte-identical goldens).
+  - **`∅` intentionally untested** — with its justification **in the cell**. An untested property is a decision
+    and gets recorded as one; an untested property with no justification is a gap wearing a marker.
+  - **`⚠` contested** — the value is pinned as frozen but an **open** spec-defect entry may move it. Name the
+    entry. Pinning a contested value silently is how a package ends up defending a ruling it never had; the
+    marker is what turns it back into a question for the owner.
+
+At the gate the table is closed out: planned assertions become the test names that exist, planned mutations become
+KILLED / SURVIVED-and-proven-equivalent, and any row that moved gets one line saying why.
+
 ### Device verification (mandatory, two passes)
 Every UI feature/UX change is verified on a physical device by **two readers of the same screen**:
 - **Pass 1 — Developer:** does it behave exactly as specified? (correctness, regressions, a11y via the *platform*
@@ -179,6 +221,12 @@ Record device, OS version, build (and TalkBack version for a11y passes).
 
 Implementation is reviewed, like design was. The rhythm:
 
+- **Mid-package (mandatory):** the specialised **"find the assertions that cannot fail"** review, run **after the
+  tests exist and before the ADR, the goldens and the review package** — verification-order step 3 in
+  [COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md#3-the-verification-order). It is a *different
+  lens* from the per-PR review, not a rehearsal of it: in B4 the narrow one found three blind assertions the
+  general one did not. It sits early because a non-discriminating assertion found at the gate invalidates the
+  mutation battery, the goldens and the ADR evidence block built on top of it; found here, it invalidates a test.
 - **Per PR:** an independent **Review Agent** (never the implementer) validates *actual repository state* — it
   treats claims as untrusted, reads the diff/tests, classifies findings **Required Fix / Recommended Improvement /
   Observation**, and returns **GO / GO WITH FIXES / NO-GO**. The implementer reconciles every Required Fix or
@@ -189,12 +237,26 @@ Implementation is reviewed, like design was. The rhythm:
 - **Per release:** a **Release Agent** verifies scope/changelog/versioning/known-limitations against
   [ROADMAP.md](ROADMAP.md) and the [PRD](PRD.md).
 
+**One owner gate per package, and it is the last one:** implement → independent review → reconcile findings →
+**stop** → owner approves → commit. The intermediate approval that used to sit *before* the review was removed
+([ADR-085](DECISIONS.md#adr-085)) — it gated a mandatory step, so it could only ever say yes. The owner still
+approves everything that enters history and still rules every design question; only the number of stops changed.
+
 ---
 
 ## 11. House rules
 
 - **Docs ship with code.** Documentation is updated in the *same change* as the work — stale docs are bugs. Don't
   restate a decision; link to its ADR.
+- **One fact, one home.** ADRs own decisions, evidence, owner rulings and the frozen property table; KDoc owns the
+  implementation mechanism and local reasoning; the handover owns cross-package lessons and navigation; the
+  spec-defect register owns defects found in the frozen artifacts. Cross-reference; never copy. A KDoc that
+  restates a ruling outlives it. **Historical ADRs are not rewritten** to match a later ruling — an ADR records
+  what was decided *when*, and editing it destroys the evidence that it was decided at all.
+- **Build execution:** never `--no-daemon` — the daemon is Gradle's default and works here
+  ([the measurement](COMPOSE-IMPLEMENTATION-RULES.md#6-build-execution)). Filter tests while iterating; run full affected suites at the gate. A mutation
+  battery may use a parallel worktree only with guaranteed repository isolation — one driver at a time, and its
+  files are off-limits until it exits. Execution efficiency only; no verification standard moves.
 - **Clean architecture + repository pattern; unidirectional data flow.** MVVM for screens; **MVI for the Bench**
   ([ADR-005](DECISIONS.md#adr-005)). Navigate from UI, not ViewModels; type-safe `@Serializable` routes; single Activity.
 - **DI = Hilt + KSP. Async = Coroutines/Flow with injected dispatchers; no LiveData.** Errors cross a sealed

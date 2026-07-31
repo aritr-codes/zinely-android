@@ -406,9 +406,19 @@ Release Agent review against [ROADMAP.md](ROADMAP.md)/[PRD.md](PRD.md) before an
 ## Standing gates across all phases
 
 - **Every phase ends with parity screenshots** (light + dark) and a **side-by-side** against the frozen HTML.
+- **Every package opens with a [frozen property table](COMPOSE-IMPLEMENTATION-GUIDE.md#81-the-frozen-property-table)**
+  in its ADR, written before production code, closed out at the gate.
+- **Every package runs the verification order**: implementation → focused tests → the mid-package **"cannot fail"**
+  review → mutation testing → record goldens → **verify** goldens → independent review → reconciliation → final
+  verification → owner approval → commit ([ADR-085](DECISIONS.md#adr-085)). Any test added or changed during
+  reconciliation re-enters at the "cannot fail" step with its own mutation.
 - **Every PR** gets an independent Review Agent (GO / GO WITH FIXES / NO-GO); Required Fixes are reconciled.
+- **One owner gate per package**, immediately before the commit. Design questions still go to the owner the moment
+  they are found — that is unchanged and is not a gate, it is the standing rule.
 - **No feature creep** — anything not in the frozen spec is out of scope and routed to the owner.
 - **Docs ship with code**; decisions become ADRs; the privacy/offline invariants stay intact.
+- **Read your package's section, not the whole roadmap**, and not all of [DECISIONS.md](DECISIONS.md) — the
+  [handover](COMPOSE-V2-HANDOVER.md) §0 is the entry point and routes you to the ADRs that matter.
 
 ---
 

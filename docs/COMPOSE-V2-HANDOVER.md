@@ -6,7 +6,7 @@
 
 ---
 
-## 0. Where the work actually is (2026-07-30)
+## 0. Where the work actually is (2026-07-31)
 
 **Phase A — Foundation — is CLOSED. Its gate passed on 2026-07-30 by owner ruling.** Nine implementation
 packages (A1–A9), nine ADRs ([ADR-071](DECISIONS.md#adr-071)…[ADR-079](DECISIONS.md#adr-079)), each
@@ -54,10 +54,10 @@ the focus ring, and the always-visible `⋯`), `ZineActionSheet` + `ZineActionSc
 over a scrim, with the zine's format and date disclosed **there** rather than on every cover), and a second
 gesture on `:core:ui`'s `Modifier.zinelyV2Control`.
 
-**B4 — the empty state and the dock — is built and at its review gate** ([ADR-084](DECISIONS.md#adr-084),
-`Proposed`). It adds `ZineShelfEmpty` (the loose sheet → arrow → little book transformation, a serif line and
-two of body copy) and `ZineDock` (the band that fades up into the desk, and the "Make a zine" button standing
-in it). **B5 has not started.**
+**B4 — the empty state and the dock — is built, independently reviewed (GO WITH FIXES, fixes applied) and
+committed 2026-07-31** (`97744e6`, [ADR-084](DECISIONS.md#adr-084), `Accepted`). It adds `ZineShelfEmpty` (the
+loose sheet → arrow → little book transformation, a serif line and two of body copy) and `ZineDock` (the band
+that fades up into the desk, and the "Make a zine" button standing in it). **B5 has not started.**
 
 **Three things about B4 a fresh session will otherwise re-derive.** First, `.empty` **replaces** the shelf —
 `body.is-empty .shelf{display:none}` — so B4 ships both halves and **B5 chooses between them** with real
@@ -282,14 +282,44 @@ Ink #2A251E.
 4. **Repository truth beats summaries.** Read the actual file/commit/test/HTML before relying on it.
 5. **The Bench and Proof already exist in code** — a real engine you **preserve, not rewrite** (see §6).
 
+**This document is the package entry point.** Start at **§0** — it says where the work actually is — then read
+**only your package's section** of the roadmap, **only the ADRs §0 or that section names** (plus any ADR your
+package will modify), and — always, whether or not §0 mentions them — the **open entries** of
+[V2-SPEC-DEFECTS.md](design/V2-SPEC-DEFECTS.md), because an open entry is a live owner question that may govern a
+value you are about to pin. **Do not read [DECISIONS.md](DECISIONS.md) end to end**: it is ~105k words, a package
+touches a handful of entries, and reading it whole costs a large fraction of a session. §0 is the **navigation
+layer, not a replacement for the ADRs** — when a decision matters, open that ADR and read it in full. A summary
+of a ruling is a claim, and rule 4 above applies to this file too.
+
+**Every package opens with a [frozen property table](COMPOSE-IMPLEMENTATION-GUIDE.md#81-the-frozen-property-table)**
+— each frozen property bound to its source, its implementation target, the assertion that will pin it, the
+mutation that must break that assertion, and an explicit marker for equivalent-mutant candidates and for anything
+deliberately left untested. It lives in the package's ADR, it is written *before* production code, and it is
+subordinate to the frozen HTML: a row with no frozen source is not a frozen property.
+
 Full guide: **[COMPOSE-IMPLEMENTATION-GUIDE.md](COMPOSE-IMPLEMENTATION-GUIDE.md)**. One-page opener you re-read
-each session: **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md)**.
+each session — and which now carries the package workflow (verification order, gates, build execution):
+**[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md)**. Workflow shape and its evidence:
+**[ADR-085](DECISIONS.md#adr-085)**.
 
 ## 5. The review process
 
+- **The order the work runs in:** production implementation → focused tests → **the "cannot fail" review** →
+  mutation testing → record goldens → verify goldens → independent review → reconciliation → final verification →
+  owner approval → commit — and **any test added or changed during reconciliation re-enters at the "cannot fail"
+  step** with its own mutation. Full statement:
+  [COMPOSE-IMPLEMENTATION-RULES.md §3](COMPOSE-IMPLEMENTATION-RULES.md#3-the-verification-order).
+- **Mid-package (mandatory):** the specialised **"find the assertions that cannot fail"** review, run once the
+  tests exist and *before* the ADR, the goldens and the review package. A different lens from the per-PR review,
+  not a rehearsal of it — B4's narrow pass found three blind assertions the general one missed. Early, because a
+  non-discriminating assertion found at the gate invalidates the battery, the rasters and the evidence block
+  stacked on top of it.
 - **Per PR:** an **independent Review Agent** (never the implementer) validates actual repo state, classifies
   findings **Required Fix / Recommended Improvement / Observation**, and returns **GO / GO WITH FIXES / NO-GO**.
   The implementer reconciles every Required Fix or surfaces the disagreement explicitly.
+- **One owner gate per package, and it is the last one:** implement → review → reconcile → **stop** → owner
+  approves → commit. The old intermediate approval before *running* the review is gone; it gated a mandatory step
+  ([ADR-085](DECISIONS.md#adr-085)). Nothing the owner decides has changed — only how often a package stops to ask.
 - **Device verification is mandatory, two passes:** Pass 1 (Developer — is it built right? assert the *platform*
   a11y tree) and Pass 2 (First-time user — would a stranger understand it?). A feature is accepted only when both
   pass; if they disagree, the disagreement is the finding.
@@ -338,21 +368,27 @@ Constitutional invariants — breaking one is a NO-GO no matter how good the scr
 
 ## 8. Definition of done (per change)
 
-Code + tests pass · docs updated in the same change (decisions → ADRs) · UI: pixel parity verified + both device
-passes accepted · no new network/account/cloud dependency · privacy & offline invariants intact · reviewed by an
-independent Review Agent.
+Frozen property table closed out · code + tests pass · every planned mutation KILLED or **proven** equivalent ·
+goldens pass `-Proborazzi.test.verify=true` · docs updated in the same change (decisions → ADRs) · UI: pixel
+parity verified + both device passes accepted · no new network/account/cloud dependency · privacy & offline
+invariants intact · the "cannot fail" review run mid-package · reviewed by an independent Review Agent · owner
+approved before the commit.
 
 ---
 
 ## Start here
 
-1. Read **[V2-CONSTITUTION.md](design/V2-CONSTITUTION.md)** (why) → **[COMPOSE-IMPLEMENTATION-GUIDE.md](COMPOSE-IMPLEMENTATION-GUIDE.md)** (how) → **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)** (what, in order).
-2. Read the **[Phase A completion record](COMPOSE-V2-ROADMAP.md#phase-a-completion-record-2026-07-29)** — what
+1. **Read §0 of this document.** It is the entry point: where the work actually is, what the last packages cost,
+   which rulings are live. Everything below is what §0 sends you to.
+2. Read **[V2-CONSTITUTION.md](design/V2-CONSTITUTION.md)** (why) → **[COMPOSE-IMPLEMENTATION-GUIDE.md](COMPOSE-IMPLEMENTATION-GUIDE.md)** (how) → **your package's section** of **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)** (what, in order). Not the whole roadmap, and **not all of [DECISIONS.md](DECISIONS.md)** — only the ADRs §0 or that section names, plus any your package will modify.
+3. Read the **[Phase A completion record](COMPOSE-V2-ROADMAP.md#phase-a-completion-record-2026-07-29)** — what
    already exists, and the four things a new engineer gets wrong that are not visible in the code.
-3. Keep **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md)** open as your checklist.
-4. Begin **Phase B — Library** on an explicit owner GO. Phase A is closed; building any of it again is the
+4. Keep **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md)** open as your checklist — it carries
+   the package workflow as well as the rules.
+5. Write the package's **frozen property table** into its ADR *before* any production code.
+6. Begin **Phase B — Library** on an explicit owner GO. Phase A is closed; building any of it again is the
    mistake this section exists to prevent.
-5. For any screen, open its **frozen HTML** first; it is the spec.
+7. For any screen, open its **frozen HTML** first; it is the spec.
 
 *The design is done. Your job is faithful execution. If something feels like it should change, it goes into the
 frozen HTML first (owner gate) — not into the code.*
@@ -361,4 +397,6 @@ frozen HTML first (owner gate) — not into the code.*
 
 *Handover written 2026-07-28 by the Design Custodian at the close of the V2 Design Program. §0 and the Phase A
 status added 2026-07-29 (package A10); updated 2026-07-30 at the **Phase A closeout**, when the D-002, D-006
-and D-016 owner rulings were recorded and Phase A's gate passed.*
+and D-016 owner rulings were recorded and Phase A's gate passed. Updated 2026-07-31 at the **Workflow V2
+revision** ([ADR-085](DECISIONS.md#adr-085)): this document became the package entry point, and §4/§5/§8 took the
+frozen property table, the verification order, the mid-package review and the single owner gate.*
