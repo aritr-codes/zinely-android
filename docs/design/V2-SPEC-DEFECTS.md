@@ -51,7 +51,7 @@ content, not visual identity* — with the pre-existing-zine backfill following 
 confirmation. [**D-024**](#d-024-ruling) was ruled the way that costs the most and is worth the most: Loading and Error are
 product states, they belong in the **canonical design**, and the answer arrives as an
 [**amendment to the frozen HTML**](#d-024-amendment) — approved and **applied on 2026-07-31** — rather than as
-prose, so parity stays verifiable. So the count is now **twenty-six: nineteen resolved, seven open** — exactly
+prose, so parity stays verifiable. So the count is now **twenty-seven: nineteen resolved, eight open** — the twenty-seventh, [**D-027**](#d-027), raised by B5's **mid-package adversarial review against shipped code** rather than by planning, which is the first entry to arrive that way — exactly
 the six Phase A left, plus D-023. **Nothing from Phase B blocks anything.**
 
 **The amendment is the first one to *add* design to a frozen V2 surface** (D-006 deleted dead specification;
@@ -2197,6 +2197,49 @@ pass on a re-drawing implementation, which is precisely the class of blind asser
 producing.
 
 ---
+
+---
+
+### D-027 — the sheet's metadata line is shipped in a vocabulary the frozen file never uses {#d-027}
+
+| | |
+|---|---|
+| **Artifact** | [`v2-library.html`](mockups/v2-library.html) `:185-190`, `:214` — `data-sub` → `.sh-sub` |
+| **Found** | 2026-07-31, by the **mid-package adversarial review** of Phase B / B5, against shipped code |
+| **Severity** | **Cosmetic, and only inside the action sheet.** The shelf draws no metadata at all, so nothing on the Library's own surface is affected |
+| **Status** | 🟡 **OPEN — owner ruling required.** B5 ships the reused formatter and pins it in a test; the entry records the difference rather than resolving it |
+
+**The gap.** The frozen file gives five example subtitles: `"A4 · 2 days ago"`, `"Letter · today"`,
+`"A4 · 5 days ago"`, `"A4 · 1 week ago"`, `"Letter · 2 weeks ago"`. B5 composes the line from V1's already
+unit-tested `editedLabel`, exactly as [ADR-086](../DECISIONS.md#adr-086) row 8 planned — *"reuses `editedLabel`
+… B5 asserts the **wiring**, not the formatter"*. The shipped strings therefore read `"A4 · Edited 2 days ago"`,
+and they differ from the freeze in two ways:
+
+1. **The word "Edited" appears nowhere in the frozen file.** Every frozen example is bare — the stock, the
+   separator, the recency. `editedLabel` prefixes all five of its cases, because it was written for V1's card,
+   where the line stands alone under a title and needs a verb.
+2. **There is no week granularity.** `editedLabel` runs *just now · N minutes · N hours · yesterday · N days*,
+   so the freeze's `1 week ago` renders as `Edited 7 days ago` and `2 weeks ago` as `Edited 14 days ago`.
+
+**Why this is a question rather than a fix.** Row 8's own note licenses the formatter as the authority on the
+words, on the ground that *"the frozen file shows five example values and defines no thresholds"* — which is
+true of the **boundaries** and false of the **vocabulary**: the freeze does exhibit week-scale wording, and it
+never says "Edited". Reading `data-sub` as five literal design decisions and reading it as five illustrations
+of a shape are both defensible, and they lead to different code. Choosing between them is a design call on
+copy that a user reads, which is the owner's, and [D-020](#d-020-ruling) is the standing warning against
+implementers settling this class of question by inference.
+
+**The alternatives.**
+
+| Rule | What it costs |
+|---|---|
+| **Keep `editedLabel` as shipped** | one formatter, already tested, one vocabulary across V1 and V2 — but the sheet says a word the design does not, and loses week-scale wording |
+| **A V2 recency formatter matching the five frozen examples** | exact parity in the sheet; a second formatter to keep, and two vocabularies in one app until V1's shelf is retired |
+| **Amend the frozen file's five examples to the shipped strings** | one vocabulary and verifiable parity — but it edits the design to match the code, which is the direction [the freeze rule forbids](../CLAUDE.md#design-freeze) unless the owner intends it |
+
+**Not blocking.** B5's row 8 asserts the wiring — paper first, separator, the formatter's own recency, and the
+line drawn only in the sheet — and every one of those holds under either ruling. A ruling changes one function
+and the literals in one test.
 
 ---
 

@@ -1,15 +1,24 @@
 package com.aritr.zinely.feature.library
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -17,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /**
@@ -53,6 +63,10 @@ internal data class ZineShelfItem(
  * becomes a function of that.
  */
 internal fun zineShelfCoverTestTag(index: Int): String = "shelf-cover-$index"
+
+/** `.ph` — one loading placeholder cell. Unnumbered: they are interchangeable, and counting them is the
+ * only assertion worth making about them. */
+internal const val ZineShelfPlaceholderTestTag: String = "shelf-placeholder"
 
 /**
  * The frozen Library's shelf — `v2-library.html:46-49`, `:147-155`.
@@ -126,6 +140,10 @@ internal fun zineShelfCoverTestTag(index: Int): String = "shelf-cover-$index"
  * @param modifier the caller's. `.shelf{flex:1 1 auto}` means **the shelf takes the space left over**,
  *   so a caller that gives it none gets a grid sized to its content and no scrolling; B5's screen passes
  *   `fillMaxSize()`.
+ * @param placeholders how many `.ph` cells to stand in for zines that have not arrived yet — **B5**, from
+ *   the [D-024 amendment](docs/design/V2-SPEC-DEFECTS.md#d-024-amendment). Zero at rest. They live inside
+ *   this grid because the frozen markup puts them there (`:184`), under the same heading and on the same
+ *   two columns, so nothing about the screen moves when the real covers land.
  */
 @Composable
 internal fun ZineShelf(
@@ -133,6 +151,7 @@ internal fun ZineShelf(
     onOpen: (Int) -> Unit,
     onActions: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    placeholders: Int = 0,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(ShelfColumns),
@@ -144,6 +163,12 @@ internal fun ZineShelf(
         // `grid-column:1 / -1` — a full-width cell, so the row gap below it is the same 28px that
         // separates the cover rows. Nothing about this is a header component; it is a wide cell.
         item(span = { GridItemSpan(maxLineSpan) }) { ShelfHeading() }
+
+        // `.ph` — the loading placeholders, which the amended freeze puts INSIDE this grid, after the
+        // heading, as ordinary cells (`:184`). They are cells rather than a separate skeleton screen for
+        // the reason the amendment states: *"the heading stays up, so the screen does not restructure
+        // when the data lands"*. See [ZineLibraryScreen] for why they are never shown beside real zines.
+        items(placeholders) { ShelfPlaceholder() }
 
         // No `key`: position is the identity a list that cannot reorder actually has. B5 supplies the
         // stable one with real projects — asserting a key here would be asserting B5's data model.
@@ -192,6 +217,33 @@ private fun ShelfHeading() {
     )
 }
 
+/**
+ * `.ph{aspect-ratio:3/4;border-radius:6px 9px 9px 6px;background:var(--desk-edge)}` (`:134`).
+ *
+ * A cover-shaped hollow in the desk's own edge tone — not a shimmer, not a spinner. The amendment's
+ * comment is the argument: *"loading must never be mistaken for the empty state. A slow read that
+ * rendered 'Make your first little zine' would tell a user with twelve zines that they have none."*
+ * A placeholder answers *"your shelf is coming"*; a spinner answers *"something is happening"*, and
+ * only one of those is the question a user holds while looking at their own shelf.
+ *
+ * **Silent to TalkBack.** It has no name because it is not a thing — announcing four unlabelled boxes
+ * would be worse than announcing nothing, and the state itself is spoken by the screen, not the cell.
+ * The asymmetric radius is the cover's own spine-left profile ([ZineCover]), kept so the hollow is the
+ * shape of what will stand in it.
+ */
+@Composable
+private fun ShelfPlaceholder() {
+    Box(
+        Modifier
+            .testTag(ZineShelfPlaceholderTestTag)
+            .fillMaxWidth()
+            .aspectRatio(PlaceholderAspectRatio)
+            .clip(PlaceholderShape)
+            .background(ZinelyTheme.v2Colors.deskEdge)
+            .clearAndSetSemantics {},
+    )
+}
+
 // ---------------------------------------------------------------------------------------------
 // The frozen values, transcribed from `v2-library.html` at the lines named against each.
 //
@@ -233,3 +285,14 @@ private val ShelfHeadingSize = 25.92.sp
 
 /** `letter-spacing:-.01em` — kept in `em`, the unit the CSS states, so it tracks the size. */
 private val ShelfHeadingTracking = (-0.01).em
+
+/** `.ph{aspect-ratio:3/4}` — width ÷ height, which is the order Compose's `aspectRatio` takes. */
+private const val PlaceholderAspectRatio = 3f / 4f
+
+/** `.ph{border-radius:6px 9px 9px 6px}` — the cover's spine-left profile, tight side first. */
+private val PlaceholderShape = RoundedCornerShape(
+    topStart = 6.dp,
+    topEnd = 9.dp,
+    bottomEnd = 9.dp,
+    bottomStart = 6.dp,
+)

@@ -42,7 +42,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import com.aritr.zinely.export.ExportViewModel
 import com.aritr.zinely.home.HomeUiState
 import com.aritr.zinely.home.HomeViewModel
-import com.aritr.zinely.feature.editor.HomeScreen
+import com.aritr.zinely.feature.library.LibraryShelfState
+import com.aritr.zinely.feature.library.ZineLibraryScreen
 import androidx.compose.runtime.DisposableEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aritr.zinely.feature.editor.EditorScreen
@@ -71,6 +72,20 @@ internal fun ZinelyNavHost(
             HomeDestination(
                 onOpenZine = { id ->
                     navController.navigate(EditorRoute(id)) { launchSingleTop = true }
+                },
+                // **Share & export pushes the editor and THEN the Proof** — the one navigation invariant
+                // B5 can break expensively ([ADR-086](../../../../../../docs/DECISIONS.md#adr-086) §6).
+                // `ProofRoute` resolves the *shared* editor ViewModel off the editor's live back-stack
+                // entry (the ADR-026 single-writer seam, see below), so a direct navigate to the Proof
+                // finds no such entry and **throws at runtime**. The failure is a crash rather than a
+                // wrong pixel, which is why the assertion is on the back stack.
+                //
+                // Going *back* from the Proof therefore lands on the bench, not the shelf. That is the
+                // existing flow's own behaviour, and D-025 says reuse the flow — which means its
+                // behaviour too, not merely its destination.
+                onShareExport = { id ->
+                    navController.navigate(EditorRoute(id)) { launchSingleTop = true }
+                    navController.navigate(ProofRoute(id))
                 },
             )
         }
@@ -106,7 +121,10 @@ internal fun ZinelyNavHost(
  * §4) and come back as one-shot [HomeViewModel.openEvents] ids collected here into [onOpenZine].
  */
 @Composable
-private fun HomeDestination(onOpenZine: (String) -> Unit) {
+private fun HomeDestination(
+    onOpenZine: (String) -> Unit,
+    onShareExport: (String) -> Unit,
+) {
     val viewModel: HomeViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -114,25 +132,35 @@ private fun HomeDestination(onOpenZine: (String) -> Unit) {
         viewModel.openEvents.collect { id -> onOpenZine(id) }
     }
 
-    HomeScreen(
-        loading = state is HomeUiState.Loading,
-        // The honest empty signal (ADR-044 §3): the invitation only when the STORE is empty — a
-        // shelf filtered to zero by pending deletes stays a zero-card shelf.
-        storeEmpty = state is HomeUiState.Empty,
-        // The shelf could not be read. The zines are still on the device; the retry re-asks the store.
-        error = state is HomeUiState.Error,
-        onRetry = viewModel::retry,
-        cards = (state as? HomeUiState.Content)?.cards ?: emptyList(),
+    ZineLibraryScreen(
+        state = state.toLibraryShelfState(),
         events = viewModel.events,
         onOpenZine = viewModel::openZine,
+        onShareExport = onShareExport,
         onStartZine = viewModel::startZine,
         onRenameZine = viewModel::rename,
         onDuplicateZine = viewModel::duplicate,
         onDeleteZine = viewModel::delete,
         onDeleteUndo = viewModel::undoDelete,
         onDeleteCommit = viewModel::commitDelete,
+        onRetry = viewModel::retry,
         modifier = Modifier.fillMaxSize(),
     )
+}
+
+/**
+ * [HomeUiState] → the Library's four states (B5).
+ *
+ * A total `when` over a sealed type on both sides, so the mapping cannot lose a state — and
+ * [HomeUiState.Empty] is the **honest** empty signal (ADR-044 §3): it means the *store* is empty, so a
+ * shelf filtered to zero by a pending undoable delete stays a zero-zine [LibraryShelfState.Content] and
+ * never flashes the invitation over a zine the user can still get back.
+ */
+private fun HomeUiState.toLibraryShelfState(): LibraryShelfState = when (this) {
+    is HomeUiState.Loading -> LibraryShelfState.Loading
+    is HomeUiState.Error -> LibraryShelfState.Error
+    is HomeUiState.Empty -> LibraryShelfState.Empty
+    is HomeUiState.Content -> LibraryShelfState.Content(zines)
 }
 
 /**

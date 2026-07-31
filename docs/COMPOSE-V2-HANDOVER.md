@@ -59,12 +59,32 @@ committed 2026-07-31** (`97744e6`, [ADR-084](DECISIONS.md#adr-084), `Accepted`).
 loose sheet → arrow → little book transformation, a serif line and two of body copy) and `ZineDock` (the band
 that fades up into the desk, and the "Make a zine" button standing in it).
 
-**B5 — the screen — is PLANNED AND STOPPED, and it is stopped for a good reason** ([ADR-086](DECISIONS.md#adr-086),
-`Proposed`). Its [frozen property table](DECISIONS.md#adr-086-fpt) — the first one this programme has written,
-under [ADR-085](DECISIONS.md#adr-085) — found that **8 of its 23 rows had no frozen source**, and raised
-**[D-024](design/V2-SPEC-DEFECTS.md#d-024)**, **[D-025](design/V2-SPEC-DEFECTS.md#d-025)**,
-**[D-026](design/V2-SPEC-DEFECTS.md#d-026)** and the `token-enrolment.txt` conflict. No production code has
-been written.
+**B5 — the screen — is BUILT and STOPPED at the pre-commit gate** ([ADR-086](DECISIONS.md#adr-086),
+`Proposed` — independently reviewed **GO WITH FIXES**, fixes applied; awaiting owner acceptance, and **nothing is committed**). Its
+[frozen property table](DECISIONS.md#adr-086-fpt) — the first one this programme has written, under
+[ADR-085](DECISIONS.md#adr-085) — found, *before* any code, that **8 of its 23 rows had no frozen source**, and
+raised **[D-024](design/V2-SPEC-DEFECTS.md#d-024)**, **[D-025](design/V2-SPEC-DEFECTS.md#d-025)**,
+**[D-026](design/V2-SPEC-DEFECTS.md#d-026)** and the `token-enrolment.txt` conflict.
+
+**What B5 actually changed.** The app's **Home route now hosts `ZineLibraryScreen`** — the first user-visible V2
+surface — with four states (Loading · Error · Empty · Content), the dock standing in all four, and the existing
+create / rename / duplicate / delete-with-undo flows reused whole (D-025). Covers are now **persisted**: the
+cover types moved to `core:model`, `ProjectMeta` and the Room index each gained `coverSurface`/`coverStamp`, and
+the index moved to **schema v2 via an additive `Migration(1,2)`** rather than destructive fallback. V1's
+`HomeScreen` and its suite are untouched and still green; what changed is which screen the route hosts.
+
+**Three things B5 learned that outlive it.** *(1)* Its tests found a **real production defect on their first
+run** — `syncRowFromDisk` built the returned `ProjectSummary` a second time by hand beside the row it had just
+written, and the hand-built one dropped the new field, so a freshly created zine came back **coverless** while
+disk and index both held its cover. Two construction sites for one projection is the defect; one site is the
+fix. *(2)* Mid-package review found **two rows terminating on nothing** — one ✅ with no test file at all, one ✅
+on a *code comment* — which is [ADR-087](DECISIONS.md#adr-087)'s whole purpose, caught by the ruling it was
+written for. *(3)* `Modifier.windowInsetsPadding` is **consumption-aware**, so the obvious "a second consumer"
+mutation is an **equivalent mutant**; the assertion that actually holds the inset measures the *workspace*, not
+the button. **13 mutations applied, 13 killed; 8 goldens recorded** (four states × two themes). B5 raised one
+new defect, **[D-027](design/V2-SPEC-DEFECTS.md#d-027)** (the metadata line's vocabulary), which does not block
+it, and reported one **pre-existing** gap it did not cause and did not fix:
+`EditorCoverageNoticeGoldenTest` (A9, `b0f2ad1`) has **no recorded rasters at HEAD**.
 
 **All four were ruled the same day and all four are closed. No table row is blocked.** D-025: *reuse the
 existing flows — and **Share & export is a route into the Proof**, not a shelf-level export.* D-026: *a

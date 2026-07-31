@@ -1,5 +1,9 @@
 package com.aritr.zinely.feature.library
 
+import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.core.model.ZineCoverStamp
+import com.aritr.zinely.core.model.ZineCoverSurface
+
 /**
  * The frozen shelf's own six objects, in its own order — `v2-library.html:149-154`.
  *

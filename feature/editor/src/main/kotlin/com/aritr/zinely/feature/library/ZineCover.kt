@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.ui.components.zinelyV2Shadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV2Grain

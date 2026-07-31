@@ -1,6 +1,9 @@
 package com.aritr.zinely.feature.library
 
 import androidx.compose.ui.graphics.Color
+import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.core.model.ZineCoverStamp
+import com.aritr.zinely.core.model.ZineCoverSurface
 import com.aritr.zinely.ui.theme.zinelyContentInks
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

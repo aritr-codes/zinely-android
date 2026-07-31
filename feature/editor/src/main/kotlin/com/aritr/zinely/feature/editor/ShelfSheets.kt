@@ -50,6 +50,9 @@ import com.aritr.zinely.ui.theme.ZinelyTheme
 
 /** Test tags on the two sheets the pre-reskin shelf had no equivalent of. */
 internal const val ShelfActionSheetTestTag: String = "shelf-action-sheet"
+
+/** The rename input on its own sheet — the V2 Library's route into the same rename flow. */
+internal const val ShelfRenameSheetTestTag: String = "shelf-rename-sheet"
 internal const val ShelfSortSheetTestTag: String = "shelf-sort-sheet"
 
 /** The frozen `#sortMenu` options, in the spec's order. */
@@ -200,37 +203,12 @@ internal fun ShelfActionSheet(
         modifier = Modifier.testTag(ShelfActionSheetTestTag),
     ) {
         if (renaming) {
-            val focusRequester = remember { FocusRequester() }
-            // `inp.focus(); inp.select();` — the field is the reason the row appeared.
-            LaunchedEffect(Unit) { focusRequester.requestFocus() }
-            // `if(z && v){ z.t=v; buzz("snap"); } closeSheets(false);` — a name emptied to nothing is
-            // not a rename. The sheet still closes, the zine still has the name it always had, and
-            // nothing buzzes: no work happened.
-            val save = {
-                val trimmed = draft.trim()
-                if (trimmed.isNotEmpty()) {
-                    haptics.perform(ZinelyHaptic.Snap)
-                    onRename(card.id, trimmed)
-                }
-                onDismiss()
-            }
-            Row(
-                modifier = Modifier.padding(start = 2.dp, end = 2.dp, top = 6.dp, bottom = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                ZTextField(
-                    value = draft,
-                    onValueChange = { draft = it },
-                    modifier = Modifier
-                        .weight(1f)
-                        .focusRequester(focusRequester)
-                        .testTag(HomeRenameFieldTestTag),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { save() }),
-                )
-                RenameSaveButton(onClick = save)
-            }
+            RenameField(
+                draft = draft,
+                onDraftChange = { draft = it },
+                onSave = { trimmed -> onRename(card.id, trimmed) },
+                onDone = onDismiss,
+            )
         }
 
         Column {
@@ -256,6 +234,96 @@ internal fun ShelfActionSheet(
                 danger = true,
             )
         }
+    }
+}
+
+/**
+ * The rename input itself — the field, its Done key and its Save button, as one thing.
+ *
+ * Extracted so the V2 Library can raise **this** surface rather than a second one of its own. The
+ * [D-025 ruling](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-025-ruling) is *"reuse existing
+ * behaviour; invent no new product concept"*, and a re-implemented field would be a new concept wearing
+ * the old one's name — same shape, different empty-name rule, different haptic, different test tags.
+ *
+ * @param onSave called only with a **non-blank, trimmed** title. A name emptied to nothing is not a
+ *   rename: the surface still closes, the zine keeps the name it always had, and nothing buzzes, because
+ *   no work happened.
+ * @param onDone the surface should close, whether or not anything was saved.
+ */
+@Composable
+private fun RenameField(
+    draft: String,
+    onDraftChange: (String) -> Unit,
+    onSave: (String) -> Unit,
+    onDone: () -> Unit,
+) {
+    val haptics = ZinelyTheme.haptics
+    val focusRequester = remember { FocusRequester() }
+    // `inp.focus(); inp.select();` — the field is the reason the row appeared.
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    val save = {
+        val trimmed = draft.trim()
+        if (trimmed.isNotEmpty()) {
+            haptics.perform(ZinelyHaptic.Snap)
+            onSave(trimmed)
+        }
+        onDone()
+    }
+    Row(
+        modifier = Modifier.padding(start = 2.dp, end = 2.dp, top = 6.dp, bottom = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ZTextField(
+            value = draft,
+            onValueChange = onDraftChange,
+            modifier = Modifier
+                .weight(1f)
+                .focusRequester(focusRequester)
+                .testTag(HomeRenameFieldTestTag),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { save() }),
+        )
+        RenameSaveButton(onClick = save)
+    }
+}
+
+/**
+ * The rename input on its own sheet — the V2 Library's rename, which is V1's rename.
+ *
+ * V1 reveals the field *inside* the action sheet, because that sheet's rows and the field are one
+ * surface. V2's action sheet is B3's frozen `.sheet` and has no room the field could be revealed in
+ * without redesigning a frozen component, so the same field arrives on its own sheet instead. **The flow
+ * is unchanged** — [RenameField]'s rules, `HomeViewModel.rename`'s trimming, the same two test tags —
+ * and the V1 chrome on a V2 screen is the seam [ADR-086](../../../../../../../docs/DECISIONS.md#adr-086)
+ * records as an accepted Known Limitation rather than a defect.
+ *
+ * @param title the zine's current name, which is what the field opens with.
+ * @param onRename the new, trimmed, non-blank title. The id is the caller's to remember.
+ */
+@Composable
+internal fun ShelfRenameSheet(
+    visible: Boolean,
+    title: String,
+    onDismiss: () -> Unit,
+    onRename: (String) -> Unit,
+) {
+    // Keyed on `title` as well as `visible` so reopening the sheet for a different zine — or for the same
+    // one after a rename — starts from the name that zine actually has, never a stale draft.
+    var draft by remember(visible, title) { mutableStateOf(title) }
+    ZSheet(
+        visible = visible,
+        onDismiss = onDismiss,
+        title = Copy.Shelf.RENAME,
+        sub = title,
+        modifier = Modifier.testTag(ShelfRenameSheetTestTag),
+    ) {
+        RenameField(
+            draft = draft,
+            onDraftChange = { draft = it },
+            onSave = onRename,
+            onDone = onDismiss,
+        )
     }
 }
 

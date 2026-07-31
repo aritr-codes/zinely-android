@@ -23,11 +23,16 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.core.model.ZineCoverStamp
+import com.aritr.zinely.core.model.ZineCoverSurface
 import com.aritr.zinely.ui.a11y.PlatformA11yNode
 import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV2Dimens
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -38,8 +43,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 /**
  * `.zine` — what the two gestures do, what a press looks like, and what the platform hears.

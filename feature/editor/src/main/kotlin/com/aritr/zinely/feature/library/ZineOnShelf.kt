@@ -32,6 +32,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme

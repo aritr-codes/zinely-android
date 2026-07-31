@@ -92,11 +92,16 @@ class ZinelyNavHostTest {
     }
 
     /**
-     * A shelf card prints its title inside `clearAndSetSemantics{}` — one node, one announcement —
-     * so the title is reachable as the card's label, never as a text node. Tests address the object
-     * the way a screen reader does.
+     * A zine on the shelf prints its title inside `clearAndSetSemantics{}` — one node, one
+     * announcement — so the title is reachable as the object's label, never as a text node. Tests
+     * address the object the way a screen reader does.
+     *
+     * **B5 changed what this label says**, because the route now hosts the V2 Library
+     * ([ADR-086](../../../../../../../docs/DECISIONS.md#adr-086)). V1's card announced *"X, finished
+     * zine. Open on the bench."*; the V2 cover announces the zine's name and nothing else — the whole
+     * design is *"covers only, no metadata line"*, and the spoken name follows the drawn one.
      */
-    private fun cardLabel(title: String) = "$title, finished zine. Open on the bench."
+    private fun cardLabel(title: String) = title
 
     private fun waitForCard(title: String, timeoutMs: Long = 10_000) {
         composeRule.waitUntil(timeoutMs) {
@@ -238,7 +243,42 @@ class ZinelyNavHostTest {
         composeRule.runOnUiThread { navController.popBackStack() }
         waitForHome()
     }
+
+    @Test
+    fun `Share and export from the shelf stacks Home then Editor then Proof`() {
+        // Given the V2 Library's sheet (B5) — `Share & export` routes into the EXISTING Proof flow
+        // (D-025), and there is no shelf-level export concept.
+        val id = seedZine()
+        setHost()
+        waitForCard(SEEDED_TITLE)
+
+        // When the row is chosen
+        // Addressed by their spoken names rather than by test tags: the Library's tags are `internal`
+        // to `:feature:editor`, and a host-level test should reach the surfaces the way the platform
+        // does anyway — the `⋯` by its `aria-label`, the row by the words on it.
+        composeRule.onNodeWithContentDescription("Actions for $SEEDED_TITLE").performClick()
+        composeRule.onNodeWithContentDescription(SHARE_AND_EXPORT).performClick()
+
+        // Then the Proof is up over an editor that actually exists on the stack.
+        //
+        // **This is the assertion, and it is on the stack rather than on a rendered screen.**
+        // `ProofRoute` resolves the *shared* editor ViewModel via `getBackStackEntry(EditorRoute(id))`
+        // — the ADR-026 single-writer seam — so a direct `navigate(ProofRoute)` finds no such entry and
+        // **throws at runtime**. The mutation is a crash, not a wrong pixel, and only the stack shows it.
+        composeRule.waitUntil(10_000) {
+            navController.currentDestination?.hasRoute<ProofRoute>() == true
+        }
+        assertEquals(id, navController.currentBackStackEntry?.toRoute<ProofRoute>()?.projectId)
+
+        // and back lands on the bench, not the shelf — "reuse the flow" means its behaviour too.
+        composeRule.runOnUiThread { navController.popBackStack() }
+        waitForEditor()
+        assertEquals(id, navController.currentBackStackEntry?.toRoute<EditorRoute>()?.projectId)
+    }
 }
 
 /** The ADR-042 §4 adoption fallback title every on-disk-seeded test project carries. */
 private const val SEEDED_TITLE = "My zine"
+
+/** `.act` — the frozen row's own words (`v2-library.html:127`), which are also its spoken name. */
+private const val SHARE_AND_EXPORT = "Share & export"

@@ -37,8 +37,13 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.core.model.ZineCoverStamp
+import com.aritr.zinely.core.model.ZineCoverSurface
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import kotlin.math.abs
+import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -48,8 +53,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 /**
  * The shelf's geometry, read back off the placed layout rather than asserted against the source.

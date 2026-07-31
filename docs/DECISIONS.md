@@ -2484,7 +2484,7 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
 
 ## ADR-086 {#adr-086}
 **Phase B / B5 — the screen: the first integration package, and the frozen property table that stopped it before it started.**
-- **Status:** `Proposed` — **planning complete and approved 2026-07-31; implementation not started.** All four blockers were ruled the day they were raised ([D-024](design/V2-SPEC-DEFECTS.md#d-024-ruling), [D-025](design/V2-SPEC-DEFECTS.md#d-025-ruling), [D-026](design/V2-SPEC-DEFECTS.md#d-026-ruling), plus the enrolment conflict re-seated to Phase D), and the [frozen-HTML amendment](design/V2-SPEC-DEFECTS.md#d-024-amendment) adding canonical Loading and Error states is **approved and applied**. **No table row is blocked.** Moves to `Accepted` when B5 is built, independently reviewed, reconciled and committed. This ADR exists because [ADR-085](#adr-085) change 2 requires a package to publish its frozen property table *before* implementation; B5 is the first package to run that rule, and the table is the reason this ADR reports blockers instead of an implementation.
+- **Status:** `Proposed` — **planning approved; implementation complete and independently reviewed 2026-07-31, awaiting owner acceptance and commit.** All four blockers were ruled the day they were raised ([D-024](design/V2-SPEC-DEFECTS.md#d-024-ruling), [D-025](design/V2-SPEC-DEFECTS.md#d-025-ruling), [D-026](design/V2-SPEC-DEFECTS.md#d-026-ruling), plus the enrolment conflict re-seated to Phase D), and the [frozen-HTML amendment](design/V2-SPEC-DEFECTS.md#d-024-amendment) adding canonical Loading and Error states is **approved and applied**. **No table row is blocked.** It **moves to `Accepted` when the owner accepts the review and the package is committed** — not before, and not on the strength of the implementer's own mid-package review, which is exactly what `Accepted` briefly claimed here and what the independent review's first Required Fix removed. This ADR exists because [ADR-085](#adr-085) change 2 requires a package to publish its frozen property table *before* implementation; B5 is the first package to run that rule, and the table is the reason this ADR reports blockers instead of an implementation.
 - **Context:** B1–B4 built the Library's parts additively — the cover, the shelf, the gestures and sheet, the empty state and the dock — against a frozen HTML that specifies each of them completely. B5 is different in kind: it is the **integration** package, and its deliverables (real project data, state selection, navigation and route hand-over, the persisted cover assignment, `token-enrolment.txt`, both device passes) are precisely the things a design prototype does not contain. The frozen [Library](design/mockups/v2-library.html) has **six hard-coded zines**: it never reads a store, so it never waits and never fails; it wires no handler to any of its six actions; and it has no rename input, no delete confirmation and no paper chooser. Every one of those is a *screen* B5 must show.
 - **Decision:**
   1. **Publish the frozen property table first, and let it report what it found.** The table below is B5's implementation checklist. Twelve rows have a frozen source and are ready to build; **eight have no source at all**, and finding that out cost a paragraph each rather than a package each. That is the whole argument for ADR-085 change 2, and this is its first run.
@@ -2521,30 +2521,35 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
   |---|---|---|---|---|---|---|
   | 1 | the screen's ground is `--desk` | `v2-library.html:42` `.phone{background:var(--desk)}`; [ADR-082](#adr-082) left it unpainted (*"the desk is B5's"*) | screen root | probe bare ground (above the shelf head, clear of any cover) `== ZinelyV2Colors.desk`, both themes | ground takes `stage` / `paper` | |
   | 2 | the dock is bottom-anchored **over** the shelf | `:88` `.dock{position:absolute;left:0;right:0;bottom:0}` | `Box` + `BottomCenter` | the dock's bounds touch the screen's bottom edge **and** the shelf's bounds extend under it | place the dock in a `Column` after the shelf | |
-  | 3 | the dock stands in **both** states | `:168` — `.dock` sits outside `.empty`, and no `is-empty` rule targets it | screen composition | the dock node exists with zero projects **and** with six | move the dock inside the shelf branch | the empty state's only exit |
+  | 3 | the dock stands in **all four** states | `:168` — `.dock` sits outside `.empty`, and no `is-empty` rule targets it; widened from *both* to *four* by the [D-024 amendment](design/V2-SPEC-DEFECTS.md#d-024-amendment), which is row 16a | screen composition | the dock node exists in Content, Empty, Loading **and** Error | move the dock inside the shelf branch | ✅ the empty state's only exit. **Row rewritten after the amendment**: it read *both states* while the shipped assertion already covered four, which understates its own artifact — the mirror of a row overstating one, and the same ADR-087 defect either way |
   | 4 | `.empty` fills the screen | `:98` `.empty{position:absolute;inset:0}` | empty branch | the empty node's bounds `==` the screen's bounds | wrap it in a shrink-wrapping column |  |
   | 5 | empty **replaces** the shelf; they are alternatives | `:117` `body.is-empty .shelf{display:none} body.is-empty .empty{display:flex}` | state selection | zero projects → empty present **and shelf absent**; ≥1 → the exact inverse | render both | the "and absent" half is the one a `hasAnyChild` assertion would miss |
   | 6 | the cover carries the **title** and nothing else | `:149` `data-name` → `.ct`; `:45` *"no header chrome, no metadata line — the covers ARE the screen"* | `ProjectSummary.title` → `ZineCover` | the cover shows the title, and **no** cover node carries the format or the date | put the sub on the cover | |
   | 7 | format + date are disclosed **in the sheet** | `:149` `data-sub` → `:172` `.sh-sub` | sheet header | the sheet header shows both, for the zine that was long-pressed | show them for the first zine regardless of which was pressed | the element and its position must meet in one matcher ([ADR-082](#adr-082)'s rule) |
-  | 8 | the sub reads `format · relative date` | `:149` `"A4 · 2 days ago"` | mapping from `ProjectSummary` | matches `<paper> · <relative>` against a fixed clock | drop the separator; use an absolute date | reuses `editedLabel`, which is already unit-tested — B5 asserts the **wiring**, not the formatter ([ADR-070](#adr-070)'s lesson) |
+  | 8 | the sub reads `format · relative date` | `:149` `"A4 · 2 days ago"` | mapping from `ProjectSummary` | matches `<paper> · <relative>` against a fixed clock | drop the separator; use an absolute date | reuses `editedLabel`, which is already unit-tested — B5 asserts the **wiring**, not the formatter ([ADR-070](#adr-070)'s lesson). ⚠ *the wiring is asserted and holds; the **words** turned out to differ from the frozen examples — `"Edited"` appears nowhere in the freeze, and `editedLabel` has no week scale, so `1 week ago` renders as `Edited 7 days ago`. Found by the mid-package review against shipped code and raised as [**D-027**](design/V2-SPEC-DEFECTS.md#d-027); the row's own note licensed the formatter on thresholds, which is true of the boundaries and false of the vocabulary* |
   | 9 | a cover is assigned **once** and persisted | [D-017 ruling](design/V2-SPEC-DEFECTS.md#d-017-ruling) | `newZineCoverRecipe` + `ProjectMeta.coverSurface/coverStamp` + Room index + `ProjectSummary` | renaming a project does not change its recipe; the recipe survives a repository reload | re-draw the recipe on every read | the guard B1 could not write, now with a call site to check |
   | 10 | the cover is **never** derived from the title | [D-017](design/V2-SPEC-DEFECTS.md#d-017-ruling) | the assigner takes no title and no title-derived seed | two projects created with the **same** title receive independently drawn recipes over a seeded run | seed the RNG from the title | B1 proved a reflection guard cannot hold this; the assertion is now behavioural, over the real create path |
-  | 11 | surface and stamp vary **independently** | `ZineCoverRecipe` KDoc; [V2-IDENTITY.md](design/V2-IDENTITY.md) §5 | the assigner draws twice | over N seeded draws both axes take ≥2 values **and** are uncorrelated | derive the stamp from the surface | |
+  | 11 | surface and stamp vary **independently** | `ZineCoverRecipe` KDoc; [V2-IDENTITY.md](design/V2-IDENTITY.md) §5 | the assigner draws twice | over N seeded draws both axes take ≥2 values **and** are uncorrelated | derive the stamp from the surface | ✅ `ZineCoverTest` — **and this row is B5's lesson.** It first shipped ✅ with **no test file at all**: the mid-package review applied the planned mutation (`stamp = entries[surface.ordinal]`) and **all four module suites stayed green**, because every neighbouring assertion compares whole recipes for *inequality*, which a one-axis assigner satisfies. Now asserted in both directions, plus reachability of every surface and stamp |
   | 12 | the shelf shows the repository's order, unmodified | the freeze states **no** order — its own six run 2d · today · 5d · 1w · 2w · 3w, unsorted — and `ProjectRepository.observeProjects()` documents *"newest-first by convention"* | screen passes the list straight through | a known list renders with title **and** position matched in one matcher | `.reversed()`, and separately an added `sortedBy` | B5 adds no sort. The freeze's silence is not a licence to invent one (D-020); the repository's documented order is a data-layer fact, not a design decision |
-  | 13 | the safe-area inset is consumed **once** | `:88` `calc(22px + env(safe-area-inset-bottom))`; [ADR-084](#adr-084) decision 4 named this risk in terms | the screen root must **not** also pad bottom | structural: no `windowInsetsPadding`/`navigationBarsPadding` on the screen root or any ancestor of the dock | add one at the screen root | ∅ *the numeric value is device-pass only — Robolectric reports a zero bottom inset at every qualifier B4 ran ([ADR-084](#adr-084)), so a unit assertion could only prove `0+22==22`. The **absence of a second consumer** is assertable now; the arithmetic is B5's device Pass 1* |
+  | 13 | the safe-area inset is consumed **once** | `:88` `calc(22px + env(safe-area-inset-bottom))`; [ADR-084](#adr-084) decision 4 named this risk in terms | the screen root must **not** also pad bottom | structural: no `windowInsetsPadding`/`navigationBarsPadding` on the screen root or any ancestor of the dock | add one at the screen root | ✅ `ZineLibraryInsetTest` — **two assertions, because the obvious mutant is equivalent.** The inset is *dispatched* into the view hierarchy, so "consumed once" is asserted as a **difference** and needs no frozen pixel: the dock's control lifts by exactly one inset, **and** the shelf still fills the root. The second half is the one that matters — `Modifier.windowInsetsPadding` is consumption-aware, so a `navigationBarsPadding()` at the root does **not** move the button (the lift assertion stays green) and is ≡ to it; what it does do is shrink the workspace by 48dp of scroll room, and the region assertion sees that. ∅ *the numeric value stays device-pass only — Robolectric reports a zero bottom inset at every qualifier, so only a supplied one is measurable here* |
   | 14 | `.start`'s label colour | `:91` `.start{color:var(--paper)}` | B4's `ZineDock`, composed unchanged | **none — B4 owns it** | none | ⚠ *contested: [D-023](design/V2-SPEC-DEFECTS.md#d-023) is open. B5 re-pins nothing and re-decides nothing; if the ruling flips it, one paint site in B4 changes* |
   | 15 | **loading**: the shelf head stands, four `.ph` placeholders, no zines, not the empty state | ✅ `v2-library.html` `.ph` / `body.is-loading` — **added by the [D-024 amendment](design/V2-SPEC-DEFECTS.md#d-024-amendment)** | the loading branch | in `Loading`: placeholders present, the shelf head present, **and no empty-state node** | render the empty state while loading — the mutation that matters, since that is the defect the state exists to prevent | the "and not the empty state" half is the assertion; "placeholders appear" alone would pass on the defect |
   | 16 | **error**: the empty state's column, reassurance first, a quiet retry | ✅ `v2-library.html` `.fail` / `.retry` / `body.is-error` — **added by the amendment** | the error branch | the reassurance line precedes the explanation, retry re-asks the store, and **no pixel of the retry is `--matcha`** (it is not a second primary) | style `.retry` as `.start`; drop the reassurance line | `--consequence` deliberately unused — nothing was destroyed |
   | 16a | the **dock stands in all four states** | ✅ `v2-library.html:88` comment — ruled with the amendment: *"the dock is part of the workspace rather than the loaded content"* | screen composition | the dock node exists in **Content, Empty, Loading and Error** | hide the dock in Loading, and separately in Error | extends row 3 from two states to four |
   | 17 | **rename** → the existing rename flow | ✅ [D-025 ruling](design/V2-SPEC-DEFECTS.md#d-025-ruling) | `HomeViewModel.rename` + its existing input surface | the sheet's Rename row reaches the existing flow for the pressed zine | wire it to a different zine's id | reuse, not re-skin |
   | 18 | **delete** → the existing delete flow, **undo included** | ✅ [D-025 ruling](design/V2-SPEC-DEFECTS.md#d-025-ruling); [ADR-046](#adr-046) §4 | `delete` / `undoDelete` / `commitDelete` | deleting raises the undo affordance and the zine returns on undo | drop `undoDelete` from the wiring — a delete with no undo is a *new* concept, not a reused one | the ruling says reuse the **flow**, and the undo is the flow |
-  | 19 | **make a zine** → the existing creation flow | ✅ [D-025 ruling](design/V2-SPEC-DEFECTS.md#d-025-ruling); [ADR-047](#adr-047) | the paper chooser → `startZine(paperSize)` | pressing `.start` raises the chooser; choosing routes to the new project | pass a fixed `PaperSize`, skipping the chooser | |
+  | 19 | **make a zine** → the existing creation flow | ✅ [D-025 ruling](design/V2-SPEC-DEFECTS.md#d-025-ruling); [ADR-047](#adr-047) | the paper chooser → `startZine(paperSize)` | pressing `.start` raises the chooser; choosing reaches `onStartZine(paper)` | pass a fixed `PaperSize`, skipping the chooser | ✅ **scoped, honestly**: the screen asserts the chooser and the hand-over; *where the new project routes* is `HomeViewModel.startZine`'s existing, already-tested behaviour (ADR-047), reused whole and not re-asserted here |
   | 20 | **share & export** → **into the Proof**, no shelf-level export | ✅ [D-025 ruling](design/V2-SPEC-DEFECTS.md#d-025-ruling) | push `EditorRoute` **then** `ProofRoute` | after the row is chosen the back stack is `Home → Editor → Proof`, in that order | navigate straight to `ProofRoute` | ⚠ *`ProofRoute` resolves the shared VM via `getBackStackEntry(EditorRoute(id))` ([ADR-026](#adr-026)); a direct navigate **throws at runtime**. The mutation is therefore a crash, not a wrong pixel — assert the stack, not the screen* |
   | 21 | a **duplicate** gets a **new** cover | ✅ [D-026 ruling](design/V2-SPEC-DEFECTS.md#d-026-ruling) — *"duplicate content, not visual identity"* | the duplicate path draws a fresh recipe and persists it | duplicating a project yields a **different** persisted recipe from its original, over a seeded run | copy the source's recipe to the duplicate | completes D-017: not from the title, not round-robin, not from neighbours, **and not inherited** |
   | 22 | a **legacy** zine gets its cover **on first presentation**, persisted immediately | ✅ [D-026 ruling](design/V2-SPEC-DEFECTS.md#d-026-ruling), 2026-07-31 — ruled explicitly, not inferred | the read path assigns-and-persists on a null field | a project with no stored recipe gets one, **and the second read returns the same one** | assign without persisting | the second-read half is the assertion: "a cover appears" alone passes on a re-drawing implementation |
   | 23 | ~~`token-enrolment.txt`~~ | **struck from B5** and re-seated to **Phase D** (owner ruling, 2026-07-31) | — | — | — | *not B5's work. D-007 untouched, `TokenDisciplineTest` untouched. See the [roadmap note](COMPOSE-V2-ROADMAP.md#phase-b--library)* |
 
-  **Row termination ([ADR-087](#adr-087)).** Every row above terminates in exactly one state: **rows 1–13 and 15–22 are ✅ Implemented-or-ready**, row 14 is ⚠ **contested** and owned by B4 (D-023, which B5 neither re-pins nor re-decides), and row 23 is **not this package's work**. Rows 2, 13 and 21 carry ≡/∅ sub-notes. **No row is blocked.**
+  **Row termination ([ADR-087](#adr-087)), restated after implementation.** Every row terminates in exactly one
+  state: **rows 1–7 and 9–13 and 15–22 are ✅ Implemented**, each against a named test; **row 8 is ✅ Implemented
+  for its wiring and ⚠ contested for its wording** ([D-027](design/V2-SPEC-DEFECTS.md#d-027)); row 14 is ⚠
+  **contested** and owned by B4 (D-023, which B5 neither re-pinned nor re-decided); and row 23 is **not this
+  package's work**. Rows 13 and 21 carry ≡/∅ sub-notes. **No row terminates on a comment or an intention** —
+  which two of them briefly did, and that is the ruling's whole point.
 
   **One implementation seam, recorded here because [D-024's ruling](design/V2-SPEC-DEFECTS.md#d-024-ruling) put it here rather than in the design.** The **loading debounce** — a short threshold before the placeholders appear, so a fast read does not flash them — is *implementation behaviour, not design*. The canonical HTML can neither express nor verify a timing threshold, so encoding one there would make the design authoritative over something it cannot check. B5 owns it: the threshold is a named constant in the screen, its value is an implementation choice, and it is verified in the **device Pass 1** (does a fast read flash?) rather than by a frozen-parity assertion. What *is* asserted in unit tests is the state machine, not the clock.
 - **Consequences:**
@@ -2554,7 +2559,99 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
   - **Neutral.** B1–B4 are unaffected and stay committed and additive. V1's Library keeps its route.
   - **Accepted as a Known Limitation.** D-025's reuse ruling puts **V1 chrome inside a V2 screen** — the rename input, the delete snackbar and the paper chooser — from the moment the V2 Library takes the route. That is [ADR-080](#adr-080)'s migration architecture working as designed, not drift, and B5's device Pass 2 records the seam rather than filing it as a defect.
 - **Alternatives considered:** *(a) Build the twelve unblocked rows now and wire the blocked ones later.* Rejected — the unblocked rows are the screen's **structure**, and the blocked ones are what it *shows*; a shelf that cannot report a failed read or open a paper chooser cannot be device-verified, so the package would reach its gate unable to pass it, and both device passes are B5 deliverables. *(b) Reuse V1's surfaces unchanged for all six blocked interactions.* This is a real candidate and is offered as option (a) inside D-025 — but it is an owner call, because it puts V1 chrome inside a V2 screen at the moment that screen becomes the product. *(c) Raise only D-024 and treat D-025/D-026 as wiring.* Rejected on inspection: four of D-025's six actions need a **surface** that does not exist, which is not wiring, and D-026 is explicitly about identity, which is what D-017 reserved.
-- **Review:** *(not yet — there is no implementation to review. The mandatory independent review runs on B5's code once the package is built.)*
+  ### What was built, and what building it found {#adr-086-implementation}
+
+  **The architectural checkpoint came first**, on the owner's instruction, and it settled two things before any
+  broad change. **Module boundary:** the cover types move to `core:model`. `feature:editor` depends on neither
+  `core:data` nor `data-android`, so leaving them in the feature module would have forced the persistence layer
+  to call *up* into the UI to assign a cover — the inversion B1's review already refused. `core:model` is
+  `kotlin.jvm`, visible to all three parties, and already imported by 23 feature files; the move is additive and
+  touches no layering. **Migration strategy:** a real additive `Migration(1,2)` rather than
+  `fallbackToDestructiveMigration()`. The index *is* rebuildable ([ADR-042](#adr-042)), so destruction was a
+  genuine candidate — it is rejected because it would make this and every later schema change silently
+  destructive, and because a dropped table forces a full reconcile scan of every project on the next launch to
+  add two columns.
+
+  **The persistence rules, in one place.** A cover is assigned **once**, at `createProject`, in the *same atomic
+  write* as the title — so a zine cannot exist without its visual identity. `renameProject` rewrites the sidecar
+  **wholesale**, so the cover is carried across explicitly: dropping it there would be a silent repaint
+  disguised as an unrelated edit, and it is exactly what D-017 means by *"a physical object should retain its
+  identity across renames"*. `duplicateProject` **draws its own** (D-026). A legacy sidecar is given one on
+  first presentation and the assignment is written straight back — and **a backfill whose write fails returns
+  the meta unchanged** rather than carrying a cover that exists only in memory, because a cover that silently
+  differs on every launch is worse than one that is visibly not yet assigned, and it would break D-017's
+  guarantee while appearing to satisfy it.
+
+  **The tests found a real defect on their first run.** `syncRowFromDisk` built the returned `ProjectSummary` a
+  **second** time by hand, beside the row it had just written, and the hand-built one dropped the new field: a
+  freshly created zine came back **coverless** while both the sidecar and the index held its cover. Two
+  construction sites for one projection is the defect; the fix is one site (`toSummary`). No assertion against
+  the *returned value* alone would have caught this — the test that did opens `meta.json`.
+
+  **The mid-package review returned GO WITH FIXES, and both Required Fixes were about evidence rather than
+  behaviour.** *(1)* Row 11 shipped ✅ with **no test file at all**; the reviewer applied the row's own planned
+  mutation and all four module suites stayed green. *(2)* Row 13 terminated ✅ on a **code comment**, and its
+  planned mutation could not have been killed by anything in the package. Both now carry real artifacts — and
+  fixing the second turned up something worth keeping: the canonical "second consumer" mutation is an
+  **equivalent mutant**, because `Modifier.windowInsetsPadding` is consumption-aware. The assertion that works
+  measures the **workspace**, not the button. Three further findings were accepted: the DI wiring of the
+  migration is now asserted (deleting `.addMigrations` from `DataModule` was invisible to every test), the
+  fallback cover for an unpersistable legacy zine is now drawn **once per zine rather than once per emission**
+  (an identity flicker arriving by the back door), and the retry-is-not-matcha probe now runs in both themes.
+  One finding was **raised rather than fixed** — the metadata line's vocabulary, now
+  [D-027](design/V2-SPEC-DEFECTS.md#d-027).
+
+  **Mutation battery: 13 applied, 13 killed**, plus one deliberate equivalent-mutant finding. Beyond the
+  reviewer's own six (ground, ground-in-dark, no-metadata-on-the-shelf, retry-ink, Share-&-export, migration
+  column type): the stamp derived from the surface; the graph forgetting the migration; the backfill assigning
+  without persisting; rename dropping the cover; the duplicate inheriting its source's; the dock hidden in
+  Loading and Error; the shelf re-ordering what it was given; the loading state standing no placeholders; the
+  shelf surviving into the error state; and both root-consumer forms of the inset defect.
+
+  **Goldens: eight rasters recorded and verified** — four states × two themes, the whole screen rather than a
+  part, which is the arrangement the frozen file's own four toggles depict and the one no component-level
+  golden could show. B1–B4's existing rasters were verified **before** recording anything, so B5's changes to
+  `ZineShelf` are known not to have moved them. **A pre-existing gap surfaced doing this and is reported rather
+  than quietly fixed:** `EditorCoverageNoticeGoldenTest` (committed in A9, `b0f2ad1`) has **no recorded rasters
+  at all** — `verify` fails for it at HEAD, independently of B5.
+
+  **What B5 did not do.** It re-pinned nothing in B1–B4, re-decided no ruling, added no destination of its own,
+  applied no sort, invented no timing threshold in the frozen file, and enrolled no package in
+  `TokenDisciplineTest`. V1's `HomeScreen` and its suite stay compiled and green; what changed is which screen
+  the Home **route** hosts.
+
+- **Review:** **two reviews, and the second found what the first could not.** *Mid-package* (adversarial,
+  "cannot fail") — **GO WITH FIXES**: two Required Fixes and three Recommended Improvements, all reconciled
+  above, plus one finding raised to the register as D-027. *Independent* (a reviewer who wrote none of this
+  code, 2026-07-31) — **GO WITH FIXES**, three mutations applied and three killed, no vacuous assertion found,
+  and **two Required Fixes**:
+
+  1. **This ADR had already flipped itself to `Accepted`** on the strength of the implementer's own mid-package
+     review — while the very next sentence still said it moves to `Accepted` after *independent* review. Self-
+     approval by documentation edit, which `CLAUDE.md` forbids in the same words. Status reverted to `Proposed`.
+  2. **A documented invariant was false on one reachable path.** `backfillCoverIfLegacy` refuses to fabricate a
+     cover it cannot persist — and three separate KDocs said that was *the single* path leaving the cover null.
+     It was not: `readMetaOrBackfill` handles the project with **no sidecar at all** (a pre-Room folder adopted
+     by the reconcile scan, the S4 `"default"` seed among them) by building the meta from scratch, and it built
+     it **already carrying a cover**, returning that cover whether or not the write succeeded. Two consequences,
+     neither tested: an unwritable sidecar left the cover in the *rebuildable* index and nowhere else (ADR-042 —
+     so the next rebuild repaints it), and a *present-but-unreadable* sidecar, which must never be overwritten,
+     therefore drew a **fresh cover on every single read**. The fix makes that function obey the rule its
+     neighbour already did — assign only when the disk takes it — and three tests now hold the three cases
+     (write refused · adoption succeeds and survives a rebuild · unreadable bytes never overwritten, never
+     redrawn). Restoring the old line kills exactly the two new tests that gate it.
+
+  **The shape of that second finding is the package's lesson.** B5 wrote a paragraph explaining that it had
+  closed the identity-flicker door, and the door was standing open **one function away**, on the path a
+  paragraph is least likely to be written about. A rule stated in a comment three times is not a rule stated in
+  code once. The independent review's other findings are reconciled too: the roadmap cell that still opened
+  *"planned, not started"*, FPT **row 3** (which read *both states* after the amendment made it four) and **row
+  19** (whose assertion text overstated its scope), and `HomeUiState.Content.zines`, whose `= emptyList()`
+  default made a state constructible that the screen cannot render honestly. Two observations were accepted as
+  written rather than fixed: import ordering (nothing gates it — no ktlint/spotless in this repo), and — worth
+  naming as **Technical Debt** rather than as a compatibility guarantee — **V1's `HomeScreen` is now dead
+  production code**, referenced from `src/main` nowhere, kept compiled and green only until the roadmap retires
+  it.
 
 ---
 

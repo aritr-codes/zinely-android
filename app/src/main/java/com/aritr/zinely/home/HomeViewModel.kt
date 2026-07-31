@@ -8,8 +8,11 @@ import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.core.model.newZineCoverRecipe
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.HomeZineCard
+import com.aritr.zinely.feature.library.LibraryZine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -27,6 +30,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 /**
@@ -40,7 +44,21 @@ internal sealed interface HomeUiState {
     data object Loading : HomeUiState
     data object Empty : HomeUiState
     data object Error : HomeUiState
-    data class Content(val cards: List<HomeZineCard>) : HomeUiState
+    /**
+     * The same visible projects, projected twice — V1's [HomeZineCard]s and the V2 Library's
+     * [LibraryZine]s — from one pass over one list, at one `now`. Two projections rather than one shared
+     * card because they disclose different things: V1's card carries `"8-page mini · A4"` on the shelf,
+     * and V2's shelf carries **no** metadata at all, holding `"A4 · Edited 2 days ago"` back for the
+     * action sheet (ADR-086 rows 6–8). Collapsing them would mean one of the two screens showing a line
+     * its frozen design says it must not.
+     */
+    data class Content(
+        val cards: List<HomeZineCard>,
+        // No default: a `Content` with cards and no zines draws the V2 shelf as a heading over nothing —
+        // no covers, and no invitation either, because `Content` is not `Empty`. It is a state the screen
+        // cannot represent honestly, so it must not be constructible by omission.
+        val zines: List<LibraryZine>,
+    ) : HomeUiState
 }
 
 /**
@@ -66,6 +84,9 @@ internal class HomeViewModel @Inject constructor(
 
     /** Ids hidden from the shelf while their undo window is open (ADR-044 §3). */
     private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
+
+    /** This session's display-only covers for zines the store could not assign one to. */
+    private val fallbackCovers = FallbackCovers()
 
     /** Queued one-shot events; the buffer absorbs emissions while the screen is between collects. */
     private val eventQueue = Channel<HomeShelfEvent>(Channel.BUFFERED)
@@ -143,7 +164,10 @@ internal class HomeViewModel @Inject constructor(
                     pendingDeletes.update { current -> current.filterTo(mutableSetOf()) { it in projectIds } }
                 }
                 val visible = projects.filterNot { it.id in pending }
-                HomeUiState.Content(visible.map { it.toCard(now) })
+                HomeUiState.Content(
+                    cards = visible.map { it.toCard(now) },
+                    zines = visible.map { it.toLibraryZine(now, fallbackCovers::get) },
+                )
             }
         }.catch { emit(HomeUiState.Error) }
 
@@ -252,6 +276,37 @@ internal class HomeViewModel @Inject constructor(
     }
 }
 
+/**
+ * This session's display-only covers for zines the store could not assign one to.
+ *
+ * [ProjectSummary.cover] is null only when the store could not **persist** an assignment: a legacy
+ * backfill whose write failed, or a project adopted from disk whose sidecar could not be written or
+ * could not be read. In every one of those cases the store returns the meta *coverless* rather than
+ * fabricating an identity it cannot store (`RoomProjectRepository.backfillCoverIfLegacy` and
+ * `readMetaOrBackfill` share that rule). A shelf still cannot draw an object with no cover, so one is
+ * drawn here — for display, for this session only.
+ *
+ * **Once per zine, not once per emission.** The shelf re-emits on every store change and on every return
+ * from the editor, so drawing inline in the mapper would repaint that zine each time — the identity
+ * flicker D-017 exists to prevent, arriving by the back door on the one path a real user can reach. The
+ * mid-package review found exactly that, and this class is the fix.
+ *
+ * **Memoised, not derived.** Computing the recipe *from the id* would also be stable, would look correct
+ * forever, and would be precisely the inference D-017 forbids — a cover derived from a name. This holds a
+ * drawn recipe instead, and holds it only as long as the ViewModel lives: the honest lifetime for a cover
+ * that is not on disk.
+ *
+ * A class rather than a `ConcurrentHashMap` field so the memo has somewhere to be tested, and so [assign]
+ * is injectable — over the real assigner two draws collide once in thirty-six, which is a flaky test, not
+ * a proof of anything. Concurrent because `flatMapLatest` can briefly overlap two collections across a
+ * [HomeViewModel.retry].
+ */
+internal class FallbackCovers(private val assign: () -> ZineCoverRecipe = { newZineCoverRecipe() }) {
+    private val drawn = ConcurrentHashMap<String, ZineCoverRecipe>()
+
+    operator fun get(id: String): ZineCoverRecipe = drawn.getOrPut(id) { assign() }
+}
+
 /** Warm failure copy (VOICE): [DataError.Busy] is "still saving", never a scary failure. */
 private fun DataError.warmMessage(): String = when (this) {
     is DataError.Busy -> BUSY_MESSAGE
@@ -275,6 +330,37 @@ internal fun ProjectSummary.toCard(
     title = title,
     formatLabel = "${format.shelfLabel()} · ${paperSize.shelfLabel()}",
     editedLabel = editedLabel(updatedAtEpochMs, nowEpochMs),
+)
+
+/**
+ * `ProjectSummary` → the object the V2 Library stands on its shelf (B5, ADR-086 rows 6–8).
+ *
+ * The **subtitle is composed here, not on the cover**, and that is the frozen design's own argument: the
+ * shelf shows covers and withholds metadata (*"Format & date are disclosed there, not stamped on every
+ * card"*), so the line exists only for the action sheet. `data-sub` reads `"A4 · 2 days ago"` — paper,
+ * then recency — and [editedLabel] supplies the recency it already supplies to V1. The freeze shows five
+ * example values and states no thresholds, so the formatter is the authority on the words and the frozen
+ * file on the shape; B5 asserts the wiring rather than re-testing the formatter (ADR-086 row 8).
+ *
+ * **The cover is read, never derived.** [ProjectSummary.cover] is the persisted recipe assigned once at
+ * creation (D-017) — this function neither draws nor infers one from the title, the position, or the
+ * neighbours. The one exception is stated rather than hidden: `null` means a legacy backfill could not be
+ * written (`RoomProjectRepository.backfillCoverIfLegacy` returns the meta unchanged rather than
+ * fabricating an identity it cannot store). A shelf cannot draw an object with no cover, so a recipe is
+ * drawn for **this rendering only** and is not persisted — the alternative would be an empty hole where a
+ * zine is, and deriving one from the id would be exactly the inference D-017 forbids.
+ */
+internal fun ProjectSummary.toLibraryZine(
+    nowEpochMs: Long,
+    fallbackCover: (String) -> ZineCoverRecipe = { newZineCoverRecipe() },
+): LibraryZine = LibraryZine(
+    id = id,
+    title = title,
+    subtitle = "${paperSize.shelfLabel()} · ${editedLabel(updatedAtEpochMs, nowEpochMs)}",
+    // `newZineCoverRecipe()` inline here would re-draw on **every emission**, not once — the identity
+    // flicker D-017 exists to prevent, on the one path that reaches a real user. The resolver is what
+    // makes the fallback stable for as long as this session lasts; see [HomeViewModel.fallbackCover].
+    cover = cover ?: fallbackCover(id),
 )
 
 /** Warm, jargon-free format name (never the enum's SCREAMING_SNAKE identity). */
