@@ -43,8 +43,32 @@ awaited a ruling, and nothing from Phase A blocked Phase B.
 the same day they were raised.** **Phase B / B3 then raised two — [D-021](#d-021--the-sheets-icons-are-unicode-characters-and-half-of-them-are-not-in-the-apps-own-font)
 and [D-022](#d-022--the-librarys-scrim-is-a-theme-invariant-literal-while-the-corpus-publishes-a-theme-aware-one)
 — and both were ruled the same day.** **Phase B / B4 raised one, [D-023](#d-023), and it is the first entry
-since Phase A to reach the owner unruled.** So the count is now **twenty-three: sixteen resolved, seven
-open** — the six Phase A left, plus D-023. **One item is awaiting an owner ruling.**
+since Phase A to reach the owner unruled.** **Phase B / B5's *planning* then raised three more — [D-024](#d-024),
+[D-025](#d-025) and [D-026](#d-026) — and all three blocked B5. **All three were ruled the same day.**
+[**D-025**](#d-025-ruling) is fully resolved (*reuse the existing flows; no shelf-level export*).
+[**D-026**](#d-026-ruling) is ruled on the question that mattered — *a duplicate gets a **new** cover; duplicate
+content, not visual identity* — with the pre-existing-zine backfill following from its principle and flagged for
+confirmation. [**D-024**](#d-024-ruling) was ruled the way that costs the most and is worth the most: Loading and Error are
+product states, they belong in the **canonical design**, and the answer arrives as an
+[**amendment to the frozen HTML**](#d-024-amendment) — approved and **applied on 2026-07-31** — rather than as
+prose, so parity stays verifiable. So the count is now **twenty-six: nineteen resolved, seven open** — exactly
+the six Phase A left, plus D-023. **Nothing from Phase B blocks anything.**
+
+**The amendment is the first one to *add* design to a frozen V2 surface** (D-006 deleted dead specification;
+this draws two states that never existed), and it carries two further rulings: **the dock stands in all four
+states**, because it belongs to the workspace rather than to the loaded content, and **the loading debounce is
+implementation behaviour that is deliberately kept out of the HTML** — a timing threshold is real, but the
+canonical design cannot express or verify one, so it is an implementation seam recorded in
+[ADR-086](../DECISIONS.md#adr-086).
+
+**B5's three are the first entries in this programme raised *before* any production code was written**, which
+is the frozen property table (**[ADR-085](../DECISIONS.md#adr-085)** change 2) doing the job it was added for:
+listing every frozen property and its source *first* surfaces the properties that have **no source** while the
+cost of finding that out is still a paragraph. All three are the same shape — **the frozen Library is a
+prototype with six hard-coded zines, so it never reads a store, never waits, never fails, and never navigates
+anywhere.** Integration is the first package to meet the edges of that, and the register's rule is unchanged:
+where the corpus is silent, silence is not an invitation to interpolate ([D-020](#d-020--the-shelf-states-a-fixed-two-column-grid-with-no-breakpoint-and-phase-b-verifies-on-foldables)),
+and the nearest source to interpolate *from* — V1's answer to the same question — is the one D-020 named.
 
 **D-023 is the fourth of the D-005 / D-011 / D-022 set, which [D-022's ruling](#d-022-ruling) predicted in
 terms.** It is also the first entry raised by *review* rather than by implementation: B4 met the divergence,
@@ -77,7 +101,7 @@ spacing acceptance criterion contradicts the **D-007** ruling — see
 | [**D-012**](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) | **Phase C** (deliberately unresolved) | three files write three different reduced-motion rules; one would strobe |
 
 Resolved: **D-002 · D-003 · D-005 · D-006 · D-007 · D-011 · D-013 · D-014 · D-015 · D-016 · D-017 · D-018 ·
-D-019 · D-020 · D-021 · D-022** — full rows in [Resolved](#resolved) below.
+D-019 · D-020 · D-021 · D-022 · D-024 · D-025 · D-026** — full rows in [Resolved](#resolved) below.
 
 **Four of the six Phase A entries are open *by owner ruling*, not by neglect** (D-008, D-009, **D-010**,
 D-012): their approach is settled and they stay open until the phase that implements the affected surfaces can
@@ -1875,6 +1899,307 @@ same act (as **D-006** required) or does the register carry the divergence (as *
 
 ---
 
+### D-024 — the frozen Library specifies a two-state screen; the real shelf has four states {#d-024}
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) line 117 — `body.is-empty .shelf{display:none} body.is-empty .empty{display:flex}` — the file's **only** state switch |
+| **Found** | 2026-07-31, during Phase B / B5 planning (the frozen property table), before any production code |
+| **Severity** | **BLOCKS B5.** B5's entire job is showing real project data, and two of the four states it will actually meet have no frozen appearance at all |
+| **Status** | ✅ **RESOLVED 2026-07-31.** Ruled ([below](#d-024-ruling)), amendment **approved and applied** to `v2-library.html` — `.ph` / `body.is-loading`, `.fail` / `.retry` / `body.is-error`, the dock standing in all four states, and two new prototype toggles. **No longer blocks B5.** |
+
+**What it says.** The frozen file has exactly two screen states: covers, or the transformation empty state.
+It is a design prototype with six hard-coded zines, so it never reads a store, never waits, and never fails.
+
+**What the store actually has.** `HomeUiState` (`app/src/main/java/com/aritr/zinely/home/HomeViewModel.kt:39`)
+is `Loading | Empty | Error | Content`, and V1's shelf renders all four — a loading skeleton
+(`HomeLoadingTestTag`), an error state with a retry that re-asks the store (`ShelfErrorState`), the empty
+invitation, and the cards. **Loading and Error have no V2 design.**
+
+**Why B5 cannot decide this itself.** Two constitutional rules pull in opposite directions and neither
+resolves it:
+
+- **Never-silent failure** ([ADR-051](../DECISIONS.md#adr-051)) forbids simply dropping the error state. A
+  shelf that renders as *empty* when the store could not be read tells the user their zines are **gone**.
+  That is the [ADR-058](../DECISIONS.md#adr-058) "it lost my work" failure exactly, and the Library's own
+  question — *"which zine do I want?"* — is answered with a lie.
+- **No silent approximation** and **D-020's** ruling (*"future adaptive layouts require a future frozen
+  design rather than implementation inference"*) forbid inventing the appearance. Where the corpus is
+  **silent**, silence is not an invitation to interpolate — not from V1's answer to the same question, which
+  is the nearest and most tempting source.
+
+**What B5 will not do.** Re-skin V1's loading skeleton and error state in V2 tokens. That is a visual design
+act on a surface the freeze does not contain, and it is exactly the inference D-020 forbade.
+
+**The alternatives.**
+
+| Rule | What it buys | What it costs |
+|---|---|---|
+| **Amend the frozen HTML** to add a loading and an error state | the corpus regains a single source of visual truth; parity stays checkable | a design-track edit to a frozen artifact, and it is real design work, not a correction |
+| **Rule that the two states are chrome, not design**, and specify them in prose (e.g. *"loading shows nothing; error shows the empty state's copy replaced by an honest failure line and a retry"*) | B5 proceeds without a design cycle | prose is a weaker spec than the HTML, and pixel parity has nothing to compare against |
+| **Defer both to a later package** and have B5 hold the last-known shelf while loading | smallest B5 | the error path stays unbuilt, which is a never-silent-failure violation the moment the store fails |
+
+**Owner decision requested.** What does the V2 Library show **while the store is being read**, and what does
+it show **when the read fails**? And is the answer expressed as an amendment to `v2-library.html` (so parity
+is verifiable) or as a written ruling B5 implements from prose?
+
+#### D-024 — owner ruling, 2026-07-31 {#d-024-ruling}
+
+> **Loading and Error are product states. They belong in the canonical design. Do not invent Compose behaviour.
+> Do not resolve them through prose alone. Instead: prepare an amendment to the frozen HTML that adds canonical
+> Loading and Error states for the Library. The HTML remains the design authority.**
+
+The ruling takes the first alternative and rejects the other two in one move — it declines both *"implement from
+prose"* and *"defer the error path"*. It is also the first amendment to a frozen V2 surface that **adds design**
+rather than deleting dead specification (**D-006** removed `--r:18px`; this one draws two states that never
+existed), so the amendment is authored as a proposal and lands only on approval.
+
+**Consequence for B5: still blocked, but now on an artifact rather than on a question.** Parity is verified
+against the frozen HTML; until the amendment is approved there is nothing to verify against, and building first
+and back-filling the HTML would be the exact inversion the workflow forbids (*"if the HTML is wrong, fix the
+HTML first — never the reverse"*).
+
+#### The amendment {#d-024-amendment}
+
+**Status: ✅ APPROVED AND APPLIED, 2026-07-31.** `v2-library.html` now carries it, under an `AMENDED` block in
+the file's own freeze header. Everything frozen on 2026-07-27 is unchanged — **the amendment only adds.** It is
+the first amendment to a V2 surface that *adds* design; **D-006** deleted dead specification (`--r:18px`), and
+this one draws two states that never existed.
+
+**Approved with two further rulings, both now in the file:**
+
+1. **The dock stands in all four states — content, empty, loading, error.** *"The dock is part of the workspace
+   rather than the loaded content."* It therefore does not wait for a read to succeed and never appears late.
+   This required no CSS: `.dock` already sits outside `.empty` and no state rule targets it, so the amendment
+   records the reason in a comment rather than adding a rule. **Do not introduce a second workspace grammar.**
+2. **The loading debounce is implementation behaviour, not design, and is deliberately NOT in the HTML.** A
+   threshold before the placeholders appear (so a fast read does not flash them) is a real requirement, but it
+   is a timing seam, and encoding it in the canonical design would make the HTML the authority on something it
+   cannot express or verify. It is recorded as an **implementation seam** in
+   [ADR-086](../DECISIONS.md#adr-086) instead, which is where B5 owns it.
+
+**Design reasoning, stated so it can be argued with rather than inferred from the CSS:**
+
+1. **Loading is the desk with unprinted covers, not a spinner.** A spinner is app chrome, and the constitution
+   puts warmth in the artifact and quiet in the chrome. Placeholders at the cover's own aspect ratio and radius
+   read physically — *sheets not yet printed* — and they keep the shelf's geometry stable, so covers do not
+   jump into place. They carry **no grain, no shadow, no stamp, no title**: an unprinted sheet has none of those.
+2. **The shelf heading stays up during loading.** It is already frozen (`.shelf-head`), it costs no read, and
+   holding it still means the screen does not visibly restructure when the data lands.
+3. **Loading must not look like the empty state, even for one frame.** This is the load-bearing one. If a slow
+   read renders the "Make your first little zine" invitation, a user with twelve zines is told they have none —
+   the [ADR-058](../DECISIONS.md#adr-058) *"it lost my work"* failure, in the screen whose one question is
+   *"which zine is mine?"*. The placeholders exist mainly to make that impossible.
+4. **The error state borrows the empty state's structure and inverts its message.** Same centred column, same
+   serif line, same body measure — because it is the same *kind* of moment (the shelf has nothing to show) and
+   a second layout grammar would be a second design. What changes is the copy and the addition of a retry.
+5. **The error copy reassures before it apologises.** *"Your zines are still on your phone"* is the first line
+   after the headline, because the honest fact is that a failed read is not a loss, and the user's fear is that
+   it is. This is never-silent-failure ([ADR-051](../DECISIONS.md#adr-051)) applied to reading rather than
+   writing.
+6. **Retry is a quiet control, not a second primary.** `.start` is the screen's one primary action and it stands
+   in every state; a second matcha-filled button would compete with it. `.retry` therefore takes the paper +
+   hairline grammar the sheet's rows and the prototype's own `.ctl` already use, at a real touch size.
+7. **`--consequence` is not used.** The palette reserves it for *delete/error*, but a failed read destroys
+   nothing. Colouring it as a consequence would say the opposite of point 5.
+
+```css
+  /* ── loading: the desk with unprinted covers.  Never the empty state — a slow read must not
+     tell a user with twelve zines that they have none. ─────────────────────────────────────── */
+  .ph{aspect-ratio:3/4;border-radius:6px 9px 9px 6px;background:var(--desk-edge)}
+  body.is-loading .shelf .zine{display:none}
+  body.is-loading .empty{display:none}
+
+  /* ── error: the empty state's column, its message inverted.  Reassure, then explain. ─────── */
+  .fail{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;padding:36px 40px 140px;gap:16px}
+  .fail h2{font-size:1.72rem;margin:8px 0 0;font-weight:600;letter-spacing:-.01em}
+  .fail p{margin:0;color:var(--ink-soft);max-width:28ch;line-height:1.55;font-size:.95rem}
+  .retry{margin-top:6px;background:var(--paper);color:var(--ink);border:1px solid var(--hair);
+    border-radius:12px;font-family:inherit;font-size:.95rem;font-weight:600;padding:13px 22px;cursor:pointer}
+  .retry:focus-visible{outline:2px solid var(--matcha-text);outline-offset:3px}
+  body.is-error .shelf{display:none} body.is-error .empty{display:none} body.is-error .fail{display:flex}
+```
+
+```html
+  <!-- inside .shelf, after .shelf-head — shown only while loading -->
+  <div class="ph-row"><div class="ph"></div><div class="ph"></div><div class="ph"></div><div class="ph"></div></div>
+
+  <!-- sibling of .empty -->
+  <div class="fail">
+    <h2 class="serif">Your shelf didn’t open.</h2>
+    <p>Your zines are still on your phone — something went wrong reading the shelf.</p>
+    <button class="retry">Try again</button>
+  </div>
+```
+
+*(The four `.ph` blocks are laid out by the existing `.shelf` grid, so they need no rule of their own beyond the
+placeholder fill; the `ph-row` wrapper above is illustrative and would be dropped in favour of four bare `.ph`
+children of `.shelf`. The prototype's `#em` toggle pattern extends to `#ld` / `#er` buttons so both new states
+are demonstrable in the file, exactly as the empty state already is.)*
+
+**Both open questions in the draft were answered on approval** and are recorded above: the dock stands in all
+four states, and the debounce stays out of the design.
+
+---
+
+### D-025 — the sheet's five actions and the dock's CTA have no destinations, and three of them need UI the freeze does not contain {#d-025}
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v2-library.html`](mockups/v2-library.html) lines 168 (`.start`) and 173–177 (the five `.act` rows) — the script at `:186-210` wires **only** the scrim and `.more` |
+| **Found** | 2026-07-31, during Phase B / B5 planning, before any production code |
+| **Severity** | **BLOCKS B5.** Route hand-over is B5's named deliverable, and the freeze names no destination for any of the seven actions |
+| **Status** | ✅ **RESOLVED 2026-07-31 by owner ruling — [see below](#d-025-ruling). Reuse the existing flows; invent no new product concept.** No longer blocks B5. |
+
+**Why this is a fresh entry and not a re-raise.** [ADR-083](../DECISIONS.md#adr-083) and
+[ADR-084](../DECISIONS.md#adr-084) both deferred these handlers to B5 as *"route hand-over"*, on the correct
+reading that the frozen file wires nothing and **nothing is not "goes nowhere on purpose"**. That deferral
+assumed the destinations existed and merely needed connecting. Planning B5 against repository truth shows
+that is true of **three** of the seven and false of the other four.
+
+| Frozen action | Destination in the repository | Verdict |
+|---|---|---|
+| tap a cover (`:199` *"tap = open zine"*) | `HomeViewModel.openZine(id)` → `EditorRoute` | ✅ exists, connect it |
+| **Open on the bench** (`:173`) | the same route | ✅ exists, connect it |
+| **Duplicate** (`:176`) | `HomeViewModel.duplicate(id)` → `duplicateProject` ([ADR-022](../DECISIONS.md#adr-022): same content hashes, new id). Needs no UI | ✅ exists, connect it — **but see [D-026](#d-026)**, since the copy is a new zine and D-017 makes a cover part of a zine's identity |
+| **Rename** (`:175`) | `HomeViewModel.rename(id, title)` exists, but a rename needs a **text input**, and the freeze contains none | ⚠ UI not in the freeze |
+| **Delete** (`:177`) | `delete` / `undoDelete` / `commitDelete` exist — V1 deletes **undoably behind a snackbar** ([ADR-046](../DECISIONS.md#adr-046) §4). The frozen sheet shows a `.danger` row and **no confirmation and no snackbar anywhere in the file** | ⚠ UI not in the freeze |
+| **Make a zine** (`:168`) | `startZine(paperSize)` requires a paper size; V1 raises a **paper chooser** (`HomePaperChooserTestTag`, ADR-047). The frozen Library contains no chooser | ⚠ UI not in the freeze |
+| **Share & export** (`:174`) | **no shelf-level equivalent exists at all.** Export lives behind the Proof surface (`EditorRoute` → `ProofRoute`, [ADR-051](../DECISIONS.md#adr-051)/[ADR-052](../DECISIONS.md#adr-052)) | ⚠ destination undefined |
+
+**Why B5 cannot decide these itself.** Each of the four is a **visible surface**, not a wiring detail. Reusing
+V1's rename dialog, delete snackbar and paper chooser inside a V2 screen puts V1 chrome on a V2 surface — and
+the paper chooser in particular is a full sheet the user will meet immediately after pressing the Library's one
+primary button. Designing V2 versions of them is a redesign during implementation, which the freeze forbids.
+"Share & export" is worse than unstyled: it is **undefined behaviour**. Exporting from the shelf without
+opening the zine would be a genuinely new capability, and routing it through the Proof means the row's label
+promises something its destination does not do.
+
+**What is not in doubt.** The three ✅ rows are unambiguous and B5 will wire them. This entry blocks the other
+four, not the screen's structure.
+
+**Owner decision requested.** For each of Rename, Delete, Make a zine and Share & export: does B5 (a) reuse
+V1's existing surface unchanged, accepting V1 chrome inside a V2 screen until C0 converges it; (b) wait for
+those surfaces to be added to the frozen corpus; or (c) something else per action? And specifically for
+**Share & export** — is it a route into the existing Proof surface, or a shelf-level export that does not
+exist yet?
+
+#### D-025 — owner ruling, 2026-07-31 {#d-025-ruling}
+
+> **Reuse existing behaviour. Do not invent new product concepts. Specifically: Rename → existing rename flow ·
+> Delete → existing delete flow · Make a zine → existing creation flow · Share & export → route into the
+> existing Proof flow. Do not introduce a separate shelf-level export concept.**
+
+Option (a) throughout, and the last sentence closes the one genuinely open question: **there is no shelf-level
+export.** The sheet row is a *route*, not a capability.
+
+**What B5 wires, precisely:**
+
+| Frozen action | Destination |
+|---|---|
+| tap a cover · **Open on the bench** | `HomeViewModel.openZine(id)` → `EditorRoute` |
+| **Duplicate** | `HomeViewModel.duplicate(id)` → `duplicateProject` — with a **new** cover, per [D-026's ruling](#d-026-ruling) |
+| **Rename** | the existing rename flow (`HomeViewModel.rename`) and its existing input surface |
+| **Delete** | the existing delete flow — which is **undoable behind a snackbar** ([ADR-046](../DECISIONS.md#adr-046) §4), including its commit-on-leave semantics. "Reuse the existing flow" means the undo comes with it; a V2 shelf that deleted immediately would be a *new* concept, not a reused one |
+| **Make a zine** | the existing creation flow, i.e. the paper chooser ([ADR-047](../DECISIONS.md#adr-047)) → `startZine(paperSize)` |
+| **Share & export** | `EditorRoute` **then** `ProofRoute` — see the constraint below |
+
+**The one integration constraint this creates.** `ProofRoute` resolves the *shared* editor ViewModel by fetching
+the editor's live back-stack entry (`navController.getBackStackEntry(EditorRoute(projectId))`, the
+[ADR-026](../DECISIONS.md#adr-026) single-writer seam). So "Share & export" **cannot** navigate straight to the
+Proof: it must push the editor and then the Proof, leaving the editor on the stack underneath. That is not a
+detail — a direct `navigate(ProofRoute)` would throw at runtime, and back from the Proof correctly lands on the
+bench rather than the shelf, which is the existing flow's own behaviour and therefore what "reuse" means.
+
+**One honest consequence, recorded rather than smoothed over.** Reusing V1's rename input, delete snackbar and
+paper chooser puts **V1 chrome inside a V2 screen** from the moment the V2 Library takes the route. That is the
+ruling's accepted cost and it is the [ADR-080](../DECISIONS.md#adr-080) migration architecture working as
+designed — V2 lands surface by surface, and these three surfaces are not Phase B's. It ships as a **Known
+Limitation** until the phase that re-skins them, and B5's device Pass 2 should record the seam rather than treat
+it as a defect.
+
+---
+
+### D-026 — D-017 assigns a cover "once at creation", and every project that already exists was created before the field existed {#d-026}
+
+| | |
+|---|---|
+| **Artifact** | the [**D-017** ruling](#d-017-ruling) — *"assign the cover surface once when the zine is created and persist that assignment"* |
+| **Found** | 2026-07-31, during Phase B / B5 planning, before any production code |
+| **Severity** | **BLOCKS the shelf for pre-existing projects.** Every zine on a real device today has no assignment |
+| **Status** | ✅ **RESOLVED 2026-07-31 — [see below](#d-026-ruling).** Both questions ruled: a duplicate generates a **new** cover, and **legacy zines receive a cover on first presentation, then persist it**. |
+
+**The gap.** B5 adds a persisted surface+stamp to the `meta.json` sidecar (`ProjectMeta`, ADR-042) and its Room
+index. `ProjectMeta` today is `(title, createdAtEpochMs)` — no cover. So the ruling's *"at creation"* hook
+covers every **future** zine and no **existing** one, and the shelf must draw a cover for those too.
+
+**Why the obvious answer is still an owner call.** *"Assign on first read and persist"* is one line of code and
+almost certainly right — but D-017 is explicitly a ruling about **identity**: *"the persisted assignment becomes
+part of the zine's identity."* Choosing when an existing object acquires its identity is the same kind of
+decision the ruling reserved, and the register's standing rule is that **measuring something real licenses
+asking, not deciding**. B4 was corrected for exactly this move one package ago.
+
+**The alternatives.**
+
+| Rule | What it costs |
+|---|---|
+| **Backfill on first read, persist immediately** | the cover is stable ever after, but is assigned at an arbitrary moment (whenever the user next opened the app) rather than at creation |
+| **Backfill in a one-shot migration**, seeded deterministically from the **id** | every existing zine gets its cover in one act; the id is not the title, so D-017's "not derived from the title" holds — but it *is* derivation, which the ruling's spirit resists |
+| **Backfill at `createdAtEpochMs` order**, i.e. as if assigned in creation sequence | closest to "at creation" | it is round-robin by another name, which D-017 named and forbade |
+
+**A second creation path the ruling does not name: `duplicateProject`.** D-017 says *"assign once when the zine
+is **created**"*, and a duplicate is created — it gets a new id, and [ADR-022](../DECISIONS.md#adr-022) makes it
+a genuinely separate project over shared content. So does the copy **inherit** the original's cover or **draw a
+new one**? Both readings are defensible from the ruling's own words, and they say opposite things about what a
+zine *is*:
+
+- **Inherit** — the cover belongs to the *work*, so a duplicate of "Sunday market" looks like "Sunday market".
+  But then the shelf shows two identical objects, and the Library's whole question is *"which zine is mine?"* —
+  which two identical covers cannot answer. This is the failure the covers-only shelf is most exposed to,
+  because [ADR-083](../DECISIONS.md#adr-083) moved every distinguishing metadata line into the action sheet.
+- **Draw a new one** — the cover belongs to the *object*, which is what *"the persisted assignment becomes part
+  of the zine's identity"* most plainly says, and two physical copies of a zine printed on different stock are
+  two objects. But a user who duplicates to make a variant may reasonably expect the variant to look related.
+
+**Owner decision requested — two questions.** (1) How does a zine that **already exists** acquire its cover?
+(2) When a zine is **duplicated**, does the copy inherit the original's cover or draw its own?
+
+#### D-026 — owner ruling, 2026-07-31 {#d-026-ruling}
+
+> **A cover is persistent visual identity. Assign a cover once when a zine is created. Persist it. When a zine
+> is duplicated: generate a new cover. Duplicate content. Do not duplicate visual identity.**
+
+Question (2) is answered outright, and against the reading that felt more intuitive: **a duplicate is a new
+object and gets a new cover.** *"Duplicate content, not visual identity"* is the sentence that decides it, and
+it protects the thing the covers-only shelf is most exposed to — two identical objects on a screen whose only
+question is *"which zine is mine?"*, with every distinguishing detail moved into the action sheet by
+[ADR-083](../DECISIONS.md#adr-083). It also completes D-017: a cover is not derived from the title, not
+round-robin, not inferred from neighbours, **and not inherited**.
+
+**Question (1) — legacy zines — ruled separately the same day, and it is a ruling, not an inference.** B5 raised
+the reading rather than assuming it, and the owner adopted it in terms:
+
+> **Legacy zines receive a cover on first presentation. The assigned cover is then persisted.**
+
+So a zine that predates the field acquires its cover **the first time the shelf draws it**, that assignment is
+**persisted immediately**, and thereafter it behaves exactly like one assigned at creation. It is the only one
+of the three candidates that contradicts nothing already ruled: seeding from the id is *derivation*, which D-017
+resisted in principle even though the id is not the title, and assigning in `createdAtEpochMs` order is
+round-robin under another name, which D-017 named and forbade. The ruling keeps the load-bearing property —
+**assigned once, never re-derived, part of the zine's identity thereafter** — and differs from *"at creation"*
+only in *when* that one assignment happens for objects that existed before there was anything to assign.
+
+**The assertion this earns.** *"Assign on first presentation"* and *"assign on every presentation"* are
+indistinguishable in a single render, so the test that matters is the **second** read: a project with no stored
+recipe gets one, and reading it again returns **the same** recipe. A test that only checks a cover appears would
+pass on a re-drawing implementation, which is precisely the class of blind assertion this programme keeps
+producing.
+
+---
+
+---
+
 ## Resolved
 
 | ID | Defect | Resolved |
@@ -1894,6 +2219,9 @@ same act (as **D-006** required) or does the register carry the divergence (as *
 | **D-018** | The cover's ink band specifies `multiply`, which Android cannot honour below API 29 | 2026-07-30 — owner ruling: **follow D-014 — omit the band**. No emulation, no substitute blend mode. Ships as one Known Limitation together with D-014's flat paper. Entry kept above. |
 | **D-021** | The sheet's icons are Unicode characters, and half of them are not in the app's own font | 2026-07-30 — owner ruling: **keep the literal characters exactly as frozen**; no substitution, no redesign, and **bundled-font coverage does not justify changing the design**. Platform fallback accepted; a future design revision may replace the glyphs explicitly. No code change owed — B3 had already transcribed them. Entry kept above. |
 | **D-022** | The Library's scrim is a theme-invariant literal, while the corpus publishes a theme-aware one | 2026-07-30 — owner ruling: **the corpus is authoritative**; implement the published light/dark values. **Code changed** (`ZineActionScrim` takes `ZinelyV2Colors.scrim`), making this the only V2 value not transcribed from the frozen Library file. Third of the D-005 / D-011 set: where the Library contradicts a corpus token, the corpus wins. Entry kept above. |
+| **D-024** | The frozen Library specifies a two-state screen; the real shelf has four states | 2026-07-31 — owner ruling: **Loading and Error are product states and belong in the canonical design.** Not prose, not invented in Compose — **the frozen HTML was amended** (`.ph`/`body.is-loading`, `.fail`/`.retry`/`body.is-error`), the first V2 amendment that *adds* design. Two further rulings with it: the **dock stands in all four states** (it belongs to the workspace, not the loaded content — no second workspace grammar), and the **loading debounce is implementation, not design**, kept out of the HTML and recorded as a seam in [ADR-086](../DECISIONS.md#adr-086). Entry kept above. |
+| **D-025** | Seven frozen actions have no destinations, and four need UI the freeze does not contain | 2026-07-31 — owner ruling: **reuse existing behaviour; invent no new product concept.** Rename/Delete/Make a zine take their existing flows (delete keeps its undo), Share & export **routes into the existing Proof** — and there is **no shelf-level export**. Consequence accepted: V1 chrome inside a V2 screen until the phase that re-skins it. Entry kept above. |
+| **D-026** | D-017 assigns a cover "at creation", but existing zines predate the field and a duplicate is created too | 2026-07-31 — owner ruling: **a cover is persistent visual identity; assign once at creation and persist. A duplicate generates a NEW cover — duplicate content, not visual identity.** Completes D-017: not from the title, not round-robin, not from neighbours, **and not inherited**. **Legacy zines receive a cover on first presentation, then persist it** — ruled explicitly, not inferred. Entry kept above. |
 | **D-019** | The frozen trilogy has no right-to-left reading, and a printed cover has a physical handedness | 2026-07-30 — owner ruling: **the printed artifact does not mirror**, in any locale; binding edge, fore-edge and crease stay exactly as frozen. Chrome may adapt to RTL; artifacts do not. Entry kept above. |
 
 *(Resolved entries stay in place rather than being deleted — the record of what was once contradictory

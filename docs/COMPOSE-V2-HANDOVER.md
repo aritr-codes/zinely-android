@@ -57,7 +57,62 @@ gesture on `:core:ui`'s `Modifier.zinelyV2Control`.
 **B4 — the empty state and the dock — is built, independently reviewed (GO WITH FIXES, fixes applied) and
 committed 2026-07-31** (`97744e6`, [ADR-084](DECISIONS.md#adr-084), `Accepted`). It adds `ZineShelfEmpty` (the
 loose sheet → arrow → little book transformation, a serif line and two of body copy) and `ZineDock` (the band
-that fades up into the desk, and the "Make a zine" button standing in it). **B5 has not started.**
+that fades up into the desk, and the "Make a zine" button standing in it).
+
+**B5 — the screen — is PLANNED AND STOPPED, and it is stopped for a good reason** ([ADR-086](DECISIONS.md#adr-086),
+`Proposed`). Its [frozen property table](DECISIONS.md#adr-086-fpt) — the first one this programme has written,
+under [ADR-085](DECISIONS.md#adr-085) — found that **8 of its 23 rows had no frozen source**, and raised
+**[D-024](design/V2-SPEC-DEFECTS.md#d-024)**, **[D-025](design/V2-SPEC-DEFECTS.md#d-025)**,
+**[D-026](design/V2-SPEC-DEFECTS.md#d-026)** and the `token-enrolment.txt` conflict. No production code has
+been written.
+
+**All four were ruled the same day and all four are closed. No table row is blocked.** D-025: *reuse the
+existing flows — and **Share & export is a route into the Proof**, not a shelf-level export.* D-026: *a
+duplicate generates a **new** cover — duplicate content, not visual identity — and **legacy zines get a cover
+on first presentation, then persist it**.* Enrolment: *struck from B5 and re-seated to Phase D on the
+[ADR-080](DECISIONS.md#adr-080) precedent; **D-007 untouched**, `TokenDisciplineTest` untouched.* And
+**[D-024](design/V2-SPEC-DEFECTS.md#d-024-ruling): Loading and Error are product states and belong in the
+canonical design** — so `v2-library.html` was **[amended](design/V2-SPEC-DEFECTS.md#d-024-amendment)** to add
+them, the first V2 amendment that *adds* design rather than deleting dead specification.
+
+**Read the amended file, not your memory of it.** It now carries an `AMENDED` block in its freeze header and
+four states rather than two: `.ph` / `body.is-loading`, `.fail` / `.retry` / `body.is-error`, plus two new
+prototype toggles. Everything frozen on 2026-07-27 is unchanged. Two rulings ride with it: **the dock stands in
+all four states** (it belongs to the *workspace*, not the loaded content — there is one workspace grammar), and
+the **loading debounce is implementation, not design**, deliberately absent from the HTML and owned by B5 as a
+seam ([ADR-086](DECISIONS.md#adr-086)).
+
+**Read those three rulings before writing B5, because three of the four went against the reading an implementer
+would most plausibly have taken.** A duplicate does *not* inherit its cover — two identical covers on a
+covers-only shelf cannot answer *"which zine is mine?"*, and [ADR-083](DECISIONS.md#adr-083) moved every
+distinguishing detail into the action sheet. "Share & export" is a *route*, not a capability. Loading and Error
+went to the **design corpus**, not into Compose. Each of those, found after implementation, would have been
+rework of a screen plus its tests, its mutations and its goldens.
+
+**Two consequences that are easy to miss.** *"Reuse the existing delete flow"* means the **undo comes with it**
+([ADR-046](DECISIONS.md#adr-046) §4) — a V2 shelf that deleted immediately would be a new concept, not a reused
+one. And Share & export must push `EditorRoute` **then** `ProofRoute`: the Proof resolves the shared ViewModel
+off the editor's live back-stack entry ([ADR-026](DECISIONS.md#adr-026)), so a direct navigate to the Proof
+**throws at runtime**.
+
+**The one-sentence version a fresh session needs: the frozen Library is a prototype with six hard-coded zines,
+so it never reads a store, never waits, never fails, and never navigates anywhere.** B1–B4 never met that,
+because each of them built a *thing on the screen* and the freeze draws those completely. B5 builds the
+*screen*, and a screen is made of states and destinations — which is the half a design prototype does not have.
+Expect the same shape at the first integration package of every phase, not just this one.
+
+**And this is what the frozen property table is for.** Every earlier package found its design questions *while
+implementing them* — B4 found four that way and shipped an ADR trying to settle one of them itself, which
+review rejected. Listing every frozen property **and its source** before writing code surfaces the properties
+that have **no source** while the cost of finding out is still a paragraph. Eight gaps, found in a planning
+pass, with no tests, no mutation battery and no goldens yet built on top of the answers — and **all eight were
+closed within a day of being asked.**
+
+**And it produced a workflow rule** ([ADR-087](DECISIONS.md#adr-087)): all eight gaps were labelled *"blocked"*,
+and that one word was doing four different jobs — two needed a **design amendment**, four needed a **routing
+ruling**, one an **identity ruling**, and one was **not the package's work at all**. Every frozen-property-table
+row now terminates in exactly one of four named states, because the state names *who owes what* and "blocked"
+does not.
 
 **Three things about B4 a fresh session will otherwise re-derive.** First, `.empty` **replaces** the shelf —
 `body.is-empty .shelf{display:none}` — so B4 ships both halves and **B5 chooses between them** with real

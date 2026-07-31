@@ -248,7 +248,7 @@ redesign, no interpretation.** This is the closest surface to a clean re-skin an
 | **B2** | **The shelf** — two-column grid (fixed at every width per the **D-020** ruling), frozen gaps, the quiet "Your shelf" header (a full-width cell *inside* the scroll, so it scrolls away), scroll. Paints no ground: the desk is B5's | B1 | ✅ **built, independently reviewed (GO WITH FIXES, applied) and committed 2026-07-30** (`1e097ab`, [ADR-082](DECISIONS.md#adr-082), `Accepted`); raised **D-020**, ruled the same day with no code change owed |
 | **B3** | **Interaction** — long-press, the visible `⋯` fallback, the action sheet (Open · Share & export · Rename · Duplicate · separated Delete), metadata in the sheet header | B2 | ✅ **built, reviewed (GO WITH FIXES, applied) and committed 2026-07-30** ([ADR-083](DECISIONS.md#adr-083)); raised **D-021** and **D-022**, **both ruled the same day** — the scrim ruling cost one paint site, the glyph ruling cost nothing. The sheet reports a choice and does not dismiss: the frozen file wires no handler to the five rows at all, so that is a **deferral to B5**, not a transcription |
 | **B4** | **Empty state + "Make a zine"** — the transformation empty state (loose sheet → arrow → little book, three lines of copy) and the `.dock` band with its primary CTA. Ships `ZineShelfEmpty` and `ZineDock`; the CTA **reports** the press and routes nowhere, because the frozen file wires no handler to `.start` at all — the paper chooser is route hand-over and therefore **B5**'s. Which of shelf/empty is shown depends on real project data, so `body.is-empty` is B5's choice too | B2 | ✅ **built, independently reviewed (GO WITH FIXES, applied) and committed 2026-07-31** ([ADR-084](DECISIONS.md#adr-084), `Accepted`); D-005, D-011 and D-021 already answered three of its four questions, and review sent the fourth to the owner as **[D-023](design/V2-SPEC-DEFECTS.md#d-023)** |
-| **B5** | **The screen** — real project data, navigation, route hand-over, `token-enrolment.txt`, both device passes. **Carries two hard prerequisites, both deferred whole from B1:** (1) the **cover assigner** itself (`newZineCoverRecipe`-equivalent) — B1 shipped no assigner at all, because independent review found no reflection guard could hold "never derived from the title" against an assigner with no caller to check; and (2) the **persisted cover assignment** the D-017 ruling requires (a surface + stamp field on the project index and its `meta.json` sidecar, [ADR-042](DECISIONS.md#adr-042)) — a shelf that assigns a cover without storing it reprints every cover on every launch. B5 builds both together, so the guard has an actual call site to check | B1–B4 | not started |
+| **B5** | **The screen** — real project data, navigation, route hand-over, ~~`token-enrolment.txt`~~ (**struck 2026-07-31 and re-seated to [Phase D](#phase-d--proof)** — unreachable under D-007; see the note below this table), both device passes. **Carries two hard prerequisites, both deferred whole from B1:** (1) the **cover assigner** itself (`newZineCoverRecipe`-equivalent) — B1 shipped no assigner at all, because independent review found no reflection guard could hold "never derived from the title" against an assigner with no caller to check; and (2) the **persisted cover assignment** the D-017 ruling requires (a surface + stamp field on the project index and its `meta.json` sidecar, [ADR-042](DECISIONS.md#adr-042)) — a shelf that assigns a cover without storing it reprints every cover on every launch. B5 builds both together, so the guard has an actual call site to check | B1–B4 | **planned, not started** — [ADR-086](DECISIONS.md#adr-086) published B5's [frozen property table](DECISIONS.md#adr-086-fpt) *before* implementation (the first under [ADR-085](DECISIONS.md#adr-085)) and found **8 of 22 rows with no frozen source**, raising **D-024 · D-025 · D-026**. All four were ruled the same day and **all four are closed**: D-025 (reuse the existing flows; Share & export routes into the Proof), D-026 (a duplicate gets a **new** cover; legacy zines get one on first presentation), enrolment (re-seated to Phase D), and **D-024 — Loading and Error are product states, so the frozen HTML was amended** to add them. **No table row is blocked; implementation is next** |
 
 B1 is the leaf: the cover is the only element the frozen file specifies completely on its own, and every later
 package draws it. It is **additive** — V1's shelf keeps its route and no V1 `src/main` file is touched — so the
@@ -283,6 +283,35 @@ new frozen design, not an implementation task.
 | [**D-017**](design/V2-SPEC-DEFECTS.md#d-017-ruling) | A cover is **assigned once at creation and persisted** — not derived from the title, not round-robin, not inferred from neighbours. The assignment is part of the zine's identity. | supersedes [ADR-069](DECISIONS.md#adr-069)'s title-hash *mechanism* for V2; B1 ships no assigner (review found no guard could hold the ruling without a persisted caller); B5 builds the assigner and the persistence together |
 | [**D-018**](design/V2-SPEC-DEFECTS.md#d-018-ruling) | **Omit** the ink band below API 29; do not emulate `multiply` or substitute a blend mode. | extends D-014 from a *material* to a *mark*; one Known Limitation covers both |
 | [**D-019**](design/V2-SPEC-DEFECTS.md#d-019-ruling) | A **printed artifact does not mirror** in any locale; chrome may. | answers B2's grid, Phase C's page sheets and Phase D's imposed sheet in advance |
+
+**A second B5 deliverable contradicts an accepted ruling, and is reported here rather than quietly dropped —
+same handling as the 8pt criterion below.** B5's row lists **`token-enrolment.txt`**, and enrolling
+`com.aritr.zinely.feature.library` **cannot pass the build**. `TokenDisciplineTest` fails an enrolled package
+on any raw `.dp` / `.sp` / `Color(` / `RoundedCornerShape(` literal in its `src/main`; the V2 library package
+contains **119 `.dp`/`.sp` literals and 12 `RoundedCornerShape(`** — and every one of them is there *because*
+the **D-007** ruling says no spacing scale is published and spacing stays **per-component exactly as frozen**.
+The enrolment gate was written for the V1 conformance programme (CI-27/C1), where migrating a package *means*
+replacing literals with scale tokens; V2 has no scale to migrate onto, by ruling. So the two are not merely in
+tension — enrolment as currently defined is **unreachable** for any V2 surface, not just this one.
+
+**✅ RULED 2026-07-31 — option (b), on the [ADR-080](DECISIONS.md#adr-080) precedent the conflict itself named:
+*"do not weaken D-007; rescope the deliverable so it aligns with the existing constitutional rulings."*** So:
+
+- **`token-enrolment.txt` is struck from B5's deliverables** and **re-seated to Phase D**, joining the
+  token-routing criterion ADR-080 moved there on 2026-07-30 — the same destination for the same reason, which
+  is that both require a convergence Phase B is forbidden to perform.
+- **D-007 is untouched.** No spacing scale is published; V2 spacing stays per-component exactly as frozen.
+- **`TokenDisciplineTest` is untouched.** It keeps guarding the V1 conformance programme it was written for
+  (CI-27/C1). B5 removes no guard and weakens no assertion.
+- **Phase D inherits one question with it,** stated here so it is not rediscovered: enrolment as currently
+  defined means *"contains no raw literal"*, which presumes a scale to migrate onto. V2 has none **by ruling**,
+  so enrolment is unreachable for **every** V2 surface, not just this package. Phase D must therefore define
+  what token discipline *means* for a V2 surface — plausibly *"every value traces to the frozen CSS"* rather
+  than *"no literal appears"* — before any V2 package can enrol. That is a Phase D design question, not a B5
+  implementation one.
+
+Nothing was invented and nothing was weakened: B5 does not enrol the package (which would break the build),
+does not touch `TokenDisciplineTest`, and does not touch D-007.
 
 **One acceptance criterion above is stale and is left as written rather than quietly amended:** *"spacing (8pt)"*
 and *"8pt rhythm"* were superseded by the **D-007** owner ruling of 2026-07-28 — *no spacing scale is published;
@@ -353,6 +382,15 @@ printing-flow parity + fold-guide parity + accessibility parity**, for the shipp
   [`config/token-enrolment.txt`](../config/token-enrolment.txt) and `TokenDisciplineTest` (CI-27) covers the
   product sources. V1's parallel token objects (`ZinelyColors`, `ZinelyDimens`, `ZinelyTypography`) are
   retired. See [ADR-080](DECISIONS.md#adr-080).
+- **Also re-seated here, from B5 by owner ruling (2026-07-31):** the **`token-enrolment.txt` deliverable itself**.
+  It was listed under Phase B / B5, where it is **unreachable** — the enrolment gate fails a package on any raw
+  `.dp`/`.sp`/`Color(`/`RoundedCornerShape(`, and every such literal in a V2 package exists *because* **D-007**
+  ruled that no spacing scale is published and spacing stays per-component exactly as frozen. Same destination
+  and same reason as the criterion above. **Phase D therefore owes a prior definition:** what token discipline
+  *means* for a V2 surface, given there is no scale to migrate onto — plausibly *"every value traces to the
+  frozen CSS"* rather than *"no literal appears"*. Until that is defined, **no V2 package can enrol at all**,
+  which is a fact about the gate rather than about any package. Full statement in
+  [Phase B](#phase-b--library).
 - Booklet / saddle-stitch / duplex are **out of this stage** (next roadmap stage); the flip-edge default is flagged
   as a device-verification item, not asserted here.
 - Both device passes accepted.
@@ -407,7 +445,9 @@ Release Agent review against [ROADMAP.md](ROADMAP.md)/[PRD.md](PRD.md) before an
 
 - **Every phase ends with parity screenshots** (light + dark) and a **side-by-side** against the frozen HTML.
 - **Every package opens with a [frozen property table](COMPOSE-IMPLEMENTATION-GUIDE.md#81-the-frozen-property-table)**
-  in its ADR, written before production code, closed out at the gate.
+  in its ADR, written before production code, closed out at the gate — and **every row terminates in exactly one
+  of four states** (✅ Implemented · ≡ Equivalent mutant with proof · ⏳ Owner ruling required · ✎ Canonical
+  design amendment required). No row stays "blocked" ([ADR-087](DECISIONS.md#adr-087)).
 - **Every package runs the verification order**: implementation → focused tests → the mid-package **"cannot fail"**
   review → mutation testing → record goldens → **verify** goldens → independent review → reconciliation → final
   verification → owner approval → commit ([ADR-085](DECISIONS.md#adr-085)). Any test added or changed during

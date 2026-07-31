@@ -37,6 +37,18 @@ the gate, the evidence record. Format and rules:
 It exists because *"which frozen properties have no test at all?"* is the question that has found the most
 defects in this programme, and asking it at the gate means rework. The table asks it first.
 
+**Every row terminates in exactly one of four states — never in an unspecified pending state**
+([ADR-087](DECISIONS.md#adr-087)):
+
+- ✅ **Implemented** — carries the test that exists and its mutation KILLED.
+- ≡ **Equivalent mutant** — carries the *proof*, not the argument.
+- ⏳ **Owner ruling required** — carries the register entry by number.
+- ✎ **Canonical design amendment required** — carries the entry, and what the amendment must add.
+
+`∅ intentionally untested` is a sub-case of ✅, not a fifth state. A row marked only "blocked" or "deferred" is
+an unfinished table: those words hide *who owes what*, and B5's eight blocked rows turned out to owe four
+different answers to four different people.
+
 ### 3. The verification order
 
 Run in this order. Each step's output is the next step's input; running them out of order is how work gets done twice.

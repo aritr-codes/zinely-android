@@ -191,6 +191,27 @@ file of its own.
 At the gate the table is closed out: planned assertions become the test names that exist, planned mutations become
 KILLED / SURVIVED-and-proven-equivalent, and any row that moved gets one line saying why.
 
+#### Row termination — every row ends in exactly one of four states
+
+**No row may remain in an unspecified pending state** ([ADR-087](DECISIONS.md#adr-087)). At the package gate each
+row terminates as:
+
+| State | Means | Evidence it must carry |
+|---|---|---|
+| ✅ **Implemented** | the property is built and pinned | the test that exists, and its mutation KILLED |
+| ≡ **Equivalent mutant** | the mutation cannot be killed by any test | the **proof** — e.g. byte-identical goldens — not the argument |
+| ⏳ **Owner ruling required** | the property depends on a decision that is not the implementer's | the register entry, by number |
+| ✎ **Canonical design amendment required** | the property has no frozen source and needs one | the register entry, and what the amendment must add |
+
+The `∅ intentionally untested` marker is **not** a fifth terminal state — it is a sub-case of ✅, and its
+justification is the evidence. A row with no state, or a note that merely says "deferred", is an unfinished table
+and the package is not at its gate.
+
+Why this rule exists: B5's table had eight rows with no frozen source, and *"blocked"* was doing four different
+jobs at once — two needed a design amendment, four needed a routing ruling, one needed an identity ruling, and one
+was not the package's work at all. Four different answers were owed to four different people. Naming the terminal
+state names **who owes what**, and a row that cannot name one is a row nobody has actually decided.
+
 ### Device verification (mandatory, two passes)
 Every UI feature/UX change is verified on a physical device by **two readers of the same screen**:
 - **Pass 1 — Developer:** does it behave exactly as specified? (correctness, regressions, a11y via the *platform*
