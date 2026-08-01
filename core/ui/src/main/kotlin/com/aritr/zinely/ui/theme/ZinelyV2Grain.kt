@@ -103,7 +103,7 @@ import com.aritr.zinely.ui.R
  * | Bench `.page::after` | 120px | .5 | .45 | **0.225** |
  * | Proof `.zpage::after` | 120px | .5 | .42 | **0.21** |
  * | Proof `.drawer::after` | 150px | .5 | .3 | **0.15** |
- * | Bench/Proof `.phone::after` | 150px | .5 | .35 | 0.175 — *prototype bezel, not product UI* |
+ * | Bench/Proof `.phone::after` | 150px | .5 | .35 | **0.175** — the studio ground; see below |
  *
  * So the Library asks for grain **four to nearly seven times** stronger than any Bench or Proof
  * surface (1.00 against 0.25 at the top of that range and 0.15 at the bottom). That gap was raised as
@@ -133,6 +133,15 @@ public object ZinelyV2Grain {
      * matches the `mix-blend-mode` reading and, for every frozen use, the `background-blend-mode` one
      * too, since those elements paint their own background first.
      */
+    /**
+     * The alpha **baked into the tile itself**, before any per-surface CSS `opacity`.
+     *
+     * Published so a surface that transcribes an effective strength from the table above can say
+     * `BakedAlpha * cssOpacity` and be bound to this file rather than re-typing `.5` next to a
+     * comment claiming it came from here (review RI3 against C1, which did exactly that).
+     */
+    public const val BakedAlpha: Float = 0.5f
+
     public val Blend: BlendMode = BlendMode.Softlight
 
     /**

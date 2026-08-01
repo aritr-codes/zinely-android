@@ -16,12 +16,17 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 frozen property table** covering every rule and every scripted behaviour in
 [`v2-bench.html`](design/mockups/v2-bench.html), written before any production code. **C0 — corpus cleanup,
 documentation only — is done** (`d21e4dd`), closing [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record).
-**C1, the studio surface, is the next package and is BLOCKED**: its own pre-implementation blocker check raised
-**[D-033](design/V2-SPEC-DEFECTS.md#d-033)** — the frozen `212×326` page is not the document's `210.47×297.64`
-panel, and the frozen uniform `16px` keep-clear is not its `17pt` `safeAreaInsetPt`, so nothing states which
-rectangle the print-correctness cue draws. **No C1 production code has been written.** [D-032](design/V2-SPEC-DEFECTS.md#d-032)
-was ruled the same day (OD-10) and row 1.9 is now specified — the warn state is transient interaction guidance,
-not document state. What is
+**C1 — the studio surface, and the phase's first production code — is built and independently reviewed
+(GO WITH FIXES, all reconciled); its two device-verification passes are still owed**, and **C2 is the next package**.
+C1's own pre-implementation blocker check raised **[D-033](design/V2-SPEC-DEFECTS.md#d-033)** — the frozen
+`212×326` page was not the document's `210.47×297.64` panel, and the frozen uniform `16px` keep-clear was not
+its `17pt` `safeAreaInsetPt`, so nothing stated which rectangle the print-correctness cue draws. The owner
+**amended the frozen Bench** the same day (`.page` **229×324**, `.keepclear` **18.5px**), making the page box
+canonical geometry; C1 then **derives** the cue from `Imposer.DEFAULT_SAFE_AREA_INSET_PT` rather than
+transcribing the frozen literal, so it keeps depicting the engine's boundary if that boundary ever moves.
+[D-032](design/V2-SPEC-DEFECTS.md#d-032) was ruled the same day (OD-10) and row 1.9 shipped with C1 — the warn
+state is transient interaction guidance, not document state: derived per frame from the in-flight gesture, held
+in no reducer, and unable to outlive the interaction. What is
 owed, and by which package, is
 [COMPOSE-V2-ROADMAP.md § Phase C — what is owed before it starts](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
 
@@ -47,7 +52,8 @@ raised rather than adjudicated, and **resolved by owner ruling OD-2 on 2026-08-0
   [roadmap § Re-seated beyond Phase C](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). **C7 and C8 no longer
   exist**, their letters are not reused, and C9 is not renumbered.
 - **OD-3** — the frozen Bench and Proof are **amended** with a dedicated `--page-shadow` / `--page-contact`
-  pair. **Transcribe the amended file**; light rendering is unchanged, Kotlin is C1's and Phase D's.
+  pair. **Transcribe the amended file**; light rendering is unchanged. **C1 landed the Kotlin half**
+  (`pageShadow` / `pageContact` in `ZinelyV2Colors`); the Proof's `.zpage` remains Phase D's.
 - **OD-4** — Phase C's acceptance criteria **exclude literal document-typeface parity for `.t-title` and
   `.t-body` only**. Everything else stays literal parity. D-004 does **not** move forward.
 
@@ -61,8 +67,8 @@ Read hand-off and back are drawn or expected and wired to nothing, and **redo** 
 the freeze), and [D-032](design/V2-SPEC-DEFECTS.md#d-032) (the keep-clear warn state is declared and *never
 triggered anywhere in the frozen script*, and its written trigger — *"text **or a face**"* — needs face
 detection). **D-029 and D-030 remain open but are no longer Phase C's**: OD-2 sent them with the capability they
-describe. **Three entries block a Phase C package and none blocks C0** — D-028 at C6, D-031 at C2, D-032 at one
-row of C1.
+describe. **Two entries block a Phase C package** — D-028 at C6 and D-031 at C2. D-032 was ruled (OD-10)
+and shipped in C1.
 
 **Two Phase C blockers were not new and were easy to miss because they read as settled — both are now answered.**
 [**D-004**](design/V2-SPEC-DEFECTS.md#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter)
@@ -502,14 +508,14 @@ Sequence and gates: **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)**. In brief
 - **B · Library** — **✅ CLOSED 2026-08-01** (B1–B5, [ADR-081](DECISIONS.md#adr-081)…[ADR-084](DECISIONS.md#adr-084),
   [ADR-086](DECISIONS.md#adr-086), plus [ADR-088](DECISIONS.md#adr-088)) — pixel parity to the frozen Library, and
   the V2 Library is now the app's Home route.
-- **C · Bench** ◀ **IN PROGRESS — C0 done, C1 next** ([ADR-089](DECISIONS.md#adr-089), `Accepted`) — pixel + interaction +
+- **C · Bench** ◀ **IN PROGRESS — C0–C1 done, C2 next** ([ADR-089](DECISIONS.md#adr-089), `Accepted`) — pixel + interaction +
   animation + editing-behaviour parity, on top of the **existing** engine. *"No feature additions"* was the line
   to read carefully: the frozen Bench contains four studio additions (H1–H4) plus a net-new element kind, and
   **three of the four — H1, H2 and H3 — plus `DecorElement` are capability the repository does not have.** Only
   **H4**, the maker inks, already exists (`ZinelyContentInks`, under D-003's ruling). **Owner ruling OD-2
   (2026-08-01) settled it in favour of the
   objective** — the phase is **eight packages** and the capability is
-  [re-seated](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). Next package: **C0**. See §0 and the roadmap's
+  [re-seated](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). Next package: **C2**. See §0 and the roadmap's
   [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
 - **D · Proof** — pixel + print-flow + fold-guide + a11y parity, for the shipped single-sheet-8 stage.
 - **E · Cross-product polish** — make the three feel like one product (motion, transitions, haptics, dark mode).
@@ -559,10 +565,10 @@ approved before the commit.
    the package workflow as well as the rules.
 5. Write the package's **frozen property table** into its ADR *before* any production code.
 6. Begin your package on an explicit owner GO. **Phases A and B are closed**; rebuilding any of them is the
-   mistake this section exists to prevent. **Phase C has begun — C0 is done and the next package is C1** —
+   mistake this section exists to prevent. **Phase C has begun — C0 and C1 are done and the next package is C2** —
    read [ADR-089](DECISIONS.md#adr-089) and the roadmap's
    [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts) before writing a line of it,
-   and note that three owner decisions are still live against **C2**, **C6** and one row of **C1**.
+   and note that two owner decisions are still live, against **C2** and **C6**; D-012 is answered *in* C9.
 7. For any screen, open its **frozen HTML** first; it is the spec.
 
 *The design is done. Your job is faithful execution. If something feels like it should change, it goes into the

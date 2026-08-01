@@ -548,7 +548,11 @@ public fun EditorScreen(
                     Key.Minus -> { reframeZoom(1.0 / Framing.ZOOM_STEP); true }
                     else -> false
                 }
-            },
+            }
+            // C1 rows 1.1 and 1.2 — the studio ground and the grain over the whole screen. Last in the
+            // chain so it draws beneath the Column's children and the grain lays over all of them, which
+            // is what `.phone::after{z-index:60}` does in the frozen file.
+            .benchStudioGround(),
     ) {
         // The "Preview" entry to the unified Proof surface (M5, ADR-051). A quiet top-end nav
         // action (not a thumb-zone craft supply — it advances the journey, it doesn't place content);
@@ -596,8 +600,34 @@ public fun EditorScreen(
             // cleanup — which would strand a `Transforming` session and a non-null `live`. Re-runs when the
             // interaction returns to Idle, so the latest scale is applied the instant the gesture ends.
             val idle = interaction is Interaction.Idle
-            LaunchedEffect(scale, idle) {
-                if (idle) dispatch(Intent.SetViewport(scale, PtPoint(0.0, 0.0)))
+            // C1 row 1.3 — `.canvasArea{display:flex;align-items:center;justify-content:center}`. The
+            // sheet is centred in the residual height instead of pinned to the top-left as the MVP host
+            // left it.
+            //
+            // Centring is expressed as the **viewport's** `pageOffset`, not as a `contentAlignment` on
+            // the canvas Box, and that choice is load-bearing. Every layer over this canvas — the render
+            // tape, the snap guides, the selection chrome, the gesture surface, the resize handles, the
+            // Reframe overlay and its affordance chip — is `fillMaxSize()` and maps page points through
+            // `ExportScale.previewPageToDevice(screenPxPerPt, pageOffset)`, i.e.
+            // `devicePx = (pagePt + pageOffset) × scale`. Moving the paper with a layout alignment would
+            // have moved the paper *only*, and left every one of those layers drawing at the old origin:
+            // the exact divergence the paper-backing comment below was written about. Moving the shared
+            // offset moves all of them at once, because there is one seam and they all already read it.
+            //
+            // Pan is therefore real from here, which retires the "harmless while the MVP host pins pan at
+            // zero" caveat below — the paper backing now applies the offset too.
+            val centreOffset = remember(widthPx, heightPx, scale, pageSizePt) {
+                if (scale <= 0f) {
+                    PtPoint(0.0, 0.0)
+                } else {
+                    PtPoint(
+                        x = ((widthPx / scale - pageSizePt.width) / 2.0).coerceAtLeast(0.0),
+                        y = ((heightPx / scale - pageSizePt.height) / 2.0).coerceAtLeast(0.0),
+                    )
+                }
+            }
+            LaunchedEffect(scale, centreOffset, idle) {
+                if (idle) dispatch(Intent.SetViewport(scale, centreOffset))
             }
 
             Box(modifier = Modifier.fillMaxSize()) {
@@ -621,14 +651,55 @@ public fun EditorScreen(
                 // day pan becomes real, this offset must be applied here too or the two diverge again.
                 val density = LocalDensity.current
                 val paperScale = uiState.view.screenPxPerPt
+                val paperOffset = uiState.view.pageOffset
                 val paperWidth = with(density) { (pageSizePt.width * paperScale).toFloat().toDp() }
                 val paperHeight = with(density) { (pageSizePt.height * paperScale).toFloat().toDp() }
+                // Both read from `uiState.view`, never from the locally measured `scale`/`centreOffset`:
+                // the viewport push is deferred while a gesture or text session is open, so a mid-session
+                // canvas resize must move the paper and the render *together*, late, rather than moving
+                // one of them immediately. Same lockstep the paperScale comment above describes — now
+                // extended to the offset, which centring made load-bearing.
+                val paperX = with(density) { (paperOffset.x * paperScale).toFloat().toDp() }
+                val paperY = with(density) { (paperOffset.y * paperScale).toFloat().toDp() }
+                // C1 (ADR-089 rows 1.5-1.9, 1.11): the bare paper rectangle becomes the frozen sheet —
+                // its hairline edge, radius, two-layer shadow and grain — and carries the two marks the
+                // frozen page carries: the keep-clear boundary and the page number. This box IS the
+                // canonical page geometry per D-033, which is why the furniture is nested inside it
+                // rather than positioned against the canvas.
                 Box(
                     modifier = Modifier
+                        .offset(x = paperX, y = paperY)
                         .size(paperWidth, paperHeight)
-                        .background(ZinelyTheme.colors.paper)
+                        .benchPageSurface()
                         .testTag(EditorPaperSurfaceTestTag),
-                )
+                ) {
+                    BenchKeepClear(
+                        // D-032: transient guidance. The cue warns only while an interaction is in
+                        // flight; `live`/`resizeOverride` are exactly the in-flight gesture, and both
+                        // are null the instant it ends, so the warning cannot outlive the act — which
+                        // is the whole of the ruling, and why no reducer state backs this.
+                        //
+                        // The resolve below duplicates the one EditorPagePreview makes this frame.
+                        // That is deliberate rather than plumbed: it is a pure call on identical
+                        // inputs, so the two agree by construction, and hoisting the result out of a
+                        // sibling composable would mean writing state during composition to read it
+                        // one frame stale — a worse trade for a few rect operations.
+                        warn = BenchStudio.keepClearWarn(
+                            page = uiState.document.pages[uiState.currentPageIndex],
+                            interaction = uiState.interaction,
+                            live = live,
+                            resizeOverride = resizeOverride,
+                            screenPxPerPt = uiState.view.screenPxPerPt,
+                            pageSizePt = pageSizePt,
+                        ),
+                        panelWidthPt = pageSizePt.width,
+                    )
+                    BenchPageNumber(
+                        pageNumber = uiState.currentPageIndex + 1,
+                        pageCount = uiState.document.pages.size,
+                        modifier = Modifier.align(Alignment.TopEnd),
+                    )
+                }
                 EditorPagePreview(
                     uiState = uiState,
                     defaults = uiState.document.defaults,
@@ -747,8 +818,16 @@ public fun EditorScreen(
                     // app having lost track of where the page is, which is why an undo that merely revealed
                     // this was reported as undo corrupting the layout. A paper-sized box also *constrains*
                     // the text, so the lines wrap to the sheet instead of being clipped by the display.
+                    //
+                    // C1: the sheet is no longer top-left anchored, so a paper-*sized* box at the canvas
+                    // origin is no longer a paper-*placed* one. It takes the same `paperX`/`paperY` the
+                    // sheet does, from the same viewport offset — which is the point of putting centring
+                    // in `pageOffset` rather than in a layout alignment: there is one number to follow,
+                    // and following it is what keeps this overlay on the paper it is about.
                     Box(
-                        modifier = Modifier.size(paperWidth, paperHeight),
+                        modifier = Modifier
+                            .offset(x = paperX, y = paperY)
+                            .size(paperWidth, paperHeight),
                         contentAlignment = Alignment.Center,
                     ) {
                         EditorEmptyState(

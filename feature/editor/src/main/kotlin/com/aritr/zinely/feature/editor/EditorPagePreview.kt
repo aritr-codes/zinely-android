@@ -127,6 +127,7 @@ public fun EditorPagePreview(
             guides = guides,
             screenPxPerPt = screenPxPerPt,
             pageOffset = pageOffset,
+            pageSizePt = pageSizePt,
             modifier = Modifier.fillMaxSize(),
         )
         SelectionChrome(

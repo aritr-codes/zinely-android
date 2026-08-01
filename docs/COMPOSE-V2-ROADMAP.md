@@ -34,7 +34,7 @@
 ```mermaid
 flowchart LR
     A["A · Foundation ✅ CLOSED\n(ADR-071…080)"] --> B["B · Library ✅ CLOSED\n(ADR-081…084, 086/088)"]
-    B --> C["C · Bench ◀ IN PROGRESS\n(ADR-089 — 8 packages; C0 done, next is C1)"]
+    B --> C["C · Bench ◀ IN PROGRESS\n(ADR-089 — 8 packages; C0–C1 done, next is C2)"]
     C --> D["D · Proof\n(pixel + print-flow + fold + a11y parity)"]
     D --> E["E · Cross-product polish"]
     E --> F["F · Reality validation\n(physical devices)"]
@@ -90,8 +90,10 @@ flowchart LR
 > because a plan edited to match its outcome stops being evidence; read it as the record of where B5 stood
 > at the pre-commit gate, not of where the repository stands.
 >
-> **Phase C has STARTED (owner GO, 2026-08-01). [ADR-089](DECISIONS.md#adr-089) is `Accepted`, and its first
-> package — C0, documentation only — is complete.** The next package is **C1**, the studio surface. Its planning
+> **Phase C has STARTED (owner GO, 2026-08-01). [ADR-089](DECISIONS.md#adr-089) is `Accepted`; C0
+> (documentation only) is complete, and **C1 — the studio surface, the phase's first production code — is
+> built and independently reviewed, with both device-verification passes still owed.**
+> The next package is **C2**. Its planning
 > package is
 > [ADR-089](DECISIONS.md#adr-089), which publishes the phase's [eight packages](#phase-c-packages) and a
 > **complete selector-level frozen property table** for the frozen Bench, written before any production code
@@ -422,7 +424,7 @@ quietly changes meaning is how two documents start disagreeing while both look c
 | # | Package | Frozen regions | Depends on | Status |
 |---|---|---|---|---|
 | **C0** | **Corpus cleanup** — documentation only | the file's header (`:3`, and the deleted `:10`) and footer (now `:380`) | — | ✅ **DONE 2026-08-01.** Discharged [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record), whose 2026-07-28 disposition said *"clean it up in the design corpus **before Phase C begins**"*. Two lines of prose deleted; **no selector, declaration, token or script touched**, and the [D-010 amendment note](design/V2-SPEC-DEFECTS.md#d-010-amendment) directly below the stripped line preserved. Every `v2-bench.html`/`v2-proof.html` citation in the corpus was re-anchored to the current files in the same change (net +9 to +13 against the last commit, C0's own −1 included) and each re-verified against the selector it names |
-| **C1** | **The studio surface** — ground, grain, the page, its shadow, page number, keep-clear, centre guide | `.phone::after`, `.canvasArea`, `.pageWrap`, `.page`, `.keepclear`, `.guide`, `.pagenum` | Phase A | ✅ **UNBLOCKED 2026-08-01.** C1's own pre-implementation blocker check raised [D-033](design/V2-SPEC-DEFECTS.md#d-033) — the frozen `212×326` page was not the document's `210.47×297.64` panel and the uniform `16px` cue was not its `17pt` safe area — and the owner **amended the frozen Bench** the same day: `.page` **229×324**, `.keepclear` **18.5px**, the page box now canonical geometry for `.keepclear`/`.guide`/`.pagenum`/D-032/`PagePreview`/`SnapGuides`/`SelectionChrome`. OD-3 amended the shadow (transcribe the amended file); OD-4 recorded the typeface divergence; **OD-10 ruled [D-032](design/V2-SPEC-DEFECTS.md#d-032)** — the warn state is transient interaction guidance. ~~D-032 fences one row — `.keepclear.warn` — not the package~~ — which held until D-033 replaced it with a blocker that fences the whole package |
+| **C1** | **The studio surface** — ground, grain, the page, its shadow, page number, keep-clear, centre guide | `.phone::after`, `.canvasArea`, `.pageWrap`, `.page`, `.keepclear`, `.guide`, `.pagenum` | Phase A | ✅ **BUILT 2026-08-01 — both device passes outstanding.** The phase's first production code. `BenchStudioSurface.kt` (new) holds the ground, the sheet's hairline/radius/two-layer shadow/grain, the keep-clear cue, the page number and the pure geometry; `SnapGuides.kt` was re-skinned to `--matcha` with the frozen 8dp end-inset; `EditorScreen` centres the page through the **shared `pageOffset` viewport** rather than a layout alignment, so all seven layers that read that seam move together. Two Compose tokens (`pageShadow`/`pageContact`) closed the deferred half of the [D-010 amendment](design/V2-SPEC-DEFECTS.md#d-010-amendment), and `Imposer.DEFAULT_SAFE_AREA_INSET_PT` was published so the cue is **derived from the engine's safe area, not transcribed** from the frozen `18.5px`. Reached here only after [D-033](design/V2-SPEC-DEFECTS.md#d-033) — C1's own pre-implementation blocker check found the frozen `212×326` page was not the document's `210.47×297.64` panel and the uniform `16px` cue depicted no real boundary — and the owner **amended the frozen Bench** the same day: `.page` **229×324**, `.keepclear` **18.5px**, the page box now canonical for `.keepclear`/`.guide`/`.pagenum`/D-032/`PagePreview`/`SnapGuides`/`SelectionChrome`. **OD-10 ruled [D-032](design/V2-SPEC-DEFECTS.md#d-032)** and row 1.9 shipped with it: the warn state is derived per frame from the in-flight gesture, holds no reducer state, and cannot outlive the interaction. OD-3 amended the shadow; OD-4 recorded the typeface divergence. 26 focused tests re-derived from the frozen CSS at test time; three goldens re-recorded and two long-missing ones baselined; reviewed **GO WITH FIXES** with all four Required Fixes reconciled ([ADR-090](DECISIONS.md#adr-090)). **Both device passes outstanding** |
 | **C2** | **Selection + the contextual toolbar** — `.el`, outline, four handles, the dim, materialise, `.ctx` and its verb sets | `.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat`, `.ctx*` | C1 | ⛔ **blocked** — [D-031](design/V2-SPEC-DEFECTS.md#d-031) (Font/Size wire to nothing). Also implements the ruled approaches of [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) and [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp), which **close here**. The `decor` verb set is unreachable while `DecorElement` is re-seated |
 | **C3** | **In-place text editing + the rigid page pan** — the centrepiece | `.kbstack`, `.styletb*`, `.caret`, `edit()`/`endEdit()`, the `-96px` pan | C2 | ▶ **ready when C2 is.** Its condition is a **device proof**, not a ruling: pixel-identical return, else the documented bottom-sheet fallback |
 | **C4** | **The bar, the status chip, the snackbar** | `.bar`, `.icon-btn*`, `.add*`, `.status`, `.saved*`, `.snack*` | C2 | ⛔ **blocked** — [D-031](design/V2-SPEC-DEFECTS.md#d-031) (the Read hand-off, back, redo) |
@@ -462,7 +464,8 @@ question rewritten after its answer stops being evidence of what was asked.
 - **OD-2 — parity only.** No new editor capability; anything needing a new document-model concept is
   [re-seated](#re-seated-beyond-phase-c). This closed OD-5, OD-7 and OD-8 as a consequence.
 - **OD-3 — amend the spec.** A dedicated `--page-shadow` / `--page-contact` pair, light preserved
-  byte-for-byte, Kotlin deferred to C1 and Phase D. Applied to both frozen files;
+  byte-for-byte; the Kotlin was deferred to C1 and Phase D, and **C1 has landed its half**
+  (`pageShadow` / `pageContact`). Applied to both frozen files;
   [D-010](design/V2-SPEC-DEFECTS.md#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark)
   is **resolved**. As this row predicted, the ruling reached Phase D as well as C1 and was stated once for both.
 - **OD-4 — record the divergence.** The acceptance criterion above is narrowed in writing to exclude literal

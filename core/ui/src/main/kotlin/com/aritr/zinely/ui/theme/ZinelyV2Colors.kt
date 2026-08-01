@@ -142,6 +142,25 @@ public data class ZinelyV2Colors(
     /** `--frame-shadow` (Bench + Proof) — the elevation shadow under in-app chrome: material tiles,
      *  page thumbnails, the contextual toolbar, the ink popover, the bottom sheet, the page grid. */
     val frameShadow: Color,
+    /** `--page-shadow` (Bench + Proof) — the **cast** half of the zine page's two-layer shadow: the
+     *  soft, negative-spread throw that lifts the sheet off the studio ground.
+     *
+     *  Added by the [D-010](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-010-amendment)
+     *  amendment (owner ruling OD-3, 2026-08-01). Before it, `.page` spelled the light-theme value of
+     *  [frameShadow] out as a literal, so the page kept a warm-brown shadow on a dark desk while every
+     *  neighbouring surface went black. [frameShadow] could not simply be substituted: one token at
+     *  `.28` cannot carry a two-layer `.4` cast plus a `.14` contact, so the fix is a dedicated pair —
+     *  the same shape the Library already publishes as [shadow] / [contact] for the same kind of
+     *  object. Light is preserved byte-for-byte; dark is **re-derived** from the Library's dark pair,
+     *  not inverted. */
+    val pageShadow: Color,
+    /** `--page-contact` (Bench + Proof) — the tight **contact** half of the page's shadow, where the
+     *  sheet meets the ground. Paired with [pageShadow]; see its KDoc for why the pair exists.
+     *
+     *  The pairing is load-bearing rather than decorative: collapsing both layers onto one token
+     *  renders *almost* right in light and visibly wrong in dark, which is the exact bug the amendment
+     *  was written to prevent — and is the planned mutation for ADR-089 row 1.6. */
+    val pageContact: Color,
 )
 
 // The literals below are the frozen `:root` bytes. rgba() tokens are expressed as base × alpha so the
@@ -184,6 +203,8 @@ public fun zinelyV2LightColors(): ZinelyV2Colors = ZinelyV2Colors(
     shadow = Color(0xFF3C3424).copy(alpha = 0.34f), // rgba(60,52,36,.34)
     contact = Color(0xFF3C3424).copy(alpha = 0.22f), // rgba(60,52,36,.22)
     frameShadow = Color(0xFF3A3020).copy(alpha = 0.28f), // rgba(58,48,32,.28)
+    pageShadow = Color(0xFF3A3020).copy(alpha = 0.40f), // rgba(58,48,32,.4)  — D-010 amendment
+    pageContact = Color(0xFF3A3020).copy(alpha = 0.14f), // rgba(58,48,32,.14) — D-010 amendment
 )
 
 /**
@@ -226,4 +247,6 @@ public fun zinelyV2DarkColors(): ZinelyV2Colors = ZinelyV2Colors(
     shadow = Color.Black.copy(alpha = 0.60f), // rgba(0,0,0,.6)
     contact = Color.Black.copy(alpha = 0.50f), // rgba(0,0,0,.5)
     frameShadow = Color.Black.copy(alpha = 0.50f), // rgba(0,0,0,.5)
+    pageShadow = Color.Black.copy(alpha = 0.60f), // rgba(0,0,0,.6)  — D-010 amendment
+    pageContact = Color.Black.copy(alpha = 0.50f), // rgba(0,0,0,.5)  — D-010 amendment
 )

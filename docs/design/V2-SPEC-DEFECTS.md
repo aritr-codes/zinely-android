@@ -960,19 +960,19 @@ pass unnoticed.
 Applied to both files on **2026-08-01**. Each of the four `:root` blocks per file gains the pair, and the
 one hand-written rule per file now references it:
 
-**[`v2-bench.html`](mockups/v2-bench.html)** — light (`:root` `:30`, `:root[data-theme="light"]` `:66`):
+**[`v2-bench.html`](mockups/v2-bench.html)** — light (`:root` `:50`, `:root[data-theme="light"]` `:86`):
 
 ```css
 --page-shadow:rgba(58,48,32,.4); --page-contact:rgba(58,48,32,.14);
 ```
 
-dark (`@media (prefers-color-scheme:dark)` `:45`, `:root[data-theme="dark"]` `:56`):
+dark (`@media (prefers-color-scheme:dark)` `:65`, `:root[data-theme="dark"]` `:76`):
 
 ```css
 --page-shadow:rgba(0,0,0,.6); --page-contact:rgba(0,0,0,.5);
 ```
 
-and `.page` at `:98`:
+and `.page` at `:118`:
 
 ```css
 box-shadow:0 14px 30px -14px var(--page-shadow),0 2px 5px var(--page-contact);

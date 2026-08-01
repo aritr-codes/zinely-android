@@ -146,21 +146,29 @@ class SelectionChromeGoldenTest {
     }
 
     /**
-     * Count of pixels carrying the teal guide's **hue signature** — green the dominant channel (`G>R` and
-     * `G≥B`). The `--teal` token (#2A9D8F) is dark and saturated, so a 1dp AA line straddling two device
-     * columns blends ~50% with the light paper and never lands within a tight per-channel tolerance of the
-     * pure token (unlike the near-paper `--yellow` it replaced). Its hue survives the blend, and neither the
-     * warm paper (`G<R`) nor the `--coral-strong` chrome (`R≫G`) satisfies it — so a green-dominant count
-     * isolates the guide without false positives.
+     * Count of pixels carrying the snap guide's **hue signature**.
+     *
+     * **Retuned for V2 (C1, ADR-089 row 1.10), and the retune is the interesting part.** The guide was
+     * `--teal` (#2A9D8F); it is now the frozen Bench's `--matcha` (#7C8A3F) at `.6` — see [SnapGuides].
+     * The old predicate required `G−R ≥ 16`, which teal clears easily. Matcha is an *olive*: green and red
+     * sit almost level, and once a 1dp AA line splits across two device columns the painted pixels measure
+     * `rgb(202,206,188)` against a `rgb(250,250,250)` page — **G−R of 4**. The threshold was therefore
+     * unreachable by the new token, and the test failed for the one reason a colour assertion should:
+     * the colour changed.
+     *
+     * So the discriminator moves to **G−B**, which the same measurement puts at **18** against the page's
+     * own **0**, with `G > R` retained as the clause that still excludes the `--coral-strong` chrome
+     * (`R ≫ G`) and every neutral grey in the capture (`G−R = 0`). Numbers from a probe over the real
+     * capture rather than from the token arithmetic, because what survives an AA blend is the question.
      */
-    private fun Bitmap.countTealGuide(): Int {
+    private fun Bitmap.countMatchaGuide(): Int {
         var n = 0
         for (y in 0 until height) for (x in 0 until width) {
             val p = getPixel(x, y)
             val r = (p shr 16) and 0xFF
             val g = (p shr 8) and 0xFF
             val b = p and 0xFF
-            if (g - r >= 16 && g - b >= 4) n++
+            if (g > r && g - b >= 10) n++
         }
         return n
     }
@@ -235,6 +243,7 @@ class SelectionChromeGoldenTest {
                     imageBytes = EmptyAssetBytes,
                 )
                 SnapGuides(
+                    pageSizePt = sheet,
                     guides = listOf(
                         SnapGuide(SnapAxis.VERTICAL, 36.0),
                         SnapGuide(SnapAxis.HORIZONTAL, 36.0),
@@ -251,12 +260,12 @@ class SelectionChromeGoldenTest {
                 )
             }
         }
-        // 1dp AA guides blend with the page, so prove them by the teal hue signature, not exact colour. A
-        // vertical + horizontal full-span line at 2.5 px/pt leaves well over 50 green-dominant pixels; a
-        // blank/undrawn guide layer (warm paper only) leaves none.
+        // 1dp AA guides blend with the page, so prove them by the matcha hue signature, not exact colour.
+        // A vertical + horizontal line at 2.5 px/pt, less the frozen 8dp each end, leaves ~640 matching
+        // pixels; a blank/undrawn guide layer leaves none, and the page's own greys leave none either.
         assertTrue(
-            "snap guides did not paint the teal token on the page",
-            bmp.countTealGuide() > 50,
+            "snap guides did not paint the frozen --matcha token on the page",
+            bmp.countMatchaGuide() > 50,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_snap_guides.png", aa())
     }
