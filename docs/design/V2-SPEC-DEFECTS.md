@@ -99,10 +99,10 @@ They are the second run of the frozen property table doing what it was added for
 than B5's: where B5's three were all one shape (*a prototype never reads a store, waits, fails or navigates*),
 these are four different shapes — an accepted ADR contradicted by a later freeze (D-028), net-new capability with
 no data model (D-029), a design navigating a product that does not exist (D-030), a screen with no exits (D-031),
-and a frozen state with no reachable trigger (D-032). **The count is now thirty-three: twenty-two resolved, eleven
+and a frozen state with no reachable trigger (D-032). **The count is now thirty-three: twenty-three resolved, ten
 open** — the twenty-first being [D-001](#d-001--v2-benchhtml-header-contradicts-the-freeze-record), closed by
 **Phase C / C0** on 2026-08-01, the first Phase C package to land, and the twenty-second [D-032](#d-032), ruled
-the same day. The eleven open include **[D-033](#d-033)**, raised by C1's own blocker check. The full statement of what Phase C owes is
+the same day. The twenty-third is **[D-033](#d-033)** — raised by C1's own blocker check and amended out of existence the same day. The full statement of what Phase C owes is
 [COMPOSE-V2-ROADMAP.md § Phase C — what is owed before it starts](../COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
 
 **On 2026-08-01 the owner ruled four questions** — OD-1 through OD-4 of [ADR-089 §5](../DECISIONS.md#adr-089) —
@@ -120,8 +120,9 @@ own distinction between fixing a defect and recording one, and it leaves D-004 i
 That left **three entries that block a Phase C package** — D-028 at C6, D-031 at C2, D-032 at C1's keep-clear
 row. **None blocked C0, which has since landed.** D-032 was ruled on 2026-08-01 and fenced a single row rather
 than the package — but **C1's own pre-implementation blocker check then raised [D-033](#d-033), which does block
-the package**: it decides the rectangle every other C1 property is positioned against. The standing count of
-Phase-C blockers is therefore back to three — D-033 at C1, D-031 at C2/C4, D-028 at C6.
+the package**: it decides the rectangle every other C1 property is positioned against. That blocker was itself
+ruled the same day — option (c), [the third amendment to a frozen V2 surface](#d-033-amendment) — so **C1 is
+unblocked and no entry blocks it**. Two Phase-C blockers stand: **D-031** at C2/C4 and **D-028** at C6.
 
 | Open | Owing to | One line |
 |---|---|---|
@@ -130,7 +131,7 @@ Phase-C blockers is therefore back to three — D-033 at C1, D-031 at C2/C4, D-0
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | [**D-031**](#d-031) | ⏳ **an owner ruling** — **Phase C / C2, C4** | Font, Size, the Read hand-off and back have no destinations; redo exists in the product and not in the freeze |
 | ~~[**D-032**](#d-032)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-032-ruling), OD-10 (C1 half) | the keep-clear warn state was never triggered in the freeze; the ruling makes it **transient interaction guidance**, so no content analysis is needed |
-| [**D-033**](#d-033) | ⏳ **an owner ruling** — **Phase C / C1** | the frozen page is not the document's panel and the 16px cue is not the 17pt safe area; **blocks C1** |
+| ~~[**D-033**](#d-033)~~ | ✅ **RESOLVED 2026-08-01** — [the frozen Bench amended](#d-033-amendment) | the frozen page was not the document's panel and the 16px cue was not the 17pt safe area; the page is now 229×324 and the cue a truthful uniform 18.5px |
 | [**D-023**](#d-023) | ⏳ **an owner ruling** | the Library labels its primary button `--paper` where the corpus publishes `--on-matcha` — the fourth of the D-005/D-011/D-022 set |
 | [**D-027**](#d-027) | ⏳ **an owner ruling** | the action sheet's metadata line ships in a vocabulary the frozen file never uses — cosmetic, sheet-only, and **blocks nothing** |
 | ~~[**D-001**](#d-001--v2-benchhtml-header-contradicts-the-freeze-record)~~ | ✅ **RESOLVED 2026-08-01** — [closed by Phase C / C0](#d-001-closure) | `v2-bench.html`'s header contradicted the freeze record. C0 deleted the stale header line and stripped the stale footer clause, keeping D-005's stand-in note and the [D-010 amendment](#d-010-amendment) that sits directly beneath the deleted line |
@@ -317,7 +318,7 @@ The test name changed from `…clears the contested 3-to-1 floor…` to `…clea
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) lines 404-407, 473, 476-483 · [V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III · [V2-IDENTITY.md](V2-IDENTITY.md) §4 · [V2-BENCH-REVIEW.md](V2-BENCH-REVIEW.md) §H4 |
+| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) lines 424-427, 493, 496-503 · [V2-CONSTITUTION.md](V2-CONSTITUTION.md) §III · [V2-IDENTITY.md](V2-IDENTITY.md) §4 · [V2-BENCH-REVIEW.md](V2-BENCH-REVIEW.md) §H4 |
 | **Found** | 2026-07-28, during Phase A / A2 (independent review of the `content.*` namespace) |
 | **Severity** | **Specification conflict** — did not block A2; would have blocked the Phase C ink popover |
 | **Status** | ✅ **RESOLVED** 2026-07-28 by owner ruling — see the resolution at the end of this entry |
@@ -487,7 +488,7 @@ remains legible at the Phase D gate.
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 37, 125, 148, 163 · [`v2-bench.html`](mockups/v2-bench.html) lines 32, 193, 211, 249 · [`v2-proof.html`](mockups/v2-proof.html) lines 177, 224, 246 |
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 37, 125, 148, 163 · [`v2-bench.html`](mockups/v2-bench.html) lines 52, 213, 231, 269 · [`v2-proof.html`](mockups/v2-proof.html) lines 177, 224, 246 |
 | **Found** | 2026-07-28, during Phase A / A3 (typography) |
 | **Severity** | **Disagreement between two frozen files** — did not block A3; ruling owed before Phase B implements a Library heading |
 | **Status** | ✅ **RESOLVED** 2026-07-28 by owner ruling — see the resolution at the end of this entry |
@@ -579,7 +580,7 @@ freeze dates, not as a fourth independent defect.
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) line 24 · [`v2-proof.html`](mockups/v2-proof.html) line 24 |
+| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) line 44 · [`v2-proof.html`](mockups/v2-proof.html) line 24 |
 | **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
 | **Severity** | Dead specification — **did not block A4** |
 | **Status** | ✅ **RESOLVED** 2026-07-30 by owner ruling — see the resolution at the end of this entry |
@@ -622,7 +623,7 @@ consistency" from.
 
 **Two in-code corrections came with the ruling**, both mechanically required by it:
 
-- `ZinelyV2Dimens`' KDoc described `--r` as *declared* at `v2-bench.html:24` / `v2-proof.html:24` and D-006
+- `ZinelyV2Dimens`' KDoc described `--r` as *declared* at `v2-bench.html:44` / `v2-proof.html:24` and D-006
   as an open finding. It now records the deletion and the ruling. **KDoc only — no token added, no value
   changed.**
 - `ZinelyV2DimensTest` **asserted the two declarations were present** (`assertEquals(… 2, declarations)`), so
@@ -734,7 +735,7 @@ test. This entry is the record.
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 61, 84, 105, 149, 170 · [`v2-bench.html`](mockups/v2-bench.html) lines 112, 222 · [`v2-proof.html`](mockups/v2-proof.html) — no focus rule anywhere. *(Re-anchored 2026-08-01: the citations were captured before the [D-024 amendment](#d-024-amendment) moved the Library and the [D-010 amendment](#d-010-amendment) moved the Bench.)* |
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 61, 84, 105, 149, 170 · [`v2-bench.html`](mockups/v2-bench.html) lines 132, 242 · [`v2-proof.html`](mockups/v2-proof.html) — no focus rule anywhere. *(Re-anchored 2026-08-01: the citations were captured before the [D-024 amendment](#d-024-amendment) moved the Library and the [D-010 amendment](#d-010-amendment) moved the Bench.)* |
 | **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
 | **Severity** | **Accessibility gap in the frozen specification** — does not block A4 |
 | **Status** | **Open by owner ruling** (2026-07-28) — approach settled; stays open until Phase C implements and verifies the affected surfaces |
@@ -878,7 +879,7 @@ on-device against the platform accessibility tree.
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) line 85 → now line 98 · [`v2-proof.html`](mockups/v2-proof.html) line 98 → now line 112 (both moved by the amendment below) |
+| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) line 105 → now line 98 · [`v2-proof.html`](mockups/v2-proof.html) line 98 → now line 112 (both moved by the amendment below) |
 | **Found** | 2026-07-28, during Phase A / A4 (shape, spacing, elevation) |
 | **Severity** | Theme defect in the frozen specification — **does not block A4** |
 | **Status** | ✅ **RESOLVED 2026-08-01** — owner ruling, applied as an [amendment to both frozen files](#d-010-amendment) |
@@ -887,7 +888,7 @@ on-device against the platform accessibility tree.
 `var(--frame-shadow)`, which is re-derived for dark (`rgba(58,48,32,.28)` → `rgba(0,0,0,.5)`). Two do
 not:
 
-- `v2-bench.html:85` — `.page` — `0 14px 30px -14px rgba(58,48,32,.4), 0 2px 5px rgba(58,48,32,.14)`
+- `v2-bench.html:105` — `.page` — `0 14px 30px -14px rgba(58,48,32,.4), 0 2px 5px rgba(58,48,32,.14)`
 - `v2-proof.html:98` — `.zpage` — `0 16px 34px -16px rgba(58,48,32,.44), 0 2px 5px rgba(58,48,32,.14)`
 
 `rgb(58,48,32)` is the **light-theme** value of `--frame-shadow`, spelled out rather than referenced.
@@ -1009,7 +1010,7 @@ stale lines, which sat directly above it — the Bench's block is intact at `:11
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 36, 43, 52, 61, 93, 119, 122 · [`v2-bench.html`](mockups/v2-bench.html) line 24 · [`v2-proof.html`](mockups/v2-proof.html) line 24 |
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) lines 36, 43, 52, 61, 93, 119, 122 · [`v2-bench.html`](mockups/v2-bench.html) line 44 · [`v2-proof.html`](mockups/v2-proof.html) line 24 |
 | **Found** | 2026-07-28, during Phase A / A5 (motion) |
 | **Severity** | Cross-file divergence — did not block A5 |
 | **Status** | ✅ **RESOLVED** 2026-07-28 by owner ruling — see the resolution at the end of this entry |
@@ -1091,7 +1092,7 @@ token. Until that lands, **this entry is the authority and the Library HTML is s
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 171 · [`v2-bench.html`](mockups/v2-bench.html) lines 123, 273 · [`v2-proof.html`](mockups/v2-proof.html) lines 259-261. *(Re-anchored 2026-08-01, as [D-008](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it)'s were.)* |
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 171 · [`v2-bench.html`](mockups/v2-bench.html) lines 143, 293 · [`v2-proof.html`](mockups/v2-proof.html) lines 259-261. *(Re-anchored 2026-08-01, as [D-008](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it)'s were.)* |
 | **Found** | 2026-07-28, during Phase A / A5 (motion) |
 | **Severity** | **Accessibility inconsistency in the frozen specification** — does not block A5 |
 | **Status** | **Open by owner ruling** (2026-07-28) — deliberately unresolved in Phase A; the behavioural decision belongs to **Phase C**, on physical devices |
@@ -1103,7 +1104,7 @@ the same way:
 | File | Rule |
 |---|---|
 | `v2-library.html:171` | `*{transition:none!important}` — kills transitions; says nothing about animations (the Library has none) |
-| `v2-bench.html:273` | `*{transition-duration:.01ms!important; animation:none!important}` — collapses transitions, **disables animations outright** |
+| `v2-bench.html:293` | `*{transition-duration:.01ms!important; animation:none!important}` — collapses transitions, **disables animations outright** |
 | `v2-proof.html:260` | `*{transition-duration:.01ms!important; animation-duration:.01ms!important}` — collapses both |
 
 **Why it matters, given they currently agree.** For the three animations that exist today — the Bench's
@@ -1196,7 +1197,7 @@ and only the latter guarantees the element still reaches its end state.
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 18 · [`v2-bench.html`](mockups/v2-bench.html) line 35 · [`v2-proof.html`](mockups/v2-proof.html) line 36 |
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 18 · [`v2-bench.html`](mockups/v2-bench.html) line 55 · [`v2-proof.html`](mockups/v2-proof.html) line 36 |
 | **Found** | 2026-07-28, during Phase A / A6 (paper / grain) |
 | **Severity** | Cross-file divergence in a **material** — did not block A6 |
 | **Status** | ✅ **RESOLVED** 2026-07-29 by owner ruling — see the resolution at the end of this entry |
@@ -1292,7 +1293,7 @@ D-011, nothing in the HTML is stale.
 
 | | |
 |---|---|
-| **Artifacts** | Platform constraint against the whole frozen trilogy — every `--grain` rule (`v2-library.html` 59/105/110 · `v2-bench.html` 74/87/99 · `v2-proof.html` 75/95/115/173) |
+| **Artifacts** | Platform constraint against the whole frozen trilogy — every `--grain` rule (`v2-library.html` 59/105/110 · `v2-bench.html` 94/107/119 · `v2-proof.html` 75/95/115/173) |
 | **Found** | 2026-07-29, during Phase A / A6 review |
 | **Severity** | **Platform capability gap**, not a specification contradiction — did not block A6 |
 | **Status** | ✅ **RESOLVED** 2026-07-29 by owner ruling — the safe floor is the permanent behaviour; see the end of this entry |
@@ -1363,7 +1364,7 @@ documented difference and belongs in release notes when V2 ships — as a **Know
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-proof.html`](mockups/v2-proof.html) lines 310 and 390 · [`v2-bench.html`](mockups/v2-bench.html) line 359 against [`v2-proof.html`](mockups/v2-proof.html) line 308 |
+| **Artifacts** | [`v2-proof.html`](mockups/v2-proof.html) lines 310 and 390 · [`v2-bench.html`](mockups/v2-bench.html) line 379 against [`v2-proof.html`](mockups/v2-proof.html) line 308 |
 | **Found** | 2026-07-29, during Phase A / A7 (icons) |
 | **Severity** | Cross-file (and intra-file) inconsistency — did not block A7 |
 | **Status** | ✅ **RESOLVED** 2026-07-29 by owner ruling — see the resolution at the end of this entry |
@@ -1388,7 +1389,7 @@ only chevron on the resting band is either a deliberately smaller mark or a tran
 | Where | Path | Used for |
 |---|---|---|
 | `v2-proof.html:294` | `M4 12l5 5 11-12` | the READY tick, and three more placements (`:311` seal, `:344`, `:485`) |
-| `v2-bench.html:359` | `M20 6 9 17l-5-5` | the Bench's *Done* button |
+| `v2-bench.html:379` | `M20 6 9 17l-5-5` | the Bench's *Done* button |
 
 Same mark, drawn from opposite ends, with different proportions. The Proof's is used four times and is
 the better-established of the two.
@@ -1946,7 +1947,7 @@ untokenised; it produces a *different amount of dimming* in the two themes while
 
 **The evidence this is staleness rather than intent.** The corpus already publishes a canonical, theme-aware
 `--scrim`: `rgba(42,37,30,.34)` light and `rgba(0,0,0,.5)` dark
-([`v2-bench.html:31,46`](mockups/v2-bench.html)) — note that the dark half is **stronger**, which is exactly
+([`v2-bench.html:51,46`](mockups/v2-bench.html)) — note that the dark half is **stronger**, which is exactly
 the correction the Library's literal is missing. Stronger still: the two other frozen files **already
 disagreed** about this token (the Proof declares `.42`/`.55`) and that disagreement was **already ruled** —
 Bench-canonical, per Q1, recorded in `ZinelyV2Colors.kt:123-129`. So V2's scrim has been adjudicated once
@@ -2608,8 +2609,8 @@ top of.
 |---|---|
 | **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) `:97` (`.page`), `:101` (`.keepclear`), `:105` (`.guide.v`), `:107` (`.pagenum`) · [`SingleSheet8Imposer.kt`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/SingleSheet8Imposer.kt) · [`Imposer.kt`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/Imposer.kt) `:28` · [`LayoutValidator.kt`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/LayoutValidator.kt) `:85` · [BP-4](V2-BENCH-PRINCIPLES.md) · [ADR-012](../DECISIONS.md#adr-012) |
 | **Found** | 2026-08-01, at the start of **C1**, by the pre-implementation blocker check ADR-089 requires |
-| **Severity** | **Blocks package C1** — it decides the geometry every other C1 property is positioned against |
-| **Status** | ⏳ **OPEN — owner ruling required** |
+| **Severity** | **Blocked package C1** — it decided the geometry every other C1 property is positioned against |
+| **Status** | ✅ **RESOLVED 2026-08-01** by owner ruling — option (c), **the frozen Bench amended**. See [the amendment](#d-033-amendment) |
 
 **The two numbers do not agree, and [ADR-089 row 1.5](../DECISIONS.md#adr-089) already half-says so.** That row
 notes *"the 212:326 ratio is **not** the document's trim; it is the frozen depiction of it"* — correctly. What
@@ -2667,12 +2668,56 @@ decorative and the register records that it is. (b) Semantic parity — the real
 at the document's real aspect, making the two agree in the corpus rather than in Compose — the [D-024](#d-024)
 precedent, and the only option that leaves nothing diverging.
 
+#### The amendment — owner ruling, 2026-08-01 {#d-033-amendment}
+
+**Option (c).** *"The page depicted by the frozen Bench must match the real document geometry rather than
+remaining a stylised approximation."* This is the **third** amendment to a frozen V2 surface, after
+[D-024](#d-024) (which added design) and [D-010](#d-010-amendment) (which corrected a token). It is the first
+that changes a **dimension**, and it follows D-024's precedent exactly: the corpus is edited first, and Compose
+implements the corpus — never the reverse.
+
+Two declarations changed in [`v2-bench.html`](mockups/v2-bench.html):
+
+| | before | after | why that number |
+|---|---|---|---|
+| `.page` (`:117`) | `212 × 326` px, ratio **0.6503** | **`229 × 324`** px, ratio **0.70679** | the real panel is `210.4725 × 297.638` pt (ratio 0.70714) — A4 landscape tiled 4 × 2 by [`SingleSheet8Imposer`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/SingleSheet8Imposer.kt). At height 324 the ideal width is **229.11 px**, so 229 is **0.11 px** off — sub-pixel |
+| `.keepclear` (`:121`) | uniform `16px` — depicting nothing | **uniform `18.5px`** | `safeAreaInsetPt = 17.0` scaled by the page box: **1.08803** px/pt horizontally (229/210.4725) and **1.08857** vertically (324/297.638), giving 18.496 and 18.506 px |
+
+**The two axes agreeing to 0.01px is the whole point.** A uniform inset is only honest on a box that shares the
+aspect of the geometry it depicts; on the old 212 × 326 page the same 17 pt needed ≈17.1 px sideways and ≈18.6 px
+top-and-bottom, and no single number was truthful. Fixing the aspect is what *earns* the uniform inset — the two
+halves of this amendment are one change, not two.
+
+**Why 324 and not 297.** The obvious choice was `210 × 297` — ratio 0.70707, a near-perfect 1 px ≈ 1 pt depiction,
+and pleasingly the millimetre figures of A4. It was rejected on evidence: the frozen content stack (title 23px/1.15
++ photo 96 + body at `22ch` + sticker 40, with three 12px gaps) measures **≈270 px**, and a 297-tall page leaves a
+content box of 253. It would have **overflowed the frozen prototype** — an amendment that breaks the artifact it is
+amending. 324 keeps the content box at 185 × 280 and is **2 px shorter** than the old page, so the canvas budget is
+unchanged too.
+
+**What the page box now governs.** Per the ruling, `.page` is the canonical geometry for `.keepclear`, `.guide`,
+`.pagenum`, [D-032](#d-032)'s intersection test, and the Compose `PagePreview` / `SnapGuides` / `SelectionChrome`
+viewport. In practice that means the Compose page is driven by the one `screenPxPerPt` those layers already share
+rather than by a fixed dp size — the divergence
+[`EditorScreen.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt) already
+documents as having been fixed once, and which a fixed-size page would have reintroduced.
+
+**Untouched.** Colours, shadows, type, motion, script, and `.content`'s 22px inset — which still sits *inside* the
+keep-clear (22 > 18.5), as it did before (22 > 16). Every `v2-bench.html` line citation in the corpus moved **+20**
+below `:10` and was re-anchored and re-verified against the selector it names.
+
+**One observation, deliberately not acted on.** The Proof's `.pageStage` is `206 × 300` — ratio **0.6867**, also not
+the panel's 0.7071, though far closer than the Bench's was. The ruling names the Bench, and *"update only the
+planning/specification documents required by this ruling"*, so the Proof is **not** amended here. It is recorded for
+the phase that meets it (**Phase D**), and this paragraph is that record.
+
 ---
 
 ## Resolved
 
 | ID | Defect | Resolved |
 |---|---|---|
+| **D-033** | The frozen page is not the document's page, and the keep-clear inset is not the document's safe area | 2026-08-01 — owner ruling, option (c): **the frozen Bench is amended**, on the [D-024](#d-024) precedent. `.page` 212×326 → **229×324** (ratio 0.70679, 0.11px off ideal) so the depiction carries the real panel's aspect; `.keepclear` 16px → **18.5px**, the engine's `safeAreaInsetPt = 17.0` scaled — the two axes agreeing to 0.01px is what licenses one uniform number. The page box is now canonical geometry for `.keepclear`, `.guide`, `.pagenum`, D-032's intersection test and the Compose viewport. [Amendment](#d-033-amendment) and entry kept above. |
 | **D-032** | The keep-clear cue has a frozen appearance, no trigger, and a written trigger the product cannot compute | 2026-08-01 — owner ruling (OD-10, C1 half): the warn state is **transient guidance, not document state**. It shows only while an in-flight interaction would move content into the keep-clear area, and disappears when the interaction ends; content already inside after editing draws no persistent warning. None of the three offered options was taken — the trigger became the manipulated element's **bounds**, so face detection is not needed and [PRD §5](../PRD.md#5-product-principles-non-negotiable) is not engaged. [Ruling](#d-032-ruling) and entry kept above. |
 | **D-001** | `v2-bench.html`'s header contradicts the freeze record | 2026-08-01 — closed by **Phase C / C0**, the documentation-only package that existed for it: the stale header line deleted, the stale footer clause stripped, D-005's stand-in note and the [D-010 amendment](#d-010-amendment) kept. No selector, declaration or script touched. [Closure](#d-001-closure) and entry kept above. |
 | **D-010** | The page shadow is hard-coded to the light theme and does not adapt in the dark | 2026-08-01 — owner ruling (OD-3 of [ADR-089](../DECISIONS.md#adr-089)): **amend the frozen Bench and Proof** with a dedicated `--page-shadow` (cast) + `--page-contact` (contact) pair, preserving light byte-for-byte and re-deriving dark from the Library's own pair. Spec first, per D-024's precedent; **Compose deferred** to Phase C / C1 and Phase D. The [amendment](#d-010-amendment) and the entry are kept above. |

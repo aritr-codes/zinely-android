@@ -17,6 +17,26 @@
   (.4 / .14, unchanged); dark is re-derived, not inverted, from the Library's own dark pair.  Nothing
   else about the freeze of 2026-07-28 is changed.  Spec first, per D-024's precedent: Compose is
   deferred to Phase C / C1.
+
+  AMENDED 2026-08-01 by owner ruling (D-033).  The page drawn here was a stylised approximation:
+  212x326 is ratio 0.6503, while the document's real printable panel -- A4 landscape tiled 4x2 by
+  SingleSheet8Imposer, 210.4725 x 297.638 pt -- is 0.7071.  Eight percent apart.  The keep-clear was
+  a uniform 16px, which depicted no real boundary: the engine's safe area is safeAreaInsetPt = 17.0
+  (~6 mm), enforced by LayoutValidator.  A uniform inset stays uniform only on a box that shares the
+  aspect of the geometry it depicts, so the old page could not carry a truthful inset at all -- 17pt
+  on a 212x326 box needs ~17.1px sideways and ~18.6px top and bottom.  BP-4 makes this cue the whole
+  of the product's print-correctness story, so a decorative one was not acceptable.
+    .page   212x326 -> 229x324.  Ratio 0.70679, which is 0.11px off the ideal width for this height;
+            324 is 2px SHORTER than before, so the canvas budget is unchanged, and the content box
+            grows 168x282 -> 185x280, which the frozen content stack (~270px) still clears.
+    .keepclear  inset 16px -> 18.5px, uniform and truthful: 229/210.4725 = 1.08803 px/pt horizontally
+            and 324/297.638 = 1.08857 vertically, so 17pt lands at 18.496px and 18.506px -- the two
+            axes agree to 0.01px, which is what makes ONE number honest.
+  This page box is now the canonical geometry for .page, .keepclear, .guide, .pagenum, D-032's
+  intersection test, and the Compose PagePreview / SnapGuides / SelectionChrome viewport.  Content
+  insets (.content 22px) are unchanged and still sit inside the keep-clear.  Colours, shadows, type,
+  motion and script are untouched.  The Proof's .pageStage (206x300, ratio 0.6867) is a different
+  surface and is NOT amended here -- recorded as an observation on D-033 for the phase that meets it.
 -->
 <style>
   :root{
@@ -94,11 +114,11 @@
   .canvasArea{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
   .pageWrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     transition:transform .34s var(--settle);will-change:transform;}
-  .page{position:relative;width:212px;height:326px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:5px;
+  .page{position:relative;width:229px;height:324px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:5px;
     box-shadow:0 14px 30px -14px var(--page-shadow),0 2px 5px var(--page-contact);}
   .page::after{content:"";position:absolute;inset:0;border-radius:5px;background-image:var(--grain);
     background-size:120px 120px;mix-blend-mode:soft-light;opacity:.45;pointer-events:none;}
-  .keepclear{position:absolute;inset:16px;border:1px dashed var(--ink-faint);border-radius:3px;opacity:.32;pointer-events:none;
+  .keepclear{position:absolute;inset:18.5px;border:1px dashed var(--ink-faint);border-radius:3px;opacity:.32;pointer-events:none;
     transition:opacity .3s,border-color .3s;}
   .keepclear.warn{opacity:.9;border-color:var(--strawberry-text);}
   .guide{position:absolute;background:var(--matcha);opacity:0;transition:opacity .12s;pointer-events:none;}
