@@ -15,8 +15,13 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 [**ADR-089**](DECISIONS.md#adr-089), `Accepted` on owner GO: **eight packages**, and a **complete selector-level
 frozen property table** covering every rule and every scripted behaviour in
 [`v2-bench.html`](design/mockups/v2-bench.html), written before any production code. **C0 — corpus cleanup,
-documentation only — is done**, landing with this change and closing [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record).
-**The next package is C1, the studio surface — the first Phase C package that writes production code.** What is
+documentation only — is done** (`d21e4dd`), closing [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record).
+**C1, the studio surface, is the next package and is BLOCKED**: its own pre-implementation blocker check raised
+**[D-033](design/V2-SPEC-DEFECTS.md#d-033)** — the frozen `212×326` page is not the document's `210.47×297.64`
+panel, and the frozen uniform `16px` keep-clear is not its `17pt` `safeAreaInsetPt`, so nothing states which
+rectangle the print-correctness cue draws. **No C1 production code has been written.** [D-032](design/V2-SPEC-DEFECTS.md#d-032)
+was ruled the same day (OD-10) and row 1.9 is now specified — the warn state is transient interaction guidance,
+not document state. What is
 owed, and by which package, is
 [COMPOSE-V2-ROADMAP.md § Phase C — what is owed before it starts](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
 

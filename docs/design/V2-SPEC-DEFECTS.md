@@ -99,9 +99,10 @@ They are the second run of the frozen property table doing what it was added for
 than B5's: where B5's three were all one shape (*a prototype never reads a store, waits, fails or navigates*),
 these are four different shapes — an accepted ADR contradicted by a later freeze (D-028), net-new capability with
 no data model (D-029), a design navigating a product that does not exist (D-030), a screen with no exits (D-031),
-and a frozen state with no reachable trigger (D-032). **The count is now thirty-two: twenty-one resolved, eleven
+and a frozen state with no reachable trigger (D-032). **The count is now thirty-three: twenty-two resolved, eleven
 open** — the twenty-first being [D-001](#d-001--v2-benchhtml-header-contradicts-the-freeze-record), closed by
-**Phase C / C0** on 2026-08-01, the first Phase C package to land. The full statement of what Phase C owes is
+**Phase C / C0** on 2026-08-01, the first Phase C package to land, and the twenty-second [D-032](#d-032), ruled
+the same day. The eleven open include **[D-033](#d-033)**, raised by C1's own blocker check. The full statement of what Phase C owes is
 [COMPOSE-V2-ROADMAP.md § Phase C — what is owed before it starts](../COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
 
 **On 2026-08-01 the owner ruled four questions** — OD-1 through OD-4 of [ADR-089 §5](../DECISIONS.md#adr-089) —
@@ -116,9 +117,11 @@ capability they describe, so they now await the phase that takes it, not the pha
 move** — the ruling wrote the divergence into Phase C's *acceptance criteria* instead, which is the register's
 own distinction between fixing a defect and recording one, and it leaves D-004 in Phase D untouched.
 
-That leaves **three entries that block a Phase C package** — D-028 at C6, D-031 at C2, D-032 at C1's keep-clear
-row. **None blocked C0, which has since landed**, and **none blocks C1's start**: D-032 fences a single row of
-C1's table rather than the package.
+That left **three entries that block a Phase C package** — D-028 at C6, D-031 at C2, D-032 at C1's keep-clear
+row. **None blocked C0, which has since landed.** D-032 was ruled on 2026-08-01 and fenced a single row rather
+than the package — but **C1's own pre-implementation blocker check then raised [D-033](#d-033), which does block
+the package**: it decides the rectangle every other C1 property is positioned against. The standing count of
+Phase-C blockers is therefore back to three — D-033 at C1, D-031 at C2/C4, D-028 at C6.
 
 | Open | Owing to | One line |
 |---|---|---|
@@ -126,7 +129,8 @@ C1's table rather than the package.
 | [**D-029**](#d-029) | ⏳ **an owner ruling** — **the phase that takes H1** (no longer Phase C) | the holding shelf and `DecorElement` are net-new: no model, no persistence, no scope, and a GC relationship |
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | [**D-031**](#d-031) | ⏳ **an owner ruling** — **Phase C / C2, C4** | Font, Size, the Read hand-off and back have no destinations; redo exists in the product and not in the freeze |
-| [**D-032**](#d-032) | ⏳ **an owner ruling** — **Phase C / C1** | the keep-clear warn state is never triggered in the freeze, and its written trigger needs face detection |
+| ~~[**D-032**](#d-032)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-032-ruling), OD-10 (C1 half) | the keep-clear warn state was never triggered in the freeze; the ruling makes it **transient interaction guidance**, so no content analysis is needed |
+| [**D-033**](#d-033) | ⏳ **an owner ruling** — **Phase C / C1** | the frozen page is not the document's panel and the 16px cue is not the 17pt safe area; **blocks C1** |
 | [**D-023**](#d-023) | ⏳ **an owner ruling** | the Library labels its primary button `--paper` where the corpus publishes `--on-matcha` — the fourth of the D-005/D-011/D-022 set |
 | [**D-027**](#d-027) | ⏳ **an owner ruling** | the action sheet's metadata line ships in a vocabulary the frozen file never uses — cosmetic, sheet-only, and **blocks nothing** |
 | ~~[**D-001**](#d-001--v2-benchhtml-header-contradicts-the-freeze-record)~~ | ✅ **RESOLVED 2026-08-01** — [closed by Phase C / C0](#d-001-closure) | `v2-bench.html`'s header contradicted the freeze record. C0 deleted the stale header line and stripped the stale footer clause, keeping D-005's stand-in note and the [D-010 amendment](#d-010-amendment) that sits directly beneath the deleted line |
@@ -2546,7 +2550,7 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 | **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) `:101-103`, `:292` · [V2-BENCH-IA-INTERACTION.md §A.4](V2-BENCH-IA-INTERACTION.md) · [BP-4](V2-BENCH-PRINCIPLES.md) |
 | **Found** | 2026-08-01, during **Phase C planning** ([ADR-089](../DECISIONS.md#adr-089)) |
 | **Severity** | **A frozen state with no reachable trigger** — affects package **C1**; the resting cue is unblocked |
-| **Status** | ⏳ **OPEN — owner ruling required** |
+| **Status** | ✅ **RESOLVED 2026-08-01** by owner ruling (OD-10, C1 half) — see [the ruling](#d-032-ruling) |
 
 **What is frozen and complete.** `.keepclear` at rest: `inset:16px`, `1px dashed var(--ink-faint)`, `border-radius:3px`, `opacity:.32`. It is in the markup (`:292`) and it transitions on `opacity .3s, border-color .3s`. Nothing about the resting cue is ambiguous, and nothing like it exists in the repository — `grep -ri "keep.\?clear"` over `core`, `feature` and `app` returns zero, so the whole cue is net-new.
 
@@ -2561,12 +2565,115 @@ The written authority does specify the trigger, and that is where the problem is
 
 **Owner decision requested.** (a) The warn state fires on **text only**, and the design's *"or a face"* is amended to say so. (b) Face detection is in scope for the Bench, with its dependency and privacy consequences ruled explicitly. (c) The warn state is deferred whole and C1 ships the resting cue alone, with the entry left open against the phase that takes it.
 
+#### The ruling — owner, 2026-08-01 (OD-10, C1 half) {#d-032-ruling}
+
+None of the three offered options was taken. The ruling re-frames what the warn state *is*, and the
+face-detection problem dissolves rather than being decided:
+
+> **The warning state is NOT a continuous editing indicator.** It is shown only while the user's current
+> interaction would cause content to enter the required keep-clear area.
+>
+> - idle → no warning
+> - content already inside the keep-clear area after editing finishes → no persistent warning
+> - dragging, resizing or editing that would move content into the forbidden region → warning shown live
+> - once the interaction ends, the warning disappears
+>
+> **The warning is therefore transient guidance, not document state.**
+
+**Why this closes the face question without answering it.** The trigger is the *geometry of the element
+being manipulated* against the keep-clear rect — the element's bounds, not what the element depicts. A photo
+is tested as a box like any other element, so nothing needs to know whether a face is inside it. The written
+*"text or a face"* of [§A.4](V2-BENCH-IA-INTERACTION.md) is superseded for implementation purposes: no
+content analysis of any kind is performed, no detection engine is added, and [PRD §5](../PRD.md#5-product-principles-non-negotiable)
+is not engaged. The corpus wording is left as written and this entry is its authority — the design says what
+the cue *means*, the ruling says when it *fires*.
+
+**Why "transient, not document state" is the load-bearing half.** A cue that persisted while content sat in
+the keep-clear area would be a standing accusation about a document the maker has already decided to keep —
+and, since backgrounds bleed freely by [BP-4](V2-BENCH-PRINCIPLES.md), often a wrong one. Scoping it to the
+live interaction makes it a *nudge during the act*, which is what BP-4's "felt, not taught" asks for. It also
+means the warn state holds **no persisted or reducer state**: it is derived per frame from the in-flight
+gesture, in the same family as the render-only snap guides ([ADR-029 §5.4](../DECISIONS.md#adr-029)) and
+explicitly *not* an undoable document fact.
+
+**What it does not settle.** The ruling gives the warn state's *trigger*. It does not say what rectangle the
+keep-clear cue draws — see [D-033](#d-033), raised the same day, which blocks the resting cue this one sits on
+top of.
+
+---
+
+### D-033 — the frozen page is not the document's page, and the keep-clear inset is not the document's safe area {#d-033}
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) `:97` (`.page`), `:101` (`.keepclear`), `:105` (`.guide.v`), `:107` (`.pagenum`) · [`SingleSheet8Imposer.kt`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/SingleSheet8Imposer.kt) · [`Imposer.kt`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/Imposer.kt) `:28` · [`LayoutValidator.kt`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/LayoutValidator.kt) `:85` · [BP-4](V2-BENCH-PRINCIPLES.md) · [ADR-012](../DECISIONS.md#adr-012) |
+| **Found** | 2026-08-01, at the start of **C1**, by the pre-implementation blocker check ADR-089 requires |
+| **Severity** | **Blocks package C1** — it decides the geometry every other C1 property is positioned against |
+| **Status** | ⏳ **OPEN — owner ruling required** |
+
+**The two numbers do not agree, and [ADR-089 row 1.5](../DECISIONS.md#adr-089) already half-says so.** That row
+notes *"the 212:326 ratio is **not** the document's trim; it is the frozen depiction of it"* — correctly. What
+no document says is **which of the two C1 actually draws**, and the answer changes every pixel in the package.
+
+| | frozen depiction | the document's real geometry |
+|---|---|---|
+| page | `212 × 326` px, ratio **0.6503** | panel `210.4725 × 297.638` pt, ratio **0.7071** |
+| keep-clear | uniform `inset:16px` → **7.55 %** of width, **4.91 %** of height | `safeAreaInsetPt = 17.0` (≈6 mm) → **8.08 %** of width, **5.71 %** of height |
+
+The panel is `A4.landscape()` tiled 4 × 2 by [`SingleSheet8Imposer`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/SingleSheet8Imposer.kt)
+— `841.890/4 × 595.276/2`. Both shapes are portrait, so this is not an orientation error; they are simply a
+different page, about 8.7 % apart in aspect.
+
+**Why the mismatch cannot be scaled away.** A uniform inset stays uniform only when the box it insets shares
+the aspect ratio of the geometry it depicts. Draw the *frozen* `212 × 326` box and depict the real 17 pt safe
+area truthfully, and the inset must become **non-uniform** — ≈17.1 px on the sides, ≈18.6 px top and bottom —
+which the frozen `inset:16px` is not. So there is no implementation that keeps the frozen page box *and* tells
+the truth about trimming. The choice is forced:
+
+- **(a) Literal parity.** Draw the page at the frozen `212 × 326` proportion with a uniform 16 dp keep-clear.
+  Matches the frozen file exactly and satisfies the FPT's planned probe and its `16 → 0` mutation. The cue then
+  depicts **no real boundary** — it is decorative, and sits ~0.5 % of the page width inside where the real safe
+  area falls on one axis and ~0.8 % on the other.
+- **(b) Semantic parity.** Draw the page at the document's real panel aspect and the keep-clear at the real
+  `safeAreaInsetPt` scaled by the same `screenPxPerPt` every other canvas layer already reads. The cue then
+  means what [BP-4](V2-BENCH-PRINCIPLES.md) says it means, and the page box matches what will actually print —
+  at the cost of differing from the frozen depiction in both ratio and inset, which the goldens must state.
+
+**Why this is not implementation's call.** [BP-4](V2-BENCH-PRINCIPLES.md) defines this cue as the whole of the
+product's print-correctness story — *"the three pro print boundaries collapse into one soft keep-clear inset"* —
+and [ADR-012](../DECISIONS.md#adr-012) makes the safe-area inset a print-correctness invariant, enforced in code
+by `LayoutValidator`'s `SAFE_NOT_IN_PANEL` check. Choosing (a) ships a print app whose only print-safety line is
+decorative; choosing (b) knowingly departs from a frozen file in a phase whose objective is parity. Either is
+defensible and neither is inferable — the corpus states the appearance, the engine states the boundary, and no
+accepted ADR or ruling states which governs when they disagree.
+
+**It is not confined to the keep-clear.** The same question decides:
+
+- whether the page box is a **fixed dp size** or is driven by `uiState.view.screenPxPerPt`, which
+  [`PagePreview`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/PagePreview.kt),
+  `SnapGuides` and `SelectionChrome` already share as one viewport — a fixed-size page would put the frame and
+  the render on two different scales, the exact divergence
+  [`EditorScreen.kt:610-621`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt)
+  documents as already having been fixed once;
+- what `.guide.v`'s *"full height less 8px"* (row 1.10) and `.pagenum`'s `top:7 right:10` (row 1.11) are measured
+  against, since both are frozen in the depiction's pixels;
+- and, transitively, [D-032](#d-032)'s warn state, whose trigger is an intersection test against whichever
+  rectangle this ruling picks.
+
+**Owner decision requested.** (a) Literal parity — the frozen `212 × 326` box and a uniform 16 dp cue; the cue is
+decorative and the register records that it is. (b) Semantic parity — the real panel aspect and the real
+`safeAreaInsetPt`, with the divergence from the frozen depiction stated in C1's golden KDoc exactly as
+[OD-4](../DECISIONS.md#adr-089) required for the typeface. (c) A design amendment that re-draws the frozen page
+at the document's real aspect, making the two agree in the corpus rather than in Compose — the [D-024](#d-024)
+precedent, and the only option that leaves nothing diverging.
+
 ---
 
 ## Resolved
 
 | ID | Defect | Resolved |
 |---|---|---|
+| **D-032** | The keep-clear cue has a frozen appearance, no trigger, and a written trigger the product cannot compute | 2026-08-01 — owner ruling (OD-10, C1 half): the warn state is **transient guidance, not document state**. It shows only while an in-flight interaction would move content into the keep-clear area, and disappears when the interaction ends; content already inside after editing draws no persistent warning. None of the three offered options was taken — the trigger became the manipulated element's **bounds**, so face detection is not needed and [PRD §5](../PRD.md#5-product-principles-non-negotiable) is not engaged. [Ruling](#d-032-ruling) and entry kept above. |
 | **D-001** | `v2-bench.html`'s header contradicts the freeze record | 2026-08-01 — closed by **Phase C / C0**, the documentation-only package that existed for it: the stale header line deleted, the stale footer clause stripped, D-005's stand-in note and the [D-010 amendment](#d-010-amendment) kept. No selector, declaration or script touched. [Closure](#d-001-closure) and entry kept above. |
 | **D-010** | The page shadow is hard-coded to the light theme and does not adapt in the dark | 2026-08-01 — owner ruling (OD-3 of [ADR-089](../DECISIONS.md#adr-089)): **amend the frozen Bench and Proof** with a dedicated `--page-shadow` (cast) + `--page-contact` (contact) pair, preserving light byte-for-byte and re-deriving dark from the Library's own pair. Spec first, per D-024's precedent; **Compose deferred** to Phase C / C1 and Phase D. The [amendment](#d-010-amendment) and the entry are kept above. |
 | **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
