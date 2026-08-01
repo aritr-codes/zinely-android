@@ -47,6 +47,7 @@ import com.aritr.zinely.ui.components.zinelyShadow
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyShadowLayer
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import kotlin.math.roundToInt
 
 /** Test tags on the two sheets the pre-reskin shelf had no equivalent of. */
 internal const val ShelfActionSheetTestTag: String = "shelf-action-sheet"
@@ -70,8 +71,9 @@ internal val ShelfPaperChoices: List<PaperSize> = listOf(PaperSize.A4, PaperSize
  * `#createSheet` — the create-flow entry. Choosing the paper *is* the create action; there is no
  * confirm step, because the spec's `.paper` click closes the sheet and starts the zine.
  *
- * The two stocks are drawn at their real-ish proportions (A4 ≈ 1:1.41, Letter ≈ 1:1.29), which is
- * the whole point of the chooser: you pick the shape of the object you are about to fold.
+ * The two stocks are drawn at their real proportions (A4 ≈ 1:1.41, Letter ≈ 1:1.29) and at one
+ * common scale, which is the whole point of the chooser: you pick the shape *and the size* of the
+ * object you are about to fold, so the drawing has to be comparable between the two.
  */
 @Composable
 internal fun ShelfCreateSheet(
@@ -139,13 +141,18 @@ private fun PaperChoice(paper: PaperSize, onClick: () -> Unit, modifier: Modifie
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(
-            Modifier
-                .zinelyShadow(stockShadow, RoundedCornerShape(2.dp))
-                .clip(RoundedCornerShape(2.dp))
-                .background(colors.paper)
-                .size(width = paper.stockWidth, height = paper.stockHeight),
-        )
+        // `.paper .stock` sits in a fixed-height slot: the stocks differ in height, and without the
+        // slot the name and dimension rows of the two tiles would sit at different heights.
+        Box(Modifier.size(width = paper.stockWidth, height = StockSlotHeight)) {
+            Box(
+                Modifier
+                    .testTag(homePaperStockTestTag(paper))
+                    .zinelyShadow(stockShadow, RoundedCornerShape(2.dp))
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(colors.paper)
+                    .size(width = paper.stockWidth, height = paper.stockHeight),
+            )
+        }
         BasicText(
             text = paper.choiceName,
             style = TextStyle(
@@ -162,9 +169,28 @@ private fun PaperChoice(paper: PaperSize, onClick: () -> Unit, modifier: Modifie
     }
 }
 
-/** `.paper.a4 .stock{52×74}` / `.paper.letter .stock{56×72}`. */
-private val PaperSize.stockWidth: Dp get() = if (this == PaperSize.A4) 52.dp else 56.dp
-private val PaperSize.stockHeight: Dp get() = if (this == PaperSize.A4) 74.dp else 72.dp
+/**
+ * `.paper .stock` — **one** scale for both stocks, taken from A4's long edge: `74dp ÷ 841.890pt`.
+ *
+ * Restating the two sizes as literals is what let them drift apart: Letter's frozen `56×72` was ~4%
+ * oversized and inverted the relation it exists to show — Letter is the physically *smaller* sheet.
+ * Deriving both from [PaperSize.portrait], the same dimensions the imposition and export use, means
+ * a per-stock error is no longer expressible. Rounding to whole dp matches the spec's whole pixels.
+ */
+private const val StockDpPerPt: Double = 74.0 / 841.890
+
+/**
+ * The tallest stock. Both tiles reserve it, so their name and dimension rows stay level.
+ *
+ * Derived, not restated as `74.dp`: [Modifier.size] *caps* the child, so a literal that stopped
+ * tracking the scale would silently clamp the taller stock rather than fail — and the tiles would
+ * still be the same height, which is the only thing the slot's own test can see.
+ */
+private val StockSlotHeight: Dp = ShelfPaperChoices.maxOf { it.stockHeight }
+
+/** `.paper.a4 .stock{52×74}` / `.paper.letter .stock{54×70}`, both derived, never restated. */
+private val PaperSize.stockWidth: Dp get() = (portrait.width * StockDpPerPt).roundToInt().dp
+private val PaperSize.stockHeight: Dp get() = (portrait.height * StockDpPerPt).roundToInt().dp
 private val PaperSize.choiceName: String get() = if (this == PaperSize.A4) Copy.Paper.A4 else Copy.Paper.LETTER
 private val PaperSize.choiceDimensions: String
     get() = if (this == PaperSize.A4) Copy.Paper.A4_DIMENSIONS else Copy.Paper.LETTER_DIMENSIONS

@@ -10,6 +10,9 @@
   STATUS: DESIGN-FROZEN (2026-07-08). Adversarial review GO + Design Director GO.
           Post-freeze: only bug/parity/a11y/perf/theme fixes. Any visual or interaction
           change must update THIS spec first, then Compose — never the reverse.
+  AMENDED: 2026-08-01 — `.paper .stock` (ADR-088). The two stocks were drawn at two different
+          scales, which inverted the relation the chooser exists to show: A4 is the LARGER sheet.
+          Letter 56×72 → 54×70; A4 unchanged. A specification bug fix, not a redesign.
           One non-automatable step remains before Compose parity: a real on-device
           keyboard/TalkBack pass. Director's 3 recommended-polish items are next-pass, not gates.
   ----------------------------------------------------------------------------
@@ -286,9 +289,17 @@ body{
   display:flex; flex-direction:column; align-items:center; gap:12px; font-family:var(--shell); color:var(--on-desk);
   transition:border-color var(--fast) var(--ease), transform var(--fast) var(--ease); }
 .paper:hover{ border-color:var(--coral-strong); transform:translateY(-2px); }
-.paper .stock{ background:var(--paper); box-shadow:var(--shadow-1),0 1px 0 var(--paper-edge); border-radius:2px; }
-.paper.a4 .stock{ width:52px; height:74px; }        /* real-ish proportions: A4 ≈ 1:1.41 */
-.paper.letter .stock{ width:56px; height:72px; }    /* Letter ≈ 1:1.29 */
+/* Both stocks are drawn at ONE common scale, so the tiles can be compared as objects rather than as
+   decorations: 74px ÷ 841.89pt (A4's long edge) = 0.087897 px/pt, applied to each stock's real size
+   and rounded to whole pixels. A4 is unchanged. Letter was 56×72 — ~4% oversized, which drew the
+   physically SMALLER sheet as the larger one. Each stock then pads itself out to the tallest of
+   them (--stock-slot), so the name/dim rows of the two tiles stay level now that the stocks differ
+   in height by 4px; the flex `gap` is added on top of that padding, never collapsed into it. */
+.paper{ --stock-slot:74px; }
+.paper .stock{ background:var(--paper); box-shadow:var(--shadow-1),0 1px 0 var(--paper-edge); border-radius:2px;
+  width:var(--stock-w); height:var(--stock-h); margin-bottom:calc(var(--stock-slot) - var(--stock-h)); }
+.paper.a4 .stock{ --stock-w:52px; --stock-h:74px; }      /* 595.276 × 841.890pt — A4 ≈ 1:1.41 */
+.paper.letter .stock{ --stock-w:54px; --stock-h:70px; }  /* 612 × 792pt — Letter ≈ 1:1.29 */
 .paper .name{ font-weight:600; font-size:15px; }
 .paper .dim{ font-size:11.5px; color:var(--on-desk-soft); }
 

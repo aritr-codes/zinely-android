@@ -51,6 +51,10 @@ public const val HomePaperChooserTestTag: String = "home-paper-chooser"
 public fun homePaperChoiceTestTag(paperSize: PaperSize): String =
     "home-paper-choice-${paperSize.name}"
 
+/** Test tag for the drawn sheet inside one paper choice — the thing whose scale is asserted. */
+public fun homePaperStockTestTag(paperSize: PaperSize): String =
+    "home-paper-stock-${paperSize.name}"
+
 /** Test tag for one zine card on the shelf, keyed by its stable project [id]. */
 public fun homeCardTestTag(id: String): String = "home-card-$id"
 
