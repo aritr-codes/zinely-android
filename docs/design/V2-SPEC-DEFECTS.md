@@ -117,19 +117,22 @@ capability they describe, so they now await the phase that takes it, not the pha
 move** — the ruling wrote the divergence into Phase C's *acceptance criteria* instead, which is the register's
 own distinction between fixing a defect and recording one, and it leaves D-004 in Phase D untouched.
 
+*The paragraph that follows is the record as it stood when Phase C opened; the sentence at its end brings it to the present.*
+
 That left **three entries that block a Phase C package** — D-028 at C6, D-031 at C2, D-032 at C1's keep-clear
 row. **None blocked C0, which has since landed.** D-032 was ruled on 2026-08-01 and fenced a single row rather
 than the package — but **C1's own pre-implementation blocker check then raised [D-033](#d-033), which does block
 the package**: it decides the rectangle every other C1 property is positioned against. That blocker was itself
 ruled the same day — option (c), [the third amendment to a frozen V2 surface](#d-033-amendment) — so **C1 is
-unblocked and no entry blocks it**. Two Phase-C blockers stand: **D-031** at C2/C4 and **D-028** at C6.
+unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and C1 is committed at `29a3819`. **As of 2026-08-01, two entries fence Phase-C work:** **[D-034](#d-034)** (**OD-11**) over C2's `.ctx*` rows — raised by C2's own pre-implementation check the moment OD-9 was applied — and **D-028** (OD-6) at C6. Neither fences a whole package: D-034 leaves C2's selection selectors free, exactly as D-032 left C1's. Live entries that fence nothing — D-012 (answered *in* C9), D-023, D-029, D-030 — are listed below and in the [roadmap's ledger](../COMPOSE-V2-ROADMAP.md).
 
 | Open | Owing to | One line |
 |---|---|---|
 | [**D-028**](#d-028) | ⏳ **an owner ruling** — **Phase C / C6** | the Bench offers nineteen swatches to a text element; `Accepted` [ADR-055](../DECISIONS.md#adr-055) pins that control to five |
 | [**D-029**](#d-029) | ⏳ **an owner ruling** — **the phase that takes H1** (no longer Phase C) | the holding shelf and `DecorElement` are net-new: no model, no persistence, no scope, and a GC relationship |
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
-| [**D-031**](#d-031) | ⏳ **an owner ruling** — **Phase C / C2, C4** | Font, Size, the Read hand-off and back have no destinations; redo exists in the product and not in the freeze |
+| ~~[**D-031**](#d-031)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-031-ruling), OD-9 | the Bench had no exits: Font and Size stay **drawn** with no invented capability, Read reuses [ADR-086](../DECISIONS.md#adr-086)'s hand-off, back reuses the existing stack, and **redo is kept** — the frozen bar specifies the editing surface, not the product's whole capability |
+| [**D-034**](#d-034) | ⏳ **an owner ruling** — **Phase C / C2** | the frozen `.ctx` is a **verb** bar; the shipped `EditorContextBar` it would replace is the **WCAG 2.5.7** single-pointer twin of the drag gestures. Transcribing the freeze removes eight discrete move/resize/rotate controls, and per-element custom actions do not substitute (they reach assistive tech only) |
 | ~~[**D-032**](#d-032)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-032-ruling), OD-10 (C1 half) | the keep-clear warn state was never triggered in the freeze; the ruling makes it **transient interaction guidance**, so no content analysis is needed |
 | ~~[**D-033**](#d-033)~~ | ✅ **RESOLVED 2026-08-01** — [the frozen Bench amended](#d-033-amendment) | the frozen page was not the document's panel and the 16px cue was not the 17pt safe area; the page is now 229×324 and the cue a truthful uniform 18.5px |
 | [**D-023**](#d-023) | ⏳ **an owner ruling** | the Library labels its primary button `--paper` where the corpus publishes `--on-matcha` — the fourth of the D-005/D-011/D-022 set |
@@ -2519,7 +2522,7 @@ The shipped product has exactly one format, `SINGLE_SHEET_8`, eight pages, fixed
 | **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) `:357-359`, `:410`, `:522`, and the whole file · [V2-BENCH-IA-INTERACTION.md §B.6](V2-BENCH-IA-INTERACTION.md) · [`EditorScreen.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt) (`onPreview`), [`EditorSupplyTray.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorSupplyTray.kt) (redo) |
 | **Found** | 2026-08-01, during **Phase C planning** ([ADR-089](../DECISIONS.md#adr-089)) |
 | **Severity** | **The screen has no exits** — blocks packages **C2** and **C4** |
-| **Status** | ⏳ **OPEN — owner ruling required** |
+| **Status** | ✅ **RESOLVED 2026-08-01** by owner ruling (OD-9) — see [the ruling](#d-031-ruling) |
 
 This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototype, so it never navigates anywhere*. It is raised separately because the answers are not the same and one of them subtracts a shipped capability.
 
@@ -2541,6 +2544,74 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 - **Back.** [ADR-051](../DECISIONS.md#adr-051)'s **loss-safe back** is a constitutional invariant. It has no frozen appearance on this surface.
 
 **Owner decision requested.** Name the destinations — the same ruling D-025 gave the Library's five actions — and rule on redo: **kept** as a platform affordance the design does not draw, or **removed** with the freeze. Note that "reuse the existing flow" carries its consequences with it, exactly as [D-025's ruling](#d-025-ruling) did for delete-with-undo.
+
+#### The ruling — owner, 2026-08-01 (OD-9) {#d-031-ruling}
+
+> The frozen Bench intentionally specifies the **editing surface, not the complete application flow.**
+>
+> - **Font and Size are contextual editing affordances only.** They shall remain **visually present** in Phase C where specified. They shall **not invent functionality** beyond what the repository already supports.
+> - **Read** continues to use the existing Editor → Proof hand-off already established by [ADR-086](../DECISIONS.md#adr-086).
+> - **Back** continues to use the existing navigation stack.
+> - **Redo** continues to reuse the existing editor redo behaviour.
+> - **No new navigation architecture. No new editor workflow. No new feature.**
+>
+> If implementing any frozen affordance would require capability that does not already exist in the repository, **document that explicitly and reuse the existing behaviour rather than inventing a new one.**
+
+**What this settles, entry by entry.**
+
+| | Ruled | Consequence for Phase C |
+|---|---|---|
+| **Font** | present, no invented capability | [ADR-055](../DECISIONS.md#adr-055) excludes font choice and [ADR-028](../DECISIONS.md#adr-028) renders one bundled family, so **there is no existing behaviour to reuse.** The verb is drawn as frozen and recorded as **specified-but-unreachable** — the disposition [D-030](#d-030)'s 1→32 page morph already carries. What it must *look* like when it cannot act is the one thing this ruling does not reach; see [D-034](#d-034) |
+| **Size** | present, reuse what exists | ADR-055's shipped **Type bar owns size** (the coalesced stepper over `TypeSizesPt`). Size routes there. No new surface |
+| **Read** | existing hand-off | [ADR-086](../DECISIONS.md#adr-086)'s Editor → Proof route, unchanged |
+| **Back** | existing stack | [ADR-051](../DECISIONS.md#adr-051)'s loss-safe back, unchanged. No new appearance is invented for it |
+| **Redo** | **kept** | The shipped `EditorSupplyTray` redo stays. The freeze's three-control bar is therefore **not** an exhaustive set — recorded here so C4 does not read `Undo · Add · Done` as a removal instruction |
+
+**Redo is the load-bearing half.** The entry framed it as *kept vs removed with the freeze*, and the ruling keeps it: the frozen bar specifies the editing surface, not the product's full capability, so a control the freeze omits is not thereby deleted. That sentence is what makes the rest coherent — it is the same reasoning that lets Font stay drawn without acquiring a handler.
+
+**One thing the ruling does not reach, raised as [D-034](#d-034).** It settles what the *verbs* mean. It does not settle what becomes of the **eight discrete transform controls the shipped `EditorContextBar` already carries** — the surface [ADR-089](../DECISIONS.md#adr-089) row 2.10 names as C2's re-skin target, and which exists to satisfy **WCAG 2.5.7**. Applying this ruling faithfully — *no new feature, reuse what exists* — is precisely what surfaces the conflict.
+
+---
+
+### D-034 — the frozen contextual bar and the shipped one are different controls, and the shipped one is an accessibility conformance path {#d-034}
+
+| | |
+|---|---|
+| **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) `:190-196`, `:429-441` · [`EditorContextBar.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorContextBar.kt) · [ADR-029](../DECISIONS.md#adr-029) §6 · [ADR-053](../DECISIONS.md#adr-053) §5 · [ADR-089](../DECISIONS.md#adr-089) row 2.10 |
+| **Found** | 2026-08-01, during **C2's pre-implementation blocker check**, immediately after [OD-9](#d-031-ruling) |
+| **Severity** | **Transcribing the freeze would remove a WCAG 2.5.7 conformance path** — blocks package **C2** |
+| **Status** | ⏳ **OPEN — owner ruling required** |
+
+**Two controls, one slot, different contents.** The frozen `.ctx` is a **verb** bar — `toolsFor()` at `:429-432` gives text **Edit · Font · Size · Ink · Delete**, photo **Reframe · Replace · Delete**. The shipped `EditorContextBar` is a **transform** bar: nudge ×4, scale ×2, rotate ×2, the Type-bar toggle, delete. Both appear on selection; both sit at the bottom. `Delete` is the only control they share.
+
+**The shipped one is not decoration.** Its own contract says what it is:
+
+> *"The visible single-pointer transform controls (**ADR-029 §6, WCAG 2.5.7**) — the on-screen twin of the gesture layer … each control is a ≥48dp `IconButton` that dispatches the **same** reducer intent the gesture commit and the per-element custom actions use, so the touch, a11y-action, and visible-button paths are one code path."*
+
+[ADR-053](../DECISIONS.md#adr-053) §5 states the same principle for Reframe: *"Discrete controls are authoritative; gestures are enhancements (accessibility floor)."*
+
+**Why the per-element custom actions do not cover it.** `ElementSemanticsLayer` does publish move/resize/rotate as `customActions`, so a **screen-reader** user keeps a path. WCAG 2.5.7 (*Dragging Movements*, AA) is not about screen readers: it requires a **single-pointer alternative** to anything achievable by dragging, for a user who can tap but cannot drag and who is **not** running assistive technology. Custom accessibility actions are exposed only through AT, so they do not satisfy it. Remove the visible bar and move/resize/rotate become drag-only for that user.
+
+**Why this needs the owner and not the implementer.** Every available answer is a decision with a cost, and none of them is a re-skin:
+
+| | What it does | What it costs |
+|---|---|---|
+| **(a) Transcribe the freeze** | `.ctx` becomes the verb bar; the transform controls go | drops a stated WCAG 2.5.7 conformance path, and contradicts ADR-029 §6 and ADR-053 §5 |
+| **(b) Keep both** | the verb bar plus a transform surface | adds a control the frozen design does not contain — the same "not parity either" objection [D-031](#d-031) raised against keeping redo, which OD-9 nonetheless resolved in favour of keeping |
+| **(c) Re-seat the verb bar** | `.ctx` waits; the transform bar stands for Phase C | C2 loses its headline surface, and rows 2.10–2.13 go with it |
+| **(d) Merge them** | one bar carrying verbs **and** transforms | invents a composition the freeze does not specify — the thing OD-2 and OD-9 both forbid |
+
+**And a fifth, which is about *scope* rather than the answer — raised by the review of this entry.** This defect fences ADR-089 rows **2.10–2.13**, not package C2. The rest of C2's frozen selectors — `.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat` — are the selection outline, the four handles, the dim and the materialise, and none of them depends on what the toolbar contains.
+
+| | What it does | What it costs |
+|---|---|---|
+| **(e) Split the package** | **C2a** — selection, handles, dim, materialise — proceeds now; **C2b** — the `.ctx` bar — waits for (a)–(d) | nothing but a package letter. The precedent is one entry away: OD-10's D-032 half **fenced a single row of C1's table rather than C1**, and C1 shipped |
+
+Option (e) is orthogonal — the owner may take it *and* any of (a)–(d).
+
+**Owner decision requested.** Which of the four, or another. Note that **OD-9's own logic points at (b)**: it kept redo on the reasoning that the frozen bar specifies the editing surface rather than the product's full capability, and the transform controls are the same kind of omission — a shipped capability the prototype never had to model. That is a reading, not a ruling, which is why C2 stops here instead of proceeding on it.
+
+**Precedent.** [D-033](#d-033) was raised the same way by C1's own pre-implementation check and ruled the same day. The check is doing what [ADR-085](../DECISIONS.md#adr-085) change 2 exists to make it do — finding the decision before the code rather than after it.
 
 ---
 
@@ -2718,6 +2789,7 @@ the phase that meets it (**Phase D**), and this paragraph is that record.
 | ID | Defect | Resolved |
 |---|---|---|
 | **D-033** | The frozen page is not the document's page, and the keep-clear inset is not the document's safe area | 2026-08-01 — owner ruling, option (c): **the frozen Bench is amended**, on the [D-024](#d-024) precedent. `.page` 212×326 → **229×324** (ratio 0.70679, 0.11px off ideal) so the depiction carries the real panel's aspect; `.keepclear` 16px → **18.5px**, the engine's `safeAreaInsetPt = 17.0` scaled — the two axes agreeing to 0.01px is what licenses one uniform number. The page box is now canonical geometry for `.keepclear`, `.guide`, `.pagenum`, D-032's intersection test and the Compose viewport. [Amendment](#d-033-amendment) and entry kept above. |
+| **D-031** | The frozen Bench draws four controls that go nowhere, and drops one the product ships | 2026-08-01 — owner ruling (**OD-9**): the freeze specifies the **editing surface, not the whole application flow**. Font and Size stay drawn as contextual affordances and invent no capability (ADR-055 excludes font choice, so Font is **specified-but-unreachable**; Size routes to the shipped Type bar). Read reuses [ADR-086](../DECISIONS.md#adr-086)'s Editor → Proof hand-off, back reuses the existing stack, and **redo is kept** — a control the freeze omits is not thereby deleted. Applying the ruling immediately surfaced [D-034](#d-034), which it does not reach. [Ruling](#d-031-ruling) and entry kept above. |
 | **D-032** | The keep-clear cue has a frozen appearance, no trigger, and a written trigger the product cannot compute | 2026-08-01 — owner ruling (OD-10, C1 half): the warn state is **transient guidance, not document state**. It shows only while an in-flight interaction would move content into the keep-clear area, and disappears when the interaction ends; content already inside after editing draws no persistent warning. None of the three offered options was taken — the trigger became the manipulated element's **bounds**, so face detection is not needed and [PRD §5](../PRD.md#5-product-principles-non-negotiable) is not engaged. [Ruling](#d-032-ruling) and entry kept above. |
 | **D-001** | `v2-bench.html`'s header contradicts the freeze record | 2026-08-01 — closed by **Phase C / C0**, the documentation-only package that existed for it: the stale header line deleted, the stale footer clause stripped, D-005's stand-in note and the [D-010 amendment](#d-010-amendment) kept. No selector, declaration or script touched. [Closure](#d-001-closure) and entry kept above. |
 | **D-010** | The page shadow is hard-coded to the light theme and does not adapt in the dark | 2026-08-01 — owner ruling (OD-3 of [ADR-089](../DECISIONS.md#adr-089)): **amend the frozen Bench and Proof** with a dedicated `--page-shadow` (cast) + `--page-contact` (contact) pair, preserving light byte-for-byte and re-deriving dark from the Library's own pair. Spec first, per D-024's precedent; **Compose deferred** to Phase C / C1 and Phase D. The [amendment](#d-010-amendment) and the entry are kept above. |

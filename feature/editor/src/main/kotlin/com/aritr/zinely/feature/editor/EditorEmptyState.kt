@@ -74,7 +74,20 @@ public fun EditorEmptyState(
     // The invitation overlays the blank paper, so its ink pairs with the paper tokens (headline `--ink`,
     // supporting copy `--ink-soft`) — the same on-paper vocabulary bench.html's empty-panel ghost uses.
     // The sticker cluster carries the frozen authorial inks (teal / paper-edge / coral).
+    //
+    // **The ink is V2's, because C1 moved the paper under it** (ADR-090; found by C1's device Pass 2, not
+    // by a golden). The two palettes disagree about dark on purpose: V1 keeps the sheet *lit* in dark
+    // (`paper` #EDE6D9) so near-black `ink` #23201C stays right, while V2 dims the sheet (`paper`
+    // #2F2A22) and answers it with a warm-cream `ink` #ECE4D3. Each is coherent on its own. C1 repainted
+    // the page with V2's `paper` and left this text on V1's `ink` — dark ink on a dark sheet, measured at
+    // **1.15:1**, effectively invisible in the dark theme and passing every golden because the golden was
+    // re-recorded with the defect already in it. The ink now comes from the same system as the surface it
+    // sits on, which is what the first line of this comment always claimed.
+    //
+    // The sticker blobs stay on the V1 maker inks: they are opaque shapes, legible against either sheet,
+    // and V2 publishes no `teal`/`coral` to move them to. Re-colouring them would be a redesign, not a fix.
     val colors = ZinelyTheme.colors
+    val onPaper = ZinelyTheme.v2Colors
     val type = ZinelyTheme.typography
     Column(
         modifier = modifier
@@ -96,7 +109,7 @@ public fun EditorEmptyState(
             // The product's display voice (Fraunces) for the headline, matching the frozen `--voice`.
             style = MaterialTheme.typography.headlineSmall.copy(fontFamily = type.voice),
             fontWeight = FontWeight.Bold,
-            color = colors.ink,
+            color = onPaper.ink,
             textAlign = TextAlign.Center,
         )
         // Names the two ways to start AND points to where they live (the supply shelf just below), so the
@@ -104,7 +117,7 @@ public fun EditorEmptyState(
         Text(
             text = Copy.EmptyState.SUPPLY_CUE,
             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = type.shell),
-            color = colors.inkSoft,
+            color = onPaper.inkSoft,
             textAlign = TextAlign.Center,
         )
 
@@ -112,7 +125,7 @@ public fun EditorEmptyState(
         Text(
             text = Copy.EmptyState.OFFLINE_NOTE,
             style = MaterialTheme.typography.labelSmall.copy(fontFamily = type.shell),
-            color = colors.inkSoft,
+            color = onPaper.inkSoft,
             textAlign = TextAlign.Center,
         )
 
@@ -125,7 +138,7 @@ public fun EditorEmptyState(
             Text(
                 text = "⌄",
                 style = MaterialTheme.typography.titleLarge,
-                color = colors.inkSoft.copy(alpha = 0.7f),
+                color = onPaper.inkSoft.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.clearAndSetSemantics { },
             )

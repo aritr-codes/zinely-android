@@ -17,7 +17,21 @@ frozen property table** covering every rule and every scripted behaviour in
 [`v2-bench.html`](design/mockups/v2-bench.html), written before any production code. **C0 — corpus cleanup,
 documentation only — is done** (`d21e4dd`), closing [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record).
 **C1 — the studio surface, and the phase's first production code — is built and independently reviewed
-(GO WITH FIXES, all reconciled); its two device-verification passes are still owed**, and **C2 is the next package**.
+(GO WITH FIXES, all reconciled); its two device-verification passes are still owed** (committed at `29a3819`).
+A device became available after that review and **[Pass 2 failed](DECISIONS.md#adr-090-device-pass-2)** — C1 repainted
+the sheet with V2 `paper` and left the blank-page invitation on V1 `ink`, **1.15:1** in dark, which every token test
+and both goldens passed because the dark golden had been re-recorded with the defect in it. Fixed, re-recorded and
+guarded by a mutation-proven pixel probe, **uncommitted at the time of writing**; both passes must still be re-run on
+the fixed build.
+**C2 is the next package, and ⛔ its toolbar half is fenced** (the selection selectors are not): [D-031](design/V2-SPEC-DEFECTS.md#d-031) was ruled on 2026-08-01
+(**OD-9** — the freeze specifies the editing surface, not the whole application flow; Font and Size stay drawn and
+invent nothing, Read and back reuse what exists, redo is kept), and applying that ruling immediately raised
+**[D-034](design/V2-SPEC-DEFECTS.md#d-034)**: the frozen `.ctx` is a **verb** bar, while the `EditorContextBar` it
+would replace is the **WCAG 2.5.7** single-pointer twin of the drag gestures. Transcribing the freeze would delete
+eight discrete move/resize/rotate controls. **No C2 production code has been written.** The fence is rows 2.10–2.13,
+not the package: `.el*`, `.sel`, `.handle*`, `.content.focusing` and `@keyframes mat` do not depend on what the bar
+contains, so **C2a (selection) can proceed and C2b (`.ctx`) waits** — a fifth option offered to the owner beside
+D-034's four, on the precedent of OD-10 fencing one row of C1 rather than C1.
 C1's own pre-implementation blocker check raised **[D-033](design/V2-SPEC-DEFECTS.md#d-033)** — the frozen
 `212×326` page was not the document's `210.47×297.64` panel, and the frozen uniform `16px` keep-clear was not
 its `17pt` `safeAreaInsetPt`, so nothing stated which rectangle the print-correctness cue draws. The owner
@@ -67,8 +81,8 @@ Read hand-off and back are drawn or expected and wired to nothing, and **redo** 
 the freeze), and [D-032](design/V2-SPEC-DEFECTS.md#d-032) (the keep-clear warn state is declared and *never
 triggered anywhere in the frozen script*, and its written trigger — *"text **or a face**"* — needs face
 detection). **D-029 and D-030 remain open but are no longer Phase C's**: OD-2 sent them with the capability they
-describe. **Two entries block a Phase C package** — D-028 at C6 and D-031 at C2. D-032 was ruled (OD-10)
-and shipped in C1.
+describe. **Two entries block a Phase C package** — D-028 at C6 and **D-034** at C2. D-032 (OD-10) shipped in C1,
+and D-031 was ruled by OD-9 — which is what surfaced D-034.
 
 **Two Phase C blockers were not new and were easy to miss because they read as settled — both are now answered.**
 [**D-004**](design/V2-SPEC-DEFECTS.md#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter)
@@ -568,7 +582,10 @@ approved before the commit.
    mistake this section exists to prevent. **Phase C has begun — C0 and C1 are done and the next package is C2** —
    read [ADR-089](DECISIONS.md#adr-089) and the roadmap's
    [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts) before writing a line of it,
-   and note that two owner decisions are still live, against **C2** and **C6**; D-012 is answered *in* C9.
+   and note that two owner decisions **fence a package's work**: **[D-034](design/V2-SPEC-DEFECTS.md#d-034) / OD-11** at
+   **C2** — its `.ctx*` rows only, not the selection selectors — and **D-028 / OD-6** at **C6**. Other decisions remain
+   live without fencing a package: **D-012**'s half of OD-10 is answered *in* C9, and D-023 / D-029 / D-030 are open
+   against whichever phase takes the re-seated capability.
 7. For any screen, open its **frozen HTML** first; it is the spec.
 
 *The design is done. Your job is faithful execution. If something feels like it should change, it goes into the
