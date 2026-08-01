@@ -6,7 +6,90 @@
 
 ---
 
-## 0. Where the work actually is (2026-07-31)
+## 0. Where the work actually is (2026-08-01)
+
+**Read this block, then §6, then stop — unless your package is named below.** Everything after it is the record of
+Phases A and B, kept because it carries rulings that still govern, not because it is where the work is.
+
+**Phases A and B are CLOSED. Phase C — the Bench — has BEGUN.** Its planning package is
+[**ADR-089**](DECISIONS.md#adr-089), `Accepted` on owner GO: **eight packages**, and a **complete selector-level
+frozen property table** covering every rule and every scripted behaviour in
+[`v2-bench.html`](design/mockups/v2-bench.html), written before any production code. **C0 — corpus cleanup,
+documentation only — is done**, landing with this change and closing [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record).
+**The next package is C1, the studio surface — the first Phase C package that writes production code.** What is
+owed, and by which package, is
+[COMPOSE-V2-ROADMAP.md § Phase C — what is owed before it starts](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
+
+**The one sentence a fresh session needs about Phase C: the frozen Bench specifies a *studio*, the repository
+ships a *document editor*, and the owner ruled that Phase C re-skins the editor rather than building the
+studio.** Nine of the frozen file's regions re-skin something that exists. **Four things rested on capability
+that does not: H1, H2, H3 and `DecorElement`** — H4's maker inks already exist, so the four are three of the
+studio additions plus the element kind. Verified, not assumed: `Element` in `core:model` is `ImageElement | TextElement` (`DecorElement` is net-new
+by [IA §A.2](design/V2-BENCH-IA-INTERACTION.md)'s own words), `grep -ri "decorelement\|keep.\?clear"` over
+`core`, `feature` and `app` returns **zero**, the holding shelf has no store or schema anywhere, and the product
+has exactly one format — `SINGLE_SHEET_8(pageCount = 8)` — against a frozen navigation authored at twelve pages
+that scales to thirty-two and offers *add / delete*. Phase C's Objective said **"no feature additions"** while
+its Deliverables named those four: a contradiction of the same shape as
+[D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface),
+raised rather than adjudicated, and **resolved by owner ruling OD-2 on 2026-08-01 in favour of the objective.**
+
+**The four rulings of 2026-08-01, which are what changed** ([ADR-089 §5](DECISIONS.md#adr-089)):
+
+- **OD-1** — Phase B is complete; [ADR-086](DECISIONS.md#adr-086) is `Accepted`.
+- **OD-2** — **Phase C is a parity phase over the existing editor architecture and introduces no new editor
+  capability.** The holding shelf (H1), `DecorElement`, variable page counts, page add/delete/reorder and the
+  Art drawer (H3) are **re-seated beyond Phase C** —
+  [roadmap § Re-seated beyond Phase C](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). **C7 and C8 no longer
+  exist**, their letters are not reused, and C9 is not renumbered.
+- **OD-3** — the frozen Bench and Proof are **amended** with a dedicated `--page-shadow` / `--page-contact`
+  pair. **Transcribe the amended file**; light rendering is unchanged, Kotlin is C1's and Phase D's.
+- **OD-4** — Phase C's acceptance criteria **exclude literal document-typeface parity for `.t-title` and
+  `.t-body` only**. Everything else stays literal parity. D-004 does **not** move forward.
+
+**Phase C planning raised five register entries before a line of code** — [D-028](design/V2-SPEC-DEFECTS.md#d-028)
+(the Ink verb offers nineteen swatches where `Accepted` [ADR-055](DECISIONS.md#adr-055) pins five),
+[D-029](design/V2-SPEC-DEFECTS.md#d-029) (the holding shelf has no model, no persistence, no scope — while
+[§E.4](design/V2-BENCH-REVIEW.md) makes its persistence a *build invariant* and [ADR-025](DECISIONS.md#adr-025)'s
+sweeper would treat an ungathered photo as unreferenced), [D-030](design/V2-SPEC-DEFECTS.md#d-030) (twelve pages
+against a fixed eight), [D-031](design/V2-SPEC-DEFECTS.md#d-031) (**the Bench has no exits** — Font, Size, the
+Read hand-off and back are drawn or expected and wired to nothing, and **redo** exists in the product and not in
+the freeze), and [D-032](design/V2-SPEC-DEFECTS.md#d-032) (the keep-clear warn state is declared and *never
+triggered anywhere in the frozen script*, and its written trigger — *"text **or a face**"* — needs face
+detection). **D-029 and D-030 remain open but are no longer Phase C's**: OD-2 sent them with the capability they
+describe. **Three entries block a Phase C package and none blocks C0** — D-028 at C6, D-031 at C2, D-032 at one
+row of C1.
+
+**Two Phase C blockers were not new and were easy to miss because they read as settled — both are now answered.**
+[**D-004**](design/V2-SPEC-DEFECTS.md#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter)
+is deferred to **Phase D** with three prohibitions — *no workaround, no temporary font substitution, no second
+rendering path* — and the frozen Bench's page text is `var(--serif)` = Fraunces, so the page cannot reach
+*literal* parity in Phase C. OD-4 wrote that divergence into the phase's criteria, narrowed to `.t-title` and
+`.t-body`, **and left D-004 where it was.** And
+[**D-010**](design/V2-SPEC-DEFECTS.md#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark)
+— the page's shadow spelled out as a light-theme literal, correct in light and subtly wrong in dark, *the
+failure mode nobody screenshots* — is **resolved** by the [OD-3 amendment](design/V2-SPEC-DEFECTS.md#d-010-amendment).
+Two more, [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it)
+and [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp),
+have their **approach** ruled and **close in this phase**: the Bench's two `outline:none` rules are *not*
+transcribed, and its 26px swatches and 23×19px tray fold keep their paint and gain 48dp of reachable area — with
+overlap resolved by hit-region priority, never by shrinking a region back under the floor.
+
+**And one re-seated surface was fenced by the freeze itself, not by any judgement made here.**
+[V2-BENCH-REVIEW §E.6](design/V2-BENCH-REVIEW.md), the owner-approved freeze, says of the Art drawer and the
+maker-ink namespace: *"**do NOT freeze into implementation until a review + legal pass clears them.**"* The
+colour-namespace ADR exists — [ADR-072](DECISIONS.md#adr-072). **The asset-layer ADR does not exist anywhere in
+this log, and no legal pass is recorded.** OD-2 re-seated the Art drawer; the freeze would have fenced it
+anyway, and it is the product's only network path.
+
+**Phase B closed at `2842603`.** The V2 Library **is** the app's Home route (B5, `03223da`), and
+[ADR-088](DECISIONS.md#adr-088) followed it — the paper chooser now draws A4 and Letter at one physical scale,
+derived from `PaperSize` rather than restated as literals. [ADR-086](DECISIONS.md#adr-086) is `Accepted` and
+Phase B's gate is recorded, by **owner ruling OD-1 of 2026-08-01**.
+
+---
+
+**Everything below this line is the Phase A and Phase B record.** It is kept verbatim because its rulings still
+govern — read it for those, not for status.
 
 **Phase A — Foundation — is CLOSED. Its gate passed on 2026-07-30 by owner ruling.** Nine implementation
 packages (A1–A9), nine ADRs ([ADR-071](DECISIONS.md#adr-071)…[ADR-079](DECISIONS.md#adr-079)), each
@@ -59,8 +142,8 @@ committed 2026-07-31** (`97744e6`, [ADR-084](DECISIONS.md#adr-084), `Accepted`).
 loose sheet → arrow → little book transformation, a serif line and two of body copy) and `ZineDock` (the band
 that fades up into the desk, and the "Make a zine" button standing in it).
 
-**B5 — the screen — is BUILT and STOPPED at the pre-commit gate** ([ADR-086](DECISIONS.md#adr-086),
-`Proposed` — independently reviewed **GO WITH FIXES**, fixes applied; awaiting owner acceptance, and **nothing is committed**). Its
+**B5 — the screen — is BUILT, ACCEPTED and COMMITTED at `03223da`** ([ADR-086](DECISIONS.md#adr-086),
+`Accepted` by owner ruling OD-1 of 2026-08-01 — independently reviewed **GO WITH FIXES**, fixes applied). Its
 [frozen property table](DECISIONS.md#adr-086-fpt) — the first one this programme has written, under
 [ADR-085](DECISIONS.md#adr-085) — found, *before* any code, that **8 of its 23 rows had no frozen source**, and
 raised **[D-024](design/V2-SPEC-DEFECTS.md#d-024)**, **[D-025](design/V2-SPEC-DEFECTS.md#d-025)**,
@@ -411,9 +494,18 @@ Sequence and gates: **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)**. In brief
   which Phase A forbids. V2 landed additively; convergence is Phases B–D, package by package, and the
   token-routing requirement is now a **Phase D** exit criterion ([ADR-080](DECISIONS.md#adr-080),
   `Accepted`). Do not read this line as a statement about the code today.
-- **B · Library** ◀ **next** — pixel parity to the frozen Library. The closest to a clean re-skin; sets the parity bar.
-- **C · Bench** — pixel + interaction + animation + editing-behaviour parity, on top of the **existing** engine.
-  No feature additions.
+- **B · Library** — **✅ CLOSED 2026-08-01** (B1–B5, [ADR-081](DECISIONS.md#adr-081)…[ADR-084](DECISIONS.md#adr-084),
+  [ADR-086](DECISIONS.md#adr-086), plus [ADR-088](DECISIONS.md#adr-088)) — pixel parity to the frozen Library, and
+  the V2 Library is now the app's Home route.
+- **C · Bench** ◀ **IN PROGRESS — C0 done, C1 next** ([ADR-089](DECISIONS.md#adr-089), `Accepted`) — pixel + interaction +
+  animation + editing-behaviour parity, on top of the **existing** engine. *"No feature additions"* was the line
+  to read carefully: the frozen Bench contains four studio additions (H1–H4) plus a net-new element kind, and
+  **three of the four — H1, H2 and H3 — plus `DecorElement` are capability the repository does not have.** Only
+  **H4**, the maker inks, already exists (`ZinelyContentInks`, under D-003's ruling). **Owner ruling OD-2
+  (2026-08-01) settled it in favour of the
+  objective** — the phase is **eight packages** and the capability is
+  [re-seated](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). Next package: **C0**. See §0 and the roadmap's
+  [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
 - **D · Proof** — pixel + print-flow + fold-guide + a11y parity, for the shipped single-sheet-8 stage.
 - **E · Cross-product polish** — make the three feel like one product (motion, transitions, haptics, dark mode).
 - **F · Reality validation** — physical devices; only now are tiny fidelity-serving adjustments allowed.
@@ -461,8 +553,11 @@ approved before the commit.
 4. Keep **[COMPOSE-IMPLEMENTATION-RULES.md](COMPOSE-IMPLEMENTATION-RULES.md)** open as your checklist — it carries
    the package workflow as well as the rules.
 5. Write the package's **frozen property table** into its ADR *before* any production code.
-6. Begin **Phase B — Library** on an explicit owner GO. Phase A is closed; building any of it again is the
-   mistake this section exists to prevent.
+6. Begin your package on an explicit owner GO. **Phases A and B are closed**; rebuilding any of them is the
+   mistake this section exists to prevent. **Phase C has begun — C0 is done and the next package is C1** —
+   read [ADR-089](DECISIONS.md#adr-089) and the roadmap's
+   [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts) before writing a line of it,
+   and note that three owner decisions are still live against **C2**, **C6** and one row of **C1**.
 7. For any screen, open its **frozen HTML** first; it is the spec.
 
 *The design is done. Your job is faithful execution. If something feels like it should change, it goes into the
@@ -474,4 +569,9 @@ frozen HTML first (owner gate) — not into the code.*
 status added 2026-07-29 (package A10); updated 2026-07-30 at the **Phase A closeout**, when the D-002, D-006
 and D-016 owner rulings were recorded and Phase A's gate passed. Updated 2026-07-31 at the **Workflow V2
 revision** ([ADR-085](DECISIONS.md#adr-085)): this document became the package entry point, and §4/§5/§8 took the
-frozen property table, the verification order, the mid-package review and the single owner gate.*
+frozen property table, the verification order, the mid-package review and the single owner gate. §0 rewritten
+2026-08-01 at the **close of Phase B and the opening of Phase C's planning gate** ([ADR-089](DECISIONS.md#adr-089)):
+the Phase A and Phase B record below it is left verbatim, because a status block edited to match its outcome
+stops being evidence of anything — with the single exception of B5's status line, which was **wrong** rather
+than merely superseded once the commit landed and the owner accepted it. §0 rewritten again later the same day
+when the owner ruled **OD-1 · OD-2 · OD-3 · OD-4**.*

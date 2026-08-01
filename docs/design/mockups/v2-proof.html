@@ -8,6 +8,16 @@
   Owner scope ruling (2026-07-28): designed + frozen for the full 1->32 range, STAGED build (single-sheet mini-zine ships first, saddle-stitch booklet follows).
   The room, not a wizard: your zine is the hero (READ); the reassurance line replaces the old SHEET step; Details + Fold are PULLED drawers; one weighted commit.
   Prototype-only controls (the model toggle, theme) sit OUTSIDE the phone and are labelled as such — they are not product UI.
+
+  AMENDED 2026-08-01 by owner ruling (D-010, OD-3 of ADR-089).  .zpage's shadow was the LIGHT-theme value
+  of --frame-shadow spelled out as a literal, so the zine kept a warm-brown shadow on a dark desk while
+  every neighbouring surface switched to black.  Substituting --frame-shadow would have fixed the dark and
+  CHANGED THE LIGHT (one token at .28 cannot carry a two-layer .44 cast + .14 contact), so the fix is a
+  dedicated pair — --page-shadow (cast) + --page-contact (contact) — mirroring the two tokens the Library
+  already publishes for the same kind of object.  Light rendering is preserved byte-for-byte (.44 / .14,
+  unchanged); dark is re-derived, not inverted, from the Library's own dark pair.  The Bench carries the
+  identical amendment with its own cast alpha (.4).  Nothing else about the freeze of 2026-07-28 is
+  changed.  Spec first, per D-024's precedent: Compose is deferred to Phase D.
 -->
 <style>
   :root{
@@ -18,6 +28,7 @@
     --consequence:#A6382A; --on-matcha:#fff; --accent-on-ink:#B7C47C;
     --ink-teal:#47857B; --ink-ochre:#D19A3C; --ink-straw:#E27F89; --ink-matcha:#7C8A3F;
     --phone:#F7F2E7; --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --page-shadow:rgba(58,48,32,.44); --page-contact:rgba(58,48,32,.14);
     --chrome:#FBF7EE; --chrome-line:#E4DAC6; --sheet:#FBF7EE; --scrim:rgba(42,37,30,.42);
     --serif:'Fraunces',Georgia,'Times New Roman',serif;
     --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -32,6 +43,7 @@
       --strawberry:#D98289; --strawberry-text:#E8A6AB; --strawberry-tint:#3C2C2A;
       --consequence:#E0857A; --on-matcha:#20240E; --accent-on-ink:#4C5826;
       --phone:#2F2A22; --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5);
+      --page-shadow:rgba(0,0,0,.6); --page-contact:rgba(0,0,0,.5);
       --chrome:#252017; --chrome-line:#3A332A; --sheet:#252017; --scrim:rgba(0,0,0,.55);
     }
   }
@@ -42,6 +54,7 @@
     --strawberry:#D98289; --strawberry-text:#E8A6AB; --strawberry-tint:#3C2C2A;
     --consequence:#E0857A; --on-matcha:#20240E; --accent-on-ink:#4C5826;
     --phone:#2F2A22; --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5);
+    --page-shadow:rgba(0,0,0,.6); --page-contact:rgba(0,0,0,.5);
     --chrome:#252017; --chrome-line:#3A332A; --sheet:#252017; --scrim:rgba(0,0,0,.55);
   }
   :root[data-theme="light"]{
@@ -51,6 +64,7 @@
     --strawberry:#E98F97; --strawberry-text:#A6474F; --strawberry-tint:#F6DAD3;
     --consequence:#A6382A; --on-matcha:#fff; --accent-on-ink:#B7C47C;
     --phone:#F7F2E7; --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --page-shadow:rgba(58,48,32,.44); --page-contact:rgba(58,48,32,.14);
     --chrome:#FBF7EE; --chrome-line:#E4DAC6; --sheet:#FBF7EE; --scrim:rgba(42,37,30,.42);
   }
 
@@ -95,7 +109,7 @@
   .tapz.l{left:0;} .tapz.r{right:0;}
   .pageStage{position:relative;width:206px;height:300px;}
   .zpage{position:absolute;inset:0;background:var(--paper);border:1px solid var(--paper-edge);border-radius:5px;
-    box-shadow:0 16px 34px -16px rgba(58,48,32,.44),0 2px 5px rgba(58,48,32,.14);
+    box-shadow:0 16px 34px -16px var(--page-shadow),0 2px 5px var(--page-contact);
     padding:26px 22px;display:flex;flex-direction:column;opacity:0;transform:translateX(14px) scale(.99);
     transition:opacity .28s var(--standard),transform .34s var(--settle);pointer-events:none;overflow:hidden;}
   .zpage::after{content:"";position:absolute;inset:0;border-radius:5px;background-image:var(--grain);

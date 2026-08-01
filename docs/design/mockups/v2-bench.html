@@ -7,7 +7,16 @@
   Type: Fraunces (voice) + Inter (work); Georgia / system-sans stand in here pending real faces at parity.
   Studio iteration: H1 holding tray · H2 morphing 1->32 page-nav · H3 one 'Art' drawer · H4 maker ink palette.
   Centrepiece preserved verbatim: in-place edit + rigid-body page-pan returning pixel-identical.
-  NOT frozen. For owner critique.
+
+  AMENDED 2026-08-01 by owner ruling (D-010, OD-3 of ADR-089).  The page's shadow was the LIGHT-theme
+  value of --frame-shadow spelled out as a literal, so .page kept a warm-brown shadow on a dark desk
+  while every neighbouring surface switched to black.  Substituting --frame-shadow would have fixed the
+  dark and CHANGED THE LIGHT (one token at .28 cannot carry a two-layer .4 cast + .14 contact), so the
+  fix is a dedicated pair — --page-shadow (cast) + --page-contact (contact) — mirroring the two tokens
+  the Library already publishes for the same kind of object.  Light rendering is preserved byte-for-byte
+  (.4 / .14, unchanged); dark is re-derived, not inverted, from the Library's own dark pair.  Nothing
+  else about the freeze of 2026-07-28 is changed.  Spec first, per D-024's precedent: Compose is
+  deferred to Phase C / C1.
 -->
 <style>
   :root{
@@ -18,6 +27,7 @@
     --consequence:#A6382A; --on-matcha:#fff; --accent-on-ink:#B7C47C;
     --ink-teal:#47857B; --ink-ochre:#D19A3C; --ink-straw:#E27F89; --ink-matcha:#7C8A3F;
     --phone:#F7F2E7; --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --page-shadow:rgba(58,48,32,.4); --page-contact:rgba(58,48,32,.14);
     --chrome:#FBF7EE; --chrome-line:#E4DAC6; --sheet:#FBF7EE; --scrim:rgba(42,37,30,.34);
     --serif:'Fraunces',Georgia,'Times New Roman',serif;
     --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -32,6 +42,7 @@
       --strawberry:#D98289; --strawberry-text:#E8A6AB; --strawberry-tint:#3C2C2A;
       --consequence:#E0857A; --on-matcha:#20240E; --accent-on-ink:#4C5826;
       --phone:#2F2A22; --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5);
+      --page-shadow:rgba(0,0,0,.6); --page-contact:rgba(0,0,0,.5);
       --chrome:#252017; --chrome-line:#3A332A; --sheet:#252017; --scrim:rgba(0,0,0,.5);
     }
   }
@@ -42,6 +53,7 @@
     --strawberry:#D98289; --strawberry-text:#E8A6AB; --strawberry-tint:#3C2C2A;
     --consequence:#E0857A; --on-matcha:#20240E; --accent-on-ink:#4C5826;
     --phone:#2F2A22; --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5);
+    --page-shadow:rgba(0,0,0,.6); --page-contact:rgba(0,0,0,.5);
     --chrome:#252017; --chrome-line:#3A332A; --sheet:#252017; --scrim:rgba(0,0,0,.5);
   }
   :root[data-theme="light"]{
@@ -51,6 +63,7 @@
     --strawberry:#E98F97; --strawberry-text:#A6474F; --strawberry-tint:#F6DAD3;
     --consequence:#A6382A; --on-matcha:#fff; --accent-on-ink:#B7C47C;
     --phone:#F7F2E7; --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --page-shadow:rgba(58,48,32,.4); --page-contact:rgba(58,48,32,.14);
     --chrome:#FBF7EE; --chrome-line:#E4DAC6; --sheet:#FBF7EE; --scrim:rgba(42,37,30,.34);
   }
 
@@ -82,7 +95,7 @@
   .pageWrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     transition:transform .34s var(--settle);will-change:transform;}
   .page{position:relative;width:212px;height:326px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:5px;
-    box-shadow:0 14px 30px -14px rgba(58,48,32,.4),0 2px 5px rgba(58,48,32,.14);}
+    box-shadow:0 14px 30px -14px var(--page-shadow),0 2px 5px var(--page-contact);}
   .page::after{content:"";position:absolute;inset:0;border-radius:5px;background-image:var(--grain);
     background-size:120px 120px;mix-blend-mode:soft-light;opacity:.45;pointer-events:none;}
   .keepclear{position:absolute;inset:16px;border:1px dashed var(--ink-faint);border-radius:3px;opacity:.32;pointer-events:none;
@@ -364,7 +377,7 @@
 
   <p class="foot">Canonical design source for the Bench (Editor). Chrome palette from <code>V2-TOKENS.md</code>; the maker
     ink palette is a separate <code>content.*</code> system. Behaviour from <code>V2-BENCH-PRINCIPLES / IA-INTERACTION / REVIEW</code>.
-    Fraunces + Inter stand in as Georgia / system-sans, pending real faces at Compose parity. Not frozen — for critique.</p>
+    Fraunces + Inter stand in as Georgia / system-sans, pending real faces at Compose parity.</p>
 </div>
 
 <script>
