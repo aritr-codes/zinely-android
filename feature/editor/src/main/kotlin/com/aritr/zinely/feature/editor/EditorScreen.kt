@@ -268,6 +268,34 @@ public fun EditorScreen(
     // Type-bar visibility is surface-only state (a disclosure flag, not a styling draft): the bar is
     // non-modal and the reducer neither knows nor needs to know it is open.
     var typeBarOpen by remember { mutableStateOf(false) }
+
+    // ── D-039: who is presenting a capability right now ────────────────────────────────────────────
+    //
+    // The owner's ruling keeps BOTH bars (OD-11, ADR-029 §6) and forbids showing the same action twice at
+    // the same moment, resolving it by **assigning responsibilities**:
+    //
+    //   the frozen `.ctx` bar  →  the ELEMENT verbs   (Edit · Font · Size · Ink · Delete · Reframe · Replace)
+    //   EditorContextBar       →  the TRANSFORM verbs (move ×4 · scale ×2 · rotate ×2 · order ×2)
+    //
+    // which is the split ADR-029 §6 already justifies: the transform bar exists because *drag* has no
+    // single-pointer twin, and move/scale/rotate/order are the verbs that argument covers. `Delete` and
+    // `Style` are not — they are element verbs the frozen bar now presents, with a word rather than a
+    // glyph, so while it is up those two stand down and the on-canvas Reframe chip stands down with them.
+    // Nothing is removed: each yields only while another visible control offers the same capability, and
+    // every one of them returns the moment the frozen bar does not (an open session, an open Type bar, a
+    // Reframe, a multi-selection, or a kind with no frozen verb set).
+    //
+    // Hoisted this high because the three sites it governs are in three different scopes: the chip inside
+    // the sheet island, the frozen bar inside the canvas, the transform bar below both.
+    val ctxElement = uiState.selection.singleOrNull()?.let { id ->
+        uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
+    }
+    val ctxKind = ctxElement?.let { benchVerbKindOf(it) }
+    val ctxVisible = ctxKind != null &&
+        uiState.interaction !is Interaction.EditingText &&
+        reframing == null &&
+        !typeBarOpen
+
     // Any change of the styleable element closes the bar (ADR-055 §3: "a selection change to a non-text
     // or empty element closes the Type bar"). Keyed on the id, so committing a style through the bar —
     // which changes the element but not its id — leaves it open, exactly as the frozen prototype does.
@@ -777,7 +805,11 @@ public fun EditorScreen(
                 val selectedImage = uiState.selection.singleOrNull()?.let { id ->
                     uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id } as? ImageElement
                 }
-                if (reframing == null && !editing && selectedImage != null) {
+                // `&& !ctxVisible` is D-039: while the frozen bar is up it presents `Reframe` as a labelled
+                // verb, so the chip would be the same offer twice on one screen — the exact pair a
+                // first-time user read as a malfunction in C2b's Pass 2. It returns whenever the bar is not
+                // up, which is every case ADR-053 RF2 built it for except the one the bar now covers.
+                if (reframing == null && !editing && selectedImage != null && !ctxVisible) {
                     val spp = uiState.view.screenPxPerPt
                     val off = uiState.view.pageOffset
                     val chipX = (selectedImage.transform.xPt + selectedImage.transform.widthPt / 2.0 + off.x) * spp
@@ -920,10 +952,6 @@ public fun EditorScreen(
                 // an invention: opening the ink popover runs ctx.classList.remove('show') and closing it
                 // restores the bar (v2-bench.html:516, :520). Two floating cards at the same canvas edge
                 // would otherwise stack.
-                val ctxElement = uiState.selection.singleOrNull()?.let { id ->
-                    uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
-                }
-                val ctxKind = ctxElement?.let { benchVerbKindOf(it) }
                 // The bar is composed inside the sheet island for its geometry — it floats at the canvas's
                 // bottom edge — but it is NOT part of the sheet, so it must not inherit the sheet's
                 // palette. [BenchStudio.sheetIsland] re-declares exactly eight tokens, and `ink` is one of
@@ -938,8 +966,12 @@ public fun EditorScreen(
                 val ctxModifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
                 CompositionLocalProvider(LocalZinelyV2Colors provides roomColors) {
                 BenchContextBar(
-                    visible = ctxKind != null && !editing && reframing == null && !typeBarOpen,
-                    verbs = ctxKind?.let { benchContextVerbs(it) }.orEmpty(),
+                    visible = ctxVisible,
+                    // `styleable` is the same test the Style control already applies (ADR-055): a text box
+                    // the reducer would refuse to style must not be offered Size or Ink (D-040).
+                    verbs = ctxKind?.let {
+                        benchContextVerbs(it, styleable = (ctxElement as? TextElement)?.text?.isNotBlank() ?: true)
+                    }.orEmpty(),
                     onVerb = { verb ->
                         val id = ctxElement?.id
                         when (verb.label) {
@@ -1084,8 +1116,20 @@ public fun EditorScreen(
                 // Style is offered only where it can act (FR-3, ADR-055): a single, non-blank text box,
                 // outside an inline edit session. Anything else — a photo, a multi-selection, a
                 // still-blank box the reducer would refuse anyway — gets the bar exactly as before.
+                //
+                // D-039 deliberately does NOT touch this one. `Size` and `Ink` on the frozen bar open the
+                // same Type bar, so it is tempting to call Style a third door onto one room — but the
+                // ruling is about *identical actions presented twice*, and the evidence Pass 2 produced was
+                // two controls wearing the same word (`Delete`, `Reframe`). "Text style" is a different
+                // offer that happens to share a destination, so standing it down is beyond the minimum the
+                // ruling asks for. (An earlier draft of this comment also claimed withholding Style would
+                // strand the open panel with no toggle. Review showed that is false — Style would only be
+                // withheld while `ctxVisible`, which requires `!typeBarOpen`, i.e. only while the panel is
+                // already closed. The sentence is gone: a wrong invariant in a comment is worse than none.)
                 onStyle = styleTarget?.let { { typeBarOpen = !typeBarOpen } },
                 styleOpen = typeBarOpen,
+                // Same rule for Delete, the one verb the two bars have always shared (ADR-092 row 2.13d).
+                showDelete = !ctxVisible,
             )
         }
     }

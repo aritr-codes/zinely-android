@@ -205,10 +205,12 @@ class TypeBarTest {
 
         composeRule.onNodeWithContentDescription("Text style").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Move right").assertExists()
-        // Addressed by tag, not by label. Since C2b (ADR-092) the frozen `.ctx` verb bar draws its own
-        // Delete alongside this one — both legitimate under OD-11, both announcing "Delete" — so a
-        // by-label lookup is now ambiguous and this assertion means *the transform bar's* Delete.
-        composeRule.onNodeWithTag("$EditorContextBarTestTag-Delete").assertExists()
+        // Delete is deliberately NOT asserted here any more. C2b put a Delete on the frozen `.ctx` bar too,
+        // and D-039 then ruled that one capability gets one visible presentation at a time — so with a
+        // photo selected the frozen bar owns Delete and this bar withholds it. The claim this test makes
+        // is about *Style*, and the transform verbs around it, which are untouched in every case; whether
+        // Delete is here or there is EditorScreenTest's subject, not this file's.
+        composeRule.onNodeWithTag("$EditorContextBarTestTag-Delete").assertDoesNotExist()
         composeRule.onNodeWithTag(TypeBarTestTag).assertDoesNotExist()
     }
 

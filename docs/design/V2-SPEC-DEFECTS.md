@@ -133,7 +133,9 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | ~~[**D-031**](#d-031)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-031-ruling), OD-9 | the Bench had no exits: Font and Size stay **drawn** with no invented capability, Read reuses [ADR-086](../DECISIONS.md#adr-086)'s hand-off, back reuses the existing stack, and **redo is kept** — the frozen bar specifies the editing surface, not the product's whole capability |
 | ~~[**D-037**](#d-037)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-037-ruling), OD-13 | the dim shipped without either of the freeze's two ways out of it. `Intent.ClearSelection` exists in the reducer and **nothing dispatches it**; the freeze's `canvas` click and Done button are unowned and C4's respectively. A stuck selection now fades everything else the user wrote, to **2.78:1**, undismissably. Pass 1 passed; **Pass 2 failed**. Ruled **(a)**: C2a adds tap-to-deselect, and selection becomes a **transient** editing state rather than a modal one |
-| [**D-039**](#d-039) | 🟦 **OPEN — an owner ruling, and it fences nothing** | since C2b the Bench offers the same verb twice — **`Delete` in both bars, and `Reframe` in both a bar and an on-canvas chip**. C2b's device Pass 2 **did not pass** on this, and [ADR-092](../DECISIONS.md#adr-092) stays `Proposed` because of it. one per bar, both announcing the same word to TalkBack. Not an accident and not a bug: it is the priced cost of [OD-11](#d-034-ruling)'s *additive*. Both delete the selection, so the duplication is redundant rather than ambiguous, and any real disambiguation is a **third** mechanism neither bar specifies. Deferred to device Pass 1, where the sweep can be heard rather than reasoned about |
+| [**D-041**](#d-041) | 🟦 **OPEN — pre-existing, not C2b's, found while proving D-040 reachable** | leaving a page while a text session is open **orphans an empty text box**: `Intent.GoToPage → leavePage` clears selection and interaction without running `endTextSession`, so the blank-box cleanup that every other exit performs never happens. The box is autosaved, invisible on the page, and exports as nothing. Found on hardware; **no fix attempted — it is reducer behaviour, outside C2b's fence** |
+| [**D-040**](#d-040) | ✅ **FIXED in C2b, no ruling needed — and reachable, which took two goes to establish** | the frozen bar offered **Size** and **Ink** on a *still-blank* text box, which the reducer refuses to style — and the tap was a **dead end that swallowed the toolbar**: it hid the frozen bar and raised nothing in its place, with no state that brought either back. Found by review, not by a test. Fixed under the ruling that already covers it ([OD-9](#d-031-ruling)): the two verbs ship inert there, exactly as `Font` does. **The implementer then claimed on device Pass 1 that the state was unreachable, and that claim was false** — see the correction below; the blank box is two taps away, and the guard was afterwards watched working on hardware |
+| [**D-039**](#d-039) | ✅ **RESOLVED 2026-08-02 by owner ruling — [OD-14](#d-039-ruling)** | since C2b the Bench offers the same verb twice — **`Delete` in both bars, and `Reframe` in both a bar and an on-canvas chip**. C2b's device Pass 2 **did not pass** on this, and [ADR-092](../DECISIONS.md#adr-092) was held at `Proposed` until [OD-14](#d-039-ruling) resolved it; it is now `Accepted`. one per bar, both announcing the same word to TalkBack. Not an accident and not a bug: it is the priced cost of [OD-11](#d-034-ruling)'s *additive*. Both delete the selection, so the duplication is redundant rather than ambiguous, and any real disambiguation is a **third** mechanism neither bar specifies. Deferred to device Pass 1, where the sweep can be heard rather than reasoned about |
 | [**D-038**](#d-038) | 🟦 **OPEN — an owner ruling, and it fences nothing** | the frozen photo bar offers **Replace**, and the product cannot honour it. `Intent.ReplaceImage(id, assetId)` exists in the reducer and is **dispatched from nowhere**; the only picker (`RequestAddImage` → `PickAndDecodeImage` → `CommitAddImage`) **creates** an element rather than re-pointing one, so reaching Replace is a flow change, not a wiring. C2b ships it **drawn and disabled** under [OD-9](#d-031-ruling)'s class — *a control the freeze draws stays drawn and invents nothing* — exactly as `Font` does. The question is whether the capability should exist |
 | [**D-036**](#d-036) | 🟦 **OPEN — documentation only, fences nothing** | the frozen Bench draws **four** resize handles; the editor has **eight**, and the extra four carry axis-constrained resize. C2a kept all eight under [OD-11](#d-034-ruling) (*the frozen vocabulary is additive; no existing capability is removed*), which the review confirmed is the right reading. What is owed is the **canonical file catching up** with that ruling — recommendation **(a)**, draw eight |
 | ~~[**D-035**](#d-035)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-035-ruling), OD-12 | the dark theme dimmed the sheet while the document's content ink stayed black — correctly, because it prints — leaving the user's own words at **1.60:1**. Ruled: **the artifact does not dim; the room around it may.** The frozen `.page` becomes a light-theme island of eight restated light tokens; `.phone` still dims |
@@ -2614,6 +2616,83 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 
 Option (e) is orthogonal — the owner may take it *and* any of (a)–(d).
 
+### D-041 — leaving a page mid-session orphans an empty text box {#d-041}
+
+**Found 2026-08-02 on `SM-A176B` / Android 16, while trying to prove [D-040](#d-040)'s state reachable.** It is not a
+C2b defect and nothing in C2b touches it; it is filed because it was seen, it persists to disk, and the next package to
+own the editing surface should decide about it rather than rediscover it.
+
+**What happens.** *Add words* places a blank `TextElement`, autosaves it (`EditorReducer.kt:32–33`) and opens a session.
+Every deliberate exit from that session routes through `endTextSession`, which **deletes a box whose resulting text is
+blank** — that is the rule that stops an accidental *Add words* leaving litter behind. But `Intent.GoToPage` routes
+through `leavePage` (`:166–169`), which clears selection and interaction *and never calls it*. Tapping the next page in
+the filmstrip therefore leaves the empty box on the page it came from.
+
+**Observed:** *Add words → Page 2 → Page 1* leaves `{"type":"text","id":"el-1",…,"text":""}` in the project's
+`document.json`, and the box is there on the page — selectable, invisible, and exporting as nothing.
+
+**Why it is worth a line rather than a shrug.** The box is not harmless furniture: it is an element a first-time user
+never knowingly created, it sits in the tap order, and it is what made [D-040](#d-040)'s "impossible" state trivially
+reproducible. The two obvious readings — *leavePage should clean up like every other exit*, or *the blank box is
+legitimate scaffolding and the deliberate exits are the odd ones out* — point at different fixes, which is why this is
+filed rather than patched.
+
+### D-040 — Size and Ink on a blank text box: a dead end that took the toolbar with it {#d-040}
+
+**Raised 2026-08-02 by the independent review of D-039's implementation, and fixed in the same change.** No owner
+ruling is needed — [OD-9](#d-031-ruling) already decides this class — but it is recorded because it was a real
+trap, it shipped in `cacc9b2`, and **nothing caught it**: not the 1449-test suite, not device Pass 1, not Pass 2.
+
+> ⚠ **A correction, and then a correction of the correction — both kept, because the second is the lesson.**
+> On the second device round the implementer tried to reach this state, failed, and wrote the entry up as
+> *unreachable*: `EditorReducer.endTextSession` **deletes** a text box whose resulting text is blank, so a box added
+> and left empty was indeed gone on the next look. **That generalisation was false, and the independent review
+> falsified it the same day.** `endTextSession` governs only the *end of a session*; two ordinary routes go around it:
+> 
+> - **Undo.** Add words → type → commit pushes `EditTextCommand(before = the blank placed box, after = "hi")`
+>   (`EditorReducer.kt:306–308`) → **Undo** inverts it, restoring `text = ""`, and `stepHistory` preserves the
+>   selection (`:332`). Blank box, selected, `Idle`.
+> - **Leave the page mid-session.** `Intent.GoToPage → leavePage` (`:166–169`) clears selection and interaction
+>   **without** running `endTextSession` at all, so the blank box is never cleaned up. It is then sitting on the page,
+>   and one tap selects it.
+> 
+> The second route was **reproduced on hardware** (SM-A176B / Android 16): Add words → back → Page 2 → Page 1 leaves
+> `{"type":"text","id":"el-1",…,"text":""}` in the autosaved `document.json`, and tapping it raises the frozen bar
+> with **`Size` and `Ink` `clickable=false enabled=false`** while `Edit` and `Delete` stay live — the guard working,
+> watched, in the state that was supposed not to exist. **The original record was right; the correction was wrong.**
+> It is left standing rather than deleted, because the failure mode it demonstrates — *one failed attempt to reach a
+> state, generalised into proof that it cannot be reached* — is exactly the reasoning device verification exists to
+> catch, and it survived a Pass 1 that was otherwise clean.
+
+**The chain.** `benchVerbKindOf` keys on element *type*, so a blank text box got the whole frozen text set,
+`Size` and `Ink` live. Tapping either ran `typeBarOpen = true`, and then three independent guards conspired:
+
+| | |
+|---|---|
+| the frozen bar carries a `!typeBarOpen` term | → **the bar hides** |
+| the Type bar is composed only `if (styleTarget != null && typeBarOpen)`, and `styleTarget` requires `text.isNotBlank()` ([ADR-055](../DECISIONS.md#adr-055)) | → **nothing appears in its place** |
+| the reset effect is keyed on `styleTarget?.id`, which was already `null` and stays `null` | → **it never re-runs, so `typeBarOpen` stays true** |
+
+So a single tap on a blank box made the contextual toolbar vanish **and kept it vanished across later
+selections** — select a photo next and the key is unchanged, so the frozen bar still does not return. No
+capability was lost (the transform bar's Delete and the Reframe chip both come back, since they key on the
+same `ctxVisible`), but the user is left with a toolbar that disappeared for no visible reason and no way back.
+
+**Why it is the mirror of a rule the corpus already had.** `TypeBarTest.a_still_blank_text_box_is_not_offered_style`
+exists precisely to stop the *transform* bar advertising a control the reducer would silently refuse. C2b put
+the same offer on a second bar without carrying the guard across — the recurring shape of this programme's
+defects: a rule enforced in one place, and a new surface that does not know about it.
+
+Both surfaces now refuse the same offer. That matters more than it looked: the blank box is not a hypothetical
+the persistence layer might one day hand us — **this build writes one to disk itself**, because `Intent.PlaceText`
+autosaves at placement (`EditorReducer.kt:32–33`) and `leavePage` can end the session without ever cleaning it up.
+
+**The fix, which invents nothing.** `benchContextVerbs(kind, styleable)` marks `Size` and `Ink`
+`enabled = false` for a blank box, putting them in the class [OD-9](#d-031-ruling) already established for
+`Font` and `Replace` — *a control the freeze draws stays drawn and invents nothing*. A blank box's `Delete`
+stays live, since a blank box is the one you most want to be rid of. Mutation-tested: restoring
+`styleable = true` kills the assertion.
+
 ### D-039 — the Bench now offers the same verb twice, in the ear and in the eye {#d-039}
 
 **Raised 2026-08-02 by C2b's own verification — as a test failure, not a review note.** It does not fence anything.
@@ -2647,9 +2726,45 @@ same word twice, at the same moment, in one glance. The first-time-user note, wr
 *"there are two Reframe buttons on my screen — did I do something wrong?"* A screen reader meeting `Delete` twice is an
 annoyance; a beginner meeting `Reframe` twice reads it as a malfunction, and this app's stated audience is beginners.
 
-**So Pass 2 did not pass, and [ADR-092](../DECISIONS.md#adr-092) stays `Proposed` because of it.** Pass 1 says the code
+**So Pass 2 did not pass, and [ADR-092](../DECISIONS.md#adr-092) was held at `Proposed` because of it** — until [OD-14](#d-039-ruling) below resolved it and a second device round passed both ways. Pass 1 says the code
 is right and Pass 2 says the screen is confusing; the handbook forbids averaging them. Option **(b)** below was written
 for the ear and is now the weaker answer — labelling the containers does nothing for the eye.
+
+### Owner ruling — OD-14: assign responsibilities, do not duplicate presentation {#d-039-ruling}
+
+**Ruled 2026-08-02.** The repository had demonstrated that keeping *both* bars faithfully produces duplicated
+actions which are technically correct and confusing to a first-time user. The ruling keeps both and removes the
+duplication by deciding **who presents what**:
+
+> The frozen contextual toolbar remains additive. `EditorContextBar` remains, as required by
+> [OD-11](#d-034-ruling) and [ADR-029](../DECISIONS.md#adr-029) §6. However, **identical actions must not be
+> presented twice simultaneously.** Accordingly: each capability shall have **one primary visible presentation
+> at a time**; accessibility capabilities must be preserved; existing editor capabilities must be preserved;
+> **no functionality is removed**; D-039 is resolved by **assigning responsibilities** rather than duplicating
+> presentation.
+
+**The assignment, and why it falls where it does.**
+
+| Owner | Verbs | Why this owner |
+|---|---|---|
+| the frozen `.ctx` bar | **Edit · Font · Size · Ink · Delete** and **Reframe · Replace · Delete** | the element verbs, which the freeze specifies and which it presents as **words** rather than glyphs |
+| `EditorContextBar` | **move ×4 · scale ×2 · rotate ×2 · order ×2** | exactly the verbs [ADR-029](../DECISIONS.md#adr-029) §6 exists for: *drag* is the gesture with no single-pointer twin, and these ten are what that argument covers. `Delete` never needed a twin — it was never a gesture |
+| the on-canvas chip | — | `Reframe` is now offered by name, in a bar, instead of by a pill over the artwork |
+
+**The minimum implementation, which is three lines and one parameter.** While the frozen bar is up
+(`ctxVisible`), `EditorContextBar` withholds **`Delete`** and the `ReframeAffordanceChip` withholds itself.
+Both return the instant the bar stands down — an open text session, an open Type bar, a Reframe, a
+multi-selection, or an element kind with no frozen verb set — so at no moment is a capability absent from the
+screen. Nothing was deleted, no component was re-skinned, and the ten transform verbs are untouched in every
+state, which is the part OD-11 actually protects.
+
+**What was tried and rejected as beyond the minimum.** `Size` and `Ink` open the same Type bar that the
+transform bar's **Style** control opens, so standing Style down looks like the same tidy-up. It is not: Style
+is the Type bar's *disclosure toggle* — the control that both opens and closes it — so withholding it leaves
+the open panel with no way back. 22 `TypeBarTest` failures said so before any reasoning did. And the ruling is
+about *identical actions presented twice*, whose evidence was two controls wearing **the same word**; "Text
+style" is a different offer that happens to share a destination. Left alone, and left for device Pass 2 to
+judge fresh rather than argued away here.
 
 **What is owed.** A judgement that can only be made with a device in hand: **does the duplicate register as confusing when you
 hear it?** That question belongs to C2b's device Pass 2, and this entry exists so the answer reaches the owner rather than
@@ -2663,7 +2778,7 @@ being settled by whoever is holding the phone.
 | **(b)** | **Label the containers** — give each bar a semantics container name ("Transform", "Actions"), so the sweep announces which bar it is in before the verbs. Invents no visible UI and touches neither bar's controls. |
 | **(c)** | Revisit OD-11 and let one bar go — **not recommended**, and named only for completeness: it is the accessibility path OD-11 exists to protect. |
 
-**Recommendation, revised after Pass 2: (b) is no longer sufficient.** The device decided, which was the whole point of running two passes — and it decided against the cheap fix. What is needed is a rule for *which* bar owns a verb the two share, so that each verb appears once: the frozen bar is the one the freeze specifies and the one a sighted beginner will reach for, and `EditorContextBar`'s value under [ADR-029](../DECISIONS.md#adr-029) §6 is the **transform** verbs (move, resize, rotate, order) that no gesture-free path otherwise offers — not `Delete`, which the frozen bar now carries. Dropping the shared verbs from the transform bar would remove no capability from any input method, but it touches a fenced component and rests on an accessibility argument, so it is put rather than taken. The on-canvas `Reframe` chip is the third copy and the easiest to retire.
+**Recommendation, revised after Pass 2, and since superseded by [OD-14](#d-039-ruling) above: (b) is no longer sufficient.** The device decided, which was the whole point of running two passes — and it decided against the cheap fix. What is needed is a rule for *which* bar owns a verb the two share, so that each verb appears once: the frozen bar is the one the freeze specifies and the one a sighted beginner will reach for, and `EditorContextBar`'s value under [ADR-029](../DECISIONS.md#adr-029) §6 is the **transform** verbs (move, resize, rotate, order) that no gesture-free path otherwise offers — not `Delete`, which the frozen bar now carries. Dropping the shared verbs from the transform bar would remove no capability from any input method, but it touches a fenced component and rests on an accessibility argument, so it is put rather than taken. The on-canvas `Reframe` chip is the third copy and the easiest to retire.
 
 ### D-038 — the frozen photo bar offers Replace, and nothing can reach it {#d-038}
 

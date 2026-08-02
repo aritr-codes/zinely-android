@@ -8,6 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -22,6 +24,7 @@ import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -805,20 +808,112 @@ class EditorScreenTest {
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertExists()
     }
 
+    // ── D-039 — one capability, one visible presentation at a time ─────────────────────────────────
+
+    /**
+     * The assertion that replaced its own opposite.
+     *
+     * C2b shipped with a test that *pinned* two `Delete` controls as the priced cost of OD-11's additive,
+     * and device Pass 2 found that price too high: the same verb offered twice on one screen reads as a
+     * malfunction to a first-time user. The owner's D-039 ruling keeps both bars and assigns them
+     * responsibilities instead — element verbs to the frozen bar, transform verbs to the shipped one — so
+     * the count that used to be 2 must now be exactly 1.
+     */
     @Test
-    fun both_bars_announce_Delete_and_that_is_what_additive_costs() {
-        // Not a defect to be fixed here, and not an accident either: OD-11 keeps `EditorContextBar` as the
-        // WCAG 2.5.7 single-pointer twin of the drag gestures (ADR-029 §6), and the frozen `.ctx` bar is
-        // *additive* on top of it. Both carry Delete, both delete the selection, both announce "Delete" —
-        // so TalkBack's linear sweep meets the same word twice. Pinned rather than tolerated silently:
-        // this assertion is what makes the cost visible to the next reader, and it fails the moment either
-        // bar's label moves. Whether the duplicate should be disambiguated is an owner question — filed as
-        // D-039, answered from device Pass 2 — not something to settle by quietly re-labelling a fenced bar.
+    fun only_one_control_offers_Delete_while_the_frozen_bar_is_up() {
         setScreen(selectedText())
         composeRule.waitForIdle()
-        val deletes = composeRule.onAllNodesWithContentDescription(Copy.BenchVerbs.DELETE).fetchSemanticsNodes()
-        assertEquals(2, deletes.size)
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithContentDescription(Copy.BenchVerbs.DELETE).fetchSemanticsNodes().size,
+        )
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertExists()
-        composeRule.onNodeWithTag("$EditorContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertExists()
+        composeRule.onNodeWithTag("$EditorContextBarTestTag-${Copy.A11y.DELETE}").assertDoesNotExist()
     }
+
+    /**
+     * The other half, and the one that keeps the ruling honest: *"no functionality is removed."* The
+     * transform bar's Delete is withheld only while another visible control offers it. Open the Type bar
+     * and the frozen bar stands down — so Delete must come straight back, or this would be a capability
+     * lost rather than a presentation assigned.
+     */
+    @Test
+    fun the_transform_bar_takes_Delete_back_the_moment_the_frozen_bar_stands_down() {
+        val store = selectedText()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertDoesNotExist()
+        composeRule.onNodeWithTag("$EditorContextBarTestTag-${Copy.A11y.DELETE}").assertExists()
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithContentDescription(Copy.A11y.DELETE).fetchSemanticsNodes().size,
+        )
+    }
+
+    private fun selectedPhoto(): EditorStore = store().also {
+        it.dispatch(
+            Intent.CommitAddImage(
+                ImageElement(id = "photo", transform = Transform(20.0, 20.0, 40.0, 30.0), assetId = "a"),
+            ),
+        )
+    }
+
+    /**
+     * The pair a first-time user actually met on the device: `Reframe` on the photo and `Reframe` in the
+     * bar, 150px apart, at the same moment. The written note was *"did I do something wrong?"* — so the
+     * chip yields to the bar, which says the same word with a label rather than over the artwork.
+     */
+    @Test
+    fun the_on_canvas_Reframe_chip_yields_to_the_bar_that_offers_the_same_verb() {
+        setScreen(selectedPhoto())
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REFRAME}").assertExists()
+        composeRule.onNodeWithTag(ReframeChipTestTag).assertDoesNotExist()
+        // One Delete for a photo too — the frozen bar's.
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithContentDescription(Copy.BenchVerbs.DELETE).fetchSemanticsNodes().size,
+        )
+    }
+
+    /**
+     * The ruling protects the transform verbs absolutely — they are what ADR-029 §6 exists for, being the
+     * verbs `drag` has no single-pointer twin for. Whatever the frozen bar is doing, all ten stay put.
+     */
+    /**
+     * D-040 — the dead end review found, which no test covered and Pass 2 would have.
+     *
+     * `benchVerbKindOf` keys on element *type*, so a still-blank box got the full text set. Tapping `Size`
+     * set `typeBarOpen`, which hid the frozen bar (its own `!typeBarOpen` term) while the Type bar declined
+     * to appear (`styleTarget` is null for a blank box) — and the reset effect is keyed on `styleTarget?.id`,
+     * still null, so it never re-ran. The bar stayed gone across later selections too. Now Size and Ink are
+     * inert there, in the class OD-9 already established for `Font`, so the tap cannot happen.
+     */
+    @Test
+    fun a_still_blank_text_box_is_offered_neither_Size_nor_Ink() {
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "   "))
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").assertIsNotEnabled()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.INK}").assertIsNotEnabled()
+        // Delete stays live — a blank box is exactly the one you most want to get rid of.
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertIsEnabled()
+    }
+
+    @Test
+    fun the_ten_transform_verbs_are_never_withheld() {
+        setScreen(selectedPhoto())
+        composeRule.waitForIdle()
+        listOf(
+            Copy.A11y.MOVE_LEFT, Copy.A11y.MOVE_RIGHT, Copy.A11y.MOVE_UP, Copy.A11y.MOVE_DOWN,
+            Copy.A11y.MAKE_LARGER, Copy.A11y.MAKE_SMALLER,
+            Copy.A11y.ROTATE_CLOCKWISE, Copy.A11y.ROTATE_COUNTERCLOCKWISE,
+            Copy.A11y.BRING_FORWARD, Copy.A11y.SEND_BACKWARD,
+        ).forEach { composeRule.onNodeWithTag("$EditorContextBarTestTag-$it").assertExists() }
+    }
+
 }

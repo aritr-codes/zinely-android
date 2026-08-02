@@ -85,6 +85,13 @@ public const val EditorContextBarTestTag: String = "editor-context-bar"
  * @param onStyle toggles the Type bar for the selected text box. `null` (the default) omits the control
  *   entirely — the host passes it only for a single, non-blank text selection.
  * @param styleOpen whether the Type bar is currently showing, for the Style control's spoken state.
+ * @param showDelete whether this bar presents Delete. **This is a presentation switch, not a capability
+ *   one** ([D-039](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-039)): the host passes `false`
+ *   only while the frozen `.ctx` bar is up and carrying Delete itself, so the action is never absent —
+ *   only never offered twice at once. The transform verbs above are untouched in every case, which is
+ *   what [OD-11](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-034-ruling) and
+ *   [ADR-029](../../../../../../../../docs/DECISIONS.md#adr-029) §6 actually protect: drag is the gesture
+ *   with no single-pointer twin, and move/scale/rotate/order are the verbs that argument covers.
  */
 // The directional/rotation glyphs use the non-AutoMirrored Filled icons on purpose: these controls are
 // spatial (page-space "left" is screen-left in any layout direction), so RTL auto-mirroring would point
@@ -98,6 +105,7 @@ public fun EditorContextBar(
     modifier: Modifier = Modifier,
     onStyle: (() -> Unit)? = null,
     styleOpen: Boolean = false,
+    showDelete: Boolean = true,
 ) {
     if (selection.isEmpty()) return
     val singleId = selection.singleOrNull()
@@ -139,7 +147,9 @@ public fun EditorContextBar(
                     onClick = onStyle,
                 )
             }
-            BarButton(Icons.Filled.Delete, Copy.A11y.DELETE, -2.5f) { dispatch(Intent.Delete(selection)) }
+            if (showDelete) {
+                BarButton(Icons.Filled.Delete, Copy.A11y.DELETE, -2.5f) { dispatch(Intent.Delete(selection)) }
+            }
         }
     }
 }

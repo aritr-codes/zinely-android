@@ -86,12 +86,20 @@ internal data class BenchVerb(
  * directly rather than through a composition — and asserted as **set-equality plus order**, because a
  * permutation would satisfy "each verb exists" and still be the wrong bar.
  */
-internal fun benchContextVerbs(kind: BenchVerbKind): List<BenchVerb> = when (kind) {
+internal fun benchContextVerbs(kind: BenchVerbKind, styleable: Boolean = true): List<BenchVerb> = when (kind) {
     BenchVerbKind.TEXT -> listOf(
         BenchVerb(Copy.BenchVerbs.EDIT, Icons.Filled.Edit),
         BenchVerb(Copy.BenchVerbs.FONT, Icons.Filled.TextFields, enabled = false),
-        BenchVerb(Copy.BenchVerbs.SIZE, Icons.Filled.FormatSize),
-        BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette),
+        // [styleable] is false for a still-blank box, which the reducer refuses to style (ADR-055) — so
+        // these two are drawn and inert there, exactly as `Font` is, under the same OD-9 class. Found by
+        // review, not by a test: with them live, tapping either on a blank box set `typeBarOpen`, which
+        // hid this bar (its own `!typeBarOpen` term) while the Type bar declined to appear (its
+        // `styleTarget != null` term) — and the reset effect is keyed on `styleTarget?.id`, still null,
+        // so it never re-ran. The bar did not come back until a non-blank box was selected. A dead end
+        // that swallowed the toolbar, and the mirror image of what `TypeBarTest` already forbids on the
+        // transform bar (D-040).
+        BenchVerb(Copy.BenchVerbs.SIZE, Icons.Filled.FormatSize, enabled = styleable),
+        BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette, enabled = styleable),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
     BenchVerbKind.PHOTO -> listOf(
@@ -121,10 +129,14 @@ internal fun benchVerbKindOf(element: Element): BenchVerbKind? = when (element) 
  * The frozen contextual verb bar — `.ctx` (`v2-bench.html:211-217`), [ADR-092](../../../../../../../../docs/DECISIONS.md#adr-092).
  *
  * **This is an addition, not a re-skin.** [EditorContextBar] is the WCAG 2.5.7 single-pointer twin of
- * the drag gestures ([ADR-029](../../../../../../../../docs/DECISIONS.md#adr-029) §6) and stays exactly
- * as it was; [OD-11](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-034-ruling) ruled that the
- * frozen bar is *additive*, because a parity phase does not remove an accessibility path. The two share
- * only `Delete`.
+ * the drag gestures ([ADR-029](../../../../../../../../docs/DECISIONS.md#adr-029) §6);
+ * [OD-11](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-034-ruling) ruled that the frozen bar is
+ * *additive*, because a parity phase does not remove an accessibility path. `Delete` is the one verb both
+ * bars name, and under
+ * [OD-14](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-039-ruling) only **one of them shows it at
+ * a time**: while this bar is up, [EditorContextBar] withholds its `Delete` and the on-canvas reframe chip
+ * withholds itself. A presentation switch, never a capability one — both return the instant this bar stands
+ * down, and its eight transform verbs are untouched in every state.
  *
  * The bar floats over the canvas, inset 12dp from its left, right and bottom edges — never over the
  * element ([IA §C.3](../../../../../../../../docs/design/V2-BENCH-IA-INTERACTION.md)) — so the host
