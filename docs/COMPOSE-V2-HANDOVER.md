@@ -23,15 +23,18 @@ the sheet with V2 `paper` and left the blank-page invitation on V1 `ink`, **1.15
 and both goldens passed because the dark golden had been re-recorded with the defect in it. Fixed, re-recorded and
 guarded by a mutation-proven pixel probe, **uncommitted at the time of writing**; both passes must still be re-run on
 the fixed build.
-**C2 is the next package, and ⛔ its toolbar half is fenced** (the selection selectors are not): [D-031](design/V2-SPEC-DEFECTS.md#d-031) was ruled on 2026-08-01
+**C2 is the next package. It is now split into C2a and C2b, and both are unblocked by ruling — but both are gated on C1's acceptance, which C1 does not yet have:** [D-031](design/V2-SPEC-DEFECTS.md#d-031) was ruled on 2026-08-01
 (**OD-9** — the freeze specifies the editing surface, not the whole application flow; Font and Size stay drawn and
 invent nothing, Read and back reuse what exists, redo is kept), and applying that ruling immediately raised
 **[D-034](design/V2-SPEC-DEFECTS.md#d-034)**: the frozen `.ctx` is a **verb** bar, while the `EditorContextBar` it
 would replace is the **WCAG 2.5.7** single-pointer twin of the drag gestures. Transcribing the freeze would delete
-eight discrete move/resize/rotate controls. **No C2 production code has been written.** The fence is rows 2.10–2.13,
-not the package: `.el*`, `.sel`, `.handle*`, `.content.focusing` and `@keyframes mat` do not depend on what the bar
-contains, so **C2a (selection) can proceed and C2b (`.ctx`) waits** — a fifth option offered to the owner beside
-D-034's four, on the precedent of OD-10 fencing one row of C1 rather than C1.
+eight discrete move/resize/rotate controls. **[Ruled 2026-08-02 (OD-11): keep both.](design/V2-SPEC-DEFECTS.md#d-034-ruling)**
+The two are not mutually exclusive — the frozen bar is the editing vocabulary, the shipped one an
+accessibility-preserving transform affordance — so `.ctx` is **additive** and the transform controls remain, because a
+parity phase does not remove or weaken a WCAG 2.5.7 conformance path. The same ruling **splits C2 into C2a**
+(`.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat`) **and C2b** (`.ctx*`, rows 2.10–2.13); C2b carries
+the non-removal invariant as a frozen-property-table assertion whose mutation is *delete them*.
+**No C2 production code has been written.**
 C1's own pre-implementation blocker check raised **[D-033](design/V2-SPEC-DEFECTS.md#d-033)** — the frozen
 `212×326` page was not the document's `210.47×297.64` panel, and the frozen uniform `16px` keep-clear was not
 its `17pt` `safeAreaInsetPt`, so nothing stated which rectangle the print-correctness cue draws. The owner
@@ -582,10 +585,10 @@ approved before the commit.
    mistake this section exists to prevent. **Phase C has begun — C0 and C1 are done and the next package is C2** —
    read [ADR-089](DECISIONS.md#adr-089) and the roadmap's
    [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts) before writing a line of it,
-   and note that two owner decisions **fence a package's work**: **[D-034](design/V2-SPEC-DEFECTS.md#d-034) / OD-11** at
-   **C2** — its `.ctx*` rows only, not the selection selectors — and **D-028 / OD-6** at **C6**. Other decisions remain
-   live without fencing a package: **D-012**'s half of OD-10 is answered *in* C9, and D-023 / D-029 / D-030 are open
-   against whichever phase takes the re-seated capability.
+   and note that **one owner decision still fences a package's work — D-028 / OD-6 at C6.** ([D-034 / OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)
+   fenced C2's `.ctx*` rows for a day and was ruled on 2026-08-02.) Other decisions remain live without fencing a
+   package: **D-012**'s half of OD-10 is answered *in* C9, and D-023 / D-029 / D-030 are open against whichever phase
+   takes the re-seated capability. **What actually gates C2a/C2b today is not a ruling — it is C1's acceptance.**
 7. For any screen, open its **frozen HTML** first; it is the spec.
 
 *The design is done. Your job is faithful execution. If something feels like it should change, it goes into the

@@ -124,7 +124,7 @@ row. **None blocked C0, which has since landed.** D-032 was ruled on 2026-08-01 
 than the package — but **C1's own pre-implementation blocker check then raised [D-033](#d-033), which does block
 the package**: it decides the rectangle every other C1 property is positioned against. That blocker was itself
 ruled the same day — option (c), [the third amendment to a frozen V2 surface](#d-033-amendment) — so **C1 is
-unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and C1 is committed at `29a3819`. **As of 2026-08-01, two entries fence Phase-C work:** **[D-034](#d-034)** (**OD-11**) over C2's `.ctx*` rows — raised by C2's own pre-implementation check the moment OD-9 was applied — and **D-028** (OD-6) at C6. Neither fences a whole package: D-034 leaves C2's selection selectors free, exactly as D-032 left C1's. Live entries that fence nothing — D-012 (answered *in* C9), D-023, D-029, D-030 — are listed below and in the [roadmap's ledger](../COMPOSE-V2-ROADMAP.md).
+unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and C1 is committed at `29a3819`. **As of 2026-08-02, ⛔ [D-035](#d-035) blocks the whole of Phase C** — C1's device verification found the dark theme's dimmed sheet leaves the user's own content at **1.60:1**, so C1 cannot be accepted and nothing downstream may start. Beyond it, **D-028** (OD-6) fences C6. [D-034](#d-034) fenced C2's `.ctx*` rows for a day — raised by C2's own pre-implementation check the moment OD-9 was applied, [ruled 2026-08-02](#d-034-ruling) as **keep both**, with C2 split into **C2a** and **C2b** and both now unblocked. Live entries that fence nothing — D-012 (answered *in* C9), D-023, D-029, D-030 — are listed below and in the [roadmap's ledger](../COMPOSE-V2-ROADMAP.md).
 
 | Open | Owing to | One line |
 |---|---|---|
@@ -132,7 +132,8 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-029**](#d-029) | ⏳ **an owner ruling** — **the phase that takes H1** (no longer Phase C) | the holding shelf and `DecorElement` are net-new: no model, no persistence, no scope, and a GC relationship |
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | ~~[**D-031**](#d-031)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-031-ruling), OD-9 | the Bench had no exits: Font and Size stay **drawn** with no invented capability, Read reuses [ADR-086](../DECISIONS.md#adr-086)'s hand-off, back reuses the existing stack, and **redo is kept** — the frozen bar specifies the editing surface, not the product's whole capability |
-| [**D-034**](#d-034) | ⏳ **an owner ruling** — **Phase C / C2** | the frozen `.ctx` is a **verb** bar; the shipped `EditorContextBar` it would replace is the **WCAG 2.5.7** single-pointer twin of the drag gestures. Transcribing the freeze removes eight discrete move/resize/rotate controls, and per-element custom actions do not substitute (they reach assistive tech only) |
+| [**D-035**](#d-035) | ⛔ **an owner ruling** — blocks **C1's acceptance**, and so all of Phase C | the dark theme dims the sheet to `#2F2A22` while the document's content ink stays black — correctly, because it prints. Measured **1.60:1** on device; the Read screen shows the same page at **16.92:1** because its sheet stays lit. Found by C1's device verification, invisible to every unit test and golden because each half is individually right |
+| ~~[**D-034**](#d-034)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-034-ruling), OD-11 | the frozen `.ctx` is a **verb** bar and the shipped `EditorContextBar` is the **WCAG 2.5.7** single-pointer twin of the drag gestures — **and they are not mutually exclusive.** The frozen bar is **additive**; the transform controls stay, because a parity phase does not remove an accessibility path. C2 splits into **C2a** (unblocked) and **C2b** (`.ctx*`) |
 | ~~[**D-032**](#d-032)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-032-ruling), OD-10 (C1 half) | the keep-clear warn state was never triggered in the freeze; the ruling makes it **transient interaction guidance**, so no content analysis is needed |
 | ~~[**D-033**](#d-033)~~ | ✅ **RESOLVED 2026-08-01** — [the frozen Bench amended](#d-033-amendment) | the frozen page was not the document's panel and the 16px cue was not the 17pt safe area; the page is now 229×324 and the cue a truthful uniform 18.5px |
 | [**D-023**](#d-023) | ⏳ **an owner ruling** | the Library labels its primary button `--paper` where the corpus publishes `--on-matcha` — the fourth of the D-005/D-011/D-022 set |
@@ -2579,8 +2580,8 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 |---|---|
 | **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) `:190-196`, `:429-441` · [`EditorContextBar.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorContextBar.kt) · [ADR-029](../DECISIONS.md#adr-029) §6 · [ADR-053](../DECISIONS.md#adr-053) §5 · [ADR-089](../DECISIONS.md#adr-089) row 2.10 |
 | **Found** | 2026-08-01, during **C2's pre-implementation blocker check**, immediately after [OD-9](#d-031-ruling) |
-| **Severity** | **Transcribing the freeze would remove a WCAG 2.5.7 conformance path** — blocks package **C2** |
-| **Status** | ⏳ **OPEN — owner ruling required** |
+| **Severity** | **Transcribing the freeze would remove a WCAG 2.5.7 conformance path** — fenced C2's rows 2.10–2.13 |
+| **Status** | ✅ **RESOLVED 2026-08-02** by owner ruling (**OD-11**) — option **(b) keep both**, plus the review's option (e). See [the ruling](#d-034-ruling) |
 
 **Two controls, one slot, different contents.** The frozen `.ctx` is a **verb** bar — `toolsFor()` at `:429-432` gives text **Edit · Font · Size · Ink · Delete**, photo **Reframe · Replace · Delete**. The shipped `EditorContextBar` is a **transform** bar: nudge ×4, scale ×2, rotate ×2, the Type-bar toggle, delete. Both appear on selection; both sit at the bottom. `Delete` is the only control they share.
 
@@ -2608,6 +2609,73 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 | **(e) Split the package** | **C2a** — selection, handles, dim, materialise — proceeds now; **C2b** — the `.ctx` bar — waits for (a)–(d) | nothing but a package letter. The precedent is one entry away: OD-10's D-032 half **fenced a single row of C1's table rather than C1**, and C1 shipped |
 
 Option (e) is orthogonal — the owner may take it *and* any of (a)–(d).
+
+### D-035 — the dark theme dims the sheet, and the document's own ink does not follow it {#d-035}
+
+| | |
+|---|---|
+| **Artifacts** | [`EditorScreen.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt) `benchPageSurface()` · [`ZinelyV2Colors.kt`](../../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Colors.kt) `paper` · [ADR-055](../DECISIONS.md#adr-055) (content inks) · [ADR-090](../DECISIONS.md#adr-090) · [`v2-bench.html`](mockups/v2-bench.html) `:59`, `:117` |
+| **Found** | 2026-08-02, by **C1's device verification** — both passes, `SM-A176B` / `RZCYA1VBQ2H`, Android 16 (SDK 36) |
+| **Severity** | **The user's own words are unreadable in the dark theme** — 1.60:1. Blocks C1's acceptance, and therefore all of Phase C |
+| **Status** | ⏳ **OPEN — owner ruling required** |
+
+**Measured, on the device, on one document.**
+
+| Screen | Sheet | Content ink | Contrast |
+|---|---|---|---|
+| **Editor**, dark, after C1 | `#2F2A22` (V2 `paper`) | `#000000` | **1.60:1** ⛔ |
+| **Editor**, light | `#F7F2E7` | `#000000` | 18.82:1 ✅ |
+| **Read / Proof**, dark, **same document, same minute** | `#EDE6D9` | `#000000` | **16.92:1** ✅ |
+
+**Neither half is a bug on its own, which is why no test caught it.** The content ink is black because it is
+*document data that prints* — theme-independent by design, and correctly so: a PDF that changed with the phone's
+night setting would be a defect far worse than this one. The sheet is `#2F2A22` because the **frozen Bench dims it**
+(`:59`), and C1 transcribed that faithfully. The defect is the *seam*: C1 replaced
+`.background(ZinelyTheme.colors.paper)` with `benchPageSurface()`, and V1's dark `paper` was a **lit** `#EDE6D9`
+while V2's is a **dimmed** `#2F2A22`. Every unit test, every golden and the whole frozen property table stayed
+green, because each half is individually right.
+
+**The frozen Bench does answer this — for its own mock content.** It draws `.t-title` / `.t-body` in `--ink`, which
+*is* theme-aware, so in the prototype the dimmed sheet carries cream text. The product cannot copy that, because
+the prototype's "content" is CSS and the product's is a document that has to print.
+
+**Why this is the owner's and not the implementer's.** It is the same shape as [D-004](#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) — the freeze and the engine disagreeing about the *artifact* rather than the chrome — and every answer is a product decision:
+
+| | What it does | What it costs |
+|---|---|---|
+| **(a) The artifact never dims** | the editor's sheet stays paper-coloured in dark, as the Read screen already does; the *room* goes dark around it | departs from the frozen Bench on `.page`'s dark value — an amendment to a frozen surface, the fourth. But it is what the shipped product already does one screen away, and it keeps the editor honest about the print |
+| **(b) Dim the sheet, invert the ink for display only** | the canvas draws content ink lightened when dark | the editor stops showing what will print — the screen that exists to answer *"how do I change this page?"* would answer it in colours the paper will never have. Also needs a per-ink display mapping that ADR-055 does not define |
+| **(c) Dim the sheet, and make content ink a theme-aware document default** | black becomes cream in dark | the PDF changes with the phone's night setting. Rejected on sight here, listed only so the option is on the record |
+| **(d) Keep as built, document as a limitation** | nothing changes | ships a screen where the user's own words are invisible at 1.60:1. Not viable |
+
+**Owner decision requested.** (a) is the only one consistent with both the Read screen and the print, and it is what
+this register would recommend — but it amends a frozen surface, which is not the implementer's to do.
+
+**Note on scope.** This is not confined to text. Any content the engine draws dark — strokes, dark photo regions,
+the [ADR-055](../DECISIONS.md#adr-055) inks tuned for AA **on light paper** — sits on the same dimmed sheet. The
+five text inks are AA-tuned against `#F7F2E7`; none of them was tuned against `#2F2A22`.
+
+---
+
+#### The ruling — owner, 2026-08-02 (OD-11) {#d-034-ruling}
+
+> The frozen `.ctx` specifies the **contextual editing vocabulary**. The shipped `EditorContextBar` specifies an **accessibility-preserving transform affordance**. **These are not mutually exclusive.**
+>
+> **Option (b) — keep both.** The frozen contextual toolbar is **additive**. The existing transform bar remains because it is an accessibility conformance path ([ADR-029](../DECISIONS.md#adr-029) §6 / WCAG 2.5.7) and **must not be removed or weakened during a parity phase**. Accordingly: the frozen `.ctx` is implemented as specified; the existing transform controls remain available; **no existing accessibility capability is removed; no existing editor capability is removed.**
+>
+> Also accept the review recommendation — **option (e)**: split C2 into **C2a** (selection, handles, focus state, the contextual selection framework) and **C2b** (the contextual toolbar, `.ctx*`). The fence applies **only to rows 2.10–2.13**. **C2a is fully unblocked.**
+
+**What this settles.** The premise the entry could not decide for itself — whether two bars in one slot is a parity failure or a parity *requirement* — is answered: during a phase whose objective is parity, an accessibility path already in the product is not a candidate for removal, and a frozen surface that omits it was never describing it. This is the same reasoning OD-9 used to keep redo, now applied to a conformance path rather than a convenience, which is why it lands the same way and harder.
+
+**Consequence for the packages.**
+
+| | |
+|---|---|
+| **C2a** — `.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat` | ▶ **unblocked.** No entry fences it |
+| **C2b** — `.ctx*`, [ADR-089](../DECISIONS.md#adr-089) rows 2.10–2.13 | ▶ **unblocked by this ruling**, and now carries an explicit non-removal invariant: C2b adds the verb bar and **leaves `EditorContextBar` reachable**. Its FPT must assert that the transform controls survive the package, and the assertion's mutation is *delete them* |
+| **C4** | unchanged — already released by OD-9 |
+
+**The one thing implementation must now get right.** Two bars that both appear on selection and both sit at the bottom is a *composition* the freeze does not draw, and the ruling makes it required rather than forbidden. How the two occupy the slot — stacked, switched, or one summoning the other — is not specified by either source, and C2b's own pre-implementation check owes that question an answer before its production code. It is a **layout** question, not a capability one; if answering it needs a new capability, that is a new entry, not an implementer's call.
 
 **Owner decision requested.** Which of the four, or another. Note that **OD-9's own logic points at (b)**: it kept redo on the reasoning that the frozen bar specifies the editing surface rather than the product's full capability, and the transform controls are the same kind of omission — a shipped capability the prototype never had to model. That is a reading, not a ruling, which is why C2 stops here instead of proceeding on it.
 
@@ -2789,6 +2857,7 @@ the phase that meets it (**Phase D**), and this paragraph is that record.
 | ID | Defect | Resolved |
 |---|---|---|
 | **D-033** | The frozen page is not the document's page, and the keep-clear inset is not the document's safe area | 2026-08-01 — owner ruling, option (c): **the frozen Bench is amended**, on the [D-024](#d-024) precedent. `.page` 212×326 → **229×324** (ratio 0.70679, 0.11px off ideal) so the depiction carries the real panel's aspect; `.keepclear` 16px → **18.5px**, the engine's `safeAreaInsetPt = 17.0` scaled — the two axes agreeing to 0.01px is what licenses one uniform number. The page box is now canonical geometry for `.keepclear`, `.guide`, `.pagenum`, D-032's intersection test and the Compose viewport. [Amendment](#d-033-amendment) and entry kept above. |
+| **D-034** | The frozen contextual bar and the shipped one are different controls, and the shipped one is an accessibility conformance path | 2026-08-02 — owner ruling (**OD-11**), option **(b) keep both**: the frozen `.ctx` is the contextual editing **vocabulary**, `EditorContextBar` is an accessibility-preserving **transform** affordance, and *"these are not mutually exclusive."* The frozen bar is **additive**; the transform controls remain, because a parity phase does not remove or weaken a WCAG 2.5.7 path ([ADR-029](../DECISIONS.md#adr-029) §6). Review's option **(e)** also accepted: C2 splits into **C2a** (selection — unblocked) and **C2b** (`.ctx*`), the fence having covered rows 2.10–2.13 only. [Ruling](#d-034-ruling) and entry kept above. |
 | **D-031** | The frozen Bench draws four controls that go nowhere, and drops one the product ships | 2026-08-01 — owner ruling (**OD-9**): the freeze specifies the **editing surface, not the whole application flow**. Font and Size stay drawn as contextual affordances and invent no capability (ADR-055 excludes font choice, so Font is **specified-but-unreachable**; Size routes to the shipped Type bar). Read reuses [ADR-086](../DECISIONS.md#adr-086)'s Editor → Proof hand-off, back reuses the existing stack, and **redo is kept** — a control the freeze omits is not thereby deleted. Applying the ruling immediately surfaced [D-034](#d-034), which it does not reach. [Ruling](#d-031-ruling) and entry kept above. |
 | **D-032** | The keep-clear cue has a frozen appearance, no trigger, and a written trigger the product cannot compute | 2026-08-01 — owner ruling (OD-10, C1 half): the warn state is **transient guidance, not document state**. It shows only while an in-flight interaction would move content into the keep-clear area, and disappears when the interaction ends; content already inside after editing draws no persistent warning. None of the three offered options was taken — the trigger became the manipulated element's **bounds**, so face detection is not needed and [PRD §5](../PRD.md#5-product-principles-non-negotiable) is not engaged. [Ruling](#d-032-ruling) and entry kept above. |
 | **D-001** | `v2-bench.html`'s header contradicts the freeze record | 2026-08-01 — closed by **Phase C / C0**, the documentation-only package that existed for it: the stale header line deleted, the stale footer clause stripped, D-005's stand-in note and the [D-010 amendment](#d-010-amendment) kept. No selector, declaration or script touched. [Closure](#d-001-closure) and entry kept above. |
