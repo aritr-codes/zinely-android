@@ -2988,6 +2988,7 @@ the work now sits is the roadmap's
 | **OD-11** ✅ **ruled 2026-08-02** | ~~C2's `.ctx*` rows 2.10–2.13~~ | **[D-034](design/V2-SPEC-DEFECTS.md#d-034)** — the frozen `.ctx` is a **verb** bar (Edit · Font · Size · Ink · Delete); the shipped `EditorContextBar` it would replace is the **transform** bar that exists to satisfy **WCAG 2.5.7** (single-pointer alternative to dragging). `Delete` is the only control they share. Per-element `customActions` do not substitute — they reach assistive tech only. Transcribe, keep both, re-seat, or merge? | ✅ **Ruled 2026-08-02 ([OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)): keep both.** The two are *"not mutually exclusive"* — the frozen bar is the contextual editing **vocabulary**, the shipped one an accessibility-preserving **transform** affordance. The frozen `.ctx` is **additive**; the transform controls remain, because a parity phase does not remove or weaken a conformance path. **C2 splits into C2a** (selection — `.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat`) **and C2b** (`.ctx*`, rows 2.10–2.13). Both unblocked. |
 
 | **OD-12** ✅ **ruled 2026-08-02** | ~~C1's acceptance, and so all of Phase C~~ | **[D-035](design/V2-SPEC-DEFECTS.md#d-035)** — the dark theme dims the sheet while the document's content ink stays black (correctly: it prints). Measured **1.60:1** on device; the Read screen showed the same page at 16.92:1. | ✅ **Ruled 2026-08-02 ([OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling)): the artifact does not dim.** *"The editor represents the physical printed artifact"* — dark theme darkens the studio chrome, not the sheet, and the five [ADR-055](#adr-055) content inks are untouched. The frozen `.page` is amended into a **light-theme island** of eight restated light tokens (the fourth amendment to a frozen V2 surface, on the D-024/D-033 precedent); `.phone` still dims. |
+| **OD-13** ✅ **ruled 2026-08-02** | ~~C2a's acceptance, and so C2b~~ | **[D-037](design/V2-SPEC-DEFECTS.md#d-037)** — C2a shipped the frozen dim and neither of the freeze's two ways out of it, so a selection could not be dismissed and everything else the user had written stayed at **2.78:1**. Raised by C2a's own Pass 2, which failed on it. | ✅ **Ruled 2026-08-02 ([OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling)): selection is transient, not modal.** Tapping anywhere outside the selection dismisses it — blank paper, the desk, or another element (which **transfers** with no intermediate clear). No confirmation, no persistent selection mode. Scoped by the owner as *completion of an existing capability, not a new feature*: the intent, the reducer branch and the state were already in the repository. C2a's fence widens by this one behaviour ([ADR-091](#adr-091) row 2.14). **[D-036](design/V2-SPEC-DEFECTS.md#d-036) ruled documentation-only in the same breath** — it fences nothing and does not affect C2a's acceptance. |
 
 **C0 may legitimately begin.** Its only blocker, OD-1, is ruled. C0 writes no production code — it strips two stale lines from `v2-bench.html` under [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record)'s existing 2026-07-28 disposition, now also carrying the OD-3 amendment note that must survive that strip. C1's first line is likewise unblocked: OD-3 and OD-4 are ruled, and OD-10's D-032 half fences a single row rather than the package.
 
@@ -3143,7 +3144,7 @@ Also reconciled: the `.phone::after` "prototype bezel, not product UI" annotatio
 
 **C2a — selection: the outline, the eight handles, the dim, and the materialise. The frozen file expresses three of these as per-element CSS the render engine cannot offer, and the honest transcription is a *composite*, not a model change.** The Bench draws each element as its own DOM node, so `opacity:.4` and `scale(.92)` are one-line declarations. Zinely draws a page as **one tape into one canvas** ([`EditorPagePreview.kt:110`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorPagePreview.kt#L110)); there is no per-element alpha in the tape and **there must not be one in the model**, because an opacity on `Element` would reach the exported PDF. This ADR publishes C2a's property-level table before its production code and records the two composite constructions that reproduce the frozen appearance without touching the document.
 
-- **Status:** `Proposed` — written at the opening of C2a, before any `src/main` change, per [ADR-089 §2.2](#adr-089) and the [RF1 lapse](#adr-090) C1 recorded. Moves to `Accepted` only on the owner's word, after independent review and **both** device-verification passes.
+- **Status:** ✅ `Accepted` **2026-08-02**. Written at the opening of C2a, before any `src/main` change, per [ADR-089 §2.2](#adr-089) and the [RF1 lapse](#adr-090) C1 recorded; it stayed `Proposed` through a failed Pass 2, an owner ruling ([OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling)), a second independent review, and **both device passes re-run from the beginning with no evidence reused** — [that record](#adr-091-completion-device) is what moves it here.
 - **Independently reviewed: GO WITH FIXES**, three Required Fixes, all reconciled and each recorded in the table below rather than quietly fixed. **RF1 — the dim escaped the sheet and bleached the desk** (row 2.8b); it was user-visible on every selection in the dark theme and no test could see it, because the probe's own host was the one arrangement that hides it. **RF2 — the frozen `.12s` chrome transition sat in this table unimplemented** (row 2.3b). **RF3 — the ADR claimed one composite deviation and there are two** (row 2.9a). The review also confirmed, independently, that the export path is untouched, that the WCAG figures are exact, and that the mutations bite.
 - **Context:** C2a is the first half of the package [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) split in two. Its selectors are [ADR-089 §4](#adr-089) rows **2.1 and 2.3–2.9** — `.el`, `.sel`, `.handle*`, `.content.focusing` and `@keyframes mat`. Rows **2.10–2.13** (`.ctx*`) are **C2b** and are fenced out of this package. Its ground is [ADR-090](#adr-090): the sheet is a **light-theme island**, which is what lets every value below be theme-independent — the outline, the handles and the dim all sit *on the artifact*, so they read against `--paper` in both themes and are measured once.
 
@@ -3199,11 +3200,12 @@ The scrim is not an approximation. CSS `opacity:.4` on an element over paper com
 | 2.6a | the four **edge** handles the freeze does not draw | absent | same | all eight present; an edge drag changes **one** axis | delete the four edge entries | ✅ **[OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) applied** — §1(b). Kept and re-skinned |
 | 2.7 | handle **hit target** ≥48dp while drawn at 13px | absent; [IA §C.1](design/V2-BENCH-IA-INTERACTION.md) | `ResizeHandles.kt` | **platform-tree** bounds via `uiautomator dump`, not Compose semantics | shrink the extended target to the drawn box | already shipped (48dp `Box`, 15dp mark → **13dp** mark). ⚠ **This row's promised assertion could not be made as written, and that is itself the finding.** The handles carry a `testTag` but **no semantics**, so they produce *no platform node*: `uiautomator dump` returns nothing for them, and a platform-tree bounds assertion has nothing to measure. The 48dp box is real in Compose layout and invisible to the platform — which also means the handles are invisible to TalkBack, by design ([ADR-029 §6](#adr-029) makes the transform bar the assistive path, not the handles). **What Pass 1 could measure is the overlap, and it is real:** the text element measured **595×192 px = 216×70 dp**, so along its 70 dp side the corner and edge handles sit **35 dp apart while each claims 48 dp** — the left-edge target overlaps both corner targets. That is exactly ⏳ **[D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)**'s warning, now with a number, and eight handles make it worse than four would |
 | 2.8 | `.content.focusing .el:not(.sel-focus){opacity:.4}` at `.18s` | `:152-153` | `EditorPagePreview.kt` | the composited pixel of an unselected element equals `0.4·ink + 0.6·paper`, measured; and the selected element's pixel is **unchanged** | α .6→0 (no dim); remove the punch-out (dim everything) | §2.1. The scrim is `--paper` at **α 0.6**, not the element at .4 — the arithmetic is the point, and the test measures the composite rather than the alpha |
-| 2.8a | the dim's deviation | — | same | an unselected element **above** the selected one is **not** dimmed | — | asserted **as a deviation**, so it is a recorded reading rather than an undiscovered bug — §2.1. Invisible in practice: the wash is paper over paper |
+| 2.8a | the dim's deviation | — | same | an unselected element **above** the selected one is **not** dimmed | — | asserted **as a deviation**, so it is a recorded reading rather than an undiscovered bug — §2.1. ⚠ **"Invisible in practice: the wash is paper over paper" was wrong, and the completion's Pass 1 disproved it on hardware.** The hole is the selection's *chrome* quad — the element box inflated by the outline's 7dp stand-off — so a **neighbouring** element whose ink falls inside that quad keeps full-strength ink while the rest of the page dims. Two adjacent text elements are enough: with one selected, the other's word measured **`(0,0,0)`, undimmed**, against `(150,147,141)` for ink outside the quad. The freeze's per-element `opacity:.4` would have dimmed all of it. It errs toward showing the user's own content at full strength — [OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling)'s direction — so it is carried, not fixed; what is corrected here is the **claim**, which is the second time this package asserted something about the composite that only the device could check |
 | 2.8b | the wash is **bounded to the sheet** | `.content{inset:22px}` inside `.page`, `:150` | `benchPageRect` | a desk pixel outside the sheet is bit-identical with the dim on and off | bound the wash to the whole canvas instead | **The review's blocking finding.** The scrim fills the canvas so its coordinates agree with its siblings', but the sheet is a smaller centred child: an unbounded wash painted *paper over the desk*, compositing the dark room `#2F2A22` to ≈`#A7A298`. Every selection lit the room up and every deselection dimmed it again — [ADR-090](#adr-090) exactly inverted. **No test could catch it**, because the probe's host painted paper edge-to-edge, the one arrangement in which it is invisible. The host now has a desk |
 | 2.9a | the materialise's deviation | — | same | anything drawn **above** the arriving element, inside its rect, is covered for the animation | — | the second deviation, recorded because the first draft of this ADR claimed there was only one. A `covers` quad is **opaque**, so inserting an element *beneath* an existing caption blanks that caption for 300 ms. The common case is safe (an insertion appends on top); unlike 2.8a this one is visible, which is why it is stated separately rather than folded in |
 | 2.9b | what the insertion guard **cannot** distinguish | — | same | one new id **and** nothing lost ⇒ animate | drop the `size + 1` clause and a whole-page content swap animates | an **undo that restores a single deleted element**, and a redo of an insert, both present exactly one genuinely new id and both animate. Telling them apart needs the reducer's intent, and reading history here would make transient appearance depend on it — the one thing [D-032](design/V2-SPEC-DEFECTS.md#d-032-ruling)'s discipline forbids. Recorded rather than papered over |
 | 2.9 | `.el.materialize` = `mat .3s var(--settle)`; `scale .92→1`, `opacity 0→1` | `:160-161` | `EditorPagePreview.kt` | the from-scale via a frame probe; the fade via the same composite measurement as 2.8 | `.92`→`1`; duration 300→0 with motion **on** | §2.2. One-shot ⇒ **0 ms under reduced motion** ([ADR-075](#adr-075)). Derived from a `remember`ed id diff — no reducer state, nothing persisted |
+| 2.14 | `canvas.addEventListener('click', … deselect())` — the way **out** of the dim | `:561` | `EditorGestures.kt` `onTap` | tap on blank paper clears; tap on the **desk** clears; tap on another element **transfers with no intermediate clear**; a drag never deselects | remove the `onTap` wiring (kills 3); `ClearSelection` + `SelectAt` instead of one intent (kills the transfer test) | ✅ **added by [OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling)**, which widened C2a's fence by exactly this one behaviour after Pass 2 failed on its absence. One line, because `SelectAt`'s **miss** branch already reduces to `ClearSelection`'s state (`EditorReducer.kt:24` vs `:26`) — so the transfer case is a *single* reduction and no frame reads as deselected. The transfer test pins that down by asserting the tap produced **exactly one intent**, and additionally records the per-reduction selection history — the review was right that the intent count is what actually kills the clear-then-select mutant, and that the history assertion is near-vacuous *in this test*, since a correct implementation leaves it holding a single entry. It is kept as the assertion that would speak if the transfer ever grew a second reduction. **Cost, stated:** `detectTapGestures` cannot know a tap is single until the double-tap window closes, so deselection resolves after that timeout — inherent to a surface carrying both click and dblclick, which the freeze specifies |
 
 ### 4. What C2a must not do
 
@@ -3258,3 +3260,83 @@ it is what currently ships.
 The two passes disagree, and per the handbook **the disagreement is the finding**: Pass 1 says the dim is exact to
 one channel step; Pass 2 says exactness is not the question. **C2a is not accepted, C2b does not begin, and the
 disposition is the owner's** — see [D-037](design/V2-SPEC-DEFECTS.md#d-037).
+
+*This section records the verification of commit `56249c4`, the state in which Pass 2 failed. It is kept
+unedited. The completion below is a separate record: **both device passes are to be re-run from the beginning
+against the completed build, and none of the evidence above may be reused.** Their result is recorded under
+[the completion](#adr-091-completion) when they have run, and not before.*
+
+#### C2a's completion — the D-037 exit {#adr-091-completion}
+
+[OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling) ruled recommendation **(a)** and made selection a **transient**
+editing state: it is dismissed by tapping anywhere outside it, with no confirmation and no persistent selection
+mode. The owner's framing is worth keeping, because it is what bounds the change — *completion of an existing
+capability, not a new feature*. The intent, the reducer branch, the selection state and their tests were already
+in the repository; only the interaction that dispatches them was missing. D-036 was ruled **documentation only**
+in the same breath and fences nothing, so C2a's acceptance does not wait on the canonical file.
+
+What landed is **row 2.14** and nothing else: one `onTap → Intent.SelectAt` in `EditorGestures.kt`, four tests,
+two mutations. No selector was re-opened, no `.ctx*` row was touched.
+
+**What the exit does *not* reach, recorded now rather than discovered later.** OD-13's exit is **spatial** — it is a
+tap at a place. [`ElementSemanticsLayer.kt`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/ElementSemanticsLayer.kt)
+gives each element an `onClick(label = "Select")` and **nothing that clears**, so a TalkBack user can *transfer* a
+selection but cannot *dismiss* one, and D-037's actual complaint — the user's own words at 2.78:1, undismissable —
+survives for that user. The freeze's non-spatial exit is the **Done** button, which is **C4**'s (`.bar`), so this is
+a deferral rather than an omission; it is written down here because the review raised it and because the previous
+round of this package proved that an unwritten gap is one nobody re-checks. **C4 closes it**, and Pass 1 confirms
+the state rather than meets it for the first time. Two smaller carries: `EditorGesturesTest` composes the gesture
+surface without `ResizeHandles`, so the sibling z-order that keeps a handle tap from deselecting is *proven* (the
+review composed the real arrangement and measured it) but **unguarded by any test**; and the freeze gates its canvas
+click on `sheet.show || pgrid.show` (`v2-bench.html:562`), where the port relies on those overlays blocking
+hit-testing — checked on device rather than assumed.
+
+##### The completion's device verification — **both passes re-run from the beginning, both pass** {#adr-091-completion-device}
+
+`SM-A176B` (`RZCYA1VBQ2H`), Android 16 / SDK 36, debug build installed 2026-08-02 15:46. **None of the `56249c4`
+evidence above is reused**; every figure below was re-measured on the completed build. Pass 1 ran on the owner's
+own zine and **the document was restored to the byte** — verified not from the screen but from the persisted file
+(`run-as … cat document.json`): page 0 holds one element, `Hello`, at `xPt 31.570875 / yPt 125.00796`, its
+starting transform. Pass 2 ran on a **new zine of my own**, which was then deleted; the shelf is back to its six.
+
+**Pass 1 — developer verification: PASS**
+
+| What | Measured | Expected |
+|---|---|---|
+| **D-037 · tap blank paper** | selection cleared, **3/3** | OD-13 clause 1 |
+| **D-037 · tap the desk** | selection cleared | clause 2 |
+| **D-037 · tap another element** | selection **transferred**; the page never showed a deselected frame | clause 3 |
+| **D-037 · drag a selected element** | moved +79 px, selection still live, bar still up | clause 4 — the transform path is untouched |
+| **tap a resize handle** | selection **preserved, 8/8 handles** | the risk raised pre-review and disproved by the reviewer in Robolectric — now confirmed on glass: the handle swallows the tap, so reaching for a handle never deselects |
+| the dim, dark | unselected ink `(149,146,140)`; `opacity:.4` over the measured paper computes `(148,145,139)` | **worst channel deviation 1** |
+| the dim, light | `(150,147,141)`, **2.75:1** | the island: one figure both themes (dark 2.78:1) |
+| selected ink | `(0,0,0)`, **18.82:1** | untouched by the wash |
+| outline core | `(96,109,49)`, **5.05–5.20:1**, identical in both themes | `--matcha`; ≥3:1 for WCAG 1.4.11 |
+| handles | eight, circular, `--paper` fill, `--matcha` ring, halo `(253,251,248)` | rows 2.5, 2.6a |
+| desk, dark, selection live | `(49,44,36)` — **unbleached** | the RF1 bound still holds |
+| platform tree | elements `Button`, `clickable=true`, **`focusable=false`**; handles **no node**; transform bar **all eight verbs** + `Bring forward`/`Send backward`/`Text style`/`Delete` | rows 2.1b, 2.7; [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) — nothing removed |
+
+One correction came out of it — **row 2.8a's "invisible in practice" is false**; see that row. One anomaly is
+recorded **unexplained rather than dismissed**: on the first attempt, a tap at (400,935) selected the element
+*below* the one under the finger. It did not recur in **five** controlled repetitions of the same sequence, and
+the most likely explanation is my own harness — a coordinate taken from one layout and replayed in the other,
+which is exactly what produced three false "deselect" readings in the handle sweep before the protocol was
+tightened. It is written down because an unreproduced one-off is not the same as an absent one.
+
+**Pass 2 — first-time user verification: PASS**
+
+The failure that stopped `56249c4` is gone. I selected something, wanted to stop, tapped the paper beside it, and
+it stopped — no hunting, no mode, nothing to learn. **The dim now has a way out, and the way out is the first one
+a person tries.** Two things are carried, neither a failure of the ruled behaviour:
+
+- **P2-1 — the sheet resizes every time you select or dismiss.** Measured: `1028×1454 px` with nothing selected,
+  `850×1202 px` with a selection — a **17 % linear shrink**, because the transform bar takes its space from the
+  canvas. It is pre-existing, and D-037 does not cause it. But dismissal never existed before, so where the user
+  used to meet this once, they now meet it on **every** dismissal, in the *growing* direction. For a product whose
+  ruling reads *"the editor represents the physical printed artifact"* ([OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling)),
+  a sheet of paper that changes size when you stop touching it is worth someone's decision. `.bar` is **C4**'s, and
+  C4 is where the fix, if any, belongs.
+- **P2-2** — the un-dimmed neighbour of row 2.8a, which a user reads as *"some of my words faded and some didn't"*.
+
+Both passes agree, so there is no disagreement to resolve. **[D-037](design/V2-SPEC-DEFECTS.md#d-037) is closed and
+C2a is accepted.**

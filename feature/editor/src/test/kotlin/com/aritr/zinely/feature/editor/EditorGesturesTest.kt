@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
@@ -73,16 +74,27 @@ class EditorGesturesTest {
 
     private class Harness(val store: EditorStore) {
         val intents = mutableListOf<Intent>()
+
+        /**
+         * The selection **after every reduction**, in order. The store's mailbox reduces synchronously
+         * before `dispatch` returns, so this is a complete per-intent state history — which is what makes
+         * the D-037 clause "no intermediate clear" falsifiable rather than merely plausible.
+         */
+        val selectionAfterEach = mutableListOf<Set<String>>()
         var lastPreviewWasNull = false
-        fun dispatch(i: Intent) { intents += i; store.dispatch(i) }
+        fun dispatch(i: Intent) {
+            intents += i
+            store.dispatch(i)
+            selectionAfterEach += store.uiState.value.selection
+        }
     }
 
-    private fun setContent(store: EditorStore): Harness {
+    private fun setContent(store: EditorStore, surfaceDp: Int = 200): Harness {
         val h = Harness(store)
         composeRule.setContent {
             Box(
                 Modifier
-                    .size(200.dp, 200.dp)
+                    .size(surfaceDp.dp, surfaceDp.dp)
                     .testTag("surface")
                     .editorTransformGestures(
                         screenPxPerPt = pxPerPt,
@@ -175,5 +187,86 @@ class EditorGesturesTest {
 
         assertNull(h.intents.firstOrNull { it is Intent.BeginTransform })
         assertTrue(store.uiState.value.interaction is Interaction.Idle)
+    }
+
+    // ── D-037: selection is a transient editing state, dismissed by tapping outside it ──────────────
+    // Owner ruling 2026-08-02 (docs/design/V2-SPEC-DEFECTS.md#d-037). Four clauses, one per test below.
+
+    /**
+     * `detectTapGestures` cannot know a tap was single until the double-tap window has closed, so a
+     * single-tap assertion that does not push the clock past that window is asserting nothing.
+     */
+    private fun singleTap(at: Offset) {
+        composeRule.onNodeWithTag("surface").performTouchInput { click(at) }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun tapOnBlankPaper_clearsTheSelection() {
+        val store = newStore()
+        store.dispatch(Intent.PlaceText(Transform(10.0, 10.0, 20.0, 20.0), "t"))
+        assertTrue(store.uiState.value.selection.isNotEmpty())
+        setContent(store)
+
+        // (160,160) px at 2 px/pt → (80,80) pt — bare paper, far from the 10..30 pt box.
+        singleTap(Offset(160f, 160f))
+
+        assertEquals(emptySet<String>(), store.uiState.value.selection)
+    }
+
+    @Test
+    fun tapOnTheDeskOutsideThePage_clearsTheSelection() {
+        val store = newStore()
+        store.dispatch(Intent.PlaceText(Transform(10.0, 10.0, 20.0, 20.0), "t"))
+        setContent(store, surfaceDp = 260)
+
+        // 260 dp at 2 px/pt spans 130 pt, so (240,240) px → (120,120) pt: off the 100×100 pt page
+        // entirely — the studio desk. It misses every element for the same reason blank paper does.
+        singleTap(Offset(240f, 240f))
+
+        assertEquals(emptySet<String>(), store.uiState.value.selection)
+    }
+
+    @Test
+    fun tapOnAnotherElement_transfersSelectionWithNoIntermediateClear() {
+        val store = newStore()
+        store.dispatch(Intent.PlaceText(Transform(10.0, 10.0, 20.0, 20.0), "a"))
+        val first = store.uiState.value.selection.single()
+        store.dispatch(Intent.PlaceText(Transform(60.0, 60.0, 20.0, 20.0), "b"))
+        val second = store.uiState.value.selection.single()
+        val h = setContent(store)
+        // Start from the FIRST element so the tap is a genuine transfer.
+        store.dispatch(Intent.SelectAt(PtPoint(20.0, 20.0)))
+        assertEquals(setOf(first), store.uiState.value.selection)
+
+        // (140,140) px → (70,70) pt — inside the second box.
+        singleTap(Offset(140f, 140f))
+
+        assertEquals(setOf(second), store.uiState.value.selection)
+        // The ruling asks for transfer *without* an intermediate clear: one reduction, and no frame in
+        // which the page reads as deselected. Both halves are checked, because either alone would pass
+        // a "clear, then select" implementation that emitted two intents in the same frame.
+        assertEquals(1, h.intents.size)
+        assertTrue("selection was never empty mid-transfer", h.selectionAfterEach.none { it.isEmpty() })
+    }
+
+    @Test
+    fun draggingASelectedElement_neverDeselectsIt() {
+        val store = newStore()
+        store.dispatch(Intent.PlaceText(Transform(40.0, 40.0, 20.0, 20.0), "t"))
+        val id = store.uiState.value.selection.single()
+        val h = setContent(store)
+
+        composeRule.onNodeWithTag("surface").performTouchInput {
+            swipeRight(startX = centerX, endX = centerX + 80f, durationMillis = 200)
+        }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        // The transform layer consumes the moved pointer, so the tap layer must not fire — otherwise
+        // every drag would end by re-hit-testing the finger's lift point and could drop the selection.
+        assertNull(h.intents.firstOrNull { it is Intent.SelectAt })
+        assertEquals(setOf(id), store.uiState.value.selection)
     }
 }

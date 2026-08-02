@@ -26,16 +26,28 @@ dimmed at night while content ink stays black, because it prints). The second be
 and the frozen Bench was amended a fourth time, making `.page` a **light-theme island** of eight restated light
 tokens. Content ink now measures **18.82:1** in dark. Both defects are guarded by assertions, not goldens: twice
 in this package a golden was re-recorded over the defect it should have caught.
-**C2a is built and NOT accepted; C2b must not start.** C1 was accepted and committed (`23e1a91`). C2a followed:
+**C2a is ACCEPTED (2026-08-02); C2b is the next package.** C1 was accepted and committed (`23e1a91`). C2a followed:
 [ADR-091](DECISIONS.md#adr-091) opened it with a property-level table before any production code, the independent review
 returned **GO WITH FIXES** and all three Required Fixes were reconciled, and the full suite plus both golden gates are
 green. Then the device answered differently on each pass. **Pass 1 passed** — the dim lands within one channel step of
 the frozen `opacity:.4`, the outline measures `#5E6B2F` at 5.20:1 in *both* themes, content ink holds 18.81:1.
 **Pass 2 failed**: once you select something there is no way to stop, so the dim — which fades everything else the user
 wrote to 2.78:1 — cannot be dismissed. `Intent.ClearSelection` exists in the reducer and nothing dispatches it; the
-freeze's two exits are a canvas click (unowned) and Done (**C4**). That is ⛔ [D-037](design/V2-SPEC-DEFECTS.md#d-037),
-and it is the owner's to rule. Recommendation **(a)**: let C2a add tap-to-deselect, one dispatch of an intent that is
-already written and already tested.
+freeze's two exits are a canvas click (unowned) and Done (**C4**). That was ⛔ [D-037](design/V2-SPEC-DEFECTS.md#d-037),
+**ruled the same day as [OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling), option (a): selection is a transient editing
+state, not a modal one** — a tap anywhere outside it dismisses it, and a tap on another element *transfers* with no
+intermediate clear. The owner scoped it as *completion of an existing capability, not a new feature*, and it landed as
+one line: `onTap → Intent.SelectAt`, which covers every clause because `SelectAt`'s hit-test **miss** already reduces to
+`ClearSelection`'s exact state ([ADR-091](DECISIONS.md#adr-091) row 2.14). Four tests, two mutations, a second
+independent review (**GO WITH FIXES** — both Required Fixes documentation, both reconciled). **[D-036](design/V2-SPEC-DEFECTS.md#d-036)
+was ruled documentation-only and fences nothing.** Both device passes were then re-run from the beginning
+against the completed build, reusing none of the earlier evidence, and **[both pass](DECISIONS.md#adr-091-completion-device)**:
+dismissal works on paper, on the desk and as a transfer, a drag still transforms, and all eight handles swallow a
+tap so reaching for one never deselects. Pass 1 disproved one of the ADR's own claims (row 2.8a's *"invisible in
+practice"* — a neighbour inside the selection's chrome quad keeps full-strength ink), corrected in place. Pass 2
+carries **P2-1: the sheet resizes 17 % on every select/dismiss**, pre-existing and `.bar`-shaped, so **C4**'s. The
+owner's document was restored and the restoration **verified from the persisted file rather than the screen**.
+**[ADR-091](DECISIONS.md#adr-091) is `Accepted`.**
 
 ~~**C2 is the next package, split into C2a and C2b by OD-11, and both are now unblocked — C1's acceptance was the
 last gate:** [D-031](design/V2-SPEC-DEFECTS.md#d-031) was ruled on 2026-08-01

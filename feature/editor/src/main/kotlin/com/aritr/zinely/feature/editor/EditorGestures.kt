@@ -30,9 +30,16 @@ import com.aritr.zinely.render.android.ExportScale
  * ([LiveTransform]) that drives the selection chrome's `graphicsLayer{}` during a drag/pinch/rotate.
  *
  * Two cooperating detectors on the page surface:
- *  - **Tap layer** — `detectTapGestures`: **long-press** → [Intent.SelectAt] (hit-test runs in the pure
- *    reducer), **double-tap** → [onDoubleTap] (the text-edit-session seam; its begin-edit intent lands in
- *    the text-session step).
+ *  - **Tap layer** — `detectTapGestures`: **tap** and **long-press** → [Intent.SelectAt] (hit-test runs in
+ *    the pure reducer, so a miss clears the selection — [D-037](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-037)),
+ *    **double-tap** → [onDoubleTap] (the text-edit-session seam; its begin-edit intent lands in the
+ *    text-session step).
+ *
+ *    **Cost of carrying `onTap` beside `onDoubleTap`, stated because it is not free:** `detectTapGestures`
+ *    must wait out the double-tap window before it can know a tap was single, so deselection resolves after
+ *    that timeout rather than instantly. That is inherent to a surface that supports both, and the frozen
+ *    Bench specifies both on the same surface (`click` deselects, `dblclick` edits). The alternative —
+ *    deselecting on down — would fire on the way into a double-tap and make text editing flicker.
  *  - **Transform layer** — a hand-rolled begin/update/commit loop (the internals of
  *    `detectTransformGestures`, opened up so the gesture *end* is observable). The first real
  *    pan/zoom/rotation frame dispatches [Intent.BeginTransform] and reads the session **token**
@@ -75,6 +82,17 @@ public fun Modifier.editorTransformGestures(
     return this
         .pointerInput(screenPxPerPt, pageOffset) {
             detectTapGestures(
+                // D-037 (owner ruling, 2026-08-02): selection is a **transient** editing state, dismissed by
+                // tapping anywhere outside it. One intent covers every clause of that ruling, because
+                // `Intent.SelectAt`'s hit-test miss branch already reduces to exactly `ClearSelection`'s state
+                // (`selection = emptySet()`, EditorReducer:24 vs :26):
+                //   · blank paper      → HitTest misses → selection cleared
+                //   · the studio desk  → the point maps outside every element → misses → cleared
+                //   · another element  → selected in the SAME reduction, so there is no intermediate clear
+                //     and no frame in which the page reads as deselected — which the ruling asks for
+                //     explicitly, and which a UI-side "clear, then select" would have broken.
+                // Running the hit test here instead would duplicate reducer logic in the UI layer for no gain.
+                onTap = { pos -> dispatch(Intent.SelectAt(toPage(pos))) },
                 onLongPress = { pos -> dispatch(Intent.SelectAt(toPage(pos))) },
                 onDoubleTap = { pos -> onDoubleTap(toPage(pos)) },
             )

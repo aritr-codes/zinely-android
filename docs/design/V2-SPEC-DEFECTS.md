@@ -132,7 +132,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-029**](#d-029) | ⏳ **an owner ruling** — **the phase that takes H1** (no longer Phase C) | the holding shelf and `DecorElement` are net-new: no model, no persistence, no scope, and a GC relationship |
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | ~~[**D-031**](#d-031)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-031-ruling), OD-9 | the Bench had no exits: Font and Size stay **drawn** with no invented capability, Read reuses [ADR-086](../DECISIONS.md#adr-086)'s hand-off, back reuses the existing stack, and **redo is kept** — the frozen bar specifies the editing surface, not the product's whole capability |
-| [**D-037**](#d-037) | ⛔ **OPEN — blocks C2a's acceptance, and therefore C2b** | the dim shipped without either of the freeze's two ways out of it. `Intent.ClearSelection` exists in the reducer and **nothing dispatches it**; the freeze's `canvas` click and Done button are unowned and C4's respectively. A stuck selection now fades everything else the user wrote, to **2.78:1**, undismissably. Pass 1 passed; **Pass 2 failed**. Recommendation **(a)**: let C2a add tap-to-deselect |
+| ~~[**D-037**](#d-037)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-037-ruling), OD-13 | the dim shipped without either of the freeze's two ways out of it. `Intent.ClearSelection` exists in the reducer and **nothing dispatches it**; the freeze's `canvas` click and Done button are unowned and C4's respectively. A stuck selection now fades everything else the user wrote, to **2.78:1**, undismissably. Pass 1 passed; **Pass 2 failed**. Ruled **(a)**: C2a adds tap-to-deselect, and selection becomes a **transient** editing state rather than a modal one |
 | [**D-036**](#d-036) | 🟦 **OPEN — documentation only, fences nothing** | the frozen Bench draws **four** resize handles; the editor has **eight**, and the extra four carry axis-constrained resize. C2a kept all eight under [OD-11](#d-034-ruling) (*the frozen vocabulary is additive; no existing capability is removed*), which the review confirmed is the right reading. What is owed is the **canonical file catching up** with that ruling — recommendation **(a)**, draw eight |
 | ~~[**D-035**](#d-035)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-035-ruling), OD-12 | the dark theme dimmed the sheet while the document's content ink stayed black — correctly, because it prints — leaving the user's own words at **1.60:1**. Ruled: **the artifact does not dim; the room around it may.** The frozen `.page` becomes a light-theme island of eight restated light tokens; `.phone` still dims |
 | ~~[**D-034**](#d-034)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-034-ruling), OD-11 | the frozen `.ctx` is a **verb** bar and the shipped `EditorContextBar` is the **WCAG 2.5.7** single-pointer twin of the drag gestures — **and they are not mutually exclusive.** The frozen bar is **additive**; the transform controls stay, because a parity phase does not remove an accessibility path. C2 splits into **C2a** (unblocked) and **C2b** (`.ctx*`) |
@@ -2614,7 +2614,11 @@ Option (e) is orthogonal — the owner may take it *and* any of (a)–(d).
 
 ### D-037 — the dim shipped without either of the two ways the freeze gives the user out of it {#d-037}
 
-**Raised 2026-08-02 by C2a's Pass 2 device verification, which it fails. It blocks C2a's acceptance and therefore
+| | |
+|---|---|
+| **Status** | ✅ **RESOLVED 2026-08-02** by owner ruling (**OD-13**) — option **(a)**, selection is transient. See [the ruling](#d-037-ruling); implemented as [ADR-091](../DECISIONS.md#adr-091) row 2.14 |
+
+**Raised 2026-08-02 by C2a's Pass 2 device verification, which it failed. It blocked C2a's acceptance and therefore
 C2b.** Pass 1 passed completely — the dim is exact to one channel step of the frozen `opacity:.4` on hardware. This
 entry is about what that exactness does not answer.
 
@@ -2628,7 +2632,7 @@ changed or the element deleted.
 | | |
 |---|---|
 | `Intent.ClearSelection` | **exists in the reducer** ([`EditorReducer.kt:26`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/EditorReducer.kt#L26)) and is **dispatched from nowhere** in `feature/editor/src/main` |
-| how selection is set | long-press only ([`EditorGestures.kt:78`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorGestures.kt#L78)) |
+| how selection is set | long-press only ([`EditorGestures.kt:78`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorGestures.kt#L78)) — **as of [OD-13](#d-037-ruling), a plain tap too, which is what closes this entry** |
 | how selection is cleared | a page change ([`EditorReducer.kt:198`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/EditorReducer.kt#L198)) — that is the whole list |
 
 The frozen Bench gives the user **two** exits on the same screen, and C2a implemented neither, because neither is
@@ -2660,6 +2664,37 @@ to the user's own words, and undismissable.
 already written and already tested, and it restores a pairing the freeze always had. **(c)** ships a state the user
 cannot leave, which is the shape [ADR-058](../DECISIONS.md#adr-058) and the *"every screen answers the user's
 current question"* principle exist to prevent.
+
+#### Owner ruling — OD-13 (2026-08-02): selection is transient, not modal {#d-037-ruling}
+
+**Recommendation (a) chosen.** Selection is dismissed by tapping anywhere outside the current selection:
+
+| Tap lands on | What happens |
+|---|---|
+| blank paper | selection cleared |
+| the studio desk, outside the page | selection cleared |
+| another selectable element | normal selection **transfer** — *no intermediate clear* |
+| (a transform gesture begins) | unchanged; the existing interaction model still owns it |
+
+No confirmation step. No persistent selection mode. **Selection is therefore a transient editing state, not a
+modal state** — and this is *completion of an existing capability, not a new feature*: the intent, the reducer
+branch, the state and its tests were all already in the repository; only the interaction that dispatches them
+was missing.
+
+**How C2a implemented it** ([`EditorGestures.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorGestures.kt),
+[ADR-091](../DECISIONS.md#adr-091)). One line — `onTap → Intent.SelectAt` — satisfies all four clauses, because
+`SelectAt`'s hit-test **miss** branch already reduces to exactly `ClearSelection`'s state
+(`selection = emptySet()`, `EditorReducer.kt:24` vs `:26`). Blank paper and the desk both miss and therefore
+clear; another element is selected in the **same** reduction, so no frame exists in which the page reads as
+deselected — which the ruling asks for explicitly and which a UI-side "clear, then select" would have broken.
+That distinction is not a matter of taste: mutating the implementation to `ClearSelection; SelectAt` fails
+`tapOnAnotherElement_transfersSelectionWithNoIntermediateClear`, which inspects the per-reduction selection
+history rather than only the end state.
+
+**The cost, stated because it is not free.** `detectTapGestures` must wait out the double-tap window before it
+knows a tap was single, so deselection resolves after that timeout rather than instantly. That is inherent to a
+surface carrying both a click and a dblclick — which the freeze specifies — and deselecting on *down* would fire
+on the way into a double-tap and make text editing flicker.
 
 ### D-036 — the frozen Bench draws four resize handles; the editor has eight, and the fourth pair is a capability {#d-036}
 
@@ -2702,6 +2737,11 @@ handles it omits, under the same amendment precedent [D-024](#d-024-amendment), 
 
 **Recommendation: (a).** It changes no code and no behaviour; it makes the canonical file true. **(c)** is listed
 for completeness and is the only option that costs the user something.
+
+**Owner disposition (2026-08-02).** *Do not block implementation on D-036.* It is recorded as **documentation /
+spec alignment only**. The canonical Bench **may later** be amended to depict the eight retained handles
+established by [OD-11](#d-034-ruling); that amendment **does not affect C2a's acceptance**. D-036 therefore stays
+open as a documentation item and fences nothing.
 
 ### D-035 — the dark theme dims the sheet, and the document's own ink does not follow it {#d-035}
 
@@ -2965,6 +3005,7 @@ the phase that meets it (**Phase D**), and this paragraph is that record.
 |---|---|---|
 | **D-033** | The frozen page is not the document's page, and the keep-clear inset is not the document's safe area | 2026-08-01 — owner ruling, option (c): **the frozen Bench is amended**, on the [D-024](#d-024) precedent. `.page` 212×326 → **229×324** (ratio 0.70679, 0.11px off ideal) so the depiction carries the real panel's aspect; `.keepclear` 16px → **18.5px**, the engine's `safeAreaInsetPt = 17.0` scaled — the two axes agreeing to 0.01px is what licenses one uniform number. The page box is now canonical geometry for `.keepclear`, `.guide`, `.pagenum`, D-032's intersection test and the Compose viewport. [Amendment](#d-033-amendment) and entry kept above. |
 | **D-035** | The dark theme dims the sheet, and the document's own ink does not follow it | 2026-08-02 — owner ruling (**OD-12**), option (a): *"the editor represents the physical printed artifact"*, so the artifact **does not dim** and only the room around it may. The frozen `.page` becomes a light-theme island restating eight on-paper tokens; `.phone` still dims; the five ADR-055 content inks are untouched and print fidelity is unchanged. The sheet's **shadow stays the room's** — lightening it reinstated [D-010](#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark) inside this fix, caught in review. [Ruling](#d-035-ruling) and entry kept above. |
+| **D-037** | The dim shipped without either of the two ways the freeze gives the user out of it | 2026-08-02 — owner ruling (**OD-13**), option **(a)**: **selection is a transient editing state, not a modal one.** A tap anywhere outside the selection dismisses it — blank paper, the studio desk, or another element (which **transfers**, in one reduction, with no intermediate clear). No confirmation step, no persistent selection mode. Scoped by the owner as *completion of an existing capability, not a new feature*: `Intent.ClearSelection`, its reducer branch, the selection state and their tests were all already in the repository, and only the interaction that dispatches them was missing. Implemented as one `onTap → Intent.SelectAt` ([ADR-091](../DECISIONS.md#adr-091) row 2.14), which suffices because `SelectAt`'s hit-test **miss** branch already reduces to `ClearSelection`'s exact state. Raised, and closed, by the device pass that exists for it. [Ruling](#d-037-ruling) and entry kept above. |
 | **D-034** | The frozen contextual bar and the shipped one are different controls, and the shipped one is an accessibility conformance path | 2026-08-02 — owner ruling (**OD-11**), option **(b) keep both**: the frozen `.ctx` is the contextual editing **vocabulary**, `EditorContextBar` is an accessibility-preserving **transform** affordance, and *"these are not mutually exclusive."* The frozen bar is **additive**; the transform controls remain, because a parity phase does not remove or weaken a WCAG 2.5.7 path ([ADR-029](../DECISIONS.md#adr-029) §6). Review's option **(e)** also accepted: C2 splits into **C2a** (selection — unblocked) and **C2b** (`.ctx*`), the fence having covered rows 2.10–2.13 only. [Ruling](#d-034-ruling) and entry kept above. |
 | **D-031** | The frozen Bench draws four controls that go nowhere, and drops one the product ships | 2026-08-01 — owner ruling (**OD-9**): the freeze specifies the **editing surface, not the whole application flow**. Font and Size stay drawn as contextual affordances and invent no capability (ADR-055 excludes font choice, so Font is **specified-but-unreachable**; Size routes to the shipped Type bar). Read reuses [ADR-086](../DECISIONS.md#adr-086)'s Editor → Proof hand-off, back reuses the existing stack, and **redo is kept** — a control the freeze omits is not thereby deleted. Applying the ruling immediately surfaced [D-034](#d-034), which it does not reach. [Ruling](#d-031-ruling) and entry kept above. |
 | **D-032** | The keep-clear cue has a frozen appearance, no trigger, and a written trigger the product cannot compute | 2026-08-01 — owner ruling (OD-10, C1 half): the warn state is **transient guidance, not document state**. It shows only while an in-flight interaction would move content into the keep-clear area, and disappears when the interaction ends; content already inside after editing draws no persistent warning. None of the three offered options was taken — the trigger became the manipulated element's **bounds**, so face detection is not needed and [PRD §5](../PRD.md#5-product-principles-non-negotiable) is not engaged. [Ruling](#d-032-ruling) and entry kept above. |
