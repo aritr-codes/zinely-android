@@ -132,6 +132,8 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-029**](#d-029) | ⏳ **an owner ruling** — **the phase that takes H1** (no longer Phase C) | the holding shelf and `DecorElement` are net-new: no model, no persistence, no scope, and a GC relationship |
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | ~~[**D-031**](#d-031)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-031-ruling), OD-9 | the Bench had no exits: Font and Size stay **drawn** with no invented capability, Read reuses [ADR-086](../DECISIONS.md#adr-086)'s hand-off, back reuses the existing stack, and **redo is kept** — the frozen bar specifies the editing surface, not the product's whole capability |
+| [**D-037**](#d-037) | ⛔ **OPEN — blocks C2a's acceptance, and therefore C2b** | the dim shipped without either of the freeze's two ways out of it. `Intent.ClearSelection` exists in the reducer and **nothing dispatches it**; the freeze's `canvas` click and Done button are unowned and C4's respectively. A stuck selection now fades everything else the user wrote, to **2.78:1**, undismissably. Pass 1 passed; **Pass 2 failed**. Recommendation **(a)**: let C2a add tap-to-deselect |
+| [**D-036**](#d-036) | 🟦 **OPEN — documentation only, fences nothing** | the frozen Bench draws **four** resize handles; the editor has **eight**, and the extra four carry axis-constrained resize. C2a kept all eight under [OD-11](#d-034-ruling) (*the frozen vocabulary is additive; no existing capability is removed*), which the review confirmed is the right reading. What is owed is the **canonical file catching up** with that ruling — recommendation **(a)**, draw eight |
 | ~~[**D-035**](#d-035)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-035-ruling), OD-12 | the dark theme dimmed the sheet while the document's content ink stayed black — correctly, because it prints — leaving the user's own words at **1.60:1**. Ruled: **the artifact does not dim; the room around it may.** The frozen `.page` becomes a light-theme island of eight restated light tokens; `.phone` still dims |
 | ~~[**D-034**](#d-034)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-034-ruling), OD-11 | the frozen `.ctx` is a **verb** bar and the shipped `EditorContextBar` is the **WCAG 2.5.7** single-pointer twin of the drag gestures — **and they are not mutually exclusive.** The frozen bar is **additive**; the transform controls stay, because a parity phase does not remove an accessibility path. C2 splits into **C2a** (unblocked) and **C2b** (`.ctx*`) |
 | ~~[**D-032**](#d-032)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-032-ruling), OD-10 (C1 half) | the keep-clear warn state was never triggered in the freeze; the ruling makes it **transient interaction guidance**, so no content analysis is needed |
@@ -2609,6 +2611,97 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 | **(e) Split the package** | **C2a** — selection, handles, dim, materialise — proceeds now; **C2b** — the `.ctx` bar — waits for (a)–(d) | nothing but a package letter. The precedent is one entry away: OD-10's D-032 half **fenced a single row of C1's table rather than C1**, and C1 shipped |
 
 Option (e) is orthogonal — the owner may take it *and* any of (a)–(d).
+
+### D-037 — the dim shipped without either of the two ways the freeze gives the user out of it {#d-037}
+
+**Raised 2026-08-02 by C2a's Pass 2 device verification, which it fails. It blocks C2a's acceptance and therefore
+C2b.** Pass 1 passed completely — the dim is exact to one channel step of the frozen `opacity:.4` on hardware. This
+entry is about what that exactness does not answer.
+
+**What happens.** Select an element on a page that has others. Every other element fades to **2.78:1** against the
+sheet — correct, and precisely what `.content.focusing .el:not(.sel-focus){opacity:.4}` specifies. Then try to stop
+selecting it. Tapping empty paper does nothing. Tapping the desk does nothing. The dim persists until the page is
+changed or the element deleted.
+
+**The gap is older than C2a; C2a is what turns it into a defect.** Verified in the repository, not inferred:
+
+| | |
+|---|---|
+| `Intent.ClearSelection` | **exists in the reducer** ([`EditorReducer.kt:26`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/EditorReducer.kt#L26)) and is **dispatched from nowhere** in `feature/editor/src/main` |
+| how selection is set | long-press only ([`EditorGestures.kt:78`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorGestures.kt#L78)) |
+| how selection is cleared | a page change ([`EditorReducer.kt:198`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/EditorReducer.kt#L198)) — that is the whole list |
+
+The frozen Bench gives the user **two** exits on the same screen, and C2a implemented neither, because neither is
+in C2a's fence:
+
+```js
+canvas.addEventListener('click',function(){ … deselect();});         // v2-bench.html:561
+$('doneBtn').onclick=function(e){ … deselect();};                    // v2-bench.html:563
+```
+
+`.bar` and its Done button are **C4**. The tap-to-deselect is unowned by any package because the freeze expresses
+it as canvas behaviour rather than as a selector.
+
+**Why this is a Pass 2 failure and not a backlog item.** Before C2a a stuck selection cost an outline. After it, a
+stuck selection **fades everything else the user has written**, indefinitely, with no gesture that undoes it. The
+screen's question is *"How do I change this page?"*, and it now answers a question the user did not ask —
+*"which one thing are you working on?"* — with no way to say *"none, for now."* Below WCAG 1.4.3's 4.5:1, applied
+to the user's own words, and undismissable.
+
+**Options for the owner**
+
+| | Disposition |
+|---|---|
+| **(a)** | **Let C2a add tap-to-deselect** — one `dispatch(Intent.ClearSelection)` on a page tap. The reducer intent already exists; nothing new is invented. It is the freeze's own `canvas` click, and it widens C2a's fence by one behaviour. |
+| **(b)** | **Hold C2a's dim behind C4** — implement `.el`/`.sel`/`.handle`/materialise now and land `.content.focusing` when Done exists. Keeps the fence exactly; costs a second pass over this file. |
+| **(c)** | Accept the dim as it stands and carry F1 as a known limitation until C4. |
+
+**Recommendation: (a).** It is the smallest change that makes the screen honest, it uses a reducer intent that is
+already written and already tested, and it restores a pairing the freeze always had. **(c)** ships a state the user
+cannot leave, which is the shape [ADR-058](../DECISIONS.md#adr-058) and the *"every screen answers the user's
+current question"* principle exist to prevent.
+
+### D-036 — the frozen Bench draws four resize handles; the editor has eight, and the fourth pair is a capability {#d-036}
+
+**Raised 2026-08-02 by C2a's pre-implementation blocker check. It does not fence C2a**, which proceeds under an
+existing ruling; it is filed because the HTML-first workflow requires the canonical file to be corrected rather
+than quietly diverged from.
+
+`v2-bench.html:159` positions exactly four handles:
+
+```css
+.handle.tl{left:-10px;top:-10px}.handle.tr{right:-10px;top:-10px}
+.handle.bl{left:-10px;bottom:-10px}.handle.br{right:-10px;bottom:-10px}
+```
+
+`ResizeHandle.entries` in `:core:editor` has **eight** — those four corners and four edge midpoints — and
+`TransformMath.resizeByHandle` gives them different behaviour: a corner resizes **both** axes, an edge resizes
+**one**. Transcribing the freeze literally would therefore delete axis-constrained resize, which is capability,
+not decoration.
+
+**Why this is not a new owner decision.** It is the same shape as [D-034](#d-034), and
+[OD-11](#d-034-ruling) already ruled that shape: during a parity phase the frozen vocabulary is **additive**, and
+*"no existing editor capability is removed."* C2a applied that ruling — all eight handles are kept and all eight
+take the frozen `.handle` appearance ([ADR-091 §1(b)](../DECISIONS.md#adr-091) row 2.6a). The independent review
+agreed the reading is right and that escalating it as a fresh decision would have been wrong.
+
+**What is still owed, and why it is filed anyway.** [CLAUDE.md](../../CLAUDE.md) makes the HTML prototype the
+canonical design source and requires any post-freeze change to *update the specification first*. Keeping eight
+handles is a **visual** divergence from the canonical file, however well-grounded the capability argument is. So
+the disposition here is a documentation act, not a design one: the frozen Bench should draw the four edge
+handles it omits, under the same amendment precedent [D-024](#d-024-amendment), [D-033](#d-033) and
+[D-035](#d-035-ruling) established.
+
+**Options for the owner**
+
+| | Disposition |
+|---|---|
+| **(a)** | **Amend the frozen Bench to draw eight handles** — the file catches up with the ruling already made, and spec and product agree again. |
+| **(b)** | Leave the freeze at four and carry this as a permanently recorded, permanently accepted divergence. |
+| **(c)** | Overrule OD-11 for this case and drop the four edge handles — which removes axis-constrained resize from the editor. |
+
+**Recommendation: (a).** It changes no code and no behaviour; it makes the canonical file true. **(c)** is listed
+for completeness and is the only option that costs the user something.
 
 ### D-035 — the dark theme dims the sheet, and the document's own ink does not follow it {#d-035}
 

@@ -84,4 +84,61 @@ class SelectionChromeGeometryTest {
         assertPt(PtPoint(30.0, 10.0), corners[2])
         assertPt(PtPoint(0.0, 10.0), corners[3])
     }
+
+    /**
+     * ADR-091 row 2.3 — the frozen `.sel` `inset:-7px` is **7 device px**, so it must not change with the
+     * zoom. Measured at two scales; at `screenPxPerPt = 2` the box doubles and the inset does not.
+     *
+     * Mutation: inset 7 → 0 collapses both expectations onto the un-inflated box.
+     */
+    @Test
+    fun inset_is_seven_device_px_at_every_zoom() {
+        val t = Transform(0.0, 0.0, 30.0, 10.0, rotationDegrees = 0.0)
+        val off = PtPoint(0.0, 0.0)
+
+        val at1 = SelectionChromeGeometry.outlineDevicePx(t, 1.0, off, inflateDevicePx = 7.0)
+        assertPt(PtPoint(-7.0, -7.0), at1[0])
+        assertPt(PtPoint(37.0, 17.0), at1[2])
+
+        val at2 = SelectionChromeGeometry.outlineDevicePx(t, 2.0, off, inflateDevicePx = 7.0)
+        // The box is now 60×20 device px; the outline still stands off by exactly 7, not 14.
+        assertPt(PtPoint(-7.0, -7.0), at2[0])
+        assertPt(PtPoint(67.0, 27.0), at2[2])
+    }
+
+    /**
+     * The reason the inflation happens in the element's **local** frame: a rotated element's outline must
+     * stay parallel to the element, not to the screen. Inflating an axis-aligned bounding box would leave
+     * a 45° photo inside a diamond-shaped gap that is 7px at the corners and much wider at the edges.
+     *
+     * At 90° the box's own axes swap, so the inflated corner is checked against the rotated geometry: each
+     * inflated corner must sit exactly `7·√2` from its un-inflated counterpart (7 along each local axis),
+     * at every angle.
+     *
+     * Mutation: inflate after the rotation with the wrong axes and the 45° case drifts off `7·√2`.
+     */
+    @Test
+    fun inset_follows_the_element_s_own_axes_at_every_rotation() {
+        val off = PtPoint(0.0, 0.0)
+        val expected = 7.0 * kotlin.math.sqrt(2.0)
+        for (deg in listOf(0.0, 30.0, 45.0, 90.0, 137.0, 270.0)) {
+            val t = Transform(10.0, 20.0, 40.0, 24.0, rotationDegrees = deg)
+            val plain = SelectionChromeGeometry.outlineDevicePx(t, 1.0, off)
+            val inflated = SelectionChromeGeometry.outlineDevicePx(t, 1.0, off, inflateDevicePx = 7.0)
+            for (i in 0 until 4) {
+                val d = kotlin.math.hypot(inflated[i].x - plain[i].x, inflated[i].y - plain[i].y)
+                assertEquals("corner $i at $deg° stands off by 7 along both local axes", expected, d, 1e-6)
+            }
+        }
+    }
+
+    /** The default is the box itself — the punch-out and the handles read it, and must not be inflated. */
+    @Test
+    fun inset_defaults_to_zero() {
+        val t = Transform(10.0, 20.0, 40.0, 24.0, rotationDegrees = 33.0)
+        val off = PtPoint(0.0, 0.0)
+        val default = SelectionChromeGeometry.outlineDevicePx(t, 1.0, off)
+        val explicit = SelectionChromeGeometry.outlineDevicePx(t, 1.0, off, inflateDevicePx = 0.0)
+        for (i in 0 until 4) assertPt(default[i], explicit[i])
+    }
 }

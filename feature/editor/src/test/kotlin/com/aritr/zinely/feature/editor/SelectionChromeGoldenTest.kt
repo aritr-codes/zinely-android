@@ -72,6 +72,19 @@ class SelectionChromeGoldenTest {
         const val GOLDEN_DIR = "src/test/roborazzi"
         const val SCREEN_PX_PER_PT = 2.5f
 
+        /**
+         * Matcha-signature pixels the C2a outline leaves around a 32pt box at 2.5 px/pt.
+         *
+         * **The threshold moved because the probe had to.** The old assertion counted pixels *exactly*
+         * equal to the token, which worked for a 2dp stroke. C2a's outline is **1.5dp** and lands on
+         * fractional coordinates, so almost every pixel it paints is an AA blend: the axis-aligned capture
+         * keeps just **12** pure ones, and a threshold low enough to admit 12 would no longer discriminate
+         * a drawn outline from a stray artefact. This is the identical failure [countMatchaGuide] was
+         * introduced for at 1dp, so the outline now uses the same hue signature — which the same capture
+         * puts in the hundreds, while a blank page leaves none.
+         */
+        const val CHROME_MATCHA_PIXELS = 100
+
         // AA stroke edges (rotated outline, guide lines) jitter a fraction of pixels run-to-run; the same
         // committed tolerance RasterGoldenTest.aa() uses absorbs that without masking a placement bug.
         fun aa() = RoborazziOptions(
@@ -175,9 +188,7 @@ class SelectionChromeGoldenTest {
 
     @Test
     fun axis_aligned_selection_outline() {
-        var chromeArgb = 0
         val bmp = pageBitmap { m ->
-            chromeArgb = ZinelyTheme.colors.coralStrong.toArgb()
             EditorPagePreview(
                 uiState = selectedModel(rotationDegrees = 0.0).toUiState(),
                 defaults = DocumentDefaults(),
@@ -186,20 +197,20 @@ class SelectionChromeGoldenTest {
                 modifier = m,
             )
         }
-        // The coral-strong outline must actually be on the page (not a vacuous blank capture); a 2dp
-        // stroke around a 32pt box at 2.5 px/pt leaves well over 50 flat-colour core pixels.
+        // C2a (ADR-091 row 2.3) re-skinned this stroke: 2dp `--coral-strong` on the box edge became
+        // 1.5dp `--matcha` 7px outside it. The token is what this assertion pins; the threshold is lower
+        // than the old 50 because a 1.5dp stroke has a correspondingly thinner flat-colour core, and the
+        // number below is measured off the real capture rather than derived from the width.
         assertTrue(
-            "selection outline did not paint the coral-strong token on the page",
-            bmp.countColour(chromeArgb) > 50,
+            "selection outline did not paint the matcha token on the page (saw ${bmp.countMatchaGuide()})",
+            bmp.countMatchaGuide() > CHROME_MATCHA_PIXELS,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_axis_aligned.png", aa())
     }
 
     @Test
     fun rotated_selection_outline() {
-        var chromeArgb = 0
         val bmp = pageBitmap { m ->
-            chromeArgb = ZinelyTheme.colors.coralStrong.toArgb()
             EditorPagePreview(
                 uiState = selectedModel(rotationDegrees = 30.0).toUiState(),
                 defaults = DocumentDefaults(),
@@ -209,8 +220,8 @@ class SelectionChromeGoldenTest {
             )
         }
         assertTrue(
-            "rotated selection outline did not paint the coral-strong token on the page",
-            bmp.countColour(chromeArgb) > 50,
+            "rotated selection outline did not paint the matcha token on the page (saw ${bmp.countMatchaGuide()})",
+            bmp.countMatchaGuide() > CHROME_MATCHA_PIXELS,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_rotated.png", aa())
     }
@@ -222,7 +233,9 @@ class SelectionChromeGoldenTest {
         // gesture's exact snap maths. A vertical + horizontal guide crossing the box centre (36,36).
         //
         // CRITICAL (Codex review): replicate EditorPagePreview's PRODUCTION layer order exactly —
-        // PagePreview -> SnapGuides -> SelectionChrome (guides BENEATH the chrome). Overlaying an extra
+        // PagePreview -> BenchFocusScrim -> SnapGuides -> SelectionChrome (guides BENEATH the chrome).
+        // C2a inserted the scrim into that stack; omitting it here would pin a layer order the product
+        // does not have, which is precisely what this comment exists to prevent. Overlaying an extra
         // SnapGuides on top of a full EditorPagePreview would pin a non-production order where guides cover
         // the selection outline. We rebuild the same stack manually only because EditorPagePreview computes
         // its guides internally (no inject seam) and we need a deterministic guide frame here.
@@ -241,6 +254,17 @@ class SelectionChromeGoldenTest {
                     pageOffset = offset,
                     modifier = Modifier.fillMaxSize(),
                     imageBytes = EmptyAssetBytes,
+                )
+                BenchFocusScrim(
+                    paper = ZinelyTheme.v2Colors.paper,
+                    pageRect = benchPageRect(SCREEN_PX_PER_PT, offset, sheet),
+                    dimAlpha = BenchFocusDimAlpha,
+                    holes = selectedTransforms.map {
+                        com.aritr.zinely.render.android.SelectionChromeGeometry
+                            .outlineDevicePx(it, SCREEN_PX_PER_PT.toDouble(), offset)
+                    },
+                    covers = emptyList(),
+                    modifier = Modifier.fillMaxSize(),
                 )
                 SnapGuides(
                     pageSizePt = sheet,

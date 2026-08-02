@@ -26,7 +26,18 @@ dimmed at night while content ink stays black, because it prints). The second be
 and the frozen Bench was amended a fourth time, making `.page` a **light-theme island** of eight restated light
 tokens. Content ink now measures **18.82:1** in dark. Both defects are guarded by assertions, not goldens: twice
 in this package a golden was re-recorded over the defect it should have caught.
-**C2 is the next package, split into C2a and C2b by OD-11, and both are now unblocked — C1's acceptance was the
+**C2a is built and NOT accepted; C2b must not start.** C1 was accepted and committed (`23e1a91`). C2a followed:
+[ADR-091](DECISIONS.md#adr-091) opened it with a property-level table before any production code, the independent review
+returned **GO WITH FIXES** and all three Required Fixes were reconciled, and the full suite plus both golden gates are
+green. Then the device answered differently on each pass. **Pass 1 passed** — the dim lands within one channel step of
+the frozen `opacity:.4`, the outline measures `#5E6B2F` at 5.20:1 in *both* themes, content ink holds 18.81:1.
+**Pass 2 failed**: once you select something there is no way to stop, so the dim — which fades everything else the user
+wrote to 2.78:1 — cannot be dismissed. `Intent.ClearSelection` exists in the reducer and nothing dispatches it; the
+freeze's two exits are a canvas click (unowned) and Done (**C4**). That is ⛔ [D-037](design/V2-SPEC-DEFECTS.md#d-037),
+and it is the owner's to rule. Recommendation **(a)**: let C2a add tap-to-deselect, one dispatch of an intent that is
+already written and already tested.
+
+~~**C2 is the next package, split into C2a and C2b by OD-11, and both are now unblocked — C1's acceptance was the
 last gate:** [D-031](design/V2-SPEC-DEFECTS.md#d-031) was ruled on 2026-08-01
 (**OD-9** — the freeze specifies the editing surface, not the whole application flow; Font and Size stay drawn and
 invent nothing, Read and back reuse what exists, redo is kept), and applying that ruling immediately raised
