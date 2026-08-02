@@ -9,6 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -25,23 +28,26 @@ import org.robolectric.annotation.GraphicsMode
  *
  * ### Why this test exists, and why a golden could not do its job
  *
- * C1 ([ADR-090](../../../../../../../../../docs/DECISIONS.md#adr-090)) repainted the editor's sheet with
- * the **V2** `paper` token and left [EditorEmptyState] painting the **V1** `ink` token. The two palettes
- * disagree about dark deliberately: V1 keeps the sheet *lit* in dark (`paper` `#EDE6D9`) so a near-black
- * `ink` (`#23201C`) is correct on it, while V2 *dims* the sheet (`paper` `#2F2A22`) and answers it with a
- * warm-cream `ink` (`#ECE4D3`). Each system is coherent alone. Mixed, the dark theme drew `#23201C` on
- * `#2F2A22` — roughly **1.1:1**, an invitation headline the user simply cannot see.
+ * C1 ([ADR-090](../../../../../../../../../docs/DECISIONS.md#adr-090)) moved the editor's sheet onto V2's
+ * `paper`, which **dims at night** (`#2F2A22`). Twice over, that left something unreadable on it, and both
+ * times every unit test and every golden stayed green:
  *
- * **Every existing check passed.** The unit tests assert tokens against the frozen CSS, and both tokens
- * were individually right. `editor_screen_dark.png` was **re-recorded by C1 with the defect already in
- * it**, so it verified green against itself — the corpus already knows this failure as
- * *goldens-in-record-mode-aren't-assertions*. It was found by a **device Pass 2**, by looking at the
- * screen.
+ * 1. The blank-page invitation was still painting V1's `ink` (`#23201C`) — about **1.15:1**. Found by a
+ *    device Pass 2. Fixed by taking the ink from the same system as the surface.
+ * 2. **The user's own words**, which no palette owns: content ink is black because it *prints*. Black on
+ *    `#2F2A22` measured **1.60:1** on device, while the Read screen showed the same page at 16.92:1.
+ *    Found by the *second* device Pass 2, and ruled by the owner in
+ *    [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035): **the artifact does not
+ *    dim; the room around it may.** The sheet is now a light-theme island ([BenchSheetIsland]).
  *
- * A token-level assertion cannot replace that: comparing V2 `ink` to V2 `paper` is a statement about a
- * pairing that was never broken, and it would have stayed green throughout the defect. The only assertion
- * that fails when this recurs is one about the **pixels that actually land** — which composable read
- * which palette is then irrelevant, because the probe measures the result.
+ * **Nothing token-level could have caught either.** Each token was individually correct against the frozen
+ * CSS both times; the defect was in the *pairing*, and in case 2 one half of the pairing is not a token at
+ * all. Worse, `editor_empty_state_dark.png` had been re-recorded by C1 **with the first defect already in
+ * it**, so it verified green against itself — the corpus's own
+ * *goldens-in-record-mode-aren't-assertions*.
+ *
+ * The only assertion that fails when this recurs is one about the **pixels that actually land**, which is
+ * what this probe measures. Which composable read which palette is then irrelevant.
  *
  * ### How the probe reads
  *
@@ -57,13 +63,20 @@ class EditorPageLegibilityProbeTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
+    /**
+     * The sheet **exactly as the editor composes it** — inside [BenchSheetIsland], because that wrapper is
+     * the D-035 amendment and a probe that omitted it would measure an arrangement the product does not
+     * have. It is also what each test's mutation removes.
+     */
     private fun host(darkTheme: Boolean, content: @Composable () -> Unit) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
-                Box(
-                    modifier = Modifier.size(PAGE_W.dp, PAGE_H.dp).benchPageSurface(),
-                    contentAlignment = Alignment.Center,
-                ) { content() }
+                BenchSheetIsland {
+                    Box(
+                        modifier = Modifier.size(PAGE_W.dp, PAGE_H.dp).benchPageSurface(),
+                        contentAlignment = Alignment.Center,
+                    ) { content() }
+                }
             }
         }
         composeRule.waitForIdle()
@@ -138,6 +151,26 @@ class EditorPageLegibilityProbeTest {
     }
 
     /**
+     * **The one that matters, and the reason [BenchSheetIsland] exists.**
+     *
+     * The document's content ink is *print* colour — black, theme-independent by design, because it goes
+     * to a PDF. So the only variable is the sheet under it, and C1 originally moved that sheet to V2's
+     * dimmed dark `paper`: black on `#2F2A22` measured **1.60:1** on device, while the Read screen showed
+     * the same page at 16.92:1. Every unit test, every golden and the whole frozen property table stayed
+     * green, because each half was individually right.
+     *
+     * This is the assertion that is not green when the artifact dims. Its mutation is *delete the island*.
+     */
+    @Test
+    fun `the document's own black ink is legible on the sheet in the dark theme`() {
+        host(darkTheme = true) {
+            Text(text = CONTENT_PROBE, color = Color.Black, fontSize = 24.sp)
+        }
+        val c = inkOnPaperContrast(hostBitmap(), CONTENT_PROBE)
+        assertTrue("dark: the user's own words reach only ${"%.2f".format(c)}:1 against the sheet", c >= 4.5)
+    }
+
+    /**
      * The light theme could not have caught the C1 defect — V1 and V2 light inks are both dark on a light
      * sheet, so the mixed pairing stayed legible and this test passes with the defect reinstated. It is here
      * as a guard against a light-theme regression, not as a mirror of the dark one.
@@ -166,6 +199,9 @@ class EditorPageLegibilityProbeTest {
          */
         const val PAGE_W = 229
         const val PAGE_H = 324
+
+        /** Stands in for the user's own words: plain black, exactly as the render tape draws content ink. */
+        const val CONTENT_PROBE = "Hello"
 
         /**
          * How far a pixel may sit from the modal sheet colour and still be *sheet*. The baked grain

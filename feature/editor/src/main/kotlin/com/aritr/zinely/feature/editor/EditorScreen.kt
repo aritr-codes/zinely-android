@@ -630,7 +630,10 @@ public fun EditorScreen(
                 if (idle) dispatch(Intent.SetViewport(scale, centreOffset))
             }
 
-            Box(modifier = Modifier.fillMaxSize()) {
+            // D-035: the canvas stack is the artifact, so it is a light-theme island — the sheet and
+            // everything drawn on it keep paper-coloured surroundings at night, while the room around
+            // this Box (bar, tray, page strip, context bar) goes on dimming. See [BenchSheetIsland].
+            BenchSheetIsland(modifier = Modifier.fillMaxSize()) {
                 // The page footprint reads as paper — the frozen `--paper` sheet (bench.html `.panel`),
                 // instead of the bare desk showing through. Purely a host backing UNDER the render: the
                 // SceneRenderer contract

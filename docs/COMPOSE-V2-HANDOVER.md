@@ -16,14 +16,18 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 frozen property table** covering every rule and every scripted behaviour in
 [`v2-bench.html`](design/mockups/v2-bench.html), written before any production code. **C0 — corpus cleanup,
 documentation only — is done** (`d21e4dd`), closing [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record).
-**C1 — the studio surface, and the phase's first production code — is built and independently reviewed
-(GO WITH FIXES, all reconciled); its two device-verification passes are still owed** (committed at `29a3819`).
-A device became available after that review and **[Pass 2 failed](DECISIONS.md#adr-090-device-pass-2)** — C1 repainted
-the sheet with V2 `paper` and left the blank-page invitation on V1 `ink`, **1.15:1** in dark, which every token test
-and both goldens passed because the dark golden had been re-recorded with the defect in it. Fixed, re-recorded and
-guarded by a mutation-proven pixel probe, **uncommitted at the time of writing**; both passes must still be re-run on
-the fixed build.
-**C2 is the next package. It is now split into C2a and C2b, and both are unblocked by ruling — but both are gated on C1's acceptance, which C1 does not yet have:** [D-031](design/V2-SPEC-DEFECTS.md#d-031) was ruled on 2026-08-01
+**C1 — the studio surface, and the phase's first production code — is DONE and ACCEPTED** (2026-08-02):
+independently reviewed twice, and **[both device-verification passes recorded and passed](DECISIONS.md#adr-090-device-verification)**
+on `SM-A176B` / Android 16. [ADR-090](DECISIONS.md#adr-090) is `Accepted`.
+Getting there cost three device sessions and two owner rulings. Pass 2 failed twice — first on the blank-page
+invitation (**1.15:1**, chrome on the wrong palette), then on **the user's own content** (**1.60:1**: the sheet
+dimmed at night while content ink stays black, because it prints). The second became
+[D-035 / OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling) — *the artifact does not dim, the room around it may* —
+and the frozen Bench was amended a fourth time, making `.page` a **light-theme island** of eight restated light
+tokens. Content ink now measures **18.82:1** in dark. Both defects are guarded by assertions, not goldens: twice
+in this package a golden was re-recorded over the defect it should have caught.
+**C2 is the next package, split into C2a and C2b by OD-11, and both are now unblocked — C1's acceptance was the
+last gate:** [D-031](design/V2-SPEC-DEFECTS.md#d-031) was ruled on 2026-08-01
 (**OD-9** — the freeze specifies the editing surface, not the whole application flow; Font and Size stay drawn and
 invent nothing, Read and back reuse what exists, redo is kept), and applying that ruling immediately raised
 **[D-034](design/V2-SPEC-DEFECTS.md#d-034)**: the frozen `.ctx` is a **verb** bar, while the `EditorContextBar` it

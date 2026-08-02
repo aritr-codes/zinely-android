@@ -99,7 +99,7 @@
 | [ADR-087](#adr-087) | **Workflow V2.1** — every frozen-property-table row terminates in exactly one of four states: ✅ Implemented · ≡ Equivalent mutant (with **proof**) · ⏳ Owner ruling required · ✎ Canonical design amendment required. No row stays "blocked", because that one word hid four different answers owed to four different people in B5's table. Extends [ADR-085](#adr-085) | Accepted |
 | [ADR-088](#adr-088) | **The paper chooser draws both stocks at one scale.** The frozen `.paper .stock` sizes drew Letter ~4% oversized, which **inverted** the one relation the chooser exists to show: A4 is the physically larger sheet. Ruled a **specification bug fix**, not a redesign — the frozen HTML is corrected (Letter `56×72` → `54×70`) and Compose now *derives* both stocks from `PaperSize.portrait`, so a per-stock error is no longer expressible | Accepted |
 | [ADR-089](#adr-089) | **Phase C planning** — the Bench is not one package. Publishes the phase's **eight packages** and a complete selector-level frozen property table for the frozen Bench, before any production code. Four of ten proposed packages could not legitimately begin; owner ruling **OD-2** re-seated the missing capability beyond Phase C | Accepted |
-| [ADR-090](#adr-090) | **C1 — the studio surface**, Phase C's first production code: the ground, the sheet and its two-layer shadow, the grain, the keep-clear cue, the centre guide and the page number. The cue is **derived** from `Imposer.DEFAULT_SAFE_AREA_INSET_PT`, not transcribed from the frozen `18.5px`, so it keeps depicting the engine's boundary if that boundary moves; the page is centred through the **shared `pageOffset` viewport**, so all ten layers reading that seam move together. Implements [D-032](design/V2-SPEC-DEFECTS.md#d-032)'s ruled warn trigger as transient per-frame guidance. Reviewed **GO WITH FIXES**; all four Required Fixes reconciled. **Both device passes outstanding** | Proposed |
+| [ADR-090](#adr-090) | **C1 — the studio surface**, Phase C's first production code: the ground, the sheet and its two-layer shadow, the grain, the keep-clear cue, the centre guide and the page number. The cue is **derived** from `Imposer.DEFAULT_SAFE_AREA_INSET_PT`, not transcribed from the frozen `18.5px`, so it keeps depicting the engine's boundary if that boundary moves; the page is centred through the **shared `pageOffset` viewport**, so all ten layers reading that seam move together. Implements [D-032](design/V2-SPEC-DEFECTS.md#d-032)'s ruled warn trigger as transient per-frame guidance. Reviewed **GO WITH FIXES** twice, every Required Fix reconciled. Its device verification failed twice and drove two amendments: [D-033](design/V2-SPEC-DEFECTS.md#d-033) gave the page real geometry, and [D-035](design/V2-SPEC-DEFECTS.md#d-035-ruling) made the sheet a **light-theme island** — the artifact does not dim, the room around it may — after the dimmed sheet left the user's own black content ink at 1.60:1. **[Both passes recorded and passed](#adr-090-device-verification)** on `SM-A176B` / Android 16 | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -2986,6 +2986,8 @@ the work now sits is the roadmap's
 | **OD-10** | ~~C1~~ **C9** (D-012); the C1 half is ✅ **ruled 2026-08-01** | **[D-032](design/V2-SPEC-DEFECTS.md#d-032)** (the keep-clear warn trigger) and **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)** (which reduced-motion rule the corpus states). | ⏳ **Half live.** D-012 was deferred *to Phase C, on physical devices*, so it is answered **in** C9, not before it. **D-032 is ✅ ruled (2026-08-01): the warn state is transient interaction guidance, not document state — the manipulated element's bounds are tested, so no face detection is required.** Row 1.9 **shipped in C1 (2026-08-01, [ADR-090](#adr-090))**: [D-033](design/V2-SPEC-DEFECTS.md#d-033) fixed the rectangle it tests against the same day, and the warn state is derived per frame from the in-flight gesture — no reducer state, nothing to clear. |
 | **OD-11** ✅ **ruled 2026-08-02** | ~~C2's `.ctx*` rows 2.10–2.13~~ | **[D-034](design/V2-SPEC-DEFECTS.md#d-034)** — the frozen `.ctx` is a **verb** bar (Edit · Font · Size · Ink · Delete); the shipped `EditorContextBar` it would replace is the **transform** bar that exists to satisfy **WCAG 2.5.7** (single-pointer alternative to dragging). `Delete` is the only control they share. Per-element `customActions` do not substitute — they reach assistive tech only. Transcribe, keep both, re-seat, or merge? | ✅ **Ruled 2026-08-02 ([OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)): keep both.** The two are *"not mutually exclusive"* — the frozen bar is the contextual editing **vocabulary**, the shipped one an accessibility-preserving **transform** affordance. The frozen `.ctx` is **additive**; the transform controls remain, because a parity phase does not remove or weaken a conformance path. **C2 splits into C2a** (selection — `.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat`) **and C2b** (`.ctx*`, rows 2.10–2.13). Both unblocked. |
 
+| **OD-12** ✅ **ruled 2026-08-02** | ~~C1's acceptance, and so all of Phase C~~ | **[D-035](design/V2-SPEC-DEFECTS.md#d-035)** — the dark theme dims the sheet while the document's content ink stays black (correctly: it prints). Measured **1.60:1** on device; the Read screen showed the same page at 16.92:1. | ✅ **Ruled 2026-08-02 ([OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling)): the artifact does not dim.** *"The editor represents the physical printed artifact"* — dark theme darkens the studio chrome, not the sheet, and the five [ADR-055](#adr-055) content inks are untouched. The frozen `.page` is amended into a **light-theme island** of eight restated light tokens (the fourth amendment to a frozen V2 surface, on the D-024/D-033 precedent); `.phone` still dims. |
+
 **C0 may legitimately begin.** Its only blocker, OD-1, is ruled. C0 writes no production code — it strips two stale lines from `v2-bench.html` under [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record)'s existing 2026-07-28 disposition, now also carrying the OD-3 amendment note that must survive that strip. C1's first line is likewise unblocked: OD-3 and OD-4 are ruled, and OD-10's D-032 half fences a single row rather than the package.
 
 ### 6. Review
@@ -2998,7 +3000,7 @@ the work now sits is the roadmap's
 
 **Phase C / C1 — the studio surface: the phase's first production code, and the package that had to amend its own specification before it could write a line.**
 
-- **Status:** `Proposed` — implementation complete, independently reviewed **GO WITH FIXES** with all four Required Fixes reconciled, full suite and all three golden suites green. **Moves to `Accepted` when the owner accepts the review and [both device-verification passes](../CLAUDE.md#device-verification-mandatory) are recorded.** **Both device passes have now been run in full, on 2026-08-02, and both failed** — see [the findings](#adr-090-device-pass-2) and [D-035](design/V2-SPEC-DEFECTS.md#d-035). C1's own geometry, grounds, grain and platform a11y tree verify correct on device; what fails is what C1's change of the page's ground did to the **content drawn on it**. C1 is **not accepted**, and no Phase C package proceeds until D-035 is ruled. Written as `Proposed` deliberately: [ADR-088](#adr-088) recorded that an ADR authored carrying `Accepted` is the implementer claiming the owner's word, and that lapse is not repeated here.
+- **Status:** `Accepted` **2026-08-02** — implementation complete, independently reviewed twice (**GO WITH FIXES** both times, every Required Fix reconciled), full suite and all three golden suites green, and **[both device-verification passes recorded and passed](#adr-090-device-verification)** on `SM-A176B` / Android 16. It took three device sessions and two owner rulings ([OD-10](design/V2-SPEC-DEFECTS.md#d-032-ruling) on the warn trigger, [OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling) on whether the artifact dims) to earn that word. **Discharged 2026-08-02: [both passes were re-run from the beginning on the D-035 build and both pass](#adr-090-device-verification).** What follows is the history, kept because it is the substance of what the gate bought. Before that: **both passes were run in full and both failed** — see [the findings](#adr-090-device-pass-2) and [D-035](design/V2-SPEC-DEFECTS.md#d-035). C1's own geometry, grounds, grain and platform a11y tree verify correct on device; what fails is what C1's change of the page's ground did to the **content drawn on it**. C1 is **not accepted**, and no Phase C package proceeds until D-035 is ruled. Written as `Proposed` deliberately: [ADR-088](#adr-088) recorded that an ADR authored carrying `Accepted` is the implementer claiming the owner's word, and that lapse is not repeated here.
 - **Context:** C1 is the first package of Phase C to touch `src/main`. Its selectors are [ADR-089 §4](#adr-089) rows **1.1–1.3 and 1.5–1.11** — the ground and its grain, the sheet's hairline, radius, two-layer shadow and grain, the keep-clear boundary, the centre guide, and the page number.
 
   Two things had to be settled before any of it could be built, and **both were found by C1's own pre-implementation blocker check rather than during implementation** — which is the whole point of running that check:
@@ -3041,6 +3043,52 @@ Dispatched to an independent Review Agent that did not write the code, against a
 - **RF3 — the guide's 8dp inset was measured from the canvas, not the page.** ACCEPTED. In the frozen file `.guide` is a child of `.page`. The two rectangles were near enough the same thing while the page was top-left anchored — **C1's own centring is what made them differ** — so a horizontal guide would have run across the desk either side of the paper. `SnapGuides` now takes `pageSizePt` and derives the page rect from the shared seam.
 - **RF4 — no device verification.** ACCEPTED and **partly discharged**. A device (`SM-A176B`, `RZCYA1VBQ2H`) became available after the review, and the passes were run then rather than batched to C9, per the owner's process note of 2026-08-01. **Pass 2 failed, and its finding is [below](#adr-090-device-pass-2).** Pass 1 and a clean Pass 2 must both be re-run against the fixed build before this ADR can move to `Accepted`; the device is no longer attached, so C1's gate stays open and this ADR stays `Proposed`.
 
+#### The completed hardware verification {#adr-090-device-verification}
+
+**Device** `SM-A176B` (`RZCYA1VBQ2H`), **Android 16**, SDK 36. **Build** a fresh `:app:assembleDebug` of the
+D-035 tree, installed clean. **2026-08-02.** No evidence reused from the two earlier sessions; every number
+below was measured again on this build, from a cold launch, with app data left intact (the device carries the
+owner's real zines).
+
+**Pass 1 — developer verification.** ✅
+
+| What | Measured | Expected |
+|---|---|---|
+| the document's **own black content ink** on the sheet, **dark** | **18.82:1** | ≥ 4.5 — it was **1.60:1** before D-035 |
+| the same, light | 18.82:1 | unchanged, and identical to dark, which is the ruling |
+| sheet, dark | `#F7F2E7` | V2 light `paper` **exactly** — the artifact does not dim |
+| room, dark | `#312C24`-class | still dark — the room does dim |
+| contact shadow under the sheet, dark | `(35,34,32)` against a `(49,44,36)` ground | **darker** than the ground; [D-010](design/V2-SPEC-DEFECTS.md#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark) not reinstated |
+| page box | **1028 × 1454 px, ratio 0.70702** | frozen `.page` 0.70679 · true panel 0.70714 |
+| keep-clear inset | **83 px**, uniform | 83.0 px derived from `DEFAULT_SAFE_AREA_INSET_PT` |
+| blank-page invitation, dark | headline **13.27:1**, subcopy **6.48:1** | ≥ 4.5 |
+| page hairline | `#EEE6D4` exactly | `--paper-edge` |
+
+**The platform tree, read with `uiautomator dump` rather than Compose semantics.** No node for the
+keep-clear, the guide, the grain, the shadow or the page number — the decoration announces nothing. Undo and
+Redo report `enabled=false` **to the platform** at rest, which is the [ADR-058](#adr-058) trap avoided. The
+later blank page announces *"A fresh page. What goes here?"*, so the VOICE headline variant is the one the
+platform actually speaks. Persistence verified across a force-stop: the previous session's zine and its
+content returned intact.
+
+**Pass 2 — first-time-user verification.** ✅ Library → *Make a zine* → paper → the sheet → *Add words* →
+type → commit → select → the transform controls → *Preview* → Read. Nothing on that path misled me, and the
+screen answers its own question — *"how do I change this page?"* — with a sheet of paper on a desk.
+
+**What the dark theme now looks like is the finding worth writing down.** A lit sheet on a dark room reads as
+a lamp over a work table: the artifact is the brightest thing on screen, which is what it is. Before D-035 the
+same page was dark in the editor and light in Read, and *that* disagreement was the thing that read as a
+malfunction. **The honest cost:** a lit sheet at night is brighter than a dark-theme user may expect, and the
+owner's ruling weighed exactly that — *"the editor must never make the user's own content unreadable in order
+to express a dark application theme."* Recorded as an accepted consequence, not a defect. The residual
+`#F7F2E7` vs `#EDE6D9` step against Read (15 levels, 5.9%) is the [ADR-071](#adr-071) V1/V2 coexistence and
+closes in Phase D.
+
+**One finding stands open, and it is not C1's** — the decorative sticker cluster is still announced (`✿`,
+`❀`, `★` as three `TextView` nodes) against [`EditorEmptyState`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt)'s
+own documented contract. `StickerBlob` lacks the `clearAndSetSemantics` the tray cue has. It predates C1,
+does not block this package, and is carried to **C9**, which owns the phase's accessibility pass.
+
 #### The Pass 2 finding — the invitation went invisible in the dark theme {#adr-090-device-pass-2}
 
 C1 repainted the sheet with V2's `paper` and left [`EditorEmptyState`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) drawing its headline in V1's `ink`. The two palettes disagree about dark **deliberately**: V1 keeps the sheet lit (`paper` `#EDE6D9`) so a near-black `ink` `#23201C` is right on it; V2 dims the sheet (`paper` `#2F2A22`) and answers it with a warm cream `ink` `#ECE4D3`. Each system is coherent alone. Mixed, the dark theme drew `#23201C` on `#2F2A22` — measured at **1.15:1**. The blank page's whole invitation was unreadable.
@@ -3062,11 +3110,21 @@ so TalkBack reads three ornaments aloud before the invitation. It is exactly the
 the merged semantics tree and the platform tree disagreeing — and it is recorded rather than fixed here because it
 predates C1 and fixing it inside a failed verification would blur what this pass tested.
 
-**But the user's own words are illegible on the dark sheet.** See [D-035](design/V2-SPEC-DEFECTS.md#d-035): the
+**But the user's own words were illegible on the dark sheet.** See [D-035](design/V2-SPEC-DEFECTS.md#d-035): the
 document's content ink is black — correctly theme-independent, because it prints — and C1 replaced the editor's
 `ZinelyTheme.colors.paper` with `benchPageSurface()`, moving the dark sheet from V1's *lit* `#EDE6D9` to V2's
 *dimmed* `#2F2A22`. Measured **1.60:1**. The same page in the Read/Proof screen, on the same device in the same
-theme, keeps its sheet at `#EDE6D9` and reads **16.92:1**. **Both passes fail**, and the ADR stays `Proposed`.
+theme, keeps its sheet at `#EDE6D9` and reads **16.92:1**. Both passes failed on it.
+
+**[OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling) ruled it the same day: the artifact does not dim, the room
+around it may.** The frozen Bench was amended for the fourth time — `.page` re-declares eight on-paper tokens
+with their light values — and `BenchSheetIsland` applies the same eight in Compose. **Eight, not the whole
+scheme:** the first implementation lightened all twenty-six, which took the sheet's own shadow with them and drew
+a warm-brown shadow on a dark desk — [D-010](design/V2-SPEC-DEFECTS.md#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark)
+reinstated inside the fix for D-035, and certified by a re-recorded dark golden before review caught it. Twice in
+one package the golden agreed with the defect it was recorded from; the guard that now exists in each case is an
+*assertion* — a pixel probe whose mutation is *delete the island*, and a set-equality test between the frozen
+`.page` block and the Compose override, in both directions.
 
 The fix below takes the ink from the same system as the surface under it. The sticker blobs stay on V1's maker inks: they are opaque shapes legible against either sheet, and V2 publishes no `teal`/`coral` to move them to — recolouring them would be a redesign, not a fix.
 

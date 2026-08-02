@@ -3,11 +3,14 @@ package com.aritr.zinely.feature.editor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -36,8 +39,10 @@ import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.LocalZinelyV2Colors
 import com.aritr.zinely.ui.theme.ZinelyV2Colors
 import com.aritr.zinely.ui.theme.ZinelyV2Dimens
+import com.aritr.zinely.ui.theme.zinelyV2LightColors
 import com.aritr.zinely.ui.theme.ZinelyV2Grain
 import com.aritr.zinely.ui.theme.ZinelyV2ShadowLayer
 import com.aritr.zinely.ui.theme.rememberZinelyV2GrainBrush
@@ -136,6 +141,39 @@ internal object BenchStudio {
      * state, and a future reader comparing Compose against the CSS will find no `2px` in it.
      */
     val KeepClearDash: Dp = 2.dp
+
+    /**
+     * The sheet's palette inside [BenchSheetIsland] — [room] with **exactly the eight tokens `.page`
+     * re-declares** taken from the light theme, and nothing else touched.
+     *
+     * Eight, not the whole scheme. The first cut of the island provided `zinelyV2LightColors()` wholesale,
+     * which lightened all twenty-six — including `pageShadow` / `pageContact`, the sheet's own shadow. In
+     * dark that drew a warm-brown shadow on a dark desk: precisely the defect
+     * [D-010](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-010) was raised for and OD-3
+     * amended both frozen files to remove, silently reinstated by the fix for a different one — and
+     * certified by a re-recorded golden, the corpus's own *goldens-in-record-mode-aren't-assertions*, for
+     * the second time in this package. Review caught it; the pixels below the sheet were *brighter* than
+     * the ground, a glow where a contact shadow belongs.
+     *
+     * So this mirrors the CSS cascade instead of replacing the scheme: `.page` declares eight custom
+     * properties and inherits the rest, and so does this. The shadow is the room's, because the shadow
+     * *is* the room — it is the sheet's mark on the desk, not part of the sheet.
+     *
+     * Pure, so the set is asserted against the frozen `.page` block without a composition.
+     */
+    fun sheetIsland(room: ZinelyV2Colors): ZinelyV2Colors {
+        val light = zinelyV2LightColors()
+        return room.copy(
+            paper = light.paper,
+            paperEdge = light.paperEdge,
+            ink = light.ink,
+            inkSoft = light.inkSoft,
+            inkFaint = light.inkFaint,
+            matcha = light.matcha,
+            matchaText = light.matchaText,
+            strawberryText = light.strawberryText,
+        )
+    }
 
     /**
      * The keep-clear inset for a page drawn at [pageWidthPx] px wide, from a panel [panelWidthPt] pt
@@ -286,6 +324,45 @@ internal fun Modifier.benchStudioGround(): Modifier {
     return this
         .background(colors.paper)
         .zinelyV2Grain(grain, alpha = BenchStudio.SCREEN_GRAIN_ALPHA)
+}
+
+/**
+ * **The sheet is a light-theme island** — the [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035)
+ * amendment, and the one thing about C1 that is not a transcription.
+ *
+ * The dark theme dims the *room*. It must not dim the *artifact*, because the artifact's ink is print
+ * colour: the document's content inks are theme-independent by design — a PDF that changed with the
+ * phone's night setting would be the worse defect by far — so a dimmed sheet left the user's own black
+ * text at **1.60:1** on device, while the Read/Proof screen showed the same page at 16.92:1. The owner
+ * ruled that the artifact does not dim, and the frozen Bench was amended to match (`.page` re-declares
+ * the on-paper tokens with their light values).
+ *
+ * This is that amendment: everything composed inside — the sheet, the keep-clear cue, the centre guide,
+ * the page number, the render tape, the selection chrome and handles, and the blank-page invitation —
+ * resolves the **eight on-paper tokens** to their light values in both themes. No new colour is
+ * introduced and none is remapped: it is the light palette, applied where the paper is. Everything else,
+ * the sheet's own shadow included, stays the room's — see [BenchStudio.sheetIsland] for why that
+ * distinction is load-bearing rather than tidy.
+ *
+ * **What is actually inside this scope is more than the sheet**, and that wants saying plainly. The
+ * canvas stack also carries the Type bar, the text-edit session sheet, the save-failure banner, the
+ * "Saved" chip, the coverage notice, the move/resize hint and the Reframe chrome. None of them renders
+ * wrong today, but only because none of them reads `v2Colors` yet — every one is still on V1's
+ * `ZinelyTheme.colors`. That is an accident of the migration, not a design. The day a package ports one
+ * of them to V2 — the Type bar is itself a frozen V2 surface, so C3 is the likely day — it will inherit
+ * paper-coloured ink at night unless it is moved out of this scope first. The bar, the tray, the page
+ * strip and the context bar are already outside, which is where room chrome belongs.
+ */
+@Composable
+internal fun BenchSheetIsland(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val room = ZinelyTheme.v2Colors
+    val onPaper = remember(room) { BenchStudio.sheetIsland(room) }
+    CompositionLocalProvider(LocalZinelyV2Colors provides onPaper) {
+        Box(modifier = modifier, content = content)
+    }
 }
 
 /**

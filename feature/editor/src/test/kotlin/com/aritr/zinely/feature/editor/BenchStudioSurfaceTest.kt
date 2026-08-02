@@ -17,6 +17,7 @@ import com.aritr.zinely.ui.theme.zinelyV2DarkColors
 import com.aritr.zinely.ui.theme.ZinelyV2Dimens
 import com.aritr.zinely.ui.theme.zinelyV2LightColors
 import java.io.File
+import com.aritr.zinely.ui.theme.ZinelyV2Colors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -52,18 +53,97 @@ class BenchStudioSurfaceTest {
         f.readText().substringBefore("</style>")
     }
 
-    /** The one declaration block for [selector], as it stands in the frozen file. */
+    /**
+     * Every declaration block for [selector], joined — because a selector may legitimately carry more
+     * than one, and `.page` now does.
+     *
+     * The first cut of this read only the *first* block, which was true of the frozen file until the
+     * [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035) amendment gave `.page` a
+     * second one holding the light-theme island's tokens. Five assertions then failed looking for `width`
+     * in a block that declares only custom properties — the test was reading CSS's shape wrong, and the
+     * spec was right.
+     */
     private fun rule(selector: String): String {
         val escaped = Regex.escape(selector)
-        val m = Regex("""(?m)^\s*$escaped\s*\{([^}]*)}""").find(benchCss)
-        assertTrue("frozen Bench has no `$selector` rule", m != null)
-        return m!!.groupValues[1]
+        val blocks = Regex("""(?m)^\s*$escaped\s*\{([^}]*)}""").findAll(benchCss)
+            .map { it.groupValues[1] }.toList()
+        assertTrue("frozen Bench has no `$selector` rule", blocks.isNotEmpty())
+        return blocks.joinToString(";")
     }
 
     private fun px(selector: String, property: String): Double {
         val m = Regex("""(?<![\w-])$property\s*:\s*(-?[\d.]+)px""").find(rule(selector))
         assertTrue("`$selector` declares no `$property` in px", m != null)
         return m!!.groupValues[1].toDouble()
+    }
+
+    /**
+     * The sheet is a **light-theme island** ([D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035)):
+     * `.page` re-declares the on-paper tokens, and each one restates the **light** theme's value.
+     *
+     * Both halves matter. That the tokens are re-declared is the amendment; that they equal `:root`'s
+     * light values is what makes it an amendment rather than a new palette — the owner's ruling forbids
+     * inventing a second one. Reading the light block out of the frozen file rather than transcribing
+     * hex here means this fails if either side is edited alone.
+     */
+    @Test
+    fun `the frozen page is a light-theme island, restating the light values and inventing no colour`() {
+        val lightRoot = Regex("""(?ms)^\s*:root\{(.*?)}""").find(benchCss)!!.groupValues[1]
+        val island = rule(".page")
+        val declared = Regex("""(--[a-z-]+)\s*:\s*(#[0-9A-Fa-f]{3,8})""").findAll(island)
+            .associate { it.groupValues[1] to it.groupValues[2].lowercase() }
+
+        assertTrue(
+            "the sheet must re-declare the on-paper tokens; found ${declared.keys}",
+            declared.keys.containsAll(
+                listOf("--paper", "--paper-edge", "--ink", "--ink-soft", "--ink-faint", "--matcha", "--strawberry-text"),
+            ),
+        )
+        declared.forEach { (token, value) ->
+            val light = Regex("""(?<![\w-])${Regex.escape(token)}\s*:\s*(#[0-9A-Fa-f]{3,8})""")
+                .find(lightRoot)?.groupValues?.get(1)?.lowercase()
+            assertEquals("`$token` on .page must restate the light theme's value, not invent one", light, value)
+        }
+    }
+
+    /**
+     * **The Compose island overrides exactly the tokens `.page` declares — no more.**
+     *
+     * This is the assertion whose absence let the first cut ship a defect. That cut provided
+     * `zinelyV2LightColors()` wholesale, lightening all twenty-six tokens rather than the spec's eight,
+     * and among the eighteen extras were `pageShadow` / `pageContact` — so in dark the sheet cast a
+     * warm-brown shadow on a dark desk, reinstating [D-010](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-010)
+     * inside the fix for [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035). Every
+     * other test stayed green, and the re-recorded dark golden certified it.
+     *
+     * Both directions are checked, because only the pair is a statement about *equality* of the sets:
+     * a token the CSS declares and Kotlin misses is an un-applied amendment; a token Kotlin changes and
+     * the CSS does not is Compose inventing spec. The comparison runs over the data class's own
+     * `toString`, so a token added to [ZinelyV2Colors] tomorrow is covered without touching this test.
+     */
+    @Test
+    fun `the Compose sheet island overrides exactly the tokens the frozen page declares`() {
+        fun fields(c: ZinelyV2Colors): Map<String, String> =
+            Regex("""(\w+)=(Color\([^)]*\))""").findAll(c.toString())
+                .associate { it.groupValues[1] to it.groupValues[2] }
+
+        val room = zinelyV2DarkColors()
+        val changed = fields(room).filter { (k, v) -> fields(BenchStudio.sheetIsland(room))[k] != v }.keys
+
+        val declared = Regex("""(--[a-z-]+)\s*:\s*#""").findAll(rule(".page"))
+            .map { m ->
+                m.groupValues[1].removePrefix("--").split('-')
+                    .mapIndexed { i, w -> if (i == 0) w else w.replaceFirstChar(Char::uppercase) }.joinToString("")
+            }.toSet()
+
+        assertEquals(
+            "the sheet island and the frozen `.page` block must name the same tokens",
+            declared.sorted(), changed.sorted(),
+        )
+        assertTrue(
+            "the sheet's shadow belongs to the room, not the sheet — it must not be lightened at night",
+            "pageShadow" !in changed && "pageContact" !in changed,
+        )
     }
 
     // -- the sheet (rows 1.5-1.7) ------------------------------------------------------------------

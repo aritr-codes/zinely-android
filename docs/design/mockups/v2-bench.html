@@ -37,6 +37,23 @@
   insets (.content 22px) are unchanged and still sit inside the keep-clear.  Colours, shadows, type,
   motion and script are untouched.  The Proof's .pageStage (206x300, ratio 0.6867) is a different
   surface and is NOT amended here -- recorded as an observation on D-033 for the phase that meets it.
+
+  AMENDED 2026-08-02 by owner ruling (D-035).  The dark theme dimmed the SHEET, and the sheet is the
+  artifact.  The document's content inks are print colours and are theme-independent by design -- a
+  PDF that changed with the phone's night setting would be the worse defect -- so a dimmed sheet left
+  the user's own black text at 1.60:1 on device, while the Read/Proof screen showed the same page at
+  16.92:1.  Ruling: the artifact does not dim; the room around it may.
+    .page   becomes a LIGHT-THEME ISLAND.  The on-paper tokens are re-declared on .page itself with
+            their light values, so everything drawn on the sheet -- .keepclear, .guide, .pagenum,
+            .el/.sel/.handle, .t-title/.t-body, and the empty-state invitation Compose draws there --
+            inherits paper-coloured surroundings in BOTH themes.  No new colour is introduced: every
+            value below already exists in :root as the light theme's.  The five ADR-055 content inks
+            are untouched, and the document is not recoloured.
+    .phone  is NOT amended and still dims.  That is the ruling's other half: the studio chrome, the
+            canvas ground, the bar, the shelf and the sheet's own shadow stay dark at night.
+  Light renders byte-for-byte as before, because in light these declarations restate :root.  The
+  Proof's .page dims by the same mechanism and is NOT amended here -- it is a different frozen
+  surface, its shipped screen already keeps the sheet lit, and it is recorded on D-035 for Phase D.
 -->
 <style>
   :root{
@@ -114,6 +131,10 @@
   .canvasArea{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
   .pageWrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     transition:transform .34s var(--settle);will-change:transform;}
+  /* D-035 amendment: the sheet is a light-theme island. These restate :root's LIGHT values, so light
+     is unchanged and dark stops dimming the artifact. Everything inside .page inherits them. */
+  .page{--paper:#F7F2E7;--paper-edge:#EEE6D4;--ink:#2A251E;--ink-soft:#5B5347;--ink-faint:#8C8269;
+    --matcha:#5E6B2F;--matcha-text:#4C5826;--strawberry-text:#A6474F;}
   .page{position:relative;width:229px;height:324px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:5px;
     box-shadow:0 14px 30px -14px var(--page-shadow),0 2px 5px var(--page-contact);}
   .page::after{content:"";position:absolute;inset:0;border-radius:5px;background-image:var(--grain);
