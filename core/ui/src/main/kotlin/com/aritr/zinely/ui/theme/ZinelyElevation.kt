@@ -6,11 +6,23 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * One CSS `box-shadow` layer: `0 <dy> <blur> <color>`. The frozen spec never offsets a shadow on x,
- * and never uses spread, so neither is modelled.
+ * One CSS `box-shadow` layer: `0 <dy> <blur> [spread] <color>`. The frozen spec never offsets a shadow
+ * on x, so that is still not modelled.
+ *
+ * **[spread] arrived with the V2 Bench and this doc used to deny it existed.** The M0 audit's "never
+ * uses spread" held for the V1 trilogy and was carried forward as a fact; the frozen `.ctx` contextual
+ * bar (`v2-bench.html:211`, `0 12px 30px -12px`) is the first layer in the corpus that needs it
+ * ([ADR-092](../../../../../../../../docs/DECISIONS.md#adr-092) row 2.10a). It defaults to zero, so every
+ * existing layer is unchanged.
  */
 @Immutable
-public data class ZinelyShadowLayer(val dy: Dp, val blur: Dp, val color: Color)
+public data class ZinelyShadowLayer(
+    val dy: Dp,
+    val blur: Dp,
+    val color: Color,
+    /** CSS spread: the shadow shape grows by this on all sides before blurring; negative shrinks it. */
+    val spread: Dp = 0.dp,
+)
 
 /**
  * The frozen depth ladder — `--shadow-1` / `--shadow-2` / `--shadow-lift` from the DESIGN-FROZEN

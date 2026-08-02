@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -63,6 +64,7 @@ import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.render.android.readImageIntrinsics
+import com.aritr.zinely.ui.theme.LocalZinelyV2Colors
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -633,6 +635,9 @@ public fun EditorScreen(
             // D-035: the canvas stack is the artifact, so it is a light-theme island — the sheet and
             // everything drawn on it keep paper-coloured surroundings at night, while the room around
             // this Box (bar, tray, page strip, context bar) goes on dimming. See [BenchSheetIsland].
+            // Read BEFORE the island opens, so the chrome that floats over the sheet can be drawn in the
+            // room's palette rather than the sheet's — see the `.ctx` bar below.
+            val roomColors = ZinelyTheme.v2Colors
             BenchSheetIsland(modifier = Modifier.fillMaxSize()) {
                 // The page footprint reads as paper — the frozen `--paper` sheet (bench.html `.panel`),
                 // instead of the bare desk showing through. Purely a host backing UNDER the render: the
@@ -906,6 +911,52 @@ public fun EditorScreen(
                         .align(Alignment.TopCenter)
                         .padding(top = 8.dp),
                 )
+
+                // The frozen contextual verb bar — .ctx (ADR-092). ADDED beside EditorContextBar, never
+                // in place of it: OD-11 ruled the frozen bar additive, because the shipped one is the
+                // WCAG 2.5.7 single-pointer path (ADR-029 §6) and a parity phase does not remove one.
+                //
+                // It hides while the Type bar is open, and that is the freeze's own pattern rather than
+                // an invention: opening the ink popover runs ctx.classList.remove('show') and closing it
+                // restores the bar (v2-bench.html:516, :520). Two floating cards at the same canvas edge
+                // would otherwise stack.
+                val ctxElement = uiState.selection.singleOrNull()?.let { id ->
+                    uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
+                }
+                val ctxKind = ctxElement?.let { benchVerbKindOf(it) }
+                // The bar is composed inside the sheet island for its geometry — it floats at the canvas's
+                // bottom edge — but it is NOT part of the sheet, so it must not inherit the sheet's
+                // palette. [BenchStudio.sheetIsland] re-declares exactly eight tokens, and `ink` is one of
+                // them: drawn under the island the bar took the *light* ink onto its own *room* `--sheet`
+                // fill, which in dark theme is dark-on-dark — measured at 1.05:1 on a device, an invisible
+                // toolbar that every Robolectric test passed because they all run the light palette. The
+                // ruling was already written at the island's own comment above ("the room around this Box
+                // — bar, tray, page strip, context bar — goes on dimming", D-035); this restores it.
+                //
+                // The alignment modifier is built out here because `align` needs the BoxScope receiver,
+                // which the provider's lambda does not carry.
+                val ctxModifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                CompositionLocalProvider(LocalZinelyV2Colors provides roomColors) {
+                BenchContextBar(
+                    visible = ctxKind != null && !editing && reframing == null && !typeBarOpen,
+                    verbs = ctxKind?.let { benchContextVerbs(it) }.orEmpty(),
+                    onVerb = { verb ->
+                        val id = ctxElement?.id
+                        when (verb.label) {
+                            Copy.BenchVerbs.EDIT -> if (id != null) dispatch(Intent.BeginEditText(id))
+                            // OD-9 routed Size to the shipped Type bar; Ink joins it there because the
+                            // freeze's own .inkpop is outside C2b's fence and the Type bar already carries
+                            // both size and the five content inks (ADR-055). ADR-092 row 2.13b.
+                            Copy.BenchVerbs.SIZE, Copy.BenchVerbs.INK -> typeBarOpen = true
+                            Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
+                            Copy.BenchVerbs.DELETE -> dispatch(Intent.Delete(uiState.selection))
+                            // Font and Replace ship disabled and never arrive here (ADR-092 §1(c), D-038).
+                            else -> Unit
+                        }
+                    },
+                    modifier = ctxModifier,
+                )
+                }
 
                 // The Type bar (FR-3, ADR-055, bench `.typebar`): a floating card pinned to the bottom of
                 // the canvas — bench `position:absolute; bottom:calc(74px + safe-area)`, i.e. it FLOATS

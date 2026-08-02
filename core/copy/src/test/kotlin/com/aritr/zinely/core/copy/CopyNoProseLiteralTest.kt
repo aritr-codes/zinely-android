@@ -40,6 +40,12 @@ class CopyNoProseLiteralTest {
             // `EditorStore.check{ … }` debug invariant (Codex D2) — a developer assertion message, never
             // rendered or announced. Not copy; deliberately left in place.
             "Autosave effect document is not the freshly-reduced document",
+            // `benchContextVerbs(DECOR)`'s `error{ … }` (ADR-092 row 2.13c) — an unreachable-branch
+            // assertion. The frozen Bench draws a decor verb set, and `DecorElement` is re-seated out of
+            // Phase C by OD-2, so the branch cannot be entered: nothing calls it, nothing renders it, and
+            // no user can reach it. It exists so the day DecorElement returns, the omission fails loudly
+            // instead of silently drawing an empty bar. Not copy.
+            "decor verbs are unreachable until DecorElement is re-seated (OD-2)",
         )
 
         /** Enrolled roots/files, relative to the repo root — the §C9 "Editor, Shelf and Proof sources; nav host". */

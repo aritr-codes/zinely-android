@@ -6,13 +6,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
@@ -24,6 +29,7 @@ import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +42,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
@@ -707,5 +714,111 @@ class EditorScreenTest {
 
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertDoesNotExist()
+    }
+
+    // ── C2b — the frozen `.ctx` verb bar, as assembled (ADR-092) ───────────────────────────────────
+
+    private fun selectedText(): EditorStore = store().also {
+        it.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "Hi"))
+    }
+
+    @Test
+    fun the_verb_bar_follows_the_selection_and_yields_to_an_open_session() {
+        val store = selectedText()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertIsDisplayed()
+
+        // ADR-092 §3: the freeze itself hides `.ctx` while a session owns the element (v2-bench.html:516).
+        store.dispatch(Intent.BeginEditText(store.uiState.value.selection.single()))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertDoesNotExist()
+    }
+
+    /**
+     * The one that would have caught it.
+     *
+     * The verb bar floats at the canvas's bottom edge, so it is composed **inside** [BenchSheetIsland] —
+     * and the island re-declares eight tokens from the light palette, `ink` among them, so that the
+     * artifact does not dim at night (D-035/OD-12). The bar took that light `ink` while keeping the room's
+     * dark `--sheet` for its own fill: dark ink on a dark card, measured at **1.05:1** on a device. Every
+     * unit test passed, because Robolectric's default qualifiers are the *light* palette, where the two
+     * sources happen to agree. Only `qualifiers = "night"` can tell them apart.
+     *
+     * Asserted as contrast rather than as a colour, because the defect is not "the wrong token" — it is
+     * "a control the user cannot see", and that is what should fail.
+     */
+    @Test
+    @Config(qualifiers = "night")
+    fun the_verb_bar_is_legible_at_night() {
+        setScreen(selectedText())
+        composeRule.waitForIdle()
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
+
+        // The bar's own fill, taken from a gap between two verbs rather than from a glyph.
+        val fill = bmp.getPixel(bar.left.toInt() + 2, bar.center.y.toInt())
+        val edit = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}")
+            .fetchSemanticsNode().boundsInWindow
+        var widest = 0
+        for (y in edit.top.toInt() + 2 until edit.bottom.toInt() - 2) {
+            for (x in edit.left.toInt() + 2 until edit.right.toInt() - 2) {
+                val p = bmp.getPixel(x, y)
+                val d = listOf(0, 8, 16).sumOf { s ->
+                    kotlin.math.abs(((p shr s) and 0xFF) - ((fill shr s) and 0xFF))
+                }
+                if (d > widest) widest = d
+            }
+        }
+        // The defect measured 7 across all three channels combined. Correct dark theme is cream on near
+        // black — several hundred. 150 sits far from both, so this is not a threshold tuned to today's
+        // pixels; it is the gap between "readable" and "not drawn at all".
+        assertTrue("the verb label must be legible against the bar it sits on (was $widest)", widest > 150)
+    }
+
+    /**
+     * The second one the device found, and the one no single package could have predicted.
+     *
+     * C2a made a tap outside the selection dismiss it (OD-13); C2b floated a card over the canvas. Their
+     * intersection is the card's own dead space — 8dp of padding and 6dp between each pair of verbs —
+     * which passed the tap straight through to the canvas underneath. Aiming at the toolbar and missing by
+     * three density-independent pixels therefore deselected the element and took the toolbar away with it:
+     * measured on hardware, four times out of four. Neither package is wrong on its own, which is exactly
+     * why this is asserted at the assembly and not in either component's own suite.
+     */
+    @Test
+    fun a_tap_that_lands_on_the_bar_but_misses_a_verb_keeps_the_selection() {
+        val store = selectedText()
+        setScreen(store)
+        composeRule.waitForIdle()
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        val edit = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}")
+            .fetchSemanticsNode().boundsInWindow
+        // The card's top-left padding: inside the bar, above and left of the first verb — the frozen 8dp.
+        val x = ((bar.left + edit.left) / 2f) - bar.left
+        val y = ((bar.top + edit.top) / 2f) - bar.top
+        composeRule.onNodeWithTag(BenchContextBarTestTag).performTouchInput { click(Offset(x, y)) }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        assertEquals(1, store.uiState.value.selection.size)
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertExists()
+    }
+
+    @Test
+    fun both_bars_announce_Delete_and_that_is_what_additive_costs() {
+        // Not a defect to be fixed here, and not an accident either: OD-11 keeps `EditorContextBar` as the
+        // WCAG 2.5.7 single-pointer twin of the drag gestures (ADR-029 §6), and the frozen `.ctx` bar is
+        // *additive* on top of it. Both carry Delete, both delete the selection, both announce "Delete" —
+        // so TalkBack's linear sweep meets the same word twice. Pinned rather than tolerated silently:
+        // this assertion is what makes the cost visible to the next reader, and it fails the moment either
+        // bar's label moves. Whether the duplicate should be disambiguated is an owner question — filed as
+        // D-039, answered from device Pass 2 — not something to settle by quietly re-labelling a fenced bar.
+        setScreen(selectedText())
+        composeRule.waitForIdle()
+        val deletes = composeRule.onAllNodesWithContentDescription(Copy.BenchVerbs.DELETE).fetchSemanticsNodes()
+        assertEquals(2, deletes.size)
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertExists()
+        composeRule.onNodeWithTag("$EditorContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertExists()
     }
 }

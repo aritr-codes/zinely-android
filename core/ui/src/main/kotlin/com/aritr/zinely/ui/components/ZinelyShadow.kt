@@ -14,8 +14,11 @@ import com.aritr.zinely.ui.theme.ZinelyShadowLayer
 
 /**
  * The multi-layer box-shadow of the DESIGN-FROZEN spec, deferred from M0 until its first caller
- * (ADR-048). Draws each [ZinelyShadowLayer] behind [shape]; CSS `box-shadow` has no x-offset or
- * spread anywhere in the frozen trilogy (verified in the M0 audit), so a layer is (dy, blur, color).
+ * (ADR-048). Draws each [ZinelyShadowLayer] behind [shape]. CSS `box-shadow` has no x-offset
+ * anywhere in the frozen corpus, so a layer is (dy, blur, color, spread). **Spread used to be
+ * absent too** - the M0 audit verified that across the V1 trilogy and this comment carried it
+ * forward as a fact; the V2 Bench's `.ctx` (`0 12px 30px -12px`) is the first layer that needs
+ * it (ADR-092 row 2.10a). It defaults to zero, so every layer written before it draws as it did.
  *
  * CSS lists shadows front-to-back (the first declared layer paints on top), so layers are drawn in
  * reverse order here.
@@ -32,7 +35,16 @@ public fun Modifier.zinelyShadow(layers: List<ZinelyShadowLayer>, shape: Shape):
     }
 
 private fun DrawScope.drawShadowLayer(layer: ZinelyShadowLayer, shape: Shape) {
-    val outline = shape.createOutline(size, layoutDirection, this)
+    // CSS spread grows the shadow shape by `spread` on every side before the blur (negative shrinks
+    // it), so the outline is built at the spread size and re-centred. Corner radii are NOT spread with
+    // it: the frozen -12px case leaves the shadow entirely inside the bar except for its dy, where a
+    // radius difference on a 30px blur is not observable. Recorded rather than silently approximated.
+    val spreadPx = layer.spread.toPx()
+    val spreadSize = androidx.compose.ui.geometry.Size(
+        (size.width + 2f * spreadPx).coerceAtLeast(0f),
+        (size.height + 2f * spreadPx).coerceAtLeast(0f),
+    )
+    val outline = shape.createOutline(spreadSize, layoutDirection, this)
     val path = Path().apply {
         when (outline) {
             is Outline.Rectangle -> addRect(outline.rect)
@@ -41,7 +53,7 @@ private fun DrawScope.drawShadowLayer(layer: ZinelyShadowLayer, shape: Shape) {
         }
     }
     val blurPx = layer.blur.toPx()
-    translate(top = layer.dy.toPx()) {
+    translate(left = -spreadPx, top = layer.dy.toPx() - spreadPx) {
         if (blurPx <= 0f) {
             drawPath(path, layer.color)
         } else {

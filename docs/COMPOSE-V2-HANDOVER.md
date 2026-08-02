@@ -26,7 +26,7 @@ dimmed at night while content ink stays black, because it prints). The second be
 and the frozen Bench was amended a fourth time, making `.page` a **light-theme island** of eight restated light
 tokens. Content ink now measures **18.82:1** in dark. Both defects are guarded by assertions, not goldens: twice
 in this package a golden was re-recorded over the defect it should have caught.
-**C2a is ACCEPTED (2026-08-02); C2b is the next package.** C1 was accepted and committed (`23e1a91`). C2a followed:
+**C2a is ACCEPTED (2026-08-02). C2b is BUILT, VERIFIED AND COMMITTED — and deliberately NOT accepted:** its device Pass 2 failed on [D-039](design/V2-SPEC-DEFECTS.md#d-039) (the same verb offered twice on one screen), so [ADR-092](DECISIONS.md#adr-092) stays `Proposed` pending an owner decision. **The next thing this programme needs is that decision, not more code.** C1 was accepted and committed (`23e1a91`). C2a followed:
 [ADR-091](DECISIONS.md#adr-091) opened it with a property-level table before any production code, the independent review
 returned **GO WITH FIXES** and all three Required Fixes were reconciled, and the full suite plus both golden gates are
 green. Then the device answered differently on each pass. **Pass 1 passed** — the dim lands within one channel step of

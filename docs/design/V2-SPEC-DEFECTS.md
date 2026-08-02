@@ -133,6 +133,8 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | ~~[**D-031**](#d-031)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-031-ruling), OD-9 | the Bench had no exits: Font and Size stay **drawn** with no invented capability, Read reuses [ADR-086](../DECISIONS.md#adr-086)'s hand-off, back reuses the existing stack, and **redo is kept** — the frozen bar specifies the editing surface, not the product's whole capability |
 | ~~[**D-037**](#d-037)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-037-ruling), OD-13 | the dim shipped without either of the freeze's two ways out of it. `Intent.ClearSelection` exists in the reducer and **nothing dispatches it**; the freeze's `canvas` click and Done button are unowned and C4's respectively. A stuck selection now fades everything else the user wrote, to **2.78:1**, undismissably. Pass 1 passed; **Pass 2 failed**. Ruled **(a)**: C2a adds tap-to-deselect, and selection becomes a **transient** editing state rather than a modal one |
+| [**D-039**](#d-039) | 🟦 **OPEN — an owner ruling, and it fences nothing** | since C2b the Bench offers the same verb twice — **`Delete` in both bars, and `Reframe` in both a bar and an on-canvas chip**. C2b's device Pass 2 **did not pass** on this, and [ADR-092](../DECISIONS.md#adr-092) stays `Proposed` because of it. one per bar, both announcing the same word to TalkBack. Not an accident and not a bug: it is the priced cost of [OD-11](#d-034-ruling)'s *additive*. Both delete the selection, so the duplication is redundant rather than ambiguous, and any real disambiguation is a **third** mechanism neither bar specifies. Deferred to device Pass 1, where the sweep can be heard rather than reasoned about |
+| [**D-038**](#d-038) | 🟦 **OPEN — an owner ruling, and it fences nothing** | the frozen photo bar offers **Replace**, and the product cannot honour it. `Intent.ReplaceImage(id, assetId)` exists in the reducer and is **dispatched from nowhere**; the only picker (`RequestAddImage` → `PickAndDecodeImage` → `CommitAddImage`) **creates** an element rather than re-pointing one, so reaching Replace is a flow change, not a wiring. C2b ships it **drawn and disabled** under [OD-9](#d-031-ruling)'s class — *a control the freeze draws stays drawn and invents nothing* — exactly as `Font` does. The question is whether the capability should exist |
 | [**D-036**](#d-036) | 🟦 **OPEN — documentation only, fences nothing** | the frozen Bench draws **four** resize handles; the editor has **eight**, and the extra four carry axis-constrained resize. C2a kept all eight under [OD-11](#d-034-ruling) (*the frozen vocabulary is additive; no existing capability is removed*), which the review confirmed is the right reading. What is owed is the **canonical file catching up** with that ruling — recommendation **(a)**, draw eight |
 | ~~[**D-035**](#d-035)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-035-ruling), OD-12 | the dark theme dimmed the sheet while the document's content ink stayed black — correctly, because it prints — leaving the user's own words at **1.60:1**. Ruled: **the artifact does not dim; the room around it may.** The frozen `.page` becomes a light-theme island of eight restated light tokens; `.phone` still dims |
 | ~~[**D-034**](#d-034)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-034-ruling), OD-11 | the frozen `.ctx` is a **verb** bar and the shipped `EditorContextBar` is the **WCAG 2.5.7** single-pointer twin of the drag gestures — **and they are not mutually exclusive.** The frozen bar is **additive**; the transform controls stay, because a parity phase does not remove an accessibility path. C2 splits into **C2a** (unblocked) and **C2b** (`.ctx*`) |
@@ -2611,6 +2613,97 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 | **(e) Split the package** | **C2a** — selection, handles, dim, materialise — proceeds now; **C2b** — the `.ctx` bar — waits for (a)–(d) | nothing but a package letter. The precedent is one entry away: OD-10's D-032 half **fenced a single row of C1's table rather than C1**, and C1 shipped |
 
 Option (e) is orthogonal — the owner may take it *and* any of (a)–(d).
+
+### D-039 — the Bench now offers the same verb twice, in the ear and in the eye {#d-039}
+
+**Raised 2026-08-02 by C2b's own verification — as a test failure, not a review note.** It does not fence anything.
+
+**What happened.** [OD-11](#d-034-ruling) ruled the frozen `.ctx` verb bar **additive**: the shipped `EditorContextBar` is the
+WCAG 2.5.7 single-pointer twin of the drag gestures ([ADR-029](../DECISIONS.md#adr-029) §6), and a parity phase does not delete
+an accessibility path. Both bars legitimately carry a Delete. The moment the second one landed,
+`TypeBarTest`'s `onNodeWithContentDescription("Delete")` stopped resolving — *"Expected exactly '1' node but found '2'"* — which
+is the clearest possible statement of the consequence: **a screen reader's linear sweep now meets the same word twice.**
+
+**Why it was not simply fixed.** Both available fixes are worse than the thing they fix:
+
+| | |
+|---|---|
+| re-label `EditorContextBar`'s Delete | precisely the "re-skinned or weakened" that [ADR-092](../DECISIONS.md#adr-092) §4 and OD-11 forbid |
+| re-label the frozen bar's Delete | breaks parity with `toolsFor()` (`v2-bench.html:452`), where the freeze says *Delete* — and the freeze is canonical |
+
+Any *real* disambiguation is therefore a **third** mechanism — a per-bar container or heading label, or collection semantics —
+which is a design decision, not an implementation detail, and so is the owner's.
+
+**How bad is it, honestly.** Not the [ADR-058](../DECISIONS.md#adr-058) class. There, the tree **lied**: a control announced
+itself enabled and did nothing. Here nothing lies — both controls announce *Delete*, both delete the selection, and a user who
+activates either gets exactly what they were promised. The cost is a redundant word in a linear sweep: a navigational
+annoyance, not a WCAG failure and not a breach of trust. It is pinned by
+[ADR-092](../DECISIONS.md#adr-092) row 2.13d, an assertion that fails the moment either label moves, so it cannot rot quietly.
+
+**The device answered, and the answer was worse than the question.** C2b's Pass 2 (2026-08-02, SM-A176B) found the
+duplication is **visible**, not merely audible — which this entry, written from the code, did not foresee. With a photo
+selected, the on-canvas `Reframe` chip sits on the image and the frozen bar's `Reframe` sits about 150px below it: the
+same word twice, at the same moment, in one glance. The first-time-user note, written before the reason was known, was
+*"there are two Reframe buttons on my screen — did I do something wrong?"* A screen reader meeting `Delete` twice is an
+annoyance; a beginner meeting `Reframe` twice reads it as a malfunction, and this app's stated audience is beginners.
+
+**So Pass 2 did not pass, and [ADR-092](../DECISIONS.md#adr-092) stays `Proposed` because of it.** Pass 1 says the code
+is right and Pass 2 says the screen is confusing; the handbook forbids averaging them. Option **(b)** below was written
+for the ear and is now the weaker answer — labelling the containers does nothing for the eye.
+
+**What is owed.** A judgement that can only be made with a device in hand: **does the duplicate register as confusing when you
+hear it?** That question belongs to C2b's device Pass 2, and this entry exists so the answer reaches the owner rather than
+being settled by whoever is holding the phone.
+
+**Options for the owner**
+
+| | Disposition |
+|---|---|
+| **(a)** | **Leave it.** Redundant, not ambiguous; both do the same thing. Cheapest, and defensible. |
+| **(b)** | **Label the containers** — give each bar a semantics container name ("Transform", "Actions"), so the sweep announces which bar it is in before the verbs. Invents no visible UI and touches neither bar's controls. |
+| **(c)** | Revisit OD-11 and let one bar go — **not recommended**, and named only for completeness: it is the accessibility path OD-11 exists to protect. |
+
+**Recommendation, revised after Pass 2: (b) is no longer sufficient.** The device decided, which was the whole point of running two passes — and it decided against the cheap fix. What is needed is a rule for *which* bar owns a verb the two share, so that each verb appears once: the frozen bar is the one the freeze specifies and the one a sighted beginner will reach for, and `EditorContextBar`'s value under [ADR-029](../DECISIONS.md#adr-029) §6 is the **transform** verbs (move, resize, rotate, order) that no gesture-free path otherwise offers — not `Delete`, which the frozen bar now carries. Dropping the shared verbs from the transform bar would remove no capability from any input method, but it touches a fenced component and rests on an accessibility argument, so it is put rather than taken. The on-canvas `Reframe` chip is the third copy and the easiest to retire.
+
+### D-038 — the frozen photo bar offers Replace, and nothing can reach it {#d-038}
+
+**Raised 2026-08-02 by C2b's pre-implementation blocker check. It does not fence C2b**, which ships the verb under an
+existing ruling; it is filed because the ruling it ships under decides *appearance*, and this entry is about *capability*.
+
+**What the freeze says.** `toolsFor('photo')` is **Reframe · Replace · Delete** (`v2-bench.html:452`). Reframe and Delete
+map onto intents the editor already dispatches. Replace does not.
+
+**What the repository says.** Verified, not inferred:
+
+| | |
+|---|---|
+| `Intent.ReplaceImage(id, assetId)` | **exists in the reducer** ([`EditorReducer.kt:97`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/EditorReducer.kt#L97)) and is **dispatched from nowhere** in any `src/main` |
+| the only image picker | `Intent.RequestAddImage` → `Effect.PickAndDecodeImage` → `Intent.CommitAddImage` — which **adds a new element** |
+| what Replace would need | that same pick, carried back to an **existing element's id** — a new parameter on the effect, i.e. a change to the effect protocol |
+
+**Why this is not another D-037.** [D-037](#d-037) looked identical from the outside — an intent sitting in the reducer with
+nothing dispatching it — and its fix was one line, because `SelectAt`'s miss branch already produced the state. Here the
+missing piece is a **flow**: a picker that knows which element it is replacing. The owner scoped D-037 as *"completion of an
+existing capability, not a new feature"*, and that scoping is exactly what does **not** transfer, so it is asked rather than
+assumed.
+
+**What C2b did in the meantime.** Shipped `Replace` **drawn and disabled**, under [OD-9](#d-031-ruling)'s class — *the freeze
+specifies the editing surface, not the whole application flow*, so a control it draws stays drawn and invents nothing. It is
+announced as disabled to the platform, not merely inert to touch ([ADR-092](../DECISIONS.md#adr-092) row 2.13a). The bar is
+faithful; the capability is the owner's call.
+
+**Options for the owner**
+
+| | Disposition |
+|---|---|
+| **(a)** | **Wire it** — carry a target id through `Effect.PickAndDecodeImage` so a pick can re-point an existing photo. A real capability a user would expect from a bar that offers it, and the reducer half already exists. Not C2b's fence; it needs its own package. |
+| **(b)** | **Leave it drawn and disabled**, as C2b shipped it, and record it as specified-but-unreachable beside `Font`. |
+| **(c)** | Amend the frozen Bench to drop `Replace` from the photo set, so spec and product agree. |
+
+**Recommendation: (a), scheduled — not now.** A user who sees *Replace* on a photo has been told the app can replace it, and
+`Font` is a weaker case only because [ADR-055](../DECISIONS.md#adr-055) genuinely excludes font choice by design, while
+nothing excludes this. **(b)** is the honest interim, which is why C2b shipped it; **(c)** removes something the product
+plausibly wants. The cost of (a) is one effect parameter and one reducer path that is already written and already tested.
 
 ### D-037 — the dim shipped without either of the two ways the freeze gives the user out of it {#d-037}
 

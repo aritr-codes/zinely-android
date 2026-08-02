@@ -73,6 +73,21 @@ public object Copy {
         public fun textLabel(text: String): String = "Text: $text"
     }
 
+    /**
+     * The frozen contextual verb bar (`v2-bench.html` `toolsFor()`, ADR-092 row 2.13). These are the
+     * verbs the freeze names for the selected element, verbatim; each doubles as the control's spoken
+     * label, since the icon above it is decorative.
+     */
+    public object BenchVerbs {
+        public const val EDIT: String = "Edit"
+        public const val FONT: String = "Font"
+        public const val SIZE: String = "Size"
+        public const val INK: String = "Ink"
+        public const val REFRAME: String = "Reframe"
+        public const val REPLACE: String = "Replace"
+        public const val DELETE: String = "Delete"
+    }
+
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */
     public object Editor {
         public const val REFRAMING_PHOTO: String =
