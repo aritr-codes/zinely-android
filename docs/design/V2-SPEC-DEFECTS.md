@@ -137,7 +137,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
 | ~~[**D-047**](#d-047)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-047-ruling), OD-21, Option A; the frozen Bench is AMENDED for the fifth time** | the frozen `.bar` drew **three** slots while [OD-9](#d-031-ruling) keeps redo, [OD-11](#d-034-ruling)/[OD-14](#d-039-ruling) keep **both** shipped add verbs, and `.add`'s handler opens a chooser whose region OD-2 re-seated beyond Phase C. Ruled: the bar becomes **`Undo · Redo · Add · Done`**; `Add` opens the frozen chooser with **only its Text and Photo rows released into C4**, Art staying fenced behind C8 — *“a fence reassignment, not a capability reassignment”*; the chooser uses the shipped `ZSheet`; **Text reuses `addTextAndEdit`** so C3's in-place model is untouched; `EditorSupplyTray` is retired. One line of frozen markup added (`#redoBtn`, `:466`), **no CSS changed**. The accepted price, recorded: both add verbs sit one tap deeper than they do today |
 | ~~[**D-048**](#d-048)~~ | ✅ **RESOLVED 2026-08-04 by rulings already in hand — a recorded deviation, not an owner question, recorded exactly as [D-042](#d-042) was. No OD number, because none was needed** | `Done` follows the frozen two-state behaviour (`:653`): while a session is open C3's `#doneEdit` owns *finish* and the bar's `Done` is **withheld at the frozen `.icon-btn:disabled` `.35`** (`:269`) — [OD-14](#d-039-ruling)'s own method, as C2b applied it, using a presentation the file already draws; with no session the bar's `Done` owns *clear selection*, which is deselect's **first drawn control**, since [OD-13](#d-037-ruling) gave it only a gesture and a gesture has no presentation for OD-14 to count. **`Preview ›` does not move** — OD-9's *reuse, don't invent* is satisfied by leaving it exactly where it ships |
-| [**D-053**](#d-053) | ⛔ **OPEN — raised by C5's pre-implementation blocker check, 2026-08-04; BLOCKS row 5.8** | the frozen  () is a **blank 26×34 paper sheet with three faint rules** drawn on every interior page; the shipped  draws a **live miniature of the real page** through the canvas's own  tape. Transcribing the freeze removes the only place you can see what is on another page **and** states something false on most pages ([D-044](#d-044)'s class, which [OD-17](#d-044-ruling) fixed by amending the file); keeping the miniature diverges from the surface [§E.2](V2-BENCH-REVIEW.md) was proudest of. No existing ruling reaches the thumb's interior — OD-2 settled the count, D-009 the targets |
+| ~~[**D-053**](#d-053)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-053-ruling), OD-22, Option (c); the frozen Bench is AMENDED for the sixth time** | the frozen  () is a **blank 26×34 paper sheet with three faint rules** drawn on every interior page; the shipped  draws a **live miniature of the real page** through the canvas's own  tape. Transcribing the freeze removes the only place you can see what is on another page **and** states something false on most pages ([D-044](#d-044)'s class, which [OD-17](#d-044-ruling) fixed by amending the file); keeping the miniature diverges from the surface [§E.2](V2-BENCH-REVIEW.md) was proudest of. No existing ruling reached the thumb's interior — OD-2 settled the count, D-009 the targets. **Ruled: amend first.** `.pthumb i` and its `<i>` are deleted from the specification, the interior becomes the real rendered page, and every other frozen property — size, radius, spine, shadow, transition, the `.cur` lift and the strawberry dot — is preserved and transcribed. **The grid is not amended.** The accepted price, recorded: at 26×34dp the miniature is a smudge, and C5 does not enlarge the thumb to compensate |
 | [**D-052**](#d-052) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; placement policy, not C4's fence** | `Add › Text` drops the new box **on top of** what is already on the page: the arriving box's editing outline enclosed an existing "Hello", so the page read as one block holding both the old words and the cursor. The drop comes from `addTextAndEdit`, which [OD-21](#d-047-ruling) required C4 to reuse **by name**; what C4 changed is the frequency — the route is now two taps from anywhere, so the collision is met on pages that already have content |
 | [**D-051**](#d-051) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; a defect in the FROZEN FILE, not in the Compose** | the chooser's `Photo` row is marked with the *replace / refresh* glyph — `v2-bench.html:721` builds it from `ICON.replace`, and `BenchAddChooser.kt` transcribes it faithfully. Beside `Text`'s clean `A` it reads as *"replace the photo"*. It matters more now than in the prototype: after [OD-21](#d-047-ruling) retired the shelf's *"Add a photo"* card, this glyph is the **only** visual the verb has. A fix amends the frozen file first, which is the owner's act |
 | [**D-050**](#d-050) | 🟦 **OPEN — raised by C4, 2026-08-04; copy, and copy is owner-owned** | the empty page still says *"Grab a photo or a few words from the **supplies below**"* (`Copy.kt:175`) and still points a chevron at the shelf (`EmptyStateTrayCueTag`, `EditorEmptyState.kt:37`) — and [OD-21](#d-047-ruling) retired the shelf. The invitation now names a surface that is not on screen, one tap before the user meets a single `Add`. **Not fixed in C4:** the strings are product voice, not frozen CSS, and rewriting them is a wording decision |
@@ -2982,8 +2982,45 @@ this and can be built whichever way `Done` is ruled.
 
 ### D-053 — the frozen page thumb is an abstraction; the shipped one is the page {#d-053}
 
+> ## ✅ OWNER RULING — **OD-22**, 2026-08-04 {#d-053-ruling}
+>
+> *"Adopt Option (c). The frozen Bench is amended. The page strip continues to display live page miniatures
+> rather than abstract placeholder sheets… The amendment should preserve the frozen visual language —
+> thumbnail size, border, lift, animation, current-page treatment, overall navigation layout — but the interior
+> of the thumbnail becomes the real rendered page. The placeholder ruled lines are removed from the frozen
+> specification. The page grid remains independent and continues to follow the frozen design."*
+>
+> **The reasoning the ruling gives:** the frozen `.pthumb` *"was appropriate for the HTML prototype but no
+> longer represents the shipped editor truthfully"*; the live miniature is *"the only place where the user can
+> understand another page's contents without navigating to it"*; and replacing it with generic rules would
+> *"intentionally discard useful information and repeat the same class of problem previously resolved by
+> OD-17."* It names its own precedent — **OD-16, OD-17, OD-21** — and the principle they share: *when literal
+> parity would reduce truthful communication, amend the frozen specification first rather than degrading the
+> implementation.*
+>
+> **The amendment is made, and it is the sixth to a frozen V2 surface.** `v2-bench.html`: the `.pthumb i` rule
+> is **deleted** (formerly `:263`) and `buildFilm()` no longer creates an `<i>` (formerly `:698`); both sites
+> now carry a comment naming this ruling. Everything else about the thumb and the row around it is untouched
+> and is what C5 transcribes — `26×34`, the asymmetric `1.5/3/3/1.5` radius, `--paper` on a `--paper-edge`
+> hairline, the 2px spine (`--matcha` on cover and back), the contact shadow, the `.2s var(--settle)`
+> transition, `.cur`'s `scale(1.16) translateY(-2px)` with its matcha border and lifted shadow, the 4px
+> `--strawberry` dot, and the `.navrow` / `.filmstrip` layout. **The grid is not amended.**
+>
+> **Two consequences recorded rather than discovered later:**
+>
+> 1. **At 26×34dp a page miniature is a smudge, not a picture.** It reads as *"something is on this page, and
+>    roughly where"* — which is the capability the ruling protects — not as *"which photo."* The frozen size is
+>    preserved in terms, so C5 does not enlarge the thumb to compensate.
+> 2. **There is no placeholder left to fall back on.** The rules are gone from the specification, so an empty
+>    page renders as an empty sheet, which is what it is.
+>
+> [V2-BENCH-REVIEW §E.2](V2-BENCH-REVIEW.md)'s phrase *"faint text lines"* describes the treatment this ruling
+> removes. It is the historical record of the 2026-07-28 freeze and is left intact — **superseded here, not
+> rewritten.**
+
 **Raised 2026-08-04 by C5's pre-implementation blocker check ([ADR-095 §3](../DECISIONS.md#adr-095-blockers)),
-before any production code. ⛔ OPEN — this one blocks: row 5.8 cannot be built either way until it is ruled.**
+before any production code — and ✅ **RULED THE SAME DAY as [OD-22](#d-053-ruling), Option (c)**, above. What
+follows is the question as it was put.**
 
 **What the freeze specifies.** `.pthumb` (`v2-bench.html:259-265`) is a **26×34 blank paper sheet** — `--paper`,
 a `--paper-edge` hairline, an asymmetric radius so the spine reads squarer, a 2px spine, a contact shadow. Its

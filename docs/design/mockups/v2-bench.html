@@ -95,6 +95,29 @@
   to its own bounds in the same change, so what leaves the canvas is CUT rather than painted over the
   chrome.  The two land together: either alone makes the other defect worse.
 
+  AMENDED 2026-08-04 by owner ruling (D-053, OD-22).  The .pthumb drew THREE 1px --ink-faint rules at
+  3px pitch on every interior page (the old .pthumb i, deleted below, and the <i> the filmstrip built
+  for it).  They were a DRAWING OF TEXT, appropriate while this file had no document to draw -- and
+  untrue of the product, where the shipped strip renders a LIVE MINIATURE of the real page through the
+  same SceneRenderer tape the canvas uses.  On the shipped eight-page document most pages are empty and
+  one may hold a full-bleed photo, so transcribing the rules would have drawn a claim that is false on
+  most thumbs AND removed the only place in the editor where you can see what is on another page
+  without going there.  That is D-044's class, which OD-17 settled the same way: when literal parity
+  would reduce truthful communication, amend the specification first.
+    .pthumb i  DELETED.  buildFilm() no longer creates an <i>; the thumb's interior is the page itself.
+    THE FROZEN VISUAL LANGUAGE IS PRESERVED IN FULL and is what C5 transcribes: 26x34, the asymmetric
+            1.5/3/3/1.5 radius, --paper on a --paper-edge hairline, the 2px spine (--matcha on cover and
+            back), the 0 2px 5px -2px contact shadow, the .2s var(--settle) transition, .cur's
+            scale(1.16) translateY(-2px) lift with its --matcha border and 0 9px 16px -6px shadow, the
+            4px --strawberry dot, and the .navrow / .filmstrip layout around them.  Only the INTERIOR
+            changes.
+    THE PAGE GRID IS NOT AMENDED.  .pgcell is net-new -- nothing ships that it replaces -- so it keeps
+            the frozen design exactly, numbers and Cover/Back labels included.  The ruling says so in
+            terms, and C5 does not infer the grid's interior from the strip's.
+    V2-BENCH-REVIEW.md SE.2's phrase "faint text lines" describes the treatment this amendment removes;
+            it is the historical record of the 2026-07-28 freeze and is left intact, superseded here
+            rather than rewritten.
+
   AMENDED 2026-08-04 by owner ruling (D-047, OD-21).  The .bar drew THREE controls -- Undo, Add, Done --
   and three accepted rulings each require something those three slots do not hold.  OD-9 keeps REDO
   ("redo is kept"), which this file omits entirely.  OD-11 and OD-14 keep BOTH shipped add verbs, which
@@ -260,7 +283,8 @@
     cursor:pointer;position:relative;box-shadow:0 2px 5px -2px var(--frame-shadow);transition:transform .2s var(--settle),box-shadow .2s;}
   .pthumb::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--desk-edge);border-radius:1.5px 0 0 1.5px;} /* the sheet's spine edge */
   .pthumb[data-cover]::before{background:var(--matcha);}
-  .pthumb i{position:absolute;left:6px;right:4px;top:6px;height:1px;background:var(--ink-faint);opacity:.4;box-shadow:0 3px 0 var(--ink-faint),0 6px 0 var(--ink-faint),0 9px 0 var(--ink-faint);}
+  /* the thumb's interior is the page itself -- a live miniature, not a drawing of text (D-053, OD-22).
+     The prototype has no document to render, so it draws an empty sheet; the product draws the page. */
   .pthumb.cur{transform:scale(1.16) translateY(-2px);box-shadow:0 9px 16px -6px var(--frame-shadow);border-color:var(--matcha);z-index:2;} /* the one in your hand */
   .pthumb.cur::after{content:"";position:absolute;left:50%;top:-7px;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--strawberry);}
 
@@ -695,7 +719,7 @@
     for(var i=1;i<=NP;i++){(function(i){
       var p=document.createElement('div'); p.className='pthumb'+(i===cur?' cur':''); if(i===1||i===NP)p.setAttribute('data-cover','');
       p.setAttribute('role','button'); p.setAttribute('aria-label','Page '+i+' of '+NP+(i===1?' (front cover)':i===NP?' (back)':''));
-      if(i!==1&&i!==NP)p.innerHTML='<i></i>';
+      /* interior: the real page, rendered (D-053, OD-22).  Nothing to draw in the prototype. */
       p.onclick=function(e){e.stopPropagation();setPage(i);}; film.appendChild(p);
     })(i);}
   }
