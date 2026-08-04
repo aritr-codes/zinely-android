@@ -135,6 +135,9 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-037**](#d-037)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-037-ruling), OD-13 | the dim shipped without either of the freeze's two ways out of it. `Intent.ClearSelection` exists in the reducer and **nothing dispatches it**; the freeze's `canvas` click and Done button are unowned and C4's respectively. A stuck selection now fades everything else the user wrote, to **2.78:1**, undismissably. Pass 1 passed; **Pass 2 failed**. Ruled **(a)**: C2a adds tap-to-deselect, and selection becomes a **transient** editing state rather than a modal one |
 | ~~[**D-044**](#d-044)~~ | ✅ **CLOSED — amendment MADE to `v2-bench.html:408`, and [ruled OD-17](#d-044-ruling) 2026-08-04: an owner-approved COMPANION amendment to OD-16, separately owned, not a consequence of it** | the frozen `.styletb` chips are **value displays** (`Fraunces`, `A 23`) wired to nothing. Transcribed literally they would claim a font and a size that are false for every element that is neither — [OD-9](#d-031-ruling)'s *invents nothing* cuts against the value, not for it. C3 ships them labelled by **verb** (`Font` · `Size` · `Ink`), matching the context bar; the swatch stays a value because row 3.9 makes it a *true* report. `v2-bench.html:408-410` is what needs editing |
 | ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
+| [**D-047**](#d-047) | ⛔ **OPEN — awaits an owner ruling; BLOCKS C4** | the frozen `.bar` (`v2-bench.html:441-444`) draws **three** slots — `Undo · Add · Done`. [OD-9](#d-031-ruling) keeps **redo**, [OD-11](#d-034-ruling)/[OD-14](#d-039-ruling) keep **both** shipped add verbs, and the frozen `Add`'s own destination (`openSupply()` `:694-705` → the `.sheet`) is **C8**, which OD-2 re-seated beyond Phase C. **Three** readings are open — (a) the bar absorbs everything (needs a **frozen-Bench amendment**), (b) the bar is additive and `EditorSupplyTray` survives (**violates OD-14**: Undo and Add drawn twice at once), (c) the bar as drawn with `Add` opening the freeze's own chooser minus its `Art` row (**builds C8's fence early**, and leaves redo unhoused). Geometry is not the obstacle; *what the bar may contain* is. ⚠ **Corrected at C4's gate:** the first draft said no chooser exists — the freeze has one, and narrates *"Add stays three verbs — Text · Photo · Art"* (`:705`), two of which ship today |
+| [**D-048**](#d-048) | ⛔ **OPEN — awaits an owner ruling; BLOCKS C4 row 4.6 only** | ADR-089 row 4.6 + [OD-9](#d-031-ruling) send the Read hand-off to the bar's `Done`, but the hand-off already ships as the top-end `Preview ›` (`EditorScreen.kt:625-637`) — binding both presents one action **twice**, which [OD-14](#d-039-ruling) forbids. Yet `doneBtn`'s two *frozen* jobs (`v2-bench.html:629`) are already owned: `endEdit()` by C3's `.done` chip, `deselect()` by [OD-13](#d-037-ruling)'s tap-outside. **Every reading collides with OD-14**; what `Done` means here is the owner's call. The rest of C4 is unaffected |
+| [**D-049**](#d-049) | 🟦 **OPEN — routed to C4 by [C2a's Pass 2](../DECISIONS.md#adr-091-completion-device) as P2-1; not a merge blocker** | the sheet measures `1028×1454 px` unselected and `850×1202 px` selected — a **17 % linear shrink** — because the bottom chrome takes its space from the canvas (`.bar{flex:none}`, `v2-bench.html:244`). Pre-existing; [D-037](#d-037) did not cause it, but dismissal now makes the user meet it on **every** deselect, in the growing direction. Against [OD-12](#d-035-ruling)'s *the editor represents the physical printed artifact*, a sheet that resizes when you stop touching it is *"worth someone's decision"* — take the height, or overlay it and amend |
 | [**D-046**](#d-046) | ⛔ **OPEN — [ruled OD-18](#d-046-ruling) 2026-08-04: stays open; no repo-wide sweep, no reopening of C3; repaired by each file's owning package or a dedicated docs-maintenance package** | the [OD-16](#d-043-ruling) amendment moved every address below the insert, stranding **25 explicit `v2-bench.html:NNN` citations across ten files C3 does not own**. C3 repaired only the files it owns, each verified against the frozen file. Three mechanical sweeps were attempted and all three did damage — including flattening [ADR-093 §1](../DECISIONS.md#adr-093)'s own drift table — so the enumeration and the working method are recorded instead of a fourth sweep across clean files. Documentation accuracy only; no runtime effect |
 | [**D-045**](#d-045) | ✅ **FIXED in C3, 2026-08-03 — a parity defect, no ruling and no amendment** | the frozen `.canvasArea{overflow:hidden}` (`v2-bench.html:171`) was never implemented in Compose. Free while the pan was zero; on device once C3 made it real the panned sheet painted over the top bar in **every** editing session, leaving `Preview ›` invisible and — read off the platform tree — still `clickable=true` at full bounds. **A control you cannot see and can press is the defect; the paper over the chrome is how you notice it.** Fixed with `clipToBounds()` alongside the OD-16 clamp, because either alone makes the other worse |
 | ~~**D-043 (original entry)**~~ | *superseded — kept for the record* | the frozen `edit()` lifts the page a literal `translateY(-96px)`. The prototype can afford it: a 324px page inside a 744px phone has slack above it. The **shipped page is *contained* in the canvas** and typically height-bound, so its slack is ≈ 0 — and an element in the top **96dp of screen** is lifted clean out of view by the gesture meant to reveal it. **96dp is the wrong unit to judge the severity in:** it is `96 / scale` points of *page*, so it is the top **≈ 73 %** of the page on the 300×400dp test host where it was reproduced, against ≈ 22 % on the measured `SM-A176B` canvas — worst on the smallest canvases, and the 73 % is the figure that actually has evidence. Reproduced deterministically, not inferred. [ADR-093](../DECISIONS.md#adr-093) row 3.1 specifies the literal and row 3.1a forbids correcting it unilaterally, so it **ships as specified** and the remedy is the owner's |
@@ -2807,6 +2810,128 @@ proves the clip with a selected element's resize handles overflowing the canvas 
 actually mattered on hardware — the panned page overflowing *upward* — needs the pan to exceed the slack, which needs
 the clearance term, which needs an **IME**, which Robolectric does not have. The upward case is
 [device checklist](../DECISIONS.md#adr-093-device-checklist) item 10 and is verified there, not here.
+
+### D-047 — the frozen bar has three slots; the rulings that govern it require five {#d-047}
+
+**Raised 2026-08-04 by C4's mandatory pre-implementation blocker check. ⛔ Blocks C4.**
+
+**What the artifact says.** `v2-bench.html:441-444` draws `.bar` as exactly three controls in a fixed
+geometry: `.icon-btn` Undo (44×44, `disabled` at rest), `.add` (`flex:1`, the residual width), `.icon-btn`
+Done (44×44) — `:244` gives the row `height:66px`, `gap:10px`, `padding:0 16px 4px`. `.add`'s handler is
+`$('addBtn').onclick = openSupply()` (`:738`).
+
+**Why that cannot be transcribed.** Three rulings already in hand each add something the three slots do not
+hold, and none of them can be satisfied by deleting another:
+
+1. **[OD-9](#d-031-ruling) keeps redo.** ADR-089 row 4.5 states the frozen file contains no Redo anywhere and
+   the ruling answers it directly: *"redo is kept."* The shipped control is `EditorSupplyTray`'s fourth card
+   (`EditorSupplyTray.kt:147-157`). That is a **fourth** control the bar must carry, or a second surface that
+   must survive beside it.
+2. **[OD-11](#d-034-ruling) / [OD-14](#d-039-ruling) keep both add verbs.** The shipped bottom surface is not
+   one `Add`; it is `Add photo` (`Intent.RequestAddImage`) and `Add words`, two distinct capabilities on two
+   distinct cards (`EditorSupplyTray.kt:118-136`), wired at `EditorScreen.kt:1173-1181`. *"No existing editor
+   capability is removed"* forbids collapsing them into one button unless the one button reaches both.
+3. **The frozen `Add`'s own destination is out of phase.** `$('addBtn').onclick` (`:738`) calls `openSupply()`
+   (`:694-705`), which builds the `.sheet` — **C8**'s region, re-seated *beyond Phase C* by OD-2. So `Add`
+   cannot be wired as drawn, and OD-9's *"the destinations reuse what ships"* has nothing single to reuse.
+
+> **Correction, 2026-08-04, made at C4's implementation gate before any production code.** This entry's first
+> draft said *"what ships is two verbs, not a chooser. No chooser exists in the repository."* The second
+> sentence is true and the first is **misleading**: a chooser exists **in the freeze**, and reading it changes
+> the shape of the decision. `openSupply()` (`:694-700`) builds three `.opt` rows — **Text**, **Photo**, **Art**
+> — and `:705` narrates the intent in the freeze's own words: *"Add stays three verbs — Text · Photo · Art."*
+> **Two of those three are exactly the two capabilities that ship** (`data-a="text"` places a text element
+> *ready to edit*; `data-a="photo"` places a photo), so the frozen `Add` does **not** ask for a capability to be
+> collapsed — it asks for one to be **routed**. Only the third, `Art` → `openArt()`, is genuinely out of reach:
+> it is the H3 drawer, re-seated by OD-2 and fenced by [V2-BENCH-REVIEW §E.6](V2-BENCH-REVIEW.md) pending the
+> legal pass that OD-8 records. What remains true, and is why this entry still blocks: **`.sheet`, `.supply` and
+> `.opt` are not in C4's frozen fence** — C4 owns `.bar`, `.icon-btn*`, `.add*`, `.status`, `.saved*`, `.snack*`
+> — so building the chooser at all is C8's surface arriving early, however small the two-verb version is.
+
+**And the surface it replaces is not shaped like it.** `EditorSupplyTray` is a `Supplies`-headed shelf of four
+tilted cards on `--desk` (`EditorSupplyTray.kt:90-158`), each with a glyph over a label. `.bar` is a 66px
+chrome strip with no heading and no labels but one. This is a **replacement**, not a re-skin, and every card it
+drops has to land somewhere the ruling permits.
+
+**Why it is not resolvable from the rulings in hand.** The two readings the rulings leave open are materially
+different products, and both are defensible:
+
+| | (a) the bar absorbs everything | (b) the bar is additive, the shelf survives | (c) the bar as drawn, `Add` → a **two-verb** chooser |
+|---|---|---|---|
+| shape | `Undo · Redo · Add · Done` — four controls in a row the freeze draws with three | frozen `.bar` exactly as drawn, `EditorSupplyTray` kept beneath it (the C2b precedent, OD-11) | frozen `.bar` exactly as drawn — three slots |
+| `Add` | must reach both add verbs ⇒ the freeze's own chooser, minus `Art` | unchanged: the shelf keeps both verbs | the freeze's `.sheet` at `:694-700` with the `Art` row withheld until C8 |
+| redo | a fourth `.icon-btn` in the bar | stays on the shelf | **unhoused** — the freeze gives it no slot, so it needs one |
+| OD-14 | satisfied — one presentation each | **violated** — Undo and Add would each be drawn twice at once | satisfied for Add; redo still needs a home |
+| the freeze | amended: `.bar` gains a control | honoured literally | honoured literally, but **builds `.sheet`, which is C8's fence** |
+
+Reading (a) requires an **amendment to the frozen Bench** — adding a control to a frozen region is a UX change,
+and the HTML-first rule makes that the owner's act, as it was for [D-010](#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark),
+[D-033](#d-033), [OD-12](#d-035-ruling) and [OD-16](#d-043-ruling). Reading (b) requires an owner to decide that
+OD-14 does not reach this case. Reading (c) requires an owner to release a slice of **C8's fence** into C4 and to
+say where redo lives. **An implementer cannot pick between them**, which is exactly the condition
+[D-042](#d-042) records as the difference between a recorded deviation and an escalation.
+
+**What is not in question.** Nothing here proposes removing a capability, and no reading does. Geometry is not
+the obstacle either: four controls fit — `44·3 + 10·3 + 32 = 194px` fixed on a 411dp device leaves `.add` ample
+residual width. The obstacle is *what the bar is allowed to contain*.
+
+---
+
+### D-048 — if the bar's `Done` becomes the Read hand-off, the hand-off is drawn twice {#d-048}
+
+**Raised 2026-08-04 by C4's mandatory pre-implementation blocker check. ⛔ Blocks C4 row 4.6.**
+
+**What the artifact says.** `$('doneBtn').onclick` (`v2-bench.html:629`) does two things and neither is a
+hand-off: if the phone is `editing` it calls `endEdit()`, otherwise it calls `deselect()`. ADR-089 row 4.6
+records that the frozen Bench has *"no route to Read / the Proof, and no back affordance"*, names
+`EditorScreen(onPreview)` as the surviving target, and OD-9 rules the hand-off *reuses* ADR-086's route.
+
+**The contradiction.** OD-9 says reuse what ships. What ships is a **top-end `Preview ›` text button**
+(`EditorScreen.kt:625-637`, `EditorPreviewActionTestTag`) — the same control C3's D-045 evidence measured at
+`(950,53)` on hardware. If C4 also binds the bar's `Done` to `onPreview`, the Editor→Proof hand-off is
+presented **twice simultaneously**, which is precisely what [OD-14](#d-039-ruling) forbids and precisely the
+shape of the defect ([D-039](#d-039)) that produced it.
+
+**But the alternative empties the control.** `doneBtn`'s two frozen jobs are both already owned and already
+shipped:
+
+- *end the edit session* — C3 built it as the style row's own `.done` chip (`v2-bench.html:410`, `#doneEdit`;
+  [ADR-093](../DECISIONS.md#adr-093) row 3.6), device-verified `clickable=true enabled=true`;
+- *deselect* — [OD-13](#d-037-ruling) ruled selection transient and C2a built tap-outside-to-dismiss
+  ([ADR-091](../DECISIONS.md#adr-091) row 2.14), device-verified 3/3.
+
+So transcribed literally, the bar's `Done` is a third presentation of two actions that already have one each —
+OD-14 again, from the other direction. **Every reading of row 4.6 collides with OD-14**; which collision is
+acceptable is a decision about what `Done` *means* on this screen, and that is the owner's.
+
+**Not a blocker for the rest of C4.** `.status`, `.saved`, `.snack` and the soft-delete rows are untouched by
+this and can be built whichever way `Done` is ruled.
+
+---
+
+### D-049 — the sheet resizes 17 % every time you select or dismiss, and `.bar` is where the fix lives {#d-049}
+
+**Raised 2026-08-02 by [C2a's Pass 2](../DECISIONS.md#adr-091-completion-device) as **P2-1**; filed here
+2026-08-04 by C4's blocker check, which is the package it was routed to. 🟦 Open — not a merge blocker for C4,
+but it is the one thing C2a explicitly said *"is worth someone's decision."***
+
+**Measured, on hardware.** The page renders `1028×1454 px` with nothing selected and `850×1202 px` with a
+selection — a **17 % linear shrink** — because the transform bar takes its space from the canvas rather than
+overlaying it. It is **pre-existing** and [D-037](#d-037) did not cause it.
+
+**Why C2a routed it here rather than fixing it.** Before OD-13 the user met the resize once, on selecting.
+Dismissal did not exist. Now it is met on **every** dismissal too, in the *growing* direction — and
+[OD-12](#d-035-ruling) rules that *the editor represents the physical printed artifact*. A sheet of paper that
+changes size when you stop touching it is a statement about the artifact, not about the chrome. `.bar` is C4's
+fence and the bottom chrome's space-taking is what C4 rebuilds, so C4 is where any fix belongs.
+
+**What the decision actually is:** whether the bottom chrome continues to *take* canvas height (the shipped
+behaviour, and what `.bar{flex:none}` at `v2-bench.html:244` specifies inside a flex column), or overlays it so
+the sheet holds still. The freeze specifies the former. Choosing the latter is an amendment; choosing the
+former is accepting a measured Pass 2 observation, on the record, as shipped behaviour. Either is legitimate —
+**neither is the implementer's to choose**, which is why C2a wrote *"the fix, if any"*.
+
+---
 
 ### D-046 — the OD-16 amendment stranded 25 line citations in files C3 does not own {#d-046}
 
