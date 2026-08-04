@@ -3837,7 +3837,15 @@ clean tree, so that wording was wrong in both particulars.
 Its mandatory pre-implementation blocker check found **three defects and two of them require an owner decision**,
 so this ADR opens as `Proposed` with its property table populated and **no `src/main` change made**.
 
-- **Status:** 📝 `Proposed` **2026-08-04.** ✅ **Unblocked the same day.**
+- **Status:** ✅ `Accepted` **2026-08-04** — implementation complete, independent review **GO WITH FIXES** with
+  every Required Fix and Recommended Improvement reconciled (§6.9–6.13), **946 tests / 0 failures** under
+  `--rerun-tasks` with the Roborazzi gate clean, **31 of 31 mutations caught** (§8), and **both device passes
+  run and passed** on `SM-A176B` / Android 16 (§9). Three frictions are recorded rather than fixed —
+  [D-050](design/V2-SPEC-DEFECTS.md#d-050), [D-051](design/V2-SPEC-DEFECTS.md#d-051),
+  [D-052](design/V2-SPEC-DEFECTS.md#d-052) — because each is a question about what the design *says*, on
+  surfaces Pass 1 measured as correct. [D-049](design/V2-SPEC-DEFECTS.md#d-049) is re-measured at **28.7 %**
+  and stays open, unruled, as it was when C4 inherited it.
+- **Opened as:** 📝 `Proposed` **2026-08-04.** ✅ **Unblocked the same day.**
   [D-047](design/V2-SPEC-DEFECTS.md#d-047) is ruled **[OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling), Option A**
   — the frozen Bench is **amended for the fifth time** and the bar becomes `Undo · Redo · Add · Done`.
   [D-048](design/V2-SPEC-DEFECTS.md#d-048) is ruled **not an owner decision**, recorded exactly as
@@ -3995,3 +4003,159 @@ was. **Every row of §2 is now buildable.**
 removed — OD-11 holds — but the editor's most common action grows by one tap. OD-21 pays that price
 deliberately, and D-049 sits next to it as the other thing C4 changes about how the editor *feels* rather
 than what it can do.
+
+<a id="adr-094-deviations"></a>
+### 6. Implementation deviations, recorded
+
+Every departure from the plan of record, written here rather than left to a comment. Each names what the
+freeze says, what shipped, and the constraint that produced the difference.
+
+| # | Deviation | Why | Where it lives |
+|---|---|---|---|
+| 6.1 | **The soft delete is drawn with the C2a/C3 cover-override seam, not with element opacity** | `SceneRenderer` paints a page as one tape, so there is no per-element alpha to animate. C2a already met this constraint in reverse — `BenchMaterialise.coverAlphaAt` fades a paper cover *out* to reveal an arriving element — and C4 runs the same seam backwards: the cover fades **in** while `deleteScaleAt` shrinks the element to `.9`. **No new rendering path**, which is what the owner's instruction asked for by name | `BenchSelectionFocus.kt` (`deleteCoverAlphaAt`, `deleteScaleAt`), `EditorPagePreview.kt` (`benchDeleteScaled`, `benchDeleteCovers`) |
+| 6.2 | **`.status`'s left slot ships empty** | The freeze's `the bench` is prototype narration, the same class as `cap()`. The product substitute would be the project's title and `EditorUiState` carries none — inventing a route for one is new capability, which OD-9 forbids. The slot stays, so `space-between` still pins the chip where the freeze puts it | `BenchStatusStrip.kt` |
+| 6.3 | **`BenchSnack` is a new composable, not a re-skin of `ZSnackbar`** | ADR-089 row 4.9 named the *"delete/undo surface"*. `ZSnackbar` is the V1 shape the Library and the Proof use; the frozen `.snack` is a 12dp radius on `--ink`, entering from `translateY(16px)` over `.22s`, with an action that is sometimes absent. Collapsing them would change the Library | `BenchSnack.kt` |
+| 6.4 | **`EditorSavedConfirmation` is retired, and `SavedConfirmationVisibleMs` moved to `BenchStatusStrip`** | Row 4.10 moves the message to the frozen strip. Leaving the old chip composable beside it is two surfaces for one message — OD-14's defect — so it goes the way `EditorSupplyTray` did, with its two test files and two goldens. The 1600ms constant keeps its name so callers and tests read unchanged. Its file also held a private `rememberReduceMotion`, which two neighbours borrowed; both now import the canonical one from `core/ui` (`ReduceMotion.kt:22`), same reading of `ANIMATOR_DURATION_SCALE` | `BenchStatusStrip.kt`, `EditorCoverageNotice.kt`, `EditorSaveFailure.kt` |
+| 6.5 | **The saved chip no longer *yields* to the move/resize hint** | The yield existed because a TopEnd chip floating over a narrow canvas overlapped the TopCenter hint. C4 moves the chip off the canvas into `.status`, above `.canvasArea` — the two cannot occupy the same pixels, so withholding the reassurance would now be a silent loss of a shipped capability rather than a collision fix. The guard becomes what it was always protecting: the test asserts they **do not overlap** | `EditorScreenTest.the_saved_chip_and_the_move_resize_hint_coexist_without_overlapping` |
+| 6.6 | **`minimumInteractiveComponentSize()` was tried on the bar's icon buttons and removed** | It does not do what its name promises here: it grows the *layout* slot to 48dp and centres the 44dp paint inside it, which pushed the first control 2dp in from the frozen 16dp padding and opened the frozen 10dp gap to 14dp. Measured, not assumed. That is *"modifying the visual design solely to satisfy"* the floor, which D-009's ruling forbids in those words. Compose's own pointer-input minimum already lifts an enabled control's `touchBoundsInRoot` to 48dp — the same finding independent review recorded on `ZineOnShelf`'s seam | `BenchBottomBar.kt`, asserted in `BenchC4Test.an_icon_button_paints_forty_four_and_takes_forty_eight` |
+| 6.7 | **A withheld icon button has no touch-target expansion** | It installs no `clickable` at all — deliberately, so the platform tree agrees it is not clickable (the ADR-058 defect). A control that cannot act needs no 48dp target; the floor is asserted on `Done`, the one icon button live at rest | `BenchBottomBarPlatformA11yTest` |
+| 6.8 | **The chooser has no Roborazzi golden** | `ZSheet` is a `Dialog`, which Robolectric renders in its own window; `decorView.rasterizeToBitmap()` does not contain it. Its paint is a device item, listed in §7 rather than silently uncovered | `BenchC4GoldenTest` KDoc, device checklist item 6 |
+| 6.9 | **The snack overlays the canvas rather than sitting above the bar** | `.snack{position:absolute;bottom:12px}` resolves against **`.canvasArea`**: the markup (`v2-bench.html:443`) is inside `.canvasArea` (`:392`), which declares `position:relative` (`:194`). The first cut put it in the screen's root `Box` and justified that with the claim it is positioned against `.phone` — **that claim was false**, and the test that locked it asserted 12dp from the window bottom, encoding a geometry the freeze never states. Independent review caught it by reading the HTML rather than this ADR. It is now anchored in the canvas, over the artifact it is about; it still takes no layout height, which is the half of the old reasoning that was true and is what keeps it from resizing the sheet ([D-049](design/V2-SPEC-DEFECTS.md#d-049)) | `EditorScreen.kt`, asserted in `BenchC4Test.the_snack_sits_at_the_frozen_insets` |
+| 6.10 | **The frozen `opacity:.35` is applied to the whole control, not to its glyph** | `.icon-btn:disabled{opacity:.35}` (`:269`) fades the button — including its 1px `--chrome-line` outline. The first cut faded only the `Icon` tint, leaving a full-strength outlined box around a faint mark: heavier chrome than the freeze draws, in the state it draws most carefully, on the very first frame every user sees. Raised by independent review; the golden gate could not see it either (below) | `BenchBottomBar.kt` `BenchIconButton` |
+| 6.11 | **TalkBack's `Delete` is routed through the screen's soft delete** | `EditorA11y.elementCustomActions` dispatched `Intent.Delete` directly, so a TalkBack user's element simply vanished while a sighted user got a fade, a 3200ms snack and an `Undo`. The reversal capability was present on one path and absent on the other. `onDelete` is now a parameter threaded `EditorA11y` → `ElementSemanticsLayer` → `EditorScreen`, defaulting to the old behaviour so every other caller is unchanged. **The price of that default, named by the review that checked the fix:** a *future* second host of `ElementSemanticsLayer` reintroduces the asymmetry silently — no compile error, no failing test, because the guard is behavioural and covers this screen's wiring only. A non-defaulted parameter would fail loudly. The default is kept because the other callers sit outside the editor and want the plain delete; the risk is written here rather than left to be rediscovered | `EditorA11y.kt`, `ElementSemanticsLayer.kt`, `EditorScreen.kt` |
+| 6.12 | **C4's user-facing strings live in `Copy`, not beside their composables** | The first cut declared them in the feature module and `CopyNoProseLiteralTest` (ADR-060 / CI-81) failed on six of them. They are now `Copy.BenchBar`, `Copy.AddChooser`, `Copy.Status` and `Copy.Snack`, with the feature-side constants kept as delegating aliases so call sites, tests and goldens read unchanged. **The guardrail only fired once `:core:copy:test` was forced to re-run** — it had been up-to-date across two earlier "full" verification runs, which is why every verification from here on uses `--rerun-tasks` | `Copy.kt`, `BenchBottomBar.kt`, `BenchAddChooser.kt`, `BenchStatusStrip.kt`, `BenchSnack.kt` |
+| 6.13 | **The Roborazzi gate cannot see either paint fix, and that is measured rather than assumed** | The goldens compare at `changeThreshold = 0.02f`. A 1px outline fading to `.35` on two 44dp squares moves far less than 2 % of a 430×66dp raster, so `verifyRoborazziDebug` stayed green across the 6.10 change — the goldens were re-recorded afterwards so the checked-in images depict current code, not because the gate demanded it. This is exactly why §8's paint probes are threshold-free and read a live and a withheld control **in one frame** | `BenchC4GoldenTest` |
+
+**One defect was raised and deliberately not fixed:** [D-050](design/V2-SPEC-DEFECTS.md#d-050) — the empty
+page still reads *"from the supplies below"* and still points a chevron at the retired shelf. It is product
+voice, the owner owns the wording, and it was found by reading C4's own re-recorded screen golden rather than
+by a failing test.
+
+<a id="adr-094-device-checklist"></a>
+### 7. The device checklist
+
+Pass 1 reads the **platform** `AccessibilityNodeInfo` tree (`adb shell uiautomator dump`), never the merged
+semantics tree. Pass 2 is first-time-user, and this package's Pass 2 carries the owner's standing question:
+*does C3's in-place editing still feel natural under the new chrome?*
+
+1. `Undo` and `Redo` at rest: `enabled=false` **and** `clickable=false` on the real tree.
+2. `Add`'s target measures ≥48dp on hardware; the drawn box is still 44dp with a 10dp gap and 16dp side padding.
+3. The chooser opens on `Add`, offers **Text** and **Photo**, and has **no** Art row.
+4. Text drops a box already in its editing session — C3's model, unchanged, in one tap of Text.
+5. Photo reaches the system picker, and the picked photo lands on the page.
+6. The chooser's paint against the frozen `.opt` rows — the item no golden can cover (§6.8).
+7. `Done` is greyed during a text session and clears a selection when none is open.
+8. Deleting fades the element out over `.2s`, the snack stands for 3200ms, `Undo` lights, and the snack's
+   `Undo` puts the element back.
+9. TalkBack: the saved chip announces *"Saved on this device"* politely, once, and only after a real save.
+10. The `✿` (U+273F) renders on the device's own fallback face — D-021's accepted platform fallback.
+11. [D-049](design/V2-SPEC-DEFECTS.md#d-049): measure the sheet on select and on dismiss, so the 17 % is
+    re-measured under the new bar rather than assumed unchanged.
+
+<a id="adr-094-mutations"></a>
+### 8. The mutation battery
+
+31 mutations, one per property the table above claims to assert, each applied to `src/main`, verified, and
+reverted. **Round 1: 22 caught, 8 survived, 1 could not compile.** Every survivor is accounted for below —
+none was written off.
+
+**The battery's own first run was invalid, and that is recorded rather than quietly re-run.** The runner
+could not launch Gradle at all (`gradlew.bat` is not on the path it used), so every invocation exited
+non-zero and every mutation scored `CAUGHT`: **31 kills, proving nothing.** It was caught by the absence of
+failing *test names* beside each kill. The fix is a **control run** — the unmutated tree through both gates
+before any mutation — which is now the first thing the battery does. A mutation battery without a control
+measures the harness, not the tests.
+
+#### The survivors, and what each one meant
+
+| Survivor | What it actually was | Reconciliation |
+|---|---|---|
+| `chrome` → `sheet` (4.1) | **A no-op.** The two tokens are byte-identical in both themes — `#FBF7EE` light, `#252017` dark (`ZinelyV2Colors.kt:196`/`:198`, `:240`/`:242`). Nothing could have observed it | Re-run against `paper`, which is a different colour |
+| `weight(1f)` → `weight(0.5f)` (4.4) | **A no-op.** With one weighted child in the row, the fraction cannot change the outcome | Re-run against a fixed `size(120.dp)` |
+| `.35` → `1` disabled alpha (4.2) | **A real gap.** Two 20dp glyphs cannot move 2 % of a 430×66dp raster, so the golden gate could not see it | New probe: the live and withheld controls are read **in one frame**, and full-strength `--ink-soft` may appear only in the live one — threshold-free, with no recorded number to drift |
+| `.94` → `.8` press scale (4.2) | **A real gap.** Nothing in C4 looked at a pressed control, and `graphicsLayer` scaling does not move the semantics box | New probe: press and hold, then measure the drawn outline's extent in the raster against the resting one |
+| `1.7` → `2.4` stroke (4.3) | **A real gap**, same cause as the alpha | New probe: the glyph's ink is counted (339px at xhdpi, measured) with a ±20 % band — far tighter than the 41 % a 2.4 stroke adds |
+| `1600` → `400` saved window (4.10) | **A self-referential test.** It advanced the clock by `SavedConfirmationVisibleMs` — the constant under test — so it could not see the constant change | Both advances become literals: still up at 1500ms, gone by 2200ms |
+| `3200` → `1600` delete window (4.13) | The same defect in `BenchC4Test` | Literals: still up at 3000ms, gone by 3800ms, plus a direct assertion of the frozen value |
+| `16dp` → `0` snack rise (4.11) | **A real gap.** Nothing looked at where the snack starts | New test: `graphicsLayer` translation moves the node's bounds in the root, so the entering and resting positions are compared directly |
+| `if (actionLabel != null)` → `if (true)` (4.15) | **Could not compile** — the block relies on that smart cast | Re-run by giving the null case a fallback label, which compiles and produces the same wrong behaviour |
+
+**"A timing assertion that spends the constant under test is decoration"** is the transferable lesson, and it
+appeared **twice** in one package. Both are now literal, with the reason written where the literal is.
+
+#### Rounds 2 and 3 — and the same defect found twice more
+
+**Round 2 (9 re-runs): 7 caught, 2 survived.** Both survivors were the two new *paint* probes, and both
+failed for reasons worth keeping:
+
+- **`.94` → `.8` survived** because the probe computed its expected width **from
+  `BenchIconBtnPressedScale`** — the constant under test. An assertion built out of the value it is
+  checking agrees with every value that constant can take. This is the third instance of that defect in
+  one package, after the two timing tests, and the first two were already written down when it was
+  committed again. It now compares against a literal `0.94` and asserts the constant separately.
+- **`1.7` → `2.4` survived** because counting pixels that merely *differ from the ground* does not measure
+  a stroke: a heavier stroke fills its footprint more completely without enlarging it much, so the count
+  barely moved. Replaced with ink **mass** — the summed per-pixel deviation, which scales with covered
+  area. Baseline **35 071 at xhdpi, measured**, with a ±15 % band against the ~41 % a 2.4 stroke adds.
+
+**Round 3 (2 re-runs, control first): both caught.**
+
+**Final: 31 of 31 mutations caught**, over three rounds, with every intermediate survival and its cause
+recorded above rather than folded into the final number.
+
+**The transferable lesson, stated once because it cost four findings:** *an assertion must not be
+constructed from the value it is asserting* — not a duration advanced by its own constant, not a width
+derived from its own scale factor. Where the frozen value is the property, the test carries the literal
+and the constant is checked against it.
+
+<a id="adr-094-device"></a>
+### 9. Device verification — both passes, 2026-08-04
+
+**Device:** Samsung SM-A176B (`a17x`), Android **16** (SDK 36), 420 dpi override (density 2.625), debug
+build installed from `:app:installDebug` at 16:05. Platform tree read with
+`adb shell uiautomator dump /sdcard/ui.xml`; measurements taken off the device raster, not the merged
+semantics tree.
+
+#### Pass 1 — developer verification, against §7's eleven items
+
+| # | Result | Evidence |
+|---|---|---|
+| 1 | ✅ | At rest `Undo` and `Redo` report `clickable=false enabled=false` on the platform tree. §6.7's "no `clickable` at all" is what produces this |
+| 2 | ✅ | `Add` `[326,1812]–[896,1938]` and `Done` `[917,1812]–[1043,1938]` measure **126 px = 48 dp** tall; the withheld `Undo`/`Redo` measure **116 px = 44 dp**, the frozen paint. Gap 26 px ≈ 10 dp, side padding 42 px = 16 dp. Both halves of D-009's remedy, on hardware: the enabled targets reach the floor, the drawn boxes do not move |
+| 3 | ✅ | The sheet offers `Text` and `Photo` and **no Art row** — three nodes total, title included |
+| 4 | ✅ | `Text` drops a box already in its session: keyboard up, `#doneEdit` chip live, and the bar's `Done` withheld in the same frame |
+| 5 | ✅ | `Photo` reaches `com.google.android.photopicker`; the picked photo landed on the page and came back selected with the photo verb set. No permission prompt, no network — the privacy invariant holds on the route C4 added |
+| 6 | ✅ paint, ⚠️ glyph | The `.opt` rows draw as frozen. The `Photo` row's mark is the *replace* glyph — faithful to `v2-bench.html:721`, and filed as [D-051](design/V2-SPEC-DEFECTS.md#d-051) |
+| 7 | ✅ | `Done` `enabled=false clickable=false` for the whole of a text session; `enabled=true` with a selection and no session |
+| 8 | ✅ | Delete fades, the snack stands with `Text deleted.` and a matcha `Undo` whose own target is 126 px = 48 dp, and tapping it restored the element (`Redo` lit afterwards, which is how the restore is distinguishable from a snack that simply timed out — the first attempt tapped an expired snack and proved exactly that) |
+| 9 | ◑ | The chip's node is on the platform tree reading **`Saved on this device`**, without the flower. *What TalkBack says* is not capturable — Samsung TalkBack logs no utterances ([DEVICE-VERIFICATION.md §3](DEVICE-VERIFICATION.md)) — so the politeness and the once-only remain asserted in Robolectric and heard by a human, not proven here. Recorded as partial rather than claimed |
+| 10 | ✅ | `✿ Saved · on this device` renders, flower included, on the device's own fallback face — D-021's accepted platform fallback, observed |
+| 11 | ⚠️ measured | Sheet **1500 px at rest → 1069 px selected: a 431 px, 28.7 % loss**, larger than the 17 % [D-049](design/V2-SPEC-DEFECTS.md#d-049) recorded, because a selection now raises the frozen `.ctx` bar above the transform bar. D-049 updated with the number; the decision it asks for is unchanged and still the owner's |
+
+**One test was missing and was written during this pass.** §6.11's re-routing of TalkBack's `Delete`
+through the soft path had no assertion anywhere — a Required Fix reconciled without a guard. The device
+cannot perform a custom action, so it is closed in Robolectric instead:
+`BenchC4Test.the_accessibility_delete_is_reversible_on_the_same_terms_as_the_verb` performs the custom
+action and asserts **the snack**, since only the soft path raises one.
+
+#### Pass 2 — first-time user, carrying the owner's standing question
+
+*Does C3's in-place editing still feel natural under the new chrome?* **Yes** — `Add › Text` lands in a
+live session in two taps, the keyboard comes up with it, and finishing with the style row's `Done` returns
+the element to Selected exactly as C3 shipped it. The new bar did not add a step to editing; it replaced
+a shelf with a chooser one tap deeper, which is the price OD-21 recorded when it ruled.
+
+Three frictions were found, none fixed inside C4, each filed where the decision belongs:
+
+1. [**D-051**](design/V2-SPEC-DEFECTS.md#d-051) — the `Photo` row's *replace* glyph. It is now the only
+   visual the verb has, and it names the wrong action. The freeze says `ICON.replace`, so the fix is an
+   amendment, not a parity repair.
+2. [**D-052**](design/V2-SPEC-DEFECTS.md#d-052) — `Add › Text` drops the new box **over** existing
+   content. Written down as it read before I knew the cause: *"it put my new text inside my old text."*
+3. [**D-050**](design/V2-SPEC-DEFECTS.md#d-050) — already open; confirmed on the device, where the empty
+   page's *"supplies below"* sits one tap above a single `Add`.
+
+**The two passes do not disagree.** Everything Pass 2 found is a question about *what the design says*,
+on surfaces Pass 1 measured as correct — which is why all three are records rather than fixes.
+
+

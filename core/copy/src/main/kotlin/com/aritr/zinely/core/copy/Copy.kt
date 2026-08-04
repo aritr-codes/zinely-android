@@ -88,6 +88,55 @@ public object Copy {
         public const val DELETE: String = "Delete"
     }
 
+    /**
+     * The frozen bottom bar (`BenchBottomBar.kt`, `v2-bench.html:464-468`; ADR-094 rows 4.1–4.8b). `Done`
+     * is [EditText.DONE] — the same word the editing row already ships, deliberately not re-typed.
+     */
+    public object BenchBar {
+        public const val UNDO: String = "Undo"
+        public const val REDO: String = "Redo"
+
+        /**
+         * The `.add` label names no medium: choosing the medium is what the chooser it opens is for
+         * ([OD-21](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling)).
+         */
+        public const val ADD: String = "Add"
+    }
+
+    /**
+     * The bar's Add chooser (`BenchAddChooser.kt`, `v2-bench.html:719-721`; ADR-094). Two rows only — Art
+     * stays fenced behind C8 per OD-21 — and each row's spoken label is [optionLabel], one target rather
+     * than three fragments.
+     */
+    public object AddChooser {
+        public const val TITLE: String = "Add to your page"
+        public const val TEXT_TITLE: String = "Text"
+        public const val TEXT_SUBTITLE: String = "Type words onto the page"
+        public const val PHOTO_TITLE: String = "Photo"
+        public const val PHOTO_SUBTITLE: String = "From your phone — it never leaves the device"
+        public fun optionLabel(title: String, subtitle: String): String = "$title. $subtitle"
+    }
+
+    /**
+     * The top status strip's autosave chip (`BenchStatusStrip.kt`, `v2-bench.html:390`; ADR-094 row 4.10).
+     * The flower is decoration and is never required to parse the meaning (VOICE rule 7), so the live
+     * region announces [SAVED_SPOKEN] without it.
+     */
+    public object Status {
+        public const val SAVED_MARK: String = "✿"
+        public const val SAVED_WORD: String = "Saved"
+        public const val SAVED_QUALIFIER: String = " · on this device"
+        public const val SAVED_SPOKEN: String = "Saved on this device"
+    }
+
+    /**
+     * The delete/undo snackbar (`BenchSnack.kt`, `v2-bench.html:626`; ADR-094 row 4.13). The full stop is
+     * the freeze's and it is kept: the line is a sentence about something that happened, not a label.
+     */
+    public object Snack {
+        public fun deleted(label: String): String = "$label deleted."
+    }
+
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */
     public object Editor {
         public const val REFRAMING_PHOTO: String =

@@ -47,14 +47,18 @@ public const val LaterPageInvitationHeadline: String = Copy.EmptyState.LATER_PAG
  * current page has no elements. It turns a blank sheet (which reads as a void) into an encouraging
  * "let's make something cute" prompt, so a first-time user feels invited rather than faced with a void.
  *
- * **Invitation-only — no buttons ([ADR-033](../DECISIONS.md#adr-033)).** The add actions live solely in
- * the always-visible [EditorSupplyTray] (the thumb-zone home, DESIGN-RULES 3/7), so "Add a photo" /
- * "Add words" never appear twice at once on a blank page. This surface only *invites and orients* — its
- * subcopy names the two ways to start and points to the supplies on the shelf just below. Warm,
- * first-person microcopy and the privacy reassurance are part of the identity, never system-error-shaped.
+ * **Invitation-only — no buttons ([ADR-033](../DECISIONS.md#adr-033)).** The add action lives solely in
+ * the always-visible bottom bar (the thumb-zone home, DESIGN-RULES 3/7), so no add verb ever appears
+ * twice at once on a blank page. Since [OD-21](../design/V2-SPEC-DEFECTS.md#d-047-ruling) that bar draws a
+ * single `Add` and the two verbs live in the chooser it opens; the retired `EditorSupplyTray` this comment
+ * used to name is gone. This surface only *invites and orients*. Warm, first-person microcopy and the
+ * privacy reassurance are part of the identity, never system-error-shaped.
+ *
+ * Its subcopy still says *"from the supplies below"* and its cue still points at the retired shelf —
+ * [D-050](../design/V2-SPEC-DEFECTS.md#d-050), deliberately open: the wording is the owner's.
  *
  * Accessibility: this overlay is non-interactive text + ornament — the decorative sticker cluster is not
- * announced, and the actionable, labelled controls are the tray's (each a ≥48dp `Role.Button`). Colours
+ * announced, and the actionable, labelled controls are the bar's (each a ≥48dp `Role.Button`). Colours
  * come from the theme, so it inherits the zine identity.
  *
  * The headline follows the page's position (VOICE empty states): the **first** page keeps the warm

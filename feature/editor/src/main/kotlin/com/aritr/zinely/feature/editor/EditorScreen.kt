@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -30,7 +31,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
@@ -76,10 +79,12 @@ import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Test tag on the editor canvas Box (the measured, gesture-bearing area). */
@@ -249,6 +254,50 @@ public fun EditorScreen(
     // live, so keystrokes route here without a prior tap.
     val editorKeyFocus = remember { FocusRequester() }
     val reduceMotion = rememberReduceMotion()
+    // ----- C4 (ADR-094) -------------------------------------------------------------------
+    // The Add chooser (rows 4.4a-4.4d). Open/closed only: the sheet itself is ZSheet, per OD-21.
+    var addChooserOpen by remember { mutableStateOf(false) }
+
+    // The frozen soft delete (rows 4.13-4.14). `del()` fades the element and shows a snack with
+    // Undo; `undo()` restores it. The product already has a real undo stack, so the snack's Undo
+    // dispatches Intent.Undo rather than carrying a private copy of the deleted element — one
+    // history, one restore path, and the bar's Undo lights up for free because canUndo is already
+    // true. The fade runs BEFORE the dispatch, because a dispatched delete has nothing left to fade.
+    var deletingId by remember { mutableStateOf<String?>(null) }
+    var deleteProgress by remember { mutableFloatStateOf(0f) }
+    var snackVisible by remember { mutableStateOf(false) }
+    var snackMessage by remember { mutableStateOf("") }
+    val c4Scope = rememberCoroutineScope()
+    // One job, cancelled on re-entry: two deletes in quick succession must not leave the first
+    // coroutine to clear `snackVisible` out from under the second, which is how a snackbar ends up
+    // dismissing itself 200ms after it appears.
+    val deleteJob = remember { arrayOfNulls<Job>(1) }
+
+    // Frozen `del()` (`v2-bench.html:620-629`), in the order the freeze performs it: fade, then
+    // remove, then say so. Row 4.13 asserts the three together because any one alone reads as a
+    // different interaction - a fade with no snack is a disappearance, a snack with no fade is a
+    // report about something that already vanished.
+    val softDelete: (Set<String>) -> Unit = { ids ->
+        val id = ids.firstOrNull()
+        if (id != null) {
+            val label = benchDeleteLabel(currentState().document.pages, id)
+            deleteJob[0]?.cancel()
+            deleteJob[0] = c4Scope.launch {
+                deletingId = id
+                animate(0f, 1f, animationSpec = tween(BenchDeleteFadeMillis)) { v, _ ->
+                    deleteProgress = v
+                }
+                dispatch(Intent.Delete(ids))
+                deletingId = null
+                deleteProgress = 0f
+                snackMessage = benchDeletedMessage(label)
+                snackVisible = true
+                delay(BenchSnackDeleteMillis)
+                snackVisible = false
+            }
+        }
+    }
+
     val bratioOf = { el: ImageElement -> el.transform.widthPt / el.transform.heightPt }
     val adjustDraft = { d: FramingDraft? -> reframeDraft = d; reframeAdjusted = true }
     // What the open draft can still change ([ReframeAbilities]) — computed once and used for BOTH the
@@ -618,6 +667,12 @@ public fun EditorScreen(
             // is what `.phone::after{z-index:60}` does in the frozen file.
             .benchStudioGround(),
     ) {
+        // C4 row 4.9: the frozen `.status` strip, the first thing in the phone (`v2-bench.html:390`
+        // sits directly inside `.phone`, above `.canvasArea`). It carries the autosave chip that
+        // `EditorSavedConfirmation` used to float over the canvas - one message, one presentation,
+        // per OD-14 - and its left slot is deliberately empty; see [BenchStatusStrip].
+        BenchStatusStrip(savedVisible = savedVisible && !saveErrorVisible)
+
         // The "Preview" entry to the unified Proof surface (M5, ADR-051). A quiet top-end nav
         // action (not a thumb-zone craft supply — it advances the journey, it doesn't place content);
         // shown only when the host supplies a destination, so the editor's tested layout is unchanged
@@ -854,6 +909,8 @@ public fun EditorScreen(
                         // ADR-093 row 3.11: the in-place field below is the only drawing of this element
                         // while the session is open, so the tape must not paint it a second time.
                         hiddenElementId = editingElement?.id,
+                    // C4 row 4.13: the leaving element, and how far through leaving it is.
+                    deleting = deletingId?.let { it to deleteProgress },
                     )
                     // ADR-093 rows 3.8/3.11: the text is edited ON the page, at its own box, inside the
                     // panned wrapper so it rides the pan rigidly with everything else. This replaces the
@@ -957,6 +1014,10 @@ public fun EditorScreen(
                             uiState = uiState,
                             dispatch = dispatch,
                             modifier = Modifier.fillMaxSize(),
+                            // C4 row 4.13: TalkBack's Delete takes the same reversible path the visible
+                            // verb does — the fade, the snack, and its Undo. Without this the element
+                            // simply vanished for a screen-reader user while a sighted user got an undo.
+                            onDelete = { softDelete(setOf(it)) },
                         )
                     }
                 }
@@ -1033,12 +1094,10 @@ public fun EditorScreen(
                 // phone-width canvas a TopEnd chip could overlap the centered hint (Codex review #2). The
                 // teaching hint wins; the chip simply skips that one window. Passive (no pointer input);
                 // it fades itself out after the transient window.
-                EditorSavedConfirmation(
-                    visible = savedVisible && !showMoveResizeHint && !saveErrorVisible,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 8.dp, end = 8.dp),
-                )
+                // C4 row 4.10: retired. The autosave reassurance now lives in the frozen `.status`
+                // strip at the top of the screen, which is where the freeze puts it. The capability is
+                // unchanged - same signal, same 1600ms window - so OD-11 holds; only the presentation
+                // moved, and leaving both would have been OD-14's defect.
 
                 // The warm save-failure banner (ADR-035) — the honest correction to the optimistic
                 // "Saved ✨". Reuses the existing app-scoped SaveFailureSink (ADR-026 §5); no second save
@@ -1105,7 +1164,7 @@ public fun EditorScreen(
                             // both size and the five content inks (ADR-055). ADR-092 row 2.13b.
                             Copy.BenchVerbs.SIZE, Copy.BenchVerbs.INK -> typeBarOpen = true
                             Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
-                            Copy.BenchVerbs.DELETE -> dispatch(Intent.Delete(uiState.selection))
+                            Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
                             // Font and Replace ship disabled and never arrive here (ADR-092 §1(c), D-038).
                             else -> Unit
                         }
@@ -1143,6 +1202,28 @@ public fun EditorScreen(
                     )
                 }
 
+                // C4 rows 4.11-4.12: the frozen `.snack` (`v2-bench.html:361-364`, markup `:443`).
+                //
+                // **Inside the canvas, not on the screen.** The markup at `:443` sits within
+                // `.canvasArea` (`:392`), and `.canvasArea` declares `position:relative` (`:194`) — so the
+                // frozen `bottom:12px` resolves against the *canvas*, which ends above the page strip and
+                // the bar. The first cut of C4 put this in the screen's root Box and justified it with the
+                // claim that `.snack` is positioned against `.phone`; that claim was false, and the test
+                // that locked it encoded the wrong geometry as frozen. Independent review caught it by
+                // reading the HTML rather than the ADR. Anchored here, the confirmation appears over the
+                // artifact it is about, and it still takes no layout height — so it cannot resize the
+                // sheet, which is the half of the old reasoning that was true.
+                BenchSnack(
+                    visible = snackVisible,
+                    message = snackMessage,
+                    actionLabel = UndoActionLabel,
+                    onAction = {
+                        deleteJob[0]?.cancel()
+                        snackVisible = false
+                        dispatch(Intent.Undo)
+                    },
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
             }
         }
 
@@ -1170,16 +1251,39 @@ public fun EditorScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
         } else {
-            EditorSupplyTray(
+            BenchBottomBar(
                 canUndo = uiState.canUndo,
                 canRedo = uiState.canRedo,
-                onAddPhoto = { dispatch(Intent.RequestAddImage) },
-                onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
-                onUndo = { dispatch(Intent.Undo) },
+                // Row 4.8a: withheld for the whole of a text session, because C3's style-row chip
+                // owns "finish" while one is open and two visible Dones is OD-14's defect.
+                doneEnabled = editingElement == null,
+                // Undoing from the bar during the delete window takes the snack down with it. Without
+                // this the snack kept standing after its own delete had already been reversed, still
+                // offering `Undo` — and a second press would have taken back whatever preceded the
+                // delete. One reversal, one affordance. (Independent review, C4.)
+                onUndo = {
+                    deleteJob[0]?.cancel()
+                    snackVisible = false
+                    dispatch(Intent.Undo)
+                },
                 onRedo = { dispatch(Intent.Redo) },
+                onAdd = { addChooserOpen = true },
+                // Row 4.8b: the frozen `deselect()` branch. `SelectAt` with a miss reduces to
+                // ClearSelection's exact state - the same one line C2a used for tap-to-dismiss, so
+                // there is one deselect path and not two that can drift.
+                onDone = { dispatch(Intent.ClearSelection) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+
+        // C4 rows 4.4a-4.4d: the frozen Add chooser, Text and Photo only (OD-21). A Dialog, so where it
+        // is declared does not affect layout.
+        BenchAddChooser(
+            visible = addChooserOpen,
+            onDismiss = { addChooserOpen = false },
+            onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
+            onAddPhoto = { dispatch(Intent.RequestAddImage) },
+        )
 
         // The page navigator: makes all pages of the SINGLE_SHEET_8 document reachable (before this
         // only page 0 was). Each card mini-renders its page through the SAME render path the canvas
@@ -1258,6 +1362,7 @@ public fun EditorScreen(
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
+
     }
 }
 

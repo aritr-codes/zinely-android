@@ -108,8 +108,9 @@ class ReframeSessionTest {
 
         assertTrue("Reframe session open", s.uiState.value.interaction is Interaction.Reframing)
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertIsDisplayed()
-        // Reframe chrome replaces the supply tray + hides the context bar.
-        composeRule.onNodeWithTag(EditorSupplyTrayTestTag).assertDoesNotExist()
+        // Reframe chrome replaces the bottom bar + hides the context bar. (Before C4 this named the
+        // retired supply tray; the surface changed, the invariant did not.)
+        composeRule.onNodeWithTag(BenchBottomBarTestTag).assertDoesNotExist()
     }
 
     /**
@@ -169,7 +170,7 @@ class ReframeSessionTest {
         // resolving true, so a refused session composes neither — the editor keeps its ordinary chrome.
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(ReframeOverlayTestTag).assertDoesNotExist()
-        composeRule.onNodeWithTag(EditorSupplyTrayTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchBottomBarTestTag).assertIsDisplayed()
     }
 
     /**

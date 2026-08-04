@@ -320,7 +320,12 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         assertTrue(store.uiState.value.document.pages[0].elements.isEmpty())
 
-        composeRule.onNodeWithTag(SupplyAddWordsTag).performClick()
+        // C4 (OD-21): `Add words` is now a row in the frozen chooser rather than a shelf card. The
+        // destination is unchanged — OD-21 requires `addTextAndEdit` by name — so what this test proves
+        // is unchanged too: the box arrives AND the C3 session opens on it, in one tap of Text.
+        composeRule.onNodeWithTag(BenchBarAddTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchAddChooserTextTag).performClick()
         composeRule.waitForIdle()
 
         val page = store.uiState.value.document.pages[0]
@@ -331,26 +336,25 @@ class EditorScreenTest {
     }
 
     @Test
-    fun on_a_blank_page_the_add_actions_are_not_duplicated_the_tray_owns_them() {
-        // ADR-033 de-dup: a blank page raises the invitation overlay AND the persistent tray. The overlay
-        // is invitation-only (no buttons), so each add action exists exactly once on screen — in the tray
-        // (the thumb-zone home, DESIGN-RULES 3/7). Guards against re-adding buttons to the empty state.
+    fun on_a_blank_page_the_add_actions_are_not_duplicated_the_bar_owns_them() {
+        // ADR-033's de-dup, restated for C4's bar (ADR-094 row 4.7). A blank page raises the invitation
+        // overlay AND the persistent bar. The overlay is invitation-only, so the add affordance exists
+        // exactly once on screen — and after OD-21 that affordance is one `Add`, not two cards. Guards
+        // against re-adding buttons to the empty state, and against the bar drawing a second add verb.
         val store = store()
         setScreen(store)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorEmptyStateTestTag).assertIsDisplayed()
 
-        // Exactly one "Add a photo" / "Add words" affordance — the tray's, not a second in the overlay.
+        // Exactly one add affordance — the bar's — and the chooser's rows are not on screen until it
+        // is pressed, so the empty state cannot be reading as a second place to add something.
         assertTrue(
-            composeRule.onAllNodesWithText(AddPhotoActionLabel, substring = true, useUnmergedTree = true)
+            composeRule.onAllNodesWithText(AddActionLabel, substring = true, useUnmergedTree = true)
                 .fetchSemanticsNodes().size == 1,
         )
-        assertTrue(
-            composeRule.onAllNodesWithText(AddWordsActionLabel, substring = true, useUnmergedTree = true)
-                .fetchSemanticsNodes().size == 1,
-        )
-        composeRule.onNodeWithTag(SupplyAddPhotoTag).assertIsDisplayed()
-        composeRule.onNodeWithTag(SupplyAddWordsTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchBarAddTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchAddChooserTextTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchAddChooserPhotoTag).assertDoesNotExist()
     }
 
     @Test
@@ -501,7 +505,7 @@ class EditorScreenTest {
         val store = store()
         setScreen(store, savedSignals = MutableSharedFlow())
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
     }
 
     @Test
@@ -513,12 +517,12 @@ class EditorScreenTest {
         composeRule.mainClock.autoAdvance = false
         setScreen(store, savedSignals = signals)
         composeRule.waitForIdle() // the collector is now subscribed (replay=0 SharedFlow)
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
 
         signals.tryEmit(Unit)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
     }
 
     @Test
@@ -534,20 +538,34 @@ class EditorScreenTest {
         signals.tryEmit(Unit)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
 
-        // Past the visible window + the fade-out: the chip removes itself.
-        composeRule.mainClock.advanceTimeBy(SavedConfirmationVisibleMs + 1000L)
+        // Still up at 1500ms — a 400ms window would be long gone. Literal, not `SavedConfirmationVisibleMs`:
+        // advancing by the constant under test cannot see a change to it, and the mutation 1600 → 400
+        // survived this test until these two literals replaced it.
+        composeRule.mainClock.advanceTimeBy(1500L)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+
+        // Past the visible window + the .4s fade-out: the chip removes itself.
+        composeRule.mainClock.advanceTimeBy(700L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
     }
 
     @Test
-    fun the_saved_confirmation_yields_while_the_move_resize_hint_is_visible() {
-        // Competing-chrome guard (Codex review #2): placing the first element BOTH selects it (raising the
-        // move/resize hint at TopCenter, up to 320dp wide) and autosaves. On a narrow canvas a TopEnd
-        // "Saved" chip would overlap the centered hint, so the chip yields — the teaching hint wins, the
-        // chip simply skips that window.
+    fun the_saved_chip_and_the_move_resize_hint_coexist_without_overlapping() {
+        // The competing-chrome guard (Codex review #2) restated for C4. Its original form was a *yield*:
+        // placing the first element BOTH selects it (raising the move/resize hint at TopCenter, up to
+        // 320dp wide) and autosaves, and a TopEnd chip floating over a narrow canvas would have landed on
+        // top of the centered hint — so the chip skipped that window entirely.
+        //
+        // C4 moves the chip off the canvas: the freeze puts `.saved` inside `.status`
+        // (`v2-bench.html:190-192`, markup `:390`), which sits above `.canvasArea`. The two surfaces can
+        // no longer occupy the same pixels, so withholding the reassurance would now be a silent loss of
+        // a shipped capability - exactly what OD-11 forbids - rather than a collision fix. The guard
+        // therefore becomes what it was always protecting: **they do not overlap**. Recorded as a
+        // deviation in ADR-094 row 4.10 rather than left to this comment.
         val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
         val store = store()
         store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects → hint
@@ -559,8 +577,15 @@ class EditorScreenTest {
         signals.tryEmit(Unit)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        // Save fired, but the chip stays hidden because the hint owns the top of the canvas.
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+
+        val chip = composeRule.onNodeWithTag(BenchSavedChipTestTag).fetchSemanticsNode().boundsInRoot
+        val hint = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).fetchSemanticsNode().boundsInRoot
+        assertTrue(
+            "the chip must clear the teaching hint, not sit on it: chip=$chip hint=$hint",
+            chip.bottom <= hint.top || hint.bottom <= chip.top ||
+                chip.right <= hint.left || hint.right <= chip.left,
+        )
     }
 
     @Test
@@ -609,7 +634,7 @@ class EditorScreenTest {
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
         // A save was "scheduled", but with a failure on record the chip stays hidden; the banner shows.
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
     }
 
@@ -653,13 +678,13 @@ class EditorScreenTest {
         signals.tryEmit(Unit)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
 
         // A failure appears mid-window: chip yields to the banner (past its fade-out).
         errorVisible.value = true
         composeRule.mainClock.advanceTimeBy(500L)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
 
         // Dismiss the failure while the original 1600ms window would still be open: the chip must stay
@@ -667,7 +692,7 @@ class EditorScreenTest {
         errorVisible.value = false
         composeRule.mainClock.advanceTimeBy(500L)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
     }
 
     @Test

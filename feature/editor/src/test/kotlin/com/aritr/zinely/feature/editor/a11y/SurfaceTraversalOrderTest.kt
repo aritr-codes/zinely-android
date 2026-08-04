@@ -37,8 +37,8 @@ import com.aritr.zinely.feature.editor.HomeZineCard
 import com.aritr.zinely.feature.editor.ProofAct
 import com.aritr.zinely.feature.editor.ProofPrimaryTestTag
 import com.aritr.zinely.feature.editor.ProofScreen
+import com.aritr.zinely.feature.editor.AddActionLabel
 import com.aritr.zinely.feature.editor.RedoActionLabel
-import com.aritr.zinely.feature.editor.TraySectionLabel
 import com.aritr.zinely.feature.editor.UndoActionLabel
 import com.aritr.zinely.ui.a11y.PlatformA11yStop
 import com.aritr.zinely.ui.a11y.platformTraversalStops
@@ -396,12 +396,13 @@ class SurfaceTraversalOrderTest {
                 FirstPageInvitationHeadline,
                 Copy.EmptyState.SUPPLY_CUE,
                 Copy.EmptyState.OFFLINE_NOTE,
-                // The supply tray: its `heading()` first, then the four supplies left-to-right.
-                TraySectionLabel,
-                AddPhotoActionLabel,
-                AddWordsActionLabel,
+                // C4 (ADR-094 row 4.5): the frozen bottom bar, left to right. `EditorSupplyTray`'s
+                // "Supplies" heading and its four cards are gone with the shelf — the bar has no heading
+                // because the freeze gives it none, and its two add verbs now live behind `Add`.
                 UndoActionLabel,
                 RedoActionLabel,
+                AddActionLabel,
+                Copy.EditText.DONE,
                 // The page strip, last and lowest.
                 Copy.PageStrip.pageNumber(1),
             ),

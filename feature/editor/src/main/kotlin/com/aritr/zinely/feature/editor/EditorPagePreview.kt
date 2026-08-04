@@ -20,6 +20,7 @@ import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.editor.SnapGuide
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
+import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
@@ -63,6 +64,9 @@ import com.aritr.zinely.ui.theme.ZinelyV2Settle
  *   is not painted twice. C3 uses it for the element under an open in-place text session (ADR-093 row
  *   3.11); `null` is the normal case. Affects the **render** only: selection chrome, snap guides and the
  *   focus scrim still read the full page, so a suppressed element keeps its outline and its hole.
+ * @param deleting the element in C4's soft delete and how far through it is (`0f` .. `1f`), or `null`.
+ *   Drives the frozen `scale(.9)` through the override seam and the fade through a paper cover — see
+ *   [benchDeleteScaled] and [benchDeleteCovers] at the foot of this file for why the fade is a cover.
  */
 @Composable
 public fun EditorPagePreview(
@@ -75,6 +79,7 @@ public fun EditorPagePreview(
     styleOverride: Map<String, TextStyle>? = null,
     imageBytes: AssetBytesSource = EmptyAssetBytes,
     hiddenElementId: String? = null,
+    deleting: Pair<String, Float>? = null,
 ) {
     val page = uiState.document.pages[uiState.currentPageIndex]
     val interaction = uiState.interaction
@@ -177,11 +182,17 @@ public fun EditorPagePreview(
     // whatever the two text engines disagree about, which reads as the artifact duplicating itself.
     // Suppression happens here, at the tape, rather than by covering the box: a cover would have to be
     // opaque, and the page is not one flat colour behind it.
-    val visiblePage = if (hiddenElementId == null) {
+    val visiblePage0 = if (hiddenElementId == null) {
         renderedPage
     } else {
         renderedPage.copy(elements = renderedPage.elements.filterNot { it.id == hiddenElementId })
     }
+
+    // C4 (ADR-094 row 4.13): the frozen soft delete shrinks the element to `scale(.9)` while it fades.
+    // The scale rides `applyOverride` — the same seam the gesture preview, the commit and C2a's materialise
+    // all use — rather than a graphicsLayer that would have to be reconciled with them. The fade is the
+    // cover in [benchDeleteCovers]; see there for why it is a cover and not a per-element alpha.
+    val visiblePage = benchDeleteScaled(deleting, visiblePage0)
 
     // Recomputed only when the effective page / defaults / size change — i.e. per frame during a drag
     // (effectivePage changes) or per step during a size burst, never on unrelated recompositions.
@@ -231,7 +242,7 @@ public fun EditorPagePreview(
                     BenchMaterialise.coverAlphaAt(materialiseProgress),
             )
         }
-    }
+    } + benchDeleteCovers(deleting, renderedPage, screenPxPerPt, pageOffset)
 
     Box(modifier = modifier) {
         PagePreview(
@@ -270,4 +281,42 @@ public fun EditorPagePreview(
             alpha = chromeAlpha,
         )
     }
+}
+
+/**
+ * The soft-deleting element, shrunk about its own centre through the `applyOverride` seam.
+ *
+ * Pure, so the arithmetic is unit-testable without a composition — the house rule this module keeps for
+ * exactly the geometry that is otherwise only checkable by eye.
+ */
+internal fun benchDeleteScaled(deleting: Pair<String, Float>?, page: Page): Page {
+    if (deleting == null) return page
+    val (id, progress) = deleting
+    val t = page.elements.firstOrNull { it.id == id }?.transform ?: return page
+    return LivePreview.applyOverride(
+        page,
+        mapOf(id to BenchMaterialise.scaledAboutCentre(t, BenchMaterialise.deleteScaleAt(progress))),
+    )
+}
+
+/**
+ * The paper cover that fades **in** over the soft-deleting element — C2a's materialise technique reversed.
+ * Empty when nothing is being deleted, so the common path allocates nothing.
+ */
+internal fun benchDeleteCovers(
+    deleting: Pair<String, Float>?,
+    page: Page,
+    screenPxPerPt: Float,
+    pageOffset: PtPoint,
+): List<Pair<List<PtPoint>, Float>> {
+    if (deleting == null) return emptyList()
+    val (id, progress) = deleting
+    val t = page.elements.firstOrNull { it.id == id }?.transform ?: return emptyList()
+    // The cover tracks the SHRINKING box, not the resting one: a cover at the original size would sit
+    // proud of the element it is hiding and read as a growing white rectangle rather than a fading one.
+    val scaled = BenchMaterialise.scaledAboutCentre(t, BenchMaterialise.deleteScaleAt(progress))
+    return listOf(
+        SelectionChromeGeometry.outlineDevicePx(scaled, screenPxPerPt.toDouble(), pageOffset) to
+            BenchMaterialise.deleteCoverAlphaAt(progress),
+    )
 }

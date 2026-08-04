@@ -137,7 +137,10 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
 | ~~[**D-047**](#d-047)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-047-ruling), OD-21, Option A; the frozen Bench is AMENDED for the fifth time** | the frozen `.bar` drew **three** slots while [OD-9](#d-031-ruling) keeps redo, [OD-11](#d-034-ruling)/[OD-14](#d-039-ruling) keep **both** shipped add verbs, and `.add`'s handler opens a chooser whose region OD-2 re-seated beyond Phase C. Ruled: the bar becomes **`Undo · Redo · Add · Done`**; `Add` opens the frozen chooser with **only its Text and Photo rows released into C4**, Art staying fenced behind C8 — *“a fence reassignment, not a capability reassignment”*; the chooser uses the shipped `ZSheet`; **Text reuses `addTextAndEdit`** so C3's in-place model is untouched; `EditorSupplyTray` is retired. One line of frozen markup added (`#redoBtn`, `:466`), **no CSS changed**. The accepted price, recorded: both add verbs sit one tap deeper than they do today |
 | ~~[**D-048**](#d-048)~~ | ✅ **RESOLVED 2026-08-04 by rulings already in hand — a recorded deviation, not an owner question, recorded exactly as [D-042](#d-042) was. No OD number, because none was needed** | `Done` follows the frozen two-state behaviour (`:653`): while a session is open C3's `#doneEdit` owns *finish* and the bar's `Done` is **withheld at the frozen `.icon-btn:disabled` `.35`** (`:269`) — [OD-14](#d-039-ruling)'s own method, as C2b applied it, using a presentation the file already draws; with no session the bar's `Done` owns *clear selection*, which is deselect's **first drawn control**, since [OD-13](#d-037-ruling) gave it only a gesture and a gesture has no presentation for OD-14 to count. **`Preview ›` does not move** — OD-9's *reuse, don't invent* is satisfied by leaving it exactly where it ships |
-| [**D-049**](#d-049) | 🟦 **OPEN — routed to C4 by [C2a's Pass 2](../DECISIONS.md#adr-091-completion-device) as P2-1; not a merge blocker** | the sheet measures `1028×1454 px` unselected and `850×1202 px` selected — a **17 % linear shrink** — because the bottom chrome takes its space from the canvas (`.bar{flex:none}`, `v2-bench.html:267`). Pre-existing; [D-037](#d-037) did not cause it, but dismissal now makes the user meet it on **every** deselect, in the growing direction. Against [OD-12](#d-035-ruling)'s *the editor represents the physical printed artifact*, a sheet that resizes when you stop touching it is *"worth someone's decision"* — take the height, or overlay it and amend |
+| [**D-052**](#d-052) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; placement policy, not C4's fence** | `Add › Text` drops the new box **on top of** what is already on the page: the arriving box's editing outline enclosed an existing "Hello", so the page read as one block holding both the old words and the cursor. The drop comes from `addTextAndEdit`, which [OD-21](#d-047-ruling) required C4 to reuse **by name**; what C4 changed is the frequency — the route is now two taps from anywhere, so the collision is met on pages that already have content |
+| [**D-051**](#d-051) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; a defect in the FROZEN FILE, not in the Compose** | the chooser's `Photo` row is marked with the *replace / refresh* glyph — `v2-bench.html:721` builds it from `ICON.replace`, and `BenchAddChooser.kt` transcribes it faithfully. Beside `Text`'s clean `A` it reads as *"replace the photo"*. It matters more now than in the prototype: after [OD-21](#d-047-ruling) retired the shelf's *"Add a photo"* card, this glyph is the **only** visual the verb has. A fix amends the frozen file first, which is the owner's act |
+| [**D-050**](#d-050) | 🟦 **OPEN — raised by C4, 2026-08-04; copy, and copy is owner-owned** | the empty page still says *"Grab a photo or a few words from the **supplies below**"* (`Copy.kt:175`) and still points a chevron at the shelf (`EmptyStateTrayCueTag`, `EditorEmptyState.kt:37`) — and [OD-21](#d-047-ruling) retired the shelf. The invitation now names a surface that is not on screen, one tap before the user meets a single `Add`. **Not fixed in C4:** the strings are product voice, not frozen CSS, and rewriting them is a wording decision |
+| [**D-049**](#d-049) | 🟦 **OPEN — routed to C4 by [C2a's Pass 2](../DECISIONS.md#adr-091-completion-device) as P2-1; not a merge blocker. RE-MEASURED under C4's bar 2026-08-04: 1500 px → 1069 px, a 28.7 % loss of sheet height, larger than the 17 % first recorded** | the sheet measures `1028×1454 px` unselected and `850×1202 px` selected — a **17 % linear shrink**, and **28.7 % of sheet height once a selection also raises the frozen `.ctx` bar** — because the bottom chrome takes its space from the canvas (`.bar{flex:none}`, `v2-bench.html:267`). Pre-existing; [D-037](#d-037) did not cause it, but dismissal now makes the user meet it on **every** deselect, in the growing direction. Against [OD-12](#d-035-ruling)'s *the editor represents the physical printed artifact*, a sheet that resizes when you stop touching it is *"worth someone's decision"* — take the height, or overlay it and amend |
 | [**D-046**](#d-046) | ⛔ **OPEN — [ruled OD-18](#d-046-ruling) 2026-08-04: stays open; no repo-wide sweep, no reopening of C3; repaired by each file's owning package or a dedicated docs-maintenance package** | the [OD-16](#d-043-ruling) amendment moved every address below the insert, stranding **25 explicit `v2-bench.html:NNN` citations across ten files C3 does not own**. C3 repaired only the files it owns, each verified against the frozen file. Three mechanical sweeps were attempted and all three did damage — including flattening [ADR-093 §1](../DECISIONS.md#adr-093)'s own drift table — so the enumeration and the working method are recorded instead of a fourth sweep across clean files. Documentation accuracy only; no runtime effect |
 | [**D-045**](#d-045) | ✅ **FIXED in C3, 2026-08-03 — a parity defect, no ruling and no amendment** | the frozen `.canvasArea{overflow:hidden}` (`v2-bench.html:171`) was never implemented in Compose. Free while the pan was zero; on device once C3 made it real the panned sheet painted over the top bar in **every** editing session, leaving `Preview ›` invisible and — read off the platform tree — still `clickable=true` at full bounds. **A control you cannot see and can press is the defect; the paper over the chrome is how you notice it.** Fixed with `clipToBounds()` alongside the OD-16 clamp, because either alone makes the other worse |
 | ~~**D-043 (original entry)**~~ | *superseded — kept for the record* | the frozen `edit()` lifts the page a literal `translateY(-96px)`. The prototype can afford it: a 324px page inside a 744px phone has slack above it. The **shipped page is *contained* in the canvas** and typically height-bound, so its slack is ≈ 0 — and an element in the top **96dp of screen** is lifted clean out of view by the gesture meant to reveal it. **96dp is the wrong unit to judge the severity in:** it is `96 / scale` points of *page*, so it is the top **≈ 73 %** of the page on the 300×400dp test host where it was reproduced, against ≈ 22 % on the measured `SM-A176B` canvas — worst on the smallest canvases, and the 73 % is the figure that actually has evidence. Reproduced deterministically, not inferred. [ADR-093](../DECISIONS.md#adr-093) row 3.1 specifies the literal and row 3.1a forbids correcting it unilaterally, so it **ships as specified** and the remedy is the owner's |
@@ -2976,7 +2979,83 @@ this and can be built whichever way `Done` is ruled.
 
 ---
 
-### D-049 — the sheet resizes 17 % every time you select or dismiss, and `.bar` is where the fix lives {#d-049}
+### D-052 — `Add › Text` drops the new box on top of what is already on the page {#d-052}
+
+**Raised 2026-08-04 by C4's Device Verification Pass 2** (Samsung SM-A176B, Android 16, debug build).
+🟦 Open. **Not a merge blocker** — it is the shipped placement rule meeting a new one-tap route to it, not a
+regression C4 introduced.
+
+**What happened, before I knew why.** The page held one text box reading *"Hello"*. I tapped `Add`, then
+`Text`. A new box arrived already in its editing session — correct, and pleasant — but its outline was drawn
+*around* the existing "Hello", so for the length of the session the page read as **one** block containing
+both my old words and my cursor. Typing `Bench` produced a box that, once the session ended, sat directly
+over the old one; the platform tree confirms two elements, `Text: Bench` and `Text: Hello`, occupying
+adjacent, touching rectangles. A first-time user has no way to tell which words are the ones they are
+editing, and the obvious reading — *"it put my new text inside my old text"* — is wrong.
+
+**Why it is C4-adjacent and not C4's.** The drop position comes from the placement path C4 reuses **by
+name** under [OD-21](#d-047-ruling) — *"The Text action must continue to reuse the existing `addTextAndEdit`
+flow so the C3 in-place editing model remains unchanged."* — and reusing it unchanged is what
+the ruling required. What C4 changed is the *frequency*: `Add › Text` is two taps from anywhere, so the
+collision is now met on a page that already has content, which the empty-state route never did.
+
+**What a fix would decide, if ruled:** whether a placement offsets from, or avoids, the occupied region —
+a placement-policy decision that belongs to whoever owns adding, not to the package that rebuilt the bar.
+
+---
+
+### D-051 — the Add chooser offers `Photo` under a *replace* glyph {#d-051}
+
+**Raised 2026-08-04 by C4's Device Verification Pass 2.** 🟦 Open. **Not a merge blocker.** **This is a
+defect in the frozen file, not in the Compose implementation** — which is precisely why it is filed here.
+
+**What it is.** The chooser's `Photo` row draws two circular arrows chasing each other — the *refresh /
+replace / sync* glyph. On the device, beside a `Text` row marked with a clean `A`, it reads as *"replace
+the photo"* or *"sync"*, and it is the one row in the sheet whose mark does not name what the row does.
+
+**The implementation is faithful.** `v2-bench.html:721` builds that row with `ICON.replace`, and
+`BenchAddChooser.kt:139` uses `ZinelyV2Icons.Replace`. The freeze says replace; the Compose says replace.
+Changing it in Compose alone would be a Compose-side departure from a frozen surface, which the HTML-first
+workflow forbids in those terms — *"any UX change after freeze must first update the HTML specification"*.
+
+**Why it matters more here than it did in the prototype.** In the frozen file the row was one of three in a
+narrated demo. After [OD-21](#d-047-ruling) this sheet is **the only route to adding a photo** in the whole
+editor: the shelf that used to carry an unambiguous *"Add a photo"* card is retired, so this glyph is now
+the single visual the user has to recognise the verb by.
+
+**What a fix would touch, if ruled:** `v2-bench.html:721` first (a photo/image mark — `ICON.image`-class
+artwork rather than `ICON.replace`), then `BenchAddChooser.kt` and the chooser's device screenshot. It is a
+one-glyph amendment to a frozen surface, and the amendment is the owner's to make.
+
+---
+
+### D-050 — the empty page still sends the user to a shelf that no longer exists {#d-050}
+
+**Raised 2026-08-04 by C4, while reading its own golden.** 🟦 Open. **Not a merge blocker**, and
+deliberately not fixed in C4.
+
+**What it is.** `Copy.EmptyState.SUPPLY_CUE` reads *"Grab a photo or a few words from the supplies
+below."* (`core/copy/…/Copy.kt:175` — it was `:126` when this defect was raised; C4's own
+[§6.12](../DECISIONS.md#adr-094-deviations) relocation inserted 49 lines above it, and a citation left to rot
+is the [D-046](#d-046) failure mode, so it is corrected here rather than added to that pile), and `EditorEmptyState` draws a chevron beneath it pointing at the
+shelf (`EmptyStateTrayCueTag`, `feature/editor/…/EditorEmptyState.kt:37`). Both were true until
+[OD-21](#d-047-ruling) retired `EditorSupplyTray`: the bottom of the screen now holds one `Add`, and the
+two add verbs live behind it. The line names a surface that is not there, and the arrow points at a bar
+whose contents no longer match the sentence.
+
+**How it was found.** Not by a failing test — every test passed. It is legible in
+`editor_screen_light.png`, C4's re-recorded screen golden: the invitation and the new bar are in the same
+frame, and the sentence and the frame disagree.
+
+**Why C4 does not fix it.** These are product-voice strings and a teaching gesture, not frozen CSS. The
+frozen file's own empty state is not part of C4's fence, the owner owns the wording, and rewriting an
+invitation is a design change wearing a parity fix's clothes. Recorded here so it reaches the owner as a
+decision rather than being made by an implementer mid-package.
+
+**What a fix would touch, if ruled:** `Copy.EmptyState.SUPPLY_CUE`, and whether the cue chevron survives
+at all now that its target is a single control rather than a shelf of four.
+
+### D-049 — the sheet resizes 17–29 % every time you select or dismiss, and `.bar` is where the fix lives {#d-049}
 
 **Raised 2026-08-02 by [C2a's Pass 2](../DECISIONS.md#adr-091-completion-device) as **P2-1**; filed here
 2026-08-04 by C4's blocker check, which is the package it was routed to. 🟦 Open — not a merge blocker for C4,
@@ -2991,6 +3070,13 @@ Dismissal did not exist. Now it is met on **every** dismissal too, in the *growi
 [OD-12](#d-035-ruling) rules that *the editor represents the physical printed artifact*. A sheet of paper that
 changes size when you stop touching it is a statement about the artifact, not about the chrome. `.bar` is C4's
 fence and the bottom chrome's space-taking is what C4 rebuilds, so C4 is where any fix belongs.
+
+**Re-measured under C4's bar, 2026-08-04** — checklist item 11 of [ADR-094 §7](../DECISIONS.md#adr-094-device-checklist),
+on a Samsung SM-A176B (Android 16, density 420dpi), reading the drawn sheet out of the device raster rather
+than the tree: **1500 px tall at rest, 1069 px selected — a 431 px, 28.7 % loss of sheet height.** The
+number is *larger* than the 17 % C2a recorded, because C2a measured the transform bar alone and a selection
+now also raises the frozen `.ctx` verb bar above it (the [D-039](#d-039-ruling) split). The decision below is
+unchanged and still the owner's; only the size of what it decides has been corrected.
 
 **What the decision actually is:** whether the bottom chrome continues to *take* canvas height (the shipped
 behaviour, and what `.bar{flex:none}` at `v2-bench.html:267` specifies inside a flex column), or overlays it so

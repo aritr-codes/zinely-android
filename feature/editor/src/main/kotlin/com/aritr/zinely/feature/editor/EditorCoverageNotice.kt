@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.rememberReduceMotion
 
 /** Test tag on the unsupported-character coverage notice. */
 public const val EditorCoverageNoticeTestTag: String = "editor-coverage-notice"
