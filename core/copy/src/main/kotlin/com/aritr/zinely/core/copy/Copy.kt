@@ -157,6 +157,12 @@ public object Copy {
     /** Inline text-editor (`EditTextSession.kt`). */
     public object EditText {
         public const val ZINE_TEXT: String = "Zine text"
+
+        /**
+         * The frozen editing row's `#doneEdit` button (`v2-bench.html:410`) — the one live control in
+         * `BenchStyleRow`. Ends the session and returns the element to Selected (ADR-093 row 3.10).
+         */
+        public const val DONE: String = "Done"
     }
 
     /**

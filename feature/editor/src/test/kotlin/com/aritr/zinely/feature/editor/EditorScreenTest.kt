@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -63,6 +64,23 @@ class EditorScreenTest {
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val pageSizePt = PtSize(100.0, 100.0)
+
+    /**
+     * A text box the frozen pan leaves **fully on screen**, for the tests that assert the C3 in-place
+     * editing surface is visible.
+     *
+     * On this host the canvas is ~132dp for a 100pt page (**1.32 dp/pt**). The arithmetic below was written
+     * when the pan was an unconditional 96dp: only page-space y ≳ 73pt survived it, and 76–94pt landed at
+     * 4–28dp. An earlier cut used 55pt, which left a ~3dp sliver on screen — `assertIsDisplayed` passes on
+     * any non-empty intersection, so that assertion would have been decoration.
+     *
+     * Since [OD-16](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-043-ruling) the pan is clamped to
+     * the slack above the page, which on this host is **0**, so nothing is lifted here at all and this box is
+     * visible by a wider margin than the arithmetic claims. The position is kept, not relaxed: it is what
+     * makes these tests independent of the clamp, so they still say what they said if the clamp regresses.
+     * [a_top_of_page_element_stays_in_view_while_it_is_edited] below is the row that pins the clamp itself.
+     */
+    private val midPageTextBox = Transform(20.0, 76.0, 20.0, 18.0)
 
     private fun store(): EditorStore {
         val runner = object : EditorEffectRunner {
@@ -459,8 +477,13 @@ class EditorScreenTest {
     @Test
     fun opening_a_text_session_replaces_the_hint_with_the_edit_overlay() {
         // The hint never blocks editing: opening a text session yields the hint and raises the overlay.
+        //
+        // C3: the editing surface is now in place ON the element (ADR-093 row 3.8), so this test's box has
+        // to sit where the frozen −96dp pan does not carry it off the top of the canvas — see
+        // [midPageTextBox] and D-043. The box's position was arbitrary before and is deliberate now; what
+        // is asserted is unchanged and still `assertIsDisplayed`.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi"))
         val id = store.uiState.value.selection.single()
         setScreen(store)
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
@@ -663,14 +686,42 @@ class EditorScreenTest {
 
     @Test
     fun an_open_text_session_raises_the_edit_overlay() {
+        // Mid-page for the same reason as above: C3 edits in place, and the frozen pan is a real −96dp.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi"))
         val id = store.uiState.value.selection.single()
         setScreen(store)
         composeRule.onNodeWithTag(EditTextSessionTestTag).assertDoesNotExist()
 
         store.dispatch(Intent.BeginEditText(id))
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun a_top_of_page_element_stays_in_view_while_it_is_edited() {
+        // **This test used to assert the opposite, and the inversion is the record of D-043's remedy.**
+        //
+        // Until 2026-08-03 it was `the_frozen_pan_lifts_a_top_of_page_element_out_of_view`, and it passed:
+        // the frozen `edit()` panned a literal −96dp (ADR-093 row 3.1), which the prototype can afford
+        // because its 324px page sits inside a taller canvas with slack above it, and the shipped page —
+        // *contained* in the canvas — has almost none. A box near the page top was carried off the screen
+        // by the gesture meant to reveal it, and the assertion was `assertIsNotDisplayed`: evidence, not
+        // approval. It is what D-043 rested on.
+        //
+        // [OD-16](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-043-ruling) made −96 a **maximum**
+        // spent as `slack + clearance`. A box this high needs no clearance, so the lift collapses to the
+        // slack and cannot take the element out of the canvas. Same box, same host, opposite outcome —
+        // which is exactly how a defect's closure should read in the suite that found it.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        val id = store.uiState.value.selection.single()
+        setScreen(store)
+
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(EditTextSessionTestTag).assertExists()
         composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
     }
 
@@ -732,7 +783,7 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertIsDisplayed()
 
-        // ADR-092 §3: the freeze itself hides `.ctx` while a session owns the element (v2-bench.html:516).
+        // ADR-092 §3: the freeze itself hides `.ctx` while a session owns the element (v2-bench.html:582).
         store.dispatch(Intent.BeginEditText(store.uiState.value.selection.single()))
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertDoesNotExist()

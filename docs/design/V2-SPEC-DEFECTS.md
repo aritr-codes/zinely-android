@@ -133,6 +133,12 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | ~~[**D-031**](#d-031)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-031-ruling), OD-9 | the Bench had no exits: Font and Size stay **drawn** with no invented capability, Read reuses [ADR-086](../DECISIONS.md#adr-086)'s hand-off, back reuses the existing stack, and **redo is kept** — the frozen bar specifies the editing surface, not the product's whole capability |
 | ~~[**D-037**](#d-037)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-037-ruling), OD-13 | the dim shipped without either of the freeze's two ways out of it. `Intent.ClearSelection` exists in the reducer and **nothing dispatches it**; the freeze's `canvas` click and Done button are unowned and C4's respectively. A stuck selection now fades everything else the user wrote, to **2.78:1**, undismissably. Pass 1 passed; **Pass 2 failed**. Ruled **(a)**: C2a adds tap-to-deselect, and selection becomes a **transient** editing state rather than a modal one |
+| ~~[**D-044**](#d-044)~~ | ✅ **CLOSED — amendment MADE to `v2-bench.html:408`, and [ruled OD-17](#d-044-ruling) 2026-08-04: an owner-approved COMPANION amendment to OD-16, separately owned, not a consequence of it** | the frozen `.styletb` chips are **value displays** (`Fraunces`, `A 23`) wired to nothing. Transcribed literally they would claim a font and a size that are false for every element that is neither — [OD-9](#d-031-ruling)'s *invents nothing* cuts against the value, not for it. C3 ships them labelled by **verb** (`Font` · `Size` · `Ink`), matching the context bar; the swatch stays a value because row 3.9 makes it a *true* report. `v2-bench.html:408-410` is what needs editing |
+| ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
+| [**D-046**](#d-046) | ⛔ **OPEN — [ruled OD-18](#d-046-ruling) 2026-08-04: stays open; no repo-wide sweep, no reopening of C3; repaired by each file's owning package or a dedicated docs-maintenance package** | the [OD-16](#d-043-ruling) amendment moved every address below the insert, stranding **25 explicit `v2-bench.html:NNN` citations across ten files C3 does not own**. C3 repaired only the files it owns, each verified against the frozen file. Three mechanical sweeps were attempted and all three did damage — including flattening [ADR-093 §1](../DECISIONS.md#adr-093)'s own drift table — so the enumeration and the working method are recorded instead of a fourth sweep across clean files. Documentation accuracy only; no runtime effect |
+| [**D-045**](#d-045) | ✅ **FIXED in C3, 2026-08-03 — a parity defect, no ruling and no amendment** | the frozen `.canvasArea{overflow:hidden}` (`v2-bench.html:171`) was never implemented in Compose. Free while the pan was zero; on device once C3 made it real the panned sheet painted over the top bar in **every** editing session, leaving `Preview ›` invisible and — read off the platform tree — still `clickable=true` at full bounds. **A control you cannot see and can press is the defect; the paper over the chrome is how you notice it.** Fixed with `clipToBounds()` alongside the OD-16 clamp, because either alone makes the other worse |
+| ~~**D-043 (original entry)**~~ | *superseded — kept for the record* | the frozen `edit()` lifts the page a literal `translateY(-96px)`. The prototype can afford it: a 324px page inside a 744px phone has slack above it. The **shipped page is *contained* in the canvas** and typically height-bound, so its slack is ≈ 0 — and an element in the top **96dp of screen** is lifted clean out of view by the gesture meant to reveal it. **96dp is the wrong unit to judge the severity in:** it is `96 / scale` points of *page*, so it is the top **≈ 73 %** of the page on the 300×400dp test host where it was reproduced, against ≈ 22 % on the measured `SM-A176B` canvas — worst on the smallest canvases, and the 73 % is the figure that actually has evidence. Reproduced deterministically, not inferred. [ADR-093](../DECISIONS.md#adr-093) row 3.1 specifies the literal and row 3.1a forbids correcting it unilaterally, so it **ships as specified** and the remedy is the owner's |
+| [**D-042**](#d-042) | ✅ **RESOLVED by rulings already in hand — a recorded deviation, not an owner question** | [ADR-089](../DECISIONS.md#adr-089) rows 3.5–3.7 name `TypeBar.kt` as the control to **re-skin** into the frozen `.styletb`, which would delete size, align, bold, italic and five inks. [OD-11](#d-034-ruling) already says *"no existing editor capability is removed"* and [OD-14](#d-039-ruling) restates it, so that reading is dead by ruling. `.styletb` ships as the **editing state's** row — a state the product has no style control in — and `TypeBar.kt` is untouched. **The escalation was the error**; the review caught it |
 | [**D-041**](#d-041) | 🟦 **OPEN — pre-existing, not C2b's, found while proving D-040 reachable** | leaving a page while a text session is open **orphans an empty text box**: `Intent.GoToPage → leavePage` clears selection and interaction without running `endTextSession`, so the blank-box cleanup that every other exit performs never happens. The box is autosaved, invisible on the page, and exports as nothing. Found on hardware; **no fix attempted — it is reducer behaviour, outside C2b's fence** |
 | [**D-040**](#d-040) | ✅ **FIXED in C2b, no ruling needed — and reachable, which took two goes to establish** | the frozen bar offered **Size** and **Ink** on a *still-blank* text box, which the reducer refuses to style — and the tap was a **dead end that swallowed the toolbar**: it hid the frozen bar and raised nothing in its place, with no state that brought either back. Found by review, not by a test. Fixed under the ruling that already covers it ([OD-9](#d-031-ruling)): the two verbs ship inert there, exactly as `Font` does. **The implementer then claimed on device Pass 1 that the state was unreachable, and that claim was false** — see the correction below; the blank box is two taps away, and the guard was afterwards watched working on hardware |
 | [**D-039**](#d-039) | ✅ **RESOLVED 2026-08-02 by owner ruling — [OD-14](#d-039-ruling)** | since C2b the Bench offers the same verb twice — **`Delete` in both bars, and `Reframe` in both a bar and an on-canvas chip**. C2b's device Pass 2 **did not pass** on this, and [ADR-092](../DECISIONS.md#adr-092) was held at `Proposed` until [OD-14](#d-039-ruling) resolved it; it is now `Accepted`. one per bar, both announcing the same word to TalkBack. Not an accident and not a bug: it is the priced cost of [OD-11](#d-034-ruling)'s *additive*. Both delete the selection, so the duplication is redundant rather than ambiguous, and any real disambiguation is a **third** mechanism neither bar specifies. Deferred to device Pass 1, where the sweep can be heard rather than reasoned about |
@@ -970,7 +976,7 @@ pass unnoticed.
 Applied to both files on **2026-08-01**. Each of the four `:root` blocks per file gains the pair, and the
 one hand-written rule per file now references it:
 
-**[`v2-bench.html`](mockups/v2-bench.html)** — light (`:root` `:50`, `:root[data-theme="light"]` `:86`):
+**[`v2-bench.html`](mockups/v2-bench.html)** — light (`:root` `:50`, `:root[data-theme="light"]` `:126`):
 
 ```css
 --page-shadow:rgba(58,48,32,.4); --page-contact:rgba(58,48,32,.14);
@@ -2616,6 +2622,330 @@ This is [D-025](#d-025)'s shape one surface along: *the frozen file is a prototy
 
 Option (e) is orthogonal — the owner may take it *and* any of (a)–(d).
 
+### D-044 — the frozen style chips display values they cannot change {#d-044}
+
+> ## ✅ OWNER RULING — **OD-17**, 2026-08-04 {#d-044-ruling}
+>
+> *"D-044 — Approved. I acknowledge that the frozen Bench received two amendments in the same edit. Treat D-044 as an
+> explicit **owner-approved companion amendment** to OD-16. Record it exactly as a separate amendment rather than as
+> an inferred consequence of OD-16. No further implementation changes are required for D-044."*
+>
+> **What this settles, and it is not a formality.** The independent review of the reopened C3 flagged that a
+> **design-frozen** document received **two** changes inside a single edit made under a ruling scoped to one — OD-16's
+> clamp and this entry's chip relabelling — and asked for an owner nod rather than an implementer's inference. The
+> nod is given, and the two amendments are **separately owned from here on**: OD-16 owns `EDIT_PAN_MAX`/`editPanPx()`
+> and the `edit()` call site; **OD-17 owns the chip labels at `v2-bench.html:408-410`**. Neither is a consequence of
+> the other, and a future reader undoing one must not assume it carries the other with it.
+>
+> The implementation was already correct and is unchanged by this ruling — it landed in C3 before the ruling existed,
+> which is exactly why the ruling was owed.
+
+**Raised during C3 implementation, 2026-08-03. A ✎ canonical amendment, ✅ ruled OD-17 on 2026-08-04** — it is filed here
+because the HTML-first rule requires the *specification* to change before the Compose does, and C3 shipped the
+deviation without recording it anywhere. [ADR-093](../DECISIONS.md#adr-093) row 3.6 carries the ruling; this entry is
+the amendment owed to `v2-bench.html`.
+
+**What the freeze draws.** `.styletb`'s three inert chips are **value displays**: `Fraunces` (a family name), `A 23`
+(a size readout) and a `.sw` colour dot (`v2-bench.html:408-410`). None of the three has a handler
+([ADR-093 §3](../DECISIONS.md#adr-093)), so all three ship inert under [OD-9](#d-031-ruling).
+
+**Why the values cannot be transcribed.** OD-9's clause is *a control the freeze draws stays drawn and **invents
+nothing***. A value display is not neutral the way a dimmed verb is: it makes a claim about the user's artifact. In a
+prototype with one hard-coded specimen, `Fraunces` and `A 23` are true. In the product they would be **false for every
+element that is neither** — and a chip that says `A 23` over 14pt text is a worse defect than a chip whose vocabulary
+differs from the freeze's, because the user has no way to know it is lying.
+
+The chips therefore carry the **verb** labels the context bar already uses for the same three controls
+(`Copy.BenchVerbs.FONT/SIZE/INK`) — inventing no capability, claiming nothing false, and matching the wording the
+Bench already speaks. **The swatch is the exception and stays a value**: row 3.9 requires it to seed from the
+element's own computed colour (`:553`), which is a true report, so a coral heading shows coral.
+
+**Status: ✅ amendment MADE, 2026-08-03.** `v2-bench.html:408` now reads `Font` / `Size`, with the reasoning inline,
+and the `.sw` swatch is unchanged. This entry is the record of why.
+
+An earlier cut of this entry filed the amendment and left the frozen file untouched — which inverts the HTML-first
+rule, since [CLAUDE.md](../../CLAUDE.md) requires the specification to change *first* and the Compose to follow. The
+independent re-review caught it. Filing is not amending, and the precedent here is that the frozen file gets edited
+([D-033](#d-033) did, and so did [D-035](#d-035)).
+
+### D-043 — the frozen page pan lifts a top-of-page element out of view {#d-043}
+
+**Found during C3 implementation, 2026-08-03, by the implementation itself — not by a review and not by inspection.**
+[ADR-093](../DECISIONS.md#adr-093) row **3.1a** predicted a failure of exactly this class before any code was written;
+what it predicted was under-clearance (*"a literal pass can ship a page that still hides the caret"*). The failure is
+real and the direction is the other one: the pan **over**-lifts.
+
+**The frozen mechanic.** `edit()` sets `pageWrap.style.transform='translateY(-96px)'` (`v2-bench.html:551`), settled
+back by `endEdit()` (`:558`). `.pageWrap` is `position:absolute;inset:0` inside the canvas area, and the page it
+carries is `229×324` inside a `344×744` phone (`:187`, `:202-205`). There is a **band of empty canvas above the
+page** for the lift to consume.
+
+**What the product does instead.** The Bench canvas *contains* the page — `scale = min(w/pageW, h/pageH)`, and on a
+portrait page the binding dimension is height. The page therefore fills the canvas vertically and the slack above it is
+near zero. A −96dp lift has nothing to spend and takes it out of the page itself.
+
+| | frozen prototype | shipped Bench |
+|---|---|---|
+| page height | 324px inside a 744px phone | fills the canvas (measured **437dp** on `SM-A176B`) |
+| slack above the page | substantial | ≈ 0 |
+| what −96 consumes | the empty band | **the top 96dp of screen — `96 / scale` pt of page: ≈ 73 % of it on the 300×400dp test host, ≈ 22 % on the measured device canvas** |
+| element at the page top | still visible, lifted | **off the top of the canvas** |
+
+**The evidence, which is a test and not an argument.** `EditorScreenTest.the_frozen_pan_lifts_a_top_of_page_element_out_of_view`
+places a box at page `(20, 20)` and opens a session: the editing surface **exists and is not displayed**.
+*(That test still exists and still places the same box on the same host. Since OD-16 it is named
+`a_top_of_page_element_stays_in_view_while_it_is_edited` and asserts `assertIsDisplayed` — the inversion **is** the
+record of the remedy, kept in place rather than deleted. The paragraphs in this entry describe the build that had
+the defect and are left as written; the ruling block above says what replaced it.)* Neutralising
+the pan constant makes the two ordinary session tests pass again — which is how the cause was established rather than
+guessed. On that host (100pt page, scale ≈ 1.32 dp/pt) the 96dp lift removes the top **≈ 73 %** of the page from view,
+which is why every other C3 test now places its box at page-space **y ≥ 76pt**: anything higher passes
+`assertIsDisplayed` on a sliver or not at all, and an assertion that survives on a sliver is decoration. The
+screen-level golden `bench_editing_state_light.png` is captured on a **360×720dp** host for the same reason — the
+first cut used 300×400dp, where the edited element was panned out of frame and the golden pictured an editing state
+with nothing being edited, while still passing.
+
+**Why it ships anyway.** Row 3.1's assertion *is* the literal −96, its mutation is `−96 → −48`, and row 3.1a says in
+terms that the freeze's number *"is transcribable and will be transcribed"* and that the remedy on failure is the
+documented fallback, **not an invention by the implementer**. Correcting it silently would also be the one thing a
+frozen property table exists to prevent.
+
+**What is owed — a choice among four, none of which C3 may make alone.**
+
+| | what it does | cost |
+|---|---|---|
+| **(a) keep −96 literally** | maximum fidelity to the freeze | an element in the top 96dp cannot be seen while it is edited |
+| **(b) clamp the pan** — lift by `min(96dp, slack + what the element needs)` | never hides the edited element | the constant stops being a constant; the freeze specifies a distance, not a rule |
+| **(c) pan only when the element would be occluded** | no lift when none is needed | same objection, plus a second state to verify |
+| **(d) the documented bottom-sheet fallback** ([§E.6](V2-BENCH-REVIEW.md)) | a known-good shape, already written down | abandons in-place editing, which is the whole of C3 |
+
+**Recommendation: (b) or (c), and the choice belongs with the device passes.** Both are *"the frozen number, applied
+where the frozen geometry differs"* rather than a redesign, and row 3.1a already frames the clearance as the property
+the number exists to serve. But the same paragraph forbids the implementer choosing, and Pass 1 can measure the real
+clearance on the real page instead of arguing about it. ~~**C3 ships (a).**~~ — superseded by the ruling below.
+
+#### D-043 — owner ruling, 2026-08-03 {#d-043-ruling}
+
+**OD-16. Option (b), the clamp, approved.** The ruling in the owner's own words:
+
+> *"The frozen Bench is amended so that the rigid −96px translation is no longer an unconditional literal. It becomes
+> the maximum translation, clamped by the available slack above the page plus the minimum clearance required to keep
+> the edited content visible. Treat this as a frozen-spec amendment, not an implementation shortcut. Also create and
+> implement D-045 in the same package… The clamp and the clipping correction must land together so that neither fix
+> makes the other defect worse."*
+
+**What the device measured, and why (a)'s stated cost never appeared.** On `SM-A176B` (411×891dp, 2.625 px/dp) the
+page's top sits at 227px against a canvas top of 216px — **11px = 4.2dp of real slack against a 96dp demand**, which
+confirms this entry's *slack ≈ 0* premise on hardware. *(This is the **pre-amendment** round's reading. Re-measured
+on the amended build, the same device reports the paper beginning at `y226` against a canvas top of `y226` —
+**slack 0 within a pixel** ([ADR-093 §8](../DECISIONS.md#adr-093-device)). Both are kept and neither is averaged:
+between them they bracket the slack on this device at **0–4dp against a 96dp demand**, which is the premise OD-16
+was ruled on and is unaffected by which end of that range is exact.)* But the predicted symptom — *"an element in the top 96dp cannot
+be seen while it is edited"* — **did not reproduce**. The element stayed visible, and Pass 1 found the reason: the
+canvas does not clip, so the over-lifted page was *painted over the top bar* rather than cut off. `Preview ›` was
+invisible and, read off the platform `AccessibilityNodeInfo` tree, still `clickable=true` at its full bounds. The
+defect was being **masked by a second defect** — which is [D-045](#d-045), and why the two land together.
+
+**What the amendment is.** `edit()` lifts by `min(96, slack + clearance)`; `endEdit()` is untouched and still settles
+back `translateY(0)`. **The prototype's own motion changes, and an earlier draft of this paragraph denied it.**
+Computed from the file's own CSS: the `.canvasArea` is ~486px tall around a 324px `.page`, so the slack above the
+page is ~81px — *less* than 96. Editing the **title** therefore lifts `min(96, 81 + 0) ≈ 81px`, fifteen pixels
+short of the old literal; editing the **body** text, which sits low enough for the docked `.kbstack` to occlude it,
+returns to the full 96px ceiling. Claiming *byte-for-byte identical* was wrong twice over — wrong about the
+arithmetic, and wrong in kind, because a spec amendment that quietly changes the specimen is the exact thing this
+register exists to catch. The frozen file was amended first, per the HTML-first rule, and carries the full
+derivation in its header (`v2-bench.html`, `AMENDED 2026-08-03`) and at the site.
+
+**Two consequences are recorded rather than fixed, because the ruling's word is *maximum*.**
+
+1. An element deep at the **page bottom** can need more lift than 96dp. Measured: 43dp of the edited box stays behind
+   the docked `.kbstack`. The **typed line clears it by 23dp**, which is the property row 3.1a exists to serve, so
+   this is a priced cost and not a reopening.
+2. When clearance genuinely demands the full 96dp the page's top still leaves the canvas — now **clipped** by D-045
+   rather than painted over the chrome.
+
+**Where the passes disagreed, recorded rather than averaged.** Pass 1 read the old build as faithful (the pan was
+96.00dp to the pixel, and the return's residue — asserted then, **measured only afterwards** on the retained
+screencaps — is 1408 differing pixels between the pre-session and post-session rest frames, every one of them
+inside the system clock strip at `y39–73` and **zero below `y110`**, i.e. none of them the artifact); Pass 2 read
+the same motion as *"the paper slid under the clock"* — a malfunction. Both were right: the transcription was exact and its consequence was wrong. That
+disagreement **is** the finding, and it is what the amendment answers.
+
+### D-045 — the Bench canvas never clipped to its own bounds {#d-045}
+
+**Found on hardware during the OD-16 device evidence, 2026-08-03, and created by the same ruling that closed D-043.**
+
+**This is a parity defect, not a spec amendment.** The frozen `.canvasArea` has said `overflow:hidden`
+(`v2-bench.html:171`) since the freeze; the Compose host simply never implemented it. Nothing in the specification
+changes — which is why D-045 has no `AMENDED` block of its own.
+
+**Why it stayed invisible until C3.** With the pan pinned at zero the canvas had nothing to overflow with. C3 made the
+pan real, and on `SM-A176B` the panned sheet's top went to **y −25px**: the paper painted over the top app bar and up
+under the status bar in **every** editing session, at every element position. Measured rather than described — the
+pixel at `(900,170)`, inside the `Preview ›` button's own reported bounds, was `#F7F2E8` paper and not `#322D25`
+chrome.
+
+**The defect is the accessibility one, not the cosmetic one.** `Preview ›` kept its full platform bounds and
+`clickable=true` while being completely covered. A control the user cannot see and can still press is a worse fault
+than paper in the wrong place; the paper is only how you notice it.
+
+**Why it cannot ship alone, in either direction.** Clipping without the clamp leaves the paper on the top bar whenever
+clearance needs the full 96dp. Clamping without the clip would have converted D-043 from a defect you can *see* into
+one you cannot — the over-lifted element cut off instead of drawn on the chrome. The owner's ruling requires both in
+one package for exactly this reason.
+
+**Status: ✅ FIXED in C3, 2026-08-03.** `EditorScreen.kt`'s canvas carries `clipToBounds()`.
+[ADR-093](../DECISIONS.md#adr-093) row 3.14 owns it. **Post-fix, measured the same way as the defect** — a screencap
+of an open session on the amended build, probed **inside `Preview ›`'s own reported bounds**: `(950,53)` is
+`(231,113,83)`, the coral label, and `(700,53)` is `(50,45,37)`, the bar's chrome. Neither is paper. *(The first
+post-fix reading offered here probed `(900,170)` again on a **top-of-page** element, where the amended pan is `0`
+and nothing overflows in the first place — a green result that would have been green with the clip deleted. The
+independent review caught it; the numbers above replace it.)*
+
+⚠ **Its unit assertion is deliberately narrower than the defect.** `BenchC3Test.the_canvas_clips_whatever_leaves_it`
+proves the clip with a selected element's resize handles overflowing the canvas *downward*, because the case that
+actually mattered on hardware — the panned page overflowing *upward* — needs the pan to exceed the slack, which needs
+the clearance term, which needs an **IME**, which Robolectric does not have. The upward case is
+[device checklist](../DECISIONS.md#adr-093-device-checklist) item 10 and is verified there, not here.
+
+### D-046 — the OD-16 amendment stranded 25 line citations in files C3 does not own {#d-046}
+
+> ## ✅ OWNER RULING — **OD-18**, 2026-08-04 {#d-046-ruling}
+>
+> *"D-046 — Leave it open. Do not expand C3's scope to perform a repository-wide citation sweep. The stale citations
+> belong to the documents that own them and should be corrected incrementally by their owning packages or by a
+> dedicated documentation-maintenance package. Do not reopen C3 for documentation-only cleanup."*
+>
+> **The ruling endorses the refusal, and names the owner.** C3's decision not to sweep is upheld, and the repair is
+> assigned by **document ownership** rather than to whoever broke it: each stale citation is corrected by the package
+> that next touches its file, or by a dedicated documentation-maintenance package. C3 is **not** to be reopened for
+> it. This entry stays ⛔ **OPEN** as the standing record of what is owed and where.
+
+**Raised 2026-08-03 by the independent review of the reopened C3. ⛔ OPEN — deliberately not fixed inside C3, and
+[✅ ruled OD-18](#d-046-ruling) on 2026-08-04 to stay that way.**
+
+**What it is.** [OD-16](#d-043-ruling)'s amendment inserted ~64 lines into
+[`v2-bench.html`](mockups/v2-bench.html), moving every address below the insertion point. C3 repaired the citations
+in the files C3 already owns, each verified by opening the frozen file at the cited line. **Twenty-five explicit
+`v2-bench.html:NNN` citations remain stale in ten files this package does not touch**, plus an unaudited number of
+bare `` `:NNN` `` references:
+
+| file | stale citations |
+|---|---|
+| `core/ui/.../ZinelyContentInks.kt` | 9 |
+| `feature/editor/.../BenchContextBar.kt` | 4 |
+| `core/ui/.../ZinelyContentInksTest.kt` | 3 |
+| `core/ui/.../ZinelyV2Icons.kt` | 2 |
+| `feature/editor/.../BenchContextBarTest.kt` | 2 |
+| `core/ui/.../ZinelyElevation.kt`, `ZinelyV2Colors.kt`, `ZinelyV2Motion.kt`, `ZinelyV2Typography.kt`, `feature/editor/.../SnapGuides.kt` | 1 each |
+
+**Why it is filed rather than swept.** Three mechanical repair passes were attempted during this package and all
+three did damage: the first rewrote citations belonging to **other** mockups whose line numbers collided, the second
+flattened [ADR-093 §1](../DECISIONS.md#adr-093)'s drift table — whose entire content is *"ADR-089 said X, it is
+actually at Y"* — into a table where both columns said Y, and the third began modifying ten clean files inside a
+package whose ruling says **"do not perform unrelated documentation cleanup"**. The working tree was restored each
+time. A fourth sweep across files C3 has no business touching, at the acceptance gate, is not a repair — it is the
+same mistake with more surface area.
+
+**How to fix it when it is scheduled.** The method that works is in
+[HANDOVER lesson 8k](../COMPOSE-V2-HANDOVER.md): rebuild the old→new map by diffing the frozen file against its own
+previous revision (`difflib` over lines), then rewrite a token **only** when the backticked selector on that same
+line is present at the old address and absent at the new one — verified per token, never per table. And re-check any
+table whose *purpose* is to record a stale address before trusting the result.
+
+**Scope, stated precisely so a reader does not over-read it.** This entry covers the **25 citations in files C3 does
+not own**, which this amendment broke. Two other populations exist and are **not** D-046's:
+
+1. **Citations in C3's own files** — repaired inside C3, each verified against the frozen file. The independent
+   re-review found four this entry's original scoping let fall through the gap (`EditorScreenTest.kt`,
+   `DECISIONS.md` ×2, `V2-SPEC-DEFECTS.md` ×2); those are fixed, not filed.
+2. **~18 further citations in `DECISIONS.md`, `V2-SPEC-DEFECTS.md` and `COMPOSE-V2-ROADMAP.md` that were already
+   wrong at `HEAD`** — verified individually (`:105`, `:118`, `:159`, `:233`, `:244`, `:293`, `:379`, `:400`,
+   `:414`, `:424`, `:493`, `:565` among them). They predate this amendment and are **pre-existing debt, not this
+   change's**. Named here because a reader would otherwise assume the prose citations had been audited; they have
+   not been.
+
+**Severity.** Documentation accuracy, no user impact, no runtime effect. Every stale citation points into a design
+document, not into code.
+
+### D-042 — the plan said re-skin the style panel; two rulings already forbid it {#d-042}
+
+**Raised 2026-08-02 at C3's pre-implementation blocker check, before any production code — and resolved the same day,
+against this implementer's own recommendation to escalate it.**
+
+> ⚠ **This entry was first filed as ⛔ OPEN, requesting an owner ruling, and C3 was stopped waiting for one. That was
+> wrong.** The independent review returned **NO-GO on the stop**: [OD-11](#d-034-ruling) and [OD-14](#d-039-ruling) each
+> state, unconditionally, that no existing editor capability is removed — which kills the re-skin reading outright and
+> leaves a plan defect, not a question. The escalation had tested only those rulings' *permission* rationales (space
+> competition, simultaneity) and never their *prohibitions*, and the draft contradicted itself: one paragraph said
+> OD-11 *"refused this exact trade"*, the next said *"neither existing ruling reaches it"*. The precedent it should
+> have followed was one package earlier — [ADR-092 §1](../DECISIONS.md#adr-092) cleared **five** candidate owner
+> decisions against rulings in hand and shipped. **Kept as a deviation record, because the analysis below is correct
+> and only its conclusion was not.**
+
+**What the freeze specifies.** `.styletb` (`v2-bench.html:261`) lives inside `.kbstack`, which is `translateY(110%)`
+— **offscreen except under `.editing`** (`:259-260`). It is an editing-mode row, and it holds exactly four things
+(`:452-454`):
+
+| chip | wired in the freeze to | |
+|---|---|---|
+| **Fraunces** | — | **nothing.** The string appears at `:7`, `:69`, `:408` and `:421`; no handler exists |
+| **A 23** | — | **nothing.** The string appears once, at `:408` |
+| **Ink** (+ a 14px `.sw` dot) | — | **nothing.** `#editColour` has no listener anywhere; `openInk` is bound only inside `buildCtx` (`:515`, `:583`), to the **`.ctx` bar's** Ink verb. This entry first claimed otherwise — the review disproved it, and with it the *"pulls C6 forward"* arm: `.inkpop` is never reached from `.styletb` under any reading |
+| **Done** | `#doneEdit` → `endEdit()` | C3's, unambiguously |
+
+In the frozen product there is **no style control in the selected state at all**: `.ctx`'s `Size` has no handler
+([D-031](#d-031)) and its `Ink` opens C6's popover.
+
+**What the product ships.** `TypeBar.kt` ([ADR-055](../DECISIONS.md#adr-055)) is a four-row panel in the **selected**
+state: a ten-value **size** stepper, **align** ×3, **bold**, **italic**, and **five inks** — thirteen controls, each
+wired to `Intent.StyleText`, each reachable today. It is reachable *because* [OD-9](#d-031-ruling) routed the frozen
+`Size` verb to it rather than inventing `.inkpop` early, and [ADR-092](../DECISIONS.md#adr-092) routed `Ink` there too.
+
+**The contradiction, stated plainly.** [ADR-089](../DECISIONS.md#adr-089) rows 3.5–3.7 give the Compose target as a
+`TypeBar.kt` **re-skin**. Taken literally, C3 would:
+
+- **remove** size, align, bold, italic and five inks;
+- **replace** them with two chips that do nothing and one that leads into a blocked package;
+- **move** what survives out of the state that has it today, since `.styletb` exists only while editing.
+
+A parity phase does not delete editor capability. [OD-2](#d-029) said Phase C *"does NOT introduce new editor
+capabilities"*; [OD-11](#d-034-ruling) refused the mirror image of this trade when the frozen `.ctx` would have
+deleted eight transform controls.
+
+**Why the existing rulings *do* decide it — the correction.**
+
+| ruling | why it does not decide this |
+|---|---|
+| [OD-11](#d-034-ruling) | **decides it.** *"no existing accessibility capability is removed; **no existing editor capability is removed**"* — unconditional, and reading (b) removes five. The space-competition argument was OD-11's reason for *permitting* two bars; it is not a limit on what it *forbids*, and the first draft of this entry confused the two |
+| [OD-14](#d-039-ruling) | **restates the prohibition** (*"existing editor capabilities must be preserved · no functionality is removed"*) and imposes nothing further: these two are never on screen at the same moment — `EditorScreen.kt:267` gates `styleTarget` on `interaction !is EditingText`, so the Type bar is structurally unreachable while editing. Nothing to assign away, so OD-14 **permits** reading (a) |
+| [OD-9](#d-031-ruling) *drawn, inert, inventing nothing* | decides the two dead chips cleanly. It says nothing about whether the panel they would displace survives |
+
+**The two readings, and what each ships.**
+
+| | (a) `.styletb` is **additive** — an editing-state row | (b) `.styletb` **replaces** `TypeBar.kt`, as ADR-089 says |
+|---|---|---|
+| what the user gains | a style row while typing, where there is none today | fidelity to the frozen editing surface |
+| what the user loses | nothing | size, align, bold, italic, five inks |
+| the two dead chips | ship inert beside `Font` and `Replace`, under OD-9 | same |
+| the `Ink` chip | opens the shipped Type bar, as OD-9 did for `Size` — or ships inert until C6 | must open `.inkpop`, which is blocked by [D-028](#d-028) |
+| cost | two style surfaces exist, in two different states, with different vocabularies — a real coherence cost, and **C4**'s to resolve | a capability regression, and a blocked dependency pulled forward |
+| contradicts | [ADR-089](../DECISIONS.md#adr-089) row 3.5's stated Compose target | [OD-2](#d-029), [OD-11](#d-034-ruling), and the parity principle |
+
+**Resolution: (a), and it was never the implementer's to choose — it was already chosen.** No user loses a control
+they have today; ADR-089 row 3.5 disagrees with a *ruling*, so the row is corrected, not the product. Row 3.5's
+Compose target becomes a **new** editing-state row (`BenchStyleRow.kt`) and `TypeBar.kt` is untouched — asserted, by
+counting the Type bar's nodes in the selected state before and after C3.
+
+**The residual question answers itself too.** Whether the `Ink` chip should open the shipped Type bar (OD-9's move for
+`Size`) or ship inert is settled by the freeze: **the chip is not wired there either.** All three chips ship inert
+under [OD-9](#d-031-ruling), beside `Font` and `Replace`. The swatch still *reports* the element's colour (ADR-093 row
+3.9), which is the one live thing the freeze gives it.
+
+**What is left is a cost, not a question.** Two style surfaces with different vocabularies — a four-row panel when
+selected, a chip row when editing. Visible, real, and **C4's**, recorded here on the [ADR-092 §2](../DECISIONS.md#adr-092)
+precedent rather than stopping the package for it.
+
 ### D-041 — leaving a page mid-session orphans an empty text box {#d-041}
 
 **Found 2026-08-02 on `SM-A176B` / Android 16, while trying to prove [D-040](#d-040)'s state reachable.** It is not a
@@ -2708,7 +3038,7 @@ is the clearest possible statement of the consequence: **a screen reader's linea
 | | |
 |---|---|
 | re-label `EditorContextBar`'s Delete | precisely the "re-skinned or weakened" that [ADR-092](../DECISIONS.md#adr-092) §4 and OD-11 forbid |
-| re-label the frozen bar's Delete | breaks parity with `toolsFor()` (`v2-bench.html:452`), where the freeze says *Delete* — and the freeze is canonical |
+| re-label the frozen bar's Delete | breaks parity with `toolsFor()` (`v2-bench.html:496`), where the freeze says *Delete* — and the freeze is canonical |
 
 Any *real* disambiguation is therefore a **third** mechanism — a per-bar container or heading label, or collection semantics —
 which is a design decision, not an implementation detail, and so is the owner's.
@@ -2785,7 +3115,7 @@ being settled by whoever is holding the phone.
 **Raised 2026-08-02 by C2b's pre-implementation blocker check. It does not fence C2b**, which ships the verb under an
 existing ruling; it is filed because the ruling it ships under decides *appearance*, and this entry is about *capability*.
 
-**What the freeze says.** `toolsFor('photo')` is **Reframe · Replace · Delete** (`v2-bench.html:452`). Reframe and Delete
+**What the freeze says.** `toolsFor('photo')` is **Reframe · Replace · Delete** (`v2-bench.html:496`). Reframe and Delete
 map onto intents the editor already dispatches. Replace does not.
 
 **What the repository says.** Verified, not inferred:
@@ -2847,8 +3177,8 @@ The frozen Bench gives the user **two** exits on the same screen, and C2a implem
 in C2a's fence:
 
 ```js
-canvas.addEventListener('click',function(){ … deselect();});         // v2-bench.html:561
-$('doneBtn').onclick=function(e){ … deselect();};                    // v2-bench.html:563
+canvas.addEventListener('click',function(){ … deselect();});         // v2-bench.html:627
+$('doneBtn').onclick=function(e){ … deselect();};                    // v2-bench.html:629
 ```
 
 `.bar` and its Done button are **C4**. The tap-to-deselect is unowned by any package because the freeze expresses

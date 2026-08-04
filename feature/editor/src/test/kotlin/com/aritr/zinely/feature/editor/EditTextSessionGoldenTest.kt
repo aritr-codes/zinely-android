@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -58,6 +59,14 @@ class EditTextSessionGoldenTest {
     )
     private val session = Interaction.EditingText(id = "t1", token = 1L)
 
+    /**
+     * The sizing the component used to apply to itself. C3 moved it out to the host, because the in-place
+     * editing surface sizes the field to the **element's own box** and a self-applied `fillMaxWidth()` plus
+     * 8dp padding would have fought it (ADR-093 row 3.11). This golden keeps the pre-C3 framing so it goes
+     * on measuring the field rather than the change of host — the component under test is unchanged.
+     */
+    private val sheetHost = Modifier.fillMaxWidth().padding(8.dp)
+
     private var deskArgb = 0
 
     private fun host(darkTheme: Boolean, content: @Composable () -> Unit) {
@@ -98,12 +107,12 @@ class EditTextSessionGoldenTest {
     @Test
     fun edit_text_session_light() =
         capture("edit_text_session_light", darkTheme = false) {
-            EditTextSession(session = session, element = element, dispatch = {})
+            EditTextSession(session = session, element = element, dispatch = {}, modifier = sheetHost)
         }
 
     @Test
     fun edit_text_session_dark() =
         capture("edit_text_session_dark", darkTheme = true) {
-            EditTextSession(session = session, element = element, dispatch = {})
+            EditTextSession(session = session, element = element, dispatch = {}, modifier = sheetHost)
         }
 }

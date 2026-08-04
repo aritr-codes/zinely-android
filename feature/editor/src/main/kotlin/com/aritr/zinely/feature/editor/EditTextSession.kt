@@ -1,7 +1,5 @@
 package com.aritr.zinely.feature.editor
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -19,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 // NB: compose-ui's LocalLifecycleOwner is deprecated in favour of lifecycle-runtime-compose's, but moving
 // homes means bumping the graph-wide lifecycle version (catalog is on 2.6.1 ktx) — deferred to a dep-bump.
@@ -26,9 +25,9 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.aritr.zinely.core.copy.Copy
@@ -38,6 +37,7 @@ import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.analyzeTextCoverage
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import androidx.compose.ui.text.TextStyle as ComposeTextStyle
 
 /** Test tag on the edit-session text field. */
 public const val EditTextSessionTestTag: String = "edit-text-session"
@@ -74,7 +74,19 @@ public const val EditTextSessionTestTag: String = "edit-text-session"
  * @param session the open edit session (its `id`/`token` scope the commit).
  * @param element the document [TextElement] being edited (the `before`; seeds the draft + carries style).
  * @param dispatch forwards an [Intent] into the store.
- * @param modifier sizing/placement applied by the host (e.g. an IME-padded sheet).
+ * @param modifier sizing/placement applied by the host (C3: the element's own device rect on the page).
+ * @param textStyle how the draft is drawn. Hoisted for C3 ([BenchEditingSurface]): editing happens **in
+ *   place** on the page now, so the draft must be drawn in the element's own size, ink, alignment and
+ *   weight rather than in a fixed sheet style, or the text visibly changes appearance the moment it is
+ *   tapped. The default is the pre-C3 sheet style and is what the non-in-place callers (tests) still get.
+ * @param cursorColor the caret colour — frozen `.caret{background:var(--matcha)}` (`v2-bench.html:204`)
+ *   for the V2 in-place surface. Defaults to the V1 `coralStrong` this file shipped with. [BenchEditingSurface]
+ *   passes `Transparent` and draws the frozen caret itself; see [onTextLayout].
+ * @param onTextLayout the field's measured layout, and [onDraftChanged] the live draft. Both exist for the
+ *   frozen caret: it is 1.5px × 1.05em, `--matcha`, blinking `1.05s steps(1)` and **still** under reduced
+ *   motion (ADR-093 row 3.8), and none of those four are settable on the platform cursor, which exposes
+ *   only a brush. Drawing it needs the cursor's rect, which needs the layout and the selection — so the
+ *   two escape here rather than the caret moving inside this file, which owns the *session*, not the skin.
  * @param onCoverageChanged reports the draft's current [TextCoverage] (ADR-070): on the seed, on every
  *   keystroke, and [TextCoverage.Covered] on dispose. The host raises the [EditorCoverageNotice] from it.
  */
@@ -85,6 +97,12 @@ public fun EditTextSession(
     dispatch: (Intent) -> Unit,
     modifier: Modifier = Modifier,
     onCoverageChanged: (TextCoverage) -> Unit = {},
+    textStyle: ComposeTextStyle = LocalTextStyle.current
+        .merge(MaterialTheme.typography.bodyLarge)
+        .copy(fontFamily = ZinelyTheme.typography.shell),
+    cursorColor: Color = ZinelyTheme.colors.coralStrong,
+    onTextLayout: (TextLayoutResult) -> Unit = {},
+    onDraftChanged: (TextFieldValue) -> Unit = {},
 ) {
     var draft by remember(session.token) { mutableStateOf(TextFieldValue(element.text)) }
     var committed by remember(session.token) { mutableStateOf(false) }
@@ -137,10 +155,9 @@ public fun EditTextSession(
 
     BasicTextField(
         value = draft,
-        onValueChange = { draft = it },
+        onValueChange = { draft = it; onDraftChanged(it) },
+        onTextLayout = onTextLayout,
         modifier = modifier
-            .fillMaxWidth()
-            .padding(8.dp)
             .testTag(EditTextSessionTestTag)
             // The empty edit box renders as only a caret (frozen bench.html spec), so it carries no text to
             // name it — TalkBack would focus a bare "edit box". A non-visual name fixes that (WCAG 4.1.2)
@@ -150,14 +167,11 @@ public fun EditTextSession(
             .onFocusChanged { state ->
                 if (state.isFocused) hadFocus = true else if (hadFocus) commit()
             },
-        // Draft renders in the frozen shell voice (Inter) — the SAME bundled face the export/preview path
-        // renders the committed TextElement with — so the draft and the baked artifact read alike (bench.html
-        // sets the editing surface in a bundled voice, never a system fallback).
-        textStyle = LocalTextStyle.current
-            .merge(MaterialTheme.typography.bodyLarge)
-            .copy(fontFamily = ZinelyTheme.typography.shell),
-        // Frozen caret colour: bench.html `.block.text .surface[contenteditable]{ caret-color:var(--coral-strong) }`.
-        cursorBrush = SolidColor(ZinelyTheme.colors.coralStrong),
+        // Both hoisted for C3 — the in-place surface draws the draft in the ELEMENT's own style, not in a
+        // fixed sheet style, and tints the caret the frozen `--matcha`. The defaults above preserve the
+        // pre-C3 appearance (bundled Inter at bodyLarge, V1's `coral-strong` caret) for every other caller.
+        textStyle = textStyle,
+        cursorBrush = SolidColor(cursorColor),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { commit() }),
     )

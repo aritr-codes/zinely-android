@@ -54,6 +54,46 @@
   Light renders byte-for-byte as before, because in light these declarations restate :root.  The
   Proof's .page dims by the same mechanism and is NOT amended here -- it is a different frozen
   surface, its shipped screen already keeps the sheet lit, and it is recorded on D-035 for Phase D.
+
+  AMENDED 2026-08-03 by owner ruling (D-043, OD-16).  The pan's -96px was an UNCONDITIONAL literal,
+  and it is only affordable because of a fact about this prototype rather than about the design: a
+  229x324 .page inside a 344x744 .phone leaves a band of empty canvas above the sheet for the lift to
+  spend.  The shipped Bench CONTAINS the page -- scale = min(w/pageW, h/pageH), and a portrait page is
+  height-bound -- so its slack above the sheet is not substantial, it is ~0.  Measured on SM-A176B
+  (411x891dp): page top 227px against a canvas top of 216px, i.e. 11px = 4.2dp of slack (pre-amendment round; ADR-093 s8 reconciles) against a
+  96dp demand.  The lift therefore came out of the PAGE, and on device out of the window: the sheet
+  painted over the top bar in every editing session, leaving "Preview" invisible and still clickable,
+  and an element in the top 96dp of screen was lifted out of the canvas by the gesture meant to reveal
+  it.  Ruling: -96 is a MAXIMUM, not an unconditional literal.
+    edit()  lifts by  min(96, slackAboveThePage + clearanceTheEditedContentNeeds)  instead of a flat
+            96.  Slack is the empty canvas band above the sheet; clearance is how far the edited
+            element's bottom sits below the docked .kbstack.  The number is unchanged; what changed is
+            that it is now a ceiling.
+    THE PROTOTYPE'S OWN MOTION CHANGES, and pretending otherwise would be the exact dishonesty this
+            register exists to prevent.  Derived from this file's CSS (computed, not measured in a
+            browser): .phone 744 - 20 border = 724 content; minus .status 26 (:167), .tray ~90 (:213),
+            .navrow 56 (:229) and .bar 66 (:244) leaves .canvasArea ~486.  A 324px .page centred in 486
+            has slack (486-324)/2 ~= 81.  .kbstack is .styletb (34 + 16 padding + 1 border = 51) over .kb
+            (4 rows x 34 + 3 gaps x 7 + 20 padding + 1 border = 178) ~= 229, docked at the CANVAS bottom,
+            so its top sits ~257 below the canvas top -- inside the page, which runs 81..405.
+              the TITLE, which the masthead tells the reader to double-tap: bottom well above 257, so
+                need = 0 and the lift is min(96, 81) = ~81px.  Fifteen pixels less than before.
+              the BODY text, lower down: its bottom falls past 257, so need > 15 and the lift returns to
+                the full 96px ceiling.
+            An earlier draft of this block asserted the prototype rendered "EXACTLY as before" and showed
+            no arithmetic.  It was wrong twice over -- the slack is 81 and not >=96, and editPanPx() was
+            reading the occluder off .phone when .kbstack is a child of .canvasArea.  D-033 and D-035 both
+            SHOWED their arithmetic for precisely this reason; an amendment that claims visual identity
+            without numbers is a claim nobody can check.
+    endEdit() is NOT amended.  translateY(0) still settles back pixel-identical.
+  This is the frozen geometry applied where the frozen geometry differs, not a redesign: the motion,
+  its .34s var(--settle) transition, the rigid-body property (.pageWrap moves, nothing inside it does)
+  and the settle back are all untouched.  Two consequences are recorded rather than fixed, because the
+  ruling sets 96 as the maximum: an element deep at the page bottom can still need more lift than 96
+  and keeps part of its box behind the .kbstack (the typed line clears it), and the page's top can
+  still leave the canvas when clearance is genuinely required -- which is why D-045 clips the canvas
+  to its own bounds in the same change, so what leaves the canvas is CUT rather than painted over the
+  chrome.  The two land together: either alone makes the other defect worse.
 -->
 <style>
   :root{
@@ -361,7 +401,11 @@
 
         <div class="kbstack" id="kbstack">
           <div class="styletb">
-            <button class="chip">Fraunces</button><button class="chip">A 23</button>
+            <!-- D-044 (C3): labelled by VERB, not by value. These three chips are wired to nothing, and a
+                 value display that cannot change the value must still be true — hard-coded "Fraunces"/"A 23"
+                 would misreport every element that is neither. The swatch stays a value because it is a true
+                 report, seeded from the element's own computed colour at :553. -->
+            <button class="chip">Font</button><button class="chip">Size</button>
             <button class="chip" id="editColour"><span class="sw" id="editSw" style="background:var(--ink)"></span> Ink</button>
             <span class="grow"></span><button class="done" id="doneEdit">Done</button>
           </div>
@@ -478,11 +522,33 @@
     cap('Rest','The page fills the screen. Gather on the shelf, tap the page to make it yours.');
   }
 
+  var EDIT_PAN_MAX=96;                                   // the freeze's number, now a ceiling (OD-16)
+  function editPanPx(){
+    var wrap=$('pageWrap'), pg=wrap.querySelector('.page'), stack=$('kbstack');
+    if(!wrap||!pg||!stack||!selNode)return EDIT_PAN_MAX;
+    // Measured at rest, before the transform is applied, so the two terms cannot chase each other.
+    var slack=Math.max(0, pg.getBoundingClientRect().top - wrap.getBoundingClientRect().top);
+    // .kbstack is offscreen until .editing lands, so derive its docked top rather than reading it.
+    // Derived from the CANVAS, not the phone: .kbstack (:402) is a child of .canvasArea (:369), whose rule
+    // is position:relative (:171), so its bottom:0 (:259) docks it at the canvas's bottom edge — about 220px
+    // above the phone's. The first cut of this function measured from the phone and put the occluder below
+    // every element on the page, which silently made `need` zero for all of them.
+    var stackTop=canvas.getBoundingClientRect().bottom - stack.offsetHeight;
+    var need=Math.max(0, selNode.getBoundingClientRect().bottom - stackTop);
+    return Math.min(EDIT_PAN_MAX, slack+need);
+  }
   function edit(){
     if(!selNode||kindOf(selNode)!=='text')return;
     ctx.classList.remove('show'); inkpop.classList.remove('show'); selNode.classList.add('editing');
     phone.classList.add('editing');
-    $('pageWrap').style.transform='translateY(-96px)';   // whole page pans up as ONE rigid body
+    // D-043 / OD-16 amendment: -96 is the MAXIMUM lift, not an unconditional one. Spend the empty
+    // band above the sheet, plus only what the edited element needs to clear the docked .kbstack.
+    // On this prototype's geometry the sum is NOT always >= 96, so the prototype's own motion
+    // changes: the title lifts ~81px (slack-limited), lower elements still reach the 96 ceiling.
+    // See the amendment note at the top of this file for the derivation. On a canvas that contains
+    // the page this is what stops the lift taking the page out of the window. Whole page still
+    // pans as ONE rigid body.
+    $('pageWrap').style.transform='translateY(-'+editPanPx()+'px)';
     var t=selNode.querySelector('.t-title,.t-body');
     $('editSw').style.background=t?getComputedStyle(t).color:'var(--ink)';
     cap('Editing · in place','You’re typing in the real text. The page leaned up as one rigid body — it never reflowed. “Done” settles it back.');

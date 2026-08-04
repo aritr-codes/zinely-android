@@ -26,7 +26,7 @@ dimmed at night while content ink stays black, because it prints). The second be
 and the frozen Bench was amended a fourth time, making `.page` a **light-theme island** of eight restated light
 tokens. Content ink now measures **18.82:1** in dark. Both defects are guarded by assertions, not goldens: twice
 in this package a golden was re-recorded over the defect it should have caught.
-**C2a and C2b are both ACCEPTED (2026-08-02). The next package is [C3](COMPOSE-V2-ROADMAP.md) — in-place text editing and the rigid page pan — and it has not begun.** C2b took the long way there: its first device Pass 2 failed on [D-039](design/V2-SPEC-DEFECTS.md#d-039), the same verb offered twice on one screen, and [ADR-092](DECISIONS.md#adr-092) was held at `Proposed` until the owner ruled [**OD-14**](design/V2-SPEC-DEFECTS.md#d-039-ruling): *both bars stay, but identical actions are never presented twice at once — assign responsibilities instead of duplicating presentation.* Element verbs went to the frozen bar, transform verbs to the shipped one, and the on-canvas Reframe chip yields to the verb that names it; every withheld control returns the instant the frozen bar stands down, so **no capability is ever off-screen**. Both device passes were then re-run from the beginning, reusing no earlier evidence, and [**both pass**](DECISIONS.md#adr-092-device-2). C1 was accepted and committed (`23e1a91`). C2a followed:
+**C2a, C2b and C3 are all ACCEPTED. C3 — in-place text editing and the rigid page pan, the centrepiece — closed 2026-08-04 ([ADR-093](DECISIONS.md#adr-093)); the next package is [C4](COMPOSE-V2-ROADMAP.md) — the bar, the status chip, the snackbar — and it has not begun.** C3 was **reopened by an owner ruling after implementation**: the frozen `translateY(-96px)` pan assumed canvas slack the shipped contained page does not have ([D-043](design/V2-SPEC-DEFECTS.md#d-043)), and [**OD-16**](design/V2-SPEC-DEFECTS.md#d-043-ruling) ruled option (b) — *−96 is a **maximum**, spent as `min(96dp, slack + clearance)`*. The frozen Bench was amended **first**, per the HTML-first rule, and the amendment changes the prototype's own motion (the title now lifts ~81px; lower elements still reach the 96px ceiling). The device evidence that produced the ruling also found a second defect the first was **hiding behind** — [D-045](design/V2-SPEC-DEFECTS.md#d-045), the canvas never honouring `.canvasArea{overflow:hidden}`, which left `Preview ›` invisible **and still `clickable` on the platform tree** in every editing session. Both landed together, as the ruling required: either alone makes the other worse. C2b took the long way there: its first device Pass 2 failed on [D-039](design/V2-SPEC-DEFECTS.md#d-039), the same verb offered twice on one screen, and [ADR-092](DECISIONS.md#adr-092) was held at `Proposed` until the owner ruled [**OD-14**](design/V2-SPEC-DEFECTS.md#d-039-ruling): *both bars stay, but identical actions are never presented twice at once — assign responsibilities instead of duplicating presentation.* Element verbs went to the frozen bar, transform verbs to the shipped one, and the on-canvas Reframe chip yields to the verb that names it; every withheld control returns the instant the frozen bar stands down, so **no capability is ever off-screen**. Both device passes were then re-run from the beginning, reusing no earlier evidence, and [**both pass**](DECISIONS.md#adr-092-device-2). C1 was accepted and committed (`23e1a91`). C2a followed:
 [ADR-091](DECISIONS.md#adr-091) opened it with a property-level table before any production code, the independent review
 returned **GO WITH FIXES** and all three Required Fixes were reconciled, and the full suite plus both golden gates are
 green. Then the device answered differently on each pass. **Pass 1 passed** — the dim lands within one channel step of
@@ -372,6 +372,88 @@ to read and were not cheap to find:
    held the file, which left a live mutation (`.clickable {}` on the dock) in the tree. Two rules, not one:
    a mutation result is only evidence if you know what was in the file when the test ran, and a driver's
    files are **off-limits to you** until it exits. Docs are safe to edit; sources are not.
+8a. **A mutation harness must prove it can report a PASS before any verdict it gives means anything.** C3's
+   driver reported *"13 killed, 0 survivors"* having **executed no tests at all**: it invoked
+   `cmd /c gradlew.bat` by bare name, `cmd` never resolved it, every run returned `rc 1` with
+   `'gradlew.bat' is not recognized`, and the verdict logic inferred KILLED from the non-zero exit. A
+   perfect score is the *expected* output of a harness that is simply broken, which makes it the least
+   trustworthy result a battery can produce and the one least likely to be questioned. Three rules follow:
+   run a **control** with no mutation applied and abort unless it passes; read the verdict from the **JUnit
+   XML** — failures *and* whether the filter matched any test at all, since "no tests ran" is an unguarded
+   row, not a kill — and never from an exit code alone; and use an **absolute** wrapper path. *(Scope: only
+   C3's driver had this defect. `mutate.sh` uses `./gradlew` from bash and resolves; earlier packages' own
+   drivers were not re-run and were not re-verified here.)*
+8b. **`verifyRoborazziDebug`, not `testDebugUnitTest`, for any mutation whose property is paint.** Under a
+   plain test task Roborazzi records nothing and compares nothing, so every golden-guarded row passes
+   trivially. And even on the right task, `changeThreshold = 0.02f` means a 1px hairline across a 400px row
+   — about 0.25 % of the frame — **cannot move the gate**. A raster is a net for what nobody thought to
+   assert; it is not an assertion about fine paint. Count those pixels explicitly.
+8d. **A mutation is evidence about the property on its label only if the edit changes that property and
+   nothing else.** C3 shipped two that did not. One swapped a whole chip for a different control, which
+   deletes a node and duplicates a tag: all five failures it produced were *cardinality* errors, so it
+   killed nothing about the enabled-ness it was named for. Another deleted a chip’s padding under a label
+   about the chip’s *announced bounds* — two different defects, and the one that actually shipped once
+   (`testTag` below `padding`) went on surviving. Prefer the **minimal** edit; if you cannot make one, the
+   mutation is testing something else and should be renamed to whatever that is.
+8e. **Attribute each kill to the test that actually produced it, and check.** Two of C3’s were credited to
+   suites that ran and *passed* — including one credited to a platform-tree suite that was not even in the
+   filter. The battery was right and the write-up was wrong, which is the harder error to notice: the
+   headline number was true, so nothing prompted a second look.
+8f. **A perfect score is a statement about the mutations you chose, not about your tests.** C3’s own
+   fourteen came back 14/14. An independent reviewer then chose six and **five survived**, three of them
+   frozen properties the ADR already listed as asserted. A battery written by the author of the code will
+   flatter it; the cheapest correction is to have someone else pick a handful.
+8c. **Put `testTag` above `padding`, not below it.** Modifier order decides what the semantics node's bounds
+   *are*. C3 tagged the style row after its padding, so every geometric assertion about "the row" was
+   measuring its inner content box — and a raster probe aimed at the row's top hairline read the chips
+   instead, and reported a **deleted** hairline as present. The mutation that exposed it produced a
+   byte-identical raster, which is what finally proved the probe, not the code, was wrong.
+
+**C3's device passes added four more, and the first is the one that would have been missed forever.**
+
+8g. **A defect whose predicted symptom does not reproduce is not thereby absent — find out why it didn't.**
+   [D-043](design/V2-SPEC-DEFECTS.md#d-043) said an element in the top 96dp would be *lifted out of view* by
+   its own edit gesture, and on hardware it stayed perfectly visible. The tempting reading was "the unit-test
+   host exaggerated it." The real reason was a **second defect masking the first**: the canvas never clipped,
+   so the over-lifted page was painted over the top bar instead of being cut off
+   ([D-045](design/V2-SPEC-DEFECTS.md#d-045)). Fixing the clip alone would have *created* the reported
+   symptom; fixing the pan alone would have left paper on the chrome. Two defects that hide each other have to
+   be found and landed together, and the only thing that surfaced the pair was refusing to accept a
+   non-reproduction as good news.
+8h. **When a frozen constant is affordable only because of the prototype's own geometry, it is a rule wearing
+   a number's clothes.** `−96px` works in the freeze because a 229×324 page sits inside a 344×744 phone with
+   a band of empty canvas above it. The shipped Bench *contains* the page, so that band measured **4.2dp** on
+   device. The freeze was not wrong and the transcription was not wrong — the number was load-bearing on an
+   assumption the freeze never had to state. Ask of any frozen literal: *what does this depend on that the
+   prototype gets for free?*
+8i. **Argue severity in the unit the ruling will be made in.** D-043 was escalated as "the top ≈ 73 % of the
+   page", which is `96/scale` **points of page** and varies per host. What actually decided OD-16 was
+   **slack: 4.2dp available against 96dp demanded**. The page-relative figure was true and nearly useless;
+   one measured number on real hardware settled it.
+8j. **Robolectric has no IME, so anything that depends on the keyboard has no unit test — say so in the row.**
+   Half of C3's amended pan (the clearance term) and the half of D-045 that actually mattered on device are
+   both unobservable in Robolectric for this one structural reason. They are carried by pure-function tests
+   plus named device-checklist items. A row that quietly has no assertion is worse than a row that says it
+   has none.
+8k. **Amending a frozen file invalidates every `:NNN` citation to it, and a find-and-replace table is the
+   wrong tool for repairing them.** OD-16's amendment moved ~64 lines of `v2-bench.html` and stranded dozens
+   of references. The first repair pass used a hand-written old→new map applied to bare `` `:NNN` `` tokens,
+   which did three kinds of damage: it rewrote citations belonging to **other** mockups whose line numbers
+   happened to collide (`v2-library.html`'s `.done h4` `:224`, a `v2-proof.html` `:485`); it "corrected" rows
+   whose stated old address was already stale from an *earlier* amendment, moving them somewhere new and
+   equally wrong; and it flattened [ADR-093 §1](DECISIONS.md#adr-093)'s drift table — whose entire content is
+   *"ADR-089 said X, it is actually at Y"* — into a table where both columns said Y. What works: rebuild the
+   map by **diffing the file against its own previous revision** (`difflib` over lines gives the exact
+   old→new mapping), then rewrite a token only when the backticked selector on that same doc line is present
+   at the old address and absent at the new one. Verified per token, not per table. And re-check any table
+   whose *purpose* is to record a stale address — those are the ones a correctness pass will silently destroy.
+   **This lesson is written from three failed attempts, and the repair is only partly done.** C3 repaired the
+   citations in the files C3 already owns, each one verified by opening the frozen file at the cited line. The
+   **25 explicit citations stranded in ten files C3 does not touch** are filed as
+   [D-046](design/V2-SPEC-DEFECTS.md#d-046) rather than swept — a fourth mechanical pass across clean files, in a
+   package under an owner instruction not to do unrelated cleanup, is how the first three went wrong. An earlier
+   draft of this lesson described the method as though it had been applied everywhere; it had not, and the
+   independent review caught the claim.
 
 **B4's review added three more, and the first is the most valuable thing the package produced.**
 

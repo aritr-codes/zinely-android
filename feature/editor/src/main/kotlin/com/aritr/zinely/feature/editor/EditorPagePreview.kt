@@ -59,6 +59,10 @@ import com.aritr.zinely.ui.theme.ZinelyV2Settle
  * @param modifier sized by the caller; both the preview and the chrome fill it so their device-px
  *   coordinates align.
  * @param imageBytes import-master byte source for image elements; defaults to the missing-asset placeholder.
+ * @param hiddenElementId the element the host is drawing itself this frame — omitted from the tape so it
+ *   is not painted twice. C3 uses it for the element under an open in-place text session (ADR-093 row
+ *   3.11); `null` is the normal case. Affects the **render** only: selection chrome, snap guides and the
+ *   focus scrim still read the full page, so a suppressed element keeps its outline and its hole.
  */
 @Composable
 public fun EditorPagePreview(
@@ -70,6 +74,7 @@ public fun EditorPagePreview(
     resizeOverride: Map<String, Transform>? = null,
     styleOverride: Map<String, TextStyle>? = null,
     imageBytes: AssetBytesSource = EmptyAssetBytes,
+    hiddenElementId: String? = null,
 ) {
     val page = uiState.document.pages[uiState.currentPageIndex]
     val interaction = uiState.interaction
@@ -167,17 +172,28 @@ public fun EditorPagePreview(
         }
     }
 
+    // C3 (ADR-093 row 3.11): the element under an open text session is drawn by the in-place editing
+    // field, so the tape must NOT also draw it — otherwise the same words appear twice, offset by
+    // whatever the two text engines disagree about, which reads as the artifact duplicating itself.
+    // Suppression happens here, at the tape, rather than by covering the box: a cover would have to be
+    // opaque, and the page is not one flat colour behind it.
+    val visiblePage = if (hiddenElementId == null) {
+        renderedPage
+    } else {
+        renderedPage.copy(elements = renderedPage.elements.filterNot { it.id == hiddenElementId })
+    }
+
     // Recomputed only when the effective page / defaults / size change — i.e. per frame during a drag
     // (effectivePage changes) or per step during a size burst, never on unrelated recompositions.
-    val tape = remember(renderedPage, defaults, pageSizePt) {
-        SceneRenderer.render(renderedPage, pageSizePt, defaults)
+    val tape = remember(visiblePage, defaults, pageSizePt) {
+        SceneRenderer.render(visiblePage, pageSizePt, defaults)
     }
     val selectedTransforms = remember(effectivePage, uiState.selection) {
         effectivePage.elements.filter { it.id in uiState.selection }.map { it.transform }
     }
 
-    // C2a (ADR-091 §2.1): `.content.focusing` is on whenever a selection is live (v2-bench.html `:469`,
-    // cleared at `:477`). The dim is a paper wash with the selection punched out — see [BenchFocusScrim]
+    // C2a (ADR-091 §2.1): `.content.focusing` is on whenever a selection is live (v2-bench.html `:513`,
+    // cleared at `:521`). The dim is a paper wash with the selection punched out — see [BenchFocusScrim]
     // for why it is a composite and not a per-element alpha.
     val selected = selectedTransforms.isNotEmpty()
     val dimAlpha by animateFloatAsState(
