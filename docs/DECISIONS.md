@@ -3837,9 +3837,13 @@ clean tree, so that wording was wrong in both particulars.
 Its mandatory pre-implementation blocker check found **three defects and two of them require an owner decision**,
 so this ADR opens as `Proposed` with its property table populated and **no `src/main` change made**.
 
-- **Status:** 📝 `Proposed` **2026-08-04.** ⛔ **Blocked on [D-047](design/V2-SPEC-DEFECTS.md#d-047) and
-  [D-048](design/V2-SPEC-DEFECTS.md#d-048).** Also carries [D-049](design/V2-SPEC-DEFECTS.md#d-049), inherited
+- **Status:** 📝 `Proposed` **2026-08-04.** ✅ **Unblocked the same day.**
+  [D-047](design/V2-SPEC-DEFECTS.md#d-047) is ruled **[OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling), Option A**
+  — the frozen Bench is **amended for the fifth time** and the bar becomes `Undo · Redo · Add · Done`.
+  [D-048](design/V2-SPEC-DEFECTS.md#d-048) is ruled **not an owner decision**, recorded exactly as
+  [D-042](design/V2-SPEC-DEFECTS.md#d-042) was. Still carries [D-049](design/V2-SPEC-DEFECTS.md#d-049), inherited
   from [C2a's Pass 2](#adr-091-completion-device) as **P2-1** and routed here by the package that raised it.
+  Moves to `Accepted` only on both device passes, as C1–C3 did.
 - **Depends on:** C2 — both halves accepted ([ADR-091](#adr-091), [ADR-092](#adr-092)). C3 is committed and
   [ADR-093](#adr-093) is `Accepted`; C4 does not depend on it, but it inherits its surfaces.
 - **Frozen regions:** `.bar`, `.icon-btn*`, `.add*`, `.status`, `.saved*`, `.snack*`.
@@ -3854,65 +3858,77 @@ verified against the selector it names in the current file, before any of the ta
 
 | ADR-089 said | it is actually at, today | verified by |
 |---|---|---|
-| `.bar` `:183` | **`:244`** | `.bar{flex:none;height:66px;…}` |
-| `.icon-btn` `:224-225` | **`:245-247`** | `.icon-btn`, `:hover`/`:active`/`:disabled`, `svg` |
-| `.add` `:187-188`, `:378` | **`:248-249`**, markup **`:443`** | `.add{flex:1;height:44px;…}`, `<button class="add" id="addBtn">` |
-| bar order `:377-379` | **`:441-444`** | `<div class="bar">` + its three buttons, `undoBtn` `disabled` |
-| `doneBtn` `:542` | **`:629`** | `$('doneBtn').onclick` |
-| `.status` `:110`, `:306` | **`:167`**, markup **`:367`** | `.status{height:26px;…}`, `<div class="status">` |
-| `.saved` `:111-112`, `:306`, `:412` | **`:168-169`**, markup **`:367`**, `flashSaved()` **`:477`** | `.saved`, `.saved.show`, the `✿ Saved · on this device` span |
-| `.snack` `:317-319` | **`:338-340`**, markup **`:420`** | `.snack{position:absolute;…}`, `.snack.show` |
-| `.snack button` `:280` | **`:341`** | `.snack button{…color:var(--accent-on-ink);font-weight:700;}` |
-| `del()` `:509-518` | **`:596-605`** | `function del(){` … `cap('Rest','Soft-deleted…` |
-| `undo()` `:519-524` | **`:606-611`** | `function undo(){` … `undoBtn.disabled=true` |
-| ink snack `:505-506` | **`:592-593`** | `snackText.textContent='Ink · '+name` |
-| `addBtn` handler | **`:738`** | `$('addBtn').onclick = … openSupply()` |
+| `.bar` `:183` | **`:267`** | `.bar{flex:none;height:66px;…}` |
+| `.icon-btn` `:224-225` | **`:268-270`** | `.icon-btn`, `:hover`/`:active`/`:disabled`, `svg` |
+| `.add` `:187-188`, `:378` | **`:271-272`**, markup **`:467`** | `.add{flex:1;height:44px;…}`, `<button class="add" id="addBtn">` |
+| bar order `:377-379` | **`:464-468`** | `<div class="bar">` + its **four** buttons after OD-21, `undoBtn`/`redoBtn` both `disabled` |
+| `doneBtn` `:542` | **`:653`** | `$('doneBtn').onclick` |
+| `.status` `:110`, `:306` | **`:190`**, markup **`:390`** | `.status{height:26px;…}`, `<div class="status">` |
+| `.saved` `:111-112`, `:306`, `:412` | **`:191-192`**, markup **`:390`**, `flashSaved()` **`:501`** | `.saved`, `.saved.show`, the `✿ Saved · on this device` span |
+| `.snack` `:317-319` | **`:361-363`**, markup **`:443`** | `.snack{position:absolute;…}`, `.snack.show` |
+| `.snack button` `:280` | **`:364`** | `.snack button{…color:var(--accent-on-ink);font-weight:700;}` |
+| `del()` `:509-518` | **`:620-629`** | `function del(){` … `cap('Rest','Soft-deleted…` |
+| `undo()` `:519-524` | **`:630-635`** | `function undo(){` … `undoBtn.disabled=true` |
+| ink snack `:505-506` | **`:616-617`** | `snackText.textContent='Ink · '+name` |
+| `addBtn` handler | **`:762`** | `$('addBtn').onclick = … openSupply()` |
+
+**Re-anchored a second time, 2026-08-04**, after [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) amended the
+frozen Bench: `+23` above the bar's markup, `+24` below. The right column below is the **post-OD-21** file,
+verified selector by selector. Files C4 does not own were left alone per [OD-18](design/V2-SPEC-DEFECTS.md#d-046-ruling);
+their new drift is [D-046](design/V2-SPEC-DEFECTS.md#d-046)'s.
 
 *Note, so a reader does not over-trust the left column: it is reproduced from ADR-089 verbatim. C3's mechanical
 sweep once flattened a table of exactly this shape into one where both columns agreed, destroying its purpose
 ([D-046](design/V2-SPEC-DEFECTS.md#d-046)). This one was re-anchored by hand, selector by selector.*
 
 <a id="adr-094-fpt"></a>
-### 2. Frozen property table
+### 2. Frozen property table — 23 rows
 
 Written before production code. Rows marked ⛔ cannot be built until the blocker they name is ruled.
 
 | # | Frozen property | Frozen at | Compose target | What the test must assert | Its mutation | Status |
 |---|---|---|---|---|---|---|
-| 4.1 | `.bar` h66, `--chrome` ground, 1px `--chrome-line` top hairline, `padding 0 16px 4px`, `gap 10px` | `:244` | the editor's bottom bar (replaces `EditorSupplyTray`) | height + ground + hairline + the asymmetric bottom pad | `4px`→`0` | ⛔ [D-047](design/V2-SPEC-DEFECTS.md#d-047) — the row's *contents* are unruled; its box is not |
-| 4.2 | `.icon-btn` 44×44, radius 12, 1px `--chrome-line`, `--ink-soft`; `:active` scale `.94`; `:disabled` opacity `.35` | `:245-246` | a bar icon button | box + radius + the disabled alpha | scale `.94`→`.8` | ⏳ 44 < 48 ⇒ [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp): **extend the target, keep the paint** — the method C3 proved on hardware (`Done` measured 48.0dp exactly) |
-| 4.3 | `.icon-btn svg` 20×20, `stroke:currentColor`, `stroke-width 1.7`, round caps/joins | `:247` | same | the 20dp glyph box and the 1.7 stroke | `1.7`→`2.4` | |
-| 4.4 | `.add` `flex:1`, h44, radius 12, `--matcha` on `--on-matcha`, 14.5px/600, `＋ Add`, `:active` scale `.98`; its `svg` 18×18 `stroke-width 2` | `:248-249`, `:443` | the primary supply control | it takes the **residual** width between the fixed 44s, not a fixed width | `flex:1`→fixed | ⛔ [D-047](design/V2-SPEC-DEFECTS.md#d-047) — what `Add` *does* is unruled. Its frozen handler `openSupply()` (`:694-705`) opens a **three-verb chooser** (`Text · Photo · Art`, narrated at `:705`) built from `.sheet`/`.supply`/`.opt` — **not in C4's fence**, and `Art` is C8's re-seated drawer |
-| 4.5 | bar order **Undo · Add · Done**, Undo `disabled` at rest | `:441-444` | same | order **and** the initial disabled state read off the **platform** tree | enable Undo at rest | ⛔ [D-047](design/V2-SPEC-DEFECTS.md#d-047). The platform-tree clause is not optional: Compose can report `enabled` to the platform while `assertIsNotEnabled` passes ([ADR-058](#adr-058) branch) |
-| 4.6 | **redo survives the package** | — (the freeze omits it; [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps it) | `EditorSupplyTray.kt:147-157` today | a redo control is **still reachable** after the re-skin | delete it | ⛔ [D-047](design/V2-SPEC-DEFECTS.md#d-047) — kept by ruling; *where* it is drawn is the unruled part |
-| 4.7 | **both add verbs survive** — `Add photo` and `Add words` are distinct capabilities | — ([OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)) | `EditorSupplyTray.kt:118-136`, wired `EditorScreen.kt:1173-1181` | both still reach `Intent.RequestAddImage` and the add-text path | collapse to one | ⛔ [D-047](design/V2-SPEC-DEFECTS.md#d-047) |
-| 4.8 | the Read hand-off and back still reach their existing destinations | `EditorScreen.kt:625-637` (`onPreview`), [ADR-086](#adr-086) | `EditorScreen(onPreview)` | the hand-off is reachable and drawn **exactly once** | break the `onPreview` wiring | ⛔ [D-048](design/V2-SPEC-DEFECTS.md#d-048) |
-| 4.9 | `.status` h26, `padding 0 20px`, 11px `--ink-faint`, two slots, `flex:none` | `:167`, `:367` | the editor's top status strip | height + the two-slot row + it does not grow | height 26→32 | the left `"the bench"` label is PROTO narration, not product copy |
-| 4.10 | `.saved` = `✿ **Saved** · on this device`, `--matcha-text`, `opacity 0→1` over `.4s var(--standard)`, visible **1600ms** | `:168-169`, `:367`, `:477` | `EditorSavedConfirmation.kt` | the copy, the colour, the `.4s` fade **and** the 1600ms window | 1600→400 | shipped copy is `"Saved ✨"`. The `✿` (U+273F) coverage question is **already ruled**: [D-021](design/V2-SPEC-DEFECTS.md#d-021-ruling) — keep the literal character, platform fallback acceptable |
-| 4.11 | `.snack` `--ink` ground, `--paper` text, radius 12, `left/right 14px`, `bottom 12px`, enter `translateY(16px)`→`0` + opacity over `.22s var(--standard)` | `:338-340`, `:420` | the delete/undo surface; `ZSnackbar` (`ui.components`) is the shipped shape | ground inversion + the 16px enter + the `.22s` | 16→0 | three snackbar treatments already exist in-tree (`ZSnackbar`, `EditorSaveFailure`, `EditorCoverageNotice`); the last two cite **V1** `bench.html .snackbar` and are not this |
-| 4.12 | `.snack button` `--accent-on-ink`, weight 700 | `:341` | same | the Undo label's colour against the ink ground | `--accent-on-ink`→`--matcha` | `--accent-on-ink` exists in the palette **only** for this pairing |
-| 4.13 | delete is a **soft delete**: the element fades to `opacity 0` / `scale .9` over `.2s`, the snack shows **3200ms**, and the bar's Undo **enables** | `:596-605` | the delete path (`Intent.Delete`, `EditorScreen.kt:1108`) | the fade, the 3200ms, and Undo's enablement **together** | 3200→1600 | reversible by default ([EP-4](design/V2-BENCH-PRINCIPLES.md)); **no modal**. The editor ships no delete snackbar today — this is new surface, not a re-skin |
-| 4.14 | undo restores opacity / transform / pointer-events **and re-disables** the bar's Undo | `:606-611` | same | the restore *and* the re-disable | leave Undo enabled | |
-| 4.15 | applying an ink flashes a **buttonless** snack `Ink · <name>` for 1600ms | `:592-593` | the ink path | the button is hidden **in this variant only** | show the button | 🔭 the ink path itself is **C6**'s; C4 owns the snack variant, not what raises it |
-| 4.16 | the bottom chrome takes its height from the canvas (`.bar{flex:none}` in a flex column) | `:244` | the editor column | whichever behaviour is ruled, asserted as ruled | invert it | 🟦 [D-049](design/V2-SPEC-DEFECTS.md#d-049) — measured 17 % sheet shrink on select/dismiss; the freeze specifies *take the height* |
+| 4.1 | `.bar` h66, `--chrome` ground, 1px `--chrome-line` top hairline, `padding 0 16px 4px`, `gap 10px` | `:267` | the editor's bottom bar (replaces `EditorSupplyTray`) | height + ground + hairline + the asymmetric bottom pad | `4px`→`0` | ⛔ [D-047](design/V2-SPEC-DEFECTS.md#d-047) — the row's *contents* are unruled; its box is not |
+| 4.2 | `.icon-btn` 44×44, radius 12, 1px `--chrome-line`, `--ink-soft`; `:active` scale `.94`; `:disabled` opacity `.35` | `:268-269` | a bar icon button | box + radius + the disabled alpha | scale `.94`→`.8` | ⏳ 44 < 48 ⇒ [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp): **extend the target, keep the paint** — the method C3 proved on hardware (`Done` measured 48.0dp exactly) |
+| 4.3 | `.icon-btn svg` 20×20, `stroke:currentColor`, `stroke-width 1.7`, round caps/joins | `:270` | same | the 20dp glyph box and the 1.7 stroke | `1.7`→`2.4` | |
+| 4.4 | `.add` `flex:1`, h44, radius 12, `--matcha` on `--on-matcha`, 14.5px/600, `＋ Add`, `:active` scale `.98`; its `svg` 18×18 `stroke-width 2` | `:271-272`, `:467` | the primary supply control | it takes the **residual** width between the two fixed 44s on its left and one on its right | `flex:1`→fixed | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) |
+| 4.4a | `Add` opens the frozen chooser: `<h3>Add to your page</h3>` over `.opt` rows | `:718-724` | a new `ZSheet` call | the sheet opens on `Add`, carries the frozen title, and offers **exactly two** rows | drop a row | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) releases **Text and Photo only**. Uses the shipped `ZSheet` (`ZSheet.kt:68`, 6 production users) |
+| 4.4b | the `Art` row stays **fenced**, not deleted | `:722` | — | the chooser offers no Art row in C4 | add one | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling): *“a fence reassignment, not a capability reassignment.”* C8 adds the third row; [§E.6](design/V2-BENCH-REVIEW.md)'s legal pass sits behind it |
+| 4.4c | **Text reuses `addTextAndEdit`** — the new box drops in *ready to edit* | `:721` narrates it; `EditorScreen.kt:1308-1315` implements it | same | choosing Text still dispatches `PlaceText` **then** `BeginEditText` | drop the `BeginEditText` | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) requires it **by name**, so C3's in-place model is unchanged. The freeze and the shipped flow already agreed |
+| 4.4d | **Photo reuses `Intent.RequestAddImage`** | `:721` | same | choosing Photo dispatches the same intent the shelf did | dispatch nothing | the picker binding in `ZinelyNavHost` is untouched |
+| 4.5 | bar order **Undo · Redo · Add · Done**; Undo **and** Redo `disabled` at rest | `:464-468` (amended) | same | order **and** both initial disabled states read off the **platform** tree | enable Undo at rest | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling). The platform-tree clause is not optional: Compose can report `enabled` to the platform while `assertIsNotEnabled` passes ([ADR-058](#adr-058) branch) — the defect C1's device pass caught |
+| 4.6 | **redo lives in the bar**, as a second `.icon-btn` | `:466` (added by the amendment) | the new bar | a redo control is reachable, in the bar, and enabled exactly when `canRedo` | delete it | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling): *“redo remains in the bottom bar.”* [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling)'s *redo is kept* now has a drawn home |
+| 4.7 | **both add verbs survive**, now one tap deeper — through the chooser | — ([OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)) | replaces `EditorSupplyTray.kt:118-136` | both still reach `Intent.RequestAddImage` and the add-text path | collapse to one | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling). The extra tap is the ruling's **recorded accepted cost**, not an oversight |
+| 4.7a | `EditorSupplyTray` is **retired** | — | `EditorSupplyTray.kt` + its two test files | no supply shelf composes in the editor | leave it composed | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling): *“retired as planned.”* Retiring the surface is not removing a capability — all four of its verbs land in the bar or the chooser |
+| 4.8 | the Read hand-off **does not move**, and back is still the nav stack | `EditorScreen.kt:625-637` (`onPreview`), wired at `ZinelyNavHost.kt:95`/`:419`; [ADR-086](#adr-086) | `EditorScreen(onPreview)`, untouched | the hand-off is reachable and drawn **exactly once** | break the `onPreview` wiring | ✅ [D-048](design/V2-SPEC-DEFECTS.md#d-048-ruling). `EditorScreen` has **no** `onBack` and draws none — verified, 0 matches — so OD-9's *back reuses the existing stack* needs nothing from C4 |
+| 4.8a | `Done` is **two-state**, and withheld during a session | `:653`; the withheld presentation at `:269` | the new bar | with a session open `Done` is disabled at the frozen `.35`; with none it dispatches deselect | make it live during a session | ✅ [D-048](design/V2-SPEC-DEFECTS.md#d-048-ruling) — [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling)'s own withholding method, as C2b applied it |
+| 4.8b | deselect gains its **first drawn control** | `:653` second branch | `Intent.SelectAt` miss → `ClearSelection` (`EditorGestures.kt:62`) | the bar's `Done` clears a selection without a gesture | dispatch nothing | answers the WCAG 2.5.7 argument [ADR-029 §6](#adr-029) makes for `EditorContextBar` |
+| 4.9 | `.status` h26, `padding 0 20px`, 11px `--ink-faint`, two slots, `flex:none` | `:190`, `:390` | the editor's top status strip | height + the two-slot row + it does not grow | height 26→32 | the left `"the bench"` label is PROTO narration, not product copy |
+| 4.10 | `.saved` = `✿ **Saved** · on this device`, `--matcha-text`, `opacity 0→1` over `.4s var(--standard)`, visible **1600ms** | `:191-192`, `:390`, `:501` | `EditorSavedConfirmation.kt` | the copy, the colour, the `.4s` fade **and** the 1600ms window | 1600→400 | shipped copy is `"Saved ✨"`. The `✿` (U+273F) coverage question is **already ruled**: [D-021](design/V2-SPEC-DEFECTS.md#d-021-ruling) — keep the literal character, platform fallback acceptable |
+| 4.11 | `.snack` `--ink` ground, `--paper` text, radius 12, `left/right 14px`, `bottom 12px`, enter `translateY(16px)`→`0` + opacity over `.22s var(--standard)` | `:361-363`, `:443` | the delete/undo surface; `ZSnackbar` (`ui.components`) is the shipped shape | ground inversion + the 16px enter + the `.22s` | 16→0 | three snackbar treatments already exist in-tree (`ZSnackbar`, `EditorSaveFailure`, `EditorCoverageNotice`); the last two cite **V1** `bench.html .snackbar` and are not this |
+| 4.12 | `.snack button` `--accent-on-ink`, weight 700 | `:364` | same | the Undo label's colour against the ink ground | `--accent-on-ink`→`--matcha` | `--accent-on-ink` exists in the palette **only** for this pairing |
+| 4.13 | delete is a **soft delete**: the element fades to `opacity 0` / `scale .9` over `.2s`, the snack shows **3200ms**, and the bar's Undo **enables** | `:620-629` | the delete path (`Intent.Delete`, `EditorScreen.kt:1108`) | the fade, the 3200ms, and Undo's enablement **together** | 3200→1600 | reversible by default ([EP-4](design/V2-BENCH-PRINCIPLES.md)); **no modal**. The editor ships no delete snackbar today — this is new surface, not a re-skin |
+| 4.14 | undo restores opacity / transform / pointer-events **and re-disables** the bar's Undo | `:630-635` | same | the restore *and* the re-disable | leave Undo enabled | |
+| 4.15 | applying an ink flashes a **buttonless** snack `Ink · <name>` for 1600ms | `:616-617` | the ink path | the button is hidden **in this variant only** | show the button | 🔭 the ink path itself is **C6**'s; C4 owns the snack variant, not what raises it |
+| 4.16 | the bottom chrome takes its height from the canvas (`.bar{flex:none}` in a flex column) | `:267` | the editor column | whichever behaviour is ruled, asserted as ruled | invert it | 🟦 [D-049](design/V2-SPEC-DEFECTS.md#d-049) — measured 17 % sheet shrink on select/dismiss; the freeze specifies *take the height* |
 
 <a id="adr-094-blockers"></a>
-### 3. The pre-implementation blocker check
+### 3. The pre-implementation blocker check — ✅ both blockers cleared 2026-08-04
 
 Run before any production code, as [ADR-089 §2.2](#adr-089) requires. It read the frozen file, the plan of
 record (ADR-089 rows 4.1–4.13), every ruling that reaches C4's fence, and the shipped repository.
 
-**⛔ [D-047](design/V2-SPEC-DEFECTS.md#d-047) — the frozen bar has three slots; the rulings that govern it
-require more.** `Undo · Add · Done` is drawn; OD-9 keeps redo, OD-11/OD-14 keep both shipped add verbs, and the
-frozen `Add`'s destination — `openSupply()` at `:694-705` — builds the `.sheet`, which belongs to **C8**,
+**✅ [D-047](design/V2-SPEC-DEFECTS.md#d-047) — RULED [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling), Option A.
+As raised: the frozen bar has three slots; the rulings that govern it require more.** `Undo · Add · Done` is drawn; OD-9 keeps redo, OD-11/OD-14 keep both shipped add verbs, and the
+frozen `Add`'s destination — `openSupply()` at `:718-729` — builds the `.sheet`, which belongs to **C8**,
 re-seated beyond Phase C by OD-2. **Three** readings are open: *the bar absorbs everything* (needs a
 frozen-Bench amendment), *the bar is additive and the shelf survives* (violates OD-14 — Undo and Add drawn twice
 at once), or *the bar as drawn with `Add` opening the freeze's own chooser minus its `Art` row* (builds C8's
 fence early, and leaves redo without a slot). **Geometry is not the obstacle**: four controls fit comfortably
 (`44·3 + 10·3 + 32 = 194px` fixed on a 411dp device). What the bar is *allowed to contain* is.
 
-**⛔ [D-048](design/V2-SPEC-DEFECTS.md#d-048) — if `Done` becomes the Read hand-off, the hand-off is drawn
-twice.** OD-9 says reuse what ships; what ships is a top-end `Preview ›` (`EditorScreen.kt:625-637`), the same
+**✅ [D-048](design/V2-SPEC-DEFECTS.md#d-048) — RESOLVED without a ruling, recorded as [D-042](design/V2-SPEC-DEFECTS.md#d-042) was.
+As raised: if `Done` becomes the Read hand-off, the hand-off is drawn twice.** OD-9 says reuse what ships; what ships is a top-end `Preview ›` (`EditorScreen.kt:625-637`), the same
 control C3's D-045 evidence measured at `(950,53)` on hardware. Binding the bar's `Done` to it as well presents
 one action twice — [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling) forbids exactly that. But `doneBtn`'s two
 *frozen* jobs are already owned and shipped: `endEdit()` by C3's `.done` chip (row 3.6) and `deselect()` by
@@ -3944,8 +3960,8 @@ accepted owner decisions (OD-9, OD-11, OD-14, OD-16, OD-17, OD-18) and the roadm
 this ADR and did not clear either blocker**, so no production code was written.
 
 **What it corrected.** §3 and [D-047](design/V2-SPEC-DEFECTS.md#d-047) claimed *"a chooser that does not
-exist."* False as stated. `openSupply()` (`v2-bench.html:694-700`) builds a `.sheet` titled *"Add to your page"*
-with **three** `.opt` rows — `data-a="text"`, `data-a="photo"`, `data-a="art"` — and `:705` narrates it in the
+exist."* False as stated. `openSupply()` (`v2-bench.html:718-724`) builds a `.sheet` titled *"Add to your page"*
+with **three** `.opt` rows — `data-a="text"`, `data-a="photo"`, `data-a="art"` — and `:729` narrates it in the
 freeze's own words: **"Add stays three verbs — Text · Photo · Art."** The first two are precisely the two
 capabilities that ship, so the frozen `Add` asks for routing, not for a collapse. The blocker survives on a
 narrower and more accurate ground — `.sheet`/`.supply`/`.opt` are **not in C4's fence**, and `Art` → `openArt()`
@@ -3957,17 +3973,25 @@ the owner's decision different, which is why it stopped the gate rather than bei
 
 | Claim | Evidence |
 |---|---|
-| `.status` is the top strip, above the canvas | `:367` sits directly inside `.phone`, immediately before `.canvasArea` `:369` |
-| the freeze offers **no** back and no Read route | `:441-444` is the whole `.bar`; `.status` `:367` holds two `<span>`s, neither interactive |
+| `.status` is the top strip, above the canvas | `:390` sits directly inside `.phone`, immediately before `.canvasArea` `:392` |
+| the freeze offers **no** back and no Read route | `:464-468` is the whole `.bar`; `.status` `:390` holds two `<span>`s, neither interactive |
 | the hand-off ships at the top | `EditorScreen.kt:625-637`, `EditorPreviewActionTestTag`, `Copy.Editor.PREVIEW_LABEL` |
 | the shelf is four cards | `EditorSupplyTray.kt:118/128/138/148` — `AddPhoto`, `AddWords`, `Undo`, `Redo`; wired `EditorScreen.kt:1173-1181` |
 | row 4.10's 1600ms is **already** the shipped value | `EditorSavedConfirmation.kt:50` `SavedConfirmationVisibleMs = 1600L`; copy at `:37` is `"Saved ✨"`, against the freeze's `✿ Saved · on this device` |
-| row 4.12's token already exists in Compose | `ZinelyV2Colors.kt:131` `accentOnInk`, `:200` `#B7C47C` light / `:244` `#4C5826` dark — matching `v2-bench.html:104` and `:120`/`:131` — and asserted at `ZinelyV2ColorsTest.kt:48` |
+| row 4.12's token already exists in Compose | `ZinelyV2Colors.kt:131` `accentOnInk`, `:200` `#B7C47C` light / `:267` `#4C5826` dark — matching `v2-bench.html:104` and `:120`/`:131` — and asserted at `ZinelyV2ColorsTest.kt:48` |
 | row 4.11 has a shipped shape to re-skin | `core/ui/.../components/ZSnackbar.kt:56` — `message`, `actionLabel`, `onAction`, `onTimeout` |
 | the editor ships **no** element-delete snackbar | `Intent.Delete` is dispatched at `EditorScreen.kt:1108` and raises nothing; the only `ZSnackbar` call sites are `HomeScreen.kt:251` and `ProofScreen` |
 | D-049's measurement and routing | [ADR-091 §Pass 2](#adr-091-completion-device) — `1028×1454` → `850×1202`, *"`.bar` is C4's"* |
 
-**What it did not clear.** [D-047](design/V2-SPEC-DEFECTS.md#d-047) and
-[D-048](design/V2-SPEC-DEFECTS.md#d-048) both stand. No ruling in hand reaches either, and OD-14 is implicated
-in every available reading of both. Rows 4.1, 4.4, 4.5, 4.6, 4.7 and 4.8 therefore remain unbuildable; rows
-4.2, 4.3 and 4.9–4.15 are unaffected.
+**How they closed.** Both on 2026-08-04, the day the gate reported them. [D-047](design/V2-SPEC-DEFECTS.md#d-047)
+took **[OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling)** — Option A, with the frozen Bench amended first.
+[D-048](design/V2-SPEC-DEFECTS.md#d-048) took **no ruling at all**: the owner ruled it was never an owner
+question, and it is recorded as a deviation with its reasoning, exactly as [D-042](design/V2-SPEC-DEFECTS.md#d-042)
+was. **Every row of §2 is now buildable.**
+
+<a id="adr-094-cost"></a>
+**The one cost this package ships knowingly**, named here rather than discovered later: `Add photo` and
+`Add words` are two direct controls on the shipped shelf and become two rows behind one `Add`. Nothing is
+removed — OD-11 holds — but the editor's most common action grows by one tap. OD-21 pays that price
+deliberately, and D-049 sits next to it as the other thing C4 changes about how the editor *feels* rather
+than what it can do.
