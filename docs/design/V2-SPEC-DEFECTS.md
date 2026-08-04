@@ -137,6 +137,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
 | ~~[**D-047**](#d-047)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-047-ruling), OD-21, Option A; the frozen Bench is AMENDED for the fifth time** | the frozen `.bar` drew **three** slots while [OD-9](#d-031-ruling) keeps redo, [OD-11](#d-034-ruling)/[OD-14](#d-039-ruling) keep **both** shipped add verbs, and `.add`'s handler opens a chooser whose region OD-2 re-seated beyond Phase C. Ruled: the bar becomes **`Undo · Redo · Add · Done`**; `Add` opens the frozen chooser with **only its Text and Photo rows released into C4**, Art staying fenced behind C8 — *“a fence reassignment, not a capability reassignment”*; the chooser uses the shipped `ZSheet`; **Text reuses `addTextAndEdit`** so C3's in-place model is untouched; `EditorSupplyTray` is retired. One line of frozen markup added (`#redoBtn`, `:466`), **no CSS changed**. The accepted price, recorded: both add verbs sit one tap deeper than they do today |
 | ~~[**D-048**](#d-048)~~ | ✅ **RESOLVED 2026-08-04 by rulings already in hand — a recorded deviation, not an owner question, recorded exactly as [D-042](#d-042) was. No OD number, because none was needed** | `Done` follows the frozen two-state behaviour (`:653`): while a session is open C3's `#doneEdit` owns *finish* and the bar's `Done` is **withheld at the frozen `.icon-btn:disabled` `.35`** (`:269`) — [OD-14](#d-039-ruling)'s own method, as C2b applied it, using a presentation the file already draws; with no session the bar's `Done` owns *clear selection*, which is deselect's **first drawn control**, since [OD-13](#d-037-ruling) gave it only a gesture and a gesture has no presentation for OD-14 to count. **`Preview ›` does not move** — OD-9's *reuse, don't invent* is satisfied by leaving it exactly where it ships |
+| [**D-053**](#d-053) | ⛔ **OPEN — raised by C5's pre-implementation blocker check, 2026-08-04; BLOCKS row 5.8** | the frozen  () is a **blank 26×34 paper sheet with three faint rules** drawn on every interior page; the shipped  draws a **live miniature of the real page** through the canvas's own  tape. Transcribing the freeze removes the only place you can see what is on another page **and** states something false on most pages ([D-044](#d-044)'s class, which [OD-17](#d-044-ruling) fixed by amending the file); keeping the miniature diverges from the surface [§E.2](V2-BENCH-REVIEW.md) was proudest of. No existing ruling reaches the thumb's interior — OD-2 settled the count, D-009 the targets |
 | [**D-052**](#d-052) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; placement policy, not C4's fence** | `Add › Text` drops the new box **on top of** what is already on the page: the arriving box's editing outline enclosed an existing "Hello", so the page read as one block holding both the old words and the cursor. The drop comes from `addTextAndEdit`, which [OD-21](#d-047-ruling) required C4 to reuse **by name**; what C4 changed is the frequency — the route is now two taps from anywhere, so the collision is met on pages that already have content |
 | [**D-051**](#d-051) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; a defect in the FROZEN FILE, not in the Compose** | the chooser's `Photo` row is marked with the *replace / refresh* glyph — `v2-bench.html:721` builds it from `ICON.replace`, and `BenchAddChooser.kt` transcribes it faithfully. Beside `Text`'s clean `A` it reads as *"replace the photo"*. It matters more now than in the prototype: after [OD-21](#d-047-ruling) retired the shelf's *"Add a photo"* card, this glyph is the **only** visual the verb has. A fix amends the frozen file first, which is the owner's act |
 | [**D-050**](#d-050) | 🟦 **OPEN — raised by C4, 2026-08-04; copy, and copy is owner-owned** | the empty page still says *"Grab a photo or a few words from the **supplies below**"* (`Copy.kt:175`) and still points a chevron at the shelf (`EmptyStateTrayCueTag`, `EditorEmptyState.kt:37`) — and [OD-21](#d-047-ruling) retired the shelf. The invitation now names a surface that is not on screen, one tap before the user meets a single `Add`. **Not fixed in C4:** the strings are product voice, not frozen CSS, and rewriting them is a wording decision |
@@ -2976,6 +2977,61 @@ acceptable is a decision about what `Done` *means* on this screen, and that is t
 
 **Not a blocker for the rest of C4.** `.status`, `.saved`, `.snack` and the soft-delete rows are untouched by
 this and can be built whichever way `Done` is ruled.
+
+---
+
+### D-053 — the frozen page thumb is an abstraction; the shipped one is the page {#d-053}
+
+**Raised 2026-08-04 by C5's pre-implementation blocker check ([ADR-095 §3](../DECISIONS.md#adr-095-blockers)),
+before any production code. ⛔ OPEN — this one blocks: row 5.8 cannot be built either way until it is ruled.**
+
+**What the freeze specifies.** `.pthumb` (`v2-bench.html:259-265`) is a **26×34 blank paper sheet** — `--paper`,
+a `--paper-edge` hairline, an asymmetric radius so the spine reads squarer, a 2px spine, a contact shadow. Its
+interior is `.pthumb i` (`:263`): **three 1px `--ink-faint` rules at 3px pitch**, drawn on every page except the
+cover and the back (`:698`). They are a *drawing of text*, not text — the prototype has no document to draw.
+
+**What the product ships today.** `EditorPageStrip` renders a **live miniature of the real page**: the page's own
+`SceneRenderer` tape replayed through `PagePreview`, the same render path the canvas uses
+(`feature/editor/…/EditorPageStrip.kt:204-244`). A card with a photo on it looks like a card with a photo on it.
+An empty page renders blank and keeps a faint page number so it stays legible (`:177-184`). It has been that way
+since the strip was built, and its KDoc says why in one line: *"a card looks like the page it navigates to rather
+than a numbered placeholder."*
+
+**Why this is a decision and not a parity fix.** Transcribing `.pthumb` literally does two things at once:
+
+1. It **removes information that ships** — the only place in the editor where you can see what is on another page
+   without going there. Nothing else in the product answers *"which one was the photo page?"*
+2. It **replaces that information with a statement that is false on most pages.** Three ruled lines say *this
+   page holds a few lines of text.* On this document most pages are empty, and one may hold a full-bleed photo.
+   That is the same class of defect as [D-044](#d-044) — a frozen chip claiming a value that is not the
+   element's — which the owner ruled ([OD-17](#d-044-ruling)) by **amending the frozen file** so the control
+   states a truth rather than a plausible-looking constant.
+
+Keeping the miniature, on the other hand, is a **visible divergence from a frozen surface** on the one property
+the freeze's own physicality audit was proudest of — [§E.2](V2-BENCH-REVIEW.md) records the navigation being
+*"rebuilt as little paper sheets: real edges, a spine, faint text lines … Slider → riffled cards."*
+
+**What no existing ruling settles.** [OD-2](../DECISIONS.md#adr-089) settled the page *count*.
+[D-009](#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)
+settled the *touch targets* on this exact surface. [OD-9](#d-031-ruling) / [OD-11](#d-034-ruling) /
+[OD-14](#d-039-ruling) govern verbs and toolbars. None of them reaches the thumb's interior. And the §E.2 audit
+that produced the frozen treatment was auditing **the prototype's slider pips** — it was not weighing live
+miniatures against paper sheets, because the prototype never had any to weigh.
+
+**The options, stated so the ruling can be a choice rather than an essay:**
+
+| | What ships | Cost |
+|---|---|---|
+| **(a) Transcribe the freeze** | 26×34 paper sheets with three faint rules; no page content anywhere in the strip | the *"which page was that?"* capability is lost, and the rules are false on most pages. The frozen appearance is exact |
+| **(b) Keep the miniature inside the frozen sheet** | the frozen 26×34 box, spine, radius, shadow, lift and dot — with the **live page** drawn inside instead of `.pthumb i` | every frozen property except `.pthumb i` is met; the interior diverges, and at 26×34 the miniature is a smudge rather than a picture |
+| **(c) Amend the frozen file first** | whichever of (a)/(b) the owner wants, written into `v2-bench.html` before Compose moves — the [OD-16](#d-043-ruling)/[OD-17](#d-044-ruling)/[OD-21](#d-047-ruling) pattern | one more amendment to a frozen surface; and it is the only route that leaves the HTML and the app agreeing |
+
+**A note that belongs to the owner and not to the implementer:** the *grid* has no such conflict. `.pgcell` is
+net-new — nothing ships that it replaces — so whatever is ruled here, the grid can transcribe the freeze without
+removing anything. If (b) or (c) is chosen for the strip, whether the grid's cells also show content is a
+separate question, and C5 will not answer it by inference.
+
+**Until it is ruled, C5 builds every row except 5.8**, and does not draw a thumb interior of either kind.
 
 ---
 

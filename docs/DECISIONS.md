@@ -4158,4 +4158,138 @@ Three frictions were found, none fixed inside C4, each filed where the decision 
 **The two passes do not disagree.** Everything Pass 2 found is a question about *what the design says*,
 on surfaces Pass 1 measured as correct — which is why all three are records rather than fixes.
 
+---
 
+## ADR-095 {#adr-095}
+
+**C5 — page navigation: the filmstrip of little paper sheets and the summoned page grid. Written before any
+production code, per [ADR-089 §2.2](#adr-089).** Its mandatory pre-implementation blocker check found **one
+question that is genuinely the owner's**, so this ADR opens as `Proposed` with its property table populated and
+**no `src/main` change made**.
+
+- **Status:** 📝 `Proposed` **2026-08-04.** ⛔ **Blocked on [D-053](design/V2-SPEC-DEFECTS.md#d-053)** — the
+  frozen `.pthumb` is an *abstract* paper sheet with three faint rules, and the shipped strip draws a **live
+  miniature of the real page**. Transcribing the freeze literally would replace real information with a
+  decoration that is false on most pages; keeping the miniature diverges from a frozen surface. Neither is the
+  implementer's to choose. Moves to `Accepted` only on both device passes, as C1–C4 did.
+- **Depends on:** C1 ([ADR-090](#adr-090), `Accepted`) for the studio surface the nav row sits under. Not C4 —
+  but it lands beside C4's `.bar` and shares the bottom chrome's height budget, which is why
+  [D-049](design/V2-SPEC-DEFECTS.md#d-049) is carried here too.
+- **Frozen regions:** `.navrow`, `.gridbtn`, `.filmstrip`, `.pthumb*`, `.pgrid*`, `.pgg`, `.pgcell*`, and the
+  scripted `buildFilm()` / `setPage()` / `openGrid()` / `closeGrid()`.
+
+<a id="adr-095-drift"></a>
+### 1. Citation drift — every address ADR-089 gives for C5 is wrong
+
+[ADR-089 §4](#adr-089) was written before **five** amendments to the frozen Bench (OD-3, OD-10/D-033, OD-16 and
+OD-21, plus C0's cleanup). Every C5 address moved. Re-anchored against the current file, each verified by
+opening it at the cited line and reading the selector:
+
+| row | ADR-089 said | actually at | what is there now |
+|---|---|---|---|
+| 5.1 `.navrow` | `:168-169` | **`:252-253`** | `height:56px; gap:8px; padding:0 10px; background:var(--chrome); border-top:1px solid var(--chrome-line); z-index:20` |
+| 5.2 `.gridbtn` + glyph | `:170-171`, `:371` | **`:254`, `:255`** | `34×34`, `radius:9px`, `1px --chrome-line`; `svg{width:17px;stroke-width:1.8}` — markup at `:458-460` |
+| 5.3 `.filmstrip` | `:172-173` | **`:256-257`** | `flex:1; gap:7px; overflow-x:auto; overflow-y:visible; padding:9px 4px` |
+| 5.4 `.pthumb` | `:175-176` | **`:259-260`** | `26×34`, `radius:1.5px 3px 3px 1.5px`, `--paper`, `1px --paper-edge`, `shadow 0 2px 5px -2px`, `transition .2s var(--settle)` |
+| 5.5 spine | `:177-178` | **`:261-262`** | `::before` 2px `--desk-edge`; `[data-cover]::before` → `--matcha` |
+| 5.6 `.cur` | `:180` | **`:264`** | `scale(1.16) translateY(-2px)`, `shadow 0 9px 16px -6px`, `border-color --matcha`, `z-index:2` |
+| 5.7 `.cur::after` | `:181` | **`:265`** | 4px `--strawberry` dot, `top:-7px`, centred |
+| 5.8 `.pthumb i` | `:179`, `:587` | **`:263`, `:698`** | three 1px `--ink-faint` rules at 3px pitch, `opacity:.4`; omitted when `i===1||i===NP` |
+| 5.9 role + label | `:586` | **`:697`** | `role=button`, `Page i of N (front cover)/(back)` |
+| 5.10 scroll to centre | `:592` | **`:703`** | `scrollIntoView({block:'nearest',inline:'center'})` |
+| 5.11 `.pgrid` | `:266-267` | **`:350-351`** | `inset:0; z-index:46; background:var(--desk); padding:16px; translateY(102%) → 0 at .3s var(--settle); overflow:auto` |
+| 5.12 `.pgg` / `.pgcell` | `:311-312` | **`:355-356`** | `repeat(3,1fr)`, `gap:12px`; `aspect-ratio:.66`, `radius:6px`, `--paper`, `shadow 0 4px 10px -6px` |
+| 5.13 `.pgcell.cur` | `:273` | **`:357`** | `border-color:--matcha; border-width:2px` (and `:active{scale(.96)}`, which ADR-089 never listed) |
+| 5.14 cell labels | `:274-275`, `:598` | **`:358-359`, `:709`** | `span` = number, 9px `--ink-faint`, bottom-right; `b` = `Cover`/`Back`, 8px `--matcha-text` 700 upper, top-left |
+| 5.15 grid header | `:269-270`, `:596` | **`:352-354`, `:707`** | `Your zine · N pages` in `--serif` 17px/500, `Done` in `--matcha-text` 600 13px |
+| 5.16 `NP` | `:409` | **`:498`** | `var … NP=12, cur=3` |
+
+Per [OD-18](design/V2-SPEC-DEFECTS.md#d-046-ruling) this ADR re-anchors **its own** citations only; the stranded
+addresses in files C5 does not own stay with [D-046](design/V2-SPEC-DEFECTS.md#d-046).
+
+ADR-089 also **under-counted two rows**: `.pgcell:active{transform:scale(.96)}` (`:357`) and the `.pthumb`
+`transition` (`:260`) are frozen properties with no row of their own. They are carried below as 5.13a and 5.4a
+rather than implemented silently.
+
+<a id="adr-095-fpt"></a>
+### 2. Frozen property table — 29 rows
+
+One row per frozen *value*, with its planned assertion and the mutation that must kill it, per the
+[§8.1 format](COMPOSE-IMPLEMENTATION-GUIDE.md#81-the-frozen-property-table). `N` is **always** the document's
+`format.pageCount`, never a literal.
+
+| # | Frozen property | Source | Assertion | Mutation |
+|---|---|---|---|---|
+| 5.1 | `.navrow{height:56px}` | `:252` | the row's node height is 56dp | 56 → 44 |
+| 5.1a | `.navrow{background:var(--chrome); border-top:1px solid var(--chrome-line)}` | `:252-253` | golden; raster probe on the top hairline | `chrome` → `desk` |
+| 5.1b | `.navrow{gap:8px; padding:0 10px}` | `:252` | grid button's left inset = 10dp; strip's left edge − button's right edge = 8dp | padding 10 → 16 |
+| 5.2 | `.gridbtn{34×34; border-radius:9px; 1px --chrome-line}` | `:254` | drawn box 34dp square; radius by golden | 34 → 44 |
+| 5.2a | `.gridbtn svg{17px; stroke-width:1.8}` | `:255` | glyph node 17dp; stroke by ink-mass probe | 17 → 20 · 1.8 → 2.6 |
+| 5.2b | D-009: the target, not the paint | [D-009 ruling](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) | `touchBoundsInRoot` ≥ 48dp **and** the drawn box still 34dp, in one test; platform tree on device | grow the layout box to 48 |
+| 5.3 | `.filmstrip{gap:7px; padding:9px 4px}` | `:256` | inter-thumb gap 7dp; first thumb's left inset 4dp | gap 7 → 10 |
+| 5.3a | `.filmstrip{overflow-x:auto}` and no scrollbar | `:256-257` | the strip scrolls horizontally with no scrollbar node | drop the scroll |
+| 5.3b | `.filmstrip{overflow-y:visible}` — what lets `.cur` lift out of the row | `:256` | the current thumb's drawn bounds exceed the strip's content box vertically and are **not** clipped | clip the cross axis |
+| 5.4 | `.pthumb{26×34}` | `:259` | every non-current thumb measures 26×34dp | 26×34 → 30×40 |
+| 5.4a | `.pthumb{transition:transform .2s var(--settle)}` | `:260` | the lift animates over 200ms on the settle curve | 200 → 0 |
+| 5.4b | `.pthumb{border-radius:1.5px 3px 3px 1.5px}` — **asymmetric**, the spine is squarer | `:259` | golden + a corner-pixel probe: the two left corners are squarer than the two right | make it uniform |
+| 5.4c | `.pthumb{--paper; 1px --paper-edge; shadow 0 2px 5px -2px}` | `:259-260` | golden | `paper` → `chrome` |
+| 5.5 | `.pthumb::before` 2px `--desk-edge` spine | `:261` | raster probe on the left 2dp column | drop the spine |
+| 5.5a | `.pthumb[data-cover]::before{--matcha}` — **cover and back both** | `:262`, `:696` | the spine reads matcha on `FRONT_COVER` and `BACK_COVER`, desk-edge elsewhere | apply it to page 1 only |
+| 5.6 | `.pthumb.cur{scale(1.16) translateY(-2px)}` | `:264` | centroid of the current thumb's drawn box vs a neighbour's — scale **and** lift together | 1.16 → 1.0 |
+| 5.6a | `.pthumb.cur{border-color:--matcha; shadow 0 9px 16px -6px; z-index:2}` | `:264` | golden; the current thumb paints over its neighbours | drop `z-index` |
+| 5.7 | `.pthumb.cur::after` 4dp `--strawberry` dot, 7dp above, centred | `:265` | raster probe: exactly one strawberry region in the strip, centred over the current thumb | `--strawberry` → `--matcha` |
+| 5.8 | `.pthumb i` three 1px `--ink-faint` rules at 3px pitch, `opacity:.4`, **omitted on cover and back** | `:263`, `:698` | ⛔ **blocked on [D-053](design/V2-SPEC-DEFECTS.md#d-053)** | — |
+| 5.9 | each thumb is a control labelled `Page i of N (front cover)/(back)` | `:697` | the label on the **platform** `AccessibilityNodeInfo` tree, on device and in the CI-26 harness | drop the cover/back suffix |
+| 5.10 | selecting a page scrolls it to centre | `:703` | after selecting the last page, its centre is within the strip's viewport | remove the scroll |
+| 5.11 | `.pgrid` full-cover overlay on `--desk`, `translateY(102%) → 0` at `.3s var(--settle)` | `:350-351` | the overlay covers the phone; mid-animation its top edge is below its resting top | 102% → 0% |
+| 5.11a | the grid is **summoned, never default** | `:705`, `:715` | at rest no grid node exists; the grid button composes it; `Done` removes it | compose it always |
+| 5.12 | `.pgg{repeat(3,1fr); gap:12px}` | `:355` | three cells per row at every width tested; 12dp gutters | 3 → 2 columns |
+| 5.12a | `.pgcell{aspect-ratio:.66; radius:6px; --paper; shadow 0 4px 10px -6px}` | `:356` | measured w/h ratio 0.66; golden for the rest | .66 → 1.0 |
+| 5.13 | `.pgcell.cur{border-color:--matcha; border-width:2px}` — 2px where others are 1px | `:357` | the current cell's border **width and colour in one matcher** | width 2 → 1 |
+| 5.13a | `.pgcell:active{transform:scale(.96)}` | `:357` | pressed cell's drawn width = .96 × resting (a **literal** .96, not the constant) | .96 → 1.0 |
+| 5.14 | `.pgcell b` = `Cover`/`Back` 8px `--matcha-text` 700 upper, top-left; `.pgcell span` = the number, 9px `--ink-faint`, bottom-right | `:358-359`, `:709` | both labels present and in the right corners | swap their corners |
+| 5.15 | header `Your zine · N pages` in `--serif` 17px/500, `Done` in `--matcha-text` 600 13px | `:352-354`, `:707` | the copy reads the document's real N; the two type roles by golden | serif → sans |
+| 5.16 | **N is the document's, never a constant** | [OD-2](#adr-089) / [D-030](design/V2-SPEC-DEFECTS.md#d-030) | strip and grid both render exactly `document.format.pageCount`, asserted at 8 **and** at a fabricated shorter document so no constant can pass | hard-code `12`; hard-code `8` |
+
+<a id="adr-095-blockers"></a>
+### 3. The pre-implementation blocker check
+
+**One question is the owner's. Everything else resolved from rulings already in hand — and is recorded here so
+that resolution is auditable rather than assumed.**
+
+⛔ **[D-053](design/V2-SPEC-DEFECTS.md#d-053) — the frozen thumb is an abstraction; the shipped thumb is the
+page.** `EditorPageStrip` renders a **live miniature** of each page through the same `SceneRenderer` tape the
+canvas uses (`EditorPageStrip.kt:204-244`), so a card looks like the page it navigates to. The frozen `.pthumb`
+is a 26×34 blank sheet with three faint rules — and `.pthumb i` is drawn on **every interior page whether or not
+it holds text**, so on this product it would be decoration that is false on most pages. Row 5.8 cannot be built
+either way without deciding which one the product is. **Not resolvable from existing rulings:** OD-2 settled the
+page *count*, D-009 settled the *targets*, and OD-9/OD-11/OD-14 govern verbs and toolbars, not this. The freeze's
+own [§E.2](design/V2-BENCH-REVIEW.md) audit rebuilt the navigation *from the prototype's slider pips* — it was
+not ruling against live miniatures, because the prototype never had any.
+
+✅ **Cleared without an owner, each by a ruling already accepted:**
+
+| Question | Resolved by |
+|---|---|
+| The 34dp grid button and the 26×34 thumbs are far under the 48dp floor | **[D-009's ruling](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)** already names this exact surface — *"the Bench's filmstrip and swatch grid keep their frozen 26×34"* — and expands the targets invisibly. Row 5.2b asserts both halves, as C4's did |
+| The strip's current-page marker is a **yellow tape strip** in the shipped code, and `EditorPageStrip.kt:186-190` records that divergence as *"left for a design decision"* | The freeze **is** that decision: rows 5.6/5.6a/5.7 specify scale, lift, matcha border and the strawberry dot. C5 closes the KDoc's open question rather than carrying it |
+| Cover and back detection | The model already carries `PageRole.FRONT_COVER` / `BACK_COVER` (`ModelEnums.kt:46-54`). C5 reads the **role**, not the index — strictly better than the freeze's `i===1||i===NP`, and it cannot drift if a format ever orders pages differently |
+| The freeze gives each thumb `role=button`; the shipped card is a `selectable` with `Role.Tab` and a selected state | Kept as shipped, per C2b's rule that a parity phase does not weaken a conformance path. The frozen **label** is adopted, the stronger role is not discarded. Recorded as a deviation, not silently |
+| Is the summoned grid a new capability? | No — [OD-2 §2.3](#adr-089) names it explicitly: *"the filmstrip … and the summoned page grid are all parity over the document's existing eight pages"*. It navigates with the shipped `Intent.GoToPage`; it adds no page verb |
+| The 1 → 32 morph | [D-030](design/V2-SPEC-DEFECTS.md#d-030) / OD-2: specified-but-unreachable at eight pages. C5 builds the one reachable shape and records the rest |
+
+**Carried for awareness, not fixed here** — [D-049](design/V2-SPEC-DEFECTS.md#d-049) (the nav row is part of the
+bottom chrome whose height C5 changes, from the shipped strip's box to the frozen 56dp; the *direction* is
+favourable, but the decision D-049 asks for is still the owner's), [D-051](design/V2-SPEC-DEFECTS.md#d-051) and
+[D-052](design/V2-SPEC-DEFECTS.md#d-052).
+
+<a id="adr-095-not-done"></a>
+### 4. What C5 must not do
+
+- **Do not add, delete or reorder pages**, and do not draw a control that implies it — OD-2 re-seated all three,
+  and the freeze's own grid caption says *"drag to reorder (in the build)"*, which is prototype narration.
+- **Do not read `N` from a constant.** Row 5.16's second mutation exists because `8` is the right number for the
+  wrong reason: it survives until the day a second format lands.
+- **Do not clip the strip's cross axis.** The lift is the whole point of *"the one in your hand"* (5.3b).
+- **Do not resolve D-053 by building a smaller version of either answer** — a miniature "sometimes", or rules
+  drawn only when a page happens to hold text, would be a third design nobody approved.
