@@ -137,6 +137,12 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
 | ~~[**D-047**](#d-047)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-047-ruling), OD-21, Option A; the frozen Bench is AMENDED for the fifth time** | the frozen `.bar` drew **three** slots while [OD-9](#d-031-ruling) keeps redo, [OD-11](#d-034-ruling)/[OD-14](#d-039-ruling) keep **both** shipped add verbs, and `.add`'s handler opens a chooser whose region OD-2 re-seated beyond Phase C. Ruled: the bar becomes **`Undo · Redo · Add · Done`**; `Add` opens the frozen chooser with **only its Text and Photo rows released into C4**, Art staying fenced behind C8 — *“a fence reassignment, not a capability reassignment”*; the chooser uses the shipped `ZSheet`; **Text reuses `addTextAndEdit`** so C3's in-place model is untouched; `EditorSupplyTray` is retired. One line of frozen markup added (`#redoBtn`, `:466`), **no CSS changed**. The accepted price, recorded: both add verbs sit one tap deeper than they do today |
 | ~~[**D-048**](#d-048)~~ | ✅ **RESOLVED 2026-08-04 by rulings already in hand — a recorded deviation, not an owner question, recorded exactly as [D-042](#d-042) was. No OD number, because none was needed** | `Done` follows the frozen two-state behaviour (`:653`): while a session is open C3's `#doneEdit` owns *finish* and the bar's `Done` is **withheld at the frozen `.icon-btn:disabled` `.35`** (`:269`) — [OD-14](#d-039-ruling)'s own method, as C2b applied it, using a presentation the file already draws; with no session the bar's `Done` owns *clear selection*, which is deselect's **first drawn control**, since [OD-13](#d-037-ruling) gave it only a gesture and a gesture has no presentation for OD-14 to count. **`Preview ›` does not move** — OD-9's *reuse, don't invent* is satisfied by leaving it exactly where it ships |
+| ~~[**D-059**](#d-059)~~ | ✅ **RESOLVED 2026-08-05 — [owner ruling](#d-059-ruling), OD-23, Option (a); the frozen Bench is AMENDED for the seventh time** | [OD-22](#d-053-ruling) made the thumb's interior *the real page*. The sheet's ground is still the room's `--paper`, which in dark theme is `#2F2A22` — so in dark theme the miniature draws the page's content with **no paper under it**, and the user's own text measures **1.21:1** against the sheet (8.02:1 in light, same document, same words). This is [D-035](#d-035)'s failure a second time, one surface along; [OD-12](#d-035-ruling) ruled *the artifact does not dim* and the frozen file implements it as `.page{--paper:#F7F2E7}` (`v2-bench.html:222`) — an island scoped to `.page`, which the thumb is not. Extending it to `.pthumb` is a **seventh amendment to the frozen Bench** and therefore the owner's call, not the implementer's. |
+| ~~[**D-058**](#d-058)~~ | ✅ **FIXED 2026-08-05 — a C5 defect, found by independent review** | C5 emitted the frozen `.navrow` **below** the bar. The freeze opens `.navrow` at `v2-bench.html:481` and `.bar` at `:488`, both in `.phone`'s normal flow, so the sheets belong above `Undo · Redo · Add · Done`. Nothing caught it: every test measured one row against itself, and ADR-095's own device checklist described the frozen order while the build did the opposite. The row is moved and the *relation* is now asserted — in `BenchC5Test` and in CI-31's `SurfaceTraversalOrderTest`, where it is also the reading order. |
+| ~~[**D-057**](#d-057)~~ | ✅ **FIXED 2026-08-05 — a C5 defect, found by Device Pass 1** | The frozen `.cur{z-index:2}` was transcribed as `Modifier.zIndex`, which reorders the **platform accessibility tree** as well as the paint: the current sheet was published last, so a screen reader met page 1 after every other page. `traversalIndex` did not override it. The `zIndex` is dropped — a recorded deviation under the freeze's own allowance for post-freeze accessibility work — and its cost is a shadow tail, measured from the freeze's own geometry. |
+| ~~[**D-056**](#d-056)~~ | ✅ **FIXED 2026-08-05 — a C5 defect, found by Device Pass 1** | C5 read `PageRole` to decide which sheets are covers, on an ADR-095 §3 clearance claiming the model carries those roles. It does not: every document is built with every page `INTERIOR`. Three frozen rows — 5.5a, 5.9's cover clause, 5.14 — were dead code on every real document, and passed anyway because all three test fixtures fabricated the roles. Covers are read by **position** now, as the freeze always said. |
+| ~~[**D-055**](#d-055)~~ | ✅ **FIXED 2026-08-04 — a C4 test defect, found by C5's verification and repaired outside the C5 fence** | `ZinelyNavHostTest` waited ten seconds for the text *"Add a photo"* as its definition of **Ready**; [OD-21](#d-047-ruling) retired that shelf, so two `:app` tests had been failing with `ComposeTimeoutException` since `026d15a`. Reproduced in a clean worktree at `HEAD` — with no C5 change present — before it was attributed. Now waits on `BenchBottomBarTestTag`, which is what Ready actually draws |
+| ~~[**D-054**](#d-054)~~ | ✅ **FIXED 2026-08-04 — a C4 golden defect, found by C5's verification and repaired outside the C5 fence** | C4 added the `Redo` mark to `ZinelyV2Icons` without re-recording `:core:ui`'s four catalog goldens, which have depicted a 36-mark set against a 37-mark code base ever since. It survived because `testDebugUnitTest` **captures** and only `verifyRoborazziDebug` **compares** — and C4's run named the former. Both goldens re-recorded; the sole delta is the new mark and the one-cell shift |
 | ~~[**D-053**](#d-053)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-053-ruling), OD-22, Option (c); the frozen Bench is AMENDED for the sixth time** | the frozen  () is a **blank 26×34 paper sheet with three faint rules** drawn on every interior page; the shipped  draws a **live miniature of the real page** through the canvas's own  tape. Transcribing the freeze removes the only place you can see what is on another page **and** states something false on most pages ([D-044](#d-044)'s class, which [OD-17](#d-044-ruling) fixed by amending the file); keeping the miniature diverges from the surface [§E.2](V2-BENCH-REVIEW.md) was proudest of. No existing ruling reached the thumb's interior — OD-2 settled the count, D-009 the targets. **Ruled: amend first.** `.pthumb i` and its `<i>` are deleted from the specification, the interior becomes the real rendered page, and every other frozen property — size, radius, spine, shadow, transition, the `.cur` lift and the strawberry dot — is preserved and transcribed. **The grid is not amended.** The accepted price, recorded: at 26×34dp the miniature is a smudge, and C5 does not enlarge the thumb to compensate |
 | [**D-052**](#d-052) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; placement policy, not C4's fence** | `Add › Text` drops the new box **on top of** what is already on the page: the arriving box's editing outline enclosed an existing "Hello", so the page read as one block holding both the old words and the cursor. The drop comes from `addTextAndEdit`, which [OD-21](#d-047-ruling) required C4 to reuse **by name**; what C4 changed is the frequency — the route is now two taps from anywhere, so the collision is met on pages that already have content |
 | [**D-051**](#d-051) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; a defect in the FROZEN FILE, not in the Compose** | the chooser's `Photo` row is marked with the *replace / refresh* glyph — `v2-bench.html:721` builds it from `ICON.replace`, and `BenchAddChooser.kt` transcribes it faithfully. Beside `Text`'s clean `A` it reads as *"replace the photo"*. It matters more now than in the prototype: after [OD-21](#d-047-ruling) retired the shelf's *"Add a photo"* card, this glyph is the **only** visual the verb has. A fix amends the frozen file first, which is the owner's act |
@@ -2977,6 +2983,219 @@ acceptable is a decision about what `Done` *means* on this screen, and that is t
 
 **Not a blocker for the rest of C4.** `.status`, `.saved`, `.snack` and the soft-delete rows are untouched by
 this and can be built whichever way `Done` is ruled.
+
+---
+
+### D-059 — the miniature lost its paper, and in dark theme the page went with it {#d-059}
+
+**Raised 2026-08-05 by C5's Device Pass 1 on `SM-A176B` / Android 16 / density 420. ⛔ OWNER DECISION OWED —
+this blocks C5's acceptance and no work-around has been applied.**
+
+**What was seen.** With the device in dark theme, a sheet in the filmstrip draws the page's *elements* — the
+photo card, the words — directly on the sheet's own dark ground. The page's paper is missing, so a text
+element renders dark ink on a dark sheet. Measured from the screenshot, on the front cover of a real
+document carrying the words *"Page one"*:
+
+| theme | sheet ground | the page's own text | contrast |
+|---|---|---|---|
+| dark | `#312C24` | `#201D18` | **1.21 : 1** |
+| light | `#F7F2E7` | `#584636` | 8.02 : 1 |
+
+Same document, same words, same build. In light theme the miniature is a picture of the page; in dark theme
+it is a photo floating in a hole.
+
+**Why it happens, and why nothing caught it.** The frozen `.pthumb{background:var(--paper)}` (`:282`) resolves
+against the **room's** `--paper`, which the dark theme sets to `#2F2A22` (`:162`). The page is different: the
+freeze makes `.page` a light island — `.page{--paper:#F7F2E7;--ink:#2A251E;…}` (`:222`) — the amendment
+[OD-12](#d-035-ruling) produced when [D-035](#d-035) found the same failure on the canvas at 1.60:1. The thumb
+never needed that island, because until [OD-22](#d-053-ruling) its interior was three faint placeholder rules
+that carried no user content at all. **OD-22 changed what is inside the sheet and nobody revisited what is
+underneath it.** The dark golden passes because it was recorded from this build, and no probe compares the
+thumb's ground to the page's — the same shape of hole D-035 fell through on C1.
+
+**Why this is the owner's decision and not the implementer's.** Fixing it means the thumb's interior no longer
+paints the room's `--paper` — a **frozen property**, changed in a frozen file, which is a visual amendment and
+not one of the four things a freeze permits after the fact. Every previous amendment (six of them) was an
+owner ruling. The principle behind OD-12 plainly reaches this case; its *implementation* was scoped to
+`.page`, and extending that scope is an amendment.
+
+**Options, with what each costs.**
+
+- **(a) Extend the light island to the thumb's interior.** The sheet's interior paints the page's paper
+  (`#F7F2E7`) in both themes; the sheet's edge, spine, shadow and the row around it stay chrome. The
+  miniature then matches the canvas, which is what OD-22 said it is a miniature *of*. Cost: a dark-theme
+  strip of eight small light rectangles — brighter chrome than the freeze draws, and C1 already paid this
+  price knowingly for the canvas. One golden re-records; a probe and a mutation guard it.
+- **(b) Give only the page's *ink* the island** (dark-theme thumbs keep the dark ground, but the page's text
+  renders in a light ink). Cost: the miniature stops being a faithful reduction of the page — the same
+  objection that retired the placeholder rules, in a subtler form. Not recommended.
+- **(c) Accept it as a limitation of the miniature at 26×34dp.** Cost: in dark theme the strip tells you
+  nothing about pages whose content is text, which is most pages of most zines, and OD-22's accepted price
+  was *"a smudge rather than a picture"* — not *"nothing at all"*.
+
+**Not a blocker for anything else in C5.** Every other row is built, asserted and device-verified; this is one
+paint decision on one surface. But the strip is C5's centrepiece, and shipping it half-legible in dark theme
+would repeat, knowingly, the defect C1 was reopened for.
+
+---
+
+#### Owner ruling — OD-23 {#d-059-ruling}
+
+**Ruled 2026-08-05. Option (a): extend the light island to the thumb's interior. The frozen Bench is amended
+for the seventh time.**
+
+**What the amendment says.** `.pthumb` becomes a light-theme island in the same manner `.page` has been one
+since [OD-12](#d-035-ruling) — restated in `docs/design/mockups/v2-bench.html` immediately above the existing
+`.pthumb` rule, with the amendment recorded in the file's own amendment log:
+
+```css
+.pthumb{--paper:#F7F2E7;--paper-edge:#EEE6D4;--ink:#2A251E;--ink-soft:#5B5347;--ink-faint:#8C8269;}
+```
+
+**Five tokens, not eight — and that is the whole of the ruling's precision.** `.page` restates eight;
+`--matcha` and `--strawberry` are deliberately **not** carried into `.pthumb`, because on this surface they are
+not the page's ink at all: the spine, the `.cur` border and the current dot are the **row's** marks *on* the
+sheet, and they must read against the chrome the row is drawn in, not against the paper. The same distinction
+C1 drew when it left the sheet's *shadow* to the room ([D-010](#d-010)'s lesson: an artifact that lightens its
+room is a second defect, not a fix). `--frame-shadow`, `--chrome` and `--desk` are likewise untouched.
+
+**Nothing else changes.** Sheet geometry, the 1.16 lift, the 7dp pitch, the spine, the `.cur` border, the dot,
+the row's ground, the transition — all as frozen. **The page grid is *not* amended**: its cells are drawn at a
+size where the room's own paper never produced the failure, and widening the amendment past the defect is how
+freezes rot.
+
+**How it was implemented.** HTML first (the amendment above), then Compose: `benchThumbIsland(room)` in
+`BenchPageNav.kt` returns the room's colours with exactly those five replaced by `zinelyV2LightColors()`, and
+`BenchPageThumb` provides it through `LocalZinelyV2Colors` around the rendered page while painting the sheet's
+own ground and edge from it. Guarded three ways — a pure set-based assertion that the five change and the
+row's marks do not (`BenchC5Test.the_sheet_takes_the_page_s_five_tokens_and_leaves_the_row_s_marks_alone`), a
+threshold-free raster probe on the dark golden that the sheet's interior is `#F7F2E7` **and** the row's ground
+is still chrome, and mutation **M36** (`paper = light.paper` → `paper = room.paper`).
+
+**The accepted price, recorded.** In dark theme the filmstrip is a row of small light rectangles — brighter
+chrome than the freeze draws. That is the same price C1 paid knowingly for the canvas, and it is the reason the
+island stops at five tokens.
+
+---
+
+### D-058 — the navigation row shipped below the bar {#d-058}
+
+**Raised 2026-08-05 by C5's independent review. ✅ FIXED the same day.**
+
+The frozen `.phone` opens `.navrow` at `v2-bench.html:481` and `.bar` at `:488`, both in normal flow — the
+filmstrip of sheets sits **above** `Undo · Redo · Add · Done`, nearer the page it navigates. C5's Column
+emitted them the other way round.
+
+**Why nothing caught it.** Every C5 test measured a row against *itself* — the nav row's own 56dp height, the
+bar's own contents, the grid's bottom edge against whichever row happened to be under the canvas. A
+*relation* between two rows was asserted nowhere, so the inversion was invisible to 38 focused tests, 25
+mutations and five goldens. Worse, [ADR-095 §7](../DECISIONS.md#adr-095-device-checklist)'s device checklist
+stated the frozen order as fact — *"sits above C4's bar"* — so the manual pass would have read the checklist,
+seen the opposite on the screen, and had to decide which document was wrong.
+
+**The fix.** `BenchPageNav` is emitted between the canvas and the bar, and the relation is now asserted
+twice: geometrically in `BenchC5Test.the_navigation_row_sits_above_the_bar_as_the_freeze_stacks_them`, and as
+*reading* order in CI-31's `SurfaceTraversalOrderTest`, where the sheets now precede the bar's four verbs.
+The screen-level goldens (`editor_screen_light/dark`, `bench_editing_state_light`) were re-recorded and show
+the frozen stack.
+
+**The lesson, which is the general one.** A suite that only ever measures each component against its own
+specification cannot see a composition defect. Both reviews of this package found their strongest finding by
+reading the frozen file against the emitted tree, not by running anything.
+
+---
+
+### D-057 — `z-index` moved the reading order, not just the paint {#d-057}
+
+**Raised 2026-08-05 by C5's Device Pass 1. ✅ FIXED the same day.**
+
+`Modifier.zIndex(2f)` on the current sheet — a literal transcription of the frozen `.cur{z-index:2}`
+(`v2-bench.html:288`) — reorders the children Compose publishes to the platform accessibility tree. The
+current sheet was therefore the **last** traversal stop in the strip: a screen-reader user met the page they
+were on after all the others. `Modifier.semantics { traversalIndex = … }` on each sheet, with
+`isTraversalGroup` on the strip, did **not** override it.
+
+**Caught by** `BenchPageNavA11yTest.every_sheet_is_one_named_traversal_stop`, which asserts the platform's
+own traversal sequence, and independently by CI-31's `SurfaceTraversalOrderTest`. Neither the merged-tree
+semantics assertions nor any golden could see it.
+
+**The fix and its price.** The `zIndex` is not transcribed. That is a deviation from a frozen property, and
+it is permitted in terms: *"Allowed after freeze: … accessibility improvements"* (CLAUDE.md, DESIGN FREEZE).
+The price was measured from the freeze's own numbers rather than assumed — at `scale(1.16)` a 26dp sheet
+overhangs 2.08dp a side into a 7dp gap, so no two sheets ever overlap and the raise protected only the
+current sheet's shadow tail against a neighbour 7dp away. Reading order is a conformance path; a shadow tail
+is not.
+
+---
+
+### D-056 — the cover treatments were dead code on every real document {#d-056}
+
+**Raised 2026-08-05 by C5's Device Pass 1. ✅ FIXED the same day.**
+
+C5 decided cover-ness from `PageRole`, on the strength of an [ADR-095 §3](../DECISIONS.md#adr-095-blockers)
+clearance that called it *"strictly better"* than the freeze's `i===1||i===NP`. The product never assigns
+those roles: `EditorBootstrap.kt:26` and `RoomProjectRepository.kt:475` build every page as
+`PageRole.INTERIOR`, and `FRONT_COVER`/`BACK_COVER` appear in `src/main` only in `:core:imposition`'s
+`Convention.kt:56-63`, which maps **panel** roles at print time.
+
+So rows 5.5a (the matcha spine), 5.9's cover clause (*"(front cover)"* / *"(back)"*) and 5.14 (the
+`COVER`/`BACK` badge) never fired. On device: no badge, no spine, and the platform tree read *"Page 1 of 8"*.
+
+**Why no instrument caught it.** All three C5 test fixtures constructed pages with fabricated cover roles, so
+every assertion, golden probe and mutation exercised a data shape the product cannot produce. This is the
+sharpest instance yet of the rule that a test fixture is a claim about reality: the fixtures now build pages
+exactly as the product does, and the reason is recorded at each of the three.
+
+**Fixed** by `benchCoverAt(pageNumber, pageCount)` — the freeze's own rule, read by both the strip and the
+grid. See [ADR-095 §3a](../DECISIONS.md#adr-095-cover-correction) for why this needed no owner ruling.
+
+---
+
+### D-055 — two `:app` navigation tests waited ten seconds for copy C4 had retired {#d-055}
+
+**Raised 2026-08-04 by C5's cross-module full verification. ✅ FIXED the same day — a test defect belonging to
+[C4](../DECISIONS.md#adr-094), repaired outside the C5 commit fence.**
+
+`ZinelyNavHostTest` used *"the supply tray is up"* as its definition of **Ready**, and waited for the literal
+text `"Add a photo"`. [OD-21](#d-047-ruling) retired that shelf: the frozen `.bar` draws `Undo · Redo · Add ·
+Done` and names no medium, so the string stopped existing on the editor screen. Two tests —
+`the single Proof surface stacks above the editor and loss-safe back returns to it` and `a fast reopen of the
+just-closed project boots Ready - never the busy error` — therefore spent ten seconds waiting for a phrase that
+could never arrive and failed with `ComposeTimeoutException`.
+
+**Attributed to C4 on evidence, not on argument.** Both failures were reproduced in a clean `git worktree` at
+`HEAD` — that is, with **no C5 change present at all** — before any attribution was made. The cause is visible
+in `git show 026d15a`: C4 replaced the shelf and did not update these two `:app` waits.
+
+**Fixed** by waiting on `BenchBottomBarTestTag` instead: the bar is what "Ready" actually draws, and a test tag
+cannot be retired by a copy change the way the phrase it replaced was.
+
+**The lesson is the one [ADR-094 §6.12](../DECISIONS.md#adr-094) already records, in a second costume.** That
+entry was about a task Gradle skipped as up-to-date; this one is about a *module the verification command never
+named*. Both produce the same false green, and the same repair: run the whole tree, with `--rerun-tasks`.
+
+---
+
+### D-054 — the V2 catalog goldens went stale the moment C4 added an icon {#d-054}
+
+**Raised 2026-08-04 by C5's cross-module full verification. ✅ FIXED the same day — a golden defect belonging to
+[C4](../DECISIONS.md#adr-094), repaired outside the C5 commit fence.**
+
+C4 added the **`Redo` mark** to `ZinelyV2Icons` (`026d15a`) — the icon [OD-21](#d-047-ruling)'s fourth control
+needed — and updated the icon set's own parity test, but did not re-record `:core:ui`'s catalog goldens. All
+**four** are affected — `v2_catalog_icons_light/dark.png` and `v2_catalog_all_light/dark.png` — though only the
+two light ones failed the verify run, because a golden is compared only by the test that captures it and the
+dark pair had not been reached before the build stopped. They have depicted a 36-mark set ever since, while the
+code draws 37; every mark after the insertion point shifts one cell, so the comparison fails across the whole
+sheet even though exactly one glyph is new.
+
+**It survived because nothing looked.** `verifyRoborazziDebug` is what compares a golden; `testDebugUnitTest`
+merely *captures*. C4's verification ran the latter, so the mismatch sat unread from `026d15a` until a run that
+named the verify task on the whole tree.
+
+**Fixed** by re-recording all four and reading the compare images: the sole change is the `Redo` mark and the
+one-cell shift it causes. (The first draft of this entry said *"two goldens"*, counting the two that failed
+rather than the four that moved — corrected after independent review checked the diff against the prose.) See [D-055](#d-055) for the same class of miss, found in the same run.
 
 ---
 

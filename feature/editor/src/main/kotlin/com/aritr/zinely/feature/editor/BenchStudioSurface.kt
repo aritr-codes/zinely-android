@@ -459,8 +459,8 @@ internal fun BenchKeepClear(
  * cannot have — and OD-2 re-seated that capability beyond Phase C, so [pageCount] is read from the
  * document and never written as a constant.
  *
- * **Silent to assistive technology, deliberately.** `EditorPageStrip` already announces the page
- * position (`Copy.PageStrip.pageNumber`) and is the control that can *change* it; this is the sheet's
+ * **Silent to assistive technology, deliberately.** [BenchPageNav] already announces the page
+ * position ([benchPageLabel]) and is the control that can *change* it; this is the sheet's
  * visual echo of that same fact. Left announcing, it inserts a second "3 / 12" in the middle of the
  * canvas subtree — a duplicate reading, and a traversal stop between the work and the tray that the
  * design does not have. `SurfaceTraversalOrderTest` caught exactly that. Nothing is withheld: the

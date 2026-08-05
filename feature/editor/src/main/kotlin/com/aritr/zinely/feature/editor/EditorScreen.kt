@@ -27,6 +27,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.IntOffset
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Alignment
@@ -257,6 +258,15 @@ public fun EditorScreen(
     // ----- C4 (ADR-094) -------------------------------------------------------------------
     // The Add chooser (rows 4.4a-4.4d). Open/closed only: the sheet itself is ZSheet, per OD-21.
     var addChooserOpen by remember { mutableStateOf(false) }
+
+    // ----- C5 (ADR-095) -------------------------------------------------------------------
+    // The page grid is *summoned*, never default (row 5.11a): this flag is the whole of its existence,
+    // and while it is false the overlay composes nothing at all.
+    var pageGridOpen by remember { mutableStateOf(false) }
+    // Back stands the grid down instead of leaving the editor. The frozen HTML cannot specify this — a
+    // prototype has no back button — but on Android an overlay you summoned is an overlay Back dismisses,
+    // and the grid consumes every touch beneath it, so without this its only exits are `Done` and a cell.
+    BackHandler(enabled = pageGridOpen) { pageGridOpen = false }
 
     // The frozen soft delete (rows 4.13-4.14). `del()` fades the element and shows a snack with
     // Undo; `undo()` restores it. The product already has a real undo stack, so the snack's Undo
@@ -788,7 +798,7 @@ public fun EditorScreen(
                 // mid-session (most obviously the soft keyboard opening under an inline edit) moved the
                 // paper immediately and left the render behind, until the session ended. Both now lag
                 // together, which is invisible, instead of diverging, which reads as the app losing the
-                // page. Same shape as EditorPageStrip's thumbnails, where one scale drives both the output
+                // page. Same shape as BenchPageNav's thumbs, where one scale drives both the output
                 // box and the render and they cannot disagree.
                 //
                 // The remaining coupling is `pageOffset`: the render translates by it, this backing does
@@ -1224,8 +1234,75 @@ public fun EditorScreen(
                     },
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
+
+                // C5 rows 5.11-5.15: the frozen `.pgrid` (`v2-bench.html:374-383`, markup `:470`).
+                //
+                // **Inside the canvas, for the same reason `.snack` above is.** The markup at `:470` sits
+                // within `.canvasArea` (opened `:416`, closed `:471`) and the rule is
+                // `position:absolute; inset:0` — not `fixed` — so the frozen grid covers **the canvas and
+                // nothing else**: the status strip above it and the filmstrip and bar below it stay
+                // visible and live while it is open. The first cut of C5 made it a full-screen Dialog and
+                // recorded, in this comment and in ADR-095 row 5.11, that the freeze said `fixed`. It does
+                // not. Independent review caught it by reading the HTML rather than the ADR — the second
+                // time in two packages that this exact mistake has been made in this exact file.
+                //
+                // The Dialog was chosen to get system Back for free. That is a real problem and it is not
+                // solved by covering more of the screen than the design does; it is recorded as an
+                // observation for the device passes instead of being fixed by a silent redesign.
+                //
+                // Room palette: this is chrome over the artifact, not the artifact (D-035), and the sheet
+                // island above re-declares `ink`.
+                CompositionLocalProvider(LocalZinelyV2Colors provides roomColors) {
+                    BenchPageGrid(
+                        visible = pageGridOpen,
+                        pages = uiState.document.pages,
+                        currentPageIndex = uiState.currentPageIndex,
+                        // Choosing a page here does what choosing one on the strip does, and then stands
+                        // the grid down — a picker that stayed open after picking would be a panel, which
+                        // is what "summoned, never default" refuses.
+                        onSelectPage = { idx ->
+                            if (reframing != null) commitReframe()
+                            dispatch(Intent.GoToPage(idx))
+                            pageGridOpen = false
+                        },
+                        onDismiss = { pageGridOpen = false },
+                    )
+                }
             }
         }
+
+        // C5 rows 5.1-5.10: the frozen `.navrow` — the grid button and the filmstrip of little sheets,
+        // replacing V1's tilted cards. Every page of the document stays reachable exactly as before; the
+        // capability is untouched and only the paint changed (OD-9, D-009).
+        //
+        // It is emitted HERE, between the canvas and the bar, because that is the frozen stacking order:
+        // `v2-bench.html:481` opens `.navrow` and `:488` opens `.bar`, both in `.phone`'s normal flow, so
+        // the sheets sit *above* Undo/Redo/Add/Done. C5 first shipped them the other way round and this
+        // ADR's own device checklist described the frozen order while the build did the opposite — caught
+        // by independent review, not by a test, because nothing asserted the two rows' relative order.
+        // `SurfaceTraversalOrderTest` now does.
+        //
+        // Each thumb mini-renders its page through the SAME render path the canvas uses — which after
+        // OD-22 is the specification, not a divergence from it: the frozen `.pthumb i` rules were deleted
+        // from `v2-bench.html` because a live miniature is the only way to see another page without
+        // going there. Reads pages / current / size / defaults from the same hoisted state and dispatches
+        // Intent.GoToPage; the reducer clears selection + returns to Idle on the switch. Threads the
+        // host's imageBytes so a thumb's images match the canvas.
+        BenchPageNav(
+            pages = uiState.document.pages,
+            currentPageIndex = uiState.currentPageIndex,
+            pageSizePt = pageSizePt,
+            defaults = uiState.document.defaults,
+            // Leaving the panel commits the open framing first (bench: never strand a session on an
+            // off-screen photo), then navigates.
+            onSelectPage = { idx ->
+                if (reframing != null) commitReframe()
+                dispatch(Intent.GoToPage(idx))
+            },
+            onOpenGrid = { pageGridOpen = true },
+            modifier = Modifier.fillMaxWidth(),
+            imageBytes = imageBytes,
+        )
 
         // The supply tray: the visible shelf of craft supplies that replaces the app's lone "Add image"
         // FAB. Every primary action lives here in the thumb zone — add a photo (the old FAB's
@@ -1285,26 +1362,6 @@ public fun EditorScreen(
             onAddPhoto = { dispatch(Intent.RequestAddImage) },
         )
 
-        // The page navigator: makes all pages of the SINGLE_SHEET_8 document reachable (before this
-        // only page 0 was). Each card mini-renders its page through the SAME render path the canvas
-        // uses, so it reads as a real workbench; reads pages / current / size / defaults from the same
-        // hoisted state and dispatches Intent.GoToPage; the reducer clears selection + returns to Idle
-        // on the switch. Threads the host's imageBytes so a card's images match the canvas.
-        EditorPageStrip(
-            pages = uiState.document.pages,
-            currentPageIndex = uiState.currentPageIndex,
-            pageSizePt = pageSizePt,
-            defaults = uiState.document.defaults,
-            // Leaving the panel commits the open framing first (bench: never strand a session on an
-            // off-screen photo), then navigates.
-            onSelectPage = { idx ->
-                if (reframing != null) commitReframe()
-                dispatch(Intent.GoToPage(idx))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            imageBytes = imageBytes,
-        )
-
         // The transform context bar is hidden during a Reframe session — the Reframe controls take over.
         // "During a session" means a *presented* one: while readability is still resolving, and for a
         // session that is refused outright, the bar stays put so the editor is visually untouched by a
@@ -1362,7 +1419,6 @@ public fun EditorScreen(
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
         }
-
     }
 }
 

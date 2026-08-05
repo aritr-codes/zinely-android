@@ -144,6 +144,10 @@ dependencies {
     // collectAsStateWithLifecycle in EditorScreen (CLAUDE.md). Same 2.6.1 as -ktx — no version bump.
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    // `BackHandler` for C5's summoned page grid (ADR-095 row 5.11a). Back closing a full-canvas overlay
+    // is a platform contract, not a frozen-design property — the freeze has no Back to describe. Same
+    // artifact and version :app already uses; nothing new enters the graph.
+    implementation(libs.androidx.activity.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     // Unit tests run on the JVM via Robolectric NATIVE (real Skia) — no emulator, fits the existing

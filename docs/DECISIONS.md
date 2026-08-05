@@ -4164,10 +4164,18 @@ on surfaces Pass 1 measured as correct — which is why all three are records ra
 
 **C5 — page navigation: the filmstrip of little paper sheets and the summoned page grid. Written before any
 production code, per [ADR-089 §2.2](#adr-089).** Its mandatory pre-implementation blocker check found **one
-question that is genuinely the owner's**, so this ADR opens as `Proposed` with its property table populated and
-**no `src/main` change made**.
+question that is genuinely the owner's**, so this ADR opened as `Proposed` with its property table populated
+and **no `src/main` change made**. A **second** owner question — [D-059](design/V2-SPEC-DEFECTS.md#d-059) —
+was found later, by hardware, halfway through Device Pass 1, and stopped the package a second time. Both were
+ruled; both amended the frozen Bench; neither was worked around.
 
-- **Status:** 📝 `Proposed` **2026-08-04.** ✅ **Unblocked the same day.**
+- **Status:** ✅ **`Accepted` 2026-08-05** — 31 property rows built, **44 mutations / 44 killed**, whole-project
+  sweep green, three independent reviews reconciled, and **both device passes run from the beginning on the
+  amended build** ([§8](#adr-095-device), [§8b](#adr-095-pass-2)). The package needed **one owner ruling
+  mid-verification** and stopped for it rather than working around it:
+  [D-059](design/V2-SPEC-DEFECTS.md#d-059) is ruled **[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling), Option
+  (a)** — **the frozen Bench is amended for the seventh time**, `.pthumb` becoming a light-theme island of five
+  tokens. Previously: 📝 `Proposed` **2026-08-04.** ✅ **Unblocked the same day.**
   [D-053](design/V2-SPEC-DEFECTS.md#d-053) is ruled **[OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling), Option
   (c)** — **the frozen Bench is amended for the sixth time**: `.pthumb i` and the `<i>` that carried it are
   **deleted from the specification**, the thumb's interior becomes the real rendered page, and every other frozen
@@ -4216,7 +4224,11 @@ ADR-089 also **under-counted two rows**: `.pgcell:active{transform:scale(.96)}` 
 rather than implemented silently.
 
 <a id="adr-095-fpt"></a>
-### 2. Frozen property table — 29 rows
+### 2. Frozen property table — 31 rows
+
+> Row **5.4d** was added on 2026-08-05, after the table was first written, by
+> [OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) — the amendment Device Pass 1 forced. The table is C5's
+> acceptance contract, so an amendment to the freeze adds a row to it; it does not get implemented beside it.
 
 One row per frozen *value*, with its planned assertion and the mutation that must kill it, per the
 [§8.1 format](COMPOSE-IMPLEMENTATION-GUIDE.md#81-the-frozen-property-table). `N` is **always** the document's
@@ -4229,7 +4241,7 @@ One row per frozen *value*, with its planned assertion and the mutation that mus
 | 5.1b | `.navrow{gap:8px; padding:0 10px}` | `:275` | grid button's left inset = 10dp; strip's left edge − button's right edge = 8dp | padding 10 → 16 |
 | 5.2 | `.gridbtn{34×34; border-radius:9px; 1px --chrome-line}` | `:277` | drawn box 34dp square; radius by golden | 34 → 44 |
 | 5.2a | `.gridbtn svg{17px; stroke-width:1.8}` | `:278` | glyph node 17dp; stroke by ink-mass probe | 17 → 20 · 1.8 → 2.6 |
-| 5.2b | D-009: the target, not the paint | [D-009 ruling](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) | `touchBoundsInRoot` ≥ 48dp **and** the drawn box still 34dp, in one test; platform tree on device | grow the layout box to 48 |
+| 5.2b | D-009: the target, not the paint | [D-009 ruling](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) | `touchBoundsInRoot` ≥ 48dp **and** the drawn box still 34dp, in one test; platform tree on device | **none — and deliberately so.** The 48dp floor is delivered by Compose's own pointer-input minimum, not by any C5 code, so there is nothing in this package to break. The mutation this column used to name (*grow the layout box to 48*) would have added `minimumInteractiveComponentSize()` — a change *toward* the defect D-009 warns of, which the drawn-size half of the test would not even catch, since the drawn `Box` is sized 26×34 either way. Recorded as framework-delivered rather than covered by an invented mutation |
 | 5.3 | `.filmstrip{gap:7px; padding:9px 4px}` | `:279` | inter-thumb gap 7dp; first thumb's left inset 4dp | gap 7 → 10 |
 | 5.3a | `.filmstrip{overflow-x:auto}` and no scrollbar | `:279-280` | the strip scrolls horizontally with no scrollbar node | drop the scroll |
 | 5.3b | `.filmstrip{overflow-y:visible}` — what lets `.cur` lift out of the row | `:279` | the current thumb's drawn bounds exceed the strip's content box vertically and are **not** clipped | clip the cross axis |
@@ -4237,15 +4249,16 @@ One row per frozen *value*, with its planned assertion and the mutation that mus
 | 5.4a | `.pthumb{transition:transform .2s var(--settle)}` | `:283` | the lift animates over 200ms on the settle curve | 200 → 0 |
 | 5.4b | `.pthumb{border-radius:1.5px 3px 3px 1.5px}` — **asymmetric**, the spine is squarer | `:282` | golden + a corner-pixel probe: the two left corners are squarer than the two right | make it uniform |
 | 5.4c | `.pthumb{--paper; 1px --paper-edge; shadow 0 2px 5px -2px}` | `:282-283` | golden | `paper` → `chrome` |
+| 5.4d | **`.pthumb` is a light-theme island** — `--paper --paper-edge --ink --ink-soft --ink-faint` restated, `--matcha`/`--strawberry` deliberately **not** ([OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling), the seventh amendment; added to the freeze 2026-08-05) | `:282` (amendment above the rule) | a pure set assertion that exactly those five take the light values while the row's marks stay the room's, **plus** a raster probe that the sheet's interior is `#F7F2E7` in the dark golden and the row's ground is still chrome | `paper = light.paper` → `paper = room.paper` (M36) |
 | 5.5 | `.pthumb::before` 2px `--desk-edge` spine | `:284` | raster probe on the left 2dp column | drop the spine |
 | 5.5a | `.pthumb[data-cover]::before{--matcha}` — **cover and back both** | `:285`, `:720` | the spine reads matcha on `FRONT_COVER` and `BACK_COVER`, desk-edge elsewhere | apply it to page 1 only |
 | 5.6 | `.pthumb.cur{scale(1.16) translateY(-2px)}` | `:288` | centroid of the current thumb's drawn box vs a neighbour's — scale **and** lift together | 1.16 → 1.0 |
-| 5.6a | `.pthumb.cur{border-color:--matcha; shadow 0 9px 16px -6px; z-index:2}` | `:288` | golden; the current thumb paints over its neighbours | drop `z-index` |
+| 5.6a | `.pthumb.cur{border-color:--matcha; shadow 0 9px 16px -6px; z-index:2}` | `:288` | golden, **plus** a matcha count on the current sheet's own crop — the row-wide count is satisfied by the two cover spines alone, which is how a build that stopped ringing the current sheet would have passed | `if (current) matcha else paperEdge` → `paperEdge` (M41). ⚠ this column read *drop `z-index`* until the final review: [D-057](design/V2-SPEC-DEFECTS.md#d-057) had already removed `z-index` from the transcription, so it named a mutation that **could not exist** |
 | 5.7 | `.pthumb.cur::after` 4dp `--strawberry` dot, 7dp above, centred | `:289` | raster probe: exactly one strawberry region in the strip, centred over the current thumb | `--strawberry` → `--matcha` |
 | 5.8 | **the thumb’s interior is the real page** — a live miniature through the canvas’s own `SceneRenderer` tape, not a drawing of text | [OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling); `:285-286`, `:722` | the strip’s thumb and the canvas render the **same** tape for the same page — asserted by rendering a page with a distinctive element and reading the thumb’s raster, not by trusting the call | draw a static placeholder instead |
 | 5.9 | each thumb is a control labelled `Page i of N (front cover)/(back)` | `:721` | the label on the **platform** `AccessibilityNodeInfo` tree, on device and in the CI-26 harness | drop the cover/back suffix |
 | 5.10 | selecting a page scrolls it to centre | `:727` | after selecting the last page, its centre is within the strip's viewport | remove the scroll |
-| 5.11 | `.pgrid` full-cover overlay on `--desk`, `translateY(102%) → 0` at `.3s var(--settle)` | `:374-375` | the overlay covers the phone; mid-animation its top edge is below its resting top | 102% → 0% |
+| 5.11 | `.pgrid` overlay on `--desk`, `translateY(102%) → 0` at `.3s var(--settle)`. **`position:absolute` on markup inside `.canvasArea`** — so it covers the *canvas*, and the status strip, filmstrip and bar stay visible beneath it | `:374-375`, markup `:470` inside `:416`–`:471` | the grid's bottom edge stops at the navigation row's top, and the row and bar are still displayed; mid-animation its top edge is below its resting top | 102% → 0%; make it full-screen |
 | 5.11a | the grid is **summoned, never default** | `:729`, `:739` | at rest no grid node exists; the grid button composes it; `Done` removes it | compose it always |
 | 5.12 | `.pgg{repeat(3,1fr); gap:12px}` | `:379` | three cells per row at every width tested; 12dp gutters | 3 → 2 columns |
 | 5.12a | `.pgcell{aspect-ratio:.66; radius:6px; --paper; shadow 0 4px 10px -6px}` | `:380` | measured w/h ratio 0.66; golden for the rest | .66 → 1.0 |
@@ -4289,7 +4302,7 @@ frozen 26×34 is preserved by the ruling in terms.
 |---|---|
 | The 34dp grid button and the 26×34 thumbs are far under the 48dp floor | **[D-009's ruling](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)** already names this exact surface — *"the Bench's filmstrip and swatch grid keep their frozen 26×34"* — and expands the targets invisibly. Row 5.2b asserts both halves, as C4's did |
 | The strip's current-page marker is a **yellow tape strip** in the shipped code, and `EditorPageStrip.kt:186-190` records that divergence as *"left for a design decision"* | The freeze **is** that decision: rows 5.6/5.6a/5.7 specify scale, lift, matcha border and the strawberry dot. C5 closes the KDoc's open question rather than carrying it |
-| Cover and back detection | The model already carries `PageRole.FRONT_COVER` / `BACK_COVER` (`ModelEnums.kt:46-54`). C5 reads the **role**, not the index — strictly better than the freeze's `i===1||i===NP`, and it cannot drift if a format ever orders pages differently |
+| Cover and back detection | ~~The model already carries `PageRole.FRONT_COVER` / `BACK_COVER` (`ModelEnums.kt:46-54`). C5 reads the **role**, not the index — strictly better than the freeze's `i===1||i===NP`.~~ **WRONG, and falsified by Device Pass 1 — see [§3a](#adr-095-cover-correction). C5 reads the position, as the freeze says.** |
 | The freeze gives each thumb `role=button`; the shipped card is a `selectable` with `Role.Tab` and a selected state | Kept as shipped, per C2b's rule that a parity phase does not weaken a conformance path. The frozen **label** is adopted, the stronger role is not discarded. Recorded as a deviation, not silently |
 | Is the summoned grid a new capability? | No — [OD-2 §2.3](#adr-089) names it explicitly: *"the filmstrip … and the summoned page grid are all parity over the document's existing eight pages"*. It navigates with the shipped `Intent.GoToPage`; it adds no page verb |
 | The 1 → 32 morph | [D-030](design/V2-SPEC-DEFECTS.md#d-030) / OD-2: specified-but-unreachable at eight pages. C5 builds the one reachable shape and records the rest |
@@ -4298,6 +4311,61 @@ frozen 26×34 is preserved by the ruling in terms.
 bottom chrome whose height C5 changes, from the shipped strip's box to the frozen 56dp; the *direction* is
 favourable, but the decision D-049 asks for is still the owner's), [D-051](design/V2-SPEC-DEFECTS.md#d-051) and
 [D-052](design/V2-SPEC-DEFECTS.md#d-052).
+
+<a id="adr-095-cover-correction"></a>
+### 3a. The correction Device Pass 1 forced — covers are a matter of position
+
+**The clearance in §3 was false, and every JVM instrument in the package agreed with it.**
+
+§3 cleared row 5.5a, row 5.9's cover clause and row 5.14 on the claim that the document already carries
+`PageRole.FRONT_COVER` / `BACK_COVER`, and called reading the role *"strictly better"* than the freeze's
+`i===1||i===NP`. It is not what the product does:
+
+| where a document is built | what it assigns |
+|---|---|
+| `app/src/main/java/com/aritr/zinely/editor/EditorBootstrap.kt:26` | every page `PageRole.INTERIOR` |
+| `data-android/src/main/kotlin/com/aritr/zinely/data/android/RoomProjectRepository.kt:475` | every page `PageRole.INTERIOR` |
+
+`FRONT_COVER` / `BACK_COVER` are assigned **nowhere** in `src/main` outside `:core:imposition`'s
+`Convention.kt:56-63`, which maps *panel* roles at print time — a different thing from a document's page
+roles. So on a real document the role branch never fired: no cover label, no `--matcha` spine, no
+`COVER` / `BACK` badge. Three frozen rows were dead code, and the suite proved them anyway because all three
+test fixtures **fabricated** the roles.
+
+**The correction, and why it needed no owner ruling.** The frozen file is canonical and already specifies
+the rule — `buildFilm()` marks covers with `i===1||i===NP` (`v2-bench.html:697`). Returning to it is literal
+parity, not a new decision, and it agrees with the imposition convention that already treats panel 1 as the
+front cover and panel 8 as the back. `benchCoverAt(pageNumber, pageCount)` in `BenchPageNav.kt` is now the
+single source, read by both the strip and the grid. The alternative — assigning real page roles at document
+creation — is a model change outside C5's fence and was **not** taken.
+
+**What stops it recurring.** All three fixtures now build pages the way the product does, every page
+`INTERIOR`, with the reason recorded at each. Two mutations exist for the rule itself (M9 *the first sheet is
+the front cover*, M24 *the last sheet is the back*), kept separate so one assertion cannot cover both.
+
+<a id="adr-095-a11y-correction"></a>
+### 3b. What Device Pass 1 got wrong about accessibility, and the one defect underneath it
+
+Device Pass 1 reported that every sheet published `clickable="false" focusable="false" selected="false"` to
+the platform, and that D-009's 48dp target did not exist. **Both reports were wrong**, and the error was in
+the reading, not the code: `uiautomator dump` was grepped by `content-desc`, which finds Compose's
+*synthetic* content-description child — a node that reports exactly those attributes for every merged
+control in the framework. The real sheet nodes were in the same dump: `86×126px` = 33×48dp, `clickable=true`,
+`focusable=true`, and `selected=true` on the current sheet. The repo's own harness documents the mechanism
+(`PlatformAccessibilityTree.kt`, *"a focusable but unnamed parent whose name lives on a synthetic
+contentDescription child"*), and the ancestor rule means a service still lands on exactly one stop per sheet.
+
+Two fixes attempted against the phantom defect — deleting the miniature's test tag, then clearing the
+subtree's semantics — were **reverted** once the traversal was measured instead of inferred.
+
+**The real defect, which only the traversal measurement could see:** the frozen `.cur{z-index:2}` was
+transcribed as `Modifier.zIndex`, and that reorders the platform tree's children as well as the paint. The
+current sheet was published **last**, so a screen reader met page 1 after pages 2, 3 and 4. `traversalIndex`
+did not override it. The `zIndex` is therefore **not transcribed** — a recorded deviation, permitted by the
+freeze's own rule that accessibility improvements are allowed after freeze. Its cost is bounded and was
+measured from the freeze's geometry: at `scale(1.16)` a 26dp sheet overhangs 2.08dp a side into a 7dp gap,
+so no two sheets ever overlap, and the only thing the raise protected was the current sheet's shadow tail
+against a neighbour 7dp away. Reading order is a conformance path (CI-29/CI-30/CI-31); a shadow tail is not.
 
 <a id="adr-095-not-done"></a>
 ### 4. What C5 must not do
@@ -4312,3 +4380,350 @@ favourable, but the decision D-049 asks for is still the owner's), [D-051](desig
   page renders as an empty sheet, which is what it is.
 - **Do not enlarge the thumb to make the miniature more legible.** The ruling preserves the frozen 26×34 in
   terms, and the smudge is the accepted price, recorded in §3.
+
+<a id="adr-095-implementation"></a>
+### 5. The implementation record
+
+**Files.** New: `BenchPageNav.kt`, `BenchPageGrid.kt`. Retired by `git rm`: `EditorPageStrip.kt` and its three
+test files and two goldens. Modified: `EditorScreen.kt` (the `pageGridOpen` flag, its `BackHandler`, the
+overlay declared **inside** the canvas `BoxWithConstraints`, and the nav row emitted above the bar per
+[D-058](design/V2-SPEC-DEFECTS.md#d-058)), `Copy.kt` (new `Copy.PageNav`; `Copy.PageStrip.pageNumber` deleted
+as dead), `feature/editor/build.gradle.kts` (`activity-compose`, for `BackHandler` only). Also touched, and
+named here because an incomplete file list is how a change hides: `BenchStudioSurface.kt`,
+`EditorContextBar.kt` and `ProofRead.kt` (the retired strip's call sites), `EditorEmptyStateTest.kt`,
+`ReframeSessionTest.kt` and `a11y/SurfaceTraversalOrderTest.kt` (retargeted to the new row),
+`docs/COMPOSE-V2-ROADMAP.md`. **The frozen file itself**, `docs/design/mockups/v2-bench.html` — amended by
+[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) (the `.pthumb` light island plus its amendment-log entry),
+HTML first and Compose second, as the freeze requires. `:core:ui`'s CI-26 harness
+`a11y/PlatformAccessibilityTree.kt`, which gained `stateDescription` because the grid's accessibility defect
+was invisible to every instrument that existed. `docs/DEVICE-VERIFICATION.md`, which gained the two traps this
+package paid for: the `MSYS_NO_PATHCONV` stale-dump trap and the fact that `stateDescription` is absent from
+`uiautomator dump`'s schema altogether. Outside the C5 fence and carried as a separate commit: `:app`'s
+`ZinelyNavHostTest.kt` and `:core:ui`'s `ZinelyV2DimensTest.kt` with four `v2_catalog_*` goldens, both
+[D-054](design/V2-SPEC-DEFECTS.md#d-054)/[D-055](design/V2-SPEC-DEFECTS.md#d-055) — C4 defects C5's
+verification exposed.
+
+**Tests.** `BenchC5Test` (28), `BenchC5GoldenTest` (5), `BenchPageNavA11yTest` (7) — 40 in total, plus CI-31's
+`SurfaceTraversalOrderTest` updated for the new row and for its position in it. Geometry is asserted against **frozen literals**, never
+against the production constants: three tautological assertions were found and rewritten during the package,
+each of which had let its own mutation survive.
+
+**Goldens.** New: `bench_page_nav_light/dark`, `bench_page_grid_light/dark`, `bench_page_grid_open_light` (the
+screen-level frame that proves the overlay is canvas-scoped). Re-recorded: `editor_screen_light/dark`,
+`bench_editing_state_light`.
+
+**Mutation battery — 44 mutations, 44 killed, no survivors and no equivalents.** Each breaks exactly one
+frozen property; the battery records which named test caught it, runs with `-Proborazzi.test.verify=true` so
+a golden is an assertion rather than a photograph, and — after a run whose tail was found to be re-reading
+stale JUnit XML — deletes prior results and refuses a verdict when fewer than the control's **40** tests
+execute. M36 and M37 were added for [OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) and the accessibility fix;
+both died, M36 to the golden probe **and** the pure token assertion, M37 to the two-picker equivalence test.
+
+⚠ **The final run reported one `SKIPPED — anchor not found`, and it is recorded rather than counted as a
+kill.** M12's anchor was the `BenchThumbPage(` call, which OD-23 re-indented by wrapping it in a
+`CompositionLocalProvider`; the battery refused a verdict instead of silently reporting a green mutant. Re-aimed
+and re-run with its control, it died to `bench_page_nav_light` and `bench_page_nav_dark`. The mechanism is
+worth keeping in view: **a mutation whose anchor has drifted is indistinguishable from a mutation nothing
+catches, unless the harness says so out loud.**
+
+⚠ **The first 25 were reported here as complete, and that report was misleading.** They were 25 real
+mutations, honestly killed — but §2 above names a mutation for every row of the property table, and ten of
+those had never been built. A second independent review listed them, and the rows they guard had **no
+instrument of any kind**: the row's `10px` end padding and `8px` gap (5.1b), the strip's `4px` content inset
+(5.3), the `.2s` lift itself (5.4a — `BenchThumbMillis = 0` passed the entire suite), the grid glyph's `17px`
+size and `1.8` stroke (5.2a), the `--desk-edge` spine on an ordinary sheet (5.5 — only the *covers'* matcha
+spine was ever asserted), the grid's `16px` inset (5.11), the page **number** on a cell (5.14 — nothing read
+it), and 5.16's second clause. Ten tests were written first and then M26–M35; all ten died. The lesson is the
+one C4 recorded in a different form: *a battery proves the mutations it contains, and says nothing about the
+rows nobody wrote one for.* The count is meaningless without the table it is measured against.
+
+⚠ **And it happened a second time. The claim that stood here — *"no row is without one"* — was false when it
+was written, and the final independent review proved it by mapping all 37 `what` strings against the table.**
+**Eight** rows named a mutation in §2 that the battery had never contained: 5.2b, 5.3a, 5.3b, 5.4c, 5.6a,
+5.11a, 5.13a and 5.15. Three of them had a test and no mutation; **five had neither**, resting on a golden
+whose own header explains that a hairline or a 2px spine survives its 0.02f threshold. Seven are now built as
+M38–M44 and all seven died. The eighth, 5.2b, has **no C5 code to break** and is recorded in the table as
+framework-delivered rather than papered over with an invented mutation.
+
+Three of the seven needed an assertion before they could have a mutation at all, and two of those are worth
+naming because of *how* they were built: 5.6a's matcha border is counted on the **current sheet's own crop**,
+since the row-wide matcha count was satisfied by the two cover spines alone; and 5.15's serif voice is read as
+the title's **ink mass** — measured at 1302px for the frozen face against 1620px for the sans mutant — after
+the bounding box was measured too and *rejected*, because the two faces differ there by 2.5 %, which no honest
+tolerance separates. **Asserting the measure that cannot discriminate is how a row acquires coverage on paper
+and none in fact**, which is the same failure as having no mutation, wearing a test as a disguise.
+
+The count is therefore **44 mutations against 31 rows**: 30 rows carry at least one, and the 31st is
+framework-delivered. The lesson, twice-learned in one package: *the table is the contract, and only a
+row-by-row audit of the battery against it can say whether the contract is met — the total never can.*
+
+**Deviations from the frozen file, both recorded rather than silent:**
+
+| frozen property | what C5 does | why |
+|---|---|---|
+| `.pthumb i` placeholder rules | not drawn; the interior is the real page | [OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling) deleted them from the specification |
+| `.cur{z-index:2}` | not transcribed | [D-057](design/V2-SPEC-DEFECTS.md#d-057) — it reorders the platform accessibility tree, publishing the current sheet last |
+| `role=button` on a thumb | `Role.Tab` + selected state | §3: a parity phase does not weaken a conformance path (CI-29/CI-30) |
+| `.scrim` behind the grid | omitted | the grid is opaque `--desk` at `inset:0` over the same box, so the scrim is invisible *once the grid has arrived*. **An earlier version of this row claimed it was fully occluded, and that is false:** `.scrim` fades over `.25s` (`v2-bench.html:333-334`) while `.pgrid` slides for `.3s`, so the freeze shows it through the entry. What is lost is 300ms of a fade behind an arriving opaque panel; recorded as the small deviation it is, rather than argued away |
+| `role=button` on a grid **cell** | `Role.Button` + `selected` + **`stateDescription`** | parity — but note the two page pickers now publish *different* roles, `Role.Tab` on a sheet and `Role.Button` on a cell. That is deliberate: the strip is a persistent selector where CI-30 requires a tab, the grid is a transient list of destinations. It is recorded because a reader meeting both would otherwise assume one of them is a mistake |
+
+<a id="adr-095-od23"></a>
+**The seventh amendment, and the accessibility fix Device Pass 1 held open.** Device Pass 1 stopped at item 5
+with two findings that outlived it, and both are closed here:
+
+- **[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling)** — the miniature drew the page's content on the *room's*
+  paper, so in dark theme the user's own words measured **1.21:1** against the sheet (8.02:1 in light, same
+  document). This repaints a frozen property, so it was **not** worked around: the pass was halted, the defect
+  written up with costed options, and the owner ruled option (a). The frozen HTML was amended first, then
+  transposed into Compose as `benchThumbIsland` — **five** tokens, not `.page`'s eight, because `--matcha` and
+  `--strawberry` on this surface are the *row's* marks on the sheet and must read against the chrome. Carried
+  as FPT row **5.4d**, guarded by a pure set assertion, a raster probe with a counter-assertion that the row's
+  own ground did **not** move with it, and mutation M36.
+
+  **Two limits of that evidence, recorded because the final review named them and both are real.** (1) The
+  probes assert the **token** (`zinelyV2LightColors().paper`), not the hex literal `#F7F2E7`; the literal is
+  tied to the token only transitively, through `ZinelyV2ColorsTest`. A change made to the token in both places
+  would satisfy every C5 assertion. (2) Of the five tokens the island restates, only `--paper` and
+  `--paper-edge` currently do any work in Compose — the miniature's renderer paints each element's own stored
+  colour and reads nothing from the scheme, so `--ink`, `--ink-soft` and `--ink-faint` are carried for
+  **parity, not effect**. They are restated anyway, because the amendment is to the *specification* and a
+  renderer that later starts reading the scheme must find the island already there; but the KDoc's claim that
+  anything the miniature draws from the scheme reads the page's tokens is, today, vacuously true.
+- **The grid's current cell told the platform the wrong thing, in the wrong words.** Compose maps
+  `SemanticsProperties.Selected` through to `AccessibilityNodeInfo.isSelected` for `Role.Tab` and **not** for
+  `Role.Button`, so every cell reported `selected=false` — the current one included — while the 2dp matcha ring
+  said otherwise on screen. Every merged-tree assertion passed, because the merged tree is not the tree
+  TalkBack reads.
+
+  ⚠ **An earlier version of this bullet said the cell "told the platform nothing", and the final review
+  disproved it from Compose's own source.** The same delegate routes a non-`Tab` `Selected` to **`isChecked`**
+  and, when no `stateDescription` is set, fills in Android's **default** *selected / not selected* wording. So
+  the pre-fix cell did publish state — as a *checked* state, in the framework's words rather than the app's,
+  and diverging from the strip's. That is a smaller defect than the one claimed here, and the correction is
+  recorded rather than quietly softened. Note also that the CI-26 harness snapshots neither `isSelected` nor
+  `isChecked`, so this diagnosis is still **uninstrumented**: what the tests assert is the property that
+  matters — that both pickers say the *same* thing. Fixed with an explicit
+  `stateDescription`, the CI-26 harness extended to snapshot it, and the property asserted as an *equivalence*
+  between the two pickers in one composition (`the_strip_and_the_grid_tell_the_platform_the_same_current_page`)
+  so they cannot drift apart again. Mutation M37.
+
+**Added beyond the freeze:** `BackHandler` on the summoned grid. The frozen HTML cannot describe it — a
+prototype has no back button — and losing it was a side effect of correcting the overlay's scope.
+
+**Three corrections this ADR made to itself**, each recorded in full rather than quietly amended:
+[§3a](#adr-095-cover-correction) (cover detection, forced by device evidence),
+[§3b](#adr-095-a11y-correction) (the withdrawn accessibility findings, and the real defect underneath them),
+and [D-058](design/V2-SPEC-DEFECTS.md#d-058) — the navigation row shipped **below** the bar while §7's device
+checklist asserted the frozen order. The second independent review found it by reading the frozen markup
+against the emitted Column; nothing in 38 tests, 35 mutations or five goldens could, because every one of
+them measured a row against itself and never two rows against each other.
+
+<a id="adr-095-verification"></a>
+### 6. Verification
+
+One sweep of the whole project against the current tree, `--rerun-tasks` throughout so no task could be
+silently up-to-date (C4's lesson), and `-Proborazzi.test.verify=true` so the golden gate **asserts** rather
+than photographs — the distinction that had already cost this package three "green" runs in which no golden
+was ever compared:
+
+```
+./gradlew.bat test testDebugUnitTest verifyRoborazziDebug --rerun-tasks -Proborazzi.test.verify=true
+```
+
+**BUILD SUCCESSFUL.** `verifyRoborazziDebug` green in `:core:ui`, `:render-android` and `:feature:editor`.
+**1544 tests, 0 failures, 1 skipped**, counted from the JUnit XML of the final sweep — the one run after
+[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) and the accessibility fix, superseding the 1542-test figure
+this section previously carried:
+`:feature:editor` 663 · `:core:ui` 172 · `:data-android` 151 · `:core:editor` 136 · `:app` 100 ·
+`:core:imposition` 69 · `:core:data` 66 · `:render-android` 62 · `:core:model` 51 · `:core:data-storage` 44 ·
+`:core:render` 23 · `:core:copy` 7.
+
+⚠ **The sweep immediately before this one was `BUILD FAILED`, by a regression this package caused, and the
+mutation battery could not have found it.** Extending the CI-26 harness for the accessibility fix added a call
+to `AccessibilityNodeInfo.getStateDescription()` — **API 30+**. Robolectric runs each suite at *its own*
+configured SDK, and four tests in suites C5 has no interest in (`ZineOnShelfTest` ×3, `ZineDockTest` ×1) read
+the platform tree through that same shared reader below API 30, so they died with `NoSuchMethodError` at
+`PlatformAccessibilityTree.kt:150`. Guarded on `Build.VERSION.SDK_INT >= R`, returning `null` below it — the
+platform genuinely has no state description there, so `null` is the honest answer and not a degraded one.
+
+The lesson is the battery's own boundary, stated plainly: **the mutation battery runs a 40-test focused filter
+over C5's three suites, so a defect this package inflicts on someone else's suite is invisible to it by
+construction.** Only the full sweep can see that, which is why the sweep is a separate gate and not a
+formality after a green battery.
+
+⚠ **An earlier sweep failed once for an unrelated reason, and that failure is recorded rather than discarded.**
+`ReframeSessionTest.done_bakes_a_zoom_as_one_undoable_edit` could not find the `Zoom in` control
+(`ReframeSessionTest.kt:222`). It passes 9/9 when its class runs alone and it passed in the clean sweep
+above, so it is **non-deterministic** — the same intermittent Reframe/Robolectric flake
+[ADR-093 §7](#adr-093-verification) recorded for `ReframeA11yTest`. It is not attributed to C5 on that
+evidence alone: the only C5 edit to that file is in a **different** test method (`ReframeSessionTest.kt:280`,
+the page-switch case retargeted to the new filmstrip tag), the failing method touches no C5 code, and node
+absence in the semantics tree is not something a sibling row's layout can cause. Carried as a known
+intermittent, not as a C5 defect.
+
+<a id="adr-095-device-checklist"></a>
+### 7. The device checklist — written before the passes run
+
+Only the items hardware can answer are listed; the other 20-odd FPT rows are closed by unit tests, goldens and
+the mutation battery above, and repeating them by eye adds nothing. Every item names what is *read*, not what
+is *looked at*.
+
+1. **The row stands.** `.navrow` measures 56dp on the platform tree at density 420, sits above C4's bar, and
+   the canvas is not clipped by it (row 5.1).
+2. **Every sheet is one traversal stop, in page order** — read from `uiautomator dump`, matching the CI-26
+   harness's assertion on hardware (rows 5.9, D-057). The current sheet must **not** be published last.
+3. **A sheet's hit rect is ≥48dp tall** on the platform tree while its paint stays 26×34dp (row 5.2b, D-009).
+4. **The current sheet is announced `selected=true`**, its neighbours `false`, and the label reads
+   `Page i of N`, with `(front cover)` on the first and `(back)` on the last of the **real** document — the
+   defect D-056 fixed, checked on a document the app itself created (rows 5.5a, 5.9, 5.14).
+5. **The miniature is the real page** — text the user typed is visible inside the 26×34dp sheet, and changing
+   the page changes the picture (row 5.8, OD-22). Also the accepted price: judge whether it reads as a picture
+   or a smudge, and record the answer either way.
+6. **Selecting a far sheet scrolls it toward the centre**, animated, and the first composition **snaps**
+   without an animation (row 5.10).
+7. **The grid is summoned and canvas-scoped** — no grid node at rest; the button raises it; it covers the
+   canvas while the navigation row and C4's bar stay standing and usable (rows 5.11, 5.11a).
+8. **Back stands the grid down** and does not leave the editor — the one thing added beyond the freeze.
+9. **The grid's header counts the document's real N**, and choosing a cell navigates *and* dismisses
+   (rows 5.15, 5.16, 5.14).
+10. **Cover badges read `COVER` / `BACK` in capitals** on the first and last cells of the real document, and
+    the current cell's border is visibly heavier than its neighbours' (rows 5.13, 5.14).
+11. **Regression:** C1's sheet, C2a's selection and dismissal, C3's in-place editing with the IME up, and C4's
+    bar/chooser/snackbar all still behave — the navigation row must not have stolen space or taps from any of
+    them.
+
+**Pass 2** asks its own question and is recorded separately: *how do I get to another page, and did I ever
+wonder where my page went?* Per the owner's standing instruction, it also re-reads the whole editing
+experience as a first-time user, not only C5's two surfaces.
+
+<a id="adr-095-device"></a>
+### 8. Device Pass 1 — run from the beginning on the amended build
+
+`SM-A176B` · Android 16 · density 420 (2.625) · debug build carrying
+[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) and the accessibility fix · 2026-08-05, 18:24–18:36.
+
+**No evidence from the aborted pass is reused.** The build changed, so every item was re-read; the aborted
+pass's table is kept below the new one only as the record of why the package stopped.
+
+⚠ **An environment trap invalidated this pass's first four accessibility readings, and they were re-taken.**
+Under Git Bash, MSYS rewrites the `/sdcard/…` argument of `adb shell uiautomator dump` — the device answered
+`UI hierchary dumped to: /Files/Git/sdcard/ui5.xml` — while `MSYS_NO_PATHCONV=1 adb exec-out cat /sdcard/ui5.xml`
+read the *unrewritten* path. The dump therefore landed somewhere else and the reader silently returned a
+**stale file from an earlier session**, which is how a tree claiming page 8 was current was read off a screen
+showing page 5. It was caught only because the tree contradicted the pixels. Every reading below comes from a
+dump with `MSYS_NO_PATHCONV=1` on **both** halves, cross-checked against the same screenshot. Added to
+[DEVICE-VERIFICATION.md](DEVICE-VERIFICATION.md) — *a stale accessibility dump is worse than no dump, because
+it answers.*
+
+| # | item | reading |
+|---|---|---|
+| 1 | the row stands, above the bar | ✅ above `Undo · Redo · Add · Done` in both themes; canvas not clipped. [D-058](design/V2-SPEC-DEFECTS.md#d-058) confirmed on hardware |
+| 2 | one traversal stop per sheet, in page order | ✅ eight named stops, `Page 1 of 8 (front cover)` → `Page 8 of 8 (back)`, current sheet **not** last — [D-057](design/V2-SPEC-DEFECTS.md#d-057) confirmed |
+| 3 | hit rect ≥ 48dp | ✅ every sheet **48.0dp tall** (126px). Widths 29.0–32.8dp, clipped by the 33dp pitch, paint still 26×34 — D-009's *extend the target, keep the paint* as far as the pitch allows. Current sheet 55.6×55.6dp; grid button 38.1×48.0dp |
+| 4 | current sheet announced | ✅ **exactly one** `selected=true`, and it tracked the page through two navigations (page 1 → 5 via the grid, 5 → 7 via the strip) |
+| 5 | **dark-theme miniature readability** ([D-059](design/V2-SPEC-DEFECTS.md#d-059), the reason for this re-run) | ✅ **FIXED.** Modal sheet interior measures `#F7F2E7` **exactly** — the frozen `--paper`, not the room's. Darkest page ink vs sheet paper = **13.97 : 1**, against the **1.21 : 1** that stopped the last pass |
+| 5a | the row did not move with the sheet | ✅ row ground still `#272219`; sheet-vs-row **14.15 : 1** in dark. The island stayed inside the sheet, which is the whole of [D-010](design/V2-SPEC-DEFECTS.md#d-010)'s lesson |
+| 5b | **light-theme miniature readability** | ✅ paper `#F7F2E7`, ink-vs-paper **10.94 : 1** — and *identical* paper to dark, since in light the room's own paper already equalled the island's, so OD-23 is a no-op there. ⚠ but see DV-B |
+| 6 | thumbnail rendering | ✅ the real page: the front cover's photo card and its caption are visible inside 26×34dp and survive navigation. At that size it is a smudge with a recognisable shape — OD-22's accepted price, confirmed as accepted rather than assumed |
+| 7 | choosing a far sheet scrolls it to centre | ⚪ **still unreachable on the product's only format.** The strip *is* a real `HorizontalScrollView` (bounds `[136,1899][828,2036]`) but reports `scrollable=false`: eight sheets fit. Rows 5.3a and 5.10 stay specified-but-unreachable, asserted in Robolectric on a 20-page fixture and killed by M13 |
+| 8 | the grid is summoned and canvas-scoped | ✅ no grid node at rest; the button raises it; nav row and bar stay standing and usable under it |
+| 9 | Back stands the grid down | ✅ grid gone, editor still open, page unchanged |
+| 10 | header counts the real N; a cell navigates and dismisses | ✅ `Your zine · 8 pages`; cell 5 went to page 5 and took the grid with it, confirmed in both the pixels and the tree |
+| 11 | `COVER` / `BACK` in capitals; current cell heavier | ✅ both badges on the real document's first and last cells; the 2dp matcha ring reads clearly |
+| 12 | regressions | ✅ C4's chooser still offers **Text and Photo and no Art**; C3's in-place session still opens with its style row above the IME and the nav row correctly *replaced* by the editing stack; Undo restored the added box. The nav row's move stole no space and no taps |
+
+**DV-A — the grid's current cell: fixed, but the fix is not verifiable on this instrument.** The
+`stateDescription` added for it is **absent from `uiautomator dump`'s schema entirely** (`'state-desc' in dump
+→ False`), so the device can neither confirm nor deny it. What the device *does* still show is the underlying
+asymmetry: every grid cell reports `selected=false`, the current one included, because Compose maps `Selected`
+to `AccessibilityNodeInfo.isSelected` for `Role.Tab` and not for `Role.Button`. The authoritative evidence is
+therefore Robolectric's platform-tree harness, which reads the real `AccessibilityNodeInfo` and asserts the two
+pickers speak the *same* state (`the_strip_and_the_grid_tell_the_platform_the_same_current_page`, mutation
+M37). Recorded as a limit of the instrument, in the same family as C4's *TalkBack utterances are not
+capturable* — **not** as a passed item.
+
+**DV-B — in light theme a sheet and the row it sits in differ by 1.04 : 1.** Measured: row `#FBF7EE`, sheet
+`#F7F2E7`. The sheets are told apart only by their 1dp `--paper-edge` and 2dp spine, which do read. This is
+**pre-existing frozen behaviour, untouched by OD-23** — the freeze sets `--chrome` and `--paper` two steps
+apart in light — and it is the exact inverse of the dark-theme complaint D-059 raised. Recorded as an
+observation against the freeze, not a C5 defect, because C5 transcribes both values correctly.
+
+**DV-C — with the grid open, sixteen page stops are published at once**: eight cells and, beneath them, the
+strip's eight sheets, all named `Page N of 8`. That is faithful to the freeze — `.pgrid` is `inset:0` inside
+`.canvasArea`, so the navigation row is genuinely still on screen and genuinely still usable — but a screen
+reader traversing the open grid meets every page twice. Recorded; changing it means excluding a visible,
+working control from the tree, which is a design decision and not a parity fix.
+
+**One platform behaviour, checked rather than assumed.** The current sheet reports `clickable=false` while its
+neighbours report `clickable=true`. That is Compose's own mapping for a **selected** `Role.Tab` — a screen
+reader should not offer *activate* on the tab you are already on — and not a defect in this code. It is
+recorded because it looks like one.
+
+<a id="adr-095-pass-2"></a>
+#### 8b. Device Pass 2 — first-time user, recorded separately and **not averaged with Pass 1**
+
+Same device, same build, dark theme, app force-stopped first. The goal attempted was an ordinary one — *get to
+page 7 and put a word on it* — and the question the editor is supposed to answer is **"how do I change this
+page?"**
+
+**It works, and it works in one tap.** Tapping the seventh sheet lands on `7 / 8`. Nothing had to be learned,
+nothing had to be undone. The row reads as *the pages of my zine*, which is what it is, and after OD-23 it
+reads that way in dark theme too: eight little sheets of paper on a dark bench, rather than eight holes.
+
+Findings, separated as the protocol requires into what the implementation got wrong and what the design
+intends:
+
+1. 🟦 **The two page pickers are made of different material** (design consequence, not a defect). In dark
+   theme the strip's sheets are cream and the grid's cells are dark. I reached for the grid expecting *the
+   same pages, larger*, and got a different-looking thing. The cause is exactly OD-23's deliberate narrowness:
+   the strip renders the real page and therefore needed the page's paper, the grid renders no page content and
+   therefore did not. The ruling considered the grid and excluded it in the same breath, so this is **not a
+   new owner decision** — it is that ruling's recorded consequence, and a candidate for a future amendment if
+   the owner ever wants the two pickers to look like the same object.
+2. 🟦 **Choosing a page means counting.** No sheet carries its number and no cell carries a preview, so
+   picking "page 7" is done by position. On this document that is honest — the pages *are* blank, and the
+   strip is not lying about them — but it means the grid, summoned to answer *which page do I want*, answers
+   only *how many there are and where you are*. Frozen behaviour on both surfaces; recorded, not fixed.
+3. 🟦 **The strawberry dot is unexplained.** The current sheet already carries a matcha border and a lift; the
+   pink dot above it is a third mark for the same fact, with no legend. It is the freeze's own
+   `.pthumb.cur::after`, transcribed faithfully. I noted the confusion *before* looking up why it was there,
+   which is the note worth keeping.
+4. ⚪ **Not C5:** the shelf takes ~3s to first paint after a force-stop, long enough that a tap aimed at a zine
+   is swallowed. Pre-existing, outside this fence, filed here only so it is not lost.
+
+**Nothing in Pass 2 contradicts Pass 1.** Where the two look at the same thing — the dark-theme miniature —
+they agree: Pass 1 measures 13.97:1 and Pass 2 reads *paper*. The three 🟦 items are frictions in the frozen
+design, none of them blocking, and none of them are the kind of thing Pass 1 could have seen.
+
+<a id="adr-095-device-pass-1-partial"></a>
+#### 8a. The aborted Pass 1 — kept as the record of why the package stopped, and **not** as evidence
+
+The pass below was **halted by [D-059](design/V2-SPEC-DEFECTS.md#d-059)** rather than worked around. Its
+readings are superseded in full by §8; several of its accessibility lines are now known to have come from the
+stale-dump trap described above, which is a second reason not to count them.
+
+| # | item | reading |
+|---|---|---|
+| 1 | the row stands, above the bar | ✅ 56dp, above `Undo · Redo · Add · Done`, canvas not clipped — [D-058](design/V2-SPEC-DEFECTS.md#d-058)'s fix confirmed on hardware |
+| 2 | one traversal stop per sheet, in page order | ✅ eight named stops, `Page 1 of 8 (front cover)` → `Page 8 of 8 (back)`, current sheet **not** last — [D-057](design/V2-SPEC-DEFECTS.md#d-057)'s fix confirmed |
+| 3 | hit rect ≥ 48dp | ✅ sheets `86×126px` = **32.8 × 48.0dp** at density 2.625, paint still 26×34; grid button `100×126px` = **38 × 48dp** |
+| 4 | current sheet announced, covers named | ✅ on the strip: `selected=true` on the current sheet only, and the labels name both covers on a document the app itself created — [D-056](design/V2-SPEC-DEFECTS.md#d-056)'s fix confirmed. ⚠ **but see DV-A below for the grid** |
+| 5 | the miniature is the real page | ⛔ **[D-059](design/V2-SPEC-DEFECTS.md#d-059)** — true in light theme (a typed word appears in the sheet within a second), and in dark theme the page's paper is missing and its text measures **1.21:1**. **Pass stopped here.** |
+| 6 | choosing a far sheet scrolls it to centre | ⚪ **unreachable on the product's only format** — eight sheets on a 33dp pitch measure 690px against a 692px viewport, so the strip never overflows and the scroll never runs. Asserted in Robolectric on a 20-page fixture; recorded as specified-but-unreachable, beside the 1→32 morph |
+| 7 | the grid is summoned and canvas-scoped | ✅ no grid node at rest; the button raises it; the nav row and the bar stay standing and usable under it |
+| 8 | Back stands the grid down | ✅ grid gone, editor still open, page unchanged, activity not finishing |
+| 9 | header counts the real N; a cell navigates and dismisses | ✅ `Your zine · 8 pages`; cell 1 went to page 1 and took the grid with it |
+| 10 | `COVER` / `BACK` in capitals; current cell heavier | ✅ both badges on the real document's first and last cells; the 2dp matcha ring reads clearly against the others' 1dp |
+| 11 | regressions | ✅ C2a selection + eight handles, C2b's verb bar, C3's in-place session (style row, IME, pan) and C4's bar/chooser all behave; the chooser still offers Text and Photo and no Art |
+
+**DV-A — a second finding, fixable inside the fence and not yet fixed.** The grid's current cell is *drawn*
+current but not *announced* current: on the platform tree every cell reports `selected=false`, including the
+one the user is on. The strip's sheet publishes `selected=true` because Compose maps `Selected` through for
+`Role.Tab`; the cell carries `Role.Button` and the same `selected` property never reaches
+`AccessibilityNodeInfo`. The fix is the strip's own — a `stateDescription` — and it is an accessibility
+improvement, which the freeze permits; it is held with D-059 so both passes run once, on one build.
+
+**One platform behaviour, checked rather than assumed.** The current sheet reports `clickable=false` while its
+neighbours report `clickable=true`. That is Compose's own mapping for a **selected** `Role.Tab` — a screen
+reader should not offer *activate* on the tab you are already on — and not a defect in this code. It is
+recorded because it looks like one.

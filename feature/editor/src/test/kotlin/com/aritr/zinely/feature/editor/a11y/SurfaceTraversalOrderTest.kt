@@ -396,6 +396,17 @@ class SurfaceTraversalOrderTest {
                 FirstPageInvitationHeadline,
                 Copy.EmptyState.SUPPLY_CUE,
                 Copy.EmptyState.OFFLINE_NOTE,
+                // C5 (ADR-095 rows 5.1, 5.2, 5.9): the navigation row comes BEFORE the bar, because the
+                // freeze puts it there — `v2-bench.html:481` opens `.navrow` and `:488` opens `.bar`, both
+                // in `.phone`'s normal flow, so the sheets sit above Undo/Redo/Add/Done. This ordering is
+                // the assertion: C5 first shipped the two rows inverted and no test noticed, since each
+                // row was only ever checked against itself. Grid button ahead of the sheets, which is both
+                // the design's order and the row's visual order.
+                Copy.PageNav.ALL_PAGES,
+                // A one-page document's only sheet is its front cover: covers are a matter of position
+                // (`benchCoverAt`), and position 1 is the front. `i===1||i===NP` in the freeze is true of
+                // both clauses here, and the front reading wins.
+                Copy.PageNav.frontCoverLabel(1, 1),
                 // C4 (ADR-094 row 4.5): the frozen bottom bar, left to right. `EditorSupplyTray`'s
                 // "Supplies" heading and its four cards are gone with the shelf — the bar has no heading
                 // because the freeze gives it none, and its two add verbs now live behind `Add`.
@@ -403,8 +414,6 @@ class SurfaceTraversalOrderTest {
                 RedoActionLabel,
                 AddActionLabel,
                 Copy.EditText.DONE,
-                // The page strip, last and lowest.
-                Copy.PageStrip.pageNumber(1),
             ),
         )
     }

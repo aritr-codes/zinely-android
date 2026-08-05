@@ -61,7 +61,7 @@ public fun proofReadPageTag(pageNumber: Int): String = "proof-read-page-$pageNum
  * act draws against [ProofSheetAct].
  *
  * **No geometry of its own.** Each page is `SceneRenderer.render(page, …)` replayed through [PagePreview]
- * — the identical path [EditorPageStrip]'s thumbnails and the main canvas use, and the same
+ * — the identical path [BenchPageNav]'s thumbs and the main canvas use, and the same
  * `CanvasReplayer` the PDF export replays ([ADR-028](../../../../../../docs/DECISIONS.md#adr-028)). That
  * is what keeps `read == preview == export` structural rather than a promise: there is no second way to
  * draw a page to disagree with.

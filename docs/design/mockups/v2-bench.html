@@ -118,6 +118,25 @@
             it is the historical record of the 2026-07-28 freeze and is left intact, superseded here
             rather than rewritten.
 
+  AMENDED 2026-08-05 by owner ruling (D-059, OD-23).  This is the second half of OD-22 and was missed by it.
+  OD-22 changed what is INSIDE the sheet -- the interior became the real page -- and nobody revisited what is
+  UNDER it.  .pthumb's background stayed var(--paper), which resolves against the ROOM, and the room's dark
+  --paper is #2F2A22.  So in dark theme the miniature drew the page's content with no paper beneath it: on a
+  real document, the user's own words measured 1.21:1 against their own sheet, against 8.02:1 for the same
+  words in light.  That is exactly D-035's failure -- the one OD-12 ruled on for the canvas -- one surface
+  along, and it reached the device because the freeze's light island was scoped to .page, which a thumb is
+  not.  The ruling is OD-12's own principle applied where OD-22 moved the artifact to: THE ARTIFACT DOES NOT
+  DIM, wherever it is drawn.
+    .pthumb GAINS THE LIGHT ISLAND, restated below exactly as .page carries it at :222.  Light rendering is
+            unchanged byte-for-byte; dark stops dimming the miniature.
+    THE ROOM'S MARKS STAY THE ROOM'S.  --matcha and --strawberry are deliberately NOT restated: the spine,
+            the .cur border and the dot are marks the ROW puts ON the sheet, not ink the page carries, and
+            they must keep reading against the chrome around them.  This is the same line C1 drew when it
+            left .page's shadow to the room rather than lightening it inside the island (D-010's lesson).
+    NOTHING ELSE CHANGES.  26x34, the asymmetric radius, the spine's 2px, the contact shadow, the .2s
+            settle, .cur's lift, the dot, the .navrow / .filmstrip layout: all as OD-22 left them.
+    THE PAGE GRID IS STILL NOT AMENDED.  .pgcell draws no page content, so it has no artifact to dim.
+
   AMENDED 2026-08-04 by owner ruling (D-047, OD-21).  The .bar drew THREE controls -- Undo, Add, Done --
   and three accepted rulings each require something those three slots do not hold.  OD-9 keeps REDO
   ("redo is kept"), which this file omits entirely.  OD-11 and OD-14 keep BOTH shipped add verbs, which
@@ -279,6 +298,12 @@
   .filmstrip{flex:1;display:flex;gap:7px;overflow-x:auto;overflow-y:visible;scrollbar-width:none;padding:9px 4px;align-items:center;}
   .filmstrip::-webkit-scrollbar{display:none;}
   /* page-nav as little paper sheets — tiny printed pages resting in a row, not slider pips */
+  /* D-059 amendment (OD-23): the sheet is a light-theme island, exactly as .page is at :222 (OD-12).
+     OD-22 made the interior the real page; the ground under it was still the room's --paper, so in dark
+     theme the page's own words measured 1.21:1 against their own sheet. These restate :root's LIGHT values,
+     so light is unchanged and dark stops dimming the miniature. --matcha and --strawberry are NOT restated:
+     the spine, the .cur border and the dot are the ROW's marks on the sheet, not the page's ink. */
+  .pthumb{--paper:#F7F2E7;--paper-edge:#EEE6D4;--ink:#2A251E;--ink-soft:#5B5347;--ink-faint:#8C8269;}
   .pthumb{flex:none;width:26px;height:34px;border-radius:1.5px 3px 3px 1.5px;background:var(--paper);border:1px solid var(--paper-edge);
     cursor:pointer;position:relative;box-shadow:0 2px 5px -2px var(--frame-shadow);transition:transform .2s var(--settle),box-shadow .2s;}
   .pthumb::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--desk-edge);border-radius:1.5px 0 0 1.5px;} /* the sheet's spine edge */

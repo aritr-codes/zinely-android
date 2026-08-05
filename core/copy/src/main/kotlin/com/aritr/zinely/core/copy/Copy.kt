@@ -191,11 +191,48 @@ public object Copy {
             "Your phone is low on storage. Free up a little space, then tap Try now — or keep editing to retry."
     }
 
-    /** Page-strip thumbnails (`EditorPageStrip.kt`). */
+    /**
+     * The page picker's per-thumb **state**. C5 replaced the V1 strip's `"Page N"` label with [PageNav]'s
+     * `"Page N of M"`, so only these two state lines remain here — CI-29's `stateDescription`, which the
+     * frozen Bench has no equivalent of and which the conformance path still asserts.
+     */
     public object PageStrip {
-        public fun pageNumber(number: Int): String = "Page $number"
         public const val CURRENT_PAGE: String = "Current page"
         public const val NOT_SELECTED: String = "Not selected"
+    }
+
+    /**
+     * The Bench's page navigation — the filmstrip row and the summoned page grid
+     * (`BenchPageNav.kt`, `BenchPageGrid.kt`; [ADR-095](../../../../../../../docs/DECISIONS.md#adr-095)
+     * rows 5.9, 5.10, 5.15).
+     *
+     * Roles are passed as *which function you call*, not as a string: `:core:copy` has no dependencies, so
+     * it cannot see `PageRole`, and inventing a parallel string enum here would be a second source of truth
+     * for the same three cases. The composable maps the role; this object owns only the wording.
+     */
+    public object PageNav {
+        /** The grid button's label — it summons the grid, so it says what it shows. */
+        public const val ALL_PAGES: String = "All pages"
+
+        /** An interior page. `N` is always the document's real page count, never a constant. */
+        public fun pageLabel(number: Int, count: Int): String = "Page $number of $count"
+
+        /** The first page. TalkBack says *which* page as well as *what* it is. */
+        public fun frontCoverLabel(number: Int, count: Int): String =
+            "${pageLabel(number, count)} (front cover)"
+
+        /** The last page. */
+        public fun backCoverLabel(number: Int, count: Int): String =
+            "${pageLabel(number, count)} (back)"
+
+        /** The grid's header. Possessive, not a noun-phrase title: it is the user's zine, not a document. */
+        public fun gridTitle(count: Int): String = "Your zine · $count pages"
+
+        /** The front cover's cell badge. */
+        public const val COVER: String = "Cover"
+
+        /** The back cover's cell badge. */
+        public const val BACK: String = "Back"
     }
 
     /** Editor effect outcomes surfaced to the user (`EditorEffects.kt`). */

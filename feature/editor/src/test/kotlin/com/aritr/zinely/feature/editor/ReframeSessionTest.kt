@@ -280,9 +280,10 @@ class ReframeSessionTest {
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertIsDisplayed()
 
-        // Tap the page-2 card: the host commits the open framing before navigating (bench: never strand a
-        // session on an off-screen photo). Exercises the real onSelectPage wrapper, not a raw GoToPage.
-        composeRule.onNodeWithContentDescription("Page 2").performClick()
+        // Tap the page-2 sheet on C5's filmstrip: the host commits the open framing before navigating
+        // (bench: never strand a session on an off-screen photo). Exercises the real onSelectPage wrapper,
+        // not a raw GoToPage.
+        composeRule.onNodeWithTag(benchThumbTag(2)).performClick()
         composeRule.waitForIdle()
 
         assertTrue("session cleaned up on page switch", s.uiState.value.interaction is Interaction.Idle)

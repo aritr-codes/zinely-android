@@ -18,7 +18,8 @@ import org.robolectric.annotation.GraphicsMode
  * It owns NO add actions: the always-visible the bottom bar (the retired `EditorSupplyTray`) is the single, thumb-zone home for
  * "Add a photo" / "Add words", so the two actions never appear twice at once (DESIGN-RULES 3, 7). This
  * suite proves the overlay is invitation-only; the host assembly (overlay + tray) is proven in
- * [EditorScreenTest]. Robolectric NATIVE, same tier as [EditorPageStripTest].
+ * [EditorScreenTest]. Robolectric NATIVE, same tier as [BenchC5Test] (which replaced the retired
+ * `EditorPageStripTest` when C5 landed the filmstrip).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
