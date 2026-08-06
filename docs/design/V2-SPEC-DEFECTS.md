@@ -124,7 +124,7 @@ row. **None blocked C0, which has since landed.** D-032 was ruled on 2026-08-01 
 than the package — but **C1's own pre-implementation blocker check then raised [D-033](#d-033), which does block
 the package**: it decides the rectangle every other C1 property is positioned against. That blocker was itself
 ruled the same day — option (c), [the third amendment to a frozen V2 surface](#d-033-amendment) — so **C1 is
-unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and C1 is committed at `29a3819`. **As of 2026-08-06, NO entry fences Phase-C work, and C9 — the phase's last package — is READY.** [D-060](#d-060) was raised by C6's Pass 2 on 2026-08-06 and fences nothing either: ADR-096 is `Accepted` with it open. D-028 was the last entry that did fence a package, and it was ruled that day — [OD-24](#d-028-ruling), option (c), the file's **eighth** amendment. C9 **carries** [D-012](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) rather than being blocked by it — the entry is answered *inside* C9, as row 9.2, by design. (This sentence read *"C9 remains blocked by D-012"* until 2026-08-06, contradicting the ledger three sentences above it; the roadmap's C9 row carried the same wrong label and was corrected with it.) [D-035](#d-035) blocked all of Phase C for part of one day — C1's device verification found the dimmed sheet left the user's own content at **1.60:1** — and was [ruled the same day](#d-035-ruling). [D-034](#d-034) fenced C2's `.ctx*` rows for a day — raised by C2's own pre-implementation check the moment OD-9 was applied, [ruled 2026-08-02](#d-034-ruling) as **keep both**, with C2 split into **C2a** and **C2b** and both now unblocked. Live entries that fence nothing — D-012 (answered *in* C9), D-023, D-029, D-030 — are listed below and in the [roadmap's ledger](../COMPOSE-V2-ROADMAP.md).
+unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and C1 is committed at `29a3819`. **As of 2026-08-06, NO entry fences Phase-C work, and C9 — the phase's last package — is READY.** [D-060](#d-060) was raised by C6's Pass 2 on 2026-08-06 and fences nothing either: ADR-096 is `Accepted` with it open. [D-061](#d-061) was raised the same day by **C9's row 9.5**, from arithmetic, and **withdrawn the same day by C9's Device Pass 1** — the pass it had itself asked for — because the pairing it failed is drawn nowhere on the screen. Its replacement, [**D-062**](#d-062), was **also withdrawn the same day and inside the same pass**, on better measurement: the dark grid badge reads at **3.449:1**, and the dark cell it sits on was ruled deliberately by [OD-23](#d-059-ruling)'s own text at `v2-bench.html:138`. **Neither entry is a defect and neither owes an owner decision**; both are kept because together they are the finding — row 9.5 was computed three times, was wrong twice in opposite directions, and the hardware was right the first time. C9's **Pass 2** and its independent review then raised three more entries, of which **two stand and one was a duplicate**: [**D-063**](#d-063) turned out to be [**D-051**](#d-051) under a second number — C4 had filed the same Add-chooser *sync*-glyph defect two days earlier, and C9 failed to recognise it because [OD-21](#d-047-ruling)'s amendment had moved the address it cites, so **address drift defeats duplicate-detection**; it is withdrawn, its new observations merged, and the owner's ruling recorded on the original. The two that stand: [**D-064**](#d-064), the page number clearing its floor as drawn (**3.396:1**/**3.449:1** measured) and failing it as modelled (**2.969:1**/**2.525:1** worst case over the screen grain), with neither the floor's scope nor the instrument settled — this is the half of D-061 that was never wrong; and [**D-065**](#d-065), the grid drawing blank sheets while the filmstrip 12dp below draws the same pages with content, which C9 first tried to close as already-ruled and **review reopened**. **All three were ruled the same day — [OD-26](#d-051-ruling) (on D-051, the surviving entry), [OD-27](#d-064-ruling), [OD-28](#d-065-ruling) — as observations carried forward: no implementation change, no frozen-spec amendment, C9 not reopened.** They are 🔭 deferred design debt, not open questions. **And [D-012](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) — open since 2026-07-28 and the last entry that gated a Phase C package — was RESOLVED the same day by [OD-25](#d-012-ruling)**, option (a), ratifying the Bench's reduced-motion rule on C9's device evidence. **As of 2026-08-06 no entry fences any Phase C work, and none is owed a ruling.** D-028 was the last entry that did fence a package, and it was ruled that day — [OD-24](#d-028-ruling), option (c), the file's **eighth** amendment. C9 **carries** [D-012](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) rather than being blocked by it — the entry is answered *inside* C9, as row 9.2, by design. (This sentence read *"C9 remains blocked by D-012"* until 2026-08-06, contradicting the ledger three sentences above it; the roadmap's C9 row carried the same wrong label and was corrected with it.) [D-035](#d-035) blocked all of Phase C for part of one day — C1's device verification found the dimmed sheet left the user's own content at **1.60:1** — and was [ruled the same day](#d-035-ruling). [D-034](#d-034) fenced C2's `.ctx*` rows for a day — raised by C2's own pre-implementation check the moment OD-9 was applied, [ruled 2026-08-02](#d-034-ruling) as **keep both**, with C2 split into **C2a** and **C2b** and both now unblocked. Live entries that fence nothing — D-012 (answered *in* C9), D-023, D-029, D-030 — are listed below and in the [roadmap's ledger](../COMPOSE-V2-ROADMAP.md).
 
 | Open | Owing to | One line |
 |---|---|---|
@@ -137,6 +137,11 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
 | ~~[**D-047**](#d-047)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-047-ruling), OD-21, Option A; the frozen Bench is AMENDED for the fifth time** | the frozen `.bar` drew **three** slots while [OD-9](#d-031-ruling) keeps redo, [OD-11](#d-034-ruling)/[OD-14](#d-039-ruling) keep **both** shipped add verbs, and `.add`'s handler opens a chooser whose region OD-2 re-seated beyond Phase C. Ruled: the bar becomes **`Undo · Redo · Add · Done`**; `Add` opens the frozen chooser with **only its Text and Photo rows released into C4**, Art staying fenced behind C8 — *“a fence reassignment, not a capability reassignment”*; the chooser uses the shipped `ZSheet`; **Text reuses `addTextAndEdit`** so C3's in-place model is untouched; `EditorSupplyTray` is retired. One line of frozen markup added (`#redoBtn`, `:466`), **no CSS changed**. The accepted price, recorded: both add verbs sit one tap deeper than they do today |
 | ~~[**D-048**](#d-048)~~ | ✅ **RESOLVED 2026-08-04 by rulings already in hand — a recorded deviation, not an owner question, recorded exactly as [D-042](#d-042) was. No OD number, because none was needed** | `Done` follows the frozen two-state behaviour (`:653`): while a session is open C3's `#doneEdit` owns *finish* and the bar's `Done` is **withheld at the frozen `.icon-btn:disabled` `.35`** (`:269`) — [OD-14](#d-039-ruling)'s own method, as C2b applied it, using a presentation the file already draws; with no session the bar's `Done` owns *clear selection*, which is deselect's **first drawn control**, since [OD-13](#d-037-ruling) gave it only a gesture and a gesture has no presentation for OD-14 to count. **`Preview ›` does not move** — OD-9's *reuse, don't invent* is satisfied by leaving it exactly where it ships |
+| [**D-065**](#d-065) | 🔭 **CARRIED 2026-08-06 — [owner ruling](#d-065-ruling), OD-28: a UX observation only, no implementation change, no amendment; deferred to future design work.** Raised by C9's Pass 2 and kept open by C9's independent review after the implementer tried to close it as already-ruled | the page grid draws **eight blank sheets with numbers** while the filmstrip **12dp below, in the same frame**, draws the same pages **with their content**. A screen whose only question is *which page?* gives nothing to choose by. `v2-bench.html:114-116`/`:138` rule the **grid**, not the **juxtaposition** — which did not exist until [OD-22](#d-053-ruling) made the strip's interior the real page. The precedent is decisive: [OD-23](#d-059-ruling) exists **only** because OD-22 missed a consequence of its own amendment (*"This is the second half of OD-22 and was missed by it"*). Options: give the grid miniatures (a **ninth** amendment), drop the grid's sheets, or accept and document the inconsistency |
+| [**D-064**](#d-064) | 🔭 **CARRIED 2026-08-06 — [owner ruling](#d-064-ruling), OD-27: observation only; the contrast policy is NOT expanded during Phase C, no implementation change, no amendment.** Raised by C9's independent review; the badge is legible on hardware | the grid's page number measures **3.396:1 light / 3.449:1 dark on the device** and **2.969:1 / 2.525:1 as a worst-case single pixel over the screen grain** (`SCREEN_GRAIN_ALPHA` 0.175, laid over the whole screen by `benchStudioGround()`). Two undecided questions: does [IA §C.4](V2-BENCH-IA-INTERACTION.md)'s ≥3:1 **control** floor bind a page *number*, when [V2-TOKENS.md](V2-TOKENS.md) marks `inkFaint` decorative with no floor — the half of [D-061](#d-061) that was never wrong and until now had no correctly-grounded failing instance; and is per-pixel worst case the right **instrument** over a noise tile, when row 9.5 uses it for body ink and the reader of grain sees the mean. C9 asserts the flat pair, states why in the test, and changes no pixel |
+| ~~[**D-063**](#d-063)~~ | ✅ **WITHDRAWN 2026-08-06 as a DUPLICATE of [D-051](#d-051)** — C4's Pass 2 filed the same defect on 2026-08-04. C9's Pass 2 did not recognise it because [OD-21](#d-047-ruling)'s amendment had moved every address below it, so the two entries cite `:721` and `:808` for one row. **Address drift defeats duplicate-detection.** Its three new observations were merged into D-051; the owner's ruling on the substance is [**OD-26**](#d-051-ruling), recorded there | *(see [D-051](#d-051))* |
+| ~~[**D-062**](#d-062)~~ | ✅ **WITHDRAWN 2026-08-06 before it was ever presented — raised and closed inside the same Device Pass 1. Not a defect; no owner decision owed** | it claimed the dark grid cell loses the page's paper and takes its page number to **1.014:1**. That figure came from one guessed coordinate that missed the 9px glyph and compared the ground with itself. Re-measured over the badge's whole box: **3.396:1 light**, **3.449:1 dark** — both clear the ≥3:1 floor, and the dark figure is the flat `inkFaint`-on-`paper` token pair to three decimals. The dark cell is ruled, not broken: [OD-23](#d-059-ruling)'s own text at **`v2-bench.html:138`** reads *"THE PAGE GRID IS STILL NOT AMENDED. `.pgcell` draws no page content, so it has no artifact to dim"* — the owner considered this surface and withheld the island deliberately, because [OD-12](#d-035-ruling)'s principle is about the artifact and the cell holds none |
+| ~~[**D-061**](#d-061)~~ | ✅ **WITHDRAWN 2026-08-06 the day it was raised — by C9's Device Pass 1, which is the pass the entry itself asked for. Kept, not deleted: the way it was wrong is worth more than the entry was** | it claimed `inkFaint` on `desk` measures **2.880:1**, below [IA §C.4](V2-BENCH-IA-INTERACTION.md)'s ≥3:1 control floor, and that this put the IA against [V2-TOKENS.md](V2-TOKENS.md)'s floorless decorative `inkFaint`. The arithmetic was right and **the premise was invented**: the badge sits on the **cell**, not on the desk behind it. Real pixels — glyph `(141,131,106)` on `(247,242,231)` — measure **3.364:1** and clear the floor. The failing pairing is drawn nowhere. C6's lesson in a new costume: a computed check can be exactly right about a relationship that does not exist. What the device found instead is [D-062](#d-062), and it is worse |
 | [**D-060**](#d-060) | 🟦 **OPEN — raised by C6's Device Verification Pass 2, 2026-08-06; a defect in the FROZEN FILE, not in the Compose. Not a merge blocker; C6 is `Accepted` with it open** | the ink popover offers the swatch **`Ink` twice** — it is a member of both the `INKS` array (`v2-bench.html:596`) and the `NEUT` array (`:598`), and [OD-24](#d-028-ruling) draws both bands for a text target. On the device that is two near-identical near-black circles in two rows, announced identically to a screen reader, of which only one takes the selection ring. The owner already counted this — OD-24 says *"Inks + Neutrals — 13 distinct swatches"* over 14 drawn — so it is **not** a new decision; what is undecided is whether the duplicate should be **renamed** so the two can be told apart. A fix amends the frozen file first |
 | ~~[**D-059**](#d-059)~~ | ✅ **RESOLVED 2026-08-05 — [owner ruling](#d-059-ruling), OD-23, Option (a); the frozen Bench is AMENDED for the seventh time** | [OD-22](#d-053-ruling) made the thumb's interior *the real page*. The sheet's ground is still the room's `--paper`, which in dark theme is `#2F2A22` — so in dark theme the miniature draws the page's content with **no paper under it**, and the user's own text measures **1.21:1** against the sheet (8.02:1 in light, same document, same words). This is [D-035](#d-035)'s failure a second time, one surface along; [OD-12](#d-035-ruling) ruled *the artifact does not dim* and the frozen file implements it as `.page{--paper:#F7F2E7}` (`v2-bench.html:222`) — an island scoped to `.page`, which the thumb is not. Extending it to `.pthumb` is a **seventh amendment to the frozen Bench** and therefore the owner's call, not the implementer's. |
 | ~~[**D-058**](#d-058)~~ | ✅ **FIXED 2026-08-05 — a C5 defect, found by independent review** | C5 emitted the frozen `.navrow` **below** the bar. The freeze opens `.navrow` at `v2-bench.html:481` and `.bar` at `:488`, both in `.phone`'s normal flow, so the sheets belong above `Undo · Redo · Add · Done`. Nothing caught it: every test measured one row against itself, and ADR-095's own device checklist described the frozen order while the build did the opposite. The row is moved and the *relation* is now asserted — in `BenchC5Test` and in CI-31's `SurfaceTraversalOrderTest`, where it is also the reading order. |
@@ -146,7 +151,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-054**](#d-054)~~ | ✅ **FIXED 2026-08-04 — a C4 golden defect, found by C5's verification and repaired outside the C5 fence** | C4 added the `Redo` mark to `ZinelyV2Icons` without re-recording `:core:ui`'s four catalog goldens, which have depicted a 36-mark set against a 37-mark code base ever since. It survived because `testDebugUnitTest` **captures** and only `verifyRoborazziDebug` **compares** — and C4's run named the former. Both goldens re-recorded; the sole delta is the new mark and the one-cell shift |
 | ~~[**D-053**](#d-053)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-053-ruling), OD-22, Option (c); the frozen Bench is AMENDED for the sixth time** | the frozen  () is a **blank 26×34 paper sheet with three faint rules** drawn on every interior page; the shipped  draws a **live miniature of the real page** through the canvas's own  tape. Transcribing the freeze removes the only place you can see what is on another page **and** states something false on most pages ([D-044](#d-044)'s class, which [OD-17](#d-044-ruling) fixed by amending the file); keeping the miniature diverges from the surface [§E.2](V2-BENCH-REVIEW.md) was proudest of. No existing ruling reached the thumb's interior — OD-2 settled the count, D-009 the targets. **Ruled: amend first.** `.pthumb i` and its `<i>` are deleted from the specification, the interior becomes the real rendered page, and every other frozen property — size, radius, spine, shadow, transition, the `.cur` lift and the strawberry dot — is preserved and transcribed. **The grid is not amended.** The accepted price, recorded: at 26×34dp the miniature is a smudge, and C5 does not enlarge the thumb to compensate |
 | [**D-052**](#d-052) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; placement policy, not C4's fence** | `Add › Text` drops the new box **on top of** what is already on the page: the arriving box's editing outline enclosed an existing "Hello", so the page read as one block holding both the old words and the cursor. The drop comes from `addTextAndEdit`, which [OD-21](#d-047-ruling) required C4 to reuse **by name**; what C4 changed is the frequency — the route is now two taps from anywhere, so the collision is met on pages that already have content |
-| [**D-051**](#d-051) | 🟦 **OPEN — raised by C4's Device Verification Pass 2, 2026-08-04; a defect in the FROZEN FILE, not in the Compose** | the chooser's `Photo` row is marked with the *replace / refresh* glyph — `v2-bench.html:721` builds it from `ICON.replace`, and `BenchAddChooser.kt` transcribes it faithfully. Beside `Text`'s clean `A` it reads as *"replace the photo"*. It matters more now than in the prototype: after [OD-21](#d-047-ruling) retired the shelf's *"Add a photo"* card, this glyph is the **only** visual the verb has. A fix amends the frozen file first, which is the owner's act |
+| [**D-051**](#d-051) | 🔭 **CARRIED 2026-08-06 — [owner ruling](#d-051-ruling), OD-26: a non-blocking design observation, carried forward as design debt; C9 is NOT reopened and the frozen Bench is NOT amended.** Raised by C4's Pass 2 2026-08-04 and **re-found independently by C9's Pass 2** (filed as ~~[D-063](#d-063)~~, withdrawn as a duplicate — address drift hid it); a defect in the FROZEN FILE, not in the Compose | the chooser's `Photo` row is marked with the *replace / refresh* glyph — **`v2-bench.html:808`, built from `ICON.replace` at `:592`** (the `:721` this row cited until 2026-08-06 is pre-OD-21), and `BenchAddChooser.kt` transcribes it faithfully, path for path. C9 measured what that costs: the four paths draw **two arrows chasing each other round a circle**, the universal glyph for **sync**, beside this row's own subtitle *"From your phone — it never leaves the device."* A fix **adds** a path rather than swapping one — `:603`/`:604` still need `ICON.replace` for genuine Replace actions. Beside `Text`'s clean `A` it reads as *"replace the photo"*. It matters more now than in the prototype: after [OD-21](#d-047-ruling) retired the shelf's *"Add a photo"* card, this glyph is the **only** visual the verb has. A fix amends the frozen file first, which is the owner's act |
 | [**D-050**](#d-050) | 🟦 **OPEN — raised by C4, 2026-08-04; copy, and copy is owner-owned** | the empty page still says *"Grab a photo or a few words from the **supplies below**"* (`Copy.kt:175`) and still points a chevron at the shelf (`EmptyStateTrayCueTag`, `EditorEmptyState.kt:37`) — and [OD-21](#d-047-ruling) retired the shelf. The invitation now names a surface that is not on screen, one tap before the user meets a single `Add`. **Not fixed in C4:** the strings are product voice, not frozen CSS, and rewriting them is a wording decision |
 | [**D-049**](#d-049) | 🟦 **OPEN — routed to C4 by [C2a's Pass 2](../DECISIONS.md#adr-091-completion-device) as P2-1; not a merge blocker. RE-MEASURED under C4's bar 2026-08-04: 1500 px → 1069 px, a 28.7 % loss of sheet height, larger than the 17 % first recorded** | the sheet measures `1028×1454 px` unselected and `850×1202 px` selected — a **17 % linear shrink**, and **28.7 % of sheet height once a selection also raises the frozen `.ctx` bar** — because the bottom chrome takes its space from the canvas (`.bar{flex:none}`, `v2-bench.html:267`). Pre-existing; [D-037](#d-037) did not cause it, but dismissal now makes the user meet it on **every** deselect, in the growing direction. Against [OD-12](#d-035-ruling)'s *the editor represents the physical printed artifact*, a sheet that resizes when you stop touching it is *"worth someone's decision"* — take the height, or overlay it and amend |
 | [**D-046**](#d-046) | ⛔ **OPEN — [ruled OD-18](#d-046-ruling) 2026-08-04: stays open; no repo-wide sweep, no reopening of C3; repaired by each file's owning package or a dedicated docs-maintenance package** | the [OD-16](#d-043-ruling) amendment moved every address below the insert, stranding **25 explicit `v2-bench.html:NNN` citations across ten files C3 does not own**. C3 repaired only the files it owns, each verified against the frozen file. Three mechanical sweeps were attempted and all three did damage — including flattening [ADR-093 §1](../DECISIONS.md#adr-093)'s own drift table — so the enumeration and the working method are recorded instead of a fourth sweep across clean files. Documentation accuracy only; no runtime effect |
@@ -169,7 +174,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-008**](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) | **Phase C** (approach settled) | two surfaces specify no focus appearance and one removes it |
 | [**D-009**](#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) | **Phase C** (approach settled) | no control declares a minimum touch target; most measure under 48dp. *Was "Phase B/C"; Phase B closed on 2026-08-01 without needing it, so C2 is where it lands* |
 | ~~[**D-010**](#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark)~~ | ✅ **RESOLVED 2026-08-01** — [amendment applied](#d-010-amendment) | the page shadow was hard-coded to the light theme; the Bench and the Proof now carry a dedicated `--page-shadow` / `--page-contact` pair. Compose deferred to C1 / Phase D |
-| [**D-012**](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) | **Phase C** (deliberately unresolved) | three files write three different reduced-motion rules; one would strobe |
+| ~~[**D-012**](#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)~~ | ✅ **RESOLVED 2026-08-06 — [owner ruling](#d-012-ruling), OD-25, option (a); ratified, no code changed** | three files write three different reduced-motion rules; one would strobe. Ruled: **the Bench's rule governs** — the frozen Bench is canonical, Phase A adopted it, C3 built on it, and C9's device evidence confirms it on hardware (reduce on → **0 differing bytes across all 15 caret frame pairs**; the caret stops rather than collapsing to a ten-kilohertz loop). Reserved for Phase C *"on physical devices"* in 2026-07-28 and decided there. The **corpus cleanup** — whether the Library's and Proof's `:root` blocks should be rewritten to state it — is deliberately **not** settled by this ruling and fences nothing |
 
 Resolved: **D-001 · D-002 · D-003 · D-005 · D-006 · D-007 · D-010 · D-011 · D-013 · D-014 · D-015 · D-016 ·
 D-017 · D-018 · D-019 · D-020 · D-021 · D-022 · D-024 · D-025 · D-026** — full rows in [Resolved](#resolved) below.
@@ -1125,7 +1130,7 @@ token. Until that lands, **this entry is the authority and the Library HTML is s
 | **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 171 · [`v2-bench.html`](mockups/v2-bench.html) lines **303** (the caret) and **460** (the rule) · [`v2-proof.html`](mockups/v2-proof.html) lines 259-261. *(Re-anchored 2026-08-01, as [D-008](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it)'s were — and **re-anchored again 2026-08-06 by [ADR-097 §3.1](../DECISIONS.md#adr-097-drift)**, which found the Bench's two addresses had drifted a second time, to `143`/`293`, while the Library's and the Proof's still resolve. Only Bench addresses have ever drifted here, because only the Bench has been amended.)* |
 | **Found** | 2026-07-28, during Phase A / A5 (motion) |
 | **Severity** | **Accessibility inconsistency in the frozen specification** — does not block A5 |
-| **Status** | **Open by owner ruling** (2026-07-28) — deliberately unresolved in Phase A; the behavioural decision belongs to **Phase C**, on physical devices |
+| **Status** | ✅ **RESOLVED 2026-08-06 — [owner ruling](#d-012-ruling), OD-25, option (a).** Open by owner ruling from 2026-07-28, deliberately unresolved in Phase A, decided in **Phase C** on physical devices exactly as scheduled |
 
 **What they say.** Every file honours `prefers-reduced-motion`, which is the good news and is worth
 stating plainly — this is not a missing-accessibility defect like **D-008**. But no two files honour it
@@ -1221,6 +1226,47 @@ carry the Bench's rule — `transition-duration:.01ms; animation:none` — so th
 policy? Note that the Library's `transition:none` and the Bench's `.01ms` also differ in a subtler way:
 `transition:none` cancels a transition mid-flight, while a `.01ms` duration lets it complete instantly,
 and only the latter guarantees the element still reaches its end state.
+
+<a id="d-012-ruling"></a>
+#### ✓ OWNER RULING — 2026-08-06 · **OD-25** · option **(a)**: ratify the Bench's rule
+
+> *"Ratify the Bench's reduced-motion rule (option a). The frozen Bench is the canonical specification;
+> Phase A already adopted this policy; later Phase C work (including C3) already built on it; C9's device
+> evidence confirms the behaviour is correct on hardware; no device evidence justifies changing the policy
+> now."*
+
+**This is the ruling the 2026-07-28 ruling scheduled, delivered in the venue it named.** The behavioural
+decision was reserved for Phase C *"on physical devices against the implemented product rather than isolated
+prototypes"*, and that is exactly where it was taken: on `SM-A176B` / Android 16, against the shipped Bench.
+
+**What the device showed** ([ADR-097 §9a](../DECISIONS.md#adr-097-device)) — a threshold-free raster probe of
+the caret region, 16 successive frames decoded to RGB and compared pixel by pixel:
+
+| preference | reading |
+|---|---|
+| reduce **off** | exactly two distinct frames, **1152 decoded bytes = 384px** apart — the `steps(1)` square wave, running |
+| reduce **on** | **0 differing bytes across all 15 frame pairs** — the caret does not run **at all** |
+
+That is the entry's central safety claim, measured rather than argued: under the Bench's rule the caret
+*stops*, where the Proof's rule would collapse an infinite animation's duration and make it repeat at ten
+thousand hertz against a preference that is in part a photosensitivity setting.
+
+**What the ruling settles, precisely.** `ZinelyV2Motion` ships the Bench's rule and now does so **by
+ratification rather than by implementer's choice**. Nothing changes in code: this is the one outcome of the
+four that required no edit anywhere, which is the honest reason to record that the ruling cost nothing rather
+than to imply the implementation anticipated it correctly by design.
+
+**What the ruling does not settle, and is not asked to.** The **corpus cleanup** above — whether
+`v2-library.html:171` and `v2-proof.html:260` should be rewritten to state the ratified rule — is a separate
+question about the prototypes, not about behaviour. It stays open and fences nothing; the two files have
+never been amended, and Phase C is a parity phase that does not amend frozen files without a ruling that says
+so. **This ruling governs the product's behaviour; it does not edit the corpus.**
+
+**Consequences recorded.** [OD-10](../DECISIONS.md#adr-089)'s live half — *"first required by C9"* — is
+**discharged**. [ADR-097](../DECISIONS.md#adr-097) §3.2's condition for `Accepted` is met. The ~20
+`ZinelyV2Motion` call sites and C3's hold-still caret ([ADR-093](../DECISIONS.md#adr-093) row 3.8) are
+confirmed as built on the ratified policy rather than on a provisional one.
+
 ---
 
 ### D-013 — the Library and the Bench bake different alpha into the same grain, so a cover shows it four to nearly seven times stronger
@@ -3135,6 +3181,190 @@ this and can be built whichever way `Done` is ruled.
 
 ---
 
+### D-065 — the grid draws blank sheets while the filmstrip below it draws the same pages with content {#d-065}
+
+**Raised 2026-08-06 by C9's Device Verification Pass 2, and kept open by C9's independent review, which
+refuted the implementer's first attempt to close it as already-ruled. ⏳ Open — an owner question. Not a merge
+blocker; nothing is fenced by it.**
+
+**What a first-time user meets.** The page grid opens on *"Your zine · 8 pages"* and draws **eight blank
+sheets with numbers**. The filmstrip **12dp below it, in the same frame**, draws the same eight pages **with
+their content** — page 1's words are legible in the thumb and absent from the cell directly above. A screen
+whose only question is *which page?* offers nothing to choose by, while the row beneath it does.
+
+**Why this is not closed by [OD-22](#d-053-ruling)/[OD-23](#d-059-ruling), though it looks like it is.**
+`v2-bench.html:114-116` keeps the grid's frozen design *"numbers and Cover/Back labels included"* and `:138`
+states *"`.pgcell` draws no page content"*. Those rule the **grid**; they do not rule the **juxtaposition**,
+which did not exist when the grid was frozen — **OD-22 created it** by making the strip's interior the real
+page. `:114`'s stated reason is net-newness (*"nothing ships that it replaces"*), not the two-miniatures
+reading, and the precedent is decisive: [OD-23](#d-059-ruling) exists **only** because OD-22 missed a
+consequence of its own amendment — its opening line is *"This is the second half of OD-22 and was missed by
+it."* So *"OD-22 said the grid is not amended"* cannot be read as *"the owner considered every consequence."*
+
+**The process finding is worth as much as the defect.** C9 first wrote this into
+[ADR-097 §9b](../DECISIONS.md#adr-097-device) as *ruled, not broken* — a Pass 2 confusion explained away by
+knowledge the user does not have, which is the exact failure mode Pass 2's *"confusion is itself evidence"*
+rule exists to prevent. Independent review caught it. It is recorded here rather than quietly corrected.
+
+**Undecided, and the owner's:** whether the grid gains miniatures (a **ninth** amendment, and the third
+consequence of OD-22 to be found after the fact), whether the strip is the answer and the grid should not draw
+sheets at all, or whether the inconsistency is accepted and documented.
+
+<a id="d-065-ruling"></a>
+#### ✓ OWNER RULING — 2026-08-06 · **OD-28**: a UX observation, carried forward
+
+> *"Record as a UX observation only. No implementation change. No frozen-spec amendment. Carry it forward
+> for future design work."*
+
+**Ruled without an amendment, which is the third of the three options above.** The inconsistency is accepted
+and documented; the grid keeps its blank sheets and the filmstrip keeps its miniatures. Phase C changes
+nothing here, and the entry stays in the register as **deferred design work** rather than closing.
+
+**What survives the ruling.** The *reading* is not disputed — it remains true that a screen asking *which
+page?* gives nothing to choose by while the row 12dp beneath it does. What the ruling settles is that this is
+not Phase C's to fix. It is carried, not dismissed.
+
+---
+
+### D-064 — the page number clears its floor as drawn and fails it as modelled, and nothing says which reading governs {#d-064}
+
+**Raised 2026-08-06 by C9's independent review, which found the assertion row 9.5 had settled on was resting
+on a false premise. 🔭 CARRIED by [owner ruling OD-27](#d-064-ruling) the same day — observation only.**
+**The badge is legible on hardware; this is a question about the floor and the instrument, not a report that
+anything looks wrong.**
+
+**The measurements, all of the same pairing** — `inkFaint` on the grid cell's `paper`, under the screen grain
+(`SCREEN_GRAIN_ALPHA` = `BakedAlpha × .35` = 0.175), which `benchStudioGround()` lays over the whole screen:
+
+| reading | light | dark | ≥3:1 floor |
+|---|---|---|---|
+| device, over the badge's whole box (`SM-A176B`) | **3.396:1** | **3.449:1** | clears |
+| flat token pair, no grain | 3.412:1 | 3.447:1 | clears |
+| **worst-case single pixel over the grain** | **2.969:1** | **2.525:1** | **fails** |
+
+**Two questions, both the owner's.**
+
+1. **Does [IA §C.4](V2-BENCH-IA-INTERACTION.md)'s ≥3:1 control floor bind a page number?** The cell is a
+   control; the number on it is a label, and [V2-TOKENS.md](V2-TOKENS.md) marks `inkFaint` *"faint/decorative
+   only"* with **no** floor at all. This is the document disagreement [D-061](#d-061) first named — that half
+   of D-061 was never wrong, it merely had no correctly-grounded failing instance until now. It has one.
+2. **Is per-pixel worst case the right instrument over a noise tile?** Row 9.5 uses it for the page's body ink
+   — a large glyph on a sheet the reader dwells on — and the same row cannot silently use a different
+   instrument for a 9px decorative number without saying why. The reader of a grain tile sees the mean, not
+   one extreme pixel, and the device agrees with the mean to two decimals in both themes. But *"the device
+   agrees with the model I chose"* is not an argument for the model, and C9 has been wrong three times on
+   this row already.
+
+**What C9 did.** Asserted the flat pair in both themes, stated the reason in `BenchC9Test` rather than leaving
+it implicit, recorded the failing modelled figures here, and changed no pixel. Row 9.5 is ✅ **as asserted**
+and this entry is what it does not assert.
+
+<a id="d-064-ruling"></a>
+#### ✓ OWNER RULING — 2026-08-06 · **OD-27**: observation only; the contrast policy is not expanded in Phase C
+
+> *"Do not expand the project's contrast policy during Phase C. Record the observation only. No
+> implementation changes. No frozen-spec amendment."*
+
+**Both questions above are answered by not answering them, deliberately and at the right level.** Whether the
+IA's ≥3:1 control floor reaches a page number, and whether per-pixel worst case is the right instrument over
+a noise tile, are *policy* questions — settling either would extend the project's contrast policy, and Phase
+C is a parity phase. So `BenchC9Test` keeps the flat assertion it can defend, the modelled worst-case figures
+stay recorded here rather than asserted anywhere, and no token, pixel or floor moves.
+
+**What this ruling does not do.** It does not declare the badge compliant under a worst-case instrument, and
+it does not withdraw the measurement. **2.969:1 light / 2.525:1 dark** remain on the record as computed; the
+device's 3.396/3.449 remain on the record as measured. A future phase that expands the contrast policy
+inherits both numbers and the question intact.
+
+---
+
+### ~~D-063~~ — WITHDRAWN as a DUPLICATE of [D-051](#d-051), which C4 filed two days earlier {#d-063}
+
+**Raised 2026-08-06 by C9's Device Verification Pass 2 on `SM-A176B`; withdrawn the same day, on the same
+day it was ruled.** ✅ **Not a defect record — a second number for a defect that already had one.** The
+substance is real and is **[D-051](#d-051)**; the owner's ruling on it, **[OD-26](#d-051-ruling)**, is
+recorded there.
+
+**What happened.** C4's Pass 2 filed D-051 on 2026-08-04 — *"the Add chooser offers `Photo` under a *replace*
+glyph"*, citing `v2-bench.html:721`. C9's Pass 2 met the same row on hardware, checked the repository before
+filing as it is required to, read `:592`/`:808`, and **did not recognise it as the same entry because
+[OD-21](#d-047-ruling)'s amendment had moved every address below it**. Two numbers for one defect is exactly
+what the [Documentation Rule](../../CLAUDE.md) forbids, so this one is withdrawn and its three genuinely new
+observations — the drifted address, the four verbatim paths and the fact that `:603`/`:604` make a
+swap-in-place impossible — were **merged into D-051** rather than lost.
+
+**The lesson, and it is C9's own lesson in a third costume.** C9 spent this package proving that *a check can
+be exactly right about a relationship that does not exist*; here it was exactly right about a defect that
+already existed. **Address drift defeats duplicate-detection**, and every amendment to a frozen file makes the
+register harder to search by line number. The register is searched by *what a thing is*, not by where it was.
+
+---
+
+### ~~D-062~~ — WITHDRAWN before it was ever presented: the dark grid badge reads, and the dark cell is ruled {#d-062}
+
+**Raised and withdrawn 2026-08-06, both inside C9's Device Verification Pass 1 on `SM-A176B` / Android 16 /
+density 420. ✅ NOT A DEFECT — no owner decision is owed, no work-around was applied.** Kept, like
+[D-061](#d-061) directly above it, because the pair of them is the finding.
+
+**What it claimed.** That in dark theme the page grid draws its cells on the room's dark ground rather than
+the page's paper — cell `(49,44,36)` against the ribbon thumb's `(247,242,231)` in the same frame — and that
+the page number on it measured **1.014:1**, invisible. It was filed as [D-059](#d-059) one surface along, and
+therefore as an owner amendment by that entry's own reasoning.
+
+**Why the 1.014:1 was wrong.** It came from a single guessed pixel coordinate that missed the 9px glyph
+entirely, so it compared the cell's ground with *itself* — `(48,43,35)` against `(49,44,36)` is grain, not
+ink. Re-measured over the badge's whole box, in both themes, in the frame where the grid is actually open:
+
+| theme | glyph | cell ground | ratio | floor |
+|---|---|---|---|---|
+| light | `(141,131,106)` | `(247,243,232)` | **3.396:1** | ≥3:1 — **clears** |
+| dark | `(136,127,108)` | `(50,45,36)` | **3.449:1** | ≥3:1 — **clears** |
+
+The dark figure is the flat `inkFaint`-on-`paper` token pair to three decimals, which is itself the evidence
+that the cell is a flat surface with no grain on it — the second thing the computed check had wrong.
+
+**Why the dark cell is not a defect either.** The premise that the grid *should* carry the light island was
+already ruled against, in terms, by the ruling it was being compared to. [OD-23](#d-059-ruling)'s own
+amendment text closes with **`v2-bench.html:138`**: *"THE PAGE GRID IS STILL NOT AMENDED. `.pgcell` draws no
+page content, so it has no artifact to dim."* The owner considered this exact surface when extending the
+island to `.pthumb` and deliberately withheld it, because [OD-12](#d-035-ruling)'s principle is *the artifact
+does not dim* and the grid cell holds no artifact — only the room's own number and label, which
+[OD-23](#d-059-ruling) says must keep reading against the chrome around them. At 3.449:1 they do.
+
+**The finding is the method, and it cost two entries to learn.** Row 9.5 was computed three times and got two
+different wrong answers in opposite directions — `inkFaint` on the wrong *ground* (D-061, 2.880:1), then on
+the right ground with a *grain that is not drawn* (D-062, 2.817:1) — while the hardware was right the first
+time and agreed with itself across both themes. `BenchC9Test` now asserts the **flat pair in both themes**,
+and its comment carries the whole sequence so the next author does not compute a fourth version of it. The
+rule this leaves behind: **being wrong once is not a reason to trust the correction** — a corrected model is
+still a model, and only the device is the surface.
+
+---
+
+### ~~D-061~~ — WITHDRAWN the day it was raised: the failing pairing is not drawn anywhere {#d-061}
+
+**Raised 2026-08-06 by C9's row 9.5 from arithmetic. ✅ WITHDRAWN 2026-08-06 by C9's Device Pass 1, which is
+the pass the entry itself asked for.** Kept rather than deleted, because the way it was wrong is worth more
+than the entry was.
+
+**What it claimed.** That `inkFaint` on `desk`, over the screen grain, measures **2.880:1** — below
+[IA §C.4](V2-BENCH-IA-INTERACTION.md)'s ≥3:1 control floor — and that this put the IA in conflict with
+[V2-TOKENS.md](V2-TOKENS.md), which marks `inkFaint` decorative with no floor at all.
+
+**Why it was wrong.** The arithmetic was correct and the **premise was invented**. The page grid does fill
+with `desk` (`BenchPageGrid.kt:198`) and does draw its badges in `inkFaint` (`:341`) — but the badge sits on
+the **cell**, not on the desk behind it. Sampling the real pixels on hardware: glyph `(141,131,106)` on
+`(247,242,231)` — **3.364:1**, which clears the floor. The pairing the entry was raised against is not drawn
+anywhere on the screen.
+
+**The lesson, which is C6's lesson in a new costume.** A computed check can be exactly right about a
+relationship that does not exist. `BenchC9Test` now measures the badge against the ground it is actually drawn
+on, and the comment there records this so the next author does not re-derive the same false pairing.
+
+**What the device found instead is real, and worse** — see [D-062](#d-062).
+
+---
+
 ### D-060 — the ink popover offers the same swatch twice, under one name {#d-060}
 
 **Raised 2026-08-06 by C6's Device Verification Pass 2 on `SM-A176B` / Android 16.** 🟦 Open. **Not a merge
@@ -3520,6 +3750,32 @@ the single visual the user has to recognise the verb by.
 **What a fix would touch, if ruled:** `v2-bench.html:721` first (a photo/image mark — `ICON.image`-class
 artwork rather than `ICON.replace`), then `BenchAddChooser.kt` and the chooser's device screenshot. It is a
 one-glyph amendment to a frozen surface, and the amendment is the owner's to make.
+
+**Independently re-found by C9's Device Verification Pass 2 on 2026-08-06**, filed as D-063, and **collapsed
+back into this entry** — see [D-063](#d-063). C9 added three things this entry did not have, kept here because
+they are what the ruling is about:
+
+- **The address has drifted.** The row is at **`v2-bench.html:808`** now, built from `ICON.replace` as defined
+  at **`:592`**; the `:721` above is pre-[OD-21](#d-047-ruling). Both are the same row.
+- **The glyph's four paths, verbatim** — `M3 12a9 9 0 0 1 15-6.7L21 8` · `M21 3v5h-5` ·
+  `M21 12a9 9 0 0 1-15 6.7L3 16` · `M3 21v-5h5` — two arrows chasing each other round a circle. That is not
+  merely *"does not name the verb"*: it is the universal glyph for **sync**, and it sits beside this row's own
+  subtitle, *"From your phone — it never leaves the device."* On the one screen where this product makes its
+  central promise, the icon next to the promise means the opposite.
+- **A fix cannot swap the glyph in place.** `:603`/`:604` still use `ICON.replace` for genuine *Replace*
+  actions, where it is correct. The amendment **adds** a path.
+
+<a id="d-051-ruling"></a>
+#### ✓ OWNER RULING — 2026-08-06 · **OD-26**: design debt, carried; C9 is not reopened
+
+> *"Record as a non-blocking design observation. Do not reopen C9. Do not amend the frozen Bench. Carry it
+> forward exactly as design debt."*
+
+**The frozen Bench is not amended and C9 does not reopen.** The Photo row keeps `ICON.replace`. This entry
+becomes 🔭 **carried design debt** rather than closing, because the reading it describes is still true of the
+shipped product. *(The ruling was issued against the duplicate number D-063 and is recorded here, on the
+original entry, so one defect keeps one authoritative location. Only the number moves; the ruling's substance
+is untouched.)*
 
 ---
 

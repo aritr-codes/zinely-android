@@ -131,6 +131,7 @@ public fun EditorPagePreview(
     // appearance is derived per frame. Reduced motion collapses it to 0ms (ADR-075) — it is a one-shot,
     // so it simply arrives.
     val reduceMotion = ZinelyTheme.motion.reduceMotion
+    val v2Motion = ZinelyTheme.v2Motion
     val pageKey = uiState.currentPageIndex
     val ids = page.elements.map { it.id }
     var seenIds by remember(pageKey) { mutableStateOf(ids.toSet()) }
@@ -153,7 +154,15 @@ public fun EditorPagePreview(
         if (newId != null && !reduceMotion) {
             arrivingId = newId
             materialise.snapTo(0f)
-            materialise.animateTo(1f, tween(BenchMaterialiseMillis, easing = ZinelyV2Settle))
+            // C9 row 9.2a: the duration is resolved through the policy even though the `!reduceMotion`
+            // guard above already means this line cannot run under a reduced-motion preference. Belt and
+            // braces is not the reason — the reason is that the guard is an *enclosing condition*, which
+            // no scan of the animation's own statement can see, so a call site correct only by its
+            // context is a call site the invariant cannot check. Stating it locally makes it checkable.
+            materialise.animateTo(
+                1f,
+                tween(v2Motion.durationMillis(BenchMaterialiseMillis), easing = ZinelyV2Settle),
+            )
         }
         arrivingId = null
     }

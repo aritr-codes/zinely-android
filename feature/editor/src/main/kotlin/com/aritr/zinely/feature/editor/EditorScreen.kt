@@ -292,6 +292,11 @@ public fun EditorScreen(
     // remove, then say so. Row 4.13 asserts the three together because any one alone reads as a
     // different interaction - a fade with no snack is a disappearance, a snack with no fade is a
     // report about something that already vanished.
+    // C9 row 9.2a: the frozen rule's selector is `*`, so this fade honours it like every other V2 animation.
+    // It was the one call site in the Bench that did not — it read `tween(BenchDeleteFadeMillis)` flat, and
+    // under a reduced-motion preference the element still faded for 200ms before vanishing. Hoisted out of
+    // the lambda because `softDelete` runs in a coroutine, where a CompositionLocal cannot be read.
+    val deleteFadeMillis = ZinelyTheme.v2Motion.durationMillis(BenchDeleteFadeMillis)
     val softDelete: (Set<String>) -> Unit = { ids ->
         val id = ids.firstOrNull()
         if (id != null) {
@@ -299,7 +304,7 @@ public fun EditorScreen(
             deleteJob[0]?.cancel()
             deleteJob[0] = c4Scope.launch {
                 deletingId = id
-                animate(0f, 1f, animationSpec = tween(BenchDeleteFadeMillis)) { v, _ ->
+                animate(0f, 1f, animationSpec = tween(deleteFadeMillis)) { v, _ ->
                     deleteProgress = v
                 }
                 dispatch(Intent.Delete(ids))
@@ -396,8 +401,19 @@ public fun EditorScreen(
         uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
     }
     val ctxKind = ctxElement?.let { benchVerbKindOf(it) }
-    val ctxVisible = ctxKind != null &&
-        uiState.interaction !is Interaction.EditingText &&
+    // C9 row 9.1: the Bench's four states, derived in one place. The `!EditingText` term spelled out here
+    // is subsumed by `benchState == Selected`; `ctxKind != null` stays, because it asks a different
+    // question (a single element, of a kind the freeze gives verbs to). So the one behavioural change is
+    // the term the freeze writes and this call site did not: `showSheet` removes `.ctx`
+    // (`v2-bench.html:847`). Nothing regressed by adding it — the Add chooser is a Dialog, so the bar it
+    // now suppresses was already behind another window; the point is that the rule lives in the model
+    // rather than being delegated to a platform accident. (`showDelete = !ctxVisible` below therefore
+    // offers Delete on the transform bar while the chooser is up — also behind the Dialog. That "behind a
+    // Dialog ⇒ unreachable" premise is exactly the merged-semantics assumption ADR-059/CI-26 distrusts,
+    // so it is on the device Pass 1 platform-tree checklist rather than settled by this comment.)
+    val benchState = benchStateOf(uiState.selection, uiState.interaction, addChooserOpen)
+    val ctxVisible = benchState == BenchState.Selected &&
+        ctxKind != null &&
         reframing == null &&
         !typeBarOpen &&
         // The freeze's own swap: `openInk` runs `ctx.classList.remove('show')` and `inkClose` restores

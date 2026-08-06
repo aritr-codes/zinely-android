@@ -13,14 +13,18 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 
 > ### The one-paragraph answer
 >
-> **Phase C is seven-eighths built. C0, C1, C2a, C2b, C3, C4, C5 and C6 are all DONE and ACCEPTED.**
-> C0 was documentation-only — no ADR, no device passes. The seven production packages carry
-> [ADR-090](DECISIONS.md#adr-090) through [ADR-096](DECISIONS.md#adr-096), **every one `Accepted`, each with both
-> device-verification passes recorded**. **The next implementation package is [C9 — Integration](COMPOSE-V2-ROADMAP.md#phase-c-packages),
-> and nothing fences it**: its dependency is C1–C6, which is met, and [ADR-089](DECISIONS.md#adr-089) already
-> carries seven planned property rows, which [**ADR-097**](DECISIONS.md#adr-097) — C9's planning package,
-> 📝 `Proposed` 2026-08-06, written before any production code — re-verified against the frozen file and
-> extended to **14**. **C9 awaits explicit owner GO; no C9 production code exists.**
+> **PHASE C IS COMPLETE (2026-08-06). C0, C1, C2a, C2b, C3, C4, C5, C6 and C9 are all DONE and ACCEPTED.**
+> C0 was documentation-only — no ADR, no device passes. The eight production packages carry
+> [ADR-090](DECISIONS.md#adr-090) through [ADR-097](DECISIONS.md#adr-097), **every one `Accepted`, each with both
+> device-verification passes recorded**. C9 — Integration was the last: the four Bench states made explicit and
+> wired, the reduced-motion policy bound at every call site, and the maker's **place** persisted through process
+> death. It closed on the ruling it existed to obtain — **[OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling) ratified
+> the Bench's reduced-motion rule (option a) on C9's hardware evidence**, discharging D-012 and
+> [OD-10](DECISIONS.md#adr-089)'s live half. **No code changed for that ruling**, and no frozen file was amended
+> by C9.
+>
+> **There is no next Phase C package.** Scheduling what comes after Phase C is an owner act that has not been
+> performed; the re-seated H1/H3 work below is the nearest candidate and is not scheduled.
 >
 > **There is no C7 and no C8.** [Owner ruling OD-2](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c) (2026-08-01)
 > re-seated the holding tray (H1) and the Add / Art drawer (H3) beyond Phase C; **their letters are not reused
@@ -28,9 +32,14 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 > If you are looking for a live "C7", it belongs to the **V1 conformance programme's** own milestone numbering —
 > a different ladder — see [§0.1](#01-two-programmes-two-c-ladders) below.
 >
-> **No register entry blocks a Phase C package** ([V2-SPEC-DEFECTS](design/V2-SPEC-DEFECTS.md)). Carried but not
-> blocking: D-012 (answered *inside* C9 as row 9.2), D-023, D-049, D-050, D-051, D-052, D-060. Re-seated with H1/H3
-> and no longer Phase C's: D-029, D-030.
+> **No register entry blocks a Phase C package, and none is owed a ruling**
+> ([V2-SPEC-DEFECTS](design/V2-SPEC-DEFECTS.md)). **D-012 is RESOLVED** ([OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling)),
+> which was the last entry that ever gated one. Carried forward as **design debt**, all explicitly non-blocking
+> and none owed a decision: D-023, D-049, D-050, **D-051** (OD-26), D-052, D-060, **D-064** (OD-27),
+> **D-065** (OD-28). Withdrawn the day they were raised, kept as record: D-061, D-062, D-063. Re-seated with
+> H1/H3 and no longer Phase C's: D-029, D-030. **One accessibility debt travels on undischarged**: the empty
+> state's sticker cluster announces `✿`/`❀`/`★` to the platform a11y tree against its own documented contract,
+> found by [C1's Pass 1](DECISIONS.md#adr-090-device-verification) and **not** closed by C9.
 
 <a id="01-two-programmes-two-c-ladders"></a>
 ### 0.1 Two programmes, two "C" ladders — read the prefix
@@ -741,10 +750,11 @@ approved before the commit.
    the package workflow as well as the rules.
 5. Write the package's **frozen property table** into its ADR *before* any production code.
 6. Begin your package on an explicit owner GO. **Phases A and B are closed**; rebuilding any of them is the
-   mistake this section exists to prevent. **Phase C is seven-eighths built — C0, C1, C2a, C2b, C3, C4, C5 and C6 are DONE and ACCEPTED,
-   and the next package is C9 — Integration**, the phase's last; there is no C7 and no C8 —
+   mistake this section exists to prevent. **Phase C is CLOSED as of 2026-08-06 — C0, C1, C2a, C2b, C3, C4, C5,
+   C6 and C9 are all DONE and ACCEPTED, and there is no next Phase C package**; there is no C7 and no C8 —
    read [ADR-089](DECISIONS.md#adr-089) and the roadmap's
-   [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts) before writing a line of it,
+   [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts) before writing a line of anything
+   that claims to continue it,
    and note that **no owner decision now fences a package's work** — D-028 / OD-6 fenced C6 and was ruled on
    2026-08-05 by [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling). ([D-034 / OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)
    fenced C2's `.ctx*` rows for a day and was ruled on 2026-08-02.) Other decisions remain live without fencing a
