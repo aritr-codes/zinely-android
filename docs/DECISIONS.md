@@ -106,6 +106,7 @@
 | [ADR-094](#adr-094) | **C4 — the bar, the status chip, the snackbar.** Opened before any production code per [ADR-089 §2.2](#adr-089); its own blocker check found three plan defects, two of them owner decisions ([D-047](design/V2-SPEC-DEFECTS.md#d-047), [D-048](design/V2-SPEC-DEFECTS.md#d-048)), and it was implemented and `Accepted` only after [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) ruled them. | Accepted |
 | [ADR-095](#adr-095) | **C5 — page navigation**: the filmstrip of little paper sheets and the summoned page grid. Two owner questions ([D-053](design/V2-SPEC-DEFECTS.md#d-053), [D-059](design/V2-SPEC-DEFECTS.md#d-059)) — the second raised *during* implementation — both ruled, both amending the frozen Bench. 31 frozen rows, 44 mutations, both device passes accepted. | Accepted |
 | [ADR-096](#adr-096) | **C6 — the ink popover (H4): the maker palette.** Opened before any production code per [ADR-089 §2.2](#adr-089) and **held `Proposed` until its one owner decision was ruled** — [D-028](design/V2-SPEC-DEFECTS.md#d-028), which asked whether [ADR-055](#adr-055) Decision 6's five accepted content inks are superseded by the freeze's nineteen swatches; [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) ruled it on 2026-08-05, the frozen Bench's eighth amendment. Re-anchors every C6 citation (all sixteen were wrong, at four different offsets, and were wrong at the freeze commit) and audits twelve frozen properties no ADR-089 row reaches. **Both device passes run and accepted 2026-08-06** ([§9](#adr-096-device)); Pass 1 failed the first build on two frozen properties and added rows 6.2c and 6.1i. | Accepted |
+| [ADR-097](#adr-097) | **C9 — integration: the four states, the motion policy, persistence of place, and the phase gate.** Phase C's **last** package, and the only one whose subject is the seams between the six already built rather than a region of the frozen file. Opened before any production code per [ADR-089 §2.2](#adr-089), with a **14-row** property table read from `v2-bench.html` itself — which is how it found the Bench's reduced-motion address wrong in three places (`:293`/`:260`/`:143` → **`:460`**), one rule ADR-089's phase table names nowhere, a caption outside the four states, and a row C3 had already discharged. Its blocker check finds **no owner decision**: [D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) was deferred *into* this package by owner ruling, so C9 answers it rather than waiting on it — though the escape hatch that justified deciding it early in code (*"free to reverse while this API has no callers"*) has expired at ~20 call sites. | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -5330,3 +5331,218 @@ Roborazzi frames verifying, and a full-suite regression of 1 585 tests with 0 fa
 Those counts are read from the JUnit XML, not from memory: this section originally said *43* tests, which
 was a miscount carried forward in prose, and the battery's own `MIN_TESTS` floor of 41 is what it should
 always have agreed with.
+
+## ADR-097 {#adr-097}
+
+**C9 — integration: the four states, the motion policy, persistence of place, and the phase gate. Written
+before any production code, per [ADR-089 §2.2](#adr-089).** C9 is Phase C's **last** package and the only one
+whose subject is not a region of the frozen file but the seams between the six that are already built.
+
+- **Status:** 📝 `Proposed` **2026-08-06** — planning only. No production code, no tests. Awaiting owner **GO**.
+- **Package:** C9 · **Depends on:** C1 ✅, C2a ✅, C2b ✅, C3 ✅, C4 ✅, C5 ✅, C6 ✅ — **all `Accepted`**, the last
+  on 2026-08-06 ([ADR-090](#adr-090) … [ADR-096](#adr-096)).
+- **Frozen regions:** `@media (prefers-reduced-motion:reduce)` (`v2-bench.html:460`) and the state machine the
+  script's `cap()` calls narrate (`:583`, and fifteen call sites). **That is the whole of C9's frozen surface** —
+  everything else it owns is an *invariant across* packages, sourced from the IA, the principles and accepted
+  ADRs rather than from a selector.
+- **Supersedes nothing. Modifies nothing.** It **ratifies or reverses** one thing already written in code —
+  see [§3.2](#adr-097-d012).
+- **There is no C7 and no C8.** [OD-2](#adr-089) re-seated them; C9 is not renumbered
+  ([roadmap](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c)).
+
+<a id="adr-097-objective"></a>
+### 1. Objective, ownership and scope
+
+**Objective.** Close Phase C: prove that the six built packages compose into **one editor** — four states with a
+single destination, one motion policy honoured at every call site, the maker's place kept across process death,
+the canvas legible to the platform accessibility tree and to the eye — and carry the phase's acceptance criteria
+to the owner's review gate.
+
+**Ownership.** C9 owns **integration**, not surfaces. Where a property is already asserted by a shipped package,
+C9 **verifies it end to end and on hardware; it does not re-own it, re-assert it, or move it**. §2 marks each row
+with who owns it, and two rows are marked as owned by C3 and by Phase A precisely so that nobody rebuilds them
+here.
+
+**Scope — what C9 will do.**
+1. Make the four-state model explicit and testable across the six packages, with the return-to-Rest invariant.
+2. Answer **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)** —
+   the reduced-motion rule — which the owner deferred *to this phase, on physical devices*, and bind every V2
+   animation call site to the answer.
+3. Implement **persistence of place (the page half)**: the page index survives process death.
+4. Verify canvas accessibility against the **platform** tree, and contrast **over the grain**.
+5. Run both device-verification passes for the phase and assemble the phase gate.
+
+<a id="adr-097-exclusions"></a>
+### 2. Known exclusions — named, so they are not rediscovered as gaps
+
+| Excluded | Why, and where it lives |
+|---|---|
+| **The shelf half of persistence of place** | [OD-2](#adr-089) re-seated H1. C9 owes the **page** half only; [§E.4](design/V2-BENCH-REVIEW.md)'s build invariant carries forward to the package that builds the shelf, **unweakened** |
+| **H1, H3, `DecorElement`, variable page counts, page add/delete** | re-seated beyond Phase C by OD-2; [D-029](design/V2-SPEC-DEFECTS.md#d-029) / [D-030](design/V2-SPEC-DEFECTS.md#d-030) travel with them |
+| **`.caption`, `.state`, `.hint`, `.legend*`, `.foot*`, `.kb*`, the masthead** | **PROTO** — the prototype's narration, classified so by [ADR-089 row 1.18](#adr-089). `cap()` is how the demo explains itself to a viewer; **C9 models the states it names and ships none of its text** |
+| **`@media (prefers-color-scheme:dark)` (`:213`)** | the dark palette is **Phase A's**, shipped in `ZinelyV2Colors`. C9 *verifies* both themes on device; it does not own the tokens. Recorded because this rule is named **nowhere** in ADR-089's phase-level table — see [§5](#adr-097-consistency) |
+| **Literal document-typeface parity for `.t-title` / `.t-body`** | owner ruling **OD-4**; [D-004](design/V2-SPEC-DEFECTS.md#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) stays deferred to Phase D |
+| **The finished-book reveal** | [BP-7](design/V2-BENCH-PRINCIPLES.md) / [ADR-058](#adr-058) — it stays on Read. Asserted **by absence** (row 9.6) |
+| **The open register entries that fence nothing** | D-023, D-049, D-050, D-051, D-052, D-060 — carried, none blocking; see [§3](#adr-097-blockers) |
+
+<a id="adr-097-fpt"></a>
+### 3. Frozen property table — 14 rows
+
+Built by reading **`v2-bench.html` itself**, not ADR-089 alone — which is how §3.1's citation drift was found.
+
+**What the 14 actually is, so the number is not read as growth it is not.** Seven rows are ADR-089's, carried
+intact. Of the seven added, **three are net-new frozen properties** (9.1a, 9.1b, 9.2a); two are *splits* of rows
+ADR-089 bundled (9.2b, 9.3a), one of which is already discharged by another package; and two are the process
+obligations every package carries (9.8 device passes, 9.9 the phase gate) written down rather than assumed.
+The frozen surface grew by three.
+Assertions will live in `BenchC9Test` (`T`), the platform-tree harness (`P`) and the existing gates (`G`).
+Ownership is stated per row: **C9** means C9 writes it; **C3** / **Phase A** mean it is already discharged and
+C9 only verifies it on hardware.
+
+| # | frozen property / invariant | source (re-anchored) | target | planned assertion | planned mutation | owner |
+|---|---|---|---|---|---|---|
+| **9.1** | four states — **Rest · Selected · Editing · Adding** — and every action returns to Rest | [IA §A.1](design/V2-BENCH-IA-INTERACTION.md); `cap()` `:583` and its **16** call sites (15 of them literal captions; `showSheet` `:847` passes one through) | `EditorStore` / `EditorScreen` state | every transition, and the return-to-Rest invariant | make deselect land in `Adding` | **C9** |
+| **9.1a** | the page grid is an **overlay within Rest**, not a fifth state — `closeGrid` restores `Rest` | `:800`, `:802` | same | opening and closing the grid leaves the model in `Rest` | model `All pages` as a fifth state | **C9** *(new — from the script; ADR-089 row 9.1 notes the tray but not the grid)* |
+| **9.1b** | the narration ships nothing | `:555`, `:583`; [ADR-089 row 1.18](#adr-089) | — | no `.caption` / `.state` / `.hint` string reaches the shipped Bench | ship one | **C9** ∅ *by absence* |
+| **9.2** | `@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}` | **`:460`** *(ADR-089 cites `:293` — wrong; see §3.1)* | `ZinelyV2Motion` | one-shots collapse to **0 and still arrive**; continuous motion does **not run** | `durationMillis` returns `frozenMillis` under reduce | **C9** — and it **ratifies [D-012](#adr-097-d012)** |
+| **9.2a** | the rule's selector is `*` — **every** V2 animation call site honours it | `:460` | ~20 call sites across `feature/editor`, `feature/library` | no animation in the V2 surfaces bypasses `ZinelyV2Motion` | hard-code a duration at one call site | **C9** *(new — could not have been written before the call sites existed)* |
+| **9.2b** | the caret does not run under reduced motion | `.caret` `:303`, `.editing .caret` `:304`, `@keyframes blink` `:305` | `BenchEditingSurface.kt` | **already asserted** — `BenchC3Test.the_caret_blinks_as_a_square_wave_and_holds_still_under_reduced_motion` | — *(C3's)* | **C3** — [ADR-093](#adr-093) row 3.8. **C9 verifies on device and owns no code here** |
+| **9.3** | persistence of place, **page half**: reopening lands on the same page | [§E.4](design/V2-BENCH-REVIEW.md) — *"a build invariant, freeze-blocking for the Compose build"* | `EditorViewModel` `SavedStateHandle` → **restored into `EditorStore` as the single state owner**, per [ADR-005](#adr-005)'s MVI — the handle carries the index across process death, it does **not** become a second owner of `currentPageIndex` | reopen after **process death**: the page index survives, and the store is the only thing the UI reads it from | always restore page 1 | **C9** |
+| **9.3a** | persistence of place, **shelf half** | §E.4 | — | not built here; the invariant carries forward undiluted | — | **re-seated (OD-2)** ∅ *by absence* |
+| **9.4** | canvas a11y: per-element focusable node, role + label + selected, rotated-AABB bounds, reading-then-z order, stepped custom action per gesture, **Polite** live region (Assertive only for "Page full") | [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) | `ElementSemanticsLayer.kt`, `ZinelyV2CanvasSemantics.kt` | **platform-tree dump**, never merged semantics | collapse two nodes into one | **C9** |
+| **9.5** | handles ≥3:1 over any user photo; text ≥4.5:1; controls ≥3:1 — worst case **over the grain** | [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) | `ZinelyV2ContrastTest` | measured over the **grain tile**, not the flat token | measure on flat paper | **C9** — note [D-002](design/V2-SPEC-DEFECTS.md#d-002--two-frozen-cover-inks-put-their-titles-below-aa-for-normal-text)'s 3.0:1 is **cover titles only** |
+| **9.6** | the finished-book reveal is **not** on the Bench | [BP-7](design/V2-BENCH-PRINCIPLES.md), [ADR-058](#adr-058) | — | no Read-like surface exists in the Bench | add one | **C9** ∅ *by absence* |
+| **9.7** | one engine: preview == export == read | [ADR-028](#adr-028) | `CanvasReplayer` | the existing parity test still passes **unchanged** | add a second draw path | **C9** ∅ *constitutional — the gate is that C1–C6 added no second path* |
+| **9.8** | both device-verification passes, for the phase | [CLAUDE.md](../CLAUDE.md) | hardware | Pass 1 and Pass 2, each run from the beginning | — | **C9** |
+| **9.9** | the phase gate — every Phase C acceptance criterion, evidenced | [roadmap, Phase C](COMPOSE-V2-ROADMAP.md) | — | parity + interaction + a11y evidence attached; the text-edit proof recorded | — | **C9** |
+
+<a id="adr-097-drift"></a>
+#### 3.1 Citation drift — the Bench's reduced-motion address is wrong in three places
+
+Found by reading the frozen file rather than the plan, which is the same method [ADR-096 §1](#adr-096-drift)
+used on C6's sixteen wrong addresses. The rule is at **`v2-bench.html:460`**. It is cited as:
+
+| where | cited | actual |
+|---|---|---|
+| [ADR-089](#adr-089) row 9.2 | `:293` | **`:460`** |
+| [D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) — *Artifacts* row and its rule table | `:143`, `:293` | **`:460`** |
+| D-012, the caret | `:123` | **`:303`** (`@keyframes blink` at `:305`) |
+| `ZinelyV2Motion` KDoc `:61` | `v2-library.html:138` | **`:171`** |
+| `ZinelyV2Motion` KDoc `:62` | `v2-bench.html:260` | **`:460`** |
+| `ZinelyV2Motion` KDoc `:63` | `v2-proof.html:246` | **`:259`** |
+
+**In the planning documents the drift is the Bench's alone** — D-012's `v2-library.html:171` and
+`v2-proof.html:259` both resolve, which is consistent with the amendments, since only the Bench has ever been
+amended. **In `ZinelyV2Motion`'s KDoc all three are wrong**, including the two files nothing has moved, so that
+table was captured from a different revision of the corpus rather than drifting under it. This ADR first said
+"the drift is the Bench's alone" without qualification; independent review opened the KDoc and found the other
+two. The distinction matters to whoever repairs it: **three lines, not one.**
+
+**Corrected in the planning artefacts by this ADR. The `ZinelyV2Motion` KDoc is production source and is
+therefore left for C9's implementation commit**, listed here so it is not lost: this ADR does not touch
+`src/main`.
+
+<a id="adr-097-d012"></a>
+#### 3.2 D-012 is C9's deliverable, not C9's blocker — but its escape hatch has expired
+
+**It does not block.** [D-012's own status](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)
+reads *"Open by owner ruling (2026-07-28) — deliberately unresolved in Phase A; the behavioural decision belongs
+to **Phase C**, on physical devices."* The owner **scheduled the decision into this package**. C9 answers it; it
+does not wait on it. The register ledger, the roadmap's C9 row and [HANDOVER §0](COMPOSE-V2-HANDOVER.md) all
+now say the same thing.
+
+**But the decision has already been taken in code, twice, and the reason given for taking it early no longer
+holds.** `ZinelyV2Motion` adopts the **Bench's** rule — `animation:none`, not a collapsed duration — and is
+candid that *"adopting one of three written rules **is a choice**"*, that the Bench's is the **older** of the two
+live statements while the Proof's is the corpus's most recent word, and that what justified choosing rather than
+stopping was that *"the choice is free to reverse while this API has no callers."*
+
+**That API now has roughly twenty call sites** across `BenchBottomBar`, `BenchPageGrid`, `BenchPageNav`,
+`BenchSnack`, `BenchStatusStrip`, `BenchStyleRow`, `EditorScreen`, `ZineActionSheet`, `ZineCover`, `ZineDock`
+and `ZineOnShelf`, and C3 shipped the caret's *hold-still-under-reduced-motion* behaviour on top of it
+([ADR-093](#adr-093) row 3.8). Reversal is no longer free.
+
+**This is not a new owner decision** — it is the *same* decision, D-012, with its cost disclosed honestly at the
+moment it is finally put to the owner. What expired is the *cheapness of reversal*, which is a cost input to a
+decision already owed since 2026-07-28, not a second decision. **The safety argument is unchanged and still
+favours the Bench's rule**: it is the only file with a looping animation, and collapsing an infinite animation's
+duration makes it strobe rather than calm it.
+
+**It is tracked as [OD-10](#adr-089), and that has two consequences this ADR states plainly.** ADR-089 §5 lists
+OD-10's live half as *"first required by C9"*.
+
+1. **C9 may begin without it.** The ruling is C9's to obtain, not C9's precondition, and the register ledger,
+   the roadmap and [HANDOVER §0](COMPOSE-V2-HANDOVER.md) agree that no entry fences the package.
+2. **C9 cannot reach `Accepted` without it** — the same standard [ADR-096](#adr-096) held itself to, which stayed
+   `Proposed` until OD-24 ruled D-028.
+
+**The ruling is requested before the implementation commit, not at the device pass.** That is a change of order
+this ADR makes deliberately: row 9.2a's whole purpose is to *bind every animation call site* to the answer, so
+every day the ask waits, the reversal it might mandate gets more expensive. The device pass then **validates**
+the ruling on hardware — which is what *"on physical devices"* asked for — rather than being the first place the
+question is put.
+
+<a id="adr-097-blockers"></a>
+#### 3.3 Pre-implementation blocker check — run 2026-08-06
+
+Every planned property checked against the frozen Bench, the current repository, the accepted ADRs, the owner
+rulings and the open register. **Result: no genuine owner decision blocks C9.**
+
+| checked | finding |
+|---|---|
+| **D-012** | **Not a blocker** — deferred *into* this package by owner ruling. See §3.2 |
+| **OD-2 boundary** — does any C9 row need a new document-model concept? | **No.** Row 9.3 persists a **page index**, which `SavedStateHandle` carries across process death with no schema change, no new `Element` subtype and no variable page count. The shelf half is excluded |
+| **OD-4** | honoured — the typeface exception is named in §2 and is Phase D's |
+| **ADR-005 (MVI)**, **ADR-028 (one engine)**, **ADR-058 (Read owns the reveal)**, **ADR-069 (no per-edit render)** | all four are *preserved* by C9's rows 9.6 / 9.7 and by the exclusions; none is amended |
+| **D-023, D-049, D-050, D-051, D-052, D-060** | all open, **none fences a Phase C package** — the register ledger says so as of 2026-08-06. D-049 is C4-shaped and carried; D-051 and D-060 are frozen-file defects awaiting an owner amendment |
+| **D-029, D-030** | open, and **no longer Phase C's** — re-seated with H1/H3 |
+| **Repository targets** | all exist: `ZinelyV2Motion.kt`, `ElementSemanticsLayer.kt`, `ZinelyV2CanvasSemantics.kt`, `AutosaveCoordinator.kt`, `CanvasReplayer.kt`, `ZinelyV2ContrastTest.kt` |
+| **Row 9.3's implementation** | **nothing persists a page index today** — `AutosaveCoordinator` persists the **document** only. This is genuine net-new work inside C9's fence, not a blocker |
+| **Row 9.2b** | **already discharged by C3** — a package-ownership correction, not a gap |
+
+<a id="adr-097-verification"></a>
+### 4. Verification strategy and review expectations
+
+**Verification**, in the shape every package from C1 onward has used:
+1. A focused assertion per row in `BenchC9Test`, plus the **platform accessibility tree** harness for row 9.4 —
+   never merged Compose semantics, for the reason [ADR-058](#adr-058) and [ADR-059](#adr-059) both record.
+2. A **mutation battery** over the rows that carry one, with a mandatory **GREEN control**, name-based verdicts
+   read from the JUnit XML, a `MIN_TESTS` floor and restore-in-`finally`. Rows marked ∅ carry their
+   justification instead of a mutation, per [ADR-087](#adr-087)'s four terminal states.
+3. **Roborazzi** where a row has a visual: threshold-free raster probes for anything smaller than the 2 %
+   `changeThreshold`, because — as C6 learned three times — **a recorded frame cannot fail against the
+   implementation it was recorded from**.
+4. The whole-project regression under `--rerun-tasks -Proborazzi.test.verify=true`.
+5. **Both device passes, each run from the beginning**, on `SM-A176B` / Android 16. Row 9.8 is the phase's, not
+   just the package's: Pass 2 asks whether the *editor* answers *"How do I change this page?"*, across all six
+   built surfaces rather than one.
+
+**Review expectations.** An independent Review Agent that did not implement it, validating the working tree
+rather than this ADR's claims, classifying findings **Required Fix / Recommended Improvement / Observation** and
+returning **GO / GO WITH FIXES / NO-GO**. Every Required Fix reconciled individually, disagreements surfaced.
+C9 additionally carries the **phase** gate, so its review is the last chance to catch a cross-package defect that
+each package's own review was scoped too narrowly to see — which is exactly how D-054 and D-055 were found.
+
+**Acceptance criteria** are the phase's, quoted from the [roadmap](COMPOSE-V2-ROADMAP.md): pixel parity in both
+themes and all states (excluding OD-4's two selectors); interaction and animation parity; editing-behaviour
+parity verified on device; boundaries honoured; canvas a11y verified against the platform tree; both device
+passes accepted; **GO before Phase D**.
+
+<a id="adr-097-consistency"></a>
+### 5. What this planning pass found in ADR-089
+
+Recorded rather than silently fixed, because ADR-089 is `Accepted` and its phase-level table claims to assign
+*"every rule in `<style>` and every function in `<script>` … exactly once"*:
+
+1. **Row 9.2's address is wrong** (`:293` → `:460`) — §3.1.
+2. **`@media (prefers-color-scheme:dark)` (`:213`) is named nowhere in the table.** It is Phase A's palette work
+   and is genuinely built, so nothing is unbuilt — but the completeness claim is one rule short, and this is the
+   second time an audit has found the table short (C6 found twelve properties no row reached).
+3. **Row 9.1 does not account for `cap('All pages')`** (`:800`), the only caption naming something outside the
+   four states. It resolves cleanly — the grid is an overlay within Rest, and `closeGrid` (`:802`) restores Rest
+   — but the resolution was not written down, so C9 writes it as row 9.1a.
+4. **Row 9.2 bundles a property C3 has already discharged.** The caret half is [ADR-093](#adr-093) row 3.8 and
+   `BenchC3Test`; C9 splits it out as row 9.2b, owner **C3**, so it is verified and not rebuilt.
+
+None of the four changes what Phase C must build. All four change what C9 must *not* rebuild, or where it must
+look.

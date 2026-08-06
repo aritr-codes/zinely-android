@@ -1122,7 +1122,7 @@ token. Until that lands, **this entry is the authority and the Library HTML is s
 
 | | |
 |---|---|
-| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 171 · [`v2-bench.html`](mockups/v2-bench.html) lines 143, 293 · [`v2-proof.html`](mockups/v2-proof.html) lines 259-261. *(Re-anchored 2026-08-01, as [D-008](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it)'s were.)* |
+| **Artifacts** | [`v2-library.html`](mockups/v2-library.html) line 171 · [`v2-bench.html`](mockups/v2-bench.html) lines **303** (the caret) and **460** (the rule) · [`v2-proof.html`](mockups/v2-proof.html) lines 259-261. *(Re-anchored 2026-08-01, as [D-008](#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it)'s were — and **re-anchored again 2026-08-06 by [ADR-097 §3.1](../DECISIONS.md#adr-097-drift)**, which found the Bench's two addresses had drifted a second time, to `143`/`293`, while the Library's and the Proof's still resolve. Only Bench addresses have ever drifted here, because only the Bench has been amended.)* |
 | **Found** | 2026-07-28, during Phase A / A5 (motion) |
 | **Severity** | **Accessibility inconsistency in the frozen specification** — does not block A5 |
 | **Status** | **Open by owner ruling** (2026-07-28) — deliberately unresolved in Phase A; the behavioural decision belongs to **Phase C**, on physical devices |
@@ -1134,7 +1134,7 @@ the same way:
 | File | Rule |
 |---|---|
 | `v2-library.html:171` | `*{transition:none!important}` — kills transitions; says nothing about animations (the Library has none) |
-| `v2-bench.html:293` | `*{transition-duration:.01ms!important; animation:none!important}` — collapses transitions, **disables animations outright** |
+| `v2-bench.html:460` | `*{transition-duration:.01ms!important; animation:none!important}` — collapses transitions, **disables animations outright** |
 | `v2-proof.html:260` | `*{transition-duration:.01ms!important; animation-duration:.01ms!important}` — collapses both |
 
 **Why it matters, given they currently agree.** For the three animations that exist today — the Bench's
@@ -1143,7 +1143,7 @@ produce an acceptable result, which is how the divergence survived the freeze. T
 interchangeable, and the difference is not stylistic:
 
 The Bench contains the trilogy's only **looping** animation — the text caret's
-`animation:blink 1.05s steps(1) infinite` (`:123`). Collapsing an *infinite* animation's duration to
+`animation:blink 1.05s steps(1) infinite` (`:303`, `@keyframes blink` at `:305`). Collapsing an *infinite* animation's duration to
 `.01ms`, as the Proof's rule does, does not calm it: it makes it repeat at ten thousand hertz. The
 Bench's `animation:none` is the correct form, and it is correct precisely because the Bench is the file
 that has a loop. So the two files each wrote the rule that suited what they contained, and the Proof's

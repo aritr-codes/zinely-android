@@ -18,8 +18,9 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 > [ADR-090](DECISIONS.md#adr-090) through [ADR-096](DECISIONS.md#adr-096), **every one `Accepted`, each with both
 > device-verification passes recorded**. **The next implementation package is [C9 — Integration](COMPOSE-V2-ROADMAP.md#phase-c-packages),
 > and nothing fences it**: its dependency is C1–C6, which is met, and [ADR-089](DECISIONS.md#adr-089) already
-> carries its seven planned property rows (9.1–9.7). It has no ADR of its own yet; writing one before any
-> production code is the next act, per [ADR-089 §2.2](DECISIONS.md#adr-089).
+> carries seven planned property rows, which [**ADR-097**](DECISIONS.md#adr-097) — C9's planning package,
+> 📝 `Proposed` 2026-08-06, written before any production code — re-verified against the frozen file and
+> extended to **14**. **C9 awaits explicit owner GO; no C9 production code exists.**
 >
 > **There is no C7 and no C8.** [Owner ruling OD-2](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c) (2026-08-01)
 > re-seated the holding tray (H1) and the Add / Art drawer (H3) beyond Phase C; **their letters are not reused
