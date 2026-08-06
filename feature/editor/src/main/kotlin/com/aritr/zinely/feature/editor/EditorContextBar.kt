@@ -67,7 +67,7 @@ public const val EditorContextBarTestTag: String = "editor-context-bar"
  * supplies, not productivity-template text. The chip and tilt are decorative: the icon is hidden from
  * the a11y tree and [clearAndSetSemantics] puts the spoken label on the (axis-aligned, ≥48dp) button.
  *
- * The control row **scrolls horizontally** (same pattern as [EditorPageStrip]): with up to eleven ≥48dp
+ * The control row **scrolls horizontally** (same pattern as [BenchPageNav]'s filmstrip): with up to eleven ≥48dp
  * controls the set overflows a narrow phone, so scrolling keeps every control reachable without shrinking
  * any target below 48dp (DESIGN-RULES 1, 7). Scrolling changes layout only — no action, intent, gating,
  * or semantic label changes.

@@ -115,7 +115,7 @@ class ZinelyV2IconsTest {
     fun `every icon is byte-identical to the frozen source, geometry and paint together`() {
         assertTrue("expected to run with :core:ui as the working directory", mockups.isDirectory)
         val frozen = files.flatMap { icons(it) }.map { frozenShapes(it.second) }.toSet()
-        assertEquals("36 distinct marks across the trilogy", 36, frozen.size)
+        assertEquals("37 distinct marks across the trilogy", 37, frozen.size)
 
         ZinelyV2Icons.All.forEach { icon ->
             assertTrue(
@@ -131,10 +131,10 @@ class ZinelyV2IconsTest {
     }
 
     @Test
-    fun `the set is 36 marks over 42 placements, so four are reused`() {
-        assertEquals(36, ZinelyV2Icons.All.size)
-        assertEquals(36, ZinelyV2Icons.All.map { it.name }.toSet().size)
-        assertEquals("42 placements in the frozen trilogy", 42, files.sumOf { icons(it).size })
+    fun `the set is 37 marks over 43 placements, so four are reused`() {
+        assertEquals(37, ZinelyV2Icons.All.size)
+        assertEquals(37, ZinelyV2Icons.All.map { it.name }.toSet().size)
+        assertEquals("43 placements in the frozen trilogy", 43, files.sumOf { icons(it).size })
         // Tick x4, ChevronLeft x2, Close x2, and Play x2 — the second being stopAnim() restoring it.
         val byGeometry = files.flatMap { icons(it) }.groupBy { frozenShapes(it.second) }
         assertEquals("four marks appear more than once", 4, byGeometry.count { it.value.size > 1 })
@@ -165,7 +165,7 @@ class ZinelyV2IconsTest {
             ZinelyV2Icons.All.filter { it.frozenPaint != null && it.frozenPaint !is ZinelyV2IconPaint.Stroke }
                 .map { it.name }.toSet(),
         )
-        assertEquals("the remaining 26 take their paint from the call site", 26,
+        assertEquals("the remaining 27 take their paint from the call site", 27,
             ZinelyV2Icons.All.count { it.frozenPaint == null })
     }
 

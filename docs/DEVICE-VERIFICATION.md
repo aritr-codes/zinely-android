@@ -31,9 +31,28 @@ verification report. A pass without them is not reproducible.
 ## 2. The accessibility tree — the highest-value artefact
 
 ```
-adb shell uiautomator dump /sdcard/ui.xml
-adb pull /sdcard/ui.xml
+MSYS_NO_PATHCONV=1 adb shell uiautomator dump /sdcard/ui.xml
+MSYS_NO_PATHCONV=1 adb exec-out cat /sdcard/ui.xml | <your reader>
 ```
+
+> ⚠ **`MSYS_NO_PATHCONV=1` belongs on BOTH lines, and the first one is the one everybody forgets.** Under Git
+> Bash, MSYS rewrites the `/sdcard/…` argument of the **dump** command, so the file lands somewhere like
+> `/Files/Git/sdcard/ui.xml` while your reader — correctly guarded — reads `/sdcard/ui.xml` and quietly
+> returns **whatever an earlier session left there**. The device tells you, if you look: `UI hierchary dumped
+> to: /Files/Git/sdcard/ui.xml`. C5's Pass 1 lost four readings to this and caught it only because the tree
+> claimed page 8 was current while the screen showed page 5.
+>
+> Two habits make it self-detecting: use a **fresh unique filename** per dump, and **cross-check one fact
+> against the screenshot** before trusting the rest. *A stale accessibility dump is worse than no dump,
+> because it answers.*
+>
+> `adb pull` into the scratchpad and shell redirects (`> file`) have both been seen to write nothing here
+> while reporting success — pipe `exec-out cat` straight into the reader instead, and check the byte count.
+
+**`stateDescription` is not in this dump's schema at all.** There is no `state-desc` attribute, so a control
+whose current/selected state is carried by `stateDescription` cannot be verified on device this way. Use the
+CI-26 Robolectric harness (`platformNode`), which reads the real `AccessibilityNodeInfo`, and record the device
+item as *limited by the instrument* rather than as passed.
 
 `uiautomator dump` returns the real `AccessibilityNodeInfo` tree — **the exact thing TalkBack consumes**.
 Per node it gives `content-desc`, `class`, `clickable`, `focusable`, `checked`, `enabled`, and `bounds` in

@@ -16,13 +16,42 @@ import androidx.compose.ui.input.pointer.pointerInput
 import kotlin.math.PI
 import kotlin.math.abs
 import com.aritr.zinely.core.editor.EditorUiState
+import com.aritr.zinely.core.editor.HitTest
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveSnap
 import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.render.android.ExportScale
+
+/**
+ * What a **single tap on the page** means, as a pure decision — [ADR-093](../../../../../../../../docs/DECISIONS.md#adr-093)
+ * row 3.12 layered on top of [D-037](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-037)'s ruling.
+ *
+ * - a tap on a text element that is **already the sole selection** → [Intent.BeginEditText]. This is the
+ *   frozen `wire()`'s first branch: `if(kindOf(n)==='text'&&selNode===n){edit();return;}` (`v2-bench.html:618`).
+ * - **every other tap** → [Intent.SelectAt], whose own miss branch reduces to exactly `ClearSelection`.
+ *   D-037's three dismissal clauses — blank paper, the desk, another element — are therefore untouched.
+ *
+ * *Which* element was tapped is answered by the reducer's own [HitTest], not by a second hit test written
+ * for the UI layer; the only thing this adds is the one question the reduction destroys by answering it,
+ * namely *was this already selected before the tap*.
+ *
+ * Pure, and extracted rather than inlined, because a tap on this surface cannot be driven end-to-end in
+ * Robolectric — injected touches do not reach `detectTapGestures` through the editor's layer stack, which
+ * is why the shipped editor has never had a tap-to-select unit test. The **decision** is fully testable
+ * here; the **delivery** is a device-verification item, which is where gesture behaviour is verified anyway.
+ */
+internal fun benchTapIntent(state: EditorUiState, pt: PtPoint): Intent {
+    val page = state.document.pages[state.currentPageIndex]
+    val hit = HitTest.topmostAt(page, pt)
+    val reselectedText = hit != null &&
+        state.selection == setOf(hit) &&
+        page.elements.firstOrNull { it.id == hit } is TextElement
+    return if (reselectedText) Intent.BeginEditText(hit!!) else Intent.SelectAt(pt)
+}
 
 /**
  * The S4 editor gesture layer (ADR-029 §5). Translates raw Compose pointer input over the page into the
@@ -92,7 +121,18 @@ public fun Modifier.editorTransformGestures(
                 //     and no frame in which the page reads as deselected — which the ruling asks for
                 //     explicitly, and which a UI-side "clear, then select" would have broken.
                 // Running the hit test here instead would duplicate reducer logic in the UI layer for no gain.
-                onTap = { pos -> dispatch(Intent.SelectAt(toPage(pos))) },
+                // C3 (ADR-093 row 3.12), layered ON TOP of the ruling above rather than replacing it:
+                // tapping a text element that is **already the sole selection** enters edit, which is the
+                // frozen `wire()`'s first branch — `if(kindOf(n)==='text'&&selNode===n){edit();return;}`
+                // (`v2-bench.html:618`). Every other tap still falls through to `Intent.SelectAt` and its
+                // miss branch, so D-037's dismissal clauses are untouched.
+                //
+                // The "which element" question is answered by the reducer's OWN [HitTest], not by a second
+                // hit test written here — that is what makes this an additional branch rather than the
+                // duplicated selection logic the comment above refuses. It asks one further question the
+                // reducer cannot answer for it: *was this already selected before the tap*, which is state
+                // the reduction destroys by selecting.
+                onTap = { pos -> dispatch(benchTapIntent(currentState(), toPage(pos))) },
                 onLongPress = { pos -> dispatch(Intent.SelectAt(toPage(pos))) },
                 onDoubleTap = { pos -> onDoubleTap(toPage(pos)) },
             )

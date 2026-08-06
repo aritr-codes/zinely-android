@@ -150,6 +150,12 @@ internal const val BenchMaterialiseFromScale: Float = 0.92f
  * — and the fade is [BenchFocusScrim]'s cover run backwards, from a full paper wash to none. Nothing new
  * is introduced for either half.
  */
+/** Frozen `del()` — `transform:scale(.9)` as the element leaves (`v2-bench.html:624`). */
+internal const val BenchDeleteToScale: Float = 0.9f
+
+/** Frozen `del()` — `transition:opacity .2s, transform .2s` (`v2-bench.html:624`). */
+internal const val BenchDeleteFadeMillis: Int = 200
+
 internal object BenchMaterialise {
 
     /** `scale(.92)` at `progress = 0`, `scale(1)` at `1`; the easing is applied by the caller's animation. */
@@ -160,6 +166,25 @@ internal object BenchMaterialise {
 
     /** The paper cover's alpha: full at `progress = 0` (element invisible), gone at `1`. */
     fun coverAlphaAt(progress: Float): Float = 1f - progress.coerceIn(0f, 1f)
+
+    /**
+     * C4's soft delete (ADR-094 row 4.13), which is this same animation run backwards.
+     *
+     * The frozen `del()` (`v2-bench.html:620-629`) fades the element to `opacity:0` and `scale(.9)` over
+     * `.2s`. `SceneRenderer` paints the page as **one tape**, so there is no per-element opacity to animate —
+     * which is exactly the constraint C2a already met when it needed to fade an element *in*, and answered
+     * with a paper cover rather than a new render path. This is that answer in reverse: the cover fades **in**
+     * over the element while [deleteScaleAt] shrinks it, so what the user sees is the element leaving.
+     *
+     * @return the cover's alpha: transparent at `progress = 0`, opaque at `1`.
+     */
+    fun deleteCoverAlphaAt(progress: Float): Float = progress.coerceIn(0f, 1f)
+
+    /** `scale(1)` at `progress = 0`, the frozen `scale(.9)` at `1`. */
+    fun deleteScaleAt(progress: Float): Float {
+        val p = progress.coerceIn(0f, 1f)
+        return 1f - (1f - BenchDeleteToScale) * p
+    }
 
     /**
      * [t] scaled about its own **centre**, which is what `transform:scale()` does — a naive width/height

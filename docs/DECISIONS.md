@@ -69,7 +69,7 @@
 | [ADR-056](#adr-056) | One shared `readImageIntrinsics` seam so preview and export resolve geometry from identical dimensions | Accepted |
 | [ADR-057](#adr-057) | Foundation typography — one registry; coverage split into promise (`:core:model`) vs. cmap-measured capability | Accepted |
 | [ADR-058](#adr-058) | Proof surface opens on Read (chrome-free finished zine); imposed sheet becomes step 1 of "Print & fold" | Accepted |
-| [ADR-059](#adr-059) | House `Role.Button` controls mis-announce as `android.view.View`; fix scheduled to the C4/C6/C7 a11y gate | Accepted |
+| [ADR-059](#adr-059) | House `Role.Button` controls mis-announce as `android.view.View`; fix scheduled to the conformance C4/C6/C7 a11y gate | Accepted |
 | [ADR-060](#adr-060) | User-facing copy layer = new pure-Kotlin `:core:copy` module exposing a `Copy` object (not `strings.xml`) | Accepted |
 | [ADR-061](#adr-061) | CI-01 hub adjudication — `ZINELY-DESIGN-SYSTEM.md` is authoritative; `DESIGN-LANGUAGE.md` is a companion; §0.2 owns per-area authority | Accepted |
 | [ADR-062](#adr-062) | CI-07 / A-3 — a fourth colour job (*consequence*, non-accent) + four control-state values; two-accent rule unchanged | Accepted |
@@ -95,13 +95,18 @@
 | [ADR-083](#adr-083) | **B3 — interaction**: long-press + the always-visible `⋯` fallback, the action sheet over a theme-aware scrim (D-022 — where the Library file contradicts a corpus token, the **corpus wins**), metadata disclosed in the sheet rather than on every cover, and the frozen literal glyphs kept as frozen (D-021). **A control cannot contain a control**; a golden in record mode is not an assertion | Accepted |
 | [ADR-084](#adr-084) | **B4 — the empty state and the dock**: the loose-sheet→book transformation and the inert band with the one way off the screen. The gradient inverts on transcription (CSS and Compose measure from opposite edges); a centre-aligned flex item's margin moves it by **half**; `env(safe-area-inset-bottom)` through the *consuming* seam. Raised **D-023** rather than settling it | Accepted |
 | [ADR-085](#adr-085) | **Workflow V2** — the implementation process is re-shaped around where its cost actually falls: the handover becomes the package entry point, every package opens with a **frozen property table**, the "cannot fail" review moves **mid-package**, the verification order is fixed, one owner gate replaces two, and the Gradle daemon is on. **No verification standard is weakened** — fifteen are restated as unweakenable | Accepted |
-| [ADR-086](#adr-086) | **B5 — the screen (planning).** The first integration package publishes its [frozen property table](#adr-086-fpt) before writing code, and the table reports that **8 of 22 rows have no frozen source**: the Library prototype has six hard-coded zines, so it never waits, never fails, wires no destination, and contains no rename input, delete confirmation or paper chooser. Raised **D-024 / D-025 / D-026** plus the `token-enrolment.txt` ↔ D-007 conflict — **all four ruled the same day**: reuse the existing flows, a duplicate gets a **new** cover, enrolment re-seats to Phase D, and Loading/Error go to the **frozen HTML** — which was **amended**. Planning approved; **no row blocked**; implementation next | Proposed |
+| [ADR-086](#adr-086) | **B5 — the screen (planning).** The first integration package publishes its [frozen property table](#adr-086-fpt) before writing code, and the table reports that **8 of 22 rows have no frozen source**: the Library prototype has six hard-coded zines, so it never waits, never fails, wires no destination, and contains no rename input, delete confirmation or paper chooser. Raised **D-024 / D-025 / D-026** plus the `token-enrolment.txt` ↔ D-007 conflict — **all four ruled the same day**: reuse the existing flows, a duplicate gets a **new** cover, enrolment re-seats to Phase D, and Loading/Error go to the **frozen HTML** — which was **amended**. Planning approved; **no row blocked**; implementation complete, independently reviewed 2026-07-31, and closed by **owner ruling 2026-08-01** (OD-1 of [ADR-089](#adr-089)) — B5 committed at `03223da` | Accepted |
 | [ADR-087](#adr-087) | **Workflow V2.1** — every frozen-property-table row terminates in exactly one of four states: ✅ Implemented · ≡ Equivalent mutant (with **proof**) · ⏳ Owner ruling required · ✎ Canonical design amendment required. No row stays "blocked", because that one word hid four different answers owed to four different people in B5's table. Extends [ADR-085](#adr-085) | Accepted |
 | [ADR-088](#adr-088) | **The paper chooser draws both stocks at one scale.** The frozen `.paper .stock` sizes drew Letter ~4% oversized, which **inverted** the one relation the chooser exists to show: A4 is the physically larger sheet. Ruled a **specification bug fix**, not a redesign — the frozen HTML is corrected (Letter `56×72` → `54×70`) and Compose now *derives* both stocks from `PaperSize.portrait`, so a per-stock error is no longer expressible | Accepted |
 | [ADR-089](#adr-089) | **Phase C planning** — the Bench is not one package. Publishes the phase's **eight packages** and a complete selector-level frozen property table for the frozen Bench, before any production code. Four of ten proposed packages could not legitimately begin; owner ruling **OD-2** re-seated the missing capability beyond Phase C | Accepted |
 | [ADR-090](#adr-090) | **C1 — the studio surface**, Phase C's first production code: the ground, the sheet and its two-layer shadow, the grain, the keep-clear cue, the centre guide and the page number. The cue is **derived** from `Imposer.DEFAULT_SAFE_AREA_INSET_PT`, not transcribed from the frozen `18.5px`, so it keeps depicting the engine's boundary if that boundary moves; the page is centred through the **shared `pageOffset` viewport**, so all ten layers reading that seam move together. Implements [D-032](design/V2-SPEC-DEFECTS.md#d-032)'s ruled warn trigger as transient per-frame guidance. Reviewed **GO WITH FIXES** twice, every Required Fix reconciled. Its device verification failed twice and drove two amendments: [D-033](design/V2-SPEC-DEFECTS.md#d-033) gave the page real geometry, and [D-035](design/V2-SPEC-DEFECTS.md#d-035-ruling) made the sheet a **light-theme island** — the artifact does not dim, the room around it may — after the dimmed sheet left the user's own black content ink at 1.60:1. **[Both passes recorded and passed](#adr-090-device-verification)** on `SM-A176B` / Android 16 | Accepted |
 | [ADR-091](#adr-091) | **C2a — selection**, the second production package of Phase C: the outline, the eight handles, the dim and the materialise. Records the pre-implementation blocker check that cleared both of its candidate owner decisions — the `--matcha` re-skin **improves** the outline's WCAG 1.4.11 figure (4.11:1 → **5.20:1**, and now in both themes, because [ADR-090](#adr-090) made the sheet an island), and the freeze's four handles versus the editor's eight is [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) applied, not a new ruling. Its substance is two **composites**: the frozen per-element `opacity:.4` becomes a `--paper` scrim at α 0.6 punched out at the selection, because an opacity on `Element` would reach the exported PDF and a two-pass render would break z-order; the materialise reuses that same scrim backwards plus the existing `LivePreview` seam | Accepted |
 | [ADR-092](#adr-092) | **C2b - the contextual verb bar**, the second half of the OD-11 split: the freeze's `.ctx` is **added** beside the shipped `EditorContextBar` rather than replacing it, because the two are different controls and only `Delete` is shared. Records a five-question blocker check that cleared **all five** against rulings already in hand - including `Font`, which ships drawn and **disabled** because OD-9 said the freeze specifies the editing surface, not the product's whole capability. | Accepted |
+| [ADR-093](#adr-093) | **C3 — in-place text editing and the rigid page pan**, opened before any production code per [ADR-089 §2.2](#adr-089). Re-verifies ADR-089's eleven planned rows against the frozen file (every reference but one had drifted) and adds four, for **15**. Its blocker check found one plan defect and **no owner decision**: ADR-089's `TypeBar.kt` re-skin would delete five style capabilities, which [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) forbids outright, so `.styletb` ships as the editing state's row — [D-042](design/V2-SPEC-DEFECTS.md#d-042) | Accepted |
+| [ADR-094](#adr-094) | **C4 — the bar, the status chip, the snackbar.** Opened before any production code per [ADR-089 §2.2](#adr-089); its own blocker check found three plan defects, two of them owner decisions ([D-047](design/V2-SPEC-DEFECTS.md#d-047), [D-048](design/V2-SPEC-DEFECTS.md#d-048)), and it was implemented and `Accepted` only after [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) ruled them. | Accepted |
+| [ADR-095](#adr-095) | **C5 — page navigation**: the filmstrip of little paper sheets and the summoned page grid. Two owner questions ([D-053](design/V2-SPEC-DEFECTS.md#d-053), [D-059](design/V2-SPEC-DEFECTS.md#d-059)) — the second raised *during* implementation — both ruled, both amending the frozen Bench. 31 frozen rows, 44 mutations, both device passes accepted. | Accepted |
+| [ADR-096](#adr-096) | **C6 — the ink popover (H4): the maker palette.** Opened before any production code per [ADR-089 §2.2](#adr-089) and **held `Proposed` until its one owner decision was ruled** — [D-028](design/V2-SPEC-DEFECTS.md#d-028), which asked whether [ADR-055](#adr-055) Decision 6's five accepted content inks are superseded by the freeze's nineteen swatches; [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) ruled it on 2026-08-05, the frozen Bench's eighth amendment. Re-anchors every C6 citation (all sixteen were wrong, at four different offsets, and were wrong at the freeze commit) and audits twelve frozen properties no ADR-089 row reaches. **Both device passes run and accepted 2026-08-06** ([§9](#adr-096-device)); Pass 1 failed the first build on two frozen properties and added rows 6.2c and 6.1i. | Accepted |
+| [ADR-097](#adr-097) | **C9 — integration: the four states, the motion policy, persistence of place, and the phase gate.** Phase C's **last** package, and the only one whose subject is the seams between the six already built rather than a region of the frozen file. Opened before any production code per [ADR-089 §2.2](#adr-089), with a **14-row** property table read from `v2-bench.html` itself — which is how it found the Bench's reduced-motion address wrong in three places (`:293`/`:260`/`:143` → **`:460`**), one rule ADR-089's phase table names nowhere, a caption outside the four states, and a row C3 had already discharged. Built, verified (**1603 tests green**; **15/15 mutations RED** over a GREEN control), reviewed twice (**GO WITH FIXES**, all Required Fixes reconciled) and **device-verified on both passes**. Its own invariants found two real product defects nothing else had: a **dead selection carried across undo** in `EditorReducer.stepHistory`, and a soft-delete fade **hard-coding 200ms** under a reduced-motion preference. Its row 9.5 was computed four times and wrong three times — raising and withdrawing [D-061](design/V2-SPEC-DEFECTS.md#d-061) and [D-062](design/V2-SPEC-DEFECTS.md#d-062) the same day — while the hardware was right the first time; **being wrong once is not a reason to trust the correction**. ✅ **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) RESOLVED by [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling)**, option (a) — the Bench's rule ratified on device evidence, **no code changed**, discharging [OD-10](#adr-089)'s live half. **This acceptance closes Phase C.** | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -1693,11 +1698,11 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
 ---
 
 ## ADR-059 {#adr-059}
-**House `Role.Button` controls announce to the platform accessibility tree as `android.view.View`, not their role — fix scheduled to the C4/C6/C7 accessibility merge gate.**
+**House `Role.Button` controls announce to the platform accessibility tree as `android.view.View`, not their role — fix scheduled to the conformance C4/C6/C7 accessibility merge gate.**
 - **Status:** Accepted (2026-07-23) — records a **finding + its scheduling**; the fix *mechanism* is decided by the milestone that implements it, not here.
 - **Context:** The [C1 conformance-guardrails milestone](reviews/C1-conformance-guardrails.md) built a harness that reads the *platform* `AccessibilityNodeInfo` tree (the tree TalkBack consumes), not Compose's merged-semantics tree ([V1-CONFORMANCE-INVENTORY](V1-CONFORMANCE-INVENTORY.md) CI-26; [ZINELY-DESIGN-SYSTEM §11.3](ZINELY-DESIGN-SYSTEM.md) *"the platform's tree is the truth"*). That harness surfaced — and an independent Review Agent reproduced with a direct probe — that any control setting a `Role` on a node that **merges child content** collapses to `className = android.view.View` on the platform tree. This is Compose's own `AndroidComposeViewAccessibilityDelegateCompat` behaviour (a Role's class survives only on a **leaf** or `clearAndSetSemantics` node) and is identical on-device. Affected in production, shipped in `0.9.0-beta.1`: the `ZButton` family (`ZPrimaryButton`/`ZStampButton`/`ZIconButton`/`ZToolButton`), the `TypeBar` radios/checkboxes, and Proof's `ZToolButton` — TalkBack announces these as generic "View" rather than "Button"/"Radio button". This is a [DESIGN-RULES R9](design/DESIGN-RULES.md) / §11.3 defect. The `enabled` bit is unaffected and correct (the separate [`f4faaa4`](#adr-058) class); the leaf/cleared Reframe controls correctly surface `android.widget.Button`.
-- **Decision:** The fix is **not** made in C1 (a net-building milestone that ships zero `src/main` change). It is **scheduled to the existing accessibility merge gate** on the surface milestones: the `ZButton` family → **C4** (the object layer, where these are consolidated into `:core:ui` by C2 and restyled by C4); `TypeBar` radios/checkboxes → **C6**; Proof `ZToolButton` → **C7**. The fix mechanism (e.g. make the role-bearing node a leaf, or `clearAndSetSemantics` carrying the role) is decided by that milestone, verified on the platform tree via the CI-26 harness **and** both device passes. Deferring avoids fixing components that C2 moves and C4 restyles, then re-verifying twice.
-- **Consequences:** The defect is documented and tracked rather than silently carried; C4/C6/C7 inherit an explicit, evidenced mandate plus a ready acceptance test — the platform-tree Role/class assertion the CI-26 harness enables, which is the CI-30 remainder C1 could not close. **Accepted risk:** `0.9.0-beta.1` ships a known screen-reader-role defect until those milestones land; a targeted pre-C4 fix was considered and **deferred** (owner decision, 2026-07-23) absent evidence of TalkBack users in the beta cohort. Full evidence and the C1 finding ledger: [reviews/C1-conformance-guardrails.md](reviews/C1-conformance-guardrails.md).
+- **Decision:** The fix is **not** made in C1 (a net-building milestone that ships zero `src/main` change). It is **scheduled to the existing accessibility merge gate** on the surface milestones: the `ZButton` family → **conformance C4** (the object layer, where these are consolidated into `:core:ui` by conformance C2 and restyled by conformance C4); `TypeBar` radios/checkboxes → **conformance C6**; Proof `ZToolButton` → **conformance C7**. *(Every milestone letter in this ADR belongs to the [V1 conformance programme](V1-CONFORMANCE-INVENTORY.md), not to Compose V2's Phase C — the two ladders both run C0…C9 and Phase C has no C7 at all. See [HANDOVER §0.1](COMPOSE-V2-HANDOVER.md#01-two-programmes-two-c-ladders).)* The fix mechanism (e.g. make the role-bearing node a leaf, or `clearAndSetSemantics` carrying the role) is decided by that milestone, verified on the platform tree via the CI-26 harness **and** both device passes. Deferring avoids fixing components that C2 moves and C4 restyles, then re-verifying twice.
+- **Consequences:** The defect is documented and tracked rather than silently carried; conformance C4/C6/C7 inherit an explicit, evidenced mandate plus a ready acceptance test — the platform-tree Role/class assertion the CI-26 harness enables, which is the CI-30 remainder C1 could not close. **Accepted risk:** `0.9.0-beta.1` ships a known screen-reader-role defect until those milestones land; a targeted pre-C4 fix was considered and **deferred** (owner decision, 2026-07-23) absent evidence of TalkBack users in the beta cohort. Full evidence and the C1 finding ledger: [reviews/C1-conformance-guardrails.md](reviews/C1-conformance-guardrails.md).
 - **Review:** Finding independently reproduced by a Review Agent's direct platform-tree probe (not an implementer claim). Scheduling is the owner's recorded decision. Supersedes nothing.
 
 ---
@@ -1763,7 +1768,7 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
   3. **No size threshold and no partial exception.** There is no "small tokens take the chrome radius" line, and no per-surface carve-out. [CI-73](V1-CONFORMANCE-INVENTORY.md) states why: *"rounding the sheet but not the cover is worse than either consistent answer, because the inconsistency **is** the defect A-5 names."*
   4. **§2.7's row conflict is resolved by precedence, not by new text:** where an object is claimed by both rows — it is chrome *and* it represents paper — **the paper row governs its corner.** This states which half of the existing sentence applies; it adds no rule and reverses none.
   5. **The corpus is confirmed, not edited.** [§2.7](ZINELY-DESIGN-SYSTEM.md) remains authoritative. [§5.1](ZINELY-DESIGN-SYSTEM.md)'s *"Never: … takes a corner radius"* remains authoritative. [§13](ZINELY-DESIGN-SYSTEM.md)'s checklist item remains aligned and needs no edit. [RD-4](V1-DESIGN-REFINEMENT.md) is **confirmed rather than superseded** — its *"rounded cream rectangle"* finding was correct, and this ADR cites it as evidence.
-  6. **The four production sites are non-conformant** and are corrected in **CI-73** at **C7** — all four in one commit, never split. **No code changes here.**
+  6. **The four production sites are non-conformant** and are corrected in **CI-73** at **conformance C7** (the [V1 conformance](V1-CONFORMANCE-INVENTORY.md) ladder — Compose V2's Phase C has no C7) — all four in one commit, never split. **No code changes here.**
 - **Consequences:** **No accepted rule text in the design system changes**, which is the point: unlike [ADR-064](#adr-064), this ADR is an act of confirmation. It **supersedes nothing** and carries no ⚠️ amendment flag, because the direction chosen is the one the accepted text already stated in four places. **D-5 is closed** and audit row 3 becomes decidable — a template card is square. **D-6 remains open by explicit owner intent, and is re-scoped: it is no longer a radius question at all.** With corner geometry now settled **identically** for page and thumbnail, D-6 can no longer be resolved *by* the radius answer, and what survives is a **rotation / placement semantics** question — [§8.3](ZINELY-DESIGN-SYSTEM.md) forbids *"the page rotates for effect"* while [§5.10](ZINELY-DESIGN-SYSTEM.md), [§4.3](ZINELY-DESIGN-SYSTEM.md) and [R10](design/DESIGN-RULES.md) require the page strip be hand-placed and rotated. That question **gets its own owner decision** and is **not** resolved by extending this ADR; it is filed as **[CI-98](V1-CONFORMANCE-INVENTORY.md)** so it cannot be orphaned by CI-09's closure. **This ADR unblocks [CI-20](V1-CONFORMANCE-INVENTORY.md)** (the radius re-freeze of `docs/design/v1/*.html`, which currently carries **22 distinct `border-radius` values** against §2.7's three) **and [CI-12](V1-CONFORMANCE-INVENTORY.md)**, whose last prerequisite it was. It also settles the [roadmap](V1-IMPLEMENTATION-ROADMAP.md)'s shape-count condition, deliberately left unfixed pending this ruling — settled as a **rule** (no radius on the artifact or any representation of it) rather than as a number, since this ADR specifies no count and instead removes sites. **No README edit.**
 - **Review:** Owner ruling rejecting A-5; independent Review Agent to confirm (a) that **no accepted text was amended** — §2.7, §5.1 and §13 must read as they did before, save the precedence note in Decision 4; (b) that RD-4 is marked confirmed, not superseded; (c) that no size threshold or partial exception has crept in; (d) that D-6 is left open and explicitly re-scoped away from radius, with a live owner; and (e) that the four CI-73 sites are recorded as non-conformant without any code being touched. **Supersedes nothing.**
 
@@ -1860,7 +1865,7 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
   3. **Theme-invariant, by design and stated as such.** `zinelyContentInks()` takes no theme parameter and its local is not keyed on `darkTheme`. The frozen specs declare these outside every `:root[data-theme]` and `prefers-color-scheme` block. This is recorded explicitly because *"we forgot the dark values"* and *"there are no dark values"* look identical in code: **a printed object does not change colour when the room lights dim**, and a cover that restyled itself in dark mode would be the app lying about a physical artifact — the dishonesty §II.6 forbids. Chrome re-derives because chrome is *the room*; content does not because content is *the thing on the desk*.
   4. **The wall is enforced by types, and the one stated rule is asserted narrowly.** `ZinelyV2Colors` and `ZinelyContentInks` are separate types in separate locals, so reading across is a compile error rather than a review comment. The value-level assertion is exactly the rule the specs state — *"`consequence` red never enters the maker set"* — and **deliberately nothing broader**: a blanket "no content value equals any chrome value" check would be wrong and would fail immediately, because maker `Ink #2A251E` is *identical* to light-theme chrome `ink` and legitimately so. Black is both what the interface writes in and what a maker draws with; only the error red is reserved.
   5. **No human ink names in `:core:ui`.** The frozen Bench carries display labels (`['Matcha','#7C8A3F']`, …). Those are **user-facing copy** and belong to `:core:copy` ([ADR-060](#adr-060)); this file models identity as an enum and leaves the labels to the copy layer, which the ink popover will read from in Phase C. (`:core:ui` is not currently enrolled in `CopyNoProseLiteralTest`, so this is architectural discipline rather than a gate being obeyed — which is why it is recorded rather than left to the linter to notice later.)
-  6. **The in-page palette is three bands, and they are three *categories* — not nineteen inks.** The frozen ink popover renders `Inks` (10) + `Paper tints` (5) + `Neutrals` (4) and applies **any** of the nineteen swatches (`v2-bench.html:493`, `:476-483`), while the Constitution §III and [V2-IDENTITY.md](design/V2-IDENTITY.md) §4 fix the maker set at **ten**, "verbatim, no invention". A2 initially modelled only the `INKS` band and raised the discrepancy as **D-003** rather than choosing a side. **Owner ruling (2026-07-28), which closes D-003:** *"The frozen HTML is the authority. The complete maker palette consists of: Inks · Paper Tints · Neutrals. The constitutional '10 maker inks' refers only to the INKS band. Paper Tints and Neutrals are separate categories, not additional inks. Do not merge them. Do not rename them. Implement all three groups exactly as frozen when Phase C arrives. Model them as three distinct collections so the architecture reflects the product language rather than flattening everything into a single list."* Implemented as `makerInks` / `paperTints` / `neutrals` — three collections of **three distinct types**, which is what makes the ruling enforceable rather than merely documented: there is no `List<Color>` the three can be concatenated into, so "flatten the palette" is a compile error. *(The tokens land now, in `content.*`'s own package, rather than in Phase C: the ruling settles what the namespace **contains**, and leaving a known hole in the foundation for a later phase to discover is precisely what Phase A exists to prevent. Phase C implements the three-band **popover UI** over them, together with the three `PRESETS` (`v2-bench.html:427`), which are recipes over the bands rather than tokens.)* **Three chrome/content value coincidences are now sanctioned and pinned by test**: neutral `Ink #2A251E`, `Slate #5B5347` and `Stone #8C8269` are byte-identical to light chrome `ink`, `inkSoft` and `inkFaint`. Any future "no content value equals a chrome value" lint would be wrong — the only value-level rule the corpus states remains the `consequence` exclusion. `Ink` also appears in **both** the ink and neutral bands, verbatim from source, and is pinned so it is not de-duplicated into one.
+  6. **The in-page palette is three bands, and they are three *categories* — not nineteen inks.** The frozen ink popover renders `Inks` (10) + `Paper tints` (5) + `Neutrals` (4) and applies **any** of the nineteen swatches (`v2-bench.html:493`, `:586-608`), while the Constitution §III and [V2-IDENTITY.md](design/V2-IDENTITY.md) §4 fix the maker set at **ten**, "verbatim, no invention". A2 initially modelled only the `INKS` band and raised the discrepancy as **D-003** rather than choosing a side. **Owner ruling (2026-07-28), which closes D-003:** *"The frozen HTML is the authority. The complete maker palette consists of: Inks · Paper Tints · Neutrals. The constitutional '10 maker inks' refers only to the INKS band. Paper Tints and Neutrals are separate categories, not additional inks. Do not merge them. Do not rename them. Implement all three groups exactly as frozen when Phase C arrives. Model them as three distinct collections so the architecture reflects the product language rather than flattening everything into a single list."* Implemented as `makerInks` / `paperTints` / `neutrals` — three collections of **three distinct types**, which is what makes the ruling enforceable rather than merely documented: there is no `List<Color>` the three can be concatenated into, so "flatten the palette" is a compile error. *(The tokens land now, in `content.*`'s own package, rather than in Phase C: the ruling settles what the namespace **contains**, and leaving a known hole in the foundation for a later phase to discover is precisely what Phase A exists to prevent. Phase C implements the three-band **popover UI** over them, together with the three `PRESETS` (`v2-bench.html:471`), which are recipes over the bands rather than tokens.)* **Three chrome/content value coincidences are now sanctioned and pinned by test**: neutral `Ink #2A251E`, `Slate #5B5347` and `Stone #8C8269` are byte-identical to light chrome `ink`, `inkSoft` and `inkFaint`. Any future "no content value equals a chrome value" lint would be wrong — the only value-level rule the corpus states remains the `consequence` exclusion. `Ink` also appears in **both** the ink and neutral bands, verbatim from source, and is pinned so it is not de-duplicated into one.
 - **Consequences:** Additive exactly as A1 was — a new type, a new local, no call site migrated, nothing consuming it until Phase B, so it **cannot move a golden or a pixel**. Every **colour** custom property in the three frozen `:root` blocks is now accounted for as ported, deferred, or scaffolding; the non-colour remainder — `--serif`, `--sans`, `--r`, `--settle`, `--standard` and `--grain` — is deferred to **A3** (typography), **A4** (shape), **A5** (motion) and **A6** (paper). *(An earlier draft of this paragraph claimed a completed audit of every property with `--grain` as the sole deferral. That was false, and the way it was false is instructive: `:root` is the wrong completeness test for a **content**-colour package, because the entire maker palette lives in JavaScript at `v2-bench.html:424-427`, outside every `:root` block — which is exactly how the omission in the next sentence survived an audit that felt exhaustive.)* **A second, larger finding this work surfaced — raised as D-003, now owner-ruled and closed (see Decision 6).** **An accessibility finding this work surfaced, and deliberately did not resolve:** two of the four frozen cover inks put their title below the AA normal-text floor — Matcha **3.380:1** and Teal **3.832:1** (Strawberry 4.992, Ochre 5.535, paper stock 12.763). Three governing documents point three different ways on whether that is a defect: the title is ~18.56px semibold and so falls *just* under WCAG's 18.66px-bold large-text threshold on both counts; cover inks carry **no ★** in V2-TOKENS.md and the Constitution gates AA on ★ pairings; yet [COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md) Phase B lists *"AA contrast per ink"* as an impl-gate without naming a level. Implementation therefore asserted the **minimum defensible** floor (3.0:1) — strictly better than no gate, while refusing to certify at 4.5:1 a pair that does not clear it — **changed no frozen value**, and logged the question as **D-002** in the new [V2-SPEC-DEFECTS.md](design/V2-SPEC-DEFECTS.md) for an owner ruling before Phase B's gate is assessed. Every available fix (darken the fills, lighten the titles, or raise the title's size/weight) is a change to what the shelf *looks like*, and so is an owner amendment to the frozen HTML, not an implementation call. Affected: `:core:ui` (new namespace + theme wiring + one test file) and docs (this ADR, the new defect register). **No README edit.**
 - **Review:** Independent Review Agent to falsify, specifically: (a) **transcription fidelity** — re-read `v2-library.html:79-84` and `v2-bench.html:424` and confirm all four cover triples, the stock pair, and all ten maker values *and their frozen order*; (b) that the **theme-invariance claim is true of the frozen source** — that no ink is redefined in any `:root[data-theme]`, `prefers-color-scheme`, or `[data-theme]` block in any of the three files, since the whole "printed objects don't change colour" argument collapses if one is; (c) that the **`consequence` assertion is neither too narrow nor too broad** — verify independently that maker `Ink` really does equal chrome light `ink` (so the blanket check would indeed have been wrong) and that no consequence value appears in any content value; (d) the **contrast numbers** — recompute all five ratios independently and confirm 3.380/3.832/4.992/5.535/12.763, and judge whether asserting 3.0 rather than 4.5 is honest gating or convenient under-gating; (e) that the change is **genuinely additive** — `git diff` shows no V1 or A1 token value altered and no call site re-pointed; (f) that **`--grain` is the only remaining unported `:root` property** and nothing else was missed; and (g) that **no product surface** was built and no recipe composition (which band pairs with which stock) was smuggled in ahead of Phase B. Supersedes nothing.
 
@@ -2014,7 +2019,7 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
   - The **platform-tree harness exists** — `platformNode` / `platformTraversalStops`, built in C1 (CI-26) — but in `:feature:editor`'s **test** source set. A test source set is not published, and `:core:ui` is *upstream* of `:feature:editor`. So the module that owns every V2 component had no way to assert the tree TalkBack reads. The symptom is already in the tree: `ZButtonPlatformA11yTest` tests `:core:ui`'s button family from inside `:feature:editor`.
   - The **device a11y-dump recipe was not wired into anything.** CLAUDE.md says *"the recipe … is in the device-verification notes"*. No such document existed. The mandatory pass was, for a new reader, undocumented.
 
-  And underneath all four sits [ADR-059](#adr-059): the V1 button family announces to TalkBack as `android.view.View` instead of its role. Its *fix* is scheduled to C4/C6/C7, which is not this package's business — but every V2 surface in Phases B–D is built in `:core:ui`, and a foundation that does not solve this hands the same defect to all three.
+  And underneath all four sits [ADR-059](#adr-059): the V1 button family announces to TalkBack as `android.view.View` instead of its role. Its *fix* is scheduled to conformance C4/C6/C7, which is not this package's business — but every V2 surface in Phases B–D is built in `:core:ui`, and a foundation that does not solve this hands the same defect to all three.
 
   **The repository's own evidence is sharper than ADR-059's summary.** ADR-059 states the rule as *leaf or `clearAndSetSemantics`*. Reading the code it came from: `ReframeControls.NudgeCell` keeps `android.widget.Button` on a plain `clickable(role = …).semantics { }` — **device-verified** — because its only child is `Icon(contentDescription = null)`, which contributes no semantics. `ZoomButton` had the identical modifier chain and lost the class, because a `Text` child split it into three nodes: click and `disabled` on one, label on a second, role on a third. TalkBack landed on the labelled node, which reported `enabled = true`. So the rule is **the role survives only when the control collapses to one node**; the Z* buttons all wrap a `BasicText`, which is exactly why they collapse.
 
@@ -2033,7 +2038,7 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
 
      One ordering constraint follows and is documented on the seam: because it **ends** in `clearAndSetSemantics`, anything semantic chained after it — a `testTag` included — is discarded. Tags go before the control.
 
-     V1's `zinelyControl` is untouched: ADR-059's V1 fix stays with C4/C6/C7, which will move components this package must not pre-empt.
+     V1's `zinelyControl` is untouched: ADR-059's V1 fix stays with conformance C4/C6/C7, which will move components this package must not pre-empt.
   2. **The seam decides no appearance.** `indication` is passed through and defaults to `null`; `interactionSource` is exposed for the focus ring to hang off later. V2's focus indicator is **D-008**, owner-deferred to Phases B/C, and the frozen HTML does not answer it. A Material ripple default would be inventing an unfrozen visual — the constitutional error this workflow exists to prevent. Drawing nothing is the honest foundation state.
   3. **The canvas node tree ships as mechanism only.** `ZinelyV2CanvasSemantics` knows nothing of elements, pages or zines: it takes bounds in device pixels, a name, a selected state, an activation, and custom actions. A fold guide or a proof sheet uses it on the same terms as a page.
 
@@ -2069,7 +2074,7 @@ The enabling fact is that the cost is far lower than the `ProofSheet` deferral i
   Second: the KDoc promises that `selected = null` declares *nothing*, so a plain button never tells a service it is an unselected something. Only deletion of that line was caught; replacing the null-check with `this.selected = (selected == true)` survived green. Absence is now asserted directly, and the ADR's "individually mutation-covered" claim above is narrowed to what was actually tested — coverage against deletion, which is not the same as coverage against a wrong value.
 
   **One Recommended Improvement taken, and it was worth more than it looked:** the host runs at density 1.0, where every `dp`↔`px` conversion in the canvas layer is the identity — `toPx()` could have been `.value` with nothing noticing. A test at density 2 distinguishes all three conversions **and** exercises the inflation path in composition for the first time (a 60px node against a 96px floor), which the second review correctly identified as the residual gap behind its "is the bounds oracle circular?" question. It is not circular in aggregate — the pure suite pins the same function against literal expectations — but neither layer fixture had been below the floor. Three new gates, each mutation-verified red. **149 tests, 0 failures.**
-- **Review:** Independent Review Agent to falsify, specifically: (a) **the sharpened rule** — that the role survives only on a one-node collapse, and that `clearAndSetSemantics` + re-declared `disabled` genuinely produces class, label, enabled bit and click together on the platform node, rather than passing because Robolectric's tree differs from a device's; (b) whether `ZinelyV2ControlPlatformA11yTest` can be **corrupted without turning red** — in particular whether removing the `disabled()` line, or reordering `clickable` inside the clear, is caught; (c) whether the fixture is **strong enough** — a control with no text child would pass against a seam that does nothing; (d) the **centre-inflation** claim and every boundary in the pure geometry suite, including negative coordinates and the single-point case; (e) whether the roadmap's *"build the scaffolding"* and *"preserve `ElementSemanticsLayer`"* really are compatible, or whether this ADR resolved a conflict it should have escalated; (f) that the harness move is genuinely behaviour-neutral — that no assertion in the nine moved-consumer test files changed meaning; (g) whether the **testFixtures** mechanism is the right one on this AGP version, or whether it costs a variant the CI job does not build; (h) whether the CI AA-contrast gate really is complete, by re-deriving the ★ set from V2-TOKENS.md independently; and (i) whether **DEVICE-VERIFICATION.md** restates policy the Documentation Rule says belongs to CLAUDE.md. Supersedes nothing; does **not** discharge [ADR-059](#adr-059), whose V1 fix remains scheduled to C4/C6/C7.
+- **Review:** Independent Review Agent to falsify, specifically: (a) **the sharpened rule** — that the role survives only on a one-node collapse, and that `clearAndSetSemantics` + re-declared `disabled` genuinely produces class, label, enabled bit and click together on the platform node, rather than passing because Robolectric's tree differs from a device's; (b) whether `ZinelyV2ControlPlatformA11yTest` can be **corrupted without turning red** — in particular whether removing the `disabled()` line, or reordering `clickable` inside the clear, is caught; (c) whether the fixture is **strong enough** — a control with no text child would pass against a seam that does nothing; (d) the **centre-inflation** claim and every boundary in the pure geometry suite, including negative coordinates and the single-point case; (e) whether the roadmap's *"build the scaffolding"* and *"preserve `ElementSemanticsLayer`"* really are compatible, or whether this ADR resolved a conflict it should have escalated; (f) that the harness move is genuinely behaviour-neutral — that no assertion in the nine moved-consumer test files changed meaning; (g) whether the **testFixtures** mechanism is the right one on this AGP version, or whether it costs a variant the CI job does not build; (h) whether the CI AA-contrast gate really is complete, by re-deriving the ★ set from V2-TOKENS.md independently; and (i) whether **DEVICE-VERIFICATION.md** restates policy the Documentation Rule says belongs to CLAUDE.md. Supersedes nothing; does **not** discharge [ADR-059](#adr-059), whose V1 fix remains scheduled to conformance C4/C6/C7.
 
 ## ADR-079 {#adr-079}
 **The V2 foundation catalog (A9): parity is proved against the frozen corpus, and goldens only keep it.**
@@ -2733,7 +2738,7 @@ Sequencing within a phase is the implementer's call ([roadmap standing gates](CO
 
 | # | Package | Frozen regions | Depends on | Blocked by |
 |---|---|---|---|---|
-| **C0** | **Corpus cleanup** — documentation only, no production code | the file header (`:3`, and the deleted `:10`) and footer (now `:380`) | — | ✅ **DONE** — [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record) resolved |
+| **C0** | **Corpus cleanup** — documentation only, no production code | the file header (`:3`, and the deleted `:10`) and footer (now `:424`) | — | ✅ **DONE** — [D-001](design/V2-SPEC-DEFECTS.md#d-001--v2-benchhtml-header-contradicts-the-freeze-record) resolved |
 | **C1** | **The studio surface** — the screen's ground and grain, the page, its shadow, the page number, the keep-clear inset, the centre guide | `.phone`/`::after`, `.canvasArea`, `.pageWrap`, `.page`, `.page::after`, `.keepclear`, `.guide`, `.pagenum` | Phase A foundation | ✅ **UNBLOCKED 2026-08-01.** Every ruling is in hand: D-010 by the OD-3 amendment, D-004's divergence recorded by OD-4, D-032 ruled by OD-10, and **D-033 resolved by the third amendment to a frozen V2 surface**. ~~What remains is the only contested row and the resting cue is unaffected~~ — superseded: nothing remains contested |
 | **C2** | **Selection and the contextual toolbar** — `.el`, the outline, four handles, the dim, the materialise, `.ctx` and its **two reachable** verb sets | `.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat`, `.ctx*` | C1 | ✅ **unblocked.** ~~D-031~~ ruled by **OD-9**; ~~D-034~~ ruled by **OD-11** (*keep both* — the frozen `.ctx` is additive and `EditorContextBar` stays as the WCAG 2.5.7 path), which also **splits the package into C2a** (`.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat`) **and C2b** (`.ctx*`, rows 2.10–2.13). **D-008** and **D-009** have their approach ruled and **close here**. The decor verb set is unreachable — see row 2.13 |
 | **C3** | **In-place text editing and the rigid page pan** — the centrepiece | `.kbstack`, `.editing .kbstack`, `.styletb*`, `.caret`, `@keyframes blink`, `edit()`/`endEdit()` | C2 | — *(its condition is a device proof, not a ruling)* |
@@ -2829,15 +2834,15 @@ It lives here rather than in the roadmap, because [§8.1](COMPOSE-IMPLEMENTATION
 |---|---|---|---|---|---|---|
 | 1.1 | the screen's ground is `--paper` `#F7F2E7` / dark `#2F2A22` | `:104` `.phone{background:var(--phone)}`, `--phone`=`--paper` `:49`/`:64` | `EditorScreen` root | pixel probe outside the page, both themes | ground → `--desk` | the Bench's ground is **paper**, not the Library's desk — different screens, different grounds |
 | 1.2 | grain over the whole screen, tile 150px, `soft-light`, `opacity .35` | `:107-108` `.phone::after` | `EditorScreen` root via `ZinelyV2Grain` | grain-present + density assertion, per A6's harness | `opacity` .35 → .5 (the `body::before` value) | ⚠ the two grains in this file differ (`body::before` is 180px/.5 and is PROTO); [D-013](design/V2-SPEC-DEFECTS.md#d-013--the-library-and-the-bench-bake-different-alpha-into-the-same-grain-so-a-cover-shows-it-four-to-nearly-seven-times-stronger) settled the alpha question, this is the tile size |
-| 1.3 | `.canvasArea` fills the space between status and tray, clips, centres | `:114` | `EditorScreen` canvas host | the page is centred in the residual height | `align-items:center` → top | |
+| 1.3 | `.canvasArea` fills the space between status and tray, clips, centres | `:154` | `EditorScreen` canvas host | the page is centred in the residual height | `align-items:center` → top | |
 | 1.4 | `.pageWrap` translates on `transform .34s var(--settle)`, `will-change` | `:115-116` | C3's pan host; declared here | — (asserted at C3) | — | ∅ *the transform's only driver is C3; the declaration is transcribed here and pinned there* |
 | 1.5 | `.page` **229×324px** (amended), `--paper`, 1px `--paper-edge`, radius 5px | `:117` | `EditorPagePreview` frame | size + border + radius pixel probe, both themes | radius 5→0; border colour → `--desk-edge` | ✅ **[D-033](design/V2-SPEC-DEFECTS.md#d-033) resolved by the owner amendment of 2026-08-01.** The 212×326 depiction (ratio 0.6503) is gone; the frozen page is now **229×324**, ratio 0.70679, which is **0.11px** off the ideal width for its height. The page box is the **canonical geometry** — `.keepclear`, `.guide`, `.pagenum`, D-032's intersection test and the Compose `PagePreview`/`SnapGuides`/`SelectionChrome` viewport all derive from it |
-| 1.6 | `.page` two-layer shadow `0 14px 30px -14px var(--page-shadow)`, `0 2px 5px var(--page-contact)` — light `.4`/`.14`, dark `.6`/`.5` | `:118` (the amended declaration); tokens at `:50`/`:65`/`:76`/`:86` | `Modifier.zinelyV2Shadow` on the page, two layers | shadow-colour probe below the page **in both themes**, and the two layers asserted as *different* colours | collapse both layers onto one token | ✅ **[D-010](design/V2-SPEC-DEFECTS.md#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark) resolved by the OD-3 amendment, 2026-08-01.** C1 transcribes the amended file. The mutation matters: a single-token implementation renders *almost* right in light and is the exact bug the amendment exists to prevent |
+| 1.6 | `.page` two-layer shadow `0 14px 30px -14px var(--page-shadow)`, `0 2px 5px var(--page-contact)` — light `.4`/`.14`, dark `.6`/`.5` | `:158` (the amended declaration); tokens at `:50`/`:65`/`:76`/`:86` | `Modifier.zinelyV2Shadow` on the page, two layers | shadow-colour probe below the page **in both themes**, and the two layers asserted as *different* colours | collapse both layers onto one token | ✅ **[D-010](design/V2-SPEC-DEFECTS.md#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark) resolved by the OD-3 amendment, 2026-08-01.** C1 transcribes the amended file. The mutation matters: a single-token implementation renders *almost* right in light and is the exact bug the amendment exists to prevent |
 | 1.7 | `.page::after` grain, tile 120px, `soft-light`, `opacity .45`, clipped to radius | `:119-120` | page surface | density assertion + clip at the corner | tile 120→150 | ≡ *candidate:* a 120 vs 150 tile may be indistinguishable at 212px width — record, then measure |
 | 1.8 | `.keepclear` inset **18.5px** (amended), 1px **dashed** `--ink-faint`, radius 3, `opacity .32` | `:121-122` | net-new; `EditorPagePreview` overlay | inset + dash + alpha pixel probe, **and that the inset equals the document's safe area scaled to the page box** | inset 18.5→16 (the pre-amendment literal — must fail, or the cue is decorative again) | ✅ **[D-033](design/V2-SPEC-DEFECTS.md#d-033) resolved by the owner amendment of 2026-08-01.** The cue is still net-new — `grep -ri "keep.?clear"` over `core`, `feature`, `app` returned zero — but it is now **truthful**: `18.5px` on the amended page is the engine's `safeAreaInsetPt = 17.0` scaled by 1.08803 px/pt horizontally and 1.08857 vertically, which agree to **0.01px**. That agreement is what licenses one uniform number |
 | 1.9 | `.keepclear.warn` → `opacity .9`, border `--strawberry-text` | `:123` | same | warn appearance **only** while an interaction is in flight whose live geometry intersects the keep-clear rect: absent at idle, absent after the interaction ends even with content still inside | make the warn state survive the end of the interaction (must fail); border `--strawberry-text`→`--ink-faint` | ✅ **[D-032](design/V2-SPEC-DEFECTS.md#d-032) resolved by owner ruling, 2026-08-01 (OD-10, C1 half).** The warn state is **transient guidance, not document state** — it is derived per frame from the in-flight gesture, holds no persisted or reducer state, and tests the manipulated element's **bounds**, so no face detection and no content analysis of any kind is required. ✅ **Built in C1** (`BenchStudio.keepClearWarn`, [ADR-090](#adr-090)): [D-033](design/V2-SPEC-DEFECTS.md#d-033) fixed the rectangle it tests against on 2026-08-01. Two readings the ruling forced, recorded because neither is in the CSS: the **snapped** frame is tested (the same `LiveSnap.resolve` the preview renders and the commit bakes, so the cue answers for the rectangle the user can see rather than blinking inside the 8px snap threshold); and **rotation is expanded** to the drawn bounding box — `LiveSnap`/`Snap` bail on rotated elements, but a turned photo's corner enters the margin while its unrotated box clears it. Nothing *enforces* this boundary: `LayoutValidator`'s `SAFE_NOT_IN_PANEL` checks the imposer's own panel geometry, not user content |
 | 1.10 | `.guide.v` 1px `--matcha`, full height less 8px, centred, `opacity .6` on `.show`, `transition .12s` | `:124-126` | `SnapGuides.kt` re-skin | guide colour + width + the 8px inset | width 1→2; opacity .6→1 | trigger comes from the **existing** `:core:editor` `Snap`/`LiveSnap` — appearance is frozen, behaviour is preserved |
-| 1.11 | `.pagenum` top 7 right 10, 9px, `--ink-faint`, `letter-spacing .04em`, text `"3 / 12"` | `:127`, `:311` | `EditorPagePreview` | position + size + the `n / N` format | 9px→11px | ⚠ the *format* is frozen; the **12** is [D-030](design/V2-SPEC-DEFECTS.md#d-030)'s |
+| 1.11 | `.pagenum` top 7 right 10, 9px, `--ink-faint`, `letter-spacing .04em`, text `"3 / 12"` | `:167`, `:311` | `EditorPagePreview` | position + size + the `n / N` format | 9px→11px | ⚠ the *format* is frozen; the **12** is [D-030](design/V2-SPEC-DEFECTS.md#d-030)'s |
 | 1.12 | `.content` inset 22px, column, `gap 12px` | `:129` | page content host | inset + gap measured as displacement | inset 22→16 | |
 | 1.13 | document text draws in `var(--serif)` = Fraunces | `.t-title`/`.t-body` `font-family:var(--serif)` | `DocumentFontRegistry` — **Inter only** | — | — | ✅ **Recorded divergence, by owner ruling OD-4 (2026-08-01).** Phase C's acceptance criteria **exclude literal document-typeface parity for these two selectors only**. [D-004](design/V2-SPEC-DEFECTS.md#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) stays in **Phase D**; its three prohibitions stand. **C1's goldens state the divergence in KDoc rather than silently baselining it** — ADR-073's rule: compare against the declared CSS, not against a rendering of it |
 | 1.14 | `.t-title` 23px/1.15, weight 500, `--ink`, `letter-spacing -.01em` | `.t-title{}` | text element style | size/weight/colour probe | 500→600 | ✅ every property here **except the family** is literal parity and is built |
@@ -2854,12 +2859,12 @@ It lives here rather than in the roadmap, because [§8.1](COMPOSE-IMPLEMENTATION
 | 2.2 | focus appearance for every Bench control | **absent from the file**; the Library's `:54`/`:77`/`:95` are the only authored focus in V2 | every control in C2–C6 | platform-tree focus assertion + a ring pixel test | offset 6→60dp, radius 9→0 (B3's rule 4: the ring had no test at all) | ⏳ **D-008 stays open until Phase C implements *and* verifies on device.** Approach is ruled: 2px `matchaText`, per-component offset, **visually subordinate**; the design does not move to suit the indicator |
 | 2.3 | `.el .sel` inset −7px, 1.5px `--matcha`, radius 6, `transition:opacity .12s` | `:133` | `SelectionChrome.kt` | inset + stroke + radius, composed from production | inset −7→0; stroke 1.5→3 | a test that rebuilds the constant cannot fail (B3 rule 2) |
 | 2.4 | `.el.selected .sel,.handle{opacity:1}` | `:134` | same | selected vs unselected in one composition | drop the `.selected` gate | |
-| 2.5 | `.handle` 13×13 circle, `--paper` fill, 2px `--matcha`, halo `0 0 0 1.5px rgba(255,255,255,.7)` | `:135-136` | `ResizeHandles.kt` | fill + ring + halo probe | halo removed | the halo is the [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) dual-tone that holds **3:1 over a user photo** |
+| 2.5 | `.handle` 13×13 circle, `--paper` fill, 2px `--matcha`, halo `0 0 0 1.5px rgba(255,255,255,.7)` | `:175-176` | `ResizeHandles.kt` | fill + ring + halo probe | halo removed | the halo is the [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) dual-tone that holds **3:1 over a user photo** |
 | 2.6 | `.handle.tl/.tr/.bl/.br` at ∓10px | `:137` | same | each corner's offset, each against its own corner | `-10`→`-13` | never anchor two subjects on their containers' centres (B4 rule 10) |
 | 2.7 | handle **hit target** ≥48dp while drawn at 13px | **absent**; [IA §C.1](design/V2-BENCH-IA-INTERACTION.md) *"handles are drawn small but carry ≥48 dp"* | `ResizeHandles.kt` | **platform-tree** bounds, not Compose semantics | shrink the extended target to the drawn box | ⏳ **[D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)** — approach ruled (extend the touch area, never grow the control); the **overlap** it warns about is at its worst here: four 48dp regions around a 40px sticker |
 | 2.8 | `.content.focusing .el:not(.sel-focus){opacity:.4}` at `.18s` | `:130-131` | element host | unselected alpha in a two-element composition | .4→1 | the *dim* is how the Bench says "this one"; it has no equivalent in the shipped editor |
 | 2.9 | `.el.materialize` = `mat .3s var(--settle)`; `@keyframes mat{scale .92→1, opacity 0→1}` | `:138-139` | insertion path | the from-scale, via a frame probe | `.92`→`1` | one-shot ⇒ collapses to 0ms under reduced motion ([ADR-075](#adr-075)) |
-| 2.10 | `.ctx` left/right/bottom 12, radius 16, `--sheet`, 1px `--chrome-line`, shadow `0 12px 30px -12px`, enter `translateY(14px)→0` + opacity at `.2s var(--standard)` | `:190-193` | `EditorContextBar.kt` re-skin | anchor + radius + the 14px enter displacement | 14→0; `--standard`→`--settle` | the bar is **edge-anchored and never over the element** ([IA §C.3](design/V2-BENCH-IA-INTERACTION.md)). ⛔ **The named target is contested — [D-034](design/V2-SPEC-DEFECTS.md#d-034).** `EditorContextBar` is not the frozen bar's counterpart: it is the **WCAG 2.5.7** single-pointer twin of the drag gestures (ADR-029 §6), and re-skinning it into a verb bar deletes eight discrete move/resize/rotate controls |
+| 2.10 | `.ctx` left/right/bottom 12, radius 16, `--sheet`, 1px `--chrome-line`, shadow `0 12px 30px -12px`, enter `translateY(14px)→0` + opacity at `.2s var(--standard)` | `:230-233` | `EditorContextBar.kt` re-skin | anchor + radius + the 14px enter displacement | 14→0; `--standard`→`--settle` | the bar is **edge-anchored and never over the element** ([IA §C.3](design/V2-BENCH-IA-INTERACTION.md)). ⛔ **The named target is contested — [D-034](design/V2-SPEC-DEFECTS.md#d-034).** `EditorContextBar` is not the frozen bar's counterpart: it is the **WCAG 2.5.7** single-pointer twin of the drag gestures (ADR-029 §6), and re-skinning it into a verb bar deletes eight discrete move/resize/rotate controls |
 | 2.11 | `.ctx button` flex 1, h40, radius 10, 12.5px/500, icon-over-label column, `gap 2px` | `:194-195` | same | equal widths + the stacked layout | `flex:1`→`flex:none` | |
 | 2.12 | `.ctx button.danger{color:var(--consequence)}` | `:196` | same | Delete's colour vs its neighbours' | drop `.danger` | `consequence` is chrome-only and delete-only |
 | 2.13 | text verbs = **Edit · Font · Size · Ink · Delete**; photo = **Reframe · Replace · Delete**; decor = **Replace · Ink · Delete** | `:430-432` `toolsFor()` | same | the exact set per kind, set-equality not membership | swap two verbs between kinds | **two of the three kinds are reachable.** `decor` is unreachable while `DecorElement` is re-seated (row 1.17, OD-2) — assert the text and photo sets, and assert that `toolsFor` has **no third branch to reach**, so the day the kind lands the missing set fails loudly instead of silently defaulting. A permutation satisfies "each exists" + "positions ascend" (ADR-082's rule), which is why set-equality is the assertion |
@@ -2872,31 +2877,32 @@ It lives here rather than in the roadmap, because [§8.1](COMPOSE-IMPLEMENTATION
 
 | # | Property | Source | Target | Planned assertion | Planned mutation | Note |
 |---|---|---|---|---|---|---|
-| 3.1 | entering edit pans the **whole page** by `translateY(-96px)` as one rigid body | `:464` | `EditTextSession.kt` + page host | the page's displacement measured by **luminance-weighted centroid**; nothing else moves | pan −96→−48; pan the element instead of the page | the load-bearing mechanic ([EP-1](design/V2-BENCH-PRINCIPLES.md)) |
-| 3.2 | `Done` returns to `translateY(0)` **pixel-identical** | `:471` | same | rest raster before vs after, byte-compared | return to `-1px` | ✅-or-fallback: the device Pass-2 proof; failure ⇒ harden the bottom sheet ([§E.6](design/V2-BENCH-REVIEW.md)) |
-| 3.3 | the pan rides `transition:transform .34s var(--settle)` | `:116` | same | duration + easing, behaviourally | `--settle`→`--standard` | one-shot ⇒ 0ms under reduced motion, and it must still **arrive** |
-| 3.4 | `.kbstack` enters `translateY(110%)→0` at `.34s var(--settle)` on `.editing` | `:198-199` | the style toolbar host | offscreen at rest, docked in edit | 110%→50% | it sits **above the IME**, so its host is `WindowInsets.ime`, not a fixed offset |
-| 3.5 | `.styletb` row: `--sheet` ground, top hairline, `8px 12px`, `gap 6px` | `:200` | `TypeBar.kt` re-skin | ground + hairline + padding | drop the hairline | |
-| 3.6 | chips **Fraunces** · **A 23** · **Ink** (with a `.sw` 14px dot) then `.grow` then **Done** | `:201-203`, `:343-345` | same | the order and the right-anchored Done | move `.grow` | ⚠ the **Fraunces** chip is 1.13/D-004 again, on chrome this time |
-| 3.7 | `.styletb .done` h34, radius 9, `--matcha` on `--on-matcha`, 13px/600 | `:203` | same | fill + label contrast | `--on-matcha`→`--paper` | ⚠ [D-023](design/V2-SPEC-DEFECTS.md#d-023) is the **Library's** version of this pair and is **open**; the Bench already uses `--on-matcha`, which is the reading D-023 asks about |
-| 3.8 | `.caret` 1.5px × 1.05em `--matcha`, `blink 1.05s steps(1) infinite`, shown only under `.editing` | `:143-145` | `EditTextSession.kt` | the caret's presence gated on the session | show it at rest | ⚠ **the trilogy's only looping animation** — [D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)'s whole subject. `allowsContinuousMotion=false` ⇒ it does not run; running it at 0ms strobes |
-| 3.9 | the ink swatch seeds from the element's **computed** colour on entry | `:466` | same | the chip reflects the element, not a default | seed from `--ink` always | |
-| 3.10 | `Done` flashes "Saved" and returns to **Selected**, not Rest | `:469-477` | same | post-edit state is Selected with `.ctx` back | return to Rest | |
-| 3.11 | the page **never reflows, resizes or desyncs** during edit | `:9` of the Bench, `:168-174` of [IA §C.2](design/V2-BENCH-IA-INTERACTION.md) | the existing anti-desync viewport defence | element bounds identical at rest / editing / rest | introduce a second viewport authority | ∅ *no new mechanism — the defence exists; the assertion pins that C3 did not add a second one* |
+| 3.1 | entering edit pans the **whole page** by `translateY(-96px)` as one rigid body | `:551` | `EditTextSession.kt` + page host | the page's displacement measured by **luminance-weighted centroid**; nothing else moves | pan −96→−48; pan the element instead of the page | the load-bearing mechanic ([EP-1](design/V2-BENCH-PRINCIPLES.md)) ✅ **Implemented** — a `graphicsLayer{translationY}` over the page layers in `EditorScreen.kt`, asserted both ways (displacement, and identical size/left ⇒ translation not re-layout). |
+| 3.2 | `Done` returns to `translateY(0)` **pixel-identical** | `:558` | same | rest raster before vs after, byte-compared | return to `-1px` | ✅-or-fallback: the device Pass-2 proof; failure ⇒ harden the bottom sheet ([§E.6](design/V2-BENCH-REVIEW.md)) ✅ **the testable half is implemented and asserted** (geometry returns exactly, mutation `0.dp → -1.dp` killed). The pixel-identical raster compare remains the **device** gate. |
+| 3.3 | the pan rides `transition:transform .34s var(--settle)` | `:172-173` | same | duration + easing, behaviourally | `--settle`→`--standard` | one-shot ⇒ 0ms under reduced motion, and it must still **arrive** ✅ **Implemented and asserted mid-flight** — an end-state assertion cannot tell a settle from a linear ramp from a jump, so the test reads the page at half the duration and requires > 80 % of the distance covered. Mutation `settle → standard` killed. |
+| 3.4 | `.kbstack` enters `translateY(110%)→0` at `.34s var(--settle)` on `.editing` | `:259-260` | the style toolbar host | offscreen at rest, docked in edit | 110%→50% | it sits **above the IME**, so its host is `WindowInsets.ime`, not a fixed offset ✅ **Implemented, with two corrections the first cut got wrong and the tests caught.** (i) The row is **absent from the tree** at rest, not merely translated — a `graphicsLayer` moves pixels, not nodes, and four controls left in the platform tree made `SurfaceTraversalOrderTest` read "Font, Size, Ink, Done" on an editor with no session open. (ii) `bottom:0` is the **phone**, not the canvas: the row was first hosted inside the sheet island and the screen-level golden showed it floating mid-screen with the supply tray beneath it. It is now a root-level overlay, which is what `z-index:35` means. |
+| 3.5 | `.styletb` row: `--sheet` ground, top hairline, `8px 12px`, `gap 6px` | `:261` | `TypeBar.kt` re-skin | ground + hairline + padding | drop the hairline | ✅ **Implemented as `BenchStyleRow.kt` (new).** `TypeBar.kt` is untouched — asserted, not intended: `the_type_bar_keeps_every_style_capability_it_had` reaches it through the context bar’s `Size` verb and counts the five inks still there. |
+| 3.6 | chips **Fraunces** · **A 23** · **Ink** (with a `.sw` 14px dot) then `.grow` then **Done** | `:262-264`, `:408-410` | same | the order and the right-anchored Done | move `.grow` | ⚠ the **Fraunces** chip is 1.13/D-004 again, on chrome this time ✅ **Implemented (three inert, announced disabled, carrying no `clickable`)**, with one ✎ **canonical amendment**: the chips are labelled by **verb** (`Font` · `Size` · `Ink`, the context bar’s own copy) rather than by the frozen **values** (`Fraunces` · `A 23`). A value display that cannot change the value must be true or absent, and a hard-coded `Fraunces`/`A 23` would misreport every element that is neither — which is a worse defect than the wrong noun. The swatch is the exception and stays a value, because row 3.9 requires it to report. |
+| 3.6a | `.styletb .chip` h34, radius 9, padding `0 12px`, 1px `--chrome-line` border, transparent ground, `--ink` label at 12.5px/500, `gap 6px`, and a `.sw` dot 14px fully round | `:262-263` | same | the chip's own box — height, radius, border presence and the dot's diameter | drop the border; square the dot | ✎ **added — ADR-089 carried no row for the chip's own geometry**, only for the row (3.5) and the Done button (3.7). Raised by the independent review against the row-per-frozen-value standard |
+| 3.7 | `.styletb .done` h34, radius 9, `--matcha` on `--on-matcha`, 13px/600 | `:264` | same | fill + label contrast | `--on-matcha`→`--paper` | ⚠ [D-023](design/V2-SPEC-DEFECTS.md#d-023) is the **Library's** version of this pair and is **open**; the Bench already uses `--on-matcha`, which is the reading D-023 asks about ✅ **Implemented**, pinned by `bench_style_row_light/dark.png` — fills and contrasts are paint, and the raster is the only honest reading of paint. Mutation `--matcha → --paper` killed by the golden. |
+| 3.8 | `.caret` 1.5px × 1.05em `--matcha`, `blink 1.05s steps(1) infinite`, shown only under `.editing` | `:204-205` | `EditTextSession.kt` | the caret's presence gated on the session | show it at rest | ⚠ **the trilogy's only looping animation** — [D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)'s whole subject. `allowsContinuousMotion=false` ⇒ it does not run; running it at 0ms strobes ✅ **Implemented as a drawn caret**, which is a stronger ✎ amendment than the row anticipated. The platform cursor exposes **only a brush** — not width, not height, not blink period — and would blink through reduced motion, which row 3.8 forbids. So `cursorColor` is `Transparent` and the caret is drawn from the field’s own `TextLayoutResult.getCursorRect`: 1.5dp × 1.05em, `--matcha`, a **square wave** at 1.05s (`steps(1)`, not an interpolation), and under reduced motion the ticker is **not composed at all**, so "it does not run" is structural. The blink lives in the pure `benchCaretAlphaAt`, so D-012’s subject is testable without a frame clock. |
+| 3.9 | the ink swatch seeds from the element's **computed** colour on entry | `:553` | same | the chip reflects the element, not a default | seed from `--ink` always | ✅ **Implemented** — seeded from the `TextElement`’s own `style.color`. The golden is seeded with the **coral** content ink specifically so "reports the element" cannot pass as "draws `--ink`"; that mutation is killed. |
+| 3.10 | `Done` flashes "Saved" and returns to **Selected**, not Rest | `:556-564` | same | post-edit state is Selected with `.ctx` back | return to Rest | ✅ **Asserted, as the row said it would be** — `Done` clears focus, the field’s existing focus-loss commit fires, `endTextSession` returns `Idle` with the selection intact, and the bar comes back by construction. **Why focus and not a dispatch:** the draft is feature-ephemeral (ADR-029 §5.6), so an end dispatched from outside would close the session first and the field’s dispose-commit would be rejected by its own token guard — silently dropping what was typed. `done_commits_the_draft_rather_than_discarding_it` is the guard on that reasoning. |
+| 3.11 | the page **never reflows, resizes or desyncs** during edit | `:9` of the Bench, `:168-174` of [IA §C.2](design/V2-BENCH-IA-INTERACTION.md) | the existing anti-desync viewport defence | element bounds identical at rest / editing / rest | introduce a second viewport authority | ∅ *no new mechanism — the defence exists; the assertion pins that C3 did not add a second one* ✅ **Implemented as tape suppression**, which the row did not anticipate needing. The page is painted by the **export replayer**, so an editable field over a box the tape still paints shows the words **twice**. `EditorPagePreview(hiddenElementId=…)` drops the element from the tape for the life of the session, and the field is its only drawing. ⚠ **the residue, stated:** the two engines are not the same code path — `includeFontPadding=false`, unit line-height and simple break strategy mirror `SharedTextLayout`, but a long line may still wrap one word differently and shift on commit. That is a **device** question, and it is the honest price of not writing a text engine. |
 
 #### C4 — the bar, the status chip, the snackbar
 
 | # | Property | Source | Target | Planned assertion | Planned mutation | Note |
 |---|---|---|---|---|---|---|
 | 4.1 | `.bar` h66, `--chrome`, top hairline, `padding 0 16px 4px`, `gap 10px` | `:183` | `EditorScreen` bottom bar | height + ground + the asymmetric bottom pad | `4px`→`0` | ≡ *candidate:* under `align-items:center` only the **difference** of top/bottom padding reaches layout (B4 rule 11) |
-| 4.2 | `.icon-btn` 44×44, radius 12, 1px `--chrome-line`, `--ink-soft`; `:active` scale .94; `:disabled` opacity .35 | `:184-185` | `BarButton` | box + radius + the disabled alpha | scale .94→.8 | ⏳ 44 < 48 ⇒ [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp): extend the target, keep the paint |
+| 4.2 | `.icon-btn` 44×44, radius 12, 1px `--chrome-line`, `--ink-soft`; `:active` scale .94; `:disabled` opacity .35 | `:224-225` | `BarButton` | box + radius + the disabled alpha | scale .94→.8 | ⏳ 44 < 48 ⇒ [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp): extend the target, keep the paint |
 | 4.3 | `.add` flex 1, h44, radius 12, `--matcha` on `--on-matcha`, 14.5px/600, `＋ Add`, `:active` scale .98 | `:187-188`, `:378` | same | it takes the residual width between two 44s | `flex:1`→fixed | |
 | 4.4 | bar order **Undo · Add · Done**, Undo `disabled` at rest | `:377-379` | same | order + initial disabled state on the **platform** tree | enable Undo at rest | Compose can report enabled to the platform while `assertIsNotEnabled` passes ([ADR-058](#adr-058) branch) |
 | 4.5 | there is **no Redo** anywhere in the frozen Bench | the whole file | `EditorSupplyTray` ships one today | the redo control is **still present** after the re-skin | delete it | ✅ [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) — **redo is kept.** A control the freeze omits is not thereby deleted; the frozen bar specifies the editing surface, not the product's whole capability |
 | 4.6 | there is **no route to Read / the Proof**, and **no back affordance** | the whole file; `doneBtn` `:542` only deselects | `EditorScreen(onPreview)` exists today | the hand-off and back still reach their existing destinations | break the `onPreview` wiring | ✅ [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) — reuse, don't invent: Read keeps [ADR-086](#adr-086)'s Editor → Proof hand-off, back keeps the existing stack. [IA §B.6](design/V2-BENCH-IA-INTERACTION.md) said the Bench hands off to Read; the file wired nothing, and the ruling says the repository's wiring stands |
 | 4.7 | `.status` h26, `0 20px`, 11px `--ink-faint`, left label | `:110`, `:306` | status row | height + the two-slot row | height 26→32 | the left `"the bench"` label is PROTO narration |
 | 4.8 | `.saved` = `✿ **Saved** · on this device`, `--matcha-text`, `opacity 0→1` at `.4s var(--standard)`, visible **1600ms** | `:111-112`, `:306`, `:412` | `EditorSavedConfirmation.kt` | the copy, the colour, and the 1600ms window | 1600→400 | shipped copy is `"Saved ✨"`; the freeze says `✿ … · on this device`. `✿` U+273F — check the bundled coverage ([D-021](design/V2-SPEC-DEFECTS.md#d-021-ruling) rule, B3 rule 1) |
-| 4.9 | `.snack` `--ink` ground, `--paper` text, radius 12, enter `translateY(16px)`+opacity `.22s var(--standard)` | `:277-279` | delete/undo surface | ground inversion + the 16px enter | 16→0 | |
+| 4.9 | `.snack` `--ink` ground, `--paper` text, radius 12, enter `translateY(16px)`+opacity `.22s var(--standard)` | `:317-319` | delete/undo surface | ground inversion + the 16px enter | 16→0 | |
 | 4.10 | `.snack button` `--accent-on-ink`, weight 700 | `:280` | same | the Undo label's colour against the ink ground | `--accent-on-ink`→`--matcha` | `--accent-on-ink` exists **only** for this pairing |
 | 4.11 | delete is a **soft delete**: element fades to `opacity 0`/`scale .9` over `.2s`, snackbar for **3200ms**, bar Undo enables | `:509-518` | delete path | the fade, the 3200ms, and Undo's enablement together | 3200→1600 | reversible-by-default ([EP-4](design/V2-BENCH-PRINCIPLES.md)); no modal |
 | 4.12 | undo restores opacity/transform/pointer-events and **re-disables** the bar's Undo | `:519-524` | same | the restore *and* the re-disable | leave Undo enabled | |
@@ -2917,7 +2923,7 @@ It lives here rather than in the roadmap, because [§8.1](COMPOSE-IMPLEMENTATION
 | 5.9 | each thumb is `role=button`, label `Page i of N (front cover)/(back)` | `:586` | same | the label text on the **platform** tree | drop the cover/back suffix | |
 | 5.10 | selecting a page scrolls it to centre, `block:nearest` | `:592` | same | the scroll target | `center`→`start` | |
 | 5.11 | `.pgrid` full-cover overlay on `--desk`, enters `translateY(102%)→0` at `.3s var(--settle)`, scrolls | `:266-267` | net-new overlay | ground + the enter | 102%→0% | **summoned, never default** — the justified exception to "a grid turns a desk into a database" ([§E.2](design/V2-BENCH-REVIEW.md)) |
-| 5.12 | `.pgg` **3 columns**, `gap 12px`; `.pgcell` `aspect-ratio .66`, `--paper`, radius 6, shadow `0 4px 10px -6px` | `:271-272` | same | 3 columns at every width; the .66 ratio | 3→2 columns | [D-020](design/V2-SPEC-DEFECTS.md#d-020-ruling)'s precedent: no breakpoint is specified, so none is invented |
+| 5.12 | `.pgg` **3 columns**, `gap 12px`; `.pgcell` `aspect-ratio .66`, `--paper`, radius 6, shadow `0 4px 10px -6px` | `:311-312` | same | 3 columns at every width; the .66 ratio | 3→2 columns | [D-020](design/V2-SPEC-DEFECTS.md#d-020-ruling)'s precedent: no breakpoint is specified, so none is invented |
 | 5.13 | `.pgcell.cur` border `--matcha` at **2px** (others 1px) | `:273` | same | the current cell's border width *and* colour in one matcher | width 2→1 | |
 | 5.14 | `.pgcell b` = `Cover` / `Back` 8px `--matcha-text` 700 upper; `.pgcell span` = the number, 9px `--ink-faint`, bottom-right | `:274-275`, `:598` | same | both labels, positioned | swap their corners | |
 | 5.15 | header `Your zine · N pages` in `--serif` 17px/500, with a `Done` in `--matcha-text` 600 | `:269-270`, `:596` | same | the copy and the two type roles | serif→sans | |
@@ -2927,7 +2933,7 @@ It lives here rather than in the roadmap, because [§8.1](COMPOSE-IMPLEMENTATION
 
 | # | Property | Source | Target | Planned assertion | Planned mutation | Note |
 |---|---|---|---|---|---|---|
-| 6.1 | `.inkpop` anchored like `.ctx` (12/12/12), radius 16, `--sheet`, shadow `0 14px 34px -12px`, enter `14px`+opacity `.22s var(--standard)` | `:210-212` | net-new popover | anchor + radius + enter | shadow → `.ctx`'s | it **replaces** `.ctx` rather than stacking (`:495`) |
+| 6.1 | `.inkpop` anchored like `.ctx` (12/12/12), radius 16, `--sheet`, shadow `0 14px 34px -12px`, enter `14px`+opacity `.22s var(--standard)` | `:250-252` | net-new popover | anchor + radius + enter | shadow → `.ctx`'s | it **replaces** `.ctx` rather than stacking (`:495`) |
 | 6.2 | `h4` = `Ink` in `--serif` 15px/500, with a `Done` in `--ink-faint` 12px sans | `:213-214`, `:492` | same | the two type roles in one row | serif→sans | |
 | 6.3 | three bands, labelled `Inks` · `Paper tints` · `Neutrals`, 10px/`.12em` upper `--ink-faint` 600 | `:215`, `:493` | same | the three labels, in order | reorder the bands | |
 | 6.4 | `.sw2` 26px circle, 2px `rgba(255,255,255,.6)` ring, `0 0 0 1px --desk-edge` halo, `:active` scale .9 | `:217-218` | same | ring + halo + size | drop the outer halo | ⏳ D-009: 26px drawn, 48dp reachable, in a **wrapping** row — the overlap case D-009 warns about |
@@ -2935,7 +2941,7 @@ It lives here rather than in the roadmap, because [§8.1](COMPOSE-IMPLEMENTATION
 | 6.6 | **Inks (10):** Matcha `#7C8A3F` · Forest `#3E5E3A` · Strawberry `#E27F89` · Brick `#B0503F` · Sunflower `#E7B53C` · Ochre `#D19A3C` · Aqua `#57B0A9` · Cornflower `#6E86C9` · Plum `#8A5A9B` · Ink `#2A251E` | `:424` | `ZinelyContentInks.makerInks` ([ADR-072](#adr-072)) | value **and** order, name bound to hex in one matcher | swap two hexes | the ten already exist in the foundation; `Ink` legitimately appears in **two** bands and must never be de-duplicated (D-003) |
 | 6.7 | **Paper tints (5):** Cream `#F1E9D6` · Blush `#F0DED9` · Sky `#DDE9EE` · Sage `#E1E9D2` · Kraft `#E4D3B4` | `:425` | `ZinelyContentInks.paperTints` | same | same | already modelled as its **own type** under [D-003's ruling](design/V2-SPEC-DEFECTS.md#d-003--the-maker-palette-is-ten-inks-or-nineteen-depending-on-which-document-you-read) — the three bands cannot be flattened into one list, by construction |
 | 6.8 | **Neutrals (4):** Ink `#2A251E` · Slate `#5B5347` · Stone `#8C8269` · Fog `#B7AD93` | `:426` | `ZinelyContentInks.neutrals` | same | same | `Slate`/`Stone` are byte-identical to light `--ink-soft`/`--ink-faint`; D-003 records these as **sanctioned** coincidences, so a "no content value equals a chrome value" lint would be wrong |
-| 6.9 | **3 presets:** Two-colour · Warm zine · Cool zine, each drawn as overlapping dots at `-4px` with a `--sheet` ring | `:219-221`, `:427` | net-new — [D-003's ruling](design/V2-SPEC-DEFECTS.md#d-003--the-maker-palette-is-ten-inks-or-nineteen-depending-on-which-document-you-read) leaves the presets to Phase C: *"recipes over the bands rather than tokens"* | the dot overlap and the ring | `-4px`→`0` | this is the one part of the palette the foundation deliberately did not model |
+| 6.9 | **3 presets:** Two-colour · Warm zine · Cool zine, each drawn as overlapping dots at `-4px` with a `--sheet` ring | `:259-261`, `:427` | net-new — [D-003's ruling](design/V2-SPEC-DEFECTS.md#d-003--the-maker-palette-is-ten-inks-or-nineteen-depending-on-which-document-you-read) leaves the presets to Phase C: *"recipes over the bands rather than tokens"* | the dot overlap and the ring | `-4px`→`0` | this is the one part of the palette the foundation deliberately did not model |
 | 6.10 | choosing a preset applies its **second** ink (or first if absent) | `:498` | same | the second-not-first rule | apply `[0]` always | ⏳ [D-028](design/V2-SPEC-DEFECTS.md#d-028) — `TextStyle.color` is one value, so a three-colour "palette" landing on one element needs a stated rule; the freeze's own answer (`[1]`) reads like prototype convenience |
 | 6.11 | `.inkuse` nudge: *"Zines look best — and print cheapest — with 1–3 inks. This one uses 2."* 11px `--ink-faint` with a 13px shield glyph | `:222-223`, `:494` | same | the copy and the live count | hard-code "2" | the count is **computed** in the product; the freeze shows a literal |
 | 6.12 | text colour maps to **five brand text-inks** | [ADR-055](#adr-055) Decision 6, `Accepted` — *"the two are not unified and must not be conflated"* | `TypeBar.kt` `InkRow` (5 swatches, shipped) | — | — | ⏳ **[D-028](design/V2-SPEC-DEFECTS.md#d-028)** — an `Accepted` ADR and the frozen design specify different palettes for the same control. Superseding an ADR is an owner act |
@@ -2985,7 +2991,7 @@ the work now sits is the roadmap's
 | **OD-7** | — | **[D-029](design/V2-SPEC-DEFECTS.md#d-029)** — the holding shelf has no data model, no persistence and no stated scope, while §E.4 makes its persistence a build invariant. | ✅ **Answered by OD-2.** Re-seated with H1; C7 no longer exists. |
 | **OD-8** | — | **The asset-layer ADR and its legal pass** ([§E.6](design/V2-BENCH-REVIEW.md)) — commission it, ship the drawer bundled-only, or defer H3. | ✅ **Answered by OD-2**, and it was never Phase C's to decide — [§2.3](#adr-089). C8 no longer exists. |
 | **OD-9** ✅ **ruled 2026-08-01** | ~~C2, C4~~ | **[D-031](design/V2-SPEC-DEFECTS.md#d-031)** — the Bench's destinations: the Read/Proof hand-off, back, redo, and the Font/Size verbs the freeze draws and wires to nothing. | ✅ **Ruled 2026-08-01 ([OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling)).** The freeze specifies the **editing surface, not the whole application flow**: Font and Size stay drawn and invent nothing, Read and back reuse what exists, and **redo is kept**. Applying it immediately raised ⛔ **[D-034](design/V2-SPEC-DEFECTS.md#d-034)**, which OD-9 does not reach and which now blocks C2. |
-| **OD-10** | ~~C1~~ **C9** (D-012); the C1 half is ✅ **ruled 2026-08-01** | **[D-032](design/V2-SPEC-DEFECTS.md#d-032)** (the keep-clear warn trigger) and **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)** (which reduced-motion rule the corpus states). | ⏳ **Half live.** D-012 was deferred *to Phase C, on physical devices*, so it is answered **in** C9, not before it. **D-032 is ✅ ruled (2026-08-01): the warn state is transient interaction guidance, not document state — the manipulated element's bounds are tested, so no face detection is required.** Row 1.9 **shipped in C1 (2026-08-01, [ADR-090](#adr-090))**: [D-033](design/V2-SPEC-DEFECTS.md#d-033) fixed the rectangle it tests against the same day, and the warn state is derived per frame from the in-flight gesture — no reducer state, nothing to clear. |
+| **OD-10** ✅ **fully ruled 2026-08-06** | ~~C1~~ ~~C9~~ — **both halves discharged** | **[D-032](design/V2-SPEC-DEFECTS.md#d-032)** (the keep-clear warn trigger) and **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)** (which reduced-motion rule the corpus states). | ✅ **Both halves ruled.** **The D-012 half was ruled 2026-08-06 as [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling), option (a): the Bench's rule is ratified** — the frozen Bench is canonical, Phase A adopted it, C3 built on it, and C9's device evidence confirms it on hardware (reduce on → **0 differing bytes across all 15 caret frame pairs**). It was deferred *to Phase C, on physical devices*, and was decided there, in C9, on `SM-A176B`. **No code changed.** The *corpus cleanup* — whether the Library's and Proof's `:root` blocks are rewritten to state the ratified rule — is explicitly **not** settled by OD-25 and fences nothing. **D-032 is ✅ ruled (2026-08-01): the warn state is transient interaction guidance, not document state — the manipulated element's bounds are tested, so no face detection is required.** Row 1.9 **shipped in C1 (2026-08-01, [ADR-090](#adr-090))**: [D-033](design/V2-SPEC-DEFECTS.md#d-033) fixed the rectangle it tests against the same day, and the warn state is derived per frame from the in-flight gesture — no reducer state, nothing to clear. |
 | **OD-11** ✅ **ruled 2026-08-02** | ~~C2's `.ctx*` rows 2.10–2.13~~ | **[D-034](design/V2-SPEC-DEFECTS.md#d-034)** — the frozen `.ctx` is a **verb** bar (Edit · Font · Size · Ink · Delete); the shipped `EditorContextBar` it would replace is the **transform** bar that exists to satisfy **WCAG 2.5.7** (single-pointer alternative to dragging). `Delete` is the only control they share. Per-element `customActions` do not substitute — they reach assistive tech only. Transcribe, keep both, re-seat, or merge? | ✅ **Ruled 2026-08-02 ([OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)): keep both.** The two are *"not mutually exclusive"* — the frozen bar is the contextual editing **vocabulary**, the shipped one an accessibility-preserving **transform** affordance. The frozen `.ctx` is **additive**; the transform controls remain, because a parity phase does not remove or weaken a conformance path. **C2 splits into C2a** (selection — `.el*`, `.sel`, `.handle*`, `.content.focusing`, `@keyframes mat`) **and C2b** (`.ctx*`, rows 2.10–2.13). Both unblocked. |
 
 | **OD-12** ✅ **ruled 2026-08-02** | ~~C1's acceptance, and so all of Phase C~~ | **[D-035](design/V2-SPEC-DEFECTS.md#d-035)** — the dark theme dims the sheet while the document's content ink stays black (correctly: it prints). Measured **1.60:1** on device; the Read screen showed the same page at 16.92:1. | ✅ **Ruled 2026-08-02 ([OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling)): the artifact does not dim.** *"The editor represents the physical printed artifact"* — dark theme darkens the studio chrome, not the sheet, and the five [ADR-055](#adr-055) content inks are untouched. The frozen `.page` is amended into a **light-theme island** of eight restated light tokens (the fourth amendment to a frozen V2 surface, on the D-024/D-033 precedent); `.phone` still dims. |
@@ -3191,12 +3197,12 @@ The scrim is not an approximation. CSS `opacity:.4` on an element over paper com
 
 | # | Frozen property | Frozen source | Compose target | Assertion | Mutation | Status |
 |---|---|---|---|---|---|---|
-| 2.1a | `.el` `border-radius:4px` | `:154` | — | — | — | **prototype-only, and deliberately not transcribed.** `.el` is the *element itself*; rounding its corners in the editor would round the user's photo on screen and not in the PDF, breaking preview == print. The freeze's 4px belongs to its placeholder `<div>`s, and the artifact is [OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling)'s: the document is not recoloured or reshaped to suit chrome |
-| 2.1b | `.el` `outline:none`, with `tabindex="0" role="button"` on every element node (`:336-351`) | `:154`, `:336` | — | — | — | ⏳ **not transcribed, and nothing regresses — but the reason first written here was wrong, and the device said so.** This row originally claimed the editor exposes *no per-element node at all*. The platform tree disproves it: `uiautomator dump` shows **`Text: Hello` and `Text: Second` as `android.widget.Button`, `clickable=true`, 595×192 px** — real per-element nodes, and the independent review accepted the wrong claim because it, too, read the source rather than the platform. What the tree also shows is `focusable="false"`, and *that* is what carries the conclusion: [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) forbids a **keyboard-operable** control with no focus indicator, and a node the platform will not focus cannot be keyboard-operated. So C2a still owes no ring. **Row 2.2 stays open**; the ring lands when the node becomes focusable, in C3. Recorded at length because this is precisely the failure mode the handbook's *read the platform's own state, not the framework's* rule exists to catch — and it caught an implementer and a reviewer in the same turn |
+| 2.1a | `.el` `border-radius:4px` | `:194` | — | — | — | **prototype-only, and deliberately not transcribed.** `.el` is the *element itself*; rounding its corners in the editor would round the user's photo on screen and not in the PDF, breaking preview == print. The freeze's 4px belongs to its placeholder `<div>`s, and the artifact is [OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling)'s: the document is not recoloured or reshaped to suit chrome |
+| 2.1b | `.el` `outline:none`, with `tabindex="0" role="button"` on every element node (`:376-391`) | `:194`, `:376` | — | — | — | ⏳ **not transcribed, and nothing regresses — but the reason first written here was wrong, and the device said so.** This row originally claimed the editor exposes *no per-element node at all*. The platform tree disproves it: `uiautomator dump` shows **`Text: Hello` and `Text: Second` as `android.widget.Button`, `clickable=true`, 595×192 px** — real per-element nodes, and the independent review accepted the wrong claim because it, too, read the source rather than the platform. What the tree also shows is `focusable="false"`, and *that* is what carries the conclusion: [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) forbids a **keyboard-operable** control with no focus indicator, and a node the platform will not focus cannot be keyboard-operated. So C2a still owes no ring. **Row 2.2 stays open**; the ring lands when the node becomes focusable, in C3. Recorded at length because this is precisely the failure mode the handbook's *read the platform's own state, not the framework's* rule exists to catch — and it caught an implementer and a reviewer in the same turn |
 | 2.3 | `.el .sel` inset −7px, **1.5px `--matcha`**, radius 6 | `:155` | `SelectionChrome.kt` + `SelectionChromeGeometry` | inset, stroke width and radius each read from a composed frame, not from the constant | inset −7→0; stroke 1.5→3; radius 6→0 | the outline stays **rotation-exact** — the inflation is applied along the box's own rotated axes, not to an axis-aligned bounding rect, so a turned photo keeps a parallel outline. CSS cannot express that and the shipped chrome already earns it |
 | 2.4 | `.el.selected .sel,.handle{opacity:1}` | `:156` | same + `ResizeHandles.kt` | selected vs unselected in **one** composition | drop the `.selected` gate | |
-| 2.3b | `.sel` and `.handle` `transition:opacity .12s` | `:155`, `:157` | `SelectionChrome.kt` `alpha`, `ResizeHandles.kt` | the chrome is still drawn, at a reduced alpha, one frame after the selection is cleared | fade duration 120→0 | **Raised by the independent review as a Required Fix, and it was right**: this row's transition was carried into the table and then not implemented, so the outline and all eight handles popped in and out. Fading *out* is the half that is easy to miss — it needs geometry that outlives the selection, so the last selected box is retained until the fade completes. A handle mid-fade is drawn but **not interactive** (`live == null`): a control that no longer has a selection must not accept a drag |
-| 2.5 | `.handle` 13×13 **circle**, `--paper` fill, 2px `--matcha`, halo `0 0 0 1.5px rgba(255,255,255,.7)` | `:157-158` | `ResizeHandles.kt` | fill, ring and halo each probed by pixel | halo removed; circle → the shipped 4dp-radius square | the shipped mark is a **square** citing V1 `bench.html`; the halo is [IA §C.4](design/V2-BENCH-IA-INTERACTION.md)'s dual-tone, and it is what holds the mark ≥3:1 **over a user photo**, where `--matcha` alone cannot be guaranteed |
+| 2.3b | `.sel` and `.handle` `transition:opacity .12s` | `:195`, `:197` | `SelectionChrome.kt` `alpha`, `ResizeHandles.kt` | the chrome is still drawn, at a reduced alpha, one frame after the selection is cleared | fade duration 120→0 | **Raised by the independent review as a Required Fix, and it was right**: this row's transition was carried into the table and then not implemented, so the outline and all eight handles popped in and out. Fading *out* is the half that is easy to miss — it needs geometry that outlives the selection, so the last selected box is retained until the fade completes. A handle mid-fade is drawn but **not interactive** (`live == null`): a control that no longer has a selection must not accept a drag |
+| 2.5 | `.handle` 13×13 **circle**, `--paper` fill, 2px `--matcha`, halo `0 0 0 1.5px rgba(255,255,255,.7)` | `:197-198` | `ResizeHandles.kt` | fill, ring and halo each probed by pixel | halo removed; circle → the shipped 4dp-radius square | the shipped mark is a **square** citing V1 `bench.html`; the halo is [IA §C.4](design/V2-BENCH-IA-INTERACTION.md)'s dual-tone, and it is what holds the mark ≥3:1 **over a user photo**, where `--matcha` alone cannot be guaranteed |
 | 2.6 | `.handle.tl/.tr/.bl/.br` at ∓10px | `:159` | same | each corner's offset against **its own** corner | `-10`→`-13` | the ∓10px offset on a 13px circle centres it on the box corner; `handleDevicePx` already returns that centre, so the frozen offset is **satisfied by construction** and the assertion is on the drawn centre, not on a re-derived constant |
 | 2.6a | the four **edge** handles the freeze does not draw | absent | same | all eight present; an edge drag changes **one** axis | delete the four edge entries | ✅ **[OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) applied** — §1(b). Kept and re-skinned |
 | 2.7 | handle **hit target** ≥48dp while drawn at 13px | absent; [IA §C.1](design/V2-BENCH-IA-INTERACTION.md) | `ResizeHandles.kt` | **platform-tree** bounds via `uiautomator dump`, not Compose semantics | shrink the extended target to the drawn box | already shipped (48dp `Box`, 15dp mark → **13dp** mark). ⚠ **This row's promised assertion could not be made as written, and that is itself the finding.** The handles carry a `testTag` but **no semantics**, so they produce *no platform node*: `uiautomator dump` returns nothing for them, and a platform-tree bounds assertion has nothing to measure. The 48dp box is real in Compose layout and invisible to the platform — which also means the handles are invisible to TalkBack, by design ([ADR-029 §6](#adr-029) makes the transform bar the assistive path, not the handles). **What Pass 1 could measure is the overlap, and it is real:** the text element measured **595×192 px = 216×70 dp**, so along its 70 dp side the corner and edge handles sit **35 dp apart while each claims 48 dp** — the left-edge target overlaps both corner targets. That is exactly ⏳ **[D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)**'s warning, now with a number, and eight handles make it worse than four would |
@@ -3205,7 +3211,7 @@ The scrim is not an approximation. CSS `opacity:.4` on an element over paper com
 | 2.8b | the wash is **bounded to the sheet** | `.content{inset:22px}` inside `.page`, `:150` | `benchPageRect` | a desk pixel outside the sheet is bit-identical with the dim on and off | bound the wash to the whole canvas instead | **The review's blocking finding.** The scrim fills the canvas so its coordinates agree with its siblings', but the sheet is a smaller centred child: an unbounded wash painted *paper over the desk*, compositing the dark room `#2F2A22` to ≈`#A7A298`. Every selection lit the room up and every deselection dimmed it again — [ADR-090](#adr-090) exactly inverted. **No test could catch it**, because the probe's host painted paper edge-to-edge, the one arrangement in which it is invisible. The host now has a desk |
 | 2.9a | the materialise's deviation | — | same | anything drawn **above** the arriving element, inside its rect, is covered for the animation | — | the second deviation, recorded because the first draft of this ADR claimed there was only one. A `covers` quad is **opaque**, so inserting an element *beneath* an existing caption blanks that caption for 300 ms. The common case is safe (an insertion appends on top); unlike 2.8a this one is visible, which is why it is stated separately rather than folded in |
 | 2.9b | what the insertion guard **cannot** distinguish | — | same | one new id **and** nothing lost ⇒ animate | drop the `size + 1` clause and a whole-page content swap animates | an **undo that restores a single deleted element**, and a redo of an insert, both present exactly one genuinely new id and both animate. Telling them apart needs the reducer's intent, and reading history here would make transient appearance depend on it — the one thing [D-032](design/V2-SPEC-DEFECTS.md#d-032-ruling)'s discipline forbids. Recorded rather than papered over |
-| 2.9 | `.el.materialize` = `mat .3s var(--settle)`; `scale .92→1`, `opacity 0→1` | `:160-161` | `EditorPagePreview.kt` | the from-scale via a frame probe; the fade via the same composite measurement as 2.8 | `.92`→`1`; duration 300→0 with motion **on** | §2.2. One-shot ⇒ **0 ms under reduced motion** ([ADR-075](#adr-075)). Derived from a `remember`ed id diff — no reducer state, nothing persisted |
+| 2.9 | `.el.materialize` = `mat .3s var(--settle)`; `scale .92→1`, `opacity 0→1` | `:200-201` | `EditorPagePreview.kt` | the from-scale via a frame probe; the fade via the same composite measurement as 2.8 | `.92`→`1`; duration 300→0 with motion **on** | §2.2. One-shot ⇒ **0 ms under reduced motion** ([ADR-075](#adr-075)). Derived from a `remember`ed id diff — no reducer state, nothing persisted |
 | 2.14 | `canvas.addEventListener('click', … deselect())` — the way **out** of the dim | `:561` | `EditorGestures.kt` `onTap` | tap on blank paper clears; tap on the **desk** clears; tap on another element **transfers with no intermediate clear**; a drag never deselects | remove the `onTap` wiring (kills 3); `ClearSelection` + `SelectAt` instead of one intent (kills the transfer test) | ✅ **added by [OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling)**, which widened C2a's fence by exactly this one behaviour after Pass 2 failed on its absence. One line, because `SelectAt`'s **miss** branch already reduces to `ClearSelection`'s state (`EditorReducer.kt:24` vs `:26`) — so the transfer case is a *single* reduction and no frame reads as deselected. The transfer test pins that down by asserting the tap produced **exactly one intent**, and additionally records the per-reduction selection history — the review was right that the intent count is what actually kills the clear-then-select mutant, and that the history assertion is near-vacuous *in this test*, since a correct implementation leaves it holding a single entry. It is kept as the assertion that would speak if the transfer ever grew a second reduction. **Cost, stated:** `detectTapGestures` cannot know a tap is single until the double-tap window closes, so deselection resolves after that timeout — inherent to a surface carrying both click and dblclick, which the freeze specifies |
 
 ### 4. What C2a must not do
@@ -3249,7 +3255,7 @@ and cleared only by a page change ([`EditorReducer.kt:198`](../core/editor/src/m
 
 **This gap is older than C2a — and C2a is what makes it a defect.** The frozen Bench pairs the dim with two ways
 out on the same screen: `canvas.addEventListener('click', … deselect())` and the Done button
-([`v2-bench.html:561-563`](design/mockups/v2-bench.html)). C2a implemented the dim and neither exit, because the
+([`v2-bench.html:627-629`](design/mockups/v2-bench.html)). C2a implemented the dim and neither exit, because the
 exits belong to **C4** (`.bar`, Done). Before this package a stuck selection cost an outline. After it, a stuck
 selection **fades everything else the user has written**, with no gesture that undoes it.
 
@@ -3289,7 +3295,7 @@ round of this package proved that an unwritten gap is one nobody re-checks. **C4
 the state rather than meets it for the first time. Two smaller carries: `EditorGesturesTest` composes the gesture
 surface without `ResizeHandles`, so the sibling z-order that keeps a handle tap from deselecting is *proven* (the
 review composed the real arrangement and measured it) but **unguarded by any test**; and the freeze gates its canvas
-click on `sheet.show || pgrid.show` (`v2-bench.html:562`), where the port relies on those overlays blocking
+click on `sheet.show || pgrid.show` (`v2-bench.html:628`), where the port relies on those overlays blocking
 hit-testing — checked on device rather than assumed.
 
 ##### The completion's device verification — **both passes re-run from the beginning, both pass** {#adr-091-completion-device}
@@ -3374,20 +3380,20 @@ Two bars can be on screen at once for a selected text box, and their vocabularie
 | # | Frozen property | Frozen source | Compose target | Assertion | Mutation | Status |
 |---|---|---|---|---|---|---|
 | 2.10 | `.ctx` inset 12 left/right/bottom, radius 16, `--sheet`, 1px `--chrome-line`, shadow `0 12px 30px -12px --frame-shadow`, enter `translateY(14px)→0` + opacity, at `.2s var(--standard)` | `:211–214` | `BenchContextBar.kt` (**new**) | inset, radius, fill and the 14dp enter displacement each read from a composed frame; the **border** is sampled at the straight middle of the left edge, where no corner arc reaches, and must land nearer `--chrome-line` than the bar's own `--sheet` fill | inset 12→0; radius 16→0; enter 14→0; `--standard`→`--settle`; border painted in `sheet` |  **a new file, not a re-skin** — OD-11. `EditorContextBar` is untouched by this package |
-| 2.11 | `.ctx button` `flex:1`, h40, radius 10, 12.5px/500, icon **over** label, `gap:2px` | `:215` | same | all buttons **equal width**, measured from the composed frame, and the 40dp draw sits under the 48dp target floor (row 2.11a) | `flex:1`→`flex:none` (widths diverge) |  `flex:1` over a `min-width:0` basis is `Modifier.weight(1f)`; the label is the a11y name, so the icon is decorative. **The assertion column once also claimed "the label sits below the icon" and nothing read it** — icon-over-label is a `Column`'s literal argument order, cheap to see and expensive to photograph, so the claim is withdrawn rather than dressed in a bitmap probe |
-| 2.12 | `.ctx button.danger{color:var(--consequence)}` | `:217` | same | Delete's darkest pixel differs from Edit's, **and** lands nearer `consequence` than `ink` while Edit's lands the other way about — *nearer*, not equal, because the sampled 1.7px stroke is antialiased against `sheet` | drop `.danger`; repaint `.danger` in a different dark colour |  `consequence` is chrome-only and delete-only ([ADR-055](#adr-055)) |
+| 2.11 | `.ctx button` `flex:1`, h40, radius 10, 12.5px/500, icon **over** label, `gap:2px` | `:255` | same | all buttons **equal width**, measured from the composed frame, and the 40dp draw sits under the 48dp target floor (row 2.11a) | `flex:1`→`flex:none` (widths diverge) |  `flex:1` over a `min-width:0` basis is `Modifier.weight(1f)`; the label is the a11y name, so the icon is decorative. **The assertion column once also claimed "the label sits below the icon" and nothing read it** — icon-over-label is a `Column`'s literal argument order, cheap to see and expensive to photograph, so the claim is withdrawn rather than dressed in a bitmap probe |
+| 2.12 | `.ctx button.danger{color:var(--consequence)}` | `:257` | same | Delete's darkest pixel differs from Edit's, **and** lands nearer `consequence` than `ink` while Edit's lands the other way about — *nearer*, not equal, because the sampled 1.7px stroke is antialiased against `sheet` | drop `.danger`; repaint `.danger` in a different dark colour |  `consequence` is chrome-only and delete-only ([ADR-055](#adr-055)) |
 | 2.13 | text = **Edit · Font · Size · Ink · Delete**; photo = **Reframe · Replace · Delete** | `:450–453` `toolsFor()` | `benchContextVerbs()` (pure) | **set-equality** per kind, not membership, plus order | swap two verbs between kinds | a permutation satisfies "each exists" + "positions ascend", which is why set-equality is the assertion (ADR-082's rule). `decor` is unreachable — asserted **absent**, so it fails loudly when it lands |
-| 2.13a | `Font` is drawn and does nothing | `:451` + [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) | same | present, and **`enabled=false` in the platform tree** — not in the merged Compose semantics | make it enabled | the [ADR-058](#adr-058) `ReframeControls.ZoomButton` defect was exactly this shape — **and the first draft of this file reproduced it.** `clearAndSetSemantics` wipes everything the button published, *including* the disabled state `enabled = false` sets, so `Font` was announced as an ordinary button that silently did nothing. The test caught it; the fix is an explicit `disabled()` inside the semantics block, and a mutation removing that one line kills the assertion. Robolectric stays necessary-and-insufficient: this row's real gate is `uiautomator dump` on hardware. **The independent review then found the same defect one axis over:** `clearAndSetSemantics` wipes `OnClick` by the same rule, and only the disabled axis had been re-published — so all five *enabled* verbs announced a button exposing no way to activate it. A pointer tap still worked, because a tap never consults semantics, which is exactly what kept it invisible; Switch Access, an external keyboard or any `ACTION_CLICK` consumer would have met a dead control, and `uiautomator dump` would have read `clickable="false"` on every verb. Fixed by re-publishing `onClick` for enabled verbs, asserted per-verb both ways, mutation-killed |
-| 2.10a | the shadow carries a **−12px spread**, and the shared helper had none | `:211` | `ZinelyShadowLayer.spread` (`:core:ui`) | — | — | **the corpus's first spread-bearing shadow.** `zinelyShadow`'s own KDoc read *"CSS box-shadow has no x-offset or spread anywhere in the frozen trilogy (verified in the M0 audit)"* — true when written, false the moment V2's `.ctx` arrived, and carried forward as a fact until this row. `spread` ships with a **zero default**, so every layer written before it draws exactly as it did. CSS spreads the corner *radii* too; that is **not** modelled, and at −12px the shadow sits inside the bar's own footprint except for its `dy`, where a radius difference under a 30px blur is not observable. Stated rather than approximated silently |
+| 2.13a | `Font` is drawn and does nothing | `:495` + [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) | same | present, and **`enabled=false` in the platform tree** — not in the merged Compose semantics | make it enabled | the [ADR-058](#adr-058) `ReframeControls.ZoomButton` defect was exactly this shape — **and the first draft of this file reproduced it.** `clearAndSetSemantics` wipes everything the button published, *including* the disabled state `enabled = false` sets, so `Font` was announced as an ordinary button that silently did nothing. The test caught it; the fix is an explicit `disabled()` inside the semantics block, and a mutation removing that one line kills the assertion. Robolectric stays necessary-and-insufficient: this row's real gate is `uiautomator dump` on hardware. **The independent review then found the same defect one axis over:** `clearAndSetSemantics` wipes `OnClick` by the same rule, and only the disabled axis had been re-published — so all five *enabled* verbs announced a button exposing no way to activate it. A pointer tap still worked, because a tap never consults semantics, which is exactly what kept it invisible; Switch Access, an external keyboard or any `ACTION_CLICK` consumer would have met a dead control, and `uiautomator dump` would have read `clickable="false"` on every verb. Fixed by re-publishing `onClick` for enabled verbs, asserted per-verb both ways, mutation-killed |
+| 2.10a | the shadow carries a **−12px spread**, and the shared helper had none | `:251` | `ZinelyShadowLayer.spread` (`:core:ui`) | — | — | **the corpus's first spread-bearing shadow.** `zinelyShadow`'s own KDoc read *"CSS box-shadow has no x-offset or spread anywhere in the frozen trilogy (verified in the M0 audit)"* — true when written, false the moment V2's `.ctx` arrived, and carried forward as a fact until this row. `spread` ships with a **zero default**, so every layer written before it draws exactly as it did. CSS spreads the corner *radii* too; that is **not** modelled, and at −12px the shadow sits inside the bar's own footprint except for its `dy`, where a radius difference under a 30px blur is not observable. Stated rather than approximated silently |
 | 2.11a | the frozen control is **40dp**; its touch target is **48dp** | `:215` | `BenchContextBar.kt` | the node measures the 48dp floor, and the drawn height is provably under it | — | Material floors interactive components at 48dp, so the *drawn* box is the frozen 40 and the *target* is 48. Deliberately not fought: ⏳ **[D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)** records that no control in the frozen trilogy declares a minimum target and most measure well under 48dp, so the floor is the freeze **improved on**. Asserted so nobody later "fixes" the target down to 40 |
 | 2.13b | two routes to one Type bar | — | — | — | — | the recorded deviation of §2: `Size` and `Ink` both reveal the Type bar, because `.inkpop` is out of fence and the shipped bar already carries both; likewise the frozen `Reframe` verb beside the existing `ReframeAffordanceChip`. **Nothing is removed** (OD-11); de-duplication is **C4**'s |
 | 2.13c | when the bar shows | `:470`, `:477`, `:483`, `:535` | `EditorScreen.kt` | shown for a **single** selection; hidden with no selection, while **editing**, and while **reframing** | show it during a text-edit session | the freeze hides `.ctx` on `edit()` and on deselect. A bar floating over the keyboard stack would cover the text being typed |
 
 | 2.13c-i | a verb that is **announced** disabled is **drawn** disabled | `:206` (`.icon-btn:disabled{opacity:.35}`) | `BenchContextBar.kt` | `Font`'s glyph is lighter than `Edit`'s, still darker than the `--sheet` under it, and nearer that sheet than full `--ink` | drop the alpha | ✎ **canonical amendment, of the smallest kind.** The frozen `.ctx button` has **no** disabled rule — the freeze never disables one — so nothing was copied from it. But `enabled = false` dims a `TextButton` through `LocalContentColor`, and this bar passes its content colour explicitly, which overrides that: `Font` and `Replace` said *disabled* to TalkBack and *tap me* to the eye. Rather than invent a treatment, this borrows the corpus's own single existing one, two rules above the bar it belongs to. Raised by the independent review, not by a test |
 | 2.10b | the bar's own card **swallows taps that miss a verb** | — | `BenchContextBar.kt` | a click on the card's padding, between the bar's edge and the first verb, leaves the selection intact and the bar up | remove the sink | ✓ **found on hardware, and no single package could have predicted it.** C2a made a tap outside the selection dismiss it ([OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling)); C2b floated a card over the canvas. Their intersection is the card's own dead space — 8dp of padding, 6dp between each pair of verbs — which passed the tap through to the canvas beneath, so **aiming at the toolbar and missing by 3dp deselected the element and took the toolbar away with it**. Measured 4 times out of 4, fixed 4 times out of 4. Neither package is wrong alone, which is why the assertion lives at the assembly |
-| 2.10c | the bar draws in the **room's** palette, not the sheet's | `:211` (`.ctx` is a sibling of `.page`, not a child) | `EditorScreen.kt` | at `qualifiers = "night"` the verb label's extreme differs from the bar's fill by **>150** across RGB | draw it under the island instead | ✓ **the one the whole unit suite was blind to.** The bar is composed *inside* [BenchSheetIsland] for its geometry, and the island re-declares eight tokens from the light palette so the artifact does not dim at night (D-035/OD-12) — `ink` among them. The bar took that light `ink` onto its own *room* `--sheet` fill: in dark theme, **1.05:1**, an invisible toolbar. Every Robolectric test passed, because Robolectric's default qualifiers are the light palette, where the two sources happen to agree. The ruling was already written at the island's own call site (*"the room around this Box — bar, tray, page strip, context bar — goes on dimming"*) and this restores it |
+| 2.10c | the bar draws in the **room's** palette, not the sheet's | `:251` (`.ctx` is a sibling of `.page`, not a child) | `EditorScreen.kt` | at `qualifiers = "night"` the verb label's extreme differs from the bar's fill by **>150** across RGB | draw it under the island instead | ✓ **the one the whole unit suite was blind to.** The bar is composed *inside* [BenchSheetIsland] for its geometry, and the island re-declares eight tokens from the light palette so the artifact does not dim at night (D-035/OD-12) — `ink` among them. The bar took that light `ink` onto its own *room* `--sheet` fill: in dark theme, **1.05:1**, an invisible toolbar. Every Robolectric test passed, because Robolectric's default qualifiers are the light palette, where the two sources happen to agree. The ruling was already written at the island's own call site (*"the room around this Box — bar, tray, page strip, context bar — goes on dimming"*) and this restores it |
 | 2.13d | **exactly one control offers `Delete` at a time**, and one offers `Reframe` | — | `EditorScreenTest`, `EditorContextBar.showDelete` | `onAllNodesWithContentDescription("Delete")` measures **exactly 1** for text and for a photo; the transform bar's Delete is absent while the frozen bar is up and **present again** the moment it stands down; the on-canvas Reframe chip is absent while the bar offers `Reframe`; all **ten** transform verbs present throughout | restore the duplicate Delete; ignore `showDelete` inside the component; stop the chip yielding | ✅ **the price was refused.** This row first *pinned* the duplication as the cost of OD-11's additive — and device Pass 2 refused it: the same verb twice on one screen reads as a malfunction to a beginner, and `Reframe` doubled **visibly** (bar + on-canvas chip) as well as `Delete` audibly. [**OD-14**](design/V2-SPEC-DEFECTS.md#d-039-ruling) keeps both bars and assigns responsibilities instead — element verbs to the frozen bar, transform verbs to the shipped one — which is the split [ADR-029](#adr-029) §6 already justifies, since *drag* is the gesture with no single-pointer twin and `Delete` was never a gesture. A **presentation** switch, never a capability one: every withheld control returns the instant the frozen bar stands down, so no capability is off-screen at any moment. Each of the three mutations kills |
-| 2.13e | a text box the reducer would refuse to style is offered **neither `Size` nor `Ink`** | `:451` + [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) | `benchContextVerbs(kind, styleable)` | a blank box's Size and Ink are `enabled = false` in the semantics tree while its Delete stays enabled | drop the guard (`styleable = true`) | ✅ **[D-040](design/V2-SPEC-DEFECTS.md#d-040), found by review after this ADR had already passed a device Pass 1.** With the verbs live, one tap on a blank box hid the frozen bar (`!typeBarOpen`), raised no Type bar in its place (`styleTarget` is null for a blank box) and left `typeBarOpen` stuck true, because the reset effect keys on `styleTarget?.id` — still null, so it never re-ran. **The toolbar stayed gone across later selections.** The transform bar already refuses this exact offer; C2b put it on a second surface without carrying the guard across. ⚠ **This row briefly claimed the state was unreachable — wrongly.** Two routes go around `endTextSession`: **Undo** of the first commit restores `text = ""` with the selection preserved (`EditorReducer.kt:306–308`, `:332`), and `Intent.GoToPage → leavePage` (`:166–169`) ends the session **without running `endTextSession` at all**. The second was reproduced on hardware, and the guard was then watched working there: on a blank box, `Size` and `Ink` read **`clickable=false enabled=false`** in the platform tree while `Edit` and `Delete` stay live |
+| 2.13e | a text box the reducer would refuse to style is offered **neither `Size` nor `Ink`** | `:495` + [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) | `benchContextVerbs(kind, styleable)` | a blank box's Size and Ink are `enabled = false` in the semantics tree while its Delete stays enabled | drop the guard (`styleable = true`) | ✅ **[D-040](design/V2-SPEC-DEFECTS.md#d-040), found by review after this ADR had already passed a device Pass 1.** With the verbs live, one tap on a blank box hid the frozen bar (`!typeBarOpen`), raised no Type bar in its place (`styleTarget` is null for a blank box) and left `typeBarOpen` stuck true, because the reset effect keys on `styleTarget?.id` — still null, so it never re-ran. **The toolbar stayed gone across later selections.** The transform bar already refuses this exact offer; C2b put it on a second surface without carrying the guard across. ⚠ **This row briefly claimed the state was unreachable — wrongly.** Two routes go around `endTextSession`: **Undo** of the first commit restores `text = ""` with the selection preserved (`EditorReducer.kt:306–308`, `:332`), and `Intent.GoToPage → leavePage` (`:166–169`) ends the session **without running `endTextSession` at all**. The second was reproduced on hardware, and the guard was then watched working there: on a blank box, `Size` and `Ink` read **`clickable=false enabled=false`** in the platform tree while `Edit` and `Delete` stay live |
 
 ### 3a. Device verification {#adr-092-device}
 
@@ -3460,3 +3466,2304 @@ correct and regression-tested; what is outstanding is a judgement, and it is [D-
 - **must not** implement `.inkpop`, `.bar`, `.kbstack` or `.styletb*` — those are C3's and C4's.
 - **must not** give `Font` a behaviour — [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling).
 - **must not** touch `core:model`, `SceneRenderer`, or anything the export path reads.
+
+## ADR-093 {#adr-093}
+
+**C3 — in-place text editing and the rigid page pan, the centrepiece. Written before any production code.** Its blocker check found one contradiction and **no owner decision**: [ADR-089](#adr-089) rows 3.5–3.7 name `TypeBar.kt` as the thing to *re-skin* into the frozen `.styletb`, which would delete the size stepper, align, bold, italic and the five inks. [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) already forbids that in one sentence — *"no existing editor capability is removed"* — and [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling) restates it. So the plan is corrected against the rulings that outrank it, and the correction is recorded as [**D-042**](design/V2-SPEC-DEFECTS.md#d-042) rather than escalated: **`.styletb` is the editing state's row, which this product does not have yet; `TypeBar.kt` stays exactly where OD-9 put it.** Nothing is removed, nothing is duplicated — the two are never on screen at the same moment, which `EditorScreen.kt:267` enforces structurally.
+
+- **Status:** ✅ `Accepted` **2026-08-04.** Opened as `Proposed` before any `src/main` change ([ADR-089 §2.2](#adr-089)) and held there through a **NO-GO** first review, an owner ruling that **reopened the package after implementation**, a second independent review (**GO WITH FIXES**), and a third (**GO WITH FIXES**, all reconciled). It moves here only now, on the evidence in [§7](#adr-093-verification) and [§8](#adr-093-device): **both** device passes run from the beginning on the amended build reusing none of the earlier evidence, all **eleven** checklist items read and marked individually, **30 mutations killed with no survivors**, `:feature:editor` **605/0** with **87/87** goldens unchanged against the current tree. Row 3.2's pixel-identical return — the hardware gate no unit test can close, and the roadmap's stated condition for C3 — is **97 differing pixels, every one inside the status-bar clock, zero below `y250`**. **Reopened 2026-08-03 by [OD-16](design/V2-SPEC-DEFECTS.md#d-043-ruling)** — the owner ruled option (b) on [D-043](design/V2-SPEC-DEFECTS.md#d-043), amending the frozen pan from an unconditional `−96px` to a **maximum** spent as `min(96dp, slack + clearance)`, and created [D-045](design/V2-SPEC-DEFECTS.md#d-045) to be implemented in the same package. The frozen Bench was amended first, per the HTML-first rule. Rows **3.1** and **3.1a** are rewritten and row **3.14** is new; everything else stands.
+- **Context:** C3 is the fourth production package of Phase C. [C1](#adr-090), [C2a](#adr-091) and [C2b](#adr-092) are `Accepted`. Its fence is [ADR-089 §4](#adr-089) rows **3.1–3.11**, plus four rows this table adds and §1 explains; the roadmap records its condition as *"a device proof, not a ruling"*, and the blocker check confirms that — the one contradiction it found is settled by rulings already in hand.
+
+### 1. The frozen sources are not where ADR-089 says they are
+
+Every line reference in [ADR-089](#adr-089)'s C3 table **except row 3.11's `:9`** predates five amendments to the frozen file (D-001's header cleanup, D-010/OD-3's shadow, D-033's, D-035/OD-12's light-theme island, and — since 2026-08-03 — D-043/OD-16's clamp, which moved every address below `:520` again). **Every row was re-verified against `v2-bench.html` as it stands**, and the table below carries the corrected sources. This is drift, not contradiction — no rule changed, only its address — but a table that cannot be followed to the rule it cites is not a frozen property table.
+
+*(The left column quotes [ADR-089](#adr-089)'s C3 table **as written**. Its addresses have since been
+corrected in place — that table is the live phase fence and carries C3's status — so the record of what it
+originally said survives only here. A 2026-08-03 pass that rewrote citations mechanically flattened this
+column onto the right one and had to be undone: a drift table whose two columns agree documents nothing.)*
+
+| ADR-089 said | it is actually at | what is there |
+|---|---|---|
+| `:116` (the pan's transition) | **`:172`** | `.pageWrap{transition:transform .34s var(--settle);will-change:transform}` |
+| `:143-145` (the caret) | **`:204-205`** | `.caret`, `.editing .caret`, `@keyframes blink` |
+| `:198-199` (`.kbstack`) | **`:259-260`** | `.kbstack`, `.editing .kbstack` |
+| `:200` (`.styletb`) | **`:261`** | the row's ground, hairline and padding |
+| `:201-203` (the chips) | **`:262-264`** CSS · **`:408-410`** markup | `.chip`, `.sw`, `.grow`, `.done` |
+| `:343-345` (the chip row) | **`:408-410`** | `Fraunces` · `A 23` · `Ink` · grow · `Done` |
+| `:464` (the pan) | **`:551`** | `$('pageWrap').style.transform='translateY(-'+editPanPx()+'px)'` — the literal `-96px` was replaced by the OD-16 clamp; `editPanPx()` is `:525-539` |
+| `:466` (the ink seed) | **`:553`** | `$('editSw').style.background=getComputedStyle(t).color` |
+| `:469-477` (`endEdit`) | **`:556-564`** | settle back, ctx returns, `flashSaved()` |
+| `:471` (the return) | **`:558`** | `translateY(0)` — *"settle back — pixel-identical"* |
+
+### 2. Frozen property table — C3
+
+| # | Frozen property | Frozen source | Compose target | Assertion | Mutation | Status |
+|---|---|---|---|---|---|---|
+| 3.1 | entering edit pans the **whole page** as one rigid body — `.pageWrap` moves, nothing inside it does. **Amended 2026-08-03 ([OD-16](design/V2-SPEC-DEFECTS.md#d-043-ruling)): the frozen `translateY(-96px)` is the MAXIMUM lift, spent as `min(96dp, slack + clearance)`** | `:551` (+ `.pageWrap` `:172`), as amended | `EditorScreen.kt` page host, `graphicsLayer{translationY}`; the rule itself is the pure `benchEditPanMagnitudeDp` | the page's displacement, **and** every element's page-space bounds identical before/during (rigid body, not a layout change) | pan −96→−48; pan the element instead of the page; drop either term of the clamp | ✅ **the load-bearing mechanic** ([EP-1](design/V2-BENCH-PRINCIPLES.md)), and since OD-16 a rule rather than a constant. The literal survives as the ceiling and is still asserted at screen level — on the one test host where the ceiling is *reachable*, because an assertion of a maximum on a host that never reaches it asserts nothing |
+| 3.1a | −96 is a **frozen-phone** constant, and the device page is not the frozen page | `.phone` `:161` is 344×744 with a 229×324 `.page`; the shipped page fills the canvas (measured 342×437dp on `SM-A176B`) | same | the literal −96dp **and** the functional property it exists for: the edited element's bottom clears the `.kbstack` + IME | pan to a value that satisfies the literal but not the clearance | ✎ **stated before it is discovered.** −96/324 = **29.6 %** of the frozen page; −96dp/437dp = **22 %** of the device page. The freeze's number is transcribable and will be transcribed, but the assertion must also read the *reason* for it, or a literal pass can ship a page that still hides the caret. Failure is the documented bottom-sheet fallback ([§E.6](design/V2-BENCH-REVIEW.md)), not an invention ⛔ **the prediction landed, in the other direction — [D-043](design/V2-SPEC-DEFECTS.md#d-043).** Not under-clearance: the shipped page is *contained* in the canvas, so it has ≈ 0 slack above it and −96dp is taken out of the page — an element in the top 96dp of screen is lifted **out of view by its own edit gesture**. **How much of the page that is depends on the canvas scale, and 96dp is the wrong unit to state it in:** 96dp = `96 / scale` points of page, so on the 300×400dp test host (scale ≈ 1.32 dp/pt, a 100pt page) it is the top **≈ 73 %** of the page, against **22 %** on the measured `SM-A176B` canvas. The severity is worst on the smallest canvases, and the only figure so far *reproduced* is the 73 % one. ~~Ships literal per row 3.1; the remedy is one of four options and is the owner’s.~~ ~~✅ **Row 3.1a's own clearance assertion is now built** (`the_edited_element_clears_the_style_row_after_the_pan`)~~ — **withdrawn 2026-08-03 on independent review.** That test asserts *layering* (the row paints over the page, the edited box is not behind it); it cannot assert clearance, because clearance is defined against the IME and Robolectric has none. Claiming it did was the same overreach this table caught once already in row 3.8. ✅ **RESOLVED 2026-08-03 by [OD-16](design/V2-SPEC-DEFECTS.md#d-043-ruling) — option (b), the clamp**, frozen file amended first. Two things this row got wrong are worth keeping: the severity was stated in `96/scale` points of *page* and the figure that mattered turned out to be **slack**, measured at **4.2dp on `SM-A176B`** in the pre-amendment round — today's amended build reads **0**, reconciled in [§8](#adr-093-device) — and the predicted symptom (*the element cannot be seen*) **never reproduced on hardware**, because the un-clipped canvas was masking it ([D-045](design/V2-SPEC-DEFECTS.md#d-045)). A prediction that lands for the wrong reason is still a defect found; it is not evidence the reasoning was right. The clearance term itself remains **unassertable in Robolectric** — it needs an IME, and there is none — so it is carried by the pure rule's own tests and by [checklist](#adr-093-device-checklist) items 9–11. |
+| 3.2 | `Done` returns to `translateY(0)` **pixel-identical** | `:558` | same | rest raster before vs after, byte-compared | return to `-1px` | ⏳ **the device proof.** The roadmap's stated condition for C3 |
+| 3.3 | the pan rides `transition:transform .34s var(--settle)` | `:172`, `--settle` at `:111` | same | duration + easing behaviourally, through `ZinelyV2Motion` | `--settle`→`--standard` | one-shot ⇒ 0 ms under reduced motion, and it must still **arrive** |
+| 3.4 | `.kbstack` is bottom-anchored (`left/right/bottom:0`, `z-index:35`) and enters `translateY(110%)→0` at `.34s var(--settle)` under `.editing` | `:259-260` | new editing-surface host | offscreen at rest, docked in edit | 110%→50% | it sits **above the IME**, so its host is `WindowInsets.ime`, not a fixed offset. The freeze's sibling `.kb` (`:265`, markup `:412-417`) is the prototype's **drawn stand-in for the system keyboard** and is explicitly *not* implemented — the real IME is |
+| 3.5 | `.styletb` row: `--sheet` ground, top 1px `--chrome-line` hairline, padding `8px 12px`, `gap 6px` | `:261` | `BenchStyleRow.kt` (**new**) | ground + hairline + padding, read from a composed frame | drop the hairline | ✎ **the Compose target is corrected from ADR-089's.** It named a `TypeBar.kt` re-skin, which would delete five shipped capabilities; [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)'s *no existing editor capability is removed* forbids that outright, so this is a **new** editing-state row and `TypeBar.kt` is untouched — see §3 and [D-042](design/V2-SPEC-DEFECTS.md#d-042) |
+| 3.6 | chips **Fraunces** · **A 23** · **Ink** (with a `.sw` 14px dot), then `.grow`, then **Done** right-anchored | `:262-264`, `:408-410` | same | the order and the right-anchored Done, plus **three of the four announced `enabled=false`** | move `.grow`; enable a dead chip | ✅ **three chips are dead in the freeze, not two.** Enumerating every listener in the script: `Fraunces` and `A 23` have no handler, and `#editColour` has none either — `openInk` is bound in `toolsFor` (`:495`, `:497`) and dispatched by `buildCtx` (`:499`, `:504`) to the **`.ctx`** bar's Ink verb. So all three ship inert under [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling), exactly as `Font` and `Replace` do, and `.inkpop` is not pulled forward. A first draft of this row claimed `Ink` was wired; the review disproved it. ⚠ the `Fraunces` chip is 1.13/[D-004](design/V2-SPEC-DEFECTS.md#d-004) again, on chrome this time ✎ **Deviation, shipped: the chips are labelled by verb (`Font` · `Size` · `Ink`), not by value (`Fraunces` · `A 23`).** A value display that cannot change the value must still be *true*; hard-coding `Fraunces`/`A 23` would misreport every element that is neither, which is a stronger defect than a vocabulary difference. The swatch is the exception and stays a value (row 3.9). This is a **canonical amendment owed to the HTML** under the HTML-first rule and is filed as [D-044](design/V2-SPEC-DEFECTS.md#d-044) — an earlier draft of §6 claimed it was "recorded in row 3.6" when it was recorded nowhere. |
+| 3.7 | `.styletb .done` h34, radius 9, padding `0 16px`, `--matcha` on `--on-matcha`, 13px/600 | `:264` | same | fill + label contrast + the 34dp draw height | `--on-matcha`→`--paper` | ⚠ [D-023](design/V2-SPEC-DEFECTS.md#d-023) is the **Library's** version of this pair and is open; the Bench already uses the reading D-023 asks about |
+| 3.8 | `.caret` 1.5px × 1.05em `--matcha`, `blink 1.05s steps(1) infinite`, shown **only** under `.editing` | `:204-205` | the in-place editing surface | the caret's presence gated on the session; its colour is `--matcha`, **not** the shipped `coralStrong`; its 1.5px width; and it does not run under reduced motion | show it at rest; recolour it; widen it 8×; blink it under reduced motion | ✎ **a canonical amendment is owed either way.** `EditTextSession.kt:159-160` sets `cursorBrush = coralStrong` and cites *bench.html's* V1 rule; V2's Bench says `--matcha`. ⚠ the blink is **the trilogy's only looping animation** and is [D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)'s whole subject — D-012 is **open and C9's**, so C3 wires the caret through the existing `ZinelyV2Motion.reduceMotion` seam and asserts *it does not run* when motion is reduced, which is the one reading all three frozen files agree on ✅ **colour and width are asserted on the raster** (`BenchStyleRowGoldenTest`, scoped to the field's own rect because `Done` is also `--matcha`); the reduced-motion hold is asserted on the pure `benchCaretAlphaAt`. ⏳ **The blink’s session-relative baseline is NOT asserted and is not claimed to be** — it is what makes the caret appear *on* rather than mid-blink, it is structurally correct (`produceState` is not composed at all under reduced motion), and it is **not unit-observable**: Robolectric’s frame clock starts near zero, so removing the baseline changes nothing a test can see. [Device checklist](#adr-093-device-checklist) item 7 owns it. An earlier draft of this column named the colour as asserted when nothing asserted it; the independent re-review reverted it and it survived. |
+| 3.9 | the ink swatch seeds from the element's **computed** colour on entry | `:553` | same | the dot takes the element's colour, not a theme default | seed from `--ink` always | ✅ the one live thing about the `Ink` chip: it *reports*. The dot is read from the `TextElement`'s own `style.color`, so a coral heading shows coral even though the chip does nothing when tapped |
+| 3.10 | `Done` returns to **Selected**, not Rest — `.ctx` comes back | `:561` | `EditorScreen.kt` | post-edit state is Selected with the frozen bar up | return to Rest | ✅ reachable now: [ADR-092](#adr-092)'s bar keys on `Interaction !is EditingText`, so it returns by construction — the row asserts it rather than building it |
+| 3.10a | `Done` also **flashes "Saved"** | `:562`, `flashSaved()` `:477`, `.saved` `:168-169` | — | — | — | ∅ **C4's, and left there.** `.status` and `.saved*` are [ADR-089 §2](#adr-089)'s C4 regions. C3 returns to Selected; the flash arrives with the status chip |
+| 3.11 | the page **never reflows, resizes or desyncs** during edit | `:9`; [IA §C.2](design/V2-BENCH-IA-INTERACTION.md) | the existing anti-desync viewport defence | element bounds identical at rest / editing / rest | introduce a second viewport authority | ∅ *no new mechanism — the defence exists; this pins that C3 did not add a second one* ✅ **the in-place half now has a guard that bites.** C3 draws the edited element itself and suppresses it from the tape, so "drawn once, in place" became a new property. It is asserted on the raster in `EditorPagePreviewTest.the_tape_omits_the_element_under_an_open_session` with a probe ink no other pixel can produce — because the field and the tape draw the *same words at the same rect*, so a screen-level golden cannot see the difference and the first cut's mutation survived the entire suite unnoticed. |
+| 3.12 | entering edit is a **gesture**, not only a verb: tap on an already-selected text element enters edit; double-tap selects-then-edits; Enter/Space do the same | `:615-623` `wire()` | `EditorGestures.kt` + `EditorScreen.kt` | each path in isolation, plus the *already selected* branch | make the second tap a no-op | ✎ **re-seated from C2, and it could not have been otherwise.** [ADR-089](#adr-089) files this as row **2.16**, but its whole body is `edit()`, which is *this* package's function — C2 had nothing to call. Verified unimplemented today: `onTap → Intent.SelectAt` (ADR-091 row 2.14) has no already-selected branch, and `onDoubleTap → Intent.DoubleTapAt` exists. Recorded here rather than left as an open row in an accepted package's table ✅ **Implemented as the pure `benchTapIntent`**, asserted over all three branches (reselected text → edit; unselected text → select; miss → select-and-clear, so D-037 is untouched). ⚠ **the delivery is not unit-tested and cannot be**: injected touches do not reach `detectTapGestures` through this screen’s layer stack — verified, not assumed, by instrumenting the callback — which is also why the shipped editor has never had a tap-to-select unit test. Tapping is a **Pass 1** item. |
+| 3.14 | the canvas **clips to its own bounds** — `.canvasArea{overflow:hidden}` | `:171` | `EditorScreen.kt` canvas `BoxWithConstraints`, `clipToBounds()` | on the raster: nothing the canvas holds may paint outside it | delete `clipToBounds()` | ✎ **added 2026-08-03 by [OD-16](design/V2-SPEC-DEFECTS.md#d-043-ruling)'s second half — [D-045](design/V2-SPEC-DEFECTS.md#d-045).** Not an amendment: the freeze has always said `overflow:hidden` and this host never implemented it, which cost nothing while the pan was pinned at zero and everything once C3 made it real. ⚠ **the unit assertion is narrower than the defect and says so**: it proves the clip with resize handles overflowing *downward*, because the hardware case (the panned page overflowing *upward* over the top bar) needs the clearance term, hence an IME, which Robolectric has not got. [Checklist](#adr-093-device-checklist) item 10 owns the real one |
+| 3.13 | while editing, the canvas tap **does not deselect** and the bar's Done ends the session instead of deselecting | `:627-629` | `EditorScreen.kt` | a canvas tap during a session is inert; the session's own Done ends it | drop the editing guard | ✅ the guard is C3's because the state is C3's; `doneBtn` itself is **C4's** chrome, so only the *guard* lands here ✅ **Asserted structurally**, which is stronger than the row asked: the gesture surface and its resize handles are **not composed** while a session is open, so there is nothing for a stray tap to reach. Mutation (drop the `!editing` guard) killed. |
+
+### 3. The one contradiction, and the rulings that settle it without the owner
+
+**What the freeze specifies.** `.styletb` (`:261`) lives inside `.kbstack`, which is `translateY(110%)` — **offscreen except under `.editing`** (`:259-260`). It is an *editing-mode* row, and it holds four things (`:408-410`): chips **Fraunces**, **A 23**, **Ink** (with a 14px `.sw` dot), and **Done**. Enumerating every listener in the frozen script shows **only `Done` (`#doneEdit`, `:565`) is wired**: `Fraunces` and `A 23` have no handler anywhere, and `#editColour` has none either — `openInk` is bound in `toolsFor` (`:495`, `:497`) and dispatched by `buildCtx` (`:499`, `:504`), to the **`.ctx` bar's** `Ink` verb, never to this chip. Three of the four chips are dead in the freeze. In the frozen product there is no style control in the **selected** state at all: `.ctx`'s `Size` has no handler ([D-031](design/V2-SPEC-DEFECTS.md#d-031)) and its `Ink` opens C6's popover.
+
+**What the product ships.** `TypeBar.kt` ([ADR-055](#adr-055)) is a four-row panel in the **selected** state: a ten-value size stepper, three alignments, bold, italic and five inks — every one wired to `Intent.StyleText`, every one reachable today, and reachable *because* [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) routed the frozen `Size` verb to it and [ADR-092](#adr-092) routed `Ink` there too.
+
+**The contradiction.** [ADR-089](#adr-089) rows 3.5–3.7 name the Compose target `TypeBar.kt` **re-skin**. Executed literally, C3 would remove five working style capabilities and replace them with three chips the freeze never wired — a parity phase deleting editor capability.
+
+**Why this is not an owner decision.** Because the owner has already written the sentence that decides it, twice:
+
+> [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling): *"the existing transform controls remain available; **no existing accessibility capability is removed; no existing editor capability is removed.**"*
+>
+> [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling): *"accessibility capabilities must be preserved; **existing editor capabilities must be preserved**; **no functionality is removed**."*
+
+Neither clause is conditioned on *which* control, on space competition, or on simultaneity — those were the arguments for the **permissions** those rulings granted, not limits on the **prohibitions** they stated. A first draft of this section tested only the permissions, concluded *"neither existing ruling reaches it"*, and contradicted its own preceding paragraph, which had already said OD-11 refused this exact trade. The independent review caught it. The prohibition reaches it; the re-skin reading is dead by ruling, not by preference.
+
+**What is left is therefore a plan defect, not a question.** `.styletb` is implemented as **the editing state's style row**, which this product does not have; `TypeBar.kt` is untouched in its own state. Nothing is removed and nothing is duplicated — and the second half of that is structural, not a convention: `EditorScreen.kt:267` gates `styleTarget` on `uiState.interaction !is Interaction.EditingText`, so the Type bar is **unreachable for the whole of a session**. The two surfaces cannot both be on screen; [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling) has nothing to assign.
+
+**The cost, stated rather than discovered.** The product will carry two style surfaces with different vocabularies — a four-row panel when selected, a chip row when editing. That is a real coherence cost, it is visible, and it is **C4's**, on the [ADR-092 §2](#adr-092) precedent of recording a composition the freeze does not draw instead of stopping for it. The three dead chips ship inert beside `Font` and `Replace` under [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) — which also means **`.inkpop` is never reached from `.styletb` under either reading**, so C6's [D-028](design/V2-SPEC-DEFECTS.md#d-028) blocker is not pulled forward.
+
+### 4. What C3 must not do
+
+- **must not** remove, gate or re-host `TypeBar.kt` or any of its five style capabilities — [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling), [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling), [D-042](design/V2-SPEC-DEFECTS.md#d-042). It is asserted, not merely intended: the Type bar's thirteen nodes are counted in the selected state before and after C3.
+- **must not** implement `.inkpop`, `.bar`, `.status`, `.saved*` or `.snack*` — C6's and C4's.
+- **must not** give `Fraunces` or `A 23` a behaviour the freeze does not wire — [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling).
+- **must not** draw the frozen `.kb` — it is the prototype's stand-in for the system keyboard.
+- **must not** introduce a second viewport authority (row 3.11), or touch `core:model`, `SceneRenderer`, or the export path.
+
+### 5. Review
+
+The pre-implementation artifact was independently reviewed before any code was written, and returned **NO-GO on the stop itself**: the blocker check had escalated a question three rulings already answer. Reconciled in full — §3 rewritten, rows 3.5/3.6/3.7/3.9 unblocked and assigned, the `Ink`-is-wired error corrected in five places, the self-contradiction in §3 removed, row 3.6a added, row 3.4 extended, and §1's *"every reference drifted"* narrowed to exclude row 3.11's `:9`. The review's own summary of why the stop was wrong is the one worth keeping: the precedent was [ADR-092 §1](#adr-092), one package earlier, where five candidate owner decisions were **recorded and cleared against rulings in hand** rather than escalated.
+
+### 6. Implementation record — what the code did that the table did not say
+
+Written at the review gate, before any commit. **Reopened 2026-08-03 by [OD-16](design/V2-SPEC-DEFECTS.md#d-043-ruling)**,
+which approved option (b) and required [D-045](design/V2-SPEC-DEFECTS.md#d-045) in the same package.
+
+**Five things the implementation discovered that the plan could not have.**
+
+1. **[D-043](design/V2-SPEC-DEFECTS.md#d-043)** — the pan over-lifts. Row 3.1a predicted the class and missed the
+   direction. Filed with a test as its evidence and four options for the owner; C3 first shipped the literal, and
+   **OD-16 then ruled option (b)**: `−96` becomes `min(96dp, slack + clearance)`, with the frozen file amended first.
+   The test that was its evidence is now inverted — `EditorScreenTest.a_top_of_page_element_stays_in_view_while_it_is_edited`
+   is the same box on the same host with the opposite assertion, which is how a closure should read in the suite that
+   found the defect.
+2. **The style row is phone-anchored, not canvas-anchored.** Hosted first inside the sheet island, where it read as a
+   bar floating in the middle of the screen with the supply tray still visible below it. `z-index:35` + `bottom:0`
+   means the screen root. Caught by the screen-level golden, which is why that golden exists.
+3. **A `graphicsLayer` translation does not remove a node from the accessibility tree.** The row was composed at rest
+   and announced four controls on an editor with no session open. Fixed by gating composition on
+   `visible || still animating out`; `SurfaceTraversalOrderTest` is the test that found it, by reading the platform
+   tree rather than a screenshot.
+4. **The caret had to be drawn.** `BasicTextField`’s cursor takes a brush and nothing else, and it blinks through
+   reduced motion — which row 3.8 forbids in terms. See the row.
+5. **[D-045](design/V2-SPEC-DEFECTS.md#d-045)** — and it is the one the device found rather than the code. The canvas
+   never honoured `.canvasArea{overflow:hidden}`, which cost nothing while the pan was zero. Once C3 made the pan real
+   the panned sheet painted over the top bar in every session, and `Preview ›` was invisible **and still `clickable`
+   on the platform tree**. It also **masked D-043**: the element that row 3.1a said would be lifted out of view stayed
+   visible, because nothing was cutting it off. The lesson is narrower than "clip your canvases" — *a defect whose
+   predicted symptom does not reproduce is not thereby absent, and the reason it did not reproduce is worth finding.*
+   Fixing either alone would have made the other worse, which is why the ruling required both.
+
+**One deviation that is a judgement, not a discovery:** the three inert chips carry verb labels rather than the
+freeze’s value labels (row 3.6), and it is filed as a canonical HTML amendment at
+[D-044](design/V2-SPEC-DEFECTS.md#d-044). An earlier draft of this paragraph said it was "recorded there rather than
+argued here" while row 3.6 recorded nothing — the review caught that; both now carry it.
+
+<a id="adr-093-device-checklist"></a>
+**What the device passes must carry, named here so no pass can quietly skip it.**
+
+| # | Pass | What must be read on hardware |
+|---|---|---|
+| 1 | **1** | ✅ **READ 2026-08-03 ([§8](#adr-093-device)).** The edited box's bottom lands at **1200 — the docked row's top, to the pixel**, with the IME up. **Row 3.1a's real clearance.** The unit test holds the edited box above the `.kbstack`; only the device has the **IME**, whose height is the other half of the occlusion. Measure the gap with the keyboard up, on the tallest realistic element. |
+| 2 | **1** | ✅ **READ — 97 differing pixels, all in the clock strip `y55–68`, zero below `y250`.** **Row 3.2's *pixel-identical* return** — a raster byte-compare of the rest frame before and after a session. It is the roadmap's stated condition for C3 and the one row a unit test cannot reduce. |
+| 3 | **1** | ✅ **READ — measured off the platform tree: the three chips are 89px = **33.9dp**, and `Done`, the row's only live control, is 126px = **48.0dp exactly**.** So the one control that can be missed already meets the floor, and D-009's extended hit area is owed only to the three inert chips — which cannot be missed because they cannot be hit. **The 34dp control height.** `.styletb`'s chips and **`Done`** are `h34` (row 3.7), against Android's 48dp floor — the row [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) names explicitly and which is **still open**. `Done` is the row's only live control, so it is the only one that can be missed: measure its real touch target, and note whether it needs D-009's extended hit area rather than a bigger box. |
+| 4 | **1** | ✅ **READ — three `enabled=false clickable=false`, `Done` enabled, clickable and focusable.** **The platform tree.** `uiautomator dump` with a session open: four nodes, three `enabled=false` **and** `clickable=false`, `Done` enabled and clickable. Robolectric asserts this ([`BenchStyleRowPlatformA11yTest`](../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/a11y/BenchStyleRowPlatformA11yTest.kt)); the device is what proves the assertion was about the same tree. |
+| 5 | **1** | ✅ **READ — the two engines agree.** A wrapping string broke as *"The quick brown fox / jumps over the lazy dog / and keeps running"* in the live field **and identically** in the committed render, at two different canvas scales. **Row 3.11's line-break residue** — whether the in-place field and `SceneRenderer` break the same text at the same places. Two text engines, one rect; a unit test cannot see disagreement it does not know to look for. |
+| 6 | **1** | ✅ **READ — tap selects, second tap on the already-selected element opens the session** (IME up, style row docked). The branch the unit tests can only decide, delivered. **Row 3.12's tap delivery.** Tap-to-edit is asserted only as a pure decision (`benchTapIntent`); injected touches do not reach `detectTapGestures` through this screen's layer stack, so the **delivery** has never been tested and cannot be. |
+| 7 | **1** | ✅ **READ — present and ON in the first captured frame**, 4px wide (**1.52dp** against the frozen 1.5), colour `(97,109,50)` ≈ `--matcha` `#5E6B2F`. **The caret's first frame.** It must appear **on**, immediately, and must not blink at all under reduced motion (row 3.8). The blink phase is session-relative in code; the device is where a wrong baseline shows as a caret that starts invisible. |
+| 8 | **2** | ✅ **RE-READ after the amendment ([§8](#adr-093-device)): room being made where room is needed, the page holding still where it isn't** — and not *nothing happening*, because the caret, the keyboard and the `Done` row carry the state change. ~~**[D-043](design/V2-SPEC-DEFECTS.md#d-043) as a user meets it**~~ — **done, and it produced the ruling.** The sentence written before reasoning about the cause was *"the paper slid under the clock"*. [OD-16](design/V2-SPEC-DEFECTS.md#d-043-ruling) was ruled on it. Re-read after the amendment: does the smaller, conditional lift still read as *room being made*, or as nothing happening? |
+| 10 | **1** | ✅ **READ at the maximum measured pan (91.81dp, page top driven to `y −15`): zero paper pixels above the canvas, and `Preview ›`'s label rendering inside its own bounds.** **[D-045](design/V2-SPEC-DEFECTS.md#d-045) upward, the case the unit test cannot reach.** With the IME up and an element deep at the page bottom — the only state where clearance drives the pan past the slack — the page top must be **cut at the canvas**, not painted over the top bar. Read the pixel inside `Preview ›`'s own reported bounds, and read the platform tree to confirm the button is not both invisible and `clickable`. |
+| 11 | **1** | ✅ **READ — 0 at the page top, 0 mid-page, 91.81dp at the page bottom**, each equal to `min(96, slack + clearance)` on the measured geometry. ⚠ **The slack term could not be positively demonstrated on this device**, because its canvas *contains* the page and slack is 0 everywhere — which is D-043's premise, not an omission. The slack term is carried by `benchEditPanMagnitudeDp`'s own tests and by the two Robolectric hosts built to have slack. **The amended pan's two terms, measured.** Confirm the lift equals the slack when nothing occludes the element (page top) and rises toward the 96dp ceiling when something does (page bottom). The clearance term has **no unit test anywhere** — Robolectric has no IME — so this row is not a double-check, it is the only check. |
+| 9 | **2** | ✅ **READ, and it produced this package's strongest Pass 2 sentence — *the editor takes my styling away at the moment I start typing*** ([§8](#adr-093-device), observation 1). Not a C3 blocker: the freeze wires none of the three chips and [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) requires exactly this. Routed to C4/C6. **Two style vocabularies.** A four-row Type bar when selected, a three-chip row when editing, with three of the chips inert. Whether that reads as one editor is a Pass 2 question and nothing else can answer it. |
+
+**What was deliberately not done**, against [§4](#adr-093):
+
+- `TypeBar.kt` is untouched — asserted by a test that reaches it and counts its inks.
+- No `.inkpop`, `.bar`, `.status`, `.saved*`, `.snack*`. No `.kb` key grid — the real IME takes its place via
+  `imePadding()`.
+- `core:model`, `SceneRenderer` and the export path are unmodified. `EditorPagePreview` gained one optional parameter
+  that filters the page *before* rendering; the renderer contract is unchanged.
+- The "Saved" flash (row 3.10a) is still C4’s.
+
+<a id="adr-093-verification"></a>
+### 7. Verification
+
+> ⚠ **The first battery's results are SUPERSEDED and were never evidence.** This section reported
+> *"13 mutations, 13 killed, 0 survivors"*. That figure was produced by a harness that **executed no tests at all**:
+> it invoked `cmd /c gradlew.bat` by bare name, which never resolved, so every run returned `rc 1` with
+> `'gradlew.bat' is not recognized` and zero tests run — and the verdict logic inferred KILLED from the non-zero
+> return code. The claim was disproved by the independent review, which hand-checked two mutations and found both
+> alive. **It is recorded here rather than deleted**, because a verification system that cannot fail is a defect of
+> the same class as the code defects it was built to catch, and the next reader needs to know it happened.
+>
+> Three faults, all fixed: the wrapper path; the verdict (now read from the JUnit XML — failures **and** whether the
+> filter matched any test at all, so an empty run reports `NO-TESTS-RAN` instead of a kill); and the task — paint
+> mutations now run `verifyRoborazziDebug`, since a plain test task records nothing and compares nothing, which is
+> why every golden-guarded row passed trivially. A **control run** now precedes the battery and aborts it unless the
+> unmutated tree passes, so the harness must demonstrate it can report a pass before any verdict it gives counts.
+
+**Mutation battery — 20 applied, 20 killed, 0 survivors, 0 unsupported.** Both control runs passed first
+(`testDebugUnitTest` 19, `verifyRoborazziDebug` 3, zero failures), so the harness demonstrated it could report a pass
+before any verdict was taken from it. Every kill below is a named failing test read from that run's JUnit XML.
+
+> **Re-run 2026-08-03 after [OD-16](design/V2-SPEC-DEFECTS.md#d-043-ruling) reopened the package.** Only the rows the
+> ruling reaches were re-run, per the owner's instruction not to re-run unrelated batteries: **10 applied, 10 killed,
+> 0 survivors** (controls green first — `testDebugUnitTest` 26, `verifyRoborazziDebug` 3). Four are the pre-existing
+> pan rows re-verified against the amended code, and **six are new**, five of them for the clamp's own terms. The
+> other **sixteen** rows of the original twenty are untouched by the amendment and were not re-run; the table below
+> carries both, and the ten under the marker are exactly the ten re-run — an earlier draft of this block said
+> *twenty-one* and filed two original rows under the marker, so the section's own arithmetic did not close.
+>
+> **One of the six survived on its first two attempts and the reason is the finding.** `3.14-clip-dropped` was
+> written against a test that pointed the wrong way: it looked for spilled ink **below** the canvas, where the supply
+> sheet — a later sibling in the same `Column`, with an opaque ground — paints over anything the canvas spills
+> whether it clips or not. Re-aimed **upward**, at the `Preview` bar, it still survived, because the probe demanded
+> an *exact* `#5E6B2F` and a resize handle is a thin antialiased ring that contributes **no pure pixel anywhere in
+> the raster** — a green assertion about the absence of a colour that was never present. It kills on a near-match in
+> the band above the canvas. Both cuts passed the suite and proved nothing, which is the same class of fault as the
+> battery this section already records as superseded, caught this time by the battery instead of by a reviewer.
+
+| mutation | row | verdict | what actually kills it |
+|---|---|---|---|
+| pan `−96 → −48` | 3.1 | ✅ killed (3) | the displacement assertion, against the **literal** 96dp — written against `BenchEditPanDp` it could not fail when that constant changed |
+| rest `0.dp → (−1).dp` | 3.2 | ✅ killed (1) | **an equivalent mutant for the return test** — it compares rest-before with rest-after and the mutation shifts both alike. It dies only as a *displacement* of 95dp, and only once that tolerance is sub-pixel |
+| `--settle → --standard` | 3.3 | ✅ killed (1) | resampling at **25 %** (0.832 vs 0.607). At 50 % the curves have converged to 0.950 vs 0.878 |
+| duration `340 → 680` | 3.3 | ✅ killed (1) | sampling at the **literal** `340L / 4L`. `BenchEditPanMillis / 4` samples a quarter of whatever duration exists, so it cannot see this at all |
+| `docked = true` | 3.4 | ✅ killed (1) | `BenchC3Test.the_style_row_is_absent_at_rest_and_docked_while_editing`. **Not `SurfaceTraversalOrderTest`** — an earlier draft of this table credited that suite; it runs and *passes*, because four extra controls at rest are invisible to it |
+| hairline dropped | 3.5 | ✅ killed (2) | an explicit scanline count (0/792 px differ when deleted). Roborazzi's `changeThreshold = 0.02f` cannot see a 1px rule at ~0.25 % of the frame |
+| `disabled()` dropped | 3.6 | ✅ killed (2) | `three_of_the_four_style_controls_are_inert_and_say_so` **and** `BenchStyleRowPlatformA11yTest`. The first cut of this mutation swapped a whole chip for a `DoneChip`, which deletes a control and duplicates a tag — all five failures it produced were node-cardinality errors and it proved nothing about enabled-ness |
+| `.grow` removed | 3.6 | ✅ killed (1) | the right-anchor assertion |
+| swatch `14.dp → 22.dp` | 3.6 | ✅ killed (1) | the **literal** 14dp. Asserted against `BenchStyleSwatchSize` it was circular |
+| chip padding dropped | 3.6 | ✅ killed (1) | the chip's leading padding, measured from its announced left edge to the swatch |
+| chip `testTag` below `padding` | 3.6 | ✅ killed (1) | the same assertion — a chip reporting its inner content box shows 0 where the frozen 12dp belongs |
+| `Done` fill | 3.7 | ✅ killed (2) | an explicit `--matcha` pixel count |
+| caret blinks under reduced motion | 3.8 | ✅ killed (1) | the pure `benchCaretAlphaAt` |
+| caret `--matcha → coralStrong` | 3.8 | ✅ killed (1) | a near-match colour probe inside the field's own rect (`Done` is also matcha, hence the scoping) |
+| caret `1.5.dp → 12.dp` | 3.8 | ✅ killed (1) | the width of the caret's contiguous column run, against the literal 1.5dp |
+| swatch drawn from the theme | 3.9 | ✅ killed (1) | the **screen-level** golden, styling the element coral. Both component goldens pass `inkSwatch` in by hand, so the screen's own read was untested |
+| tape suppression removed | 3.11 | ✅ killed (1) | a raster probe on `EditorPagePreview` in an ink no other pixel can produce |
+| suppression **not wired** at the screen | 3.11 | ✅ killed (1) | open the session, then **empty the draft**: the document still holds the text, so an unsuppressed tape keeps painting it while the field paints nothing |
+| second tap inert | 3.12 | ✅ killed (2) | `benchTapIntent`'s branches |
+| editing guard dropped | 3.13 | ✅ killed (1) | the gesture surface is not composed during a session |
+| **— OD-16 re-run, 2026-08-03 —** | | | |
+| pan `−96 → −48` (re-verified) | 3.1 | ✅ killed (2) | still the literal-96 displacement assertion, now taken on the one host where the **ceiling is reachable**. On a host that never reaches it the mutation would be invisible, which is why that test moved rather than stayed |
+| rest `0.dp → (−1).dp` (re-anchored) | 3.2 | ✅ killed (1) | the old anchor (`if (editing) BenchEditPanDp else 0.dp`) no longer exists; same property, same sub-pixel residue |
+| `--settle → --standard` (re-verified) | 3.3 | ✅ killed (1) | unchanged |
+| duration `340 → 680` (re-verified) | 3.3 | ✅ killed (1) | unchanged |
+| clamp: **slack term** → `0f` | 3.1 | ✅ killed (7) | seven failures, because the slack term is what every non-ceiling host's pan is made of |
+| clamp: **clearance term** → `0f` | 3.1 | ✅ killed (1) | the pure rule's own test. **Nothing at screen level can kill this** — the clearance term needs an occluder inside the canvas, which needs the IME, which Robolectric has not got. Named here rather than left to look covered |
+| clamp: **ceiling** dropped | 3.1 | ✅ killed (3) | the frozen 96dp maximum, on the host whose slack (132dp) exceeds it |
+| clamp: `coerceAtLeast(0f)` dropped | 3.1 | ✅ killed (1) | a negative slack must not push the page **down** into the row it is escaping |
+| clamp **not wired** — literal restored at the call site | 3.1 | ✅ killed (3) | the rule can be correct and never consulted. Restoring the pre-OD-16 unconditional `BenchEditPanDp` leaves `benchEditPanMagnitudeDp` intact and passing its own tests; what dies is `EditorScreenTest.a_top_of_page_element_stays_in_view_while_it_is_edited` — i.e. D-043 itself, reintroduced and caught. The same shape as row 3.11's *not wired* mutation |
+| `clipToBounds()` deleted | 3.14 | ✅ killed (1) | a near-match `--matcha` probe in the band **above** the canvas, with the `Preview` bar composed. Survived twice first — see the note above; that history is why this row is worth reading rather than counting |
+
+**How this number was reached matters more than the number.** The battery ran three times honestly. The first found
+**five survivors**; an independent re-review then chose **six mutations of its own and five of those survived too**,
+including three frozen properties this table's Assertion column already claimed were asserted — the caret's colour,
+the caret's width, and the `.sw` dot's 14px. A perfect score is a statement about the *mutations chosen*, not about
+the tests, and a battery written by the author of the code will flatter it. The reviewer's six are now folded in, and
+so are two of its findings about the battery's own rigour: a mutation is evidence about the property named on its
+label **only if the edit changes that property and nothing else** (two mutations here failed that test and were
+re-specified), and a kill must be attributed to the test that actually produced it (two attributions here were wrong).
+
+**One row is not closed by any of this.** Row 3.8's session-relative blink baseline — the thing that makes the caret
+appear **on** rather than mid-blink — is structurally correct (`produceState` is not composed at all under reduced
+motion) but is **not unit-observable**: Robolectric's frame clock starts near zero, so dropping the baseline changes
+nothing a test can see. It is not asserted, it is not claimed to be, and it is [device checklist](#adr-093-device-checklist)
+item 7.
+
+**What is in this package's diff, and what is merely in the same working tree.** C3 touches
+`v2-bench.html`, `DECISIONS.md`, `V2-SPEC-DEFECTS.md`, `COMPOSE-V2-ROADMAP.md`, `COMPOSE-V2-HANDOVER.md`,
+`core/copy/Copy.kt`, five files under `feature/editor/src/main`, five under `src/test`, and three recorded PNGs.
+**Four other paths are dirty and are none of C3's:** `README.md`, `docs/RESEARCH.md` and `gradle.properties` were
+already modified when this session opened, and `37596.jpg` is an untracked file at the repository root. They are
+**named here rather than cleaned up** — the ruling says do no unrelated repository cleanup, and a reviewer reading
+`git status` at the commit gate should be told which lines are C3's rather than left to infer it.
+
+**Tests.** `:feature:editor` **605**. Whole project **1486, zero failures** — and that figure is a **sum across module runs of different ages**, not one
+sweep, which the independent review caught this section claiming. What was re-run against the current tree:
+`:feature:editor:testDebugUnitTest` + `:feature:editor:verifyRoborazziDebug` (**605** / **87 golden comparisons, all
+`unchanged`**), and `:core:copy:test` (**7**, re-run because `Copy.kt` is in this diff — note the task is `test`, not
+`testDebugUnitTest`; `:core:copy` is a JVM module and asking for the Android task fails the build). The remaining
+modules carry older results and **are untouched by this change**, which is the ruling's own instruction not to re-run
+unrelated batteries — but "older results" is what should have been written here the first time, rather than
+*"a full `--rerun-tasks` run"*. *(Both figures are the post-OD-16 re-run: `:feature:editor` gained seven tests — four on the clamp rule, the clip guard, and two hosts re-seated — and the whole-project figure moves by exactly the same seven, which is the check that the amendment reached nothing outside this module.)*
+`verifyRoborazziDebug` green.
+
+New in C3: `BenchC3Test` (**26** after OD-16), `BenchStyleRowGoldenTest` (3 goldens), `BenchStyleRowPlatformA11yTest` (2), plus one
+raster guard added to `EditorPagePreviewTest` and one D-043 case added to `EditorScreenTest`.
+`EditTextSessionGoldenTest` is also modified and was not in the first review package: the component lost its own
+`.fillMaxWidth().padding(8.dp)` and the test now supplies it as a `sheetHost`. Its two recorded PNGs are **unchanged
+on disk**, which is the evidence that the reframing preserved the pre-C3 picture rather than a claim that it did.
+
+The two pre-existing session tests were re-aimed, not weakened: they assert `assertIsDisplayed` on a box at
+page-space **y ≥ 76pt**, which the arithmetic in their KDoc shows is genuinely clear of the pan — an earlier cut left
+them passing on a ~3dp sliver, which `assertIsDisplayed` accepts and which is therefore not an assertion.
+
+### 8. Device verification — the amended build {#adr-093-device}
+
+**Samsung `SM-A176B` · Android 16 · debug build `zinely-0.9.0-beta.1-debug.apk`, 2026-08-03, 1080×2340 @ 420dpi
+(411×891dp, 2.625 px/dp), system in dark mode.** Run on a zine created for the purpose and deleted afterwards; the
+shelf was returned to its original **nine** documents, verified by counting the persisted project directories
+(`run-as … ls files/projects`) rather than by reading the screen.
+
+**Both passes are run on the post-OD-16 build.** The earlier round's evidence produced the ruling and is **not**
+reused — it was taken on the build that had the defect.
+
+#### Pass 1 — developer verification: **PASS**
+
+Read from the platform `AccessibilityNodeInfo` tree (`adb shell uiautomator dump`) and from the raster, never from
+merged Compose semantics. Every pan below is the difference between the element's **reported bounds** at rest and
+during the session, with the IME up (`dumpsys input_method` → `mInputShown=true`) in every editing row.
+
+| case | rest bounds | editing bounds | pan | the clamp's own arithmetic |
+|---|---|---|---|---|
+| element at the **page top** | `[242,343][837,535]` | **identical** | **0** | slack `0` + clearance `0` → `min(96, 0)` = **0** |
+| element **mid-page** | `[180,837][900,1070]` | **identical** | **0** | occluder top `1200`; box bottom `1070` → clearance `0` |
+| element at the **page bottom** | `[242,1249][837,1441]` | `[242,1008][837,1200]` | **241px = 91.81dp** | slack `0` (measured today — see the note below) + clearance `(1441−1200)=241px` → `min(96, 91.81)` = **91.81dp** |
+
+- **Row 3.1a's clearance, the property no unit test can reach.** In the page-bottom row the edited box's bottom
+  lands at **1200 — the docked style row's top, to the pixel.** The lift is exactly what the content needed and
+  not one pixel more, which is the whole content of the OD-16 amendment.
+- ⚠ **The slack figure here is `0`, and [D-043](design/V2-SPEC-DEFECTS.md#d-043) records `4.2dp` on the same
+  device. Both readings are kept, because the disagreement is real and averaging it would be the exact fault this
+  handbook forbids.** D-043's `11px = 4.2dp` was measured in the **pre-amendment** round, on the build that had the
+  defect and in a different chrome state; the readings above were taken today on the amended build, where the paper
+  begins at `y226` and the canvas top is also `y226` (probed: `y224` is chrome `(49,44,36)`, `y228` is paper
+  `(238,230,213)`), i.e. **slack 0 within a pixel**. Which figure is right does not change any conclusion in this
+  package, and that is worth stating rather than hiding: at slack `4.19dp` the page-bottom pan would be
+  `min(96, 4.19 + 91.81) = 96dp = 252px` and the edited box would land at `1189` — **11px above** the row instead
+  of flush against it. Clearance is satisfied either way; only the amount of headroom differs. What the two
+  readings do establish jointly is the premise OD-16 was ruled on — **slack on this device is somewhere between 0
+  and 4dp against a 96dp demand** — which is why the ceiling is unreachable here and the clamp does all the work.
+- **[D-043](design/V2-SPEC-DEFECTS.md#d-043) does not reproduce.** The case it was raised on — a text element at
+  the page top, edited — now moves **not at all**, and its words stay on screen (995 coral pixels inside the
+  element's band; the probe ink is the element's own styled colour, which no chrome can produce).
+- **[D-045](design/V2-SPEC-DEFECTS.md#d-045) holds in the state that created it.** At the maximum measured pan the
+  page's top is driven to **y −15**, outside the canvas. Sampling 18 columns across five rows in the band **above**
+  the canvas top returns **zero paper pixels**: the page is cut at `y226`, not painted onto the chrome. Inside
+  `Preview ›`'s own reported bounds, `(950,163)` is `(231,113,84)` — the coral label, rendering.
+- **Row 3.2, the *pixel-identical* return, and it is the roadmap's stated condition for C3.** Two full sessions
+  opened and closed on the same element; the two rest frames differ in **97 pixels**, bounding box
+  `(894,55)–(906,69)` — the system clock's minute digit. **Zero differing pixels below `y250`.** The artifact, the
+  page, the bar and the chrome are byte-identical across an edit session.
+- **Row 3.10.** `Done` returns to **Selected**: the element's bounds restore exactly to `[242,1249][837,1441]` and
+  the frozen bar comes back with `Edit` and `Delete` live.
+- **The four items OD-16 does not reach were never read either** — the first device round stopped at the ruling —
+  **so they were read now rather than carried as an unstated gap.** The caret is present and **on** in the first
+  captured frame, 4px wide (**1.52dp** against the frozen 1.5px) in `(97,109,50)` ≈ `--matcha` (item 7). The two
+  text engines **agree**: a wrapping string broke as *"The quick brown fox / jumps over the lazy dog / and keeps
+  running"* in the live field and identically in the committed render, at two different canvas scales (item 5).
+  Tap-to-edit **delivers** — the branch `benchTapIntent` can only decide (item 6). And the 34dp question resolves
+  better than the row feared: the chips measure **33.9dp** but `Done`, the row's only live control, measures
+  **48.0dp exactly**, so the sub-floor controls are precisely the ones that cannot be missed (item 3).
+- **Row 3.6 on the platform tree**, which is the reading that matters and not the one a semantics test gives:
+  `Font` `clickable=false enabled=false`, `Size` `clickable=false enabled=false`, `Ink` `clickable=false
+  enabled=false`, `Done` `clickable=true enabled=true focusable=true`. Three inert, one live, exactly as the row
+  claims.
+
+#### Pass 2 — first-time-user verification: **PASS**
+
+*The reading, written before reasoning about the cause, is the finding.* I tapped my words, tapped `Edit`, and the
+keyboard came up. **At the top of the page the paper did not move at all** — and it did not read as *nothing
+happened*, because plenty happened: a caret appeared in my text, a row of chips with a green **Done** replaced the
+verbs, and the keyboard rose. The page simply had no reason to move, and it didn't. **At the bottom of the page it
+leaned up**, just far enough to put the line I was typing directly above the chips, and settled back when I tapped
+`Done`. That reads as *room being made* — the motion has a visible reason, which is the thing the old build's
+motion did not have. The sentence the previous round produced — *"the paper slid under the clock"* — has no
+occasion to be written on this build.
+
+**[Checklist](#adr-093-device-checklist) item 8 is therefore answered:** the smaller, conditional lift reads as
+room being made where room is needed, and as the page holding still where it isn't. The session announces itself
+through the caret, the keyboard and the `Done` row — not through the pan — so removing an unnecessary pan costs the
+state change nothing.
+
+**Three observations, none of them C3 blockers, all recorded rather than smoothed over:**
+
+1. **The editor takes my styling away at the moment I start typing.** Tapping the text *without* editing offers a
+   full panel — ten sizes, three alignments, bold, italic, five inks. Tapping `Edit` replaces it with `Font`,
+   `Size` and `Ink` **all dim**. As a beginner that is backwards: styling is offered in the state where I am least
+   likely to want it and withdrawn in the state where I am most likely to want it. This is
+   [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling) and [D-042](design/V2-SPEC-DEFECTS.md#d-042) working exactly as
+   ruled — the freeze wires none of the three chips — and it is [checklist](#adr-093-device-checklist) item 9. It
+   is named here in the sentence a first-time user would use, because that sentence is what C4 and C6 inherit.
+2. **The `Ink` chip's dot reports my text's colour truthfully and then does nothing when tapped.** A control that
+   is visibly *right* invites a press more strongly than a blank one does. Same ruling, worth its own line.
+3. **An element moved past the page's top edge disappears with no feedback** — and it is **not C3's**. Verified:
+   with the element off-page it renders **zero** of its own ink at rest, session or no session, so opening an edit
+   session hides nothing that was not already hidden. Before D-045 that off-page content was painted over the top
+   app bar, which is worse and is the defect that was fixed. What remains is the pre-existing ability of the
+   transform verbs to push an element off the page; it belongs to whoever owns element bounds, not to this package.
+
+**Both passes pass, and they agree.** The disagreement that the previous round recorded — Pass 1 reading the pan as
+a faithful transcription while Pass 2 read it as a malfunction — is what OD-16 resolved, and it does not recur:
+Pass 1 now measures a lift that is conditional and exact, and Pass 2 reads that same lift as purposeful.
+
+**`ReframeA11yTest` is an intermittent flake, and it is a flaky CLASS rather than a flaky test.** The run above is
+clean, and that is not evidence the class is reliable. Under full-project conditions it has failed **one** of its
+nine tests in one run and **two** in another (`entering_reframe_announces_and_marks_the_coach_seen`, and
+`the_reset_framing_custom_action_reverts_to_the_placement_default`), while passing 9/9 whenever the class or the
+module is run alone. It is the Robolectric NATIVE image-decoder flake this module already documents, and it
+exercises no code C3 touches. Recorded rather than waved through: an earlier draft named a single test and reported
+*"597, 0 failures"* as though the class were dependable; the independent re-review reproduced two failures against a
+clean tree, so that wording was wrong in both particulars.
+
+---
+
+## ADR-094 {#adr-094}
+
+**C4 — the bar, the status chip, the snackbar. Written before any production code, per [ADR-089 §2.2](#adr-089).**
+Its mandatory pre-implementation blocker check found **three defects and two of them require an owner decision**,
+so this ADR opens as `Proposed` with its property table populated and **no `src/main` change made**.
+
+- **Status:** ✅ `Accepted` **2026-08-04** — implementation complete, independent review **GO WITH FIXES** with
+  every Required Fix and Recommended Improvement reconciled (§6.9–6.13), **946 tests / 0 failures** under
+  `--rerun-tasks` with the Roborazzi gate clean, **31 of 31 mutations caught** (§8), and **both device passes
+  run and passed** on `SM-A176B` / Android 16 (§9). Three frictions are recorded rather than fixed —
+  [D-050](design/V2-SPEC-DEFECTS.md#d-050), [D-051](design/V2-SPEC-DEFECTS.md#d-051),
+  [D-052](design/V2-SPEC-DEFECTS.md#d-052) — because each is a question about what the design *says*, on
+  surfaces Pass 1 measured as correct. [D-049](design/V2-SPEC-DEFECTS.md#d-049) is re-measured at **28.7 %**
+  and stays open, unruled, as it was when C4 inherited it.
+- **Opened as:** 📝 `Proposed` **2026-08-04.** ✅ **Unblocked the same day.**
+  [D-047](design/V2-SPEC-DEFECTS.md#d-047) is ruled **[OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling), Option A**
+  — the frozen Bench is **amended for the fifth time** and the bar becomes `Undo · Redo · Add · Done`.
+  [D-048](design/V2-SPEC-DEFECTS.md#d-048) is ruled **not an owner decision**, recorded exactly as
+  [D-042](design/V2-SPEC-DEFECTS.md#d-042) was. Still carries [D-049](design/V2-SPEC-DEFECTS.md#d-049), inherited
+  from [C2a's Pass 2](#adr-091-completion-device) as **P2-1** and routed here by the package that raised it.
+  Moves to `Accepted` only on both device passes, as C1–C3 did.
+- **Depends on:** C2 — both halves accepted ([ADR-091](#adr-091), [ADR-092](#adr-092)). C3 is committed and
+  [ADR-093](#adr-093) is `Accepted`; C4 does not depend on it, but it inherits its surfaces.
+- **Frozen regions:** `.bar`, `.icon-btn*`, `.add*`, `.status`, `.saved*`, `.snack*`.
+
+<a id="adr-094-drift"></a>
+### 1. Citation drift — every address ADR-089 gives for C4 is now wrong
+
+`v2-bench.html` has been amended four times since [ADR-089](#adr-089) wrote C4's rows (D-010, D-033, OD-12,
+OD-16/OD-17) and cleaned once by C0. **All thirteen rows cite pre-amendment addresses.** This is the same
+condition [ADR-093 §1](#adr-093) recorded for C3, and it is repaired the same way — re-anchored here, each
+verified against the selector it names in the current file, before any of the table below is trusted.
+
+| ADR-089 said | it is actually at, today | verified by |
+|---|---|---|
+| `.bar` `:183` | **`:267`** | `.bar{flex:none;height:66px;…}` |
+| `.icon-btn` `:224-225` | **`:268-270`** | `.icon-btn`, `:hover`/`:active`/`:disabled`, `svg` |
+| `.add` `:187-188`, `:378` | **`:271-272`**, markup **`:467`** | `.add{flex:1;height:44px;…}`, `<button class="add" id="addBtn">` |
+| bar order `:377-379` | **`:464-468`** | `<div class="bar">` + its **four** buttons after OD-21, `undoBtn`/`redoBtn` both `disabled` |
+| `doneBtn` `:542` | **`:653`** | `$('doneBtn').onclick` |
+| `.status` `:110`, `:306` | **`:190`**, markup **`:390`** | `.status{height:26px;…}`, `<div class="status">` |
+| `.saved` `:111-112`, `:306`, `:412` | **`:191-192`**, markup **`:390`**, `flashSaved()` **`:501`** | `.saved`, `.saved.show`, the `✿ Saved · on this device` span |
+| `.snack` `:317-319` | **`:361-363`**, markup **`:443`** | `.snack{position:absolute;…}`, `.snack.show` |
+| `.snack button` `:280` | **`:364`** | `.snack button{…color:var(--accent-on-ink);font-weight:700;}` |
+| `del()` `:509-518` | **`:620-629`** | `function del(){` … `cap('Rest','Soft-deleted…` |
+| `undo()` `:519-524` | **`:630-635`** | `function undo(){` … `undoBtn.disabled=true` |
+| ink snack `:505-506` | **`:616-617`** | `snackText.textContent='Ink · '+name` |
+| `addBtn` handler | **`:762`** | `$('addBtn').onclick = … openSupply()` |
+
+**Re-anchored a second time, 2026-08-04**, after [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) amended the
+frozen Bench: `+23` above the bar's markup, `+24` below. The right column below is the **post-OD-21** file,
+verified selector by selector. Files C4 does not own were left alone per [OD-18](design/V2-SPEC-DEFECTS.md#d-046-ruling);
+their new drift is [D-046](design/V2-SPEC-DEFECTS.md#d-046)'s.
+
+*Note, so a reader does not over-trust the left column: it is reproduced from ADR-089 verbatim. C3's mechanical
+sweep once flattened a table of exactly this shape into one where both columns agreed, destroying its purpose
+([D-046](design/V2-SPEC-DEFECTS.md#d-046)). This one was re-anchored by hand, selector by selector.*
+
+<a id="adr-094-fpt"></a>
+### 2. Frozen property table — 23 rows
+
+Written before production code. Rows marked ⛔ cannot be built until the blocker they name is ruled.
+
+| # | Frozen property | Frozen at | Compose target | What the test must assert | Its mutation | Status |
+|---|---|---|---|---|---|---|
+| 4.1 | `.bar` h66, `--chrome` ground, 1px `--chrome-line` top hairline, `padding 0 16px 4px`, `gap 10px` | `:267` | the editor's bottom bar (replaces `EditorSupplyTray`) | height + ground + hairline + the asymmetric bottom pad | `4px`→`0` | ⛔ [D-047](design/V2-SPEC-DEFECTS.md#d-047) — the row's *contents* are unruled; its box is not |
+| 4.2 | `.icon-btn` 44×44, radius 12, 1px `--chrome-line`, `--ink-soft`; `:active` scale `.94`; `:disabled` opacity `.35` | `:268-269` | a bar icon button | box + radius + the disabled alpha | scale `.94`→`.8` | ⏳ 44 < 48 ⇒ [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp): **extend the target, keep the paint** — the method C3 proved on hardware (`Done` measured 48.0dp exactly) |
+| 4.3 | `.icon-btn svg` 20×20, `stroke:currentColor`, `stroke-width 1.7`, round caps/joins | `:270` | same | the 20dp glyph box and the 1.7 stroke | `1.7`→`2.4` | |
+| 4.4 | `.add` `flex:1`, h44, radius 12, `--matcha` on `--on-matcha`, 14.5px/600, `＋ Add`, `:active` scale `.98`; its `svg` 18×18 `stroke-width 2` | `:271-272`, `:467` | the primary supply control | it takes the **residual** width between the two fixed 44s on its left and one on its right | `flex:1`→fixed | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) |
+| 4.4a | `Add` opens the frozen chooser: `<h3>Add to your page</h3>` over `.opt` rows | `:718-724` | a new `ZSheet` call | the sheet opens on `Add`, carries the frozen title, and offers **exactly two** rows | drop a row | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) releases **Text and Photo only**. Uses the shipped `ZSheet` (`ZSheet.kt:68`, 6 production users) |
+| 4.4b | the `Art` row stays **fenced**, not deleted | `:722` | — | the chooser offers no Art row in C4 | add one | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling): *“a fence reassignment, not a capability reassignment.”* C8 adds the third row; [§E.6](design/V2-BENCH-REVIEW.md)'s legal pass sits behind it |
+| 4.4c | **Text reuses `addTextAndEdit`** — the new box drops in *ready to edit* | `:721` narrates it; `EditorScreen.kt:1308-1315` implements it | same | choosing Text still dispatches `PlaceText` **then** `BeginEditText` | drop the `BeginEditText` | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) requires it **by name**, so C3's in-place model is unchanged. The freeze and the shipped flow already agreed |
+| 4.4d | **Photo reuses `Intent.RequestAddImage`** | `:721` | same | choosing Photo dispatches the same intent the shelf did | dispatch nothing | the picker binding in `ZinelyNavHost` is untouched |
+| 4.5 | bar order **Undo · Redo · Add · Done**; Undo **and** Redo `disabled` at rest | `:464-468` (amended) | same | order **and** both initial disabled states read off the **platform** tree | enable Undo at rest | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling). The platform-tree clause is not optional: Compose can report `enabled` to the platform while `assertIsNotEnabled` passes ([ADR-058](#adr-058) branch) — the defect C1's device pass caught |
+| 4.6 | **redo lives in the bar**, as a second `.icon-btn` | `:466` (added by the amendment) | the new bar | a redo control is reachable, in the bar, and enabled exactly when `canRedo` | delete it | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling): *“redo remains in the bottom bar.”* [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling)'s *redo is kept* now has a drawn home |
+| 4.7 | **both add verbs survive**, now one tap deeper — through the chooser | — ([OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)) | replaces `EditorSupplyTray.kt:118-136` | both still reach `Intent.RequestAddImage` and the add-text path | collapse to one | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling). The extra tap is the ruling's **recorded accepted cost**, not an oversight |
+| 4.7a | `EditorSupplyTray` is **retired** | — | `EditorSupplyTray.kt` + its two test files | no supply shelf composes in the editor | leave it composed | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling): *“retired as planned.”* Retiring the surface is not removing a capability — all four of its verbs land in the bar or the chooser |
+| 4.8 | the Read hand-off **does not move**, and back is still the nav stack | `EditorScreen.kt:625-637` (`onPreview`), wired at `ZinelyNavHost.kt:95`/`:419`; [ADR-086](#adr-086) | `EditorScreen(onPreview)`, untouched | the hand-off is reachable and drawn **exactly once** | break the `onPreview` wiring | ✅ [D-048](design/V2-SPEC-DEFECTS.md#d-048-ruling). `EditorScreen` has **no** `onBack` and draws none — verified, 0 matches — so OD-9's *back reuses the existing stack* needs nothing from C4 |
+| 4.8a | `Done` is **two-state**, and withheld during a session | `:653`; the withheld presentation at `:269` | the new bar | with a session open `Done` is disabled at the frozen `.35`; with none it dispatches deselect | make it live during a session | ✅ [D-048](design/V2-SPEC-DEFECTS.md#d-048-ruling) — [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling)'s own withholding method, as C2b applied it |
+| 4.8b | deselect gains its **first drawn control** | `:653` second branch | `Intent.SelectAt` miss → `ClearSelection` (`EditorGestures.kt:62`) | the bar's `Done` clears a selection without a gesture | dispatch nothing | answers the WCAG 2.5.7 argument [ADR-029 §6](#adr-029) makes for `EditorContextBar` |
+| 4.9 | `.status` h26, `padding 0 20px`, 11px `--ink-faint`, two slots, `flex:none` | `:190`, `:390` | the editor's top status strip | height + the two-slot row + it does not grow | height 26→32 | the left `"the bench"` label is PROTO narration, not product copy |
+| 4.10 | `.saved` = `✿ **Saved** · on this device`, `--matcha-text`, `opacity 0→1` over `.4s var(--standard)`, visible **1600ms** | `:191-192`, `:390`, `:501` | `EditorSavedConfirmation.kt` | the copy, the colour, the `.4s` fade **and** the 1600ms window | 1600→400 | shipped copy is `"Saved ✨"`. The `✿` (U+273F) coverage question is **already ruled**: [D-021](design/V2-SPEC-DEFECTS.md#d-021-ruling) — keep the literal character, platform fallback acceptable |
+| 4.11 | `.snack` `--ink` ground, `--paper` text, radius 12, `left/right 14px`, `bottom 12px`, enter `translateY(16px)`→`0` + opacity over `.22s var(--standard)` | `:361-363`, `:443` | the delete/undo surface; `ZSnackbar` (`ui.components`) is the shipped shape | ground inversion + the 16px enter + the `.22s` | 16→0 | three snackbar treatments already exist in-tree (`ZSnackbar`, `EditorSaveFailure`, `EditorCoverageNotice`); the last two cite **V1** `bench.html .snackbar` and are not this |
+| 4.12 | `.snack button` `--accent-on-ink`, weight 700 | `:364` | same | the Undo label's colour against the ink ground | `--accent-on-ink`→`--matcha` | `--accent-on-ink` exists in the palette **only** for this pairing |
+| 4.13 | delete is a **soft delete**: the element fades to `opacity 0` / `scale .9` over `.2s`, the snack shows **3200ms**, and the bar's Undo **enables** | `:620-629` | the delete path (`Intent.Delete`, `EditorScreen.kt:1108`) | the fade, the 3200ms, and Undo's enablement **together** | 3200→1600 | reversible by default ([EP-4](design/V2-BENCH-PRINCIPLES.md)); **no modal**. The editor ships no delete snackbar today — this is new surface, not a re-skin |
+| 4.14 | undo restores opacity / transform / pointer-events **and re-disables** the bar's Undo | `:630-635` | same | the restore *and* the re-disable | leave Undo enabled | |
+| 4.15 | applying an ink flashes a **buttonless** snack `Ink · <name>` for 1600ms | `:616-617` | the ink path | the button is hidden **in this variant only** | show the button | 🔭 the ink path itself is **C6**'s; C4 owns the snack variant, not what raises it |
+| 4.16 | the bottom chrome takes its height from the canvas (`.bar{flex:none}` in a flex column) | `:267` | the editor column | whichever behaviour is ruled, asserted as ruled | invert it | 🟦 [D-049](design/V2-SPEC-DEFECTS.md#d-049) — measured 17 % sheet shrink on select/dismiss; the freeze specifies *take the height* |
+
+<a id="adr-094-blockers"></a>
+### 3. The pre-implementation blocker check — ✅ both blockers cleared 2026-08-04
+
+Run before any production code, as [ADR-089 §2.2](#adr-089) requires. It read the frozen file, the plan of
+record (ADR-089 rows 4.1–4.13), every ruling that reaches C4's fence, and the shipped repository.
+
+**✅ [D-047](design/V2-SPEC-DEFECTS.md#d-047) — RULED [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling), Option A.
+As raised: the frozen bar has three slots; the rulings that govern it require more.** `Undo · Add · Done` is drawn; OD-9 keeps redo, OD-11/OD-14 keep both shipped add verbs, and the
+frozen `Add`'s destination — `openSupply()` at `:718-729` — builds the `.sheet`, which belongs to **C8**,
+re-seated beyond Phase C by OD-2. **Three** readings are open: *the bar absorbs everything* (needs a
+frozen-Bench amendment), *the bar is additive and the shelf survives* (violates OD-14 — Undo and Add drawn twice
+at once), or *the bar as drawn with `Add` opening the freeze's own chooser minus its `Art` row* (builds C8's
+fence early, and leaves redo without a slot). **Geometry is not the obstacle**: four controls fit comfortably
+(`44·3 + 10·3 + 32 = 194px` fixed on a 411dp device). What the bar is *allowed to contain* is.
+
+**✅ [D-048](design/V2-SPEC-DEFECTS.md#d-048) — RESOLVED without a ruling, recorded as [D-042](design/V2-SPEC-DEFECTS.md#d-042) was.
+As raised: if `Done` becomes the Read hand-off, the hand-off is drawn twice.** OD-9 says reuse what ships; what ships is a top-end `Preview ›` (`EditorScreen.kt:625-637`), the same
+control C3's D-045 evidence measured at `(950,53)` on hardware. Binding the bar's `Done` to it as well presents
+one action twice — [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling) forbids exactly that. But `doneBtn`'s two
+*frozen* jobs are already owned and shipped: `endEdit()` by C3's `.done` chip (row 3.6) and `deselect()` by
+OD-13's tap-outside (row 2.14). **Every reading collides with OD-14.** Blocks row 4.8 only.
+
+**🟦 [D-049](design/V2-SPEC-DEFECTS.md#d-049) — the sheet resizes 17 % on select and on dismiss.** Inherited,
+not discovered: C2a measured `1028×1454` → `850×1202` on hardware, called it *"worth someone's decision"*, and
+routed it here because `.bar` is C4's fence. Not a merge blocker; it is a decision about whether the bottom
+chrome takes the canvas's height (as the freeze specifies) or overlays it so the artifact holds still.
+
+**What the check did *not* find, stated so the absence is on the record.** No contradiction in `.status`,
+`.saved`, `.snack` or the soft-delete rows — those five surfaces (4.9–4.15) are buildable today against rulings
+already in hand. The `✿` glyph question ADR-089 row 4.8 raised is **pre-answered** by
+[D-021](design/V2-SPEC-DEFECTS.md#d-021-ruling). And no reading of any blocker proposes removing a capability;
+OD-11's floor holds in all of them.
+
+<a id="adr-094-not-done"></a>
+### 4. Deliberately not done
+
+No `src/main` change. No test. No agent dispatched. The ADR opens `Proposed` with its table populated and stops
+at the blocker check — which is the point of running the check before the code, and the reason C3's own check
+cost one document instead of one reopening.
+
+<a id="adr-094-gate"></a>
+### 5. The implementation gate — run 2026-08-04, before any production code
+
+Run on owner instruction to verify this ADR against the frozen Bench, the current Compose implementation, the
+accepted owner decisions (OD-9, OD-11, OD-14, OD-16, OD-17, OD-18) and the roadmap. **It found one error in
+this ADR and did not clear either blocker**, so no production code was written.
+
+**What it corrected.** §3 and [D-047](design/V2-SPEC-DEFECTS.md#d-047) claimed *"a chooser that does not
+exist."* False as stated. `openSupply()` (`v2-bench.html:718-724`) builds a `.sheet` titled *"Add to your page"*
+with **three** `.opt` rows — `data-a="text"`, `data-a="photo"`, `data-a="art"` — and `:729` narrates it in the
+freeze's own words: **"Add stays three verbs — Text · Photo · Art."** The first two are precisely the two
+capabilities that ship, so the frozen `Add` asks for routing, not for a collapse. The blocker survives on a
+narrower and more accurate ground — `.sheet`/`.supply`/`.opt` are **not in C4's fence**, and `Art` → `openArt()`
+is the H3 drawer that OD-2 re-seated and [§E.6](design/V2-BENCH-REVIEW.md) fenced pending a legal pass — and it
+gains a third reading, (c), which is cheaper than either of the two originally recorded. **The correction makes
+the owner's decision different, which is why it stopped the gate rather than being folded in silently.**
+
+**What it verified and found sound.** Every other citation in §1 and §2, re-read against the current files:
+
+| Claim | Evidence |
+|---|---|
+| `.status` is the top strip, above the canvas | `:390` sits directly inside `.phone`, immediately before `.canvasArea` `:392` |
+| the freeze offers **no** back and no Read route | `:464-468` is the whole `.bar`; `.status` `:390` holds two `<span>`s, neither interactive |
+| the hand-off ships at the top | `EditorScreen.kt:625-637`, `EditorPreviewActionTestTag`, `Copy.Editor.PREVIEW_LABEL` |
+| the shelf is four cards | `EditorSupplyTray.kt:118/128/138/148` — `AddPhoto`, `AddWords`, `Undo`, `Redo`; wired `EditorScreen.kt:1173-1181` |
+| row 4.10's 1600ms is **already** the shipped value | `EditorSavedConfirmation.kt:50` `SavedConfirmationVisibleMs = 1600L`; copy at `:37` is `"Saved ✨"`, against the freeze's `✿ Saved · on this device` |
+| row 4.12's token already exists in Compose | `ZinelyV2Colors.kt:131` `accentOnInk`, `:200` `#B7C47C` light / `:267` `#4C5826` dark — matching `v2-bench.html:104` and `:120`/`:131` — and asserted at `ZinelyV2ColorsTest.kt:48` |
+| row 4.11 has a shipped shape to re-skin | `core/ui/.../components/ZSnackbar.kt:56` — `message`, `actionLabel`, `onAction`, `onTimeout` |
+| the editor ships **no** element-delete snackbar | `Intent.Delete` is dispatched at `EditorScreen.kt:1108` and raises nothing; the only `ZSnackbar` call sites are `HomeScreen.kt:251` and `ProofScreen` |
+| D-049's measurement and routing | [ADR-091 §Pass 2](#adr-091-completion-device) — `1028×1454` → `850×1202`, *"`.bar` is C4's"* |
+
+**How they closed.** Both on 2026-08-04, the day the gate reported them. [D-047](design/V2-SPEC-DEFECTS.md#d-047)
+took **[OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling)** — Option A, with the frozen Bench amended first.
+[D-048](design/V2-SPEC-DEFECTS.md#d-048) took **no ruling at all**: the owner ruled it was never an owner
+question, and it is recorded as a deviation with its reasoning, exactly as [D-042](design/V2-SPEC-DEFECTS.md#d-042)
+was. **Every row of §2 is now buildable.**
+
+<a id="adr-094-cost"></a>
+**The one cost this package ships knowingly**, named here rather than discovered later: `Add photo` and
+`Add words` are two direct controls on the shipped shelf and become two rows behind one `Add`. Nothing is
+removed — OD-11 holds — but the editor's most common action grows by one tap. OD-21 pays that price
+deliberately, and D-049 sits next to it as the other thing C4 changes about how the editor *feels* rather
+than what it can do.
+
+<a id="adr-094-deviations"></a>
+### 6. Implementation deviations, recorded
+
+Every departure from the plan of record, written here rather than left to a comment. Each names what the
+freeze says, what shipped, and the constraint that produced the difference.
+
+| # | Deviation | Why | Where it lives |
+|---|---|---|---|
+| 6.1 | **The soft delete is drawn with the C2a/C3 cover-override seam, not with element opacity** | `SceneRenderer` paints a page as one tape, so there is no per-element alpha to animate. C2a already met this constraint in reverse — `BenchMaterialise.coverAlphaAt` fades a paper cover *out* to reveal an arriving element — and C4 runs the same seam backwards: the cover fades **in** while `deleteScaleAt` shrinks the element to `.9`. **No new rendering path**, which is what the owner's instruction asked for by name | `BenchSelectionFocus.kt` (`deleteCoverAlphaAt`, `deleteScaleAt`), `EditorPagePreview.kt` (`benchDeleteScaled`, `benchDeleteCovers`) |
+| 6.2 | **`.status`'s left slot ships empty** | The freeze's `the bench` is prototype narration, the same class as `cap()`. The product substitute would be the project's title and `EditorUiState` carries none — inventing a route for one is new capability, which OD-9 forbids. The slot stays, so `space-between` still pins the chip where the freeze puts it | `BenchStatusStrip.kt` |
+| 6.3 | **`BenchSnack` is a new composable, not a re-skin of `ZSnackbar`** | ADR-089 row 4.9 named the *"delete/undo surface"*. `ZSnackbar` is the V1 shape the Library and the Proof use; the frozen `.snack` is a 12dp radius on `--ink`, entering from `translateY(16px)` over `.22s`, with an action that is sometimes absent. Collapsing them would change the Library | `BenchSnack.kt` |
+| 6.4 | **`EditorSavedConfirmation` is retired, and `SavedConfirmationVisibleMs` moved to `BenchStatusStrip`** | Row 4.10 moves the message to the frozen strip. Leaving the old chip composable beside it is two surfaces for one message — OD-14's defect — so it goes the way `EditorSupplyTray` did, with its two test files and two goldens. The 1600ms constant keeps its name so callers and tests read unchanged. Its file also held a private `rememberReduceMotion`, which two neighbours borrowed; both now import the canonical one from `core/ui` (`ReduceMotion.kt:22`), same reading of `ANIMATOR_DURATION_SCALE` | `BenchStatusStrip.kt`, `EditorCoverageNotice.kt`, `EditorSaveFailure.kt` |
+| 6.5 | **The saved chip no longer *yields* to the move/resize hint** | The yield existed because a TopEnd chip floating over a narrow canvas overlapped the TopCenter hint. C4 moves the chip off the canvas into `.status`, above `.canvasArea` — the two cannot occupy the same pixels, so withholding the reassurance would now be a silent loss of a shipped capability rather than a collision fix. The guard becomes what it was always protecting: the test asserts they **do not overlap** | `EditorScreenTest.the_saved_chip_and_the_move_resize_hint_coexist_without_overlapping` |
+| 6.6 | **`minimumInteractiveComponentSize()` was tried on the bar's icon buttons and removed** | It does not do what its name promises here: it grows the *layout* slot to 48dp and centres the 44dp paint inside it, which pushed the first control 2dp in from the frozen 16dp padding and opened the frozen 10dp gap to 14dp. Measured, not assumed. That is *"modifying the visual design solely to satisfy"* the floor, which D-009's ruling forbids in those words. Compose's own pointer-input minimum already lifts an enabled control's `touchBoundsInRoot` to 48dp — the same finding independent review recorded on `ZineOnShelf`'s seam | `BenchBottomBar.kt`, asserted in `BenchC4Test.an_icon_button_paints_forty_four_and_takes_forty_eight` |
+| 6.7 | **A withheld icon button has no touch-target expansion** | It installs no `clickable` at all — deliberately, so the platform tree agrees it is not clickable (the ADR-058 defect). A control that cannot act needs no 48dp target; the floor is asserted on `Done`, the one icon button live at rest | `BenchBottomBarPlatformA11yTest` |
+| 6.8 | **The chooser has no Roborazzi golden** | `ZSheet` is a `Dialog`, which Robolectric renders in its own window; `decorView.rasterizeToBitmap()` does not contain it. Its paint is a device item, listed in §7 rather than silently uncovered | `BenchC4GoldenTest` KDoc, device checklist item 6 |
+| 6.9 | **The snack overlays the canvas rather than sitting above the bar** | `.snack{position:absolute;bottom:12px}` resolves against **`.canvasArea`**: the markup (`v2-bench.html:443`) is inside `.canvasArea` (`:392`), which declares `position:relative` (`:194`). The first cut put it in the screen's root `Box` and justified that with the claim it is positioned against `.phone` — **that claim was false**, and the test that locked it asserted 12dp from the window bottom, encoding a geometry the freeze never states. Independent review caught it by reading the HTML rather than this ADR. It is now anchored in the canvas, over the artifact it is about; it still takes no layout height, which is the half of the old reasoning that was true and is what keeps it from resizing the sheet ([D-049](design/V2-SPEC-DEFECTS.md#d-049)) | `EditorScreen.kt`, asserted in `BenchC4Test.the_snack_sits_at_the_frozen_insets` |
+| 6.10 | **The frozen `opacity:.35` is applied to the whole control, not to its glyph** | `.icon-btn:disabled{opacity:.35}` (`:269`) fades the button — including its 1px `--chrome-line` outline. The first cut faded only the `Icon` tint, leaving a full-strength outlined box around a faint mark: heavier chrome than the freeze draws, in the state it draws most carefully, on the very first frame every user sees. Raised by independent review; the golden gate could not see it either (below) | `BenchBottomBar.kt` `BenchIconButton` |
+| 6.11 | **TalkBack's `Delete` is routed through the screen's soft delete** | `EditorA11y.elementCustomActions` dispatched `Intent.Delete` directly, so a TalkBack user's element simply vanished while a sighted user got a fade, a 3200ms snack and an `Undo`. The reversal capability was present on one path and absent on the other. `onDelete` is now a parameter threaded `EditorA11y` → `ElementSemanticsLayer` → `EditorScreen`, defaulting to the old behaviour so every other caller is unchanged. **The price of that default, named by the review that checked the fix:** a *future* second host of `ElementSemanticsLayer` reintroduces the asymmetry silently — no compile error, no failing test, because the guard is behavioural and covers this screen's wiring only. A non-defaulted parameter would fail loudly. The default is kept because the other callers sit outside the editor and want the plain delete; the risk is written here rather than left to be rediscovered | `EditorA11y.kt`, `ElementSemanticsLayer.kt`, `EditorScreen.kt` |
+| 6.12 | **C4's user-facing strings live in `Copy`, not beside their composables** | The first cut declared them in the feature module and `CopyNoProseLiteralTest` (ADR-060 / CI-81) failed on six of them. They are now `Copy.BenchBar`, `Copy.AddChooser`, `Copy.Status` and `Copy.Snack`, with the feature-side constants kept as delegating aliases so call sites, tests and goldens read unchanged. **The guardrail only fired once `:core:copy:test` was forced to re-run** — it had been up-to-date across two earlier "full" verification runs, which is why every verification from here on uses `--rerun-tasks` | `Copy.kt`, `BenchBottomBar.kt`, `BenchAddChooser.kt`, `BenchStatusStrip.kt`, `BenchSnack.kt` |
+| 6.13 | **The Roborazzi gate cannot see either paint fix, and that is measured rather than assumed** | The goldens compare at `changeThreshold = 0.02f`. A 1px outline fading to `.35` on two 44dp squares moves far less than 2 % of a 430×66dp raster, so `verifyRoborazziDebug` stayed green across the 6.10 change — the goldens were re-recorded afterwards so the checked-in images depict current code, not because the gate demanded it. This is exactly why §8's paint probes are threshold-free and read a live and a withheld control **in one frame** | `BenchC4GoldenTest` |
+
+**One defect was raised and deliberately not fixed:** [D-050](design/V2-SPEC-DEFECTS.md#d-050) — the empty
+page still reads *"from the supplies below"* and still points a chevron at the retired shelf. It is product
+voice, the owner owns the wording, and it was found by reading C4's own re-recorded screen golden rather than
+by a failing test.
+
+<a id="adr-094-device-checklist"></a>
+### 7. The device checklist
+
+Pass 1 reads the **platform** `AccessibilityNodeInfo` tree (`adb shell uiautomator dump`), never the merged
+semantics tree. Pass 2 is first-time-user, and this package's Pass 2 carries the owner's standing question:
+*does C3's in-place editing still feel natural under the new chrome?*
+
+1. `Undo` and `Redo` at rest: `enabled=false` **and** `clickable=false` on the real tree.
+2. `Add`'s target measures ≥48dp on hardware; the drawn box is still 44dp with a 10dp gap and 16dp side padding.
+3. The chooser opens on `Add`, offers **Text** and **Photo**, and has **no** Art row.
+4. Text drops a box already in its editing session — C3's model, unchanged, in one tap of Text.
+5. Photo reaches the system picker, and the picked photo lands on the page.
+6. The chooser's paint against the frozen `.opt` rows — the item no golden can cover (§6.8).
+7. `Done` is greyed during a text session and clears a selection when none is open.
+8. Deleting fades the element out over `.2s`, the snack stands for 3200ms, `Undo` lights, and the snack's
+   `Undo` puts the element back.
+9. TalkBack: the saved chip announces *"Saved on this device"* politely, once, and only after a real save.
+10. The `✿` (U+273F) renders on the device's own fallback face — D-021's accepted platform fallback.
+11. [D-049](design/V2-SPEC-DEFECTS.md#d-049): measure the sheet on select and on dismiss, so the 17 % is
+    re-measured under the new bar rather than assumed unchanged.
+
+<a id="adr-094-mutations"></a>
+### 8. The mutation battery
+
+31 mutations, one per property the table above claims to assert, each applied to `src/main`, verified, and
+reverted. **Round 1: 22 caught, 8 survived, 1 could not compile.** Every survivor is accounted for below —
+none was written off.
+
+**The battery's own first run was invalid, and that is recorded rather than quietly re-run.** The runner
+could not launch Gradle at all (`gradlew.bat` is not on the path it used), so every invocation exited
+non-zero and every mutation scored `CAUGHT`: **31 kills, proving nothing.** It was caught by the absence of
+failing *test names* beside each kill. The fix is a **control run** — the unmutated tree through both gates
+before any mutation — which is now the first thing the battery does. A mutation battery without a control
+measures the harness, not the tests.
+
+#### The survivors, and what each one meant
+
+| Survivor | What it actually was | Reconciliation |
+|---|---|---|
+| `chrome` → `sheet` (4.1) | **A no-op.** The two tokens are byte-identical in both themes — `#FBF7EE` light, `#252017` dark (`ZinelyV2Colors.kt:196`/`:198`, `:240`/`:242`). Nothing could have observed it | Re-run against `paper`, which is a different colour |
+| `weight(1f)` → `weight(0.5f)` (4.4) | **A no-op.** With one weighted child in the row, the fraction cannot change the outcome | Re-run against a fixed `size(120.dp)` |
+| `.35` → `1` disabled alpha (4.2) | **A real gap.** Two 20dp glyphs cannot move 2 % of a 430×66dp raster, so the golden gate could not see it | New probe: the live and withheld controls are read **in one frame**, and full-strength `--ink-soft` may appear only in the live one — threshold-free, with no recorded number to drift |
+| `.94` → `.8` press scale (4.2) | **A real gap.** Nothing in C4 looked at a pressed control, and `graphicsLayer` scaling does not move the semantics box | New probe: press and hold, then measure the drawn outline's extent in the raster against the resting one |
+| `1.7` → `2.4` stroke (4.3) | **A real gap**, same cause as the alpha | New probe: the glyph's ink is counted (339px at xhdpi, measured) with a ±20 % band — far tighter than the 41 % a 2.4 stroke adds |
+| `1600` → `400` saved window (4.10) | **A self-referential test.** It advanced the clock by `SavedConfirmationVisibleMs` — the constant under test — so it could not see the constant change | Both advances become literals: still up at 1500ms, gone by 2200ms |
+| `3200` → `1600` delete window (4.13) | The same defect in `BenchC4Test` | Literals: still up at 3000ms, gone by 3800ms, plus a direct assertion of the frozen value |
+| `16dp` → `0` snack rise (4.11) | **A real gap.** Nothing looked at where the snack starts | New test: `graphicsLayer` translation moves the node's bounds in the root, so the entering and resting positions are compared directly |
+| `if (actionLabel != null)` → `if (true)` (4.15) | **Could not compile** — the block relies on that smart cast | Re-run by giving the null case a fallback label, which compiles and produces the same wrong behaviour |
+
+**"A timing assertion that spends the constant under test is decoration"** is the transferable lesson, and it
+appeared **twice** in one package. Both are now literal, with the reason written where the literal is.
+
+#### Rounds 2 and 3 — and the same defect found twice more
+
+**Round 2 (9 re-runs): 7 caught, 2 survived.** Both survivors were the two new *paint* probes, and both
+failed for reasons worth keeping:
+
+- **`.94` → `.8` survived** because the probe computed its expected width **from
+  `BenchIconBtnPressedScale`** — the constant under test. An assertion built out of the value it is
+  checking agrees with every value that constant can take. This is the third instance of that defect in
+  one package, after the two timing tests, and the first two were already written down when it was
+  committed again. It now compares against a literal `0.94` and asserts the constant separately.
+- **`1.7` → `2.4` survived** because counting pixels that merely *differ from the ground* does not measure
+  a stroke: a heavier stroke fills its footprint more completely without enlarging it much, so the count
+  barely moved. Replaced with ink **mass** — the summed per-pixel deviation, which scales with covered
+  area. Baseline **35 071 at xhdpi, measured**, with a ±15 % band against the ~41 % a 2.4 stroke adds.
+
+**Round 3 (2 re-runs, control first): both caught.**
+
+**Final: 31 of 31 mutations caught**, over three rounds, with every intermediate survival and its cause
+recorded above rather than folded into the final number.
+
+**The transferable lesson, stated once because it cost four findings:** *an assertion must not be
+constructed from the value it is asserting* — not a duration advanced by its own constant, not a width
+derived from its own scale factor. Where the frozen value is the property, the test carries the literal
+and the constant is checked against it.
+
+<a id="adr-094-device"></a>
+### 9. Device verification — both passes, 2026-08-04
+
+**Device:** Samsung SM-A176B (`a17x`), Android **16** (SDK 36), 420 dpi override (density 2.625), debug
+build installed from `:app:installDebug` at 16:05. Platform tree read with
+`adb shell uiautomator dump /sdcard/ui.xml`; measurements taken off the device raster, not the merged
+semantics tree.
+
+#### Pass 1 — developer verification, against §7's eleven items
+
+| # | Result | Evidence |
+|---|---|---|
+| 1 | ✅ | At rest `Undo` and `Redo` report `clickable=false enabled=false` on the platform tree. §6.7's "no `clickable` at all" is what produces this |
+| 2 | ✅ | `Add` `[326,1812]–[896,1938]` and `Done` `[917,1812]–[1043,1938]` measure **126 px = 48 dp** tall; the withheld `Undo`/`Redo` measure **116 px = 44 dp**, the frozen paint. Gap 26 px ≈ 10 dp, side padding 42 px = 16 dp. Both halves of D-009's remedy, on hardware: the enabled targets reach the floor, the drawn boxes do not move |
+| 3 | ✅ | The sheet offers `Text` and `Photo` and **no Art row** — three nodes total, title included |
+| 4 | ✅ | `Text` drops a box already in its session: keyboard up, `#doneEdit` chip live, and the bar's `Done` withheld in the same frame |
+| 5 | ✅ | `Photo` reaches `com.google.android.photopicker`; the picked photo landed on the page and came back selected with the photo verb set. No permission prompt, no network — the privacy invariant holds on the route C4 added |
+| 6 | ✅ paint, ⚠️ glyph | The `.opt` rows draw as frozen. The `Photo` row's mark is the *replace* glyph — faithful to `v2-bench.html:721`, and filed as [D-051](design/V2-SPEC-DEFECTS.md#d-051) |
+| 7 | ✅ | `Done` `enabled=false clickable=false` for the whole of a text session; `enabled=true` with a selection and no session |
+| 8 | ✅ | Delete fades, the snack stands with `Text deleted.` and a matcha `Undo` whose own target is 126 px = 48 dp, and tapping it restored the element (`Redo` lit afterwards, which is how the restore is distinguishable from a snack that simply timed out — the first attempt tapped an expired snack and proved exactly that) |
+| 9 | ◑ | The chip's node is on the platform tree reading **`Saved on this device`**, without the flower. *What TalkBack says* is not capturable — Samsung TalkBack logs no utterances ([DEVICE-VERIFICATION.md §3](DEVICE-VERIFICATION.md)) — so the politeness and the once-only remain asserted in Robolectric and heard by a human, not proven here. Recorded as partial rather than claimed |
+| 10 | ✅ | `✿ Saved · on this device` renders, flower included, on the device's own fallback face — D-021's accepted platform fallback, observed |
+| 11 | ⚠️ measured | Sheet **1500 px at rest → 1069 px selected: a 431 px, 28.7 % loss**, larger than the 17 % [D-049](design/V2-SPEC-DEFECTS.md#d-049) recorded, because a selection now raises the frozen `.ctx` bar above the transform bar. D-049 updated with the number; the decision it asks for is unchanged and still the owner's |
+
+**One test was missing and was written during this pass.** §6.11's re-routing of TalkBack's `Delete`
+through the soft path had no assertion anywhere — a Required Fix reconciled without a guard. The device
+cannot perform a custom action, so it is closed in Robolectric instead:
+`BenchC4Test.the_accessibility_delete_is_reversible_on_the_same_terms_as_the_verb` performs the custom
+action and asserts **the snack**, since only the soft path raises one.
+
+#### Pass 2 — first-time user, carrying the owner's standing question
+
+*Does C3's in-place editing still feel natural under the new chrome?* **Yes** — `Add › Text` lands in a
+live session in two taps, the keyboard comes up with it, and finishing with the style row's `Done` returns
+the element to Selected exactly as C3 shipped it. The new bar did not add a step to editing; it replaced
+a shelf with a chooser one tap deeper, which is the price OD-21 recorded when it ruled.
+
+Three frictions were found, none fixed inside C4, each filed where the decision belongs:
+
+1. [**D-051**](design/V2-SPEC-DEFECTS.md#d-051) — the `Photo` row's *replace* glyph. It is now the only
+   visual the verb has, and it names the wrong action. The freeze says `ICON.replace`, so the fix is an
+   amendment, not a parity repair.
+2. [**D-052**](design/V2-SPEC-DEFECTS.md#d-052) — `Add › Text` drops the new box **over** existing
+   content. Written down as it read before I knew the cause: *"it put my new text inside my old text."*
+3. [**D-050**](design/V2-SPEC-DEFECTS.md#d-050) — already open; confirmed on the device, where the empty
+   page's *"supplies below"* sits one tap above a single `Add`.
+
+**The two passes do not disagree.** Everything Pass 2 found is a question about *what the design says*,
+on surfaces Pass 1 measured as correct — which is why all three are records rather than fixes.
+
+---
+
+## ADR-095 {#adr-095}
+
+**C5 — page navigation: the filmstrip of little paper sheets and the summoned page grid. Written before any
+production code, per [ADR-089 §2.2](#adr-089).** Its mandatory pre-implementation blocker check found **one
+question that is genuinely the owner's**, so this ADR opened as `Proposed` with its property table populated
+and **no `src/main` change made**. A **second** owner question — [D-059](design/V2-SPEC-DEFECTS.md#d-059) —
+was found later, by hardware, halfway through Device Pass 1, and stopped the package a second time. Both were
+ruled; both amended the frozen Bench; neither was worked around.
+
+- **Status:** ✅ **`Accepted` 2026-08-05** — 31 property rows built, **44 mutations / 44 killed**, whole-project
+  sweep green, three independent reviews reconciled, and **both device passes run from the beginning on the
+  amended build** ([§8](#adr-095-device), [§8b](#adr-095-pass-2)). The package needed **one owner ruling
+  mid-verification** and stopped for it rather than working around it:
+  [D-059](design/V2-SPEC-DEFECTS.md#d-059) is ruled **[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling), Option
+  (a)** — **the frozen Bench is amended for the seventh time**, `.pthumb` becoming a light-theme island of five
+  tokens. Previously: 📝 `Proposed` **2026-08-04.** ✅ **Unblocked the same day.**
+  [D-053](design/V2-SPEC-DEFECTS.md#d-053) is ruled **[OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling), Option
+  (c)** — **the frozen Bench is amended for the sixth time**: `.pthumb i` and the `<i>` that carried it are
+  **deleted from the specification**, the thumb's interior becomes the real rendered page, and every other frozen
+  property of the thumb and the row around it is preserved and transcribed. The page grid is explicitly **not**
+  amended. Moves to `Accepted` only on both device passes, as C1–C4 did.
+- **Depends on:** C1 ([ADR-090](#adr-090), `Accepted`) for the studio surface the nav row sits under. Not C4 —
+  but it lands beside C4's `.bar` and shares the bottom chrome's height budget, which is why
+  [D-049](design/V2-SPEC-DEFECTS.md#d-049) is carried here too.
+- **Frozen regions:** `.navrow`, `.gridbtn`, `.filmstrip`, `.pthumb*`, `.pgrid*`, `.pgg`, `.pgcell*`, and the
+  scripted `buildFilm()` / `setPage()` / `openGrid()` / `closeGrid()`.
+
+<a id="adr-095-drift"></a>
+### 1. Citation drift — every address ADR-089 gives for C5 is wrong
+
+[ADR-089 §4](#adr-089) was written before **five** amendments to the frozen Bench (OD-3, OD-10/D-033, OD-16 and
+OD-21, plus C0's cleanup), and **[OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling) added a sixth on the day this
+table was written** — which moved every C5 address a second time, by +23 lines. The table below is anchored to
+the **amended** file, which is the one C5 transcribes; the middle column keeps the pre-amendment address so the
+two rounds of drift are legible rather than silently collapsed. Each was verified by opening the file at the
+cited line and reading the selector.
+
+| row | ADR-089 said | actually at | what is there now |
+|---|---|---|---|
+| 5.1 `.navrow` | `:168-169` → `:252-253` | **`:275-276`** | `height:56px; gap:8px; padding:0 10px; background:var(--chrome); border-top:1px solid var(--chrome-line); z-index:20` |
+| 5.2 `.gridbtn` + glyph | `:170-171`, `:371` → `:254-255` | **`:277`, `:278`** | `34×34`, `radius:9px`, `1px --chrome-line`; `svg{width:17px;stroke-width:1.8}` — markup at `:482-484` |
+| 5.3 `.filmstrip` | `:172-173` → `:256-257` | **`:279-280`** | `flex:1; gap:7px; overflow-x:auto; overflow-y:visible; padding:9px 4px` |
+| 5.4 `.pthumb` | `:175-176` → `:259-260` | **`:282-283`** | `26×34`, `radius:1.5px 3px 3px 1.5px`, `--paper`, `1px --paper-edge`, `shadow 0 2px 5px -2px`, `transition .2s var(--settle)` |
+| 5.5 spine | `:177-178` → `:261-262` | **`:284-285`** | `::before` 2px `--desk-edge`; `[data-cover]::before` → `--matcha` |
+| 5.6 `.cur` | `:180` → `:264` | **`:288`** | `scale(1.16) translateY(-2px)`, `shadow 0 9px 16px -6px`, `border-color --matcha`, `z-index:2` |
+| 5.7 `.cur::after` | `:181` → `:265` | **`:289`** | 4px `--strawberry` dot, `top:-7px`, centred |
+| 5.8 `.pthumb i` | `:179`, `:587` → `:263`, `:698` | **deleted by [OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling)** | the rule and its `<i>` are gone from the specification; `:285-286` and `:722` now carry the comments that record why |
+| 5.9 role + label | `:586` → `:697` | **`:721`** | `role=button`, `Page i of N (front cover)/(back)` |
+| 5.10 scroll to centre | `:592` → `:703` | **`:727`** | `scrollIntoView({block:'nearest',inline:'center'})` |
+| 5.11 `.pgrid` | `:266-267` → `:350-351` | **`:374-375`** | `inset:0; z-index:46; background:var(--desk); padding:16px; translateY(102%) → 0 at .3s var(--settle); overflow:auto` |
+| 5.12 `.pgg` / `.pgcell` | `:311-312` → `:355-356` | **`:379-380`** | `repeat(3,1fr)`, `gap:12px`; `aspect-ratio:.66`, `radius:6px`, `--paper`, `shadow 0 4px 10px -6px` |
+| 5.13 `.pgcell.cur` | `:273` → `:357` | **`:381`** | `border-color:--matcha; border-width:2px` (and `:active{scale(.96)}`, which ADR-089 never listed) |
+| 5.14 cell labels | `:274-275`, `:598` → `:358-359`, `:709` | **`:382-383`, `:733`** | `span` = number, 9px `--ink-faint`, bottom-right; `b` = `Cover`/`Back`, 8px `--matcha-text` 700 upper, top-left |
+| 5.15 grid header | `:269-270`, `:596` → `:352-354`, `:707` | **`:376-378`, `:731`** | `Your zine · N pages` in `--serif` 17px/500, `Done` in `--matcha-text` 600 13px |
+| 5.16 `NP` | `:409` → `:498` | **`:522`** | `var … NP=12, cur=3` |
+
+Per [OD-18](design/V2-SPEC-DEFECTS.md#d-046-ruling) this ADR re-anchors **its own** citations only; the stranded
+addresses in files C5 does not own stay with [D-046](design/V2-SPEC-DEFECTS.md#d-046).
+
+ADR-089 also **under-counted two rows**: `.pgcell:active{transform:scale(.96)}` (`:381`) and the `.pthumb`
+`transition` (`:283`) are frozen properties with no row of their own. They are carried below as 5.13a and 5.4a
+rather than implemented silently.
+
+<a id="adr-095-fpt"></a>
+### 2. Frozen property table — 31 rows
+
+> Row **5.4d** was added on 2026-08-05, after the table was first written, by
+> [OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) — the amendment Device Pass 1 forced. The table is C5's
+> acceptance contract, so an amendment to the freeze adds a row to it; it does not get implemented beside it.
+
+One row per frozen *value*, with its planned assertion and the mutation that must kill it, per the
+[§8.1 format](COMPOSE-IMPLEMENTATION-GUIDE.md#81-the-frozen-property-table). `N` is **always** the document's
+`format.pageCount`, never a literal.
+
+| # | Frozen property | Source | Assertion | Mutation |
+|---|---|---|---|---|
+| 5.1 | `.navrow{height:56px}` | `:275` | the row's node height is 56dp | 56 → 44 |
+| 5.1a | `.navrow{background:var(--chrome); border-top:1px solid var(--chrome-line)}` | `:275-276` | golden; raster probe on the top hairline | `chrome` → `desk` |
+| 5.1b | `.navrow{gap:8px; padding:0 10px}` | `:275` | grid button's left inset = 10dp; strip's left edge − button's right edge = 8dp | padding 10 → 16 |
+| 5.2 | `.gridbtn{34×34; border-radius:9px; 1px --chrome-line}` | `:277` | drawn box 34dp square; radius by golden | 34 → 44 |
+| 5.2a | `.gridbtn svg{17px; stroke-width:1.8}` | `:278` | glyph node 17dp; stroke by ink-mass probe | 17 → 20 · 1.8 → 2.6 |
+| 5.2b | D-009: the target, not the paint | [D-009 ruling](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) | `touchBoundsInRoot` ≥ 48dp **and** the drawn box still 34dp, in one test; platform tree on device | **none — and deliberately so.** The 48dp floor is delivered by Compose's own pointer-input minimum, not by any C5 code, so there is nothing in this package to break. The mutation this column used to name (*grow the layout box to 48*) would have added `minimumInteractiveComponentSize()` — a change *toward* the defect D-009 warns of, which the drawn-size half of the test would not even catch, since the drawn `Box` is sized 26×34 either way. Recorded as framework-delivered rather than covered by an invented mutation |
+| 5.3 | `.filmstrip{gap:7px; padding:9px 4px}` | `:279` | inter-thumb gap 7dp; first thumb's left inset 4dp | gap 7 → 10 |
+| 5.3a | `.filmstrip{overflow-x:auto}` and no scrollbar | `:279-280` | the strip scrolls horizontally with no scrollbar node | drop the scroll |
+| 5.3b | `.filmstrip{overflow-y:visible}` — what lets `.cur` lift out of the row | `:279` | the current thumb's drawn bounds exceed the strip's content box vertically and are **not** clipped | clip the cross axis |
+| 5.4 | `.pthumb{26×34}` | `:282` | every non-current thumb measures 26×34dp | 26×34 → 30×40 |
+| 5.4a | `.pthumb{transition:transform .2s var(--settle)}` | `:283` | the lift animates over 200ms on the settle curve | 200 → 0 |
+| 5.4b | `.pthumb{border-radius:1.5px 3px 3px 1.5px}` — **asymmetric**, the spine is squarer | `:282` | golden + a corner-pixel probe: the two left corners are squarer than the two right | make it uniform |
+| 5.4c | `.pthumb{--paper; 1px --paper-edge; shadow 0 2px 5px -2px}` | `:282-283` | golden | `paper` → `chrome` |
+| 5.4d | **`.pthumb` is a light-theme island** — `--paper --paper-edge --ink --ink-soft --ink-faint` restated, `--matcha`/`--strawberry` deliberately **not** ([OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling), the seventh amendment; added to the freeze 2026-08-05) | `:282` (amendment above the rule) | a pure set assertion that exactly those five take the light values while the row's marks stay the room's, **plus** a raster probe that the sheet's interior is `#F7F2E7` in the dark golden and the row's ground is still chrome | `paper = light.paper` → `paper = room.paper` (M36) |
+| 5.5 | `.pthumb::before` 2px `--desk-edge` spine | `:284` | raster probe on the left 2dp column | drop the spine |
+| 5.5a | `.pthumb[data-cover]::before{--matcha}` — **cover and back both** | `:285`, `:720` | the spine reads matcha on `FRONT_COVER` and `BACK_COVER`, desk-edge elsewhere | apply it to page 1 only |
+| 5.6 | `.pthumb.cur{scale(1.16) translateY(-2px)}` | `:288` | centroid of the current thumb's drawn box vs a neighbour's — scale **and** lift together | 1.16 → 1.0 |
+| 5.6a | `.pthumb.cur{border-color:--matcha; shadow 0 9px 16px -6px; z-index:2}` | `:288` | golden, **plus** a matcha count on the current sheet's own crop — the row-wide count is satisfied by the two cover spines alone, which is how a build that stopped ringing the current sheet would have passed | `if (current) matcha else paperEdge` → `paperEdge` (M41). ⚠ this column read *drop `z-index`* until the final review: [D-057](design/V2-SPEC-DEFECTS.md#d-057) had already removed `z-index` from the transcription, so it named a mutation that **could not exist** |
+| 5.7 | `.pthumb.cur::after` 4dp `--strawberry` dot, 7dp above, centred | `:289` | raster probe: exactly one strawberry region in the strip, centred over the current thumb | `--strawberry` → `--matcha` |
+| 5.8 | **the thumb’s interior is the real page** — a live miniature through the canvas’s own `SceneRenderer` tape, not a drawing of text | [OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling); `:285-286`, `:722` | the strip’s thumb and the canvas render the **same** tape for the same page — asserted by rendering a page with a distinctive element and reading the thumb’s raster, not by trusting the call | draw a static placeholder instead |
+| 5.9 | each thumb is a control labelled `Page i of N (front cover)/(back)` | `:721` | the label on the **platform** `AccessibilityNodeInfo` tree, on device and in the CI-26 harness | drop the cover/back suffix |
+| 5.10 | selecting a page scrolls it to centre | `:727` | after selecting the last page, its centre is within the strip's viewport | remove the scroll |
+| 5.11 | `.pgrid` overlay on `--desk`, `translateY(102%) → 0` at `.3s var(--settle)`. **`position:absolute` on markup inside `.canvasArea`** — so it covers the *canvas*, and the status strip, filmstrip and bar stay visible beneath it | `:374-375`, markup `:470` inside `:416`–`:471` | the grid's bottom edge stops at the navigation row's top, and the row and bar are still displayed; mid-animation its top edge is below its resting top | 102% → 0%; make it full-screen |
+| 5.11a | the grid is **summoned, never default** | `:729`, `:739` | at rest no grid node exists; the grid button composes it; `Done` removes it | compose it always |
+| 5.12 | `.pgg{repeat(3,1fr); gap:12px}` | `:379` | three cells per row at every width tested; 12dp gutters | 3 → 2 columns |
+| 5.12a | `.pgcell{aspect-ratio:.66; radius:6px; --paper; shadow 0 4px 10px -6px}` | `:380` | measured w/h ratio 0.66; golden for the rest | .66 → 1.0 |
+| 5.13 | `.pgcell.cur{border-color:--matcha; border-width:2px}` — 2px where others are 1px | `:381` | the current cell's border **width and colour in one matcher** | width 2 → 1 |
+| 5.13a | `.pgcell:active{transform:scale(.96)}` | `:381` | pressed cell's drawn width = .96 × resting (a **literal** .96, not the constant) | .96 → 1.0 |
+| 5.14 | `.pgcell b` = `Cover`/`Back` 8px `--matcha-text` 700 upper, top-left; `.pgcell span` = the number, 9px `--ink-faint`, bottom-right | `:382-383`, `:733` | both labels present and in the right corners | swap their corners |
+| 5.15 | header `Your zine · N pages` in `--serif` 17px/500, `Done` in `--matcha-text` 600 13px | `:376-378`, `:731` | the copy reads the document's real N; the two type roles by golden | serif → sans |
+| 5.16 | **N is the document's, never a constant** | [OD-2](#adr-089) / [D-030](design/V2-SPEC-DEFECTS.md#d-030) | strip and grid both render exactly `document.format.pageCount`, asserted at 8 **and** at a fabricated shorter document so no constant can pass | hard-code `12`; hard-code `8` |
+
+<a id="adr-095-blockers"></a>
+### 3. The pre-implementation blocker check
+
+**One question is the owner's. Everything else resolved from rulings already in hand — and is recorded here so
+that resolution is auditable rather than assumed.**
+
+✅ **[D-053](design/V2-SPEC-DEFECTS.md#d-053) — RULED THE SAME DAY as
+[OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling), Option (c): the frozen Bench is amended and the live miniature
+stays.** `.pthumb i` and its `<i>` are deleted from the specification; the thumb keeps every other frozen
+property and its interior becomes the real page. The grid is not amended. What the question was: `EditorPageStrip` renders a **live miniature** of each page through the same `SceneRenderer` tape the
+canvas uses (`EditorPageStrip.kt:204-244`), so a card looks like the page it navigates to. The frozen `.pthumb`
+is a 26×34 blank sheet with three faint rules — and `.pthumb i` is drawn on **every interior page whether or not
+it holds text**, so on this product it would be decoration that is false on most pages. Row 5.8 cannot be built
+either way without deciding which one the product is. **Not resolvable from existing rulings:** OD-2 settled the
+page *count*, D-009 settled the *targets*, and OD-9/OD-11/OD-14 govern verbs and toolbars, not this. The freeze's
+own [§E.2](design/V2-BENCH-REVIEW.md) audit rebuilt the navigation *from the prototype's slider pips* — it was
+not ruling against live miniatures, because the prototype never had any.
+
+**The ruling, and what it costs.** OD-22 chose (c) — amend first — on the same reasoning OD-17 used: *when
+literal parity would reduce truthful communication, amend the frozen specification rather than degrade the
+implementation.* The price, recorded before the code: **at 26×34dp a page miniature is a smudge, not a
+picture.** It is legible as *"something is on this page, and roughly where"*, which is what the capability was
+ever for; it is not legible as *"which photo"*. C5 does not compensate for that by enlarging the thumb — the
+frozen 26×34 is preserved by the ruling in terms.
+
+**And one thing the ruling deliberately leaves alone:** the grid's cells keep the frozen design, numbers and
+`Cover`/`Back` labels included. Row 5.12a transcribes them; C5 does not infer a grid interior from the strip's.
+
+✅ **Cleared without an owner, each by a ruling already accepted:**
+
+| Question | Resolved by |
+|---|---|
+| The 34dp grid button and the 26×34 thumbs are far under the 48dp floor | **[D-009's ruling](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)** already names this exact surface — *"the Bench's filmstrip and swatch grid keep their frozen 26×34"* — and expands the targets invisibly. Row 5.2b asserts both halves, as C4's did |
+| The strip's current-page marker is a **yellow tape strip** in the shipped code, and `EditorPageStrip.kt:186-190` records that divergence as *"left for a design decision"* | The freeze **is** that decision: rows 5.6/5.6a/5.7 specify scale, lift, matcha border and the strawberry dot. C5 closes the KDoc's open question rather than carrying it |
+| Cover and back detection | ~~The model already carries `PageRole.FRONT_COVER` / `BACK_COVER` (`ModelEnums.kt:46-54`). C5 reads the **role**, not the index — strictly better than the freeze's `i===1||i===NP`.~~ **WRONG, and falsified by Device Pass 1 — see [§3a](#adr-095-cover-correction). C5 reads the position, as the freeze says.** |
+| The freeze gives each thumb `role=button`; the shipped card is a `selectable` with `Role.Tab` and a selected state | Kept as shipped, per C2b's rule that a parity phase does not weaken a conformance path. The frozen **label** is adopted, the stronger role is not discarded. Recorded as a deviation, not silently |
+| Is the summoned grid a new capability? | No — [OD-2 §2.3](#adr-089) names it explicitly: *"the filmstrip … and the summoned page grid are all parity over the document's existing eight pages"*. It navigates with the shipped `Intent.GoToPage`; it adds no page verb |
+| The 1 → 32 morph | [D-030](design/V2-SPEC-DEFECTS.md#d-030) / OD-2: specified-but-unreachable at eight pages. C5 builds the one reachable shape and records the rest |
+
+**Carried for awareness, not fixed here** — [D-049](design/V2-SPEC-DEFECTS.md#d-049) (the nav row is part of the
+bottom chrome whose height C5 changes, from the shipped strip's box to the frozen 56dp; the *direction* is
+favourable, but the decision D-049 asks for is still the owner's), [D-051](design/V2-SPEC-DEFECTS.md#d-051) and
+[D-052](design/V2-SPEC-DEFECTS.md#d-052).
+
+<a id="adr-095-cover-correction"></a>
+### 3a. The correction Device Pass 1 forced — covers are a matter of position
+
+**The clearance in §3 was false, and every JVM instrument in the package agreed with it.**
+
+§3 cleared row 5.5a, row 5.9's cover clause and row 5.14 on the claim that the document already carries
+`PageRole.FRONT_COVER` / `BACK_COVER`, and called reading the role *"strictly better"* than the freeze's
+`i===1||i===NP`. It is not what the product does:
+
+| where a document is built | what it assigns |
+|---|---|
+| `app/src/main/java/com/aritr/zinely/editor/EditorBootstrap.kt:26` | every page `PageRole.INTERIOR` |
+| `data-android/src/main/kotlin/com/aritr/zinely/data/android/RoomProjectRepository.kt:475` | every page `PageRole.INTERIOR` |
+
+`FRONT_COVER` / `BACK_COVER` are assigned **nowhere** in `src/main` outside `:core:imposition`'s
+`Convention.kt:56-63`, which maps *panel* roles at print time — a different thing from a document's page
+roles. So on a real document the role branch never fired: no cover label, no `--matcha` spine, no
+`COVER` / `BACK` badge. Three frozen rows were dead code, and the suite proved them anyway because all three
+test fixtures **fabricated** the roles.
+
+**The correction, and why it needed no owner ruling.** The frozen file is canonical and already specifies
+the rule — `buildFilm()` marks covers with `i===1||i===NP` (`v2-bench.html:697`). Returning to it is literal
+parity, not a new decision, and it agrees with the imposition convention that already treats panel 1 as the
+front cover and panel 8 as the back. `benchCoverAt(pageNumber, pageCount)` in `BenchPageNav.kt` is now the
+single source, read by both the strip and the grid. The alternative — assigning real page roles at document
+creation — is a model change outside C5's fence and was **not** taken.
+
+**What stops it recurring.** All three fixtures now build pages the way the product does, every page
+`INTERIOR`, with the reason recorded at each. Two mutations exist for the rule itself (M9 *the first sheet is
+the front cover*, M24 *the last sheet is the back*), kept separate so one assertion cannot cover both.
+
+<a id="adr-095-a11y-correction"></a>
+### 3b. What Device Pass 1 got wrong about accessibility, and the one defect underneath it
+
+Device Pass 1 reported that every sheet published `clickable="false" focusable="false" selected="false"` to
+the platform, and that D-009's 48dp target did not exist. **Both reports were wrong**, and the error was in
+the reading, not the code: `uiautomator dump` was grepped by `content-desc`, which finds Compose's
+*synthetic* content-description child — a node that reports exactly those attributes for every merged
+control in the framework. The real sheet nodes were in the same dump: `86×126px` = 33×48dp, `clickable=true`,
+`focusable=true`, and `selected=true` on the current sheet. The repo's own harness documents the mechanism
+(`PlatformAccessibilityTree.kt`, *"a focusable but unnamed parent whose name lives on a synthetic
+contentDescription child"*), and the ancestor rule means a service still lands on exactly one stop per sheet.
+
+Two fixes attempted against the phantom defect — deleting the miniature's test tag, then clearing the
+subtree's semantics — were **reverted** once the traversal was measured instead of inferred.
+
+**The real defect, which only the traversal measurement could see:** the frozen `.cur{z-index:2}` was
+transcribed as `Modifier.zIndex`, and that reorders the platform tree's children as well as the paint. The
+current sheet was published **last**, so a screen reader met page 1 after pages 2, 3 and 4. `traversalIndex`
+did not override it. The `zIndex` is therefore **not transcribed** — a recorded deviation, permitted by the
+freeze's own rule that accessibility improvements are allowed after freeze. Its cost is bounded and was
+measured from the freeze's geometry: at `scale(1.16)` a 26dp sheet overhangs 2.08dp a side into a 7dp gap,
+so no two sheets ever overlap, and the only thing the raise protected was the current sheet's shadow tail
+against a neighbour 7dp away. Reading order is a conformance path (CI-29/CI-30/CI-31); a shadow tail is not.
+
+<a id="adr-095-not-done"></a>
+### 4. What C5 must not do
+
+- **Do not add, delete or reorder pages**, and do not draw a control that implies it — OD-2 re-seated all three,
+  and the freeze's own grid caption says *"drag to reorder (in the build)"*, which is prototype narration.
+- **Do not read `N` from a constant.** Row 5.16's second mutation exists because `8` is the right number for the
+  wrong reason: it survives until the day a second format lands.
+- **Do not clip the strip's cross axis.** The lift is the whole point of *"the one in your hand"* (5.3b).
+- **Do not carry the deleted placeholder anywhere.** [OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling) removed
+  `.pthumb i` from the specification, so there is no fallback treatment to draw when a page is empty: an empty
+  page renders as an empty sheet, which is what it is.
+- **Do not enlarge the thumb to make the miniature more legible.** The ruling preserves the frozen 26×34 in
+  terms, and the smudge is the accepted price, recorded in §3.
+
+<a id="adr-095-implementation"></a>
+### 5. The implementation record
+
+**Files.** New: `BenchPageNav.kt`, `BenchPageGrid.kt`. Retired by `git rm`: `EditorPageStrip.kt` and its three
+test files and two goldens. Modified: `EditorScreen.kt` (the `pageGridOpen` flag, its `BackHandler`, the
+overlay declared **inside** the canvas `BoxWithConstraints`, and the nav row emitted above the bar per
+[D-058](design/V2-SPEC-DEFECTS.md#d-058)), `Copy.kt` (new `Copy.PageNav`; `Copy.PageStrip.pageNumber` deleted
+as dead), `feature/editor/build.gradle.kts` (`activity-compose`, for `BackHandler` only). Also touched, and
+named here because an incomplete file list is how a change hides: `BenchStudioSurface.kt`,
+`EditorContextBar.kt` and `ProofRead.kt` (the retired strip's call sites), `EditorEmptyStateTest.kt`,
+`ReframeSessionTest.kt` and `a11y/SurfaceTraversalOrderTest.kt` (retargeted to the new row),
+`docs/COMPOSE-V2-ROADMAP.md`. **The frozen file itself**, `docs/design/mockups/v2-bench.html` — amended by
+[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) (the `.pthumb` light island plus its amendment-log entry),
+HTML first and Compose second, as the freeze requires. `:core:ui`'s CI-26 harness
+`a11y/PlatformAccessibilityTree.kt`, which gained `stateDescription` because the grid's accessibility defect
+was invisible to every instrument that existed. `docs/DEVICE-VERIFICATION.md`, which gained the two traps this
+package paid for: the `MSYS_NO_PATHCONV` stale-dump trap and the fact that `stateDescription` is absent from
+`uiautomator dump`'s schema altogether. Outside the C5 fence and carried as a separate commit: `:app`'s
+`ZinelyNavHostTest.kt` and `:core:ui`'s `ZinelyV2DimensTest.kt` with four `v2_catalog_*` goldens, both
+[D-054](design/V2-SPEC-DEFECTS.md#d-054)/[D-055](design/V2-SPEC-DEFECTS.md#d-055) — C4 defects C5's
+verification exposed.
+
+**Tests.** `BenchC5Test` (28), `BenchC5GoldenTest` (5), `BenchPageNavA11yTest` (7) — 40 in total, plus CI-31's
+`SurfaceTraversalOrderTest` updated for the new row and for its position in it. Geometry is asserted against **frozen literals**, never
+against the production constants: three tautological assertions were found and rewritten during the package,
+each of which had let its own mutation survive.
+
+**Goldens.** New: `bench_page_nav_light/dark`, `bench_page_grid_light/dark`, `bench_page_grid_open_light` (the
+screen-level frame that proves the overlay is canvas-scoped). Re-recorded: `editor_screen_light/dark`,
+`bench_editing_state_light`.
+
+**Mutation battery — 44 mutations, 44 killed, no survivors and no equivalents.** Each breaks exactly one
+frozen property; the battery records which named test caught it, runs with `-Proborazzi.test.verify=true` so
+a golden is an assertion rather than a photograph, and — after a run whose tail was found to be re-reading
+stale JUnit XML — deletes prior results and refuses a verdict when fewer than the control's **40** tests
+execute. M36 and M37 were added for [OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) and the accessibility fix;
+both died, M36 to the golden probe **and** the pure token assertion, M37 to the two-picker equivalence test.
+
+⚠ **The final run reported one `SKIPPED — anchor not found`, and it is recorded rather than counted as a
+kill.** M12's anchor was the `BenchThumbPage(` call, which OD-23 re-indented by wrapping it in a
+`CompositionLocalProvider`; the battery refused a verdict instead of silently reporting a green mutant. Re-aimed
+and re-run with its control, it died to `bench_page_nav_light` and `bench_page_nav_dark`. The mechanism is
+worth keeping in view: **a mutation whose anchor has drifted is indistinguishable from a mutation nothing
+catches, unless the harness says so out loud.**
+
+⚠ **The first 25 were reported here as complete, and that report was misleading.** They were 25 real
+mutations, honestly killed — but §2 above names a mutation for every row of the property table, and ten of
+those had never been built. A second independent review listed them, and the rows they guard had **no
+instrument of any kind**: the row's `10px` end padding and `8px` gap (5.1b), the strip's `4px` content inset
+(5.3), the `.2s` lift itself (5.4a — `BenchThumbMillis = 0` passed the entire suite), the grid glyph's `17px`
+size and `1.8` stroke (5.2a), the `--desk-edge` spine on an ordinary sheet (5.5 — only the *covers'* matcha
+spine was ever asserted), the grid's `16px` inset (5.11), the page **number** on a cell (5.14 — nothing read
+it), and 5.16's second clause. Ten tests were written first and then M26–M35; all ten died. The lesson is the
+one C4 recorded in a different form: *a battery proves the mutations it contains, and says nothing about the
+rows nobody wrote one for.* The count is meaningless without the table it is measured against.
+
+⚠ **And it happened a second time. The claim that stood here — *"no row is without one"* — was false when it
+was written, and the final independent review proved it by mapping all 37 `what` strings against the table.**
+**Eight** rows named a mutation in §2 that the battery had never contained: 5.2b, 5.3a, 5.3b, 5.4c, 5.6a,
+5.11a, 5.13a and 5.15. Three of them had a test and no mutation; **five had neither**, resting on a golden
+whose own header explains that a hairline or a 2px spine survives its 0.02f threshold. Seven are now built as
+M38–M44 and all seven died. The eighth, 5.2b, has **no C5 code to break** and is recorded in the table as
+framework-delivered rather than papered over with an invented mutation.
+
+Three of the seven needed an assertion before they could have a mutation at all, and two of those are worth
+naming because of *how* they were built: 5.6a's matcha border is counted on the **current sheet's own crop**,
+since the row-wide matcha count was satisfied by the two cover spines alone; and 5.15's serif voice is read as
+the title's **ink mass** — measured at 1302px for the frozen face against 1620px for the sans mutant — after
+the bounding box was measured too and *rejected*, because the two faces differ there by 2.5 %, which no honest
+tolerance separates. **Asserting the measure that cannot discriminate is how a row acquires coverage on paper
+and none in fact**, which is the same failure as having no mutation, wearing a test as a disguise.
+
+The count is therefore **44 mutations against 31 rows**: 30 rows carry at least one, and the 31st is
+framework-delivered. The lesson, twice-learned in one package: *the table is the contract, and only a
+row-by-row audit of the battery against it can say whether the contract is met — the total never can.*
+
+**Deviations from the frozen file, both recorded rather than silent:**
+
+| frozen property | what C5 does | why |
+|---|---|---|
+| `.pthumb i` placeholder rules | not drawn; the interior is the real page | [OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling) deleted them from the specification |
+| `.cur{z-index:2}` | not transcribed | [D-057](design/V2-SPEC-DEFECTS.md#d-057) — it reorders the platform accessibility tree, publishing the current sheet last |
+| `role=button` on a thumb | `Role.Tab` + selected state | §3: a parity phase does not weaken a conformance path (CI-29/CI-30) |
+| `.scrim` behind the grid | omitted | the grid is opaque `--desk` at `inset:0` over the same box, so the scrim is invisible *once the grid has arrived*. **An earlier version of this row claimed it was fully occluded, and that is false:** `.scrim` fades over `.25s` (`v2-bench.html:333-334`) while `.pgrid` slides for `.3s`, so the freeze shows it through the entry. What is lost is 300ms of a fade behind an arriving opaque panel; recorded as the small deviation it is, rather than argued away |
+| `role=button` on a grid **cell** | `Role.Button` + `selected` + **`stateDescription`** | parity — but note the two page pickers now publish *different* roles, `Role.Tab` on a sheet and `Role.Button` on a cell. That is deliberate: the strip is a persistent selector where CI-30 requires a tab, the grid is a transient list of destinations. It is recorded because a reader meeting both would otherwise assume one of them is a mistake |
+
+<a id="adr-095-od23"></a>
+**The seventh amendment, and the accessibility fix Device Pass 1 held open.** Device Pass 1 stopped at item 5
+with two findings that outlived it, and both are closed here:
+
+- **[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling)** — the miniature drew the page's content on the *room's*
+  paper, so in dark theme the user's own words measured **1.21:1** against the sheet (8.02:1 in light, same
+  document). This repaints a frozen property, so it was **not** worked around: the pass was halted, the defect
+  written up with costed options, and the owner ruled option (a). The frozen HTML was amended first, then
+  transposed into Compose as `benchThumbIsland` — **five** tokens, not `.page`'s eight, because `--matcha` and
+  `--strawberry` on this surface are the *row's* marks on the sheet and must read against the chrome. Carried
+  as FPT row **5.4d**, guarded by a pure set assertion, a raster probe with a counter-assertion that the row's
+  own ground did **not** move with it, and mutation M36.
+
+  **Two limits of that evidence, recorded because the final review named them and both are real.** (1) The
+  probes assert the **token** (`zinelyV2LightColors().paper`), not the hex literal `#F7F2E7`; the literal is
+  tied to the token only transitively, through `ZinelyV2ColorsTest`. A change made to the token in both places
+  would satisfy every C5 assertion. (2) Of the five tokens the island restates, only `--paper` and
+  `--paper-edge` currently do any work in Compose — the miniature's renderer paints each element's own stored
+  colour and reads nothing from the scheme, so `--ink`, `--ink-soft` and `--ink-faint` are carried for
+  **parity, not effect**. They are restated anyway, because the amendment is to the *specification* and a
+  renderer that later starts reading the scheme must find the island already there; but the KDoc's claim that
+  anything the miniature draws from the scheme reads the page's tokens is, today, vacuously true.
+- **The grid's current cell told the platform the wrong thing, in the wrong words.** Compose maps
+  `SemanticsProperties.Selected` through to `AccessibilityNodeInfo.isSelected` for `Role.Tab` and **not** for
+  `Role.Button`, so every cell reported `selected=false` — the current one included — while the 2dp matcha ring
+  said otherwise on screen. Every merged-tree assertion passed, because the merged tree is not the tree
+  TalkBack reads.
+
+  ⚠ **An earlier version of this bullet said the cell "told the platform nothing", and the final review
+  disproved it from Compose's own source.** The same delegate routes a non-`Tab` `Selected` to **`isChecked`**
+  and, when no `stateDescription` is set, fills in Android's **default** *selected / not selected* wording. So
+  the pre-fix cell did publish state — as a *checked* state, in the framework's words rather than the app's,
+  and diverging from the strip's. That is a smaller defect than the one claimed here, and the correction is
+  recorded rather than quietly softened. Note also that the CI-26 harness snapshots neither `isSelected` nor
+  `isChecked`, so this diagnosis is still **uninstrumented**: what the tests assert is the property that
+  matters — that both pickers say the *same* thing. Fixed with an explicit
+  `stateDescription`, the CI-26 harness extended to snapshot it, and the property asserted as an *equivalence*
+  between the two pickers in one composition (`the_strip_and_the_grid_tell_the_platform_the_same_current_page`)
+  so they cannot drift apart again. Mutation M37.
+
+**Added beyond the freeze:** `BackHandler` on the summoned grid. The frozen HTML cannot describe it — a
+prototype has no back button — and losing it was a side effect of correcting the overlay's scope.
+
+**Three corrections this ADR made to itself**, each recorded in full rather than quietly amended:
+[§3a](#adr-095-cover-correction) (cover detection, forced by device evidence),
+[§3b](#adr-095-a11y-correction) (the withdrawn accessibility findings, and the real defect underneath them),
+and [D-058](design/V2-SPEC-DEFECTS.md#d-058) — the navigation row shipped **below** the bar while §7's device
+checklist asserted the frozen order. The second independent review found it by reading the frozen markup
+against the emitted Column; nothing in 38 tests, 35 mutations or five goldens could, because every one of
+them measured a row against itself and never two rows against each other.
+
+<a id="adr-095-verification"></a>
+### 6. Verification
+
+One sweep of the whole project against the current tree, `--rerun-tasks` throughout so no task could be
+silently up-to-date (C4's lesson), and `-Proborazzi.test.verify=true` so the golden gate **asserts** rather
+than photographs — the distinction that had already cost this package three "green" runs in which no golden
+was ever compared:
+
+```
+./gradlew.bat test testDebugUnitTest verifyRoborazziDebug --rerun-tasks -Proborazzi.test.verify=true
+```
+
+**BUILD SUCCESSFUL.** `verifyRoborazziDebug` green in `:core:ui`, `:render-android` and `:feature:editor`.
+**1544 tests, 0 failures, 1 skipped**, counted from the JUnit XML of the final sweep — the one run after
+[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) and the accessibility fix, superseding the 1542-test figure
+this section previously carried:
+`:feature:editor` 663 · `:core:ui` 172 · `:data-android` 151 · `:core:editor` 136 · `:app` 100 ·
+`:core:imposition` 69 · `:core:data` 66 · `:render-android` 62 · `:core:model` 51 · `:core:data-storage` 44 ·
+`:core:render` 23 · `:core:copy` 7.
+
+⚠ **The sweep immediately before this one was `BUILD FAILED`, by a regression this package caused, and the
+mutation battery could not have found it.** Extending the CI-26 harness for the accessibility fix added a call
+to `AccessibilityNodeInfo.getStateDescription()` — **API 30+**. Robolectric runs each suite at *its own*
+configured SDK, and four tests in suites C5 has no interest in (`ZineOnShelfTest` ×3, `ZineDockTest` ×1) read
+the platform tree through that same shared reader below API 30, so they died with `NoSuchMethodError` at
+`PlatformAccessibilityTree.kt:150`. Guarded on `Build.VERSION.SDK_INT >= R`, returning `null` below it — the
+platform genuinely has no state description there, so `null` is the honest answer and not a degraded one.
+
+The lesson is the battery's own boundary, stated plainly: **the mutation battery runs a 40-test focused filter
+over C5's three suites, so a defect this package inflicts on someone else's suite is invisible to it by
+construction.** Only the full sweep can see that, which is why the sweep is a separate gate and not a
+formality after a green battery.
+
+⚠ **An earlier sweep failed once for an unrelated reason, and that failure is recorded rather than discarded.**
+`ReframeSessionTest.done_bakes_a_zoom_as_one_undoable_edit` could not find the `Zoom in` control
+(`ReframeSessionTest.kt:222`). It passes 9/9 when its class runs alone and it passed in the clean sweep
+above, so it is **non-deterministic** — the same intermittent Reframe/Robolectric flake
+[ADR-093 §7](#adr-093-verification) recorded for `ReframeA11yTest`. It is not attributed to C5 on that
+evidence alone: the only C5 edit to that file is in a **different** test method (`ReframeSessionTest.kt:280`,
+the page-switch case retargeted to the new filmstrip tag), the failing method touches no C5 code, and node
+absence in the semantics tree is not something a sibling row's layout can cause. Carried as a known
+intermittent, not as a C5 defect.
+
+<a id="adr-095-device-checklist"></a>
+### 7. The device checklist — written before the passes run
+
+Only the items hardware can answer are listed; the other 20-odd FPT rows are closed by unit tests, goldens and
+the mutation battery above, and repeating them by eye adds nothing. Every item names what is *read*, not what
+is *looked at*.
+
+1. **The row stands.** `.navrow` measures 56dp on the platform tree at density 420, sits above C4's bar, and
+   the canvas is not clipped by it (row 5.1).
+2. **Every sheet is one traversal stop, in page order** — read from `uiautomator dump`, matching the CI-26
+   harness's assertion on hardware (rows 5.9, D-057). The current sheet must **not** be published last.
+3. **A sheet's hit rect is ≥48dp tall** on the platform tree while its paint stays 26×34dp (row 5.2b, D-009).
+4. **The current sheet is announced `selected=true`**, its neighbours `false`, and the label reads
+   `Page i of N`, with `(front cover)` on the first and `(back)` on the last of the **real** document — the
+   defect D-056 fixed, checked on a document the app itself created (rows 5.5a, 5.9, 5.14).
+5. **The miniature is the real page** — text the user typed is visible inside the 26×34dp sheet, and changing
+   the page changes the picture (row 5.8, OD-22). Also the accepted price: judge whether it reads as a picture
+   or a smudge, and record the answer either way.
+6. **Selecting a far sheet scrolls it toward the centre**, animated, and the first composition **snaps**
+   without an animation (row 5.10).
+7. **The grid is summoned and canvas-scoped** — no grid node at rest; the button raises it; it covers the
+   canvas while the navigation row and C4's bar stay standing and usable (rows 5.11, 5.11a).
+8. **Back stands the grid down** and does not leave the editor — the one thing added beyond the freeze.
+9. **The grid's header counts the document's real N**, and choosing a cell navigates *and* dismisses
+   (rows 5.15, 5.16, 5.14).
+10. **Cover badges read `COVER` / `BACK` in capitals** on the first and last cells of the real document, and
+    the current cell's border is visibly heavier than its neighbours' (rows 5.13, 5.14).
+11. **Regression:** C1's sheet, C2a's selection and dismissal, C3's in-place editing with the IME up, and C4's
+    bar/chooser/snackbar all still behave — the navigation row must not have stolen space or taps from any of
+    them.
+
+**Pass 2** asks its own question and is recorded separately: *how do I get to another page, and did I ever
+wonder where my page went?* Per the owner's standing instruction, it also re-reads the whole editing
+experience as a first-time user, not only C5's two surfaces.
+
+<a id="adr-095-device"></a>
+### 8. Device Pass 1 — run from the beginning on the amended build
+
+`SM-A176B` · Android 16 · density 420 (2.625) · debug build carrying
+[OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) and the accessibility fix · 2026-08-05, 18:24–18:36.
+
+**No evidence from the aborted pass is reused.** The build changed, so every item was re-read; the aborted
+pass's table is kept below the new one only as the record of why the package stopped.
+
+⚠ **An environment trap invalidated this pass's first four accessibility readings, and they were re-taken.**
+Under Git Bash, MSYS rewrites the `/sdcard/…` argument of `adb shell uiautomator dump` — the device answered
+`UI hierchary dumped to: /Files/Git/sdcard/ui5.xml` — while `MSYS_NO_PATHCONV=1 adb exec-out cat /sdcard/ui5.xml`
+read the *unrewritten* path. The dump therefore landed somewhere else and the reader silently returned a
+**stale file from an earlier session**, which is how a tree claiming page 8 was current was read off a screen
+showing page 5. It was caught only because the tree contradicted the pixels. Every reading below comes from a
+dump with `MSYS_NO_PATHCONV=1` on **both** halves, cross-checked against the same screenshot. Added to
+[DEVICE-VERIFICATION.md](DEVICE-VERIFICATION.md) — *a stale accessibility dump is worse than no dump, because
+it answers.*
+
+| # | item | reading |
+|---|---|---|
+| 1 | the row stands, above the bar | ✅ above `Undo · Redo · Add · Done` in both themes; canvas not clipped. [D-058](design/V2-SPEC-DEFECTS.md#d-058) confirmed on hardware |
+| 2 | one traversal stop per sheet, in page order | ✅ eight named stops, `Page 1 of 8 (front cover)` → `Page 8 of 8 (back)`, current sheet **not** last — [D-057](design/V2-SPEC-DEFECTS.md#d-057) confirmed |
+| 3 | hit rect ≥ 48dp | ✅ every sheet **48.0dp tall** (126px). Widths 29.0–32.8dp, clipped by the 33dp pitch, paint still 26×34 — D-009's *extend the target, keep the paint* as far as the pitch allows. Current sheet 55.6×55.6dp; grid button 38.1×48.0dp |
+| 4 | current sheet announced | ✅ **exactly one** `selected=true`, and it tracked the page through two navigations (page 1 → 5 via the grid, 5 → 7 via the strip) |
+| 5 | **dark-theme miniature readability** ([D-059](design/V2-SPEC-DEFECTS.md#d-059), the reason for this re-run) | ✅ **FIXED.** Modal sheet interior measures `#F7F2E7` **exactly** — the frozen `--paper`, not the room's. Darkest page ink vs sheet paper = **13.97 : 1**, against the **1.21 : 1** that stopped the last pass |
+| 5a | the row did not move with the sheet | ✅ row ground still `#272219`; sheet-vs-row **14.15 : 1** in dark. The island stayed inside the sheet, which is the whole of [D-010](design/V2-SPEC-DEFECTS.md#d-010)'s lesson |
+| 5b | **light-theme miniature readability** | ✅ paper `#F7F2E7`, ink-vs-paper **10.94 : 1** — and *identical* paper to dark, since in light the room's own paper already equalled the island's, so OD-23 is a no-op there. ⚠ but see DV-B |
+| 6 | thumbnail rendering | ✅ the real page: the front cover's photo card and its caption are visible inside 26×34dp and survive navigation. At that size it is a smudge with a recognisable shape — OD-22's accepted price, confirmed as accepted rather than assumed |
+| 7 | choosing a far sheet scrolls it to centre | ⚪ **still unreachable on the product's only format.** The strip *is* a real `HorizontalScrollView` (bounds `[136,1899][828,2036]`) but reports `scrollable=false`: eight sheets fit. Rows 5.3a and 5.10 stay specified-but-unreachable, asserted in Robolectric on a 20-page fixture and killed by M13 |
+| 8 | the grid is summoned and canvas-scoped | ✅ no grid node at rest; the button raises it; nav row and bar stay standing and usable under it |
+| 9 | Back stands the grid down | ✅ grid gone, editor still open, page unchanged |
+| 10 | header counts the real N; a cell navigates and dismisses | ✅ `Your zine · 8 pages`; cell 5 went to page 5 and took the grid with it, confirmed in both the pixels and the tree |
+| 11 | `COVER` / `BACK` in capitals; current cell heavier | ✅ both badges on the real document's first and last cells; the 2dp matcha ring reads clearly |
+| 12 | regressions | ✅ C4's chooser still offers **Text and Photo and no Art**; C3's in-place session still opens with its style row above the IME and the nav row correctly *replaced* by the editing stack; Undo restored the added box. The nav row's move stole no space and no taps |
+
+**DV-A — the grid's current cell: fixed, but the fix is not verifiable on this instrument.** The
+`stateDescription` added for it is **absent from `uiautomator dump`'s schema entirely** (`'state-desc' in dump
+→ False`), so the device can neither confirm nor deny it. What the device *does* still show is the underlying
+asymmetry: every grid cell reports `selected=false`, the current one included, because Compose maps `Selected`
+to `AccessibilityNodeInfo.isSelected` for `Role.Tab` and not for `Role.Button`. The authoritative evidence is
+therefore Robolectric's platform-tree harness, which reads the real `AccessibilityNodeInfo` and asserts the two
+pickers speak the *same* state (`the_strip_and_the_grid_tell_the_platform_the_same_current_page`, mutation
+M37). Recorded as a limit of the instrument, in the same family as C4's *TalkBack utterances are not
+capturable* — **not** as a passed item.
+
+**DV-B — in light theme a sheet and the row it sits in differ by 1.04 : 1.** Measured: row `#FBF7EE`, sheet
+`#F7F2E7`. The sheets are told apart only by their 1dp `--paper-edge` and 2dp spine, which do read. This is
+**pre-existing frozen behaviour, untouched by OD-23** — the freeze sets `--chrome` and `--paper` two steps
+apart in light — and it is the exact inverse of the dark-theme complaint D-059 raised. Recorded as an
+observation against the freeze, not a C5 defect, because C5 transcribes both values correctly.
+
+**DV-C — with the grid open, sixteen page stops are published at once**: eight cells and, beneath them, the
+strip's eight sheets, all named `Page N of 8`. That is faithful to the freeze — `.pgrid` is `inset:0` inside
+`.canvasArea`, so the navigation row is genuinely still on screen and genuinely still usable — but a screen
+reader traversing the open grid meets every page twice. Recorded; changing it means excluding a visible,
+working control from the tree, which is a design decision and not a parity fix.
+
+**One platform behaviour, checked rather than assumed.** The current sheet reports `clickable=false` while its
+neighbours report `clickable=true`. That is Compose's own mapping for a **selected** `Role.Tab` — a screen
+reader should not offer *activate* on the tab you are already on — and not a defect in this code. It is
+recorded because it looks like one.
+
+<a id="adr-095-pass-2"></a>
+#### 8b. Device Pass 2 — first-time user, recorded separately and **not averaged with Pass 1**
+
+Same device, same build, dark theme, app force-stopped first. The goal attempted was an ordinary one — *get to
+page 7 and put a word on it* — and the question the editor is supposed to answer is **"how do I change this
+page?"**
+
+**It works, and it works in one tap.** Tapping the seventh sheet lands on `7 / 8`. Nothing had to be learned,
+nothing had to be undone. The row reads as *the pages of my zine*, which is what it is, and after OD-23 it
+reads that way in dark theme too: eight little sheets of paper on a dark bench, rather than eight holes.
+
+Findings, separated as the protocol requires into what the implementation got wrong and what the design
+intends:
+
+1. 🟦 **The two page pickers are made of different material** (design consequence, not a defect). In dark
+   theme the strip's sheets are cream and the grid's cells are dark. I reached for the grid expecting *the
+   same pages, larger*, and got a different-looking thing. The cause is exactly OD-23's deliberate narrowness:
+   the strip renders the real page and therefore needed the page's paper, the grid renders no page content and
+   therefore did not. The ruling considered the grid and excluded it in the same breath, so this is **not a
+   new owner decision** — it is that ruling's recorded consequence, and a candidate for a future amendment if
+   the owner ever wants the two pickers to look like the same object.
+2. 🟦 **Choosing a page means counting.** No sheet carries its number and no cell carries a preview, so
+   picking "page 7" is done by position. On this document that is honest — the pages *are* blank, and the
+   strip is not lying about them — but it means the grid, summoned to answer *which page do I want*, answers
+   only *how many there are and where you are*. Frozen behaviour on both surfaces; recorded, not fixed.
+3. 🟦 **The strawberry dot is unexplained.** The current sheet already carries a matcha border and a lift; the
+   pink dot above it is a third mark for the same fact, with no legend. It is the freeze's own
+   `.pthumb.cur::after`, transcribed faithfully. I noted the confusion *before* looking up why it was there,
+   which is the note worth keeping.
+4. ⚪ **Not C5:** the shelf takes ~3s to first paint after a force-stop, long enough that a tap aimed at a zine
+   is swallowed. Pre-existing, outside this fence, filed here only so it is not lost.
+
+**Nothing in Pass 2 contradicts Pass 1.** Where the two look at the same thing — the dark-theme miniature —
+they agree: Pass 1 measures 13.97:1 and Pass 2 reads *paper*. The three 🟦 items are frictions in the frozen
+design, none of them blocking, and none of them are the kind of thing Pass 1 could have seen.
+
+<a id="adr-095-device-pass-1-partial"></a>
+#### 8a. The aborted Pass 1 — kept as the record of why the package stopped, and **not** as evidence
+
+The pass below was **halted by [D-059](design/V2-SPEC-DEFECTS.md#d-059)** rather than worked around. Its
+readings are superseded in full by §8; several of its accessibility lines are now known to have come from the
+stale-dump trap described above, which is a second reason not to count them.
+
+| # | item | reading |
+|---|---|---|
+| 1 | the row stands, above the bar | ✅ 56dp, above `Undo · Redo · Add · Done`, canvas not clipped — [D-058](design/V2-SPEC-DEFECTS.md#d-058)'s fix confirmed on hardware |
+| 2 | one traversal stop per sheet, in page order | ✅ eight named stops, `Page 1 of 8 (front cover)` → `Page 8 of 8 (back)`, current sheet **not** last — [D-057](design/V2-SPEC-DEFECTS.md#d-057)'s fix confirmed |
+| 3 | hit rect ≥ 48dp | ✅ sheets `86×126px` = **32.8 × 48.0dp** at density 2.625, paint still 26×34; grid button `100×126px` = **38 × 48dp** |
+| 4 | current sheet announced, covers named | ✅ on the strip: `selected=true` on the current sheet only, and the labels name both covers on a document the app itself created — [D-056](design/V2-SPEC-DEFECTS.md#d-056)'s fix confirmed. ⚠ **but see DV-A below for the grid** |
+| 5 | the miniature is the real page | ⛔ **[D-059](design/V2-SPEC-DEFECTS.md#d-059)** — true in light theme (a typed word appears in the sheet within a second), and in dark theme the page's paper is missing and its text measures **1.21:1**. **Pass stopped here.** |
+| 6 | choosing a far sheet scrolls it to centre | ⚪ **unreachable on the product's only format** — eight sheets on a 33dp pitch measure 690px against a 692px viewport, so the strip never overflows and the scroll never runs. Asserted in Robolectric on a 20-page fixture; recorded as specified-but-unreachable, beside the 1→32 morph |
+| 7 | the grid is summoned and canvas-scoped | ✅ no grid node at rest; the button raises it; the nav row and the bar stay standing and usable under it |
+| 8 | Back stands the grid down | ✅ grid gone, editor still open, page unchanged, activity not finishing |
+| 9 | header counts the real N; a cell navigates and dismisses | ✅ `Your zine · 8 pages`; cell 1 went to page 1 and took the grid with it |
+| 10 | `COVER` / `BACK` in capitals; current cell heavier | ✅ both badges on the real document's first and last cells; the 2dp matcha ring reads clearly against the others' 1dp |
+| 11 | regressions | ✅ C2a selection + eight handles, C2b's verb bar, C3's in-place session (style row, IME, pan) and C4's bar/chooser all behave; the chooser still offers Text and Photo and no Art |
+
+**DV-A — a second finding, fixable inside the fence and not yet fixed.** The grid's current cell is *drawn*
+current but not *announced* current: on the platform tree every cell reports `selected=false`, including the
+one the user is on. The strip's sheet publishes `selected=true` because Compose maps `Selected` through for
+`Role.Tab`; the cell carries `Role.Button` and the same `selected` property never reaches
+`AccessibilityNodeInfo`. The fix is the strip's own — a `stateDescription` — and it is an accessibility
+improvement, which the freeze permits; it is held with D-059 so both passes run once, on one build.
+
+**One platform behaviour, checked rather than assumed.** The current sheet reports `clickable=false` while its
+neighbours report `clickable=true`. That is Compose's own mapping for a **selected** `Role.Tab` — a screen
+reader should not offer *activate* on the tab you are already on — and not a defect in this code. It is
+recorded because it looks like one.
+
+---
+
+## ADR-096 {#adr-096}
+
+**C6 — the ink popover (H4): the maker palette. Written before any production code, per
+[ADR-089 §2.2](#adr-089).** It opened `Proposed` and **blocked**: its [blocker check](#adr-096-blockers) found
+**one** question that was genuinely the owner's, and unlike C5's it could not be cleared by rulings in hand,
+because it asked whether an `Accepted` ADR is superseded. **[D-028 was ruled on 2026-08-05](design/V2-SPEC-DEFECTS.md#d-028-ruling)
+— OD-24, option (c) — the frozen Bench was amended first, and only then was any production code written.**
+
+- **Status:** ✅ `Accepted` **2026-08-06** — implementation complete; independent review reconciled
+  ([§6](#adr-096-review)); **both device passes accepted on hardware** ([§9](#adr-096-device)), which cost
+  two fixes, two new frozen-property rows and two new mutations. [§3a](#adr-096-ruling) records the ruling
+  that unblocked it. Opened 📝 `Proposed` **2026-08-05**.
+- **Package:** C6 · **Depends on:** C2 ✅ (C2a/C2b `Accepted`) · **Selectors:** `.inkpop*`, `.band*`, `.swrow`,
+  `.sw2*`, `.presets`, `.preset*`, `.inkuse*`, and the behaviours `openInk` / `applyInk` / `inkClose`.
+- **Supersedes nothing. Modifies nothing.** Whether [ADR-055](#adr-055) Decision 6 is superseded is the
+  owner's act, requested as D-028, and is **not** performed here.
+
+<a id="adr-096-drift"></a>
+### 1. Citation drift — every C6 address in ADR-089 is wrong, and not by one offset
+
+[OD-18](design/V2-SPEC-DEFECTS.md#d-046-ruling) makes each package re-anchor **its own** citations. C5 did this
+in [ADR-095 §1](#adr-095-drift) and the same is owed here. Each line below was resolved by opening
+`docs/design/mockups/v2-bench.html` at the cited address and reading what is actually there.
+
+⚠ **The first version of this gate reported a single offset — *"all twelve stale by ~+93 after seven
+amendments"* — and the independent planning review disproved it twice over.** The drift is **at least four
+different offsets**, and the addresses were **already wrong at the DESIGN FREEZE commit `4494e95`**, before any
+amendment existed: `:250` was `.caption .state` and `:213` was `.chips` even then. So the diagnosis was wrong as
+well as the number — these citations never resolved against this file at all. *An approximate offset is not a
+re-anchoring; it is a guess that happens to be checkable, and it was checked.*
+
+| ADR-089 row | cited | at the gate (pre-amendment) | **today (post-amendment)** | what stands at the cited line |
+|---|---|---|---|---|
+| 6.1 `.inkpop` | `:250-252` | `:343-345` | **`:377-379`** | `.guide` |
+| 6.1 replaces `.ctx` | `:495` | `:655` | **`:692`** | scrim / sheet markup |
+| 6.2 `.inkpop h4` | `:213-214` | `:346-347` | **`:380-381`** | `body` |
+| 6.2 the `Done` button | `:492` | `:652` | **`:689`** | snack markup |
+| 6.3 `.band` / `.bl` | `:215` | `:348` | **`:382`** | `body` |
+| 6.3 the band labels | `:493` | `:653` | **`:690`** | scrim markup |
+| 6.4 `.sw2` | `:217-218` | `:350-351` | **`:384-385`** | `body` |
+| 6.5 `.sw2.sel::after` | `:218` | `:351` | **`:385`** | `body` |
+| 6.6 `INKS` | `:424` | `:562` | **`:596`** | `.foot` |
+| 6.7 `TINTS` | `:425` | `:563` | **`:597`** | `@media` |
+| 6.8 `NEUT` | `:426` | `:564` | **`:598`** | `@media` |
+| 6.9 `PRESETS` | `:427` | `:565` | **`:599`** | `</style>` |
+| 6.9 `.presets` / `.preset` | `:259-261` | `:352-354` | **`:386-388`** | `.guide`-adjacent |
+| 6.10 preset applies `[1]` | `:498` | `:658` | **`:696`** | a comment |
+| 6.11 `.inkuse` | `:222-223` | `:355-356` | **`:389-390`** | `body` |
+| 6.11 the copy | `:494` | `:654` | **`:691`** | scrim markup |
+
+[D-028](design/V2-SPEC-DEFECTS.md#d-028)'s own citations are stale by different amounts again: `:404-407` and
+`:410` resolved at the gate to `:562-565` and `:568`, and `:476-483` to `:655-658` — **today `:596-599`,
+`:602` and `:692-696`.**
+
+⚠ **This table was resolved at the gate, against the file as it stood BEFORE the OD-24 amendment, and a
+first version of it carried only that column.** The amendment then inserted 34 lines above the CSS block and
+a further three inside `openInk`, so every "at the gate" address moved — by +34, +37 or +38 depending on
+where it sits. The fourth column is the post-amendment address and is the one to use; the third is kept
+because it is what the gate actually read, and deleting it would make this table a claim rather than a
+record. Independent review caught §3a asserting that this section had been re-resolved after the amendment
+when it had not; the claim is corrected there and the work is done here.
+
+<a id="adr-096-gaps"></a>
+### 2. What ADR-089's C6 table does not cover — audited property by property
+
+ADR-089 rows 6.1–6.12 are a **selector-level** table and never claimed to be property-level; §2.2 says so. This
+audit exists because C5 learned the same lesson twice — at its second review and again at its third — that *a
+table is the contract, and only a row-by-row audit against the frozen file can say whether the contract is met.*
+
+**Every address in this section is PRE-amendment**, because the audit was written before
+[OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) amended the frozen Bench. They are §1's *"at the gate"*
+column, and following one today lands you in the page-strip CSS rather than the popover's. The offsets are
+§1's: **+34** for the `.inkpop` block (`343 → 377`, `349 → 383`), **+37**/**+38** for the behaviours
+(`664 → 701`, `659 → 697`). **§4's addresses are the live ones** — use those. This paragraph exists because
+§1 got a two-column treatment and an explanation and §2 got neither, which independent review found by
+following an address here and landing on the wrong rule.
+
+**Frozen properties with no row of any kind.** Each becomes a row in §4 when this ADR is unblocked:
+
+| frozen property | address | why no existing row reaches it |
+|---|---|---|
+| `.swrow{display:flex;gap:7px;flex-wrap:wrap}` | `:349` | **the selector has no row at all.** ADR-089's package table names `.swrow`; its property table forgot it |
+| `.inkpop{padding:12px 14px 14px}`, `z-index:42`, `border:1px solid --chrome-line` | `:343-344` | row 6.1 asserts anchor, radius, `--sheet`, shadow and the enter transition only |
+| `.inkpop h4{margin:0 0 8px}` and its `space-between` layout | `:346` | row 6.2 asserts the two **type** roles |
+| `.band{margin-bottom:9px}`, `.bl{margin-bottom:5px}` | `:348` | row 6.3 asserts the labels and their order |
+| **the fourth band, labelled `Ready-made palettes`** | `:648` | **row 6.3 says "three bands"; `openInk` emits four.** The presets sit inside a `.band` carrying its own `.bl`, so that label is a frozen property nobody owns |
+| `.sw2{transition:transform .1s}` | `:350` | row 6.4 asserts ring, halo and size |
+| `.presets{gap:8px;margin-top:2px;flex-wrap}` | `:352` | row 6.9 asserts the dots' overlap and their ring |
+| `.preset` pill: `border-radius:20px`, `padding:5px 9px 5px 6px`, `font-size:11.5px`, `1px --chrome-line`, `--ink`, sans | `:353` | as above — the **dots** are covered, the **pill** is not |
+| `.inkuse{margin-top:9px;gap:6px}` and `svg{stroke-width:1.7}` | `:355-356` | row 6.11 asserts the copy, the live count and the 13px glyph **size** — not its **weight**, which is exactly the pair C5 had to split for the grid glyph (5.2a) |
+| `inkClose` hides `.inkpop` **and restores `.ctx`** | `:659` | row 6.2 asserts that `Done` exists, not what it does. The restore is the half that fails silently |
+| `applyInk` writes `$('editSw').style.background` | `:664` | **cross-package**: C6 behaviour writing into C3/C4's style-toolbar chip (`.styletb .chip .sw`, `:335`). Ownership must be stated before it is built |
+| `applyInk` calls `flashSaved()` | `:664` | **cross-package**: it raises C4's `.saved` chip. Same |
+
+**One claimed gap that is not one — recorded, because claiming it would have repeated C5's own failure.** An
+earlier draft of this audit listed `applyInk`'s snackbar — buttonless, auto-hiding at 1600ms — as unowned. It is
+owned **twice**: [ADR-089](#adr-089) row 4.13 and [ADR-094](#adr-094) row **4.15**, which says in terms *"the
+ink path itself is C6's; C4 owns the snack variant, not what raises it"* — and it is **already shipped**
+(`BenchSnack.kt`, with `BenchC4Test` asserting `actionLabel = null`). C6 raises it; C6 does not rebuild it.
+Likewise the swatch-selection **exclusivity** (`:656-657`) is fairly read as already inside row 6.5's *"selection
+ring on the chosen swatch only"*. *Inventing a gap is the same defect as missing one: either way the table is
+not the contract.*
+
+**One row that is settled in approach and must still be planned on day one.** ADR-089 row 6.4 already flags
+[D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)'s
+**overlap** case, and `.swrow` is the densest instance of it in V2: 26px swatches at `gap:7px` — a **33px centre
+pitch against a 48dp floor**, in a *wrapping* row, so expanded targets overlap both horizontally **and**
+vertically. D-009 is ruled (*extend the target, keep the paint*), so this is not a blocker; but C5 met only the
+one-dimensional version (sheets clipped to 29–33dp wide) and C6 meets the two-dimensional one. A
+hit-region-priority row belongs in §4 from the start, not after a device pass finds it.
+
+<a id="adr-096-blockers"></a>
+### 3. Pre-implementation blocker check — run 2026-08-05
+
+**Result: exactly one owner decision, and it is [D-028](design/V2-SPEC-DEFECTS.md#d-028).** Every open register
+item was read and cleared against C6's fence: D-008 and D-009 are **ruled in approach** and close on device
+verification, not before; D-012 is answered *inside* C9 by design; D-029 and D-030 were re-seated beyond Phase C
+by [OD-2](#adr-089); D-038 fences nothing; D-046 is ruled [OD-18](design/V2-SPEC-DEFECTS.md#d-046-ruling), which
+makes §1 above a **requirement** of this package rather than a blocker on it; D-041, D-049, D-050, D-051 and
+D-052 belong to other packages; D-005, D-023 and D-027 are the Library's.
+
+**The measured evidence D-028 needs lives in the register**, at
+[D-028 § gate evidence](design/V2-SPEC-DEFECTS.md#d-028-evidence), and is deliberately not restated here — the
+Documentation Rule forbids a second source of truth for it.
+
+**Rows 6.6, 6.7, 6.8, 6.10 and 6.12 cannot be written until the ruling.** An earlier draft named only 6.6, 6.10
+and 6.12, which the planning review correctly called inconsistent: option (b) offers five inks for **text**,
+which withholds all three bands rather than one, so 6.7 (Paper tints) and 6.8 (Neutrals) are contingent on
+exactly the same ruling as 6.6. Every other row can be written the moment C6 opens.
+
+<a id="adr-096-ruling"></a>
+### 3a. The ruling, and the two amendments it required — OD-24, 2026-08-05
+
+⛔ **The blocker is closed.** [D-028 was ruled](design/V2-SPEC-DEFECTS.md#d-028-ruling) **option (c)**, and the
+frozen Bench was amended **first**, per the HTML-first rule — its **eighth** amendment, and the register
+holds the ruling's own reasoning rather than a second copy of it here.
+
+What it decided, in one line each:
+
+1. **The ink target selects the bands.** A **text** element is offered `Inks` + `Neutrals`; `Paper tints` are
+   **not drawn** for it, because they are paper — by the band's own frozen label, by the popover's caption
+   (*"riso spot-inks"*), and by the presets' third slot, which in two of three recipes is a tint **by value**.
+   `TINTS` and `bandHTML` are untouched: this is [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling)'s **fence
+   reassignment, not a capability reassignment**, and the band returns the day a paper target exists.
+2. **A preset applies `[0]`, its primary ink** (`PRESETS[i][1][1]` → `[0]`). Measured on paper-white, `[1]` is
+   the least legible colour available in all three recipes.
+3. **No contrast floor is imposed on in-page text ink** — deliberately, because a riso palette that clears AA
+   is not a riso palette and contrast is a property of the *pairing*. C6's AA gate asserts nothing on this
+   control **on purpose**, and this sentence is the record that the absence is a decision.
+4. **[ADR-055](#adr-055) Decision 6's exclusivity is superseded** for V2. Its five values are **not** deleted
+   and **nothing migrates**: `TextStyle.color` is a free `ColorRgba`, and [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)
+   keeps the shipped Type bar — and its `Coral` / `Teal` / `Blue` — reachable. That no user loses a colour
+   they already applied is a **consequence of OD-11**, not a designed migration path.
+
+The two amendments were made to `v2-bench.html` before a line of Compose: `openInk()` now takes the target's
+kind (`:688`), and the preset handler applies `PRESETS[i][1][0]` (`:696`). §1's table was resolved **at the
+gate, against the pre-amendment file**; a first version of this sentence claimed it had been re-resolved
+afterwards, which independent review disproved. §1 now carries both columns, and §4's addresses below were
+resolved against the amended file — nine of them one line high on their first pass, and corrected here.
+
+### 4. Frozen property table — 50 rows
+
+Forty-eight when the package was written; **two — 6.1i and 6.2c — were added by device verification**, and
+neither could have been added by the suite, because the suite's evidence for both blocks was a recorded
+Roborazzi frame and *a recorded frame cannot fail against the implementation it was recorded from*
+([§9](#adr-096-device)). They are marked in the table by their mutation ids, **M39** and **M40**, which are
+the battery's last two.
+
+**This heading said 37, and before that 35, and both were wrong — in the section that boasts of having
+audited its own count.** The table has always had 50 rows (48 before hardware). What 37 actually counts is
+**rows carrying a mutation of their own**: 50 rows, less the 10 that name no mutation, less the 3 that
+reuse another row's (6.9c→M20, 6.10b→M21, 6.15c→M24). That is a real and useful statistic — it is simply
+not the row count, and printing it under the word *rows* is precisely the failure this section cites C5's
+review for catching. Counted programmatically from the table body, not by eye. The 10 with no mutation are
+not one kind of row but three, and §4's closing note now separates them.
+
+Written when [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) unblocked the package, from §1's re-anchored
+addresses and §2's audit. Every row carries one assertion and one mutation, in the
+[§8.1 format](COMPOSE-IMPLEMENTATION-GUIDE.md#81-the-frozen-property-table), and the count below was
+**audited row by row against the frozen file** rather than reported as a total — C5's own review had to
+correct a heading that said 30 over a table of 31.
+
+Assertions live in `BenchC6Test` (`T`) and `BenchC6GoldenTest` (`G`). Mutation ids are the battery's
+(§5).
+
+| # | frozen property | address | assertion | mutation |
+|---|---|---|---|---|
+| **6.1** | `.inkpop{left:12px;right:12px;bottom:12px}` | `:377` | `T.the_popover_sits_at_the_frozen_twelve_dp_inset` | **M1** 12dp → 24dp |
+| **6.1a** | summoned, never default — `openInk` is `.inkpop`'s only `add('show')` | `:692` | `T.the_popover_does_not_exist_until_the_ink_verb_asks_for_it` | **M2** `visible` → unconditional |
+| **6.1b** | `background:var(--sheet)` | `:377` | `G.the_popover_stands_on_the_frozen_sheet_behind_a_one_pixel_hairline` | **M3** `sheet` → `paper` — *see the null-mutation note under §5* |
+| **6.1c** | `border:1px solid var(--chrome-line)` | `:377` | `G` — run length inward from the left edge, in px at this density | **M4** the border deleted |
+| **6.1d** | `border-radius:16px` | `:377` | `G` — the corner pixel is not `--sheet`; 20dp in, it is | **M5** 16dp → 0 |
+| **6.1e** | `transform:translateY(14px)` released over `.22s var(--standard)` | `:377-379` | `T.the_popover_rises_fourteen_dp_into_place` | **M6** 14dp → 0 · **M7** 220 → 400 |
+| **6.1f** | `openInk` hides `.ctx`; `inkClose` restores it | `:692`, `:697` | `T.the_popover_takes_the_verb_bars_place_and_gives_it_back` | **M8** the `!inkPopoverOpen` term → `true` |
+| **6.1g** | `box-shadow:0 14px 34px -12px var(--frame-shadow)` | `:378` | `G` recorded frame (light + dark) | — *(see the note below)* |
+| **6.1h** | `padding:12px 14px 14px` | `:378` | `G` recorded frame | — *(see the note below)* |
+| **6.1i** | the frozen z-order — `.inkpop` `z-index:42` sits **above** `.snack` `38`, which sits above `.ctx` `30` | `:377`, `:444`, `:357` | `T.the_popover_is_drawn_above_the_snack_it_raises` | **M40** the `zIndex(1f)` dropped |
+| **6.2** | `h4` — `Ink`, `--serif`, 500, 15px | `:380`, `:689` | `T.the_header_is_the_frozen_title_and_its_done` + `G` | — *(see the note below)* |
+| **6.2a** | `h4 button` — `Done`, `--sans`, 12px, `--ink-faint` | `:381`, `:689` | `T.the_header_is_the_frozen_title_and_its_done` | — *(see the note below)* |
+| **6.2b** | `inkClose` hides the popover **and** restores `.ctx` | `:697` | `T.the_popover_takes_the_verb_bars_place_and_gives_it_back` | **M9** `onDone` made inert |
+| **6.2c** | `h4{display:flex;justify-content:space-between}` — `Done` sits at the card's far edge, not against the title | `:380` | `T.done_sits_at_the_cards_far_edge_and_not_against_the_title` | **M39** `fillMaxWidth` + `SpaceBetween` dropped |
+| **6.3** | four labelled bands, in order — `Inks · Neutrals · Ready-made palettes` for a text target | `:682`, `:688`, `:690` | `T.a_text_target_draws_three_of_the_freezes_four_labelled_bands` | **M10** the presets' `.bl` deleted |
+| **6.3b** | `.bl{text-transform:uppercase}` | `:382` | `T.a_text_target_draws_three_of_the_freezes_four_labelled_bands` | **M11** `.uppercase()` dropped |
+| **6.3c** | `.bl` — 10px/600, `.12em`, `--ink-faint`, 5px under itself; `.band{margin-bottom:9px}` | `:382` | `G` recorded frame | — *(see the note below)* |
+| **6.4** | `.sw2{width:26px;height:26px}` under `box-sizing:border-box` | `:384` | `T.every_swatch_is_the_frozen_twenty_six_dp` | **M12** 26dp → 32dp |
+| **6.4b** | `.swrow{display:flex;gap:7px;flex-wrap:wrap}` — **the selector ADR-089 had no row for at all** | `:383` | `T.the_swatch_row_keeps_the_frozen_seven_dp_gap` | **M13** 7dp → 12dp |
+| **6.5** | `.sw2{border:2px solid rgba(255,255,255,.6);border-radius:50%}` | `:384` | `G` recorded frame | — *(see the note below)* |
+| **6.5b** | `.sw2{box-shadow:0 0 0 1px var(--desk-edge)}` — drawn **outside** the layout bounds | `:384` | `G.every_swatch_carries_the_frozen_hairline_halo_outside_its_paint` | **M14** the halo made transparent |
+| **6.5c** | `.sw2:active{transform:scale(.9)}` over `transition:transform .1s` | `:384-385` | `T.a_pressed_swatch_shrinks_to_the_frozen_nine_tenths` | **M36** .9 → 1.0 · **M37** 100 → 400 |
+| **6.6** | `.sw2.sel::after{inset:-5px;border:1.5px solid var(--matcha)}`, on **one** swatch | `:385` | `G.the_selection_ring_is_drawn_in_matcha_on_exactly_one_swatch` + `T.the_ring_marks_the_element_s_own_ink_and_only_that_one` | **M15** the ring never drawn |
+| **6.6b** | the ring reads the **document**, not the last tap — and rings nothing for an ink outside the bands | *deviation, §7* | `T.an_ink_from_outside_the_frozen_bands_rings_nothing` | **M16** `selected` → always `null` |
+| **6.7** | `INKS` — ten named riso inks, in frozen order, by name **and** value | `:596` | `T.the_inks_band_is_the_frozen_ten_in_the_frozen_order` | **M17** the band reversed |
+| **6.8** | `NEUT` — four neutrals, `Ink` repeating band 1's verbatim | `:598` | `T.the_neutrals_band_is_the_frozen_four_in_the_frozen_order` | **M18** one neutral dropped |
+| **6.9** | **OD-24** — a **text** target is offered `Inks` + `Neutrals` and **no** `Paper tints` | `:688-690` | `T.a_text_element_is_offered_inks_and_neutrals_and_no_paper_tints` + `G.no_paper_tint_is_painted_anywhere_in_a_text_elements_popover` | **M19** the fence removed |
+| **6.9b** | the fence is a **fence**: any other target keeps all three bands | `:688` | `T.any_other_ink_target_still_gets_all_three_frozen_bands` | **M20** the band deleted rather than fenced |
+| **6.9c** | `TINTS`'s five values survive untouched | `:597` | `T.the_paper_tints_survive_the_fence_in_full` | **M20** (same) |
+| **6.10** | `PRESETS` — three recipes, every dot, in order | `:599` | `T.the_three_frozen_recipes_are_transcribed_dot_for_dot` | **M21** one dot re-pointed |
+| **6.10b** | a recipe is built from the typed palette, and two of three end in a paper tint | `:599` | `T.two_of_the_three_recipes_end_in_a_paper_tint` | **M21** (same) |
+| **6.10c** | `.presets{gap:8px;margin-top:2px;flex-wrap}` · `.preset` pill: radius 20, `padding:5px 9px 5px 6px`, 1px `--chrome-line`, 11.5px, `--ink`, `--sans`, `gap:6px` | `:386-387` | `G` recorded frame | — *(see the note below)* |
+| **6.10d** | `.preset .dots span{width:12px;margin-right:-4px;border:1.5px solid var(--sheet)}` | `:388` | `G.a_recipes_dots_overlap_by_the_frozen_four_dp` | **M23** the overlap → 0 |
+| **6.11** | **OD-24** — a preset applies `PRESETS[i][1][0]`, its primary ink | `:696` | `T.a_preset_applies_its_primary_ink_and_never_its_accent` + `T.choosing_a_preset_inks_the_element_with_its_primary` | **M22** `[0]` → `[1]`, the pre-amendment rule |
+| **6.12** | `.inkuse` copy, with a **live** count where the prototype hard-codes 2 | `:691` | `T.the_ink_note_counts_the_distinct_inks_of_the_whole_zine` | **M24** the count → a constant |
+| **6.12b** | the count spans the **zine**, not the open page | *deviation, §7* | `T.the_ink_note_counts_the_distinct_inks_of_the_whole_zine` | **M25** the count scoped to page 1 |
+| **6.12c** | `.inkuse svg{width:13px;height:13px;fill:none;stroke-width:1.7}` | `:389-390` | `G.the_ink_note_shield_is_drawn_at_the_frozen_stroke_weight` | **M26** 1.7 → 0.4 |
+| **6.13** | `applyInk` sets the element's ink — one `Intent.StyleText`, one undoable command | `:700` | `T.choosing_a_swatch_inks_the_element_with_that_exact_colour` + `T.an_ink_is_one_undoable_command` | **M27** the dispatch removed |
+| **6.13a** | `applyInk` writes `$('editSw').style.background` | `:701` | **framework-delivered** — `BenchStyleRow`'s `inkSwatch` already reads the element's live style (§7) | — |
+| **6.13b** | `applyInk` calls `flashSaved()` | `:701` | **framework-delivered** — the `.status` chip C4 moved the autosave reassurance into (§7) | — |
+| **6.13c** | the snack names the ink and carries **no button** ([ADR-094](#adr-094) row 4.15) | `:702-703` | `T.applying_an_ink_raises_the_buttonless_snack_that_names_it` | **M28** the `Undo` button restored |
+| **6.13d** | it stands for **1600ms**, not the delete snack's 3200 | `:703` | `T.applying_an_ink_raises_the_buttonless_snack_that_names_it` | **M29** 1600 → 3200 |
+| **6.14** | the popover stands down whenever its element does (`selectNode`, `deselect`, `edit`, `del`) | `:621`, `:628`, `:649`, `:712` | `T.the_popover_stands_down_when_the_selection_does` | **M30** the effect made inert |
+| **6.15** | every swatch announces the ink it **is** | a11y | `T.every_swatch_announces_the_ink_it_is` | **M31** every swatch named `Ink` |
+| **6.15b** | a preset publishes **one** node naming the recipe *and* the ink it will apply | a11y | `T.a_preset_announces_the_ink_it_will_actually_apply` | **M32** the primary dropped from the name |
+| **6.15c** | `.inkuse` reads as one sentence, not a glyph and a string | a11y | `T.the_ink_note_reads_as_one_sentence` | **M24** (the sentence carries the count) |
+| **6.16** | [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) — 26dp of paint, ≥48dp of target | `:384` | `T.a_swatch_paints_at_twenty_six_and_is_touchable_at_forty_eight` | **framework-delivered** (§7) |
+| **6.17** | `Ink` opens `.inkpop`; `Size` keeps [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling)'s route to the Type bar | `:601` | `T.ink_opens_the_popover_while_size_still_opens_the_type_bar` | **M33** Ink re-routed · **M34** Size re-routed |
+| **6.17b** | `ColorRgba` ↔ `Color` is exact, which is why OD-24 needs no migration | `Document.kt:125` | `T.a_swatch_survives_the_document_round_trip_byte_for_byte` | **M35** one channel scaled by 254 |
+| **6.18** | the popover is **chrome over the artifact** — the room's palette, not the sheet island's ([D-035](design/V2-SPEC-DEFECTS.md#d-035)) | `EditorScreen.kt` | `G.the_popover_dims_with_the_room_because_it_is_chrome` | **M38** the popover drawn in the island's palette |
+
+**Rows with no mutation of their own, named rather than left implicit — and they are three kinds, not one.**
+**Seven** are closed by the two recorded Roborazzi frames: 6.1g, 6.1h, 6.2, 6.2a, 6.3c, 6.5, 6.10c. **Two**
+are *framework-delivered* — 6.13a and 6.13b, whose behaviour C4 already owns, so there is nothing of C6's to
+mutate. **One** — 6.16, the [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)
+touch-target row — carries a threshold-free assertion but no mutation, because it records a measurement
+rather than a frozen value. Ten in total. Only the first group is a coverage limit; the earlier text
+counted nine, lumped all three kinds together, and named the group by an enumeration that did not match it.
+The seven frame-closed rows are a real limit and it is the one C5's third
+review named: at `changeThreshold = 0.02f` a recorded frame catches a *change*, not necessarily a *small*
+change. Each of these is a multi-property block — a padding, a type role, a pill's whole geometry — large
+enough that a change to it moves well over 2 % of a cropped card, which is why they are left to the
+frame; the properties too small for that threshold (the 1px hairline, the 1px halo, the 1.5px ring, the
+1.7 stroke, the 4dp overlap, the corner radius) each have a threshold-free probe of their own above.
+**The distinction is the row's, not the reviewer's to rediscover.**
+
+**Device verification falsified the second half of that argument, twice.** The reasoning above is that a
+recorded frame is adequate for a *large* block because a change to it moves more than 2 % of the crop.
+That is true of a change made *after* the frame was recorded, and false of a property that was **never
+right**: the frame was recorded from the implementation, so it recorded the defect as the expectation.
+Row 6.2's block hid a header that was never `space-between`, and row 6.1's block hid a popover that was
+never above the snack — both inside blocks this note called covered. The limit is therefore not
+"small changes escape the threshold"; it is **"a recorded frame cannot fail against the implementation it
+was recorded from"**, which is a strictly larger hole, and the only instrument in this package that closes
+it is hardware. Rows 6.1i and 6.2c exist because of it.
+
+
+### 5. Mutation battery — 40 mutations, and the four the suite did not catch
+
+Every row of §4 carries a mutation that breaks exactly one frozen property. The battery restores the
+file in a `finally`, re-runs `:feature:editor:testDebugUnitTest --rerun-tasks
+-Proborazzi.test.verify=true` per mutation, reads the verdict from the JUnit XML **by test name**, and
+refuses a verdict at all from a run that executed fewer tests than the control. Script:
+`c6_mutations.py`. A CONTROL run precedes the battery and must be GREEN, so a suite that is red for an
+unrelated reason cannot be read as "every mutation caught".
+
+**Result: 40 of 40 RED.** Thirty-eight were written with the package; **M39 and M40 were written after
+device verification**, against the two rows hardware added ([§9](#adr-096-device)), and both came back RED
+first time — `M39` caught by `done_sits_at_the_cards_far_edge_and_not_against_the_title`, `M40` by
+`the_popover_is_drawn_above_the_snack_it_raises`. The battery was **re-run in full after the review fixes of §6** — the ring's
+identity and the collapsed margin both changed production code, so the earlier verdicts no longer answered
+for the tree. Four came back GREEN on the first pass. None of them was a passing build, and
+each is recorded here with its diagnosis rather than as a line in a summary table — the point of the
+battery is the four, not the thirty-four.
+
+| id | row | why it was GREEN | what changed |
+|---|---|---|---|
+| **M3** | 6.1b the card stands on `--sheet` | **The mutation was null.** `ZinelyV2Colors.kt:196-198` and `:240-242` give `chrome` and `sheet` the *same* value in both palettes (`#FBF7EE` / `#252017`), so swapping one for the other changed no pixel. Its GREEN verdict measured nothing; it did not indicate a gap. | mutation redefined to `sheet` → `paper` (`:176` / `:220`), a genuinely different colour and the one a careless implementation would actually reach for. Now RED. |
+| **M25** | 6.12b the count spans the **zine**, not the open page | **A fixture defect.** The test's document put both distinct inks on page 1, so `pages.take(1)` returned the same count as `pages` and the assertion could not tell a zine-wide count from a page-local one. | the second ink moved to page 2; page 2 also repeats the first, so the de-duplication clause it already tested still holds. Now RED. |
+| **M26** | 6.12c `.inkuse svg{stroke-width:1.7}` | **A vacuous probe.** It counted `--ink-faint` pixels across the whole note — and the *sentence* beside the shield is drawn in that same tint, so the text's pixels swamped the outline's and a stroke at a quarter of the frozen weight still cleared the floor. | the crop narrowed to the glyph's own 13dp box, which leaves the shield alone in frame. Now RED. |
+| **M30** | 6.14 the popover stands down with its element | **The assertion passed for the wrong reason.** `Intent.ClearSelection` also nulls `inkTarget`, and `visible = inkPopoverOpen && inkTarget != null` hides the popover on that term alone — so an inert `LaunchedEffect` survived. | a second half added: place a *second* text box, which moves the selection while keeping `inkTarget` non-null, so only the effect can close the popover. Now RED. |
+
+**Row 6.18 had no mutation of its own.** It borrowed M3 — which, once M3 was diagnosed, meant it had
+none at all. **M38** was written for it: the popover composed under `ZinelyTheme.v2Colors` *inside*
+`BenchSheetIsland`, which is precisely the [D-035](design/V2-SPEC-DEFECTS.md#d-035) defect. It came back
+GREEN, and this one was a real hole rather than a flawed instrument.
+
+The golden standing against row 6.18 hosts `BenchInkPopover` **standalone** — a composition with no
+island in it, where there is no wrong palette available to take. The row's claim is not about the
+popover's paint; it is about *where the popover is composed*, and that can only be asserted at the
+assembly. `BenchC6Test.the_popover_is_the_rooms_chrome_at_night_and_not_the_islands` now does so under
+`@Config(qualifiers = "+night")`. Under the light palette the room and the island agree, which is
+exactly how C2b reached a device through a green suite.
+
+**That probe took two attempts, and the first failure is worth keeping.** It measured the ground against
+the room's `--sheet`, and the contrast of the popover's `Done` against it — and M38 walked through both.
+`BenchStudio.sheetIsland` overrides exactly **eight** tokens, and `sheet` is not one of them: a popover
+sourced entirely from the island keeps the room's ground, so the first assertion could not fail. `Done`
+is `inkFaint`, a mid-grey the island *does* override but which stays legible on either ground, so the
+second could not either. The token C2b measured at 1.05:1 is `ink` — the **title's** colour. The probe
+now measures the title, and M38 is RED. The ground assertion is kept, and its comment now says what it
+does and does not cover: it stands against a wholesale light palette under a dark room, not against the
+island.
+
+Recorded because the lesson generalises past this row: "assert it in the right composition" was only
+half the fix. The other half was **assert the token that actually differs** — a legibility probe aimed
+at a token the island happens to leave readable is as vacuous as M26's was, and reads just as green.
+
+**What this says about the suite, stated rather than left for a reviewer.** Of 38 mutations, three
+exposed assertions that were weaker than they read — one fixture, one probe, one that passed on a
+second term — one exposed a battery defect rather than a suite one, and one exposed a row asserted in
+the wrong composition entirely, then a second time against the wrong token. All are closed, and the
+suite gained one test (`the_popover_is_the_rooms_chrome_at_night_and_not_the_islands`) it did not have.
+Seven rows — 6.1g, 6.1h, 6.2, 6.2a, 6.3c, 6.5 and 6.10c — remain closed by recorded Roborazzi frames with no
+dedicated mutation, for the reason §4's closing note gives; that limit is unchanged by this battery and
+is not a finding of it.
+
+
+<a id="adr-096-review"></a>
+### 6. What independent review found, and what it changed
+
+The package was reviewed by an agent that did not implement it, against the working tree rather than
+against this ADR. Verdict **GO WITH FIXES**, eight Required Fixes. Each is reconciled below — accepted,
+partially accepted or rejected with evidence, per the handoff protocol in `CLAUDE.md`.
+
+| # | finding | disposition |
+|---|---|---|
+| **RF-1** | Picking `Ink` ringed **two** swatches. `Ink #2A251E` is a member of both `INKS` (`:596`) and `NEUT` (`:598`) — the freeze repeats it verbatim — and a text target draws both bands, so `selected == swatch.value` matched twice and published `Selected` on two `RadioButton` nodes in one group. | **ACCEPTED.** The ring now resolves to the first `(band, index)` whose value matches, so `Ink` rings in the Inks band and not again in Neutrals. Both fixtures used a *unique* colour and were blind to it; both now exercise the duplicated one. |
+| **RF-2** | Five FPT rows deferred to a **§7 that did not exist**, so the package's claimed deviations had no authoritative record — the Documentation Rule's exact failure. | **ACCEPTED.** §7 below is written. |
+| **RF-3** | §1's addresses were pre-amendment while §3a claimed they had been re-resolved after it, and **nine** §4 rows were one line high. | **ACCEPTED.** §1 carries both columns and says which is which; §3a's claim is corrected; the nine rows are re-resolved against the amended file. |
+| **RF-4** | Row 6.1a was closed by a fixture that called the `store()` **factory twice**, so the text was placed on a store the screen never observed and the popover was absent for an unrelated reason. | **ACCEPTED.** One store, and the selection's own verb bar is now asserted present — the popover's every precondition but the tap. |
+| **RF-5** | `assertEquals(Copy.BenchInk.TITLE, Copy.BenchVerbs.INK)` compares a definition with itself; `Copy.kt` declares `TITLE = BenchVerbs.INK`. | **ACCEPTED.** Asserted against the literal `"Ink"`, plus the word's presence on screen. |
+| **RF-6** | The gap above `.inkuse` was **18dp against a frozen 9px**. `.band{margin-bottom:9px}` and `.inkuse{margin-top:9px}` are adjacent block siblings in a `.inkpop` that declares no `display`, so CSS **collapses** them; Compose has no collapsing and applied both. | **ACCEPTED — and this is the one a recorded frame could never have caught**, because the frame was recorded from the implementation that had the defect. Both goldens re-recorded. |
+| **RF-7** | Row 6.5c read *"not asserted"* while the suite does assert it. | **ACCEPTED.** The row now names its assertion and its two mutations. |
+| **RF-8** | `COMPOSE-V2-ROADMAP.md` still showed D-028 as `⏳ live` in the ledger, three sections below its own C6 row saying `RESOLVED`. | **ACCEPTED.** |
+
+Recommended Improvements **RI-1, RI-2, RI-3, RI-5, RI-6 and RI-8** were also taken: the live ink count is
+now read at two values rather than only at 1 (a hard-coded argument survived the assembly before); the
+frozen `bottom:12px` is asserted for the first time, against the bar the popover replaces rather than
+against the root — the root is the window, and measured there the inset reads 182px, which is precisely
+why the edge had been left out; the 14dp rise is asserted as a value as well as a range; and two stale
+citations outside the ADR are corrected. **RI-4** — the mutation harness is not in the tree — is
+**PARTIALLY ACCEPTED** and recorded in §8 as the package's one open quality debt.
+
+**RF-1 and RF-6 are the two that matter**, and they share a shape worth naming: each was a real
+divergence from a frozen property sitting inside a block that the suite believed it had covered. RF-6
+sat inside a *recorded frame*, which cannot fail against the implementation it was recorded from. RF-1
+sat behind two fixtures that both happened to choose a colour appearing once. Neither is exotic; both
+were invisible to a 38-mutation battery that reported 38 kills, because a mutation can only fail a test
+that could have failed.
+
+<a id="adr-096-deviations"></a>
+### 7. Every deviation from the frozen prototype, named
+
+The freeze is authoritative and Compose implements it. Where this package does something the prototype
+does not, it is recorded here rather than argued in a KDoc — one authoritative location, per the
+Documentation Rule. Nothing below is a visual or interaction redesign; each is either a correctness fix
+the freeze's own comments ask for, a platform difference, or a capability the prototype fakes.
+
+**7.1 — the selection ring reads the document, not the last tap (row 6.6b).** The frozen `.sw2` handler
+adds `.sel` to whatever was just clicked. That state lives only in the DOM, so in the prototype an undo,
+a page change or a reselect leaves the ring where it was. Compose derives it from
+`TextElement.style.color`, which means: the ring survives all three; an ink applied from the **Type
+bar** (`Coral`, `Teal`, `Blue` — reachable only there, per [OD-11](#adr-089)) correctly rings *nothing*
+rather than ringing something stale; and — since independent review — a colour that appears in two
+bands rings once, in the first band that carries it. This is [OD-22](design/V2-SPEC-DEFECTS.md#d-052)'s
+class of change: the prototype's own comment calls the DOM class "the picker's memory", and a memory
+that outlives its subject is a defect, not a feature.
+
+**7.2 — the ink count spans the zine, not the open page (row 6.12b).** `.inkuse` hard-codes `2` in the
+prototype. The count is real here, and it counts distinct text inks across **every** page. The note's
+own sentence is about what the zine will cost to print, and a print run is the whole document; a count
+that reset at a page turn would answer a question nobody asked. Asserted on the pure function and, since
+independent review, at the assembly as well.
+
+**7.3 — `editSw` and `flashSaved` are framework-delivered (rows 6.13a, 6.13b).** The frozen `applyInk`
+writes `$('editSw').style.background` and calls `flashSaved()`. Neither is re-implemented: `BenchStyleRow`'s
+`inkSwatch` already reads the element's live style, so it follows the one `Intent.StyleText` this surface
+dispatches; and the autosave reassurance moved into the `.status` chip in C4 ([ADR-094](#adr-094)). Both
+frozen effects therefore still happen — through the mechanism that already owns them, rather than through
+a second one that could disagree with it.
+
+**7.4 — the touch target grows, the paint does not (row 6.16).** [D-009](design/V2-SPEC-DEFECTS.md#d-009):
+26dp of paint, ≥48dp of target, and `minimumInteractiveComponentSize()` is forbidden because it grows the
+layout slot and would open the frozen 7dp gaps. Compose's own pointer-input minimum gives a `selectable`
+node the expanded `touchBoundsInRoot` without moving anything. Where two expanded targets overlap they
+resolve by nearest centre — stated plainly because it is a real consequence, not a hidden one.
+
+**7.5 — the collapsed margin above `.inkuse` (row 6.1h/6.10c).** CSS collapses the presets band's 9px
+bottom margin with the note's 9px top margin; Compose has no margin collapsing, so the gap is applied
+once, by the note. Recorded because it reads as a missing padding in the Compose source and is not one.
+
+**7.6 — `.inkpop` is drawn in the room's palette although it is composed inside the sheet island
+(row 6.18).** [D-035](design/V2-SPEC-DEFECTS.md#d-035): the artifact does not dim, the room does. The
+popover is chrome over the artifact, so it takes the room's tokens. This is a deviation from *composition
+position*, not from the freeze — the prototype has no island.
+
+**8. The system Back button dismisses the popover.** The freeze has no such control — a browser prototype
+has no Back — so this is a Compose-only affordance, added by nothing more than the popover living inside the
+editor's existing back handling. It behaves exactly as `inkClose` does (`:697`): the popover goes, the verb
+bar returns, the element stays selected. **Verified on hardware** ([§9.2](#adr-096-pass2)). Recorded as a
+deviation because the freeze does not describe it, and kept because an Android transient surface that
+ignores Back is a platform defect regardless of what the prototype says.
+
+**Not a deviation, recorded because it looks like one:** `benchInkBands` is called with a hard-coded
+`BenchVerbKind.TEXT` at the assembly. The `Ink` verb is reachable from a text element only —
+`benchVerbKindOf` returns `null` for anything else — so the `PHOTO`/`DECOR` branch is unreachable **in
+Phase C** and is kept for the phase that re-seats `.decor` ([OD-2](#adr-089)). The frozen `toolsFor`
+does give `Ink` to a decor target at `:604`; that target does not exist yet.
+
+<a id="adr-096-debt"></a>
+### 8. Open quality debt
+
+**The mutation harness is not in the tree.** `c6_mutations.py` produced §5's verdicts and lives outside
+the repository, so §5 cannot be independently re-run — which, as independent review pointed out, is the
+weakest form this evidence can take, and C3's own history has a harness that never compiled a mutation
+and reported every failure as a kill ([ROADMAP](COMPOSE-V2-ROADMAP.md)). The harness's *design* guards
+against that (a mandatory GREEN control, name-based verdicts read from the JUnit XML, a `MIN_TESTS`
+floor, `--rerun-tasks`, restore in a `finally`), and RF-4 is a case where a recorded verdict did **not**
+survive someone reading the fixture — the battery said RED and the assertion was hollow anyway.
+
+Tracked rather than fixed here: committing a harness is a change to how this programme evidences its
+packages, which is a decision for the owner and for every package, not a thing C6 should settle for
+everyone on its way past. Recorded as debt, visible, not shipped as a surprise.
+
+**The popover announces no pane title.** `BenchInkPopover` publishes no container node with a name, so a
+screen-reader user activating `Ink` is told nothing about the pane that just opened. Established from the
+platform tree in [§9.2](#adr-096-pass2), unmeasured for user impact because TalkBack could not be run, and
+left unfixed only because the closeout's instruction was not to touch the implementation without device
+proof. One `Modifier.semantics { paneTitle = … }` closes it. **Scheduled, not discovered.**
+
+<a id="adr-096-device"></a>
+### 9. Device verification — both passes, on hardware
+
+**Device:** Samsung SM-A176B (`RZCYA1VBQ2H`), Android 16 / SDK 36, 1080×2340 at density 420 —
+**2.625 px/dp**, 411.4dp wide, which is the width the frozen `.phone` is drawn at. **Build:** `:app:installDebug`
+from the working tree at [`aa6ba7d`](COMPOSE-V2-ROADMAP.md) plus the two fixes below. Bounds are read from
+the **platform `AccessibilityNodeInfo` tree** (`adb shell uiautomator dump`), not from Compose semantics —
+the two are not the same tree, and this programme has shipped a defect through the difference before
+([ADR-058](#adr-058)). Colours are screencap pixels.
+
+**Every measurement below was taken in this session on this build.** None is carried over.
+
+<a id="adr-096-pass1"></a>
+#### 9.1 Pass 1 — developer verification
+
+Pass 1 ran **twice**: once against `aa6ba7d`, which **failed**, and then from the beginning against the
+fixed build, which passed. Both runs are recorded here, because the first is the evidence that the
+package's entire apparatus — 41 tests (34 in `BenchC6Test`, 7 in `BenchC6GoldenTest`, counted from the
+JUnit XML rather than by eye), two recorded Roborazzi frames, 38 mutations and an independent
+review that returned GO WITH FIXES — did not see two frozen properties **at all**.
+
+**Defects Pass 1 found. Both fixed; each now carries a row and a mutation.**
+
+| id | what hardware showed | root cause | fix | row / mutation |
+|---|---|---|---|---|
+| **DP1-1** | `Done` sat immediately right of the title `Ink`, not at the card's far edge | the header `Row` never filled its width, so `Arrangement.SpaceBetween` had nothing to distribute | `.fillMaxWidth()` on the header row (`BenchInkPopover.kt`) | **6.2c** / **M39** |
+| **DP1-2** | the `Ink · Matcha` snack drew **over** the open popover and covered the `.inkuse` note | `BenchSnack` is composed after `BenchInkPopover` in `EditorScreen.kt`, and nothing expressed the frozen z-order | `Modifier.zIndex(1f)` on the popover, cited to `.inkpop` `42` (`:377`) over `.snack` `38` (`:444`) over `.ctx` `30` (`:357`) | **6.1i** / **M40** |
+
+Neither is a small-change-under-threshold miss. Both sat **inside blocks §4 had signed off to a recorded
+frame**, and each frame had been recorded from the defect. §4's closing note now states that limit in its
+true form rather than the weaker one it originally claimed.
+
+**The fixed build, measured.**
+
+| row | frozen property | measured on device |
+|---|---|---|
+| **6.1** | `left/right/bottom:12px` | card edges **12.19dp** left and right; the card's bottom edge lands on the verb bar's own bottom edge, which carries the same frozen offset. Identical in light and dark. |
+| **6.1f / 6.2b** | `openInk` hides `.ctx`, `inkClose` restores it | with the popover open the tree contains **no** verb bar; after `Done` it contains exactly `Edit · Font · Size · Ink · Delete` and no popover |
+| **6.1i** | popover above the snack | the `.inkuse` note renders **complete and unobstructed** while the snack is up |
+| **6.2c** | `justify-content:space-between` | title glyph run **71–128 px**; `Done` glyph run **938–1009 px** against a card content edge of ≈**1007 px** |
+| **6.3 / OD-24** | a text target draws Inks · Neutrals · Ready-made palettes | band labels read exactly `INKS`, `NEUTRALS`, `READY-MADE PALETTES`. **Paper tints are absent** — fenced, as D-028 ruled, not deleted from the freeze |
+| **6.4 / 6.15** | fourteen swatches, each announcing the ink it is | **14** nodes: `Matcha · Forest · Strawberry · Brick · Sunflower · Ochre · Aqua · Cornflower · Plum · Ink` then `Ink · Slate · Stone · Fog` |
+| **6.9 / 6.15** | the swatch is a radio, not a button | every swatch reports **`android.widget.RadioButton`**, `checkable="true"`, to the platform tree — the [ADR-059](#adr-059) Role→View defect does **not** reproduce here |
+| **6.9b (RF-1)** | the ring belongs to one swatch | tapping the **duplicated** `Ink` — the one in the Inks band — yields `checked` **count = 1**, at `[814,994][940,1120]`, the Inks instance only |
+| **6.11 / OD-24** | a preset applies `PRESETS[i][1][0]` | tapping `Cool zine` leaves `checked = ['Forest']` — the primary ink, one colour |
+| **6.15b** | a preset names the ink it will apply | `Two-colour. Primary ink Ink` · `Warm zine. Primary ink Brick` · `Cool zine. Primary ink Forest` |
+| **6.12 / 6.15c** | `.inkuse` is one sentence carrying the count | **one** node: *"Zines look best — and print cheapest — with 1–3 inks. This one uses 1."* |
+| **6.16 / D-009** | 26dp of paint, 48dp of target | swatch nodes are **86 px × 126 px = 32.8dp × 48dp**, tiling edge to edge, with the last in each row **126 px = 48dp** wide. The 48dp floor is met vertically and on the row-final swatch; horizontally the interior targets tile at 32.8dp. See the ruling note below. |
+| **6.18 / D-035** | the popover is the room's chrome, not the island's | light ground `(251,247,238)` — title **14.03:1**, `Done` and all three band labels **3.52:1**. Dark ground `(40,35,25)` — title **12.47:1**, `Done` and the band labels **4.00:1**. The card does not take the island's palette in either theme |
+
+**On 6.16, and why it is not a new owner decision.** 32.8dp interior targets are below 48dp.
+[D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)
+reaches the floor by *extending the touch area, never by growing the control*; it **names the swatch grid
+by name** as the case where extended regions overlap, and says resolving it wrongly is "precisely a device-pass
+finding". At a frozen 26dp of paint on a 33dp pitch (`:383-384`), non-overlapping 48dp-wide targets are
+geometrically impossible — so tiling to the pitch and taking the full 48dp vertically is the ruling's own
+accepted consequence, not a question it left open. Recorded as a **measurement**, not a defect.
+
+**On contrast, and on the pair this section first published.** Two tokens are in play, not one. The title
+is `--ink`; `Done`, the three band labels and the `.inkuse` sentence are all `--ink-faint`, the pairing this
+programme uses for secondary chrome. Measured on device, sampling each glyph's extreme pixel against the
+card's own ground:
+
+| | light — ground `(251,247,238)` | dark — ground `(40,35,25)` |
+|---|---|---|
+| title `Ink` (`--ink`) | **14.03:1** | **12.47:1** |
+| `Done`, band labels (`--ink-faint`) | **3.52:1** | **4.00:1** |
+| `.inkuse` sentence (`--ink-faint`) | 3.56:1 | 4.04:1 |
+
+**This table replaces a wrong one, and the error is worth naming.** §9 first published *"title 14.03:1,
+`Done` and the band labels 3.52:1. Dark: 4.04:1 and 4.08:1"* — in which both dark figures were `--ink-faint`
+samples and one had been labelled as the title. As written it said the faint caption out-contrasted the
+primary title on the same ground, which is impossible, and it put the dark title at 4.04:1 when
+[C2b](#adr-092) measured a genuine dark-palette defect at 1.05:1 — so the number was in the neighbourhood
+of *evidence of a defect*, printed as evidence of correctness, in the one row whose whole purpose is
+[D-035](design/V2-SPEC-DEFECTS.md#d-035). Independent review caught it by computing the tokens; it was then
+re-measured on hardware in both themes. The figures above are the re-measurement.
+
+**No WCAG conformance is claimed here.** AA's large-text exemption begins at 24px regular / 18.66px bold, so
+the 15px title, the 12px `Done` and the 10px band labels all carry the 4.5:1 body threshold, and the
+`--ink-faint` pairing does not reach it in either theme. **The only contrast floor this programme has
+ruled is [D-002](design/V2-SPEC-DEFECTS.md#d-002)'s 3.0:1 on cover titles**, which every figure above
+clears. These are recorded as **measurements** so the owner can see them; changing them means repainting a
+frozen token, which belongs to no package here.
+
+**Regressions against earlier packages.** From a cold editor: the page strip renders eight thumbnails with
+`Page 1 of 8 (front cover)` … `Page 8 of 8 (back)` (C5); selecting the text element raises the five-verb bar
+with `Font` disabled (C4); the nudge row, `Undo`, `Redo`, `Add`, `Done` and `Preview` are all present and
+reachable (C3, C4). **`Undo` reverts an applied ink and the ring follows it** — `Strawberry` → `Forest`,
+with the popover still open. No regression observed.
+
+<a id="adr-096-pass2"></a>
+#### 9.2 Pass 2 — first-time-user verification
+
+Run from the Library, cold, as a person meeting the editor for the first time. **Implementation defects and
+design observations are kept apart below, and the two passes are not averaged.**
+
+**Implementation defects: none.** Three behaviours read as wrong and each turned out otherwise, which is
+recorded because a Pass 2 that finds nothing is only credible if it says what it suspected:
+
+- *`Back` appeared to strand the element selected with no verb bar.* It does not — the probe read `text=`
+  where the bar publishes `content-desc`. `Back` dismisses the popover and restores the bar, exactly as
+  `Done` does.
+- *Tapping outside the card closes the popover **and** clears the selection.* This is the freeze: the
+  canvas click handler (`:738-739`) calls `deselect()` (`:626-628`), which drops `.ctx`, `.inkpop` and the
+  selection together. Compose matches.
+- *The popover has no scrim and does not trap focus* — the whole editor stays traversable behind it. Also
+  the freeze: `.inkpop` is not a `<dialog>` and adds no scrim, unlike `showSheet` (`:847`), which does.
+
+**Design observations.** None is a defect; each is how the frozen design reads to someone meeting it cold.
+
+| id | observation |
+|---|---|
+| **P2-O1** | **The same colour is offered twice, under one name.** `Ink` appears in the Inks band *and* in the Neutrals band — two near-identical near-black circles in two rows, announced identically. Only one takes the ring. RF-1 made the *behaviour* unambiguous; **comprehension is still ambiguous**, and a first-time user cannot tell which one they chose. Source: `INKS` (`:596`) and `NEUT` (`:598`) both contain `#2A251E`. **Not a new owner decision, and the citation says so rather than the inference:** [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) §1 offers a text target *"Inks + Neutrals — **13 distinct swatches**"* over **14 drawn** — the owner counted the duplicate, in the ruling, and drew both bands anyway. What is undecided is only whether to *rename* one, which amends a frozen surface. **Filed as [D-060](design/V2-SPEC-DEFECTS.md#d-060)** in the register where owner-owed work queues, not left in prose. |
+| **P2-O2** | **A preset shows a palette and applies one colour.** `Cool zine` draws three dots and applies `Forest` alone. Its *spoken* description — "Cool zine. Primary ink Forest" — is more honest than its picture, which is an odd inversion. This is exactly what [D-028/OD-24 option (c)](design/V2-SPEC-DEFECTS.md#d-028-ruling) ruled (`PRESETS[i][1][0]`, `:696`), so it is a ruled consequence, not a new question. Recorded because Pass 2's job is to say how it reads. |
+| **P2-O3** | **Ink has no cold-state affordance.** A freshly opened editor says `Preview`, `Undo`, `Redo`, `Add`, `Done` and eight page numbers. Nothing says colour or ink. The route is one tap — select the element, the verb bar appears, `Ink` is on it — but it must be *guessed* first. This is the frozen selection-driven context model shared with C4, not a C6 property. |
+| **P2-O4** | **No swatch carries a visible name.** Sighted users get colour only; the name exists only in the accessibility tree (`.sw2` has no text, `:384`). In an app whose output is *printed*, the name is the thing you say to a copy shop. |
+| **P2-O5** | **The note counts, but it does not lead.** "…with 1–3 inks. This one uses 1." is the only place the app explains *why* ink count matters, and it gives a reason rather than a rule — good. But a user persuaded by it has no route from this popover to a second element. |
+
+**One accessibility defect, deferred with its reason — not a design observation.** The popover publishes
+**no container node carrying a name**: there is no `Modifier.semantics { paneTitle = … }`, so a screen-reader
+user who activates `Ink` gets no statement that a pane has opened. This was first written into the
+observations table above, and independent review was right that it does not belong there: HTML has no
+`paneTitle` concept, so **the freeze cannot be the authority** — this is a platform gap, and `CLAUDE.md`
+expressly permits accessibility improvements after freeze. It is not fixed here for one reason and it is
+stated rather than dressed up: **the owner's instruction for this closeout was not to touch the C6
+implementation unless device verification proved a change necessary, and this pass could not run TalkBack**
+(see the limit below), so the gap is established from the node tree but its *user impact* is unmeasured.
+Fixing it is one modifier. Recorded here as [§8](#adr-096-debt) debt so it is scheduled rather than
+discovered.
+
+**Does Ink answer the editor's question?** The editor exists to answer *"How do I change this page?"*
+([CLAUDE.md](../CLAUDE.md)). Ink answers it in place: the artifact stays visible, the popover takes the verb
+bar's own footprint, the change is immediate, `Undo` reverses it with the ring following, and `Done` or
+`Back` returns you to where you were. Nothing is swapped out, and nothing reads as lost — which is the
+failure mode [ADR-058](#adr-058) exists to prevent. **Pass 2 accepts.**
+
+**The honest limit of this pass.** TalkBack was **not run**. Enabling it launched a Samsung permission
+activity that took the foreground and consumed the automated taps (and, before it was noticed, edited the
+sample text — reverted with `Undo`, verified back to `Hello`). P2-O6 and every accessibility claim in §9.1
+therefore rest on the **platform `AccessibilityNodeInfo` tree**, which is the tree TalkBack reads, but not on
+TalkBack's own speech. That is a weaker instrument than a spoken pass and it is stated rather than
+smoothed over.
+
+<a id="adr-096-acceptance"></a>
+#### 9.3 Acceptance
+
+Pass 1 and Pass 2 both succeed **on the fixed build**, and they do not disagree: Pass 1's two findings were
+implementation defects and are fixed; Pass 2 found **no implementation defect**, five design observations
+against the frozen prototype and **one accessibility defect deferred with its reason**, all recorded and
+none averaged into Pass 1's verdict. One observation — P2-O1 — is owner-owed and is filed as
+[D-060](design/V2-SPEC-DEFECTS.md#d-060) rather than left in prose. After the fixes the package stands at **41 tests — 34 in
+`BenchC6Test`, 7 in `BenchC6GoldenTest` — 40 of 40 mutations RED with a GREEN control, two recorded
+Roborazzi frames verifying, and a full-suite regression of 1 585 tests with 0 failures and 0 errors**
+(`./gradlew.bat test --rerun-tasks -Proborazzi.test.verify=true`, 2026-08-06).
+
+Those counts are read from the JUnit XML, not from memory: this section originally said *43* tests, which
+was a miscount carried forward in prose, and the battery's own `MIN_TESTS` floor of 41 is what it should
+always have agreed with.
+
+## ADR-097 {#adr-097}
+
+**C9 — integration: the four states, the motion policy, persistence of place, and the phase gate. Written
+before any production code, per [ADR-089 §2.2](#adr-089).** C9 is Phase C's **last** package and the only one
+whose subject is not a region of the frozen file but the seams between the six that are already built.
+
+- **Status:** ✅ `Accepted` **2026-08-06**. Opened `Proposed` the same day as a planning-only document, given
+  owner **GO**, implemented, verified, independently reviewed, device-verified on both passes, and accepted on
+  the ruling [§3.2](#adr-097-d012) said it could not be accepted without: **[OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling)
+  ratified the Bench's reduced-motion rule** and discharged [D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)
+  / [OD-10](#adr-089). Three entries C9 raised were ruled the same day as carried observations — OD-26
+  ([D-063](design/V2-SPEC-DEFECTS.md#d-063)), OD-27 ([D-064](design/V2-SPEC-DEFECTS.md#d-064)), OD-28
+  ([D-065](design/V2-SPEC-DEFECTS.md#d-065)) — none reopening C9 and none amending a frozen file.
+  **C9 is Phase C's last package, so this acceptance closes Phase C.**
+- **Package:** C9 · **Depends on:** C1 ✅, C2a ✅, C2b ✅, C3 ✅, C4 ✅, C5 ✅, C6 ✅ — **all `Accepted`**, the last
+  on 2026-08-06 ([ADR-090](#adr-090) … [ADR-096](#adr-096)).
+- **Frozen regions:** `@media (prefers-reduced-motion:reduce)` (`v2-bench.html:460`) and the state machine the
+  script's `cap()` calls narrate (`:583`, and fifteen call sites). **That is the whole of C9's frozen surface** —
+  everything else it owns is an *invariant across* packages, sourced from the IA, the principles and accepted
+  ADRs rather than from a selector.
+- **Supersedes nothing. Modifies nothing.** It **ratifies or reverses** one thing already written in code —
+  see [§3.2](#adr-097-d012).
+- **There is no C7 and no C8.** [OD-2](#adr-089) re-seated them; C9 is not renumbered
+  ([roadmap](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c)).
+
+<a id="adr-097-objective"></a>
+### 1. Objective, ownership and scope
+
+**Objective.** Close Phase C: prove that the six built packages compose into **one editor** — four states with a
+single destination, one motion policy honoured at every call site, the maker's place kept across process death,
+the canvas legible to the platform accessibility tree and to the eye — and carry the phase's acceptance criteria
+to the owner's review gate.
+
+**Ownership.** C9 owns **integration**, not surfaces. Where a property is already asserted by a shipped package,
+C9 **verifies it end to end and on hardware; it does not re-own it, re-assert it, or move it**. §2 marks each row
+with who owns it, and two rows are marked as owned by C3 and by Phase A precisely so that nobody rebuilds them
+here.
+
+**Scope — what C9 will do.**
+1. Make the four-state model explicit and testable across the six packages, with the return-to-Rest invariant.
+2. Answer **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)** —
+   the reduced-motion rule — which the owner deferred *to this phase, on physical devices*, and bind every V2
+   animation call site to the answer.
+3. Implement **persistence of place (the page half)**: the page index survives process death.
+4. Verify canvas accessibility against the **platform** tree, and contrast **over the grain**.
+5. Run both device-verification passes for the phase and assemble the phase gate.
+
+<a id="adr-097-exclusions"></a>
+### 2. Known exclusions — named, so they are not rediscovered as gaps
+
+| Excluded | Why, and where it lives |
+|---|---|
+| **The shelf half of persistence of place** | [OD-2](#adr-089) re-seated H1. C9 owes the **page** half only; [§E.4](design/V2-BENCH-REVIEW.md)'s build invariant carries forward to the package that builds the shelf, **unweakened** |
+| **H1, H3, `DecorElement`, variable page counts, page add/delete** | re-seated beyond Phase C by OD-2; [D-029](design/V2-SPEC-DEFECTS.md#d-029) / [D-030](design/V2-SPEC-DEFECTS.md#d-030) travel with them |
+| **`.caption`, `.state`, `.hint`, `.legend*`, `.foot*`, `.kb*`, the masthead** | **PROTO** — the prototype's narration, classified so by [ADR-089 row 1.18](#adr-089). `cap()` is how the demo explains itself to a viewer; **C9 models the states it names and ships none of its text** |
+| **`@media (prefers-color-scheme:dark)` (`:213`)** | the dark palette is **Phase A's**, shipped in `ZinelyV2Colors`. C9 *verifies* both themes on device; it does not own the tokens. Recorded because this rule is named **nowhere** in ADR-089's phase-level table — see [§5](#adr-097-consistency) |
+| **Literal document-typeface parity for `.t-title` / `.t-body`** | owner ruling **OD-4**; [D-004](design/V2-SPEC-DEFECTS.md#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) stays deferred to Phase D |
+| **The finished-book reveal** | [BP-7](design/V2-BENCH-PRINCIPLES.md) / [ADR-058](#adr-058) — it stays on Read. Asserted **by absence** (row 9.6) |
+| **The open register entries that fence nothing** | D-023, D-049, D-050, D-051, D-052, D-060 — carried, none blocking; see [§3](#adr-097-blockers) |
+
+<a id="adr-097-fpt"></a>
+### 3. Frozen property table — 14 rows
+
+Built by reading **`v2-bench.html` itself**, not ADR-089 alone — which is how §3.1's citation drift was found.
+
+**What the 14 actually is, so the number is not read as growth it is not.** Seven rows are ADR-089's, carried
+intact. Of the seven added, **three are net-new frozen properties** (9.1a, 9.1b, 9.2a); two are *splits* of rows
+ADR-089 bundled (9.2b, 9.3a), one of which is already discharged by another package; and two are the process
+obligations every package carries (9.8 device passes, 9.9 the phase gate) written down rather than assumed.
+The frozen surface grew by three.
+Assertions will live in `BenchC9Test` (`T`), the platform-tree harness (`P`) and the existing gates (`G`).
+Ownership is stated per row: **C9** means C9 writes it; **C3** / **Phase A** mean it is already discharged and
+C9 only verifies it on hardware.
+
+| # | frozen property / invariant | source (re-anchored) | target | planned assertion | planned mutation | owner |
+|---|---|---|---|---|---|---|
+| **9.1** | four states — **Rest · Selected · Editing · Adding** — and every action returns to Rest | [IA §A.1](design/V2-BENCH-IA-INTERACTION.md); `cap()` `:583` and its **16** call sites (15 of them literal captions; `showSheet` `:847` passes one through) | `EditorStore` / `EditorScreen` state | every transition, and the return-to-Rest invariant | make deselect land in `Adding` | **C9** |
+| **9.1a** | the page grid is an **overlay within Rest**, not a fifth state — `closeGrid` restores `Rest` | `:800`, `:802` | same | opening and closing the grid leaves the model in `Rest` | model `All pages` as a fifth state | **C9** *(new — from the script; ADR-089 row 9.1 notes the tray but not the grid)* |
+| **9.1b** | the narration ships nothing | `:555`, `:583`; [ADR-089 row 1.18](#adr-089) | — | no `.caption` / `.state` / `.hint` string reaches the shipped Bench | ship one | **C9** ∅ *by absence* |
+| **9.2** | `@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}` | **`:460`** *(ADR-089 cites `:293` — wrong; see §3.1)* | `ZinelyV2Motion` | one-shots collapse to **0 and still arrive**; continuous motion does **not run** | `durationMillis` returns `frozenMillis` under reduce | **C9** — and it **ratifies [D-012](#adr-097-d012)** |
+| **9.2a** | the rule's selector is `*` — **every** V2 animation call site honours it | `:460` | ~20 call sites across `feature/editor`, `feature/library` | no animation in the V2 surfaces bypasses `ZinelyV2Motion` | hard-code a duration at one call site | **C9** *(new — could not have been written before the call sites existed)* |
+| **9.2b** | the caret does not run under reduced motion | `.caret` `:303`, `.editing .caret` `:304`, `@keyframes blink` `:305` | `BenchEditingSurface.kt` | **already asserted** — `BenchC3Test.the_caret_blinks_as_a_square_wave_and_holds_still_under_reduced_motion` | — *(C3's)* | **C3** — [ADR-093](#adr-093) row 3.8. **C9 verifies on device and owns no code here** |
+| **9.3** | persistence of place, **page half**: reopening lands on the same page | [§E.4](design/V2-BENCH-REVIEW.md) — *"a build invariant, freeze-blocking for the Compose build"* | `EditorViewModel` `SavedStateHandle` → **restored into `EditorStore` as the single state owner**, per [ADR-005](#adr-005)'s MVI — the handle carries the index across process death, it does **not** become a second owner of `currentPageIndex` | reopen after **process death**: the page index survives, and the store is the only thing the UI reads it from | always restore page 1 | **C9** |
+| **9.3a** | persistence of place, **shelf half** | §E.4 | — | not built here; the invariant carries forward undiluted | — | **re-seated (OD-2)** ∅ *by absence* |
+| **9.4** | canvas a11y: per-element focusable node, role + label + selected, rotated-AABB bounds, reading-then-z order, stepped custom action per gesture, **Polite** live region (Assertive only for "Page full") | [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) | `ElementSemanticsLayer.kt`, `ZinelyV2CanvasSemantics.kt` | **platform-tree dump**, never merged semantics | collapse two nodes into one | **C9** |
+| **9.5** | handles ≥3:1 over any user photo; text ≥4.5:1; controls ≥3:1 — worst case **over the grain** | [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) | `ZinelyV2ContrastTest` | measured over the **grain tile**, not the flat token | measure on flat paper | **C9** — note [D-002](design/V2-SPEC-DEFECTS.md#d-002--two-frozen-cover-inks-put-their-titles-below-aa-for-normal-text)'s 3.0:1 is **cover titles only** |
+| **9.6** | the finished-book reveal is **not** on the Bench | [BP-7](design/V2-BENCH-PRINCIPLES.md), [ADR-058](#adr-058) | — | no Read-like surface exists in the Bench | add one | **C9** ∅ *by absence* |
+| **9.7** | one engine: preview == export == read | [ADR-028](#adr-028) | `CanvasReplayer` | the existing parity test still passes **unchanged** | add a second draw path | **C9** ∅ *constitutional — the gate is that C1–C6 added no second path* |
+| **9.8** | both device-verification passes, for the phase | [CLAUDE.md](../CLAUDE.md) | hardware | Pass 1 and Pass 2, each run from the beginning | — | **C9** |
+| **9.9** | the phase gate — every Phase C acceptance criterion, evidenced | [roadmap, Phase C](COMPOSE-V2-ROADMAP.md) | — | parity + interaction + a11y evidence attached; the text-edit proof recorded | — | **C9** |
+
+<a id="adr-097-drift"></a>
+#### 3.1 Citation drift — the Bench's reduced-motion address is wrong in three places
+
+Found by reading the frozen file rather than the plan, which is the same method [ADR-096 §1](#adr-096-drift)
+used on C6's sixteen wrong addresses. The rule is at **`v2-bench.html:460`**. It is cited as:
+
+| where | cited | actual |
+|---|---|---|
+| [ADR-089](#adr-089) row 9.2 | `:293` | **`:460`** |
+| [D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) — *Artifacts* row and its rule table | `:143`, `:293` | **`:460`** |
+| D-012, the caret | `:123` | **`:303`** (`@keyframes blink` at `:305`) |
+| `ZinelyV2Motion` KDoc `:61` | `v2-library.html:138` | **`:171`** |
+| `ZinelyV2Motion` KDoc `:62` | `v2-bench.html:260` | **`:460`** |
+| `ZinelyV2Motion` KDoc `:63` | `v2-proof.html:246` | **`:259`** |
+
+**In the planning documents the drift is the Bench's alone** — D-012's `v2-library.html:171` and
+`v2-proof.html:259` both resolve, which is consistent with the amendments, since only the Bench has ever been
+amended. **In `ZinelyV2Motion`'s KDoc all three are wrong**, including the two files nothing has moved, so that
+table was captured from a different revision of the corpus rather than drifting under it. This ADR first said
+"the drift is the Bench's alone" without qualification; independent review opened the KDoc and found the other
+two. The distinction matters to whoever repairs it: **three lines, not one.**
+
+**Corrected in the planning artefacts by this ADR. The `ZinelyV2Motion` KDoc is production source and is
+therefore left for C9's implementation commit**, listed here so it is not lost: this ADR does not touch
+`src/main`.
+
+<a id="adr-097-d012"></a>
+#### 3.2 D-012 is C9's deliverable, not C9's blocker — but its escape hatch has expired
+
+**It does not block.** [D-012's own status](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe)
+reads *"Open by owner ruling (2026-07-28) — deliberately unresolved in Phase A; the behavioural decision belongs
+to **Phase C**, on physical devices."* The owner **scheduled the decision into this package**. C9 answers it; it
+does not wait on it. The register ledger, the roadmap's C9 row and [HANDOVER §0](COMPOSE-V2-HANDOVER.md) all
+now say the same thing.
+
+**But the decision has already been taken in code, twice, and the reason given for taking it early no longer
+holds.** `ZinelyV2Motion` adopts the **Bench's** rule — `animation:none`, not a collapsed duration — and is
+candid that *"adopting one of three written rules **is a choice**"*, that the Bench's is the **older** of the two
+live statements while the Proof's is the corpus's most recent word, and that what justified choosing rather than
+stopping was that *"the choice is free to reverse while this API has no callers."*
+
+**That API now has roughly twenty call sites** across `BenchBottomBar`, `BenchPageGrid`, `BenchPageNav`,
+`BenchSnack`, `BenchStatusStrip`, `BenchStyleRow`, `EditorScreen`, `ZineActionSheet`, `ZineCover`, `ZineDock`
+and `ZineOnShelf`, and C3 shipped the caret's *hold-still-under-reduced-motion* behaviour on top of it
+([ADR-093](#adr-093) row 3.8). Reversal is no longer free.
+
+**This is not a new owner decision** — it is the *same* decision, D-012, with its cost disclosed honestly at the
+moment it is finally put to the owner. What expired is the *cheapness of reversal*, which is a cost input to a
+decision already owed since 2026-07-28, not a second decision. **The safety argument is unchanged and still
+favours the Bench's rule**: it is the only file with a looping animation, and collapsing an infinite animation's
+duration makes it strobe rather than calm it.
+
+**It is tracked as [OD-10](#adr-089), and that has two consequences this ADR states plainly.** ADR-089 §5 listed
+OD-10's live half as *"first required by C9"* — **discharged 2026-08-06 by OD-25; that table now reads
+fully ruled.**
+
+1. **C9 may begin without it.** The ruling is C9's to obtain, not C9's precondition, and the register ledger,
+   the roadmap and [HANDOVER §0](COMPOSE-V2-HANDOVER.md) agree that no entry fences the package.
+2. **C9 cannot reach `Accepted` without it** — the same standard [ADR-096](#adr-096) held itself to, which stayed
+   `Proposed` until OD-24 ruled D-028.
+
+**✅ DISCHARGED 2026-08-06 by [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling), option (a) — ratify the Bench's
+rule.** The request was made in the order this section specifies: **before the implementation commit**, with
+the device evidence already collected, so that row 9.2a's binding of every animation call site was put to the
+owner with its cost disclosed rather than assumed. The ruling's reasoning names all five grounds this section
+raised — the frozen Bench is canonical, Phase A adopted it, C3 built on it, C9's hardware evidence confirms
+it, and no device evidence justifies changing it. **Nothing changed in code**, which is the honest reading of
+option (a) and not evidence that the implementation had guessed correctly by design: three of the four options
+would have required an edit, and the value shipped provisionally for two phases before it was ratified. That
+is the risk this section was written to expose, and it happens to have landed well.
+
+**The ruling is requested before the implementation commit, not at the device pass.** That is a change of order
+this ADR makes deliberately: row 9.2a's whole purpose is to *bind every animation call site* to the answer, so
+every day the ask waits, the reversal it might mandate gets more expensive. The device pass then **validates**
+the ruling on hardware — which is what *"on physical devices"* asked for — rather than being the first place the
+question is put.
+
+<a id="adr-097-blockers"></a>
+#### 3.3 Pre-implementation blocker check — run 2026-08-06
+
+Every planned property checked against the frozen Bench, the current repository, the accepted ADRs, the owner
+rulings and the open register. **Result: no genuine owner decision blocks C9.**
+
+| checked | finding |
+|---|---|
+| **D-012** | **Not a blocker** — deferred *into* this package by owner ruling. See §3.2 |
+| **OD-2 boundary** — does any C9 row need a new document-model concept? | **No.** Row 9.3 persists a **page index**, which `SavedStateHandle` carries across process death with no schema change, no new `Element` subtype and no variable page count. The shelf half is excluded |
+| **OD-4** | honoured — the typeface exception is named in §2 and is Phase D's |
+| **ADR-005 (MVI)**, **ADR-028 (one engine)**, **ADR-058 (Read owns the reveal)**, **ADR-069 (no per-edit render)** | all four are *preserved* by C9's rows 9.6 / 9.7 and by the exclusions; none is amended |
+| **D-023, D-049, D-050, D-051, D-052, D-060** | all open, **none fences a Phase C package** — the register ledger says so as of 2026-08-06. D-049 is C4-shaped and carried; D-051 and D-060 are frozen-file defects awaiting an owner amendment |
+| **D-029, D-030** | open, and **no longer Phase C's** — re-seated with H1/H3 |
+| **Repository targets** | all exist: `ZinelyV2Motion.kt`, `ElementSemanticsLayer.kt`, `ZinelyV2CanvasSemantics.kt`, `AutosaveCoordinator.kt`, `CanvasReplayer.kt`, `ZinelyV2ContrastTest.kt` |
+| **Row 9.3's implementation** | **nothing persists a page index today** — `AutosaveCoordinator` persists the **document** only. This is genuine net-new work inside C9's fence, not a blocker |
+| **Row 9.2b** | **already discharged by C3** — a package-ownership correction, not a gap |
+
+<a id="adr-097-verification"></a>
+### 4. Verification strategy and review expectations
+
+**Verification**, in the shape every package from C1 onward has used:
+1. A focused assertion per row in `BenchC9Test`, plus the **platform accessibility tree** harness for row 9.4 —
+   never merged Compose semantics, for the reason [ADR-058](#adr-058) and [ADR-059](#adr-059) both record.
+2. A **mutation battery** over the rows that carry one, with a mandatory **GREEN control**, name-based verdicts
+   read from the JUnit XML, a `MIN_TESTS` floor and restore-in-`finally`. Rows marked ∅ carry their
+   justification instead of a mutation, per [ADR-087](#adr-087)'s four terminal states.
+3. **Roborazzi** where a row has a visual: threshold-free raster probes for anything smaller than the 2 %
+   `changeThreshold`, because — as C6 learned three times — **a recorded frame cannot fail against the
+   implementation it was recorded from**.
+4. The whole-project regression under `--rerun-tasks -Proborazzi.test.verify=true`.
+5. **Both device passes, each run from the beginning**, on `SM-A176B` / Android 16. Row 9.8 is the phase's, not
+   just the package's: Pass 2 asks whether the *editor* answers *"How do I change this page?"*, across all six
+   built surfaces rather than one.
+
+**Review expectations.** An independent Review Agent that did not implement it, validating the working tree
+rather than this ADR's claims, classifying findings **Required Fix / Recommended Improvement / Observation** and
+returning **GO / GO WITH FIXES / NO-GO**. Every Required Fix reconciled individually, disagreements surfaced.
+C9 additionally carries the **phase** gate, so its review is the last chance to catch a cross-package defect that
+each package's own review was scoped too narrowly to see — which is exactly how D-054 and D-055 were found.
+
+**Acceptance criteria** are the phase's, quoted from the [roadmap](COMPOSE-V2-ROADMAP.md): pixel parity in both
+themes and all states (excluding OD-4's two selectors); interaction and animation parity; editing-behaviour
+parity verified on device; boundaries honoured; canvas a11y verified against the platform tree; both device
+passes accepted; **GO before Phase D**.
+
+<a id="adr-097-consistency"></a>
+### 5. What this planning pass found in ADR-089
+
+Recorded rather than silently fixed, because ADR-089 is `Accepted` and its phase-level table claims to assign
+*"every rule in `<style>` and every function in `<script>` … exactly once"*:
+
+1. **Row 9.2's address is wrong** (`:293` → `:460`) — §3.1.
+2. **`@media (prefers-color-scheme:dark)` (`:213`) is named nowhere in the table.** It is Phase A's palette work
+   and is genuinely built, so nothing is unbuilt — but the completeness claim is one rule short, and this is the
+   second time an audit has found the table short (C6 found twelve properties no row reached).
+3. **Row 9.1 does not account for `cap('All pages')`** (`:800`), the only caption naming something outside the
+   four states. It resolves cleanly — the grid is an overlay within Rest, and `closeGrid` (`:802`) restores Rest
+   — but the resolution was not written down, so C9 writes it as row 9.1a.
+4. **Row 9.2 bundles a property C3 has already discharged.** The caret half is [ADR-093](#adr-093) row 3.8 and
+   `BenchC3Test`; C9 splits it out as row 9.2b, owner **C3**, so it is verified and not rebuilt.
+
+None of the four changes what Phase C must build. All four change what C9 must *not* rebuild, or where it must
+look.
+
+<a id="adr-097-implementation"></a>
+### 6. Implementation record — 2026-08-06
+
+Six production files, two new test suites, **18 focused assertions** (11 in `BenchC9Test`, 7 in
+`EditorPagePersistenceTest`).
+
+| row | how it landed | where |
+|---|---|---|
+| **9.1** | `BenchState` + `benchStateOf(selection, interaction, addChooserOpen)`; the precedence is the freeze's, anchored line by line in the KDoc. **Wired, not decorative** — `ctxVisible` now reads `benchState == Selected` | `BenchState.kt` (new), `EditorScreen.kt` |
+| **9.1a** | asserted structurally: the page grid is **not a parameter** of `benchStateOf`, and summoning/dismissing it — by `Done` *and* by Back — leaves the model in `Rest` | `BenchC9Test` |
+| **9.1b** | ✅ ∅ *by absence* — no frozen `cap()` string ships, scanned across `feature:editor` **and `core:copy`** | `BenchC9Test` |
+| **9.2** | already implemented in Phase A; C9 asserts the distinction the CSS only implies (one-shots collapse to 0 **and still arrive**; continuous motion does not run) and repairs the KDoc's three wrong citations | `ZinelyV2Motion.kt`, `BenchC9Test` |
+| **9.2a** | **one genuine bypass found and fixed**: `EditorScreen`'s soft-delete fade read `tween(BenchDeleteFadeMillis)` flat and kept fading 200ms under a reduced-motion preference. A second site (`EditorPagePreview`'s materialise) was correct only by an *enclosing* guard and now states the policy locally | `EditorScreen.kt`, `EditorPagePreview.kt`, `BenchC9Test` |
+| **9.2b** | ✅ **C3's**, verified present by name rather than re-owned | `BenchC9Test` |
+| **9.3** | `KEY_PAGE_INDEX`, the pure `restoredPageIndex` clamp, the restore on the real boot path, and a `distinctUntilChanged` write-back. The store stays the single owner ([ADR-005](#adr-005)); the handle only carries | `EditorViewModel.kt`, `EditorPagePersistenceTest` |
+| **9.3a** | ✅ ∅ *by absence* — re-seated by OD-2, invariant carried forward unweakened | — |
+| **9.4** | ⏳ device Pass 1 — the **platform** tree, not merged semantics | hardware |
+| **9.5** | ✅ **both themes.** Body ink over the page grain's extremes; the cell badge over the **flat** `inkFaint`-on-`paper` pair the grid actually draws. Two computed drafts were wrong first and the device corrected both — [D-061](design/V2-SPEC-DEFECTS.md#d-061) (wrong ground) and [D-062](design/V2-SPEC-DEFECTS.md#d-062) (right ground, grain that is not drawn), **each raised and withdrawn the same day, neither a defect** | `BenchC9Test` |
+| **9.6** | ✅ ∅ *by absence* — no Bench source reaches `ProofReadAct` | `BenchC9Test` |
+| **9.7** | ✅ ∅ *constitutional* — the parity suite is intact and unchanged; see deviation 4 | `BenchC9Test` |
+| **9.8**, **9.9** | ⏳ the device passes and the phase gate | hardware |
+
+**One in-fence bug fix outside C9's surface fence, recorded here and not only in a source comment.**
+`EditorReducer.stepHistory` carried the selection forward across an undo unconditionally, so undoing a
+*placement* left the editor holding a selection of an element that no longer existed: the frozen bar hid (it
+resolves the element and finds none) while the transform bar still offered `Delete`, and the model read
+`Selected` where the freeze's own `undo()` captions `Rest` (`v2-bench.html:721`). The fix intersects the
+carried selection with the ids still present in the resulting document. `DeletePageCommand`'s `priorSelection`
+restore is unaffected — `invertOn` re-inserts the whole `Page`, elements included, before the intersection is
+computed — and `:core:editor:test` passes 136 tests unchanged.
+
+**It was found by row 9.1's return-to-Rest invariant**, which is the cross-package instrument §4 says C9's
+review is the last chance to run. `core:editor` is outside C9's surface fence; the fix is inside its
+*integration* fence, and it is a defect repair rather than a capability, so it does not touch OD-2.
+
+<a id="adr-097-deviations"></a>
+### 7. Deviations from the plan — stated, not absorbed
+
+1. **Row 9.5 does not live in `ZinelyV2ContrastTest`.** §3 names that target; the grain *strengths* are the
+   Bench's (`BenchStudio.PAGE_GRAIN_ALPHA`, `SCREEN_GRAIN_ALPHA`) and `core:ui` cannot depend on
+   `feature:editor`, so the assertion lives with the surface whose numbers it uses. The ★ token gate in
+   `ZinelyV2ContrastTest` is untouched and still runs.
+2. **Row 9.5's photo clause is not asserted in code.** *Handles ≥3:1 over any user photo* has no token pairing
+   to compute — the backdrop is arbitrary. It is a device-pass observation, and is on the Pass 1 checklist.
+3. **Row 9.5's cell-badge clause was computed three times, wrong twice, and settled by the device.** The row
+   passes in **both themes** and files no defect, but the route there is the deviation and is recorded rather
+   than absorbed. Draft one measured `inkFaint` on **`desk`** — 2.880:1 — and filed
+   [D-061](design/V2-SPEC-DEFECTS.md#d-061) against the ≥3:1 floor; the badge sits on the *cell*, and that
+   pairing is drawn nowhere. Draft two used the right ground but composited the **page's** grain
+   (`PAGE_GRAIN_ALPHA`) over it — 2.817:1 dark — and very nearly filed
+   [D-062](design/V2-SPEC-DEFECTS.md#d-062). Draft three asserted the flat pair and justified it by *"the cell
+   is flat"* — **also false, and caught by independent review against this ADR's own recorded pixels**:
+   `BenchPageGrid` applies no grain, but `benchStudioGround()` (`BenchStudioSurface.kt:321`) is applied to the
+   screen root and draws its grain *after* its content, so `SCREEN_GRAIN_ALPHA` lays over the grid like
+   everything else. Grained, the ground ranges `(246,240,227)..(248,243,233)` light and
+   `(40,36,29)..(58,53,44)` dark — and the device samples below sit inside those ranges, not on the flat
+   token. The device was right the first time and agreed with itself across both themes: glyph
+   `(141,131,106)` on `(247,243,232)` = **3.396:1** light, `(136,127,108)` on `(50,45,36)` = **3.449:1** dark,
+   the dark figure matching the flat token pair to three decimals. D-062's other half — that the dark cell
+   should carry the page's light island — was already ruled against in terms by
+   [OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) itself, at `v2-bench.html:138`: *"THE PAGE GRID IS STILL
+   NOT AMENDED. `.pgcell` draws no page content, so it has no artifact to dim."* **Both entries are withdrawn
+   and kept.** The assertion is the flat pair in both themes — now **deliberately, with the reason stated in
+   the test**: worst-case-single-pixel is the right instrument for the page's body ink and the wrong one for a
+   9px decorative number over a noise tile, where the extreme is one pixel of tile and the reader sees the
+   mean. Applying the row's own method to the badge gives **2.969:1 light / 2.525:1 dark**, below the floor;
+   whether that floor binds a page number at all, and whether per-pixel worst case is the right instrument
+   over grain, is **[D-064](design/V2-SPEC-DEFECTS.md#d-064) — ⏳ owner ruling required**. The row asserts what
+   it can defend and files what it cannot. The lesson is C6's in a new costume — *a computed check can be
+   exactly right about a relationship that does not exist* — plus the corollary this row paid for three times:
+   **being wrong once is not a reason to trust the correction.**
+4. **Row 9.7's assertion is weaker than the row.** It counts the parity suite's tests and fails if the suite is
+   emptied; it cannot detect a *second* draw path. The row is genuinely constitutional — the gate is that C1–C6
+   added none — and the whole-project regression is what runs the parity test itself. Stated so the phase gate
+   does not cite this assertion as proof of something it does not check.
+5. **`ZSheet`, `ZSnackbar`, `ZToast` and `ZButton` animate on V1's `ZinelyMotion`,** and two V2 surfaces reach
+   them (the Add chooser; the Library's snackbar). Reduced motion **is** honoured — `ZinelyMotion` collapses
+   too — so there is no user-visible defect, but *"every V2 animation call site routes through
+   `ZinelyV2Motion`"* is false at composition level. Recorded rather than fixed: re-basing shared `core:ui`
+   components onto V2's motion class changes V1 surfaces, which is outside a parity phase's fence.
+
+<a id="adr-097-mutations"></a>
+### 8. Mutation battery — 15 of 15 RED, over a GREEN control
+
+Control: **11** `BenchC9Test` + **7** `EditorPagePersistenceTest`, all green, `MIN_TESTS` floors enforced,
+verdicts read by test name from the JUnit XML, `--rerun-tasks` throughout, restore from `.bak` in `finally`.
+
+| # | row | mutation | verdict |
+|---|---|---|---|
+| M1 | 9.1 | `benchStateOf`'s `else` lands in `Adding` | RED |
+| M2 | 9.1 | the reducer carries a dead selection across undo again | RED |
+| M3 | 9.1 | `ctxVisible` relaxed to `!= Rest` | RED |
+| M4 | 9.1a | Back re-opens the grid instead of standing it down | RED |
+| M5 | 9.1b | ship one frozen `cap()` hint | RED |
+| M6 | 9.2 | `durationMillis` returns `frozenMillis` under reduce | RED |
+| M7 | 9.2a | re-hard-code the soft-delete fade | RED |
+| M8 | 9.5 | the grain stops moving the paper (the body-ink half stops measuring what it claims) | RED |
+| M8a | 9.5 | **the cell fills with `desk` instead of `paper`** — D-061's mistake, made in the product this time | RED |
+| M8b | 9.5 | the page number is written in `inkSoft` instead of `inkFaint` | RED |
+| M9 | 9.6 | reach `ProofReadAct` from a Bench file | RED |
+| M10 | 9.3 | always restore page 1 | RED |
+| M11 | 9.3 | drop `currentPageIndex` from the boot model | RED |
+| M12 | 9.3 | delete the write-back collector | RED |
+| M13 | 9.2a | hard-code a duration at a *different* call site (`BenchSnack`) | RED |
+
+**The first run of this battery was worth more than the second.** It ran 10 mutants and **two survived** — M3
+and M4 — and both were real gaps rather than equivalent mutants: the context-bar test checked only Rest and
+Selected (so a predicate relaxed to `!= Rest` passed it), and the grid test exited only through `Done` (so
+Back was never exercised). Both tests were widened; the mutants now die. The `MIN_TESTS` guard also fired on
+the first attempt, against a suite size this ADR's author had miscounted — which is the guard doing precisely
+the job it exists for.
+
+**Independent review ran its own battery and killed one this one could not.** Row 9.2a's first scan accepted a
+call site if the policy appeared anywhere within ±6 lines; review re-implemented it, ran *hard-code a duration*
+against all eleven hard-codable sites, and found **six survivors** — every file that opens with
+`val motion = ZinelyTheme.v2Motion` hides the mutation inside its own window. The scan now judges the
+animation's own statement. M13 exists because of that finding: it mutates a site the original guard would have
+let through.
+
+**M8a and M8b exist because the device found a third gap, of the same shape.** Row 9.5's assertion was two
+tokens deep — it computed a contrast ratio and never asked which two colours the grid draws — so
+`.background(colors.paper)` could become `colors.desk` and the row would go on passing while the screen
+changed. That is not hypothetical: it is [D-061](design/V2-SPEC-DEFECTS.md#d-061) with the error moved from
+the test into the product. The row now pins the pairing in the source as well as the numbers, and both
+mutants die. **All three gaps this battery closed were the same gap** — an assertion that measured a
+relationship without pinning that the relationship exists.
+
+**The pairing scan is one level short of the thing it stands for, and that is stated rather than implied.**
+It pins that `.background(colors.paper)` and `color = colors.inkFaint` both occur in `BenchPageGrid.kt`; it
+does not pin that the `inkFaint` text is *inside* the paper-backed box. Both strings could in principle
+survive in unrelated composables in that file. The tighter instrument exists in-module — `BenchC9Test`
+already runs Robolectric with `GraphicsMode(NATIVE)`, so `captureToImage()` over the grid and a sample of the
+real cell pixel would measure the relationship instead of asserting two facts about it, and unlike a recorded
+golden it would fail against the implementation it was written from. M8a and M8b kill the two mutants that
+matter today, so this is recorded as the next improvement rather than done here.
+
+<a id="adr-097-device"></a>
+### 9. Device verification — both passes, run from the beginning on one build
+
+`SM-A176B` (`RZCYA1VBQ2H`) · Android 16 · 1080×2340 · density override 420 (**2.625 px/dp, 411.4dp wide**).
+Pass 1 read the **platform** `AccessibilityNodeInfo` tree via `uiautomator dump`, never the merged Compose
+semantics. Pass 2 ran afterwards with animation scales restored to `1.0`, from a cold start, as a first-time
+user. The two are recorded separately and are **not averaged**.
+
+#### 9a. Pass 1 — developer verification
+
+| row | what the device was asked | reading |
+|---|---|---|
+| 9.1 / 9.1a | the four states and their exits, on the platform tree | ✅ each state publishes the controls the freeze gives it; grid summon/stand-down leaves Rest |
+| 9.2 / 9.2b | reduced motion, by **threshold-free raster probe** rather than by eye | ✅ 16 successive `screencap` PNGs of the caret region, each **decoded to RGB** and compared pixel-by-pixel (the byte counts below are decoded raster bytes, 3/px — over encoded PNGs they would mean nothing). Reduce OFF: exactly two distinct frames, differing by **1152 bytes = 384px** — the `steps(1)` square wave. Reduce ON: **0 differing bytes across all 15 frame pairs** — the caret does not run at all, rather than collapsing an infinite duration into a strobe. This is D-012's safety argument, measured |
+| 9.2 (one-shots) | *collapse to 0 **and still arrive*** | ⚠️ **instrument limit, not a pass**: the bar demonstrably appears, but 0ms against 200ms is below `uiautomator`'s ~1s granularity. Stated as such rather than claimed |
+| 9.3 | place survives **process death** | ✅ twice, on two separate runs: PID `28473`→`30950` and PID `5130`→`9350`, each returning to the page the maker left (page 4 of 8). Undo/redo correctly reset — **place** persists, **history** does not, which is the shape the KDoc claims |
+| 9.4 | the platform tree, attribute by attribute | ✅ after four checks that each looked like a defect and were not — `Bring forward`'s 12.2dp (a `HorizontalScrollView` ancestor), page thumbs `clickable=false` (**only** the current page, which is correct, and which a previous device pass had already misread and "fixed" once), the Style row's disabled `Font`/`Size`/`Ink` ([D-042](design/V2-SPEC-DEFECTS.md#d-042), OD-9), and 32.8×48.0dp thumb targets ([D-009](design/V2-SPEC-DEFECTS.md#d-009)). Element nodes report `checkable=true checked=true selected=false`; that is Compose's documented non-Tab mapping, and because `uiautomator` does not expose `stateDescription` the **announcement** is explicitly not claimed either way |
+| 9.5 | the real pixels of the grid badge | ✅ both themes — and it **overturned this ADR's own arithmetic twice**; see [deviation 3](#adr-097-deviations), [D-061](design/V2-SPEC-DEFECTS.md#d-061), [D-062](design/V2-SPEC-DEFECTS.md#d-062) |
+
+#### 9b. Pass 2 — first-time-user verification
+
+Cold start → shelf → open a zine → change the page → add something → turn pages → leave and come back. The
+Bench answers *"How do I change this page?"* throughout: the page fills the screen, tapping an element offers
+verbs on it, `Add` names what it adds, and returning after process death lands on the page I left — which is
+correct precisely by being unremarkable.
+
+Four things read wrong to a reader who did not know why they were that way. Confusion is the evidence, so all
+four are recorded, and **none is fixed here**. Notably **three of the four were already in the register** —
+Pass 2 rediscovering, from a cold start, what earlier passes filed is evidence the entries describe something
+real about the product rather than something about the reader:
+
+1. **[D-051](design/V2-SPEC-DEFECTS.md#d-051) — the sharpest, and *not* new, which is itself the finding.**
+   The Add chooser draws its **Photo** row under `ICON.replace`: two arrows chasing each other round a circle,
+   the universal glyph for *sync*. Its own subtitle reads *"From your phone — it never leaves the device."* On
+   the one screen where this product makes its central promise, the icon beside the promise means the
+   opposite. A defect in the **frozen file** (`v2-bench.html:592`, used at `:808`) — the Compose transcription
+   is exact, path for path. **C9 filed this as D-063 and it was a duplicate**: C4's Pass 2 had filed it on
+   2026-08-04 citing `:721`, and [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling)'s amendment moved every
+   address below it, so a repository check that did exactly what it should have done still failed to match
+   them. **Address drift defeats duplicate-detection.** D-063 is withdrawn, its three new observations merged
+   into D-051, and [OD-26](design/V2-SPEC-DEFECTS.md#d-051-ruling) recorded on the original.
+2. **[D-050](design/V2-SPEC-DEFECTS.md#d-050) reconfirmed on hardware.** A blank page still says *"Grab a
+   photo or a few words from **the supplies below**"* and points a chevron at a bar that has held no supplies
+   since [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling). I followed the arrow and found `Undo · Redo · Add ·
+   Done`. Already open, already the owner's wording call.
+3. **[D-065](design/V2-SPEC-DEFECTS.md#d-065) — the page grid gives you nothing to choose by.** *"Your zine ·
+   8 pages"* draws eight blank sheets with numbers, while the filmstrip 12dp below it draws the same pages
+   **with their content**. Two miniatures of one document in one frame, one populated and one not.
+   **This paragraph first read *"ruled, not broken"*, and independent review was right to refuse it.**
+   `v2-bench.html:114-116` and `:138` rule the **grid**; they do not rule the **juxtaposition**, which did not
+   exist until [OD-22](design/V2-SPEC-DEFECTS.md#d-053-ruling) made the strip's interior the real page — and
+   [OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) exists *only* because OD-22 missed a consequence of its own
+   amendment. Explaining a Pass 2 confusion away with knowledge the user does not have is the precise failure
+   Pass 2's *"confusion is itself evidence"* rule exists to prevent, and this ADR committed it. **Filed, open,
+   the owner's.**
+4. **[D-052](design/V2-SPEC-DEFECTS.md#d-052) — a second text element lands exactly on top of the first.**
+   Adding text to a page that already has some drops the new box over the old one at the same rect. Already
+   filed by C4's Pass 2; C9 met it independently and confirms it on the current build. C4's placement,
+   outside C9's fence.
+
+#### 9c. Where the passes disagree
+
+They do not, on any C9 row. Every Pass 2 friction above is either an entry that was already open, a design the
+owner already ruled, or a surface outside C9. The one place the two passes *did* pull against each other is
+row 9.5, and there the disagreement was between the **suite and the device**, not between the passes: the
+device won twice, and the row is now written the way the hardware reads it.

@@ -88,6 +88,137 @@ public object Copy {
         public const val DELETE: String = "Delete"
     }
 
+    /**
+     * The frozen bottom bar (`BenchBottomBar.kt`, `v2-bench.html:464-468`; ADR-094 rows 4.1–4.8b). `Done`
+     * is [EditText.DONE] — the same word the editing row already ships, deliberately not re-typed.
+     */
+    public object BenchBar {
+        public const val UNDO: String = "Undo"
+        public const val REDO: String = "Redo"
+
+        /**
+         * The `.add` label names no medium: choosing the medium is what the chooser it opens is for
+         * ([OD-21](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling)).
+         */
+        public const val ADD: String = "Add"
+    }
+
+    /**
+     * The frozen ink popover — H4, the maker palette (`BenchInkPopover.kt`, `v2-bench.html:679-704`;
+     * [ADR-096](../../../../../../../docs/DECISIONS.md#adr-096)).
+     *
+     * The swatch **names** live here rather than beside their colours because
+     * [ZinelyContentInks][com.aritr.zinely.ui.theme.ZinelyContentInks] models identity as an enum and
+     * leaves the labels to this layer ([ADR-060](../../../../../../../docs/DECISIONS.md#adr-060)) — they
+     * are user-facing copy, not colour tokens. They are transcribed verbatim from the frozen arrays.
+     *
+     * [PAPER_TINTS] is here and is **not offered to a text element**
+     * ([OD-24](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-028-ruling)): the band is fenced, not
+     * deleted, and it returns the day a paper target exists. Deleting the string would have made the fence
+     * look like an omission.
+     */
+    public object BenchInk {
+        /** The popover's own title — the same word the verb that opens it carries. */
+        public const val TITLE: String = BenchVerbs.INK
+
+        /** The popover's dismiss. The same word the editing row and the bar already ship. */
+        public const val DONE: String = EditText.DONE
+
+        // — the four band labels, verbatim (`v2-bench.html:690` Inks/Neutrals, `:688` Paper tints, `:682` the presets) —
+        public const val INKS: String = "Inks"
+        public const val PAPER_TINTS: String = "Paper tints"
+        public const val NEUTRALS: String = "Neutrals"
+        public const val PRESETS: String = "Ready-made palettes"
+
+        // — band 1, the ten riso spot inks, in frozen order —
+        public const val MATCHA: String = "Matcha"
+        public const val FOREST: String = "Forest"
+        public const val STRAWBERRY: String = "Strawberry"
+        public const val BRICK: String = "Brick"
+        public const val SUNFLOWER: String = "Sunflower"
+        public const val OCHRE: String = "Ochre"
+        public const val AQUA: String = "Aqua"
+        public const val CORNFLOWER: String = "Cornflower"
+        public const val PLUM: String = "Plum"
+        public const val INK: String = "Ink"
+
+        // — band 2, the paper tints (fenced for a text target, see above) —
+        public const val CREAM: String = "Cream"
+        public const val BLUSH: String = "Blush"
+        public const val SKY: String = "Sky"
+        public const val SAGE: String = "Sage"
+        public const val KRAFT: String = "Kraft"
+
+        // — band 3, the neutrals. `Ink` repeats band 1's, verbatim from the frozen source —
+        public const val SLATE: String = "Slate"
+        public const val STONE: String = "Stone"
+        public const val FOG: String = "Fog"
+
+        // — the three preset recipes —
+        public const val PRESET_TWO_COLOUR: String = "Two-colour"
+        public const val PRESET_WARM: String = "Warm zine"
+        public const val PRESET_COOL: String = "Cool zine"
+
+        /**
+         * The `.inkuse` note (`v2-bench.html:691`). The count is **live** — the prototype hard-codes 2
+         * because it has no document to count. It counts the distinct inks in the whole **zine**, not the
+         * open page: "print cheapest" is a per-zine cost, since a riso or a copy shop charges by the ink
+         * on the job.
+         */
+        public fun useNote(inks: Int): String =
+            "Zines look best — and print cheapest — with 1–3 inks. This one uses $inks."
+
+        /**
+         * The confirmation the frozen `applyInk` raises (`v2-bench.html:702`) — the ink's own name, so the
+         * message says which one landed rather than that something did.
+         */
+        public fun applied(name: String): String = "Ink · $name"
+
+        /** Spoken name for one swatch: the colour's name is the control's whole meaning. */
+        public fun swatchLabel(name: String): String = name
+
+        /**
+         * Spoken name for one preset. The dots are decorative — a reader cannot hear three overlapping
+         * circles — so the recipe's name carries it, with its primary ink named because that is the one
+         * the tap actually applies (OD-24).
+         */
+        public fun presetLabel(name: String, primary: String): String = "$name. Primary ink $primary"
+    }
+
+    /**
+     * The bar's Add chooser (`BenchAddChooser.kt`, `v2-bench.html:719-721`; ADR-094). Two rows only — Art
+     * stays fenced behind C8 per OD-21 — and each row's spoken label is [optionLabel], one target rather
+     * than three fragments.
+     */
+    public object AddChooser {
+        public const val TITLE: String = "Add to your page"
+        public const val TEXT_TITLE: String = "Text"
+        public const val TEXT_SUBTITLE: String = "Type words onto the page"
+        public const val PHOTO_TITLE: String = "Photo"
+        public const val PHOTO_SUBTITLE: String = "From your phone — it never leaves the device"
+        public fun optionLabel(title: String, subtitle: String): String = "$title. $subtitle"
+    }
+
+    /**
+     * The top status strip's autosave chip (`BenchStatusStrip.kt`, `v2-bench.html:390`; ADR-094 row 4.10).
+     * The flower is decoration and is never required to parse the meaning (VOICE rule 7), so the live
+     * region announces [SAVED_SPOKEN] without it.
+     */
+    public object Status {
+        public const val SAVED_MARK: String = "✿"
+        public const val SAVED_WORD: String = "Saved"
+        public const val SAVED_QUALIFIER: String = " · on this device"
+        public const val SAVED_SPOKEN: String = "Saved on this device"
+    }
+
+    /**
+     * The delete/undo snackbar (`BenchSnack.kt`, `v2-bench.html:626`; ADR-094 row 4.13). The full stop is
+     * the freeze's and it is kept: the line is a sentence about something that happened, not a label.
+     */
+    public object Snack {
+        public fun deleted(label: String): String = "$label deleted."
+    }
+
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */
     public object Editor {
         public const val REFRAMING_PHOTO: String =
@@ -142,11 +273,48 @@ public object Copy {
             "Your phone is low on storage. Free up a little space, then tap Try now — or keep editing to retry."
     }
 
-    /** Page-strip thumbnails (`EditorPageStrip.kt`). */
+    /**
+     * The page picker's per-thumb **state**. C5 replaced the V1 strip's `"Page N"` label with [PageNav]'s
+     * `"Page N of M"`, so only these two state lines remain here — CI-29's `stateDescription`, which the
+     * frozen Bench has no equivalent of and which the conformance path still asserts.
+     */
     public object PageStrip {
-        public fun pageNumber(number: Int): String = "Page $number"
         public const val CURRENT_PAGE: String = "Current page"
         public const val NOT_SELECTED: String = "Not selected"
+    }
+
+    /**
+     * The Bench's page navigation — the filmstrip row and the summoned page grid
+     * (`BenchPageNav.kt`, `BenchPageGrid.kt`; [ADR-095](../../../../../../../docs/DECISIONS.md#adr-095)
+     * rows 5.9, 5.10, 5.15).
+     *
+     * Roles are passed as *which function you call*, not as a string: `:core:copy` has no dependencies, so
+     * it cannot see `PageRole`, and inventing a parallel string enum here would be a second source of truth
+     * for the same three cases. The composable maps the role; this object owns only the wording.
+     */
+    public object PageNav {
+        /** The grid button's label — it summons the grid, so it says what it shows. */
+        public const val ALL_PAGES: String = "All pages"
+
+        /** An interior page. `N` is always the document's real page count, never a constant. */
+        public fun pageLabel(number: Int, count: Int): String = "Page $number of $count"
+
+        /** The first page. TalkBack says *which* page as well as *what* it is. */
+        public fun frontCoverLabel(number: Int, count: Int): String =
+            "${pageLabel(number, count)} (front cover)"
+
+        /** The last page. */
+        public fun backCoverLabel(number: Int, count: Int): String =
+            "${pageLabel(number, count)} (back)"
+
+        /** The grid's header. Possessive, not a noun-phrase title: it is the user's zine, not a document. */
+        public fun gridTitle(count: Int): String = "Your zine · $count pages"
+
+        /** The front cover's cell badge. */
+        public const val COVER: String = "Cover"
+
+        /** The back cover's cell badge. */
+        public const val BACK: String = "Back"
     }
 
     /** Editor effect outcomes surfaced to the user (`EditorEffects.kt`). */
@@ -157,6 +325,12 @@ public object Copy {
     /** Inline text-editor (`EditTextSession.kt`). */
     public object EditText {
         public const val ZINE_TEXT: String = "Zine text"
+
+        /**
+         * The frozen editing row's `#doneEdit` button (`v2-bench.html:410`) — the one live control in
+         * `BenchStyleRow`. Ends the session and returns the element to Selected (ADR-093 row 3.10).
+         */
+        public const val DONE: String = "Done"
     }
 
     /**

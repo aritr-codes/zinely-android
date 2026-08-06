@@ -329,7 +329,19 @@ public object EditorReducer {
         val target = cmd.touchedPageIndex()?.coerceIn(0, doc.pages.lastIndex)
         val nav = target != null && target != model.currentPageIndex
         // Undoing a page delete restores the selection that page carried (Codex required-fix #8).
-        val selection = if (!redo && cmd is DeletePageCommand) cmd.priorSelection else model.selection
+        val carried = if (!redo && cmd is DeletePageCommand) cmd.priorSelection else model.selection
+        // ...but a selection may not outlive the element it points at. Undoing a *placement* removes the
+        // element the placement auto-selected, and carrying the id forward left the editor holding a
+        // selection of nothing: the frozen bar hid (it resolves the element and finds none) while the
+        // transform bar still offered Delete, and the model still read `Selected` where the freeze's own
+        // `undo()` captions `Rest` (`v2-bench.html:721`). Found by C9's return-to-Rest invariant, which is
+        // the cross-package kind of defect no single package's review was scoped to see.
+        //
+        // Filtered against the whole document rather than the current page: element ids are unique, page
+        // changes clear the selection anyway (`leavePage`), and an undo that navigates has already moved
+        // `currentPageIndex` by the time this is read.
+        val liveIds = doc.pages.asSequence().flatMap { it.elements.asSequence() }.map { it.id }.toSet()
+        val selection = carried.intersect(liveIds)
         val next = model.copy(
             document = doc,
             history = history,

@@ -39,7 +39,11 @@ public object EditorA11y {
      * lands via TalkBack without a prior tap), then dispatches the twin intent. Reorder/delete are
      * id-scoped already. The visible contextbar reuses the same intents on the current selection.
      */
-    public fun elementCustomActions(element: Element, dispatch: (Intent) -> Unit): List<CustomAccessibilityAction> {
+    public fun elementCustomActions(
+        element: Element,
+        dispatch: (Intent) -> Unit,
+        onDelete: (String) -> Unit = { dispatch(Intent.Delete(setOf(it))) },
+    ): List<CustomAccessibilityAction> {
         val id = element.id
         fun selectThen(action: () -> Unit): Boolean { dispatch(Intent.Select(id)); action(); return true }
         return buildList {
@@ -64,7 +68,13 @@ public object EditorA11y {
             add(CustomAccessibilityAction(Copy.A11y.ROTATE_COUNTERCLOCKWISE) { selectThen { dispatch(Intent.RotateBy(-ROTATE_STEP_DEGREES)) } })
             add(CustomAccessibilityAction(Copy.A11y.BRING_FORWARD) { dispatch(Intent.Reorder(id, ReorderOp.BRING_FORWARD)); true })
             add(CustomAccessibilityAction(Copy.A11y.SEND_BACKWARD) { dispatch(Intent.Reorder(id, ReorderOp.SEND_BACKWARD)); true })
-            add(CustomAccessibilityAction(Copy.A11y.DELETE) { dispatch(Intent.Delete(setOf(id))); true })
+            // Routed through the host's [onDelete] rather than dispatching `Intent.Delete` directly, so
+            // the accessibility path gets the **same reversible delete** the visible verb does: the fade,
+            // the 3200ms snack and its `Undo` ([ADR-094](../DECISIONS.md#adr-094) row 4.13). Dispatching
+            // here made the element simply vanish for a TalkBack user while a sighted user got an undo
+            // affordance — the reversal capability present on one path and absent on the other. The
+            // default keeps every existing caller behaving exactly as before.
+            add(CustomAccessibilityAction(Copy.A11y.DELETE) { onDelete(id); true })
         }
     }
 }

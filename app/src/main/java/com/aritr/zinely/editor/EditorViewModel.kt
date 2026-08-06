@@ -64,6 +64,29 @@ internal sealed interface EditorBootState {
 }
 
 /**
+ * `SavedStateHandle` key for **persistence of place** — C9 row 9.3.
+ *
+ * Scoped to the editor's `SavedStateHandle`, which is per navigation entry, so it is already per project:
+ * two zines cannot share a remembered page. Survives process death; does not survive leaving the editor,
+ * which is correct — reopening a zine is what §E.4's invariant is about, and that goes through a fresh
+ * entry whose handle the platform restores.
+ */
+internal const val KEY_PAGE_INDEX: String = "c9.pageIndex"
+
+/**
+ * The restore half of row 9.3, as a pure function — the house's *pure helper extraction* convention, and
+ * the only part of persistence of place that has a decision in it.
+ *
+ * Clamping is the whole guard: a remembered index cannot outlive the pages it referred to. It can only
+ * ever be too large (a shorter document than the one the maker left), because [OD-2](../../../../../../docs/DECISIONS.md#adr-089)
+ * re-seated variable page counts, so nothing in Phase C grows a document. `pageCount = 0` is defended
+ * anyway rather than assumed impossible — an empty document reaching here would otherwise throw inside a
+ * `coerceIn` with a reversed range, and turning a missing page into a crash is a poor trade.
+ */
+internal fun restoredPageIndex(saved: Int?, pageCount: Int): Int =
+    (saved ?: 0).coerceIn(0, (pageCount - 1).coerceAtLeast(0))
+
+/**
  * Owns the editor's MVI [EditorStore], its effect runner, and the app-side autosave [binder] for the
  * lifetime of one open project (ADR-030 §1/§2). Lifecycle = [viewModelScope] (survives rotation).
  *
@@ -98,6 +121,29 @@ internal class EditorViewModel @Inject constructor(
 
     /** The project to open — threaded from the type-safe [EditorRoute] (Codex rec E), not a stray constant. */
     private val projectId: String = savedStateHandle.toRoute<EditorRoute>().projectId
+
+    /**
+     * **Persistence of place — C9 row 9.3** ([ADR-097](../../../../../../../docs/DECISIONS.md#adr-097)).
+     *
+     * [V2-BENCH-REVIEW §E.4](../../../../../../../docs/design/V2-BENCH-REVIEW.md) makes reopening *"exactly
+     * as left"* **a build invariant, freeze-blocking for the Compose build** — and it is the one signal the
+     * prototype cannot show, because a prototype is never killed and restarted.
+     *
+     * Two things this deliberately is **not**:
+     *
+     * - **Not the shelf half.** §E.4's invariant covers the page *and* the gathered materials. Owner ruling
+     *   [OD-2](../../../../../../../docs/DECISIONS.md#adr-089) re-seated H1 beyond Phase C, so C9 owes the
+     *   **page** half only; the shelf half carries forward to the package that builds the shelf, unweakened.
+     * - **Not a second state owner.** [ADR-005](../../../../../../../docs/DECISIONS.md#adr-005) makes the
+     *   editor MVI with [EditorStore] owning state. The handle is a *carrier* across process death, written
+     *   from the store and read exactly once, at boot, into the initial model. Nothing in the UI reads the
+     *   page index from here.
+     *
+     * `SavedStateHandle` rather than the document, because a page index is where the *maker* is, not what
+     * the *zine* is — persisting it into `ZineDocument` would be a schema change, which is precisely the
+     * "new document-model concept" OD-2 forbids Phase C.
+     */
+    private val savedPageIndex: SavedStateHandle = savedStateHandle
 
     private val _bootState = MutableStateFlow<EditorBootState>(EditorBootState.Loading)
     val bootState: StateFlow<EditorBootState> = _bootState.asStateFlow()
@@ -219,7 +265,15 @@ internal class EditorViewModel @Inject constructor(
             // Back on Main: the store's dispatch is main-thread-only by contract, so it is built here.
             _bootState.value = when (result) {
                 is DataResult.Success -> try {
-                    ready(EditorModel(result.value))
+                    // Row 9.3: land on the page the maker left, not on page 1. Clamped against the document
+                    // actually loaded — a stale index cannot outlive the pages it referred to, and a
+                    // clamp is the whole guard because the format's page count is fixed (OD-2 re-seated
+                    // variable page counts, so this can only ever shrink through a corrupt/older document).
+                    val restored = restoredPageIndex(
+                        saved = savedPageIndex.get<Int>(KEY_PAGE_INDEX),
+                        pageCount = result.value.pages.size,
+                    )
+                    ready(EditorModel(result.value, currentPageIndex = restored))
                 } catch (ce: CancellationException) {
                     throw ce
                 } catch (t: Throwable) {
@@ -272,6 +326,16 @@ internal class EditorViewModel @Inject constructor(
                 savedSignal = savedSignal,
             ),
         )
+
+        // Row 9.3, the write half: the store stays the single owner and this only mirrors it. Started here
+        // rather than in `init` so it cannot observe a store that does not exist, and `distinctUntilChanged`
+        // keeps a drag or a text edit from writing an unchanged index on every emission.
+        viewModelScope.launch(mainDispatcher) {
+            store.uiState
+                .map { it.currentPageIndex }
+                .distinctUntilChanged()
+                .collect { savedPageIndex[KEY_PAGE_INDEX] = it }
+        }
 
         // Step 3: the autosave binder pulls the latest document from the live store at save time.
         val snapshotProvider = DocumentSnapshotProvider { store.uiState.value.document }

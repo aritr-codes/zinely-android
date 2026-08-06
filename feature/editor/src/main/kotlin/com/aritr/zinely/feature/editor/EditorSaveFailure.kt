@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.rememberReduceMotion
 
 /** Test tag on the warm save-failure banner. */
 public const val EditorSaveFailureTestTag: String = "editor-save-failure"
@@ -85,7 +86,8 @@ public const val SaveFailureDismissLabel: String = Copy.SaveFailure.DISMISS_LABE
 
 /**
  * The warm, honest **save-failure** banner ([ADR-035](../DECISIONS.md#adr-035); VOICE §Errors;
- * DESIGN-LANGUAGE §10). It corrects the optimistic [EditorSavedConfirmation] "Saved ✨": that chip
+ * DESIGN-LANGUAGE §10). It corrects the optimistic autosave chip (C4's `BenchStatusStrip`, and before it
+ * `EditorSavedConfirmation`'s "Saved ✨"): that chip
  * fires when an autosave is *scheduled* (mark-dirty, ADR-034), so a later debounced write can still
  * fail. When the app-scoped `SaveFailureSink` (ADR-026 §5) reports a real failure, the host surfaces
  * this calm line instead — and suppresses the "Saved ✨" chip — so the editor never claims success it

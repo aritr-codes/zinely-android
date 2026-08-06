@@ -48,12 +48,16 @@ public const val ElementNodeTagPrefix: String = "element-node-"
  * @param uiState the history-free editor projection (current page, selection, view scale/offset).
  * @param dispatch forwards an [Intent] into the store.
  * @param modifier sized identically to the sibling [PagePreview] so node device-px bounds align.
+ * @param onDelete the host's delete verb. Defaults to a bare `Intent.Delete`, which is what every caller
+ *   outside the editor screen wants; the screen passes its **soft** delete so the accessibility path is
+ *   reversible on exactly the same terms as the visible one.
  */
 @Composable
 public fun ElementSemanticsLayer(
     uiState: EditorUiState,
     dispatch: (Intent) -> Unit,
     modifier: Modifier = Modifier,
+    onDelete: (String) -> Unit = { dispatch(Intent.Delete(setOf(it))) },
 ) {
     val page = uiState.document.pages[uiState.currentPageIndex]
     val screenPxPerPt = uiState.view.screenPxPerPt.toDouble()
@@ -77,7 +81,7 @@ public fun ElementSemanticsLayer(
             val hDp = with(density) { hPx.toDp() }
 
             val selected = element.id in uiState.selection
-            val actions = EditorA11y.elementCustomActions(element, dispatch)
+            val actions = EditorA11y.elementCustomActions(element, dispatch, onDelete)
             val description = EditorA11y.label(element)
 
             // Semantics-ONLY (no clickable/selectable): the node must not consume pointer input, or it
