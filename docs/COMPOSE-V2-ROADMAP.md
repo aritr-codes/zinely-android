@@ -544,6 +544,84 @@ index alone.
 
 ---
 
+## Phase C completion record (2026-08-06) {#phase-c-completion-record-2026-08-06}
+
+> **Why this section exists.** The plan above is what Phase C *set out* to do. This is what it did. They are
+> not the same, and the differences are decisions — recorded here so a new engineer inherits the outcome
+> rather than reconstructing it from nine ADRs and a commit log. Written at the close of the phase, in the
+> same shape as the [Phase A completion record](#phase-a-completion-record-2026-07-29) above.
+
+**Phase C is complete.** Merged to `main` as **`8a30051`** — `merge(Phase C): the Bench, complete` — a
+`--no-ff` merge of `feat/c3-inplace-edit-and-page-pan` (`31e014f`) preserving all twelve package commits
+unsquashed. Permanently tagged **`compose-v2-bench-complete`**, the Phase A milestone's own convention.
+**`main` is the new baseline**, and work that follows starts from it with its own planning package and its
+own ADR sequence rather than extending this phase's governance chain.
+
+### Packages
+
+| # | Package | ADR | Outcome |
+|---|---|---|---|
+| **C0** | corpus cleanup — documentation only | — | ✅ two lines of stale prose deleted; no selector, token or script touched |
+| **C1** | the studio surface | [ADR-090](DECISIONS.md#adr-090) | ✅ the phase's first production code. Cost three device sessions and two owner rulings |
+| **C2a** | selection — outline, handles, dim, materialise | [ADR-091](DECISIONS.md#adr-091) | ✅ Pass 1 passed, Pass 2 failed, [OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling) made selection transient |
+| **C2b** | the contextual toolbar | [ADR-092](DECISIONS.md#adr-092) | ✅ [OD-14](design/V2-SPEC-DEFECTS.md#d-039-ruling): both bars stay, no verb appears twice at once |
+| **C3** | in-place text editing + the rigid page pan | [ADR-093](DECISIONS.md#adr-093) | ✅ the centrepiece. Reopened after implementation by [OD-16](design/V2-SPEC-DEFECTS.md#d-043-ruling) |
+| **C4** | the bar, the status chip, the snackbar | [ADR-094](DECISIONS.md#adr-094) | ✅ [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) amended the bar to four controls |
+| **C5** | page navigation | [ADR-095](DECISIONS.md#adr-095) | ✅ halted mid-verification for [OD-23](design/V2-SPEC-DEFECTS.md#d-059-ruling) and did not work around it |
+| **C6** | the ink popover | [ADR-096](DECISIONS.md#adr-096) | ✅ held `Proposed` until [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) ruled D-028 |
+| **C9** | integration — the four states, motion, place | [ADR-097](DECISIONS.md#adr-097) | ✅ the phase gate. Closed on [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling) |
+
+**There is no C7 and no C8.** [OD-2](#re-seated-beyond-phase-c) re-seated the holding tray (H1) and the
+Add / Art drawer (H3) beyond the phase; **their letters are not reused and C9 was deliberately not
+renumbered**, because six ADRs and two property tables already referred to these labels.
+
+### What the plan got wrong, and what corrected it
+
+| Planned | Delivered | Why |
+|---|---|---|
+| **eight packages** | **nine**, one of them never built | C2 split into C2a/C2b by [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling); C7 and C8 re-seated by OD-2 |
+| **transcribe the frozen file** | transcribed, **and the file amended eight times** | each amendment an owner ruling, each editing the HTML *first* — the workflow's order, never reversed |
+| **`ADR-089`'s property tables are the contract** | **every package re-read the frozen file and found the addresses wrong** | five amendments moved them; C5 found all 16 of its citations stale, C6 all 16 of its, C9 three |
+| **D-012 answered in Phase C on physical devices** | ✅ exactly that | [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling) ratified the Bench's rule on C9's hardware evidence. **No code changed** |
+| **goldens prove parity** | ⚠️ **goldens proved less than assumed** | *a recorded frame cannot fail against the implementation it was recorded from* — see below |
+
+### Owner decisions
+
+**Resolved through OD-25.** Nothing awaits an owner, and no register entry fences any work. The last entry
+that ever gated a Phase C package was [D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe),
+open since 2026-07-28 and answered in the venue its own deferral named.
+
+**Carried design debt, all explicitly non-blocking:** D-023 · D-049 · D-050 ·
+[D-051](design/V2-SPEC-DEFECTS.md#d-051) (OD-26) · D-052 · D-060 ·
+[D-064](design/V2-SPEC-DEFECTS.md#d-064) (OD-27) · [D-065](design/V2-SPEC-DEFECTS.md#d-065) (OD-28).
+**Re-seated with H1/H3:** D-029 · D-030. **Withdrawn and kept as record:** D-061 · D-062 · D-063.
+
+**One accessibility debt travels on undischarged:** the empty state's decorative sticker cluster announces
+the characters it draws to the platform accessibility tree, against its own documented contract. Found by
+[C1's Pass 1](DECISIONS.md#adr-090-device-verification); **not** closed by C9.
+
+### What the phase taught
+
+Recorded because each cost a real defect, and because a phase that only records its successes teaches
+nothing:
+
+- **A recorded Roborazzi frame cannot fail against the implementation it was recorded from.** C1 re-recorded
+  a golden over a 1.15:1 headline; C6 signed off two blocks to frames recorded from the defect. This is
+  strictly larger than *"small changes escape the 2 % threshold"*, and it is why later packages assert with
+  threshold-free probes rather than frames.
+- **A computed check can be exactly right about a relationship that does not exist.** C9's row 9.5 was
+  computed four times and wrong three times, in opposite directions, while the hardware was right the first
+  time. The corollary it paid for twice: *being wrong once is not a reason to trust the correction.*
+- **Pass 1 and Pass 2 answer different questions and neither substitutes for the other.** C2a and C2b each
+  passed Pass 1 and failed Pass 2, on findings no test could have expressed. C9 tried once to explain a Pass
+  2 confusion away with knowledge the user does not have; review refused it.
+- **A mutation battery is worth exactly what its control run is worth.** C3's harness reported thirty kills
+  having compiled no mutant at all.
+- **Address drift defeats duplicate-detection.** C9 filed a defect the register already held, because an
+  amendment had moved the line it cites. The register is searched by *what a thing is*, not by where it was.
+
+---
+
 ## Phase D — Proof
 
 **Objective.** Bring the Proof surface to the frozen [Proof](design/mockups/v2-proof.html): **pixel parity +
