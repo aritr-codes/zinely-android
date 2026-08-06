@@ -473,6 +473,82 @@ class BenchC6Test {
     }
 
     /**
+     * Row 6.2c — `justify-content:space-between`: `Done` sits at the card's far edge, not against the
+     * title.
+     *
+     * **Device Pass 1 found this and nothing else could have.** The header `Row` had no `fillMaxWidth`,
+     * so `Arrangement.SpaceBetween` had no free space to distribute and the header read "InkDone" —
+     * measured on an `SM-A176B` at 411dp, title glyphs ending at x=128px with `Done` at 132..203px where
+     * the frozen header puts it near x=1007. Every existing assertion passed: both texts were present,
+     * both displayed, both the right colour. The golden passed too, because it was recorded from this
+     * layout — the third time in this package that a recorded frame could not fail against the
+     * implementation it was recorded from (see ADR-096 §6, RF-6).
+     */
+    @Test
+    fun done_sits_at_the_cards_far_edge_and_not_against_the_title() {
+        val store = store()
+        setScreen(store)
+        openInk(store)
+        val card = bounds(BenchInkPopoverTestTag)
+        val done = bounds(BenchInkDoneTestTag)
+        val title = composeRule.onNodeWithText(Copy.BenchInk.TITLE).fetchSemanticsNode().boundsInRoot
+        // `.inkpop{padding:12px 14px 14px}` inside a 1px border: the header's content box ends 15dp in.
+        val inset = px(14.dp) + px(1.dp)
+        assertEquals("Done's right edge is the card's content edge", card.right - inset, done.right, 2f)
+        // …and the two are genuinely apart, which is what "space-between" means on a 411dp card.
+        assertTrue(
+            "Done must not sit against the title (title ends ${title.right}, Done starts ${done.left})",
+            done.left - title.right > px(100.dp),
+        )
+    }
+
+    /**
+     * Row 6.1i — the frozen stacking order: `.ctx` 30 (`:357`) < `.snack` 38 (`:444`) < `.inkpop` 42
+     * (`:377`). The popover is drawn ABOVE the snack it raises.
+     *
+     * Also a Device Pass 1 finding. `BenchSnack` is composed after `BenchInkPopover`, so the snack drew
+     * over the card and covered the `.inkuse` note — the one line that tells you what your zine now
+     * costs to print, hidden by the confirmation that you changed it.
+     *
+     * Asserted as paint, because z-order is paint: in the light palette the snack's `--ink` ground and
+     * the popover's `--sheet` are at opposite ends of the scale, so one pixel inside the note settles it.
+     */
+    @Test
+    fun the_popover_is_drawn_above_the_snack_it_raises() {
+        val store = store()
+        setScreen(store)
+        openInk(store)
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithContentDescription(Copy.BenchInk.FOREST).performClick()
+        composeRule.mainClock.advanceTimeBy(300)
+        composeRule.waitForIdle()
+
+        val note = composeRule.onNodeWithTag(BenchInkUseNoteTestTag, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInWindow
+        val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
+        val sheet = zinelyV2LightColors().sheet.toArgb()
+        val ink = zinelyV2LightColors().ink.toArgb()
+        // Counted across the whole note rather than sampled at one pixel: the note carries a shield
+        // glyph and a sentence, both in `--ink-faint`, and a single probe lands on whichever it hits.
+        // What settles the z-order is how much of the note's own GROUND survives.
+        var onSheet = 0
+        var total = 0
+        for (y in note.top.toInt() until note.bottom.toInt()) {
+            for (x in note.left.toInt() until note.right.toInt()) {
+                total++
+                if (channelDistance(bmp.getPixel(x, y), sheet) < channelDistance(bmp.getPixel(x, y), ink)) {
+                    onSheet++
+                }
+            }
+        }
+        assertTrue(
+            "only $onSheet of $total pixels of the ink note stand on the popover's --sheet; the snack is " +
+                "drawn over the card it should sit behind",
+            onSheet > total / 2,
+        )
+    }
+
+    /**
      * Row 6.3 — four bands in the freeze, **three** for a text target. ADR-089's own table said three
      * and `openInk` emits four; OD-24 then fenced `Paper tints` away from a text element, so a text
      * target sees `Inks · Neutrals · Ready-made palettes`. The labels are asserted as an ordered list for

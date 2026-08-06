@@ -4741,8 +4741,10 @@ recorded because it looks like one.
 because it asked whether an `Accepted` ADR is superseded. **[D-028 was ruled on 2026-08-05](design/V2-SPEC-DEFECTS.md#d-028-ruling)
 — OD-24, option (c) — the frozen Bench was amended first, and only then was any production code written.**
 
-- **Status:** 📝 `Proposed` **2026-08-05** — implementation complete; awaiting the independent review and both
-  device passes. [§3a](#adr-096-ruling) records the ruling that unblocked it.
+- **Status:** ✅ `Accepted` **2026-08-06** — implementation complete; independent review reconciled
+  ([§6](#adr-096-review)); **both device passes accepted on hardware** ([§9](#adr-096-device)), which cost
+  two fixes, two new frozen-property rows and two new mutations. [§3a](#adr-096-ruling) records the ruling
+  that unblocked it. Opened 📝 `Proposed` **2026-08-05**.
 - **Package:** C6 · **Depends on:** C2 ✅ (C2a/C2b `Accepted`) · **Selectors:** `.inkpop*`, `.band*`, `.swrow`,
   `.sw2*`, `.presets`, `.preset*`, `.inkuse*`, and the behaviours `openInk` / `applyInk` / `inkClose`.
 - **Supersedes nothing. Modifies nothing.** Whether [ADR-055](#adr-055) Decision 6 is superseded is the
@@ -4799,6 +4801,14 @@ when it had not; the claim is corrected there and the work is done here.
 ADR-089 rows 6.1–6.12 are a **selector-level** table and never claimed to be property-level; §2.2 says so. This
 audit exists because C5 learned the same lesson twice — at its second review and again at its third — that *a
 table is the contract, and only a row-by-row audit against the frozen file can say whether the contract is met.*
+
+**Every address in this section is PRE-amendment**, because the audit was written before
+[OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) amended the frozen Bench. They are §1's *"at the gate"*
+column, and following one today lands you in the page-strip CSS rather than the popover's. The offsets are
+§1's: **+34** for the `.inkpop` block (`343 → 377`, `349 → 383`), **+37**/**+38** for the behaviours
+(`664 → 701`, `659 → 697`). **§4's addresses are the live ones** — use those. This paragraph exists because
+§1 got a two-column treatment and an explanation and §2 got neither, which independent review found by
+following an address here and landing on the wrong rule.
 
 **Frozen properties with no row of any kind.** Each becomes a row in §4 when this ADR is unblocked:
 
@@ -4883,7 +4893,21 @@ gate, against the pre-amendment file**; a first version of this sentence claimed
 afterwards, which independent review disproved. §1 now carries both columns, and §4's addresses below were
 resolved against the amended file — nine of them one line high on their first pass, and corrected here.
 
-### 4. Frozen property table — 35 rows
+### 4. Frozen property table — 50 rows
+
+Forty-eight when the package was written; **two — 6.1i and 6.2c — were added by device verification**, and
+neither could have been added by the suite, because the suite's evidence for both blocks was a recorded
+Roborazzi frame and *a recorded frame cannot fail against the implementation it was recorded from*
+([§9](#adr-096-device)). They are marked in the table by their mutation ids, **M39** and **M40**, which are
+the battery's last two.
+
+**This heading said 37, and before that 35, and both were wrong — in the section that boasts of having
+audited its own count.** The table has always had 50 rows (48 before hardware). What 37 actually counts is
+**rows carrying a mutation of their own**: 50 rows, less the 10 that name no mutation, less the 3 that
+reuse another row's (6.9c→M20, 6.10b→M21, 6.15c→M24). That is a real and useful statistic — it is simply
+not the row count, and printing it under the word *rows* is precisely the failure this section cites C5's
+review for catching. Counted programmatically from the table body, not by eye. The 10 with no mutation are
+not one kind of row but three, and §4's closing note now separates them.
 
 Written when [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) unblocked the package, from §1's re-anchored
 addresses and §2's audit. Every row carries one assertion and one mutation, in the
@@ -4905,9 +4929,11 @@ Assertions live in `BenchC6Test` (`T`) and `BenchC6GoldenTest` (`G`). Mutation i
 | **6.1f** | `openInk` hides `.ctx`; `inkClose` restores it | `:692`, `:697` | `T.the_popover_takes_the_verb_bars_place_and_gives_it_back` | **M8** the `!inkPopoverOpen` term → `true` |
 | **6.1g** | `box-shadow:0 14px 34px -12px var(--frame-shadow)` | `:378` | `G` recorded frame (light + dark) | — *(see the note below)* |
 | **6.1h** | `padding:12px 14px 14px` | `:378` | `G` recorded frame | — *(see the note below)* |
+| **6.1i** | the frozen z-order — `.inkpop` `z-index:42` sits **above** `.snack` `38`, which sits above `.ctx` `30` | `:377`, `:444`, `:357` | `T.the_popover_is_drawn_above_the_snack_it_raises` | **M40** the `zIndex(1f)` dropped |
 | **6.2** | `h4` — `Ink`, `--serif`, 500, 15px | `:380`, `:689` | `T.the_header_is_the_frozen_title_and_its_done` + `G` | — *(see the note below)* |
 | **6.2a** | `h4 button` — `Done`, `--sans`, 12px, `--ink-faint` | `:381`, `:689` | `T.the_header_is_the_frozen_title_and_its_done` | — *(see the note below)* |
 | **6.2b** | `inkClose` hides the popover **and** restores `.ctx` | `:697` | `T.the_popover_takes_the_verb_bars_place_and_gives_it_back` | **M9** `onDone` made inert |
+| **6.2c** | `h4{display:flex;justify-content:space-between}` — `Done` sits at the card's far edge, not against the title | `:380` | `T.done_sits_at_the_cards_far_edge_and_not_against_the_title` | **M39** `fillMaxWidth` + `SpaceBetween` dropped |
 | **6.3** | four labelled bands, in order — `Inks · Neutrals · Ready-made palettes` for a text target | `:682`, `:688`, `:690` | `T.a_text_target_draws_three_of_the_freezes_four_labelled_bands` | **M10** the presets' `.bl` deleted |
 | **6.3b** | `.bl{text-transform:uppercase}` | `:382` | `T.a_text_target_draws_three_of_the_freezes_four_labelled_bands` | **M11** `.uppercase()` dropped |
 | **6.3c** | `.bl` — 10px/600, `.12em`, `--ink-faint`, 5px under itself; `.band{margin-bottom:9px}` | `:382` | `G` recorded frame | — *(see the note below)* |
@@ -4945,9 +4971,14 @@ Assertions live in `BenchC6Test` (`T`) and `BenchC6GoldenTest` (`G`). Mutation i
 | **6.17b** | `ColorRgba` ↔ `Color` is exact, which is why OD-24 needs no migration | `Document.kt:125` | `T.a_swatch_survives_the_document_round_trip_byte_for_byte` | **M35** one channel scaled by 254 |
 | **6.18** | the popover is **chrome over the artifact** — the room's palette, not the sheet island's ([D-035](design/V2-SPEC-DEFECTS.md#d-035)) | `EditorScreen.kt` | `G.the_popover_dims_with_the_room_because_it_is_chrome` | **M38** the popover drawn in the island's palette |
 
-**Rows with a recorded frame and no mutation, named rather than left implicit.** Nine rows above (6.1g,
-6.1h, 6.2, 6.2a, 6.3c, 6.5, 6.10c and the paint halves of 6.2/6.5) are closed by the two recorded
-Roborazzi frames and carry **no dedicated mutation**. That is a real limit and it is the one C5's third
+**Rows with no mutation of their own, named rather than left implicit — and they are three kinds, not one.**
+**Seven** are closed by the two recorded Roborazzi frames: 6.1g, 6.1h, 6.2, 6.2a, 6.3c, 6.5, 6.10c. **Two**
+are *framework-delivered* — 6.13a and 6.13b, whose behaviour C4 already owns, so there is nothing of C6's to
+mutate. **One** — 6.16, the [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)
+touch-target row — carries a threshold-free assertion but no mutation, because it records a measurement
+rather than a frozen value. Ten in total. Only the first group is a coverage limit; the earlier text
+counted nine, lumped all three kinds together, and named the group by an enumeration that did not match it.
+The seven frame-closed rows are a real limit and it is the one C5's third
 review named: at `changeThreshold = 0.02f` a recorded frame catches a *change*, not necessarily a *small*
 change. Each of these is a multi-property block — a padding, a type role, a pill's whole geometry — large
 enough that a change to it moves well over 2 % of a cropped card, which is why they are left to the
@@ -4955,8 +4986,18 @@ frame; the properties too small for that threshold (the 1px hairline, the 1px ha
 1.7 stroke, the 4dp overlap, the corner radius) each have a threshold-free probe of their own above.
 **The distinction is the row's, not the reviewer's to rediscover.**
 
+**Device verification falsified the second half of that argument, twice.** The reasoning above is that a
+recorded frame is adequate for a *large* block because a change to it moves more than 2 % of the crop.
+That is true of a change made *after* the frame was recorded, and false of a property that was **never
+right**: the frame was recorded from the implementation, so it recorded the defect as the expectation.
+Row 6.2's block hid a header that was never `space-between`, and row 6.1's block hid a popover that was
+never above the snack — both inside blocks this note called covered. The limit is therefore not
+"small changes escape the threshold"; it is **"a recorded frame cannot fail against the implementation it
+was recorded from"**, which is a strictly larger hole, and the only instrument in this package that closes
+it is hardware. Rows 6.1i and 6.2c exist because of it.
 
-### 5. Mutation battery — 38 mutations, and the four the suite did not catch
+
+### 5. Mutation battery — 40 mutations, and the four the suite did not catch
 
 Every row of §4 carries a mutation that breaks exactly one frozen property. The battery restores the
 file in a `finally`, re-runs `:feature:editor:testDebugUnitTest --rerun-tasks
@@ -4965,7 +5006,10 @@ refuses a verdict at all from a run that executed fewer tests than the control. 
 `c6_mutations.py`. A CONTROL run precedes the battery and must be GREEN, so a suite that is red for an
 unrelated reason cannot be read as "every mutation caught".
 
-**Result: 38 of 38 RED**, and the battery was **re-run in full after the review fixes of §6** — the ring's
+**Result: 40 of 40 RED.** Thirty-eight were written with the package; **M39 and M40 were written after
+device verification**, against the two rows hardware added ([§9](#adr-096-device)), and both came back RED
+first time — `M39` caught by `done_sits_at_the_cards_far_edge_and_not_against_the_title`, `M40` by
+`the_popover_is_drawn_above_the_snack_it_raises`. The battery was **re-run in full after the review fixes of §6** — the ring's
 identity and the collapsed margin both changed production code, so the earlier verdicts no longer answered
 for the tree. Four came back GREEN on the first pass. None of them was a passing build, and
 each is recorded here with its diagnosis rather than as a line in a summary table — the point of the
@@ -5009,11 +5053,12 @@ exposed assertions that were weaker than they read — one fixture, one probe, o
 second term — one exposed a battery defect rather than a suite one, and one exposed a row asserted in
 the wrong composition entirely, then a second time against the wrong token. All are closed, and the
 suite gained one test (`the_popover_is_the_rooms_chrome_at_night_and_not_the_islands`) it did not have.
-Nine rows — 6.1g, 6.1h, 6.3c, 6.10c, and the paint halves of 6.2, 6.2a and 6.5 — remain closed by recorded Roborazzi frames with no
+Seven rows — 6.1g, 6.1h, 6.2, 6.2a, 6.3c, 6.5 and 6.10c — remain closed by recorded Roborazzi frames with no
 dedicated mutation, for the reason §4's closing note gives; that limit is unchanged by this battery and
 is not a finding of it.
 
 
+<a id="adr-096-review"></a>
 ### 6. What independent review found, and what it changed
 
 The package was reviewed by an agent that did not implement it, against the working tree rather than
@@ -5092,6 +5137,13 @@ once, by the note. Recorded because it reads as a missing padding in the Compose
 popover is chrome over the artifact, so it takes the room's tokens. This is a deviation from *composition
 position*, not from the freeze — the prototype has no island.
 
+**8. The system Back button dismisses the popover.** The freeze has no such control — a browser prototype
+has no Back — so this is a Compose-only affordance, added by nothing more than the popover living inside the
+editor's existing back handling. It behaves exactly as `inkClose` does (`:697`): the popover goes, the verb
+bar returns, the element stays selected. **Verified on hardware** ([§9.2](#adr-096-pass2)). Recorded as a
+deviation because the freeze does not describe it, and kept because an Android transient surface that
+ignores Back is a platform defect regardless of what the prototype says.
+
 **Not a deviation, recorded because it looks like one:** `benchInkBands` is called with a hard-coded
 `BenchVerbKind.TEXT` at the assembly. The `Ink` verb is reachable from a text element only —
 `benchVerbKindOf` returns `null` for anything else — so the `PHOTO`/`DECOR` branch is unreachable **in
@@ -5112,3 +5164,169 @@ survive someone reading the fixture — the battery said RED and the assertion w
 Tracked rather than fixed here: committing a harness is a change to how this programme evidences its
 packages, which is a decision for the owner and for every package, not a thing C6 should settle for
 everyone on its way past. Recorded as debt, visible, not shipped as a surprise.
+
+**The popover announces no pane title.** `BenchInkPopover` publishes no container node with a name, so a
+screen-reader user activating `Ink` is told nothing about the pane that just opened. Established from the
+platform tree in [§9.2](#adr-096-pass2), unmeasured for user impact because TalkBack could not be run, and
+left unfixed only because the closeout's instruction was not to touch the implementation without device
+proof. One `Modifier.semantics { paneTitle = … }` closes it. **Scheduled, not discovered.**
+
+<a id="adr-096-device"></a>
+### 9. Device verification — both passes, on hardware
+
+**Device:** Samsung SM-A176B (`RZCYA1VBQ2H`), Android 16 / SDK 36, 1080×2340 at density 420 —
+**2.625 px/dp**, 411.4dp wide, which is the width the frozen `.phone` is drawn at. **Build:** `:app:installDebug`
+from the working tree at [`aa6ba7d`](COMPOSE-V2-ROADMAP.md) plus the two fixes below. Bounds are read from
+the **platform `AccessibilityNodeInfo` tree** (`adb shell uiautomator dump`), not from Compose semantics —
+the two are not the same tree, and this programme has shipped a defect through the difference before
+([ADR-058](#adr-058)). Colours are screencap pixels.
+
+**Every measurement below was taken in this session on this build.** None is carried over.
+
+<a id="adr-096-pass1"></a>
+#### 9.1 Pass 1 — developer verification
+
+Pass 1 ran **twice**: once against `aa6ba7d`, which **failed**, and then from the beginning against the
+fixed build, which passed. Both runs are recorded here, because the first is the evidence that the
+package's entire apparatus — 41 tests (34 in `BenchC6Test`, 7 in `BenchC6GoldenTest`, counted from the
+JUnit XML rather than by eye), two recorded Roborazzi frames, 38 mutations and an independent
+review that returned GO WITH FIXES — did not see two frozen properties **at all**.
+
+**Defects Pass 1 found. Both fixed; each now carries a row and a mutation.**
+
+| id | what hardware showed | root cause | fix | row / mutation |
+|---|---|---|---|---|
+| **DP1-1** | `Done` sat immediately right of the title `Ink`, not at the card's far edge | the header `Row` never filled its width, so `Arrangement.SpaceBetween` had nothing to distribute | `.fillMaxWidth()` on the header row (`BenchInkPopover.kt`) | **6.2c** / **M39** |
+| **DP1-2** | the `Ink · Matcha` snack drew **over** the open popover and covered the `.inkuse` note | `BenchSnack` is composed after `BenchInkPopover` in `EditorScreen.kt`, and nothing expressed the frozen z-order | `Modifier.zIndex(1f)` on the popover, cited to `.inkpop` `42` (`:377`) over `.snack` `38` (`:444`) over `.ctx` `30` (`:357`) | **6.1i** / **M40** |
+
+Neither is a small-change-under-threshold miss. Both sat **inside blocks §4 had signed off to a recorded
+frame**, and each frame had been recorded from the defect. §4's closing note now states that limit in its
+true form rather than the weaker one it originally claimed.
+
+**The fixed build, measured.**
+
+| row | frozen property | measured on device |
+|---|---|---|
+| **6.1** | `left/right/bottom:12px` | card edges **12.19dp** left and right; the card's bottom edge lands on the verb bar's own bottom edge, which carries the same frozen offset. Identical in light and dark. |
+| **6.1f / 6.2b** | `openInk` hides `.ctx`, `inkClose` restores it | with the popover open the tree contains **no** verb bar; after `Done` it contains exactly `Edit · Font · Size · Ink · Delete` and no popover |
+| **6.1i** | popover above the snack | the `.inkuse` note renders **complete and unobstructed** while the snack is up |
+| **6.2c** | `justify-content:space-between` | title glyph run **71–128 px**; `Done` glyph run **938–1009 px** against a card content edge of ≈**1007 px** |
+| **6.3 / OD-24** | a text target draws Inks · Neutrals · Ready-made palettes | band labels read exactly `INKS`, `NEUTRALS`, `READY-MADE PALETTES`. **Paper tints are absent** — fenced, as D-028 ruled, not deleted from the freeze |
+| **6.4 / 6.15** | fourteen swatches, each announcing the ink it is | **14** nodes: `Matcha · Forest · Strawberry · Brick · Sunflower · Ochre · Aqua · Cornflower · Plum · Ink` then `Ink · Slate · Stone · Fog` |
+| **6.9 / 6.15** | the swatch is a radio, not a button | every swatch reports **`android.widget.RadioButton`**, `checkable="true"`, to the platform tree — the [ADR-059](#adr-059) Role→View defect does **not** reproduce here |
+| **6.9b (RF-1)** | the ring belongs to one swatch | tapping the **duplicated** `Ink` — the one in the Inks band — yields `checked` **count = 1**, at `[814,994][940,1120]`, the Inks instance only |
+| **6.11 / OD-24** | a preset applies `PRESETS[i][1][0]` | tapping `Cool zine` leaves `checked = ['Forest']` — the primary ink, one colour |
+| **6.15b** | a preset names the ink it will apply | `Two-colour. Primary ink Ink` · `Warm zine. Primary ink Brick` · `Cool zine. Primary ink Forest` |
+| **6.12 / 6.15c** | `.inkuse` is one sentence carrying the count | **one** node: *"Zines look best — and print cheapest — with 1–3 inks. This one uses 1."* |
+| **6.16 / D-009** | 26dp of paint, 48dp of target | swatch nodes are **86 px × 126 px = 32.8dp × 48dp**, tiling edge to edge, with the last in each row **126 px = 48dp** wide. The 48dp floor is met vertically and on the row-final swatch; horizontally the interior targets tile at 32.8dp. See the ruling note below. |
+| **6.18 / D-035** | the popover is the room's chrome, not the island's | light ground `(251,247,238)` — title **14.03:1**, `Done` and all three band labels **3.52:1**. Dark ground `(40,35,25)` — title **12.47:1**, `Done` and the band labels **4.00:1**. The card does not take the island's palette in either theme |
+
+**On 6.16, and why it is not a new owner decision.** 32.8dp interior targets are below 48dp.
+[D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)
+reaches the floor by *extending the touch area, never by growing the control*; it **names the swatch grid
+by name** as the case where extended regions overlap, and says resolving it wrongly is "precisely a device-pass
+finding". At a frozen 26dp of paint on a 33dp pitch (`:383-384`), non-overlapping 48dp-wide targets are
+geometrically impossible — so tiling to the pitch and taking the full 48dp vertically is the ruling's own
+accepted consequence, not a question it left open. Recorded as a **measurement**, not a defect.
+
+**On contrast, and on the pair this section first published.** Two tokens are in play, not one. The title
+is `--ink`; `Done`, the three band labels and the `.inkuse` sentence are all `--ink-faint`, the pairing this
+programme uses for secondary chrome. Measured on device, sampling each glyph's extreme pixel against the
+card's own ground:
+
+| | light — ground `(251,247,238)` | dark — ground `(40,35,25)` |
+|---|---|---|
+| title `Ink` (`--ink`) | **14.03:1** | **12.47:1** |
+| `Done`, band labels (`--ink-faint`) | **3.52:1** | **4.00:1** |
+| `.inkuse` sentence (`--ink-faint`) | 3.56:1 | 4.04:1 |
+
+**This table replaces a wrong one, and the error is worth naming.** §9 first published *"title 14.03:1,
+`Done` and the band labels 3.52:1. Dark: 4.04:1 and 4.08:1"* — in which both dark figures were `--ink-faint`
+samples and one had been labelled as the title. As written it said the faint caption out-contrasted the
+primary title on the same ground, which is impossible, and it put the dark title at 4.04:1 when
+[C2b](#adr-092) measured a genuine dark-palette defect at 1.05:1 — so the number was in the neighbourhood
+of *evidence of a defect*, printed as evidence of correctness, in the one row whose whole purpose is
+[D-035](design/V2-SPEC-DEFECTS.md#d-035). Independent review caught it by computing the tokens; it was then
+re-measured on hardware in both themes. The figures above are the re-measurement.
+
+**No WCAG conformance is claimed here.** AA's large-text exemption begins at 24px regular / 18.66px bold, so
+the 15px title, the 12px `Done` and the 10px band labels all carry the 4.5:1 body threshold, and the
+`--ink-faint` pairing does not reach it in either theme. **The only contrast floor this programme has
+ruled is [D-002](design/V2-SPEC-DEFECTS.md#d-002)'s 3.0:1 on cover titles**, which every figure above
+clears. These are recorded as **measurements** so the owner can see them; changing them means repainting a
+frozen token, which belongs to no package here.
+
+**Regressions against earlier packages.** From a cold editor: the page strip renders eight thumbnails with
+`Page 1 of 8 (front cover)` … `Page 8 of 8 (back)` (C5); selecting the text element raises the five-verb bar
+with `Font` disabled (C4); the nudge row, `Undo`, `Redo`, `Add`, `Done` and `Preview` are all present and
+reachable (C3, C4). **`Undo` reverts an applied ink and the ring follows it** — `Strawberry` → `Forest`,
+with the popover still open. No regression observed.
+
+<a id="adr-096-pass2"></a>
+#### 9.2 Pass 2 — first-time-user verification
+
+Run from the Library, cold, as a person meeting the editor for the first time. **Implementation defects and
+design observations are kept apart below, and the two passes are not averaged.**
+
+**Implementation defects: none.** Three behaviours read as wrong and each turned out otherwise, which is
+recorded because a Pass 2 that finds nothing is only credible if it says what it suspected:
+
+- *`Back` appeared to strand the element selected with no verb bar.* It does not — the probe read `text=`
+  where the bar publishes `content-desc`. `Back` dismisses the popover and restores the bar, exactly as
+  `Done` does.
+- *Tapping outside the card closes the popover **and** clears the selection.* This is the freeze: the
+  canvas click handler (`:738-739`) calls `deselect()` (`:626-628`), which drops `.ctx`, `.inkpop` and the
+  selection together. Compose matches.
+- *The popover has no scrim and does not trap focus* — the whole editor stays traversable behind it. Also
+  the freeze: `.inkpop` is not a `<dialog>` and adds no scrim, unlike `showSheet` (`:847`), which does.
+
+**Design observations.** None is a defect; each is how the frozen design reads to someone meeting it cold.
+
+| id | observation |
+|---|---|
+| **P2-O1** | **The same colour is offered twice, under one name.** `Ink` appears in the Inks band *and* in the Neutrals band — two near-identical near-black circles in two rows, announced identically. Only one takes the ring. RF-1 made the *behaviour* unambiguous; **comprehension is still ambiguous**, and a first-time user cannot tell which one they chose. Source: `INKS` (`:596`) and `NEUT` (`:598`) both contain `#2A251E`. **Not a new owner decision, and the citation says so rather than the inference:** [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) §1 offers a text target *"Inks + Neutrals — **13 distinct swatches**"* over **14 drawn** — the owner counted the duplicate, in the ruling, and drew both bands anyway. What is undecided is only whether to *rename* one, which amends a frozen surface. **Filed as [D-060](design/V2-SPEC-DEFECTS.md#d-060)** in the register where owner-owed work queues, not left in prose. |
+| **P2-O2** | **A preset shows a palette and applies one colour.** `Cool zine` draws three dots and applies `Forest` alone. Its *spoken* description — "Cool zine. Primary ink Forest" — is more honest than its picture, which is an odd inversion. This is exactly what [D-028/OD-24 option (c)](design/V2-SPEC-DEFECTS.md#d-028-ruling) ruled (`PRESETS[i][1][0]`, `:696`), so it is a ruled consequence, not a new question. Recorded because Pass 2's job is to say how it reads. |
+| **P2-O3** | **Ink has no cold-state affordance.** A freshly opened editor says `Preview`, `Undo`, `Redo`, `Add`, `Done` and eight page numbers. Nothing says colour or ink. The route is one tap — select the element, the verb bar appears, `Ink` is on it — but it must be *guessed* first. This is the frozen selection-driven context model shared with C4, not a C6 property. |
+| **P2-O4** | **No swatch carries a visible name.** Sighted users get colour only; the name exists only in the accessibility tree (`.sw2` has no text, `:384`). In an app whose output is *printed*, the name is the thing you say to a copy shop. |
+| **P2-O5** | **The note counts, but it does not lead.** "…with 1–3 inks. This one uses 1." is the only place the app explains *why* ink count matters, and it gives a reason rather than a rule — good. But a user persuaded by it has no route from this popover to a second element. |
+
+**One accessibility defect, deferred with its reason — not a design observation.** The popover publishes
+**no container node carrying a name**: there is no `Modifier.semantics { paneTitle = … }`, so a screen-reader
+user who activates `Ink` gets no statement that a pane has opened. This was first written into the
+observations table above, and independent review was right that it does not belong there: HTML has no
+`paneTitle` concept, so **the freeze cannot be the authority** — this is a platform gap, and `CLAUDE.md`
+expressly permits accessibility improvements after freeze. It is not fixed here for one reason and it is
+stated rather than dressed up: **the owner's instruction for this closeout was not to touch the C6
+implementation unless device verification proved a change necessary, and this pass could not run TalkBack**
+(see the limit below), so the gap is established from the node tree but its *user impact* is unmeasured.
+Fixing it is one modifier. Recorded here as [§8](#adr-096-debt) debt so it is scheduled rather than
+discovered.
+
+**Does Ink answer the editor's question?** The editor exists to answer *"How do I change this page?"*
+([CLAUDE.md](../CLAUDE.md)). Ink answers it in place: the artifact stays visible, the popover takes the verb
+bar's own footprint, the change is immediate, `Undo` reverses it with the ring following, and `Done` or
+`Back` returns you to where you were. Nothing is swapped out, and nothing reads as lost — which is the
+failure mode [ADR-058](#adr-058) exists to prevent. **Pass 2 accepts.**
+
+**The honest limit of this pass.** TalkBack was **not run**. Enabling it launched a Samsung permission
+activity that took the foreground and consumed the automated taps (and, before it was noticed, edited the
+sample text — reverted with `Undo`, verified back to `Hello`). P2-O6 and every accessibility claim in §9.1
+therefore rest on the **platform `AccessibilityNodeInfo` tree**, which is the tree TalkBack reads, but not on
+TalkBack's own speech. That is a weaker instrument than a spoken pass and it is stated rather than
+smoothed over.
+
+<a id="adr-096-acceptance"></a>
+#### 9.3 Acceptance
+
+Pass 1 and Pass 2 both succeed **on the fixed build**, and they do not disagree: Pass 1's two findings were
+implementation defects and are fixed; Pass 2 found **no implementation defect**, five design observations
+against the frozen prototype and **one accessibility defect deferred with its reason**, all recorded and
+none averaged into Pass 1's verdict. One observation — P2-O1 — is owner-owed and is filed as
+[D-060](design/V2-SPEC-DEFECTS.md#d-060) rather than left in prose. After the fixes the package stands at **41 tests — 34 in
+`BenchC6Test`, 7 in `BenchC6GoldenTest` — 40 of 40 mutations RED with a GREEN control, two recorded
+Roborazzi frames verifying, and a full-suite regression of 1 585 tests with 0 failures and 0 errors**
+(`./gradlew.bat test --rerun-tasks -Proborazzi.test.verify=true`, 2026-08-06).
+
+Those counts are read from the JUnit XML, not from memory: this section originally said *43* tests, which
+was a miscount carried forward in prose, and the battery's own `MIN_TESTS` floor of 41 is what it should
+always have agreed with.

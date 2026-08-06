@@ -137,6 +137,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | ~~[**D-043**](#d-043)~~ | ✅ **RESOLVED 2026-08-03** — [owner ruling](#d-043-ruling), OD-16, option **(b)** | ruled: **−96 is a maximum, not an unconditional literal.** `edit()` lifts by `min(96, slack + clearance)`; the frozen Bench was amended first and its prototype renders unchanged, because on its own geometry the two terms still sum past 96. Device evidence closed it: `SM-A176B` has **4.2dp of slack against a 96dp demand**, confirming the premise — but (a)'s predicted symptom never appeared, because the un-clipped canvas was *masking* it. That mask is [D-045](#d-045), created by the same ruling and landed in the same package. Two costs priced and recorded, not fixed: 43dp of a page-bottom box stays behind the row (the typed line clears by 23dp), and the page top still leaves the canvas when clearance demands the ceiling — clipped now, not painted over the chrome |
 | ~~[**D-047**](#d-047)~~ | ✅ **RESOLVED 2026-08-04 — [owner ruling](#d-047-ruling), OD-21, Option A; the frozen Bench is AMENDED for the fifth time** | the frozen `.bar` drew **three** slots while [OD-9](#d-031-ruling) keeps redo, [OD-11](#d-034-ruling)/[OD-14](#d-039-ruling) keep **both** shipped add verbs, and `.add`'s handler opens a chooser whose region OD-2 re-seated beyond Phase C. Ruled: the bar becomes **`Undo · Redo · Add · Done`**; `Add` opens the frozen chooser with **only its Text and Photo rows released into C4**, Art staying fenced behind C8 — *“a fence reassignment, not a capability reassignment”*; the chooser uses the shipped `ZSheet`; **Text reuses `addTextAndEdit`** so C3's in-place model is untouched; `EditorSupplyTray` is retired. One line of frozen markup added (`#redoBtn`, `:466`), **no CSS changed**. The accepted price, recorded: both add verbs sit one tap deeper than they do today |
 | ~~[**D-048**](#d-048)~~ | ✅ **RESOLVED 2026-08-04 by rulings already in hand — a recorded deviation, not an owner question, recorded exactly as [D-042](#d-042) was. No OD number, because none was needed** | `Done` follows the frozen two-state behaviour (`:653`): while a session is open C3's `#doneEdit` owns *finish* and the bar's `Done` is **withheld at the frozen `.icon-btn:disabled` `.35`** (`:269`) — [OD-14](#d-039-ruling)'s own method, as C2b applied it, using a presentation the file already draws; with no session the bar's `Done` owns *clear selection*, which is deselect's **first drawn control**, since [OD-13](#d-037-ruling) gave it only a gesture and a gesture has no presentation for OD-14 to count. **`Preview ›` does not move** — OD-9's *reuse, don't invent* is satisfied by leaving it exactly where it ships |
+| [**D-060**](#d-060) | 🟦 **OPEN — raised by C6's Device Verification Pass 2, 2026-08-06; a defect in the FROZEN FILE, not in the Compose. Not a merge blocker; C6 is `Accepted` with it open** | the ink popover offers the swatch **`Ink` twice** — it is a member of both the `INKS` array (`v2-bench.html:596`) and the `NEUT` array (`:598`), and [OD-24](#d-028-ruling) draws both bands for a text target. On the device that is two near-identical near-black circles in two rows, announced identically to a screen reader, of which only one takes the selection ring. The owner already counted this — OD-24 says *"Inks + Neutrals — 13 distinct swatches"* over 14 drawn — so it is **not** a new decision; what is undecided is whether the duplicate should be **renamed** so the two can be told apart. A fix amends the frozen file first |
 | ~~[**D-059**](#d-059)~~ | ✅ **RESOLVED 2026-08-05 — [owner ruling](#d-059-ruling), OD-23, Option (a); the frozen Bench is AMENDED for the seventh time** | [OD-22](#d-053-ruling) made the thumb's interior *the real page*. The sheet's ground is still the room's `--paper`, which in dark theme is `#2F2A22` — so in dark theme the miniature draws the page's content with **no paper under it**, and the user's own text measures **1.21:1** against the sheet (8.02:1 in light, same document, same words). This is [D-035](#d-035)'s failure a second time, one surface along; [OD-12](#d-035-ruling) ruled *the artifact does not dim* and the frozen file implements it as `.page{--paper:#F7F2E7}` (`v2-bench.html:222`) — an island scoped to `.page`, which the thumb is not. Extending it to `.pthumb` is a **seventh amendment to the frozen Bench** and therefore the owner's call, not the implementer's. |
 | ~~[**D-058**](#d-058)~~ | ✅ **FIXED 2026-08-05 — a C5 defect, found by independent review** | C5 emitted the frozen `.navrow` **below** the bar. The freeze opens `.navrow` at `v2-bench.html:481` and `.bar` at `:488`, both in `.phone`'s normal flow, so the sheets belong above `Undo · Redo · Add · Done`. Nothing caught it: every test measured one row against itself, and ADR-095's own device checklist described the frozen order while the build did the opposite. The row is moved and the *relation* is now asserted — in `BenchC5Test` and in CI-31's `SurfaceTraversalOrderTest`, where it is also the reading order. |
 | ~~[**D-057**](#d-057)~~ | ✅ **FIXED 2026-08-05 — a C5 defect, found by Device Pass 1** | The frozen `.cur{z-index:2}` was transcribed as `Modifier.zIndex`, which reorders the **platform accessibility tree** as well as the paint: the current sheet was published last, so a screen reader met page 1 after every other page. `traversalIndex` did not override it. The `zIndex` is dropped — a recorded deviation under the freeze's own allowance for post-freeze accessibility work — and its cost is a shadow tail, measured from the freeze's own geometry. |
@@ -3131,6 +3132,39 @@ acceptable is a decision about what `Done` *means* on this screen, and that is t
 
 **Not a blocker for the rest of C4.** `.status`, `.saved`, `.snack` and the soft-delete rows are untouched by
 this and can be built whichever way `Done` is ruled.
+
+---
+
+### D-060 — the ink popover offers the same swatch twice, under one name {#d-060}
+
+**Raised 2026-08-06 by C6's Device Verification Pass 2 on `SM-A176B` / Android 16.** 🟦 Open. **Not a merge
+blocker — [ADR-096](../DECISIONS.md#adr-096) is `Accepted` with this open.** **This is a defect in the frozen
+file, not in the Compose implementation** — which is precisely why it is filed here, exactly as
+[D-051](#d-051) was.
+
+**What was seen.** With a text element selected, the popover draws `Inks` (ten swatches) then `Neutrals`
+(four). The **tenth ink and the first neutral are the same colour** — `#2A251E` — so the user is shown two
+near-identical near-black circles, one at the end of one row and one at the start of the next. Both are
+named `Ink`. To a sighted user they are indistinguishable at 26dp; to a screen-reader user the platform tree
+reads `… Plum, Ink` then `Ink, Slate, …`, with nothing to tell them apart. Selecting either shows the
+selection ring on **one** of them.
+
+**The implementation is faithful, and deliberately so.** `v2-bench.html:596` puts `#2A251E` in `INKS` and
+`:598` puts it in `NEUT`; [OD-24](#d-028-ruling) draws both bands for a text target. C6's independent review
+raised the ring behaviour as RF-1 — the first implementation ringed *both* — and the fix makes the ring
+belong to the Inks-band instance, the first match, which is a defensible reading but is a Compose choice
+standing in for a spec that does not say.
+
+**This is not a new owner decision, which is why C6 did not stop.** OD-24 §1 states the offer as
+*"a **text** target is offered **Inks + Neutrals** — **13 distinct swatches**"*. Ten plus four is fourteen
+drawn; thirteen distinct is the count **after** the duplicate is removed. The owner counted the duplicate,
+in the ruling, and drew both bands anyway. The device measurement agrees from the other side: 14 nodes,
+13 distinct values ([ADR-096 §9.1](../DECISIONS.md#adr-096-pass1)).
+
+**What is undecided** is only whether the duplicate should be *told apart* — a rename, so that the near-black
+in `Neutrals` is not also called `Ink`. That is a change to a frozen surface's copy, so it amends
+`v2-bench.html` first and `Copy.BenchInk` second, and the amendment is the owner's to make. Until then the
+popover is correct and mildly confusing, which is a fair description of the freeze it implements.
 
 ---
 

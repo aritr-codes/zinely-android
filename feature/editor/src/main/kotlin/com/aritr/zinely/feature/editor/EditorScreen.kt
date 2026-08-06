@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aritr.zinely.ui.theme.rememberReduceMotion
 import com.aritr.zinely.core.copy.Copy
@@ -1263,7 +1264,14 @@ public fun EditorScreen(
                     // what the frozen `applyInk(c, PRESETS[i][0])` passes.
                     onPreset = { preset -> applyInk(preset.name, preset.applied.value) },
                     onDone = { inkPopoverOpen = false },
-                    modifier = ctxModifier,
+                    // The frozen stacking order is explicit and this is the only place it can be
+                    // expressed: `.ctx` is `z-index:30` (`:357`), `.snack` is `38` (`:444`) and
+                    // `.inkpop` is `42` (`:377`) — the popover sits ABOVE the snack. `BenchSnack` is
+                    // composed after this call, so without a zIndex the snack drew over the card and
+                    // covered the `.inkuse` note; measured on device. Raising the popover rather than
+                    // reordering the composition keeps the snack above the verb bar, which is the other
+                    // half of the frozen order.
+                    modifier = ctxModifier.zIndex(1f),
                 )
                 }
 

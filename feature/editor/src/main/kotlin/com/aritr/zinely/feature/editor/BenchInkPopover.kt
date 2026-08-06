@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -292,8 +293,17 @@ internal fun BenchInkPopover(
                 .padding(BenchInkPopoverPadding),
         ) {
             // `.inkpop h4{margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}`
+            //
+            // `fillMaxWidth` is what makes `SpaceBetween` mean anything: without it the Row wraps its
+            // two children and there is no free space to distribute, so `Done` sits hard against the
+            // title and the header reads "InkDone". Measured on device at 411dp — title glyphs ended at
+            // x=128px and `Done` ran 132..203px, where the frozen header puts it at the card's right
+            // edge (~1007px). Neither the golden nor any semantics assertion could see it: the golden
+            // was recorded from this layout, and both texts were present and displayed.
             Row(
-                modifier = Modifier.padding(bottom = BenchInkHeaderGapDp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = BenchInkHeaderGapDp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
