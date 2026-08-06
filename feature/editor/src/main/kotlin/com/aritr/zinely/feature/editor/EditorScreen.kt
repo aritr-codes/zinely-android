@@ -277,6 +277,10 @@ public fun EditorScreen(
     var deleteProgress by remember { mutableFloatStateOf(0f) }
     var snackVisible by remember { mutableStateOf(false) }
     var snackMessage by remember { mutableStateOf("") }
+    // Which snack is up. The delete snack carries `Undo`; the ink snack (C6, row 4.15) carries no
+    // button at all and stands for 1600ms rather than 3200 — the frozen `applyInk` builds it that way
+    // because an ink is one undoable command the bar's own Undo already reverses.
+    var snackAction by remember { mutableStateOf<String?>(null) }
     val c4Scope = rememberCoroutineScope()
     // One job, cancelled on re-entry: two deletes in quick succession must not leave the first
     // coroutine to clear `snackVisible` out from under the second, which is how a snackbar ends up
@@ -301,8 +305,32 @@ public fun EditorScreen(
                 deletingId = null
                 deleteProgress = 0f
                 snackMessage = benchDeletedMessage(label)
+                snackAction = UndoActionLabel
                 snackVisible = true
                 delay(BenchSnackDeleteMillis)
+                snackVisible = false
+            }
+        }
+    }
+
+    // Frozen `applyInk()` (`v2-bench.html:699-704`), in the order the freeze performs it: set the ink,
+    // then say which one. The other two writes it makes are already delivered here by unidirectional
+    // data flow rather than by this lambda — `$('editSw').style.background` is `BenchStyleRow`'s own
+    // `inkSwatch`, which reads the element's live style, and `flashSaved()` is the `.status` chip C4
+    // moved the autosave reassurance into, which the document change raises by itself.
+    //
+    // One `Intent.StyleText` per tap: an immediate-commit style change, so each ink is one undoable
+    // command and the buttonless snack is honest — the bar's Undo is right there.
+    val applyInk: (String, Color) -> Unit = { name, color ->
+        val id = uiState.selection.singleOrNull()
+        if (id != null) {
+            dispatch(Intent.StyleText(id, color = color.toColorRgba()))
+            deleteJob[0]?.cancel()
+            deleteJob[0] = c4Scope.launch {
+                snackMessage = Copy.BenchInk.applied(name)
+                snackAction = null
+                snackVisible = true
+                delay(BenchSnackInkMillis)
                 snackVisible = false
             }
         }
@@ -335,6 +363,16 @@ public fun EditorScreen(
     // non-modal and the reducer neither knows nor needs to know it is open.
     var typeBarOpen by remember { mutableStateOf(false) }
 
+    // ----- C6 (ADR-096) -------------------------------------------------------------------
+    // The frozen ink popover is summoned by the `Ink` verb and by nothing else — `.inkpop` has no rest
+    // state in the freeze either (`openInk` is its only `add('show')`). Surface-only state, like
+    // `typeBarOpen`: the reducer neither knows nor needs to know a popover is open.
+    var inkPopoverOpen by remember { mutableStateOf(false) }
+    // Back stands it down rather than leaving the editor, exactly as it does for the page grid, and for
+    // the same reason: a prototype has no Back, so the freeze cannot specify this, and an overlay you
+    // summoned is one Android expects Back to dismiss.
+    BackHandler(enabled = inkPopoverOpen) { inkPopoverOpen = false }
+
     // ── D-039: who is presenting a capability right now ────────────────────────────────────────────
     //
     // The owner's ruling keeps BOTH bars (OD-11, ADR-029 §6) and forbids showing the same action twice at
@@ -360,7 +398,17 @@ public fun EditorScreen(
     val ctxVisible = ctxKind != null &&
         uiState.interaction !is Interaction.EditingText &&
         reframing == null &&
-        !typeBarOpen
+        !typeBarOpen &&
+        // The freeze's own swap: `openInk` runs `ctx.classList.remove('show')` and `inkClose` restores
+        // it (`v2-bench.html:692`, `:697`). Two floating cards share this 12dp inset, so one of them is
+        // always the one that is up.
+        !inkPopoverOpen
+
+    // The popover belongs to the element that summoned it. Any change of that element — a reselect, a
+    // deselect, a page change, a delete — stands it down, which is the freeze doing the same at four
+    // separate sites (`:621`, `:628`, `:649`, `:712`). Keyed on the id rather than the element, so
+    // applying an ink (which changes the element and not its id) leaves it open, as the prototype does.
+    LaunchedEffect(ctxElement?.id) { inkPopoverOpen = false }
 
     // Any change of the styleable element closes the bar (ADR-055 §3: "a selection change to a non-text
     // or empty element closes the Type bar"). Keyed on the id, so committing a style through the bar —
@@ -1169,16 +1217,52 @@ public fun EditorScreen(
                         val id = ctxElement?.id
                         when (verb.label) {
                             Copy.BenchVerbs.EDIT -> if (id != null) dispatch(Intent.BeginEditText(id))
-                            // OD-9 routed Size to the shipped Type bar; Ink joins it there because the
-                            // freeze's own .inkpop is outside C2b's fence and the Type bar already carries
-                            // both size and the five content inks (ADR-055). ADR-092 row 2.13b.
-                            Copy.BenchVerbs.SIZE, Copy.BenchVerbs.INK -> typeBarOpen = true
+                            // OD-9 routed Size to the shipped Type bar, and it stays there.
+                            Copy.BenchVerbs.SIZE -> typeBarOpen = true
+                            // C6 (ADR-096 row 6.1): Ink now opens the frozen `.inkpop`, which is what
+                            // the freeze binds it to. Until this package it borrowed the Type bar,
+                            // because `.inkpop` was outside C2b's fence and blocked on D-028 — recorded
+                            // then as a temporary route, closed now. The Type bar keeps its own ink row:
+                            // OD-11 makes the frozen surface additive, and its five inks are the only
+                            // place `Coral`, `Teal` and `Blue` remain reachable.
+                            Copy.BenchVerbs.INK -> inkPopoverOpen = true
                             Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
                             Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
                             // Font and Replace ship disabled and never arrive here (ADR-092 §1(c), D-038).
                             else -> Unit
                         }
                     },
+                    modifier = ctxModifier,
+                )
+
+                // C6 rows 6.1-6.14: the frozen `.inkpop` (`v2-bench.html:377-390`, markup `:506`).
+                //
+                // It sits in the same 12dp inset the bar above it does, because the freeze gives them the
+                // same three offsets — and it *replaces* that bar rather than stacking on it, which is
+                // `openInk`/`inkClose`'s own behaviour and is why `ctxVisible` carries `!inkPopoverOpen`.
+                //
+                // Room palette, inside the same provider as the bar: this is chrome over the artifact,
+                // not the artifact (D-035). Drawn under the sheet island it would take the island's light
+                // `ink` onto the room's `sheet` — the exact 1.05:1 defect C2b measured on a device.
+                //
+                // Text-only by construction: `.inkpop` is reachable from the `Ink` verb, and the freeze
+                // gives that verb to a text element only (`toolsFor`, `:601-603`). The `Ink`-bearing third
+                // branch is the DECOR fallback OD-2 re-seated beyond Phase C.
+                val inkTarget = ctxElement as? TextElement
+                BenchInkPopover(
+                    visible = inkPopoverOpen && inkTarget != null,
+                    bands = benchInkBands(ZinelyTheme.contentInks, BenchVerbKind.TEXT),
+                    presets = benchInkPresets(ZinelyTheme.contentInks),
+                    // The element's OWN ink, not the last tap: the ring survives undo, a page change and
+                    // a reselect, and an ink applied from the Type bar (Coral, Teal, Blue — in no frozen
+                    // band) correctly rings nothing rather than ringing something stale.
+                    selected = inkTarget?.style?.color?.toComposeColor(),
+                    inkCount = benchInkCount(uiState.document.pages),
+                    onPick = { swatch -> applyInk(swatch.name, swatch.value) },
+                    // OD-24: the recipe's PRIMARY ink, and the snack says the recipe's name — which is
+                    // what the frozen `applyInk(c, PRESETS[i][0])` passes.
+                    onPreset = { preset -> applyInk(preset.name, preset.applied.value) },
+                    onDone = { inkPopoverOpen = false },
                     modifier = ctxModifier,
                 )
                 }
@@ -1226,7 +1310,8 @@ public fun EditorScreen(
                 BenchSnack(
                     visible = snackVisible,
                     message = snackMessage,
-                    actionLabel = UndoActionLabel,
+                    // Null for the ink snack (row 4.15 / C6): the frozen `applyInk` hides the button.
+                    actionLabel = snackAction,
                     onAction = {
                         deleteJob[0]?.cancel()
                         snackVisible = false

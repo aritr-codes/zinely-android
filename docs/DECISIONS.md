@@ -103,6 +103,9 @@
 | [ADR-091](#adr-091) | **C2a — selection**, the second production package of Phase C: the outline, the eight handles, the dim and the materialise. Records the pre-implementation blocker check that cleared both of its candidate owner decisions — the `--matcha` re-skin **improves** the outline's WCAG 1.4.11 figure (4.11:1 → **5.20:1**, and now in both themes, because [ADR-090](#adr-090) made the sheet an island), and the freeze's four handles versus the editor's eight is [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) applied, not a new ruling. Its substance is two **composites**: the frozen per-element `opacity:.4` becomes a `--paper` scrim at α 0.6 punched out at the selection, because an opacity on `Element` would reach the exported PDF and a two-pass render would break z-order; the materialise reuses that same scrim backwards plus the existing `LivePreview` seam | Accepted |
 | [ADR-092](#adr-092) | **C2b - the contextual verb bar**, the second half of the OD-11 split: the freeze's `.ctx` is **added** beside the shipped `EditorContextBar` rather than replacing it, because the two are different controls and only `Delete` is shared. Records a five-question blocker check that cleared **all five** against rulings already in hand - including `Font`, which ships drawn and **disabled** because OD-9 said the freeze specifies the editing surface, not the product's whole capability. | Accepted |
 | [ADR-093](#adr-093) | **C3 — in-place text editing and the rigid page pan**, opened before any production code per [ADR-089 §2.2](#adr-089). Re-verifies ADR-089's eleven planned rows against the frozen file (every reference but one had drifted) and adds four, for **15**. Its blocker check found one plan defect and **no owner decision**: ADR-089's `TypeBar.kt` re-skin would delete five style capabilities, which [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling) forbids outright, so `.styletb` ships as the editing state's row — [D-042](design/V2-SPEC-DEFECTS.md#d-042) | Proposed |
+| [ADR-094](#adr-094) | **C4 — the bar, the status chip, the snackbar.** Opened before any production code per [ADR-089 §2.2](#adr-089); its own blocker check found three plan defects, two of them owner decisions ([D-047](design/V2-SPEC-DEFECTS.md#d-047), [D-048](design/V2-SPEC-DEFECTS.md#d-048)), and it was implemented and `Accepted` only after [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling) ruled them. | Accepted |
+| [ADR-095](#adr-095) | **C5 — page navigation**: the filmstrip of little paper sheets and the summoned page grid. Two owner questions ([D-053](design/V2-SPEC-DEFECTS.md#d-053), [D-059](design/V2-SPEC-DEFECTS.md#d-059)) — the second raised *during* implementation — both ruled, both amending the frozen Bench. 31 frozen rows, 44 mutations, both device passes accepted. | Accepted |
+| [ADR-096](#adr-096) | **C6 — the ink popover (H4): the maker palette.** Opened before any production code per [ADR-089 §2.2](#adr-089) and ⛔ **held `Proposed`**: its blocker check finds exactly one owner decision, [D-028](design/V2-SPEC-DEFECTS.md#d-028) — which asks whether [ADR-055](#adr-055) Decision 6's five accepted content inks are superseded by the freeze's nineteen swatches. Re-anchors every C6 citation (all sixteen were wrong, at four different offsets, and were wrong at the freeze commit) and audits twelve frozen properties no ADR-089 row reaches. | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -4727,3 +4730,385 @@ improvement, which the freeze permits; it is held with D-059 so both passes run 
 neighbours report `clickable=true`. That is Compose's own mapping for a **selected** `Role.Tab` — a screen
 reader should not offer *activate* on the tab you are already on — and not a defect in this code. It is
 recorded because it looks like one.
+
+---
+
+## ADR-096 {#adr-096}
+
+**C6 — the ink popover (H4): the maker palette. Written before any production code, per
+[ADR-089 §2.2](#adr-089).** It opened `Proposed` and **blocked**: its [blocker check](#adr-096-blockers) found
+**one** question that was genuinely the owner's, and unlike C5's it could not be cleared by rulings in hand,
+because it asked whether an `Accepted` ADR is superseded. **[D-028 was ruled on 2026-08-05](design/V2-SPEC-DEFECTS.md#d-028-ruling)
+— OD-24, option (c) — the frozen Bench was amended first, and only then was any production code written.**
+
+- **Status:** 📝 `Proposed` **2026-08-05** — implementation complete; awaiting the independent review and both
+  device passes. [§3a](#adr-096-ruling) records the ruling that unblocked it.
+- **Package:** C6 · **Depends on:** C2 ✅ (C2a/C2b `Accepted`) · **Selectors:** `.inkpop*`, `.band*`, `.swrow`,
+  `.sw2*`, `.presets`, `.preset*`, `.inkuse*`, and the behaviours `openInk` / `applyInk` / `inkClose`.
+- **Supersedes nothing. Modifies nothing.** Whether [ADR-055](#adr-055) Decision 6 is superseded is the
+  owner's act, requested as D-028, and is **not** performed here.
+
+<a id="adr-096-drift"></a>
+### 1. Citation drift — every C6 address in ADR-089 is wrong, and not by one offset
+
+[OD-18](design/V2-SPEC-DEFECTS.md#d-046-ruling) makes each package re-anchor **its own** citations. C5 did this
+in [ADR-095 §1](#adr-095-drift) and the same is owed here. Each line below was resolved by opening
+`docs/design/mockups/v2-bench.html` at the cited address and reading what is actually there.
+
+⚠ **The first version of this gate reported a single offset — *"all twelve stale by ~+93 after seven
+amendments"* — and the independent planning review disproved it twice over.** The drift is **at least four
+different offsets**, and the addresses were **already wrong at the DESIGN FREEZE commit `4494e95`**, before any
+amendment existed: `:250` was `.caption .state` and `:213` was `.chips` even then. So the diagnosis was wrong as
+well as the number — these citations never resolved against this file at all. *An approximate offset is not a
+re-anchoring; it is a guess that happens to be checkable, and it was checked.*
+
+| ADR-089 row | cited | at the gate (pre-amendment) | **today (post-amendment)** | what stands at the cited line |
+|---|---|---|---|---|
+| 6.1 `.inkpop` | `:250-252` | `:343-345` | **`:377-379`** | `.guide` |
+| 6.1 replaces `.ctx` | `:495` | `:655` | **`:692`** | scrim / sheet markup |
+| 6.2 `.inkpop h4` | `:213-214` | `:346-347` | **`:380-381`** | `body` |
+| 6.2 the `Done` button | `:492` | `:652` | **`:689`** | snack markup |
+| 6.3 `.band` / `.bl` | `:215` | `:348` | **`:382`** | `body` |
+| 6.3 the band labels | `:493` | `:653` | **`:690`** | scrim markup |
+| 6.4 `.sw2` | `:217-218` | `:350-351` | **`:384-385`** | `body` |
+| 6.5 `.sw2.sel::after` | `:218` | `:351` | **`:385`** | `body` |
+| 6.6 `INKS` | `:424` | `:562` | **`:596`** | `.foot` |
+| 6.7 `TINTS` | `:425` | `:563` | **`:597`** | `@media` |
+| 6.8 `NEUT` | `:426` | `:564` | **`:598`** | `@media` |
+| 6.9 `PRESETS` | `:427` | `:565` | **`:599`** | `</style>` |
+| 6.9 `.presets` / `.preset` | `:259-261` | `:352-354` | **`:386-388`** | `.guide`-adjacent |
+| 6.10 preset applies `[1]` | `:498` | `:658` | **`:696`** | a comment |
+| 6.11 `.inkuse` | `:222-223` | `:355-356` | **`:389-390`** | `body` |
+| 6.11 the copy | `:494` | `:654` | **`:691`** | scrim markup |
+
+[D-028](design/V2-SPEC-DEFECTS.md#d-028)'s own citations are stale by different amounts again: `:404-407` and
+`:410` resolved at the gate to `:562-565` and `:568`, and `:476-483` to `:655-658` — **today `:596-599`,
+`:602` and `:692-696`.**
+
+⚠ **This table was resolved at the gate, against the file as it stood BEFORE the OD-24 amendment, and a
+first version of it carried only that column.** The amendment then inserted 34 lines above the CSS block and
+a further three inside `openInk`, so every "at the gate" address moved — by +34, +37 or +38 depending on
+where it sits. The fourth column is the post-amendment address and is the one to use; the third is kept
+because it is what the gate actually read, and deleting it would make this table a claim rather than a
+record. Independent review caught §3a asserting that this section had been re-resolved after the amendment
+when it had not; the claim is corrected there and the work is done here.
+
+<a id="adr-096-gaps"></a>
+### 2. What ADR-089's C6 table does not cover — audited property by property
+
+ADR-089 rows 6.1–6.12 are a **selector-level** table and never claimed to be property-level; §2.2 says so. This
+audit exists because C5 learned the same lesson twice — at its second review and again at its third — that *a
+table is the contract, and only a row-by-row audit against the frozen file can say whether the contract is met.*
+
+**Frozen properties with no row of any kind.** Each becomes a row in §4 when this ADR is unblocked:
+
+| frozen property | address | why no existing row reaches it |
+|---|---|---|
+| `.swrow{display:flex;gap:7px;flex-wrap:wrap}` | `:349` | **the selector has no row at all.** ADR-089's package table names `.swrow`; its property table forgot it |
+| `.inkpop{padding:12px 14px 14px}`, `z-index:42`, `border:1px solid --chrome-line` | `:343-344` | row 6.1 asserts anchor, radius, `--sheet`, shadow and the enter transition only |
+| `.inkpop h4{margin:0 0 8px}` and its `space-between` layout | `:346` | row 6.2 asserts the two **type** roles |
+| `.band{margin-bottom:9px}`, `.bl{margin-bottom:5px}` | `:348` | row 6.3 asserts the labels and their order |
+| **the fourth band, labelled `Ready-made palettes`** | `:648` | **row 6.3 says "three bands"; `openInk` emits four.** The presets sit inside a `.band` carrying its own `.bl`, so that label is a frozen property nobody owns |
+| `.sw2{transition:transform .1s}` | `:350` | row 6.4 asserts ring, halo and size |
+| `.presets{gap:8px;margin-top:2px;flex-wrap}` | `:352` | row 6.9 asserts the dots' overlap and their ring |
+| `.preset` pill: `border-radius:20px`, `padding:5px 9px 5px 6px`, `font-size:11.5px`, `1px --chrome-line`, `--ink`, sans | `:353` | as above — the **dots** are covered, the **pill** is not |
+| `.inkuse{margin-top:9px;gap:6px}` and `svg{stroke-width:1.7}` | `:355-356` | row 6.11 asserts the copy, the live count and the 13px glyph **size** — not its **weight**, which is exactly the pair C5 had to split for the grid glyph (5.2a) |
+| `inkClose` hides `.inkpop` **and restores `.ctx`** | `:659` | row 6.2 asserts that `Done` exists, not what it does. The restore is the half that fails silently |
+| `applyInk` writes `$('editSw').style.background` | `:664` | **cross-package**: C6 behaviour writing into C3/C4's style-toolbar chip (`.styletb .chip .sw`, `:335`). Ownership must be stated before it is built |
+| `applyInk` calls `flashSaved()` | `:664` | **cross-package**: it raises C4's `.saved` chip. Same |
+
+**One claimed gap that is not one — recorded, because claiming it would have repeated C5's own failure.** An
+earlier draft of this audit listed `applyInk`'s snackbar — buttonless, auto-hiding at 1600ms — as unowned. It is
+owned **twice**: [ADR-089](#adr-089) row 4.13 and [ADR-094](#adr-094) row **4.15**, which says in terms *"the
+ink path itself is C6's; C4 owns the snack variant, not what raises it"* — and it is **already shipped**
+(`BenchSnack.kt`, with `BenchC4Test` asserting `actionLabel = null`). C6 raises it; C6 does not rebuild it.
+Likewise the swatch-selection **exclusivity** (`:656-657`) is fairly read as already inside row 6.5's *"selection
+ring on the chosen swatch only"*. *Inventing a gap is the same defect as missing one: either way the table is
+not the contract.*
+
+**One row that is settled in approach and must still be planned on day one.** ADR-089 row 6.4 already flags
+[D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp)'s
+**overlap** case, and `.swrow` is the densest instance of it in V2: 26px swatches at `gap:7px` — a **33px centre
+pitch against a 48dp floor**, in a *wrapping* row, so expanded targets overlap both horizontally **and**
+vertically. D-009 is ruled (*extend the target, keep the paint*), so this is not a blocker; but C5 met only the
+one-dimensional version (sheets clipped to 29–33dp wide) and C6 meets the two-dimensional one. A
+hit-region-priority row belongs in §4 from the start, not after a device pass finds it.
+
+<a id="adr-096-blockers"></a>
+### 3. Pre-implementation blocker check — run 2026-08-05
+
+**Result: exactly one owner decision, and it is [D-028](design/V2-SPEC-DEFECTS.md#d-028).** Every open register
+item was read and cleared against C6's fence: D-008 and D-009 are **ruled in approach** and close on device
+verification, not before; D-012 is answered *inside* C9 by design; D-029 and D-030 were re-seated beyond Phase C
+by [OD-2](#adr-089); D-038 fences nothing; D-046 is ruled [OD-18](design/V2-SPEC-DEFECTS.md#d-046-ruling), which
+makes §1 above a **requirement** of this package rather than a blocker on it; D-041, D-049, D-050, D-051 and
+D-052 belong to other packages; D-005, D-023 and D-027 are the Library's.
+
+**The measured evidence D-028 needs lives in the register**, at
+[D-028 § gate evidence](design/V2-SPEC-DEFECTS.md#d-028-evidence), and is deliberately not restated here — the
+Documentation Rule forbids a second source of truth for it.
+
+**Rows 6.6, 6.7, 6.8, 6.10 and 6.12 cannot be written until the ruling.** An earlier draft named only 6.6, 6.10
+and 6.12, which the planning review correctly called inconsistent: option (b) offers five inks for **text**,
+which withholds all three bands rather than one, so 6.7 (Paper tints) and 6.8 (Neutrals) are contingent on
+exactly the same ruling as 6.6. Every other row can be written the moment C6 opens.
+
+<a id="adr-096-ruling"></a>
+### 3a. The ruling, and the two amendments it required — OD-24, 2026-08-05
+
+⛔ **The blocker is closed.** [D-028 was ruled](design/V2-SPEC-DEFECTS.md#d-028-ruling) **option (c)**, and the
+frozen Bench was amended **first**, per the HTML-first rule — its **eighth** amendment, and the register
+holds the ruling's own reasoning rather than a second copy of it here.
+
+What it decided, in one line each:
+
+1. **The ink target selects the bands.** A **text** element is offered `Inks` + `Neutrals`; `Paper tints` are
+   **not drawn** for it, because they are paper — by the band's own frozen label, by the popover's caption
+   (*"riso spot-inks"*), and by the presets' third slot, which in two of three recipes is a tint **by value**.
+   `TINTS` and `bandHTML` are untouched: this is [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling)'s **fence
+   reassignment, not a capability reassignment**, and the band returns the day a paper target exists.
+2. **A preset applies `[0]`, its primary ink** (`PRESETS[i][1][1]` → `[0]`). Measured on paper-white, `[1]` is
+   the least legible colour available in all three recipes.
+3. **No contrast floor is imposed on in-page text ink** — deliberately, because a riso palette that clears AA
+   is not a riso palette and contrast is a property of the *pairing*. C6's AA gate asserts nothing on this
+   control **on purpose**, and this sentence is the record that the absence is a decision.
+4. **[ADR-055](#adr-055) Decision 6's exclusivity is superseded** for V2. Its five values are **not** deleted
+   and **nothing migrates**: `TextStyle.color` is a free `ColorRgba`, and [OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)
+   keeps the shipped Type bar — and its `Coral` / `Teal` / `Blue` — reachable. That no user loses a colour
+   they already applied is a **consequence of OD-11**, not a designed migration path.
+
+The two amendments were made to `v2-bench.html` before a line of Compose: `openInk()` now takes the target's
+kind (`:688`), and the preset handler applies `PRESETS[i][1][0]` (`:696`). §1's table was resolved **at the
+gate, against the pre-amendment file**; a first version of this sentence claimed it had been re-resolved
+afterwards, which independent review disproved. §1 now carries both columns, and §4's addresses below were
+resolved against the amended file — nine of them one line high on their first pass, and corrected here.
+
+### 4. Frozen property table — 35 rows
+
+Written when [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) unblocked the package, from §1's re-anchored
+addresses and §2's audit. Every row carries one assertion and one mutation, in the
+[§8.1 format](COMPOSE-IMPLEMENTATION-GUIDE.md#81-the-frozen-property-table), and the count below was
+**audited row by row against the frozen file** rather than reported as a total — C5's own review had to
+correct a heading that said 30 over a table of 31.
+
+Assertions live in `BenchC6Test` (`T`) and `BenchC6GoldenTest` (`G`). Mutation ids are the battery's
+(§5).
+
+| # | frozen property | address | assertion | mutation |
+|---|---|---|---|---|
+| **6.1** | `.inkpop{left:12px;right:12px;bottom:12px}` | `:377` | `T.the_popover_sits_at_the_frozen_twelve_dp_inset` | **M1** 12dp → 24dp |
+| **6.1a** | summoned, never default — `openInk` is `.inkpop`'s only `add('show')` | `:692` | `T.the_popover_does_not_exist_until_the_ink_verb_asks_for_it` | **M2** `visible` → unconditional |
+| **6.1b** | `background:var(--sheet)` | `:377` | `G.the_popover_stands_on_the_frozen_sheet_behind_a_one_pixel_hairline` | **M3** `sheet` → `paper` — *see the null-mutation note under §5* |
+| **6.1c** | `border:1px solid var(--chrome-line)` | `:377` | `G` — run length inward from the left edge, in px at this density | **M4** the border deleted |
+| **6.1d** | `border-radius:16px` | `:377` | `G` — the corner pixel is not `--sheet`; 20dp in, it is | **M5** 16dp → 0 |
+| **6.1e** | `transform:translateY(14px)` released over `.22s var(--standard)` | `:377-379` | `T.the_popover_rises_fourteen_dp_into_place` | **M6** 14dp → 0 · **M7** 220 → 400 |
+| **6.1f** | `openInk` hides `.ctx`; `inkClose` restores it | `:692`, `:697` | `T.the_popover_takes_the_verb_bars_place_and_gives_it_back` | **M8** the `!inkPopoverOpen` term → `true` |
+| **6.1g** | `box-shadow:0 14px 34px -12px var(--frame-shadow)` | `:378` | `G` recorded frame (light + dark) | — *(see the note below)* |
+| **6.1h** | `padding:12px 14px 14px` | `:378` | `G` recorded frame | — *(see the note below)* |
+| **6.2** | `h4` — `Ink`, `--serif`, 500, 15px | `:380`, `:689` | `T.the_header_is_the_frozen_title_and_its_done` + `G` | — *(see the note below)* |
+| **6.2a** | `h4 button` — `Done`, `--sans`, 12px, `--ink-faint` | `:381`, `:689` | `T.the_header_is_the_frozen_title_and_its_done` | — *(see the note below)* |
+| **6.2b** | `inkClose` hides the popover **and** restores `.ctx` | `:697` | `T.the_popover_takes_the_verb_bars_place_and_gives_it_back` | **M9** `onDone` made inert |
+| **6.3** | four labelled bands, in order — `Inks · Neutrals · Ready-made palettes` for a text target | `:682`, `:688`, `:690` | `T.a_text_target_draws_three_of_the_freezes_four_labelled_bands` | **M10** the presets' `.bl` deleted |
+| **6.3b** | `.bl{text-transform:uppercase}` | `:382` | `T.a_text_target_draws_three_of_the_freezes_four_labelled_bands` | **M11** `.uppercase()` dropped |
+| **6.3c** | `.bl` — 10px/600, `.12em`, `--ink-faint`, 5px under itself; `.band{margin-bottom:9px}` | `:382` | `G` recorded frame | — *(see the note below)* |
+| **6.4** | `.sw2{width:26px;height:26px}` under `box-sizing:border-box` | `:384` | `T.every_swatch_is_the_frozen_twenty_six_dp` | **M12** 26dp → 32dp |
+| **6.4b** | `.swrow{display:flex;gap:7px;flex-wrap:wrap}` — **the selector ADR-089 had no row for at all** | `:383` | `T.the_swatch_row_keeps_the_frozen_seven_dp_gap` | **M13** 7dp → 12dp |
+| **6.5** | `.sw2{border:2px solid rgba(255,255,255,.6);border-radius:50%}` | `:384` | `G` recorded frame | — *(see the note below)* |
+| **6.5b** | `.sw2{box-shadow:0 0 0 1px var(--desk-edge)}` — drawn **outside** the layout bounds | `:384` | `G.every_swatch_carries_the_frozen_hairline_halo_outside_its_paint` | **M14** the halo made transparent |
+| **6.5c** | `.sw2:active{transform:scale(.9)}` over `transition:transform .1s` | `:384-385` | `T.a_pressed_swatch_shrinks_to_the_frozen_nine_tenths` | **M36** .9 → 1.0 · **M37** 100 → 400 |
+| **6.6** | `.sw2.sel::after{inset:-5px;border:1.5px solid var(--matcha)}`, on **one** swatch | `:385` | `G.the_selection_ring_is_drawn_in_matcha_on_exactly_one_swatch` + `T.the_ring_marks_the_element_s_own_ink_and_only_that_one` | **M15** the ring never drawn |
+| **6.6b** | the ring reads the **document**, not the last tap — and rings nothing for an ink outside the bands | *deviation, §7* | `T.an_ink_from_outside_the_frozen_bands_rings_nothing` | **M16** `selected` → always `null` |
+| **6.7** | `INKS` — ten named riso inks, in frozen order, by name **and** value | `:596` | `T.the_inks_band_is_the_frozen_ten_in_the_frozen_order` | **M17** the band reversed |
+| **6.8** | `NEUT` — four neutrals, `Ink` repeating band 1's verbatim | `:598` | `T.the_neutrals_band_is_the_frozen_four_in_the_frozen_order` | **M18** one neutral dropped |
+| **6.9** | **OD-24** — a **text** target is offered `Inks` + `Neutrals` and **no** `Paper tints` | `:688-690` | `T.a_text_element_is_offered_inks_and_neutrals_and_no_paper_tints` + `G.no_paper_tint_is_painted_anywhere_in_a_text_elements_popover` | **M19** the fence removed |
+| **6.9b** | the fence is a **fence**: any other target keeps all three bands | `:688` | `T.any_other_ink_target_still_gets_all_three_frozen_bands` | **M20** the band deleted rather than fenced |
+| **6.9c** | `TINTS`'s five values survive untouched | `:597` | `T.the_paper_tints_survive_the_fence_in_full` | **M20** (same) |
+| **6.10** | `PRESETS` — three recipes, every dot, in order | `:599` | `T.the_three_frozen_recipes_are_transcribed_dot_for_dot` | **M21** one dot re-pointed |
+| **6.10b** | a recipe is built from the typed palette, and two of three end in a paper tint | `:599` | `T.two_of_the_three_recipes_end_in_a_paper_tint` | **M21** (same) |
+| **6.10c** | `.presets{gap:8px;margin-top:2px;flex-wrap}` · `.preset` pill: radius 20, `padding:5px 9px 5px 6px`, 1px `--chrome-line`, 11.5px, `--ink`, `--sans`, `gap:6px` | `:386-387` | `G` recorded frame | — *(see the note below)* |
+| **6.10d** | `.preset .dots span{width:12px;margin-right:-4px;border:1.5px solid var(--sheet)}` | `:388` | `G.a_recipes_dots_overlap_by_the_frozen_four_dp` | **M23** the overlap → 0 |
+| **6.11** | **OD-24** — a preset applies `PRESETS[i][1][0]`, its primary ink | `:696` | `T.a_preset_applies_its_primary_ink_and_never_its_accent` + `T.choosing_a_preset_inks_the_element_with_its_primary` | **M22** `[0]` → `[1]`, the pre-amendment rule |
+| **6.12** | `.inkuse` copy, with a **live** count where the prototype hard-codes 2 | `:691` | `T.the_ink_note_counts_the_distinct_inks_of_the_whole_zine` | **M24** the count → a constant |
+| **6.12b** | the count spans the **zine**, not the open page | *deviation, §7* | `T.the_ink_note_counts_the_distinct_inks_of_the_whole_zine` | **M25** the count scoped to page 1 |
+| **6.12c** | `.inkuse svg{width:13px;height:13px;fill:none;stroke-width:1.7}` | `:389-390` | `G.the_ink_note_shield_is_drawn_at_the_frozen_stroke_weight` | **M26** 1.7 → 0.4 |
+| **6.13** | `applyInk` sets the element's ink — one `Intent.StyleText`, one undoable command | `:700` | `T.choosing_a_swatch_inks_the_element_with_that_exact_colour` + `T.an_ink_is_one_undoable_command` | **M27** the dispatch removed |
+| **6.13a** | `applyInk` writes `$('editSw').style.background` | `:701` | **framework-delivered** — `BenchStyleRow`'s `inkSwatch` already reads the element's live style (§7) | — |
+| **6.13b** | `applyInk` calls `flashSaved()` | `:701` | **framework-delivered** — the `.status` chip C4 moved the autosave reassurance into (§7) | — |
+| **6.13c** | the snack names the ink and carries **no button** ([ADR-094](#adr-094) row 4.15) | `:702-703` | `T.applying_an_ink_raises_the_buttonless_snack_that_names_it` | **M28** the `Undo` button restored |
+| **6.13d** | it stands for **1600ms**, not the delete snack's 3200 | `:703` | `T.applying_an_ink_raises_the_buttonless_snack_that_names_it` | **M29** 1600 → 3200 |
+| **6.14** | the popover stands down whenever its element does (`selectNode`, `deselect`, `edit`, `del`) | `:621`, `:628`, `:649`, `:712` | `T.the_popover_stands_down_when_the_selection_does` | **M30** the effect made inert |
+| **6.15** | every swatch announces the ink it **is** | a11y | `T.every_swatch_announces_the_ink_it_is` | **M31** every swatch named `Ink` |
+| **6.15b** | a preset publishes **one** node naming the recipe *and* the ink it will apply | a11y | `T.a_preset_announces_the_ink_it_will_actually_apply` | **M32** the primary dropped from the name |
+| **6.15c** | `.inkuse` reads as one sentence, not a glyph and a string | a11y | `T.the_ink_note_reads_as_one_sentence` | **M24** (the sentence carries the count) |
+| **6.16** | [D-009](design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) — 26dp of paint, ≥48dp of target | `:384` | `T.a_swatch_paints_at_twenty_six_and_is_touchable_at_forty_eight` | **framework-delivered** (§7) |
+| **6.17** | `Ink` opens `.inkpop`; `Size` keeps [OD-9](design/V2-SPEC-DEFECTS.md#d-031-ruling)'s route to the Type bar | `:601` | `T.ink_opens_the_popover_while_size_still_opens_the_type_bar` | **M33** Ink re-routed · **M34** Size re-routed |
+| **6.17b** | `ColorRgba` ↔ `Color` is exact, which is why OD-24 needs no migration | `Document.kt:125` | `T.a_swatch_survives_the_document_round_trip_byte_for_byte` | **M35** one channel scaled by 254 |
+| **6.18** | the popover is **chrome over the artifact** — the room's palette, not the sheet island's ([D-035](design/V2-SPEC-DEFECTS.md#d-035)) | `EditorScreen.kt` | `G.the_popover_dims_with_the_room_because_it_is_chrome` | **M38** the popover drawn in the island's palette |
+
+**Rows with a recorded frame and no mutation, named rather than left implicit.** Nine rows above (6.1g,
+6.1h, 6.2, 6.2a, 6.3c, 6.5, 6.10c and the paint halves of 6.2/6.5) are closed by the two recorded
+Roborazzi frames and carry **no dedicated mutation**. That is a real limit and it is the one C5's third
+review named: at `changeThreshold = 0.02f` a recorded frame catches a *change*, not necessarily a *small*
+change. Each of these is a multi-property block — a padding, a type role, a pill's whole geometry — large
+enough that a change to it moves well over 2 % of a cropped card, which is why they are left to the
+frame; the properties too small for that threshold (the 1px hairline, the 1px halo, the 1.5px ring, the
+1.7 stroke, the 4dp overlap, the corner radius) each have a threshold-free probe of their own above.
+**The distinction is the row's, not the reviewer's to rediscover.**
+
+
+### 5. Mutation battery — 38 mutations, and the four the suite did not catch
+
+Every row of §4 carries a mutation that breaks exactly one frozen property. The battery restores the
+file in a `finally`, re-runs `:feature:editor:testDebugUnitTest --rerun-tasks
+-Proborazzi.test.verify=true` per mutation, reads the verdict from the JUnit XML **by test name**, and
+refuses a verdict at all from a run that executed fewer tests than the control. Script:
+`c6_mutations.py`. A CONTROL run precedes the battery and must be GREEN, so a suite that is red for an
+unrelated reason cannot be read as "every mutation caught".
+
+**Result: 38 of 38 RED**, and the battery was **re-run in full after the review fixes of §6** — the ring's
+identity and the collapsed margin both changed production code, so the earlier verdicts no longer answered
+for the tree. Four came back GREEN on the first pass. None of them was a passing build, and
+each is recorded here with its diagnosis rather than as a line in a summary table — the point of the
+battery is the four, not the thirty-four.
+
+| id | row | why it was GREEN | what changed |
+|---|---|---|---|
+| **M3** | 6.1b the card stands on `--sheet` | **The mutation was null.** `ZinelyV2Colors.kt:196-198` and `:240-242` give `chrome` and `sheet` the *same* value in both palettes (`#FBF7EE` / `#252017`), so swapping one for the other changed no pixel. Its GREEN verdict measured nothing; it did not indicate a gap. | mutation redefined to `sheet` → `paper` (`:176` / `:220`), a genuinely different colour and the one a careless implementation would actually reach for. Now RED. |
+| **M25** | 6.12b the count spans the **zine**, not the open page | **A fixture defect.** The test's document put both distinct inks on page 1, so `pages.take(1)` returned the same count as `pages` and the assertion could not tell a zine-wide count from a page-local one. | the second ink moved to page 2; page 2 also repeats the first, so the de-duplication clause it already tested still holds. Now RED. |
+| **M26** | 6.12c `.inkuse svg{stroke-width:1.7}` | **A vacuous probe.** It counted `--ink-faint` pixels across the whole note — and the *sentence* beside the shield is drawn in that same tint, so the text's pixels swamped the outline's and a stroke at a quarter of the frozen weight still cleared the floor. | the crop narrowed to the glyph's own 13dp box, which leaves the shield alone in frame. Now RED. |
+| **M30** | 6.14 the popover stands down with its element | **The assertion passed for the wrong reason.** `Intent.ClearSelection` also nulls `inkTarget`, and `visible = inkPopoverOpen && inkTarget != null` hides the popover on that term alone — so an inert `LaunchedEffect` survived. | a second half added: place a *second* text box, which moves the selection while keeping `inkTarget` non-null, so only the effect can close the popover. Now RED. |
+
+**Row 6.18 had no mutation of its own.** It borrowed M3 — which, once M3 was diagnosed, meant it had
+none at all. **M38** was written for it: the popover composed under `ZinelyTheme.v2Colors` *inside*
+`BenchSheetIsland`, which is precisely the [D-035](design/V2-SPEC-DEFECTS.md#d-035) defect. It came back
+GREEN, and this one was a real hole rather than a flawed instrument.
+
+The golden standing against row 6.18 hosts `BenchInkPopover` **standalone** — a composition with no
+island in it, where there is no wrong palette available to take. The row's claim is not about the
+popover's paint; it is about *where the popover is composed*, and that can only be asserted at the
+assembly. `BenchC6Test.the_popover_is_the_rooms_chrome_at_night_and_not_the_islands` now does so under
+`@Config(qualifiers = "+night")`. Under the light palette the room and the island agree, which is
+exactly how C2b reached a device through a green suite.
+
+**That probe took two attempts, and the first failure is worth keeping.** It measured the ground against
+the room's `--sheet`, and the contrast of the popover's `Done` against it — and M38 walked through both.
+`BenchStudio.sheetIsland` overrides exactly **eight** tokens, and `sheet` is not one of them: a popover
+sourced entirely from the island keeps the room's ground, so the first assertion could not fail. `Done`
+is `inkFaint`, a mid-grey the island *does* override but which stays legible on either ground, so the
+second could not either. The token C2b measured at 1.05:1 is `ink` — the **title's** colour. The probe
+now measures the title, and M38 is RED. The ground assertion is kept, and its comment now says what it
+does and does not cover: it stands against a wholesale light palette under a dark room, not against the
+island.
+
+Recorded because the lesson generalises past this row: "assert it in the right composition" was only
+half the fix. The other half was **assert the token that actually differs** — a legibility probe aimed
+at a token the island happens to leave readable is as vacuous as M26's was, and reads just as green.
+
+**What this says about the suite, stated rather than left for a reviewer.** Of 38 mutations, three
+exposed assertions that were weaker than they read — one fixture, one probe, one that passed on a
+second term — one exposed a battery defect rather than a suite one, and one exposed a row asserted in
+the wrong composition entirely, then a second time against the wrong token. All are closed, and the
+suite gained one test (`the_popover_is_the_rooms_chrome_at_night_and_not_the_islands`) it did not have.
+Nine rows — 6.1g, 6.1h, 6.3c, 6.10c, and the paint halves of 6.2, 6.2a and 6.5 — remain closed by recorded Roborazzi frames with no
+dedicated mutation, for the reason §4's closing note gives; that limit is unchanged by this battery and
+is not a finding of it.
+
+
+### 6. What independent review found, and what it changed
+
+The package was reviewed by an agent that did not implement it, against the working tree rather than
+against this ADR. Verdict **GO WITH FIXES**, eight Required Fixes. Each is reconciled below — accepted,
+partially accepted or rejected with evidence, per the handoff protocol in `CLAUDE.md`.
+
+| # | finding | disposition |
+|---|---|---|
+| **RF-1** | Picking `Ink` ringed **two** swatches. `Ink #2A251E` is a member of both `INKS` (`:596`) and `NEUT` (`:598`) — the freeze repeats it verbatim — and a text target draws both bands, so `selected == swatch.value` matched twice and published `Selected` on two `RadioButton` nodes in one group. | **ACCEPTED.** The ring now resolves to the first `(band, index)` whose value matches, so `Ink` rings in the Inks band and not again in Neutrals. Both fixtures used a *unique* colour and were blind to it; both now exercise the duplicated one. |
+| **RF-2** | Five FPT rows deferred to a **§7 that did not exist**, so the package's claimed deviations had no authoritative record — the Documentation Rule's exact failure. | **ACCEPTED.** §7 below is written. |
+| **RF-3** | §1's addresses were pre-amendment while §3a claimed they had been re-resolved after it, and **nine** §4 rows were one line high. | **ACCEPTED.** §1 carries both columns and says which is which; §3a's claim is corrected; the nine rows are re-resolved against the amended file. |
+| **RF-4** | Row 6.1a was closed by a fixture that called the `store()` **factory twice**, so the text was placed on a store the screen never observed and the popover was absent for an unrelated reason. | **ACCEPTED.** One store, and the selection's own verb bar is now asserted present — the popover's every precondition but the tap. |
+| **RF-5** | `assertEquals(Copy.BenchInk.TITLE, Copy.BenchVerbs.INK)` compares a definition with itself; `Copy.kt` declares `TITLE = BenchVerbs.INK`. | **ACCEPTED.** Asserted against the literal `"Ink"`, plus the word's presence on screen. |
+| **RF-6** | The gap above `.inkuse` was **18dp against a frozen 9px**. `.band{margin-bottom:9px}` and `.inkuse{margin-top:9px}` are adjacent block siblings in a `.inkpop` that declares no `display`, so CSS **collapses** them; Compose has no collapsing and applied both. | **ACCEPTED — and this is the one a recorded frame could never have caught**, because the frame was recorded from the implementation that had the defect. Both goldens re-recorded. |
+| **RF-7** | Row 6.5c read *"not asserted"* while the suite does assert it. | **ACCEPTED.** The row now names its assertion and its two mutations. |
+| **RF-8** | `COMPOSE-V2-ROADMAP.md` still showed D-028 as `⏳ live` in the ledger, three sections below its own C6 row saying `RESOLVED`. | **ACCEPTED.** |
+
+Recommended Improvements **RI-1, RI-2, RI-3, RI-5, RI-6 and RI-8** were also taken: the live ink count is
+now read at two values rather than only at 1 (a hard-coded argument survived the assembly before); the
+frozen `bottom:12px` is asserted for the first time, against the bar the popover replaces rather than
+against the root — the root is the window, and measured there the inset reads 182px, which is precisely
+why the edge had been left out; the 14dp rise is asserted as a value as well as a range; and two stale
+citations outside the ADR are corrected. **RI-4** — the mutation harness is not in the tree — is
+**PARTIALLY ACCEPTED** and recorded in §8 as the package's one open quality debt.
+
+**RF-1 and RF-6 are the two that matter**, and they share a shape worth naming: each was a real
+divergence from a frozen property sitting inside a block that the suite believed it had covered. RF-6
+sat inside a *recorded frame*, which cannot fail against the implementation it was recorded from. RF-1
+sat behind two fixtures that both happened to choose a colour appearing once. Neither is exotic; both
+were invisible to a 38-mutation battery that reported 38 kills, because a mutation can only fail a test
+that could have failed.
+
+<a id="adr-096-deviations"></a>
+### 7. Every deviation from the frozen prototype, named
+
+The freeze is authoritative and Compose implements it. Where this package does something the prototype
+does not, it is recorded here rather than argued in a KDoc — one authoritative location, per the
+Documentation Rule. Nothing below is a visual or interaction redesign; each is either a correctness fix
+the freeze's own comments ask for, a platform difference, or a capability the prototype fakes.
+
+**7.1 — the selection ring reads the document, not the last tap (row 6.6b).** The frozen `.sw2` handler
+adds `.sel` to whatever was just clicked. That state lives only in the DOM, so in the prototype an undo,
+a page change or a reselect leaves the ring where it was. Compose derives it from
+`TextElement.style.color`, which means: the ring survives all three; an ink applied from the **Type
+bar** (`Coral`, `Teal`, `Blue` — reachable only there, per [OD-11](#adr-089)) correctly rings *nothing*
+rather than ringing something stale; and — since independent review — a colour that appears in two
+bands rings once, in the first band that carries it. This is [OD-22](design/V2-SPEC-DEFECTS.md#d-052)'s
+class of change: the prototype's own comment calls the DOM class "the picker's memory", and a memory
+that outlives its subject is a defect, not a feature.
+
+**7.2 — the ink count spans the zine, not the open page (row 6.12b).** `.inkuse` hard-codes `2` in the
+prototype. The count is real here, and it counts distinct text inks across **every** page. The note's
+own sentence is about what the zine will cost to print, and a print run is the whole document; a count
+that reset at a page turn would answer a question nobody asked. Asserted on the pure function and, since
+independent review, at the assembly as well.
+
+**7.3 — `editSw` and `flashSaved` are framework-delivered (rows 6.13a, 6.13b).** The frozen `applyInk`
+writes `$('editSw').style.background` and calls `flashSaved()`. Neither is re-implemented: `BenchStyleRow`'s
+`inkSwatch` already reads the element's live style, so it follows the one `Intent.StyleText` this surface
+dispatches; and the autosave reassurance moved into the `.status` chip in C4 ([ADR-094](#adr-094)). Both
+frozen effects therefore still happen — through the mechanism that already owns them, rather than through
+a second one that could disagree with it.
+
+**7.4 — the touch target grows, the paint does not (row 6.16).** [D-009](design/V2-SPEC-DEFECTS.md#d-009):
+26dp of paint, ≥48dp of target, and `minimumInteractiveComponentSize()` is forbidden because it grows the
+layout slot and would open the frozen 7dp gaps. Compose's own pointer-input minimum gives a `selectable`
+node the expanded `touchBoundsInRoot` without moving anything. Where two expanded targets overlap they
+resolve by nearest centre — stated plainly because it is a real consequence, not a hidden one.
+
+**7.5 — the collapsed margin above `.inkuse` (row 6.1h/6.10c).** CSS collapses the presets band's 9px
+bottom margin with the note's 9px top margin; Compose has no margin collapsing, so the gap is applied
+once, by the note. Recorded because it reads as a missing padding in the Compose source and is not one.
+
+**7.6 — `.inkpop` is drawn in the room's palette although it is composed inside the sheet island
+(row 6.18).** [D-035](design/V2-SPEC-DEFECTS.md#d-035): the artifact does not dim, the room does. The
+popover is chrome over the artifact, so it takes the room's tokens. This is a deviation from *composition
+position*, not from the freeze — the prototype has no island.
+
+**Not a deviation, recorded because it looks like one:** `benchInkBands` is called with a hard-coded
+`BenchVerbKind.TEXT` at the assembly. The `Ink` verb is reachable from a text element only —
+`benchVerbKindOf` returns `null` for anything else — so the `PHOTO`/`DECOR` branch is unreachable **in
+Phase C** and is kept for the phase that re-seats `.decor` ([OD-2](#adr-089)). The frozen `toolsFor`
+does give `Ink` to a decor target at `:604`; that target does not exist yet.
+
+<a id="adr-096-debt"></a>
+### 8. Open quality debt
+
+**The mutation harness is not in the tree.** `c6_mutations.py` produced §5's verdicts and lives outside
+the repository, so §5 cannot be independently re-run — which, as independent review pointed out, is the
+weakest form this evidence can take, and C3's own history has a harness that never compiled a mutation
+and reported every failure as a kill ([ROADMAP](COMPOSE-V2-ROADMAP.md)). The harness's *design* guards
+against that (a mandatory GREEN control, name-based verdicts read from the JUnit XML, a `MIN_TESTS`
+floor, `--rerun-tasks`, restore in a `finally`), and RF-4 is a case where a recorded verdict did **not**
+survive someone reading the fixture — the battery said RED and the assertion was hollow anyway.
+
+Tracked rather than fixed here: committing a harness is a change to how this programme evidences its
+packages, which is a decision for the owner and for every package, not a thing C6 should settle for
+everyone on its way past. Recorded as debt, visible, not shipped as a surprise.

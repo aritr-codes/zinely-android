@@ -159,6 +159,40 @@
             a state this file already draws.  With no session open the bar's Done owns "clear
             selection", which is deselect's FIRST drawn control: OD-13 gave it a gesture, and a gesture
             has no visible presentation for OD-14 to count.  Preview does not move.
+
+  AMENDED 2026-08-05 by owner ruling (D-028, OD-24).  The popover binds applyInk to EVERY .sw2 in all
+  three bands (:693, post-amendment addresses throughout) and applyInk sets t.style.color (:701) -- so a
+  text element could be given Cream #F1E9D6, which measures 1.21:1 on the paper this product actually
+  prints (Background.None).  Ten of the eighteen distinct swatches fall below the 3.0:1 floor D-002 ruled
+  for this product's cover titles.  THIS FILE'S OWN LABELS SAY WHY: the band is called "Paper tints"
+  (:688) and the caption calls the whole control "the maker palette -- riso spot-inks, named, in bands"
+  (:698).  And the presets
+  decode it completely -- Warm zine ends in #F1E9D6 (Cream) and Cool zine in #DDE9EE (Sky), BOTH paper
+  tints -- so a preset is [ink, accent, paper], and the uniform .sw2 binding was one handler over one
+  node list, not a design statement.  Same class as the preset's own [1] below.
+    THE INK TARGET SELECTS THE BANDS.  openInk() takes the target kind.  A TEXT target is offered
+            Inks + Neutrals (13 distinct swatches); PAPER TINTS ARE NOT DRAWN for it, because they are
+            paper, by their own label and by the presets' third slot.  Any other target keeps all
+            three.  This is OD-21's shape exactly -- A FENCE REASSIGNMENT, NOT A CAPABILITY
+            REASSIGNMENT: TINTS, bandHTML and the band's whole visual language stay frozen and intact,
+            and the band returns the moment a paper target exists.  Nothing in Phase C has one
+            (OD-2 re-seated .decor and the tray), so C6 draws two bands and no more.
+    PRESETS APPLY [0], THE PRIMARY INK.  PRESETS[i][1][1]||[0] -> PRESETS[i][1][0].  Measured on
+            paper-white, [1] is the LEAST legible colour available in all three recipes -- Strawberry
+            2.75:1, Sunflower 1.90:1, Aqua 2.56:1 -- while every [0] clears AA at 15.20, 5.17 and 7.32.
+            [1] is the accent and [2] the paper; applying the accent as the element's one ink was
+            prototype convenience of the same kind as the uniform binding above.
+    NO CONTRAST FLOOR IS IMPOSED ON IN-PAGE TEXT INK, and that is a decision, not an omission.  A riso
+            palette that clears AA is not a riso palette -- Strawberry and Sunflower ARE the medium --
+            and contrast is a property of the PAIRING, not of the swatch, on a page whose paper the
+            maker may later change.  With the tints fenced the darkest remaining risk is Fog #B7AD93
+            at 2.23:1, which is a light mark rather than an invisible one.  D-002's 3.0:1 stays where
+            it was ruled, on cover titles.  The AA gate asserts nothing on this control, on purpose.
+    NOTHING ELSE CHANGES.  .inkpop and its enter transition, h4 and its Done, .band / .bl, .swrow,
+            .sw2 with its ring, halo, :active and .sel, .presets / .preset and their overlapping dots,
+            .inkuse and its shield glyph, the selection exclusivity at :694, inkClose's restore of
+            .ctx (:697), and applyInk's writes to #editSw, flashSaved() and the buttonless 1600ms
+            snack (:702-704): all exactly as frozen.
 -->
 <style>
   :root{
@@ -649,13 +683,17 @@
     PRESETS.forEach(function(p){var d='';p[1].forEach(function(c){d+='<span style="background:'+c+'"></span>';});
       pres+='<button class="preset"><span class="dots">'+d+'</span>'+p[0]+'</button>';});
     pres+='</div></div>';
+    // D-028 / OD-24 amendment: the ink TARGET selects the bands.  Paper tints are paper -- by their own
+    // label, and by the presets' third slot -- so they are not offered as a text element's one ink.
+    var tints=kindOf(selNode)==='text'?'':bandHTML('Paper tints',TINTS);
     inkpop.innerHTML='<h4>Ink <button id="inkClose">Done</button></h4>'+
-      bandHTML('Inks',INKS)+bandHTML('Paper tints',TINTS)+bandHTML('Neutrals',NEUT)+pres+
+      bandHTML('Inks',INKS)+tints+bandHTML('Neutrals',NEUT)+pres+
       '<div class="inkuse"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/></svg> Zines look best — and print cheapest — with 1–3 inks. This one uses 2.</div>';
     ctx.classList.remove('show'); inkpop.classList.add('show');
     inkpop.querySelectorAll('.sw2').forEach(function(sw){sw.onclick=function(){applyInk(sw.getAttribute('data-ink'),sw.getAttribute('data-name'));
       inkpop.querySelectorAll('.sw2').forEach(function(x){x.classList.remove('sel');});sw.classList.add('sel');};});
-    inkpop.querySelectorAll('.preset').forEach(function(p,i){p.onclick=function(){var c=PRESETS[i][1][1]||PRESETS[i][1][0];applyInk(c,PRESETS[i][0]);};});
+    // D-028 / OD-24 amendment: a preset is [ink, accent, paper]; the element takes [0], the PRIMARY ink.
+    inkpop.querySelectorAll('.preset').forEach(function(p,i){p.onclick=function(){applyInk(PRESETS[i][1][0],PRESETS[i][0]);};});
     $('inkClose').onclick=function(e){e.stopPropagation();inkpop.classList.remove('show');if(selNode)ctx.classList.add('show');};
     cap('Selected · Ink','The maker palette — riso spot-inks, named, in bands. Separate from the app’s own colours; the chrome stays quiet so your ink reads true.');
   }

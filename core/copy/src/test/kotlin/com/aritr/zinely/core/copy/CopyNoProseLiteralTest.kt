@@ -46,6 +46,12 @@ class CopyNoProseLiteralTest {
             // no user can reach it. It exists so the day DecorElement returns, the omission fails loudly
             // instead of silently drawing an empty bar. Not copy.
             "decor verbs are unreachable until DecorElement is re-seated (OD-2)",
+            // `BenchInkPreset`'s `require{ … }` (ADR-096 row 6.10) — a construction invariant on a data
+            // class whose three instances are all built in this repository from the frozen `PRESETS`
+            // array. A preset with no colours has nothing to apply, so `applied` would throw further
+            // from the cause; this fails at the point the mistake is made. Never rendered, never
+            // announced, unreachable from any user action. Not copy.
+            "a preset with no colours cannot be applied",
         )
 
         /** Enrolled roots/files, relative to the repo root — the §C9 "Editor, Shelf and Proof sources; nav host". */

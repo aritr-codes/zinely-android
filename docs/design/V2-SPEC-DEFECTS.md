@@ -124,11 +124,11 @@ row. **None blocked C0, which has since landed.** D-032 was ruled on 2026-08-01 
 than the package — but **C1's own pre-implementation blocker check then raised [D-033](#d-033), which does block
 the package**: it decides the rectangle every other C1 property is positioned against. That blocker was itself
 ruled the same day — option (c), [the third amendment to a frozen V2 surface](#d-033-amendment) — so **C1 is
-unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and C1 is committed at `29a3819`. **As of 2026-08-02, one entry fences Phase-C work: D-028** (OD-6) at C6. [D-035](#d-035) blocked all of Phase C for part of one day — C1's device verification found the dimmed sheet left the user's own content at **1.60:1** — and was [ruled the same day](#d-035-ruling). [D-034](#d-034) fenced C2's `.ctx*` rows for a day — raised by C2's own pre-implementation check the moment OD-9 was applied, [ruled 2026-08-02](#d-034-ruling) as **keep both**, with C2 split into **C2a** and **C2b** and both now unblocked. Live entries that fence nothing — D-012 (answered *in* C9), D-023, D-029, D-030 — are listed below and in the [roadmap's ledger](../COMPOSE-V2-ROADMAP.md).
+unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and C1 is committed at `29a3819`. **As of 2026-08-05, NO entry fences Phase-C work.** D-028 was the last, and it was ruled that day — [OD-24](#d-028-ruling), option (c), the file's **eighth** amendment. C9 remains blocked by [D-012](#d-012), which is answered *inside* it by design. [D-035](#d-035) blocked all of Phase C for part of one day — C1's device verification found the dimmed sheet left the user's own content at **1.60:1** — and was [ruled the same day](#d-035-ruling). [D-034](#d-034) fenced C2's `.ctx*` rows for a day — raised by C2's own pre-implementation check the moment OD-9 was applied, [ruled 2026-08-02](#d-034-ruling) as **keep both**, with C2 split into **C2a** and **C2b** and both now unblocked. Live entries that fence nothing — D-012 (answered *in* C9), D-023, D-029, D-030 — are listed below and in the [roadmap's ledger](../COMPOSE-V2-ROADMAP.md).
 
 | Open | Owing to | One line |
 |---|---|---|
-| [**D-028**](#d-028) | ⏳ **an owner ruling** — **Phase C / C6** | the Bench offers nineteen swatches to a text element; `Accepted` [ADR-055](../DECISIONS.md#adr-055) pins that control to five |
+| ~~[**D-028**](#d-028)~~ | ✅ **RESOLVED 2026-08-05** — [owner ruling](#d-028-ruling), **OD-24**, option (c); the frozen Bench is amended an **eighth** time | the ink **target** selects the bands: a text element is offered **Inks + Neutrals** and `Paper tints` are not drawn for it, because they are paper — by the band's own label and by the presets' third slot. A preset applies **`[0]`**, the primary ink, not the accent. **No contrast floor is imposed on in-page text ink**, deliberately. [ADR-055](../DECISIONS.md#adr-055) Decision 6's exclusivity is superseded; the Type bar's five stay reachable under OD-11 |
 | [**D-029**](#d-029) | ⏳ **an owner ruling** — **the phase that takes H1** (no longer Phase C) | the holding shelf and `DecorElement` are net-new: no model, no persistence, no scope, and a GC relationship |
 | [**D-030**](#d-030) | ⏳ **an owner ruling** — **the phase that takes variable page counts** (no longer Phase C) | the frozen nav runs 12 pages and adds/deletes them; the product has one fixed 8-page format |
 | ~~[**D-031**](#d-031)~~ | ✅ **RESOLVED 2026-08-01** — [owner ruling](#d-031-ruling), OD-9 | the Bench had no exits: Font and Size stay **drawn** with no invented capability, Read reuses [ADR-086](../DECISIONS.md#adr-086)'s hand-off, back reuses the existing stack, and **redo is kept** — the frozen bar specifies the editing surface, not the product's whole capability |
@@ -2448,7 +2448,7 @@ and the literals in one test.
 | **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) `:404-407`, `:410` (`['Ink',ICON.colour,openInk]`), `:476-483` · [ADR-055](../DECISIONS.md#adr-055) Decision 6 · [`TypeBar.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/TypeBar.kt) `InkRow` |
 | **Found** | 2026-08-01, during **Phase C planning** ([ADR-089](../DECISIONS.md#adr-089)), by the frozen property table — before any production code |
 | **Severity** | **Conflict between an `Accepted` ADR and the frozen design** — blocks package **C6**, blocks nothing before it |
-| **Status** | ⏳ **OPEN — owner ruling required** |
+| **Status** | ✅ **RESOLVED 2026-08-05** — [owner ruling OD-24](#d-028-ruling), option (c). `v2-bench.html` **amended first**, per the HTML-first rule |
 
 **This is not [D-003](#d-003--the-maker-palette-is-ten-inks-or-nineteen-depending-on-which-document-you-read) again.** D-003 asked *how big is the maker's palette* and was ruled: three bands, three categories, three collections, implemented in `ZinelyContentInks` as three distinct types. That ruling settles what the popover **contains**. It does not touch what an **ink applied to text** may be, and that is a different document's decision.
 
@@ -2465,6 +2465,154 @@ Both documents are internally coherent and they were authored for different prod
 **Consequence of leaving it.** Neither reading is expensive to build and both are expensive to change afterwards: the ink row is a control with goldens, mutations, an announcement path and an AA gate attached to whichever set it offers.
 
 **Owner decision requested.** (a) The frozen H4 palette wins and ADR-055 Decision 6's five-ink mapping is **superseded** for V2 — with a stated position on whether any AA floor applies to in-page text, since the frozen swatches are not tuned for it. (b) ADR-055 wins and the popover offers only the five for **text**, the full nineteen for decor — which departs from the frozen file at a visible control and needs the D-022 treatment. (c) Something narrower. And, either way: what does a three-colour preset do to one element?
+
+---
+
+#### Gate evidence, measured 2026-08-05 at C6's pre-implementation gate {#d-028-evidence}
+
+Added before the ruling, not to steer it, but because three things assumed above turn out to be
+**false or unstated**, and the owner should not be asked to rule on a description of the conflict that
+is wrong. Citations re-anchored to the current frozen file per [D-046](#d-046)/[OD-18](#d-046-ruling): this
+defect's own `:404-407` and `:410` resolve to **`:562-565`** and **`:568`**, and `:476-483` to **`:655-658`**.
+
+> **The first draft of this block explained that drift as *"stale by ~+93 after seven amendments"*, and the
+> independent planning review disproved it twice.** The offsets are **not one number** — C6's sixteen
+> ADR-089 addresses drift by **+93, +133, +138 and +160** — and the amendments are **not the cause**: at the
+> DESIGN FREEZE commit `4494e95`, before any amendment existed, `:250` was already `.caption .state` and
+> `:213` was already `.chips`. These citations never resolved against this file. The full per-row
+> re-anchoring is [ADR-096 §1](../DECISIONS.md#adr-096-drift). *An approximate offset is not a
+> re-anchoring; it is a guess that happens to be checkable.*
+
+**1. The two palettes are not a subset and a superset. They are disjoint, and two names collide at
+different values.** The shipped five (`TypeBar.kt:86-92`) against the frozen `INKS` (`:562`):
+
+| | shipped ADR-055 | frozen Bench | same? |
+|---|---|---|---|
+| `Ink` | `#23201C` | `#2A251E` | **no** |
+| `Ochre` | `#7A5E12` | `#D19A3C` | **no** |
+| `Coral` `#A63C22` · `Teal` `#2A9D8F` · `Blue` `#264653` | shipped | **absent from all nineteen** | — |
+
+So option (a) is not *"widen five to nineteen"* — it **replaces** every ink a user can currently pick,
+and re-points two names at different colours. A document already saved carries the old value; under (a)
+its ink would not be selectable in the new control, and `.sw2.sel` would show **nothing selected** on a
+document the user coloured themselves. That is survivable only because [OD-11](#d-034-ruling) keeps the
+Type bar reachable — the old five stay pickable *somewhere* — and it is worth the owner knowing that the
+mitigation is an accident of OD-11 rather than a designed migration path.
+
+**2. The AA premise is not true of either set, and is least true of the frozen one.** Contrast against
+paper-white, which is what `Background.None` (`Document.kt:36`, the shipped default) actually prints:
+
+- **Frozen nineteen: 13 of 18 distinct swatches fall below AA 4.5**, and **10 fall below even 3.0:1**. All
+  five paper tints are effectively invisible as text — `Cream #F1E9D6` measures **1.21:1**, `Sky` 1.24,
+  `Sage` 1.25, `Blush` 1.30, `Kraft` 1.47 — and `Fog #B7AD93` 2.23, `Aqua #57B0A9` 2.56. Only `Ink`,
+  `Slate`, `Forest`, `Brick` and `Plum` clear AA.
+- **Shipped five: 4 of 5 clear AA** — but **`Teal #2A9D8F` measures 3.32:1**, so ADR-055's own claim that
+  the five are *"AA-tuned for legibility"* is **not literally true** of the set it ships. The floor is
+  already not absolute, which weakens the strongest argument for (b) without settling anything.
+
+> **The count above was first written as *"9 below 3:1"*, and the independent planning review found the
+> arithmetic wrong against my own output: `Aqua #57B0A9` at **2.56:1** was omitted. It is **10**.
+
+**2a. The floor is not a question — the owner already set one, and the frozen set fails it.** The only
+contrast floor this product has ruled is
+[D-002](#d-002--two-frozen-cover-inks-put-their-titles-below-aa-for-normal-text) (2026-07-30): *"The
+governing floor for cover titles is **3.0:1**. No frozen colours change."* That ruling was about **cover
+titles on cover fills**, not in-page text on paper, so it does not transfer by itself — but it is the
+owner's stated view of what "legible enough" means in this product, and read against it the framing is
+not *"13 miss AA"* but ***"10 of 18 miss the floor this owner has already chosen once."*** Option (a)
+therefore either extends D-002's 3.0:1 to in-page text — in which case ten frozen swatches are offered
+knowing they fail it — or states a different floor for text, or states that none applies. Silence is the
+one answer that would leave the AA gate with nothing to assert against.
+
+**2b. Under the freeze's own preset rule, all three presets apply an ink below 3.0:1.** The prototype
+applies `PRESETS[i][1][1]` — the **second** colour (`:658`) — and measured against paper-white that is:
+
+| preset | applied `[1]` | contrast | its `[0]`, unused | contrast |
+|---|---|---|---|---|
+| Two-colour | `#E27F89` | **2.75:1** | `#2A251E` | 15.20:1 |
+| Warm zine | `#E7B53C` | **1.90:1** | `#B0503F` | 5.17:1 |
+| Cool zine | `#57B0A9` | **2.56:1** | `#3E5E3A` | 7.32:1 |
+
+Every preset's **first** colour clears AA and every preset's **second** fails 3.0:1. So the "which of the
+three colours" question in the paragraph above is not a tie-breaking detail: the rule the prototype
+happens to implement is the one that produces the *least* legible result available in all three cases.
+That is the strongest evidence yet that `[1]` is prototype convenience rather than design — but it stays
+the owner's call, because reading it as convenience and switching to `[0]` would change what a frozen
+control visibly does.
+
+**3. The conflict is narrower than this defect states: it is text-only, and the freeze agrees.** The
+paragraph above reads `:410`/`toolsFor` as giving an image the `Ink` verb. Re-read on the current file,
+`toolsFor` has three branches (`:567-571`): text gets `Ink` (`:568`), **photo does not** (`:569` —
+`Reframe · Replace · Delete`), and the `Replace · Ink · Delete` set at `:570` is the **decor** fallback,
+which [OD-2](../DECISIONS.md#adr-089) re-seated beyond Phase C and which `benchVerbKindOf` refuses
+outright (`BenchContextBar.kt:118`). The shipped photo verbs match the freeze exactly. **No image ink is
+at stake in C6**, and option (b)'s *"the full nineteen for decor"* describes a surface Phase C cannot
+reach.
+
+**4. Persistence and export constrain nothing.** `TextStyle.color` is a free `ColorRgba` of four ints
+(`Document.kt:114-130`), serialized as such; there is no enum, no palette table and no id in the
+document. Any of the nineteen is already storable today, and
+[`SharedTextLayout.kt:46`](../../render-android/src/main/kotlin/com/aritr/zinely/render/android/SharedTextLayout.kt)
+(`color = style.color.toArgb()`) →
+[`CanvasReplayer.kt:85`](../../render-android/src/main/kotlin/com/aritr/zinely/render/android/CanvasReplayer.kt)
+(`fillPaint.color = command.color.toArgb()`) is the single engine ADR-028 fixes for preview, export and read. **Neither option needs a
+migration, and neither can produce an export that differs from what the editor showed.** The decision is
+therefore purely about *what the control offers*, which is the cleanest possible form of it.
+
+---
+
+#### ✅ OWNER RULING — 2026-08-05 (OD-24): option (c), and the freeze's own labels carry it {#d-028-ruling}
+
+> **Option (c).** The frozen bands win, with `Paper tints` fenced for a text target; presets apply `[0]`;
+> no contrast floor is imposed on in-page text ink.
+
+**What the gate had missed, and what changed the answer.** The measurement above framed this as a contrast
+problem, and it is not one. Three things in the frozen file, read together, decode the control:
+
+1. The band's own label is **`Paper tints`** (`v2-bench.html:688`), and the popover's caption calls the whole
+   thing *"the maker palette — **riso spot-inks**, named, in bands"* (`:698`).
+2. `applyInk` sets `t.style.color` (`:701`) — text only. So binding `applyInk` to **every** `.sw2` in all three
+   bands (`:693`) is *one handler over one node list*, not a design statement.
+3. **Two of the three presets end in a paper tint.** `Warm zine` = `#B0503F` · `#E7B53C` · **`#F1E9D6` =
+   Cream**; `Cool zine` = `#3E5E3A` · `#57B0A9` · **`#DDE9EE` = Sky**. A preset is **[ink, accent, paper]** —
+   which is the same file saying, in a third place, that tints are paper.
+
+**1. The ink target selects the bands.** `openInk()` reads `kindOf(selNode)` (`:688`); a **text** target is offered
+**Inks + Neutrals** — 13 distinct swatches — and the `Paper tints` band is **not drawn** for it. Any other
+target keeps all three. `TINTS`, `bandHTML` and the band's entire visual language stay frozen and intact, and
+the band returns the moment a paper target exists. **Nothing in Phase C has one** ([OD-2](../DECISIONS.md#adr-089)
+re-seated `.decor` and the tray), so C6 draws **two** swatch bands.
+
+This is [OD-21](#d-047-ruling)'s shape exactly, and the ruling adopts its words: **a fence reassignment, not a
+capability reassignment.** Withholding a band is a departure from the freeze at a visible control, which is
+[D-022](#d-022)'s class — so it is amended in the specification **first**, and this is the file's **eighth**
+amendment.
+
+**2. Presets apply `[0]`, the primary ink.** `PRESETS[i][1][1]||[0]` → `PRESETS[i][1][0]` (`:696`). Measured on
+paper-white, `[1]` is the **least legible colour available in all three recipes** — 2.75:1, 1.90:1, 2.56:1 —
+while every `[0]` clears AA at 15.20, 5.17 and 7.32. A rule that reliably picks the worst of three is
+convenience, not design; and now that `[2]` is known to be the paper, `[1]` is known to be the accent.
+
+**3. No contrast floor is imposed on in-page text ink — deliberately, and it is recorded so the absence is not
+read later as an oversight.** A riso palette that clears AA is not a riso palette: `Strawberry` 2.75:1 and
+`Sunflower` 1.90:1 **are** the medium. And contrast is a property of the **pairing**, not of the swatch, on a
+page whose paper the maker may later change — so a floor applied to a colour would be measuring the wrong
+thing. With the tints fenced, the darkest remaining risk is `Fog #B7AD93` at 2.23:1, which is a light mark
+rather than an invisible one. [D-002](#d-002--two-frozen-cover-inks-put-their-titles-below-aa-for-normal-text)'s
+**3.0:1** stays where it was ruled, on cover titles. **C6's AA gate asserts nothing on this control, on
+purpose.**
+
+**4. What this does to [ADR-055](../DECISIONS.md#adr-055) Decision 6.** Its **exclusivity** — *"the two … must
+not be conflated"* — is **superseded** for V2: the V2 text ink comes from the frozen bands. Its **five values
+are not deleted and nothing migrates**: `TextStyle.color` is a free `ColorRgba` (`Document.kt:114-121`), so
+every existing document renders unchanged, and [OD-11](#d-034-ruling) keeps the shipped Type bar — and its
+`Coral` / `Teal` / `Blue` — reachable. Recorded plainly: the fact that no user loses a colour they already
+applied is a **consequence of OD-11**, not of a designed migration path.
+
+**What the ruling does not do.** It does not give paper an ink target (that is the phase that takes it), does
+not touch the `.decor` branch [OD-2](../DECISIONS.md#adr-089) re-seated, does not alter `.inkuse`'s copy or its
+live count, and does not move `Preview`.
+
 
 ---
 
@@ -3520,7 +3668,7 @@ deleted eight transform controls.
 | what the user gains | a style row while typing, where there is none today | fidelity to the frozen editing surface |
 | what the user loses | nothing | size, align, bold, italic, five inks |
 | the two dead chips | ship inert beside `Font` and `Replace`, under OD-9 | same |
-| the `Ink` chip | opens the shipped Type bar, as OD-9 did for `Size` — or ships inert until C6 | must open `.inkpop`, which is blocked by [D-028](#d-028) |
+| the `Ink` chip | opens the shipped Type bar, as OD-9 did for `Size` — or ships inert until C6 | must open `.inkpop`, which [D-028](#d-028) blocked until [OD-24](#d-028-ruling) (2026-08-05); C6 builds it |
 | cost | two style surfaces exist, in two different states, with different vocabularies — a real coherence cost, and **C4**'s to resolve | a capability regression, and a blocked dependency pulled forward |
 | contradicts | [ADR-089](../DECISIONS.md#adr-089) row 3.5's stated Compose target | [OD-2](#d-029), [OD-11](#d-034-ruling), and the parity principle |
 
