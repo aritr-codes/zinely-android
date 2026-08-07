@@ -24,12 +24,12 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 > by C9.
 >
 > **PHASE D — THE PROOF — IS IN PLANNING (2026-08-06). Its planning package is
-> [ADR-098](DECISIONS.md#adr-098), `Proposed`. PHASE D HAS NOT OPENED — but **D1 is now unblocked** and
-> ten of the eleven packages are not.**
+> [ADR-098](DECISIONS.md#adr-098), `Proposed`. PHASE D HAS NOT OPENED. **D5 is unfenced except through OD-30
+> and D8 is unfenced; every other package is fenced.**
 > Eleven packages (D0…D10), a **complete selector-level frozen property table** over all 702 lines of
-> [`v2-proof.html`](design/mockups/v2-proof.html), and **twelve owner decisions raised — one answered
-> (OD-37), eleven still owed** —
-> [OD-29…OD-40](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts). Three things a new session
+> [`v2-proof.html`](design/mockups/v2-proof.html), and **thirteen owner decisions raised — one answered
+> (OD-37), twelve still owed** —
+> [OD-29…OD-41](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts). Three things a new session
 > should know before reading anything else:
 >
 > 1. **The Proof already exists in Compose.** One route, one surface (`ProofScreen.kt`, four acts), and
@@ -48,7 +48,10 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 >    `recorded 0 · changed 0`. ⚠ **The tag `compose-v2-bench-complete` still points at `fdb8319` and is
 >    deliberately not moved** ([OD-37a](COMPOSE-V2-ROADMAP.md#phase-c-addendum-record-integrity)) — the
 >    milestone and the verified baseline are two commits, on purpose. **[OD-37](DECISIONS.md#adr-098-od37) is
->    answered; D1 is unblocked and D0 waits on [OD-29](DECISIONS.md#adr-098-od29).** Since 2026-08-06 every
+>    answered** — which removed D1's *baseline* blocker and nothing else. **D0 waits on
+>    [OD-29](DECISIONS.md#adr-098-od29); D1 waits on [OD-41](DECISIONS.md#adr-098-od41)**, the scope ruling
+>    raised 2026-08-07 because [ADR-097 §7](DECISIONS.md#adr-097) deviation 5 (`Accepted`) had already put
+>    re-basing shared `core:ui` components *"outside a parity phase's fence."* Since 2026-08-06 every
 >    package closeout captures `git status --porcelain` before the final run **and** before the commit.
 >
 > **There is no next Phase C package.** Scheduling the re-seated H1/H3 work is a separate owner act that has
@@ -735,13 +738,13 @@ Sequence and gates: **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)**. In brief
   objective** — the phase is **eight packages** and the capability is
   [re-seated](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). See §0 and the roadmap's
   [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
-- **D · Proof** ◀ **IN PLANNING — not opened; D1 unblocked, D0 waits on OD-29** ([ADR-098](DECISIONS.md#adr-098), `Proposed`) —
+- **D · Proof** ◀ **IN PLANNING — not opened; D0 waits on OD-29, D1 waits on OD-41; D5 (except OD-30) and D8 are unfenced** ([ADR-098](DECISIONS.md#adr-098), `Proposed`) —
   pixel + print-flow + fold-guide + a11y parity, for the shipped single-sheet-8 stage, **plus** the two
   obligations re-seated here by owner ruling: retiring V1's parallel token objects and defining what enrolment
   in `config/token-enrolment.txt` even *means* for a V2 surface. **Eleven packages**, D0…D10, ordered by golden
   blast radius; **twelve owner decisions owed**
-  ([OD-29…OD-40](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts)); **four packages fenced before
-  any is opened**. The Proof is **already built as V1** and READ-first already ships — this phase changes which
+  ([OD-29…OD-41](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts)); **nine of eleven packages
+  fenced before any is opened**. The Proof is **already built as V1** and READ-first already ships — this phase changes which
   frozen document the surface answers to, and closes the gap where the imposed sheet is a **schematic rather
   than a render of the user's own pages**.
 - **E · Cross-product polish** — make the three feel like one product (motion, transitions, haptics, dark mode).

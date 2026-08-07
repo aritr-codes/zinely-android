@@ -107,7 +107,7 @@
 | [ADR-095](#adr-095) | **C5 — page navigation**: the filmstrip of little paper sheets and the summoned page grid. Two owner questions ([D-053](design/V2-SPEC-DEFECTS.md#d-053), [D-059](design/V2-SPEC-DEFECTS.md#d-059)) — the second raised *during* implementation — both ruled, both amending the frozen Bench. 31 frozen rows, 44 mutations, both device passes accepted. | Accepted |
 | [ADR-096](#adr-096) | **C6 — the ink popover (H4): the maker palette.** Opened before any production code per [ADR-089 §2.2](#adr-089) and **held `Proposed` until its one owner decision was ruled** — [D-028](design/V2-SPEC-DEFECTS.md#d-028), which asked whether [ADR-055](#adr-055) Decision 6's five accepted content inks are superseded by the freeze's nineteen swatches; [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) ruled it on 2026-08-05, the frozen Bench's eighth amendment. Re-anchors every C6 citation (all sixteen were wrong, at four different offsets, and were wrong at the freeze commit) and audits twelve frozen properties no ADR-089 row reaches. **Both device passes run and accepted 2026-08-06** ([§9](#adr-096-device)); Pass 1 failed the first build on two frozen properties and added rows 6.2c and 6.1i. | Accepted |
 | [ADR-097](#adr-097) | **C9 — integration: the four states, the motion policy, persistence of place, and the phase gate.** Phase C's **last** package, and the only one whose subject is the seams between the six already built rather than a region of the frozen file. Opened before any production code per [ADR-089 §2.2](#adr-089), with a **14-row** property table read from `v2-bench.html` itself — which is how it found the Bench's reduced-motion address wrong in three places (`:293`/`:260`/`:143` → **`:460`**), one rule ADR-089's phase table names nowhere, a caption outside the four states, and a row C3 had already discharged. Built, verified (**1603 tests green**; **15/15 mutations RED** over a GREEN control), reviewed twice (**GO WITH FIXES**, all Required Fixes reconciled) and **device-verified on both passes**. Its own invariants found two real product defects nothing else had: a **dead selection carried across undo** in `EditorReducer.stepHistory`, and a soft-delete fade **hard-coding 200ms** under a reduced-motion preference. Its row 9.5 was computed four times and wrong three times — raising and withdrawing [D-061](design/V2-SPEC-DEFECTS.md#d-061) and [D-062](design/V2-SPEC-DEFECTS.md#d-062) the same day — while the hardware was right the first time; **being wrong once is not a reason to trust the correction**. ✅ **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) RESOLVED by [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling)**, option (a) — the Bench's rule ratified on device evidence, **no code changed**, discharging [OD-10](#adr-089)'s live half. **This acceptance closes Phase C.** ⚠ *Verification provenance annotated 2026-08-06 ([§6](#adr-097), [OD-37b](COMPOSE-V2-ROADMAP.md#phase-c-addendum-record-integrity)): the **1603** figure is unaltered and was reproduced on a clean tree at `fc33bca`, but the run it originally described held three uncommitted test-side fixes. No claim retracted; C9 not reopened.* | Accepted |
-| [ADR-098](#adr-098) | **Phase D opens (planning).** The Proof is **already built** — as V1, against the superseded `proof.html`, with READ-first shipping and **zero V2 tokens across all five files** — so Phase D is a re-skin, and its phase-level property table sweeps all 702 lines of the frozen Proof to report **four of eleven packages fenced before any is opened**. Eleven packages ordered by **golden blast radius**, not by rulings-in-hand: the shared `Z*` components convert once, before the surface, or ~110 PNGs re-record twice. Finds the enrolment gate **unsatisfiable by ruling** (`feature.editor` holds **563** raw `.dp`, every one of them because D-007 published no spacing scale), the imposed sheet **schematic rather than rendered** so a maker never sees their own sheet before spending paper, the frozen Proof carrying **no Loading and no Error state** (D-024's exact shape), the fold animation **looping forever** where the roadmap requires it to rest, and **both of Phase D's two named deliverable addresses stale**. Raises **twelve owner decisions (OD-29…OD-40)**. Its baseline finding — `main` red in three places inside the tagged milestone — was confirmed by audit and **closed by the maintenance commit `fc33bca`**, which retires **OD-37** and unblocks **D1**; the remaining eleven stand, and **D0 is blocked on OD-29** | Proposed |
+| [ADR-098](#adr-098) | **Phase D opens (planning).** The Proof is **already built** — as V1, against the superseded `proof.html`, with READ-first shipping and **zero V2 tokens across all five files** — so Phase D is a re-skin, and its phase-level property table sweeps all 702 lines of the frozen Proof to report **four of eleven packages fenced before any is opened**. Eleven packages ordered by **golden blast radius**, not by rulings-in-hand: the shared `Z*` components convert once, before the surface, or ~110 PNGs re-record twice. Finds the enrolment gate **unsatisfiable by ruling** (`feature.editor` holds **563** raw `.dp`, every one of them because D-007 published no spacing scale), the imposed sheet **schematic rather than rendered** so a maker never sees their own sheet before spending paper, the frozen Proof carrying **no Loading and no Error state** (D-024's exact shape), the fold animation **looping forever** where the roadmap requires it to rest, and **both of Phase D's two named deliverable addresses stale**. Raises **thirteen owner decisions (OD-29…OD-41)**. Its baseline finding — `main` red in three places inside the tagged milestone — was confirmed by audit and **closed by the maintenance commit `fc33bca`**, which retires **OD-37**; ~~and unblocks **D1**~~ **corrected 2026-08-07** — that removed D1's *baseline* blocker only, and [OD-41](#adr-098-od41) now carries its scope ruling. **D0 is blocked on OD-29, D1 on OD-41**; **D5** (except OD-30) and **D8** are unfenced. Records that ADR-089 §2.2 **audits** package proposals rather than generating them, so no derivation-methodology repair was owed ([note](#adr-098-derivation-note)) | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -5969,6 +5969,18 @@ fold guide · **D7** completion and the post-save state machine · **D8** the V1
 deletion · **D9** retire `ZinelyColors`/`ZinelyDimens`/`ZinelyTypography` and enrol every product package ·
 **D10** integration, print-flow parity, the platform-a11y pass, both device passes, the phase gate.
 
+**Why D9 carries enrolment as well as deletion (recorded 2026-08-07).** [ADR-080](#adr-080) Decision 2 makes
+enrolment **per package** — *"enrols that package in `token-enrolment.txt` in the same commit"* — so a terminal
+enrolment package looks like a duplicated responsibility, and would be one if the rule were reachable. It is
+not yet: **no Phase D package can enrol itself until [OD-29](#adr-098-od29) rules what enrolment *means* for a
+V2 surface**, and until then `TokenDisciplineTest` fails any enrolled package on the per-component spacing
+literals [D-007](design/V2-SPEC-DEFECTS.md#d-007--the-constitutional-8pt-rhythm-is-not-observable-in-the-frozen-css)
+deliberately kept. D9 therefore holds enrolment **only for as
+long as OD-29 is unanswered**: once OD-29 rules, each package enrols itself in its own commit per ADR-080, and
+**D9 narrows to the deletion alone** — which is genuinely terminal, because the V1 token objects can only be
+removed when the last consumer anywhere has left, a fact about the repository that no single package can know.
+The two halves are not equal: enrolment dissolves, deletion does not.
+
 #### 2.2 The frozen property table is published at two granularities, and both are mandatory
 
 Unchanged from [ADR-089 §2.2](#adr-089). [§4](#adr-098-fpt) below is **complete against the frozen file at
@@ -6061,12 +6073,41 @@ picture, exactly as OD-22 accepted for the Bench's 26×34 thumbs. D5 does not en
 
 ### 4. Frozen property table — Phase D (complete, selector-level) {#adr-098-fpt}
 
-**Completeness ledger.** `v2-proof.html` is 702 lines: CSS `:22–262`, markup `:264–408`, script `:410–701`. The
-sweep finds **137 CSS rules** (including four `:root` blocks, one `@media (prefers-color-scheme)`, one
-`@media (prefers-reduced-motion)`, one `@keyframes`) and **31 script functions** over **8 top-level state
-declarations**. Every one is assigned below exactly once. Totals: 137 + 31 + 8 = **176 rows**, of which
-**41 are `PROTO`** (prototype-only, never implemented), **34 terminate in ⏳**, **4 in ✎**, and **97 are ready
-to build** once the phase opens.
+**Completeness ledger.** `v2-proof.html` is 702 lines: CSS `:22–262`, markup `:264–408`, script `:410–701`.
+
+**Counting method (recorded so the totals are reproducible).** The sweep was re-run mechanically on 2026-08-07
+under these four rules, and no total below may be quoted without them — the first sweep published totals whose
+method was not recorded, and they could not be reproduced.
+
+1. **Scope.** `<style>` is `:22–262`; `<script>` is `:410–701`. The markup `:264–408` contributes no countable
+   unit of its own: every element is reached through a CSS rule or a script function.
+2. **CSS rule** = one declaration block `selector { … }`. A block nested inside an at-rule is counted **and**
+   the at-rule wrapper is counted once itself. `@keyframes` counts once; its `from`/`to` stops are not rules.
+   Two blocks on one physical line count as two (`:109`, `:206`).
+3. **Script function** = one `function NAME(` declaration, at any depth.
+4. **Top-level state declaration** = one initialiser in a `var` statement at `<script>`'s top level;
+   `var a=…, b=…` counts two.
+
+**Totals under that method: 153 CSS rules** (150 plain — of which four are `:root` blocks — plus
+`@media (prefers-color-scheme:dark)`, `@media (prefers-reduced-motion:reduce)`, and `@keyframes seal`)
+**+ 32 script functions + 10 top-level state declarations = 195 units.**
+
+**These supersede the figures first published here — 137 + 31 + 8 = 176.** The corrections are: CSS +16 (the
+first sweep did not count at-rule wrappers separately, nor the two double-rule lines); functions +1; state +2
+(`MINI` `:536` and `BOOK` `:543`, the two fold-step arrays, which the first sweep folded into D6's rows rather
+than counting). **No unit is newly discovered and no package's scope changes** — the corrections are to the
+*count*, not to the file or to what any package owns.
+
+**Units are not rows.** The 195 units are assigned across the **55 rows** of the per-package tables below (54 as
+first published, plus row 0.5 for [D-075](design/V2-SPEC-DEFECTS.md#d-075)), each row carrying a selector group
+at the granularity [ADR-089 §2.2](#adr-089) requires. The first ledger conflated the two by calling 176 a row
+count.
+
+⏳ **Owed at D0's gate, and only there: re-tally the terminal states against the corrected
+inventory of 195.** The published split — 41 `PROTO`, 34 ⏳, 4 ✎, 97 ready — was computed against 176 and is
+therefore unverified, though every individual row's note below is unaffected. D0 is the package that owns
+corpus repairs on Phase D's own path, so the recount belongs to it and to no other package. **ADR-089 §2.2's
+audit — every unit assigned exactly once — must be re-run at the same gate against the 195.**
 
 **Note legend** (verbatim from [ADR-089](#adr-089)): blank = ready to build · `≡` equivalent-mutant candidate ·
 `∅` intentionally untested with the reason in the cell · `⚠` pinned but contested by an open register entry ·
@@ -6081,6 +6122,7 @@ to build** once the phase opens.
 | 0.2 | `config/token-enrolment.txt` is a declared Gradle input | `TokenDisciplineTest.kt:44–51` | build script | task re-runs when the file changes | touch the file, assert not UP-TO-DATE | |
 | 0.3 | the three stale addresses on Phase D's path | `ROADMAP:470`, `V2-SPEC-DEFECTS:146` | same | each citation re-verified against the selector it names | — | ∅ documentation |
 | 0.4 | the Proof's unrecorded post-freeze edit (`--r`, `c0f806e`) | `v2-proof.html:12–20` | same | the banner describes the file's whole history | — | ✎ [OD-39](#adr-098-od39) |
+| 0.5 | `.status` is the one element inside `.phone` the freeze never classifies as product or prototype | `v2-proof.html:98`, `:286` | same | the file's own three-way prototype marking is applied to it, either way | — | ✎ [D-075](design/V2-SPEC-DEFECTS.md#d-075) — **fences no package**; it moves one rule between PROTO and D2's chrome and adds no dependency. Not an OD |
 
 #### D1 — `:core:ui` `Z*` components onto V2 (no frozen Proof region)
 
@@ -6203,6 +6245,8 @@ meaning is how two documents start disagreeing while both look correct.
 | **OD-39** {#adr-098-od39} | **D0 / D3** | Four corpus-integrity items in the frozen Proof, one ruling: (a) three **dead CSS rules** for controls the freeze removed or never had — `.foldlink` `:162–164`+`:240`, `.privacyline` `:207–208`, `.backlbl` `:104`; (b) two **declared-and-never-used tokens**, `--accent-on-ink` and `--ink-straw`, the exact D-006 shape that survived its own sweep; (c) `flash()` — the only snackbar-shaped surface — has **no frozen selector**, only ~10 inline hard-coded properties, which collides with Phase D's own token criterion; (d) the **soft-proof / colour-approximation line** required by PP-5 and PF-3 appears **nowhere** in the file. Strike, amend, or record? | ⏳ **open** |
 | **OD-40** {#adr-098-od40} | **D2 / D10** | The Proof's per-page accessibility model — *"each page a focusable node announcing 'Page n of N'"* — exists **only in prose** (IA C.1, C.4). The frozen file provides a plain `#pcount` span and two invisible edge buttons. Confirm the a11y contract is binding-from-prose, so Phase D's property tables may carry rows with **no frozen CSS address** | ⏳ **open** |
 
+| **OD-41** {#adr-098-od41} | **D1** | **Does Phase D re-base the shared `:core:ui` `Z*` components onto V2, or is that re-seated beyond the phase?** D1 was published as needing *"no design ruling at all"*. It needs a **scope** ruling, and the corpus has already answered the same question once, restrictively: [ADR-097 §7](#adr-097) deviation 5, `Accepted`, records that *"re-basing shared `core:ui` components onto V2's motion class changes V1 surfaces, which is outside a parity phase's fence"* — which is why C9 declined it. [ADR-080](#adr-080) Decision 2 defines convergence as **surface by surface**, and the eleven `Z*` components are consumed by surfaces Phase D does not own. D1 is not derived from `v2-proof.html` and owns no frozen region (it is an implementation proposal, which is legitimate — [C0](#adr-089) owned none either); the question is whether the phase's fence reaches it. Three dispositions: **(a)** rule it in, superseding ADR-097 §7.5 for Phase D explicitly; **(b)** narrow D1 to the `Z*` components the Proof actually consumes, leaving the rest V1; **(c)** re-seat it, and let each Proof package convert what it needs. This is the [OD-2](#adr-089) move — the owner ruling a package's scope in or out of a phase | ⏳ **open — blocks D1** |
+
 **Two questions are recorded here and are deliberately *not* ODs**, because they are answered:
 
 - The **reduced-motion corpus cleanup** — whether the Proof's `:260` is rewritten to state the ratified Bench
@@ -6211,11 +6255,36 @@ meaning is how two documents start disagreeing while both look correct.
 - **Act 1 as a filled true render.** The roadmap already decided it (*"never blank panels"*). The schematic is
   a deferral recorded in source, not a design; D5 reverses it and no ruling is needed.
 
-**Updated 2026-08-06, after OD-37 was answered by `fc33bca`.** ~~No Phase D package may legitimately begin.~~
-**D1 may legitimately begin** — it needs no design ruling at all, and its only blocker was a baseline whose
-suite did not pass, which is now demonstrably false. **D0 remains blocked on [OD-29](#adr-098-od29)** alone.
-Every other package stays fenced on OD-30…OD-36, unchanged. *Nothing in this paragraph starts Phase D: it
-records which package is unblocked, not that one has opened.*
+~~**Updated 2026-08-06, after OD-37 was answered by `fc33bca`.**~~ ~~No Phase D package may legitimately
+begin.~~ ~~**D1 may legitimately begin** — it needs no design ruling at all, and its only blocker was a
+baseline whose suite did not pass, which is now demonstrably false.~~ **Superseded 2026-08-07 by
+[OD-41](#adr-098-od41).** The struck sentence was wrong in one word: D1 needs no *design* ruling, but it needs
+a **scope** ruling, and [ADR-097 §7](#adr-097) deviation 5 (`Accepted`) had already answered that question
+restrictively before this ADR was written. OD-37's answer removed D1's *baseline* blocker and nothing else.
+
+**Readiness, as it now stands (2026-08-07).** **D0** is blocked on [OD-29](#adr-098-od29). **D1** is blocked on
+[OD-41](#adr-098-od41). **D2** on OD-30/OD-31, **D3** on OD-32, **D4** on OD-33/OD-34, **D6** on OD-35, **D7**
+on OD-36, **D9** on OD-29. **D5** is unfenced except through [OD-30](#adr-098-od30), and **D8** is unfenced —
+so the phase is **not** deadlocked, but no package has opened. **D10**'s [OD-38](#adr-098-od38) blocks the
+phase gate's honesty, not a package. *Nothing in this paragraph starts Phase D: it records which packages are
+fenced, not that any has opened.*
+
+**Historical note — no derivation-methodology repair was required. {#adr-098-derivation-note}** A governance
+audit on 2026-08-07 asked where Phase C's package boundaries actually came from, and answered it from the
+accepted corpus: **[ADR-089 §2.2](#adr-089) is an audit rule — complete coverage and unique ownership — not a
+package-generation algorithm.** ADR-089's own opening records the order of operations: *"its frozen property
+table reported that four of its **ten proposed** packages could not legitimately begin. **The owner ruled**,
+and Phase C is now eight."* Packages were proposed, audited, then ruled. [ADR-086](#adr-086) states the same
+for Phase B — *"Sequencing inside a phase is the implementer's call… Phase B is **therefore split** into five
+packages, in dependency order"* — and ADR-089 §2.1 adds that Phase C's order runs *"the opposite of the natural
+reading order of the frozen file."* **No accepted ADR claims package boundaries are mechanically derivable from
+the frozen HTML, and a corpus-wide search finds no such rule; `contiguous` appears nowhere in any derivation
+rule.** Every structural change in Phase C was an owner ruling — OD-2 removed C7/C8, OD-11 split C2 into
+C2a/C2b, OD-21 widened C4 — and in no case was the frozen file re-read to produce a boundary; the audit table
+was reconciled afterwards. **This ADR's D0–D10 are therefore implementation proposals in exactly the same
+sense, which is why [OD-41](#adr-098-od41) is a scope ruling and not a defect.** The note is recorded here so a
+future session does not re-derive a decomposition from `v2-proof.html` under the belief that ADR-089 requires
+it. It does not.
 
 ### 6. Review {#adr-098-review}
 
