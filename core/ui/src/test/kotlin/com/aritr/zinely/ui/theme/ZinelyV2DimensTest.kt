@@ -171,7 +171,12 @@ class ZinelyV2DimensTest {
             Regex("""box-shadow\s*:\s*([^;}]+)""").findAll(css).map { it.groupValues[1].trim() }.toList()
         }.filter { it != "none" }
         val negativeSpread = shadows.count { Regex("""\s-[\d.]+px""").containsMatchIn(it) }
-        assertEquals("27 real box-shadow declarations across the trilogy", 27, shadows.size)
+        // 27 until 2026-08-04, when [OD-22](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-053-ruling)
+        // deleted `.pthumb i` from the frozen Bench. That rule drew its three placeholder page-lines *with*
+        // a stacked `box-shadow` (`0 3px 0, 0 6px 0, 0 9px 0`) rather than with borders, so removing the
+        // abstraction removed a shadow declaration with it. Zero-spread, which is why the count below is
+        // unmoved. The drop is the amendment's arithmetic, not a corpus edit anyone made by hand.
+        assertEquals("26 real box-shadow declarations across the trilogy", 26, shadows.size)
         assertEquals("22 of them carry spread", 22, negativeSpread)
         // Never once positive, and never offset horizontally — both absences justify the field list.
         assertEquals(

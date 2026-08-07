@@ -3,12 +3,14 @@ package com.aritr.zinely.editor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.aritr.zinely.feature.editor.BenchBottomBarTestTag
 import com.aritr.zinely.feature.editor.HomeEmptyHeadline
 import com.aritr.zinely.feature.editor.ProofBackTestTag
 import com.aritr.zinely.feature.editor.ProofScreenTestTag
@@ -92,6 +94,24 @@ class ZinelyNavHostTest {
     }
 
     /**
+     * Waits for the editor to be **Ready** — its frozen bottom bar drawn.
+     *
+     * These three call sites used to wait for the text `"Add a photo"`, the V1 supply tray's photo
+     * card. C4 ([ADR-094](../../../../../../../docs/DECISIONS.md#adr-094)) retired that shelf for the
+     * frozen `.bar`, so the string stopped existing on the editor and both tests that waited for it
+     * timed out at 10s — since 026d15a, undetected, because C4's verification run did not include
+     * `:app`. Discovered by C5's full verification and fixed here rather than in the C5 package.
+     *
+     * The bar's own tag, not a label: it is what "Ready" actually draws, and it cannot be retired by a
+     * copy change the way the phrase it replaces was.
+     */
+    private fun waitForEditorReady(timeoutMs: Long = 10_000) {
+        composeRule.waitUntil(timeoutMs) {
+            composeRule.onAllNodesWithTag(BenchBottomBarTestTag).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    /**
      * A zine on the shelf prints its title inside `clearAndSetSemantics{}` — one node, one
      * announcement — so the title is reachable as the object's label, never as a text node. Tests
      * address the object the way a screen reader does.
@@ -167,7 +187,7 @@ class ZinelyNavHostTest {
         waitForCard(SEEDED_TITLE)
         tapCard(SEEDED_TITLE)
         waitForEditor()
-        waitForText("Add a photo") // Ready: the supply tray is up
+        waitForEditorReady() // Ready: the frozen bar is up
         composeRule.runOnUiThread { navController.popBackStack() }
         waitForHome()
 
@@ -177,7 +197,7 @@ class ZinelyNavHostTest {
         waitForEditor()
 
         // Then the editor awaits the single-writer slot and boots Ready — no spurious boot error
-        waitForText("Add a photo")
+        waitForEditorReady()
         assertEquals(id, navController.currentBackStackEntry?.toRoute<EditorRoute>()?.projectId)
     }
 
@@ -225,7 +245,7 @@ class ZinelyNavHostTest {
         waitForCard(SEEDED_TITLE)
         tapCard(SEEDED_TITLE)
         waitForEditor()
-        waitForText("Add a photo")
+        waitForEditorReady()
         composeRule.runOnUiThread { navController.navigate(ProofRoute(id)) }
 
         // Then the Proof surface is up (one destination, not three)
