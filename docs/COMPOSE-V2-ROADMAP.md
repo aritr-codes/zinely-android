@@ -447,6 +447,14 @@ quietly changes meaning is how two documents start disagreeing while both look c
 | ~~**C8**~~ | ~~Add / supply + the Art drawer (H3)~~ | — | — | **re-seated beyond Phase C** by OD-2, and it was already fenced by the freeze itself — [V2-BENCH-REVIEW §E.6](design/V2-BENCH-REVIEW.md): *"do NOT freeze into implementation until a review + legal pass clears them."* **The asset-layer ADR does not exist** |
 | **C9** | **Integration** — the four states, the motion policy, persistence of place, both device passes, the phase gate | `@media (prefers-reduced-motion)` and the state machine across all of the above | C1–C6 ✅ | ✅ **DONE and ACCEPTED 2026-08-06 — [ADR-097](DECISIONS.md#adr-097) is `Accepted`, and with it PHASE C IS COMPLETE.** C9 owned no region of the frozen file except `@media (prefers-reduced-motion:reduce)` (`:460`) and the state machine `cap()` narrates; everything else it owns is an *invariant across* the six packages already built. Code: `BenchState.kt` (new) makes the four states — Rest · Selected · Editing · Adding — explicit and **wired**, not decorative (`ctxVisible` now reads `benchState == Selected`); `KEY_PAGE_INDEX` + a pure `restoredPageIndex` clamp + a `distinctUntilChanged` write-back persist the maker's **place** through process death, with the store still the single owner ([ADR-005](DECISIONS.md#adr-005)). **Verification:** `BenchC9Test` 11 + `EditorPagePersistenceTest` 7 green; whole project **1603 tests, 0 failures, 0 errors, 1 skipped** across 12 modules with `--rerun-tasks -Proborazzi.test.verify=true`; **15 mutations, 15 killed** over a GREEN control with a `MIN_TESTS` floor. **Two real product defects were found by C9's own invariants rather than by its tests:** row 9.1's return-to-Rest invariant exposed `EditorReducer.stepHistory` carrying a **dead selection across undo** (fixed at root — the carried selection is intersected with the ids still in the document), and row 9.2a found the soft-delete fade **hard-coding `tween(200)`** so it kept animating under a reduced-motion preference. **Independent review returned GO WITH FIXES twice**, every Required Fix reconciled: the first found row 9.2a's ±6-line scan let **six of eleven** call sites hide a hard-coded duration (rewritten to judge the animation's own statement, which immediately caught a second live site); the second refuted this ADR's own claim that the grid cell is flat — `benchStudioGround()` lays the screen grain over the grid, and **this ADR's own recorded device pixels proved it**. **Row 9.5 was computed four times and was wrong three times**, in opposite directions, while the hardware was right the first time: [D-061](design/V2-SPEC-DEFECTS.md#d-061) (wrong ground) and [D-062](design/V2-SPEC-DEFECTS.md#d-062) (grain that is not drawn) were each **raised and withdrawn the same day**, and what survives is [D-064](design/V2-SPEC-DEFECTS.md#d-064). The lesson the package leaves behind: *a computed check can be exactly right about a relationship that does not exist*, and **being wrong once is not a reason to trust the correction**. ✅ **Both device passes ran from the beginning on `SM-A176B` / Android 16** ([§9](DECISIONS.md#adr-097-device)). Pass 1's sharpest instrument was a **threshold-free raster probe**: 16 caret frames decoded to RGB — reduce **off**, exactly two states **1152 decoded bytes (384px)** apart; reduce **on**, **0 differing bytes across all 15 frame pairs**, so the caret does not run *at all*. Place survived real process death twice (PID 28473→30950, 5130→9350), each time returning to page 4 of 8. Pass 2 raised four frictions, **three of them already in the register** — including one C9 filed as D-063 that turned out to be C4's [D-051](design/V2-SPEC-DEFECTS.md#d-051) under a second number, because [OD-21](design/V2-SPEC-DEFECTS.md#d-047-ruling)'s amendment had moved the address it cites. **Address drift defeats duplicate-detection.** **The ruling C9 existed to obtain:** ✅ **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) is RESOLVED — [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling), option (a): the Bench's reduced-motion rule is ratified**, on the device evidence, in the venue the 2026-07-28 ruling named. **No code changed**, and [OD-10](DECISIONS.md#adr-089)'s live half is discharged. Three entries C9 raised were ruled the same day as carried observations — **OD-26** ([D-051](design/V2-SPEC-DEFECTS.md#d-051)), **OD-27** ([D-064](design/V2-SPEC-DEFECTS.md#d-064)), **OD-28** ([D-065](design/V2-SPEC-DEFECTS.md#d-065)) — none reopening C9, none amending a frozen file. C1's carried device finding (the empty state's sticker cluster announcing `✿`/`❀`/`★`) is **not** discharged here and travels on as debt. Persistence of place is the **page half only**; the shelf half travels with H1 |
 
+> ⚠ **Verification provenance across this whole table, annotated 2026-08-06 by
+> [OD-37b](#phase-c-addendum-record-integrity).** Every test figure quoted in the rows above is **unaltered
+> and was never wrong**; C5's *"1544 / 0"* and C9's *"1603 / 0 / 0 / 1"* each describe the working tree that
+> run executed in. From C4 onward that tree held **three uncommitted test-side corrections**, committed only
+> later as **`fc33bca`**. The rows stay as written — they are the phase's own record — and the
+> [addendum below](#phase-c-addendum-record-integrity) carries what the audit found, what was fixed and what
+> was ruled. **No package is reopened.**
+
 **One package remains feature-adjacent: C5.** Its frozen navigation is drawn for a page count the document
 cannot have. It is built over the real eight and asserts against `format.pageCount` rather than a constant —
 that is a re-skin, but it is one row away from not being one, and that row is where a phase silently doubles.
@@ -620,6 +628,69 @@ nothing:
 - **Address drift defeats duplicate-detection.** C9 filed a defect the register already held, because an
   amendment had moved the line it cites. The register is searched by *what a thing is*, not by where it was.
 
+### Addendum — record integrity (2026-08-06) {#phase-c-addendum-record-integrity}
+
+> **Everything above this line is left exactly as it was written at the close of the phase.** It is the
+> phase's own account of itself and it is not edited here, because a narrative silently rewritten after the
+> fact stops being evidence of anything. This addendum is what a later audit found, and it corrects the
+> *provenance* of the verification figures without touching the figures or the history that produced them.
+
+**What the audit found.** Phase D's planning package asserted, and a baseline audit then proved, that
+**`main` was red in three places at `fdb8319`** — the very commit this record calls the new baseline, and the
+commit the milestone tag points at:
+
+| Failing gate | Introduced by | Cause |
+|---|---|---|
+| 2 tests in `:app` — `ZinelyNavHostTest` | **`026d15a`** (C4) | C4 retired `EditorSupplyTray`, whose line 119 was the **only** call site of `AddPhotoActionLabel`. The constant outlived its renderer: `EditorEmptyState` declares it and never draws it, so no composable rendered *"Add a photo"* and three `waitForText` calls could only time out at 10s |
+| 1 test in `:core:ui` — `ZinelyV2DimensTest` | **`5b68e26`** (C5 / OD-22) | the sixth Bench amendment deleted `.pthumb i`, taking the trilogy from 27 real `box-shadow` declarations to **26**; the assertion still read 27. The test reads the mockups **from disk**, so a corpus edit silently changes its input |
+| `:core:ui:verifyRoborazziDebug` | **`026d15a`** (C4) | C4 added a `Redo` mark and registered it in `ZinelyV2Icons.All`, which `ZinelyV2Catalog` iterates directly. The four affected baselines were last written at `b0f2ad1` (A9), **six days before the mark existed** |
+
+**Why every green run was nonetheless honest.** All three corrections were authored on **2026-08-04**, between
+18:40 and 19:07 — the same evening C4 landed — and were then **carried uncommitted in the working tree for
+three days**. C5, C6 and C9 each ran their suites against a tree that held them. Their reported figures are
+true of the tree they ran in and false of the tree they committed. **No production defect was found, and no
+Phase C package is reopened.**
+
+**The correction.** The three fixes were committed as **`fc33bca`** — *"fix(repo): land the three assertions
+Phase C changed the inputs to but never committed"* — six files, +29/−4, **test-side only: no production code,
+no design change, no documentation edit.** It was verified in a **detached worktree whose
+`git status --porcelain` was empty before and after the run**, so the committed `gradle.properties` was in
+force rather than any local tuning:
+
+- targeted, `--rerun-tasks -Proborazzi.test.verify=true`: `:app` **107/0/0**, `:core:ui` **172/0/0**,
+  `:core:ui:verifyRoborazziDebug` **10/10 unchanged**;
+- full project, same flags: **1603 tests · 0 failures · 0 errors · 1 skipped · 12 modules**, and Roborazzi
+  across all three modules reporting `recorded 0 · added 0 · changed 0` over **122 comparisons** — verify
+  mode proven by the summaries themselves, not asserted.
+
+**`fc33bca` is corrective maintenance, not Phase C implementation.** It lands no package, carries no ADR,
+closes no register entry and changes no accepted decision. Phase C's nine packages and
+[ADR-090](DECISIONS.md#adr-090)–[ADR-097](DECISIONS.md#adr-097) stand exactly as accepted.
+
+**Two owner rulings closed this addendum, both on the completed maintenance evidence:**
+
+- ✅ **OD-37a — the tag does not move.** `compose-v2-bench-complete` stays on **`fdb8319`**, the original
+  completion milestone, and is **deliberately not retargeted** to the green commit. A permanent label that
+  quietly changes meaning is the hazard this roadmap names in its own words and the reason C7 and C8's letters
+  were never reused; a tag that silently acquires three commits it did not have is that hazard applied to
+  history. **Repository history and verification history are therefore distinguished rather than reconciled:**
+  the milestone is where the phase ended, `fc33bca` is where the baseline became verifiable, and they are two
+  commits because they were two events.
+- ✅ **OD-37b — the figures stand; their provenance is annotated.** [ADR-097](DECISIONS.md#adr-097) and
+  [ADR-095](DECISIONS.md#adr-095) keep their recorded counts unaltered, each with an explicit annotation
+  naming the tree the run actually described. Neither is rewritten, because the numbers were never wrong —
+  only the tree they were attributed to was.
+
+**A sixth thing the phase taught, added here because it cost the most to find:**
+
+- **A verification run proves the tree it ran in, not the tree you shipped.** Three green sweeps, two ADRs and
+  one completion record all read as true while the committed baseline failed, and nothing in the evidence
+  bundle could have revealed it — because `git status` was not in the bundle. **It is now**: every package
+  closeout captures `git status --porcelain` immediately before the final run *and* immediately before the
+  commit, and a tree that is not clean must name each entry and say whether it participated in the run. This
+  is the same family as C4's `:core:copy` guardrail sitting silently up-to-date across two "full" runs, which
+  is why every verification since uses `--rerun-tasks` — the same lesson, one layer further out.
+
 ---
 
 ## Phase D — Proof
@@ -664,6 +735,76 @@ printing-flow parity + fold-guide parity + accessibility parity**, for the shipp
 
 **Review gate.** Parity + print-flow + fold + a11y evidence; the READ-first and honesty invariants confirmed;
 **GO** before Phase E.
+
+### Phase D packages {#phase-d-packages}
+
+Published by [ADR-098](DECISIONS.md#adr-098) (2026-08-06) at the phase's planning gate, **before any production
+code**. Sequencing within a phase is the implementer's call; Phase C's order put every package whose rulings
+were in hand ahead of every package whose rulings were not. **Phase D cannot use that order** — four of its
+packages are fenced by rulings that do not exist, and the constraint that actually binds is the **golden blast
+radius**: re-skinning the Proof before `:core:ui`'s shared `Z*` components re-records ~14 Proof rasters, then
+re-records them again.
+
+**The fact that most changes this phase's shape is not in the section above: the Proof already exists in
+Compose.** One route (`ProofRoute`), one surface (`ProofScreen.kt`, 686 lines), four acts, and
+**`startAct = READ` already ships**. No navigation change is required by anything in Phase D's stated scope.
+What does not ship is V2 — all five Proof files read **zero** V2 tokens — and the Compose answers to the
+**V1-era** `proof.html` (`ProofScreen.kt:135`, `ProofSheet.kt:87`), not `v2-proof.html`. Phase D changes which
+document the surface answers to.
+
+*Line references below are to `v2-proof.html` as it stands after the [D-010 amendment](design/V2-SPEC-DEFECTS.md#d-010-amendment)
+of 2026-08-01. The two addresses this roadmap previously named for Phase D — `v2-proof.html:98` and
+`v2-bench.html:105` — are **both stale**; the real addresses are `:112` and `:278`, and repairing them is D0's.*
+
+| # | Package | Frozen regions | Depends on | Status |
+|---|---|---|---|---|
+| **D0** | **Enrolment definition + corpus repairs** — documentation and test-infrastructure only, zero `src/main` | none (`@media`/token blocks read, not transcribed) | — | ⏳ **BLOCKED on [OD-29](DECISIONS.md#adr-098-od29)** (OD-37 answered 2026-08-06). Defines what token discipline *means* for a V2 surface, makes `config/token-enrolment.txt` a declared Gradle input, and re-anchors the three stale addresses on Phase D's own path. **It does not enrol anything** |
+| **D1** | **`:core:ui`'s eleven `Z*` components onto V2** — the widest golden event in the phase, paid once | none | — | ▶ **UNBLOCKED 2026-08-06** — its only blocker, OD-37, is answered by `fc33bca`, and it needs no design ruling. **Not started; Phase D has not opened.** `ZButton` · `ZSheet` · `ZSnackbar` · `ZMenuItem` · `ZStatusPane` · `ZToast` · `ZPaperSurface` · `ZTextField` · `ZFocusRing` · `ZSweep` · `ZAccessibleControl` are **100% V1**, and both the V2 Bench and the V2 Proof consume them. Re-records `v2_catalog_*` (10) and ~100 `feature/editor` rasters |
+| **D2** | **Act 0 — READ**, the chrome-free finished zine | `.reader` `.tapz*` `.pageStage` `.zpage*` `.zpn` `.zt` `.cover*` `.h` `.b` `.pull` `.zlist` `.zphoto*` `.zcap` `.backc*` `.topbar` `.iconbtn*` `.pcount` (`:99–137`) | D1 | ⏳ **BLOCKED on [OD-30](DECISIONS.md#adr-098-od30)** (nine document-content selectors are Fraunces; the engine draws Inter only, three prohibitions intact) **and [OD-31](DECISIONS.md#adr-098-od31)** (the Proof dims its own page, against OD-12) |
+| **D3** | **The READY band and the single weighted commit** — Save PDF primary, Share peer, no fake Print | `.band` `.ready*` `.commit` `.btn*` (`:140–161`), `doSave()` `flash()` | D1 | ⏳ **BLOCKED on [OD-32](DECISIONS.md#adr-098-od32)** — the frozen Proof has **no Loading and no Error state**, `doSave()` is synchronous and real export is not, and never-silent failure is a binding invariant *and* an acceptance criterion. [D-024](design/V2-SPEC-DEFECTS.md#d-024-ruling)'s exact shape, which was answered by amending the frozen HTML |
+| **D4** | **The details drawer** — paper, the checklist, the reassurance sheet | `.scrim*` `.drawer*` `.grab` `.dhead*` `.dclose*` `.dbody` `.sect` `.paperseg*` `.paperhint` `.check*` `.sheetcard*` `.minisheet*` (`:167–199`) | D1 | ⏳ **BLOCKED on [OD-33](DECISIONS.md#adr-098-od33)** (the checklist is always green, yet its first item is a check that can fail) **and [OD-34](DECISIONS.md#adr-098-od34)** (`.minisheet` is hard-fixed at Letter regardless of the paper switch two sections above it). `.testcard`/`.duplex` are booklet-only and **out of this stage** |
+| **D5** | **The imposed sheet as a filled true render** — the phase's centrepiece | the Act-1 surface; no new frozen region | D1, D2 | ▶ **Unfenced except through [OD-30](DECISIONS.md#adr-098-od30).** `ProofSheet.kt:96–99` records the deferral in source: the cells carry the engine-derived page **number**, a schematic stand-in — so **the user never sees their own imposed sheet before spending paper**, against this phase's own *"filled true render, never blank panels"*. `DecorativeImpositionOrderTest` already guards the panel order; `PagePreviewParityTest` is the shape of the proof owed |
+| **D6** | **The fold guide** | `.foldstage` `.foldsvg*` `.foldcap` `.foldnav` `.stepdots*` `.fnav*` `.animtoggle*` `.animnote` (`:211–236`), `renderFold()`…`stopAnim()` | D1 | ⏳ **BLOCKED on [OD-35](DECISIONS.md#adr-098-od35)** — the animation is under-specified three ways: no animated rendering exists, it **loops modulo forever** where this phase requires a *persistent static end-state*, and no reduced-motion path reaches the JS interval |
+| **D7** | **Completion and the post-save state machine** | `.done*` `.seal` `@keyframes seal` `.band.saved*` (`:239–251`) | D3 | ⏳ **BLOCKED on [OD-36](DECISIONS.md#adr-098-od36)** — after Save, paper settings, Share and a second save are all unreachable, and no transition back to unsaved is specified |
+| **D8** | **The V1 holdout sweep + the dead-code deletion** | none | D1 | ▶ **Unfenced.** ~13 `:feature:editor` files, ~90 V1 accessor reads (`ReframeControls` 26 · `ShelfStates` 22 · `TypeBar` 20 · …), plus `HomeScreen.kt` and `Shelf*` — **~7 source and 7 test files that are dead in production**, the nav host having routed to `ZineLibraryScreen` since B5 |
+| **D9** | **Retire `ZinelyColors`/`ZinelyDimens`/`ZinelyTypography` and enrol every product package** | none | D1, D8 | ⏳ **BLOCKED on [OD-29](DECISIONS.md#adr-098-od29).** Deletion compiles only after D1 and D8 — it is a compile break in 28 files. **No golden should move here; if one does, D1 or D8 left a real visual difference and it is a finding, not a re-record** |
+| **D10** | **Integration** — reduced motion, print-flow parity, the platform-a11y pass, both device passes, the phase gate | `@media (prefers-reduced-motion:reduce)` (`:259–261`) and the invariants across the above | D0–D9 | ⏳ **Carries [OD-38](DECISIONS.md#adr-098-od38) and [OD-40](DECISIONS.md#adr-098-od40).** ⚠ **Row 10.1 must not transcribe `:260`** — OD-25 ratified the **Bench's** reduced-motion rule; the Proof writes the other variant. **The Proof has never been through a platform-`AccessibilityNodeInfo` pass** — every other V2 surface has |
+
+**Re-seated beyond Phase D:** **Fraunces as a document font family** is not a package and is not sequenced with
+the others — if [OD-30](DECISIONS.md#adr-098-od30) rules that way it is a standalone `:render-android` change
+(four *static* instances, since Fraunces is variable upstream and the registry forbids variable fonts against
+`minSdk 24`), and it invalidates a different golden set while raising a `:core:model` question — which family a
+document *records* — that Phase D has not scoped. **Booklet / saddle-stitch / duplex** stay out of this stage;
+[D-030](design/V2-SPEC-DEFECTS.md#d-030) and [D-029](design/V2-SPEC-DEFECTS.md#d-029) stay re-seated and
+unassigned, and Phase D must not absorb them.
+
+### Phase D — what is owed before it starts {#phase-d--what-is-owed-before-it-starts}
+
+**Implementation may NOT yet legitimately begin.** This is the opposite of Phase C's position at the same point,
+and the difference is worth stating plainly: Phase C opened with four blockers that were all ruled on one day.
+Phase D opens with **twelve**, of which **one is not a design question at all** — it is the state of the
+baseline the phase is told to build on. This section is the register's companion, not a second copy of it; the
+detail lives in [ADR-098 §5](DECISIONS.md#adr-098-gate).
+
+| | First required by | Question | State |
+|---|---|---|---|
+| ~~**OD-37**~~ | ~~the phase's opening~~ | ~~`main` is **red in at least three places**, and the three uncommitted files that fix it are Phase C's own residue~~ | ✅ **ANSWERED 2026-08-06** — over-escalated as put, and ruled by being done: **`fc33bca`** landed the three fixes and a clean-worktree sweep proved `main` green. The record half split into **OD-37a** (the tag does not move) and **OD-37b** (figures stand, provenance annotated), both closed in the [addendum](#phase-c-addendum-record-integrity). **D1 is unblocked** |
+| **OD-29** | D0 | What does token discipline *mean* for a V2 surface, given D-007 published no scale? Until it is defined, **no V2 package can enrol at all** | ⏳ |
+| **OD-30** | D2, D5 | [D-004](design/V2-SPEC-DEFECTS.md#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) — nine document-content selectors in Fraunces against an Inter-only registry, three prohibitions intact | ⏳ |
+| **OD-31** | D2 | The Proof dims its own page, against OD-12's *the artifact does not dim* — probable **ninth** amendment | ⏳ |
+| **OD-32** | D3 | No Loading and no Error state in the freeze, against a binding never-silent-failure invariant | ⏳ |
+| **OD-33** | D4 | The checklist's non-green branch has no frozen appearance | ⏳ |
+| **OD-34** | D4 | `.minisheet` is fixed at Letter regardless of the paper switch | ⏳ |
+| **OD-35** | D6 | The fold animation: no animated rendering, loops instead of resting, unreachable by reduced motion | ⏳ |
+| **OD-36** | D7 | The post-save state machine is a dead end with no way back | ⏳ |
+| **OD-38** | D10 | The sticker-cluster accessibility debt has **no register id** and cannot be looked up by what it is | ⏳ |
+| **OD-39** | D0 / D3 | Corpus integrity in the frozen Proof: three dead CSS rules, two unused tokens, a snackbar with no frozen selector, and a required soft-proof line that appears nowhere | ⏳ |
+| **OD-40** | D2 / D10 | Is the Proof's per-page accessibility contract binding **from prose**, so property tables may carry rows with no frozen CSS address? | ⏳ |
+
+**Updated 2026-08-06.** ~~The minimum to open the phase is one ruling.~~ That ruling is spent: **`fc33bca`**
+restored the baseline, so **D1 is unblocked and may start** — it needs no design decision. **D0 waits on
+OD-29** alone. Everything else waits on a design ruling that does not yet exist. *Recording that a package is
+unblocked is not the same as opening it; Phase D has not begun.*
 
 ---
 

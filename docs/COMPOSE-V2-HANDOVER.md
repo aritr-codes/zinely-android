@@ -23,8 +23,36 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 > [OD-10](DECISIONS.md#adr-089)'s live half. **No code changed for that ruling**, and no frozen file was amended
 > by C9.
 >
-> **There is no next Phase C package.** Scheduling what comes after Phase C is an owner act that has not been
-> performed; the re-seated H1/H3 work below is the nearest candidate and is not scheduled.
+> **PHASE D — THE PROOF — IS IN PLANNING (2026-08-06). Its planning package is
+> [ADR-098](DECISIONS.md#adr-098), `Proposed`. PHASE D HAS NOT OPENED — but **D1 is now unblocked** and
+> ten of the eleven packages are not.**
+> Eleven packages (D0…D10), a **complete selector-level frozen property table** over all 702 lines of
+> [`v2-proof.html`](design/mockups/v2-proof.html), and **twelve owner decisions raised — one answered
+> (OD-37), eleven still owed** —
+> [OD-29…OD-40](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts). Three things a new session
+> should know before reading anything else:
+>
+> 1. **The Proof already exists in Compose.** One route, one surface (`ProofScreen.kt`, four acts), and
+>    **READ-first already ships**. No navigation change is required. But all five Proof files read **zero** V2
+>    tokens, and the Compose answers to the **V1-era `proof.html`**, not `v2-proof.html`. Phase D is a re-skin.
+> 2. **The packages are ordered by golden blast radius, not by rulings-in-hand.** `:core:ui`'s eleven `Z*`
+>    components are 100% V1 and are consumed by both the V2 Bench and the V2 Proof; converting them **after**
+>    the Proof re-records ~110 rasters twice. D1 comes before D2.
+> 3. **The baseline was red and is now green — `fc33bca`.** `main` at `fdb8319` failed in three places, all
+>    Phase C residue: `:app`'s nav tests had been timing out **undetected since C4**, `ZinelyV2DimensTest`
+>    asserted a shadow count a committed amendment had changed, and four catalog goldens were never
+>    re-recorded. All three fixes had been authored 2026-08-04 and carried uncommitted for three days, which
+>    is why C5's, C6's and C9's green sweeps were honest about the tree they ran in and silent about the tree
+>    they committed. **`fc33bca`** landed them; a detached worktree reporting an empty
+>    `git status --porcelain` then verified **1603 / 0 / 0 / 1 across 12 modules** with Roborazzi at
+>    `recorded 0 · changed 0`. ⚠ **The tag `compose-v2-bench-complete` still points at `fdb8319` and is
+>    deliberately not moved** ([OD-37a](COMPOSE-V2-ROADMAP.md#phase-c-addendum-record-integrity)) — the
+>    milestone and the verified baseline are two commits, on purpose. **[OD-37](DECISIONS.md#adr-098-od37) is
+>    answered; D1 is unblocked and D0 waits on [OD-29](DECISIONS.md#adr-098-od29).** Since 2026-08-06 every
+>    package closeout captures `git status --porcelain` before the final run **and** before the commit.
+>
+> **There is no next Phase C package.** Scheduling the re-seated H1/H3 work is a separate owner act that has
+> not been performed.
 >
 > **There is no C7 and no C8.** [Owner ruling OD-2](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c) (2026-08-01)
 > re-seated the holding tray (H1) and the Add / Art drawer (H3) beyond Phase C; **their letters are not reused
@@ -55,6 +83,10 @@ So *"C7"* unqualified is ambiguous, and *"C6"* and *"C3"* appear in both. **Alwa
 "conformance C7".** This is a naming clarification only — it changes no package, no ruling and no scope. It exists
 because the V2 roadmap already warns that *"a label that quietly changes meaning is how two documents start
 disagreeing while both look correct"*, and this is that hazard sitting one namespace over.
+
+> ⚠ **The paragraph below is the record of Phase C as it was being built, kept for the rulings it carries.**
+> Phase C is **COMPLETE** — see §0 above. Read this for *why* things are the way they are, never for *where the
+> work is*.
 
 **Phases A and B are CLOSED. Phase C — the Bench — has BEGUN.** Its planning package is
 [**ADR-089**](DECISIONS.md#adr-089), `Accepted` on owner GO: **eight packages**, and a **complete selector-level
@@ -692,17 +724,26 @@ Sequence and gates: **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)**. In brief
 - **B · Library** — **✅ CLOSED 2026-08-01** (B1–B5, [ADR-081](DECISIONS.md#adr-081)…[ADR-084](DECISIONS.md#adr-084),
   [ADR-086](DECISIONS.md#adr-086), plus [ADR-088](DECISIONS.md#adr-088)) — pixel parity to the frozen Library, and
   the V2 Library is now the app's Home route.
-- **C · Bench** ◀ **IN PROGRESS — C0–C1 done, C2 next** ([ADR-089](DECISIONS.md#adr-089), `Accepted`) — pixel + interaction +
+- **C · Bench** — **✅ CLOSED 2026-08-06** (C0, C1, C2a, C2b, C3, C4, C5, C6, C9; [ADR-089](DECISIONS.md#adr-089)
+  through [ADR-097](DECISIONS.md#adr-097), every one `Accepted`; merged `8a30051`, tagged
+  `compose-v2-bench-complete`; there is no C7 and no C8) — pixel + interaction +
   animation + editing-behaviour parity, on top of the **existing** engine. *"No feature additions"* was the line
   to read carefully: the frozen Bench contains four studio additions (H1–H4) plus a net-new element kind, and
   **three of the four — H1, H2 and H3 — plus `DecorElement` are capability the repository does not have.** Only
   **H4**, the maker inks, already exists (`ZinelyContentInks`, under D-003's ruling). **Owner ruling OD-2
   (2026-08-01) settled it in favour of the
   objective** — the phase is **eight packages** and the capability is
-  [re-seated](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). Next package: **C9 — Integration**, the phase's
-  last (C0–C6 are all accepted; there is no C7 or C8). See §0 and the roadmap's
+  [re-seated](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). See §0 and the roadmap's
   [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
-- **D · Proof** — pixel + print-flow + fold-guide + a11y parity, for the shipped single-sheet-8 stage.
+- **D · Proof** ◀ **IN PLANNING — not opened; D1 unblocked, D0 waits on OD-29** ([ADR-098](DECISIONS.md#adr-098), `Proposed`) —
+  pixel + print-flow + fold-guide + a11y parity, for the shipped single-sheet-8 stage, **plus** the two
+  obligations re-seated here by owner ruling: retiring V1's parallel token objects and defining what enrolment
+  in `config/token-enrolment.txt` even *means* for a V2 surface. **Eleven packages**, D0…D10, ordered by golden
+  blast radius; **twelve owner decisions owed**
+  ([OD-29…OD-40](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts)); **four packages fenced before
+  any is opened**. The Proof is **already built as V1** and READ-first already ships — this phase changes which
+  frozen document the surface answers to, and closes the gap where the imposed sheet is a **schematic rather
+  than a render of the user's own pages**.
 - **E · Cross-product polish** — make the three feel like one product (motion, transitions, haptics, dark mode).
 - **F · Reality validation** — physical devices; only now are tiny fidelity-serving adjustments allowed.
 
