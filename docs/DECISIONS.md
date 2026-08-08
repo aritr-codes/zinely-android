@@ -6123,10 +6123,14 @@ first sweep did not count at-rule wrappers separately, nor the two double-rule l
 than counting). **No unit is newly discovered and no package's scope changes** — the corrections are to the
 *count*, not to the file or to what any package owns.
 
-**Units are not rows.** The 195 units are assigned across the **55 rows** of the per-package tables below (54 as
-first published, plus row 0.5 for [D-075](design/V2-SPEC-DEFECTS.md#d-075)), each row carrying a selector group
-at the granularity [ADR-089 §2.2](#adr-089) requires. The first ledger conflated the two by calling 176 a row
-count.
+**Units are not rows.** The 195 units are assigned across the **frozen-region rows** of the per-package tables
+below, each carrying a selector group at the granularity [ADR-089 §2.2](#adr-089) requires. The first ledger
+conflated the two by calling 176 a row count. The tables now hold **106 rows** in total — 54 as first
+published, plus row 0.5 for [D-075](design/V2-SPEC-DEFECTS.md#d-075), plus **D1's composite row expanded to
+its 52 property-level rows** (1.0 and 1.1–1.51). **D1's rows carry none of the 195 units**: the package owns no
+frozen Proof region and its rows cite Kotlin addresses, on D0's own precedent (row 0.2 cites
+`TokenDisciplineTest.kt`) and ADR-094's two Kotlin-sourced rows. The unit count is therefore unchanged by the
+expansion.
 
 ⏳ **Owed at D0's gate, and only there: re-tally the terminal states against the corrected
 inventory of 195.** The published split — 41 `PROTO`, 34 ⏳, 4 ✎, 97 ready — was computed against 176 and is
@@ -6153,7 +6157,103 @@ audit — every unit assigned exactly once — must be re-run at the same gate a
 
 | # | Property | Source | Target | Planned assertion | Planned mutation | Note |
 |---|---|---|---|---|---|---|
-| 1.1–1.11 | `ZButton` · `ZSheet` · `ZSnackbar` · `ZMenuItem` · `ZStatusPane` · `ZToast` · `ZPaperSurface` · `ZTextField` · `ZFocusRing` · `ZSweep` · `ZAccessibleControl` | V1 accessors, 37 reads | `v2Colors`/`v2Typography`/`v2Motion`/`ZinelyV2Dimens` | `ZinelyV2CatalogParityTest` extended per component | palette swap per component | ⚠ re-records `v2_catalog_*` (10) and ~100 `feature/editor` PNGs — **the phase's widest golden event** |
+| 1.0 | the accessor inventory itself — **51 rows / 69 occurrences**, against the *"37 reads"* first published here | `components/Z*.kt` (11 files) | this table | a test asserting the count of `ZinelyTheme.*` / `ZinelyDimens.*` reads under `components/` is **0** at close | add one V1 read back | ✅ closes with the count **and its method** recorded (below) |
+
+**The counting method, recorded so the numbers are reproducible.** The first publication of this row read
+*"V1 accessors, **37 reads**"* with no method, which is the [§4 ledger](#adr-098) defect in a second place.
+**37 is not wrong — it is a narrower unit**, and both numbers are kept because they count different things:
+
+- **37 = distinct `(component × role)` pairs over `colors` + `dimens` + `elevation`** — 31 + 4 + 2. The three
+  groups whose V1 accessor carries a *value*.
+- **51 = distinct `(component × group × role)` property-level FPT rows across all five groups** — the row unit
+  [ADR-089 §2.2](#adr-089) and [§8.1](COMPOSE-IMPLEMENTATION-GUIDE.md) require, adding `typography` (9 pairs)
+  and `motion` (5 pairs) to the 37.
+- Supporting totals: **69** textual accessor occurrences · **64** distinct source lines · **24** distinct
+  `(group × role)` pairs · **11** components.
+
+**Derivation** (re-run against `HEAD`, replacing the addresses first published here, every one of which was
+drifted by +8 to +36 lines): comment characters are blanked **in place** with newlines preserved, so line
+numbers are the file's own; qualified `ZinelyTheme.<group>.<role>` reads are detected; local receiver aliases
+(`val colors = ZinelyTheme.colors`) are resolved to their group; and an alias match is **suppressed where the
+alias is itself the tail of a qualified `ZinelyTheme.` read**, which is what inflated the occurrence count to
+71. The earlier method deleted block comments *including their newlines*, which is why every published address
+was short — the [address-drift](design/V2-SPEC-DEFECTS.md) lesson Phase C paid for, on Phase D's own path.
+
+Sources are `core/ui/src/main/kotlin/com/aritr/zinely/ui/components/`. Component order is the order this row
+first published. **No V1→V2 assignment is made in any cell below**; unresolved rows terminate per
+[ADR-087](#adr-087) and cite their register entry by number.
+
+| # | Property (V1 accessor · value) | Source | Target | Planned assertion | Planned mutation | Note |
+|---|---|---|---|---|---|---|
+| 1.1 | `colors.coralStrong` `#C64E34` | `ZButton.kt:104,:114` | `ZButton.kt` `ZPrimaryButton` | `ZComponentsTest` reads the rendered fill and asserts the ruled value — **not writable until D-076 rules** | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) |
+| 1.2 | `colors.stamp` `#264653` | `ZButton.kt:105,:115,:188` | `ZPrimaryButton` · `ZStampButton` | as 1.1 | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case B |
+| 1.3 | `colors.onDesk` `#23201C` | `ZButton.kt:254,:320` | `ZIconButton` · `ZToolButton` | as 1.1, on the icon/label ink | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.4 | `colors.onDeskFaint` `#726A5C` | `ZButton.kt:254` | `ZIconButton` | as 1.3, disabled branch | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.5 | `colors.coralText` `#A63C22` | `ZButton.kt:318` | `ZToolButton` | as 1.3, danger branch | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case B |
+| 1.6 | `colors.onDeskSoft` `#5E574C` | `ZButton.kt:319` | `ZToolButton` | as 1.3, soft-text branch | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.7 | `colors.field` `#FBF8F1` | `ZButton.kt:338` | `ZToolButton` | as 1.1 | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.8 | `colors.fieldEdge` `#DED4C2` | `ZButton.kt:339` | `ZToolButton` | as 1.1, on the 1dp border | border → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.9 | `elevation.shadow2` (layer list) | `ZButton.kt:186` | `ZStampButton` | the stamp draws the ruled shadow layers — **not writable until D-077 rules** | drop the layer list | ✎ [D-077](design/V2-SPEC-DEFECTS.md#d-077) |
+| 1.10 | `motion.fast` `130ms` | `ZButton.kt:124,:327` | `ZPrimaryButton` · `ZToolButton` | the press spec runs the ruled duration and curve — **not writable until D-077 rules** | duration → `0ms` | ✎ [D-077](design/V2-SPEC-DEFECTS.md#d-077) |
+| 1.11 | `typography.shell` = `ZinelyFonts.Shell` (Inter 400/500/600/700) | `ZButton.kt:157,:204,:359` | `ZPrimaryButton` · `ZStampButton` · `ZToolButton` | the label resolves to `v2Typography.work`; asserted on the `FontFamily` identity, not on a raster | swap to `voice` | ✅ `≡` candidate — `ZinelyV2Fonts.Work` names the same four `R.font.inter_*` resources ([`ZinelyV2Typography.kt:49`](../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV2Typography.kt)), so `shell → work` renders identically and no golden can kill the swap. Fixed by [V2-CONSTITUTION §Type](design/V2-CONSTITUTION.md) — *"Fraunces (voice) + Inter (work). **Permanent** … fixed across V2"* |
+| 1.12 | `motion.base` `230ms` | `ZSheet.kt:95,:96,:114,:115` | `ZSheet.kt` `ZSheet` | the enter/exit specs run the ruled duration and curve — **not writable until D-077 rules** | duration → `0ms` | ✎ [D-077](design/V2-SPEC-DEFECTS.md#d-077) — the two-surface case (Library sheet · D4 drawer) |
+| 1.13 | `colors.scrim` `#23201C` @ α.42 | `ZSheet.kt:102` | `ZSheet` | the scrim paints `ZinelyV2Colors.scrim` (`#2A251E` @ α.34) in both themes | α → `1f` | ✅ same role name published in `ZinelyV2Colors`; **the value moves** |
+| 1.14 | `colors.menu` `#FBF8F1` | `ZSheet.kt:154` | `ZSheetSurface` | as 1.1 | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.15 | `colors.fieldEdge` | `ZSheet.kt:168` | `ZSheetSurface` | as 1.1, on the grabber | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.16 | `colors.onDesk` | `ZSheet.kt:175` | `ZSheetSurface` | as 1.3, on the title | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.17 | `typography.voice` = `ZinelyFonts.Voice` (Fraunces) | `ZSheet.kt:176` | `ZSheetSurface` | the title resolves to `v2Typography.voice`, asserted on `FontFamily` identity | swap to `work` | ✅ same role name; both are Fraunces per V2-CONSTITUTION §Type |
+| 1.18 | `colors.onDeskSoft` | `ZSheet.kt:187` | `ZSheetSurface` | as 1.3, on the subtitle | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.19 | `typography.shell` | `ZSheet.kt:188` | `ZSheetSurface` | as 1.11 | swap to `voice` | ✅ `≡` candidate — as 1.11 |
+| 1.20 | `motion.fast` | `ZSnackbar.kt:78` | `ZSnackbar.kt` `ZSnackbar` | as 1.10 | duration → `0ms` | ✎ [D-077](design/V2-SPEC-DEFECTS.md#d-077) |
+| 1.21 | `colors.stamp` | `ZSnackbar.kt:88` | `ZSnackbar` | as 1.1 | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case B |
+| 1.22 | `typography.shell` | `ZSnackbar.kt:99,:123` | `ZSnackbar` | as 1.11 | swap to `voice` | ✅ `≡` candidate — as 1.11 |
+| 1.23 | `colors.yellow` `#E9C46A` | `ZSnackbar.kt:122` | `ZSnackbar` | as 1.3, on the action label | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case B |
+| 1.24 | `colors.coralText` | `ZMenuItem.kt:67,:68,:72,:73` | `ZMenuItem.kt` `ZMenuItem` | as 1.3, danger + coral-selected branches | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case B |
+| 1.25 | `colors.onDesk` | `ZMenuItem.kt:69` | `ZMenuItem` | as 1.3 | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.26 | `colors.onDeskSoft` | `ZMenuItem.kt:74` | `ZMenuItem` | as 1.3 | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.27 | `typography.shell` | `ZMenuItem.kt:105,:119` | `ZMenuItem` | as 1.11 | swap to `voice` | ✅ `≡` candidate — as 1.11 |
+| 1.28 | `colors.onDeskFaint` | `ZMenuItem.kt:118` | `ZMenuItem` | as 1.3, on the secondary line | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.29 | `colors.onDesk` | `ZStatusPane.kt:60` | `ZStatusPane.kt` `ZStatusPane` | as 1.3, on the headline | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.30 | `typography.voice` | `ZStatusPane.kt:61` | `ZStatusPane` | as 1.17 | swap to `work` | ✅ same role name |
+| 1.31 | `colors.onDeskSoft` | `ZStatusPane.kt:74` | `ZStatusPane` | as 1.3, on the body | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.32 | `typography.shell` | `ZStatusPane.kt:75` | `ZStatusPane` | as 1.11 | swap to `voice` | ✅ `≡` candidate — as 1.11 |
+| 1.33 | `motion.fast` | `ZToast.kt:59` | `ZToast.kt` `ZToast` | as 1.10 | duration → `0ms` | ✎ [D-077](design/V2-SPEC-DEFECTS.md#d-077) |
+| 1.34 | `colors.onDesk` | `ZToast.kt:70` | `ZToast` | as 1.1 — here the **background**, inverted against 1.35 | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.35 | `colors.desk` `#E7DECE` | `ZToast.kt:75` | `ZToast` | the label paints `ZinelyV2Colors.desk` (`#ECE3D1`); re-cleared against 1.34's ruled fill by `ZinelyV2ContrastTest` | ink → `Color.Magenta` | ✅ same role name; **the value moves**, and the pairing's floor is re-checked because 1.34 is unruled |
+| 1.36 | `typography.shell` | `ZToast.kt:76` | `ZToast` | as 1.11 | swap to `voice` | ✅ `≡` candidate — as 1.11 |
+| 1.37 | `elevation.shadow2` | `ZPaperSurface.kt:35` | `ZPaperSurface.kt` `ZPaperSurface` (default arg) | as 1.9 | drop the layer list | ✎ [D-077](design/V2-SPEC-DEFECTS.md#d-077) |
+| 1.38 | `colors.paper` `#F4EFE6` | `ZPaperSurface.kt:42` | `ZPaperSurface` | the sheet paints `ZinelyV2Colors.paper` (`#F7F2E7`) in both themes | fill → `Color.Magenta` | ✅ same role name; **the value moves** |
+| 1.39 | `colors.paper2` `#EFE8DA` | `ZPaperSurface.kt:42` | `ZPaperSurface` | as 1.1, `usePaper2` branch | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case C — V2 publishes one paper step. **Shares line `:42` with 1.38**, so the two are visually coupled inside one expression |
+| 1.40 | `colors.paperEdge` `#E1D8C7` | `ZPaperSurface.kt:43` | `ZPaperSurface` | the hard edge paints `ZinelyV2Colors.paperEdge` (`#EEE6D4`) | colour → `Color.Magenta` | ✅ same role name; **the value moves** |
+| 1.41 | `colors.onDesk` | `ZTextField.kt:50` | `ZTextField.kt` `ZTextField` | as 1.3, on the typed text | ink → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.42 | `typography.voice` | `ZTextField.kt:51` | `ZTextField` | as 1.17 | swap to `work` | ✅ same role name |
+| 1.43 | `colors.coralStrong` | `ZTextField.kt:55,:65` | `ZTextField` | as 1.1, cursor brush + focused border | colour → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case B |
+| 1.44 | `colors.field` | `ZTextField.kt:64` | `ZTextField` | as 1.1 | fill → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.45 | `colors.fieldEdge` | `ZTextField.kt:65` | `ZTextField` | as 1.8, unfocused branch | border → `Color.Magenta` | ⏳ [D-076](design/V2-SPEC-DEFECTS.md#d-076) sub-case A |
+| 1.46 | `dimens.FocusRingRadius` `6.dp` | `ZFocusRing.kt:29` | `Modifier.zinelyFocusRing` (default arg) | the ring's corner radius is the ruled value — **not writable until D-008 closes** | radius → `0.dp` | ✎ [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) — `ZinelyV2Dimens` publishes no radius; the ruling's reference is **per-component** |
+| 1.47 | `colors.coralStrong` | `ZFocusRing.kt:33` | `Modifier.zinelyFocusRing` | the ring paints the ruled ink — **not writable until D-008 closes** | colour → `Color.Magenta` | ⏳ [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) — its ruling names *"2px, `matchaText`, per-component offset"* as the reference. **Not** D-076 |
+| 1.48 | `dimens.FocusRingWidth` `3.dp` | `ZFocusRing.kt:35` | `Modifier.zinelyFocusRing` | the stroke measures `ZinelyV2Dimens.FocusRingWidth` = `2.dp` | width → `0.dp` | ✅ same role name; **the ring narrows 3→2dp**, so its contrast is re-checked |
+| 1.49 | `dimens.FocusRingOffset` `2.dp` | `ZFocusRing.kt:36` | `Modifier.zinelyFocusRing` | as 1.46 | offset → `0.dp` | ✎ [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) — the Library's three product rules use **three different offsets** (6px, 3px, 0), so no shared default is frozen |
+| 1.50 | `motion.reduceMotion` (Boolean) | `ZSweep.kt:29` | `Modifier.zinelySweep` | the sweep is suppressed when `v2Motion.reduceMotion` is set | invert the flag | ✅ `≡` candidate — same name, same type, and [`Theme.kt:181`](../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/Theme.kt) resolves it *"**once**, here"* into both layers, so the substituted value is bit-identical. **OD-25 is not engaged** — it ruled the reduced-motion *rule*, not this accessor |
+| 1.51 | `dimens.FocusRingRadius` `6.dp` | `ZAccessibleControl.kt:30` | `Modifier.zinelyControl` (default arg) | as 1.46 | radius → `0.dp` | ✎ [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) |
+
+**D1's terminal-state split: 15 ✅ · 4 under [D-008](design/V2-SPEC-DEFECTS.md#d-008--two-of-the-three-frozen-surfaces-specify-no-focus-appearance-and-one-removes-it) · 26 under [D-076](design/V2-SPEC-DEFECTS.md#d-076) · 6 under [D-077](design/V2-SPEC-DEFECTS.md#d-077).**
+Seven of the fifteen carry a `≡` **candidate marker**, which [§8.1](COMPOSE-IMPLEMENTATION-GUIDE.md) distinguishes
+from the `≡` *terminal state*: the candidate records the suspicion up front, and only byte-identical goldens at
+the gate promote it. **Every one of the 51 is a visual change** except those seven — even the same-named roles
+move value (`paper` `#F4EFE6`→`#F7F2E7`, `desk` `#E7DECE`→`#ECE3D1`, `paperEdge` `#E1D8C7`→`#EEE6D4`, `scrim`
+α.42→α.34, `FocusRingWidth` 3→2dp) — so **no row may be pinned by a golden D1 itself re-records**
+([ADR-097 §6](#adr-097): a recorded frame cannot fail against the implementation it was recorded from). Each
+assertion above reads a value or an identity independently; the goldens corroborate and never pin.
+
+⚠ **Golden blast radius, unchanged:** re-records `v2_catalog_*` (10 PNGs) and, on this ADR's estimate, ~100 of
+the 218 `feature/**` PNGs. The exact affected set is **owed as a measurement** — a verify-mode dry run before
+any re-record — because the estimate carries no recorded method, which is the defect row 1.0 exists to close.
+
+**None of D-008, D-076 or D-077 fences D1.** Each is a ruling *"D1's to obtain, not D1's precondition"*
+([ADR-097 §3.2](#adr-097-d012)'s standard); D1 begins without them and cannot reach `Accepted` with them open,
+exactly as [ADR-096](#adr-096) stayed `Proposed` until OD-24. **No owner decision is created by this table**,
+and no V1→V2 assignment is proposed in any cell.
 
 #### D2 — Act 0, READ (`.reader` → `.backc p`) {#adr-098-d2}
 
