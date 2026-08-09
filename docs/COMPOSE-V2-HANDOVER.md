@@ -24,15 +24,22 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 > by C9.
 >
 > **PHASE D — THE PROOF — IS IN PLANNING (2026-08-06). Its planning package is
-> [ADR-098](DECISIONS.md#adr-098), `Proposed`. PHASE D HAS NOT OPENED. **D1 is ▶ unblocked by the OD-41
-> ruling of 2026-08-07; D0 waits on OD-29; every other package is fenced.** ⚠ **`unfenced` ≠ `free to
+> [ADR-098](DECISIONS.md#adr-098), `Proposed`. PHASE D HAS NOT OPENED. **Both dependency-free packages are now
+> open: D1 is ▶ unblocked by the OD-41 ruling of 2026-08-07, and D0 is ▶ unblocked by the
+> [OD-29](DECISIONS.md#adr-098-od29) ruling of 2026-08-09; every other package is fenced.**
+> ~~D0 waits on OD-29~~ — *corrected 2026-08-09: OD-29 was answered, disposition (b), token discipline for a
+> V2 surface means **traceability to the frozen source** rather than the absence of a literal, and D9's
+> enrolment hold dissolved with it.* ⚠ **`unfenced` ≠ `free to
 > start`** — D5 and D8 carry no ruling of their own but both depend on D1, and **only D0 and D1 have no
 > package dependency at all.** The `Depends on` column is the only authority for order.
 > Eleven packages (D0…D10), a **complete selector-level frozen property table** over all 702 lines of
-> [`v2-proof.html`](design/mockups/v2-proof.html), and **thirteen owner decisions raised — two answered
-> (OD-37, OD-41), eleven still owed** —
-> [OD-29…OD-41](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts). Three things a new session
-> should know before reading anything else:
+> [`v2-proof.html`](design/mockups/v2-proof.html), and ~~**thirteen owner decisions raised — two answered
+> (OD-37, OD-41), eleven still owed**~~ **eighteen owner decisions raised — eight answered (OD-29, OD-37,
+> OD-41, and OD-42…OD-46 from the 2026-08-09 session), ten still owed** —
+> [OD-29…OD-46](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts). **D1's package ADR can now
+> reach `Accepted`**: OD-42/43/44 answered [D-076](design/V2-SPEC-DEFECTS.md#d-076) and OD-45/46 answered
+> [D-077](design/V2-SPEC-DEFECTS.md#d-077), and **no canonical amendment was required by any of the five**.
+> Three things a new session should know before reading anything else:
 >
 > 1. **The Proof already exists in Compose.** One route, one surface (`ProofScreen.kt`, four acts), and
 >    **READ-first already ships**. No navigation change is required. But all five Proof files read **zero** V2
@@ -50,8 +57,9 @@ Phases A and B, kept because it carries rulings that still govern, not because i
 >    `recorded 0 · changed 0`. ⚠ **The tag `compose-v2-bench-complete` still points at `fdb8319` and is
 >    deliberately not moved** ([OD-37a](COMPOSE-V2-ROADMAP.md#phase-c-addendum-record-integrity)) — the
 >    milestone and the verified baseline are two commits, on purpose. **[OD-37](DECISIONS.md#adr-098-od37) is
->    answered** — which removed D1's *baseline* blocker and nothing else. **D0 waits on
->    [OD-29](DECISIONS.md#adr-098-od29). [OD-41](DECISIONS.md#adr-098-od41) — D1's scope ruling — was
+>    answered** — which removed D1's *baseline* blocker and nothing else. ~~**D0 waits on
+>    [OD-29](DECISIONS.md#adr-098-od29).**~~ **[OD-29](DECISIONS.md#adr-098-od29) was ANSWERED 2026-08-09,
+>    disposition (b), and D0 is ▶ unblocked.** **[OD-41](DECISIONS.md#adr-098-od41) — D1's scope ruling — was
 >    ANSWERED 2026-08-07, disposition (a): Phase D re-bases the shared `:core:ui` `Z*` components, D1 stands
 >    as published, and D1 is ▶ unblocked.** [ADR-097 §7](DECISIONS.md#adr-097) deviation 5 (`Accepted`) put
 >    that act *"outside **a parity phase's** fence"* — **and it is not superseded**: Phase C was ruled a
@@ -745,13 +753,15 @@ Sequence and gates: **[COMPOSE-V2-ROADMAP.md](COMPOSE-V2-ROADMAP.md)**. In brief
   objective** — the phase is **eight packages** and the capability is
   [re-seated](COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c). See §0 and the roadmap's
   [what is owed](COMPOSE-V2-ROADMAP.md#phase-c--what-is-owed-before-it-starts).
-- **D · Proof** ◀ **IN PLANNING — not opened; D1 ▶ unblocked (OD-41 answered 2026-08-07), D0 waits on OD-29. D5 and D8 carry no ruling of their own but both depend on D1** ([ADR-098](DECISIONS.md#adr-098), `Proposed`) —
+- **D · Proof** ◀ **IN PLANNING — not opened; D1 ▶ unblocked (OD-41 answered 2026-08-07) and D0 ▶ unblocked (OD-29 answered 2026-08-09). D5 and D8 carry no ruling of their own but both depend on D1** ([ADR-098](DECISIONS.md#adr-098), `Proposed`) —
   pixel + print-flow + fold-guide + a11y parity, for the shipped single-sheet-8 stage, **plus** the two
   obligations re-seated here by owner ruling: retiring V1's parallel token objects and defining what enrolment
   in `config/token-enrolment.txt` even *means* for a V2 surface. **Eleven packages**, D0…D10, ordered by golden
-  blast radius; **eleven owner decisions owed of thirteen raised** — OD-37 and OD-41 are answered
-  ([OD-29…OD-41](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts)); **eight of eleven packages
-  fenced before any is opened**. The Proof is **already built as V1** and READ-first already ships — this phase changes which
+  blast radius; ~~**eleven owner decisions owed of thirteen raised** — OD-37 and OD-41 are answered~~
+  **ten owner decisions owed of eighteen raised** — OD-29, OD-37, OD-41 and OD-42…OD-46 are answered
+  ([OD-29…OD-46](COMPOSE-V2-ROADMAP.md#phase-d--what-is-owed-before-it-starts)); ~~**eight of eleven packages
+  fenced before any is opened**~~ **seven of eleven packages fenced, and the two with no dependency — D0 and
+  D1 — are both open**. The Proof is **already built as V1** and READ-first already ships — this phase changes which
   frozen document the surface answers to, and closes the gap where the imposed sheet is a **schematic rather
   than a render of the user's own pages**.
 - **E · Cross-product polish** — make the three feel like one product (motion, transitions, haptics, dark mode).
