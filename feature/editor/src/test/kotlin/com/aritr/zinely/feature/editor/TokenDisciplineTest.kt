@@ -10,14 +10,21 @@ import java.io.File
  *
  * The repository has **no lint, no detekt, no ktlint, no spotless**; `explicitApi()` in nine modules
  * is the only other static gate. This is a **pure-JVM unit test** (no new Gradle dependency, no lint
- * plugin) that scans the production (`src/main`) Kotlin sources of every **enrolled** package and
- * fails the build on any of the four raw literal forms the design system forbids outside the token
- * layer:
+ * plugin) that scans the production (`src/main`) Kotlin sources of every **enrolled** package for the
+ * four raw literal forms that carry design values:
  *
  *   1. `.dp`                    -- a raw density-pixel spacing/size literal
  *   2. `.sp`                    -- a raw scaled-pixel type-size literal
  *   3. `Color(`                 -- a raw colour constructor outside `ZinelyColors.kt`
  *   4. `RoundedCornerShape(`    -- a raw radius literal outside the shape tokens
+ *
+ * Finding one is not the verdict. Since [OD-29] the gate tests **traceability, not absence**: a
+ * detected literal passes when it names where its value came from — a frozen trilogy address or a
+ * governed repository reference — and that marker **resolves** against this repository. It fails when
+ * it names nothing, and equally when it names something that does not exist, because OD-29 forbids a
+ * silent pass wherever traceability cannot be decided. So the four forms above are *detectors*, not
+ * prohibitions; the rule they feed is [provenanceInScope] and [resolves], and D-006/D-007 are exactly
+ * why the difference matters — they keep values at component level with no token to move them to.
  *
  * Authority: [docs/ZINELY-DESIGN-SYSTEM.md] Section 13 (spacing / radius boxes);
  * [docs/V1-IMPLEMENTATION-ROADMAP.md] Sections 10.1-10.2; inventory item CI-27.
@@ -41,14 +48,20 @@ import java.io.File
  * `.dp` does not trip the gate -- see [sanitizeKotlin]. `import`/`package` declaration lines are
  * skipped ([isScannableCodeLine]) -- an `import ...unit.dp` line ends in `.dp` but constructs nothing.
  *
- * ## Gradle up-to-date caveat (by design; enforcement is CI)
- * The enrolment file lives at the repository root and is read from the filesystem at runtime, so it is
- * **not** a declared Gradle input of `testDebugUnitTest`. A purely local, warm-cache build that changes
- * *only* the enrolment file may therefore see this task reported UP-TO-DATE and skip it. This does not
- * weaken the gate: (a) the intended action -- a package joins the list **in the same commit that
- * migrates its sources** -- edits production `.kt` files, which invalidates compilation and reruns the
- * test; and (b) CI runners are fresh, so `testDebugUnitTest` has no prior outputs and always runs (the
- * roadmap requires the check "exists and runs in CI"). Locally, force a check with `--rerun-tasks`.
+ * ## Gradle wiring
+ * The enrolment file lives at the repository root and is read from the filesystem at runtime, so
+ * Gradle cannot infer that it affects this task's result. D0 therefore **declares it as an input**
+ * (`feature/editor/build.gradle.kts`, property `tokenEnrolmentList`): editing
+ * [config/token-enrolment.txt] invalidates `testDebugUnitTest` and the gate re-runs, so enrolment and
+ * its enforcement land in the same build rather than only in prose. Verified by behaviour, not by
+ * reading: UP-TO-DATE, then RAN after touching the file alone.
+ *
+ * One limitation remains, and it is a real one. The scan walks **the whole repository** from the root
+ * ([productionKotlinSources]), but only this module's own sources and its dependency graph are inputs
+ * of this task. A warm local build that changes production sources in a module `:feature:editor` does
+ * not depend on (`:app`, `:data-android`) can therefore still report the task UP-TO-DATE while those
+ * sources went unscanned. CI runners are fresh, so the check always runs there (the roadmap requires
+ * it "exists and runs in CI"); locally, force one with `--rerun-tasks`.
  */
 class TokenDisciplineTest {
 
