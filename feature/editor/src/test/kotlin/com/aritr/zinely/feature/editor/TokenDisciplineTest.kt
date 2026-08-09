@@ -83,16 +83,63 @@ class TokenDisciplineTest {
      *
      * `// approved`, `// legacy`, `// intentional` are **not** markers and never will be: they name
      * no source, so they cannot be checked against one.
+     *
+     * ## A marker is *resolved*, never merely parsed
+     * Matching the shape of a citation is not checking it. A marker that cannot be resolved against
+     * this repository — `ADR-999`, `v2-proof.html:999999`, an address in a trilogy file that does not
+     * exist — is an **invented** value wearing a citation, which is precisely the class OD-29 rules
+     * non-compliant. So both forms are looked up, repo-locally and deterministically:
+     *
+     *  - a frozen address resolves when the file exists under [FROZEN_DIR] **and** the line number is
+     *    within that file;
+     *  - a governed reference resolves when the identifier appears in the governance corpus
+     *    ([GOVERNANCE_PATHS]).
+     *
+     * An unresolved marker is treated exactly as unknown provenance — it **fails**, and the
+     * diagnostic names the reference so the author can correct it. What is deliberately *not*
+     * checked is whether the resolved ADR substantively justifies this particular value: that is a
+     * reviewer's judgement, and a static gate that claimed to make it would be lying. The gate's
+     * property is narrower and checkable — *the source it names is real*.
      */
-    private val provenanceMarkers = listOf(
-        Regex("""\bv2-(bench|proof|library)\.html:\d+"""),
-        Regex("""\b(ADR|OD|D)-\d+\b"""),
+    private val frozenAddressRegex = Regex("""\bv2-[A-Za-z0-9_-]+\.html:\d+""")
+    private val governanceRefRegex = Regex("""\b(?:ADR|OD|D)-\d+\b""")
+
+    /** Every provenance marker in [text], in either accepted form, whether or not it resolves. */
+    private fun markersIn(text: String): List<String> =
+        (frozenAddressRegex.findAll(text) + governanceRefRegex.findAll(text)).map { it.value }.toList()
+
+    /** Line count of each frozen trilogy page, by file name. Read once per test instance. */
+    private val frozenPageLengths: Map<String, Int> by lazy {
+        File(repoRoot(), FROZEN_DIR).listFiles()
+            .orEmpty()
+            .filter { it.isFile && it.extension == "html" }
+            .associate { it.name to it.readLines().size }
+    }
+
+    /** The governance corpus a `ADR-n` / `OD-n` / `D-n` reference must appear in to be real. */
+    private val governanceCorpus: String by lazy {
+        GOVERNANCE_PATHS.joinToString("\n") { path ->
+            File(repoRoot(), path).takeIf { it.isFile }?.readText().orEmpty()
+        }
+    }
+
+    private fun resolves(marker: String): Boolean =
+        if (marker.startsWith("v2-")) {
+            val page = marker.substringBeforeLast(':')
+            val line = marker.substringAfterLast(':').toIntOrNull()
+            val length = frozenPageLengths[page]
+            line != null && length != null && line in 1..length
+        } else {
+            Regex("""\b${Regex.escape(marker)}\b""").containsMatchIn(governanceCorpus)
+        }
+
+    private data class Violation(
+        val file: File,
+        val line: Int,
+        val rule: String,
+        val text: String,
+        val unresolved: List<String>,
     )
-
-    private fun hasProvenance(line: String): Boolean =
-        provenanceMarkers.any { it.containsMatchIn(line) }
-
-    private data class Violation(val file: File, val line: Int, val rule: String, val text: String)
 
     @Test
     fun `no raw dp, sp, Color or RoundedCornerShape literal survives in any enrolled package`() {
@@ -110,8 +157,8 @@ class TokenDisciplineTest {
         for (file in productionKotlinSources(repoRoot)) {
             val pkg = packageOf(file) ?: continue
             if (pkg !in enrolled) continue
-            violations += scan(file.readText()).map { (line, rule, text) ->
-                Violation(file, line, rule, text)
+            violations += scan(file.readText()).map { (line, rule, text, unresolved) ->
+                Violation(file, line, rule, text, unresolved)
             }
         }
 
@@ -132,6 +179,12 @@ class TokenDisciplineTest {
                     append(v.rule)
                     append("]  ")
                     append(v.text)
+                    if (v.unresolved.isNotEmpty()) {
+                        append("\n      Unresolved provenance reference(s): ")
+                        append(v.unresolved.joinToString(", "))
+                        append(" -- no such frozen address or governed decision exists in this ")
+                        append("repository, so the value names no source.")
+                    }
                     append('\n')
                 }
             },
@@ -253,6 +306,120 @@ class TokenDisciplineTest {
     }
 
     /**
+     * F-1 — a marker is only provenance if it **resolves**. Fabricating a citation is the cheapest
+     * possible bypass of a traceability gate, and a gate that accepts `// ADR-999` is enforcing
+     * syntax, not traceability. Every reference used here as a positive is a real one taken from the
+     * repository; every negative is unresolvable in the repository as it stands.
+     */
+    @Test
+    fun `a provenance marker only satisfies the gate when it resolves in this repository`() {
+        // Real frozen addresses -- all three trilogy pages, each within its actual length.
+        assertTrue(scan("val a = 6.dp // v2-bench.html:275").isEmpty())
+        assertTrue(scan("val b = Color(0xFF6E7F58) // v2-proof.html:158").isEmpty())
+        assertTrue(scan("val c = 8.dp // v2-library.html:101").isEmpty())
+
+        // Real governed references -- an ADR, an owner decision, a spec-defect ruling.
+        assertTrue(scan("val d = 16.dp // ADR-074").isEmpty())
+        assertTrue(scan("val e = 16.dp // OD-45").isEmpty())
+        assertTrue(scan("val f = 16.dp // D-007").isEmpty())
+
+        // Fabricated references: the shape is right, the source does not exist.
+        for (fake in listOf("ADR-999", "OD-9999", "D-0", "v2-proof.html:999999", "v2-ghost.html:1")) {
+            val findings = scan("val pad = 16.dp // $fake")
+            assertEquals("fabricated provenance must fail: $fake", 1, findings.size)
+            assertEquals(
+                "the diagnostic must name the unresolved reference: $fake",
+                listOf(fake),
+                findings.single().unresolved,
+            )
+        }
+
+        // A line number past the end of a real page is as unresolvable as a fake page.
+        val benchLength = frozenPageLengths.getValue("v2-bench.html")
+        assertTrue("a real address must resolve", scan("val g = 6.dp // v2-bench.html:$benchLength").isEmpty())
+        assertEquals(1, scan("val g = 6.dp // v2-bench.html:${benchLength + 1}").size)
+
+        // One resolving marker is enough, even alongside prose that mentions nothing checkable.
+        assertTrue(scan("val h = 16.dp // per D-007; see also the bench notes").isEmpty())
+    }
+
+    /**
+     * F-2 — the block-above marker must be **adjacent** to the literal. A comment block that mentions
+     * a real decision for an unrelated reason is not annotating whatever value happens to follow it,
+     * and treating it as though it were hands out authorisation nobody wrote.
+     */
+    @Test
+    fun `only the comment line immediately above a literal can carry its provenance`() {
+        // Rejected: real reference, but separated from the literal by unrelated prose.
+        assertEquals(
+            1,
+            scan(
+                """
+                // ADR-074
+                // unrelated explanatory prose about how this composable is laid out
+                val x = 16.dp
+                """.trimIndent(),
+            ).size,
+        )
+        // Rejected: the same shape as a block comment -- the line above the literal is the block's
+        // close, which carries nothing.
+        assertEquals(
+            1,
+            scan(
+                """
+                /*
+                 * ADR-074
+                 * unrelated explanatory prose
+                 */
+                val x = 16.dp
+                """.trimIndent(),
+            ).size,
+        )
+
+        // Accepted: the marker is the last thing said before the literal.
+        assertTrue(
+            scan(
+                """
+                // ADR-074
+                val x = 16.dp
+                """.trimIndent(),
+            ).isEmpty(),
+        )
+        // Accepted: prose first, marker last -- the existing D0 form, unchanged.
+        assertTrue(
+            scan(
+                """
+                // Bound edge, transcribed from the frozen bench pages.
+                // v2-bench.html:275
+                val edge = 6.dp
+                """.trimIndent(),
+            ).isEmpty(),
+        )
+        // Accepted: trailing on the literal's own line.
+        assertTrue(scan("val x = 16.dp // ADR-074").isEmpty())
+    }
+
+    /** F-3 — two forbidden forms on one line are two findings, not one. */
+    @Test
+    fun `every forbidden form on a line is reported, not just the first`() {
+        val findings = scan("val s = RoundedCornerShape(12.dp)")
+        assertEquals(
+            setOf("RoundedCornerShape( literal", ".dp literal"),
+            findings.map { it.rule }.toSet(),
+        )
+        assertEquals("both findings must point at the same line", setOf(1), findings.map { it.line }.toSet())
+
+        val three = scan("Box(Modifier.size(4.dp).background(Color(0xFF000000)), shape = RoundedCornerShape(2))")
+        assertEquals(
+            setOf(".dp literal", "Color( literal", "RoundedCornerShape( literal"),
+            three.map { it.rule }.toSet(),
+        )
+
+        // Resolved provenance still clears the whole line, not just the first form.
+        assertTrue(scan("val s = RoundedCornerShape(12.dp) // ADR-074").isEmpty())
+    }
+
+    /**
      * Enrolment parsing. The list is the *defined term*, so a line that cannot be read as a
      * fully-qualified package name must fail loudly rather than be silently dropped -- a typo that
      * parses to nothing would silently un-enrol a package that its commit believed it had enrolled.
@@ -290,8 +457,23 @@ class TokenDisciplineTest {
 
     // --- the mechanism -------------------------------------------------------------------------
 
-    /** One untraceable literal: 1-based line, which form it was, and the offending source line. */
-    private data class Finding(val line: Int, val rule: String, val text: String)
+    /**
+     * One untraceable literal: 1-based line, which form it was, the offending source line, and any
+     * provenance references that were *offered but did not resolve* — the most useful thing the
+     * diagnostic can say, because it distinguishes "cite your source" from "that citation is wrong".
+     */
+    private data class Finding(
+        val line: Int,
+        val rule: String,
+        val text: String,
+        val unresolved: List<String> = emptyList(),
+    )
+
+    /**
+     * What the comments around a literal offer as provenance. [resolved] is the verdict; [unresolved]
+     * carries the references that looked like markers but resolve to nothing, for the diagnostic.
+     */
+    private data class Provenance(val resolved: Boolean, val unresolved: List<String>)
 
     /**
      * The gate, as OD-29 defines it: a **narrowed literal gate combined with a provenance
@@ -320,9 +502,15 @@ class TokenDisciplineTest {
         val findings = mutableListOf<Finding>()
         sanitized.forEachIndexed { idx, line ->
             if (!isScannableCodeLine(line)) return@forEachIndexed
-            val hit = rules.firstOrNull { it.regex.containsMatchIn(line) } ?: return@forEachIndexed
-            if (provenanceInScope(raw, idx)) return@forEachIndexed
-            findings += Finding(idx + 1, hit.label, raw[idx].trim())
+            // Every rule that matches, not merely the first: two forbidden forms on one line are two
+            // things to fix, and reporting one of them sends the author back for a second round.
+            val hits = rules.filter { it.regex.containsMatchIn(line) }
+            if (hits.isEmpty()) return@forEachIndexed
+            val provenance = provenanceInScope(raw, idx)
+            if (provenance.resolved) return@forEachIndexed
+            hits.forEach { hit ->
+                findings += Finding(idx + 1, hit.label, raw[idx].trim(), provenance.unresolved)
+            }
         }
         return findings
     }
@@ -331,21 +519,29 @@ class TokenDisciplineTest {
      * Provenance is read from the **raw** source, because a marker lives in a comment and
      * [sanitizeKotlin] blanks comments before the rules ever see them.
      *
-     * Two placements are in scope, and only two: trailing on the literal's own line, or in the
-     * contiguous run of comment lines directly above it. A blank line ends the run — a marker
-     * separated from its literal by empty space is not annotating it.
+     * Two placements are in scope, and only two: trailing on the literal's own line, or on the
+     * comment line **immediately** above it. Adjacency is the whole point. A marker further up a
+     * comment block is annotating whatever prose follows it, not the literal at the bottom — so a
+     * paragraph that mentions `ADR-074` in passing cannot silently authorise the next value that
+     * happens to appear beneath it. The annotation has to be the last thing said before the literal,
+     * which is also where a reviewer looks for it.
+     *
+     * A marker resolves or it does not ([resolves]); an offered-but-unresolvable reference is
+     * carried out in [Provenance.unresolved] so the failure can name it.
      */
-    private fun provenanceInScope(raw: List<String>, idx: Int): Boolean {
-        if (idx < raw.size && hasProvenance(trailingComment(raw[idx]))) return true
-        var i = idx - 1
-        while (i >= 0) {
-            val t = raw[i].trim()
-            if (t.isEmpty()) return false
-            if (!t.startsWith("//") && !t.startsWith("*") && !t.startsWith("/*")) return false
-            if (hasProvenance(t)) return true
-            i--
+    private fun provenanceInScope(raw: List<String>, idx: Int): Provenance {
+        val offered = mutableListOf<String>()
+        fun consider(text: String): Boolean {
+            val markers = markersIn(text)
+            if (markers.any { resolves(it) }) return true
+            offered += markers
+            return false
         }
-        return false
+        if (idx < raw.size && consider(trailingComment(raw[idx]))) return Provenance(true, emptyList())
+        val above = raw.getOrNull(idx - 1)?.trim().orEmpty()
+        val isComment = above.startsWith("//") || above.startsWith("*") || above.startsWith("/*")
+        if (isComment && consider(above)) return Provenance(true, emptyList())
+        return Provenance(false, offered.distinct())
     }
 
     // --- helpers -------------------------------------------------------------------------------
@@ -494,5 +690,14 @@ class TokenDisciplineTest {
     private companion object {
         /** Path, relative to the repository root, of the committed enrolment list (the defined term). */
         const val ENROLMENT_PATH = "config/token-enrolment.txt"
+
+        /** Canonical home of the frozen V2 trilogy — the only place a `v2-*.html:n` address resolves. */
+        const val FROZEN_DIR = "docs/design/mockups"
+
+        /**
+         * Where an `ADR-n` / `OD-n` / `D-n` reference has to exist to be real: the ADR log (ADRs and
+         * the owner-decision register) and the V2 spec-defect register (the `D-` rulings).
+         */
+        val GOVERNANCE_PATHS = listOf("docs/DECISIONS.md", "docs/design/V2-SPEC-DEFECTS.md")
     }
 }
