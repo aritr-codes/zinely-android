@@ -71,6 +71,17 @@ android {
             all { test ->
                 test.maxParallelForks = 1
 
+                // ADR-098 D0 row 0.2. `config/token-enrolment.txt` *defines* which packages
+                // TokenDisciplineTest scans, and the test reads it from the filesystem at runtime —
+                // so without this declaration Gradle cannot see that the file affects the result,
+                // and a warm-cache build that changes only the enrolment list reports the task
+                // UP-TO-DATE and skips the gate. Declaring it as an input is what makes enrolment
+                // and its enforcement land in the same build, which is ADR-080 Decision 2's
+                // same-commit coupling expressed in the build rather than only in prose.
+                test.inputs.file(rootProject.layout.projectDirectory.file("config/token-enrolment.txt"))
+                    .withPropertyName("tokenEnrolmentList")
+                    .withPathSensitivity(org.gradle.api.tasks.PathSensitivity.RELATIVE)
+
                 // Recycle the test JVM periodically. Added on the belief that Robolectric NATIVE's image
                 // decoder was *exhaustible*; that was wrong (see ReframeTestPhoto.fullImageDecodeAvailable
                 // for the evidence that killed it, and the two diagnoses before this one). It is kept
