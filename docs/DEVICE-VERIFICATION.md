@@ -49,6 +49,18 @@ MSYS_NO_PATHCONV=1 adb exec-out cat /sdcard/ui.xml | <your reader>
 > `adb pull` into the scratchpad and shell redirects (`> file`) have both been seen to write nothing here
 > while reporting success — pipe `exec-out cat` straight into the reader instead, and check the byte count.
 
+**Or never write a device file at all** — one command, no `MSYS_NO_PATHCONV`, no staleness class:
+
+```
+adb exec-out uiautomator dump /dev/tty 2>/dev/null > ui-<screen>.xml
+```
+
+`/dev/tty` is a device path MSYS does not rewrite, and `exec-out` carries the XML back on stdout, so the
+dump cannot be a leftover from an earlier run: there is no file on the device to go stale. `2>/dev/null`
+drops the `UI hierchary dumped to:` line the tool writes to stderr. Still check the byte count — an empty
+capture is the one failure this form can still have. Used for the whole of the
+[2026-08-10 V2.1 Library pass](reviews/2026-08-10-v21-library-device-verification.md).
+
 **`stateDescription` is not in this dump's schema at all.** There is no `state-desc` attribute, so a control
 whose current/selected state is carried by `stateDescription` cannot be verified on device this way. Use the
 CI-26 Robolectric harness (`platformNode`), which reads the real `AccessibilityNodeInfo`, and record the device

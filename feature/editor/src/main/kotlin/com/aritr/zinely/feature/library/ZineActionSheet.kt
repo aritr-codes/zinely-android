@@ -15,12 +15,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -333,7 +340,23 @@ internal fun ZineActionSheetSurface(
                 }
                 drawPath(edge, color = colors.ink, style = Stroke(width = 2 * w))
             }
-            // `padding:0 0 var(--gap-xl)`.
+            // The safe area first, then `padding:0 0 var(--gap-xl)` on top of it — outermost-first, so the
+            // frozen 24dp is measured from the top of the navigation bar rather than from the screen edge
+            // underneath it.
+            //
+            // **Device Pass 1 found this, and it was the destructive row that paid.** A browser has no
+            // gesture bar, so the frozen file writes no `env(safe-area-inset-bottom)` here — and a sheet
+            // pinned to `bottom:0` on a device with three-button navigation puts its last row *behind* the
+            // navigation bar. Measured on `SM-A176B` (Android 16): `Delete` occupied `[0,2114]-[1080,2277]`
+            // against a bar starting at ~2235, so roughly a quarter of the row — the one row whose misfires
+            // are unrecoverable — was under the system's own targets. The other two rows of the same defect
+            // class are the shelf's and the dock's, cleared by `zineDockClearance` and by the dock's own
+            // consuming pad.
+            .windowInsetsPadding(
+                WindowInsets.navigationBars
+                    .union(WindowInsets.displayCutout)
+                    .only(WindowInsetsSides.Bottom),
+            )
             .padding(bottom = ZinelyV21Dimens.gapXl)
             // `role="dialog" aria-label="Zine actions"`. The Dialog window carries the modality; this
             // carries the name TalkBack announces on entering it.

@@ -6575,6 +6575,13 @@ question, flow, or invariant.** The full specification is
 - **Supersedes:** `v2-library.html`, `v2-proof.html`, `v2-bench.html` **as the canonical design source**, and
   any pixel-parity target derived from them. Effective on acceptance, i.e. from 2026-08-10.
 - **Supersedes no ADR.** See §4.
+- **Device-verified (Library only), 2026-08-10:** both passes on `SM-A176B` / Android 16 —
+  [record](reviews/2026-08-10-v21-library-device-verification.md). Pass 1 found one failure (the action
+  sheet placed **Delete** behind the navigation bar), which was fixed and re-verified on the same device.
+  Pass 2 is accepted with **three open findings**, none of them implementation defects: two are faithful
+  transcriptions that a prototype's data never stressed (a dark-theme paper-stock cover is nearly the desk;
+  a long title wraps without limit), and under the HTML-first workflow their fix must begin in
+  `v21-library.html`. The Proof and Bench are unverified — they are unbuilt.
 
 ### 1. Context {#adr-099-context}
 
