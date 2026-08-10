@@ -11,6 +11,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
@@ -40,19 +44,18 @@ import org.robolectric.annotation.GraphicsMode
  *
  * The six surfaces are the frozen file's own classes — `.ink-leaf`, `.paper-s`, `.ink-berry`,
  * `.paper-c`, `.ink-butter`, `.ink-jam` — in the order the prototype's shelf lists them, so the two can
- * be read side by side. Three to a row, matching the V2 raster's arrangement for the same reason: the
- * shelf's own two-column geometry belongs to the shelf, and this raster's job is to show every surface.
+ * be read side by side, each wearing its own mark from [ZineV21CoverMarks]. Two to a row: the shelf's
+ * real two-column geometry belongs to the shelf, and this raster's job is to show every surface at a
+ * size where the marks and the stamp text are legible.
  *
  * Each tile passes its **shelf index**, because the corpus keys tilt and tape placement off
- * `:nth-child(3n+k)` — so the three-cycle is visible across a row rather than having to be reasoned
- * about. The mark slot is left empty: V2.1's glyph set is not transcribed yet, and a stand-in shape
- * would put a mark in the parity raster that the specification does not contain.
+ * `:nth-child(3n+k)` — so the three-cycle is visible down the sheet rather than having to be reasoned
+ * about.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 // Taller than the V2 raster's window: six 120dp covers at 3:4 in two columns is three rows of 160dp
-// plus gaps, and h1100dp cropped the last one. The crop is the reason this qualifier is not copied
-// from ZineCoverGoldenTest.
+// plus gaps, which needs more height than ZineCoverGoldenTest's w480dp-h1100dp gives.
 @Config(qualifiers = "w480dp-h1600dp")
 class ZineV21CoverGoldenTest {
 
@@ -79,13 +82,15 @@ class ZineV21CoverGoldenTest {
         )
 
         /** `.ink-leaf .paper-s .ink-berry .paper-c .ink-butter .ink-jam`, with their stamps. */
+        data class Cover(val fill: Color, val onFill: Color, val stamp: String, val mark: ImageVector)
+
         fun frozen(c: ZinelyV21Colors) = listOf(
-            Triple(c.leaf, MarkOnInk, "A4"),
-            Triple(c.paper, c.inkSoft, "Letter"),
-            Triple(c.berry, MarkOnInk, "A5"),
-            Triple(c.butterTint, c.inkSoft, "A4"),
-            Triple(c.butter, MarkOnInk, "A6"),
-            Triple(c.jam, MarkOnInk, "A4"),
+            Cover(c.leaf, MarkOnInk, "A4", ZineV21CoverMarks.Booklet),
+            Cover(c.paper, c.inkSoft, "Letter", ZineV21CoverMarks.Envelope),
+            Cover(c.berry, MarkOnInk, "A5", ZineV21CoverMarks.Rings),
+            Cover(c.butterTint, c.inkSoft, "A4", ZineV21CoverMarks.Sprig),
+            Cover(c.butter, MarkOnInk, "A6", ZineV21CoverMarks.Lines),
+            Cover(c.jam, MarkOnInk, "A4", ZineV21CoverMarks.Mug),
         )
 
         /**
@@ -123,7 +128,14 @@ class ZineV21CoverGoldenTest {
                         index = 0,
                         pressed = true,
                         modifier = Modifier.width(CELL),
-                    )
+                    ) { markModifier ->
+                        Image(
+                            imageVector = ZineV21CoverMarks.Booklet,
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(MarkOnInk),
+                            modifier = markModifier.aspectRatio(1f),
+                        )
+                    }
                 }
             }
         }
@@ -148,20 +160,25 @@ class ZineV21CoverGoldenTest {
                     .testTag(TAG),
                 verticalArrangement = Arrangement.spacedBy(GAP),
             ) {
-                // Two to a row, not three. At three the sheet is 472dp wide inside a 480dp window and
-                // the rightmost stamp — which hangs 7dp past the cover — was clipped, along with the
-                // whole bottom row. A parity raster that crops the details being reviewed is worse
-                // than no raster: it reads as "checked".
+                // Two to a row. Three fits the window, but at 120dp cells the marks and the 9.5sp
+                // stamp text stop being readable in a raster a human is meant to compare by eye.
                 frozen(c).chunked(PER_ROW).forEachIndexed { rowIndex, row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(GAP)) {
-                        row.forEachIndexed { i, (fill, onFill, stamp) ->
+                        row.forEachIndexed { i, cover ->
                             ZineV21Cover(
-                                fill = fill,
-                                onFill = onFill,
-                                stampLabel = stamp,
+                                fill = cover.fill,
+                                onFill = cover.onFill,
+                                stampLabel = cover.stamp,
                                 index = rowIndex * PER_ROW + i,
                                 modifier = Modifier.width(CELL),
-                            )
+                            ) { markModifier ->
+                                Image(
+                                    imageVector = cover.mark,
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.tint(cover.onFill),
+                                    modifier = markModifier.aspectRatio(1f),
+                                )
+                            }
                         }
                     }
                 }
