@@ -82,6 +82,30 @@ import com.aritr.zinely.ui.R
  * reasoning that excluded `--stage` from the palette. Per-surface by the D-007 ruling, so these stay at
  * their call sites rather than becoming tokens.
  *
+ * ### What a surface actually shows is **half** the arithmetic, and that is correct
+ *
+ * Measured off the first parity raster rather than assumed. The tile's own luma is `mean 0.7322,
+ * sd 0.0598`, so a `multiply` at 0.21 over a base of luma *B* predicts a rendered sd of
+ * `B × 0.21 × 0.0598`. Sampled inside two rendered covers:
+ *
+ * | Surface | base | predicted sd | measured sd | ratio |
+ * |---|---|---|---|---|
+ * | `.ink-leaf` | 84.2 | 1.058 | 0.528 | **0.50** |
+ * | `.paper-s` | 237.4 | 2.983 | 1.447 | **0.49** |
+ *
+ * Two bases three times apart, the same ratio to two decimals — systematic, not noise. The cause is
+ * **resampling**: the tile is authored at 160px and drawn at 130dp, and interpolating a noise field
+ * whose lattice cell is ~1.2px averages neighbours and halves its contrast.
+ *
+ * **This is parity, not a defect.** `background-size:130px 130px` makes the browser resample the same
+ * 160px tile the same way, so the prototype loses the same contrast. Do **not** "correct" it by
+ * doubling the alpha — that would make Compose diverge from the specification in the name of matching
+ * an arithmetic prediction the specification never made. Recorded because a future reader who does the
+ * multiplication and then samples a screenshot will find the factor of two and reach for exactly that
+ * fix. (Recorded also as the reference measurement: the same sampling on a rendered surface is now the
+ * cheapest way to prove the grain is drawing at all, which is a question a flat-looking ink cover
+ * genuinely raises.)
+ *
  * Note the ratio V2 had and V2.1 does not: V2's Library asked for grain **four to seven times** stronger
  * than any Bench or Proof surface, ruled deliberate as **D-013**. V2.1's five surfaces span 0.147 to
  * 0.231 — a factor of 1.6. The re-freeze closed that gap without being asked to, and a future reader
