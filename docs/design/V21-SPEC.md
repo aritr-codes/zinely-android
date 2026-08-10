@@ -252,7 +252,19 @@ different claim from the one this section made.
 The radius scale needed no such work: `--br-*` was declared in all three files and used **104 times** before
 any of this, and `--hard` 24 times, `--frame` 6. **That half of §3.3 was always sound.**
 
-#### The ladder against V2-CONSTITUTION §III's 8pt rhythm — ⚠️ **REOPENED 2026-08-10**
+#### The ladder against V2-CONSTITUTION §III's 8pt rhythm — ✅ **CLOSED 2026-08-10**
+
+**Owner ruling: the rhythm is a generosity principle, not a modular grid, so the ladder never conflicted with
+it.** The evidence is the clause's own corpus — [D-007](../DECISIONS.md) measured the V2 trilogy, ratified
+under that constitution, at **16.7% on-grid**, and was Accepted on that finding. A clause its own design
+violated in five declarations out of six was never operating as a grid. What it governs is what it says:
+*spacing is calm and generous; density is never used to fit more chrome.* The ladder passes that at every
+step. **The layout/inset split is withdrawn, not corrected** — it answered a question that did not exist.
+Implementation transcribes the corpus value at each address.
+
+The falsified reasoning is kept below, because the failure is the instructive part.
+
+#### ~~The ladder against the 8pt rhythm — REOPENED~~ *(superseded 2026-08-10)*
 
 Four steps — `2, 4, 12, 36` — are off an 8pt grid, and the Constitution says an **8pt rhythm governs layout**.
 A second review raised the conflict; the owner ruled the narrowest of three readings: **the rhythm binds
@@ -569,7 +581,7 @@ against a mix of the two corpora.** Concretely:
 | 8 | ~~**`inkLine` borders in dark theme.**~~ — ✅ **CLOSED 2026-08-09; count corrected 2026-08-10.** A drawn line follows `ink`; only a shadow follows `inkLine` (§4.3). **61** borders now on `ink` (8 Library · 19 Proof · 34 Bench): **1.38 → 11.70 in dark, zero change in light.** Researched first, and the research narrowed the claim: this was **design consistency, not a WCAG failure** — 1.4.11 binds controls, not decorative frames ([V21-RESEARCH §8.1](V21-RESEARCH.md)). **Three** deliberate ink-on-ink cases, not one: the Bench snackbar, the Proof flash, and the `.chip .sw` swatch. | Closed |
 | 9 | ~~**Pixel parity has a moving target now.** Rows 7 and 8 changed the prototypes *after* the owner accepted them as directions.~~ — ✅ **CLOSED 2026-08-10.** The owner opened all three moved prototypes and accepted them directly (*"all looks perfect for the version we are building for. I accept. GO"*). **That look is what this row asked for, and it is what froze the corpus** — parity now targets the files as they stand, not the 2026-08-09 screens. | Closed |
 | 10 | ~~**The frozen corpus is untracked in git.**~~ — ✅ **CLOSED 2026-08-10.** All three prototypes committed at `a470e15` on the owner's authorisation. Drift is diffable, which is what makes *"the HTML is the specification"* enforceable rather than aspirational. | Closed |
-| 11 | **`--gap-md: 12px` spaces layout throughout the frozen corpus** — `.pgg` and `.canvasArea` (Bench), `.band`, `.dbody` and `.testcard` (Proof), `.empty` and `.sh-head` (Library), among ~59 declarations. The 8pt ruling of 2026-08-10 classified `gap-md` as a *sub-component* value and therefore out of the rhythm's scope; that classification was the implementer's, not the owner's, and the corpus contradicts it. See [V2-CONSTITUTION §III *Spacing*](V2-CONSTITUTION.md#spacing). | **Owner ruling reopened** |
+| 11 | ~~**`--gap-md: 12px` spaces layout throughout the frozen corpus**, contradicting the implementer's classification of it as a sub-component inset.~~ — ✅ **CLOSED 2026-08-10.** The owner ruled the rhythm is a **generosity principle, not a modular grid**: D-007 measured the constitution's own V2 corpus at 16.7% on-grid, so the clause never functioned as one. The ladder is compatible in full; the layout/inset split is withdrawn. See §3.3. | Closed |
 | 4 | **Read · Fold · first-run** have no V2.1 prototype (§2) | Deferred |
 | 5 | A `README.md` index row for this file and for V21-RESEARCH.md. **Deliberately not added** — `README.md` is one of four uncommitted carries the owner ruled untouchable | Owner |
 | 6 | Device verification, both passes, once anything is implemented — [CLAUDE.md § Device Verification](../../CLAUDE.md) | Implementer |

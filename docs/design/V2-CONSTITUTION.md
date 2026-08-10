@@ -168,7 +168,26 @@ fit more chrome — if something doesn't fit calmly, it is the wrong thing to sh
 > published outer step, from Maeve's `4/8/16/24/36`). No clause changes, no pixel changes, and no frozen
 > corpus is re-cut for grid purity — which the other two readings would each have required.
 >
-> ### ⚠️ The mapping under that ruling is falsified, and the question is **open again**
+> ### ✅ Closed 2026-08-10 — **the rhythm is a generosity principle, not a modular grid**
+>
+> The mapping below was falsified and the question went back to the owner, who ruled: **reading 1 — the
+> clause never was a grid rule, so `12` never conflicted with it.** The evidence is the clause's own corpus.
+> [D-007](../DECISIONS.md) measured the **V2 frozen trilogy — ratified under this very constitution — at
+> 16.7% on-grid**, and was Accepted on exactly that finding. If *"an 8pt rhythm governs layout"* were a
+> literal grid, the design this document was written to govern violated it in five declarations out of six,
+> and no one recorded a defect. A clause its own corpus never obeyed was never operating as a grid.
+>
+> What it *does* govern is the sentence it is made of: **spacing is calm and generous; density is never used
+> to fit more chrome.** That is a test a screen passes or fails, and it is the one to apply. V2.1's ladder
+> ([V21-SPEC §3.3](V21-SPEC.md)) is compatible with it in full, at every step, layout and inset alike.
+>
+> **Consequences.** No clause amended, no pixel moved, and the layout/inset split below is **withdrawn
+> rather than corrected** — it was answering a question that turned out not to exist. Implementation
+> transcribes the corpus value at each address, which is what [Principle 11](#principles) required anyway.
+>
+> The falsified mapping is kept below rather than deleted, because the failure is the instructive part.
+>
+> ### ~~⚠️ The mapping under that ruling is falsified, and the question is open again~~ *(superseded)*
 >
 > This note originally continued: *"`--gap-hair`, `--gap-xs` and `--gap-md` are sub-component values and out
 > of this clause's scope"*, and set its own tripwire — *if a **future** surface uses `--gap-md: 12px` to

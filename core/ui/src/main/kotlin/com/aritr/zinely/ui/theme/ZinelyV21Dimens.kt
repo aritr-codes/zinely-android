@@ -52,21 +52,26 @@ public object ZinelyV21Dimens {
      * Values above 40px in the corpus are one-off layout dimensions rather than rhythm (60, 64, 132,
      * 150) and are deliberately **not** on the ladder; they stay at their call sites.
      *
-     * ### ⚠️ The 8pt question is OPEN, and no value here may be chosen to settle it
+     * ### The 8pt question, asked and closed — the ladder is whole
      *
      * [V2-CONSTITUTION §III](docs/design/V2-CONSTITUTION.md) requires an **8pt rhythm for layout**, and
-     * [gapHair], [gapXs], [gapMd] and [gap2Xl] are off that grid. The owner ruled on 2026-08-10 that
-     * the rhythm binds *layout* and not sub-component insets — **that ruling stands.** What did not
-     * survive is this file's own mapping under it: a first version classified [gapMd] as an inset and
-     * therefore out of scope, and a review found the frozen corpus spaces a page grid, the canvas
-     * region, three panel types and two page-level states with it — ~59 declarations. So under the
-     * ruling as written, 12dp *is* layout spacing, and it is off the grid.
+     * [gapHair], [gapXs], [gapMd] and [gap2Xl] are off that grid. It took three rulings to settle, and
+     * the middle one is the cautionary part: this file briefly split the ladder into "layout" and
+     * "sub-component" steps to reconcile them, and a review found [gapMd] spacing a page grid, the
+     * canvas region, three panel types and two page-level states across the frozen corpus — ~59
+     * declarations, the most-used step there is. **The split was invented to save a conflict, and it
+     * did not survive contact with the corpus.**
      *
-     * The question is back with the owner ([V21-SPEC §8 row 11](docs/design/V21-SPEC.md)). Until it is
-     * answered, **transcribe what the frozen HTML says at each address and nothing else.** Do not
-     * substitute [gapLg] for a corpus 12 to make a surface grid-clean: that would decide a
-     * constitutional question by way of a padding value, and it would move pixels away from the
-     * specification to do it.
+     * The owner then closed the question underneath it: **the rhythm is a generosity principle, not a
+     * modular grid.** [D-007](docs/DECISIONS.md) measured the V2 trilogy — ratified under that same
+     * constitution — at **16.7% on-grid**; a clause its own design violated five times in six was never
+     * operating as a grid. What it governs is what it says: *spacing is calm and generous; density is
+     * never used to fit more chrome.*
+     *
+     * So every step below is usable anywhere, and the rule for callers is the ordinary one:
+     * **transcribe the corpus value at its frozen address.** Do not reach for [gapLg] where the HTML
+     * says 12 — the ladder needs no defending, and moving a pixel away from the specification to make
+     * a surface look grid-clean is the thing Principle 11 forbids.
      */
     public val gapHair: Dp = 2.dp
     public val gapXs: Dp = 4.dp

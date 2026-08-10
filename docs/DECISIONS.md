@@ -6803,8 +6803,20 @@ prototypes, ~59 declarations, the corpus's most-used step.
 
 The note had even set its own tripwire (*"if a **future** surface uses `--gap-md` to space layout…"*). It was
 already tripped, by the frozen corpus, at freeze time. **The classification was the implementer's and was
-presented as though it were the owner's** — which is the specific thing §VI exists to prevent. Back to the
-owner as [V21-SPEC §8 row 11](design/V21-SPEC.md); no Compose value may be chosen to pre-empt the answer.
+presented as though it were the owner's** — which is the specific thing §VI exists to prevent.
+
+✅ **Closed the same day, and the answer dissolved the conflict rather than splitting it.** The owner ruled
+**the rhythm is a generosity principle, not a modular grid**, on evidence from the clause's own corpus:
+[D-007](#d-007) measured the V2 trilogy — ratified under that constitution — at **16.7% on-grid**, and was
+Accepted on that finding. A clause its own design violated in five declarations out of six was never
+operating as a grid; what it governs is the sentence it is made of, *spacing is calm and generous, density is
+never used to fit more chrome*. The V2.1 ladder passes that at every step. **No clause amended, no pixel
+moved, and the layout/inset split withdrawn rather than corrected** — it answered a question that did not
+exist.
+
+Recorded because the shape of the error is reusable: an invented sub-rule, built in good faith to reconcile
+two documents, that survived only as long as nobody counted. The right move was never to classify the steps —
+it was to ask whether the clause meant what the reconciliation assumed.
 
 **The pattern across all three reviews is the same one, and it is worth naming.** None found a wrong colour or
 a wrong method. All found *claims stated with more confidence than their evidence supported* — "the single
