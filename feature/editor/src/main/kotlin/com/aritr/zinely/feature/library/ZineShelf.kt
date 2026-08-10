@@ -1,12 +1,22 @@
 package com.aritr.zinely.feature.library
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -15,8 +25,20 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
@@ -27,7 +49,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 
 /**
  * One object standing on the shelf: the title it is called, the cover it is printed on, and the line the
@@ -160,9 +185,16 @@ internal fun ZineShelf(
         verticalArrangement = Arrangement.spacedBy(ShelfRowGap),
         horizontalArrangement = Arrangement.spacedBy(ShelfColumnGap),
     ) {
-        // `grid-column:1 / -1` — a full-width cell, so the row gap below it is the same 28px that
+        // `grid-column:1 / -1` — a full-width cell, so the row gap below it is the same 24px that
         // separates the cover rows. Nothing about this is a header component; it is a wide cell.
-        item(span = { GridItemSpan(maxLineSpan) }) { ShelfHeading() }
+        // `state('loading')` sets `.shelf-head{visibility:hidden}` — the head keeps its space, so the
+        // grid does not restructure when the data lands, but it says nothing while it has nothing to
+        // say. That matters more in V2.1 than it did in V2: the head now carries a **count**, and a
+        // count rendered against an empty list during a slow read announces "0 zines" to a user who has
+        // twelve — the exact failure the D-024 amendment introduced placeholders to prevent.
+        if (placeholders == 0) {
+            item(span = { GridItemSpan(maxLineSpan) }) { ShelfHeading(zines.size) }
+        }
 
         // `.ph` — the loading placeholders, which the amended freeze puts INSIDE this grid, after the
         // heading, as ordinary cells (`:184`). They are cells rather than a separate skeleton screen for
@@ -179,120 +211,289 @@ internal fun ZineShelf(
 }
 
 /**
- * `.shelf-head h1.serif` — *"Your shelf"*, `:48-49`, `:148`.
+ * `.shelf-head` — *"Your shelf"*, its hand-drawn swipe, and the count.
  *
+ * ```css
+ * .shelf-head{grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;
+ *             margin-bottom:var(--gap-hair)}
+ * .shelf-head h1{font-family:var(--voice);font-weight:700;font-size:2rem;letter-spacing:-.005em;
+ *                line-height:1.05;margin:0}
+ * .shelf-head h1 svg{width:132px;height:9px;margin-top:var(--gap-hair);color:var(--butter)}
+ * .count{font-size:.78rem;font-weight:600;color:var(--ink-soft);background:var(--butter-tint);
+ *        border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md);transform:rotate(1.5deg)}
  * ```
- * .shelf-head{grid-column:1 / -1;padding:2px 2px 0}
- * .shelf-head h1{margin:0;font-size:1.62rem;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
- * ```
  *
- * **Fraunces 500, not the file's 600** — the same **D-005** ruling B1's cover title follows, and this
- * heading is one of the three the ruling names by selector (*"`.sh-ttl`, `.shelf-head h1`, `.empty
- * h2`"*). The 600 in the frozen CSS is an artefact of the Iowan/Georgia stack the Library was authored
- * against, and the Constitution outranks it. The register is the authority; the HTML is stale here.
+ * ### Averia 700, and this is the amendment, not a deviation
  *
- * **A heading, not decorated text.** The frozen markup is an `<h1>`, so this carries `heading()`
- * semantics: TalkBack navigates by heading, and dropping the role turns a landmark into a stray phrase
- * while looking identical on screen. `<h1>` is transcription, not an accessibility addition of our own.
+ * V2's `.shelf-head h1` was Fraunces **500** by the D-005 ruling, which overrode the file's own 600 as a
+ * stale artefact of the stack it was authored against. V2.1 bundles Averia Serif Libre, whose only
+ * weights are 400 and 700, and Constitution §III **Amendment 1** admits it as the voice role. So 700 is
+ * the transcription *and* the only weight available: there is no 500 to prefer.
  *
- * No `lineHeight` is set, and that is deliberate: `h1` declares none, and the Library's `body` declares
- * none either, so the browser resolves `normal` — the font's own metrics. Compose does the same when
- * `lineHeight` is left unspecified. Pinning a number here would invent leading the design never states.
+ * ### The swipe is a drawing, not an underline
+ *
+ * A `border-bottom` would be chrome. This is a stroked path with round caps that misses the text's left
+ * and right edges and sags in the middle — a pen mark, in `butter`, `aria-hidden`. §5.1's ruling that
+ * craft belongs to the material rather than to tools is what makes it a *drawn* line and not a styled
+ * rule, and `aria-hidden="true"` is the file's own attribute, so it is silent here too.
+ *
+ * ### The count is disclosure, and it says so out loud
+ *
+ * `6 zines` is a rotated pill, which is decoration — but the number is real information, so it stays a
+ * text node with its own semantics rather than being folded into the heading. It is **not** a heading:
+ * the `<h1>` is, and `heading()` stays on the title alone so TalkBack's heading navigation lands on one
+ * node per screen rather than two.
  */
 @Composable
-private fun ShelfHeading() {
-    Text(
-        text = ShelfHeadingText,
-        style = TextStyle(
-            fontFamily = ZinelyTheme.v2Typography.voice,
-            // D-005: Fraunces 500 is the canonical weight for the shared serif role.
-            fontWeight = FontWeight.Medium,
-            fontSize = ShelfHeadingSize,
-            letterSpacing = ShelfHeadingTracking,
-            color = ZinelyTheme.v2Colors.ink,
-        ),
-        modifier = Modifier
-            .padding(ShelfHeadingPadding)
-            .semantics { heading() },
-    )
+private fun ShelfHeading(count: Int) {
+    val colors = ZinelyTheme.v21Colors
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = ZinelyV21Dimens.gapHair),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        // `align-items:flex-end` — the count's baseline sits with the swipe, not with the cap height.
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        Column {
+            Text(
+                text = ShelfHeadingText,
+                style = TextStyle(
+                    fontFamily = ZinelyV21Fonts.Voice,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = ShelfHeadingSize,
+                    lineHeight = ShelfHeadingLineHeight,
+                    letterSpacing = ShelfHeadingTracking,
+                    color = colors.ink,
+                ),
+                modifier = Modifier.semantics { heading() },
+            )
+            Canvas(
+                Modifier
+                    .padding(top = ZinelyV21Dimens.gapHair)
+                    .size(width = SwipeWidth, height = SwipeHeight),
+            ) {
+                // `viewBox="0 0 132 9"` drawn at 132x9, so the viewport units are dp one for one and
+                // the path needs no scale — the one case where transcribing an SVG costs no arithmetic.
+                drawPath(
+                    path = ShelfSwipePath(),
+                    color = colors.butter,
+                    style = Stroke(
+                        width = SwipeStroke.toPx(),
+                        cap = StrokeCap.Round,
+                    ),
+                )
+            }
+        }
+        Text(
+            text = pluralZineCount(count),
+            style = TextStyle(
+                fontFamily = ZinelyV21Fonts.Work,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = CountSize,
+                color = colors.inkSoft,
+            ),
+            modifier = Modifier
+                .graphicsLayer { rotationZ = CountRotation }
+                .background(colors.butterTint, RoundedCornerShape(ZinelyV21Dimens.radiusPill))
+                .padding(
+                    horizontal = ZinelyV21Dimens.gapMd,
+                    vertical = ZinelyV21Dimens.gapXs,
+                ),
+        )
+    }
 }
 
 /**
- * `.ph{aspect-ratio:3/4;border-radius:6px 9px 9px 6px;background:var(--desk-edge)}` (`:134`).
+ * `6 zines` — and `1 zine`, which the frozen file never had to render.
  *
- * A cover-shaped hollow in the desk's own edge tone — not a shimmer, not a spinner. The amendment's
- * comment is the argument: *"loading must never be mistaken for the empty state. A slow read that
- * rendered 'Make your first little zine' would tell a user with twelve zines that they have none."*
- * A placeholder answers *"your shelf is coming"*; a spinner answers *"something is happening"*, and
- * only one of those is the question a user holds while looking at their own shelf.
+ * A prototype shows one number, so it can write the plural in by hand. A shelf holds whatever it holds.
+ * Pure, so the one case the corpus does not demonstrate is nonetheless tested rather than trusted.
+ */
+internal fun pluralZineCount(count: Int): String = if (count == 1) "1 zine" else "$count zines"
+
+/**
+ * `.ph` — the same object, unprinted.
  *
- * **Silent to TalkBack.** It has no name because it is not a thing — announcing four unlabelled boxes
- * would be worse than announcing nothing, and the state itself is spoken by the screen, not the cell.
- * The asymmetric radius is the cover's own spine-left profile ([ZineCover]), kept so the hollow is the
- * shape of what will stand in it.
+ * ```css
+ * .ph{aspect-ratio:3/4;border-radius:var(--br-xs) var(--br-md) var(--br-md) var(--br-xs);
+ *     background:var(--paper);border:1.5px dashed var(--hair);
+ *     box-shadow:var(--hard) var(--hard) 0 var(--hair);overflow:hidden}
+ * .ph::after{background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.5) 50%,transparent 80%);
+ *            transform:translateX(-100%);animation:sweep 1.5s cubic-bezier(.2,0,0,1) infinite}
+ * ```
+ *
+ * V2's placeholder was a **hollow** — a cover-shaped hole in the desk's own edge tone. V2.1's is the
+ * opposite reading: a sheet of paper that is standing there already, dashed rather than drawn, carrying
+ * the same hard shadow every other object carries. The amendment's argument survives either way —
+ * *"loading must never be mistaken for the empty state"* — but the answer got warmer.
+ *
+ * **The sweep is animation, so it obeys the motion policy.** `animation:sweep 1.5s infinite` is the one
+ * looping animation in the whole corpus, and a loop is exactly what the reduced-motion setting exists
+ * to stop. Under reduce-motion the sheet simply sits there, which still answers *"your shelf is
+ * coming"* — the dashed border and the empty cover shape carry that on their own.
+ *
+ * **Silent to TalkBack.** It has no name because it is not a thing.
  */
 @Composable
 private fun ShelfPlaceholder() {
+    val colors = ZinelyTheme.v21Colors
+    val motion = ZinelyTheme.v2Motion
+
+    // **`allowsContinuousMotion`, not a collapsed duration.** D-012's whole point: a one-shot under
+    // reduced motion collapses to zero and still *arrives*; a loop must not run **at all**, because
+    // collapsing an infinite animation's duration makes it strobe. A first version gated on
+    // `durationMillis(…) == 0`, which reaches the same place by the wrong reasoning and would have
+    // shipped the strobe the day someone made the policy return 1 instead of 0.
+    val sweep = if (!motion.allowsContinuousMotion) {
+        0f
+    } else {
+        rememberInfiniteTransition(label = SweepLabel).animateFloat(
+            initialValue = -1f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(motion.durationMillis(SweepDurationMillis), easing = SweepEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = SweepLabel,
+        ).value
+    }
+
     Box(
         Modifier
             .testTag(ZineShelfPlaceholderTestTag)
             .fillMaxWidth()
             .aspectRatio(PlaceholderAspectRatio)
+            .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, colors.hair, PlaceholderShape)
             .clip(PlaceholderShape)
-            .background(ZinelyTheme.v2Colors.deskEdge)
+            .background(colors.paper)
+            // One `drawBehind`, two paints, in the order CSS paints them. Two chained modifiers would
+            // work too, but their relative order is a thing to be reasoned about rather than read —
+            // which is precisely how the cover's draw-order defect stayed hidden through two reviews.
+            .drawBehind {
+                if (sweep != 0f) {
+                    // `linear-gradient(100deg, …)` translated across the cell. 100deg in CSS is
+                    // measured clockwise from "to top", so it leans right; near-vertical is the wrong
+                    // read. Approximated here as a bottom-left to top-right sweep of the cell's width.
+                    val x = sweep * size.width
+                    drawRect(
+                        brush = Brush.linearGradient(
+                            colorStops = SweepStops,
+                            start = Offset(x, size.height),
+                            end = Offset(x + size.width, 0f),
+                        ),
+                    )
+                }
+                // `border:1.5px dashed var(--hair)` on a border-box element — so the stroke is INSIDE
+                // the shape. Stroked at double width along the shape's own outline and left to the
+                // clip already on this chain, which cuts the outer half away: that is the same 1.5dp
+                // CSS draws, without an inset path whose corner radii would have to be recomputed
+                // (the arithmetic that was wrong in `zinelyV21Frame` until a review caught it).
+                val w = PlaceholderBorder.toPx()
+                drawOutline(
+                    outline = PlaceholderShape.createOutline(size, layoutDirection, this),
+                    color = colors.hair,
+                    style = Stroke(
+                        width = w * 2f,
+                        // CSS derives a dash rhythm from the border width; at 1.5px it renders at
+                        // roughly 3on/3off, which is what this transcribes — the one approximated
+                        // value on this component, recorded rather than presented as frozen.
+                        pathEffect = PathEffect.dashPathEffect(
+                            floatArrayOf(PlaceholderDash.toPx(), PlaceholderDash.toPx()),
+                        ),
+                    ),
+                )
+            }
             .clearAndSetSemantics {},
     )
 }
 
 // ---------------------------------------------------------------------------------------------
-// The frozen values, transcribed from `v2-library.html` at the lines named against each.
+// The frozen values, transcribed from `v21-library.html`.
 //
-// Per-component literals, as B1's cover has them: V2 publishes no spacing scale. The D-007 ruling
-// found the frozen CSS only 16.7% on the 8pt grid and left spacing "per-component as frozen"
-// (ADR-074), and this shelf is the evidence — 30 · 22 · 152 · 28 · 20 · 2 puts exactly one of six
-// values on the grid. A `ShelfSpacing` scale here would be inventing what that ruling declined.
+// V2.1 publishes a spacing scale (§3.3), so the shelf's own numbers are now token references rather
+// than literals — `padding:var(--gap-xl) var(--gap-lg) 132px` and `gap:var(--gap-xl) var(--gap-lg)`.
+// The 132px is the exception and stays a literal, because it is not on the scale: it is the height of
+// the dock plus its clearance, which is a measurement of another component, not a spacing choice.
 // ---------------------------------------------------------------------------------------------
 
-/** `grid-template-columns:1fr 1fr` — no breakpoint in the frozen file. See D-020. */
+/** `grid-template-columns:1fr 1fr` — still no breakpoint anywhere in the corpus. See D-020. */
 private const val ShelfColumns = 2
 
-/** `.shelf{padding:30px 22px 152px}` — the 152px clears the `.dock`, which is B4's. */
-private val ShelfPadding = PaddingValues(start = 22.dp, top = 30.dp, end = 22.dp, bottom = 152.dp)
+/** `.shelf{padding:var(--gap-xl) var(--gap-lg) 132px}` — the 132px clears the `.dock`. */
+private val ShelfPadding = PaddingValues(
+    start = ZinelyV21Dimens.gapLg,
+    top = ZinelyV21Dimens.gapXl,
+    end = ZinelyV21Dimens.gapLg,
+    bottom = 132.dp,
+)
 
 /**
- * `.shelf{gap:28px 20px}` — CSS `gap` is **row-gap first**, then column-gap.
+ * `.shelf{gap:var(--gap-xl) var(--gap-lg)}` — CSS `gap` is **row-gap first**, then column-gap.
  *
  * Named apart rather than carried as one value because they are not one value, and transposing them is
- * the defect this package is most likely to ship: 28 between the rows and 20 between the columns looks
- * plausible either way round on a screenshot. `the row gap and the column gap are not interchangeable`
- * asserts both numbers and that they differ.
+ * the defect this package is most likely to ship: 24 between the rows and 16 between the columns looks
+ * plausible either way round on a screenshot.
  */
-private val ShelfRowGap = 28.dp
-private val ShelfColumnGap = 20.dp
+private val ShelfRowGap = ZinelyV21Dimens.gapXl
+private val ShelfColumnGap = ZinelyV21Dimens.gapLg
 
-/** `.shelf-head{padding:2px 2px 0}` — 2px on three sides, nothing at the bottom. */
-private val ShelfHeadingPadding = PaddingValues(start = 2.dp, top = 2.dp, end = 2.dp, bottom = 0.dp)
-
-/** `.shelf-head h1{margin:0}` — the heading's own text, `:148`. */
+/** `.shelf-head h1{margin:0}` — the heading's own text. */
 private const val ShelfHeadingText = "Your shelf"
 
-/**
- * `font-size:1.62rem` against the browser's 16px root is **25.92px**, carried unrounded for B1's
- * reason: 25.92 → 26 is a visible change to the first heading a user reads, and the frozen file states
- * the ratio, not the pixel.
- */
-private val ShelfHeadingSize = 25.92.sp
+/** `font-size:2rem` against the browser's 16px root, and `line-height:1.05` of that. */
+private val ShelfHeadingSize = 32.sp
+private val ShelfHeadingLineHeight = 33.6.sp
 
-/** `letter-spacing:-.01em` — kept in `em`, the unit the CSS states, so it tracks the size. */
-private val ShelfHeadingTracking = (-0.01).em
+/** `letter-spacing:-.005em` — kept in `em`, the unit the CSS states, so it tracks the size. */
+private val ShelfHeadingTracking = (-0.005).em
+
+/**
+ * `.shelf-head h1 svg` — the hand-drawn swipe, `viewBox="0 0 132 9"` drawn at 132×9.
+ *
+ * Transcribed verbatim as path data for [ZineV21CoverMarks]' reason: a copy is checkable against the
+ * source by eye, and a sequence of `moveTo`/`cubicTo` calls is not.
+ */
+private val SwipeWidth = 132.dp
+private val SwipeHeight = 9.dp
+private val SwipeStroke = 3.4.dp
+private const val SwipePathData =
+    "M2 6.2c22-3.4 46-4.6 74-3.2 18 .9 33 2.4 54 1.1"
+
+private fun ShelfSwipePath(): Path = PathParser().parsePathString(SwipePathData).toPath()
+
+/** `.count{font-size:.78rem}` against a 16px root — 12.48px, carried unrounded. */
+private val CountSize = 12.48.sp
+
+/** `.count{transform:rotate(1.5deg)}` — the pill leans, the number does not move. */
+private const val CountRotation = 1.5f
 
 /** `.ph{aspect-ratio:3/4}` — width ÷ height, which is the order Compose's `aspectRatio` takes. */
 private const val PlaceholderAspectRatio = 3f / 4f
 
-/** `.ph{border-radius:6px 9px 9px 6px}` — the cover's spine-left profile, tight side first. */
+/** `.ph{border-radius:var(--br-xs) var(--br-md) var(--br-md) var(--br-xs)}` — the cover's own profile. */
 private val PlaceholderShape = RoundedCornerShape(
-    topStart = 6.dp,
-    topEnd = 9.dp,
-    bottomEnd = 9.dp,
-    bottomStart = 6.dp,
+    topStart = ZinelyV21Dimens.radiusXs,
+    topEnd = ZinelyV21Dimens.radiusMd,
+    bottomEnd = ZinelyV21Dimens.radiusMd,
+    bottomStart = ZinelyV21Dimens.radiusXs,
 )
+
+/** `.ph{border:1.5px dashed var(--hair)}` — the same 1.5px every drawn line in V2.1 uses. */
+private val PlaceholderBorder = 1.5.dp
+private val PlaceholderDash = 3.dp
+
+/**
+ * `.ph::after{background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.5) 50%,transparent 80%)}`
+ *
+ * White at half alpha in both themes — the frozen file does not theme it, and a sweep is a highlight
+ * moving across a surface rather than a colour the surface has.
+ */
+private val SweepStops = arrayOf(
+    0.2f to Color.Transparent,
+    0.5f to Color.White.copy(alpha = 0.5f),
+    0.8f to Color.Transparent,
+)
+
+/** `animation:sweep 1.5s cubic-bezier(.2,0,0,1) infinite`. */
+private const val SweepDurationMillis = 1500
+private const val SweepLabel = "shelfPlaceholderSweep"
+private val SweepEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)

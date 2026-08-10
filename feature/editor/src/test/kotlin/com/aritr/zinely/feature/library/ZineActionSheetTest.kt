@@ -73,8 +73,8 @@ class ZineActionSheetTest {
         const val ROW_SIDE = 20
 
         /** `border-top:1px solid var(--hair)` · `.danger{border-top:8px solid var(--desk)}` */
-        const val HAIRLINE = 1
-        const val DANGER_BAND = 8
+        /** `.sh-head{border-bottom:1.5px dashed var(--hair)}` — the sheet's one divider. */
+        const val HEAD_DIVIDER = 1.5f
 
         /** `.sh-ttl{font-size:1.12rem}` — and **D-005**'s weight, not the file's 600. */
         val TITLE_SIZE = 17.92.sp
@@ -259,35 +259,38 @@ class ZineActionSheetTest {
     }
 
     @Test
-    fun `Delete is set apart by a band of the desk, and the others by a hairline`() {
+    fun `the head is the sheet's only divider, and Delete is set apart by colour alone`() {
         surface()
-        val hairlines = ZineAction.entries.filterNot { it.danger }
-        hairlines.forEach { action ->
-            val band = composeRule.onNodeWithTag(zineActionSeparatorTestTag(action))
-                .fetchSemanticsNode().boundsInRoot
+        // `.sh-head{border-bottom:1.5px dashed var(--hair)}` — one divider, under the header.
+        val divider = composeRule.onNodeWithTag(ZineActionHeadDividerTestTag)
+            .fetchSemanticsNode().boundsInRoot
+        assertEquals(
+            "the head's dashed rule is ${HEAD_DIVIDER}px",
+            HEAD_DIVIDER,
+            divider.height,
+            HALF_PIXEL,
+        )
+        val title = composeRule.onNodeWithTag(ZineActionTitleTestTag).fetchSemanticsNode().boundsInRoot
+        assertTrue("and it sits below the header, not above it", divider.top > title.bottom)
+
+        // **And nothing separates the rows.** V2's `.act` carried `border-top:1px solid var(--hair)`
+        // and Delete carried `border-top:8px solid var(--desk)` — a band of the desk showing through
+        // the sheet, so the destructive row sat visibly apart. V2.1 writes `.act{border:none}`.
+        //
+        // Asserted as an *absence*, and asserted by geometry rather than by the missing tag: the five
+        // rows stack with no gap at all, so any separator would show up as a gap between them. A test
+        // that only checked the tag was gone would pass against a separator drawn some other way.
+        val rows = ZineAction.entries.map {
+            composeRule.onNodeWithTag(zineActionTestTag(it)).fetchSemanticsNode().boundsInRoot
+        }
+        rows.zipWithNext().forEach { (above, below) ->
             assertEquals(
-                "${action.label} is separated by a ${HAIRLINE}px hairline",
-                HAIRLINE.toFloat(),
-                band.height,
+                "the rows touch — no border, no band, no gap",
+                above.bottom,
+                below.top,
                 HALF_PIXEL,
             )
         }
-        val danger = composeRule.onNodeWithTag(zineActionSeparatorTestTag(ZineAction.Delete))
-            .fetchSemanticsNode().boundsInRoot
-        assertEquals(
-            "Delete is separated by the ${DANGER_BAND}px desk band, which is what makes it *apart* " +
-                "rather than merely last",
-            DANGER_BAND.toFloat(),
-            danger.height,
-            HALF_PIXEL,
-        )
-        // And it is the desk showing through, not a darker hairline: sampled in the middle of the band.
-        val raster = decorRaster()
-        assertTrue(
-            "the band must be painted in the desk colour",
-            raster.colourAt(danger.center.x.roundToInt(), danger.center.y.roundToInt())
-                .closeTo(capturedDesk),
-        )
     }
 
     @Test

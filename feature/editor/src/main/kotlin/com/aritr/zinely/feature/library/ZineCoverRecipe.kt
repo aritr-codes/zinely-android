@@ -1,12 +1,14 @@
 package com.aritr.zinely.feature.library
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.aritr.zinely.core.model.ZineCoverStamp
 import com.aritr.zinely.core.model.ZineCoverSurface
 import com.aritr.zinely.ui.theme.ZinelyContentInks
 import com.aritr.zinely.ui.theme.ZinelyCoverInkId
 import com.aritr.zinely.ui.theme.ZinelyV2Icon
 import com.aritr.zinely.ui.theme.ZinelyV2Icons
+import com.aritr.zinely.ui.theme.ZinelyV21Colors
 
 // -----------------------------------------------------------------------------------------
 // The cover TYPES moved to :core:model in B5.  This file keeps only their RENDERING.
@@ -46,6 +48,62 @@ internal fun ZineCoverStamp.icon(): ZinelyV2Icon = when (this) {
     ZineCoverStamp.Sprig -> ZinelyV2Icons.StampSprig
     ZineCoverStamp.Star -> ZinelyV2Icons.StampStar
     ZineCoverStamp.Face -> ZinelyV2Icons.StampFace
+}
+
+// -----------------------------------------------------------------------------------------
+// V2.1 resolves the SAME persisted recipe onto a different palette and a different mark set.
+// -----------------------------------------------------------------------------------------
+//
+// D-017 makes the cover part of the zine's identity: a recipe is assigned once, at creation, and
+// stored. So the re-freeze must NOT change `ZineCoverSurface` or `ZineCoverStamp` — every zine already
+// on a tester's phone names one of the six V2 surfaces and one of the six V2 stamps, and renaming them
+// would reprint objects that exist. What changes is only how those six names are painted, which is
+// exactly the split this file was written around: the model says which cover, this file says how.
+//
+// Both mappings are one-to-one and both are, in part, ARBITRARY. V2.1's ink set is leaf · berry ·
+// butter · jam with two paper stocks; V2's is matcha · teal · strawberry · ochre with two. Three pair
+// by hue (matcha/leaf, strawberry/berry, ochre/butter) and teal has no counterpart at all, so it takes
+// the remaining ink. Naming that here rather than implying a correspondence that does not exist.
+
+/** The V2.1 cover stock this surface prints on — `.ink-leaf`, `.paper-s`, `.ink-berry`, `.paper-c`, … */
+internal fun ZineCoverSurface.v21Fill(colors: ZinelyV21Colors): Color = when (this) {
+    ZineCoverSurface.MatchaInk -> colors.leaf
+    ZineCoverSurface.StrawberryInk -> colors.berry
+    ZineCoverSurface.OchreInk -> colors.butter
+    // No V2.1 ink is teal. Jam is what is left, and it is the only ink not already spoken for.
+    ZineCoverSurface.TealInk -> colors.jam
+    ZineCoverSurface.PaperMatchaBand -> colors.butterTint
+    ZineCoverSurface.PaperStrawberryBand -> colors.paper
+}
+
+/**
+ * The mark's colour on that stock — `.cover .mark{color:rgba(255,246,232,.92)}`, overridden to
+ * `ink-soft` by `.paper-s`/`.paper-c`.
+ *
+ * The ink value is hardcoded in the frozen file and **theme-invariant on purpose** (V21-SPEC §4.1): a
+ * printed cover is the maker's palette, not the app's chrome, and it does not restyle in the dark.
+ */
+internal fun ZineCoverSurface.v21MarkInk(colors: ZinelyV21Colors): Color = when (this) {
+    ZineCoverSurface.PaperMatchaBand, ZineCoverSurface.PaperStrawberryBand -> colors.inkSoft
+    else -> ZineV21MarkOnInk
+}
+
+private val ZineV21MarkOnInk = Color(0xEBFFF6E8)
+
+/**
+ * The V2.1 glyph this stamp draws — [ZineV21CoverMarks].
+ *
+ * Arbitrary in the same way the surfaces are: V2's marks name a sun, a letter, waves, a sprig, a star
+ * and a face; V2.1's name a booklet, an envelope, two rings, a sprig, three ruled lines and a mug. Two
+ * pair (letter/envelope, sprig/sprig); the rest is a stable assignment, not a translation.
+ */
+internal fun ZineCoverStamp.v21Mark(): ImageVector = when (this) {
+    ZineCoverStamp.Letter -> ZineV21CoverMarks.Envelope
+    ZineCoverStamp.Sprig -> ZineV21CoverMarks.Sprig
+    ZineCoverStamp.Sun -> ZineV21CoverMarks.Rings
+    ZineCoverStamp.Star -> ZineV21CoverMarks.Booklet
+    ZineCoverStamp.Waves -> ZineV21CoverMarks.Lines
+    ZineCoverStamp.Face -> ZineV21CoverMarks.Mug
 }
 
 /**

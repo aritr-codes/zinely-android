@@ -9,16 +9,17 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -31,7 +32,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.paneTitle
@@ -47,25 +52,31 @@ import androidx.compose.ui.window.DialogWindowProvider
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.components.zinelyV2Shadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV2ShadowLayer
 import kotlin.math.roundToInt
 
 /**
- * The five things the frozen sheet offers, in the frozen order — `v2-library.html:173-177`.
+ * The five things the frozen sheet offers, in the frozen order.
  *
- * The labels and the glyphs are the design's own bytes, which is why they live on the enum rather than at
- * the draw site: a row's icon is not a decoration chosen by the renderer, it is part of what the design
- * says that row *is*.
+ * The labels and the glyphs are the design's own bytes, which is why they live on the enum rather than
+ * at the draw site: a row's icon is not a decoration chosen by the renderer, it is part of what the
+ * design says that row *is*. All five survive the re-freeze unchanged, glyphs included.
  *
- * **Delete is separated, not merely coloured.** `.act.danger` (`:130`) trades the 1px hairline every other
- * row carries for `border-top:8px solid var(--desk)` — a band of the desk showing through the sheet, so the
- * destructive row sits visibly apart rather than at the end of a list. [danger] carries both consequences.
+ * ### ⚠️ Delete is now separated **only** by colour
+ *
+ * V2's `.act.danger` traded the 1px hairline every other row carried for `border-top:8px solid
+ * var(--desk)` — a band of the desk showing through the sheet, so the destructive row sat visibly
+ * apart. V2.1's `.act` writes `border:none` and the danger row differs by ink alone (`jam-text`, and a
+ * `berry-tint` icon chip instead of `butter-tint`). Transcribed as frozen, and **recorded**: separation
+ * by position is a stronger guard against a mis-tap than separation by hue, and colour alone is the
+ * weaker signal for anyone who cannot distinguish the two tints.
  *
  * @property label the row's spoken and printed text, verbatim from the frozen markup.
- * @property glyph the frozen `.ic` character. See [ZineActionSheetSurface] for **D-021** — three of these
- *   six codepoints (counting the shelf's `⋯`) are absent from the bundled Inter, so the device's own
- *   fallback font draws them.
- * @property danger `.act.danger` — the consequence ink *and* the 8px desk separator above it.
+ * @property glyph the frozen `.ic` character. Three of these six codepoints (counting the shelf's `⋯`)
+ *   are absent from the bundled Inter, so the device's own fallback font draws them — **D-021**.
+ * @property danger `.act.danger` — the consequence ink and the berry icon chip.
  */
 internal enum class ZineAction(
     val label: String,
@@ -82,18 +93,13 @@ internal enum class ZineAction(
 /**
  * Which zine the sheet is open for, and the metadata line it discloses.
  *
- * **This is where the shelf's hidden metadata surfaces, and the pair is the design's whole argument.** The
- * frozen caption states it as one sentence: *"Covers only — no metadata line … Format & date are disclosed
- * there, not stamped on every card"* (`:142-144`). So [subtitle] is drawn **only** here — a shelf that shows
- * it has answered a question the user did not ask yet, which is the failure
- * [CLAUDE.md](CLAUDE.md#product-principle-every-screen-answers-the-users-current-question) records for
- * `0.9.0-beta.1`'s Preview screen.
+ * **This is where the shelf's withheld metadata surfaces — and in V2.1 only half of it is withheld.**
+ * V2's shelf showed no subtitle at all. V2.1's splits it: the paper size becomes the cover's postmark
+ * and the date becomes `.sub` under the name ([ZineOnShelf]). The sheet is still the only place the two
+ * appear **together**, as one line, which is what `data-sub` is.
  *
  * @property title the zine's own name — `data-name`, and the sheet header's `.sh-ttl`.
- * @property subtitle `data-sub`, verbatim: format and recency, `"A4 · 2 days ago"`. **B3 does not compose
- *   this string and states no rule for it.** The frozen file shows five example values and defines no
- *   thresholds, so producing it belongs with the data — **B5**, exactly as V1's `HomeZineCard.editedLabel`
- *   is produced outside the card that draws it.
+ * @property subtitle `data-sub`, verbatim: format and recency, `"A4 · 2 days ago"`.
  */
 internal data class ZineActionTarget(
     val title: String,
@@ -109,65 +115,65 @@ internal const val ZineActionSheetTestTag: String = "zine-action-sheet"
 /** One action row, addressable by the action it performs. */
 internal fun zineActionTestTag(action: ZineAction): String = "zine-action-${action.name}"
 
-/** The separator *above* a row — `border-top`, which is a box-model band rather than a drawn line. */
-internal fun zineActionSeparatorTestTag(action: ZineAction): String = "zine-separator-${action.name}"
+/** `.sh-head{border-bottom:1.5px dashed var(--hair)}` — the sheet's one divider. */
+internal const val ZineActionHeadDividerTestTag: String = "zine-action-head-divider"
+
+/** `.grab` — the handle. */
+internal const val ZineActionGrabTestTag: String = "zine-action-grab"
 
 /** `.sh-ttl` and `.sh-sub`, for the type assertions to find. */
 internal const val ZineActionTitleTestTag: String = "zine-action-title"
 internal const val ZineActionSubtitleTestTag: String = "zine-action-subtitle"
 
-/** The spoken name of the sheet — the frozen `aria-label` on `role="dialog"` (`:171`). */
+/** The spoken name of the sheet — the frozen `aria-label` on `role="dialog"`. */
 internal const val ZineActionSheetPaneTitle: String = "Zine actions"
 
 /**
- * The frozen Library's action sheet — `v2-library.html:119-132`, `:171-178`.
+ * The frozen Library's action sheet — `docs/design/mockups/v21-library.html`.
  *
  * ```css
- * .scrim{position:absolute;inset:0;background:rgba(30,25,18,.36);opacity:0;visibility:hidden;
- *        transition:opacity .2s;z-index:5}
- * .sheet{position:absolute;left:10px;right:10px;bottom:10px;background:var(--paper);border-radius:20px;
- *        box-shadow:0 30px 60px -20px var(--shadow),0 0 0 1px var(--hair);transform:translateY(115%);
- *        transition:transform .24s cubic-bezier(.2,.8,.2,1);z-index:6;overflow:hidden}
+ * .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--paper);
+ *   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
+ *   transform:translateY(103%);transition:transform .26s cubic-bezier(.05,.7,.1,1);
+ *   padding:0 0 var(--gap-xl);box-shadow:0 -16px 40px -18px var(--soft-shadow)}
  * ```
  *
- * A floating card inset 10px from three edges — **not** an edge-to-edge bottom sheet, and not V1's shape
- * either (`ZSheet` is full-bleed with two rounded top corners). All four corners are 20px here because the
- * card does not touch an edge.
+ * ### It is a bottom sheet again, and it was not one in V2
+ *
+ * V2's sheet was a **floating card** inset 10px from three edges with all four corners rounded at 20px.
+ * V2.1's is edge to edge, bottom-anchored, two rounded top corners at `--br-xl`, with a 2px ink rule
+ * along its top edge — the ordinary Android shape, arrived at from the other direction. The travel
+ * shortened to match (`115%` → `103%`), because a sheet that already touches the bottom edge needs less
+ * clearance to be fully off screen.
  *
  * ### Hosted in a `Dialog`, for the three things the CSS cannot say
  *
- * `role="dialog" aria-modal="true"` (`:171`) is a *behaviour*: the content behind is unreachable, focus is
+ * `role="dialog" aria-modal="true"` is a *behaviour*: the content behind is unreachable, focus is
  * contained, and Escape closes. Android's equivalents are window modality, focus containment and system
- * back — all three of which a [Dialog] provides and an in-composition `Box` would each have to re-implement.
- * [ADR-049](docs/DECISIONS.md#adr-049) settled exactly this trade for V1's sheets and its reasoning carries:
- * not M3's `ModalBottomSheet`, because the frozen sheet has no drag handle and no drag-to-dismiss (the mock
- * script registers pointer handlers on the scrim only), and M3 brings both plus its own motion.
+ * back — all three of which a [Dialog] provides and an in-composition `Box` would each re-implement.
+ * [ADR-049](docs/DECISIONS.md#adr-049) settled exactly this trade for V1's sheets.
  *
- * What differs from V1 is only geometry, which is why [ZineActionSheetSurface] is a separate composable
- * rather than a reuse of `ZSheetSurface`.
+ * **Still not M3's `ModalBottomSheet`**, and V2.1 makes that a closer call than V2 did: this sheet now
+ * has a `.grab` handle, which is the affordance M3's component is built around. It has no
+ * drag-to-dismiss, though — the frozen script wires the scrim and Escape and nothing else — so adopting
+ * M3 would import a gesture the design does not specify along with the handle it does. The handle is
+ * drawn; the drag is not invented.
  *
  * ### The two motion values are the ruling's, not the file's
  *
- * `.24s` and `.2s` are transcribed; the curves are **not**. `cubic-bezier(.2,.8,.2,1)` appears nowhere else
- * in V2 and the **D-011** ruling is that the Library's easings reflect its earlier freeze — the canonical
- * pair governs, and that entry's own table assigns this sheet **settle** (*"a surface coming to rest"*) and
- * the scrim **standard** (*"pure opacity"*). Reduced motion collapses both to zero, per
- * [com.aritr.zinely.ui.theme.ZinelyV2Motion].
+ * `.26s` and `.22s` are transcribed; the curves are **not**. **D-011**'s ruling is that the canonical
+ * pair governs, and its table assigns this sheet **settle** (*"a surface coming to rest"*) and the scrim
+ * **standard** (*"pure opacity"*). Reduced motion collapses both to zero.
  *
  * ### Selecting an action does not close the sheet
  *
- * The frozen `.act` buttons carry **no handler at all** — the mock wires the scrim and the `⋯`, and nothing
- * else (`:195-209`). So what follows *Rename* is undesigned here, and every one of the five leads somewhere
- * B3 does not own: a route, a share sheet, a rename field, a copy, an undoable delete. This composable
- * therefore reports the choice and holds still. **B5** decides dismissal alongside the flow it triggers,
- * the same way B2 left the desk to the screen that owns it.
+ * The frozen `.act` buttons carry no handler beyond the prototype's `close()`. What follows *Rename* is
+ * undesigned here, and every one of the five leads somewhere this component does not own. It reports the
+ * choice and holds still.
  *
- * @param target the zine whose actions are showing, or `null` for a closed sheet. `null` is the closed
- *   state rather than a separate `visible` flag so that the header can never be asked to draw a zine that
- *   is not there.
- * @param onAction one of the five was chosen. Fires exactly once, and does not dismiss — see above.
- * @param onDismiss the scrim was tapped or the system back was pressed, which are the frozen dismissal
- *   paths (`:197`) plus the platform's own.
+ * @param target the zine whose actions are showing, or `null` for a closed sheet.
+ * @param onAction one of the five was chosen. Fires exactly once, and does not dismiss.
+ * @param onDismiss the scrim was tapped or the system back was pressed.
  */
 @Composable
 internal fun ZineActionSheet(
@@ -176,8 +182,7 @@ internal fun ZineActionSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Kept mounted through the exit so the sheet slides out rather than blinking away — the same shape as
-    // V1's ZSheet, whose `MutableTransitionState` this borrows.
+    // Kept mounted through the exit so the sheet slides out rather than blinking away.
     val shown = remember { MutableTransitionState(false) }
     shown.targetState = target != null
     if (!shown.currentState && !shown.targetState) return
@@ -212,15 +217,18 @@ internal fun ZineActionSheet(
             AnimatedVisibility(
                 visibleState = shown,
                 modifier = Modifier.align(Alignment.BottomCenter),
-                // `transform:translateY(115%)` — of the sheet's own height, so it starts fully clear of the
-                // bottom edge including the 10px inset.
-                enter = slideInVertically(motion.settle(SheetDurationMillis)) { (it * SheetSlide).roundToInt() },
-                exit = slideOutVertically(motion.settle(SheetDurationMillis)) { (it * SheetSlide).roundToInt() },
+                // `transform:translateY(103%)` — of the sheet's own height.
+                enter = slideInVertically(motion.settle(SheetDurationMillis)) {
+                    (it * SheetSlide).roundToInt()
+                },
+                exit = slideOutVertically(motion.settle(SheetDurationMillis)) {
+                    (it * SheetSlide).roundToInt()
+                },
             ) {
                 ZineActionSheetSurface(
                     target = drawn,
                     onAction = onAction,
-                    modifier = modifier.padding(SheetInset),
+                    modifier = modifier,
                 )
             }
         }
@@ -230,18 +238,18 @@ internal fun ZineActionSheet(
 /**
  * The `.scrim` — the dimming, and the tap that closes.
  *
- * Split out for the same reason [ZineActionSheetSurface] is, and for one more: it is the **only** place the
- * scrim's fill is painted. A test that built its own `Box` from the fill would agree with a constant while
- * the sheet painted something else — which is precisely what a mutation of the paint site proved, and why
- * this exists. Both the **D-022** probe and the parity raster compose this.
+ * Split out for the same reason [ZineActionSheetSurface] is, and for one more: it is the **only** place
+ * the scrim's fill is painted. A test that built its own `Box` from the fill would agree with a constant
+ * while the sheet painted something else.
  *
- * **The fill is the corpus token, not the Library's literal — [D-022](docs/design/V2-SPEC-DEFECTS.md), ruled.**
- * `v2-library.html:119` writes `rgba(30,25,18,.36)` as a hard literal *outside* its own `:root`, so the
- * frozen `prefers-color-scheme` block cannot reach it and the dark Library dimmed exactly as much as the
- * light one — over a desk that is already near that colour. The owner ruled the corpus authoritative, as it
- * was for the serif (**D-005**) and the easings (**D-011**): `--scrim` is `ink@.34` light and `black@.50`
- * dark, and the dark half is deliberately *stronger*. This is one of the few places B3 does **not** transcribe
- * the Library file, and it is a ruling rather than an inference.
+ * ### ⚠️ The fill is a literal, and V2.1 has no scrim token
+ *
+ * `rgba(38,26,16,.42)` is written outside `:root`, exactly as V2's `rgba(30,25,18,.36)` was — so the
+ * `prefers-color-scheme` block cannot reach it and the dark sheet dims exactly as much as the light one,
+ * over a desk that is already near that colour. For V2 the owner ruled the corpus token authoritative
+ * ([D-022](docs/design/V2-SPEC-DEFECTS.md)); V2.1's palette **has no scrim token to rule onto** — it was
+ * not among the 25 the gate measured. So the literal is transcribed, and this is recorded as the same
+ * defect recurring rather than as a value that was chosen.
  */
 @Composable
 internal fun ZineActionScrim(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
@@ -249,8 +257,8 @@ internal fun ZineActionScrim(onDismiss: () -> Unit, modifier: Modifier = Modifie
         modifier
             .testTag(ZineActionScrimTestTag)
             .fillMaxSize()
-            .background(ZinelyTheme.v2Colors.scrim)
-            // `scrim.addEventListener('click', close)` — `:197`.
+            .background(ScrimFill)
+            // `scrim.onclick = close`.
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -266,14 +274,10 @@ internal fun ZineActionScrim(onDismiss: () -> Unit, modifier: Modifier = Modifie
  * decor-view raster the golden harness captures cannot see it. Parity rasters compose this directly.
  *
  * **D-021 — the five icons are text, and three of the six frozen glyphs are not in the bundled family.**
- * `.ic` is a styled `<span>` holding a literal character, so the faithful transcription is text rather than
- * geometry, and the A7 icon set has no marks for *open* or *duplicate* to substitute even if substituting
- * were parity. Measured against the app's own fonts: `↗`, `⇪` and `⌫` are in Inter; **`✎`, `⧉` and the
- * shelf's `⋯` are not**, so the platform's fallback draws them and their weight and shape vary by device.
- * They render as real glyphs rather than tofu on the test platform, which
- * `ZineActionSheetTest.every frozen glyph draws a real mark, not a tofu box` pins — but that is one
- * platform, and the register entry is open for the owner to decide whether a glyph the design cannot
- * control is acceptable here.
+ * `.ic` is a styled `<span>` holding a literal character, so the faithful transcription is text rather
+ * than geometry. Measured against the app's own fonts: `↗`, `⇪` and `⌫` are in Inter; **`✎`, `⧉` and the
+ * shelf's `⋯` are not**, so the platform's fallback draws them. V2.1 changes only their setting — each
+ * now sits in a 30dp tinted chip rather than floating in a 20dp slot.
  */
 @Composable
 internal fun ZineActionSheetSurface(
@@ -281,38 +285,57 @@ internal fun ZineActionSheetSurface(
     onAction: (ZineAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = ZinelyTheme.v2Colors
-    val type = ZinelyTheme.v2Typography
+    val colors = ZinelyTheme.v21Colors
 
     Column(
         modifier
             .testTag(ZineActionSheetTestTag)
             .fillMaxWidth()
+            // `box-shadow:0 -16px 40px -18px var(--soft-shadow)` — upward, which is the one shadow in
+            // the corpus that is not the hard offset. A sheet rising off the screen is the exception
+            // §5.1 allows: it is not a printed object resting on the desk, it is chrome above it.
             .zinelyV2Shadow(
                 listOf(
-                    // box-shadow:0 30px 60px -20px var(--shadow), 0 0 0 1px var(--hair)
-                    ZinelyV2ShadowLayer(dy = 30.dp, blur = 60.dp, spread = (-20).dp, color = colors.shadow),
-                    ZinelyV2ShadowLayer(dy = 0.dp, blur = 0.dp, spread = 1.dp, color = colors.hair),
+                    ZinelyV2ShadowLayer(
+                        dy = (-16).dp,
+                        blur = 40.dp,
+                        spread = (-18).dp,
+                        color = colors.softShadow,
+                    ),
                 ),
                 SheetShape,
             )
             .clip(SheetShape)
             .background(colors.paper)
+            // `border-top:2px solid var(--ink)` — only the top edge, so a `border` would be wrong: it
+            // would ring all four sides, three of which are off screen but two of which are rounded.
+            .drawBehind {
+                val w = SheetTopRule.toPx()
+                drawLine(
+                    color = colors.ink,
+                    start = Offset(0f, w / 2f),
+                    end = Offset(size.width, w / 2f),
+                    strokeWidth = w,
+                )
+            }
+            // `padding:0 0 var(--gap-xl)`.
+            .padding(bottom = ZinelyV21Dimens.gapXl)
             // `role="dialog" aria-label="Zine actions"`. The Dialog window carries the modality; this
             // carries the name TalkBack announces on entering it.
             .semantics { paneTitle = ZineActionSheetPaneTitle },
     ) {
-        // `.sh-head{padding:17px 20px 13px}`
+        ZineActionGrab()
+
+        // `.sh-head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md)}`
         Column(Modifier.padding(HeadPadding)) {
             Text(
                 text = target.title,
                 modifier = Modifier.testTag(ZineActionTitleTestTag),
                 style = TextStyle(
-                    // `.sh-ttl` names an Iowan/Palatino/Georgia stack at 600; **D-005** ruled the canonical
-                    // V2 serif is Fraunces at 500 and named this very selector. The register outranks the file.
-                    fontFamily = type.voice,
-                    fontWeight = FontWeight.Medium,
+                    fontFamily = ZinelyV21Fonts.Voice,
+                    fontWeight = FontWeight.Bold,
                     fontSize = TitleSize,
+                    lineHeight = TitleLineHeight,
                     color = colors.ink,
                 ),
             )
@@ -320,17 +343,38 @@ internal fun ZineActionSheetSurface(
                 text = target.subtitle,
                 modifier = Modifier
                     .testTag(ZineActionSubtitleTestTag)
-                    .padding(top = SubtitleGap),
+                    .padding(top = ZinelyV21Dimens.gapHair),
                 style = TextStyle(
-                    fontFamily = type.work,
+                    fontFamily = ZinelyV21Fonts.Work,
+                    fontWeight = FontWeight.Medium,
                     fontSize = SubtitleSize,
-                    color = colors.inkFaint,
+                    color = colors.inkSoft,
                     // `font-variant-numeric:tabular-nums` — the dates change under the same header, and
                     // proportional digits make the line twitch when they do.
                     fontFeatureSettings = TabularNumerals,
                 ),
             )
         }
+
+        // `border-bottom:1.5px dashed var(--hair)` on the head — the sheet's ONLY divider. V2 drew one
+        // above every row and an 8px desk band above Delete; V2.1's `.act{border:none}` deletes both.
+        Box(
+            Modifier
+                .testTag(ZineActionHeadDividerTestTag)
+                .fillMaxWidth()
+                .height(HeadDivider)
+                .drawBehind {
+                    drawLine(
+                        color = colors.hair,
+                        start = Offset(0f, size.height / 2f),
+                        end = Offset(size.width, size.height / 2f),
+                        strokeWidth = size.height,
+                        pathEffect = PathEffect.dashPathEffect(
+                            floatArrayOf(HeadDividerDash.toPx(), HeadDividerDash.toPx()),
+                        ),
+                    )
+                },
+        )
 
         ZineAction.entries.forEach { action ->
             ActionRow(action = action, onAction = onAction)
@@ -339,27 +383,56 @@ internal fun ZineActionSheetSurface(
 }
 
 /**
- * One `.act` row, with the border-top that separates it from whatever is above.
+ * `.grab{width:44px;height:5px;border-radius:var(--br-pill);background:var(--ink-faint);
+ * margin:var(--gap-md) auto var(--gap-xs);opacity:.5}`
  *
- * The separator is a sibling `Box` rather than a drawn line because a CSS `border-top` occupies layout: the
- * danger row's `8px` band pushes Delete down by eight pixels, and a border painted inside the row's own
- * bounds would put it in the same place while leaving the row eight pixels shorter.
+ * A handle the sheet does not use: there is no drag-to-dismiss in the frozen script. It is drawn because
+ * the design draws it, and it is **silent** because announcing "handle" to a reader that cannot drag it
+ * would name an affordance that is not there. The dismissal paths this sheet really has — the scrim and
+ * system back — are both reachable without it.
+ */
+@Composable
+private fun ZineActionGrab() {
+    Box(
+        Modifier
+            .testTag(ZineActionGrabTestTag)
+            .fillMaxWidth()
+            .padding(top = ZinelyV21Dimens.gapMd, bottom = ZinelyV21Dimens.gapXs),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier
+                .size(width = GrabWidth, height = GrabHeight)
+                .clip(RoundedCornerShape(ZinelyV21Dimens.radiusPill))
+                .background(ZinelyTheme.v21Colors.inkFaint.copy(alpha = GrabOpacity)),
+        )
+    }
+}
+
+/**
+ * One `.act` row.
+ *
+ * ```css
+ * .act{display:flex;align-items:center;gap:var(--gap-lg);padding:var(--gap-lg) var(--gap-xl);
+ *      font-size:1rem;font-weight:500;color:var(--ink);border:none}
+ * .act .ic{width:30px;height:30px;border-radius:var(--br-sm);background:var(--butter-tint);
+ *          color:var(--ink-soft);font-size:.95rem}
+ * .act:active{background:var(--leaf-tint)}
+ * .act.danger{color:var(--jam-text)} .act.danger .ic{background:var(--berry-tint);color:var(--jam-text)}
+ * ```
+ *
+ * **`:active`, not `:hover`.** V2's rows washed on hover — a stylus/mouse state that is no state at all
+ * under a finger, transcribed because the design stated it. V2.1 states the press instead, which is the
+ * state a touch device actually has. The wash is therefore visible on every device rather than on none.
  */
 @Composable
 private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
-    val colors = ZinelyTheme.v2Colors
-    val type = ZinelyTheme.v2Typography
+    val colors = ZinelyTheme.v21Colors
 
     val interaction = remember { MutableInteractionSource() }
-    val hovered by interaction.collectIsHoveredAsState()
+    val pressed by interaction.collectIsPressedAsState()
+    val ink = if (action.danger) colors.jamText else colors.ink
 
-    Box(
-        Modifier
-            .testTag(zineActionSeparatorTestTag(action))
-            .fillMaxWidth()
-            .height(if (action.danger) DangerSeparator else HairlineSeparator)
-            .background(if (action.danger) colors.desk else colors.hair),
-    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -369,99 +442,102 @@ private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
                 interactionSource = interaction,
                 onClick = { onAction(action) },
             )
-            // `.act:hover{background:var(--matcha-tint)}` · `.act.danger:hover{background:var(--straw-tint)}`.
-            // Hover is a stylus/mouse state on Android and no state at all under a finger; transcribed
-            // because the design states it, and because a desktop-mode window really does hover.
-            .background(
-                when {
-                    !hovered -> Color.Transparent
-                    action.danger -> colors.strawberryTint
-                    else -> colors.matchaTint
-                },
-            )
-            .padding(RowPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(RowGap),
-    ) {
-        Text(
-            text = action.glyph,
-            modifier = Modifier.width(IconSlot),
-            textAlign = TextAlign.Center,
-            style = TextStyle(
-                fontFamily = type.work,
-                fontSize = RowTextSize,
-                color = rowInk(action).copy(alpha = IconOpacity),
+            .background(if (pressed) colors.leafTint else Color.Transparent)
+            .padding(
+                horizontal = ZinelyV21Dimens.gapXl,
+                vertical = ZinelyV21Dimens.gapLg,
             ),
-        )
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapLg),
+    ) {
+        Box(
+            Modifier
+                .size(IconChip)
+                .clip(RoundedCornerShape(ZinelyV21Dimens.radiusSm))
+                .background(if (action.danger) colors.berryTint else colors.butterTint),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = action.glyph,
+                textAlign = TextAlign.Center,
+                style = TextStyle(
+                    fontFamily = ZinelyV21Fonts.Work,
+                    fontSize = IconSize,
+                    color = if (action.danger) colors.jamText else colors.inkSoft,
+                ),
+            )
+        }
         Text(
             text = action.label,
             style = TextStyle(
-                // `font-family:inherit` at the browser's default 16px — the case
-                // `ZinelyV2Typography.base` documents by name. No line-height: the Library's body sets none.
-                fontFamily = type.work,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontWeight = FontWeight.Medium,
                 fontSize = RowTextSize,
-                color = rowInk(action),
+                color = ink,
             ),
         )
     }
 }
 
-@Composable
-private fun rowInk(action: ZineAction): Color =
-    if (action.danger) ZinelyTheme.v2Colors.consequence else ZinelyTheme.v2Colors.ink
-
 // ---------------------------------------------------------------------------------------------
-// The frozen values. Per-component literals, per the D-007 ruling — no scale is published, and this
-// sheet's own eleven numbers sit on no ladder either (10, 13, 14, 15, 17, 20, 20, 24, 30, 60, 115%).
+// The frozen values, transcribed from `v21-library.html`. Spacing is on the published scale; the
+// sizes below are ratios and stay literal.
 // ---------------------------------------------------------------------------------------------
 
-/** `.sheet{left:10px;right:10px;bottom:10px}` — one inset, three edges. */
-private val SheetInset = 10.dp
-
-/** `border-radius:20px`, all four corners: the card touches no edge to square off against. */
-private val SheetShape = RoundedCornerShape(20.dp)
-
-// The scrim's fill is deliberately **not** here: `ZineActionScrim` takes `ZinelyV2Colors.scrim` from the
-// corpus, per the **D-022** ruling. The Library file's own `rgba(30,25,18,.36)` is stale and is not
-// transcribed — the one place in B3 where a frozen Library value loses to the shared token layer, and it
-// lost by ruling rather than by inference. See `ZineActionScrim`'s KDoc.
-
-/** `transform:translateY(115%)` of the sheet's own height. */
-private const val SheetSlide = 1.15f
-
-/** `transition:transform .24s` — on **settle** per the D-011 ruling, not the file's own curve. */
-private const val SheetDurationMillis = 240
-
-/** `transition:opacity .2s` on the scrim — **standard**, per the same ruling's table. */
-private const val ScrimDurationMillis = 200
-
-/** `.sh-head{padding:17px 20px 13px}` */
-private val HeadPadding = PaddingValues(
-    start = 20.dp,
-    top = 17.dp,
-    end = 20.dp,
-    bottom = 13.dp,
+/** `border-radius:var(--br-xl) var(--br-xl) 0 0` — two corners, because the card touches three edges. */
+private val SheetShape: Shape = RoundedCornerShape(
+    topStart = ZinelyV21Dimens.radiusXl,
+    topEnd = ZinelyV21Dimens.radiusXl,
+    bottomEnd = 0.dp,
+    bottomStart = 0.dp,
 )
 
-/** `.sh-ttl{font-size:1.12rem}` — 1.12 × 16, unrounded for the reason B1 carried 18.56sp. */
-private val TitleSize = 17.92.sp
+/** `border-top:2px solid var(--ink)`. */
+private val SheetTopRule = 2.dp
 
-/** `.sh-sub{font-size:.78rem;margin-top:2px}` */
+/**
+ * `.scrim{background:rgba(38,26,16,.42)}` — a literal, and V2.1 publishes no scrim token to prefer over
+ * it. See [ZineActionScrim] for why that is recorded rather than quietly tokenised.
+ */
+private val ScrimFill = Color(0x6B261A10)
+
+/** `transform:translateY(103%)` of the sheet's own height. */
+private const val SheetSlide = 1.03f
+
+/** `transition:transform .26s` — on **settle** per the D-011 ruling, not the file's own curve. */
+private const val SheetDurationMillis = 260
+
+/** `transition:opacity .22s` on the scrim — **standard**, per the same ruling's table. */
+private const val ScrimDurationMillis = 220
+
+/** `.grab{width:44px;height:5px;opacity:.5}` */
+private val GrabWidth = 44.dp
+private val GrabHeight = 5.dp
+private const val GrabOpacity = 0.5f
+
+/** `.sh-head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md)}` */
+private val HeadPadding = PaddingValues(
+    start = ZinelyV21Dimens.gapXl,
+    top = ZinelyV21Dimens.gapXs,
+    end = ZinelyV21Dimens.gapXl,
+    bottom = ZinelyV21Dimens.gapMd,
+)
+
+/** `border-bottom:1.5px dashed var(--hair)`; the dash rhythm is a browser default, approximated. */
+private val HeadDivider = 1.5.dp
+private val HeadDividerDash = 3.dp
+
+/** `.sh-ttl{font-size:1.22rem;line-height:1.15}` — 19.52px, unrounded. */
+private val TitleSize = 19.52.sp
+private val TitleLineHeight = 22.448.sp
+
+/** `.sh-sub{font-size:.78rem;font-weight:500;margin-top:var(--gap-hair)}` */
 private val SubtitleSize = 12.48.sp
-private val SubtitleGap = 2.dp
 private const val TabularNumerals = "tnum"
 
-/** `.sheet .act{padding:15px 20px;gap:14px}` */
-private val RowPadding = PaddingValues(horizontal = 20.dp, vertical = 15.dp)
-private val RowGap = 14.dp
-
-/** `font-size:1rem` — the inherited browser default the four frozen chrome controls rely on. */
+/** `.act{font-size:1rem;font-weight:500}` */
 private val RowTextSize = 16.sp
 
-/** `.sheet .ic{width:20px;opacity:.85}` */
-private val IconSlot = 20.dp
-private const val IconOpacity = 0.85f
-
-/** `border-top:1px solid var(--hair)` on every row · `8px solid var(--desk)` above Delete. */
-private val HairlineSeparator = 1.dp
-private val DangerSeparator = 8.dp
+/** `.act .ic{width:30px;height:30px;font-size:.95rem}` = 15.2px. */
+private val IconChip = 30.dp
+private val IconSize = 15.2.sp

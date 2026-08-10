@@ -1,17 +1,20 @@
 package com.aritr.zinely.feature.library
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,80 +27,80 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
-import com.aritr.zinely.ui.theme.ZinelyV2Dimens
-import com.aritr.zinely.ui.theme.ZinelyV2Settle
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 
 /** The `⋯` on one placed cover — `.more`, keyed by position like [zineShelfCoverTestTag]. */
 internal fun zineShelfMoreTestTag(index: Int): String = "shelf-more-$index"
 
 /**
- * `.zine` — one object on the shelf, and the two ways into it — `v2-library.html:51-54`, `:73-77`, `:199-209`.
+ * `.zine` — one object on the shelf — `docs/design/mockups/v21-library.html`.
  *
  * ```css
- * .zine{position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .16s}
- * .zine:active{transform:translateY(2px) scale(.985)}
- * .zine:focus-visible{outline:2px solid var(--matcha-text);outline-offset:6px;border-radius:9px}
- * .more{position:absolute;bottom:8px;right:8px;z-index:2;width:34px;height:34px;opacity:.5;border-radius:50%}
+ * .zine{appearance:none;border:0;background:none;padding:0;cursor:pointer;text-align:left;
+ *       display:flex;flex-direction:column;gap:var(--gap-sm)}
+ * .name{font-family:var(--voice);font-weight:700;font-size:1rem;line-height:1.2;margin:0 var(--gap-hair)}
+ * .sub{font-size:.74rem;color:var(--ink-soft);margin:var(--gap-hair) var(--gap-hair) 0;font-weight:500}
  * ```
  *
- * The frozen script states the interaction in one line — *"tap = open zine · long-press = actions · …
- * button = actions"* (`:199`) — and the CSS states what a press looks like. That is the whole of B3's
- * behaviour on the shelf; the sheet those two gestures open is [ZineActionSheet].
+ * ### The title moved off the cover, and that is the whole re-freeze in one component
  *
- * ### Why the `⋯` is a sibling of the cover and not inside it
+ * V2 printed the zine's name *on* the cover. V2.1 prints nothing on it — the cover is a physical object
+ * with a mark, a spine, tape and a postmark ([ZineV21Cover]) — and puts the name **below** it, in the
+ * editorial voice, with the date under that. So this file changed from "a wrapper around a cover" to "a
+ * cover and its caption", and the press, which V2 put on the wrapper, now belongs to the cover alone:
+ * `.zine:active .cover`, not `.zine:active`.
  *
- * The frozen markup nests `.more` inside `.cover`, and B1 shipped an `overlay` slot to match. B3 deleted
- * that slot. The cover is the tappable object, and the seam that gives it a real `android.widget.Button`
- * ends in `clearAndSetSemantics` — which discards every descendant's semantics, a nested button's included.
- * Nesting the affordance would therefore have produced a `⋯` that no screen reader could reach: the precise
- * opposite of the thing `.more` exists to be. As a sibling inside the same wrapper it occupies the same
- * pixels (the wrapper has no padding of its own, so `BottomEnd` + 8dp is the cover's own bottom-right) and
- * stays a node of its own.
+ * ### The stamp and the sub are one field, split where the frozen markup splits it
  *
- * ### The `⋯` is not a redundant control
+ * `data-sub="A4 · 2 days ago"` is the *sheet's* line. The shelf shows its two halves in two places: the
+ * paper size becomes the cover's postmark and the date becomes `.sub`. That is [zineShelfStampLabel] and
+ * [zineShelfDateLabel], which are pure and tested — a shelf that printed "A4 · 2 days ago" under a cover
+ * carrying "A4" would be the same information twice, which is what the design moved it to avoid.
  *
- * The frozen file explains itself where it declares it: *"quiet, visible actions affordance (the fallback;
- * long-press is the accelerator)"* (`:72`). It is `display:flex` at `opacity:.5` **unconditionally** — no
- * hover gate, no long-press-discovered state — because it is the path a screen reader, a keyboard and a
- * switch device can reach, and it is the frozen answer to the *"screen-reader path for long-press"* gate the
- * file's own header lists (`:8`). It is drawn at every rest state, so it belongs to every raster of a shelf.
+ * ### ⚠️ The `⋯` is kept, and the frozen file does not draw it
  *
- * ### Two platform obligations the CSS cannot state, both authorised and both logged
+ * **This is a deliberate, declared departure from the freeze, and the owner should rule on it.** The V2.1
+ * prototype's `.zine` has no actions affordance at all: its script opens the sheet on a plain `onclick`,
+ * which is a demonstration shortcut (it is the only way to see the sheet in a browser), not a statement
+ * that tap-opens-actions is the interaction. Read as a specification, the file therefore says nothing
+ * about how actions are reached — it does not *remove* the affordance so much as never mention it.
  *
- * - **The touch target.** `.more` is 34×34, under the 48dp floor
- *   ([D-009](docs/design/V2-SPEC-DEFECTS.md)). The ruling is that targets are met *"in a manner that is
- *   visually subordinate to the frozen design"* and that the design must not be resized to suit them — so
- *   the mark stays 34dp and the seam's `minimumInteractiveComponentSize()` grows only what a finger hits.
- *   Both halves are asserted, because meeting the floor by drawing a bigger button would pass a naïve test.
- * - **The long-press timing.** The mock fires at 420ms (`:202`); this uses the platform's own long-press
- *   timeout via `combinedClickable`, per the implementation guide's rule that the HTML is a browser mock and
- *   the device is real. Recorded on [zinelyV2Control], which is where the gesture now lives.
+ * V2 did mention it, and gave the reason: the `⋯` is *"the path a screen reader, a keyboard and a switch
+ * device can reach"*, and it is the frozen answer to that file's own **screen-reader path for long-press**
+ * gate. Dropping it to match a prototype that is silent on the question would trade a stated
+ * accessibility guarantee for an inference, so it is kept — under the freeze's own "accessibility
+ * improvements are allowed after freeze" clause, at the smallest visible cost this layout permits.
  *
- * ### The haptic, and why there is exactly one
+ * It has **moved**, because V2.1 leaves it nowhere to stand on the cover: `.stamp` occupies the
+ * bottom-right corner and overhangs it, which is exactly where V2 put the `⋯`. It now sits at the
+ * trailing edge of the caption row, opposite the name, where it collides with nothing and stays a
+ * sibling — the seam ends in `clearAndSetSemantics`, so a nested `⋯` would be unreachable by the very
+ * services it exists for.
  *
- * A long-press that opens a sheet gets [ZinelyHaptic.Boundary] — V1's `ShelfCard` fires the same verb on the
- * same gesture on the same object, and the platform's own buzz is suppressed so only one plays. A **tap
- * fires none**: the note on V1's `zinelyControl` records the spec's vocabulary as *"Open = nothing"*, and the
- * tap's confirmation is the screen it opens. Neither is invented here; both are read off the repository,
- * and the frozen HTML says nothing about haptics because HTML cannot.
+ * ### Focus, borrowed from the file's own sibling control
+ *
+ * `.zine` carries no `:focus-visible` rule in V2.1; `.start` does — `outline:2px solid var(--ink);
+ * outline-offset:5px`. Transcribing that rather than V2's `matchaText`/6px ring keeps this file inside
+ * the frozen corpus instead of inventing a focus appearance, which D-008 forbids.
  *
  * @param zine what to print and, for the sheet, what to disclose.
- * @param index the position this object stands at — the identity a position-keyed grid has, and what both
- *   callbacks report. **B5** replaces it with a project id.
- * @param onOpen tap. Where it goes is B5's: the frozen script's own comment marks it *"(mock: no-op)"*.
- * @param onActions long-press, or the `⋯`. The caller opens [ZineActionSheet] with this zine.
+ * @param index the position this object stands at. The corpus keys tilt and tape placement off
+ *   `:nth-child(3n+k)`, so the position is visual as well as identifying.
+ * @param onOpen tap.
+ * @param onActions long-press, or the `⋯`.
  */
 @Composable
 internal fun ZineOnShelf(
@@ -107,68 +110,41 @@ internal fun ZineOnShelf(
     onActions: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
 
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val focused by interaction.collectIsFocusedAsState()
 
-    // `transition:transform .16s` — settle, per the D-011 ruling, and collapsed to a cut under reduced
-    // motion by the same policy B1's cover shadow follows.
-    val press by animateFloatAsState(
-        targetValue = if (pressed) 1f else 0f,
-        animationSpec = tween(
-            durationMillis = ZinelyTheme.v2Motion.durationMillis(PressDurationMillis),
-            easing = ZinelyV2Settle,
-        ),
-        label = "zineOnShelfPress",
-    )
+    val fill = zine.recipe.surface.v21Fill(colors)
+    val markInk = zine.recipe.surface.v21MarkInk(colors)
 
-    Box(
-        modifier
-            // `:focus-visible{outline:2px solid var(--matcha-text);outline-offset:6px;border-radius:9px}`.
-            // The Library is the only frozen surface that authored a focus appearance, which is why this is
-            // transcription rather than the invention D-008 forbids — and the ring sits outside the
-            // transform so a pressed, focused cover does not carry a shrinking outline.
-            .drawBehind {
-                if (!focused) return@drawBehind
-                // A CSS outline is drawn *outside* the box: its inner edge sits `outline-offset` out from
-                // the edge and its thickness grows outward, so the stroke's centre line is one half-width
-                // beyond that. Drawn here rather than with a `border`, which would have to eat 6dp of
-                // layout to sit outside — and would then shrink the cover to make room for its own ring.
-                val stroke = FocusRingWidthPx()
-                val out = FocusRingOffset.toPx() + stroke / 2f
-                drawRoundRect(
-                    color = colors.matchaText,
-                    topLeft = Offset(-out, -out),
-                    size = Size(size.width + 2 * out, size.height + 2 * out),
-                    cornerRadius = CornerRadius(FocusRingRadius.toPx()),
-                    style = Stroke(width = stroke),
-                )
-            }
-            // `translateY(2px) scale(.985)` about the default 50% 50% origin. On the wrapper, so the `⋯`
-            // travels with the object it belongs to — `.zine:active` transforms the whole item in CSS.
-            .graphicsLayer {
-                translationY = PressTranslation.toPx() * press
-                val scale = 1f - (1f - PressScale) * press
-                scaleX = scale
-                scaleY = scale
-            },
-    ) {
-        ZineCover(
-            title = zine.title,
-            recipe = zine.recipe,
-            pressed = pressed,
-            modifier = Modifier
-                // Before the seam, never after: the seam ends in `clearAndSetSemantics`, and a tag chained
-                // behind it leaves a node no test and no service can find.
+    Box(modifier) {
+        Column(
+            Modifier
+                // `.start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}`. A CSS outline
+                // is drawn outside the box and grows outward, so the stroke's centre line sits one half
+                // width beyond the offset — drawn rather than bordered, which would eat layout.
+                .drawBehind {
+                    if (!focused) return@drawBehind
+                    val stroke = FocusRingWidth.toPx()
+                    val out = FocusRingOffset.toPx() + stroke / 2f
+                    drawRoundRect(
+                        color = colors.ink,
+                        topLeft = Offset(-out, -out),
+                        size = Size(size.width + 2 * out, size.height + 2 * out),
+                        cornerRadius = CornerRadius(FocusRingRadius.toPx()),
+                        style = Stroke(width = stroke),
+                    )
+                }
+                // Before the seam, never after: the seam ends in `clearAndSetSemantics`, and a tag
+                // chained behind it leaves a node no test and no service can find.
                 .testTag(zineShelfCoverTestTag(index))
                 .zinelyV2Control(
-                    // The frozen `.zine` carries no `aria-label` — it is a `<div>` with pointer handlers, and
-                    // only `.more` was given one. An unnamed control reaches TalkBack silent, so the object's
-                    // own name stands in: the title it already prints, not a sentence invented for it. The
-                    // gestures are named by their action twins instead.
+                    // `.zine` carries no `aria-label` — it is a `<button>` whose accessible name is its
+                    // own text content, which is the name and the date. The name alone is what a user
+                    // calls the object; the date is disclosure, and it follows in `.sub`'s own node.
                     label = zine.title,
                     interactionSource = interaction,
                     onClick = { onOpen(index) },
@@ -178,24 +154,82 @@ internal fun ZineOnShelf(
                     },
                     onLongClickLabel = LongPressActionLabel,
                 ),
-        )
+            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        ) {
+            ZineV21Cover(
+                fill = fill,
+                stampLabel = zineShelfStampLabel(zine.subtitle),
+                index = index,
+                pressed = pressed,
+                modifier = Modifier.fillMaxWidth(),
+            ) { markModifier ->
+                Image(
+                    imageVector = zine.recipe.stamp.v21Mark(),
+                    // Decorative: the cover's meaning is its name, which is printed right below it.
+                    // A reader announcing "envelope" over *Letters home* invents content.
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(markInk),
+                    modifier = markModifier.aspectRatio(1f),
+                )
+            }
+
+            // `.name` / `.sub`. The end padding is the `⋯`'s: it is a sibling, so it takes no layout
+            // of its own, and without the reservation a long name would run under it.
+            Column(Modifier.padding(end = MoreSize)) {
+                Text(
+                    text = zine.title,
+                    style = NameStyle(colors.ink),
+                    modifier = Modifier.padding(horizontal = ZinelyV21Dimens.gapHair),
+                )
+                Text(
+                    text = zineShelfDateLabel(zine.subtitle),
+                    style = SubStyle(colors.inkSoft),
+                    modifier = Modifier.padding(
+                        start = ZinelyV21Dimens.gapHair,
+                        end = ZinelyV21Dimens.gapHair,
+                        top = ZinelyV21Dimens.gapHair,
+                    ),
+                )
+            }
+        }
+
         MoreButton(
             title = zine.title,
-            ink = zine.recipe.surface.palette(ZinelyTheme.contentInks).onFill,
+            ink = colors.inkSoft,
             onClick = { onActions(index) },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(MoreInset)
                 .testTag(zineShelfMoreTestTag(index)),
         )
     }
 }
 
 /**
- * `.more` — the quiet `⋯`.
+ * The paper size, as the cover's postmark — the first half of `data-sub="A4 · 2 days ago"`.
  *
- * `color:currentColor` inherits the cover's printed ink, so the mark is the same colour as the title beside
- * it and changes with the stock. `opacity:.5` at rest, `.95` with a background wash on hover or focus.
+ * Pure, and split on the frozen separator rather than parsed: the subtitle is authored by whoever built
+ * the item, and a subtitle that carries no `·` has no size to stamp, so it stamps nothing rather than
+ * guessing. Both halves are trimmed because the frozen string spaces the separator.
+ */
+internal fun zineShelfStampLabel(subtitle: String): String =
+    subtitle.substringBefore(SubtitleSeparator, missingDelimiterValue = "").trim()
+
+/**
+ * The date, as `.sub` — the second half of the same string, and the whole of it when there is no `·`.
+ *
+ * The fallback is the useful direction: a shelf that showed nothing under a cover because the subtitle
+ * was unseparated would look like missing data, where showing the whole line looks like the line.
+ */
+internal fun zineShelfDateLabel(subtitle: String): String =
+    subtitle.substringAfter(SubtitleSeparator, missingDelimiterValue = subtitle).trim()
+
+private const val SubtitleSeparator = "·"
+
+/**
+ * `.more` — the quiet `⋯`, kept from V2 and moved. See the departure note on [ZineOnShelf].
+ *
+ * Inherits `ink-soft` rather than the cover's printed ink, because it no longer sits on the cover: it
+ * sits on the desk beside the date, and it is the same weight of mark as that date.
  */
 @Composable
 private fun MoreButton(
@@ -213,15 +247,10 @@ private fun MoreButton(
         modifier
             .size(MoreSize)
             .clip(CircleShape)
-            // `.more:hover,.more:focus-visible{opacity:.95;background:rgba(0,0,0,.10)}`
             .background(if (lit) MoreLitWash else Color.Transparent)
-            // `.more:focus-visible{outline:2px solid currentColor;outline-offset:0}` — a ring on the circle,
-            // since `border-radius:50%` shapes the outline too. Drawn *outside* the 34px box like `.zine`'s,
-            // because that is what a CSS outline does at any offset including zero: `Modifier.border` paints
-            // inside the box and would eat 2px of the mark instead of surrounding it.
             .drawBehind {
                 if (!focused) return@drawBehind
-                val stroke = FocusRingWidthPx()
+                val stroke = FocusRingWidth.toPx()
                 drawCircle(
                     color = ink,
                     radius = (size.minDimension + stroke) / 2f,
@@ -229,7 +258,7 @@ private fun MoreButton(
                 )
             }
             .zinelyV2Control(
-                // `aria-label="Actions for Sunday market"` — the frozen file's own string, `:149-154`.
+                // `aria-label="Actions for Sunday market"` — V2's own string, kept with the affordance.
                 label = "Actions for $title",
                 interactionSource = interaction,
                 onClick = onClick,
@@ -240,7 +269,7 @@ private fun MoreButton(
             text = MoreGlyph,
             textAlign = TextAlign.Center,
             style = TextStyle(
-                fontFamily = ZinelyTheme.v2Typography.work,
+                fontFamily = ZinelyV21Fonts.Work,
                 fontSize = MoreGlyphSize,
                 color = ink.copy(alpha = if (lit) MoreLitOpacity else MoreRestOpacity),
             ),
@@ -249,35 +278,42 @@ private fun MoreButton(
 }
 
 // ---------------------------------------------------------------------------------------------
-// The frozen values — per component, per the D-007 ruling.
+// The frozen values — per component, per the D-007 ruling that V2.1's §3.3 did not overturn.
 // ---------------------------------------------------------------------------------------------
 
-/** `.zine:active{transform:translateY(2px) scale(.985)}` */
-private val PressTranslation = 2.dp
-private const val PressScale = 0.985f
+/** `.name{font-family:var(--voice);font-weight:700;font-size:1rem;line-height:1.2}` */
+private fun NameStyle(color: Color) = TextStyle(
+    fontFamily = ZinelyV21Fonts.Voice,
+    fontWeight = FontWeight.Bold,
+    fontSize = 16.sp,
+    lineHeight = 19.2.sp,
+    color = color,
+)
 
-/** `transition:transform .16s` */
-private const val PressDurationMillis = 160
+/** `.sub{font-size:.74rem;font-weight:500}` against a 16px root — 11.84px, carried unrounded. */
+private fun SubStyle(color: Color) = TextStyle(
+    fontFamily = ZinelyV21Fonts.Work,
+    fontWeight = FontWeight.Medium,
+    fontSize = 11.84.sp,
+    letterSpacing = 0.em,
+    color = color,
+)
 
-/** `.zine:focus-visible{outline-offset:6px;border-radius:9px}` */
-private val FocusRingOffset = 6.dp
-private val FocusRingRadius = 9.dp
+/** `.start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}` — the file's own ring. */
+private val FocusRingWidth = 2.dp
+private val FocusRingOffset = 5.dp
+private val FocusRingRadius = ZinelyV21Dimens.radiusSm
 
-/** `outline:2px` — the one number all four frozen focus rules agree on, so A4 tokenised it. */
-private fun DrawScope.FocusRingWidthPx(): Float = with(this) { ZinelyV2Dimens.FocusRingWidth.toPx() }
-
-/** `.more{bottom:8px;right:8px;width:34px;height:34px;font-size:1.05rem}` */
-private val MoreInset = 8.dp
+/** V2's `.more{width:34px;height:34px;font-size:1.05rem}`, carried with the affordance. */
 private val MoreSize = 34.dp
 private val MoreGlyphSize = 16.8.sp
 
 /**
- * `⋯` U+22EF, the frozen character — **not in the bundled Inter** (D-021), so the device's fallback draws
- * the most visible mark B3 adds. Named here so the ruling costs one line.
+ * `⋯` U+22EF — **not in the bundled Inter** (D-021), so the device's fallback draws it. Named here so
+ * the ruling costs one line.
  */
 private const val MoreGlyph = "⋯"
 
-/** `opacity:.5` at rest, `.95` lit. */
 private const val MoreRestOpacity = 0.5f
 private const val MoreLitOpacity = 0.95f
 
@@ -287,7 +323,7 @@ private val MoreLitWash = Color.Black.copy(alpha = 0.10f)
 /**
  * The name of the long-press gesture in the platform tree.
  *
- * The frozen file names the *sheet* (`aria-label="Zine actions"`) and the `⋯` (`"Actions for …"`) but never
- * the gesture, because a browser has no such concept. "Actions" is the shortest name consistent with both.
+ * Neither frozen file names the gesture, because a browser has no such concept. "Actions" is the
+ * shortest name consistent with the sheet's own `aria-label="Zine actions"`.
  */
 private const val LongPressActionLabel = "Actions"

@@ -26,6 +26,9 @@ import com.aritr.zinely.ui.components.ZSnackbar
 import com.aritr.zinely.ui.components.ZToast
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Grain
+import com.aritr.zinely.ui.theme.rememberZinelyV21GrainBrush
+import com.aritr.zinely.ui.theme.zinelyV21Grain
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 
@@ -188,7 +191,7 @@ public fun ZineLibraryScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
     val haptics = ZinelyTheme.haptics
 
     var openSheet by remember { mutableStateOf<LibrarySheet?>(null) }
@@ -235,7 +238,8 @@ public fun ZineLibraryScreen(
         modifier
             .testTag(ZineLibraryTestTag)
             .fillMaxSize()
-            // `.phone{background:var(--desk)}` — the ground B1 and B2 both left to their caller.
+            // `.phone{background:var(--desk)}` — the ground the shelf and the dock both leave to their
+            // caller.
             .background(colors.desk),
         // NOTE: no `windowInsetsPadding` here, deliberately. `.dock` transcribes
         // `calc(22px + env(safe-area-inset-bottom))` as a *consuming* pad, so a second consumer on this
@@ -271,6 +275,28 @@ public fun ZineLibraryScreen(
                 modifier = Modifier.fillMaxSize().testTag(ZineLibraryShelfTestTag),
             )
         }
+
+        // `.grainy::before` — the desk's own paper tooth: `background-size:160px 160px`,
+        // `mix-blend-mode:soft-light`, `opacity:.55`. Chrome grain, not paper grain: it blends with
+        // what is already painted beneath rather than darkening it like ink.
+        //
+        // **A sibling here, and its position is the transcription.** `z-index:2` puts it above the
+        // shelf (`z-index:auto`) and below the dock (`40`) and the sheet (`46`) — so the covers wear
+        // the desk's tooth and the chrome above them does not. Written as a modifier on the root Box it
+        // would paint after every child, grain the dock's gradient, and look almost right.
+        //
+        // `.phone::after` is a SECOND grain layer in the frozen file, at `z-index:60` over everything.
+        // That one is the prototype's *studio* ground — the simulated device sitting on a page — and is
+        // excluded on the same reasoning that excluded `--stage` from the palette.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .zinelyV21Grain(
+                    rememberZinelyV21GrainBrush(),
+                    ZinelyV21Grain.BakedAlpha * DeskGrainOpacity,
+                    ZinelyV21Grain.ChromeBlend,
+                ),
+        )
 
         // `.dock{position:absolute;left:0;right:0;bottom:0}` — over the shelf, which scrolls under it and
         // clears it with its own `padding-bottom:152px`. In a `Column` after the shelf it would look
@@ -361,3 +387,6 @@ private const val LoadingPlaceholderCount = 4
  * zines never deletes one.
  */
 private val TransientBottomInset = 96.dp
+
+/** `.grainy::before{opacity:.55}` — the effective strength is this times the tile's baked `.42`. */
+private const val DeskGrainOpacity = 0.55f
