@@ -82,29 +82,33 @@ import com.aritr.zinely.ui.R
  * reasoning that excluded `--stage` from the palette. Per-surface by the D-007 ruling, so these stay at
  * their call sites rather than becoming tokens.
  *
- * ### What a surface actually shows is **half** the arithmetic, and that is correct
+ * ### What a rendered surface shows, and what predicts it
  *
- * Measured off the first parity raster rather than assumed. The tile's own luma is `mean 0.7322,
- * sd 0.0598`, so a `multiply` at 0.21 over a base of luma *B* predicts a rendered sd of
- * `B × 0.21 × 0.0598`. Sampled inside two rendered covers:
+ * Measured off the parity rasters rather than assumed, and **rewritten after a review falsified the
+ * first model**. The tile is RGBA: the noise lives in *both* its luma and its alpha, so the quantity a
+ * `multiply` at effective alpha *a* over a base of luma *B* modulates is `a · α · (1 − l)`, not `a · l`.
+ * Measured over the tile: luma `mean 0.7322, sd 0.0598`; alpha `mean 0.5002, sd 0.1185`; and
+ * `sd(α · (1 − l)) = 0.04232`. Drawing the 160px tile at 130dp resamples it bilinearly, which averages
+ * neighbours of a field whose lattice cell is ~1.2px and costs a further factor of **0.624** — measured
+ * on the resampled tile, not inferred. Together: `sd ≈ B × 0.21 × 0.04232 × 0.624`.
  *
- * | Surface | base | predicted sd | measured sd | ratio |
- * |---|---|---|---|---|
- * | `.ink-leaf` | 84.2 | 1.058 | 0.528 | **0.50** |
- * | `.paper-s` | 237.4 | 2.983 | 1.447 | **0.49** |
+ * | Surface | base (Rec.709) | predicted sd | measured sd |
+ * |---|---|---|---|
+ * | `.ink-leaf` | 105.1 | 0.600 | **0.643** |
+ * | `.paper-s` | 246.9 | 1.370 | **1.382** |
  *
- * Two bases three times apart, the same ratio to two decimals — systematic, not noise. The cause is
- * **resampling**: the tile is authored at 160px and drawn at 130dp, and interpolating a noise field
- * whose lattice cell is ~1.2px averages neighbours and halves its contrast.
+ * The means match to within 0.03/255, which is the load-bearing part: it proves the effective alpha
+ * `0.21 = 0.42 × 0.5` is applied **exactly once**, so no double-multiplication or dropped factor is
+ * hiding in the chain. The sds land within 7% and 1%.
  *
- * **This is parity, not a defect.** `background-size:130px 130px` makes the browser resample the same
- * 160px tile the same way, so the prototype loses the same contrast. Do **not** "correct" it by
- * doubling the alpha — that would make Compose diverge from the specification in the name of matching
- * an arithmetic prediction the specification never made. Recorded because a future reader who does the
- * multiplication and then samples a screenshot will find the factor of two and reach for exactly that
- * fix. (Recorded also as the reference measurement: the same sampling on a rendered surface is now the
- * cheapest way to prove the grain is drawing at all, which is a question a flat-looking ink cover
- * genuinely raises.)
+ * An earlier version of this section quoted a single luma sd, found rendered contrast at *half* its
+ * prediction, and named resampling as the whole cause. Two of those three were wrong: the model omitted
+ * alpha entirely, and resampling is 0.624 rather than 0.50. **The conclusion survives** — the shortfall
+ * against a naive prediction is parity, not a defect, because `background-size:130px 130px` makes the
+ * browser resample the same 160px tile the same way. Do **not** "correct" it by raising the alpha: that
+ * would diverge from the specification to match an arithmetic prediction the specification never made.
+ * Recorded because the cheapest proof that the grain is drawing at all is to sample a rendered surface
+ * and compare — a question a flat-looking ink cover genuinely raises.
  *
  * Note the ratio V2 had and V2.1 does not: V2's Library asked for grain **four to seven times** stronger
  * than any Bench or Proof surface, ruled deliberate as **D-013**. V2.1's five surfaces span 0.147 to

@@ -17,7 +17,8 @@ import androidx.compose.ui.unit.dp
  * checkable against the source by eye, which a sequence of `moveTo`/`curveTo` calls is not.
  *
  * All six share the frozen geometry: a `0 0 24 24` viewport, `stroke-width:1.6`, `fill:none`,
- * `stroke-linecap:round`. [Rings] is the one exception the file itself makes — it is drawn from two
+ * `stroke-linecap:round`, and SVG's default `miter` join, which none of the six overrides.
+ * [Rings] is the one exception the file itself makes — it is drawn from two
  * `<circle>` elements, which carry no linecap because a closed path has no ends.
  *
  * ### These are decorative, and the semantics say so
@@ -97,7 +98,10 @@ private fun mark(
             stroke = SolidColor(Color.Black),
             strokeLineWidth = MARK_STROKE,
             strokeLineCap = cap,
-            strokeLineJoin = StrokeJoin.Round,
+            // SVG's default, and none of the six overrides it. An earlier version set Round without
+            // flagging it: at 46% of a 120dp cover the mark scales ~2.8x, so rounding 0.8 user-units
+            // of corner is ~2.3dp of visible softening on Booklet, Envelope, Mug and Sprig.
+            strokeLineJoin = StrokeJoin.Miter,
         )
     }
 }.build()

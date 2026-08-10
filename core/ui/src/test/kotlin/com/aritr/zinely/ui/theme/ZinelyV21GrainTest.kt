@@ -11,6 +11,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
+import java.security.MessageDigest
+import javax.imageio.ImageIO
 
 /**
  * Pins the V2.1 grain against its frozen source, and pins the one thing about it that differs from V2
@@ -22,6 +25,61 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 class ZinelyV21GrainTest {
+
+    private val tile = File("src/main/res/drawable-nodpi/zinely_v21_grain.png")
+
+    @Test
+    fun `the tile is the exact asset its provenance claims`() {
+        assertTrue("expected to run with :core:ui as the working directory — missing $tile", tile.isFile)
+        val sha = MessageDigest.getInstance("SHA-256").digest(tile.readBytes())
+            .joinToString("") { "%02x".format(it) }
+        // tools/grain/gen_grain.py v21: fractalNoise, baseFrequency .85, numOctaves 3, unstitched,
+        // seed 0, 160x160, saturate 0, linearRGB -> sRGB. Same inputs reproduce this byte for byte.
+        assertEquals("f97351546930d028dbfe82501896a79b2129e5d84fbed8d03484f8bb7684e385", sha)
+        assertEquals(58330L, tile.length())
+        val img = ImageIO.read(tile)
+        assertEquals(160, img.width)
+        assertEquals(160, img.height)
+    }
+
+    @Test
+    fun `the tile's own statistics are the ones the rendering model is built on`() {
+        // ZinelyV21Grain documents what a rendered surface's contrast should be, and that prediction
+        // takes these four numbers as inputs. A regenerated tile that changed them would leave the
+        // documented model quietly wrong — the first version of that model already was, for a
+        // different reason (it omitted alpha), which is why the inputs are pinned rather than retyped.
+        val img = ImageIO.read(tile)
+        val luma = ArrayList<Double>(img.width * img.height)
+        val alpha = ArrayList<Double>(img.width * img.height)
+        val modulated = ArrayList<Double>(img.width * img.height)
+        for (y in 0 until img.height) {
+            for (x in 0 until img.width) {
+                val p = img.getRGB(x, y)
+                val a = ((p ushr 24) and 0xFF) / 255.0
+                val r = ((p ushr 16) and 0xFF) / 255.0
+                val g = ((p ushr 8) and 0xFF) / 255.0
+                val b = (p and 0xFF) / 255.0
+                // Desaturated by feColorMatrix, so the three channels agree; Rec.709 regardless.
+                val l = 0.2126 * r + 0.7152 * g + 0.0722 * b
+                luma += l
+                alpha += a
+                modulated += a * (1.0 - l)
+            }
+        }
+        assertEquals(0.7322, luma.mean(), 0.0005)
+        assertEquals(0.0598, luma.sd(), 0.0005)
+        assertEquals(0.5002, alpha.mean(), 0.0005)
+        assertEquals(0.1185, alpha.sd(), 0.0005)
+        // The quantity a `multiply` at effective alpha actually modulates. 0.04232, not luma's 0.0598.
+        assertEquals(0.04232, modulated.sd(), 0.0002)
+    }
+
+    private fun List<Double>.mean() = sum() / size
+
+    private fun List<Double>.sd(): Double {
+        val m = mean()
+        return kotlin.math.sqrt(sumOf { (it - m) * (it - m) } / size)
+    }
 
     @Test
     fun `the tile matches the frozen background-size`() {

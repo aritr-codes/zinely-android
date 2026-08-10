@@ -81,15 +81,20 @@ class ZineV21CoverGoldenTest {
             compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.02f),
         )
 
-        /** `.ink-leaf .paper-s .ink-berry .paper-c .ink-butter .ink-jam`, with their stamps. */
+        /**
+         * `.ink-leaf .paper-s .ink-berry .paper-c .ink-butter .ink-jam`, with **the frozen file's own
+         * stamp labels** — `A4, Letter, A4, A4, Letter, A4`. An earlier version substituted A5 and A6
+         * to get more label widths under test, while the class KDoc claimed the six could be read side
+         * by side against the prototype. They could not.
+         */
         data class Cover(val fill: Color, val onFill: Color, val stamp: String, val mark: ImageVector)
 
         fun frozen(c: ZinelyV21Colors) = listOf(
             Cover(c.leaf, MarkOnInk, "A4", ZineV21CoverMarks.Booklet),
             Cover(c.paper, c.inkSoft, "Letter", ZineV21CoverMarks.Envelope),
-            Cover(c.berry, MarkOnInk, "A5", ZineV21CoverMarks.Rings),
+            Cover(c.berry, MarkOnInk, "A4", ZineV21CoverMarks.Rings),
             Cover(c.butterTint, c.inkSoft, "A4", ZineV21CoverMarks.Sprig),
-            Cover(c.butter, MarkOnInk, "A6", ZineV21CoverMarks.Lines),
+            Cover(c.butter, MarkOnInk, "Letter", ZineV21CoverMarks.Lines),
             Cover(c.jam, MarkOnInk, "A4", ZineV21CoverMarks.Mug),
         )
 
@@ -123,7 +128,6 @@ class ZineV21CoverGoldenTest {
                 ) {
                     ZineV21Cover(
                         fill = c.leaf,
-                        onFill = MarkOnInk,
                         stampLabel = "A4",
                         index = 0,
                         pressed = true,
@@ -167,7 +171,6 @@ class ZineV21CoverGoldenTest {
                         row.forEachIndexed { i, cover ->
                             ZineV21Cover(
                                 fill = cover.fill,
-                                onFill = cover.onFill,
                                 stampLabel = cover.stamp,
                                 index = rowIndex * PER_ROW + i,
                                 modifier = Modifier.width(CELL),
