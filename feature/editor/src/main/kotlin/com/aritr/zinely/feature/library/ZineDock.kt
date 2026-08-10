@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,6 +41,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.a11y.zinelyV2Control
@@ -190,6 +192,9 @@ private fun StartButton(onStart: () -> Unit) {
         fontFamily = ZinelyV21Fonts.Work,
         fontWeight = FontWeight.Bold,
         fontSize = StartLabelSize,
+        // `body{line-height:1.55}`, inherited — `.start` declares none, and this was the most visible
+        // of the seven sites that dropped it: the screen's primary control stood ~5dp short.
+        lineHeight = ZinelyV21Fonts.InheritedLineHeight,
         color = colors.onLeaf,
     )
 
@@ -312,6 +317,40 @@ private val SafeAreaBottom: WindowInsets
     @Composable get() = WindowInsets.navigationBars
         .union(WindowInsets.displayCutout)
         .only(WindowInsetsSides.Bottom)
+
+/**
+ * The room the three shelf states must leave below their content for the dock — the frozen literal
+ * **plus the same safe-area inset the dock itself adds**.
+ *
+ * The frozen file writes three separate clearances (`.shelf{padding-bottom:132px}`,
+ * `.empty`/`.fail{padding-bottom:150px}`) against a dock whose height is fixed, because a browser mock
+ * has no gesture bar. On a device the dock grows by the navigation bar, and
+ * [Modifier.windowInsetsPadding] consumes that inset only for the dock's own **descendants** — the
+ * shelf is a *sibling*. So without this the last row's caption sits under the opaque part of the band
+ * on any device with three-button navigation, by exactly the height of that bar.
+ *
+ * A review found it. Published here rather than repeated three times so the three states cannot drift
+ * from the component whose height they are clearing.
+ *
+ * **This is the *reading* form of the inset, which this file's own docs warn against** — and it is correct
+ * here only because nothing above it consumes. `ZineLibraryScreen` places the dock and the three states as
+ * siblings in a `Box` and applies no inset padding at the root (asserted by `ZineLibraryInsetTest`), so the
+ * navigation bar is consumed exactly once, by the dock, for the dock. Wrap the Library in anything that
+ * consumes the bottom inset and this double-counts. Stated rather than left to be rediscovered.
+ *
+ * **Not unit-tested, and the reason is measured rather than assumed.** A case was written for
+ * `ZineLibraryInsetTest` and deleted: that harness's decor view applies a dispatched inset as *padding*,
+ * so Compose reads zero however large the inset dispatched, and the assertion could only ever have been
+ * `0 == 0`. The finding is recorded in that file's docs. This one goes to **device Pass 1** — scroll the
+ * shelf to its end on a three-button-navigation device and the last caption must clear the band.
+ */
+@Composable
+internal fun zineDockClearance(frozen: Dp): Dp =
+    frozen + WindowInsets.navigationBars
+        .union(WindowInsets.displayCutout)
+        .only(WindowInsetsSides.Bottom)
+        .asPaddingValues()
+        .calculateBottomPadding()
 
 /** `linear-gradient(to top,var(--desk) 58%,…)`, expressed downward — see [dockGradient]. */
 private const val DockFadeStop = 0.42f

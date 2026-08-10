@@ -90,7 +90,7 @@ internal fun ZineShelfEmpty(modifier: Modifier = Modifier) {
                 start = EmptyPaddingHorizontal,
                 end = EmptyPaddingHorizontal,
                 top = EmptyPaddingTop,
-                bottom = EmptyPaddingBottom,
+                bottom = zineDockClearance(EmptyPaddingBottom),
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
         // `gap:var(--gap-md)` and `justify-content:center` in one arrangement.
@@ -200,6 +200,10 @@ private fun TransformationRow(modifier: Modifier = Modifier) {
                 fontFamily = ZinelyV21Fonts.Voice,
                 fontWeight = FontWeight.Bold,
                 fontSize = ArrowSize,
+                // `.tf .arrow` declares no `line-height`, so it inherits `body{line-height:1.55}`. This
+                // is the site where that matters most: the arrow sits in a centred flex column between
+                // the two illustrations, so a line box ~20% short moves it against both of them.
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 color = ZinelyTheme.v21Colors.jam,
             ),
             modifier = Modifier.padding(bottom = ArrowMarginBottom),
@@ -235,6 +239,7 @@ private fun TransformColumn(label: String, illustration: @Composable () -> Unit)
                 fontFamily = ZinelyV21Fonts.Work,
                 fontWeight = FontWeight.Bold,
                 fontSize = LabelSize,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 letterSpacing = LabelTracking,
                 color = ZinelyTheme.v21Colors.inkSoft,
             ),
@@ -282,15 +287,23 @@ private fun SheetIllustration() {
             .background(colors.paper)
             .border(IllustrationBorder, colors.ink, SheetShape),
     ) {
-        val inset = RuleInset.toPx()
+        // Everything below is positioned in the **padding box**, not the border box: the frozen rules are
+        // absolutely-positioned children of a bordered element, and CSS resolves both their offsets and
+        // their percentages against the padding box — which `border:1.5px` insets on every side. Drawing
+        // them against `size` instead puts each rule 1.5px too far up and left and makes them 3px too
+        // long, which is invisible in a review and wrong in a diff. A review found it.
+        val border = IllustrationBorder.toPx()
+        val boxWidth = size.width - 2 * border
+        val boxHeight = size.height - 2 * border
+        val inset = border + RuleInset.toPx()
         val thickness = RuleThickness.toPx()
-        val ruleHeight = size.height - 2 * inset
+        val ruleHeight = boxHeight - 2 * RuleInset.toPx()
 
-        // `.v1{left:33%}` and `.v3{left:67%}` — fractions of the sheet's width, not of anything else.
+        // `.v1{left:33%}` and `.v3{left:67%}` — fractions of the sheet's padding box, not of anything else.
         for (fraction in listOf(FirstFoldFraction, ThirdFoldFraction)) {
             drawRect(
                 color = colors.hair,
-                topLeft = Offset(fraction * size.width, inset),
+                topLeft = Offset(border + fraction * boxWidth, inset),
                 size = Size(thickness, ruleHeight),
             )
         }
@@ -300,7 +313,7 @@ private fun SheetIllustration() {
         // `Brush` has no repeat mode that reproduces a hard-stopped CSS repeating gradient without
         // tiling a shader, and a soft ramp would read as a smudge rather than a cut line.
         val dash = DashLength.toPx()
-        val x = SecondFoldFraction * size.width
+        val x = border + SecondFoldFraction * boxWidth
         var y = inset
         while (y < inset + ruleHeight) {
             drawRect(
@@ -312,11 +325,12 @@ private fun SheetIllustration() {
             y += 2 * dash
         }
 
-        // `.h{left:7px;right:7px;height:1px;top:50%}` — the top edge sits at half the height.
+        // `.h{left:7px;right:7px;height:1px;top:50%}` — 7px in from the padding box on both sides, and
+        // its top edge at half that box's height.
         drawRect(
             color = colors.hair,
-            topLeft = Offset(inset, HalfwayFraction * size.height),
-            size = Size(size.width - 2 * inset, thickness),
+            topLeft = Offset(inset, border + HalfwayFraction * boxHeight),
+            size = Size(boxWidth - 2 * RuleInset.toPx(), thickness),
         )
     }
 }
@@ -366,11 +380,14 @@ private fun BookIllustration() {
             .background(colors.leaf)
             .border(IllustrationBorder, colors.ink, BookShape),
     ) {
-        // `::before` — the crease, a highlight rather than a drawn line.
+        // `::before{left:6px;top:6px;bottom:6px}` — the crease, a highlight rather than a drawn line.
+        // Padding box again: 6px in from the border, not from the node's edge. See [SheetIllustration].
+        val border = IllustrationBorder.toPx()
+        val spine = border + BookSpineInset.toPx()
         drawRect(
             color = BookSpine,
-            topLeft = Offset(BookSpineInset.toPx(), BookSpineInset.toPx()),
-            size = Size(RuleThickness.toPx(), size.height - 2 * BookSpineInset.toPx()),
+            topLeft = Offset(spine, spine),
+            size = Size(RuleThickness.toPx(), size.height - 2 * spine),
         )
     }
 }

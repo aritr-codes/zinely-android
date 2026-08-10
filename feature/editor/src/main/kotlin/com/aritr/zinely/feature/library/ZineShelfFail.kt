@@ -117,7 +117,7 @@ internal fun ZineShelfFail(onRetry: () -> Unit, modifier: Modifier = Modifier) {
                 start = FailPaddingHorizontal,
                 end = FailPaddingHorizontal,
                 top = FailPaddingTop,
-                bottom = FailPaddingBottom,
+                bottom = zineDockClearance(FailPaddingBottom),
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
         // `gap:var(--gap-md)` and `justify-content:center`, as one arrangement.
@@ -134,6 +134,8 @@ internal fun ZineShelfFail(onRetry: () -> Unit, modifier: Modifier = Modifier) {
                 fontFamily = ZinelyV21Fonts.Voice,
                 fontWeight = FontWeight.Bold,
                 fontSize = HeadlineSize,
+                // `.fail h2` declares no line-height, unlike `.empty h2`'s 1.12 — so it inherits.
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 color = colors.ink,
             ),
             textAlign = TextAlign.Center,
@@ -195,6 +197,8 @@ private fun FailMark() {
                 fontFamily = ZinelyV21Fonts.Voice,
                 fontWeight = FontWeight.Bold,
                 fontSize = MarkSize2,
+                // `.fail .mk` declares no `line-height` — inherited, as everywhere else.
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 // `color:var(--jam)` as TEXT, which is what `jamText` exists for: plain `jam` on paper
                 // measures 4.20:1 light / 4.55:1 dark, and V21-SPEC §5 ruled the text case onto the
                 // darker token. The border above keeps `jam`, because a rule is not text.
@@ -235,6 +239,7 @@ private fun RetryButton(onRetry: () -> Unit, modifier: Modifier = Modifier) {
             fontFamily = ZinelyV21Fonts.Work,
             fontWeight = FontWeight.SemiBold,
             fontSize = RetryLabelSize,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
             color = colors.ink,
         ),
         modifier = modifier

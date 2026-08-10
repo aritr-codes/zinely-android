@@ -1,12 +1,12 @@
 package com.aritr.zinely.feature.library
 
+import android.graphics.Insets
+import android.view.WindowInsets
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import android.graphics.Insets
-import android.view.WindowInsets
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
@@ -43,6 +43,22 @@ import org.robolectric.annotation.GraphicsMode
  * value: dispatch a known inset into the view hierarchy, and a screen that consumes it once moves the dock
  * by exactly that much, while a screen that consumes it twice moves it by twice as much. The zero-inset
  * baseline is measured in the same run, so the assertion is on the delta and needs no frozen pixel.
+ *
+ * ### ⚠️ The delta below is smaller evidence than it reads as
+ *
+ * Measured while adding a second case here: `dispatchApplyWindowInsets` on this `ComponentActivity` is
+ * **applied by the decor view as padding**, because nothing in this harness calls `enableEdgeToEdge`. The
+ * content view therefore *shrinks* by 48 and the `AndroidComposeView` below it sees an already-consumed
+ * inset — the root's `boundsInRoot` goes `0..960` → `0..912` on dispatch, and Compose's
+ * `WindowInsets.navigationBars` reads **zero** throughout.
+ *
+ * So the 48dp the assertion measures is the window getting shorter, not the dock consuming anything. The
+ * test still kills the double-consumption defect it was written for — a second consumer would still not
+ * move the button, and half two still catches a root pad — but it does **not** prove the dock consumes,
+ * and it cannot observe anything else that reads the inset. The attempted second case (that the shelf's
+ * bottom clearance grows with the dock's, see [zineDockClearance]) was deleted rather than kept green:
+ * under a zero inset it could only ever have asserted `0 == 0`. That claim belongs to device Pass 1,
+ * which is where ADR-086 row 13 already sends the numeric half.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

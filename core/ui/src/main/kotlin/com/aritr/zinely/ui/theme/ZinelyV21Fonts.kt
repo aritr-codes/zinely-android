@@ -3,6 +3,8 @@ package com.aritr.zinely.ui.theme
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.em
 import com.aritr.zinely.ui.R
 
 /**
@@ -58,6 +60,31 @@ import com.aritr.zinely.ui.R
  * quoted as measurements. AAPT's deflate is not `zlib`. Quote 123.6.
  */
 public object ZinelyV21Fonts {
+
+    /**
+     * `body{line-height:1.55}` — **the leading every V2.1 text node inherits unless it overrides it.**
+     *
+     * The one exception to "no type scale": this is not a ladder, it is a single inherited value that
+     * exists in the corpus, and leaving it to each call site is what made it wrong in seven of them at
+     * once. CSS `line-height` inherits; Compose's `TextStyle.lineHeight` does not, and an unset one
+     * falls back to the font's own metrics — about 1.20–1.25×. So every component that transcribed a
+     * `font-size` and nothing else drew its text in a line box roughly 20% too short, which on the
+     * Library's primary button was a control about 5dp shorter than the design. A review found it as a
+     * systematic defect rather than as seven separate ones, which is the only way it was ever going to
+     * be found.
+     *
+     * **Seven** selectors in the V2.1 corpus override it, and those carry their own value at their own
+     * call site: `.cap.lead` 1.3, `.shelf-head h1` 1.05, `.name` 1.2, `.empty h2` 1.12, `.empty p` 1.55
+     * (restated), `.start .plus` 1, `.sh-ttl` 1.15. Everything else takes this. (An earlier revision of
+     * this line said eight and then listed seven — it counted `body`'s own declaration as one of its own
+     * exceptions. `grep -n line-height docs/design/mockups/v21-library.html` returns eight hits, of which
+     * the first is the rule this constant *is*. The first of those seven, `.cap.lead`, is prototype page
+     * scaffolding outside `.phone` and so overrides nothing this app draws; it is listed for the grep to
+     * reconcile against, not because a component transcribes it.)
+     *
+     * In `em`, the unit the CSS states, so it tracks the size rather than pinning a pixel.
+     */
+    public val InheritedLineHeight: TextUnit = 1.55.em
 
     /**
      * `--voice` — **Averia Sans Libre**, 400 and 700, the two weights the corpus uses.

@@ -1,5 +1,7 @@
 package com.aritr.zinely.feature.library
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +42,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Grain
 import com.aritr.zinely.ui.theme.ZinelyV21Press
+import com.aritr.zinely.ui.theme.ZinelyV2Settle
 import com.aritr.zinely.ui.theme.rememberZinelyV21GrainBrush
 import com.aritr.zinely.ui.theme.zinelyV21Grain
 
@@ -102,7 +106,23 @@ internal fun ZineV21Cover(
     val colors = ZinelyTheme.v21Colors
     val grain = rememberZinelyV21GrainBrush(CoverGrainTileV21)
     val press = ZinelyV21Press.Hero
-    val travel = if (pressed) press.travel else 0.dp
+    val motion = ZinelyTheme.v2Motion
+
+    // `transition:transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s` on `.cover`.
+    //
+    // A first version read `if (pressed) press.travel else 0.dp` straight into the offset, so the one
+    // object the whole screen is made of teleported 2dp and lost its tilt in a single frame, while
+    // every sibling control in the package animated its press. A review caught it. On **settle**, per
+    // the D-011 ruling, and collapsed to a cut under reduced motion by the same policy.
+    val pressed01 by animateFloatAsState(
+        targetValue = if (pressed) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = motion.durationMillis(CoverPressDurationMillis),
+            easing = ZinelyV2Settle,
+        ),
+        label = "zineV21CoverPress",
+    )
+    val travel = press.travel * pressed01
 
     Box(
         modifier
@@ -110,7 +130,7 @@ internal fun ZineV21Cover(
             // The tilt is a render-time rotation, not a layout one: a tilted cover must not change the
             // space the grid gives it, or the shelf's columns would breathe as tiles were added.
             // `rotate(0deg)` on :active is why this reads `pressed` rather than being hoisted.
-            .graphicsLayer { rotationZ = if (pressed) 0f else tiltFor(index) }
+            .graphicsLayer { rotationZ = tiltFor(index) * (1f - pressed01) }
             // Travel and shadow, transcribed from the Hero tier, and stated inline rather than through
             // zinelyV21Pressable so the rotation can sit between them.
             //
@@ -122,7 +142,11 @@ internal fun ZineV21Cover(
             // rest and pressed off one expression each is clearer than splitting them, not because
             // anything forces it.
             .offset(x = travel, y = travel)
-            .zinelyV21HardShadow(press.offset(pressed), colors.inkLine, CoverShapeV21),
+            .zinelyV21HardShadow(
+                offset = press.rest - (press.rest - press.pressed) * pressed01,
+                color = colors.inkLine,
+                shape = CoverShapeV21,
+            ),
     ) {
         // `border:1.5px solid var(--ink)` — a drawn line, so it follows `ink` and never `inkLine`
         // ([ZinelyV21Colors]). On the **border box**, which is the only thing at this level.
@@ -230,7 +254,12 @@ internal fun ZineV21Cover(
             }
 
             // `.stamp` — the paper size as a postmark, hanging off the bottom-right corner.
-            Text(
+            //
+            // **Not drawn when there is nothing to stamp.** A subtitle carrying no `·` yields an empty
+            // label, and the first version still drew the pill: a paper-filled, ink-bordered,
+            // hard-shadowed blank hanging off the corner. Its own caller's KDoc claimed it "stamps
+            // nothing rather than guessing", which a review checked and found false.
+            if (stampLabel.isNotBlank()) Text(
                 // `text-transform:uppercase`. Locale.ROOT rather than the default: this is a
                 // paper-size code, not prose, and a Turkish locale would give "LETTER" a dotted I.
                 text = stampLabel.uppercase(Locale.ROOT),
@@ -261,6 +290,18 @@ private const val CoverAspectRatioV21 = 3f / 4f
 
 /** `border:1.5px solid var(--ink)`. */
 private val CoverBorderV21: Dp = 1.5.dp
+
+/**
+ * `.zine .cover{transition:transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s cubic-bezier(.2,.8,.2,1)}`
+ * — the Hero tier's travel, animated rather than teleported.
+ *
+ * **The duration is transcribed; the curve is not.** The corpus writes its own `cubic-bezier(.2,.8,.2,1)`
+ * here and this uses [ZinelyV2Settle] `(.05,.7,.1,1)`, because
+ * [D-011](docs/design/V2-SPEC-DEFECTS.md#d-011) is RESOLVED in favour of the shared motion tokens over the
+ * Library file's inline curves. Quoting the declaration in full rather than eliding the part that needed a
+ * ruling: the two curves are close (both leave fast and land slow) and neither is the other.
+ */
+private const val CoverPressDurationMillis = 160
 
 /** `background-size:130px 130px; mix-blend-mode:multiply; opacity:.5` × the .42 baked alpha. */
 private val CoverGrainTileV21: Dp = 130.dp
@@ -342,6 +383,8 @@ private fun stampStyle(color: Color) = TextStyle(
     fontFamily = ZinelyV21Fonts.Work,
     fontWeight = FontWeight.Bold,
     fontSize = 9.5.sp,
+    // `body{line-height:1.55}`, inherited — `.stamp` declares none.
+    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
     letterSpacing = 0.08.em,
     color = color,
 )

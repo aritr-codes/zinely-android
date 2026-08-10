@@ -25,8 +25,10 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -181,19 +183,41 @@ internal fun ZineShelf(
     LazyVerticalGrid(
         columns = GridCells.Fixed(ShelfColumns),
         modifier = modifier,
-        contentPadding = ShelfPadding,
+        contentPadding = PaddingValues(
+            start = ZinelyV21Dimens.gapLg,
+            top = ZinelyV21Dimens.gapXl,
+            end = ZinelyV21Dimens.gapLg,
+            bottom = zineDockClearance(ShelfDockClearance),
+        ),
         verticalArrangement = Arrangement.spacedBy(ShelfRowGap),
         horizontalArrangement = Arrangement.spacedBy(ShelfColumnGap),
     ) {
         // `grid-column:1 / -1` — a full-width cell, so the row gap below it is the same 24px that
         // separates the cover rows. Nothing about this is a header component; it is a wide cell.
-        // `state('loading')` sets `.shelf-head{visibility:hidden}` — the head keeps its space, so the
-        // grid does not restructure when the data lands, but it says nothing while it has nothing to
-        // say. That matters more in V2.1 than it did in V2: the head now carries a **count**, and a
-        // count rendered against an empty list during a slow read announces "0 zines" to a user who has
-        // twelve — the exact failure the D-024 amendment introduced placeholders to prevent.
-        if (placeholders == 0) {
-            item(span = { GridItemSpan(maxLineSpan) }) { ShelfHeading(zines.size) }
+        // `state('loading')` sets `.shelf-head{visibility:hidden}` — **hidden, which keeps its space.**
+        //
+        // A first version wrote `if (placeholders == 0) item { … }`, which removes the cell entirely,
+        // under a comment claiming the head keeps its space so the grid does not restructure. Both
+        // reviewers caught it independently: the placeholders started ~60dp higher and every cover
+        // jumped down when the data landed — the exact restructure the comment said it prevented, and
+        // the exact thing `visibility:hidden` exists to avoid.
+        //
+        // The head is hidden rather than shown-with-a-zero because it carries a **count**, and a count
+        // rendered against an empty list during a slow read announces "0 zines" to a user who has
+        // twelve — the failure the D-024 amendment introduced placeholders to prevent.
+        //
+        // `alpha(0f)` and not `alpha(0.01f)` or a transparent colour: `visibility:hidden` is also
+        // removed from the accessibility tree, which is what `clearAndSetSemantics {}` transcribes.
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            val hidden = placeholders > 0
+            ShelfHeading(
+                count = zines.size,
+                modifier = if (hidden) {
+                    Modifier.alpha(0f).clearAndSetSemantics {}
+                } else {
+                    Modifier
+                },
+            )
         }
 
         // `.ph` — the loading placeholders, which the amended freeze puts INSIDE this grid, after the
@@ -245,10 +269,10 @@ internal fun ZineShelf(
  * node per screen rather than two.
  */
 @Composable
-private fun ShelfHeading(count: Int) {
+private fun ShelfHeading(count: Int, modifier: Modifier = Modifier) {
     val colors = ZinelyTheme.v21Colors
     Row(
-        Modifier.fillMaxWidth().padding(bottom = ZinelyV21Dimens.gapHair),
+        modifier.fillMaxWidth().padding(bottom = ZinelyV21Dimens.gapHair),
         horizontalArrangement = Arrangement.SpaceBetween,
         // `align-items:flex-end` — the count's baseline sits with the swipe, not with the cap height.
         verticalAlignment = Alignment.Bottom,
@@ -289,6 +313,9 @@ private fun ShelfHeading(count: Int) {
                 fontFamily = ZinelyV21Fonts.Work,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = CountSize,
+                // `body{line-height:1.55}`, inherited — `.count` declares none. See
+                // [ZinelyV21Fonts.InheritedLineHeight].
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 color = colors.inkSoft,
             ),
             modifier = Modifier
@@ -343,8 +370,12 @@ private fun ShelfPlaceholder() {
     // collapsing an infinite animation's duration makes it strobe. A first version gated on
     // `durationMillis(…) == 0`, which reaches the same place by the wrong reasoning and would have
     // shipped the strobe the day someone made the policy return 1 instead of 0.
-    val sweep = if (!motion.allowsContinuousMotion) {
-        0f
+    // Held as `State`, not read here. Reading `.value` in the composable body would recompose all four
+    // cells ~60x a second during a load — re-running the whole `ShelfPlaceholder`, re-allocating the
+    // draw lambdas and re-resolving the shape outline. Read inside `drawBehind` it is a **draw-phase**
+    // read: the layer redraws and nothing recomposes.
+    val sweep: State<Float>? = if (!motion.allowsContinuousMotion) {
+        null
     } else {
         rememberInfiniteTransition(label = SweepLabel).animateFloat(
             initialValue = -1f,
@@ -354,7 +385,7 @@ private fun ShelfPlaceholder() {
                 repeatMode = RepeatMode.Restart,
             ),
             label = SweepLabel,
-        ).value
+        )
     }
 
     Box(
@@ -365,23 +396,15 @@ private fun ShelfPlaceholder() {
             .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, colors.hair, PlaceholderShape)
             .clip(PlaceholderShape)
             .background(colors.paper)
-            // One `drawBehind`, two paints, in the order CSS paints them. Two chained modifiers would
-            // work too, but their relative order is a thing to be reasoned about rather than read —
-            // which is precisely how the cover's draw-order defect stayed hidden through two reviews.
+            // One `drawBehind`, two paints, **border first and sweep over it** — CSS paint order is
+            // background, then border, then positioned descendants, and `.ph::after` is a positioned
+            // descendant. A first version had them the other way round and commented that they were
+            // "in the order CSS paints them"; a review checked the order rather than the comment.
+            //
+            // One block rather than two chained modifiers because a chain's relative order is a thing
+            // to be reasoned about rather than read — which is precisely how the cover's draw-order
+            // defect stayed hidden through two reviews.
             .drawBehind {
-                if (sweep != 0f) {
-                    // `linear-gradient(100deg, …)` translated across the cell. 100deg in CSS is
-                    // measured clockwise from "to top", so it leans right; near-vertical is the wrong
-                    // read. Approximated here as a bottom-left to top-right sweep of the cell's width.
-                    val x = sweep * size.width
-                    drawRect(
-                        brush = Brush.linearGradient(
-                            colorStops = SweepStops,
-                            start = Offset(x, size.height),
-                            end = Offset(x + size.width, 0f),
-                        ),
-                    )
-                }
                 // `border:1.5px dashed var(--hair)` on a border-box element — so the stroke is INSIDE
                 // the shape. Stroked at double width along the shape's own outline and left to the
                 // clip already on this chain, which cuts the outer half away: that is the same 1.5dp
@@ -401,6 +424,21 @@ private fun ShelfPlaceholder() {
                         ),
                     ),
                 )
+
+                val offset = sweep?.value
+                if (offset != null) {
+                    // `.ph::after` — `linear-gradient(100deg, …)` translated across the cell. 100deg in
+                    // CSS is measured clockwise from "to top", so it leans right; near-vertical is the
+                    // wrong read. Approximated as a bottom-left to top-right sweep of the cell's width.
+                    val x = offset * size.width
+                    drawRect(
+                        brush = Brush.linearGradient(
+                            colorStops = SweepStops,
+                            start = Offset(x, size.height),
+                            end = Offset(x + size.width, 0f),
+                        ),
+                    )
+                }
             }
             .clearAndSetSemantics {},
     )
@@ -418,13 +456,8 @@ private fun ShelfPlaceholder() {
 /** `grid-template-columns:1fr 1fr` — still no breakpoint anywhere in the corpus. See D-020. */
 private const val ShelfColumns = 2
 
-/** `.shelf{padding:var(--gap-xl) var(--gap-lg) 132px}` — the 132px clears the `.dock`. */
-private val ShelfPadding = PaddingValues(
-    start = ZinelyV21Dimens.gapLg,
-    top = ZinelyV21Dimens.gapXl,
-    end = ZinelyV21Dimens.gapLg,
-    bottom = 132.dp,
-)
+/** `.shelf{padding-bottom:132px}` — the dock's height, grown by its safe area; see [zineDockClearance]. */
+private val ShelfDockClearance = 132.dp
 
 /**
  * `.shelf{gap:var(--gap-xl) var(--gap-lg)}` — CSS `gap` is **row-gap first**, then column-gap.

@@ -67,7 +67,7 @@ internal fun zineShelfMoreTestTag(index: Int): String = "shelf-more-$index"
  *
  * `data-sub="A4 · 2 days ago"` is the *sheet's* line. The shelf shows its two halves in two places: the
  * paper size becomes the cover's postmark and the date becomes `.sub`. That is [zineShelfStampLabel] and
- * [zineShelfDateLabel], which are pure and tested — a shelf that printed "A4 · 2 days ago" under a cover
+ * [zineShelfDateLabel], pure and covered by [ZineShelfLabelsTest] — a shelf that printed "A4 · 2 days ago" under a cover
  * carrying "A4" would be the same information twice, which is what the design moved it to avoid.
  *
  * ### ⚠️ The `⋯` is kept, and the frozen file does not draw it
@@ -143,8 +143,12 @@ internal fun ZineOnShelf(
                 .testTag(zineShelfCoverTestTag(index))
                 .zinelyV2Control(
                     // `.zine` carries no `aria-label` — it is a `<button>` whose accessible name is its
-                    // own text content, which is the name and the date. The name alone is what a user
-                    // calls the object; the date is disclosure, and it follows in `.sub`'s own node.
+                    // own text content, which is the name *and* the date. This seam ends in
+                    // `clearAndSetSemantics`, so the caption's two `Text`s have no nodes of their own and
+                    // the label here is the whole of what the tile says. Announcing the title alone is
+                    // therefore a deliberate narrowing, not the browser's behaviour: the date is
+                    // disclosure and the sheet's header states it, whereas a shelf that read
+                    // "Camping trip, A4, 2 days ago" six times over is a list nobody can skim by ear.
                     label = zine.title,
                     interactionSource = interaction,
                     onClick = { onOpen(index) },
@@ -295,14 +299,27 @@ private fun SubStyle(color: Color) = TextStyle(
     fontFamily = ZinelyV21Fonts.Work,
     fontWeight = FontWeight.Medium,
     fontSize = 11.84.sp,
-    letterSpacing = 0.em,
+    // `body{line-height:1.55}`, inherited — `.sub` declares none.
+    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
     color = color,
 )
 
-/** `.start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}` — the file's own ring. */
+/**
+ * `.start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}` — the corpus's **only**
+ * `focus-visible` rule, borrowed for the tile.
+ *
+ * There is no `.zine:focus-visible`: a browser gives every `<button>` a focus ring for free, so the
+ * prototype never had to write one, and Compose gives nothing. The ring is therefore an **addition** to
+ * the freeze, taking the one declaration the file does make so the two rings match.
+ *
+ * **The radius is 0 because `.zine` has none.** A CSS `outline` follows the element's own `border-radius`,
+ * and the tile — unlike `.start`, which is a pill — declares none, so its ring is square. An earlier draft
+ * rounded it to `radiusSm` by analogy with the cover inside it; that is the cover's radius, not the tile's,
+ * and the ring is drawn around the caption too.
+ */
 private val FocusRingWidth = 2.dp
 private val FocusRingOffset = 5.dp
-private val FocusRingRadius = ZinelyV21Dimens.radiusSm
+private val FocusRingRadius = 0.dp
 
 /** V2's `.more{width:34px;height:34px;font-size:1.05rem}`, carried with the affordance. */
 private val MoreSize = 34.dp
@@ -317,7 +334,14 @@ private const val MoreGlyph = "⋯"
 private const val MoreRestOpacity = 0.5f
 private const val MoreLitOpacity = 0.95f
 
-/** `background:rgba(0,0,0,.10)` — a literal, unchanged between themes, like the scrim's. */
+/**
+ * The `⋯`'s hover/focus wash.
+ *
+ * **Not transcribed — carried.** `v21-library.html` has no `.more` at all; the affordance is a V2 carry-over
+ * kept because removing the only pointer-and-keyboard route to the action sheet would leave long-press as
+ * the sole one. So this literal is V2's `background:rgba(0,0,0,.10)`, held unchanged between themes as the
+ * scrim's is, and it is an addition to the freeze rather than a reading of it.
+ */
 private val MoreLitWash = Color.Black.copy(alpha = 0.10f)
 
 /**

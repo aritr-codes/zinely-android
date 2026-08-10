@@ -299,8 +299,9 @@ public fun ZineLibraryScreen(
         )
 
         // `.dock{position:absolute;left:0;right:0;bottom:0}` — over the shelf, which scrolls under it and
-        // clears it with its own `padding-bottom:152px`. In a `Column` after the shelf it would look
-        // identical at rest and steal that space at every other moment.
+        // clears it with a bottom padding of its own (132px on `.shelf`, 150px on `.empty` and `.fail`,
+        // each grown by the safe area — see [zineDockClearance]). In a `Column` after the shelf it would
+        // look identical at rest and steal that space at every other moment.
         ZineDock(
             onStart = { haptics.perform(ZinelyHaptic.Tick); openSheet = LibrarySheet.Create },
             modifier = Modifier.align(Alignment.BottomCenter),

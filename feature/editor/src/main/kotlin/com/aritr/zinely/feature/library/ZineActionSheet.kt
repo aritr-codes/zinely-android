@@ -34,9 +34,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.paneTitle
@@ -308,15 +311,27 @@ internal fun ZineActionSheetSurface(
             .clip(SheetShape)
             .background(colors.paper)
             // `border-top:2px solid var(--ink)` — only the top edge, so a `border` would be wrong: it
-            // would ring all four sides, three of which are off screen but two of which are rounded.
+            // would ring all four sides, three of which are off screen but two of which are on screen for
+            // the sheet's whole height.
+            //
+            // **And it follows the corners.** A straight `drawLine` across the top is what this was, and
+            // the `clip` above cuts it at both rounded corners — leaving `radiusXl` of curve on each side
+            // where paper meets the scrim with no rule at all, which is exactly where the sheet's edge is
+            // most visible against a dim background. CSS has no such gap: a `border-top` on an element
+            // with `border-radius` is drawn along the arc. So the path below *is* the top edge — arc, line,
+            // arc — stroked at double width, with the clip cutting the outer half. That is an inside
+            // stroke of exactly [SheetTopRule] with no radius arithmetic, the same trick the loading
+            // placeholder uses for its dashed border.
             .drawBehind {
                 val w = SheetTopRule.toPx()
-                drawLine(
-                    color = colors.ink,
-                    start = Offset(0f, w / 2f),
-                    end = Offset(size.width, w / 2f),
-                    strokeWidth = w,
-                )
+                val r = ZinelyV21Dimens.radiusXl.toPx()
+                val edge = Path().apply {
+                    moveTo(0f, r)
+                    arcTo(Rect(0f, 0f, 2 * r, 2 * r), 180f, 90f, forceMoveTo = false)
+                    lineTo(size.width - r, 0f)
+                    arcTo(Rect(size.width - 2 * r, 0f, size.width, 2 * r), 270f, 90f, forceMoveTo = false)
+                }
+                drawPath(edge, color = colors.ink, style = Stroke(width = 2 * w))
             }
             // `padding:0 0 var(--gap-xl)`.
             .padding(bottom = ZinelyV21Dimens.gapXl)
@@ -348,9 +363,12 @@ internal fun ZineActionSheetSurface(
                     fontFamily = ZinelyV21Fonts.Work,
                     fontWeight = FontWeight.Medium,
                     fontSize = SubtitleSize,
+                    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                     color = colors.inkSoft,
-                    // `font-variant-numeric:tabular-nums` — the dates change under the same header, and
-                    // proportional digits make the line twitch when they do.
+                    // `tnum`, and the freeze does not ask for it: no `font-variant-numeric` appears
+                    // anywhere in `v21-library.html`. Added because this line is the one place a *changing*
+                    // number is re-read under a header that stays put ("2 days ago" → "12 days ago"), and
+                    // proportional digits make it twitch. An addition to the corpus, logged as one.
                     fontFeatureSettings = TabularNumerals,
                 ),
             )
@@ -463,6 +481,8 @@ private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
                 style = TextStyle(
                     fontFamily = ZinelyV21Fonts.Work,
                     fontSize = IconSize,
+                    // `.act .ic` declares no `line-height` — inherited, as everywhere else.
+                    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                     color = if (action.danger) colors.jamText else colors.inkSoft,
                 ),
             )
@@ -473,6 +493,7 @@ private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
                 fontFamily = ZinelyV21Fonts.Work,
                 fontWeight = FontWeight.Medium,
                 fontSize = RowTextSize,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 color = ink,
             ),
         )
