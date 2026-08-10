@@ -165,14 +165,28 @@ fit more chrome — if something doesn't fit calmly, it is the wrong thing to sh
 > not a density decision.
 >
 > So: **layout spacing is 8pt** (`8 · 16 · 24` carry the ladder's structural steps, and 36 is the corpus's
-> published outer step, from Maeve's `4/8/16/24/36`); **`--gap-hair`, `--gap-xs` and `--gap-md` are
-> sub-component values and out of this clause's scope.** No clause changes, no pixel changes, and no frozen
+> published outer step, from Maeve's `4/8/16/24/36`). No clause changes, no pixel changes, and no frozen
 > corpus is re-cut for grid purity — which the other two readings would each have required.
 >
-> ⚠️ **This is an interpretation, and it is the reversible one.** If a future surface uses `--gap-md: 12px`
-> to space *layout* — panels, sections, the page's own breathing room — this ruling has been stretched past
-> what it says, and the conflict is live again as a real amendment question
-> ([ADR-099 §6, RF-6](../DECISIONS.md#adr-099-review-2)).
+> ### ⚠️ The mapping under that ruling is falsified, and the question is **open again**
+>
+> This note originally continued: *"`--gap-hair`, `--gap-xs` and `--gap-md` are sub-component values and out
+> of this clause's scope"*, and set its own tripwire — *if a **future** surface uses `--gap-md: 12px` to
+> space layout, the ruling has been stretched.* **A third review found the tripwire was already tripped, by
+> the frozen corpus, at freeze time.** `--gap-md` is the corpus's workhorse: ~59 declarations, spacing a page
+> grid (`.pgg`), the canvas region (`.canvasArea`), panels (`.band`, `.dbody`, `.testcard`), and page-level
+> states (`.empty`, `.sh-head`) across all three prototypes.
+>
+> The distinction that matters: **the owner ruled on *scope* — layout, not insets — and that ruling stands.
+> The classification of `gap-md` as an inset was the implementer's, and it is wrong.** It was presented here
+> as though it were part of the ruling; it was not. Under the ruling as written, 12px spacing a panel is
+> layout, so the corpus is off the 8pt rhythm in ~59 places.
+>
+> **Owner call, reopened** — the same three readings, now with real evidence under them: the rhythm is a
+> *generosity* principle rather than a grid and `12` never conflicted · the corpus is re-cut to the grid
+> (a visual change to a frozen design) · the clause is amended to name the real ladder. Recorded at
+> [V21-SPEC §8 row 11](V21-SPEC.md) and [ADR-099 §6](../DECISIONS.md#adr-099-review-2). **Nothing in Compose
+> may depend on the answer until it is given** — see [ZinelyV21Dimens].
 
 ### Motion
 **Calm, sparing, and meaningful.** Motion marks the two emotional peaks (e.g. a paper-settle), not every

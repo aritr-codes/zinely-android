@@ -6767,7 +6767,48 @@ bundled Fraunces **Medium/500**, and **no V2.1 rule sets it** — all seven `--s
 the default weight. It is now 400 only. A bundled-but-unused weight is exactly the dead-token failure D-006
 deleted `--r` for.
 
-**The pattern across both reviews is the same one, and it is worth naming.** Neither review found a wrong
-colour or a wrong method. Both found *claims stated with more confidence than their evidence supported* — "the
-single exception", "zero failing pairings", "59 borders", "121.9 KB measured". The measurements were sound
-every time; the sentences around them were not.
+#### Third review — 2026-08-10, on the depth primitives, verdict **GO WITH FIXES** {#adr-099-review-3}
+
+Dispatched at the owner's request before the Library re-skin could consume the primitives — the cheapest
+point, as the second review was. It re-derived the press table from the corpus with its own parser and
+reproduced the four tiers, then found one real code defect and four paperwork ones. All reconciled:
+
+- **The frame ring's corner radii were wrong.** It grew the *size* and reused the *shape*, which scales radii
+  proportionally where CSS grows them additively (Backgrounds §7.1.1). At a 14dp radius with a 5dp band the
+  ring pinched at every corner. Invisible today only because all three corpus users are `--br-pill`, where the
+  two happen to coincide. **The correct implementation was already in the same package** — `spreadPath`, in
+  `ZinelyV2ShadowDraw.kt`, unit-tested, whose KDoc says in terms that a proportional scale is wrong. The ring
+  is now a `w`-wide stroke of the outline spread by `w/2`. *The defect shipped because the geometry was
+  inlined in a draw lambda instead of extracted as a pure helper — the house convention exists for this.*
+- **The `:active` count was 17; it is 18 blocks / 19 selectors**, 17 of them carrying depth. The excluded one
+  (`.act:active`, background only) was dropped silently.
+- **Two claims about the Hero tier were unsupported.** It was described as *"the one primary action on a
+  screen"* — but `.cover` wears Hero on every Library tile, and the Proof puts two Hero buttons on one screen;
+  one-per-screen is the `--frame` ring's property. And its departure from `pressed = rest − travel` was
+  narrated as deliberate expressiveness, where the corpus shows only that **every Hero and Raised rule writes
+  the identical pressed value of 1dp**. Numbers kept, story withdrawn.
+- **Three quarters of the new test class was self-consistency**, not measurement: the arithmetic test passed
+  for `Raised(5,3,2)`, and "there are exactly four tiers" asserted that four named constants were four
+  distinct constants — it could not fail when a fifth was added. Both fixed; all twelve literals now pinned
+  and the tier count asked by reflection.
+- **The 8pt ruling's mapping is falsified** — see below.
+
+#### The 8pt ruling is reopened, and the reason is worth recording {#adr-099-8pt-reopened}
+
+The owner ruled on 2026-08-10 that the rhythm binds *layout* and not sub-component insets. **That ruling
+stands.** What failed is the mapping written under it: `V2-CONSTITUTION` §III, `V21-SPEC` §3.3 and
+`ZinelyV21Dimens` all classified `--gap-md: 12px` as an inset and therefore out of scope — and the review
+found it spacing a page grid, the canvas region, three panel types and two page-level states across all three
+prototypes, ~59 declarations, the corpus's most-used step.
+
+The note had even set its own tripwire (*"if a **future** surface uses `--gap-md` to space layout…"*). It was
+already tripped, by the frozen corpus, at freeze time. **The classification was the implementer's and was
+presented as though it were the owner's** — which is the specific thing §VI exists to prevent. Back to the
+owner as [V21-SPEC §8 row 11](design/V21-SPEC.md); no Compose value may be chosen to pre-empt the answer.
+
+**The pattern across all three reviews is the same one, and it is worth naming.** None found a wrong colour or
+a wrong method. All found *claims stated with more confidence than their evidence supported* — "the single
+exception", "zero failing pairings", "59 borders", "121.9 KB measured", "17 `:active` rules", "the one primary
+action per screen". The measurements were sound every time; the sentences around them were not. The third
+review adds the code-level version of it: an inlined calculation that *looked* like the tested helper next
+door and was not.

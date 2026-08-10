@@ -252,17 +252,23 @@ different claim from the one this section made.
 The radius scale needed no such work: `--br-*` was declared in all three files and used **104 times** before
 any of this, and `--hard` 24 times, `--frame` 6. **That half of §3.3 was always sound.**
 
-#### The ladder against V2-CONSTITUTION §III's 8pt rhythm — owner-ruled 2026-08-10
+#### The ladder against V2-CONSTITUTION §III's 8pt rhythm — ⚠️ **REOPENED 2026-08-10**
 
 Four steps — `2, 4, 12, 36` — are off an 8pt grid, and the Constitution says an **8pt rhythm governs layout**.
-A second review raised this as a conflict; the owner ruled the narrowest of the three available readings:
-**the rhythm binds *layout* and never bound sub-component insets.** `gap-sm / gap-lg / gap-xl` (8/16/24) carry
-layout; `gap-hair / gap-xs / gap-md` are inside-a-control values and out of scope; 36 is the corpus's
-published outer step. No clause was amended and no pixel moved
-([V2-CONSTITUTION §III *Spacing*](V2-CONSTITUTION.md#spacing)).
+A second review raised the conflict; the owner ruled the narrowest of three readings: **the rhythm binds
+*layout* and never bound sub-component insets.** That ruling stands.
 
-⚠️ **Binding on implementation:** a `gapMd` used to space *panels or sections* — rather than the inside of a
-control — stretches this ruling past what it says and reopens the conflict as a real amendment question.
+**The mapping under it did not.** This section, the Constitution's note and `ZinelyV21Dimens` all said
+`gap-hair / gap-xs / gap-md` were inside-a-control values and out of scope — and a third review found
+`--gap-md` spacing **layout** throughout the frozen corpus: `.pgg` (a page grid) and `.canvasArea` in the
+Bench, `.band`, `.dbody` and `.testcard` in the Proof, `.empty` and `.sh-head` in the Library, among ~59
+declarations. It is the corpus's most-used step. That classification was the implementer's, not the owner's,
+and it was written as though it were the owner's.
+
+So under the ruling as written, the frozen corpus is off the 8pt rhythm in ~59 places, and the three
+readings are live again with evidence under them — §8 row 11, [V2-CONSTITUTION §III](V2-CONSTITUTION.md#spacing).
+**Binding until answered:** transcribe the corpus value at each address. Substituting a 16 for a corpus 12 to
+make a surface grid-clean would settle a constitutional question with a padding value.
 
 Consequence for Phase D, now discharged: [ADR-099 §1](../DECISIONS.md#adr-099) argues the 79 unsourced
 literals *"get a destination for the first time"* from the published scales. With both scales real and used,
@@ -396,21 +402,33 @@ running text.** Voice is for short strings; Work is for anything the user operat
   always the full shadow colour. It is a *printed* shadow, not elevation: the object physically moves under
   your finger.
 
-  **Four press tiers, counted from all 17 `:active` rules in the corpus** — this section used to state the
-  hero case alone (*"a pressed control translates `2px, 2px` and drops its shadow to `1px`"*) as though it
-  governed everything, and the Compose layer published it that way before the rules were counted:
+  **Four press tiers.** The corpus has **18 `:active` rule blocks / 19 selectors**, of which **17 carry
+  depth**; the one excluded is `.act:active`, which changes background only and has no shadow at rest. This
+  section used to state the hero case alone (*"a pressed control translates `2px, 2px` and drops its shadow
+  to `1px`"*) as though it governed everything, and the Compose layer published it that way before the rules
+  were counted:
 
   | Tier | Rest | Travel | Pressed | Where |
   |---|---|---|---|---|
-  | **Hero** | `--hard` 4 | 2 | **1** | `.start` · `.btn-save` · `.add` · `.btn-share` — the one primary per screen |
+  | **Hero** | `--hard` 4 | 2 | **1** | `.cover` (every Library cover) · `.start` · `.btn-save` · `.btn-share` · `.add` |
   | **Raised** | 3 | 2 | 1 | `.retry` · `.foldit` · `.shelf` · `.opt` · `.paperseg button` |
   | **Flat** | 2 | 2 | **0** | `.chip` · `.tile` · `.iconbtn` · `.icon-btn` · `.fnav` — presses flush |
   | **Inline** | 2 | 1 | 1 | `.ctl`, in all three prototypes — a control inside another surface |
 
-  Three follow *pressed = rest − travel*. **Hero deliberately does not** — it travels 2 and sheds 3, so the
-  screen's single primary action feels like it goes further down. That is why this is a table and not a
-  formula: a formula would have quietly corrected the most expressive control in the language into the least.
-  Only `4` is tokenised; `3` and `2` are literals at their use sites.
+  Three follow *pressed = rest − travel*; **Hero does not**, travelling 2 and shedding 3. This document
+  briefly explained that as a deliberate expressive choice for "the one primary action on a screen". **Both
+  halves of that were wrong**, and a review caught them:
+
+  - Every Hero *and* Raised `:active` rule writes the byte-identical `translate(2px,2px)` +
+    `box-shadow: 1px 1px 0`, across nine selectors and three files. What the corpus shows is **one pressed
+    value of 1dp reused regardless of rest depth** — not a per-tier decision. The reason is unknown, and the
+    numbers are transcribed because the HTML is canonical, not because the story was convincing.
+  - Hero is **not** one-per-screen: `.cover` wears it on every tile in the Library grid, and the Proof puts
+    `.btn-save` and `.btn-share` at Hero together. One-per-screen belongs to the **`--frame` ring**, which
+    appears exactly twice per file — a base rule and its `:active`.
+
+  It stays a table rather than a formula regardless: a formula would silently move whichever tier disagreed
+  with it. Only `4` is tokenised; `3` and `2` are literals at their use sites.
 - **A border is not a shadow, and they do not share a token.** A **drawn line** — every border, outline and
   SVG stroke — is *ink*, and follows `ink`. A **shadow** is the absence of light, must stay darker than the
   surface it falls on, and follows `inkLine` (`#120E0A` in dark). They are byte-identical in light theme
@@ -550,7 +568,8 @@ against a mix of the two corpora.** Concretely:
 | 7 | ~~**The spacing scale (§3.3) is OPEN.**~~ — ✅ **CLOSED 2026-08-09, owner ruled *author it*.** A 7-step ladder (`2/4/8/12/16/24/36`) measured into the corpus: **273 declarations routed**, mean movement 0.94 px, 97.1% within 2 px. The section's "authored with a scale from the first line" claim was false when written and is true now because the corpus was moved to match it — recorded as a **refit, not a discovery**. | Closed |
 | 8 | ~~**`inkLine` borders in dark theme.**~~ — ✅ **CLOSED 2026-08-09; count corrected 2026-08-10.** A drawn line follows `ink`; only a shadow follows `inkLine` (§4.3). **61** borders now on `ink` (8 Library · 19 Proof · 34 Bench): **1.38 → 11.70 in dark, zero change in light.** Researched first, and the research narrowed the claim: this was **design consistency, not a WCAG failure** — 1.4.11 binds controls, not decorative frames ([V21-RESEARCH §8.1](V21-RESEARCH.md)). **Three** deliberate ink-on-ink cases, not one: the Bench snackbar, the Proof flash, and the `.chip .sw` swatch. | Closed |
 | 9 | ~~**Pixel parity has a moving target now.** Rows 7 and 8 changed the prototypes *after* the owner accepted them as directions.~~ — ✅ **CLOSED 2026-08-10.** The owner opened all three moved prototypes and accepted them directly (*"all looks perfect for the version we are building for. I accept. GO"*). **That look is what this row asked for, and it is what froze the corpus** — parity now targets the files as they stand, not the 2026-08-09 screens. | Closed |
-| 10 | **The frozen corpus is untracked in git.** `docs/design/mockups/v21-*.html` has never been committed, so the canonical specification has no baseline to diff a drift against. Found by the second review; a commit is an owner action under this project's standing constraint. | **Owner to authorise a commit** |
+| 10 | ~~**The frozen corpus is untracked in git.**~~ — ✅ **CLOSED 2026-08-10.** All three prototypes committed at `a470e15` on the owner's authorisation. Drift is diffable, which is what makes *"the HTML is the specification"* enforceable rather than aspirational. | Closed |
+| 11 | **`--gap-md: 12px` spaces layout throughout the frozen corpus** — `.pgg` and `.canvasArea` (Bench), `.band`, `.dbody` and `.testcard` (Proof), `.empty` and `.sh-head` (Library), among ~59 declarations. The 8pt ruling of 2026-08-10 classified `gap-md` as a *sub-component* value and therefore out of the rhythm's scope; that classification was the implementer's, not the owner's, and the corpus contradicts it. See [V2-CONSTITUTION §III *Spacing*](V2-CONSTITUTION.md#spacing). | **Owner ruling reopened** |
 | 4 | **Read · Fold · first-run** have no V2.1 prototype (§2) | Deferred |
 | 5 | A `README.md` index row for this file and for V21-RESEARCH.md. **Deliberately not added** — `README.md` is one of four uncommitted carries the owner ruled untouchable | Owner |
 | 6 | Device verification, both passes, once anything is implemented — [CLAUDE.md § Device Verification](../../CLAUDE.md) | Implementer |

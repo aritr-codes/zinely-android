@@ -1,14 +1,15 @@
 package com.aritr.zinely.ui.components
 
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import com.aritr.zinely.ui.theme.ZinelyV21Press
 
 /**
@@ -29,6 +30,15 @@ import com.aritr.zinely.ui.theme.ZinelyV21Press
  * Pressing translates the object and *shortens* its shadow ([ZinelyV21Press]); the shadow is drawn
  * relative to the translated object, exactly as CSS does it, so its far edge creeps back toward the
  * surface rather than sliding with the finger.
+ *
+ * The outline is **filled**, not stroked, so the object's own opaque background is what makes this read
+ * as a shadow rather than a slab — the same precondition [zinelyV2Shadow] carries. A surface with a
+ * transparent interior gets a solid shape behind it, which is correct for a printed shadow and wrong
+ * for anything expecting an outline.
+ *
+ * One corpus hard shadow is **not** expressible here: the Proof's fold sheet uses
+ * `filter: drop-shadow(var(--hard) var(--hard) 0 …)`, which follows the drawn artwork's *alpha* rather
+ * than the node's outline. That one needs its own draw, not this modifier with a clever shape.
  *
  * @param offset the down-right offset, on both axes. Zero draws nothing — the flush pressed state of
  *   [ZinelyV21Press.Flat] is a real state, not a missing shadow.
@@ -59,17 +69,32 @@ public fun Modifier.zinelyV21HardShadow(offset: Dp, color: Color, shape: Shape):
  * bounds**: the ring must not eat the object's own padding, and the object must not have to be laid
  * out 10dp larger to wear one.
  *
+ * ### It is a stroked band, and the corner radii grow additively
+ *
+ * A first version grew the *size* and reused the *shape* — `shape.createOutline(size + 2w)` — then
+ * filled it. A review caught two defects in one line, and the fix for both was already sitting in this
+ * package. **Growing the size scales the radii proportionally, where CSS grows them additively** (CSS
+ * Backgrounds §7.1.1): at `RoundedCornerShape(14.dp)` with a 5dp band the outer boundary kept radius 14
+ * where CSS gives 19, pinching the band to less than its own width at every corner. It was invisible
+ * only because all three corpus users are `--br-pill`, where proportional growth of `min/2` coincides
+ * with `+w`. [spreadPath] does the additive thing, is unit-tested, and rejects a `Generic` outline
+ * rather than silently mis-drawing one — so the ring is a **`w`-wide stroke of the outline spread by
+ * `w/2`**, whose outer edge lands exactly `w` out with radius `r + w`.
+ *
  * Ordered against [zinelyV21HardShadow] the way the corpus stacks them — `hard, then frame` in the CSS
- * list, meaning the ring paints *under* the hard shadow. Apply the frame first in the chain.
+ * list, and CSS paints the *first*-declared shadow layer on top. Of two chained `drawBehind`s the left
+ * one paints first, i.e. underneath. **So apply the frame first in the chain** and the ring lands under
+ * the hard shadow, as it does in the prototypes.
  */
 public fun Modifier.zinelyV21Frame(width: Dp, color: Color, shape: Shape): Modifier =
     drawBehind {
         val w = width.toPx()
         if (w <= 0f) return@drawBehind
-        translate(-w, -w) {
-            val grown = Size(size.width + 2 * w, size.height + 2 * w)
-            drawOutline(shape.createOutline(grown, layoutDirection, this), color)
-        }
+        drawPath(
+            path = spreadPath(shape.createOutline(size, layoutDirection, this), w / 2f),
+            color = color,
+            style = Stroke(width = w),
+        )
     }
 
 /**
@@ -89,6 +114,28 @@ public fun Modifier.zinelyV21Frame(width: Dp, color: Color, shape: Shape): Modif
  * requirement is that reduced motion never removes the state change motion was communicating. The
  * state change *is* the position.
  *
+ * ### The chain contract — read this before writing a caller
+ *
+ * The resting shadow paints up to **4dp outside the node**, and nothing reserves space for it. Two
+ * consequences bind every caller in Steps 4–6, and both fail as *"the shadow is missing"* on a device
+ * rather than as anything a test would name:
+ *
+ * - **Nothing that clips may sit to the left of this modifier.** A `Modifier.clip`, a
+ *   `graphicsLayer(clip = true)`, a `Surface`/`Card` shape, or a lazy-list viewport edge will cut the
+ *   shadow off. Either clip further right, or give the row the padding the shadow needs.
+ * - **Put `clickable` / `semantics` to the *right*** so the touch target and the platform
+ *   `AccessibilityNodeInfo` bounds travel with the object. Placement offsets do propagate into
+ *   `boundsInWindow`, and a ≤2dp transient shift is harmless — but ADR-058 and ADR-059 are both cases
+ *   of Compose's semantics tree and the platform's disagreeing, so this is written down rather than
+ *   rediscovered on a device.
+ *
+ * ### Two corpus press behaviours this deliberately cannot express
+ *
+ * `.act:active` presses by changing **background only**, with no travel and no shadow — it has
+ * `border: none` and no depth to shed. And `.fnav:disabled` / `.icon-btn:disabled` drop to
+ * `box-shadow: none`, a *disabled* depth rather than a pressed one. Neither is a fifth tier and neither
+ * belongs here; a caller needing them states it at the call site.
+ *
  * @param color the shadow ink — `inkLine`. See [zinelyV21HardShadow].
  */
 public fun Modifier.zinelyV21Pressable(
@@ -97,11 +144,9 @@ public fun Modifier.zinelyV21Pressable(
     color: Color,
     shape: Shape,
 ): Modifier = this
-    .layout { measurable, constraints ->
-        val placeable = measurable.measure(constraints)
-        val travel = if (isPressed) press.travel.roundToPx() else 0
-        // Placed with an offset rather than measured smaller: the object does not shrink when pressed,
-        // it moves. Its own size, and therefore its text metrics, must not change under a finger.
-        layout(placeable.width, placeable.height) { placeable.place(travel, travel) }
-    }
+    // Offset, not a smaller measure: the object does not shrink under a finger, it moves — its size,
+    // and therefore its text metrics, must not change. The lambda form defers to the placement phase,
+    // so a press does not re-measure the subtree. The shadow chains *inside* it and so moves with the
+    // object, which is what CSS `transform` does to a `box-shadow`.
+    .offset { if (isPressed) IntOffset(press.travel.roundToPx(), press.travel.roundToPx()) else IntOffset.Zero }
     .zinelyV21HardShadow(press.offset(isPressed), color, shape)

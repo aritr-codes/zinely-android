@@ -52,19 +52,21 @@ public object ZinelyV21Dimens {
      * Values above 40px in the corpus are one-off layout dimensions rather than rhythm (60, 64, 132,
      * 150) and are deliberately **not** on the ladder; they stay at their call sites.
      *
-     * ### The ladder is split by scope, and the split is constitutional
+     * ### ⚠️ The 8pt question is OPEN, and no value here may be chosen to settle it
      *
      * [V2-CONSTITUTION §III](docs/design/V2-CONSTITUTION.md) requires an **8pt rhythm for layout**, and
-     * four of these steps are off that grid. The owner ruled on 2026-08-10 that the rhythm binds
-     * *layout* — the room a page is given — and never bound the gaps inside a control:
+     * [gapHair], [gapXs], [gapMd] and [gap2Xl] are off that grid. The owner ruled on 2026-08-10 that
+     * the rhythm binds *layout* and not sub-component insets — **that ruling stands.** What did not
+     * survive is this file's own mapping under it: a first version classified [gapMd] as an inset and
+     * therefore out of scope, and a review found the frozen corpus spaces a page grid, the canvas
+     * region, three panel types and two page-level states with it — ~59 declarations. So under the
+     * ruling as written, 12dp *is* layout spacing, and it is off the grid.
      *
-     * - **Layout steps, on the 8pt grid:** [gapSm], [gapLg], [gapXl], and [gap2Xl] as the corpus's
-     *   published outer step. Use these between panels, sections and list items.
-     * - **Sub-component steps, out of the clause's scope:** [gapHair], [gapXs], [gapMd]. Icon-to-label,
-     *   chip padding, hairline insets — inside one control.
-     *
-     * ⚠️ **Using [gapMd] to space panels or sections stretches that ruling past what it says** and
-     * reopens a settled constitutional question. Reach for [gapLg] there.
+     * The question is back with the owner ([V21-SPEC §8 row 11](docs/design/V21-SPEC.md)). Until it is
+     * answered, **transcribe what the frozen HTML says at each address and nothing else.** Do not
+     * substitute [gapLg] for a corpus 12 to make a surface grid-clean: that would decide a
+     * constitutional question by way of a padding value, and it would move pixels away from the
+     * specification to do it.
      */
     public val gapHair: Dp = 2.dp
     public val gapXs: Dp = 4.dp
@@ -80,8 +82,9 @@ public object ZinelyV21Dimens {
      * finger.
      *
      * This is the **hero** offset and the only one the corpus tokenises. Two more depths are used as
-     * literals; all three, and their press behaviour, are [ZinelyV21Press.Hero], [ZinelyV21Press.Raised]
-     * and [ZinelyV21Press.Flat].
+     * literals, and the three yield **four** press behaviours — [ZinelyV21Press.Hero],
+     * [ZinelyV21Press.Raised], [ZinelyV21Press.Flat] and [ZinelyV21Press.Inline], which shares Flat's
+     * rest depth but halves the travel.
      */
     public val hardShadow: Dp = 4.dp
 
