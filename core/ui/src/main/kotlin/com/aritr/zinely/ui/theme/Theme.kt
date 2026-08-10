@@ -38,6 +38,24 @@ public val LocalZinelyV2Colors: ProvidableCompositionLocal<ZinelyV2Colors> =
     staticCompositionLocalOf { error("No ZinelyV2Colors provided — wrap the tree in ZinelyTheme.") }
 
 /**
+ * The **V2.1** chrome palette, provided alongside [LocalZinelyV2Colors] on exactly the terms that one
+ * was provided alongside V1's: **additive, and it migrates nothing.**
+ *
+ * Three palettes are live because three are in use. [ADR-099](docs/DECISIONS.md#adr-099) supersedes the
+ * V2 trilogy **as the design source** and supersedes no ADR, so a V2 surface keeps reading
+ * [LocalZinelyV2Colors] until the day it is re-skinned, and the V2 goldens keep passing until then. A
+ * surface reads exactly one of these locals; a surface reading two is a re-skin someone abandoned
+ * halfway. See [ZinelyV21Colors].
+ *
+ * There is no `LocalZinelyV21Dimens` or `LocalZinelyV21Fonts` to match. Those are `object`s and neither
+ * varies with the theme — geometry does not change when the room goes dark, and neither does type.
+ * Callers name [ZinelyV21Dimens] and [ZinelyV21Fonts] directly, which also keeps the theme's flip cost
+ * to the one thing that genuinely flips.
+ */
+public val LocalZinelyV21Colors: ProvidableCompositionLocal<ZinelyV21Colors> =
+    staticCompositionLocalOf { error("No ZinelyV21Colors provided — wrap the tree in ZinelyTheme.") }
+
+/**
  * The `content.*` maker inks — the art supplies, kept in their own local so that reaching for them
  * from chrome is a deliberate act rather than an accident of autocomplete. Deliberately **not** keyed
  * on the theme: a printed cover does not restyle itself when the room goes dark. See
@@ -91,6 +109,10 @@ public object ZinelyTheme {
     /** The V2 chrome palette. Additive during the migration — see [LocalZinelyV2Colors]. */
     public val v2Colors: ZinelyV2Colors
         @Composable get() = LocalZinelyV2Colors.current
+
+    /** The V2.1 chrome palette. Additive — a surface reads this **or** [v2Colors], never both. */
+    public val v21Colors: ZinelyV21Colors
+        @Composable get() = LocalZinelyV21Colors.current
 
     /** The `content.*` maker inks — for the artifact, never for chrome. See [ZinelyContentInks]. */
     public val contentInks: ZinelyContentInks
@@ -189,6 +211,7 @@ public fun ZinelyTheme(
     val reduceMotion = rememberReduceMotion()
     val colors = remember(darkTheme) { if (darkTheme) zinelyDarkColors() else zinelyLightColors() }
     val v2Colors = remember(darkTheme) { if (darkTheme) zinelyV2DarkColors() else zinelyV2LightColors() }
+    val v21Colors = remember(darkTheme) { if (darkTheme) zinelyV21DarkColors() else zinelyV21LightColors() }
     // Not keyed on darkTheme: the maker's inks are theme-invariant by design (ZinelyContentInks).
     val contentInks = remember { zinelyContentInks() }
     val elevation = remember(darkTheme) { if (darkTheme) zinelyDarkElevation() else zinelyLightElevation() }
@@ -202,6 +225,7 @@ public fun ZinelyTheme(
     CompositionLocalProvider(
         LocalZinelyColors provides colors,
         LocalZinelyV2Colors provides v2Colors,
+        LocalZinelyV21Colors provides v21Colors,
         LocalZinelyContentInks provides contentInks,
         LocalZinelyElevation provides elevation,
         LocalZinelyMotion provides motion,
