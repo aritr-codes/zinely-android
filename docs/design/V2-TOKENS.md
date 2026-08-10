@@ -5,7 +5,11 @@
 > discipline in [V2-RESEARCH.md §3](V2-RESEARCH.md). This is the single source the HTML prototypes and the
 > Compose implementation derive from. It becomes a **governed colour ADR** when it lands in code (the
 > reopening of the colour rules the corpus ruling Q-B permits); the values here are the design-frozen
-> reference that ADR will carry. Type stays **Fraunces (voice) + Inter (work)** — unchanged.
+> reference that ADR will carry. Type was **Fraunces (voice) + Inter (work)** when this file was locked;
+> [V2-CONSTITUTION Amendment 1](V2-CONSTITUTION.md#amendment-log) (2026-08-10) made it three roles —
+> **Averia Sans Libre (voice) + Fraunces (editorial) + Inter (work)** — for V2.1 surfaces. This file's
+> **colour values are untouched by that** and still govern every surface not yet re-skinned; V2.1's palette
+> lives in [V21-SPEC §4.1](V21-SPEC.md).
 >
 > **Derivation, not copy.** Four rulings taken from the reference's *feeling* — warm temperature · muted
 > (not desaturated) ceiling · soft surfaces + crisp ink · the paper metaphor — then the image was set

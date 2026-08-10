@@ -5,9 +5,14 @@
 > a design, or a line of code conflicts with this one, this one wins.
 >
 > **Stability contract.** This document is meant to be stable for *years*. It is amended rarely, deliberately,
-> and only by the owner — never as a side-effect of implementation. The frozen screens ([Library](mockups/v2-library.html) ·
-> [Bench](mockups/v2-bench.html) · [Proof](mockups/v2-proof.html)) are the *application* of this constitution;
-> this is the constitution itself.
+> and only by the owner — never as a side-effect of implementation. The frozen screens are the *application*
+> of this constitution; this is the constitution itself. **Since 2026-08-10 those screens are the V2.1
+> corpus** ([Library](mockups/v21-library.html) · [Bench](mockups/v21-bench.html) ·
+> [Proof](mockups/v21-proof.html)), which superseded the V2 trilogy as the canonical design source under
+> [ADR-099](../DECISIONS.md#adr-099). The V2 files ([v2-library](mockups/v2-library.html) ·
+> [v2-bench](mockups/v2-bench.html) · [v2-proof](mockups/v2-proof.html)) remain the parity target for every
+> surface not yet re-skinned. The constitution itself is unchanged by that, except through
+> [Amendment 1](#amendment-log).
 >
 > **Authority chain.** Constitution → frozen HTML specifications → [ADRs](../DECISIONS.md) → implementation.
 > Read [COMPOSE-IMPLEMENTATION-GUIDE.md](../COMPOSE-IMPLEMENTATION-GUIDE.md) for how implementation obeys it.
@@ -131,12 +136,43 @@ These are the constraints implementation must never violate. Detail lives in the
 invariant is stated here.
 
 ### Typography
-**Fraunces (voice/display) + Inter (work/body). Permanent.** Fraunces carries headings, titles, and the product's
-voice; Inter carries UI, metadata, and running work. No third UI typeface. This pairing is fixed across V2.
+
+> ⚖️ **AMENDED 2026-08-10 — Amendment 1, the only amendment to date.** See [§VI](#vi-amendment). The clause as
+> ratified on 2026-07-28 read:
+>
+> > **Fraunces (voice/display) + Inter (work/body). Permanent.** Fraunces carries headings, titles, and the
+> > product's voice; Inter carries UI, metadata, and running work. No third UI typeface. This pairing is fixed
+> > across V2.
+
+**Fraunces (editorial) + Inter (work) + Averia Sans Libre (voice). Permanent.** Averia carries headings, screen
+titles and the maker's own short strings — the product's *voice*. Fraunces carries long-form editorial: zine body,
+captions, pull quotes, guide prose. Inter carries UI, metadata and running work. **No fourth UI typeface.**
+
+**The rule that makes three faces safe rather than amateur:** *the imperfect face never sets running text.* Voice
+is for short strings; Work is for anything the user operates; Editorial is for anything long. A violation of that
+sentence is a violation of this constitution, not a style preference.
 
 ### Spacing
 An **8pt rhythm** governs layout. Spacing is calm and generous; the page is given room. Density is never used to
 fit more chrome — if something doesn't fit calmly, it is the wrong thing to show here.
+
+> ✅ **Scope ruled by the owner, 2026-08-10 — this clause is *not* amended, it is read as written.**
+> V2.1's measured spacing ladder ([V21-SPEC §3.3](V21-SPEC.md)) is `2 · 4 · 8 · 12 · 16 · 24 · 36`, and four
+> steps — 2, 4, 12, 36 — are off an 8pt grid. Three readings were put to the owner; the one chosen is the
+> narrowest: **the 8pt rhythm governs *layout* — the room a page is given — and never bound sub-component
+> insets, hairlines or the gaps inside a control.** The sentences that follow this clause say what it is for
+> in its own words: *calm and generous*, *density is never used to fit more chrome*. A 2 px hairline inset is
+> not a density decision.
+>
+> So: **layout spacing is 8pt** (`8 · 16 · 24` carry the ladder's structural steps, and 36 is the corpus's
+> published outer step, from Maeve's `4/8/16/24/36`); **`--gap-hair`, `--gap-xs` and `--gap-md` are
+> sub-component values and out of this clause's scope.** No clause changes, no pixel changes, and no frozen
+> corpus is re-cut for grid purity — which the other two readings would each have required.
+>
+> ⚠️ **This is an interpretation, and it is the reversible one.** If a future surface uses `--gap-md: 12px`
+> to space *layout* — panels, sections, the page's own breathing room — this ruling has been stretched past
+> what it says, and the conflict is live again as a real amendment question
+> ([ADR-099 §6, RF-6](../DECISIONS.md#adr-099-review-2)).
 
 ### Motion
 **Calm, sparing, and meaningful.** Motion marks the two emotional peaks (e.g. a paper-settle), not every
@@ -245,6 +281,25 @@ This constitution is amended only by the **owner**, deliberately, as an explicit
 implementation, and never by a design or engineering session on its own initiative. An amendment names what
 changed and why, and (if it touches a frozen surface) updates that surface's HTML spec in the same act. Absent
 such an amendment, every statement here is final and binding on all downstream work.
+
+### Amendment log
+
+| # | Date | Clause | What changed, and why |
+|---|---|---|---|
+| **1** | **2026-08-10** | [§III Typography](#typography) | **A third UI typeface is admitted: Averia Sans Libre, as the *voice* face.** V2.1 ([ADR-099](../DECISIONS.md#adr-099)) re-skins the trilogy onto a handmade design language whose voice depends on a *deliberately imperfect* display face — one generated by averaging handwriting samples. Fraunces can be warm but not wonky, and the wobble is the whole difference between "tasteful" and "made by a person" ([V21-SPEC §3.1](V21-SPEC.md)). Fraunces is **not dropped**; it moves from *voice/display* to *editorial*, which is the role its long-form cuts were always doing. Cost, measured in a built APK rather than estimated: **123.6 KB**, and subsetting cannot reduce it (an earlier 121.9 KB was a local `zlib` estimate and is retracted — see [ADR-099 §5](../DECISIONS.md#adr-099-gaps)). The compensating constraint — *the imperfect face never sets running text* — is written into the clause itself. **Owner's explicit act, requested and ruled on 2026-08-10** after the conflict was surfaced by implementation; the three V2.1 prototypes already render in Averia, so §VI's "updates that surface's HTML spec in the same act" is satisfied by the frozen V2.1 corpus. |
+
+**Evidence for Amendment 1** (recorded because §VI requires the amendment to be the owner's *explicit act*, and
+an implementer's summary is not evidence of one). Implementation stopped on finding the conflict and put it to
+the owner as a choice, with the alternatives stated: amend §III explicitly · drop Averia and keep the clause ·
+let ADR-099 carry the change implicitly. The owner chose **"Amend §III explicitly"** on **2026-08-10**, in the
+same session that accepted the V2.1 corpus (*"all looks perfect for the version we are building for. I
+accept."*). The amendment was written only after that ruling, never in anticipation of it.
+
+⚠️ **This amendment exists because the conflict was caught, not because it was planned.** ADR-099 was written
+claiming *"V2-CONSTITUTION.md survives in full — every principle survives"*, and that claim was **false**: the ADR
+bundles a third UI typeface, which §III forbade in terms. The error was found while writing the Compose type
+layer, *after* the owner had accepted the ADR on the strength of that very sentence. Recorded plainly, because a
+constitution that quietly acquires exceptions is worth less than one that logs them.
 
 ---
 

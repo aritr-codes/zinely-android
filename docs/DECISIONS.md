@@ -108,6 +108,7 @@
 | [ADR-096](#adr-096) | **C6 — the ink popover (H4): the maker palette.** Opened before any production code per [ADR-089 §2.2](#adr-089) and **held `Proposed` until its one owner decision was ruled** — [D-028](design/V2-SPEC-DEFECTS.md#d-028), which asked whether [ADR-055](#adr-055) Decision 6's five accepted content inks are superseded by the freeze's nineteen swatches; [OD-24](design/V2-SPEC-DEFECTS.md#d-028-ruling) ruled it on 2026-08-05, the frozen Bench's eighth amendment. Re-anchors every C6 citation (all sixteen were wrong, at four different offsets, and were wrong at the freeze commit) and audits twelve frozen properties no ADR-089 row reaches. **Both device passes run and accepted 2026-08-06** ([§9](#adr-096-device)); Pass 1 failed the first build on two frozen properties and added rows 6.2c and 6.1i. | Accepted |
 | [ADR-097](#adr-097) | **C9 — integration: the four states, the motion policy, persistence of place, and the phase gate.** Phase C's **last** package, and the only one whose subject is the seams between the six already built rather than a region of the frozen file. Opened before any production code per [ADR-089 §2.2](#adr-089), with a **14-row** property table read from `v2-bench.html` itself — which is how it found the Bench's reduced-motion address wrong in three places (`:293`/`:260`/`:143` → **`:460`**), one rule ADR-089's phase table names nowhere, a caption outside the four states, and a row C3 had already discharged. Built, verified (**1603 tests green**; **15/15 mutations RED** over a GREEN control), reviewed twice (**GO WITH FIXES**, all Required Fixes reconciled) and **device-verified on both passes**. Its own invariants found two real product defects nothing else had: a **dead selection carried across undo** in `EditorReducer.stepHistory`, and a soft-delete fade **hard-coding 200ms** under a reduced-motion preference. Its row 9.5 was computed four times and wrong three times — raising and withdrawing [D-061](design/V2-SPEC-DEFECTS.md#d-061) and [D-062](design/V2-SPEC-DEFECTS.md#d-062) the same day — while the hardware was right the first time; **being wrong once is not a reason to trust the correction**. ✅ **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) RESOLVED by [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling)**, option (a) — the Bench's rule ratified on device evidence, **no code changed**, discharging [OD-10](#adr-089)'s live half. **This acceptance closes Phase C.** ⚠ *Verification provenance annotated 2026-08-06 ([§6](#adr-097), [OD-37b](COMPOSE-V2-ROADMAP.md#phase-c-addendum-record-integrity)): the **1603** figure is unaltered and was reproduced on a clean tree at `fc33bca`, but the run it originally described held three uncommitted test-side fixes. No claim retracted; C9 not reopened.* | Accepted |
 | [ADR-098](#adr-098) | **Phase D opens (planning).** The Proof is **already built** — as V1, against the superseded `proof.html`, with READ-first shipping and **zero V2 tokens across all five files** — so Phase D is a re-skin, and its phase-level property table sweeps all 702 lines of the frozen Proof to report **four of eleven packages fenced before any is opened**. Eleven packages ordered by **golden blast radius**, not by rulings-in-hand: the shared `Z*` components convert once, before the surface, or ~110 PNGs re-record twice. Finds the enrolment gate **unsatisfiable by ruling** (`feature.editor` holds **563** raw `.dp`, every one of them because D-007 published no spacing scale), the imposed sheet **schematic rather than rendered** so a maker never sees their own sheet before spending paper, the frozen Proof carrying **no Loading and no Error state** (D-024's exact shape), the fold animation **looping forever** where the roadmap requires it to rest, and **both of Phase D's two named deliverable addresses stale**. Raises **thirteen owner decisions (OD-29…OD-41)**. Its baseline finding — `main` red in three places inside the tagged milestone — was confirmed by audit and **closed by the maintenance commit `fc33bca`**, which retires **OD-37**; ~~and unblocks **D1**~~ **corrected 2026-08-07** — that removed D1's *baseline* blocker only, and [OD-41](#adr-098-od41) carried its scope ruling. **[OD-41](#adr-098-od41) is answered 2026-08-07, disposition (a): Phase D re-bases the shared `:core:ui` `Z*` components; D1 stands as published and is ▶ unblocked**, on [D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface)'s ruling that modifying existing product surfaces *"necessarily belongs to Phase D"* — **no ADR superseded**; [ADR-097](#adr-097) §7.5 is Phase-C-scoped and is annotated, not amended. **Two of thirteen owner decisions answered, eleven owed. D0 is blocked on OD-29.** Records that ADR-089 §2.2 **audits** package proposals rather than generating them, so no derivation-methodology repair was owed ([note](#adr-098-derivation-note)) | Proposed |
+| [ADR-099](#adr-099) | **V2.1 — the handmade design language re-freeze.** Re-skins the Library, Proof and Bench onto a printed-depth, published-scale, imperfect-display-face language derived from three reference sites. Supersedes the V2 trilogy **as the design source**, supersedes **no ADR**, keeps the no-fourth-chrome-hue rule intact — and **amends V2-CONSTITUTION §III Typography** to admit a third UI typeface (Amendment 1, owner, 2026-08-10). | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -6540,3 +6541,233 @@ architecture impact, documentation consistency — and reconciled here; where tw
 again. One disagreement is recorded rather than averaged: the capability audit reported the Proof as
 *"fully built"*, and the specification audit reported the frozen Proof as *"not implementable"*. **Both are
 true, and the gap between them is Phase D.**
+
+---
+
+## ADR-099 {#adr-099}
+
+**V2.1 — the handmade design language.** The frozen V2 trilogy answers the right questions in the right order,
+and reads quieter than the thing it is for. V2.1 re-skins the Library, the Proof and the Bench onto a
+**printed** design language — hard un-blurred offset shadows, a published geometry scale, a deliberately
+imperfect display face, and craft motifs where a screen is about material — **without changing a single
+question, flow, or invariant.** The full specification is
+[docs/design/V21-SPEC.md](design/V21-SPEC.md); the measured evidence is
+[docs/design/V21-RESEARCH.md](design/V21-RESEARCH.md).
+
+- **Status:** ✅ **`Accepted` — 2026-08-10**, by the owner, after reviewing all three prototypes directly
+  (*"all looks perfect for the version we are building for. I accept."*). Acceptance carries
+  **[V2-CONSTITUTION Amendment 1](design/V2-CONSTITUTION.md#amendment-log)** with it — see §4; the owner made
+  that amendment as a separate explicit act on the same day, once implementation surfaced the conflict.
+  Opened `Proposed` — **2026-08-09**. It carried **no production code, no tests and no goldens** then; it is a
+  design specification, and acceptance is acceptance of the specification. It opened `Proposed` deliberately:
+  two of its claims were unmeasured, and per [CLAUDE.md](../CLAUDE.md) an independent review is owed before
+  acceptance and was not dispatched (§6). **Both measurements ran on 2026-08-09, the independent review ran
+  after them, and all three moved this ADR rather than confirming it: eight palette pairings failed WCAG AA
+  (all now fixed), the font cost is **123.6 KB** rather than ≈101 KB and does not shrink, and the review returned
+  GO WITH FIXES with four Required Fixes the implementer had missed (§5, §6). Both of the review's open
+  rulings were then researched and closed on owner instruction (§2.4, [V21-SPEC.md §3.3, §4.3 and
+  §8](design/V21-SPEC.md)): the spacing scale was made true by refitting 273 declarations, and **61** dark-theme
+  borders were moved off the shadow token. The owner then looked at the moved corpus directly and accepted it,
+  which is what closed §8 row 9. A **second, stricter review** ran after acceptance and returned NO-GO on the
+  paperwork — not on the design — with seven Required Fixes, all reconciled on 2026-08-10 (§6).
+- **Authorised by:** the owner ruling of **2026-08-09** — *"Full re-freeze — new V2.1 design"* — chosen over a
+  Library-only pilot and over an incremental amendment of V2.
+- **Supersedes:** `v2-library.html`, `v2-proof.html`, `v2-bench.html` **as the canonical design source**, and
+  any pixel-parity target derived from them. Effective on acceptance, i.e. from 2026-08-10.
+- **Supersedes no ADR.** See §4.
+
+### 1. Context {#adr-099-context}
+
+Two facts, both established from the repository rather than from recollection.
+
+**The design was quieter than the product.** Three reference sites named by the owner
+([Nic's Ice Creams](https://www.nicicecreams.com/), [The Belgian Waffle](https://thebelgianwaffle.co/),
+[Maeve Chocolate](https://maevechocolate.com/)) were fetched and their shipped CSS parsed on 2026-08-09. All
+three independently share five moves: a warm ground with soft brown-black ink · saturated accents as flat
+blocks · a deliberately imperfect display face over a clean body sans · **hard un-blurred depth** · pill
+geometry. **V2 already had the first two.** The measured distance is loudness, not metaphor: V2 has 25 soft
+blurred shadow declarations and no scale behind its 16 distinct chrome radii; the references have zero blur
+and a published `4/8/14/24/40` ladder.
+
+**Phase D was stuck on a corpus problem, not an implementation problem.** [ADR-098](#adr-098) §1.4 published
+the census and concluded Phase D owes *"a **redefinition**, not a migration"*. The D1 enrolment attempt then
+produced **102 findings across 83 lines**, of which **79 lines correspond to no D1 property row** — all of
+them values inherited from V1 with no frozen V2 source, which [OD-29](#adr-098-od29) had already ruled
+non-compliant. Those 79 values had nowhere to go **because the frozen corpus never declared a destination for
+them**. A re-authored corpus with published scales is the first thing that gives them one.
+
+### 2. Decision {#adr-099-decision}
+
+1. **Freeze three surfaces, and only three.** Library, Proof, Bench — each has a complete prototype, owner-
+   accepted 2026-08-09. Read, Fold, first-run and settings inherit the language but are **not** frozen here.
+2. **Bundle Averia Sans Libre** (OFL) as the *voice* face, **subset**, for headings and short display strings
+   only. Inter remains *work*; Fraunces remains *editorial*. **The imperfect face never sets running text.**
+3. **Keep [V2-TOKENS.md](design/V2-TOKENS.md)'s "no fourth chrome hue" rule unchanged.** V2.1's new hue —
+   **butter** — carries no action, no state and no text; it is **material** (tape, stamps, the ring around the
+   primary, the shelf lip). It joins the side of the line V2-TOKENS already drew for *"cover inks (the maker's
+   palette, not the chrome)"*. The rule, the two ADRs resting on it and the lint wall are all undisturbed.
+4. **Publish a radius scale and a spacing scale** — ⚠️ **amended 2026-08-09, because only one of the two was
+   real.** The radius scale was declared in all three prototypes and used **104 times**; it earned publication
+   on exactly the evidence this ADR claimed. `--gap-*` was declared in **one** prototype and used
+   **nowhere**, and the corpus measured 20.8–25.8% on-scale against the **16.7%** on which
+   [D-007](#adr-098) declined to publish V2's — *the same condition*. The owner ruled **author it rather than
+   withdraw it**: a 7-step ladder (`2/4/8/12/16/24/36`) was measured into the corpus and **273 declarations
+   now route through it**, mean movement 0.94 px, 97.1% within 2 px
+   ([V21-SPEC.md §3.3](design/V21-SPEC.md), [V21-RESEARCH §8.3](design/V21-RESEARCH.md)). **This ADR's
+   original justification — *"authored with the scale from its first line"* — was false for spacing when it
+   was written.** It is true now because the corpus was refitted, which is a different and weaker claim, and
+   it is recorded as such rather than quietly satisfied. The reasoning below stands unchanged for radius.
+   This does **not** overturn [D-006](#adr-098) or
+   [D-007](#adr-098): both were findings *about the frozen corpus* — V2 had no scale to publish, so publishing
+   one would have been fabrication. V2.1's corpus was **authored with the scale from its first line**. The
+   corpus changed; the principle did not.
+5. **Two rules the prototypes discovered, now binding.** *Craft belongs to material, not to tools* — the page
+   never tilts, the contextual verb bar carries no offset shadow, tape or rotation, and selection is a drawn
+   dashed ring, because a tool that performs is a tool you stop trusting. *Physical honesty beats visual
+   convenience* — the Proof renders the real booklet model (cover alone · 2|3 · 4|5 · 6|7 · back alone) one
+   leaf at a time, with the spine on the correct side of each page.
+
+### 3. Consequences for Phase D {#adr-099-phase-d}
+
+**Do not re-plan Phase D against a mix of the two corpora.** [ADR-098](#adr-098) is `Proposed`, never
+accepted, and its D1 property table is derived line-by-line from a file this ADR supersedes.
+
+- The 52-row D1 table is **invalidated as a work list** — its frozen addresses point at the superseded Proof.
+  Its *method* survives and should be reused against the V2.1 corpus.
+- The **D1 enrolment blocker is dissolved, not solved.** Its 79 unsourced literals get a destination for the
+  first time from §2.4's published scales.
+- ~~**[OD-41](#adr-098-od41)'s scope question is recommended to be recorded as *superseded by the
+  re-freeze*, not answered.**~~ ❌ **WITHDRAWN 2026-08-09 — the premise was false.** The independent review
+  checked the register and OD-41 is **not open**: it was **answered 2026-08-07**, disposition (a), and this
+  register records it as one of only two of thirteen owner decisions settled — *"D1 is ▶ unblocked — OD-41 is
+  answered"*. Executing the recommendation would have **reversed an answered disposition**, contradicting §4's
+  *"this ADR supersedes no ADR"*. The process discipline held — nothing was written, and the diff to this file
+  is an index row plus this ADR — but the recommendation itself was wrong and is retracted rather than
+  quietly dropped. Should the re-freeze genuinely invalidate that ruling, it returns as an explicit proposal
+  to revisit an answered decision.
+
+### 4. What this does NOT change {#adr-099-not}
+
+**This ADR supersedes no ADR.** It supersedes three HTML files as the design source.
+
+⚠️ **It does, however, AMEND THE CONSTITUTION, and an earlier draft of this section denied it.** This section
+read *"V2-CONSTITUTION.md survives in full — every principle survives"* and that was **false**. §2.2 of this ADR
+bundles Averia Sans Libre, and [V2-CONSTITUTION.md](design/V2-CONSTITUTION.md) §III said, in terms:
+*"No third UI typeface. This pairing is fixed across V2."* The Constitution's own §VI forbids exactly the thing
+that sentence was doing — amending it *"implicitly through implementation"*.
+
+The conflict was found while writing the Compose type layer, **after** the owner had accepted this ADR partly on
+the strength of the false sentence. It was surfaced rather than absorbed, and the owner made the amendment as an
+explicit act on **2026-08-10**: [V2-CONSTITUTION Amendment 1](design/V2-CONSTITUTION.md#amendment-log). Fraunces
+is not dropped — it moves from *voice/display* to *editorial* — and the compensating constraint (*the imperfect
+face never sets running text*) is now constitutional text rather than advice.
+
+**Everything else in the Constitution does survive**, including Principle 11 (*HTML is canonical*), which is the
+reason this document exists at all.
+[V2-TOKENS.md](design/V2-TOKENS.md)'s **values** are superseded; its **rules** are not. **No privacy or
+offline invariant moves**: V2.1 adds no network path, and the Bench reproduces V2's opt-in online art search
+exactly, disclosure included.
+
+### 5. The two gate measurements — both discharged before acceptance {#adr-099-gaps}
+
+Recorded here rather than discovered later:
+
+Both were **measured on 2026-08-09**, before any production code was written. The measurements are discharged;
+what they produced is not.
+
+1. ✅ **WCAG AA measured across the whole palette, both themes, and now CLOSED** — full method and table in
+   [V21-SPEC.md §4.1](design/V21-SPEC.md). The colour tokens are byte-identical across all three prototypes.
+   **Eight pairings failed, across two sweeps:** `inkFaint`-as-text **3.04 / 3.40** (26 rules, smallest 9.6 px
+   — the prototypes break §4.1's own *"never body text"* rule) · `jam`-as-text on `paper` **4.20** light ·
+   `jam`-as-text on `berryTint` **3.50 / 4.43** · `butter` as the Bench's `.fav.on` **state** **1.73** light
+   (which also violates §2.3) · **the recorded snackbar-Undo exception itself, 1.59 in dark** — it was
+   reasoned in light theme only · `.badge`, a hardcoded `#FFF6E8` on `jam` that never flipped with the theme,
+   **4.20 / 2.86** · **`.seal`, the identical bug on the Proof's success tick**, missed by the first sweep and
+   caught by the review · and **`.sheetline` at 1.38 in dark**, which left §5.3's fold guide — the Proof's
+   load-bearing artefact — very nearly invisible, because a *drawn line* had been stroked in the
+   *hard-shadow* token. The five that needed a palette judgement were put to the owner rather than silently
+   darkened; the owner ruled on 2026-08-09 and **all eight are fixed — a literal-aware re-run shows zero
+   failing pairings.** ⚠️ **The first sweep read CSS `color` against CSS `background` and nothing else, and
+   that blind spot cost three of the eight.** The CI test in implementation step 1 must cover `color`, `fill`
+   and `stroke`, tokens and literals alike. The palette
+   gains `jamText` and `onJam` (on the existing `leaf`/`leafText`/`onLeaf` precedent) and loses §2.3's single
+   butter exception, which is **retired rather than lived with**: butter now touches no action anywhere.
+   `inkSoft`-on-`deskEdge` measures 4.49 but is **not a live pairing** — `deskEdge` grounds only the keyboard
+   body and the keys sit on `paper`. Everything else passes, `leafText` comfortably.
+2. ✅ **Averia measured, and the estimate was wrong in the app's favour on paper and against it in practice.**
+   The two weights are **74.1 KB** as woff2 and **207.8 KB** as the TTF Android actually bundles —
+   **123.6 KB deflated in the APK**. The ≈ 101 KB figure was the TTF size of the 400 weight alone. Subsetting
+   to Latin + punctuation saves **7.7 KB** and is not worth doing: the inlined face is already a 213-codepoint
+   Latin subset. ASCII-only would reach 37.1 KB but drops accented characters the voice face needs for
+   user-typed zine titles. **This returns to the owner as §3.1 promised: the price is 123.6 KB and it does not
+   shrink.**
+
+   ⚠️ **This number was wrong twice before it was measured properly, and both wrong versions were stated as
+   fact.** 116.0 KB came from the *prototypes'* pre-subset bytes; 121.9 KB came from a local
+   `zlib.compress(level=9)` estimate. **AAPT's deflate is not `zlib.compress(level=9)`.** 123.6 KB is the only
+   figure taken from a built APK, and it is the only one that should ever be quoted
+   ([V21-SPEC §3.1](design/V21-SPEC.md)). *Estimating a compressed size is not measuring one* — which was the
+   gate's whole instruction.
+
+### 6. Review {#adr-099-review}
+
+~~**No independent review was dispatched.**~~ ✅ **DISPATCHED 2026-08-09 at the owner's request, before any
+Compose work, and returned GO WITH FIXES.** The gap was declared rather than skipped silently, per
+[CLAUDE.md](../CLAUDE.md), and the owner closed it by asking for the review at the cheapest point.
+
+**The review paid for itself.** It re-derived every contrast figure and the entire font measurement
+independently — all reproduced to 2 dp — and then found **four Required Fixes the implementer had missed**:
+`.seal`, a hardcoded literal identical to the `.badge` bug the sweep had *just* caught and reported as proof
+of its own thoroughness, sitting forty lines away in the same file · a **published spacing scale the corpus
+never uses**, whose justification fails on D-007's own evidentiary standard · a **wrong failure count** left
+in this ADR's own Status field · and the **false premise about OD-41** retracted in §3. Its three
+recommendations (specify `.fav.on` as intent rather than as a vendor-prefixed CSS property; soften *"butter
+never carries a state"* to *"never alone"*; replace the false *"byte-identical token block"* claim with the
+one that verifies) are all applied. **Extending the sweep as the review demanded then found two further
+failures the review had not itself caught** — `.seal`'s sibling class in SVG paint, including `.sheetline`,
+the fold guide's own outline at 1.38:1 in dark.
+
+The lesson recorded rather than smoothed over: **the first sweep's "zero failing pairings" was false when it
+was written, and it was written with confidence.** A measurement's blind spot is invisible from inside the
+measurement.
+
+One finding is recorded because it falsified my own work rather than someone else's. Writing §2.3 exposed two
+places where the prototypes used butter for something the rule forbids: the Proof's **"Fold it up"** (an
+action) and the Bench's **current-page** ring (a state). Both were **fixed** — to leaf and to berry
+respectively — rather than argued away, because the alternative was to publish a palette rule the corpus
+already broke.
+
+**The contrast measurement then found two more of the same kind, including in the exception I had granted
+myself.** The Bench's favourite star carried butter as a state at 1.73:1, and the snackbar's **Undo** — the
+one exception §2.3 recorded in the open — turned out to have been reasoned in light theme only and measured
+**1.59:1 in dark**. Both are fixed, and **the exception is retired rather than preserved**: Undo is now the
+snackbar's own paper colour, underlined, and **butter touches no action anywhere in the corpus.** An
+independent review was dispatched at the owner's request on 2026-08-09, before any Compose work; **§6's gap
+closes on its verdict, not on this paragraph.**
+
+#### Second review — 2026-08-10, after acceptance, verdict **NO-GO** {#adr-099-review-2}
+
+Dispatched at the owner's request once the token, dimension and type layers existed, with an explicit
+instruction to be strict. It returned **NO-GO on the paperwork, not on the design** — no finding touched a
+colour, a measurement method or a frozen decision — with **seven Required Fixes**, every one of which I
+re-derived from the repository before accepting it. All seven are reconciled:
+
+| # | Finding | Resolution |
+|---|---|---|
+| RF-1 | The three `v21-*.html` files — the *canonical specification* — are **untracked**. `git log --all -- 'docs/design/mockups/v21-*'` returns nothing: a frozen design with no committed baseline cannot be diffed against, so "the HTML is the spec" is unenforceable. | **Escalated to the owner.** Committing is an owner decision under this project's standing constraint; the fix is a `git add`, not an edit, and it is not mine to make. |
+| RF-2 | Border count wrong everywhere: **61**, not 59. | Fixed in six places. 59 was the number of *replacements the edit made*; two Bench borders were already on `ink`. A spec records **state**, not diff size. |
+| RF-3 | *"The single exception"* (ink-on-ink ground) was **three**: `.snack`, `.flash`, `.chip .sw`. The blanket repaint had made border == background, and my scan matched one rule per selector. | All three documented; `.flash` reverted to `inkLine` like `.snack`; `.chip .sw` annotated as a correct swatch ring. |
+| RF-4 | Three different font costs in circulation — 116.0, 121.9, 123.6 KB — two of them estimates presented as measurements. | Reconciled to the single APK-measured **123.6 KB** everywhere, with the estimate history recorded in §5 rather than erased. |
+| RF-5 | Amendment 1 lacked explicit owner evidence in the Constitution. | Recorded at the amendment. |
+| RF-6 | `V2-TOKENS.md` still said *"Fraunces (voice) + Inter (work) — unchanged"*; §III's *8pt rhythm* conflicts with ladder steps 2/4/12/36. | Typography line corrected. **The 8pt conflict is escalated — it is a constitutional ruling, not an implementer's call.** |
+| RF-7 | Pre-acceptance conditionals left in this ADR after acceptance, plus a stale paragraph and a superseded code block in the spec. | Removed; §5's title corrected from *"blockers on acceptance"*. |
+
+One further finding I raised against myself while verifying RF-3's neighbourhood: `ZinelyV21Fonts.Editorial`
+bundled Fraunces **Medium/500**, and **no V2.1 rule sets it** — all seven `--serif` rules in the corpus take
+the default weight. It is now 400 only. A bundled-but-unused weight is exactly the dead-token failure D-006
+deleted `--r` for.
+
+**The pattern across both reviews is the same one, and it is worth naming.** Neither review found a wrong
+colour or a wrong method. Both found *claims stated with more confidence than their evidence supported* — "the
+single exception", "zero failing pairings", "59 borders", "121.9 KB measured". The measurements were sound
+every time; the sentences around them were not.
