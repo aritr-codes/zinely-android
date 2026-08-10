@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Colors
@@ -169,7 +169,25 @@ class ZineV21CoverGoldenTest {
         }
     }
 
+    /**
+     * Captures the **root** rather than the tagged node.
+     *
+     * The raster measures **324×592**, which is the sheet exactly: `28 + 120 + 28 + 120 + 28` across,
+     * and `28 + 3×160 + 2×28 + 28` down. Every deliberate overflow lands inside the 28dp padding —
+     * the tape 11dp above the first row, the stamps 7dp right and 9dp below, the hard shadow 4dp
+     * down-right — so nothing this component adds is cut.
+     *
+     * That is worth stating because it was recorded as a **defect first**. Viewed at reduced scale the
+     * sheet reads as cropped: the right-hand stamps look shaved and the last row looks cut. Three
+     * changes were made against that impression — three columns to two, `h1100dp` to `h1600dp`, and
+     * `onNodeWithTag` to [onRoot] — and none of them moved the output by a pixel, because there was
+     * nothing to move. Reading the PNG's own header settled it in one command.
+     *
+     * Two of those changes are kept on their own merits (two columns leaves the surfaces legible; the
+     * root is the honest thing to capture when overflow is the point). The lesson is the third:
+     * **a raster is measurable, so measure it.** An impression of a rendering is not a reading of one.
+     */
     private fun capture(name: String) {
-        composeRule.onNodeWithTag(TAG).captureRoboImage("$GOLDEN_DIR/v21_cover_$name.png", aa())
+        composeRule.onRoot().captureRoboImage("$GOLDEN_DIR/v21_cover_$name.png", aa())
     }
 }
