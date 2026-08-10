@@ -76,16 +76,14 @@ public object ZinelyV21Dimens {
 
     /**
      * `--hard: 4px` — the signature move. An offset shadow in `inkLine`, **zero blur**, always
-     * down-right. It is a *printed* shadow, not elevation: a pressed control translates `2dp, 2dp`
-     * and drops its shadow to `1dp`, so the object physically moves under the finger.
+     * down-right. It is a *printed* shadow, not elevation: the object physically moves under the
+     * finger.
+     *
+     * This is the **hero** offset and the only one the corpus tokenises. Two more depths are used as
+     * literals; all three, and their press behaviour, are [ZinelyV21Press.Hero], [ZinelyV21Press.Raised]
+     * and [ZinelyV21Press.Flat].
      */
     public val hardShadow: Dp = 4.dp
-
-    /** The pressed-state offset — [hardShadow] minus the `2dp` the control travels. */
-    public val hardShadowPressed: Dp = 1.dp
-
-    /** The distance a control travels on press, on both axes. */
-    public val pressTravel: Dp = 2.dp
 
     /**
      * `--frame: 5px` — a flat colour ring stacked outside a hard shadow, borrowed from Maeve as riso
