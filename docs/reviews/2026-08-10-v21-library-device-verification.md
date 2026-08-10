@@ -4,11 +4,16 @@
 assembled from `38d22a6` (Pass 1 re-run from `38d22a6` + the sheet inset fix below)
 **Device** Samsung `SM-A176B` (`a17x`), **Android 16 / SDK 36**, 1080×2340, 450dpi physical / **420dpi
 override** (2.625×), **three-button navigation**
-**TalkBack** not run; the accessibility evidence here is the platform `AccessibilityNodeInfo` tree read via
-`uiautomator dump`, not the Compose semantics tree. See [Not covered](#not-covered).
+**TalkBack** Samsung TalkBack, bound and running for the accessibility readings (§P1-6).
 
-Screens exercised: the shelf with **9 real zines** (content state), both themes, and the action sheet.
+Screens exercised: the shelf with real zines (content state) in **both themes**, the action sheet, and — on
+the owner's authorisation to delete the device's data — the **loading**, **empty** and **error** states.
 Screenshots and tree dumps are in the session scratchpad; the numbers quoted below are from the dumps.
+
+> **Reading the screenshots:** with TalkBack running, its accessibility-focus indicator paints as a **filled
+> blue box** over the focused text on this device. It appears over `ONE SHEET` in the mid-session empty-state
+> captures and it is not a defect — the same frame with TalkBack unbound is clean. It cost twenty minutes to
+> rule out, which is the reason it is written down.
 
 > **A dump trap, for the next person.** `adb shell uiautomator dump /sdcard/ui.xml` writes to
 > `/Files/Git/sdcard/ui.xml` under Git Bash — MSYS rewrites the leading `/`. Use
@@ -82,12 +87,83 @@ Light: desk cream, ink `#33261C`, grain visible on desk *and* covers, hard shado
 translucent over the cover's own edge, spine crease on the binding side, postmark seated on the corner.
 Dark: the same, inverted per the corpus's own dark block.
 
+### ✗ → ✓ P1-6 · The empty state's `→` was drawn by an **emoji font** — fixed, twice over
+
+`.tf .arrow` sets U+2192 in the voice face. On the device it rendered as a **blue rounded square with an
+orange arrow** (`#1A5CE5` measured in the raster), ignoring `color:var(--jam)`, sitting between two hand-drawn
+illustrations. It reads as a broken image. Nothing in the repository could have caught it: Robolectric's font
+fallback chain is not the device's.
+
+Two fixes were tried on hardware and **both failed**, which is what makes this worth recording:
+
+| attempt | reasoning | result |
+|---|---|---|
+| set it in the sans | Averia carries no U+2192 (cmap read out of `averia_sans_libre_{regular,bold}.ttf`); all four bundled Inter weights do | still `#1A5CE5` |
+| append **U+FE0E** | the text-presentation variation selector — the documented "this is text" signal | still `#1A5CE5` |
+
+U+2192 is `Emoji=Yes` (text-default) in UTR #51 and the substitution happens **above the font layer**, so
+neither a `fontFamily` nor a variation selector reaches it. The arrow is now a **path** — 24dp box, 2dp
+round-capped strokes, `jam` — verified on device as `#D04D2B` with no blue pixel in the region.
+
+D-021's three other orphans (`⋯` U+22EF, `✎` U+270E, `⧉` U+29C9) are absent from Inter too and still fall
+back, but none is emoji-eligible and all three drew as plain monochrome text glyphs here. Left alone.
+
+### ✓ P1-7 · Loading, empty and error all render, and the hidden shelf head holds its place
+
+- **Loading** — four `.ph` placeholders, 2×2, dashed border on paper with the hard shadow and a visible
+  diagonal sweep. The shelf head's space is **blank but reserved**, exactly as the reconciliation intended:
+  the first placeholder row starts where it would with the heading drawn. This is the direct device evidence
+  for the fix both 4c reviewers demanded.
+- **Empty** — vertically centred as `.empty{justify-content:center}` requires, with the 150dp + safe-area
+  clearance below it.
+- **Error** — the `!` disc, *"Your shelf didn't open."*, the two-line reassurance, and `Try again` as a quiet
+  control with the dock still offering `Make a zine`.
+
+### ✓ P1-8 · Zero NAF nodes
+
+24 nodes on the content shelf under a running TalkBack, **none** flagged `NAF` ("not accessibility
+friendly"). Traversal order is heading → count → tile → that tile's `⋯` → next tile → … → `Make a zine`,
+which matches the visual order. Two limits of this instrument: `uiautomator` exposes neither the `heading()`
+flag nor custom action labels, so *"Actions"* on long-press remains unverified.
+
 ---
 
 ## Pass 2 — First-time user verification
 
 *The screen's question is **"Which zine do I want?"*** It answers it: covers are the screen, and the name and
 recency sit under each one. Nothing competes with that. Below are the places the reading breaks.
+
+### 🔴 P2-0 · A corrupt database destroys the user's zines and then shows them the **invitation**
+
+**The most serious finding in this pass, and it is not a Library defect — the Library is the screen where it
+becomes visible.** Sequence, measured end to end on the device:
+
+1. `databases/zinely.db` was overwritten with 33 bytes of text (`run-as`, contents verified before launch).
+2. On launch Room threw
+   `SQLiteDatabaseCorruptException: file is not a database (code 26 SQLITE_NOTADB)` on `PRAGMA journal_mode`.
+3. The file came back as a fresh 4096-byte `SQLite format 3` — **Room deleted the database and recreated it
+   empty.** Everything the user had made is gone, with no prompt, no backup and no notice.
+4. The screen that greeted this: **the empty state.** `Make your first little zine.` Pixel-identical to a
+   genuine first run (55 differing pixels out of 157,950 sampled — the clock).
+
+The `Error` state does exist and is reachable — `chmod 500 databases` produces
+`SQLiteCantOpenDatabaseException` and the shelf renders *"Your shelf didn't open. Your zines are still on
+your phone…"* (P1-7). So the app has **two** read failures and tells the truth in only one of them:
+
+| failure | data | what the screen says |
+|---|---|---|
+| cannot open | intact | *"Your zines are still on your phone"* — true |
+| corrupt | **destroyed by the recovery** | *"Make your first little zine."* — the user is told they have never made anything |
+
+Against [the product principle](../../CLAUDE.md#product-principle-every-screen-answers-the-users-current-question),
+the user arrives holding *"which zine do I want?"* and is answered *"you have no zines."* The honest reading
+from their chair is **"it deleted my work"** — and unlike the `0.9.0-beta.1` Preview case, that reading is
+literally correct.
+
+**Not fixed here, deliberately.** The fix is a data-layer decision, not a re-skin: whether Room may destroy on
+corruption at all, whether a corrupt file is quarantined rather than deleted, and which state the Library
+shows when it happens. That is ADR-shaped and it belongs to the owner. Two facts to decide against: nothing
+in the app writes a backup, and the empty state is the only screen a user will ever see for this.
 
 ### P2-1 · A dark-theme "paper stock" cover reads as a hole, not as a zine
 
@@ -132,22 +208,29 @@ unskimmable by ear, which is why it was written this way. Recorded as the trade 
 
 | Pass | Outcome |
 |---|---|
-| Pass 1 | **Accepted** — one failure found (P1-1), fixed, and re-verified on the same device. |
-| Pass 2 | **Accepted with three findings open**, none of them implementation defects: P2-1 and P2-2 are faithful transcriptions whose fix must start in the frozen HTML; P2-3 is a known addition whose *appearance* has never been designed. |
+| Pass 1 | **Accepted** — two failures found (P1-1 the sheet's Delete row, P1-6 the emoji arrow), both fixed and re-verified on the same device. |
+| Pass 2 | **NOT accepted for the product** on **P2-0**, which is a data-loss finding and an owner decision. **Accepted for the re-skin**: P2-0 is not a Library defect, and the three remaining findings are not implementation defects — P2-1 and P2-2 are faithful transcriptions whose fix must start in the frozen HTML, and P2-3 is a known addition whose *appearance* has never been designed. |
 
-The two passes **do not disagree** on any screen: nothing here is "correct but misleading" in the
-`0.9.0-beta.1` Preview sense. P2-1 and P2-2 are cases where correct transcription of a prototype meets data a
-prototype never had.
+**The two passes disagree once, and the disagreement is P2-0.** Pass 1 says the error state is correct, the
+copy is honest, and the recovery does not crash — all true. Pass 2 says the user is shown a screen stating
+they have never made a zine, moments after the app deleted every zine they made. Per
+[CLAUDE.md](../../CLAUDE.md#acceptance) that disagreement is the finding and must be resolved rather than
+averaged; it is recorded here and referred to the owner, and Pass 1's correctness does not overrule it.
+
+The other three are cases where correct transcription of a prototype meets data a prototype never had.
 
 ## Not covered
 
-- **TalkBack itself** was not run; only the platform node tree was read. Focus order, the long-press action
-  label (`Actions`), and the sheet's `paneTitle` announcement are unverified.
-- **Empty, loading and error states** — reaching them means clearing the app's data, which on this device
-  means deleting the owner's nine real zines. Not done without the owner asking.
+- **TalkBack's spoken output.** The service ran, and what it consumes — the platform node tree, traversal
+  order, NAF flags — was read directly. The utterances themselves were not captured: Samsung TalkBack does
+  not log them, and injected `input tap` events bypass explore-by-touch, so focus could not be driven from
+  the shell. The `heading()` flag, the long-press action label (*Actions*) and the sheet's `paneTitle` are
+  therefore unverified — `uiautomator` does not carry any of the three.
 - **Reduced motion on device.** The Library's only continuous animation is the loading shimmer, which is
   gated by test (`ZineShelfMotionTest`) but was never observed on hardware, because the state is transient
   and the store answers immediately.
+- **Whether P2-0 loses data on a *real* corruption** (a partial write, a bad sector) rather than on a
+  synthetic one. The recovery path is the same either way; the trigger was manufactured.
 - **Pixel parity against the frozen HTML** is step **4d**, not this pass. What is verified here is that the
   values the code carries are the values the device draws (P1-3, P1-5), not that every one of them matches
   the prototype.

@@ -21,7 +21,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -192,22 +196,53 @@ private fun TransformationRow(modifier: Modifier = Modifier) {
         TransformColumn(SheetLabelText) { SheetIllustration() }
 
         // `.tf .arrow{color:var(--jam);font-size:1.5rem;font-family:var(--voice);font-weight:700;
-        // margin-bottom:var(--gap-lg)}`. U+2192, present in every bundled Inter weight — but set in the
-        // **voice** face here, which does not carry it, so the platform's fallback draws it (D-021).
-        Text(
-            text = ArrowGlyph,
-            style = TextStyle(
-                fontFamily = ZinelyV21Fonts.Voice,
-                fontWeight = FontWeight.Bold,
-                fontSize = ArrowSize,
-                // `.tf .arrow` declares no `line-height`, so it inherits `body{line-height:1.55}`. This
-                // is the site where that matters most: the arrow sits in a centred flex column between
-                // the two illustrations, so a line box ~20% short moves it against both of them.
-                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                color = ZinelyTheme.v21Colors.jam,
-            ),
-            modifier = Modifier.padding(bottom = ArrowMarginBottom),
-        )
+        // margin-bottom:var(--gap-lg)}` — **drawn, not typed**, and that is a device-Pass-1 finding.
+        //
+        // Typed, this arrow came out as a **blue rounded square with an orange arrow inside it** on
+        // `SM-A176B`: colour emoji, ignoring `color:var(--jam)`, sitting between two hand-drawn
+        // illustrations and reading as a broken image. Two fixes were tried on the device and both failed:
+        //
+        // 1. **Set it in the sans.** Averia carries no U+2192 (cmap read straight out of
+        //    `averia_sans_libre_{regular,bold}.ttf` — absent from both) whereas all four bundled Inter
+        //    weights do, so the fallback looked like the cause. It was not: still blue, measured
+        //    `#1A5CE5` in the raster.
+        // 2. **Append U+FE0E**, the text-presentation selector — the documented way to say *"this
+        //    codepoint is text"*. Still `#1A5CE5`.
+        //
+        // U+2192 is `Emoji=Yes` (text-default) in UTR #51, and the substitution happens **above the font
+        // layer**, so no `fontFamily` and no variation selector reaches it. A glyph we cannot control is
+        // not a glyph we can transcribe, so the arrow is a path: 24dp square, 2dp round-capped strokes,
+        // `jam`, which is what `font-size:1.5rem` in `--jam` renders as anywhere the substitution does not
+        // fire. Nothing else on this screen is drawn from a font we do not ship.
+        //
+        // The three other D-021 orphans (`⋯` U+22EF, `✎` U+270E, `⧉` U+29C9) are absent from Inter too and
+        // still fall back — but none is emoji-eligible, and on this device all three landed on plain
+        // monochrome text glyphs. Left alone, and recorded.
+        val jam = ZinelyTheme.v21Colors.jam
+        Canvas(
+            // No semantics: `<span class="arrow">→</span>` carries no `aria-*` and names nothing — it
+            // joins two already-labelled illustrations. A `Canvas` contributes no node, which is the
+            // decorative reading. The `Text` it replaces did contribute one, spoken as "right arrow".
+            Modifier
+                .padding(bottom = ArrowMarginBottom)
+                .size(ArrowBox),
+        ) {
+            val weight = ArrowStroke.toPx()
+            val mid = size.height / 2f
+            val start = ArrowInset.toPx()
+            val end = size.width - start
+            val head = ArrowHead.toPx()
+            drawLine(jam, Offset(start, mid), Offset(end, mid), weight, StrokeCap.Round)
+            drawPath(
+                Path().apply {
+                    moveTo(end - head, mid - head)
+                    lineTo(end, mid)
+                    lineTo(end - head, mid + head)
+                },
+                color = jam,
+                style = Stroke(width = weight, cap = StrokeCap.Round, join = StrokeJoin.Round),
+            )
+        }
 
         TransformColumn(BookLabelText) { BookIllustration() }
     }
@@ -425,8 +460,18 @@ private val TransformGap = ZinelyV21Dimens.gapLg
 private val TransformMarginBottom = ZinelyV21Dimens.gapXs
 
 /** `.tf .arrow{font-size:1.5rem;margin-bottom:var(--gap-lg)}` = 24px. U+2192 RIGHTWARDS ARROW. */
-private const val ArrowGlyph = "→"
-private val ArrowSize = 24.sp
+/** `font-size:1.5rem` — the box the drawn arrow occupies, matching the glyph's 24px em. */
+private val ArrowBox = 24.dp
+
+/** Inter's `→` at 24px measures ~1.9px on the shaft; 2dp, round-capped, is that line. */
+private val ArrowStroke = 2.dp
+
+/** The glyph's side bearings — a typed `→` does not touch its own advance edges. */
+private val ArrowInset = 2.5.dp
+
+/** Half the head's height, and its depth: a 45° chevron, as Inter draws it. */
+private val ArrowHead = 6.dp
+
 private val ArrowMarginBottom = ZinelyV21Dimens.gapLg
 
 /** `.tf .lbl{font-size:.62rem;letter-spacing:.12em;font-weight:700}` = 9.92px. */
