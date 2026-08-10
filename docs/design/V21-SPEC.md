@@ -392,9 +392,25 @@ running text.** Voice is for short strings; Work is for anything the user operat
 
 ### 4.3 Depth, geometry, motion
 
-- **`--hard: 4px`** — the signature move. An offset shadow in `ink`, **zero blur**, always down-right, always
-  the full ink colour. It is a *printed* shadow, not elevation. A pressed control translates `2px, 2px` and
-  drops its shadow to `1px` — the object physically moves under your finger.
+- **`--hard: 4px`** — the signature move. An offset shadow in `inkLine`, **zero blur**, always down-right,
+  always the full shadow colour. It is a *printed* shadow, not elevation: the object physically moves under
+  your finger.
+
+  **Four press tiers, counted from all 17 `:active` rules in the corpus** — this section used to state the
+  hero case alone (*"a pressed control translates `2px, 2px` and drops its shadow to `1px`"*) as though it
+  governed everything, and the Compose layer published it that way before the rules were counted:
+
+  | Tier | Rest | Travel | Pressed | Where |
+  |---|---|---|---|---|
+  | **Hero** | `--hard` 4 | 2 | **1** | `.start` · `.btn-save` · `.add` · `.btn-share` — the one primary per screen |
+  | **Raised** | 3 | 2 | 1 | `.retry` · `.foldit` · `.shelf` · `.opt` · `.paperseg button` |
+  | **Flat** | 2 | 2 | **0** | `.chip` · `.tile` · `.iconbtn` · `.icon-btn` · `.fnav` — presses flush |
+  | **Inline** | 2 | 1 | 1 | `.ctl`, in all three prototypes — a control inside another surface |
+
+  Three follow *pressed = rest − travel*. **Hero deliberately does not** — it travels 2 and sheds 3, so the
+  screen's single primary action feels like it goes further down. That is why this is a table and not a
+  formula: a formula would have quietly corrected the most expressive control in the language into the least.
+  Only `4` is tokenised; `3` and `2` are literals at their use sites.
 - **A border is not a shadow, and they do not share a token.** A **drawn line** — every border, outline and
   SVG stroke — is *ink*, and follows `ink`. A **shadow** is the absence of light, must stay darker than the
   surface it falls on, and follows `inkLine` (`#120E0A` in dark). They are byte-identical in light theme
