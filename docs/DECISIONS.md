@@ -109,6 +109,7 @@
 | [ADR-097](#adr-097) | **C9 — integration: the four states, the motion policy, persistence of place, and the phase gate.** Phase C's **last** package, and the only one whose subject is the seams between the six already built rather than a region of the frozen file. Opened before any production code per [ADR-089 §2.2](#adr-089), with a **14-row** property table read from `v2-bench.html` itself — which is how it found the Bench's reduced-motion address wrong in three places (`:293`/`:260`/`:143` → **`:460`**), one rule ADR-089's phase table names nowhere, a caption outside the four states, and a row C3 had already discharged. Built, verified (**1603 tests green**; **15/15 mutations RED** over a GREEN control), reviewed twice (**GO WITH FIXES**, all Required Fixes reconciled) and **device-verified on both passes**. Its own invariants found two real product defects nothing else had: a **dead selection carried across undo** in `EditorReducer.stepHistory`, and a soft-delete fade **hard-coding 200ms** under a reduced-motion preference. Its row 9.5 was computed four times and wrong three times — raising and withdrawing [D-061](design/V2-SPEC-DEFECTS.md#d-061) and [D-062](design/V2-SPEC-DEFECTS.md#d-062) the same day — while the hardware was right the first time; **being wrong once is not a reason to trust the correction**. ✅ **[D-012](design/V2-SPEC-DEFECTS.md#d-012--the-three-frozen-files-write-three-different-reduced-motion-rules-and-one-of-them-would-strobe) RESOLVED by [OD-25](design/V2-SPEC-DEFECTS.md#d-012-ruling)**, option (a) — the Bench's rule ratified on device evidence, **no code changed**, discharging [OD-10](#adr-089)'s live half. **This acceptance closes Phase C.** ⚠ *Verification provenance annotated 2026-08-06 ([§6](#adr-097), [OD-37b](COMPOSE-V2-ROADMAP.md#phase-c-addendum-record-integrity)): the **1603** figure is unaltered and was reproduced on a clean tree at `fc33bca`, but the run it originally described held three uncommitted test-side fixes. No claim retracted; C9 not reopened.* | Accepted |
 | [ADR-098](#adr-098) | **Phase D opens (planning).** The Proof is **already built** — as V1, against the superseded `proof.html`, with READ-first shipping and **zero V2 tokens across all five files** — so Phase D is a re-skin, and its phase-level property table sweeps all 702 lines of the frozen Proof to report **four of eleven packages fenced before any is opened**. Eleven packages ordered by **golden blast radius**, not by rulings-in-hand: the shared `Z*` components convert once, before the surface, or ~110 PNGs re-record twice. Finds the enrolment gate **unsatisfiable by ruling** (`feature.editor` holds **563** raw `.dp`, every one of them because D-007 published no spacing scale), the imposed sheet **schematic rather than rendered** so a maker never sees their own sheet before spending paper, the frozen Proof carrying **no Loading and no Error state** (D-024's exact shape), the fold animation **looping forever** where the roadmap requires it to rest, and **both of Phase D's two named deliverable addresses stale**. Raises **thirteen owner decisions (OD-29…OD-41)**. Its baseline finding — `main` red in three places inside the tagged milestone — was confirmed by audit and **closed by the maintenance commit `fc33bca`**, which retires **OD-37**; ~~and unblocks **D1**~~ **corrected 2026-08-07** — that removed D1's *baseline* blocker only, and [OD-41](#adr-098-od41) carried its scope ruling. **[OD-41](#adr-098-od41) is answered 2026-08-07, disposition (a): Phase D re-bases the shared `:core:ui` `Z*` components; D1 stands as published and is ▶ unblocked**, on [D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface)'s ruling that modifying existing product surfaces *"necessarily belongs to Phase D"* — **no ADR superseded**; [ADR-097](#adr-097) §7.5 is Phase-C-scoped and is annotated, not amended. **Two of thirteen owner decisions answered, eleven owed. D0 is blocked on OD-29.** Records that ADR-089 §2.2 **audits** package proposals rather than generating them, so no derivation-methodology repair was owed ([note](#adr-098-derivation-note)) | Proposed |
 | [ADR-099](#adr-099) | **V2.1 — the handmade design language re-freeze.** Re-skins the Library, Proof and Bench onto a printed-depth, published-scale, imperfect-display-face language derived from three reference sites. Supersedes the V2 trilogy **as the design source**, supersedes **no ADR**, keeps the no-fourth-chrome-hue rule intact — and **amends V2-CONSTITUTION §III Typography** to admit a third UI typeface (Amendment 1, owner, 2026-08-10). | Accepted |
+| [ADR-100](#adr-100) | **Six implementation rulings the V2.1 Library re-skin forced, taken under delegated owner authority.** The overflow affordance becomes a **drawn three-dot mark** rather than the `⋯` character (emoji2 and the bundled Inter both defeat the glyph); the **two paper cover stocks stop theming** because a themed cream at 1.18:1 on the dark desk turned a maker's object into a hole cut in the desk; long titles **cap at two lines** so one zine cannot push its neighbour's cover down; the count chip moves to `butter`/`onButter` and the dock's decorative ring to `butter`, both invisible in light theme at `butterTint`'s **1.01:1**; the prototype's `:nth-child` tilt/tape phase is confirmed a **prototype artifact** and corrected to `:nth-of-type` in the frozen file; and the dead V2 `ZineCover` is **deleted**, which exposed that the only recipe test in the tree still guarded the function the shelf had stopped calling. Adds the `onButter` token. **Amends the freeze** ([V21-SPEC §4.1](design/V21-SPEC.md#41-colour), [§4.3](design/V21-SPEC.md#43-depth-geometry-motion)) and restructures `v21-library.html`'s tile from a `<button>` into an `<article>` holding two sibling buttons, because a control may not contain a control and the prototype could not otherwise carry the affordance ruling 1 ships. Reviewed twice — **GO WITH FIXES** and **NO-GO** — with all fourteen Required Fixes reconciled ([§11](#adr-100-review)); both reviews independently found the same dead CSS selector first. **Both device passes accepted 2026-08-11** on `SM-A176B` / Android 16 ([record](reviews/2026-08-11-adr-100-device-verification.md)); the two paper stocks measure the same hex in both themes on glass. | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -6831,3 +6832,403 @@ exception", "zero failing pairings", "59 borders", "121.9 KB measured", "17 `:ac
 action per screen". The measurements were sound every time; the sentences around them were not. The third
 review adds the code-level version of it: an inlined calculation that *looked* like the tested helper next
 door and was not.
+
+---
+
+## ADR-100 {#adr-100}
+
+**Six rulings the V2.1 Library re-skin forced, taken under delegated owner authority.** Implementing
+[ADR-099](#adr-099)'s Library against real Compose, real Robolectric rasters and a real device surfaced six
+questions the frozen file could not answer — because four of them are defects *in* the frozen file, one is a
+platform behaviour no prototype can see, and one is a piece of dead V2 code the re-skin stranded. All six are
+ruled here, implemented, tested and measured.
+
+- **Status:** ✅ **`Accepted` — 2026-08-11**, on **both device-verification passes**, run on `SM-A176B` /
+  Android 16 — [record](reviews/2026-08-11-adr-100-device-verification.md). Pass 1 confirmed all six
+  rulings on glass, including the one that mattered: the two paper stocks measure the **same hex in both
+  themes** and read as printed objects at 14.05 / 12.88 against the dark desk. Pass 2 passed with two
+  Observations, both pre-existing and on surfaces this ADR does not own (§9).
+  It opened `Accepted` for a few hours **before** those passes and a review was right to call that: the
+  Definition of Done requires both passes for a UI feature, and an ADR that marks itself done while its own
+  §9 says otherwise is the paperwork failure this file keeps recording. It was returned to `Proposed` and
+  earned the status back.
+- **Authorised by:** the owner ruling of **2026-08-11**, delegating product/design/engineering authority for
+  this pass — *"behave like the product/design/engineering owner … investigate, reason, make the call,
+  implement it, test it, and update the relevant specs/tests"* — with an explicit priority order: **(1)** a UI
+  real users enjoy, **(2)** accessibility, clarity and interaction quality, **(3)** visual and design quality,
+  **(4)** correct maintainable implementation, **(5)** fidelity to the freeze *where it does not conflict with
+  the above*. The same ruling declared the freeze **"strong input and constraints, but not sacred."**
+- **Amends** [ADR-099](#adr-099) — its specification in two sections, and `v21-library.html` in the places
+  §7 enumerates (a count was quoted here and matched neither the table nor the diff; the table is the
+  count). **Supersedes no ADR.** ADR-099 itself is untouched as a decision: every ruling below changes *how* a
+  V2.1 rule is realised, none changes which question a screen answers.
+- **Scope:** the Library only. Rulings 2, 4 and 5 are palette- and corpus-level and will bind the Proof and
+  the Bench when those are re-skinned; rulings 1, 3 and 6 are Library-local.
+
+### 1. The overflow affordance is a drawn mark, not a character {#adr-100-overflow}
+
+**Ruling: three stacked dots, drawn on a `Canvas`, 3dp diameter with 3dp gaps, in `inkSoft`, inside the
+34dp target sitting **beside** the tile, not inside it.** The frozen file sets `⋯` as text — and in fact
+carries no overflow element at all (§9).
+
+Three reasons — but **they do not all prove the same thing**, and an earlier draft of this section claimed
+they were three independently sufficient grounds. They are not. 1 and 2 force *drawn rather than set*; a
+drawn **horizontal** mark satisfies both and is still the wrong mark. Only 3 forces *vertical*, and 3 is
+therefore the reason carrying the decision:
+
+1. **`⋯` (U+22EF) is not in the bundled Inter subset** — the same finding as [D-021](design/V2-SPEC-DEFECTS.md).
+   A missing glyph is a tofu box or a silent substitution from whatever the platform falls back to, which is
+   not a design decision anyone made.
+2. **emoji2 substitutes above the font layer.** The Library already lost `→` (U+2192) to a colour emoji this
+   way. A character-based control is a control whose appearance the app does not own.
+3. **A horizontal ellipsis reads as truncation, not as a menu.** This is the product reason and it outranks
+   the other two: `⋯` sitting at the end of a row of text is the universal mark for *"this string was cut
+   off"*. **Vertical** is what says *"more actions"*, which is why every Android overflow menu since 2013 has
+   been vertical. The frozen file's horizontal mark was answering the wrong question, well.
+
+The mark is `inkSoft`, **not** `ink@50%`, which measures **2.90:1** on the desk. `inkSoft` measures
+**5.54 / 7.49**. It is a control's only visual identification, so [1.4.11](https://www.w3.org/TR/WCAG22/#non-text-contrast)
+binds at 3:1 and the frozen alpha would have failed it.
+
+**The trade, stated rather than assumed:** a vertical kebab is the most recognisably *stock Android* mark
+on the screen, and V2.1 exists precisely so the app does not read as stock Android. That is a real
+concession of identity. It is made deliberately — learnability outranks identity for a control with no
+label — but it is a trade, not a free win, and the first draft of this section scored the freeze
+(*"answering the wrong question, well"*) instead of weighing it.
+
+Guarded by `ZineOnShelfTest` — *"the overflow mark is three stacked dots that carry their own contrast"* —
+which reads the raster for `inkSoft` pixels inside the button's bounds and asserts the mark is **taller than
+it is wide**. The shape assertion is the load-bearing half: it is what fails if someone re-lays the dots
+horizontally, and horizontal-vs-vertical is the entire finding.
+
+### 2. Paper cover stocks do not theme; ink stocks do {#adr-100-paper-stocks}
+
+**Ruling: `PaperStrawberryBand` and `PaperMatchaBand` are pinned to their light values —
+`#FFF6E8` and `#FDEBC4` — in both themes, with a pinned `#6E5947` mark and a pinned `#33261C` edge. The four
+ink stocks keep theming.**
+
+The frozen file paints the two paper stocks from `paper` and `butterTint`, which are chrome tokens and flip
+with the theme. In dark that makes a cover `#332B22` on a `#241E18` desk: **1.18:1**. And the hard shadow does
+not save it, because `inkLine` is `#120E0A` — **1.17:1** on the same desk. Fill gone *and* shadow gone leaves
+an outline with nothing behind it, which is not an object on a desk; it is a hole cut in the desk. The parity
+review reported exactly that reading before the number was computed.
+
+Pinned, the same covers measure **15.39** and **14.02** against the dark desk, their `inkSoft` marks **6.16**
+and **5.61** on their own stock, and their `#33261C` edge is a real outline again rather than the **1.01:1**
+(on cream) / **1.11:1** (on paper) that themed `ink` — `#F6EAD6`, i.e. the cream the stock now *is* — would
+have drawn. Those two figures read `1.03` in the first draft and in two KDocs; the number had never been
+computed, and a review computing it is the only reason it is right here.
+
+⚠️ **Half of the diagnosis above is not this ruling's to fix, and counting it was overreach.** The cited
+defect is *"fill **and** shadow both gone"*, but only the fill and the edge were pinned. `.cover`'s
+`box-shadow` still uses `inkLine`, still measures **1.17:1** on the dark desk, and still should — §4.3's
+own rule is that a shadow must stay darker than the surface it falls on. The shadow is spec-conformant
+behaviour for **all six** stocks. The fill collapse alone carries the argument; the second half was
+counted to make it louder.
+
+**The rule, stated by its actual criterion rather than by a metaphor.** A first draft wrote *"an object does
+not change what it is printed on when the room gets dark"* and attributed it to
+[§5.1](design/V21-SPEC.md#51-craft-belongs-to-material-not-to-tools-the-bench-rule). Both halves were wrong:
+§5.1 is about where the *voice* is spent — tilt, tape, hand-drawn selection, charm versus precision in
+**tools** — and it states no theming rule at all; and the aphorism, taken literally, would pin all six
+stocks, which is not what this ruling does. The line is drawn by contrast, and here it is:
+
+> **A cover stock pins when it is pale, and themes when it is saturated.** A pale stock painted from a
+> themed chrome token has no face against *either* desk — the light one because it matches, the dark one
+> because it inverts to a near-desk brown — so theming buys it nothing and costs it its object-hood. A
+> saturated stock reads as printed ink at either end of the palette, and pinning it would make a night
+> shelf a wall of light.
+
+What the corpus *does* supply is the deeper permission: **cover inks are the maker's palette, not the
+chrome** — the line V2-TOKENS draws and §3.2 quotes approvingly. That is why a cover may depart from a
+chrome token at all. It is not why *these two* depart, which is the measurement above.
+
+⚠️ **This fixes the values and not the cause, and the cause is worth naming for the next stock.** The root
+defect is that cover stocks were painted from chrome tokens in the first place. The right shape is a cover
+stock token family of its own; what ships here is six literals in `ZineCoverRecipe.kt`, anchored by
+`ZineCoverRecipeTest` to the light palette values they came from so they cannot silently drift apart from
+the frozen file. **A seventh stock added tomorrow inherits the original bug.** Recorded as debt, not as a
+finished design.
+
+⚠️ **Recorded honestly: this was not a WCAG failure either.** A cover tile is not a UI component whose
+*identification* 1.4.11 protects — it carries its title as real text underneath. It was repainted because the
+design was not working, which is the better reason and the harder one to argue from a table.
+
+### 3. A long title stops at two lines {#adr-100-long-titles}
+
+**Ruling: `maxLines = 2`, `TextOverflow.Ellipsis`.** The frozen prototype's corpus contains no title long
+enough to wrap past two lines, so the file expresses no opinion; the product has to.
+
+The alternatives were weighed and rejected:
+
+- **Unbounded wrap** breaks the shelf. The grid is two columns of equal-height rows, so a four-line title in
+  the left cell pushes the *right* cell's cover down with it. One zine silently degrades its neighbour's
+  layout, and the neighbour's maker did nothing wrong.
+- **One line** loses too much. Real zine titles are phrases, and `"Notes from the Sunday market, volume…"` at
+  one line is barely more informative than a truncation mark.
+- **Marquee / scroll on focus** is unreadable at a glance, which is the only way a shelf is read, and it
+  attaches motion to an object the design says is at rest. (A first draft cited
+  [§5.2](design/V21-SPEC.md#52-physical-honesty-beats-visual-convenience-the-proof-rule) for that second
+  clause. §5.2 is the Proof's spread-model rule and says nothing of the kind; the nearest real rule is
+  §4.3's **tilt** bullet, which governs tilt, not motion. The objection stands on the first clause.)
+- **Middle ellipsis** — *"Notes from the Sunday market, volume **two**"* and *"… volume **three**"* are
+  distinguished by their **suffix**, and end-truncation destroys exactly the characters that tell two
+  siblings apart, on the one screen whose whole question is *"which zine do I want?"*. This is the best
+  argument against the ruling and it came from a review, not from here. **It was tested, and the
+  alternative does not exist at this line count:** a probe of `TextOverflow.MiddleEllipsis` at
+  `maxLines = 2` against this project's Compose version returns `isLineEllipsized == false` on *both*
+  lines and cuts the string dead with no mark at all. It is a single-line overflow mode. So the real
+  choice was end-ellipsis at two lines versus middle-ellipsis at one, and two lines with a visible
+  truncation mark beats one line with a cleverer one. **Revisit if multiline middle-ellipsis ever lands.**
+
+Two lines is the smallest cap that keeps the grid rigid while leaving the title recognisable, and the
+ellipsis is honest about the remainder.
+
+**Where the full title actually is, stated correctly.** A first draft said *"it is the screen's own
+`contentDescription`"* — true, and useless to a sighted user, who has no tooltip and no long-press. The
+real path is the **⋮ sheet's header**, which sets no `maxLines` at all and wraps the whole title: one tap,
+available to everyone, and the same path at every font scale.
+
+**Font scale is deliberately not special-cased, and that is a ruling rather than an omission.** At
+`fontScale 2.0` two lines hold roughly half the characters, which is a real cost borne by the users least
+able to absorb it. The cap stays uniform anyway: it is a *line* count applied to every tile, so the grid
+stays rigid at any scale, and a scale-dependent cap would make the shelf's layout unpredictable precisely
+for those users. The escape hatch does not degrade with scale — the sheet header is unbounded.
+
+The regression guard is worth describing because its **first version was wrong in an instructive way.** It
+computed the ceiling from the frozen CSS `line-height: 19.2px` and asserted `≤ 38.4`; the real measurement was
+**40.0**, and the test failed a correct implementation. **Robolectric ignores `lineHeight`** — proven twice in
+this package now. The test was rewritten to render a *short-titled sibling in the same composition* and use
+its measured single line as the unit, so the ceiling is `oneLine × 2` whatever the renderer does with leading.
+A discrimination check (`wrapped > oneLine × 1.5`) keeps it from passing vacuously if the title stops
+wrapping at all.
+
+### 4. The count chip and the dock ring move off `butterTint` {#adr-100-butter-tint}
+
+**Ruling: the shelf count chip is a `butter` ground with an `onButter` label; the dock's decorative `--frame`
+ring is `butter`. New token `onButter` — `#33261C` light, `#1E1A15` dark, i.e. dark in both themes, because
+butter is a light ground in both themes.**
+
+`butterTint` measures **1.01:1** against the light desk. Not "low" — *the same colour*. Both elements were
+simply absent in light theme: the chip was an invisible pill and the ring was an invisible ring, and the
+Compose implementation was faithfully reproducing a frozen file that had only ever been looked at in dark.
+`butter` measures **1.56 / 8.71**, which is a visible pill in both.
+
+**This does not breach [§3.2](design/V21-SPEC.md#32-the-fourth-hue--recommendation-keep-the-rule-butter-is-not-chrome), and the first draft's argument for that was bad enough to record.**
+It claimed *"a count chip is a **stamp** and the frame ring is **misregistration**, both named in §3.2's own
+allow-list."* §3.2's butter row actually reads *"material — tape, the shelf lip, **the ring around the
+primary**, a caution ground."* "Misregistration" is not in it; "stamps" **is** in the corpus — in the
+**berry** row, as a state-carrying mark, which is the opposite of the licence the sentence borrowed. The
+permissive list that does say "stamps, rings" is **§4.1's token table**, a different section. So the draft
+cited the strict list while relying on the loose one, and invented a justification for the one element that
+needed none.
+
+Correctly:
+
+- **The `--frame` ring is named outright.** *"The ring around the primary"* is §3.2's own wording, and the
+  `.start` button is the primary. There is nothing to argue.
+- **The count chip passes §3.2's actual test**, which is not a vocabulary match but three questions: does it
+  carry an **action**? No. Does it carry a **state**? No — it is a count, and a count of six is not a state
+  of anything. Is it **text on butter**, which the row forbids? No: `onButter` is dark ink *on* a butter
+  ground, the same shape as `onLeaf` on leaf, and the row's *"carries text ❌"* column marks butter as
+  unusable **as** a text colour, consistently with how the leaf/berry/jam rows read.
+- The line §3.2 draws is the one row 4 of §4.1 enforced when it took butter off `.fav.on`: butter may be
+  the material an element is made of, never the signal an element is sending. Neither element here sends a
+  signal.
+
+**§3.2 and §4.1 carry two different butter allow-lists**, and that is a real inconsistency in the frozen
+specification which this ADR does not resolve — it is flagged in §9.
+
+⚠️ **What was deliberately *not* changed:** the dock's real **focus ring** stays `ink` at **12.3:1**. A focus
+indicator is load-bearing for [2.4.7](https://www.w3.org/TR/WCAG22/#focus-visible) and
+[1.4.11](https://www.w3.org/TR/WCAG22/#non-text-contrast); the `--frame` ring beside it is Riso decoration.
+They look similar and they are not the same object, and only the decorative one moved.
+
+### 5. The `:nth-child` tilt phase is a prototype artifact {#adr-100-nth-child}
+
+**Ruling: prototype artifact. Corrected in the frozen file to `:nth-of-type` — three tilt rules and two tape
+rules.**
+
+Evidence rather than preference. The frozen markup puts a `.shelf-head` `<div>` and four `.ph` placeholder
+`<div>`s inside the same grid as the `.zine` tiles, and `:nth-child` counts *all* siblings. So `.zine:nth-child(3n+1)`
+matched the **second** zine, and the whole three-cycle of tilts and tape positions rendered one position out of
+phase with the cycle the same file's comments describe.
+
+**The exculpatory version of this story is not supported, and a review was right to strip it.** A first
+draft said the `.ph` cells "were added late, which is precisely when a `:nth-child` selector silently
+changes meaning — nobody chose the off-by-one". But `.shelf-head` is itself a grid child, so **without any
+placeholders at all the first zine would still be child 2 and the cycle would still be off by one.** The
+`.ph` cells deepened the offset; they did not create it. And the "added late" chronology cannot be checked
+against this file's own history, which has a single prior commit already containing them — it was carried
+over from the V2 mockup's defect log. The ruling is unaffected: the selector says one thing and renders
+another, which is enough.
+
+`:nth-of-type` counts only `.zine` elements' own type, restoring the documented cycle. The Compose layer keys
+tilt off the item's **index in the zine list**, which was already the corrected behaviour, so this amendment
+makes the canonical file agree with the implementation rather than the other way round — the only direction
+this ADR does that, and it is allowed because the file was wrong.
+
+### 6. The dead V2 `ZineCover` is deleted {#adr-100-zinecover}
+
+**Ruling: delete `ZineCover.kt`, its two golden tests and its three `v2_cover_*` rasters, plus the V2 half of
+`ZineCoverRecipe.kt` (`icon()`, `ZineCoverPalette`, `palette()`).**
+
+⚠️ **A first draft added *"and fourteen further orphaned `v2_*` rasters whose tests were already gone"*.
+That was false, and it mattered.** All fourteen were live outputs of live tests at HEAD — `v2_shelf_*`,
+`v2_library_*`, `v2_empty_*`, `v2_sheet_*` — which this same uncommitted pass **renamed** to `v21_*` when
+their tests were re-baselined (§7). Nothing was orphaned; four capture prefixes moved. Calling a rename an
+orphan-sweep made a routine consequence of Step 4d read as a discovery, and it hid the rename from §7
+entirely. See §8 for what that costs the "95/95" figure.
+
+**[OD-41](#adr-098-od41) has nothing to do with this, and the first draft got its status wrong in a way
+worth recording.** The draft called OD-41 *"held"* and said this deletion was not executing it. OD-41 is
+**answered** — 2026-08-07, owner ruling, disposition (a) — and [ADR-099 §3](#adr-099-phase-d) already
+struck the contrary claim with *"the premise was false … OD-41 is **not open**."* Reinstating a retracted
+premise to argue against it is worse than the error it was guarding against. What is genuinely held is
+ADR-099's own **withdrawn recommendation** to record OD-41's scope question as *"superseded by the
+re-freeze"*; that recommendation stays unexecuted, and nothing here touches it.
+
+OD-41 is simply **out of scope**: it rules on the shared `:core:ui` `Z*` components. `ZineCover` is a
+narrower and unambiguous case: it is `feature.editor`-local, not a `Z*` component, it has **no remaining
+callers**, and its own
+retirement condition was written into `ZineV21CoverGoldenTest`'s KDoc before this pass —
+*"nothing about this file may disturb them until the shelf stops calling `ZineCover`"*. The shelf stopped
+calling it in Step 4c. The condition was met; the code was left behind.
+
+**Deleting it exposed the finding that justifies the ruling on its own.** `ZineCoverRecipeTest` — the only
+test in the tree covering how a persisted recipe is painted — tested `palette()` and `icon()`, the **V2**
+mapping. The shelf had been painting from `v21Fill` for a package and a half, and the V2.1 mapping had **zero
+tests in either direction**. Dead code is not merely unused: here it was the thing the live suite still
+believed in, and it hid a real hole for that long. The file was rewritten against V2.1 and now carries the
+two invariance claims ruling 2 introduced.
+
+A second instance of the same shape was found and closed in the same pass: `ZineV21CoverGoldenTest` **restated
+the fill mapping beside production instead of resolving through it**, so the one artifact whose whole job is to
+show the six stocks side by side went on recording the superseded dark stocks and passing its own comparison.
+It now calls `v21Fill` / `v21MarkInk` / `v21BorderInk`. **A parity artifact that owns a copy of the thing it is
+checking will ratify its own mistakes** — this pass found three (the third being `ZineActionSheetGoldenTest`'s
+fabricated 10dp inset, §8).
+
+### 7. What was amended {#adr-100-amendments}
+
+| Artifact | Amendment | Ruling |
+|---|---|---|
+| [V21-SPEC §4.1](design/V21-SPEC.md#41-colour) | `onButter` added to the token table; the `butterTint`-invisibility row and the paper-stock pinning recorded as measured amendments | 2, 4 |
+| [V21-SPEC §4.3](design/V21-SPEC.md#43-depth-geometry-motion) | the overflow mark and the two-line title cap recorded as geometry the corpus does not state | 1, 3 |
+| `v21-library.html` | 3 tilt + 2 tape selectors `:nth-child` → `:nth-of-type` | 5 |
+| `v21-library.html` | `--on-butter` token in all three theme blocks; `.count` and both `.start` ring rules onto `--butter`; `.paper-s`/`.paper-c` fill, cover border and mark pinned to literals; `.name` clamped to 2 lines. Every one carries its reason in a block comment | 2, 3, 4 |
+| `ZinelyV21Colors.kt` | `onButter` token, both themes | 4 |
+| `ZineCoverRecipe.kt` | V2 layer deleted; `v21MarkInk` / `v21BorderInk` added beside `v21Fill` | 2, 6 |
+| `ZineV21Cover.kt` | `borderInk` parameter | 2 |
+| `ZineOnShelf.kt` | drawn kebab mark; `maxLines = 2` + ellipsis; passes `borderInk` | 1, 3, 2 |
+| `ZineShelf.kt` · `ZineDock.kt` | count chip → `butter`/`onButter`; `--frame` ring → `butter` | 4 |
+| `ZineCoverRecipeTest.kt` | rewritten against V2.1 from scratch; adds both invariance claims and the *fill-or-shadow* criterion | 2, 6 |
+| `ZineV21CoverGoldenTest.kt` | palette table replaced by resolution through production | 6 |
+| `ZineOnShelfTest.kt` | two new guards (mark shape + contrast, two-line cap); `COLUMN` corrected 208→216dp | 1, 3 |
+| `ZineShelfGoldenFixture.kt` · `ZineShelfGoldenTest.kt` | `LONG_TITLE` fixture and a `v21_shelf_long_title` raster | 3 |
+| `ZineShelfFail.kt` | the error mark `jamText` → `jam`, restoring [V21-SPEC §4.1](design/V21-SPEC.md#41-colour)'s named large-text exemption for `.fail .mk` at 28.8px bold. **Absent from the first draft of this table**, which is why the table is now stated as complete rather than assumed to be | — |
+| `ZineShelfEmpty.kt` | `ZineArrowTestTag` added, so the drawn arrow can be found by the test that proves it is drawn and not set as `→` | 1 (same reasoning) |
+| `ZinelyV21ContrastTest.kt` | `onButter / butter` pinned — the token declared AA-critical in its own KDoc and checked by nothing | 4 |
+| `ZineShelfTest.kt` · `ZineDockTest.kt` | the count chip and the decorative ring asserted as `butter` **in light theme**, by raster probe. Ruling 4 had no guard at all until a review said so, and its only witness was a golden this pass re-recorded | 4 |
+| renamed, not deleted | 15 rasters: `v2_shelf_*` → `v21_shelf_*`, `v2_library_*` → `v21_library_*`, `v2_empty_*` → `v21_empty_*`, `v2_sheet_*` → `v21_sheet_*`. `ZineActionSheetGoldenTest` additionally swapped its host to `v21Colors.desk` and its `INSET` 10dp → 0dp, so those two changed materially with no prior baseline | Step 4d |
+| deleted | `ZineCover.kt`, `ZineCoverGoldenTest.kt`, `ZineCoverRenderTest.kt`, 3 `v2_cover_*` rasters | 6 |
+
+### 8. Evidence {#adr-100-evidence}
+
+`:feature:editor` and `:core:ui` unit suites green. Goldens re-recorded for the Library package only and
+force-verified: **95/95 `unchanged`** (97 before, minus 3 deleted `v2_cover_*`, plus `v21_shelf_long_title`).
+
+⚠️ **What that figure is worth, stated precisely.** For the ~15 rasters this pass renamed or re-hosted
+(§7), the verify ran against baselines the same pass had just written — it is a **determinism check, not a
+drift check**, and it cannot detect a wrong pixel that was recorded wrong. The remaining ~80 are a genuine
+drift check, and they are what proves the Library changes did not leak into the Proof, the Bench or the
+editor. The two `v21_sheet_*` rasters have no prior baseline at all. **This is exactly why rulings 1–4 each
+carry a behavioural assertion as well as a raster** — and why ruling 4's missing one was a Required Fix
+rather than a nicety.
+
+Three measurement lessons are recorded because each cost a wrong first answer:
+
+- **A raster is measurable, so measure it.** The action sheet's "not full-bleed" finding was diagnosed as a
+  platform `Dialog` window inset, and a `setBackgroundDrawable` + `MATCH_PARENT` fix was applied to
+  **production** — after which the raster did not move by a pixel. The real cause was the golden test's own
+  `.padding(10.dp)`, sitting under a KDoc that quoted a rule the frozen file does not contain. The production
+  change was reverted.
+- **Rotation defeats a single-column raster probe.** `.sheet-ill` is `rotate(-2deg)`, which walks a 50px
+  vertical rule ~1.75px sideways, and the covers' ±1.4° tilt displaces their edges away from the rotation
+  centre. Probes now read at the object's centre row or column, or widen the window along the axis the
+  rotation moves.
+- **Module-wide `recordRoborazziDebug` rewrote 33 unrelated V1/V2 rasters.** Reverted, then a forced verify
+  returned 97/97 `unchanged`, proving the churn was re-encoding noise rather than drift. Recording is scoped
+  to the package under change from here.
+
+### 9. Deliberately left open {#adr-100-open}
+
+- **§3.2 and §4.1 of the frozen specification carry two different butter allow-lists** (§4). §3.2 says
+  *"tape, the shelf lip, the ring around the primary, a caution ground"*; §4.1's token table says *"tape,
+  stamps, rings, the shelf lip, caution grounds"*. Both are binding, and "stamps" additionally appears in
+  §3.2's **berry** row as a state-carrying mark. Nothing in this pass depends on the difference — the two
+  elements ruled on here pass under the strict list — but the next butter question will, and a delegated
+  pass should not quietly pick the reading that suits it. **Owner ruling owed.**
+- **The cover stocks still have no token family of their own** (§2). Six literals ship, anchored by test to
+  the light palette they came from. A seventh stock inherits the original bug. Technical debt, not a
+  release blocker.
+- **[OD-41](#adr-098-od41) is answered, not held** — see §6. What remains held is ADR-099's own withdrawn
+  *"superseded by the re-freeze"* recommendation, which this pass does not execute.
+- **`acdec/` build artifacts left alone.** Nothing established they should be removed.
+- **Two Pass 2 Observations, both pre-existing and both on surfaces this ADR does not own**, recorded
+  rather than absorbed ([record](reviews/2026-08-11-adr-100-device-verification.md)): the rename sheet's
+  **red Save** — V1's `coralStrong` `#C64E34`, an [ADR-086](#adr-086) Known Limitation which now reads as a
+  *warning* because V2.1 taught the eye that red is consequence, so the limitation has acquired a cost it
+  did not have when it was accepted; and the creation flow **asking the printer's question first** (A4 or
+  Letter, before the zine has a name), which is why four new zines are four tiles all reading *"My zine"*.
+  Carried to the Proof/Bench re-skins.
+- **TalkBack itself was not stepped.** Pass 1 read the platform `AccessibilityNodeInfo` tree — the
+  instrument CLAUDE.md prescribes — and it is clean: every overflow is a real `Button` announcing
+  *"Actions for <name>"*, and traversal is **2N** as predicted (8 stops for 4 zines). The doubling is
+  accepted; the alternative is a menu with no way in. But reading the tree is not hearing it, and the
+  record does not claim otherwise.
+- The Proof and the Bench re-skins are next, and rulings 2, 4 and 5 will bind them.
+
+### 10. Closed during review, and recorded so the closure is auditable {#adr-100-closed}
+
+Both of these were listed as deliberately-left-open in the first draft. Neither survived the reviews, and
+both were closed rather than argued.
+
+- **The frozen prototype now carries the overflow control.** The first draft deferred it: `.zine` was a
+  `<button>`, a control may not contain a control, and restructuring the tile looked like a change owing
+  its own critique pass. A review pointed out what that actually amounted to — a new 34dp control on every
+  tile shipping **Compose-first**, which [CLAUDE.md](../CLAUDE.md#html-first-ui-workflow-mandatory) forbids
+  in terms (*"never the reverse"*), with pixel parity impossible for the one element ruling 1 exists for.
+  Recording a violation does not authorise it, and a delegated pass cannot grant itself an exemption from
+  the workflow. The tile is now `<article class="zine">` holding two sibling buttons, `.zine-open` and
+  `.more`, with the mark drawn as three SVG circles. **`<article>` rather than `<div>` is load-bearing:**
+  `.shelf-head` and the four `.ph` are `<div>`s, so a `<div>` tile would have silently re-broken ruling 5
+  in the same edit that implemented ruling 1.
+- **The `.ph` placeholder's border ink was investigated and needs no fix** — this belongs in §8 as
+  evidence, not here as an open item. A raster probe found ink on ~27% of the border path, which looks
+  like a defect and is not: the border is `1.5px **dashed**` at a 1:1 duty cycle, so half the path is bare
+  by design, and `hair` is `rgba(51,38,28,.16)` — a low-alpha stroke whose antialiased edge pixels fall
+  under a threshold probe. Duty cycle times partial coverage accounts for the number. **No change made**,
+  per the owner's instruction not to introduce a speculative fix to improve a measurement.
+
+### 11. Review {#adr-100-review}
+
+Two independent Review Agents, different lenses, dispatched on the same tree and neither shown the other's
+findings. **Implementation lens: GO WITH FIXES**, 8 Required Fixes. **Product and documentation lens:
+NO-GO**, 6 Required Fixes. All fourteen are reconciled above; none was rejected outright, and the one
+partially rejected is the middle-ellipsis alternative, rejected **on a measurement** rather than on
+preference (§3).
+
+**Both reviews independently found the same single defect first**, and it is the one this ADR would have
+shipped as a lie: `.paper-s .cover` is a descendant selector, `.paper-s` **is** the cover, the rule matched
+nothing, and §7 claimed ruling 2 was in the canonical file when it was not. Two reviewers converging on one
+line is the strongest signal either produced.
+
+**The pattern in the rest of the findings is the pattern this file named one ADR earlier**, in the sentence
+immediately above `## ADR-100`: *claims stated with more confidence than their evidence supported*. Not one
+review found a wrong measurement — every quoted ratio except `1.03` and `9.99` verified. What they found
+was **citations**: §5.1 and §5.2 invoked for rules they do not contain, §3.2's allow-list quoted while
+§4.1's was relied on, OD-41 called held when the register says answered, a rename called an orphan-sweep, a
+determinism check called a drift check, and three reasons called independently sufficient when one of them
+carried the decision alone. The measurements were sound every time; the sentences around them were not —
+written into the same document that opens by warning against exactly that.

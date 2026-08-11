@@ -55,6 +55,17 @@ internal const val ZineSheetIllustrationTestTag = "empty-sheet"
 internal const val ZineBookIllustrationTestTag = "empty-book"
 
 /**
+ * `.tf .arrow` — the mark between the two illustrations.
+ *
+ * It was a `Text` until device Pass 1 turned it into a `Canvas` (see the note at its call site), and a
+ * canvas has no text for a test to find. The tag is what the geometry assertions hold on to now.
+ *
+ * A bare `testTag` adds a semantics node carrying no name, no description and no action, which services
+ * skip — so the decorative reading the `Canvas` was chosen for is unchanged.
+ */
+internal const val ZineArrowTestTag = "empty-arrow"
+
+/**
  * The frozen Library's **empty state** — `docs/design/mockups/v21-library.html`.
  *
  * ```css
@@ -224,6 +235,7 @@ private fun TransformationRow(modifier: Modifier = Modifier) {
             // joins two already-labelled illustrations. A `Canvas` contributes no node, which is the
             // decorative reading. The `Text` it replaces did contribute one, spoken as "right arrow".
             Modifier
+                .testTag(ZineArrowTestTag)
                 .padding(bottom = ArrowMarginBottom)
                 .size(ArrowBox),
         ) {

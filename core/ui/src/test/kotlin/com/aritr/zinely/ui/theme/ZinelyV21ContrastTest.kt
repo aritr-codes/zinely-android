@@ -92,6 +92,15 @@ class ZinelyV21ContrastTest {
     }
 
     @Test
+    fun `onButter carries a label on the one hue that stays bright in both themes`() {
+        // The gap ADR-100 left open and a review found: `onButter` was declared "★ AA-critical" in its own
+        // KDoc, and this file — which that KDoc names as the thing pinning it — did not mention the token.
+        // A cream label mirroring `onLeaf` would measure 1.6:1 on butter, so this pairing is the whole
+        // reason the token exists and it was the one AA-critical pairing nothing checked.
+        assertPairing("onButter / butter", WcagContrast.AA_NORMAL) { it.onButter to it.butter }
+    }
+
+    @Test
     fun `the snackbar reads in both themes`() {
         // Its ground is `ink`, which inverts. The Undo used to be butter here and measured 1.59:1 in
         // dark — V21-SPEC §3.2's one recorded exception, retired rather than lived with.

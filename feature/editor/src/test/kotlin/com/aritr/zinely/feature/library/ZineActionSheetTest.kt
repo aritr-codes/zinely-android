@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -64,23 +65,43 @@ class ZineActionSheetTest {
         const val SUBTITLE = "A4 · 2 days ago"
         val TARGET = ZineActionTarget(TITLE, SUBTITLE)
 
-        /** `.sheet{left:10px;right:10px;bottom:10px}` */
-        const val INSET = 10
+        /**
+         * `.sheet{left:0;right:0;bottom:0}` — **the card stopped floating**.
+         *
+         * V2 inset it 10px on three sides. V2.1 runs it to the window's edges and rounds only the two top
+         * corners, which is why the radius below more than doubled in the same re-freeze: a full-bleed
+         * sheet with a small radius reads as a panel rather than as a card being drawn up.
+         */
+        const val INSET = 0
 
-        /** `.sh-head{padding:17px 20px 13px}` · `.act{padding:15px 20px}` */
-        const val HEAD_TOP = 17
-        const val HEAD_SIDE = 20
-        const val ROW_SIDE = 20
+        /**
+         * `.sh-head{padding:var(--gap-xs) var(--gap-xl) var(--gap-md)}` · `.act{padding:var(--gap-lg)
+         * var(--gap-xl)}` — 4 / 24 / 12 and 16 / 24, where V2 wrote 17 / 20 / 13 and 15 / 20. All of them
+         * are steps on the published scale (§3.3) now rather than hand-set numbers.
+         */
+        const val HEAD_TOP = 4
+        const val HEAD_SIDE = 24
+        const val ROW_SIDE = 24
+
+        /**
+         * `.grab{height:5px;margin:var(--gap-md) auto var(--gap-xs)}` — 12 + 5 + 4, the room the handle
+         * takes above the head. The head's own padding is measured on top of it.
+         */
+        const val GRAB_BLOCK = 21
+
+        /** `.act .ic{width:30px;height:30px}` and `.act{gap:var(--gap-lg)}` — V2's were 20 and 14. */
+        const val ICON_CHIP = 30
+        const val ROW_GAP = 16
 
         /** `border-top:1px solid var(--hair)` · `.danger{border-top:8px solid var(--desk)}` */
         /** `.sh-head{border-bottom:1.5px dashed var(--hair)}` — the sheet's one divider. */
         const val HEAD_DIVIDER = 1.5f
 
-        /** `.sh-ttl{font-size:1.12rem}` — and **D-005**'s weight, not the file's 600. */
-        val TITLE_SIZE = 17.92.sp
+        /** `.sh-ttl{font-family:var(--voice);font-size:1.22rem;font-weight:700}` — 19.52px in Averia. */
+        val TITLE_SIZE = 19.52.sp
 
-        /** `.sheet{border-radius:20px}` */
-        const val CARD_RADIUS = 20
+        /** `.sheet{border-radius:var(--br-xl) var(--br-xl) 0 0}` — 36px, on the two top corners only. */
+        const val CARD_RADIUS = 36
 
         const val HALF_PIXEL = 0.5f
 
@@ -89,7 +110,7 @@ class ZineActionSheetTest {
 
         /** Reference renderings for the type test. */
         const val REF_FROZEN = "ref-frozen"
-        const val REF_HEAVY = "ref-600"
+        const val REF_LIGHTER = "ref-500"
         const val REF_SMALL = "ref-12sp"
 
         /**
@@ -208,9 +229,13 @@ class ZineActionSheetTest {
             "three pixels in, well below the corner, must be the sheet's own paper",
             raster.colourAt(left + 3, top + CARD_RADIUS * 2).closeTo(capturedPaper),
         )
+        // The arc's own centre is paper — read on the **right**, because the 36px radius now reaches down
+        // past the head's top padding and the title's glyphs stand at the same point on the left. That is
+        // a consequence of re-deriving the radius rather than of the sheet being wrong, and moving the
+        // probe is the honest fix: a tolerance wide enough to accept ink here would accept anything.
         assertTrue(
             "and the corner's own diagonal must be paper once past the arc",
-            raster.colourAt(left + CARD_RADIUS, top + CARD_RADIUS).closeTo(capturedPaper),
+            raster.colourAt(card.right.roundToInt() - CARD_RADIUS, top + CARD_RADIUS).closeTo(capturedPaper),
         )
     }
 
@@ -305,9 +330,13 @@ class ZineActionSheetTest {
             title.left - card.left,
             HALF_PIXEL,
         )
+        // The head's own padding stands **below the grab handle**, which is `margin:var(--gap-md) auto
+        // var(--gap-xs)` around a 5px bar — 21px of it before `.sh-head` starts. V2's expectation was the
+        // head padding alone; keeping that shape and re-baselining 17 to 25 would have folded the handle
+        // into a number nobody could read back to the frozen file.
         assertEquals(
-            "and opens ${HEAD_TOP}px down",
-            HEAD_TOP.toFloat(),
+            "and opens ${GRAB_BLOCK} + ${HEAD_TOP}px down — the handle, then the head's own padding",
+            (GRAB_BLOCK + HEAD_TOP).toFloat(),
             title.top - card.top,
             HALF_PIXEL,
         )
@@ -326,23 +355,52 @@ class ZineActionSheetTest {
             .onNodeWithText(ZineAction.Open.label, useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
 
+        // **Measured through the glyph's centre, not its left edge.** `.ic` is a 30px chip with the
+        // character centred in it (`display:grid;place-items:center`), so the glyph's own left edge is
+        // the padding plus half the difference between the chip and the character — a number that moves
+        // with the *font*. Its centre does not: it is the padding plus half the chip, which pins both
+        // frozen values at once and nothing else.
         assertEquals(
-            "`.act{padding:15px ${ROW_SIDE}px}` — the glyph slot starts ${ROW_SIDE}px in",
-            ROW_SIDE.toFloat(),
-            glyph.left - row.left,
+            "`.act{padding:var(--gap-lg) var(--gap-xl)}` and `.ic{width:${ICON_CHIP}px}` — the chip's " +
+                "centre stands ${ROW_SIDE} + ${ICON_CHIP / 2}px in",
+            (ROW_SIDE + ICON_CHIP / 2f),
+            glyph.center.x - row.left,
             HALF_PIXEL,
         )
-        assertEquals("`.ic{width:20px}`", 20f, glyph.width, HALF_PIXEL)
         assertEquals(
-            "`gap:14px` between the icon slot and the label",
-            14f,
-            label.left - glyph.right,
+            "`gap:var(--gap-lg)` between the chip and the label",
+            (ROW_SIDE + ICON_CHIP + ROW_GAP).toFloat(),
+            label.left - row.left,
             HALF_PIXEL,
         )
-        // `padding:15px 20px` is symmetric top and bottom, so the label sits centred. An asymmetric
-        // transcription — the header's own 17/13, say — passes every horizontal check above.
+
+        // **And the chip's own width, read off the raster.** The two assertions above both measure from
+        // `row.left`, so they are two equations in three unknowns: padding 19 / chip 40 / gap 11 satisfies
+        // both, and `.ic{width:30px}` would be asserted by nothing at all. The predecessor pinned it by
+        // measuring the glyph's box directly; that box is the *character's*, which moves with the font,
+        // which is why it was dropped. The chip is not a semantics node either — but it is `--butter-tint`
+        // on `--paper`, so it can simply be counted.
+        val raster = decorRaster()
+        // Measured as the **span** of chip-coloured columns on the chip's centre line, not as a count of
+        // them. Two readings had to be discarded first: a count on the centre line reads 25, because the
+        // glyph is centred in the chip and its own ink interrupts the run; a count three rows below the
+        // top edge reads 27, because `--br-sm` is an 8px radius and the corners are still cutting in.
+        // The span is blind to both — the glyph is interior and the widest row is the centre one.
+        val chipRow = glyph.center.y.roundToInt()
+        val columns = (row.left.roundToInt() until row.right.roundToInt())
+            .filter { raster.colourAt(it, chipRow).closeTo(capturedChip) }
         assertEquals(
-            "the label must sit centred between equal 15px paddings",
+            "`.act .ic{width:${ICON_CHIP}px;background:var(--butter-tint)}` — the chip must be that wide",
+            ICON_CHIP.toFloat(),
+            (columns.last() - columns.first() + 1).toFloat(),
+            // One pixel for the antialiased column at either end of the span.
+            2f,
+        )
+
+        // `padding:var(--gap-lg) var(--gap-xl)` is symmetric top and bottom, so the label sits centred. An
+        // asymmetric transcription — the header's own 4/12, say — passes every horizontal check above.
+        assertEquals(
+            "the label must sit centred between equal ${ROW_GAP}px paddings",
             row.center.y,
             label.center.y,
             1.5f,
@@ -361,32 +419,36 @@ class ZineActionSheetTest {
     // ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `the sheet title is set in the voice face at the frozen size and D-005's weight`() {
-        // Ink coverage, for the reason `ZineShelfTest` had to adopt it: `.sh-ttl` at 500 and at the file's
-        // stale 600 differ by about a pixel of advance, so nothing about the node's width or height can
-        // tell them apart — and the weight is precisely what **D-005** ruled, naming this selector.
+    fun `the sheet title is set in the voice face at the frozen size and weight`() {
+        // Ink coverage, for the reason `ZineShelfTest` had to adopt it: two weights of one face at one
+        // size differ by about a pixel of advance, so nothing about the node's width or height can tell
+        // them apart.
+        //
+        // `.sh-ttl{font-family:var(--voice);font-size:1.22rem;font-weight:700}` — **Averia 700 at
+        // 19.52px**, where V2 wrote Fraunces 500 at 17.92px. Face, size and weight all moved together, so
+        // the wrong-weight foil is now V2's own 500 rather than the V2 file's stale 600.
         surfaceWithReferences()
         val raster = decorRaster()
         val threshold = inkThreshold(capturedPaper)
 
         val frozen = raster.inkCoverage(tagBounds(REF_FROZEN), threshold)
-        val heavier = raster.inkCoverage(tagBounds(REF_HEAVY), threshold)
+        val lighter = raster.inkCoverage(tagBounds(REF_LIGHTER), threshold)
         val smaller = raster.inkCoverage(tagBounds(REF_SMALL), threshold)
         val actual = raster.inkCoverage(tagBounds(ZineActionTitleTestTag), threshold)
 
         assertTrue("nothing was drawn at the frozen style", frozen > 0)
         assertTrue(
-            "this host cannot tell Fraunces 500 from the file's stale 600 ($frozen vs $heavier), " +
-                "so D-005 would be unguarded here",
-            relativeGap(frozen, heavier) > 0.03f,
+            "this host cannot tell the frozen 700 from V2's 500 ($frozen vs $lighter), " +
+                "so the weight would be unguarded here",
+            relativeGap(frozen, lighter) > 0.03f,
         )
         assertTrue(
             "this host cannot tell ${TITLE_SIZE} from the subtitle's 12.48sp ($frozen vs $smaller)",
             relativeGap(frozen, smaller) > 0.03f,
         )
         assertTrue(
-            "the title must render at Fraunces 500 / $TITLE_SIZE — coverage $actual against $frozen " +
-                "frozen, $heavier at 600, $smaller at 12.48sp",
+            "the title must render at Averia 700 / $TITLE_SIZE — coverage $actual against $frozen " +
+                "frozen, $lighter at 500, $smaller at 12.48sp",
             relativeGap(actual, frozen) <= 0.03f,
         )
     }
@@ -399,13 +461,13 @@ class ZineActionSheetTest {
         // while the title takes plain `--ink`. Swapping either composes perfectly and reads as a choice.
         assertTrue(
             "some pixel of the subtitle must be exactly inkFaint",
-            raster.anyPixel(tagBounds(ZineActionSubtitleTestTag), capturedInkFaint),
+            raster.anyPixel(tagBounds(ZineActionSubtitleTestTag), capturedInkSoft),
         )
         assertTrue(
             "and some pixel of the title exactly ink",
             raster.anyPixel(tagBounds(ZineActionTitleTestTag), capturedInk),
         )
-        assertNotEquals("the two inks must differ, or neither assertion discriminates", capturedInk, capturedInkFaint)
+        assertNotEquals("the two inks must differ, or neither assertion discriminates", capturedInk, capturedInkSoft)
     }
 
     @Test
@@ -473,45 +535,38 @@ class ZineActionSheetTest {
     }
 
     @Test
-    fun `the scrim dims a dark shelf harder than a light one, which is the D-022 ruling`() {
-        // **D-022, ruled: the corpus wins.** `v2-library.html:119` writes `rgba(30,25,18,.36)` as a hard
-        // literal outside its own `:root`, so the frozen dark block could never reach it and both themes
-        // dimmed identically — over a dark desk that is already close to that colour. The owner ruled the
-        // canonical `--scrim` authoritative, as for the serif (D-005) and the easings (D-011). So this test
-        // is the inverse of the one B3 first shipped: what was pinned as sameness is now asserted as
-        // difference, and the earlier version is what the ruling flipped.
+    fun `the scrim is one wash in both themes, which is what the re-freeze wrote`() {
+        // **This assertion is the inverse of the one it replaces, for the second time, and that is the
+        // finding rather than an embarrassment.** B3 first pinned the two themes as *equal*; the D-022
+        // ruling made the corpus's theme-aware `--scrim` authoritative and the test was rewritten to
+        // assert they *differ*. V2.1 writes `.scrim{background:rgba(38,26,16,.42)}` in the shared block
+        // with no dark override anywhere in the file, so the re-freeze answers the same question a third
+        // time — back to one wash, at a new value.
+        //
+        // Re-baselining the two expected colours would have kept the `assertNotEquals` and gone on
+        // requiring a difference the frozen file does not state. See [FROZEN_SCRIM] for why this is
+        // recorded against D-022 rather than treated as closing it.
         val (light, dark) = scrimPixels()
+        val expected = FROZEN_SCRIM.compositeOverWhite()
 
-        assertNotEquals(
-            "the ruled scrim is theme-aware — if these are equal, the Library's stale literal is back",
-            light,
-            dark,
-        )
-        // Not merely different: the published values, composited the way the raster composited them. The
-        // dark half is deliberately the *stronger* wash, which is the whole substance of the ruling.
         assertTrue(
-            "light must be the corpus ink at .34 over white — expected ${LIGHT_SCRIM.compositeOverWhite()}, found $light",
-            light.closeTo(LIGHT_SCRIM.compositeOverWhite()),
+            "light must be the frozen rgba(38,26,16,.42) over white — expected $expected, found $light",
+            light.closeTo(expected),
         )
         assertTrue(
-            "dark must be the corpus black at .50 over white — expected ${DARK_SCRIM.compositeOverWhite()}, found $dark",
-            dark.closeTo(DARK_SCRIM.compositeOverWhite()),
-        )
-        assertTrue(
-            "and the dark scrim must dim harder than the light one, or the ruling's point is lost " +
-                "(light luminance ${light.luminance()}, dark ${dark.luminance()})",
-            dark.luminance() < light.luminance(),
+            "and dark must be the same wash — expected $expected, found $dark",
+            dark.closeTo(expected),
         )
     }
 
     @Test
     fun `the stale Library literal is not what the sheet paints`() {
-        // The control for the ruling. Without it, any theme-aware pair of colours would satisfy the test
-        // above; this names the specific value that was rejected, so a revert to it fails loudly rather
-        // than quietly re-opening a closed defect.
+        // The control. Without it, *any* single colour painted in both themes would satisfy the test
+        // above — which, read carelessly, is a description of V2's defect as well as of V2.1's design.
+        // Naming the rejected value is what keeps the two apart.
         val (light, _) = scrimPixels()
         assertFalse(
-            "the frozen Library's rgba(30,25,18,.36) was ruled stale and must not be painted",
+            "V2's rgba(30,25,18,.36) is not the V2.1 wash and must not be painted",
             light.closeTo(STALE_LIBRARY_SCRIM.compositeOverWhite()),
         )
     }
@@ -563,9 +618,9 @@ class ZineActionSheetTest {
                         .align(Alignment.TopStart)
                         .background(ZinelyTheme.v2Colors.paper),
                 ) {
-                    Reference(REF_FROZEN, FontWeight.Medium, TITLE_SIZE, TITLE)
-                    Reference(REF_HEAVY, FontWeight.SemiBold, TITLE_SIZE, TITLE)
-                    Reference(REF_SMALL, FontWeight.Medium, 12.48.sp, TITLE)
+                    Reference(REF_FROZEN, FontWeight.Bold, TITLE_SIZE, TITLE)
+                    Reference(REF_LIGHTER, FontWeight.Medium, TITLE_SIZE, TITLE)
+                    Reference(REF_SMALL, FontWeight.Bold, 12.48.sp, TITLE)
                 }
                 Column(
                     Modifier
@@ -587,7 +642,7 @@ class ZineActionSheetTest {
             text = text,
             modifier = Modifier.testTag(tag),
             style = TextStyle(
-                fontFamily = ZinelyTheme.v2Typography.voice,
+                fontFamily = ZinelyV21Fonts.Voice,
                 fontWeight = weight,
                 fontSize = size,
                 color = ZinelyTheme.v2Colors.ink,
@@ -602,7 +657,7 @@ class ZineActionSheetTest {
             Text(
                 text = glyph,
                 style = TextStyle(
-                    fontFamily = ZinelyTheme.v2Typography.work,
+                    fontFamily = ZinelyV21Fonts.Work,
                     fontSize = 16.sp,
                     color = ZinelyTheme.v2Colors.ink,
                 ),
@@ -611,19 +666,21 @@ class ZineActionSheetTest {
     }
 
     private var capturedInk: Color = Color.Unspecified
-    private var capturedInkFaint: Color = Color.Unspecified
+    private var capturedInkSoft: Color = Color.Unspecified
     private var capturedConsequence: Color = Color.Unspecified
     private var capturedDesk: Color = Color.Unspecified
     private var capturedPaper: Color = Color.Unspecified
+    private var capturedChip: Color = Color.Unspecified
 
     @Composable
     private fun Host(dark: Boolean, content: @Composable androidx.compose.foundation.layout.BoxScope.() -> Unit) {
         ZinelyTheme(darkTheme = dark) {
-            capturedInk = ZinelyTheme.v2Colors.ink
-            capturedInkFaint = ZinelyTheme.v2Colors.inkFaint
-            capturedConsequence = ZinelyTheme.v2Colors.consequence
-            capturedDesk = ZinelyTheme.v2Colors.desk
-            capturedPaper = ZinelyTheme.v2Colors.paper
+            capturedInk = ZinelyTheme.v21Colors.ink
+            capturedInkSoft = ZinelyTheme.v21Colors.inkSoft
+            capturedConsequence = ZinelyTheme.v21Colors.jamText
+            capturedDesk = ZinelyTheme.v21Colors.desk
+            capturedPaper = ZinelyTheme.v21Colors.paper
+            capturedChip = ZinelyTheme.v21Colors.butterTint
             Box(Modifier.fillMaxSize().background(PROBE_GROUND)) { content() }
         }
     }
@@ -748,15 +805,20 @@ class ZineActionSheetTest {
 }
 
 /**
- * The **corpus** scrim, `--scrim` — `rgba(42,37,30,.34)` light and `rgba(0,0,0,.5)` dark
- * ([`v2-bench.html:21,35`](docs/design/mockups/v2-bench.html)), which the **D-022** ruling made authoritative
- * over the Library's own literal.
+ * The V2.1 scrim — `.scrim{background:rgba(38,26,16,.42)}`, **one value for both themes**.
  *
- * Written out here rather than read from `ZinelyV2Colors` on purpose: a test that took the token would agree
- * with whatever the token said, including a wrong value. These are the bytes the ruling names.
+ * **This is where D-022 landed, and it did not land on the ruling.** That defect was raised because V2's
+ * Library wrote its scrim as a hard literal outside `:root`, so the frozen dark block could never reach it
+ * and both themes dimmed identically — while the corpus's own `--scrim` *was* theme-aware, and the owner
+ * ruled the corpus authoritative. The re-freeze writes a single literal again, deliberately: `.scrim` sits
+ * in the shared block and no dark override in the file touches it. So V2.1's answer to *"should the scrim
+ * invert?"* is **no**, at a new value, and the assertion the ruling produced is what that answer flips.
+ * Recorded rather than closed — D-022 was raised against V2's file, and closing it is the owner's.
+ *
+ * Written out here rather than read from `ZinelyV21Colors` on purpose: a test that took the token would
+ * agree with whatever the token said, including a wrong value. These are the bytes the frozen file names.
  */
-private val LIGHT_SCRIM = Color(0xFF2A251E).copy(alpha = 0.34f)
-private val DARK_SCRIM = Color(0xFF000000).copy(alpha = 0.50f)
+private val FROZEN_SCRIM = Color(0xFF261A10).copy(alpha = 0.42f)
 
 /** What the ruling rejected — pinned so a revert to it is a failure rather than a silence. */
 private val STALE_LIBRARY_SCRIM = Color(0xFF1E1912).copy(alpha = 0.36f)

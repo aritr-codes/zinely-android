@@ -84,7 +84,7 @@ class ZineLibraryScreenTest {
     private val events = Channel<HomeShelfEvent>(Channel.BUFFERED)
 
     private var deskColor: Color = Color.Unspecified
-    private var matchaColor: Color = Color.Unspecified
+    private var leafColor: Color = Color.Unspecified
 
     // ---------------------------------------------------------------------------------------------
     // Row 1 — the ground
@@ -229,19 +229,43 @@ class ZineLibraryScreenTest {
     // ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `loading stands placeholders under the heading, and never the invitation`() {
+    fun `loading stands placeholders in the head's kept space, and never the invitation`() {
         render(LibraryShelfState.Loading)
 
         composeRule.onAllNodesWithTag(ZineShelfPlaceholderTestTag).assertCountEquals(PLACEHOLDERS)
-        // `body.is-loading` does not hide `.shelf`: the heading stays up, so the screen does not
-        // restructure when the data lands.
-        composeRule.onNodeWithText(SHELF_HEADING).assertIsDisplayed()
+
+        // **The re-freeze inverted this claim, so the assertion is rewritten rather than re-baselined.**
+        // V2 kept the heading up while loading; V2.1's `state()` writes
+        // `.shelf-head{visibility:hidden}` (`v21-library.html:440`) — *hidden*, which keeps the space
+        // and drops the text. It has to: the head carries a **count**, and a count of zero while the
+        // read is still running tells a user with twelve zines that they have none.
+        //
+        // `visibility:hidden` is also out of the accessibility tree, so this is `assertDoesNotExist`
+        // and not `assertIsNotDisplayed` — an alpha-zero heading that still spoke would be the same
+        // defect said aloud.
+        composeRule.onNodeWithText(SHELF_HEADING).assertDoesNotExist()
+
+        // The other half of *hidden*, and the reason it is not `if (loading) {}`: the space stays, so
+        // the grid does not restructure when the data lands. Measured as the placeholders standing
+        // where the covers will stand — a removed head moves the whole grid up by its height, which is
+        // a jump every screenshot ratifies as "the content arrived".
+        val placeholderTop = composeRule.onAllNodesWithTag(ZineShelfPlaceholderTestTag)[0]
+            .fetchSemanticsNode().boundsInRoot.top
         // **This is the assertion.** `body.is-loading .empty{display:none}` exists because a slow read
         // that rendered *"Make your first little zine"* would tell a user with twelve zines that they
         // have none. "Placeholders appear" alone passes on precisely that defect.
         composeRule.onNodeWithTag(ZineShelfEmptyTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(ZineShelfFailTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(zineShelfCoverTestTag(0)).assertDoesNotExist()
+
+        content(zines(2))
+        assertEquals(
+            "the covers must land where the placeholders stood — the hidden head keeps its space",
+            bounds(zineShelfCoverTestTag(0)).top,
+            placeholderTop,
+            HALF_PIXEL,
+        )
+        composeRule.onNodeWithText(SHELF_HEADING).assertIsDisplayed()
     }
 
     @Test
@@ -283,28 +307,29 @@ class ZineLibraryScreenTest {
     }
 
     @Test
-    fun `no pixel of the retry control is matcha`() {
-        // `.retry` takes the paper + hairline grammar because `.start` is the screen's one primary and
-        // **stands in this state too**; two matcha buttons would make the recovery compete with the
-        // invitation. "It looks quiet" is not checkable, and the mutation — style `.retry` as `.start` —
-        // is a one-line change that a screenshot ratifies, so the claim is made against the pixels.
+    fun `no pixel of the retry control is leaf`() {
+        // `.retry{background:var(--paper);border:1.5px solid var(--ink)}` — the paper + hairline grammar,
+        // because `.start` is the screen's one primary and **stands in this state too**; two leaf buttons
+        // would make the recovery compete with the invitation. "It looks quiet" is not checkable, and the
+        // mutation — style `.retry` as `.start` — is a one-line change that a screenshot ratifies, so the
+        // claim is made against the pixels.
         //
-        // Both themes: `--matcha` is a different colour in each, so a light-only probe would miss a
-        // dark-mode-only regression entirely — and dark is where the two inks are closest.
+        // Both themes: `--leaf` is a different colour in each (#4E7A3C / #8FAE6B), so a light-only probe
+        // would miss a dark-mode-only regression entirely — and dark is where the two inks are closest.
         for (dark in listOf(false, true)) {
             render(LibraryShelfState.Error, dark = dark)
             val retry = bounds(ZineRetryTestTag)
             val raster = decorRaster()
-            var matchaPixels = 0
+            var leafPixels = 0
             for (y in retry.top.toInt() until retry.bottom.toInt()) {
                 for (x in retry.left.toInt() until retry.right.toInt()) {
-                    if (raster.matches(x, y, matchaColor)) matchaPixels++
+                    if (raster.matches(x, y, leafColor)) leafPixels++
                 }
             }
             assertEquals(
                 "the retry control is painted in the primary's ink (dark=$dark)",
                 0,
-                matchaPixels,
+                leafPixels,
             )
         }
     }
@@ -425,8 +450,8 @@ class ZineLibraryScreenTest {
     @Composable
     private fun Host() {
         ZinelyTheme(darkTheme = darkTheme) {
-            deskColor = ZinelyTheme.v2Colors.desk
-            matchaColor = ZinelyTheme.v2Colors.matcha
+            deskColor = ZinelyTheme.v21Colors.desk
+            leafColor = ZinelyTheme.v21Colors.leaf
             ZineLibraryScreen(
                 state = shelfState,
                 events = events.receiveAsFlow(),

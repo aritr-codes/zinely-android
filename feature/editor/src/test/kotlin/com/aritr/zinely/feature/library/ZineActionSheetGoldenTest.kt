@@ -52,8 +52,18 @@ class ZineActionSheetGoldenTest {
         const val GOLDEN_DIR = "src/test/roborazzi"
         const val TAG = "sheet-viewport"
 
-        /** `.sheet{left:10px;right:10px;bottom:10px}` — the arrangement [ZineActionSheet] applies. */
-        val INSET = 10.dp
+        /**
+         * `.sheet{position:absolute;left:0;right:0;bottom:0}` — flush, which is *why*
+         * `border-radius:36px 36px 0 0` squares off the bottom two corners.
+         *
+         * This host wrote **10dp** and a KDoc quoting a `left:10px;right:10px;bottom:10px` rule that does
+         * not exist in the frozen file, so the recorded raster showed the paper spanning x 10→381 of 392
+         * and stopping 10 rows short of the bottom, with dimmed shelf visible underneath and the square
+         * corners rendered as rounded desk. Production never did this — [ZineActionSheet] aligns the
+         * surface `BottomCenter` with no padding — so it was the parity artifact itself that was wrong,
+         * and it had been ratifying its own mistake since B3.
+         */
+        val INSET = 0.dp
 
         /** The zine the frozen sheet is open for — `:172` shows exactly this header. */
         val TARGET = ZineActionTarget("Sunday market", "A4 · 2 days ago")
@@ -72,7 +82,7 @@ class ZineActionSheetGoldenTest {
     private fun sheet(name: String, dark: Boolean) {
         composeRule.setContent { Screen(dark) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(TAG).captureRoboImage("$GOLDEN_DIR/v2_sheet_$name.png", aa())
+        composeRule.onNodeWithTag(TAG).captureRoboImage("$GOLDEN_DIR/v21_sheet_$name.png", aa())
     }
 
     @Composable
@@ -82,7 +92,7 @@ class ZineActionSheetGoldenTest {
                 Modifier
                     .testTag(TAG)
                     .fillMaxSize()
-                    .background(ZinelyTheme.v2Colors.desk),
+                    .background(ZinelyTheme.v21Colors.desk),
             ) {
                 ZineShelf(
                     zines = ZineShelfGoldenFixture.FROZEN,

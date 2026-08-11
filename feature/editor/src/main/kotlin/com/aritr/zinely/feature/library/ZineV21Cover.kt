@@ -101,6 +101,10 @@ internal fun ZineV21Cover(
     index: Int,
     modifier: Modifier = Modifier,
     pressed: Boolean = false,
+    // `.cover{border:1.5px solid var(--ink)}` for every ink stock, and a pinned ink for the two paper
+    // stocks that stopped theming — see `ZineCoverSurface.v21BorderInk`. Defaulted so callers that draw
+    // a cover from a bare colour (the golden sheets) keep the frozen rule without restating it.
+    borderInk: Color = ZinelyTheme.v21Colors.ink,
     mark: @Composable BoxScope.(Modifier) -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -153,7 +157,7 @@ internal fun ZineV21Cover(
         Box(
             Modifier
                 .fillMaxSize()
-                .border(CoverBorderV21, colors.ink, CoverShapeV21),
+                .border(CoverBorderV21, borderInk, CoverShapeV21),
         )
 
         // Everything else lives in the **padding box**, and that inset is not cosmetic.

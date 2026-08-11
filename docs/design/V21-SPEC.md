@@ -324,6 +324,7 @@ scale is now under an **open owner ruling**).
 | `jamText` | `#A63B20` | `#E4856D` | ✱ jam **as text or icon**, added 2026-08-09 by measurement (§4.1) — mirrors `leaf`/`leafText` |
 | `onJam` | `#FFF6E8` | `#1E1A15` | ✱ the label on a `jamText` ground — mirrors `onLeaf` |
 | `butter` / `butterTint` | `#F6B22C` · `#FDEBC4` | `#E8B458` · `#3E3320` | ✱ **material only** — tape, stamps, rings, the shelf lip, caution grounds |
+| `onButter` | `#33261C` | `#1E1A15` | the label on a `butter` ground — added 2026-08-11, [ADR-100 §4](../DECISIONS.md#adr-100-butter-tint). **Dark in both themes**, because butter is a light ground in both |
 | `hair` | `rgba(51,38,28,.16)` | `rgba(246,234,214,.15)` | internal hairlines and dashed dividers |
 
 #### ✅ VERIFIED — WCAG AA measured 2026-08-09; **eight pairings failed, all eight are fixed**
@@ -397,6 +398,39 @@ Finding 1 is the one worth remembering: **the prototypes broke this section's ow
 never body text"* — across roughly two thirds of the Bench's and the Proof's small text. The measurement did
 not find a palette that was too dark; it found a palette being used against its own specification.
 
+#### ✅ Amended 2026-08-11 by implementation — three further pairings, all measured on device-parity rasters
+
+Found by building the Library, not by re-reading the corpus. Ruled in
+[ADR-100](../DECISIONS.md#adr-100); each is an amendment to this section, not an exception to it.
+
+| # | Pairing | Was (light / dark) | Ruling | Now |
+|---|---|---|---|---|
+| 9 | `butterTint` as the count chip's ground, and as the `--frame` ring | **1.01** / 1.33 against `desk` | **Both move to `butter`.** Neither is a control and neither carries a state, so §3.2's material allow-list already covers them — a count chip is a *stamp*, the ring is *misregistration*. `butterTint` on the light desk is not "low contrast", it is the same colour: both elements were simply **absent** in light theme | **1.56 / 8.71**, with a new `onButter` label at 7.89 |
+| 10 | the two **paper cover stocks**, painted from the `paper` and `butterTint` chrome tokens | **1.18** in dark — the fill has no face against the desk | **A cover stock pins when it is pale and themes when it is saturated.** The two paper stocks, their `inkSoft` mark and their `#33261C` edge take their light values in both themes; the four ink stocks keep theming. Reasoning: [ADR-100 §2](../DECISIONS.md#adr-100-paper-stocks) | **15.39 / 14.02** stock on desk; marks **6.16 / 5.61** on their own stock; edge restored from **1.01 / 1.11** |
+| 11 | the shelf tile's **overflow affordance** at `ink` @ 50% | **2.90** against `desk` | It is a control's only visual identification, so 1.4.11 binds at 3:1. **`inkSoft`.** The same ruling replaced the `⋯` character with a drawn vertical mark, for reasons that are not contrast — §4.3 | **5.54 / 7.49** |
+
+Row 10 concerns the **fill only**. The `.cover` hard shadow stays on `inkLine` and stays at 1.17:1 against
+the dark desk, for all six stocks, because §4.3 requires a shadow to be darker than the surface it falls on.
+An earlier draft counted the shadow into row 10's diagnosis; it is spec-conformant behaviour and no part of
+the defect.
+
+Rows 10 and 11 were **not** WCAG failures in the sense row 8 was, and saying otherwise would overstate the
+evidence. A cover tile carries its title as real text underneath, so 1.4.11's *identification* clause does not
+bind it; it was repainted because the design had stopped working, which is the better reason and the harder
+one to argue from a table. Row 11 *is* binding — an overflow button has no text.
+
+⚠️ **Row 9's ruling exposes an inconsistency this document has not resolved.** §3.2's butter row lists
+*"tape, the shelf lip, the ring around the primary, a caution ground"*; §4.1's token table lists *"tape,
+**stamps**, **rings**, the shelf lip, caution grounds"* — and "stamps" also appears in §3.2's **berry** row
+as a state-carrying mark. The two elements in row 9 pass under the **strict** list (the `--frame` ring is
+named in it; the count chip carries no action, no state, and is not butter-as-text), so nothing here turns
+on the difference. The next butter question will. **Owner ruling owed.**
+
+⚠️ **The two exemptions above survive this amendment unchanged.** `.cover .mark`'s hardcoded
+`rgba(255,246,232,.92)` stays theme-invariant on the four **ink** stocks (2.38 on berry, cover art, decorative)
+— pinning the *paper* stocks does not widen it, and `ZineCoverRecipeTest` asserts the literal rather than a
+ratio precisely so it cannot be. `.fail .mk`'s `jam`-on-`paper` at 4.20 stays large text.
+
 ### 4.2 Type
 
 | Role | Face | Used for |
@@ -458,6 +492,24 @@ running text.** Voice is for short strings; Work is for anything the user operat
 - **Radius / spacing** — the published scales in §3.3. Pills for controls, `--br-md`/`--br-lg` for cards and
   drawers, `--br-xl` for a bottom sheet's top corners.
 - **Tilt** — objects **at rest** sit at ±0.6–2°. Objects **being worked on** never tilt (see §5.2).
+
+  **The corpus phases tilt and tape in a three-cycle keyed to the object's index among its own kind.** The
+  frozen file expressed this as `:nth-child(3n+k)` and was **off by one**, because a `.shelf-head` and four
+  `.ph` placeholders share the grid and `:nth-child` counts them. Corrected to `:nth-of-type` on 2026-08-11
+  — three tilt rules and two tape rules — per [ADR-100 §5](../DECISIONS.md#adr-100-nth-child), which is
+  also why the tile is an `<article>`: `.shelf-head` and `.ph` are `<div>`s, so a `<div>` tile would
+  reintroduce the same defect. This is the one place a specification was moved to agree with an
+  implementation, and it is allowed because the file was wrong.
+- **An overflow affordance is a drawn mark, never a character, and it is vertical.** Three dots, 3dp across
+  with 3dp gaps, stacked, in `inkSoft`, inside a 34dp target that is a **sibling** of the tile's own button,
+  not a child of it — a control may not contain a control, which is why `.zine` is an `<article>` holding
+  `.zine-open` and `.more` rather than the `<button>` it was. Reasoning:
+  [ADR-100 §1](../DECISIONS.md#adr-100-overflow).
+- **A zine's title on the shelf caps at two lines, with an end ellipsis.** Uniform across every tile and
+  across every font scale, so the grid stays rigid: two equal-height columns mean an unbounded title in one
+  cell pushes its **neighbour's** cover down. The full title is reachable from the `.more` sheet's header,
+  which sets no cap. Reasoning, alternatives and the measurement that ruled out middle-ellipsis:
+  [ADR-100 §3](../DECISIONS.md#adr-100-long-titles).
 - **Grain** — an SVG turbulence overlay, `soft-light` over chrome and `multiply` over paper.
 - **Motion** stays V2's: short, `cubic-bezier(.05,.7,.1,1)` for entrances, ≤ 300 ms. `prefers-reduced-motion`
   **downgrades** motion; it never removes the state change that motion was communicating.

@@ -4,10 +4,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.aritr.zinely.core.model.ZineCoverStamp
 import com.aritr.zinely.core.model.ZineCoverSurface
-import com.aritr.zinely.ui.theme.ZinelyContentInks
-import com.aritr.zinely.ui.theme.ZinelyCoverInkId
-import com.aritr.zinely.ui.theme.ZinelyV2Icon
-import com.aritr.zinely.ui.theme.ZinelyV2Icons
 import com.aritr.zinely.ui.theme.ZinelyV21Colors
 
 // -----------------------------------------------------------------------------------------
@@ -40,16 +36,6 @@ import com.aritr.zinely.ui.theme.ZinelyV21Colors
 // *for V2 covers only*; ADR-069's load-bearing rule (a cover is a recipe, never a rendered thumbnail) is
 // untouched, and V1's shelf keeps its own title hash until C0 retires it.
 
-/** The mark this stamp draws. */
-internal fun ZineCoverStamp.icon(): ZinelyV2Icon = when (this) {
-    ZineCoverStamp.Sun -> ZinelyV2Icons.StampSun
-    ZineCoverStamp.Letter -> ZinelyV2Icons.StampLetter
-    ZineCoverStamp.Waves -> ZinelyV2Icons.StampWaves
-    ZineCoverStamp.Sprig -> ZinelyV2Icons.StampSprig
-    ZineCoverStamp.Star -> ZinelyV2Icons.StampStar
-    ZineCoverStamp.Face -> ZinelyV2Icons.StampFace
-}
-
 // -----------------------------------------------------------------------------------------
 // V2.1 resolves the SAME persisted recipe onto a different palette and a different mark set.
 // -----------------------------------------------------------------------------------------
@@ -65,15 +51,42 @@ internal fun ZineCoverStamp.icon(): ZinelyV2Icon = when (this) {
 // by hue (matcha/leaf, strawberry/berry, ochre/butter) and teal has no counterpart at all, so it takes
 // the remaining ink. Naming that here rather than implying a correspondence that does not exist.
 
-/** The V2.1 cover stock this surface prints on — `.ink-leaf`, `.paper-s`, `.ink-berry`, `.paper-c`, … */
+/**
+ * The V2.1 cover stock this surface prints on — `.ink-leaf`, `.paper-s`, `.ink-berry`, `.paper-c`, …
+ *
+ * ### The two paper stocks do not theme, and that is an amendment to the freeze — ADR-100
+ *
+ * The frozen file writes `.paper-s .fill{background:var(--paper)}` and
+ * `.paper-c .fill{background:var(--butter-tint)}`, and the dark block redefines both tokens. Taken
+ * literally that is what shipped, and the parity raster shows what it costs: at **1.18:1** and
+ * **1.33:1** against `--desk`, with a hard shadow at **1.17:1**, the two paper covers stop being
+ * objects resting on a desk and become outlined holes cut into it — beside four ink covers that keep
+ * both their fill and their shadow. On the one screen whose whole job is *"which zine do I want?"*, two
+ * of six zines have no face at night.
+ *
+ * So the stocks are pinned to their light values, which is **already the rule for everything else
+ * printed on a cover**: `.cover .mark`'s hardcoded `rgba(255,246,232,.92)` is exempted by name in
+ * V21-SPEC §4.1 because *cover art is the maker's palette, not the app's chrome, and does not restyle
+ * in the dark*. A stock is the most literal cover art there is — it is the paper. Extending the
+ * exemption from the ink on the paper to the paper itself is the smaller claim, not the larger one.
+ *
+ * Measured after: **15.39:1** and **14.02:1** against the dark desk, marks at 6.16 and 5.61 on them.
+ * **Light is byte-identical** — these are the light tokens' own values, so the amendment can only be
+ * seen at night, which is the only place the defect was.
+ *
+ * The four ink stocks keep theming, deliberately. They are legible in both themes (the dark set is the
+ * lighter, more saturated cut), and a shelf of six invariant covers on a dark desk would be a wall of
+ * light. The rule this file now follows: **a cover's stock is paper and does not theme; a cover's ink
+ * is chosen from the palette and the palette adapts.**
+ */
 internal fun ZineCoverSurface.v21Fill(colors: ZinelyV21Colors): Color = when (this) {
     ZineCoverSurface.MatchaInk -> colors.leaf
     ZineCoverSurface.StrawberryInk -> colors.berry
     ZineCoverSurface.OchreInk -> colors.butter
     // No V2.1 ink is teal. Jam is what is left, and it is the only ink not already spoken for.
     ZineCoverSurface.TealInk -> colors.jam
-    ZineCoverSurface.PaperMatchaBand -> colors.butterTint
-    ZineCoverSurface.PaperStrawberryBand -> colors.paper
+    ZineCoverSurface.PaperMatchaBand -> ZineV21StockCream
+    ZineCoverSurface.PaperStrawberryBand -> ZineV21StockPaper
 }
 
 /**
@@ -81,14 +94,36 @@ internal fun ZineCoverSurface.v21Fill(colors: ZinelyV21Colors): Color = when (th
  * `ink-soft` by `.paper-s`/`.paper-c`.
  *
  * The ink value is hardcoded in the frozen file and **theme-invariant on purpose** (V21-SPEC §4.1): a
- * printed cover is the maker's palette, not the app's chrome, and it does not restyle in the dark.
+ * printed cover is the maker's palette, not the app's chrome, and it does not restyle in the dark. The
+ * paper stocks' mark is now invariant for the same reason and by the same amendment ([v21Fill]) — a
+ * themed `ink-soft` on an unthemed cream stock would be the defect inverted.
  */
 internal fun ZineCoverSurface.v21MarkInk(colors: ZinelyV21Colors): Color = when (this) {
-    ZineCoverSurface.PaperMatchaBand, ZineCoverSurface.PaperStrawberryBand -> colors.inkSoft
+    ZineCoverSurface.PaperMatchaBand, ZineCoverSurface.PaperStrawberryBand -> ZineV21MarkOnStock
     else -> ZineV21MarkOnInk
 }
 
+/**
+ * `.cover{border:1.5px solid var(--ink)}` — themed, except on the two stocks that no longer theme.
+ *
+ * `--ink` is `#F6EAD6` in dark, which is the cream the paper stocks now *are*: an outline at **1.01:1**
+ * on `.paper-c`'s `#FDEBC4` and **1.11:1** on `.paper-s`'s `#FFF6E8` is no outline. (Both figures read
+ * `1.03` here until a review recomputed them; neither was ever measured.)
+ * The border is part of the printed object wherever the fill is, so
+ * it is pinned with it. The four ink covers keep the themed border, where it still contrasts.
+ */
+internal fun ZineCoverSurface.v21BorderInk(colors: ZinelyV21Colors): Color = when (this) {
+    ZineCoverSurface.PaperMatchaBand, ZineCoverSurface.PaperStrawberryBand -> ZineV21StockEdge
+    else -> colors.ink
+}
+
 private val ZineV21MarkOnInk = Color(0xEBFFF6E8)
+
+/** The light `--paper` / `--butter-tint` / `--ink-soft` / `--ink`, pinned. See [v21Fill]. */
+private val ZineV21StockPaper = Color(0xFFFFF6E8)
+private val ZineV21StockCream = Color(0xFFFDEBC4)
+private val ZineV21MarkOnStock = Color(0xFF6E5947)
+private val ZineV21StockEdge = Color(0xFF33261C)
 
 /**
  * The V2.1 glyph this stamp draws — [ZineV21CoverMarks].
@@ -104,56 +139,4 @@ internal fun ZineCoverStamp.v21Mark(): ImageVector = when (this) {
     ZineCoverStamp.Star -> ZineV21CoverMarks.Booklet
     ZineCoverStamp.Waves -> ZineV21CoverMarks.Lines
     ZineCoverStamp.Face -> ZineV21CoverMarks.Mug
-}
-
-/**
- * The three colours one cover needs, resolved together.
- *
- * A fill without its title colour is unusable and a band without its fill is meaningless, so they
- * travel as a triple — the same reason [com.aritr.zinely.ui.theme.ZinelyCoverInk] is a triple rather
- * than a colour.
- */
-internal data class ZineCoverPalette(
-    val fill: Color,
-    val onFill: Color,
-    val band: Color,
-)
-
-/**
- * Resolve a surface against the `content.*` namespace. **No colour is written here** — every value
- * comes from [ZinelyContentInks], which is the only place the frozen cover palette exists.
- *
- * The two paper surfaces take their band from a *cover ink's fill* (`.paper-c .band{background:#7C8A3F}`
- * is matcha's fill; `.paper-s .band{background:#E27F89}` is strawberry's), not from that ink's darker
- * `band` cut. That is the frozen CSS, and it is the one place a cover's band is a different value from
- * the band of the ink it names.
- */
-internal fun ZineCoverSurface.palette(inks: ZinelyContentInks): ZineCoverPalette = when (this) {
-    ZineCoverSurface.MatchaInk -> inks[ZinelyCoverInkId.Matcha].let {
-        ZineCoverPalette(it.fill, it.onFill, it.band)
-    }
-
-    ZineCoverSurface.TealInk -> inks[ZinelyCoverInkId.Teal].let {
-        ZineCoverPalette(it.fill, it.onFill, it.band)
-    }
-
-    ZineCoverSurface.StrawberryInk -> inks[ZinelyCoverInkId.Strawberry].let {
-        ZineCoverPalette(it.fill, it.onFill, it.band)
-    }
-
-    ZineCoverSurface.OchreInk -> inks[ZinelyCoverInkId.Ochre].let {
-        ZineCoverPalette(it.fill, it.onFill, it.band)
-    }
-
-    ZineCoverSurface.PaperMatchaBand -> ZineCoverPalette(
-        fill = inks.coverStock.fill,
-        onFill = inks.coverStock.onFill,
-        band = inks[ZinelyCoverInkId.Matcha].fill,
-    )
-
-    ZineCoverSurface.PaperStrawberryBand -> ZineCoverPalette(
-        fill = inks.coverStock.fill,
-        onFill = inks.coverStock.onFill,
-        band = inks[ZinelyCoverInkId.Strawberry].fill,
-    )
 }

@@ -88,14 +88,23 @@ class ZineShelfGoldenTest {
     @Test
     fun `the frozen shelf dark`() = sheet("dark", dark = true)
 
-    private fun sheet(name: String, dark: Boolean) {
-        composeRule.setContent { Desk(dark) }
+    /**
+     * **Not a parity raster.** `.name` has no `max-lines` and no ellipsis in the frozen file, and no
+     * fixture title is longer than 14 characters, so what a long name does to the grid has never been
+     * pictured. This records it for the ruling that is still open — see [ZineShelfGoldenFixture.LONG_TITLE].
+     */
+    @Test
+    fun `a long title, for the open ruling`() =
+        sheet("long_title", dark = false, zines = ZineShelfGoldenFixture.LONG_TITLE)
+
+    private fun sheet(name: String, dark: Boolean, zines: List<ZineShelfItem> = FROZEN) {
+        composeRule.setContent { Desk(dark, zines) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(TAG).captureRoboImage("$GOLDEN_DIR/v2_shelf_$name.png", aa())
+        composeRule.onNodeWithTag(TAG).captureRoboImage("$GOLDEN_DIR/v21_shelf_$name.png", aa())
     }
 
     @Composable
-    private fun Desk(dark: Boolean) {
+    private fun Desk(dark: Boolean, zines: List<ZineShelfItem>) {
         ZinelyTheme(darkTheme = dark) {
             // testTag outermost, so the capture is the whole viewport the shelf fills rather than a crop
             // of its content — the frozen file's own reading is the phone, dock room and all.
@@ -103,9 +112,9 @@ class ZineShelfGoldenTest {
                 Modifier
                     .testTag(TAG)
                     .fillMaxSize()
-                    .background(ZinelyTheme.v2Colors.desk),
+                    .background(ZinelyTheme.v21Colors.desk),
             ) {
-                ZineShelf(FROZEN, onOpen = {}, onActions = {}, modifier = Modifier.fillMaxSize())
+                ZineShelf(zines, onOpen = {}, onActions = {}, modifier = Modifier.fillMaxSize())
             }
         }
     }

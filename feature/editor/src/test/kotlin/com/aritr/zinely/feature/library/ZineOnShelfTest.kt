@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -52,7 +53,7 @@ import org.robolectric.annotation.GraphicsMode
  * off the source, and the roles are read out of the **platform** `AccessibilityNodeInfo` tree rather than
  * Compose's merged one — the split ADR-058 records, and the reason B2's own a11y claim needed two tests.
  *
- * `w480dp` gives the object the 208dp column width the frozen shelf produces, so the numbers here are the
+ * `w480dp` gives the object the 216dp column width the frozen shelf produces, so the numbers here are the
  * numbers a real cell sees.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -68,20 +69,66 @@ class ZineOnShelfTest {
         const val TITLE = "Sunday market"
         const val SUBTITLE = "A4 · 2 days ago"
 
-        /** `.zine:active{transform:translateY(2px) scale(.985)}` */
-        const val PRESS_DROP = 2f
-        const val PRESS_SCALE = 0.985f
+        /**
+         * `.cover:active{transform:translate(2px,2px) rotate(0deg)}` — and **the press moved objects**.
+         *
+         * V2 wrote `.zine:active{transform:translateY(2px) scale(.985)}`: the whole item dropped and
+         * shrank. V2.1 presses the **cover** and not the item, travels on both axes, and drops the tilt
+         * instead of scaling. So there is no scale factor to re-baseline — the claim it encoded is gone,
+         * and a `PRESS_SCALE` kept at 1.0 would have read as a measurement.
+         */
+        const val PRESS_TRAVEL = 2f
 
-        /** `.zine:focus-visible{outline:2px solid var(--matcha-text);outline-offset:6px;border-radius:9px}` */
-        const val RING_OFFSET = 6
-        const val RING_RADIUS = 9
+        /**
+         * Long enough for `transition:transform .16s` to finish.
+         *
+         * The press animates on **settle** (D-011), so a bound read immediately after `down()` catches the
+         * cover mid-travel and measures whatever fraction the frame landed on. V2's press was read
+         * straight off `waitForIdle`, which worked only because that implementation cut rather than
+         * animated — the defect a review caught in the cover itself.
+         */
+        const val SETTLE_MILLIS = 400L
 
-        /** The two columns the 2px stroke actually lands on, measured off the raster. */
-        const val RING_INNER = 7
-        const val RING_OUTER = 8
+        /**
+         * `.start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}`.
+         *
+         * `.zine` declares no focus rule in V2.1, so the implementation borrows the file's own sibling
+         * control rather than inventing one (D-008). V2's ring was `--matcha-text` at a 6px offset with a
+         * 9px radius; all three moved, and the radius went to **0** because `.zine` has no border-radius
+         * for an outline to follow — the cover inside it does.
+         */
+        const val RING_OFFSET = 5
+        const val RING_WIDTH = 2
 
-        /** Where the corner arc crosses its own diagonal — the probe that can see [RING_RADIUS]. */
-        const val RING_DIAGONAL = 5
+        /** The two columns the 2px stroke actually lands on: it centres at `offset + width/2` = 6px out. */
+        const val RING_INNER = 6
+        const val RING_OUTER = 7
+
+        /**
+         * The left edge is read at the cover's **centre row**, and the bottom edge at its centre column,
+         * for one reason each probe shares: the tilt rotates about the cover's centre, so displacement
+         * along each axis vanishes there — and the press *removes* the tilt, so anywhere else the scan
+         * measures `translate(2px,2px)` **plus** however far un-tilting moved that particular edge.
+         *
+         * A fixed 100px down the cover used to serve. It survived only by accident of the old column
+         * width: at 216dp the cover is 288 tall, the probe stood 44px above centre, and un-tilting a
+         * −1.4° object walks its left edge `44 × tan 1.4° ≈ 1.07px` — so a 2px travel measured 3.0 and
+         * the test failed with an expectation that was right and an instrument that was not.
+         *
+         * [BOTTOM_SCAN_FROM] is where the vertical scan *starts* looking, as an offset from the item's
+         * top. The top border cannot be read at all: `.tape` is `top:-11px`, 56px wide and painted over
+         * the cover's own edge, so at every column it covers there is no border pixel to find — two
+         * earlier probe columns proved it, one by saturating at the scan's first row (a travel of
+         * exactly 0.0) and one by running clean past the top border to the bottom one, at the cover's
+         * full height.
+         */
+        const val BOTTOM_SCAN_FROM = 200
+
+        /** One pixel, for the two anchors an antialiased edge on a tilted object can only fix to that. */
+        const val ONE_PIXEL = 1f
+
+        /** `.cover{border:1.5px solid var(--ink)}`, painted inside the box. */
+        const val COVER_BORDER = 1.5f
 
         /** A ground no token carries, so "something was painted here" is unambiguous. */
         val PROBE_GROUND = Color(0xFF00FF00)
@@ -90,11 +137,25 @@ class ZineOnShelfTest {
         const val MORE_SIZE = 34
         const val MORE_INSET = 8
 
-        /** The column width `w480dp` produces on the frozen shelf: `(480 − 22 − 22 − 20) / 2`. */
-        val COLUMN = 208.dp
+        /**
+         * The column width `w480dp` produces on the frozen shelf: `(480 − 16 − 16 − 16) / 2`.
+         *
+         * This read **208** until a review caught it — V2's `padding:0 22px` and `gap:… 20px`, which the
+         * re-freeze moved to `--gap-lg` (16) on both (`v21-library.html:149-150`, and `ZineShelfTest`
+         * derives the same 216 independently). Every absolute geometry in this file was therefore
+         * measured on a cell 8dp narrower than the product ever renders, under a class KDoc that called
+         * it "the numbers a real cell sees".
+         */
+        val COLUMN = 216.dp
 
         /** Half a pixel, for the reason `ZineShelfTest.HALF_PIXEL` states: `assertEquals` passes at `|Δ| == delta`. */
         const val HALF_PIXEL = 0.5f
+
+        /** The cap ADR-100 set on `.name`, which declares none in the frozen file. */
+        const val NameMaxLines = 2
+
+        /** Long enough to reach a third line in a 216dp column, which every frozen title is far from. */
+        const val LONG_TITLE = "Notes from the Sunday market, volume three"
 
         val ITEM = ZineShelfItem(
             title = TITLE,
@@ -153,38 +214,56 @@ class ZineOnShelfTest {
     // ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `a held cover settles two pixels down and a percent and a half smaller`() {
+    fun `a held cover settles two pixels down and two across, and the item does not move`() {
         item()
-        val rest = coverBounds()
+        val restItem = coverBounds()
+        val (restBottom, restLeft) = printedCoverEdges()
 
         composeRule.onNodeWithTag(zineShelfCoverTestTag(INDEX)).performTouchInput { down(center) }
+        composeRule.mainClock.advanceTimeBy(SETTLE_MILLIS)
         composeRule.waitForIdle()
-        val held = coverBounds()
+        val (heldBottom, heldLeft) = printedCoverEdges()
 
-        // Both numbers, because either alone is satisfied by the wrong transform: a pure translate keeps
-        // the width, and a pure scale about the centre moves the top edge down on its own.
-        assertEquals(
-            "the object must scale to $PRESS_SCALE of its width",
-            rest.width * PRESS_SCALE,
-            held.width,
-            HALF_PIXEL,
-        )
-        val centreDrop = held.center.y - rest.center.y
-        assertEquals(
-            "and its centre must drop ${PRESS_DROP}px — the translate, which the scale cannot produce",
-            PRESS_DROP,
-            centreDrop,
-            HALF_PIXEL,
-        )
+        // **Two axes, and the second one is the whole difference from V2.** V2 wrote
+        // `translateY(2px) scale(.985)`, so this test measured a drop and a shrink. V2.1 writes
+        // `translate(2px,2px)` — toward the hard shadow, which collapses to meet it — and no scale at
+        // all. Asserting the drop alone would be satisfied by V2's transform; asserting a scale would be
+        // asserting a value the corpus deleted.
+        assertEquals("the cover must travel ${PRESS_TRAVEL}px down", PRESS_TRAVEL, heldBottom - restBottom, HALF_PIXEL)
+        // The horizontal axis carries `ONE_PIXEL` where the vertical carries half of one, and the reason
+        // is the instrument rather than the claim: the bottom edge is found by scanning *rows* of a
+        // border painted along a row, which quantises cleanly, while the left edge is found by scanning
+        // *columns* across an antialiased near-vertical border that the un-tilt also re-samples. Two
+        // independent ±0.5 roundings live in `heldLeft - restLeft`. A travel of zero still fails, which
+        // is what this assertion exists to catch.
+        assertEquals("and ${PRESS_TRAVEL}px across", PRESS_TRAVEL, heldLeft - restLeft, ONE_PIXEL)
+        // `.zine:active .cover` — the press is on the printed object, not on the item that holds it. The
+        // caption below the cover must not move with it, which is what pins the selector's scope.
+        assertEquals("the item itself must not move", restItem.top, coverBounds().top, HALF_PIXEL)
+        assertEquals("nor change size", restItem.width, coverBounds().width, HALF_PIXEL)
     }
 
     @Test
-    fun `a cover at rest carries no transform at all`() {
-        // The frozen `.zine` is a bare positioned box until `:active`. This is the control for the test
-        // above: without it, a permanently-shrunken cover would satisfy every relative measurement there.
+    fun `a cover at rest carries no travel at all`() {
+        // The control for the test above: without it, a permanently-offset cover would satisfy every
+        // relative measurement there.
         item()
-        val cover = coverBounds()
-        assertEquals("an untouched cover is the full column wide", 208f, cover.width, HALF_PIXEL)
+        val item = coverBounds()
+        assertEquals("an untouched item is the full column wide", COLUMN.value, item.width, HALF_PIXEL)
+        val (bottom, left) = printedCoverEdges()
+        // Both anchors, and they are also the guard on the two scans the travel test reads: an edge that
+        // is not where the untouched item puts it means the scan has found the tape, the shadow or the
+        // caption, and a travel measured through it would be measuring that instead.
+        assertEquals("its cover starts at the item's own left edge", item.left, left, ONE_PIXEL)
+        // The scan finds the **first** row of the border, and `border:1.5px` is painted inside the box, so
+        // the edge it reports sits that much above the cover's own bottom. Stated as a term rather than
+        // absorbed into a wider tolerance: a two-pixel tolerance here would also accept the press.
+        assertEquals(
+            "and ends `aspect-ratio:3/4` below the item's top, less its own border",
+            item.top + item.width * 4f / 3f - COVER_BORDER,
+            bottom,
+            ONE_PIXEL,
+        )
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -213,32 +292,35 @@ class ZineOnShelfTest {
         val midY = cover.center.y.roundToInt()
 
         // A CSS outline is drawn outside the box: its inner edge sits `outline-offset` out and its 2px
-        // thickness grows outward from there. Measured, the stroke lands on the two columns 7 and 8 out.
+        // thickness grows outward from there. At a 5px offset the stroke centres 6px out, so it lands on
+        // the two columns 6 and 7 — where V2's 6px offset put it on 7 and 8.
         for (out in RING_INNER..RING_OUTER) {
             assertTrue(
-                "the ring must be painted ${out}px out from the cover's left edge, in matchaText " +
+                "the ring must be painted ${out}px out from the item's left edge, in ink " +
                     "(found ${raster.colourAt(left - out, midY)})",
-                raster.colourAt(left - out, midY).closeTo(capturedMatchaText),
+                raster.colourAt(left - out, midY).closeTo(capturedRingInk),
             )
         }
         // The `outline-offset` gap must hold no ring, or a ring drawn flush against the edge — or a 2px
         // border eating into the layout — would satisfy the loop above.
         assertFalse(
             "the ${RING_OFFSET}px offset must be clear of the ring",
-            raster.colourAt(left - 3, midY).closeTo(capturedMatchaText),
+            raster.colourAt(left - 3, midY).closeTo(capturedRingInk),
         )
         assertFalse(
             "and there must be no second ring beyond it",
-            raster.colourAt(left - (RING_OUTER + 4), midY).closeTo(capturedMatchaText),
+            raster.colourAt(left - (RING_OUTER + 4), midY).closeTo(capturedRingInk),
         )
 
-        // **The radius, which a straight edge cannot see.** The ring rect's own corner sits 8px out; with
-        // `border-radius:9px` the arc cuts that corner and crosses its diagonal about 5px out. Squared off,
-        // that point is inside the ring and nothing is painted there — so this is what pins the 9px.
+        // **The corner, which a straight edge cannot see — and it is now square rather than round.** V2's
+        // ring carried `border-radius:9px`, and this probe asserted the arc had *cut* the corner away.
+        // V2.1's `.zine` has no border-radius for an outline to follow, so the ring's own corner is a
+        // right angle and the pixel at the corner of its rect is painted. The probe is kept, inverted,
+        // rather than deleted: it is still the only assertion here that a wrong radius could fail.
         assertTrue(
-            "the ring's corner must be rounded to ${RING_RADIUS}px — a square corner leaves the " +
-                "diagonal ${RING_DIAGONAL}px out unpainted",
-            raster.anyPixelNear(left - RING_DIAGONAL, cover.top.roundToInt() - RING_DIAGONAL, capturedMatchaText),
+            "the ring's corner must be square — the pixel at its own corner, ${RING_INNER}px out on " +
+                "both axes, must carry the stroke",
+            raster.anyPixelNear(left - RING_INNER, cover.top.roundToInt() - RING_INNER, capturedRingInk),
         )
     }
 
@@ -253,32 +335,35 @@ class ZineOnShelfTest {
         for (out in RING_INNER..RING_OUTER) {
             assertFalse(
                 "nothing may be painted ${out}px outside an unfocused cover",
-                raster.colourAt(cover.left.roundToInt() - out, midY).closeTo(capturedMatchaText),
+                raster.colourAt(cover.left.roundToInt() - out, midY).closeTo(capturedRingInk),
             )
         }
     }
 
     @Test
-    fun `the ring does not shrink when the cover is pressed`() {
-        // `drawBehind` is chained *before* `graphicsLayer`, so the press transform never reaches the ring.
-        // Chaining them the other way composes perfectly and reads as deliberate — and would drag the focus
-        // indicator inward every time the object was touched.
+    fun `the ring does not move when the cover is pressed`() {
+        // The ring is drawn on the **item**, and the press is on the cover inside it, so the indicator
+        // cannot be dragged by the transform. Asserted rather than assumed: a version that put the ring
+        // on the cover composes perfectly, reads as deliberate, and slides the focus indicator two pixels
+        // every time the object is touched.
         item()
         focusTheCover()
         val rest = coverBounds()
+        val (_, restLeft) = printedCoverEdges()
 
         composeRule.onNodeWithTag(zineShelfCoverTestTag(INDEX)).performTouchInput { down(center) }
+        composeRule.mainClock.advanceTimeBy(SETTLE_MILLIS)
         composeRule.waitForIdle()
 
         assertTrue(
-            "the cover must actually have shrunk, or this test proves nothing",
-            coverBounds().width < rest.width,
+            "the cover must actually have travelled, or this test proves nothing",
+            printedCoverEdges().second > restLeft,
         )
         assertTrue(
-            "but the ring must still stand where it did, measured from the cover's resting edge",
+            "but the ring must still stand where it did, measured from the item's resting edge",
             decorRaster()
                 .colourAt(rest.left.roundToInt() - RING_INNER, rest.center.y.roundToInt())
-                .closeTo(capturedMatchaText),
+                .closeTo(capturedRingInk),
         )
     }
 
@@ -311,25 +396,145 @@ class ZineOnShelfTest {
     }
 
     @Test
-    fun `the ⋯ sits eight pixels in from the cover's bottom-right corner`() {
+    fun `the overflow mark is three stacked dots that carry their own contrast`() {
+        // **ADR-100's ruling, and the defect it answers, both stated as pixels.**
+        //
+        // The mark was a `⋯` glyph at `ink.copy(alpha = .5f)`, which composites to `#978875` on the desk
+        // — **2.90:1**, failing 4.5:1 as text and 3:1 as a control indicator in both themes, in the only
+        // state a user sees before touching it. It is now full `ink-soft`: 5.54 light, 7.49 dark.
+        //
+        // Alpha is what is asserted, because alpha is what was wrong. A ratio computed from the token
+        // would pass while the composable dimmed it — which is precisely how the defect survived: the
+        // token was always `ink-soft`, and the `.copy(alpha)` was three lines away from it.
         item()
-        val cover = coverBounds()
+        val raster = decorRaster()
         val more = composeRule.onNodeWithTag(zineShelfMoreTestTag(INDEX))
             .fetchSemanticsNode().boundsInRoot
 
-        // `.more{bottom:8px;right:8px}` measured against the *cover*, which is the box CSS positions it
-        // against — and the check that survives the affordance moving out of the cover's own subtree.
+        val dots = (more.top.roundToInt() until more.bottom.roundToInt())
+            .count { y ->
+                (more.left.roundToInt() until more.right.roundToInt())
+                    .any { x -> raster.colourAt(x, y).closeTo(capturedMoreInk) }
+            }
+        assertTrue(
+            "the mark must be painted at full ink-soft, undimmed — found $dots rows carrying it",
+            dots > 0,
+        )
+
+        // Three dots **stacked**, which is the half of the ruling that is about reading rather than
+        // measuring: horizontal dots inline after a title read as a truncation ellipsis, and the parity
+        // review's first-time reading of `Sunday market ⋯` was "the name is too long". A vertical mark
+        // cannot be mistaken for elided text. Asserted as the shape — taller than it is wide — because
+        // that is the property the misreading turns on, and it is the one a re-layout could undo.
+        val columns = (more.left.roundToInt() until more.right.roundToInt())
+            .count { x ->
+                (more.top.roundToInt() until more.bottom.roundToInt())
+                    .any { y -> raster.colourAt(x, y).closeTo(capturedMoreInk) }
+            }
+        assertTrue(
+            "the mark must stand taller than it is wide ($dots rows against $columns columns)",
+            dots > columns,
+        )
+    }
+
+    @Test
+    fun `a long title stops at two lines, so one zine cannot push its neighbour's cover down`() {
+        // `.name` declares no `max-lines` and every frozen title is =< 14 characters, so the prototype
+        // never rendered this. ADR-100 caps it at two: the grid sizes a row to its tallest cell, so a
+        // three-line caption moves the *next row's covers* down by a line and a half of empty desk.
+        //
+        // Measured as the title's own laid-out height against a two-line ceiling, rather than by reading
+        // the ellipsis: `TextOverflow.Ellipsis` is a rendering property with no semantics, so asserting
+        // the string would only prove Compose truncates — not that the row held its shape.
+        //
+        // **The ceiling is measured, not computed from `line-height`.** `2 × 19.2 = 38.4` is the frozen
+        // arithmetic and it is the wrong number here: Robolectric ignores `lineHeight` entirely (proven
+        // by experiment on `ZineDockTest` — a reference at 40sp still laid out 19px), so two lines come
+        // out at the font's own 40px. A ceiling written from the CSS would fail a correct
+        // implementation. So a **short-titled sibling is rendered beside the long one** and its single
+        // line is the unit: whatever this host's line box really is, the cap is two of them.
+        composeRule.setContent {
+            Host {
+                Column {
+                    ZineOnShelf(
+                        zine = ITEM,
+                        index = INDEX,
+                        onOpen = {},
+                        onActions = {},
+                        modifier = Modifier.width(COLUMN),
+                    )
+                    ZineOnShelf(
+                        zine = ITEM.copy(title = LONG_TITLE),
+                        index = INDEX + 1,
+                        onOpen = {},
+                        onActions = {},
+                        modifier = Modifier.width(COLUMN),
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        fun heightOf(text: String) = composeRule
+            .onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot.height
+        val oneLine = heightOf(TITLE)
+        val wrapped = heightOf(LONG_TITLE)
+
+        assertTrue(
+            "a ${LONG_TITLE.length}-character title laid out ${wrapped}px against a one-line " +
+                "${oneLine}px, so it reached ${wrapped / oneLine} lines — a third line pushes the next " +
+                "row's covers down by that much empty desk",
+            wrapped <= oneLine * NameMaxLines + HALF_PIXEL,
+        )
+        // The discrimination: the cap must actually be capping. A title that fitted on one line would
+        // satisfy the assertion above while proving nothing about the cap.
+        assertTrue(
+            "the title must have wrapped at all, or the cap is untested (${wrapped}px on ${oneLine}px)",
+            wrapped > oneLine * 1.5f,
+        )
+    }
+
+    @Test
+    fun `the ⋯ stands at the caption's trailing edge, clear of the printed cover`() {
+        item()
+        val item = coverBounds()
+        val more = composeRule.onNodeWithTag(zineShelfMoreTestTag(INDEX))
+            .fetchSemanticsNode().boundsInRoot
+
+        // **The V2 geometry is gone, and re-baselining its two numbers would have hidden where it went.**
+        // V2 wrote `.more{position:absolute;bottom:8px;right:8px}` on the cover. V2.1's cover has a
+        // postmark stamp in that exact corner, overhanging it, so the `⋯` moved to the trailing end of
+        // the caption row — the one place on the item it collides with nothing. The frozen file draws no
+        // `⋯` at all (the departure is declared on `ZineOnShelf` and is the owner's to rule on), so what
+        // is asserted here is the placement this implementation chose, stated as such.
         assertEquals(
-            "${MORE_INSET}px in from the right edge",
-            MORE_INSET.toFloat(),
-            cover.right - more.right,
+            "the ⋯ must sit at the item's trailing edge",
+            item.right,
+            more.right,
             HALF_PIXEL,
         )
         assertEquals(
-            "${MORE_INSET}px up from the bottom edge",
-            MORE_INSET.toFloat(),
-            cover.bottom - more.bottom,
+            "and at its bottom, level with the date rather than over the cover",
+            item.bottom,
+            more.bottom,
             HALF_PIXEL,
+        )
+        // The claim that matters is the collision, not the corner: it must be **below** the printed
+        // object, where V2's sat on top of it. The cover is `aspect-ratio:3/4` on the column, so its
+        // bottom is derived from the item's own width rather than from a second reading of the raster.
+        val coverBottom = item.top + item.width * 4f / 3f
+        assertTrue(
+            "the ⋯ must stand clear of the cover (cover ends $coverBottom, ⋯ starts ${more.top})",
+            more.top >= coverBottom,
+        )
+        // And the caption must reserve its width, or a long name runs underneath it — the reservation is
+        // an `end` padding on a sibling, so nothing in the layout enforces it but this. Unmerged, because
+        // the item's seam collapses its children out of the merged tree.
+        val name = composeRule.onNodeWithText(TITLE, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue(
+            "the name must stop before the ⋯ (name ends ${name.right}, ⋯ starts ${more.left})",
+            name.right <= more.left,
         )
     }
 
@@ -405,7 +610,8 @@ class ZineOnShelfTest {
         composeRule.waitForIdle()
     }
 
-    private var capturedMatchaText: Color = Color.Unspecified
+    private var capturedRingInk: Color = Color.Unspecified
+    private var capturedMoreInk: Color = Color.Unspecified
     private lateinit var inputMode: InputModeManager
 
     /**
@@ -430,7 +636,8 @@ class ZineOnShelfTest {
     @Composable
     private fun Host(content: @Composable () -> Unit) {
         ZinelyTheme(darkTheme = false) {
-            capturedMatchaText = ZinelyTheme.v2Colors.matchaText
+            capturedRingInk = ZinelyTheme.v21Colors.ink
+            capturedMoreInk = ZinelyTheme.v21Colors.inkSoft
             inputMode = LocalInputModeManager.current
             // The probe ground rather than the desk: the ring is painted *outside* the cover, so the pixels
             // it lands on must be a colour no token carries, or "ring" and "room" could be the same value.
@@ -470,6 +677,33 @@ class ZineOnShelfTest {
 
     private fun coverBounds(): Rect =
         composeRule.onNodeWithTag(zineShelfCoverTestTag(INDEX)).fetchSemanticsNode().boundsInRoot
+
+    /**
+     * The printed cover's top and left edges, **read off the raster**.
+     *
+     * [zineShelfCoverTestTag] named the cover in V2, where the item *was* the cover. It names the item
+     * now, and the item does not move when it is held: `.zine:active .cover`.
+     *
+     * ⚠️ **A placed bound cannot see this press, which is why it is measured in pixels.** The travel is
+     * `Modifier.offset` *inside* the cover's chain: it re-places the content and reports the same size to
+     * everything outside it, so `boundsInRoot` on any node — including the cover's own tag — reads 0px of
+     * travel while the object visibly moves. Measured, not assumed: the tagged node was asserted first
+     * and returned exactly `0.0`.
+     *
+     * The scan starts inside the `outline-offset` gap so a focus ring, when one is drawn, is behind the
+     * probe rather than in front of it.
+     */
+    private fun printedCoverEdges(): Pair<Float, Float> {
+        val item = coverBounds()
+        val raster = decorRaster()
+        val x = item.center.x.roundToInt()
+        val y = item.center.y.roundToInt()
+        val bottom = (item.top.roundToInt() + BOTTOM_SCAN_FROM until raster.height)
+            .first { raster.colourAt(x, it).closeTo(capturedRingInk) }
+        val left = (item.left.roundToInt() - RING_OFFSET + 2 until raster.width)
+            .first { raster.colourAt(it, y).closeTo(capturedRingInk) }
+        return bottom.toFloat() to left.toFloat()
+    }
 
     /**
      * The **platform** node for a tagged composable, through the published CI-26 harness.

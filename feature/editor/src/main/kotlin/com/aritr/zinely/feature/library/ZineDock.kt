@@ -218,7 +218,16 @@ private fun StartButton(onStart: () -> Unit) {
             // paints first — underneath. CSS is the other way round: the first-declared `box-shadow`
             // paints on top. So the two are written here in reverse of the frozen rule, deliberately.
             // (The cover's draw order was got wrong in exactly this way and survived two reviews.)
-            .zinelyV21Frame(ZinelyV21Dimens.frameRing, colors.butterTint, StartShape)
+            // `box-shadow:0 0 0 var(--frame) var(--butter-tint)` — **amended to `--butter`, ADR-100.**
+            //
+            // The ring is decoration, not the focus indicator (`drawFocusRing` below is that, in `--ink`
+            // at 12.3:1, and it is untouched). But at `butter-tint` it measured **1.01:1** against the
+            // light desk and **1.33:1** against the dark one — so the corpus's signature stacked-ring
+            // move, the thing that makes the one primary action look like a printed label with a border
+            // around it, was invisible in light and barely there in dark. A design's emphasis idiom that
+            // only appears at night is not an idiom. `--butter` puts it at 1.56 and 8.71, and matches
+            // the count chip it now shares a screen with.
+            .zinelyV21Frame(ZinelyV21Dimens.frameRing, colors.butter, StartShape)
             .zinelyV21HardShadow(
                 offset = press.rest - (press.rest - press.pressed) * travel,
                 color = colors.inkLine,

@@ -1,5 +1,6 @@
 package com.aritr.zinely.feature.library
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -33,6 +34,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -70,9 +72,15 @@ internal fun zineShelfMoreTestTag(index: Int): String = "shelf-more-$index"
  * [zineShelfDateLabel], pure and covered by [ZineShelfLabelsTest] — a shelf that printed "A4 · 2 days ago" under a cover
  * carrying "A4" would be the same information twice, which is what the design moved it to avoid.
  *
- * ### ⚠️ The `⋯` is kept, and the frozen file does not draw it
+ * ### The overflow affordance is kept, and the frozen file does not draw it — ruled, ADR-100
  *
- * **This is a deliberate, declared departure from the freeze, and the owner should rule on it.** The V2.1
+ * **Ruled 2026-08-11: keep it, and redraw it.** It stays for the reason below; it is now three stacked
+ * dots at full `ink-soft` rather than a half-strength horizontal `⋯`, because the form the departure
+ * originally took failed contrast at 2.90:1 and read as a truncation ellipsis. [MoreDotDiameter] carries
+ * the whole argument. The paragraphs below are why the *affordance* exists at all, which the redraw does
+ * not change.
+ *
+ * The V2.1
  * prototype's `.zine` has no actions affordance at all: its script opens the sheet on a plain `onclick`,
  * which is a demonstration shortcut (it is the only way to see the sheet in a browser), not a statement
  * that tap-opens-actions is the interaction. Read as a specification, the file therefore says nothing
@@ -83,6 +91,11 @@ internal fun zineShelfMoreTestTag(index: Int): String = "shelf-more-$index"
  * gate. Dropping it to match a prototype that is silent on the question would trade a stated
  * accessibility guarantee for an inference, so it is kept — under the freeze's own "accessibility
  * improvements are allowed after freeze" clause, at the smallest visible cost this layout permits.
+ *
+ * The second reason, which the redraw makes load-bearing: **long-press cannot be the only route.** It is
+ * undiscoverable by inspection — a first-time user has no way to learn it exists — so removing the visible
+ * affordance would not simplify the shelf, it would hide half of what the shelf can do behind a gesture
+ * nobody is told about.
  *
  * It has **moved**, because V2.1 leaves it nowhere to stand on the cover: `.stamp` occupies the
  * bottom-right corner and overhangs it, which is exactly where V2 put the `⋯`. It now sits at the
@@ -165,6 +178,7 @@ internal fun ZineOnShelf(
                 stampLabel = zineShelfStampLabel(zine.subtitle),
                 index = index,
                 pressed = pressed,
+                borderInk = zine.recipe.surface.v21BorderInk(colors),
                 modifier = Modifier.fillMaxWidth(),
             ) { markModifier ->
                 Image(
@@ -183,6 +197,39 @@ internal fun ZineOnShelf(
                 Text(
                     text = zine.title,
                     style = NameStyle(colors.ink),
+                    // **Two lines, then an ellipsis — ADR-100, an amendment to the freeze.**
+                    //
+                    // `.name` declares no `max-lines` and no overflow, and every title in the frozen
+                    // markup is 14 characters or shorter, so the prototype never rendered the case. The
+                    // long-title raster does: "Notes from the Sunday market, volume three" wraps to
+                    // three lines, and because the grid sizes a row to its tallest cell, one long name
+                    // pushes its neighbour's *cover* down by a line-and-a-half of empty desk. The shelf
+                    // stops being a grid of objects and becomes a ragged list.
+                    //
+                    // Two lines is the cap because the cover — not the caption — is what the user
+                    // recognises a zine by, and because nothing is lost: the full title is the action
+                    // sheet's header, one tap away, and TalkBack reads the whole string regardless
+                    // (`zinelyV21Control(label = zine.title)` on the tile, which this `Text` does not
+                    // supply). One line was too few — plenty of ordinary titles are two.
+                    //
+                    // **`TextOverflow.MiddleEllipsis` was tried and is not available here — measured,
+                    // not assumed.** A review made the good point that makers distinguish zines by
+                    // *suffix* ("… volume two" / "… volume three"), which end-truncation destroys
+                    // exactly when it matters. But a probe against this Compose version showed
+                    // `MiddleEllipsis` at `maxLines = 2` produces `isLineEllipsized == false` on **both**
+                    // lines and simply cuts the string dead — no mark of any kind. It is a single-line
+                    // overflow mode. The choice was therefore end-ellipsis at two lines versus
+                    // middle-ellipsis at one, and two lines with a visible truncation mark beats one
+                    // line with a cleverer one. Revisit if multiline middle-ellipsis ever lands.
+                    //
+                    // **Font scale is deliberately not special-cased.** At `fontScale 2.0` two lines
+                    // hold roughly half the characters, which is a real cost — but the cap is uniform
+                    // across every tile, so the grid stays rigid at any scale, and a scale-dependent cap
+                    // would make the shelf's layout unpredictable to the users least able to absorb
+                    // surprise. The sighted escape hatch is the same one at every scale: the ⋮ sheet's
+                    // header, which sets no `maxLines` at all.
+                    maxLines = NameMaxLines,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(horizontal = ZinelyV21Dimens.gapHair),
                 )
                 Text(
@@ -269,21 +316,23 @@ private fun MoreButton(
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = MoreGlyph,
-            textAlign = TextAlign.Center,
-            style = TextStyle(
-                fontFamily = ZinelyV21Fonts.Work,
-                fontSize = MoreGlyphSize,
-                color = ink.copy(alpha = if (lit) MoreLitOpacity else MoreRestOpacity),
-            ),
-        )
+        // Three dots stacked, **drawn rather than set** — see [MoreDotDiameter] for both halves of why.
+        Canvas(Modifier.size(width = MoreDotDiameter, height = MoreMarkHeight)) {
+            val r = MoreDotDiameter.toPx() / 2f
+            val step = MoreDotDiameter.toPx() + MoreDotGap.toPx()
+            repeat(MoreDotCount) { dot ->
+                drawCircle(color = ink, radius = r, center = Offset(r, r + dot * step))
+            }
+        }
     }
 }
 
 // ---------------------------------------------------------------------------------------------
 // The frozen values — per component, per the D-007 ruling that V2.1's §3.3 did not overturn.
 // ---------------------------------------------------------------------------------------------
+
+/** Two lines then an ellipsis — an amendment, not a transcription. See the call site. */
+private const val NameMaxLines = 2
 
 /** `.name{font-family:var(--voice);font-weight:700;font-size:1rem;line-height:1.2}` */
 private fun NameStyle(color: Color) = TextStyle(
@@ -321,18 +370,47 @@ private val FocusRingWidth = 2.dp
 private val FocusRingOffset = 5.dp
 private val FocusRingRadius = 0.dp
 
-/** V2's `.more{width:34px;height:34px;font-size:1.05rem}`, carried with the affordance. */
+/** V2's `.more{width:34px;height:34px}`, carried with the affordance. */
 private val MoreSize = 34.dp
-private val MoreGlyphSize = 16.8.sp
 
 /**
- * `⋯` U+22EF — **not in the bundled Inter** (D-021), so the device's fallback draws it. Named here so
- * the ruling costs one line.
+ * The overflow mark: **three dots stacked vertically, drawn, at full `ink-soft`** — ADR-100.
+ *
+ * Three things were wrong with the `⋯` this replaces, and they compound.
+ *
+ * 1. **It measured 2.90:1 against the desk.** `ink` at `alpha = .5` composites to `#978875` on
+ *    `--desk`, and less than that over a cover's cast shadow — failing 4.5:1 as text
+ *    and 3:1 as a non-text control indicator, in *both* themes, in the only state a user sees before
+ *    touching it. Full `ink-soft` is **5.54:1 light / 7.49:1 dark**, which is the same weight of mark as
+ *    the date beside it — which is what the affordance was always documented to be.
+ * 2. **Horizontal, inline, immediately after the title, it read as a truncation ellipsis.** The parity
+ *    review's first-time reading of `Sunday market ⋯` was *"the name is too long"* — the precise
+ *    opposite of "there are more actions here", and a Pass-2 failure however correct the code. Stacking
+ *    the dots removes the reading entirely: a vertical kebab cannot be mistaken for elided text, and it
+ *    is the overflow idiom every Android user already knows. That the frozen file draws no affordance at
+ *    all leaves the *form* free; it never argued for this one.
+ * 3. **`⋯` U+22EF is not in the bundled Inter** (D-021), so it was drawn by whatever the device fell
+ *    back to — a glyph whose size, weight and centring we did not control, and could lose to tofu. The
+ *    empty state's arrow was a `Text` for the same reason until device Pass 1 found emoji2 substituting
+ *    a colour emoji for U+2192. Three circles are three circles.
+ *
+ * **The three do not all prove the same thing, and an earlier draft claimed they did.** 1 and 3 force
+ * *drawn rather than set* — a drawn horizontal mark would satisfy both and still be the wrong mark. Only
+ * 2 forces *vertical*, and 2 is the product argument, so it is the one carrying the decision. The other
+ * two only say the app must own the pixels either way.
+ *
+ * **The trade this makes, stated rather than assumed:** a vertical kebab is the most recognisably *stock
+ * Android* mark on the screen, and V2.1 exists to not read as stock Android. That is a real concession of
+ * identity, made deliberately — learnability outranks identity for a control with no label, and this
+ * control has no label.
+ *
+ * 15dp of mark (3 · 3dp dots, 3dp apart) centred in the 34dp box, which
+ * `minimumInteractiveComponentSize()` still expands to a 48dp target.
  */
-private const val MoreGlyph = "⋯"
-
-private const val MoreRestOpacity = 0.5f
-private const val MoreLitOpacity = 0.95f
+private val MoreDotDiameter = 3.dp
+private val MoreDotGap = 3.dp
+private const val MoreDotCount = 3
+private val MoreMarkHeight = MoreDotDiameter * MoreDotCount + MoreDotGap * (MoreDotCount - 1)
 
 /**
  * The `⋯`'s hover/focus wash.

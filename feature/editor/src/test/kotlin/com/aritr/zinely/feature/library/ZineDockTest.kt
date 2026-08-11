@@ -39,6 +39,7 @@ import com.aritr.zinely.ui.a11y.PlatformA11yNode
 import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV2Dimens
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -81,30 +82,61 @@ class ZineDockTest {
         const val UNDER = "under-the-dock"
         const val REF_LABEL = "ref-label"
         const val REF_ROW = "ref-row"
-        const val REF_PLUS_NATURAL = "ref-plus-natural"
+        const val REF_PLUS = "ref-plus"
 
         const val LABEL = "Make a zine"
 
-        /** `.dock{padding:52px 20px 22px}`. */
-        const val PAD_TOP = 52
-        const val PAD_SIDE = 20
-        const val PAD_BOTTOM = 22
+        /** `.dock{padding:var(--gap-lg) var(--gap-lg) var(--gap-xl)}` — 16 / 16 / 24. */
+        const val PAD_TOP = 16
+        const val PAD_SIDE = 16
+        const val PAD_BOTTOM = 24
 
-        /** `.start{padding:15px 26px;border-radius:16px}`. */
-        const val START_PAD_VERTICAL = 15
-        const val START_RADIUS = 16
+        /** `.start{padding:var(--gap-lg) var(--gap-xl);border-radius:var(--br-pill)}`. */
+        const val START_PAD_VERTICAL = 16
+        const val START_PAD_HORIZONTAL = 24
 
-        /** `.start{font-size:1rem}` and `.start .plus{font-size:1.2rem;margin-top:-2px}`. */
+        /**
+         * `.start{border:1.5px solid var(--ink)}` — V2's button had **no border at all**, and that is
+         * why three raster probes in this file had to move rather than be re-baselined. A probe one
+         * pixel inside the bounds used to land on the fill; it now lands on the ink edge, and reads as
+         * "the fill is missing" when the fill is exactly where it should be. The probes step past the
+         * border and one antialiased pixel beyond it. `Modifier.border` paints *inside* the bounds, so
+         * this adds nothing to the button's measured size — only to where its fill starts.
+         */
+        const val START_BORDER_PROBE = 3
+
+        /**
+         * `linear-gradient(to top,var(--desk) 58%,transparent)`, as a fraction measured **downward**.
+         *
+         * CSS measures `to top` from the bottom edge, so the frozen stop 58% up is 42% down. V2's band
+         * stopped at 80% up (20% down); re-baselining the number without inverting it would put the solid
+         * in the wrong half and still read as a plausible band.
+         */
+        const val FADE_STOP_DOWNWARD = 0.42f
+
+        /** `.start{font-size:1rem}` and `.start .plus{font-size:1.15rem;line-height:1}`. */
         const val LABEL_SIZE = 16f
-        const val PLUS_SIZE = 19.2f
-        const val PLUS_MARGIN_TOP = -2f
+        const val PLUS_SIZE = 18.4f
 
-        /** `.start:active{transform:translateY(2px)}` on `transition:transform .14s`. */
+        /** `.start:active{transform:translate(2px,2px)}` on `transition:transform .14s`. */
         const val PRESS_TRANSLATION = 2
         const val PRESS_DURATION = 140L
 
-        /** `.start:focus-visible{outline:2px solid var(--ink);outline-offset:3px}`. */
-        const val RING_OFFSET = 3
+        /** V2's `.start{border-radius:16px}`, kept only as the foil the pill test measures against. */
+        const val START_RADIUS_RECTANGLE = 16
+
+        /** `.start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}`. */
+        const val RING_OFFSET = 5
+
+        /**
+         * How far left of the button's own box to sweep for the decorative `--frame` ring.
+         *
+         * `ZinelyV21Dimens.frameRing` is 5dp and it stacks outside a 4dp hard shadow, so the ring's
+         * band starts within ~9px of the edge. Swept rather than probed at one x: the ring is drawn on
+         * a rounded shape and the exact first painted column depends on antialiasing at the corner
+         * radius, which is not what this test is about.
+         */
+        const val RING_SEARCH = 12
 
         /** Narrower than the button wants, so the frozen side padding becomes the binding constraint. */
         const val NARROW_BAND = 120
@@ -165,7 +197,7 @@ class ZineDockTest {
     }
 
     @Test
-    fun `the desk is solid from four fifths of the way up`() {
+    fun `the desk is solid from 58 percent of the way up`() {
         dock()
         val band = bounds(ZineDockTestTag)
         val raster = decorRaster()
@@ -173,20 +205,22 @@ class ZineDockTest {
         val x = band.left.roundToInt() + 5
 
         // The stop, read as a boundary rather than as a colour: the first row from the top that is fully
-        // desk. `0.2 * height` is where the frozen 80% lands measured downward.
+        // desk. V2 stopped at 80% up; V2.1 stops at **58%** up, which is [FADE_STOP_DOWNWARD] measured
+        // downward — and inverting the fraction is the half of this re-baseline that is easy to miss,
+        // because 0.58 downward is also a number and also produces a band.
         val firstSolid = (band.top.roundToInt()..band.bottom.roundToInt() - 1)
             .first { raster.matches(x, it, capturedDesk) }
-        val expected = band.top + 0.2f * band.height
+        val expected = band.top + FADE_STOP_DOWNWARD * band.height
 
         assertEquals(
-            "the solid must begin one fifth down the band, which is the frozen 80% up",
+            "the solid must begin ${FADE_STOP_DOWNWARD * 100}% down the band, which is the frozen 58% up",
             expected,
             firstSolid.toFloat(),
             1f,
         )
         // And the fade above it must actually be a fade — a two-stop step at the same place would satisfy
         // the boundary above while looking nothing like the frozen band.
-        val quarterWay = (band.top + 0.1f * band.height).roundToInt()
+        val quarterWay = (band.top + FADE_STOP_DOWNWARD / 2f * band.height).roundToInt()
         assertFalse(
             "the region above the stop must be partly transparent, not a hard edge",
             raster.matches(x, quarterWay, capturedDesk) ||
@@ -288,73 +322,76 @@ class ZineDockTest {
     }
 
     @Test
-    fun `the plus adds no height to the button`() {
+    fun `the button is its tallest child plus the frozen padding`() {
         dockWithReferences()
         val button = bounds(ZineStartTestTag)
         val label = bounds(REF_LABEL)
+        val plus = bounds(REF_PLUS)
 
-        // `.plus{line-height:0}` — a flex item with a zero-height line box contributes nothing to the row,
-        // so `.start`'s height is `15 + label + 15` and the 19.2px plus does not enter it. Drop the rule
-        // and the button grows by several pixels while still looking like a button, which is why this is
-        // measured against a label rendered at the same style rather than against a remembered number.
+        // **The V2 test asked a question this harness cannot answer, and re-baselining its number would
+        // have hidden that.** V2 wrote `.plus{line-height:0}`, so its row was the label alone and the
+        // test asserted `label + 15 + 15`. V2.1 writes `.plus{line-height:1}` against a label inheriting
+        // `body{line-height:1.55}` — 18.4px under 24.8px — so on a device the row is still the label's
+        // line box, for the opposite reason.
+        //
+        // ⚠️ **`lineHeight` is not observable here.** Measured, not assumed: the reference was run at
+        // `lineHeight = 40.sp` and laid out 19px, because Robolectric's text layout ignores the
+        // line-height span. So in this harness the plus — in the Voice face, whose metrics are deeper —
+        // is the taller child, and no JVM assertion can gate the frozen line boxes at all.
+        //
+        // What *is* gated is the padding, which is the value that actually moved: `var(--gap-lg)` where
+        // V2 wrote 15px. It is gated against whichever child the row resolves to, so this assertion
+        // states the same thing on a device as it does here. The line boxes are a **golden and device
+        // parity** claim; that is said rather than left to look like coverage.
         assertEquals(
-            "the button must be the label's own height plus the frozen 15px top and bottom",
-            label.height + 2 * START_PAD_VERTICAL,
+            "the button must be its tallest child (label ${label.height}px, plus ${plus.height}px) plus " +
+                "the frozen ${START_PAD_VERTICAL}px top and bottom — the 1.5px border paints inside the " +
+                "bounds and adds nothing to the measured height",
+            maxOf(label.height, plus.height) + 2 * START_PAD_VERTICAL,
             button.height,
             HALF_PIXEL,
-        )
-        // The discrimination this rests on: the plus really is taller than the label. If it were not,
-        // deleting the zero-height layout would change nothing and the assertion above would be inert.
-        //
-        // Measured on the host, not argued from the stylesheet. The first version wrote `assertTrue(19.2f >
-        // 16f)` — two literals the compiler could have folded, which stays green however small the plus
-        // becomes, i.e. it certifies discrimination for a test it cannot see. Both references render at the
-        // production styles, so this fails if either size moves under the other.
-        val plus = bounds(REF_PLUS_NATURAL)
-        assertTrue(
-            "the plus (${plus.height}px) must render taller than the label (${label.height}px), " +
-                "or the assertion above is inert",
-            plus.height > label.height,
         )
     }
 
     @Test
-    fun `the plus is lifted by half its frozen margin, because a flex item centres its margin box`() {
+    fun `the plus sits on the row's centre, because V2_1 gave it no margin to lift it`() {
         dockWithReferences()
-        // `.plus{margin-top:-2px}` on `align-items:center`. Centring aligns the *margin* box: with
-        // `line-height:0` the border box is 0 tall, the margin box is -2, so the border box lands at
-        // `(L+2)/2 - 2 = L/2 - 1`. The net lift is **1px, not 2** — the rule this file's own handover notes
-        // record for `.arrow` and `.lbl`, and the one place B4 first failed to apply it.
+        // **This test asserts the opposite of what it asserted in V2, and that is the whole point.**
+        //
+        // V2 wrote `.start .plus{line-height:0;margin-top:-2px}`, and because a flex item is centred on its
+        // *margin* box, the frozen −2px lifted the glyph by exactly **1px**. V2.1 writes
+        // `.start .plus{font-family:var(--voice);font-size:1.15rem;font-weight:700;line-height:1}` — no
+        // margin at all. So the plus must now sit level with an unmargined reference, and re-baselining the
+        // old expectation to a new number would have kept a lift the corpus no longer asks for.
         //
         // Measured as an offset from each container's own centre, so the glyph's metrics cancel. A
         // fullwidth plus is not centred on its em box — it sits on the maths axis — so no absolute
-        // prediction of its ink is safe. The reference renders the same glyph at the same size with the
-        // same zero-height layout and **no margin**; production must sit exactly 1px above it. Nothing
-        // inside the button can carry a test tag (the A8 seam clears descendant semantics), so the live
-        // plus is found by pixel: the first ink run inside the button, left of the label.
+        // prediction of its ink is safe. The reference renders the same glyph at the same size with no
+        // margin; production must sit on top of it. Nothing inside the button can carry a test tag (the A8
+        // seam clears descendant semantics), so the live plus is found by pixel: the first ink run inside
+        // the button, left of the label.
         val raster = decorRaster()
         val button = bounds(ZineStartTestTag)
         val reference = bounds(REF_ROW)
 
         // Each row is measured against **itself**: the plus's centroid less the label's, in the same row.
-        // The label carries no margin in either, so the difference between the two differences is the
-        // margin and nothing else — no container geometry survives into the comparison.
+        // The label carries no margin in either, so the difference between the two differences is any
+        // remaining lift and nothing else — no container geometry survives into the comparison.
         val live = raster.plusOverLabel(button)
         val flat = raster.plusOverLabel(reference)
 
         assertEquals(
-            "the production plus must ride ${-PLUS_MARGIN_TOP / 2f}px above an unmargined one " +
-                "(live $live against reference $flat)",
-            flat + PLUS_MARGIN_TOP / 2f,
+            "the production plus must sit level with an unmargined one (live $live against reference $flat)",
+            flat,
             live,
             SUB_PIXEL,
         )
-        // The effect is a whole pixel and the tolerance is a third of one, so this separates the frozen
-        // half-margin from the whole margin — which is the defect it exists for. `assertEquals` passes at
-        // exactly the tolerance, so the two numbers are compared rather than assumed to be far apart.
+        // The discrimination: the tolerance is a third of a pixel, so re-introducing V2's `margin-top:-2px`
+        // — a 1px lift — fails this. Without that, "level" would be satisfied by any margin small enough to
+        // round away, and the assertion would certify nothing.
         assertTrue(
-            "a tolerance of $SUB_PIXEL cannot tell ${-PLUS_MARGIN_TOP / 2f}px from ${-PLUS_MARGIN_TOP}px",
-            SUB_PIXEL < abs(PLUS_MARGIN_TOP) / 2f,
+            "a tolerance of $SUB_PIXEL must be able to see V2's 1px lift",
+            SUB_PIXEL < 1f,
         )
     }
 
@@ -389,24 +426,25 @@ class ZineDockTest {
     // ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `the button is matcha and its label is paper, by day`() = assertButtonInk(dark = false)
+    fun `the button is leaf and its label is on-leaf, by day`() = assertButtonInk(dark = false)
 
     @Test
-    fun `the button is matcha and its label is paper, by night`() = assertButtonInk(dark = true)
+    fun `the button is leaf and its label is on-leaf, by night`() = assertButtonInk(dark = true)
 
     /**
-     * `.start{background:var(--matcha);color:var(--paper)}`, read off the raster.
+     * `.start{background:var(--leaf);color:var(--on-leaf)}`, read off the raster.
      *
-     * The Bench and Proof use `--on-matcha` for every matcha fill and the Library declares no such token —
-     * the shape of **D-005**, **D-011** and **D-022**. Unlike those three this value is not broken: it is
-     * declared in both themes, it inverts with them, and it clears AA both ways (**5.20:1** light, **5.12:1**
-     * dark). So it is transcribed, and what keeps it transcribed is that the *corpus's* token must be
-     * **absent** from the raster.
+     * **This is the assertion D-023 turned on, and it now points the other way.** V2's Library wrote
+     * `color:var(--paper)` on a matcha fill while the Bench and the Proof wrote `--on-matcha`, and this
+     * test held the Library's reading by requiring the corpus's token to be *absent*. V2.1 writes
+     * `--on-leaf`, so the defect is closed by the re-freeze rather than by a ruling, and the forbidden
+     * colour is V2's `--paper`.
      *
-     * That token is theme-aware — `#FFFFFF` light, `#20240E` dark — so the check reads
-     * `ZinelyTheme.v2Colors.onMatcha` rather than pure white. A first draft asserted white in both themes and
-     * would have been inert in dark, where the corpus's own label is nearly black: the assertion would have
-     * passed on the exact substitution it exists to catch.
+     * Both tokens are theme-aware — so both are read from `ZinelyTheme.v21Colors` rather than written as
+     * literals. A first draft of the V2 test asserted white in both themes and would have been inert in
+     * dark, where the corpus's own label is nearly black: it would have passed on the exact substitution
+     * it existed to catch. The same trap applies inverted, which is why the two are also asserted to
+     * differ in each theme before the exclusion is trusted.
      *
      * Two tests rather than a loop over both themes: the Compose rule accepts one `setContent` per test,
      * which a first draft learned by throwing on the second call.
@@ -418,29 +456,36 @@ class ZineDockTest {
         val found = raster.coloursIn(button)
 
         assertTrue(
-            "the fill must be --matcha ($capturedMatcha) in ${theme(dark)}",
-            found.any { it.closeTo(capturedMatcha) },
+            "the fill must be --leaf ($capturedLeaf) in ${theme(dark)}",
+            found.any { it.closeTo(capturedLeaf) },
         )
         assertTrue(
-            "the label must be --paper ($capturedPaper) in ${theme(dark)}",
-            found.any { it.closeTo(capturedPaper) },
+            "the label must be --on-leaf ($capturedOnLeaf) in ${theme(dark)}",
+            found.any { it.closeTo(capturedOnLeaf) },
         )
-        assertFalse(
-            "no pixel may be --on-matcha ($capturedOnMatcha) in ${theme(dark)} — that is the corpus's " +
-                "token for a matcha fill, and the Library does not declare it. **D-023 is open against " +
-                "this**: if it is ruled corpus-wins, this assertion is what the ruling flips.",
-            found.any { it.closeTo(capturedOnMatcha) },
-        )
-        // The check above only discriminates if the two labels are actually different colours in this
-        // theme. They are — by 8/13/24 channel steps in light and 15/6/20 in dark — but the tolerance is
-        // 1.5/255, so this says so rather than leaving it to be re-derived.
-        assertFalse(
-            "--paper and --on-matcha must differ in ${theme(dark)}, or the assertion above is inert",
-            capturedPaper.closeTo(capturedOnMatcha),
-        )
+        // **D-023 is closed by the re-freeze, and the exclusion that used to guard it can only run in
+        // one theme now.** V2's Library wrote `color:var(--paper)` on matcha while the Bench and Proof
+        // wrote `--on-matcha`; V2.1 writes `--on-leaf` here, so the substitution to forbid is V2's
+        // `--paper`. But the light palette declares `--paper:#FFF6E8` and `--on-leaf:#FFF6E8` — the same
+        // colour — so in light no raster can tell the two apart, and an exclusion written there would
+        // fail on a **correct** implementation. It is asserted where it discriminates, and the reason it
+        // cannot be asserted in light is stated rather than left as a missing case.
+        if (capturedPaper.closeTo(capturedOnLeaf)) {
+            assertFalse(
+                "the two tokens may only coincide in light — in dark, --paper (${capturedPaper}) and " +
+                    "--on-leaf ($capturedOnLeaf) are different colours and the exclusion must run",
+                dark,
+            )
+        } else {
+            assertFalse(
+                "no pixel may be --paper ($capturedPaper) in ${theme(dark)} — that is V2's " +
+                    "transcription of this label, and the re-freeze replaced it",
+                found.any { it.closeTo(capturedPaper) },
+            )
+        }
         // The reason the transcription is safe, measured on the rendered pair rather than asserted from
-        // the tokens: 5.20:1 light and 5.12:1 dark.
-        val ratio = contrast(capturedPaper, capturedMatcha)
+        // the tokens: 4.70:1 light and 6.95:1 dark.
+        val ratio = contrast(capturedOnLeaf, capturedLeaf)
         assertTrue(
             "the label must clear AA on its own fill in ${theme(dark)} (found $ratio:1)",
             ratio >= 4.5f,
@@ -493,6 +538,36 @@ class ZineDockTest {
     }
 
     @Test
+    fun `the decorative misregistration ring is butter, and is not the focus ring`() {
+        // **ADR-100 §4's second half, guarded only by a raster this pass re-recorded until a review
+        // said so.** The ring was `butterTint`, 1.01:1 against the light desk — an invisible ring.
+        //
+        // The two assertions here are one finding: the *decorative* ring moved to `butter` and the
+        // *focus* ring did not. They sit 5dp apart, they look like the same object, and only one of them
+        // is load-bearing for 2.4.7/1.4.11. A revert that repainted both, or a "tidy-up" that unified
+        // them, is the failure this catches — and the focus half is already asserted at `capturedInk` by
+        // the test below, so what is added here is the decorative half plus the explicit non-equality.
+        dock()
+        val button = bounds(ZineStartTestTag)
+        val raster = decorRaster()
+
+        // The ring stacks OUTSIDE the hard shadow, so probe beyond the button's own box on the centre
+        // row — the same row the focus-ring test uses, and the row a rounded shape displaces least.
+        val y = button.center.y.roundToInt()
+        val ringBand = (button.left.roundToInt() - RING_SEARCH..button.left.roundToInt())
+        assertTrue(
+            "no pixel left of the start button is --butter ($capturedButter) — the misregistration " +
+                "ring is invisible on the light desk",
+            ringBand.any { raster.matches(it, y, capturedButter) },
+        )
+        assertFalse(
+            "--butter and --ink must stay different colours, or this test cannot tell the decorative " +
+                "ring from the focus ring",
+            capturedButter.closeTo(capturedInk),
+        )
+    }
+
+    @Test
     fun `the focus ring surrounds the button instead of eating into it`() {
         dock()
         focusTheButton()
@@ -513,9 +588,9 @@ class ZineDockTest {
             raster.matches(ringX, y, capturedInk),
         )
         assertTrue(
-            "and the button's own fill must be untouched one pixel inside it " +
-                "(found ${raster.colourAt(button.left.roundToInt() + 1, y)})",
-            raster.matches(button.left.roundToInt() + 1, y, capturedMatcha),
+            "and the button's own fill must be untouched just inside its ink border " +
+                "(found ${raster.colourAt(button.left.roundToInt() + START_BORDER_PROBE, y)})",
+            raster.matches(button.left.roundToInt() + START_BORDER_PROBE, y, capturedLeaf),
         )
 
         // `outline-offset:3px` gated on **both** sides. The probe above only fails if the ring moves
@@ -548,29 +623,47 @@ class ZineDockTest {
     }
 
     @Test
-    fun `the button's own corners are rounded to the frozen radius`() {
+    fun `the button is a pill, not a rounded rectangle`() {
         dock()
         val button = bounds(ZineStartTestTag)
         val raster = decorRaster()
 
-        // `.start{border-radius:16px}` had no test of any kind: `StartRadius = 16.dp -> 0.dp` is a visible
-        // redesign of the screen's only primary action and left every assertion green. The corner pixel of
-        // the bounding box is outside a 16px arc and inside a square one.
-        val inset = 1
-        assertFalse(
-            "the button's top-left corner pixel must be clipped away, not matcha",
-            raster.matches(button.left.roundToInt() + inset, button.top.roundToInt() + inset, capturedMatcha),
-        )
-        // The corner is only clipped if the radius is large; a 2px radius would also pass the probe above.
-        // The arc's own midpoint — 45 degrees in from the corner at radius r — must be fill.
-        val diagonal = (START_RADIUS - START_RADIUS / 1.41421f).roundToInt() + 1
+        // `.start{border-radius:var(--br-pill)}` — 999px, i.e. **half the height**, where V2 wrote a 16px
+        // rectangle. Re-baselining 16 to 999 would assert nothing: any radius past half the height clips
+        // identically, so the test has to change shape rather than change number. What separates a pill
+        // from a large rounded rectangle is that the arc consumes the button's **whole** vertical extent:
+        // at the exact vertical centre the fill must reach the outermost column, and one pixel further out
+        // than half the height at the top row it must not.
+        val r = button.height / 2f
+        val midY = button.center.y.roundToInt()
+        val left = button.left.roundToInt()
+
         assertTrue(
-            "and the ${START_RADIUS}px arc must have closed by ${diagonal}px in from that corner",
-            raster.matches(
-                button.left.roundToInt() + diagonal,
-                button.top.roundToInt() + diagonal,
-                capturedMatcha,
-            ),
+            "a pill's widest point is its vertical centre, so the leftmost column must be leaf there, " +
+                "just inside the ink border (found ${raster.colourAt(left + START_BORDER_PROBE, midY)})",
+            raster.matches(left + START_BORDER_PROBE, midY, capturedLeaf),
+        )
+        // The corner pixel of the bounding box is outside the arc of any radius worth the name — this is
+        // the probe that fails on `RoundedCornerShape(0)`.
+        assertFalse(
+            "the button's top-left corner pixel must be clipped away, not leaf",
+            raster.matches(left + 1, button.top.roundToInt() + 1, capturedLeaf),
+        )
+        // And the pill claim itself: a 16px rectangle has closed its arc ~5px in and would be fill at the
+        // top row well before `r`. A pill is still empty there, because its arc runs the full half-height.
+        val insideRectangleArc = left + (r / 2f).roundToInt()
+        assertFalse(
+            "at ${(r / 2f).roundToInt()}px in, the top row must still be outside a pill's arc — " +
+                "a ${START_RADIUS_RECTANGLE}px rectangle would already be fill here " +
+                "(found ${raster.colourAt(insideRectangleArc, button.top.roundToInt() + 1)})",
+            raster.matches(insideRectangleArc, button.top.roundToInt() + 1, capturedLeaf),
+        )
+        // The arc must close by the time the corner's own 45-degree point is reached, or this is not a
+        // radius at all but a clipped rectangle.
+        val diagonal = (r - r / 1.41421f).roundToInt() + START_BORDER_PROBE
+        assertTrue(
+            "and the arc must have closed by ${diagonal}px in from that corner",
+            raster.matches(left + diagonal, button.top.roundToInt() + diagonal, capturedLeaf),
         )
     }
 
@@ -580,7 +673,7 @@ class ZineDockTest {
         val raster = decorRaster()
         val button = bounds(ZineStartTestTag)
         val x = button.center.x.roundToInt()
-        val atRest = raster.firstRowOf(capturedMatcha, x, button.top.roundToInt() - 8)
+        val atRest = raster.firstRowOf(capturedLeaf, x, button.top.roundToInt() - 8)
 
         // `.start:active{transform:translateY(2px)}` on `transition:transform .14s`, which had no assertion
         // at all — deleting the whole `graphicsLayer`/`animateFloatAsState` block survived the suite, as did
@@ -590,7 +683,7 @@ class ZineDockTest {
         composeRule.waitForIdle()
 
         val pressedRaster = decorRaster()
-        val pressed = pressedRaster.firstRowOf(capturedMatcha, x, button.top.roundToInt() - 8)
+        val pressed = pressedRaster.firstRowOf(capturedLeaf, x, button.top.roundToInt() - 8)
         composeRule.onNodeWithTag(ZineStartTestTag).performTouchInput { up() }
 
         assertEquals(
@@ -638,11 +731,11 @@ class ZineDockTest {
     /**
      * The dock, plus two yardsticks rendered at the production styles in the same composition.
      *
-     * [REF_LABEL] is the label alone — the height the button must be built from. [REF_PLUS] is the plus
-     * alone, laid out with the same zero-height line box and **no margin**, on the same matcha fill so the
-     * ink probe reads it exactly as it reads the live one. Both are references rather than copies of an
-     * assertion: they measure the host, which is what the three tautological "discrimination" guards this
-     * file first shipped did not.
+     * [REF_LABEL] and [REF_PLUS] are the button's two children, each alone and each at the production
+     * style — the two candidates for the row's height. [REF_ROW] is the whole row rebuilt with **no
+     * margin** on the plus, which is the one value the alignment test measures. All three are references
+     * rather than copies of an assertion: they measure the host, which is what the three tautological
+     * "discrimination" guards this file first shipped did not.
      *
      * One composition, because the Compose rule accepts a single `setContent` per test.
      */
@@ -650,25 +743,34 @@ class ZineDockTest {
         composeRule.setContent {
             Host {
                 ZineDock(onStart = {}, modifier = Modifier.align(Alignment.BottomCenter))
+                // Both references at the **production** styles, so the button's height can be measured
+                // against what it actually contains rather than against a remembered number.
+                //
+                // ⚠️ `lineHeight` is **not observable in this harness** — measured, not assumed: this
+                // reference was run at `lineHeight = 40.sp` and still laid out 19px. Robolectric's text
+                // layout does not honour the line-height span, so the frozen `body{line-height:1.55}`
+                // (24.8px against the plus's 18.4px) cannot be gated from the JVM at all. It is written
+                // here regardless, because the reference must not silently diverge from production the
+                // day the harness gains it.
                 Text(
                     text = LABEL,
                     style = TextStyle(
-                        fontFamily = ZinelyTheme.v2Typography.work,
-                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = ZinelyV21Fonts.Work,
+                        fontWeight = FontWeight.Bold,
                         fontSize = LABEL_SIZE.sp,
+                        lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                     ),
                     modifier = Modifier.testTag(REF_LABEL).align(Alignment.TopStart),
                 )
-                // The plus at its **natural** height — no zero-height layout — which is the height the
-                // frozen `line-height:0` exists to keep out of the row.
                 Text(
                     text = StartPlusGlyph,
                     style = TextStyle(
-                        fontFamily = ZinelyTheme.v2Typography.work,
-                        fontWeight = FontWeight.SemiBold,
+                        fontFamily = ZinelyV21Fonts.Voice,
+                        fontWeight = FontWeight.Bold,
                         fontSize = PLUS_SIZE.sp,
+                        lineHeight = PLUS_SIZE.sp,
                     ),
-                    modifier = Modifier.testTag(REF_PLUS_NATURAL).align(Alignment.BottomStart),
+                    modifier = Modifier.testTag(REF_PLUS).align(Alignment.BottomStart),
                 )
                 // The button's own row, rebuilt at the production styles with **no `margin-top`** on the
                 // plus — the one value under test. Everything else is identical, deliberately: the plus is
@@ -681,7 +783,7 @@ class ZineDockTest {
                     modifier = Modifier
                         .testTag(REF_ROW)
                         .align(Alignment.TopEnd)
-                        .background(ZinelyTheme.v2Colors.matcha)
+                        .background(ZinelyTheme.v21Colors.leaf)
                         .padding(horizontal = 26.dp, vertical = START_PAD_VERTICAL.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -692,7 +794,7 @@ class ZineDockTest {
                             fontFamily = ZinelyTheme.v2Typography.work,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = PLUS_SIZE.sp,
-                            color = ZinelyTheme.v2Colors.paper,
+                            color = ZinelyTheme.v21Colors.paper,
                         ),
                         modifier = Modifier.layout { measurable, constraints ->
                             val placeable = measurable.measure(constraints)
@@ -707,7 +809,7 @@ class ZineDockTest {
                             fontFamily = ZinelyTheme.v2Typography.work,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = LABEL_SIZE.sp,
-                            color = ZinelyTheme.v2Colors.paper,
+                            color = ZinelyTheme.v21Colors.paper,
                         ),
                     )
                 }
@@ -739,19 +841,23 @@ class ZineDockTest {
     private lateinit var inputMode: InputModeManager
     private var capturedInk: Color = Color.Unspecified
     private var capturedDesk: Color = Color.Unspecified
-    private var capturedMatcha: Color = Color.Unspecified
+    private var capturedLeaf: Color = Color.Unspecified
     private var capturedPaper: Color = Color.Unspecified
-    private var capturedOnMatcha: Color = Color.Unspecified
+    private var capturedOnLeaf: Color = Color.Unspecified
+
+    /** `--butter` — the decorative `--frame` ring's colour since ADR-100 §4. Not the focus ring. */
+    private var capturedButter: Color = Color.Unspecified
 
     @Composable
     private fun Host(dark: Boolean = false, content: @Composable BoxScope.() -> Unit) {
         ZinelyTheme(darkTheme = dark) {
             inputMode = LocalInputModeManager.current
-            capturedInk = ZinelyTheme.v2Colors.ink
-            capturedDesk = ZinelyTheme.v2Colors.desk
-            capturedMatcha = ZinelyTheme.v2Colors.matcha
-            capturedPaper = ZinelyTheme.v2Colors.paper
-            capturedOnMatcha = ZinelyTheme.v2Colors.onMatcha
+            capturedButter = ZinelyTheme.v21Colors.butter
+            capturedInk = ZinelyTheme.v21Colors.ink
+            capturedDesk = ZinelyTheme.v21Colors.desk
+            capturedLeaf = ZinelyTheme.v21Colors.leaf
+            capturedPaper = ZinelyTheme.v21Colors.paper
+            capturedOnLeaf = ZinelyTheme.v21Colors.onLeaf
             // The probe ground rather than the desk: the band's fade is only visible against something the
             // desk is not, and `.dock` is the only thing in this host that paints desk at all.
             Box(Modifier.fillMaxSize().background(PROBE_GROUND)) { content() }
@@ -829,7 +935,7 @@ class ZineDockTest {
         for (y in from until to) {
             for (x in fromX.roundToInt() until toX.roundToInt().coerceAtMost(width)) {
                 if (x < 0 || y < 0) continue
-                val weight = distance(colourAt(x, y), capturedMatcha).toDouble()
+                val weight = distance(colourAt(x, y), capturedLeaf).toDouble()
                 weighted += weight * y
                 total += weight
             }

@@ -54,6 +54,7 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --on-leaf:#FFF6E8;
   --butter:#F6B22C;         /* ✱ highlight / tape / stamp — punctuation, never action   */
   --butter-tint:#FDEBC4;
+  --on-butter:#33261C;      /* ADR-100 §4 — the label on a butter ground. Dark in BOTH themes. */
   --berry:#E4879F;          /* ✱ second punctuation — a stamp, a current-page dot       */
   --berry-tint:#F8DCE2;
   --jam:#CF4A28;            /* consequence: delete, real error, and nothing else        */
@@ -89,7 +90,8 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
   --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
   --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
+  --butter:#E8B458; --butter-tint:#3E3320; --on-butter:#1E1A15;
+  --berry:#D3899B; --berry-tint:#3A2A2D;
   --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15;
   --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
   --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
@@ -98,7 +100,8 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
   --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
   --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
+  --butter:#E8B458; --butter-tint:#3E3320; --on-butter:#1E1A15;
+  --berry:#D3899B; --berry-tint:#3A2A2D;
   --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15;
   --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
   --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
@@ -156,15 +159,51 @@ body{
 }
 /* ✱ the underline is a hand-drawn swipe, not a rule */
 .shelf-head h1 svg{display:block;width:132px;height:9px;margin-top:var(--gap-hair);color:var(--butter)}
-.count{font-size:.78rem;font-weight:600;color:var(--ink-soft);background:var(--butter-tint);
+/* Amended 2026-08-11 (ADR-100 §4): the ground was --butter-tint, which measures 1.01:1 against the light
+   desk — not "low contrast", the same colour. The chip simply did not exist in light theme. --butter is
+   1.56/8.71, and --on-butter is its label. A count chip is a stamp, so §3.2's material rule still holds. */
+.count{font-size:.78rem;font-weight:600;color:var(--on-butter);background:var(--butter);
   border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md);transform:rotate(1.5deg)}
 
 /* a zine is a printed object resting on the desk ---------------------------- */
-.zine{appearance:none;border:0;background:none;padding:0;cursor:pointer;text-align:left;
+
+/* A TILE IS NOT A BUTTON — restructured 2026-08-11 (ADR-100 §1).
+   It was `<button class="zine">`, which is why the prototype could not carry an overflow control at
+   all: a control may not contain a control.  The tile is now an <article> holding two sibling buttons,
+   `.zine-open` (the whole printed object plus its caption) and `.more`.  Compose already shipped
+   exactly this shape; the prototype is what was behind.
+   <article>, not <div>, and that is load-bearing: .shelf-head and the four .ph are <div>s, so a <div>
+   tile would silently re-break the :nth-of-type fix below the moment it was made. */
+.zine{position:relative;display:flex;flex-direction:column}
+.zine-open{appearance:none;border:0;background:none;padding:0;cursor:pointer;text-align:left;
   display:flex;flex-direction:column;gap:var(--gap-sm)}
-.zine:nth-child(3n+1) .cover{transform:rotate(var(--tiltA))}
-.zine:nth-child(3n+2) .cover{transform:rotate(var(--tiltB))}
-.zine:nth-child(3n)   .cover{transform:rotate(var(--tiltC))}
+
+/* ✱ THE OVERFLOW AFFORDANCE — three dots, DRAWN, and stacked.  Added 2026-08-11 (ADR-100 §1).
+   Drawn because `⋯` U+22EF is absent from the bundled Inter subset and emoji2 substitutes above the
+   font layer regardless, so a character is a mark the app does not own.  Stacked because a HORIZONTAL
+   ellipsis after a title is the universal mark for *truncated text*, not for a menu — the parity
+   review's first reading of `Sunday market ⋯` was "the name is too long", which is the opposite of
+   what the control means.  --ink-soft, not ink at 50%: at .5 alpha it composites to 2.90:1 on the
+   desk, and this is a control's only visual identification, so 1.4.11 binds at 3:1. */
+.more{position:absolute;right:0;bottom:2px;width:34px;height:34px;appearance:none;border:0;
+  background:none;padding:0;cursor:pointer;display:grid;place-items:center;border-radius:var(--br-pill);
+  color:var(--ink-soft)}
+.more:active{background:rgba(0,0,0,.10)}
+.more svg{display:block;width:3px;height:15px}
+/* the caption reserves the mark's width — .more is absolutely positioned and takes no layout, so
+   without this a long name runs underneath it */
+.cap{padding-right:34px}
+
+/* ✱ nth-OF-TYPE, corrected 2026-08-11 (ADR-100 §5).  These were :nth-child, which counts .shelf-head
+   and the four .ph as siblings — so the first zine matched 3n and the whole three-cycle rendered one
+   phase off the intent the selector plainly states.  .zine is the only <article> in .shelf, so
+   :nth-of-type counts zines and nothing else.  The Compose implementation already keyed off the tile's
+   own index and so was always right; this makes the prototype say what it meant.
+   NOTE the .shelf-head alone was enough to shift the phase — the four .ph moved it further.  An
+   earlier note here implied the placeholders created the defect; they only deepened it. */
+.zine:nth-of-type(3n+1) .cover{transform:rotate(var(--tiltA))}
+.zine:nth-of-type(3n+2) .cover{transform:rotate(var(--tiltB))}
+.zine:nth-of-type(3n)   .cover{transform:rotate(var(--tiltC))}
 .cover{
   position:relative;aspect-ratio:3/4;border-radius:var(--br-xs) var(--br-md) var(--br-md) var(--br-xs);
   overflow:visible;background:var(--paper);
@@ -174,7 +213,7 @@ body{
   transition:transform .16s cubic-bezier(.2,.8,.2,1), box-shadow .16s;
   display:grid;place-items:center;
 }
-.zine:active .cover{transform:translate(2px,2px) rotate(0deg);box-shadow:1px 1px 0 var(--ink-line)}
+.zine-open:active .cover{transform:translate(2px,2px) rotate(0deg);box-shadow:1px 1px 0 var(--ink-line)}
 .cover .fill{position:absolute;inset:0;border-radius:inherit;overflow:hidden}
 .cover .fill::after{content:"";position:absolute;inset:0;background-image:var(--grain);
   background-size:130px 130px;mix-blend-mode:multiply;opacity:.5}
@@ -183,10 +222,23 @@ body{
 .ink-berry .fill{background:var(--berry)}
 .ink-butter .fill{background:var(--butter)}
 .ink-jam   .fill{background:var(--jam)}
-.paper-s   .fill{background:var(--paper)}
-.paper-c   .fill{background:var(--butter-tint)}
+/* Amended 2026-08-11 (ADR-100 §2): the two paper stocks are PINNED to their light values in both themes.
+   Painted from the themed chrome tokens they measured 1.18:1 on the dark desk, and the hard shadow went with
+   them (--ink-line is 1.17 there) — fill gone and shadow gone is a hole cut in the desk, not an object on it.
+   A cover is the maker's object (§5.1); an object does not change what it is printed on after dark. The four
+   ink stocks above keep theming, because they are saturated enough to take the dark cut. */
+.paper-s   .fill{background:#FFF6E8}
+.paper-c   .fill{background:#FDEBC4}
+/* the stock's own edge, pinned with it — themed --ink is #F6EAD6 in dark, which is the cream the stock
+   already is, so an outline at 1.01:1 (cream) / 1.11:1 (paper) is no outline.
+   COMPOUND, not descendant: .paper-s IS the .cover (`<div class="cover paper-s">`). Written
+   `.paper-s .cover` for one draft, which matched nothing and left this ruling unimplemented in the
+   canonical file while the ADR claimed otherwise. Both reviews caught it; it is the reason the sibling
+   .fill and .mark rules below look the same and are correct — those ARE descendants. */
+.cover.paper-s, .cover.paper-c{border-color:#33261C}
 .cover .mark{position:relative;z-index:1;width:46%;color:rgba(255,246,232,.92)}
-.paper-s .mark,.paper-c .mark{color:var(--ink-soft)}
+/* pinned with the stock, for the same reason: --ink-soft is #BFAC93 in dark, 1.72:1 on this cream */
+.paper-s .mark,.paper-c .mark{color:#6E5947}
 
 /* ✱ tape — a translucent strip holding the cover to the desk */
 .tape{
@@ -196,8 +248,8 @@ body{
   transform:translateX(-50%) rotate(-4deg);
   box-shadow:0 1px 2px rgba(0,0,0,.12);
 }
-.zine:nth-child(3n+2) .tape{transform:translateX(-50%) rotate(5deg);left:38%}
-.zine:nth-child(3n) .tape{transform:translateX(-50%) rotate(-2deg);left:62%}
+.zine:nth-of-type(3n+2) .tape{transform:translateX(-50%) rotate(5deg);left:38%}
+.zine:nth-of-type(3n) .tape{transform:translateX(-50%) rotate(-2deg);left:62%}
 
 /* ✱ the stamp — metadata as a postmark, not a caption */
 .stamp{
@@ -207,7 +259,11 @@ body{
   text-transform:uppercase;color:var(--ink-soft);padding:var(--gap-hair) var(--gap-sm);
   transform:rotate(-3deg);box-shadow:2px 2px 0 var(--ink-line);
 }
-.name{font-family:var(--voice);font-weight:700;font-size:1rem;line-height:1.2;margin:0 var(--gap-hair)}
+/* Amended 2026-08-11 (ADR-100 §3): the corpus holds no title long enough to state this, and the grid needs
+   it stated — two equal-height columns mean an unbounded title in one cell pushes its NEIGHBOUR's cover
+   down. Two lines is the smallest cap that keeps the grid rigid and a phrase recognisable. */
+.name{font-family:var(--voice);font-weight:700;font-size:1rem;line-height:1.2;margin:0 var(--gap-hair);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sub{font-size:.74rem;color:var(--ink-soft);margin:var(--gap-hair) var(--gap-hair) 0;font-weight:500}
 
 /* loading — the same objects, unprinted ------------------------------------ */
@@ -274,10 +330,10 @@ body{
   cursor:pointer;
   /* ✱ stacked rings — the reference sites' emphasis idiom (Maeve --frame-width) */
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line),
-             0 0 0 var(--frame) var(--butter-tint);
+             0 0 0 var(--frame) var(--butter);
   transition:transform .14s cubic-bezier(.2,.8,.2,1),box-shadow .14s;
 }
-.start:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line),0 0 0 var(--frame) var(--butter-tint)}
+.start:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line),0 0 0 var(--frame) var(--butter)}
 .start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}
 .start .plus{font-family:var(--voice);font-size:1.15rem;font-weight:700;line-height:1}
 
@@ -336,47 +392,65 @@ Toggle each one below and judge it on its own.</p>
 
     <div class="ph"></div><div class="ph"></div><div class="ph"></div><div class="ph"></div>
 
-    <button class="zine" data-name="Sunday market" data-sub="A4 · 2 days ago">
-      <div class="cover ink-leaf"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
-        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5h16v14H4z"/><path d="M4 9h16M9 9v10"/></svg>
-        <span class="stamp">A4</span></div>
-      <div><p class="name">Sunday market</p><p class="sub">2 days ago</p></div>
-    </button>
+    <article class="zine" data-name="Sunday market" data-sub="A4 · 2 days ago">
+      <button class="zine-open" aria-label="Sunday market">
+        <div class="cover ink-leaf"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
+          <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 5h16v14H4z"/><path d="M4 9h16M9 9v10"/></svg>
+          <span class="stamp">A4</span></div>
+        <div class="cap"><p class="name">Sunday market</p><p class="sub">2 days ago</p></div>
+      </button>
+      <button class="more" aria-label="Actions for Sunday market"><svg viewBox="0 0 3 15" aria-hidden="true" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="7.5" r="1.5"/><circle cx="1.5" cy="13.5" r="1.5"/></svg></button>
+    </article>
 
-    <button class="zine" data-name="Letters home" data-sub="Letter · today">
-      <div class="cover paper-s"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
-        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/></svg>
-        <span class="stamp">Letter</span></div>
-      <div><p class="name">Letters home</p><p class="sub">today</p></div>
-    </button>
+    <article class="zine" data-name="Letters home" data-sub="Letter · today">
+      <button class="zine-open" aria-label="Letters home">
+        <div class="cover paper-s"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
+          <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/></svg>
+          <span class="stamp">Letter</span></div>
+        <div class="cap"><p class="name">Letters home</p><p class="sub">today</p></div>
+      </button>
+      <button class="more" aria-label="Actions for Letters home"><svg viewBox="0 0 3 15" aria-hidden="true" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="7.5" r="1.5"/><circle cx="1.5" cy="13.5" r="1.5"/></svg></button>
+    </article>
 
-    <button class="zine" data-name="Riso tests" data-sub="A4 · 5 days ago">
-      <div class="cover ink-berry"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
-        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9.5" cy="10" r="5.2"/><circle cx="14.5" cy="14" r="5.2"/></svg>
-        <span class="stamp">A4</span></div>
-      <div><p class="name">Riso tests</p><p class="sub">5 days ago</p></div>
-    </button>
+    <article class="zine" data-name="Riso tests" data-sub="A4 · 5 days ago">
+      <button class="zine-open" aria-label="Riso tests">
+        <div class="cover ink-berry"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
+          <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9.5" cy="10" r="5.2"/><circle cx="14.5" cy="14" r="5.2"/></svg>
+          <span class="stamp">A4</span></div>
+        <div class="cap"><p class="name">Riso tests</p><p class="sub">5 days ago</p></div>
+      </button>
+      <button class="more" aria-label="Actions for Riso tests"><svg viewBox="0 0 3 15" aria-hidden="true" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="7.5" r="1.5"/><circle cx="1.5" cy="13.5" r="1.5"/></svg></button>
+    </article>
 
-    <button class="zine" data-name="Mum’s garden" data-sub="A4 · 1 week ago">
-      <div class="cover paper-c"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
-        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 21V9"/><path d="M12 9c0-4 3-6 6-6 0 4-2.5 6-6 6Z"/><path d="M12 13c0-3-2.5-5-5-5 0 3 2 5 5 5Z"/></svg>
-        <span class="stamp">A4</span></div>
-      <div><p class="name">Mum’s garden</p><p class="sub">1 week ago</p></div>
-    </button>
+    <article class="zine" data-name="Mum’s garden" data-sub="A4 · 1 week ago">
+      <button class="zine-open" aria-label="Mum’s garden">
+        <div class="cover paper-c"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
+          <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M12 21V9"/><path d="M12 9c0-4 3-6 6-6 0 4-2.5 6-6 6Z"/><path d="M12 13c0-3-2.5-5-5-5 0 3 2 5 5 5Z"/></svg>
+          <span class="stamp">A4</span></div>
+        <div class="cap"><p class="name">Mum’s garden</p><p class="sub">1 week ago</p></div>
+      </button>
+      <button class="more" aria-label="Actions for Mum’s garden"><svg viewBox="0 0 3 15" aria-hidden="true" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="7.5" r="1.5"/><circle cx="1.5" cy="13.5" r="1.5"/></svg></button>
+    </article>
 
-    <button class="zine" data-name="Tiny poems" data-sub="Letter · 2 weeks ago">
-      <div class="cover ink-butter"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
-        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 5h12M6 10h12M6 15h7"/></svg>
-        <span class="stamp">Letter</span></div>
-      <div><p class="name">Tiny poems</p><p class="sub">2 weeks ago</p></div>
-    </button>
+    <article class="zine" data-name="Tiny poems" data-sub="Letter · 2 weeks ago">
+      <button class="zine-open" aria-label="Tiny poems">
+        <div class="cover ink-butter"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
+          <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 5h12M6 10h12M6 15h7"/></svg>
+          <span class="stamp">Letter</span></div>
+        <div class="cap"><p class="name">Tiny poems</p><p class="sub">2 weeks ago</p></div>
+      </button>
+      <button class="more" aria-label="Actions for Tiny poems"><svg viewBox="0 0 3 15" aria-hidden="true" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="7.5" r="1.5"/><circle cx="1.5" cy="13.5" r="1.5"/></svg></button>
+    </article>
 
-    <button class="zine" data-name="Coffee log" data-sub="A4 · 3 weeks ago">
-      <div class="cover ink-jam"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
-        <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 8h11v6a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/></svg>
-        <span class="stamp">A4</span></div>
-      <div><p class="name">Coffee log</p><p class="sub">3 weeks ago</p></div>
-    </button>
+    <article class="zine" data-name="Coffee log" data-sub="A4 · 3 weeks ago">
+      <button class="zine-open" aria-label="Coffee log">
+        <div class="cover ink-jam"><span class="tape"></span><div class="fill"></div><div class="spine"></div>
+          <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 8h11v6a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/></svg>
+          <span class="stamp">A4</span></div>
+        <div class="cap"><p class="name">Coffee log</p><p class="sub">3 weeks ago</p></div>
+      </button>
+      <button class="more" aria-label="Actions for Coffee log"><svg viewBox="0 0 3 15" aria-hidden="true" fill="currentColor"><circle cx="1.5" cy="1.5" r="1.5"/><circle cx="1.5" cy="7.5" r="1.5"/><circle cx="1.5" cy="13.5" r="1.5"/></svg></button>
+    </article>
   </div>
 
   <div class="empty">
@@ -462,10 +536,17 @@ document.querySelectorAll('.ctl[data-t]').forEach(b => b.onclick = () => {
 
 const scrim = document.getElementById('scrim'), sheet = document.getElementById('sheet');
 function close(){ scrim.classList.remove('show'); sheet.classList.remove('show'); }
-document.querySelectorAll('.zine').forEach(z => z.onclick = () => {
-  document.getElementById('shTtl').textContent = z.dataset.name;
-  document.getElementById('shSub').textContent = z.dataset.sub;
-  scrim.classList.add('show'); sheet.classList.add('show');
+// The sheet's real trigger is `.more`; `.zine-open` is wired to it too because this prototype has no
+// Bench to open, and a tile that does nothing when tapped would misrepresent the design. In the app
+// `.zine-open` opens the zine and only `.more` opens this sheet.
+document.querySelectorAll('.zine').forEach(z => {
+  const open = () => {
+    document.getElementById('shTtl').textContent = z.dataset.name;
+    document.getElementById('shSub').textContent = z.dataset.sub;
+    scrim.classList.add('show'); sheet.classList.add('show');
+  };
+  z.querySelector('.more').onclick = open;
+  z.querySelector('.zine-open').onclick = open;
 });
 scrim.onclick = close;
 document.querySelectorAll('.act').forEach(a => a.onclick = close);

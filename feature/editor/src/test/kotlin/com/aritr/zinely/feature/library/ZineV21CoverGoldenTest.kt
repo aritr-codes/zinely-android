@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.model.ZineCoverSurface
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Colors
 import com.github.takahirom.roborazzi.RoborazziOptions
@@ -87,23 +88,45 @@ class ZineV21CoverGoldenTest {
          * to get more label widths under test, while the class KDoc claimed the six could be read side
          * by side against the prototype. They could not.
          */
-        data class Cover(val fill: Color, val onFill: Color, val stamp: String, val mark: ImageVector)
-
-        fun frozen(c: ZinelyV21Colors) = listOf(
-            Cover(c.leaf, MarkOnInk, "A4", ZineV21CoverMarks.Booklet),
-            Cover(c.paper, c.inkSoft, "Letter", ZineV21CoverMarks.Envelope),
-            Cover(c.berry, MarkOnInk, "A4", ZineV21CoverMarks.Rings),
-            Cover(c.butterTint, c.inkSoft, "A4", ZineV21CoverMarks.Sprig),
-            Cover(c.butter, MarkOnInk, "Letter", ZineV21CoverMarks.Lines),
-            Cover(c.jam, MarkOnInk, "A4", ZineV21CoverMarks.Mug),
+        data class Cover(
+            val fill: Color,
+            val onFill: Color,
+            val borderInk: Color,
+            val stamp: String,
+            val mark: ImageVector,
         )
 
         /**
-         * `.cover .mark{color:rgba(255,246,232,.92)}` — hardcoded in the frozen file and theme-invariant,
-         * per V21-SPEC §4.1. `.paper-s`/`.paper-c` override it to `ink-soft`, which is why the table
-         * above carries the mark colour per surface rather than deriving it.
+         * **Resolved through the production mapping, not restated beside it.**
+         *
+         * This table used to write `c.paper` and `c.butterTint` itself, and that made it a second source
+         * of design truth. ADR-100 pinned the two paper stocks to their light values in
+         * `ZineCoverSurface.v21Fill`, and this raster — the one artifact whose whole job is to show the
+         * six stocks side by side — went on recording the old dark ones and passing its own comparison.
+         * Exactly the failure `ZineShelfGoldenFixture` was extracted to prevent, one file over.
+         *
+         * The surfaces are listed in the frozen file's own order with the frozen file's own stamp labels
+         * (`A4, Letter, A4, A4, Letter, A4`); everything about how they are *painted* now comes from the
+         * functions the shelf calls.
          */
-        val MarkOnInk = Color(0xEBFFF6E8)
+        val FrozenOrder = listOf(
+            ZineCoverSurface.MatchaInk to ("A4" to ZineV21CoverMarks.Booklet),
+            ZineCoverSurface.PaperStrawberryBand to ("Letter" to ZineV21CoverMarks.Envelope),
+            ZineCoverSurface.StrawberryInk to ("A4" to ZineV21CoverMarks.Rings),
+            ZineCoverSurface.PaperMatchaBand to ("A4" to ZineV21CoverMarks.Sprig),
+            ZineCoverSurface.OchreInk to ("Letter" to ZineV21CoverMarks.Lines),
+            ZineCoverSurface.TealInk to ("A4" to ZineV21CoverMarks.Mug),
+        )
+
+        fun frozen(c: ZinelyV21Colors) = FrozenOrder.map { (surface, label) ->
+            Cover(
+                fill = surface.v21Fill(c),
+                onFill = surface.v21MarkInk(c),
+                borderInk = surface.v21BorderInk(c),
+                stamp = label.first,
+                mark = label.second,
+            )
+        }
     }
 
     @Test
@@ -127,16 +150,17 @@ class ZineV21CoverGoldenTest {
                         .padding(GAP),
                 ) {
                     ZineV21Cover(
-                        fill = c.leaf,
+                        fill = ZineCoverSurface.MatchaInk.v21Fill(c),
                         stampLabel = "A4",
                         index = 0,
                         pressed = true,
+                        borderInk = ZineCoverSurface.MatchaInk.v21BorderInk(c),
                         modifier = Modifier.width(CELL),
                     ) { markModifier ->
                         Image(
                             imageVector = ZineV21CoverMarks.Booklet,
                             contentDescription = null,
-                            colorFilter = ColorFilter.tint(MarkOnInk),
+                            colorFilter = ColorFilter.tint(ZineCoverSurface.MatchaInk.v21MarkInk(c)),
                             modifier = markModifier.aspectRatio(1f),
                         )
                     }
@@ -173,6 +197,7 @@ class ZineV21CoverGoldenTest {
                                 fill = cover.fill,
                                 stampLabel = cover.stamp,
                                 index = rowIndex * PER_ROW + i,
+                                borderInk = cover.borderInk,
                                 modifier = Modifier.width(CELL),
                             ) { markModifier ->
                                 Image(

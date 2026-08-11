@@ -42,6 +42,7 @@ import com.aritr.zinely.core.model.ZineCoverStamp
 import com.aritr.zinely.core.model.ZineCoverSurface
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
@@ -79,16 +80,24 @@ class ZineShelfTest {
         const val SHELF = "shelf"
         const val HEADING = "Your shelf"
 
-        /** `.shelf{padding:30px 22px 152px}` and `gap:28px 20px`, as the numbers under test. */
-        const val PAD_TOP = 30
-        const val PAD_SIDE = 22
-        const val PAD_BOTTOM = 152
-        const val ROW_GAP = 28
-        const val COLUMN_GAP = 20
+        /**
+         * `.shelf{padding:var(--gap-xl) var(--gap-lg) 132px}` and `gap:var(--gap-xl) var(--gap-lg)` —
+         * 24 / 16 / 132 and 24 × 16, every one of them re-read from `v21-library.html` rather than
+         * nudged from V2's 30 / 22 / 152 and 28 × 20. The re-freeze routed this screen through the
+         * published spacing scale (§3.3), which is why five separate numbers all moved at once.
+         */
+        const val PAD_TOP = 24
+        const val PAD_SIDE = 16
+        const val PAD_BOTTOM = 132
+        const val ROW_GAP = 24
+        const val COLUMN_GAP = 16
         const val COLUMNS = 2
 
-        /** `.shelf-head{padding:2px 2px 0}`. */
-        const val HEAD_PAD = 2
+        /**
+         * `.cover .spine{left:6px}` against `border:1.5px` — the shade's own column, 7.5px from the
+         * cover's border-box left, so the pixel that carries it is the eighth.
+         */
+        const val SPINE_X = 8
 
         /**
          * Every geometry assertion's tolerance — **half a pixel, not one**.
@@ -97,7 +106,7 @@ class ZineShelfTest {
          * value one pixel off the frozen one — exactly the *"a number merely close to the frozen one is
          * the defect"* case this file exists to catch. Independent review proved it by setting the column
          * gap to **21dp** and watching the whole suite stay green. Density is pinned to `1.0` and every
-         * frozen value divides exactly at `w480dp` (columns land on whole pixels: `(480−44−20)/2 = 208`),
+         * frozen value divides exactly at `w480dp` (columns land on whole pixels: `(480−32−16)/2 = 216`),
          * so there is no rounding for a tolerance to absorb and half a pixel costs nothing.
          */
         const val HALF_PIXEL = 0.5f
@@ -107,7 +116,7 @@ class ZineShelfTest {
 
         /** Reference renderings of the heading, for the type assertions to measure against. */
         const val REF_FROZEN = "ref-frozen"
-        const val REF_HEAVY = "ref-weight-600"
+        const val REF_WRONG_WEIGHT = "ref-weight-500"
         const val REF_SMALL = "ref-16sp"
 
         /** The frozen shelf's own six, plus enough more to overflow a 960dp viewport. */
@@ -207,11 +216,12 @@ class ZineShelfTest {
         shelf(zines(2))
         val shelf = bounds(SHELF, byTag = true)
         val head = bounds(HEADING)
-        // 30px of shelf padding, then the heading cell's own 2px. Both are asserted through one edge
-        // because that is the one edge the design states; splitting them would assert an internal.
+        // The shelf's own top padding, and nothing else: V2's `.shelf-head{padding:2px 2px 0}` is gone,
+        // and the V2.1 head declares only `margin-bottom:var(--gap-hair)` — which is below the heading,
+        // not above it. So the two-term expectation collapses to one term rather than to a new number.
         assertEquals(
-            "the heading must open ${PAD_TOP + HEAD_PAD}px down",
-            (PAD_TOP + HEAD_PAD).toFloat(),
+            "the heading must open ${PAD_TOP}px down",
+            PAD_TOP.toFloat(),
             head.top - shelf.top,
             HALF_PIXEL,
         )
@@ -221,14 +231,20 @@ class ZineShelfTest {
     fun `the heading spans the shelf, so no cover stands beside it`() {
         shelf(zines(4))
         val shelf = bounds(SHELF, byTag = true)
-        val head = bounds(HEADING)
+        val head = bounds(ZineShelfHeadTestTag, byTag = true)
 
         // `grid-column:1 / -1` — two independent consequences, because either can fail alone. First: the
-        // cell really is the full line. A grid cell constrains its content to a fixed width, so the
-        // heading's own `Text` fills it, and a one-column heading would measure one column wide.
+        // cell really is the full line.
+        //
+        // **Read off the head row, not off the `<h1>`, and that is a change in instrument rather than in
+        // number.** V2's head held the heading alone, so the heading filled the cell and measuring it
+        // measured the span. V2.1 writes `display:flex;justify-content:space-between` with the count chip
+        // at the far end, so the `<h1>` is content-sized — 146px on a 432px line. Re-baselining 432 to
+        // 146 would have produced a green test that no longer distinguishes a spanning head from a
+        // one-column one, which is the whole claim.
         assertEquals(
             "the heading cell must span both columns",
-            (shelf.width - 2 * PAD_SIDE - 2 * HEAD_PAD),
+            (shelf.width - 2 * PAD_SIDE),
             head.width,
             HALF_PIXEL,
         )
@@ -342,41 +358,45 @@ class ZineShelfTest {
 
     @Test
     fun `the heading is set in the voice face at the frozen size and weight`() {
-        // **Why ink coverage and not the node's width.** A grid cell constrains its content to a fixed
-        // width, so the heading's `Text` fills its span whatever type is inside it — the placed bounds
-        // are 432px at 26sp Medium, at 16sp, and at any weight. Height alone would catch a wrong size and
-        // never a wrong weight, and weight is precisely what **D-005** ruled on. What does change is how
-        // much ink the glyphs lay down, so that is what is counted: the shelf's own heading against three
-        // reference renderings composed beside it on the same ground.
+        // **Why ink coverage and not the node's width.** The heading's `Text` is content-sized in V2.1's
+        // flex head, so its width tracks the type — but only loosely, and height alone would catch a
+        // wrong size and never a wrong weight. What changes measurably is how much ink the glyphs lay
+        // down, so that is what is counted: the shelf's own heading against three reference renderings
+        // composed beside it on the same ground.
+        //
+        // The frozen style is `.shelf-head h1{font-family:var(--voice);font-weight:700;font-size:2rem}` —
+        // **Averia 700 at 32px**, where V2 wrote Fraunces 500 at 25.92px. Face, weight and size all moved,
+        // so all three references are re-derived from the file rather than nudged, and the wrong-weight
+        // foil is now V2's own 500.
         shelfWithReferences(zines(2))
         val decor = decorRaster()
         val ink = capturedInk
         val threshold = (PROBE_GROUND.luminance() + ink.luminance()) / 2f
 
         val frozen = decor.inkCoverage(bounds(REF_FROZEN, byTag = true), threshold)
-        val heavier = decor.inkCoverage(bounds(REF_HEAVY, byTag = true), threshold)
+        val lighter = decor.inkCoverage(bounds(REF_WRONG_WEIGHT, byTag = true), threshold)
         val smaller = decor.inkCoverage(bounds(REF_SMALL, byTag = true), threshold)
         val heading = decor.inkCoverage(headingBounds(), threshold)
 
-        // The discriminating power is asserted BEFORE the parity claim. If this host cannot tell 25.92sp
-        // from 16sp, or Fraunces 500 from the file's stale 600, then the comparison below proves nothing
-        // and would pass over the very defect it exists to catch — the failure mode this file is written
-        // against. `> 3%` is the tolerance the last assertion allows, so anything inside it is not a
-        // difference this test could act on.
+        // The discriminating power is asserted BEFORE the parity claim. If this host cannot tell 32sp
+        // from 16sp, or 700 from V2's 500, then the comparison below proves nothing and would pass over
+        // the very defect it exists to catch — the failure mode this file is written against. `> 3%` is
+        // the tolerance the last assertion allows, so anything inside it is not a difference this test
+        // could act on.
         assertTrue("nothing was drawn at the frozen style (coverage $frozen)", frozen > 0)
         assertTrue(
-            "this host cannot distinguish Fraunces 500 from the file's stale 600 " +
-                "($frozen vs $heavier), so D-005 is unguarded here",
-            relativeGap(frozen, heavier) > 0.03f,
+            "this host cannot distinguish the frozen 700 from V2's 500 ($frozen vs $lighter), " +
+                "so the weight is unguarded here",
+            relativeGap(frozen, lighter) > 0.03f,
         )
         assertTrue(
-            "this host cannot distinguish the frozen 25.92sp from body 16sp ($frozen vs $smaller)",
+            "this host cannot distinguish the frozen 32sp from body 16sp ($frozen vs $smaller)",
             relativeGap(frozen, smaller) > 0.03f,
         )
 
         assertTrue(
-            "the heading must render at Fraunces 500 / 25.92sp — coverage $heading against " +
-                "$frozen frozen, $heavier at weight 600, $smaller at 16sp",
+            "the heading must render at Averia 700 / 32sp — coverage $heading against " +
+                "$frozen frozen, $lighter at weight 500, $smaller at 16sp",
             relativeGap(heading, frozen) <= 0.03f,
         )
     }
@@ -397,6 +417,33 @@ class ZineShelfTest {
             }
         }
         assertTrue("no pixel of the heading is $ink", hit)
+    }
+
+    @Test
+    fun `the count chip is a visible butter pill in LIGHT theme, where it used to be invisible`() {
+        // **ADR-100 §4's only guard, and it did not exist until a review pointed out that it didn't.**
+        //
+        // The chip's ground was `butterTint`, which is 1.01:1 against the light desk — not "low
+        // contrast", the same colour. The chip was simply absent in light theme, and the Compose layer
+        // was faithfully reproducing a frozen file nobody had looked at in daylight.
+        //
+        // Light theme deliberately: in dark, `butterTint` measured 1.33 and the defect was less visible
+        // to a reviewer, so a dark-theme assertion would have passed the broken build. **The test has to
+        // run in the theme the bug lived in.**
+        //
+        // And it has to be a raster probe rather than a golden. The goldens were re-recorded in the same
+        // pass that made this change, so a revert plus a re-record would have shipped green — which is
+        // this pass's own stated lesson about parity artifacts that own a copy of what they check.
+        shelf(zines(2))
+        val chip = pluralZineCount(2)
+        val box = bounds(chip)
+        val decor = decorRaster()
+        val butter = capturedButter
+
+        val hit = (box.top.roundToInt()..box.bottom.roundToInt()).any { y ->
+            (box.left.roundToInt()..box.right.roundToInt()).any { x -> decor.matches(x, y, butter) }
+        }
+        assertTrue("the count chip's ground is not $butter — it is invisible on the light desk", hit)
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -471,23 +518,27 @@ class ZineShelfTest {
             shelf.right - first.right,
             HALF_PIXEL,
         )
-        // The artifact does not mirror: the fold spine stays at the cover's physical left, which is what
-        // `ZineCoverRenderTest.a mirrored layout does not mirror the printed object` pins in detail. Here
-        // it is re-checked *inside the grid*, because a mirroring container could have flipped the cover
-        // even though the cover's own shape is absolute.
+        // The artifact does not mirror: the binding hairline stays at the cover's physical left. Checked
+        // *inside the grid*, because a mirroring container could flip the cover even though the cover's
+        // own shape is absolute.
+        //
+        // **The hairline changed sign as well as position, and both had to be re-derived.** V2 drew a
+        // white *highlight* 9px in; V2.1 writes `.cover .spine{left:6px;width:1px;
+        // background:rgba(0,0,0,.18)}` — a **shade**, and one that resolves against the padding box, so
+        // it sits 1.5px further in than the declaration reads (`*{box-sizing:border-box}` with
+        // `border:1.5px`). Re-baselining 9 to 6 while keeping `spine.luminance() > stock` would have been
+        // green on a cover with no spine at all, since any two stock samples satisfy neither ordering
+        // reliably.
         val decor = decorRaster()
         for (placed in listOf(first, second)) {
-            val spineX = placed.left.roundToInt() + 9
+            val spineX = placed.left.roundToInt() + SPINE_X
             val y = placed.center.y.roundToInt()
             val spine = decor.colourAt(spineX, y)
-            // Four pixels right of the crease is plain stock — the same pair of samples
-            // `ZineCoverRenderTest.the fold spine is a hairline highlight…` reads, so a cover flipped by
-            // its container puts stock at `spineX` and the highlight beyond the far edge.
-            val stock = decor.colourAt(spineX + 4, y)
+            val stock = decor.colourAt(spineX + 6, y)
             assertTrue(
-                "the crease must stay 9px from each cover's physical left inside a mirrored grid " +
-                    "(found $spine against stock $stock)",
-                spine.luminance() > stock.luminance(),
+                "the binding shade must stay ${SPINE_X}px from each cover's physical left inside a " +
+                    "mirrored grid (found $spine against stock $stock)",
+                spine.luminance() < stock.luminance(),
             )
         }
     }
@@ -529,9 +580,9 @@ class ZineShelfTest {
             Host(PROBE_GROUND) {
                 ZineShelf(zines, onOpen = {}, onActions = {}, modifier = shelfModifier())
                 Column(Modifier.align(Alignment.BottomStart)) {
-                    Reference(REF_FROZEN, FontWeight.Medium, 25.92.sp)
-                    Reference(REF_HEAVY, FontWeight.SemiBold, 25.92.sp)
-                    Reference(REF_SMALL, FontWeight.Medium, 16.sp)
+                    Reference(REF_FROZEN, FontWeight.Bold, 32.sp)
+                    Reference(REF_WRONG_WEIGHT, FontWeight.Medium, 32.sp)
+                    Reference(REF_SMALL, FontWeight.Bold, 16.sp)
                 }
             }
         }
@@ -544,11 +595,13 @@ class ZineShelfTest {
         Text(
             text = HEADING,
             style = TextStyle(
-                fontFamily = ZinelyTheme.v2Typography.voice,
+                fontFamily = ZinelyV21Fonts.Voice,
                 fontWeight = weight,
                 fontSize = size,
-                letterSpacing = (-0.01).em,
-                color = ZinelyTheme.v2Colors.ink,
+                // `.shelf-head h1{letter-spacing:-.005em}` — half V2's, and it is the reference's job to
+                // carry the production value so the coverage comparison isolates the one axis under test.
+                letterSpacing = (-0.005).em,
+                color = ZinelyTheme.v21Colors.ink,
             ),
             modifier = Modifier.testTag(tag),
         )
@@ -560,10 +613,19 @@ class ZineShelfTest {
     /** `--ink`, read out of the same composition the shelf drew in rather than re-derived here. */
     private var capturedInk: Color = Color.Unspecified
 
+    /**
+     * `--butter` — the count chip's ground since [ADR-100 §4](docs/DECISIONS.md#adr-100-butter-tint).
+     *
+     * [Host] composes light-only, which is the theme this token had to be read in: `butterTint` and the
+     * light desk are the same colour to three significant figures.
+     */
+    private var capturedButter: Color = Color.Unspecified
+
     @Composable
     private fun Host(ground: Color, content: @Composable BoxScope.() -> Unit) {
         ZinelyTheme(darkTheme = false) {
-            capturedInk = ZinelyTheme.v2Colors.ink
+            capturedInk = ZinelyTheme.v21Colors.ink
+            capturedButter = ZinelyTheme.v21Colors.butter
             Box(Modifier.fillMaxSize().background(ground)) { content() }
         }
     }

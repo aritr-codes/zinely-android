@@ -68,7 +68,7 @@ class ZineEmptyGoldenTest {
     private fun viewport(name: String, dark: Boolean) {
         composeRule.setContent { Desk(dark) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(TAG).captureRoboImage("$GOLDEN_DIR/v2_empty_$name.png", aa())
+        composeRule.onNodeWithTag(TAG).captureRoboImage("$GOLDEN_DIR/v21_empty_$name.png", aa())
     }
 
     @Composable

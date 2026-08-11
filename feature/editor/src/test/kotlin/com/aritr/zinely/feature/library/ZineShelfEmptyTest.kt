@@ -37,8 +37,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
-import com.aritr.zinely.ui.theme.ZinelyMakerInkId
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -77,66 +77,90 @@ class ZineShelfEmptyTest {
         const val HEADLINE = "Make your first little zine."
         const val BODY = "One sheet of paper becomes a little eight-page book you print and " +
             "fold yourself — we’ll show you each step."
-        const val PRIVACY = "Everything you make stays on your phone — no account, nothing uploaded."
+        const val PRIVACY = "Everything stays on your phone — no account, nothing uploaded."
         const val SHEET_CAPTION = "ONE SHEET"
         const val BOOK_CAPTION = "A LITTLE BOOK"
         const val ARROW = "→"
 
-        /** `.sheet-ill{width:92px;height:66px}` and `.book-ill{width:52px;height:68px}`. */
-        const val SHEET_W = 92
-        const val SHEET_H = 66
-        const val BOOK_W = 52
-        const val BOOK_H = 68
+        /** `.sheet-ill{width:94px;height:68px}` and `.book-ill{width:54px;height:70px}` — each 2px up
+         * on V2, which is small enough to be invisible and large enough to be a wrong transcription. */
+        const val SHEET_W = 94
+        const val SHEET_H = 68
+        const val BOOK_W = 54
+        const val BOOK_H = 70
 
-        /** `.sheet-ill .v{top:6px;bottom:6px}`, the folds at 33% · 50% · 67%, `.h{top:50%}`. */
-        const val RULE_INSET = 6
+        /** `.sheet-ill .v{top:7px;bottom:7px}`, the folds at 33% · 50% · 67%, `.h{top:50%}`. */
+        const val RULE_INSET = 7
         const val FIRST_FOLD = 0.33f
         const val SECOND_FOLD = 0.50f
         const val THIRD_FOLD = 0.67f
 
-        /** `.book-ill::after{right:-3px;top:4px;bottom:4px;width:3px}`. */
-        const val FORE_EDGE_W = 3
-        const val FORE_EDGE_INSET = 4
-
-        /** `.book-ill::before{left:5px}` — the crease. */
-        const val BOOK_CREASE_X = 5
+        /**
+          * `.book-ill::before{left:6px;background:rgba(255,255,255,.3)}` — the crease, which resolves
+          * against the **padding box**, so it stands `6 + 1.5` from the book's own left edge. V2 wrote 5
+          * and a dark hairline; V2.1 writes 6 and a white one, so both the column and the *sign* of the
+          * comparison had to be re-derived rather than nudged.
+          */
+        const val BOOK_CREASE_X = 8
 
         /** `.v2{background:repeating-linear-gradient(… 0 3px,transparent 3px 6px)}`. */
         const val DASH_LENGTH = 3
 
-        /** `.tf{gap:14px}`, `.tf .lbl{margin-top:9px}`, `.empty{gap:16px;padding:36px 40px 140px}`. */
-        const val TRANSFORM_GAP = 14
-        const val LABEL_MARGIN_TOP = 9
-        const val EMPTY_GAP = 16
-        const val EMPTY_PADDING_SIDE = 40
-
-        /** Narrower than the frozen 28ch measure, so the side padding becomes the binding constraint. */
-        const val NARROW_HOST = 200
-
-        /** `#7C8A3F` — `ZinelyMakerInkId.Matcha`, a content ink and therefore theme-invariant. */
-        val BOOK_FILL = Color(0xFF7C8A3F)
-
-        /** `.book-ill::after` stripes. */
-        val FORE_EDGE_LIGHT = Color(0xFFF1EBDA)
-        val FORE_EDGE_DARK = Color(0xFFE3D9C2)
+        /** How far `rotate(-2deg)` plus antialiasing walk a 1px rule off its nominal column. */
+        const val RULE_DRIFT = 2
 
         /**
-         * `--paper` in light, which is the stock the sheet's rules are read against, and `--matcha` in
-         * dark, which is what the book would be if it were drawn from chrome.
+         * `.sheet-ill{border:1.5px}` / `.book-ill{border:1.5px}`, rounded up to the pixel a probe can
+         * name. Every `left`/`top`/`%` inside either illustration resolves against the padding box, so
+         * this term appears in each of them.
+         */
+        const val ILL_BORDER = 2
+
+        /**
+          * `.tf{gap:var(--gap-lg)}`, `.tf .col{gap:var(--gap-sm)}`,
+          * `.empty{gap:var(--gap-md);padding:var(--gap-2xl) var(--gap-2xl) 150px}` — 16 / 8 / 12 / 36,
+          * where V2 wrote 14 / 9 / 16 / 40. The caption's own margin is now the **column's** gap rather
+          * than a margin on the label, which is why that name changed with its value.
+          */
+        const val TRANSFORM_GAP = 16
+        const val LABEL_MARGIN_TOP = 8
+        const val EMPTY_GAP = 12
+        const val EMPTY_PADDING_SIDE = 36
+
+        /** Narrower than the frozen 29ch measure, so the side padding becomes the binding constraint. */
+        const val NARROW_HOST = 200
+
+        /**
+         * `--leaf` — `#4E7A3C` light, `#8FAE6B` dark.
+         *
+         * V2's book was a **content** ink (`ZinelyMakerInkId.Matcha`, `#7C8A3F`) and did not flip; V2.1's
+         * is a chrome token and does. Both values are pinned so the change is visible in the diff and so
+         * a token that moves fails here rather than turning the fill assertions quietly inert.
+         */
+        val LIGHT_LEAF = Color(0xFF4E7A3C)
+        val DARK_LEAF = Color(0xFF8FAE6B)
+
+        /**
+         * `--paper` in light, which is the stock the sheet's rules are read against.
          *
          * Both are cross-checked against the live theme by their own test rather than trusted. A
          * hard-coded copy of a token is exactly how B3's tofu control became a false fact: it was right
          * when it was written, and nothing was watching it afterwards.
          */
-        val LIGHT_PAPER = Color(0xFFF7F2E7)
-        val DARK_CHROME_MATCHA = Color(0xFF93A257)
+        val LIGHT_PAPER = Color(0xFFFFF6E8)
 
         const val HALF_PIXEL = 0.5f
 
         val PROBE_GROUND = Color(0xFF00FF00)
 
-        /** The width the production headline is given: the host less the frozen 40px sides. */
-        const val HEADLINE_MEASURE = 400
+        /** `.empty p{font-size:.94rem;max-width:29ch}` and `.pv{font-size:.75rem}` — V2's were .95rem,
+         * 28ch and .76rem, so the yardsticks moved with the type they measure. */
+        val BODY_SIZE = 15.04.sp
+        val PRIVACY_SIZE = 12.sp
+        const val MEASURE_CHARACTERS = 29
+
+        /** The width the production headline is given: the host less the frozen 36px sides. */
+        const val HEADLINE_MEASURE = 408
 
         /** The headline at the frozen tracking and at a loose one, both at that width. */
         const val REF_TRACK_FROZEN = "ref-track-frozen"
@@ -144,15 +168,30 @@ class ZineShelfEmptyTest {
 
         /** Reference renderings of the headline, for the type assertion to measure against. */
         const val REF_FROZEN = "ref-frozen"
-        const val REF_HEAVY = "ref-weight-600"
+        const val REF_LIGHTER = "ref-weight-500"
         const val REF_SMALL = "ref-16sp"
-        const val REF_MEASURE = "ref-28ch"
+        const val REF_MEASURE = "ref-29ch"
 
-        /** `.tf .arrow{margin-bottom:18px}`. */
-        const val ARROW_MARGIN_BOTTOM = 18
+        /**
+         * `.empty h2{font-family:var(--voice);font-size:1.75rem;font-weight:700;line-height:1.12}` — 28px
+         * in Averia 700, where V2 wrote Fraunces 500 at 27.52px, and **no `letter-spacing` at all**: V2's
+         * `-.01em` is not in the V2.1 rule, so the frozen tracking is now `0`.
+         */
+        val HEADLINE_SIZE = 28.sp
+        val HEADLINE_LINE_HEIGHT = 31.36.sp
+        val FROZEN_TRACKING = 0.em
 
-        /** 28ch at `.pv`'s own type, which is a different number from 28ch at the paragraph's. */
-        const val REF_MEASURE_PV = "ref-28ch-pv"
+        /** `.tf .arrow{margin-bottom:var(--gap-lg)}` — 16, where V2 wrote 18. */
+        const val ARROW_MARGIN_BOTTOM = 16
+
+        /** The square the arrow is drawn into, since Pass 1 made it a `Canvas` rather than a glyph. */
+        const val ARROW_BOX = 24
+
+        /** `.empty{padding:… 150px}` — clearance for the dock, not padding. */
+        const val EMPTY_PADDING_BOTTOM = 150
+
+        /** 29ch at `.pv`'s own type, which is a different number from 29ch at the paragraph's. */
+        const val REF_MEASURE_PV = "ref-29ch-pv"
 
         /** The privacy line with and without the `line-height:1.55` it inherits from `.empty p`. */
         const val REF_PV_LEADED = "ref-pv-leaded"
@@ -173,7 +212,7 @@ class ZineShelfEmptyTest {
         composeRule.onNodeWithText(HEADLINE).assertIsDisplayed()
         composeRule.onNodeWithText(BODY).assertIsDisplayed()
         composeRule.onNodeWithText(PRIVACY).assertIsDisplayed()
-        composeRule.onNodeWithText(ARROW).assertIsDisplayed()
+        composeRule.onNodeWithTag(ZineArrowTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ZineSheetIllustrationTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ZineBookIllustrationTestTag).assertIsDisplayed()
     }
@@ -193,17 +232,17 @@ class ZineShelfEmptyTest {
     }
 
     @Test
-    fun `the headline is the voice face at the frozen size and D-005's weight`() {
-        // The technique [ZineShelfTest] established for `.shelf-head h1`, applied to the second selector
-        // the **D-005** ruling names: `.empty h2`'s frozen `font-weight:600` is stale, and it renders at
-        // Fraunces 500. Ink coverage rather than bounds, because a centred `Text` in a fixed-width column
-        // measures the same at any weight.
+    fun `the headline is the voice face at the frozen size and weight`() {
+        // The technique [ZineShelfTest] established for `.shelf-head h1`, applied to `.empty h2`:
+        // `font-family:var(--voice);font-size:1.75rem;font-weight:700` — **Averia 700 at 28px**, where V2
+        // wrote Fraunces 500 at 27.52px and D-005 had to rule on the file's stale 600. Ink coverage rather
+        // than bounds, because a centred `Text` in a fixed-width column measures the same at any weight.
         emptyWithReferences()
         val raster = decorRaster()
         val threshold = (PROBE_GROUND.luminance() + capturedInk.luminance()) / 2f
 
         val frozen = raster.inkCoverage(bounds(REF_FROZEN, byTag = true), threshold)
-        val heavier = raster.inkCoverage(bounds(REF_HEAVY, byTag = true), threshold)
+        val lighter = raster.inkCoverage(bounds(REF_LIGHTER, byTag = true), threshold)
         val smaller = raster.inkCoverage(bounds(REF_SMALL, byTag = true), threshold)
         // Found by its role, not its words: this host renders the same sentence three more times as
         // yardsticks, and `<h2>` is the one thing only the real headline carries.
@@ -213,17 +252,17 @@ class ZineShelfEmptyTest {
         // shipped assertions blind to the defect class their names claimed to gate.
         assertTrue("nothing was drawn at the frozen style (coverage $frozen)", frozen > 0)
         assertTrue(
-            "this host cannot tell Fraunces 500 from the file's stale 600 ($frozen vs $heavier), " +
-                "so D-005 is unguarded here",
-            relativeGap(frozen, heavier) > 0.03f,
+            "this host cannot tell the frozen 700 from V2's 500 ($frozen vs $lighter), " +
+                "so the weight is unguarded here",
+            relativeGap(frozen, lighter) > 0.03f,
         )
         assertTrue(
-            "this host cannot tell the frozen 27.52sp from body 16sp ($frozen vs $smaller)",
+            "this host cannot tell the frozen ${HEADLINE_SIZE} from body 16sp ($frozen vs $smaller)",
             relativeGap(frozen, smaller) > 0.03f,
         )
         assertTrue(
-            "the headline must render at Fraunces 500 / 27.52sp — coverage $headline against $frozen " +
-                "frozen, $heavier at weight 600, $smaller at 16sp",
+            "the headline must render at Averia 700 / ${HEADLINE_SIZE} — coverage $headline against " +
+                "$frozen frozen, $lighter at weight 500, $smaller at 16sp",
             relativeGap(headline, frozen) <= 0.03f,
         )
     }
@@ -271,7 +310,7 @@ class ZineShelfEmptyTest {
         // fraction of the screen would look identical at this width and be wrong at every other, and
         // wrong again under font scaling.
         assertTrue(
-            "the paragraph must not exceed 28ch (${paragraph.width} against $zeros)",
+            "the paragraph must not exceed ${MEASURE_CHARACTERS}ch (${paragraph.width} against $zeros)",
             paragraph.width <= zeros + HALF_PIXEL,
         )
         // And it must actually be *bound* by that measure rather than merely narrower than it — a
@@ -301,7 +340,7 @@ class ZineShelfEmptyTest {
         // break rather than the constraint, and SemiBold's zero is wider than Regular's, so `ch` does not
         // scale with size alone. The rendered width was never the right instrument.
         assertTrue(
-            "the privacy line must not exceed its own 28ch ($privacy.width against $ownMeasure)",
+            "the privacy line must not exceed its own ${MEASURE_CHARACTERS}ch ($privacy.width against $ownMeasure)",
             privacy.width <= ownMeasure + HALF_PIXEL,
         )
         assertTrue(
@@ -311,7 +350,8 @@ class ZineShelfEmptyTest {
         // The discrimination this rests on: the two measures are genuinely different numbers. If they were
         // not, applying the paragraph's measure to this line would pass the assertions above.
         assertTrue(
-            "28ch at 12.16sp SemiBold ($ownMeasure) must differ from 28ch at 15.2sp ($paragraphMeasure), " +
+            "${MEASURE_CHARACTERS}ch at $PRIVACY_SIZE SemiBold ($ownMeasure) must differ from " +
+                "${MEASURE_CHARACTERS}ch at $BODY_SIZE ($paragraphMeasure), " +
                 "or this test cannot see the line being measured in the wrong type",
             ownMeasure < paragraphMeasure * 0.95f,
         )
@@ -366,11 +406,11 @@ class ZineShelfEmptyTest {
         val first = raster.paintedRowsAlong(sheet, FIRST_FOLD)
         val second = raster.paintedRowsAlong(sheet, SECOND_FOLD)
         val third = raster.paintedRowsAlong(sheet, THIRD_FOLD)
-        val full = SHEET_H - 2 * RULE_INSET
+        val full = SHEET_H - 2 * ILL_BORDER - 2 * RULE_INSET
 
         // Three folds and a cut. Moving the dash to `.v1` or `.v3` draws a different set of folding
         // instructions for the same eight-page sheet, and looks entirely plausible — the illustration is
-        // 92px wide and nobody counts. So the *position* is asserted, not the existence of a dash.
+        // 94px wide and nobody counts. So the *position* is asserted, not the existence of a dash.
         assertTrue("the first fold must be a solid rule ($first of $full rows)", first >= full - 2)
         assertTrue("the third fold must be a solid rule ($third of $full rows)", third >= full - 2)
         assertTrue(
@@ -380,8 +420,8 @@ class ZineShelfEmptyTest {
 
         // A duty cycle alone does not describe a dash: `3px on / 3px off` and `8px on / 8px off` both paint
         // half the run, and the assertion above accepts either. The *period* is what the frozen repeating
-        // gradient states, so it is counted rather than inferred — a 54px run at a 6px period alternates
-        // nine times, and at a 16px period three or four.
+        // gradient states, so it is counted rather than inferred — a 50px run at a 6px period alternates
+        // eight times, and at a 16px period three or four.
         val runs = raster.paintedRunsAlong(sheet, SECOND_FOLD)
         val expected = full / (2 * DASH_LENGTH)
         assertEquals(
@@ -400,14 +440,22 @@ class ZineShelfEmptyTest {
         val raster = decorRaster()
         // A dashed rule is unpainted for half its run, so the row is found rather than assumed — a fixed
         // offset lands in a gap one time in two, which is how the first version of this failed.
-        val y = (sheet.top.roundToInt() + RULE_INSET until sheet.bottom.roundToInt() - RULE_INSET)
-            .first { raster.isPainted((sheet.left + SECOND_FOLD * SHEET_W).roundToInt(), it) }
+        //
+        // Routed through the same three helpers as its siblings. It used to carry its own border-box
+        // column (`left + .50 × 94`) and its own row range, which happen to agree with the padding-box
+        // arithmetic **at 50% only** — at any other fold the two differ and `.first {}` would throw
+        // rather than fail. A review caught it standing on the uncorrected geometry while green.
+        val nominal = foldColumn(sheet, SECOND_FOLD)
+        val y = ruleRun(sheet).first { raster.isPaintedNear(nominal, it) }
+        // The rotation walks the rule off `nominal`, so the *darkest* column in the window is the one
+        // carrying the mark; sampling `nominal` itself would read an antialiased neighbour and call a
+        // full-strength rule half-strength.
+        val x = (nominal - RULE_DRIFT..nominal + RULE_DRIFT).minBy { raster.colourAt(it, y).luminance() }
 
-        // `.v2{opacity:.5}` on `--ink-faint`. `isPainted` only asks "not the paper", so the alpha was
+        // `.v2{opacity:.55}` on `--ink-faint`. `isPainted` only asks "not the paper", so the alpha was
         // invisible to every assertion in this file — at 1.0 the cut line becomes the darkest mark on the
         // sheet, which inverts the drawing's own hierarchy: the cut would read as the strongest instruction
         // on a diagram about folding. Asserted against the token itself, which is what full strength *is*.
-        val x = (sheet.left + SECOND_FOLD * SHEET_W).roundToInt()
         val dash = raster.colourAt(x, y)
 
         assertTrue("the cut line must be painted at all (found $dash on paper $LIGHT_PAPER)", raster.isPainted(x, y))
@@ -427,21 +475,21 @@ class ZineShelfEmptyTest {
         empty()
         val sheet = bounds(ZineSheetIllustrationTestTag, byTag = true)
         val raster = decorRaster()
-        val x = (sheet.left + FIRST_FOLD * SHEET_W).roundToInt()
+        val x = foldColumn(sheet, FIRST_FOLD)
 
-        // `top:6px;bottom:6px`. A rule run edge to edge reads as a printed line rather than a fold guide,
-        // and the difference is six pixels at each end.
+        // `top:7px;bottom:7px`, against the **padding box** — so the rule starts `7 + 1.5` from the
+        // element's own top edge, and the probes carry that term rather than absorbing it into slack.
         assertFalse(
             "the rule must not reach the sheet's top edge",
-            raster.isPainted(x, sheet.top.roundToInt() + RULE_INSET - 3),
+            raster.isPaintedNear(x, sheet.top.roundToInt() + RULE_INSET - 3),
         )
         assertTrue(
-            "the rule must begin ${RULE_INSET}px down",
-            raster.isPainted(x, sheet.top.roundToInt() + RULE_INSET + 1),
+            "the rule must begin ${RULE_INSET}px down from its padding box",
+            raster.isPaintedNear(x, sheet.top.roundToInt() + RULE_INSET + ILL_BORDER + 1),
         )
         assertFalse(
             "and must not reach the bottom edge",
-            raster.isPainted(x, sheet.bottom.roundToInt() - RULE_INSET + 3),
+            raster.isPaintedNear(x, sheet.bottom.roundToInt() - RULE_INSET + 3),
         )
     }
 
@@ -453,7 +501,7 @@ class ZineShelfEmptyTest {
         // Sampled between the folds so only the horizontal rule can be responsible for the hit — at 20%
         // across, which is clear of all three verticals.
         val x = (sheet.left + 0.20f * SHEET_W).roundToInt()
-        val mid = (sheet.top + SECOND_FOLD * SHEET_H).roundToInt()
+        val mid = (sheet.top + ILL_BORDER + SECOND_FOLD * (SHEET_H - 2 * ILL_BORDER)).roundToInt()
 
         assertTrue("the horizontal rule must cross at half height", raster.isPainted(x, mid))
         assertFalse("and nowhere else on this column", raster.isPainted(x, mid - 8))
@@ -465,7 +513,7 @@ class ZineShelfEmptyTest {
     // ---------------------------------------------------------------------------------------------
 
     @Test
-    fun `the book is the frozen size, and its fore-edge hangs outside that`() {
+    fun `the book is the frozen size, and nothing hangs outside it`() {
         empty()
         val book = bounds(ZineBookIllustrationTestTag, byTag = true)
         val raster = decorRaster()
@@ -473,50 +521,47 @@ class ZineShelfEmptyTest {
         assertEquals("the book must be ${BOOK_W}px wide", BOOK_W.toFloat(), book.width, HALF_PIXEL)
         assertEquals("and ${BOOK_H}px tall", BOOK_H.toFloat(), book.height, HALF_PIXEL)
 
-        // `right:-3px` puts the stacked leaves *beyond* the element, so the layout stays 52px wide and the
-        // book stays optically centred under its caption. Drawn inside the bounds instead — the reading a
-        // clip would force — it would shift the book and swallow three pixels of its own cover.
+        // **V2's fore-edge is gone, and the assertions it carried are deleted rather than re-baselined.**
+        // V2 drew stacked leaves at `::after{right:-3px}`, outside the element, and two tests measured
+        // their inset, their stripes and where they stopped. The V2.1 `.book-ill` has one pseudo-element
+        // — the crease — and no leaves at all, so those numbers have nothing left to describe. What the
+        // deleted test was really guarding is kept: the book's own painted extent is its bounds.
         val y = book.center.y.roundToInt()
-        val outside = raster.colourAt(book.right.roundToInt() + 1, y)
         assertTrue(
-            "the fore-edge must be painted outside the book's own bounds (found $outside)",
-            outside.closeTo(FORE_EDGE_LIGHT) || outside.closeTo(FORE_EDGE_DARK),
+            "the book's fill must reach its own right edge",
+            raster.colourAt(book.right.roundToInt() - 3, y).closeTo(capturedLeaf),
         )
-        // Beyond the sliver is **not** clean ground: the book's own `0 10px 18px -10px` shadow tints the
-        // region, which is B3's lesson that a probe outside an object must assert *not the expected ink*
-        // rather than *bare ground*. A first draft demanded the ground here and failed on the shadow.
-        val beyond = raster.colourAt(book.right.roundToInt() + FORE_EDGE_W + 2, y)
         assertFalse(
-            "the fore-edge must stop after ${FORE_EDGE_W}px (found $beyond still on a stripe)",
-            beyond.closeTo(FORE_EDGE_LIGHT) || beyond.closeTo(FORE_EDGE_DARK),
+            "and nothing of the book may be painted beyond it",
+            raster.colourAt(book.right.roundToInt() + 3, y).closeTo(capturedLeaf),
         )
     }
 
     @Test
-    fun `the book is printed in the matcha maker ink`() {
+    fun `the book is printed in leaf, the theme's own green`() {
         empty(dark = false)
         val fill = bookFillPixel()
-        assertTrue("the book must print in $BOOK_FILL (found $fill)", fill.closeTo(BOOK_FILL))
-        // The literal is checked against the palette rather than trusted, so a change to the ink table
-        // cannot leave this file quietly asserting a colour the product no longer uses.
-        assertEquals("the constant above must still be the maker ink", capturedMatchaInk, BOOK_FILL)
+        assertTrue("the book must print in --leaf ($capturedLeaf, found $fill)", fill.closeTo(capturedLeaf))
+        assertEquals("and --leaf in light is the frozen #4E7A3C", LIGHT_LEAF, capturedLeaf)
     }
 
     @Test
-    fun `the book keeps its ink at night`() {
-        // `#7C8A3F` is `ZinelyMakerInkId.Matcha`, a **content** ink and not a chrome token — and content
-        // inks do not re-tint at night, because a printed object does not. Drawn from `v2Colors.matcha`
-        // instead the book would be #5E6B2F in light and #93A257 in dark, both plausible and both wrong.
-        // A separate test rather than a two-theme comparison inside one: the Compose rule accepts a single
-        // `setContent`, so the two readings are two tests pinned to the same constant.
+    fun `the book's green follows the theme, which is the reading that changed`() {
+        // **The claim here is the inverse of V2's, and it is not a re-baseline.** V2 drew this book in
+        // `ZinelyMakerInkId.Matcha` — a **content** ink, theme-invariant on the argument that a printed
+        // object does not re-tint at night — and this test existed to hold that. V2.1 writes
+        // `.book-ill{background:var(--leaf)}`, a chrome token with a dark value, so the illustration
+        // *does* flip: #4E7A3C by day, #8FAE6B by night.
+        //
+        // That is a real change of reading and worth saying rather than swapping a constant over: the
+        // book in the empty state is not a zine the user made, it is a diagram of what one becomes, so
+        // the corpus treats it as chrome. The covers on the shelf are the printed objects, and they still
+        // do not flip.
         empty(dark = true)
         val fill = bookFillPixel()
-        assertTrue("the book must still print in $BOOK_FILL at night (found $fill)", fill.closeTo(BOOK_FILL))
-        assertNotEquals(
-            "and must not be the chrome matcha, which is what would change",
-            DARK_CHROME_MATCHA,
-            fill,
-        )
+        assertTrue("the book must print in dark --leaf ($capturedLeaf, found $fill)", fill.closeTo(capturedLeaf))
+        assertEquals("and --leaf in dark is the frozen #8FAE6B", DARK_LEAF, capturedLeaf)
+        assertNotEquals("which is not the light value, or nothing here flipped", LIGHT_LEAF, capturedLeaf)
     }
 
     @Test
@@ -527,12 +572,13 @@ class ZineShelfEmptyTest {
         // rather than turning a dozen other assertions quietly inert.
         empty(dark = false)
         assertEquals("LIGHT_PAPER must still be --paper in light", capturedPaper, LIGHT_PAPER)
+        assertEquals("LIGHT_LEAF must still be --leaf in light", capturedLeaf, LIGHT_LEAF)
     }
 
     @Test
-    fun `the dark chrome matcha this file rules out is still the token it names`() {
+    fun `the dark leaf this file pins is still the token it names`() {
         empty(dark = true)
-        assertEquals("DARK_CHROME_MATCHA must still be --matcha in dark", capturedChromeMatcha, DARK_CHROME_MATCHA)
+        assertEquals("DARK_LEAF must still be --leaf in dark", capturedLeaf, DARK_LEAF)
     }
 
     @Test
@@ -549,60 +595,28 @@ class ZineShelfEmptyTest {
         val crease = raster.colourAt(book.left.roundToInt() + BOOK_CREASE_X, y)
         assertFalse(
             "the crease must lighten the ink at ${BOOK_CREASE_X}px in (found $crease, the plain fill)",
-            crease.closeTo(BOOK_FILL),
+            crease.closeTo(capturedLeaf),
         )
         assertTrue(
             "and it is a white highlight, so it must be lighter than the fill, not darker",
-            crease.luminance() > BOOK_FILL.luminance(),
+            crease.luminance() > capturedLeaf.luminance(),
         )
         // Discrimination: the fill either side must be untouched, or "lighter than the fill" would be
         // satisfied by a book drawn in the wrong colour altogether.
         assertTrue(
             "the fill must be plain two pixels further in",
-            raster.colourAt(book.left.roundToInt() + BOOK_CREASE_X + 2, y).closeTo(BOOK_FILL),
+            raster.colourAt(book.left.roundToInt() + BOOK_CREASE_X + 3, y).closeTo(capturedLeaf),
         )
         assertTrue(
             "and plain two pixels outside it",
-            raster.colourAt(book.left.roundToInt() + BOOK_CREASE_X - 2, y).closeTo(BOOK_FILL),
+            raster.colourAt(book.left.roundToInt() + BOOK_CREASE_X - 3, y).closeTo(capturedLeaf),
         )
     }
 
-    @Test
-    fun `the fore-edge is inset from the book's top and bottom and stacks two stripe colours`() {
-        empty()
-        val book = bounds(ZineBookIllustrationTestTag, byTag = true)
-        val raster = decorRaster()
-        val x = book.right.roundToInt() + 1
-
-        // `::after{top:4px;bottom:4px}` — the leaves stop short of the cover at both ends, which is what
-        // makes them read as pages inside a binding rather than as a stripe down the whole edge.
-        assertFalse(
-            "the fore-edge must not reach the book's top edge",
-            raster.colourAt(x, book.top.roundToInt() + 1).isForeEdge(),
-        )
-        assertTrue(
-            "it must begin ${FORE_EDGE_INSET}px down",
-            raster.colourAt(x, book.top.roundToInt() + FORE_EDGE_INSET + 1).isForeEdge(),
-        )
-        assertFalse(
-            "and must stop ${FORE_EDGE_INSET}px above the bottom",
-            raster.colourAt(x, book.bottom.roundToInt() - 1).isForeEdge(),
-        )
-
-        // `repeating-linear-gradient(90deg,#F1EBDA,#F1EBDA 1px,#E3D9C2 1px,#E3D9C2 2px)` — two colours, not
-        // one. The existing size assertion reads `light OR dark`, so a fore-edge painted entirely in either
-        // colour passes it; stacked leaves that do not alternate are a flat tab.
-        val y = book.center.y.roundToInt()
-        val stripes = (0 until FORE_EDGE_W).map { raster.colourAt(book.right.roundToInt() + it, y) }
-        assertTrue(
-            "the leaves must include the light stripe (found $stripes)",
-            stripes.any { it.closeTo(FORE_EDGE_LIGHT) },
-        )
-        assertTrue(
-            "and the dark one, or they are not stacked leaves at all (found $stripes)",
-            stripes.any { it.closeTo(FORE_EDGE_DARK) },
-        )
-    }
+    // The fore-edge's own test stood here. `.book-ill` has no `::after` in V2.1 — the stacked leaves are
+    // not in the frozen file — so the test is deleted rather than re-baselined onto pixels that no longer
+    // exist. What it shared with the size test (nothing of the book is painted outside its bounds) moved
+    // there.
 
     @Test
     fun `the illustrations are flat stock below API 29`() {
@@ -664,17 +678,17 @@ class ZineShelfEmptyTest {
         val bottom = bounds(PRIVACY)
         val contentCentre = (top.top + bottom.bottom) / 2f
 
-        // `padding:36px 40px 140px` against `justify-content:center` centres the content in the space
-        // *above* the dock. Trim the 140 and the copy sits under the button; the frozen number is five
-        // times the others precisely because it is not padding, it is clearance.
+        // `padding:var(--gap-2xl) var(--gap-2xl) 150px` against `justify-content:center` centres the
+        // content in the space *above* the dock. Trim the 150 and the copy sits under the button; the
+        // frozen number is four times the others precisely because it is not padding, it is clearance.
         assertTrue(
             "the content must sit above the host's own centre ($contentCentre against ${host.center.y})",
             contentCentre < host.center.y,
         )
-        // Specifically, by half the difference between the top and bottom paddings: (140 − 36) / 2 = 52.
+        // Specifically, by half the difference between the top and bottom paddings: (150 − 36) / 2 = 57.
         assertEquals(
             "the content must be lifted by half the padding difference",
-            52f,
+            (EMPTY_PADDING_BOTTOM - EMPTY_PADDING_SIDE) / 2f,
             host.center.y - contentCentre,
             2f,
         )
@@ -684,7 +698,7 @@ class ZineShelfEmptyTest {
     fun `the frozen gaps hold the row, the column and the captions apart`() {
         empty()
         val sheet = bounds(ZineSheetIllustrationTestTag, byTag = true)
-        val arrow = bounds(ARROW)
+        val arrow = bounds(ZineArrowTestTag, byTag = true)
         val caption = bounds(SHEET_CAPTION)
         val headline = headlineBounds()
         val paragraph = bounds(BODY)
@@ -726,7 +740,8 @@ class ZineShelfEmptyTest {
 
     @Test
     fun `the side padding binds the paragraph when the screen is narrower than its measure`() {
-        // `.empty{padding:36px 40px 140px}` — the sides are unobservable at any width the 28ch measure fits
+        // `.empty{padding:var(--gap-2xl) var(--gap-2xl) 150px}` — the sides are unobservable at any width the
+        // 29ch measure fits
         // in, and the vertical pair is unobservable *at all* under `justify-content:center`, which centres
         // in the box the two of them leave: only their difference reaches the layout, and the existing
         // centring test pins exactly that. Narrowing the host until the padding binds is what makes the 40
@@ -752,7 +767,7 @@ class ZineShelfEmptyTest {
         )
         // The discrimination: the padding only binds because the frozen measure is wider than what is left.
         assertTrue(
-            "the host must be narrower than the 28ch measure, or the padding never binds",
+            "the host must be narrower than the ${MEASURE_CHARACTERS}ch measure, or the padding never binds",
             paragraph.width <= NARROW_HOST - 2 * EMPTY_PADDING_SIDE + HALF_PIXEL,
         )
     }
@@ -760,7 +775,7 @@ class ZineShelfEmptyTest {
     @Test
     fun `the arrow rides half its own margin above the row, not all of it`() {
         empty()
-        val arrow = bounds(ARROW)
+        val arrow = bounds(ZineArrowTestTag, byTag = true)
         val book = bounds(ZineBookIllustrationTestTag, byTag = true)
         val caption = bounds(BOOK_CAPTION)
 
@@ -771,16 +786,29 @@ class ZineShelfEmptyTest {
         // centred on, and reported the arrow 2.5px on the wrong side of it.
         val rowCentre = (book.top + caption.bottom) / 2f
 
-        // `.arrow{margin-bottom:18px}` lifts the glyph by **half** the margin, because it is the box that
-        // is centred and the glyph sits at its top. `Modifier.offset(y = -18.dp)` would move it the full
-        // 18 and be wrong by exactly a factor of two — the sort of miss a screenshot ratifies. Compose
-        // reports a padded `Text`'s semantics bounds *inside* its padding, which is why this is asserted
-        // as a displacement from the row rather than as a taller box.
+        // `.arrow{margin-bottom:var(--gap-lg)}` lifts the mark by **half** the margin, because it is the
+        // margin box that is centred and the mark sits at its top. `Modifier.offset(y = -16.dp)` would
+        // move it the full 16 and be wrong by exactly a factor of two — the sort of miss a screenshot
+        // ratifies.
+        //
+        // **Measured through the margin box, because the arrow is a `Canvas` now.** Device Pass 1 turned
+        // the typed `→` into a drawn path, and the tag sits outside the padding, so `arrow.center.y` is
+        // the *margin box's* centre — which is the row's centre, exactly as `align-items:center` says. The
+        // lift is then the box's own asymmetry, so it is asserted as such: the drawn square is at the top
+        // of a box that is `ArrowBox + margin` tall. A test that kept reading `arrow.center.y` as the
+        // mark's centre would have measured the centring and called it the lift.
         assertEquals(
-            "the arrow must ride ${ARROW_MARGIN_BOTTOM / 2}px above the row's centre line",
-            rowCentre - ARROW_MARGIN_BOTTOM / 2f,
+            "the arrow's margin box must be centred on the row",
+            rowCentre,
             arrow.center.y,
             1.5f,
+        )
+        assertEquals(
+            "and it must carry the ${ARROW_MARGIN_BOTTOM}px margin below the mark, which is what " +
+                "lifts the mark ${ARROW_MARGIN_BOTTOM / 2}px above that line",
+            (ARROW_BOX + ARROW_MARGIN_BOTTOM).toFloat(),
+            arrow.height,
+            HALF_PIXEL,
         )
     }
 
@@ -799,16 +827,16 @@ class ZineShelfEmptyTest {
             Host {
                 ZineShelfEmpty()
                 Column(Modifier.align(Alignment.BottomStart)) {
-                    Reference(REF_FROZEN, FontWeight.Medium, 27.52.sp)
-                    Reference(REF_HEAVY, FontWeight.SemiBold, 27.52.sp)
-                    Reference(REF_SMALL, FontWeight.Medium, 16.sp)
+                    Reference(REF_FROZEN, FontWeight.Bold, HEADLINE_SIZE)
+                    Reference(REF_LIGHTER, FontWeight.Medium, HEADLINE_SIZE)
+                    Reference(REF_SMALL, FontWeight.Bold, 16.sp)
                 }
                 // The tracking pair, held to the **same width the production headline gets** — the host
-                // less the frozen 40px sides. Tracking only reaches the layout through wrapping, so a
+                // less the frozen ${EMPTY_PADDING_SIDE}px sides. Tracking only reaches the layout through wrapping, so a
                 // reference measured unconstrained would render one line at any tracking and prove nothing.
                 Column(Modifier.align(Alignment.TopEnd).width(HEADLINE_MEASURE.dp)) {
-                    Reference(REF_TRACK_FROZEN, FontWeight.Medium, 27.52.sp, (-0.01).em)
-                    Reference(REF_TRACK_LOOSE, FontWeight.Medium, 27.52.sp, 0.05.em)
+                    Reference(REF_TRACK_FROZEN, FontWeight.Bold, HEADLINE_SIZE, FROZEN_TRACKING)
+                    Reference(REF_TRACK_LOOSE, FontWeight.Bold, HEADLINE_SIZE, 0.05.em)
                 }
             }
         }
@@ -826,24 +854,24 @@ class ZineShelfEmptyTest {
             Host {
                 ZineShelfEmpty()
                 Text(
-                    text = "0".repeat(28),
+                    text = "0".repeat(MEASURE_CHARACTERS),
                     style = TextStyle(
-                        fontFamily = ZinelyTheme.v2Typography.work,
-                        fontSize = 15.2.sp,
+                        fontFamily = ZinelyV21Fonts.Work,
+                        fontSize = BODY_SIZE,
                         lineHeight = 1.55.em,
                     ),
                     softWrap = false,
                     modifier = Modifier.testTag(REF_MEASURE).align(Alignment.TopStart),
                 )
-                // The same count at `.pv`'s own type — 28ch is relative to the element, not to the rule.
+                // The same count at `.pv`'s own type — the measure is relative to the element, not to the rule.
                 val pvStyle = TextStyle(
-                    fontFamily = ZinelyTheme.v2Typography.work,
+                    fontFamily = ZinelyV21Fonts.Work,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.16.sp,
+                    fontSize = PRIVACY_SIZE,
                     lineHeight = 1.55.em,
                 )
                 Text(
-                    text = "0".repeat(28),
+                    text = "0".repeat(MEASURE_CHARACTERS),
                     style = pvStyle,
                     softWrap = false,
                     modifier = Modifier.testTag(REF_MEASURE_PV).align(Alignment.TopEnd),
@@ -856,7 +884,7 @@ class ZineShelfEmptyTest {
                 // `the privacy line is measured in its own characters`.
                 val measurer = rememberTextMeasurer()
                 val pvMeasure = with(LocalDensity.current) {
-                    measurer.measure("0".repeat(28), pvStyle, softWrap = false).size.width.toDp()
+                    measurer.measure("0".repeat(MEASURE_CHARACTERS), pvStyle, softWrap = false).size.width.toDp()
                 }
                 Text(
                     text = PRIVACY,
@@ -886,35 +914,36 @@ class ZineShelfEmptyTest {
         tag: String,
         weight: FontWeight,
         size: TextUnit,
-        tracking: TextUnit = (-0.01).em,
+        tracking: TextUnit = FROZEN_TRACKING,
     ) {
         Text(
             text = HEADLINE,
             style = TextStyle(
-                fontFamily = ZinelyTheme.v2Typography.voice,
+                fontFamily = ZinelyV21Fonts.Voice,
                 fontWeight = weight,
                 fontSize = size,
                 letterSpacing = tracking,
-                color = ZinelyTheme.v2Colors.ink,
+                lineHeight = HEADLINE_LINE_HEIGHT,
+                color = ZinelyTheme.v21Colors.ink,
             ),
             modifier = Modifier.testTag(tag),
         )
     }
 
     private var capturedInk: Color = Color.Unspecified
-    private var capturedMatchaInk: Color = Color.Unspecified
+    private var capturedLeaf: Color = Color.Unspecified
     private var capturedPaper: Color = Color.Unspecified
-    private var capturedChromeMatcha: Color = Color.Unspecified
+    private var capturedInkSoft: Color = Color.Unspecified
     private var capturedInkFaint: Color = Color.Unspecified
 
     @Composable
     private fun Host(dark: Boolean = false, content: @Composable BoxScope.() -> Unit) {
         ZinelyTheme(darkTheme = dark) {
-            capturedInk = ZinelyTheme.v2Colors.ink
-            capturedMatchaInk = ZinelyTheme.contentInks[ZinelyMakerInkId.Matcha].value
-            capturedPaper = ZinelyTheme.v2Colors.paper
-            capturedChromeMatcha = ZinelyTheme.v2Colors.matcha
-            capturedInkFaint = ZinelyTheme.v2Colors.inkFaint
+            capturedInk = ZinelyTheme.v21Colors.ink
+            capturedLeaf = ZinelyTheme.v21Colors.leaf
+            capturedPaper = ZinelyTheme.v21Colors.paper
+            capturedInkSoft = ZinelyTheme.v21Colors.inkSoft
+            capturedInkFaint = ZinelyTheme.v21Colors.inkFaint
             Box(Modifier.fillMaxSize().background(PROBE_GROUND)) { content() }
         }
     }
@@ -926,9 +955,6 @@ class ZineShelfEmptyTest {
         return raster.colourAt(book.center.x.roundToInt(), book.center.y.roundToInt())
     }
 
-    /** Whether a pixel is one of the fore-edge's two stripe colours. */
-    private fun Color.isForeEdge(): Boolean = closeTo(FORE_EDGE_LIGHT) || closeTo(FORE_EDGE_DARK)
-
     /**
      * How many painted runs the rule at [fraction] breaks into — the dash's *period*, not its duty cycle.
      *
@@ -936,11 +962,11 @@ class ZineShelfEmptyTest {
      * fraction of the column and alternates three. The duty-cycle assertion cannot tell them apart.
      */
     private fun Bitmap.paintedRunsAlong(sheet: Rect, fraction: Float): Int {
-        val x = (sheet.left + fraction * SHEET_W).roundToInt()
+        val x = foldColumn(sheet, fraction)
         var runs = 0
         var wasPainted = false
-        for (y in sheet.top.roundToInt() + RULE_INSET until sheet.bottom.roundToInt() - RULE_INSET) {
-            val painted = isPainted(x, y)
+        for (y in ruleRun(sheet)) {
+            val painted = isPaintedNear(x, y)
             if (painted && !wasPainted) runs++
             wasPainted = painted
         }
@@ -948,11 +974,40 @@ class ZineShelfEmptyTest {
     }
 
     /** How many rows of the rule at [fraction] across the sheet are painted at all. */
-    private fun Bitmap.paintedRowsAlong(sheet: Rect, fraction: Float): Int {
-        val x = (sheet.left + fraction * SHEET_W).roundToInt()
-        return (sheet.top.roundToInt() + RULE_INSET until sheet.bottom.roundToInt() - RULE_INSET)
-            .count { isPainted(x, it) }
-    }
+    private fun Bitmap.paintedRowsAlong(sheet: Rect, fraction: Float): Int =
+        ruleRun(sheet).count { isPaintedNear(foldColumn(sheet, fraction), it) }
+
+    /**
+     * The rows a `.v` rule actually occupies: `top:7px;bottom:7px` **against the padding box**, so the run
+     * is inset by the 1.5px border at both ends as well. 68 − 2×2 − 2×7 = 50 rows, not the 54 an
+     * arithmetic on the border box gives.
+     */
+    private fun ruleRun(sheet: Rect): IntRange =
+        (sheet.top.roundToInt() + ILL_BORDER + RULE_INSET) until (sheet.bottom.roundToInt() - ILL_BORDER - RULE_INSET)
+
+    /**
+     * The pixel column a fold rule falls on — resolved against the **padding box**.
+     *
+     * `.sheet-ill i{position:absolute}` percentages resolve against the padding box, which
+     * `*{box-sizing:border-box}` insets by the 1.5px border, so `left:33%` is `1.5 + .33 × (94 − 3)` =
+     * 31.5px from the element's own left.
+     */
+    private fun foldColumn(sheet: Rect, fraction: Float): Int =
+        (sheet.left + ILL_BORDER + fraction * (SHEET_W - 2 * ILL_BORDER)).roundToInt()
+
+    /**
+     * Whether the rule is painted on row [y] — searched across [RULE_DRIFT] columns either side of [x]
+     * rather than on [x] alone.
+     *
+     * **The sheet is rotated, so a "vertical" rule is not in one column.** `.sheet-ill{transform:
+     * rotate(-2deg)}` walks a 50px rule about `50 × tan 2° ≈ 1.8px` across, and a 1px line on a
+     * fractional column is antialiased over two more. A single-column probe therefore reads a *solid*
+     * rule as 39 painted rows of 50 and calls the drawing broken — which is exactly what it did before
+     * the rotation was accounted for. The window follows the mark; it does not loosen the claim, because
+     * the dash's gaps run the full width of the rule and remain gaps at every column in the window.
+     */
+    private fun Bitmap.isPaintedNear(x: Int, y: Int): Boolean =
+        (x - RULE_DRIFT..x + RULE_DRIFT).any { isPainted(it, y) }
 
     /**
      * Whether a pixel carries a rule rather than the sheet's own stock.

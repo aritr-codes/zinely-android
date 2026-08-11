@@ -96,6 +96,17 @@ internal fun zineShelfCoverTestTag(index: Int): String = "shelf-cover-$index"
 internal const val ZineShelfPlaceholderTestTag: String = "shelf-placeholder"
 
 /**
+ * `.shelf-head` — the whole head **row**, not the `<h1>` inside it.
+ *
+ * The distinction is the reason this tag exists. `grid-column:1/-1` is a claim about the row, and in V2
+ * the row's only child was the heading, so measuring the heading measured the span. V2.1's head is
+ * `display:flex;justify-content:space-between` with the count chip on the other end, so the `<h1>` is
+ * now content-sized: it measures ~146px on a 432px line, and a test that reads it can no longer tell a
+ * spanning head from a one-column one.
+ */
+internal const val ZineShelfHeadTestTag: String = "shelf-head"
+
+/**
  * The frozen Library's shelf — `v2-library.html:46-49`, `:147-155`.
  *
  * ```
@@ -222,8 +233,11 @@ internal fun ZineShelf(
 
         // `.ph` — the loading placeholders, which the amended freeze puts INSIDE this grid, after the
         // heading, as ordinary cells (`:184`). They are cells rather than a separate skeleton screen for
-        // the reason the amendment states: *"the heading stays up, so the screen does not restructure
-        // when the data lands"*. See [ZineLibraryScreen] for why they are never shown beside real zines.
+        // the reason the amendment states: *the head's cell stays up, so the screen does not restructure
+        // when the data lands*. The **cell**, not the heading — `visibility:hidden` keeps the space and
+        // drops the text, which is what the block above transcribes; an earlier version of this line
+        // quoted the amendment as "the heading stays up" and so read as the opposite of what ships.
+        // See [ZineLibraryScreen] for why they are never shown beside real zines.
         items(placeholders) { ShelfPlaceholder() }
 
         // No `key`: position is the identity a list that cannot reorder actually has. B5 supplies the
@@ -272,7 +286,10 @@ internal fun ZineShelf(
 private fun ShelfHeading(count: Int, modifier: Modifier = Modifier) {
     val colors = ZinelyTheme.v21Colors
     Row(
-        modifier.fillMaxWidth().padding(bottom = ZinelyV21Dimens.gapHair),
+        modifier
+            .testTag(ZineShelfHeadTestTag)
+            .fillMaxWidth()
+            .padding(bottom = ZinelyV21Dimens.gapHair),
         horizontalArrangement = Arrangement.SpaceBetween,
         // `align-items:flex-end` — the count's baseline sits with the swipe, not with the cap height.
         verticalAlignment = Alignment.Bottom,
@@ -316,11 +333,30 @@ private fun ShelfHeading(count: Int, modifier: Modifier = Modifier) {
                 // `body{line-height:1.55}`, inherited — `.count` declares none. See
                 // [ZinelyV21Fonts.InheritedLineHeight].
                 lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                color = colors.inkSoft,
+                // **`on-butter` on `butter`, where the freeze wrote `ink-soft` on `butter-tint`** —
+                // ADR-100. See the ground below for the defect; the label follows it because
+                // `ink-soft` on `butter` is 3.56:1 and would fail where it used to pass.
+                color = colors.onButter,
             ),
             modifier = Modifier
                 .graphicsLayer { rotationZ = CountRotation }
-                .background(colors.butterTint, RoundedCornerShape(ZinelyV21Dimens.radiusPill))
+                // `.count{background:var(--butter-tint)}` — **amended to `--butter`, ADR-100.**
+                //
+                // In light, `butter-tint #FDEBC4` on `desk #FBE9CE` measures **1.01:1**. Not "subtle":
+                // the same colour. The chip does not exist in the light theme — "6 zines" renders as
+                // bare text — while in dark it measures 1.33 and is faintly there, so the one element
+                // that tells you how much work you have looks like two different designs depending on
+                // the time of day. Nothing in the freeze intends that; the two tokens simply collide on
+                // the warm cream desk V2.1 introduced, and `butter-tint` was chosen against the older,
+                // near-white one.
+                //
+                // `--butter` is the palette's own answer: *"highlight / tape / stamp — punctuation,
+                // never action"*. A count is punctuation, and this is the third butter mark on the
+                // screen after the heading's swipe and every cover's tape, so the shelf gains a rhyme
+                // rather than a new colour. 1.56:1 against the desk as a ground, with a 7.89:1 label on
+                // it — the pill is unmistakably there in both themes now, and it still is not an action,
+                // because §3.2 reserves that reading for leaf.
+                .background(colors.butter, RoundedCornerShape(ZinelyV21Dimens.radiusPill))
                 .padding(
                     horizontal = ZinelyV21Dimens.gapMd,
                     vertical = ZinelyV21Dimens.gapXs,

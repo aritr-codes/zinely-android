@@ -114,6 +114,23 @@ public data class ZinelyV21Colors(
     /** `--butter-tint` — a caution ground. */
     val butterTint: Color,
 
+    /**
+     * `--on-butter` — the label on a [butter] fill. ★ AA-critical on [butter].
+     *
+     * **Added 2026-08-11 (ADR-100), and it is dark in *both* themes**, which is why it could not be
+     * inferred from [onLeaf]. `butter` is a bright yellow at `#F6B22C` light and `#E8B458` dark — the one
+     * hue the palette does not darken for the dark theme, because tape and stamps have to stay bright on
+     * a dark desk. A cream label mirroring [onLeaf] would measure 1.6:1 on it. Dark ink measures **7.89**
+     * and **9.15**.
+     *
+     * The dark figure read `9.99` here for one day, and it is worth recording why that survived: this
+     * class's KDoc says [ZinelyV21ContrastTest] pins every ratio, so a wrong number *should* have failed
+     * the build — but the pairing was never added to that file, and an unpinned number cannot be
+     * contradicted by anything. It is pinned now. **A token documented as AA-critical and absent from the
+     * contrast suite is the one shape of drift this palette has no defence against.**
+     */
+    val onButter: Color,
+
     // ----- consequence -------------------------------------------------------------------------
     /** `--jam` — the only urgent colour, **as fill and line**: delete, the cut line, error blocks. */
     val jam: Color,
@@ -155,6 +172,7 @@ public fun zinelyV21LightColors(): ZinelyV21Colors = ZinelyV21Colors(
     berryTint = Color(0xFFF8DCE2),
     butter = Color(0xFFF6B22C),
     butterTint = Color(0xFFFDEBC4),
+    onButter = Color(0xFF33261C),
     jam = Color(0xFFCF4A28),
     jamText = Color(0xFFA63B20),
     onJam = Color(0xFFFFF6E8),
@@ -190,6 +208,7 @@ public fun zinelyV21DarkColors(): ZinelyV21Colors = ZinelyV21Colors(
     berryTint = Color(0xFF3A2A2D),
     butter = Color(0xFFE8B458),
     butterTint = Color(0xFF3E3320),
+    onButter = Color(0xFF1E1A15),
     jam = Color(0xFFE0755A),
     jamText = Color(0xFFE4856D),
     onJam = Color(0xFF1E1A15),

@@ -74,7 +74,7 @@ class ZineLibraryGoldenTest {
     private fun viewport(name: String, state: LibraryShelfState, dark: Boolean) {
         composeRule.setContent { Screen(state, dark) }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(VIEWPORT).captureRoboImage("$GOLDEN_DIR/v2_library_$name.png", aa())
+        composeRule.onNodeWithTag(VIEWPORT).captureRoboImage("$GOLDEN_DIR/v21_library_$name.png", aa())
     }
 
     @Composable

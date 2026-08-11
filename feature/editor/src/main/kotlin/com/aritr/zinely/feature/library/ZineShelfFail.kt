@@ -199,10 +199,17 @@ private fun FailMark() {
                 fontSize = MarkSize2,
                 // `.fail .mk` declares no `line-height` — inherited, as everywhere else.
                 lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                // `color:var(--jam)` as TEXT, which is what `jamText` exists for: plain `jam` on paper
-                // measures 4.20:1 light / 4.55:1 dark, and V21-SPEC §5 ruled the text case onto the
-                // darker token. The border above keeps `jam`, because a rule is not text.
-                color = colors.jamText,
+                // `color:var(--jam)` — and **`jam`, not `jamText`**, which is the one place in the corpus
+                // where that is true. §4.1's row 2 moves jam-as-text onto `jamText` everywhere *except*
+                // here, and V21-SPEC:367 names the exception by file and selector: *"`jam` on `paper` at
+                // 4.20 survives in one place, `v21-library.html .fail .mk` at 28.8 px bold — large text,
+                // which needs 3:1. Kept deliberately: at display size the consequence colour should be
+                // the bright one."*
+                //
+                // This read `jamText` until the parity review measured it: the `!` came out a darker,
+                // browner red than the ring enclosing it, so one 60dp object was painted in two reds —
+                // and a comment here claimed a §5 ruling that says the opposite of what §4.1 wrote.
+                color = colors.jam,
             ),
         )
     }

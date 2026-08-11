@@ -1,98 +1,231 @@
 package com.aritr.zinely.feature.library
 
 import androidx.compose.ui.graphics.Color
-import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.core.model.ZineCoverStamp
 import com.aritr.zinely.core.model.ZineCoverSurface
-import com.aritr.zinely.ui.theme.zinelyContentInks
+import com.aritr.zinely.ui.theme.zinelyV21DarkColors
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The cover recipe: [ZineCoverSurface] and [ZineCoverStamp], and the palette each surface resolves to.
+ * How a persisted cover recipe is **painted** in V2.1 — [ZineCoverSurface.v21Fill],
+ * [ZineCoverSurface.v21MarkInk], [ZineCoverSurface.v21BorderInk] and [ZineCoverStamp.v21Mark].
  *
  * Pure JVM — no Robolectric. `Color` is a value class over a `ULong`, so the palette assertions need no
  * Android runtime, which keeps the frozen-hex checks in the fast suite where a wrong ink fails in
  * milliseconds.
  *
- * **What this file does not test.** B1 shipped no function that assigns a [ZineCoverRecipe] to a zine —
- * [D-017](docs/design/V2-SPEC-DEFECTS.md)'s ruling ("assign once at creation, persist, never derive from
- * the title") is a property of a create-and-store path, and B1 has neither: [ZineCover] takes a recipe,
- * it does not compute one. An earlier draft shipped an assigner here (`newZineCoverRecipe(random)`)
- * guarded by a ~40-line reflection scan that tried to prove no function in this package maps a `String`
- * to a cover. Independent review found the guard could not hold the ruling regardless of how it was
- * written: it filtered on parameter *type*, so a title-derived **seed** at a call site
- * (`newZineCoverRecipe(Random(title.hashCode()))`) satisfies every version of it while still letting the
- * title reach the cover. A signature check cannot decide an information-flow property. So the assigner —
- * and the guard — are deleted; both land in **B5**, next to the persisted field the ruling requires, where
- * there is an actual call site whose only input can be checked directly instead of enumerated against.
+ * ### This file replaces a V2 one, and closes a hole it was hiding
+ *
+ * Until 2026-08-11 this tested `palette()` and `icon()` — the V2 rendering of the same recipe — and the
+ * **V2.1 mapping had no test at all**, in either direction. The shelf had been painting from `v21Fill`
+ * for a package and a half while the only recipe test in the tree guarded the function it had stopped
+ * calling. That is the sharper half of retiring `ZineCover`: the dead component was not merely unused,
+ * it was the thing the live suite still believed in.
+ *
+ * The V2 functions were deleted with the component ([ADR-100](docs/DECISIONS.md#adr-100)), so those two
+ * tests could not be kept even in principle; these are their V2.1 counterparts plus the two invariance
+ * claims the same ADR introduced.
  */
 class ZineCoverRecipeTest {
 
+    private val light = zinelyV21LightColors()
+    private val dark = zinelyV21DarkColors()
+
     // -----------------------------------------------------------------------------------------
-    // The palette — the frozen hexes, resolved only from the content namespace
+    // The six stocks
     // -----------------------------------------------------------------------------------------
 
     @Test
-    fun `each surface resolves to its frozen fill, title colour and band`() {
-        val inks = zinelyContentInks()
-        // `v2-library.html:79-84`, verbatim.
-        val expected = mapOf(
-            ZineCoverSurface.MatchaInk to Triple(0xFF7C8A3F, 0xFFF7F2E7, 0xFF4E5A26),
-            ZineCoverSurface.TealInk to Triple(0xFF47857B, 0xFFF7F2E7, 0xFF2E574E),
-            ZineCoverSurface.StrawberryInk to Triple(0xFFE27F89, 0xFF4A211F, 0xFFC05863),
-            ZineCoverSurface.OchreInk to Triple(0xFFD19A3C, 0xFF3A2A0E, 0xFFA9741F),
-            // The paper stock's bands are cover-ink *fills*, not those inks' darker band cuts.
-            ZineCoverSurface.PaperMatchaBand to Triple(0xFFF1EBDA, 0xFF2A251E, 0xFF7C8A3F),
-            ZineCoverSurface.PaperStrawberryBand to Triple(0xFFF1EBDA, 0xFF2A251E, 0xFFE27F89),
-        )
-        for ((surface, hexes) in expected) {
-            val palette = surface.palette(inks)
-            val (fill, onFill, band) = hexes
-            assertEquals("$surface fill", Color(fill), palette.fill)
-            assertEquals("$surface title colour", Color(onFill), palette.onFill)
-            assertEquals("$surface band", Color(band), palette.band)
-        }
-        assertEquals("every frozen surface must be covered", ZineCoverSurface.entries.size, expected.size)
+    fun `each surface prints on its own frozen stock`() {
+        // `v21-library.html:182-187`, verbatim, resolved through the light palette.
+        assertEquals("MatchaInk is .ink-leaf", light.leaf, ZineCoverSurface.MatchaInk.v21Fill(light))
+        assertEquals("StrawberryInk is .ink-berry", light.berry, ZineCoverSurface.StrawberryInk.v21Fill(light))
+        assertEquals("OchreInk is .ink-butter", light.butter, ZineCoverSurface.OchreInk.v21Fill(light))
+        assertEquals("TealInk is .ink-jam", light.jam, ZineCoverSurface.TealInk.v21Fill(light))
+        assertEquals("PaperStrawberryBand is .paper-s", light.paper, ZineCoverSurface.PaperStrawberryBand.v21Fill(light))
+        assertEquals("PaperMatchaBand is .paper-c", light.butterTint, ZineCoverSurface.PaperMatchaBand.v21Fill(light))
     }
 
     @Test
-    fun `the band is always darker than the stock it prints on`() {
-        // The band multiplies onto the paper. A band lighter than its fill would still *draw* — multiply
-        // would simply do almost nothing — and the cover would silently lose its one printed mark.
-        val inks = zinelyContentInks()
-        for (surface in ZineCoverSurface.entries) {
-            val palette = surface.palette(inks)
-            assertTrue(
-                "$surface: band ${palette.band} must be darker than fill ${palette.fill}",
-                palette.band.luminance() < palette.fill.luminance(),
+    fun `the pinned literals are the light palette's own values, not free-standing hexes`() {
+        // Pinning a stock means freezing *the light palette's* value, not inventing a colour. The fills
+        // were already anchored by the test above; the mark and the border were not, and a review found
+        // the gap: move `inkSoft` or `ink` in the light theme and the paper stocks would silently stop
+        // matching `.paper-s .mark{color:var(--ink-soft)}` and `.cover{border:… var(--ink)}` in the
+        // frozen file, with nothing failing. A pinned literal still has an origin, and the origin is the
+        // thing that can drift.
+        for (surface in PaperStocks) {
+            assertEquals(
+                "$surface's pinned mark must be the light theme's inkSoft",
+                light.inkSoft,
+                surface.v21MarkInk(light),
+            )
+            assertEquals(
+                "$surface's pinned border must be the light theme's ink",
+                light.ink,
+                surface.v21BorderInk(light),
             )
         }
     }
 
-    /** Plain relative brightness — enough to order two colours, and no WCAG claim is being made here. */
-    private fun Color.luminance(): Float = 0.299f * red + 0.587f * green + 0.114f * blue
+    @Test
+    fun `the six stocks are six different colours, so no two zines print alike`() {
+        val stocks = ZineCoverSurface.entries.map { it.v21Fill(light) }
+        assertEquals("two surfaces resolved to the same stock: $stocks", stocks.size, stocks.toSet().size)
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // ADR-100 — the stock does not theme, the ink does
+    // -----------------------------------------------------------------------------------------
 
     @Test
-    fun `each stamp maps to its own frozen mark`() {
-        val icons = ZineCoverStamp.entries.map { it.icon() }
-        assertEquals("no two stamps may draw the same mark", icons.size, icons.toSet().size)
-        assertEquals("Sun stamp", "StampSun", ZineCoverStamp.Sun.icon().name)
-        assertEquals("Letter stamp", "StampLetter", ZineCoverStamp.Letter.icon().name)
-        assertEquals("Waves stamp", "StampWaves", ZineCoverStamp.Waves.icon().name)
-        assertEquals("Sprig stamp", "StampSprig", ZineCoverStamp.Sprig.icon().name)
-        assertEquals("Star stamp", "StampStar", ZineCoverStamp.Star.icon().name)
-        assertEquals("Face stamp", "StampFace", ZineCoverStamp.Face.icon().name)
+    fun `the paper stocks do not change between themes, because paper is paper`() {
+        for (surface in PaperStocks) {
+            assertEquals(
+                "$surface must print on the same stock at night — a cover is the maker's object, and " +
+                    "at 1.18:1 against the dark desk the themed token made it a hole cut in the desk",
+                surface.v21Fill(light),
+                surface.v21Fill(dark),
+            )
+            assertEquals(
+                "$surface's mark must be invariant with the stock it is printed on",
+                surface.v21MarkInk(light),
+                surface.v21MarkInk(dark),
+            )
+            assertEquals(
+                "$surface's border must be invariant too — the themed --ink is #F6EAD6 in dark, which " +
+                    "is the cream the stock now is, and an outline at 1.01:1 (cream) / 1.11:1 (paper) " +
+                    "is no outline",
+                surface.v21BorderInk(light),
+                surface.v21BorderInk(dark),
+            )
+        }
     }
 
     @Test
-    fun `every stamp paints itself, so no cover call site invents a stroke weight`() {
-        // The seven artwork marks carry `stroke-width:1.6` in their own markup, which is why the cover
-        // can build them without passing a paint. If that ever stops being true, `toImageVector` throws
-        // at run time on a real shelf — so it is asserted here instead.
-        for (stamp in ZineCoverStamp.entries) {
-            assertTrue("${stamp.icon().name} must carry its own frozen paint", stamp.icon().frozenPaint != null)
+    fun `the ink stocks do theme, so a shelf at night is not a wall of light`() {
+        // The other half of the ruling, and the half that keeps it a *rule* rather than an exception:
+        // if these were pinned too, the amendment would just be "covers never theme" — which is a
+        // different, larger claim that the dark rasters do not support.
+        for (surface in InkStocks) {
+            assertNotEquals(
+                "$surface must take the dark palette's own cut",
+                surface.v21Fill(light),
+                surface.v21Fill(dark),
+            )
+        }
+    }
+
+    @Test
+    fun `every cover rests on the desk rather than being cut out of it`() {
+        // **The criterion is "fill OR shadow", and the first draft of this test got it wrong** — which
+        // is worth recording, because the wrong version would have failed the design where it works and
+        // passed it where it broke.
+        //
+        // A blanket `fill vs desk >= 3` fails `.paper-c` **in light** at 1.01:1: cream stock on a cream
+        // desk. And the light shelf is fine — the raster shows an unmistakable object, because its
+        // 1.5px ink border and its 4px hard shadow are both at 12.3:1. A cream cover on a cream desk is
+        // the design working, not failing.
+        //
+        // What actually broke in dark was that the fill went to 1.18 **and the hard shadow went with
+        // it**, `ink-line #120E0A` measuring 1.17:1 on `desk #241E18`. Fill gone and shadow gone leaves
+        // an outline, and an outline with nothing behind it is a hole cut in the desk — which is exactly
+        // what the parity review reported seeing. So the claim is the disjunction: an object needs
+        // either a face you can distinguish or a shadow proving it is sitting on top of something.
+        for (colors in listOf(light, dark)) {
+            for (surface in ZineCoverSurface.entries) {
+                val face = contrast(surface.v21Fill(colors), colors.desk)
+                val shadow = contrast(colors.inkLine, colors.desk)
+                assertTrue(
+                    "$surface has neither a face (fill $face) nor a shadow (ink-line $shadow) against " +
+                        "the desk, so it reads as a hole rather than an object",
+                    maxOf(face, shadow) >= MinimumStockContrast,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `the paper stocks' marks are held to a reading bar, and the ink stocks' to the frozen literal`() {
+        // The two mark inks are not the same *kind* of mark, so one bar for both was wrong.
+        //
+        // `.paper-s`/`.paper-c` take `ink-soft`, a **reading** ink on a pale stock, and ADR-100 pinned
+        // both sides of that pair — so it can and must be measured: 6.16 and 5.61.
+        for (colors in listOf(light, dark)) {
+            for (surface in PaperStocks) {
+                val ratio = contrast(surface.v21MarkInk(colors), surface.v21Fill(colors))
+                assertTrue("$surface's mark measured $ratio on its own stock", ratio >= MinimumMarkContrast)
+            }
+        }
+
+        // The ink stocks take the frozen `rgba(255,246,232,.92)`, which V21-SPEC §4.1 exempts **by
+        // name** as cover art. It measures 2.38 on berry, and that is the recorded ruling rather than an
+        // oversight: the mark is `contentDescription = null` decoration, and a cover's identity is the
+        // title printed under it. Asserting the literal instead of a ratio keeps the exemption honest —
+        // it cannot drift, and it cannot be quietly widened to a mark that *is* load-bearing.
+        for (surface in InkStocks) {
+            assertEquals(
+                "$surface must take the frozen theme-invariant mark ink",
+                surface.v21MarkInk(light),
+                surface.v21MarkInk(dark),
+            )
+        }
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // The six marks
+    // -----------------------------------------------------------------------------------------
+
+    @Test
+    fun `each stamp maps to its own frozen mark`() {
+        assertEquals("Letter", ZineV21CoverMarks.Envelope, ZineCoverStamp.Letter.v21Mark())
+        assertEquals("Sprig", ZineV21CoverMarks.Sprig, ZineCoverStamp.Sprig.v21Mark())
+        assertEquals("Sun", ZineV21CoverMarks.Rings, ZineCoverStamp.Sun.v21Mark())
+        assertEquals("Star", ZineV21CoverMarks.Booklet, ZineCoverStamp.Star.v21Mark())
+        assertEquals("Waves", ZineV21CoverMarks.Lines, ZineCoverStamp.Waves.v21Mark())
+        assertEquals("Face", ZineV21CoverMarks.Mug, ZineCoverStamp.Face.v21Mark())
+    }
+
+    @Test
+    fun `the mapping is one to one, so no two stamps draw the same glyph`() {
+        val marks = ZineCoverStamp.entries.map { it.v21Mark() }
+        assertEquals("two stamps share a mark", marks.size, marks.toSet().size)
+    }
+
+    private companion object {
+        val PaperStocks = listOf(ZineCoverSurface.PaperMatchaBand, ZineCoverSurface.PaperStrawberryBand)
+        val InkStocks = ZineCoverSurface.entries - PaperStocks.toSet()
+
+        /** 1.4.11's bar for a graphical object, which is what a cover on a desk is. */
+        const val MinimumStockContrast = 3.0
+
+        /** The paper stocks' `ink-soft` mark is a reading ink on a pale ground: the text bar applies. */
+        const val MinimumMarkContrast = 4.5
+
+        /** WCAG 2.x relative luminance, on the composited colour. */
+        fun contrast(a: Color, b: Color): Double {
+            val la = luminance(a)
+            val lb = luminance(b)
+            return (maxOf(la, lb) + 0.05) / (minOf(la, lb) + 0.05)
+        }
+
+        fun luminance(c: Color): Double {
+            fun channel(v: Float): Double {
+                val d = v.toDouble()
+                return if (d <= 0.03928) d / 12.92 else Math.pow((d + 0.055) / 1.055, 2.4)
+            }
+            // The marks carry alpha; composite them on their own stock's opaque value before measuring,
+            // which the caller does by passing the stock as `b` — here the alpha is folded onto white,
+            // the lighter of the two grounds, so the number this returns is never optimistic.
+            val a = c.alpha.toDouble()
+            fun over(v: Float) = (v.toDouble() * a + (1 - a)).toFloat()
+            return 0.2126 * channel(over(c.red)) +
+                0.7152 * channel(over(c.green)) +
+                0.0722 * channel(over(c.blue))
         }
     }
 }
