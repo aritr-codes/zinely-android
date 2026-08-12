@@ -123,6 +123,14 @@ not measurements** — the session records what the device actually renders in �
 This is the ending (§9.4) — the only place the Deliberate band is allowed to exist. Measure each beat and
 the cadence between them.
 
+> ⚠️ **D-2 … D-7 no longer exist.** [ADR-101 §6.9](../DECISIONS.md#adr-101-p4-climax) retired the fold
+> climax outright — `FinishedBook`, `BookCoverFace`, `climaxBeat` and `CLIMAX_BEAT_DELAYS` are all deleted,
+> so the six beats below have no code site and the "one signature reveal" this section is named for is not
+> in the product. **D-1 survives** (the per-step diagram fade in `FoldGuide`), and the step-8 finish is a
+> `ZinelyHaptic.Success` with no animation. Left in place rather than deleted because the protocol's
+> question — *does the app have an ending, and does it read as one* — outlived the answer it was written
+> against, and whatever replaces it inherits these rows as the baseline it must beat.
+
 | # | Beat | Code site | Uses today | Easing |
 |---|---|---|---|---|
 | D-1 | Fold-**diagram** step-in (per step) | [`ProofFold.kt:319-327`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/ProofFold.kt) | tween **320** | `ZinelyEasing` |

@@ -4,7 +4,7 @@
 <title>Zinely V2.1 — Proof (handmade direction, PROPOSAL)</title>
 
 <!-- ┌─────────────────────────────────────────────────────────────────────────────┐
-     │  V2.1 PROOF — DIRECTION PROPOSAL, NOT FROZEN.                               │
+     │  V2.1 PROOF — DESIGN-FROZEN (ADR-099, owner, 2026-08-10).                    │
      │                                                                             │
      │  Re-skins the SAME screen v2-proof.html specifies: the same question         │
      │  ("how do I print it correctly?"), the same four acts (READ · the READY      │
@@ -41,7 +41,9 @@
      │       size, every step.                                                      │
      │                                                                             │
      │  Companion to v21-library.html.  Research: docs/design/V21-RESEARCH.md       │
-     │  v2-proof.html remains canonical until the owner freezes a replacement.      │
+     │  THIS FILE IS CANONICAL; v2-proof.html is SUPERSEDED (ADR-099).  The line    │
+     │  here said the reverse and survived all six ADR-101 packages built against  │
+     │  this file; corrected 2026-08-12.                                           │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -178,8 +180,12 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 /* a leaf with no facing page (cover, back cover) is a free single sheet */
 .leaf.solo{border-radius:var(--br-xs) var(--br-md) var(--br-md) var(--br-xs)}
 .leaf.solo::before{display:none}
-/* the closed side of the booklet, seen edge-on: the rest of the pages */
-.stack{align-self:center;width:7px;height:calc(100% - 14px);background:var(--paper-edge);
+/* the closed side of the booklet, seen edge-on: the rest of the pages.
+   ✱ REVISION 3: the width TRACKS how many leaves are on that side.  It was a flat 7px everywhere, which
+   made the "so you can feel where you are" claim above false — 7px at page 2 and 7px at page 7 tells you
+   only which side is bound, and the gutter already says that.  Set per render from the leaf's position;
+   3px is the floor so a single remaining leaf still reads as an edge rather than vanishing. */
+.stack{align-self:center;width:var(--stackw,7px);height:calc(100% - 14px);background:var(--paper-edge);
   border:1.5px solid var(--ink);flex:none;
   background-image:repeating-linear-gradient(180deg,transparent 0 3px,var(--hair) 3px 4px)}
 .stack.L{border-right:0;border-radius:var(--br-sm) 0 0 var(--br-sm)}
@@ -212,8 +218,22 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .backc{align-items:center;justify-content:center;text-align:center;gap:var(--gap-sm)}
 .backc p{font-family:var(--serif);font-size:.74rem;color:var(--ink-soft);margin:0}
 
-.tapz{position:absolute;top:0;bottom:0;width:30%;z-index:6;background:none;border:0;cursor:pointer}
+.tapz{position:absolute;top:0;bottom:0;width:30%;z-index:6;background:none;border:0;cursor:pointer;
+  display:grid;place-items:center;color:var(--ink-faint)}
 .tapz.l{left:0} .tapz.r{right:0}
+/* ✱ REVISION 3, from the P5 first-time-user review (NO-GO).  The tap edges were invisible, and the only
+   thing naming them was an 11px line in the top chrome -- the least-read pixels on the screen.  Read cold:
+   "I tapped my zine and it didn't do anything", then a swipe that also did nothing, and by then the screen
+   had already been judged frozen.  A chevron per edge is the smallest honest fix: it marks WHERE the live
+   zone is (the leaf's own centre is dead, and an invisible boundary through the middle of your artwork is
+   unlearnable), and because it HIDES at the ends it is also the end-of-book signal the design had none of
+   -- disabled and broken look identical when there is nothing to grey out.  Faint on purpose: this is a
+   hint, not a toolbar, and it must never compete with the zine. */
+.tapz svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.55;transition:opacity .2s ease}
+.tapz:active svg{opacity:1}
+.tapz[disabled]{cursor:default}
+.tapz[disabled] svg{display:none}
 
 /* ============================ the READY band ============================== */
 .band{flex:none;position:relative;z-index:8;margin:0 var(--gap-md) var(--gap-md);padding:var(--gap-md) var(--gap-md) var(--gap-lg);
@@ -245,11 +265,15 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   transition:transform .12s cubic-bezier(.2,.8,.2,1),box-shadow .12s}
 .btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;
   stroke-linecap:round;stroke-linejoin:round}
+/* ✱ the frame ring was --butter-tint, which measures 1.10 light / 1.13 dark against the .band's
+   paper ground: an unbounded ring reading as a soft bloom off the button rather than the deliberate
+   misregistration it is. Amended to --butter (1.73 / 7.35) under ADR-100 §4, by ADR-101 P2 —
+   the Library's count-chip defect, on a second surface. */
 .btn-save{flex:1;background:var(--leaf);color:var(--on-leaf);font-weight:700;font-size:.96rem;
   flex-direction:column;gap:var(--gap-hair);padding:var(--gap-md) var(--gap-md);
-  box-shadow:var(--hard) var(--hard) 0 var(--ink-line),0 0 0 var(--frame) var(--butter-tint)}
+  box-shadow:var(--hard) var(--hard) 0 var(--ink-line),0 0 0 var(--frame) var(--butter)}
 .btn-save:active{transform:translate(2px,2px);
-  box-shadow:1px 1px 0 var(--ink-line),0 0 0 var(--frame) var(--butter-tint)}
+  box-shadow:1px 1px 0 var(--ink-line),0 0 0 var(--frame) var(--butter)}
 .btn-save small{font-weight:500;font-size:.66rem;opacity:.9}
 .btn-share{flex:none;background:var(--paper);color:var(--ink-soft);font-size:.88rem;font-weight:600;
   padding:0 var(--gap-lg);box-shadow:var(--hard) var(--hard) 0 var(--ink-line)}
@@ -258,7 +282,12 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   outline-offset:4px}
 
 .done{display:none;flex-direction:column;align-items:center;text-align:center;gap:var(--gap-sm);padding:var(--gap-xs) var(--gap-xs) var(--gap-hair)}
-.band.saved .ready,.band.saved .commit{display:none}
+/* `.ready` SURVIVES the save (ADR-101 P2). The original rule hid it alongside `.commit`, which is
+   backwards for this screen: the print recipe is most needed once the PDF exists and the user is walking
+   to a printer, and hiding the row makes the scale-and-orientation guidance unreachable at exactly the
+   moment it pays for itself. The row is renamed for the moment it survives into — see `#readyHead`. */
+.band.saved .commit,.band.saved .stale{display:none}
+.stale{margin:var(--gap-md) 0 0;font-size:.75rem;line-height:1.4;color:var(--jam-text)}
 .band.saved .done{display:flex}
 /* ✱ same bug as .badge, missed by the first sweep: a hardcoded #FFF6E8 that never
    flipped with the theme — 4.20:1 light, 2.86:1 dark on a 26px meaning-bearing tick. */
@@ -278,6 +307,17 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .foldit{background:var(--leaf);color:var(--on-leaf)}
 .shelf{background:var(--paper);color:var(--ink-soft)}
 .foldit:active,.shelf:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
+/* ADR-101 §6.9 — the band's two post-save states. `.wf` is what it says once the fold guide's finish
+   button has been pressed; `.wu` is what it says before. The demoted "How to fold" keeps the guide
+   reachable without re-issuing an instruction the user has just reported carrying out — it is a link,
+   not the leaf action, because there is no next move left to name. */
+.wf{display:none}
+.band.folded .wu{display:none}
+.band.folded .wf{display:block}
+.band.folded .row .wf{display:inline-block}
+.foldagain{background:none;border:0;font-family:var(--sans);font-size:.84rem;font-weight:600;
+  color:var(--leaf-text);text-decoration:underline;text-underline-offset:3px;cursor:pointer;
+  padding:var(--gap-sm) var(--gap-md)}
 
 /* ================================ drawers ================================= */
 .scrim{position:absolute;inset:0;z-index:44;background:rgba(38,26,16,.44);opacity:0;
@@ -311,15 +351,36 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .paperseg button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
 .paperhint{font-size:.76rem;color:var(--ink-soft);margin:var(--gap-sm) var(--gap-hair) 0;line-height:1.5}
 
-.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--gap-sm)}
-.check li{display:flex;gap:var(--gap-md);align-items:flex-start;font-size:.84rem;line-height:1.45}
-.check .ok{flex:none;width:23px;height:23px;border-radius:var(--br-pill);background:var(--leaf-tint);
-  color:var(--leaf-text);display:grid;place-items:center;border:1.5px solid var(--ink);
-  margin-top:var(--gap-hair)}
-.check .ok.cut{background:var(--berry-tint);color:var(--jam-text)}
-.check .ok svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.8;
+/* `.already` REPLACES the `.check` list this drawer used to open with. That list drew three green ticks;
+   two of them asserted checks this product does not perform (no DPI computation exists, and content is
+   clipped to the panel rather than to the safe rect), so on the one surface whose job is to be trusted
+   about printing it was a passed-check grammar with nothing behind it. See ADR-101 §6.6. The reassurance
+   is kept, because deleting it left the drawer as pure homework; only the tick grammar is gone. These are
+   neutral dots: facts about the artifact, not verdicts on the user's content. */
+.already{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--gap-sm)}
+.already li{display:flex;gap:var(--gap-md);align-items:flex-start;font-size:.78rem;line-height:1.5;
+  color:var(--ink-soft)}
+.already li::before{content:"";flex:none;width:4px;height:4px;border-radius:var(--br-pill);
+  background:var(--ink-faint);margin-top:.55em}
+
+/* `.recipe` — ADR-052's four print-dialog settings. Not in the original freeze; added here by the P3
+   review, which caught the spec and the build disagreeing in BOTH directions. A home printer will
+   silently ruin a zine (fit-to-page shrink, portrait default, double-siding), and this is the only place
+   the full reason lives. */
+.recipe{display:flex;flex-direction:column;gap:var(--gap-sm);max-width:460px}
+.rrow{display:flex;align-items:center;gap:var(--gap-md);padding:13px 15px;background:var(--paper);
+  border:1px solid var(--ink-line);border-radius:var(--br-md)}
+.rrow .chip{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+  background:color-mix(in srgb, var(--leaf-text) 14%, transparent);color:var(--leaf-text)}
+.rrow.warn .chip{background:color-mix(in srgb, var(--jam-text) 14%, transparent);color:var(--jam-text)}
+.rrow .chip svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round}
-.check small{display:block;color:var(--ink-soft);font-size:.72rem;margin-top:var(--gap-hair)}
+.rrow .rl{font-size:.75rem;color:var(--ink-faint)}
+.rrow .rv{font-size:.94rem;font-weight:600;color:var(--ink)}
+.rrow .rv em{font-style:normal;color:var(--jam-text)}
+.singlenote{display:flex;gap:var(--gap-md);padding:2px 4px;margin:0;font-size:.78rem;line-height:1.5;
+  color:var(--ink-soft)}
+.singlenote svg{flex:none;width:17px;height:17px;fill:none;stroke:var(--ink-faint);stroke-width:2}
 
 .testcard{display:flex;gap:var(--gap-md);align-items:flex-start;margin-top:var(--gap-md);padding:var(--gap-md) var(--gap-md);
   background:var(--butter-tint);border:1.5px solid var(--ink);border-radius:var(--br-md);
@@ -331,6 +392,11 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .testcard b{color:var(--ink)}
 
 .cardh{font-size:.78rem;color:var(--ink-soft);margin:0 0 var(--gap-md);line-height:1.5}
+/* Read AFTER the picture — the abstract explainer above it cannot pre-empt an alarm the picture causes. */
+.sheetcap{font-size:.78rem;color:var(--ink-soft);line-height:1.5;text-align:center;
+  margin:var(--gap-md) 0 0}
+.foldlink{display:block;min-height:48px;margin-top:var(--gap-md);padding:0 4px;background:none;border:0;
+  font-family:var(--sans);font-size:.84rem;font-weight:600;color:var(--leaf);text-align:left;cursor:pointer}
 .minisheet{position:relative;width:100%;aspect-ratio:11/8.5;border-radius:var(--br-sm);
   background:var(--paper);border:1.5px solid var(--ink);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line);overflow:hidden;
@@ -354,14 +420,40 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
      red          = the cut
      ghost + arrow= which bit of paper moves, and where it goes
    ========================================================================= */
-.stepline{display:flex;align-items:center;justify-content:space-between;gap:var(--gap-sm);margin:var(--gap-hair) 0 var(--gap-sm)}
+.foldintro{font-size:.78rem;color:var(--ink-soft);line-height:1.5;text-align:center;margin:0 0 var(--gap-md)}
+/* ✱ was one row, space-between.  A fourth legend mark plus the counter overruns a 360px
+   phone, so the legend gets its own row underneath. */
+.stepline{display:flex;flex-direction:column;align-items:flex-start;gap:var(--gap-xs);
+  margin:var(--gap-hair) 0 var(--gap-sm)}
 .stepno{font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--ink-soft)}
-.legend{display:flex;gap:var(--gap-md);font-size:.62rem;font-weight:600;color:var(--ink-soft)}
+/* ✱ wraps, since the FIFTH mark.  Four chips plus their swatches already measure ~295px against
+   the 284px a 360px phone leaves inside the drawer, so the row was clipping before anything was
+   added to it — invisibly, because every test runs at w430dp, the one width where it fits.  It is
+   the same blindness `drawerBodyMaxHeight` records on the other axis. */
+.legend{display:flex;flex-wrap:wrap;gap:var(--gap-xs) var(--gap-md);font-size:.62rem;font-weight:600;color:var(--ink-soft)}
 .legend i{display:inline-flex;align-items:center;gap:var(--gap-xs);font-style:normal}
 .legend i::before{content:"";width:13px;height:0;border-top:2.4px dashed var(--ink-faint)}
 .legend i.now::before{border-top:3px solid var(--leaf);border-style:solid}
 .legend i.cut::before{border-top:2.4px dashed var(--jam)}
+/* ✱ FOURTH MARK, added 2026-08-11 (ADR-101 P4 first-time-user review).  Three marks made
+   the legend a lie: every arrow was drawn in --jam, the same red as the cut, so red meant
+   "cut here" on one step and "this paper travels" on seven — including step 4, whose own
+   line reads "Creases only — nothing is cut yet" under a fat red arrow.  Arrows move to
+   --ink (a drawn pencil mark), red is the cut and only the cut, and "move" is named. */
+.legend i.move::before{border-top:2.4px solid var(--ink)}
+/* ✱ FIFTH MARK, added 2026-08-12 (ADR-101 P4 re-skin, first-time-user review).  Steps 4 and 7
+   draw the Yoshizawa–Randlett *action* arrow — a HOLLOW stem, deliberately unconfusable with the
+   filled motion arrow — and the key did not contain it.  A diagram with a key implicitly promises
+   the key is complete, so an unnamed mark is worse than no key at all; it is the same failure the
+   fourth mark was added to fix, one arrow over.
+   It cannot be folded into `move` instead, which was the cheaper option and the wrong one: a
+   motion arrow has ONE tail and ONE head and says "this flap lands there".  Step 4 is a
+   double-header (the sheet opens out) and step 7 is a facing pair (both ends push in) — relative
+   motion, which the filled arrow cannot state.  Drawing those as `move` would not be less
+   information, it would be wrong information.
+   Hollow, so the swatch is the mark: an outlined bar rather than a filled rule. */
+.legend i.act::before{border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);height:3px}
 .foldstage{display:grid;place-items:center;padding:var(--gap-xs) 0 0;
   background:var(--butter-tint);border:1.5px solid var(--ink);border-radius:var(--br-md);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line)}
@@ -371,28 +463,53 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    (#33261C), so this is a no-op there and 11.70:1 in dark.  A drawn line follows ink;
    only a shadow follows ink-line. */
 .sheetline{fill:var(--paper);stroke:var(--ink);stroke-width:2.4;stroke-linejoin:round}
-.ghost{fill:var(--paper);fill-opacity:.5;stroke:var(--ink-faint);stroke-width:1.6;
-  stroke-dasharray:4 4}
+/* ✱ was stroke-dasharray:4 4 — a dashed rectangle on a diagram whose dashes already mean
+   "crease" reads as four more creases, which is the opposite of what the shape says.
+   Solid-and-faint says "this is where that paper starts" without a fifth legend mark. */
+.ghost{fill:var(--paper);fill-opacity:.5;stroke:var(--ink-faint);stroke-width:1.6}
 .crease{stroke:var(--ink-faint);stroke-width:1.5;stroke-dasharray:5 4;fill:none}
 .now{stroke:var(--leaf);stroke-width:3.4;fill:none;stroke-linecap:round}
 .cutmark{stroke:var(--jam);stroke-width:3;stroke-dasharray:6 4;stroke-linecap:round;fill:none}
+/* ✱ Where the cut STOPS.  Solid, because it is not something you cut — it is the end of the
+   thing you do cut, and the only mark on the diagram that says "one panel deep" out loud. */
+.cutstop{stroke:var(--jam);stroke-width:2.4;stroke-linecap:round;fill:none}
+/* ✱ The slit you ALREADY made, on the two steps after the cut.  It used to be drawn with the
+   identical dashed .cutmark, and a reader just taught "dashed red = cut along here" meets it
+   again and reaches for the scissors twice.  Dashed is an instruction; solid is a fact. */
+.oldcut{stroke:var(--jam);stroke-width:2.4;stroke-linecap:round;fill:none}
 /* Arrows follow the Yoshizawa–Randlett conventions as set out by Robert Lang:
    an arrow of MOTION has a single-line stem and no tail decoration, and its
    TAIL TOUCHES THE PAPER THAT MOVES while its head touches where that paper
    lands.  An arrow of ACTION (push, unfold) has a HOLLOW stem instead, so the
-   two can never be confused.  Head geometry is identical at every step. */
-.mstem{stroke:var(--jam);stroke-width:2.4;fill:none;stroke-linecap:round}
-.mhead{fill:var(--jam)}
-.hollow{fill:var(--paper);stroke:var(--jam);stroke-width:2;stroke-linejoin:round}
+   two can never be confused.  Head geometry is identical at every step.
+
+   ✱ Arrows are --ink, not --jam: see the .legend i.move note above.  Red is reserved for
+   the cut, which is the one irreversible action in the product. */
+.mstem{stroke:var(--ink);stroke-width:2.4;fill:none;stroke-linecap:round}
+.mhead{fill:var(--ink)}
+.hollow{fill:var(--paper);stroke:var(--ink);stroke-width:2;stroke-linejoin:round}
 .scissors{stroke:var(--jam);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .cellno{fill:var(--ink-soft);font-size:9px;   /* SVG text, so it is text: 3.04:1 -> 6.16:1 */font-weight:700;font-family:"Inter",sans-serif;
   text-anchor:middle}
 .coverfill{fill:var(--leaf-tint);stroke:var(--leaf);stroke-width:2}
+/* ✱ min-height is what holds the navigation still.  Captions run 55–110 characters — one to three
+   lines at 360px — and with the nav laid out directly beneath them, a short step used to pull the
+   whole row UP into the position the previous step's Next arrow occupied.  Measured on device: the
+   guide's precondition line vanishing after step 1 moved the row 108px, landing Next exactly where
+   the dots now sit, so two taps in the same place meant "next, then jump to step 8".  Reserving the
+   tallest caption's height (3 × 21 + 5 + 17 ≈ 88) costs nothing and removes the class of bug.
+   A caption that outgrows the reserve pushes the nav DOWN, which is a shift the user can see. */
 .foldcap{font-family:var(--serif);font-size:.92rem;text-align:center;color:var(--ink);
-  margin:var(--gap-md) var(--gap-sm) 0;line-height:1.5}
+  margin:var(--gap-md) var(--gap-sm) 0;line-height:1.5;min-height:88px}
 .foldnow{display:block;font-family:var(--sans);font-size:.74rem;font-weight:600;
   color:var(--leaf-text);margin-top:var(--gap-xs)}
-.foldnav{display:flex;align-items:center;justify-content:center;gap:var(--gap-lg);margin-top:var(--gap-md)}
+/* ✱ was one centred row.  Measured: 52 + 18 + 8×26 + 18 + 52 = 348px of intrinsic width, against the
+   284px a 360px phone leaves inside the drawer's padding — the drawer clips, so BOTH arrows lost more
+   than half their touch target on every one of eight steps.  Flexing the dots inside that row was the
+   first fix and was also wrong: 284 − 44 − 44 − 12 = 184 across eight dots is 23px each, under WCAG
+   2.5.8's 24×24 floor (adjacent targets, no spacing exception).  The dots get their OWN row — the full
+   284px, ~35px each — for about 14px of height in a drawer that already scrolls. */
+.foldnav{display:flex;align-items:center;justify-content:space-between;margin-top:var(--gap-md);max-width:380px}
 .fnav{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
   background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
@@ -400,10 +517,21 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .fnav:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 .fnav svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round}
-.stepdots{display:flex;gap:var(--gap-xs)}
+/* ✱ was two separate .stepdots blocks, the second re-adding `gap` against the first's
+   `space-evenly` — a spec that needs cascade arithmetic to read is not a spec. Merged. */
+.stepdots{display:flex;justify-content:space-evenly;align-items:center;gap:var(--gap-xs);max-width:380px}
 .stepdots button{width:10px;height:10px;padding:0;border-radius:var(--br-pill);background:var(--paper);
   border:1.5px solid var(--ink);cursor:pointer}
-.stepdots button.on{background:var(--berry)}
+/* ✱ size and ring weight, not hue alone.  In light, berry against ink-faint is 1.28:1 and against
+   paper 2.37:1 — a three-state indicator told apart by colour only, which is precisely what a
+   colour-blind reader cannot do.  The current dot is bigger and rings heavier; visited-vs-ahead
+   keeps fill alone, which is the pair that matters least. */
+.stepdots button.on{background:var(--berry);width:14px;height:14px;border-width:2px}
+/* ✱ a third state the original freeze did not have.  Two states answer "where am I" and not "how far
+   did I get", and the second is the question you are holding when you pick the phone back up with
+   folded paper in your other hand.  The filled trail is also what makes these read as controls rather
+   than as a pagination indicator. */
+.stepdots button.done{background:var(--ink-faint)}
 
 .flash{position:absolute;left:50%;bottom:104px;transform:translateX(-50%) rotate(-1deg);z-index:80;
   background:var(--ink);color:var(--paper);font-size:.78rem;font-weight:500;padding:var(--gap-sm) var(--gap-lg);
@@ -434,7 +562,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 }
 </style>
 
-<p class="cap lead"><span class="badge">proposal · not frozen</span><br>
+<p class="cap lead"><span class="badge">frozen · ADR-099</span><br>
 Proof — “how do I print it correctly?” · <b>V2.1 handmade direction</b></p>
 <p class="cap">Same screen as the frozen <b>v2-proof.html</b>. The pages sit as the booklet they actually are —
 cover alone, then 2|3, 4|5, 6|7, back alone — but <b>one leaf at a time</b>, with the spine on the correct side
@@ -452,17 +580,26 @@ single actions drawn on your own printed sheet.</p>
 
   <div class="stagewrap">
     <div class="book" id="book" aria-live="polite"></div>
-    <button class="tapz l" aria-label="Previous page" onclick="turn(-1)"></button>
-    <button class="tapz r" aria-label="Next page" onclick="turn(1)"></button>
+    <button class="tapz l" id="tapPrev" aria-label="Previous page" onclick="turn(-1)">
+      <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="tapz r" id="tapNext" aria-label="Next page" onclick="turn(1)">
+      <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
 
   <div class="band" id="band">
     <span class="tape"></span>
     <button class="ready" aria-label="Print details" onclick="openDrawer('details')">
       <span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
-      <span class="rl"><b>Ready when you are</b><span id="readySub">8 pages · one sheet, one cut · A4 · stays on your phone</span></span>
+      <span class="rl"><b id="readyHead">Ready when you are</b><span id="readySub">8 pages · one sheet, one cut · A4 · stays on your phone</span></span>
       <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
     </button>
+
+    <!-- The stale-file notice. Not in the original freeze, and the P3 first-time-user review is why:
+         changing the paper size correctly drops `.done` (the PDF in Downloads was imposed for the old
+         size), but it is changed inside a drawer, so the band mutates behind a scrim and the user meets
+         the effect without ever seeing the cause — "it deleted my file". The last clause is the one that
+         does the work: it is the fear, and it is answerable with a true sentence. -->
+    <p class="stale" id="stale" aria-live="polite" hidden></p>
 
     <div class="commit">
       <button class="btn btn-save" onclick="doSave()">
@@ -476,11 +613,23 @@ single actions drawn on your own printed sheet.</p>
 
     <div class="done">
       <span class="seal"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
-      <h4>Saved to your phone</h4>
-      <p>In Downloads — print it whenever, then fold it up.</p>
+      <!-- ADR-101 §6.9: the band has TWO states after a save, because the fold guide's finish button
+           makes a claim and this is the only surface that can answer it. Unfolded: instruction. Folded:
+           acknowledgement, and the instruction demotes to a quiet link — the user may want the guide
+           again, but they must not be told to do the thing they just reported doing. -->
+      <h4 class="wu">Saved to your phone</h4>
+      <h4 class="wf">Nice — that’s a zine</h4>
+      <!-- ADR-101 P2: this is the LAST sentence a user reads before walking to a printer, so it names the
+           file (ADR-054 promises a durable copy, and a promise you can't check isn't one) and carries the
+           recipe in three words. "Print it whenever" is a cheerful way to lose a sheet of paper. -->
+      <p class="wu">In Downloads — “zine.pdf”. Print it at 100%, landscape, one side — then fold it up.</p>
+      <p class="wf">Still in Downloads as “zine.pdf”, if you want to print another.</p>
       <div class="row">
-        <button class="foldit" onclick="openDrawer('fold')">Fold it up</button>
-        <button class="shelf" onclick="flash('Back to your shelf — the finished book lives in Read')">Back to shelf</button>
+        <button class="foldit wu" onclick="openDrawer('fold')">Fold it up</button>
+        <button class="foldagain wf" onclick="openDrawer('fold')">How to fold</button>
+        <!-- "Back to shelf" is NOT built: its own flash text admits the shelf does not exist ("the
+             finished book lives in Read"), and Zinely is single-project today, so the control could only
+             be the top bar's own back wearing the name of a place there is no route to. -->
       </div>
     </div>
   </div>
@@ -498,18 +647,30 @@ single actions drawn on your own printed sheet.</p>
         <button id="pA4" aria-pressed="true" onclick="setPaper('A4')">A4</button>
         <button id="pLetter" aria-pressed="false" onclick="setPaper('Letter')">US Letter</button>
       </div>
-      <p class="paperhint">We lay your zine out for this exact size, so it prints at 100% — nothing shrinks to fit.</p>
 
-      <div class="sect">All set</div>
-      <ul class="check">
-        <li><span class="ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
-          <span>Everything sits safely inside the edges<small>Nothing important lands where a home printer can’t reach.</small></span></li>
-        <li><span class="ok"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
-          <span>Your photos are sharp enough to print<small>Checked at print size, not screen size.</small></span></li>
-        <li><span class="ok cut"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></span>
-          <span>One cut, down the middle<small>The red line on the sheet below is the only place the blade goes.</small></span></li>
+      <div class="sect">What we’ve already done</div>
+      <ul class="already">
+        <li>We lay your zine out for this exact size, so it prints at 100% — nothing shrinks to fit.</li>
+        <li>One cut, down the middle — the red line on the sheet below is the only place the blade goes.</li>
+        <li>We keep a margin at the edge of the sheet, because no printer can reach all the way to the paper’s edge.</li>
       </ul>
 
+      <div class="sect">At the print dialog</div>
+      <p class="cardh">Zinely doesn’t print for you. Save the PDF, then open it from Downloads in your printer’s app — these are the settings to look for there.</p>
+      <div class="recipe">
+        <div class="rrow warn"><span class="chip"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 8l3-3h10l3 3M4 8v11h16V8M9 13h6"/></svg></span>
+          <span><span class="rl">Scale</span><br><span class="rv"><em>100% · Actual size</em> — not “Fit to page”</span></span></div>
+        <div class="rrow warn"><span class="chip"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z"/></svg></span>
+          <span><span class="rl">Orientation</span><br><span class="rv"><em>Landscape</em> — a portrait default breaks the fold</span></span></div>
+        <div class="rrow"><span class="chip"><svg viewBox="0 0 24 24"><path d="M5 3h14v18H5z"/></svg></span>
+          <span><span class="rl">Paper</span><br><span class="rv" id="recipePaper">A4</span></span></div>
+        <div class="rrow"><span class="chip"><svg viewBox="0 0 24 24"><path d="M4 7h16v10H4zM8 7v10"/></svg></span>
+          <span><span class="rl">Sides</span><br><span class="rv">Single-sided — one side only</span></span></div>
+        <p class="singlenote"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r="1.1" fill="currentColor" stroke="none"/></svg>
+          <span>If your printer asks about double-sided, choose <b>single-sided</b> (or “off”). A mini-zine prints on one side, then folds.</span></p>
+      </div>
+
+      <div class="sect">Before you print a stack</div>
       <div class="testcard">
         <span class="ti"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-3-6 3z"/></svg></span>
         <p><b>New printer?</b> Print one test sheet first and fold it — check the cover’s on top and the text is upright. Printers flip pages differently; one sheet saves a stack.</p>
@@ -518,6 +679,8 @@ single actions drawn on your own printed sheet.</p>
       <div class="sect">How it becomes a booklet</div>
       <p class="cardh">We lay your 8 pages onto one sheet, already in the order that makes a booklet once it’s folded — so you never rearrange anything yourself.</p>
       <div class="minisheet" id="minisheet"></div>
+      <p class="sheetcap">Looks scrambled on purpose — the top row prints upside-down so it’s the right way up once it’s folded.</p>
+      <button class="foldlink" onclick="openDrawer('fold')">See how to fold it</button>
     </div>
   </div>
 
@@ -527,9 +690,17 @@ single actions drawn on your own printed sheet.</p>
       <button class="dclose" aria-label="Close" onclick="closeDrawer()">
         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="dbody">
+      <!-- The precondition, shown on step 1 only. Not in the original freeze: this drawer is reachable
+           from the top bar before anything has been printed, and step 1 says "the sheet" without ever
+           saying which sheet. It disappears once you are moving, because a precondition stops being
+           useful the moment you are past it and eight steps need the room. -->
+      <!-- Scissors are named here and nowhere else. They are first needed at step 5, by which point the
+           user is sitting down with paper in both hands; a tool you have to get up for belongs in the
+           precondition, beside the sheet. -->
+      <p class="foldintro" id="foldIntro">Got your printed sheet and some scissors? Take the steps one at a time — tap the arrow when a step is done.</p>
       <div class="stepline">
         <span class="stepno" id="stepNo">Step 1 of 8</span>
-        <span class="legend"><i>crease</i><i class="now">fold now</i><i class="cut">cut</i></span>
+        <span class="legend"><i>crease</i><i class="now">fold now</i><i class="cut">cut</i><i class="move">move</i><i class="act">push or pull</i></span>
       </div>
       <div class="foldstage"><svg class="folddiag" id="foldDiagram" viewBox="0 0 230 172"
         role="img" aria-labelledby="foldCap"></svg></div>
@@ -537,10 +708,15 @@ single actions drawn on your own printed sheet.</p>
       <div class="foldnav">
         <button class="fnav" id="fPrev" aria-label="Previous fold step" onclick="foldStep(-1)">
           <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-        <div class="stepdots" id="foldDots" role="group" aria-label="Fold steps"></div>
         <button class="fnav" id="fNext" aria-label="Next fold step" onclick="foldStep(1)">
           <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
       </div>
+      <!-- ADR-101 §6.9: the terminal ACTION the freeze lacked. It replaces the Next arrow on step 8 (a
+           dead arrow is worse than none) and it is not a celebration — the celebration was retired
+           because its two exits pointed away from the zine and it drew a generic booklet over the user's
+           real one. Tapping it closes the drawer onto the reader, and the .done band answers it. -->
+      <button class="foldit" id="fDone" hidden onclick="markFolded()">It’s folded</button>
+      <div class="stepdots" id="foldDots" role="group" aria-label="Fold steps"></div>
     </div>
   </div>
 
@@ -594,13 +770,26 @@ function render(){
   const n    = (l === null) ? r : (r === null) ? l : (side ? r : l);
   const pos  = (l === null) ? 'R' : (r === null) ? 'L' : (side ? 'R' : 'L');
   const solo = (l === null || r === null);
+  // Behind a right-hand leaf is everything already read; behind a left-hand one, everything left.
+  const behind = (pos === 'R') ? n - 1 : 8 - n;
+  const sw = `style="--stackw:${Math.max(3, Math.round(behind * 1.6))}px"`;
   let html = '';
-  if (!solo && pos === 'R') html += '<span class="stack L"></span>';
+  if (!solo && pos === 'R') html += `<span class="stack L" ${sw}></span>`;
   html += leafHTML(n, pos, solo);
-  if (!solo && pos === 'L') html += '<span class="stack R"></span>';
+  if (!solo && pos === 'L') html += `<span class="stack R" ${sw}></span>`;
   book.innerHTML = html;
+  /* ✱ REVISION 3 — the readout carries the COUNT as well as the name.
+     The freeze put the name here and the number on the leaf (`.pgn`, stamped in the corner of every page
+     including the cover), so the two reconciled between them.  Compose cannot stamp `.pgn`: the leaf is
+     the user's own artwork, and ADR-058 keeps the reader free of furniture printed over it.  With the
+     number gone and only the name left, the readout walked Cover -> 2,3,4,5,6,7 -> Back cover directly
+     above a band reading "8 pages", and the honest cold reading was "page 1 is missing".  Two readouts on
+     one screen disagreeing about how many pages the zine has is the one thing THIS screen exists to
+     settle. */
   document.getElementById('pcount').textContent =
-    l === null ? 'Cover' : r === null ? 'Back cover' : 'Page ' + n;
+    l === null ? 'Cover · 1 of 8' : r === null ? 'Back cover · 8 of 8' : 'Page ' + n + ' of 8';
+  document.getElementById('tapPrev').disabled = (spread === 0);
+  document.getElementById('tapNext').disabled = (spread === SPREADS.length-1);
 }
 
 /* the turn: swing out on the spine, swap, swing back in */
@@ -630,6 +819,21 @@ function turn(dir){
   }, 180);
 }
 render();
+
+/* ✱ REVISION 3 — a horizontal drag turns a leaf, because it is the first thing a hand does.
+   The booklet model does not need the swipe deleted; it needed the TAP added.  Every reading surface on
+   this phone turns on a drag, so a reader that ignores one makes its single most probable first input a
+   silent no-op — and a silent no-op on arrival is indistinguishable from a frozen screen.  Real paper
+   answers your finger the moment you touch it; the tap edges are the discoverable, screen-reader-friendly
+   control, and this is the one the hand already knows. */
+let dragX = null;
+book.parentElement.addEventListener('pointerdown', e => { dragX = e.clientX; });
+book.parentElement.addEventListener('pointerup', e => {
+  if (dragX === null) return;
+  const dx = e.clientX - dragX;
+  dragX = null;
+  if (Math.abs(dx) > 40) turn(dx < 0 ? 1 : -1);
+});
 
 /* ===== imposition sheet: the frozen 8-up order ============================ */
 const ORDER = [[5,'rot'],[4,'rot'],[3,'rot'],[6,'rot'],[8,''],[1,'cover'],[2,''],[7,'']];
@@ -690,7 +894,9 @@ const cells = () => [[Q1-22,CY-46,'5'],[Q1+22,CY-46,'4'],[Q3-22,CY-46,'3'],[Q3+2
 const STEPS = [
   /* 1 — valley fold on the vertical centre.  The RIGHT half is the paper that
         moves, so the tail sits at its centre and the head lands on the left. */
-  { cap:'Fold the sheet in half, bringing the two short edges together.',
+  /* ✱ cap gained its first clause 2026-08-11: the diagram is drawn landscape and printed side up, and
+        step 1 assumed you would infer both.  Every later step inherits whichever way you started. */
+  { cap:'Printed side up, the wide way round. Fold the sheet in half, bringing the two short edges together.',
     now:'You should be holding a tall half-sheet.',
     d: FULL + cells()
      + `<rect class="ghost" x="${CX}" y="${Y0}" width="${X1-CX}" height="${Y1-Y0}" rx="2"/>`
@@ -725,12 +931,25 @@ const STEPS = [
 
   /* 5 — CUTTING is an action performed on the paper, so it carries no motion
         arrow at all: the blade sits on the line, pointing along the cut. */
-  { cap:'Fold in half the first way again, then cut in along the middle crease — from the folded edge, one panel deep.',
+  { cap:'Fold in half the first way again, then cut in along the middle crease — from the folded edge, through both layers, one panel deep.',
     now:'One short slit. Nothing else gets cut.',
+    /* ✱ three changes, all on the one step whose mistake cannot be undone.
+       (a) The crease ran Q1→Q3 with the cut drawn ON TOP of its left half — two dashed lines,
+           same rhythm, collinear, distinguished only by hue on a dark stage.  Read cold: "do I
+           cut to the red bit or across the whole thing?"  The crease now starts where the cut
+           STOPS, so the two marks abut instead of overlapping and the handover is the answer.
+       (b) A stop tick at CX, in --jam.  "One panel deep" is in the caption and "One short slit"
+           in the holding line; the diagram was the only one of the three not saying it.
+       (c) The `now` line is GONE.  It sat exactly on the sheet's own left edge — the rect here
+           is drawn from Q1, so the spine was already an ink line — and it made green mean "the
+           fold you are making" on steps 1-3 and "a fold you already made" here, on the step
+           where knowing which edge is folded decides where the slit lands.  Same failure as the
+           red arrows: a legend that teaches a rule and then breaks it.  The folded edge is now
+           read from the cut's own origin and the scissors sitting outside it. */
     d: sheet(Q1,Y0,Q3-Q1,Y1-Y0)
-     + `<line class="crease" x1="${Q1}" y1="${CY}" x2="${Q3}" y2="${CY}"/>`
-     + `<line class="now" x1="${Q1}" y1="${Y0}" x2="${Q1}" y2="${Y1}"/>`
+     + `<line class="crease" x1="${CX}" y1="${CY}" x2="${Q3}" y2="${CY}"/>`
      + `<line class="cutmark" x1="${Q1}" y1="${CY}" x2="${CX}" y2="${CY}"/>`
+     + `<line class="cutstop" x1="${CX}" y1="${CY-7}" x2="${CX}" y2="${CY+7}"/>`
      + `<g class="scissors" transform="translate(${Q1-34},${CY})"><circle cx="2" cy="-7" r="3.6"/><circle cx="2" cy="7" r="3.6"/><path d="M5 -5l17 5M5 5l17 -5"/></g>` },
 
   /* 6 — the BOTTOM half travels up again, now with the slit on the crease. */
@@ -742,7 +961,7 @@ const STEPS = [
      + `<line class="crease" x1="${Q3}" y1="${Y0}" x2="${Q3}" y2="${Y1}"/>`
      + `<rect class="ghost" x="${X0}" y="${CY}" width="${X1-X0}" height="${Y1-CY}" rx="2"/>`
      + `<line class="now" x1="${X0}" y1="${CY}" x2="${X1}" y2="${CY}"/>`
-     + `<line class="cutmark" x1="${Q1}" y1="${CY}" x2="${Q3}" y2="${CY}"/>`
+     + `<line class="oldcut" x1="${Q1}" y1="${CY}" x2="${Q3}" y2="${CY}"/>`
      + move(X1-24, CY+38, X1-24, CY-38, 44) },
 
   /* 7 — PUSHING is an action: hollow stems, one from each end. */
@@ -751,7 +970,7 @@ const STEPS = [
     d: sheet(X0,CY-34,X1-X0,68)
      + `<line class="crease" x1="${Q1}" y1="${CY-34}" x2="${Q1}" y2="${CY+34}"/>`
      + `<line class="crease" x1="${Q3}" y1="${CY-34}" x2="${Q3}" y2="${CY+34}"/>`
-     + `<path class="cutmark" d="M${Q1} ${CY}L${CX} ${CY-15}L${Q3} ${CY}L${CX} ${CY+15}Z"/>`
+     + `<path class="oldcut" d="M${Q1} ${CY}L${CX} ${CY-15}L${Q3} ${CY}L${CX} ${CY+15}Z" stroke-linejoin="round"/>`
      + act(X0-25, CY, X0-3, CY, 1)
      + act(X1+25, CY, X1+3, CY, 1) },
 
@@ -772,20 +991,41 @@ function drawFold(){
     STEPS[step].cap + `<span class="foldnow">${STEPS[step].now}</span>`;
   document.getElementById('stepNo').textContent = `Step ${step+1} of ${STEPS.length}`;
   document.getElementById('foldDots').innerHTML = STEPS.map((s,i) =>
-    `<button class="${i===step?'on':''}" aria-label="Step ${i+1}" aria-current="${i===step}" onclick="goStep(${i})"></button>`).join('');
+    `<button class="${i===step?'on':i<step?'done':''}" aria-label="Step ${i+1}" aria-current="${i===step}" onclick="goStep(${i})"></button>`).join('');
+  const last = step === STEPS.length-1;
   document.getElementById('fPrev').disabled = step === 0;
-  document.getElementById('fNext').disabled = step === STEPS.length-1;
+  document.getElementById('fNext').hidden = last;
+  document.getElementById('fDone').hidden = !last;
+  document.getElementById('foldIntro').hidden = step !== 0;
+}
+
+/* The band has to hear the claim. Re-stating "then fold it up" under a stamp primary, to somebody who
+   has just told the app they folded it, reads as the app not listening — the ADR-058 shape. */
+function markFolded(){
+  document.getElementById('band').classList.add('folded');
+  closeDrawer(); goStep(0);
 }
 function foldStep(d){ goStep(step + d); }
 function goStep(i){ step = Math.min(STEPS.length-1, Math.max(0, i)); drawFold(); }
 drawFold();
 
 /* ===== paper size, drawers, save, toast =================================== */
+let paperName = 'A4';
 function setPaper(p){
+  const was = paperName;
+  paperName = p==='A4' ? 'A4' : 'US Letter';
   document.getElementById('pA4').setAttribute('aria-pressed', p==='A4');
-  document.getElementById('pLetter').setAttribute('aria-pressed', p==='Letter');
-  document.getElementById('readySub').textContent = `8 pages · one sheet, one cut · ${p} · stays on your phone`;
-  document.getElementById('saveSub').textContent = `8 pages · ${p}`;
+  document.getElementById('pLetter').setAttribute('aria-pressed', p!=='A4');
+  document.getElementById('readySub').textContent = `8 pages · one sheet, one cut · ${paperName} · stays on your phone`;
+  document.getElementById('saveSub').textContent = `8 pages · ${paperName}`;
+  document.getElementById('recipePaper').textContent = paperName;
+  // Dropping `.done` on a paper change is correct and must be SAID — see the note's comment in the band.
+  const band = document.getElementById('band'), stale = document.getElementById('stale');
+  if (band.classList.contains('saved') && was !== paperName){
+    band.classList.remove('saved');
+    stale.textContent = `Paper changed to ${paperName} — save again to get a ${paperName}-sized PDF. The ${was} one is still in Downloads.`;
+    stale.hidden = false;
+  }
 }
 const scrim = document.getElementById('scrim');
 function openDrawer(which){
@@ -799,6 +1039,10 @@ function closeDrawer(){
 }
 function doSave(){
   document.getElementById('band').classList.add('saved');
+  // A row that survives into a new moment has to be named for that moment: "Ready when you are" sitting
+  // above "Saved to your phone" reads as *ready for what, I just did it*.
+  document.getElementById('readyHead').textContent = 'Before you print';
+  document.getElementById('stale').hidden = true;
   flash('Saved to Downloads');
 }
 let ft;

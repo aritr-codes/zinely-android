@@ -110,6 +110,8 @@
 | [ADR-098](#adr-098) | **Phase D opens (planning).** The Proof is **already built** — as V1, against the superseded `proof.html`, with READ-first shipping and **zero V2 tokens across all five files** — so Phase D is a re-skin, and its phase-level property table sweeps all 702 lines of the frozen Proof to report **four of eleven packages fenced before any is opened**. Eleven packages ordered by **golden blast radius**, not by rulings-in-hand: the shared `Z*` components convert once, before the surface, or ~110 PNGs re-record twice. Finds the enrolment gate **unsatisfiable by ruling** (`feature.editor` holds **563** raw `.dp`, every one of them because D-007 published no spacing scale), the imposed sheet **schematic rather than rendered** so a maker never sees their own sheet before spending paper, the frozen Proof carrying **no Loading and no Error state** (D-024's exact shape), the fold animation **looping forever** where the roadmap requires it to rest, and **both of Phase D's two named deliverable addresses stale**. Raises **thirteen owner decisions (OD-29…OD-41)**. Its baseline finding — `main` red in three places inside the tagged milestone — was confirmed by audit and **closed by the maintenance commit `fc33bca`**, which retires **OD-37**; ~~and unblocks **D1**~~ **corrected 2026-08-07** — that removed D1's *baseline* blocker only, and [OD-41](#adr-098-od41) carried its scope ruling. **[OD-41](#adr-098-od41) is answered 2026-08-07, disposition (a): Phase D re-bases the shared `:core:ui` `Z*` components; D1 stands as published and is ▶ unblocked**, on [D-016](design/V2-SPEC-DEFECTS.md#d-016--two-of-phase-as-acceptance-criteria-cannot-be-met-by-a-phase-forbidden-to-touch-product-surface)'s ruling that modifying existing product surfaces *"necessarily belongs to Phase D"* — **no ADR superseded**; [ADR-097](#adr-097) §7.5 is Phase-C-scoped and is annotated, not amended. **Two of thirteen owner decisions answered, eleven owed. D0 is blocked on OD-29.** Records that ADR-089 §2.2 **audits** package proposals rather than generating them, so no derivation-methodology repair was owed ([note](#adr-098-derivation-note)) | Proposed |
 | [ADR-099](#adr-099) | **V2.1 — the handmade design language re-freeze.** Re-skins the Library, Proof and Bench onto a printed-depth, published-scale, imperfect-display-face language derived from three reference sites. Supersedes the V2 trilogy **as the design source**, supersedes **no ADR**, keeps the no-fourth-chrome-hue rule intact — and **amends V2-CONSTITUTION §III Typography** to admit a third UI typeface (Amendment 1, owner, 2026-08-10). | Accepted |
 | [ADR-100](#adr-100) | **Six implementation rulings the V2.1 Library re-skin forced, taken under delegated owner authority.** The overflow affordance becomes a **drawn three-dot mark** rather than the `⋯` character (emoji2 and the bundled Inter both defeat the glyph); the **two paper cover stocks stop theming** because a themed cream at 1.18:1 on the dark desk turned a maker's object into a hole cut in the desk; long titles **cap at two lines** so one zine cannot push its neighbour's cover down; the count chip moves to `butter`/`onButter` and the dock's decorative ring to `butter`, both invisible in light theme at `butterTint`'s **1.01:1**; the prototype's `:nth-child` tilt/tape phase is confirmed a **prototype artifact** and corrected to `:nth-of-type` in the frozen file; and the dead V2 `ZineCover` is **deleted**, which exposed that the only recipe test in the tree still guarded the function the shelf had stopped calling. Adds the `onButter` token. **Amends the freeze** ([V21-SPEC §4.1](design/V21-SPEC.md#41-colour), [§4.3](design/V21-SPEC.md#43-depth-geometry-motion)) and restructures `v21-library.html`'s tile from a `<button>` into an `<article>` holding two sibling buttons, because a control may not contain a control and the prototype could not otherwise carry the affordance ruling 1 ships. Reviewed twice — **GO WITH FIXES** and **NO-GO** — with all fourteen Required Fixes reconciled ([§11](#adr-100-review)); both reviews independently found the same dead CSS selector first. **Both device passes accepted 2026-08-11** on `SM-A176B` / Android 16 ([record](reviews/2026-08-11-adr-100-device-verification.md)); the two paper stocks measure the same hex in both themes on glass. | Accepted |
+| [ADR-101](#adr-101) | **The Proof's climb becomes a band and two drawers.** Step 5 planning, opened before any code per [ADR-089 §2.2](#adr-089). Rules on **reconciliation, not design** — the structure was already owner-accepted with the prototype under [ADR-099](#adr-099). Audit finds the Proof is **V1 → V2.1 plus a navigation change** (24 `ZinelyTheme.colors`, **zero V2 tokens** across 2360 lines), a harder jump than the Library's re-skin. Two [ADR-100](#adr-100) ruling-4 defects found **by measurement before any code**: `.btn-save`'s `butterTint` frame ring at **1.10 / 1.13** on the band's paper ground, and `.pcount` at **1.01** light on the desk — the Library's count chip again. `.seal`'s red is kept: sealing wax is material, not signal. Names five invariants the prototype could not know about — chiefly that the frozen band has **a `.done` state and no failure state**, so [D-024](design/V2-SPEC-DEFECTS.md#d-024)'s shape is inherited — **withdrawn on reading the code**, which already replaces the whole surface on failure, a better answer than a third band state; **D-066/OD-32 are answered** on both halves (Error, and Loading via `exportBusy`). **Modifies [ADR-051](#adr-051) Decision A** — P1 retires the acts it created. Six packages, **structure before paint**: ADR-098's rule is *order by golden blast radius*, and with the structure changing that same rule yields the opposite of its usual chrome-first consequence. **Reviewed twice before any code** — evidence lens and plan lens, both GO WITH FIXES, fourteen Required Fixes reconciled ([§6](#adr-101-review)); the reviews caught §3 omitting the **print recipe**, which the frozen drawer does not contain at all, and P4 scoped at five fold steps against the frozen eight. **All six packages complete 2026-08-12**, each device-verified on both passes; P6's device Pass 1 found the surface's sharpest defect — the reader's leaf and the print drawer's imposed sheet both rendered the user's *printed output* in the room's dark palette, at 1.2:1, which no reviewer could see because it takes three separately-correct facts to produce ([§6.11](#adr-101-p6-device)). | Accepted |
+| [ADR-102](#adr-102) | **The Bench re-skin, and the ruling its first draft would have reversed.** Step 6 planning, opened before any code on ADR-101's precedent — and **rewritten the same day after a NO-GO**, which is the whole value of planning in a document. Establishes first that **the freeze banners were wrong on all three prototypes**: `v21-bench.html` still called itself a *"DIRECTION PROPOSAL, NOT FROZEN"* naming the superseded `v2-bench.html` as canonical, as did `v21-proof.html` through all six ADR-101 packages built against it ([§1](#adr-102-banners)). Audit finds the Bench wearing **three palettes** — V2 (**41** references), a V2 island, and V1 remnants led by `ReframeControls` (**25**) — and a citation debt of **106 lines** in the Bench sources, **211 repo-wide**, all pointing at a superseded spec ([§2](#adr-102-audit)). **The rejected first draft ruled that `BenchSheetIsland` be retired** on the stated ground that V2 lacked a worktop token; the file it cited records the real cause — **[D-035](design/V2-SPEC-DEFECTS.md#d-035)**, an owner ruling taken after the user's own black text measured **1.60:1** on device against a dimmed sheet. Retiring it would have reinstated that defect on the surface users spend the most time on, and `EditorPageLegibilityProbeTest` exists to fail when it does. **The island stays; only its mechanism changes** ([§3](#adr-102-island)) — unified with the `ProofLitPaper` rule ADR-101 P6 derived independently three days earlier, which is the same rule: *the artifact does not dim.* Also names **four freeze changes that are not paint** ([§6](#adr-102-structural)), and puts the shelf and the network-bearing Art surface **explicitly out of scope** under OD-2 and an unresolved legal fence ([§7](#adr-102-oos)). Eight packages, dependency-ordered. | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -6896,6 +6898,12 @@ concession of identity. It is made deliberately — learnability outranks identi
 label — but it is a trade, not a free win, and the first draft of this section scored the freeze
 (*"answering the wrong question, well"*) instead of weighing it.
 
+**The trade, stated rather than assumed:** a vertical kebab is the most recognisably *stock Android* mark
+on the screen, and V2.1 exists precisely so the app does not read as stock Android. That is a real
+concession of identity. It is made deliberately — learnability outranks identity for a control with no
+label — but it is a trade, not a free win, and the first draft of this section scored the freeze
+(*"answering the wrong question, well"*) instead of weighing it.
+
 Guarded by `ZineOnShelfTest` — *"the overflow mark is three stacked dots that carry their own contrast"* —
 which reads the raster for `inkSoft` pixels inside the button's bounds and asserts the mark is **taller than
 it is wide**. The shape assertion is the load-bearing half: it is what fails if someone re-lays the dots
@@ -7146,6 +7154,14 @@ editor. The two `v21_sheet_*` rasters have no prior baseline at all. **This is e
 carry a behavioural assertion as well as a raster** — and why ruling 4's missing one was a Required Fix
 rather than a nicety.
 
+⚠️ **What that figure is worth, stated precisely.** For the ~15 rasters this pass renamed or re-hosted
+(§7), the verify ran against baselines the same pass had just written — it is a **determinism check, not a
+drift check**, and it cannot detect a wrong pixel that was recorded wrong. The remaining ~80 are a genuine
+drift check, and they are what proves the Library changes did not leak into the Proof, the Bench or the
+editor. The two `v21_sheet_*` rasters have no prior baseline at all. **This is exactly why rulings 1–4 each
+carry a behavioural assertion as well as a raster** — and why ruling 4's missing one was a Required Fix
+rather than a nicety.
+
 Three measurement lessons are recorded because each cost a wrong first answer:
 
 - **A raster is measurable, so measure it.** The action sheet's "not full-bleed" finding was diagnosed as a
@@ -7232,3 +7248,1668 @@ was **citations**: §5.1 and §5.2 invoked for rules they do not contain, §3.2'
 determinism check called a drift check, and three reasons called independently sufficient when one of them
 carried the decision alone. The measurements were sound every time; the sentences around them were not —
 written into the same document that opens by warning against exactly that.
+
+---
+
+## ADR-101 {#adr-101}
+
+**The Proof's climb becomes a band and two drawers — the accepted V2.1 design, reconciled with the built
+screen.** Step 5 of the V2.1 implementation. Opened **before any production code**, per
+[ADR-089 §2.2](#adr-089).
+
+- **Status:** 🟢 **`Accepted` — 2026-08-11; all six packages complete 2026-08-12.** Opened as `Proposed`
+  planning-only. **P1–P5 are
+  built, tested and device-verified** ([§6](#adr-101-p1)–[§6.10](#adr-101-p5)). **P6** — the chrome,
+  `.pcount`, the V1→V2.1 sweep and the re-recorded rasters — is **built, tested, reviewed twice and
+  device-verified on both passes** ([§6.11](#adr-101-p6), [review](#adr-101-p6-review),
+  [device](#adr-101-p6-device)). With P6 **all six packages are complete** and the surface no longer paints
+  in two palettes — the drawers' V1 *material* is the one accepted departure, and it converts with
+  `:core:ui` in the Bench step.
+- **Owner questions open:** one, raised by P6's device Pass 2 and **not** blocking: the `.pcount` ticket's
+  `butterTint` ground measures **1.01:1** on `desk` in light theme, so the ticket reads as a dashed outline
+  rather than a filled ticket. The edge moved from `hair` to `inkSoft` to carry it; whether the *ground*
+  should change is the owner's call, because `butterTint`-on-`desk` is the freeze's own pairing
+  ([§6.11 device](#adr-101-p6-device)). The previous question — the top bar's zine name and act-status live
+  region — was answered on 2026-08-12 in favour of the frozen bar ([§5](#adr-101-open),
+  [§6.11](#adr-101-p6)).
+- **Supersedes:** nothing. **Modifies:** [ADR-051](#adr-051) Decision A — the three acts it established as
+  one surface stop being acts (§3 item 3); its *"you can always leave, nothing is lost"* invariant is kept
+  and extended to drawer dismissal. **Answers:** [OD-32](#adr-098-od32) / [D-066](design/V2-SPEC-DEFECTS.md#d-066)
+  (§3 item 1). **Bound by:** [ADR-100 §9](#adr-100) rulings 2, 4 and 5.
+- **Reviewed twice before any code** — an evidence lens and a plan lens, both **GO WITH FIXES**, fourteen
+  Required Fixes reconciled into §2–§5 ([§6](#adr-101-review)).
+- **This ADR rules on reconciliation, not on the design.** The structure below was **already accepted by the
+  owner** on 2026-08-10 when they accepted all three prototypes ([ADR-099](#adr-099)); implementing
+  `v21-proof.html` is executing the freeze, not making a new product decision. What genuinely needs deciding
+  is what happens to the invariants the *built* Proof earned along the way, which the prototype does not
+  know about (§3).
+
+### 1. What the audit found {#adr-101-audit}
+
+Measured, not assumed — `feature/editor/.../Proof*.kt` against `docs/design/mockups/v21-proof.html`.
+
+| | built | frozen V2.1 |
+|---|---|---|
+| Token layer | **V1 throughout — 24 `ZinelyTheme.colors`, zero V2 and zero V2.1 references** | V2.1 |
+| Shape | Read + a three-act **climb** (`ProofAct.SHEET` → `PRINT` → `FOLD`), each a full screen | Read **is** the screen; a persistent `.band` beneath it, and two bottom `.drawer`s |
+| Imposed sheet | `ProofSheetAct`, its own screen | `.minisheet`, inside the Print-details drawer |
+| Print checklist / paper choice | `ProofPrintAct`, its own screen | the Print-details drawer |
+| Fold guide | `ProofFoldAct`, its own screen | the Fold drawer |
+| Save / Share | end of the climb | `.commit`, on the Read screen itself |
+| After saving | completion act | `.done` block, swapped into the same band |
+
+**This is a bigger jump than the Library's.** The Library was V2 → V2.1, a re-skin. The Proof is **V1 →
+V2.1 plus a navigation change**, and the Bench (Step 6) is the Library's shape again — genuinely V2, with
+30 `v2Colors` and 3 `ZinelyV2Dimens`. Step 5 is the harder of the two and goes first because the Bench is
+the better-understood problem.
+
+**Why the change is right, in one line:** it is [ADR-058](#adr-058)'s lesson made structural. The built
+Proof already put Read first; the frozen design finishes the job by making printing and folding things you
+reach *from* your finished book rather than screens standing between you and it. Save PDF moves from three
+screens deep to one tap.
+
+### 2. Two defects inherited from ADR-100, found before any code {#adr-101-inherited}
+
+[ADR-100 §9](#adr-100)'s closing bullet binds rulings 2, 4 and 5 to the remaining surfaces — *"the Proof and
+the Bench re-skins are next, and rulings 2, 4 and 5 will bind them."* **Corrected in review:** this ADR first
+sourced that binding to
+[V21-SPEC §3.4](design/V21-SPEC.md#34-scope---recommendation-all-three-surfaces-and-no-more), which is the
+*scope* of the freeze and says nothing about ADR-100 — the citation defect
+[ADR-100 §11](#adr-100-review) exists to name, committed in the ADR that names it.
+
+Ruling 4 applies twice here, both measured off the frozen file rather than discovered on a device:
+
+| Frozen rule | Measured | Disposition |
+|---|---|---|
+| `.btn-save{box-shadow:… 0 0 0 var(--frame) var(--butter-tint)}` | **1.10 light / 1.13 dark** where the ring's **outer** edge meets the `.band`'s `paper` ground — so the ring has no outline against the band it sits on. Its **inner** edge against the `--leaf` fill measures **4.28 / 4.96**, so the ring is not literally invisible; it is unbounded, reading as a soft bloom off the button rather than the deliberate misregistration it is | **→ `--butter`** (1.73 / 7.35), exactly as ADR-100 §4 ruled. Amend `v21-proof.html` |
+| `.pcount{background:var(--butter-tint)}` on the topbar, over `desk` | **1.01 light / 1.33 dark** — the same colour, the same defect, the same numbers as the Library's count chip | **→ `--butter` + `--on-butter`** (ground 1.56 / 8.71, label 7.89 / 9.15), per ADR-100 §4. Amend `v21-proof.html` |
+
+Measured and deliberately **not** changed: `.seal`. Its `jamText` **fill against the band's paper** measures
+**6.00 / 5.22**, and its `onJam` **label on that fill** measures **6.00 / 6.49** — the two coincide in light
+only because `onJam` and `paper` are the same value there. A wax seal is red because sealing wax is red: that
+is butter's own *material, not signal* test applied to a different hue, and the seal marks success only in
+the way a stamped envelope does. `.flash`'s `--ink-line` border is
+[§4.3](design/V21-SPEC.md#43-depth-geometry-motion)'s named ink-on-ink exception and is correct.
+
+### 3. The invariants the prototype does not know about {#adr-101-invariants}
+
+The prototype was drawn without sight of what the built Proof had to earn. These survive the restructure or
+the restructure is wrong:
+
+1. **Export-error surfacing.** `ProofErrorPane` exists because a PDF write can fail, and the frozen band has
+   a `.done` state and no failure state — the same gap [D-024](design/V2-SPEC-DEFECTS.md) named in the
+   Library. **Corrected after reading the code:** this needs no new design. `ProofScreen` already renders the
+   error as a **surface-level replacement** of the acts *and* the action bar, keeping only the top bar's
+   loss-safe back — one recovery action, no competing ones. That is a better answer than a third band state,
+   which would leave Save/Share live next to a failure notice. The invariant is preserved by **leaving
+   `ProofErrorPane` exactly where it is**; the band simply never renders while `exportFailed`. §5's open
+   question is withdrawn — **and so is the register entry that owns this gap for the Proof.** The
+   **D-066** row ([V2-SPEC-DEFECTS](design/V2-SPEC-DEFECTS.md), no anchor of its own) /
+   [OD-32](#adr-098-od32) are open and marked *blocks Phase D package D3*, and this ADR answers both halves
+   of what they name: **no Error state** — the surface already replaces itself, so the band needs none — and
+   **no Loading state** — `exportBusy` (§3 item 6), which the frozen band also lacks and P2 adds. Note that
+   D-066 was raised against `v2-proof.html`, superseded as the design source by [ADR-099](#adr-099); it
+   survives because the *gap* survived the re-freeze even though the file did not.
+   [D-024](design/V2-SPEC-DEFECTS.md#d-024) is the Library's precedent, cited for the shape only.
+2. **The [ADR-041](#adr-041) fold hand-off, *and the filename it carries*.** Preserved in shape — `.done`'s
+   *"Fold it up"* is the hand-off — but the frozen `.done` says only *"In Downloads — print it whenever"*,
+   while the built snackbar NAMES the file the exporter actually wrote (`savedSignals` → `savedToDownloads`).
+   That name is what makes [ADR-054](#adr-054)'s *we kept a copy* promise checkable rather than asserted, and
+   it must survive. Note the inverted state lifetime: `savedName` is deliberately **not** `rememberSaveable`
+   ("a transient nudge should not survive a rotation"), whereas `.done` is a persistent band state that
+   **must**. The band cannot simply inherit the snackbar's contract.
+3. **[ADR-051](#adr-051)'s back contract, which P1 modifies.** ADR-051 Decision A established the three-act
+   climb as one surface under *"you can always leave, nothing is lost"*; today `ProofAct.SHEET`'s back
+   returns to Read rather than leaving. With drawers, back must dismiss the drawer and **never** leave the
+   Proof from an open drawer. **This ADR therefore modifies ADR-051 Decision A** — the acts it created stop
+   being acts — and supersedes no ADR.
+4. **The print recipe — the largest thing at risk, and the one this list was written to catch.** The built
+   `ProofPrintAct` carries four rows that exist because home printers silently ruin zines: `100% · Actual
+   size — not "Fit to page"`, `Landscape — a portrait default breaks the fold`, paper, `Single-sided`
+   (`Copy.kt:524-532`). The frozen drawer contains **none of them** — searching `v21-proof.html` for those
+   phrases returns one hit, a code comment about sheet geometry. It has a paper segment, three passive ticks
+   and a test-sheet card. §1's table called this "print checklist → the details drawer" as though the same
+   content were moving house; it is [ADR-052](#adr-052)'s decision content being deleted. **The recipe rows
+   are an invariant: P3 carries them into the drawer.** Dropping guidance that prevents a wasted sheet is not
+   a re-skin decision.
+5. **The fold climax.** `foldFinished` → the five-beat schedule (980/1180/1440/1700/2000) → `Success` at beat
+   0, `Tick` at beat 2, reveal-gated exits, and the reduced-motion short-circuit. In the prototype `.done` is
+   raised by **save**, not by finishing the fold, and the fold drawer has no terminal state — so B4's *your
+   zine is a book* payoff, and the `onMakeAnother` exit wired at `ZinelyNavHost.kt:265`, have no home in the
+   frozen design. **Owner question, not an implementer's call** (§5).
+6. **`exportBusy` single-flight.** Both built export controls disable while a render is in flight; the
+   frozen `.btn-save`/`.btn-share` have no busy state. Without one, P2 ships a double-tap that fires two
+   concurrent PDF renders. P2 adds it — a missing disabled state is a bug in the prototype, not a design
+   choice to honour.
+7. **The act-status live region and the zine name.** The built top bar carries the project title and a
+   `LiveRegionMode.Polite` caption documented as *"the line a screen-reader user hears on arriving"*. The
+   frozen top bar has back · `.pcount` · "How to fold" — no title, no caption, no live region; `.book`'s
+   `aria-live` covers page turns only, not arrival or drawer open/close. Four merged C1 conformance
+   assertions in `SurfaceTraversalOrderTest.kt` expect the title in traversal order. P6 either keeps both or
+   this ADR records their removal explicitly.
+8. **Drawer accessibility, and the key handling it breaks.** Reuse `core/ui/.../ZSheet.kt` — it already
+   gives `paneTitle` semantics, platform-back dismissal and real focus containment, and the surface being
+   deleted already uses it twice. **Consequence:** `ZSheet` is `Dialog`-backed, so it is a separate window
+   and `ProofScreen`'s root `onPreviewKeyEvent` will **not** see ←/→ while a drawer is open. The frozen
+   prototype routes ←/→ to fold steps when that drawer is open and to page turns otherwise, so the handler
+   must move inside the drawer content. P3/P4 own this.
+9. **[§5.3](design/V21-SPEC.md#53-fold-arrows-follow-origamis-own-conventions-not-ours)'s
+   Yoshizawa–Randlett arrows** bind the fold drawer's diagrams. Binding, not to be reinterpreted — and P4 is
+   **eight** frozen steps against the built five (`FOLD_LAST_STEP = 4`), so it is eight diagrams and eight
+   copy pairs, not a re-skin of five.
+
+**Withdrawn on measurement:** an earlier draft listed *"the fold guide rests rather than loops"* as an
+inherited ADR-098 finding. It is not inherited by either artifact — the frozen JS clamps
+(`goStep(i){ step = Math.min(STEPS.length-1, Math.max(0, i)) }`, no `setInterval` anywhere in the file) and
+the built nav guards both directions. ADR-098's OD-35 was raised against `v2-proof.html`, which
+[ADR-099](#adr-099) superseded as the design source. Recorded rather than deleted, because "a defect declared
+inherited that both artifacts already resolve" is the same misreading as a rename called an orphan-sweep.
+
+### 4. Packages {#adr-101-packages}
+
+Ordered by golden blast radius, per ADR-098's rule — shared chrome converts once, before the surfaces that
+sit on it, or the ~16 `proof_*` rasters re-record twice.
+
+| # | Package | Owns |
+|---|---|---|
+| **P1** | **Retire the climb** | `ProofAct` → `READ` + two drawer flags; delete the act `AnimatedContent`, `ProofActionBar`'s per-act configuration and `ProgressCreases`; back dismisses a drawer before leaving |
+| **P2** | The band | `.band` + `.ready` + `.commit` + `.done` — the Save/Share/fold-hand-off home |
+| **P3** | Print-details drawer | `ZSheet` shell (§3.8), `.paperseg`, `.check`, `.testcard`, `.minisheet`, **and §3.4's four recipe rows** |
+| **P4** | Fold drawer | eight steps (not five), `.stepline`, `.foldstage`, `.foldnav`, `.stepdots` — under §5.3 |
+| **P5** | Reader | `.book`, `.tapz`, leaf-turn — [§5.2](design/V21-SPEC.md#52-physical-honesty-beats-visual-convenience-the-proof-rule)'s single leaf, spine on the correct side |
+| **P6** | Chrome + paint | `.topbar`, `.pcount`, `.stagewrap` grain, ~~`.flash`~~ (not built — [§6.11](#adr-101-p6)); the V1→V2.1 token sweep; re-baseline tests; record the rasters **once** |
+
+**Structure precedes paint, and that does not override [ADR-098](#adr-098).** ADR-098's rule is *order by
+golden blast radius*; chrome-first is a **consequence** of it when the structure is stable, not the rule
+itself. Here the structure is not stable — `ProgressCreases` is three dots describing a climb P1 deletes — so
+the same rule produces the opposite order. **Corrected in review:** an earlier draft justified this by
+claiming the 16 rasters would "record twice". They would not, since goldens record once in P6 under either
+order. The honest accounting is that **14 of the 16 belong to screens P1–P4 delete outright** (sheet ×4,
+print ×4, fold ×4, finished ×2) — they are not re-recorded but retired and replaced — and the real argument
+is simply that painting a component P1 deletes is wasted work.
+
+**Which module gets re-skinned — the question §4 must answer and nearly didn't (P2/P3/P6).** Every shared
+component the Proof consumes (`ZSheet`, `ZSnackbar`, `ZStatusPane`, `ZButton`, `ZMenuItem`) is still V1-token
+with zero `v21` references. The Library re-skin did **not** convert `:core:ui`; it built surface-local V2.1
+composables. **The Proof follows the Library:** surface-local V2.1, `:core:ui` untouched. Converting the
+shared components would re-record the Library's and the Bench's goldens too — which is precisely the blast
+radius ADR-098's rule exists to price, so honouring that rule here means *not* converting them.
+
+**P1's blast radius is small in production and large in tests.** Production consumers are exactly two: the
+enum declaration and `ZinelyNavHost.kt:228`, which never passes `startAct` — no route change, no serialized
+key. But `startAct` is **public API** with ~10 test call sites across six files, and
+`SurfaceTraversalOrderTest.kt` holds four full-traversal assertions for Read/Sheet/Print/Fold that are merged
+C1 guardrail material (`a139fac`). P6's "re-baseline tests" means retiring several test files and rewriting a
+merged conformance suite; it is named here so it is not discovered as a surprise.
+
+**P5 is a rewrite, not a re-skin.** The built reader is a `HorizontalPager`, one page per screen, swipe-driven,
+with the pager as a single labelled stop. The frozen `.book` is a booklet-leaf model — cover alone, 2|3, 4|5,
+6|7, back alone — turned by `.tapz` **taps**, not swipes. Different pagination, different gesture, different
+a11y shape, and `Copy.Proof.ACT_READ` literally says *"swipe to turn the page"*. ADR-058's reading-order
+contract needs re-stating against a spread model.
+
+Each package: implement → unit tests → **two reviews, different lenses**. Goldens and both device passes run
+once at the end of P6, not per package. Per [ADR-089 §2.2](#adr-089), the property-level frozen property
+table is owed **per package at the point it opens** — this ADR is the phase-level artifact, in ADR-098's
+sense, and does not discharge that.
+
+### 5. Open {#adr-101-open}
+
+- **The fold climax (§3.5) has nowhere to go in the frozen design, and that is an owner question.** The
+  prototype raises `.done` on save and gives the fold drawer no terminal state, so B4's payoff and the
+  `onMakeAnother` exit are deleted by the accepted design rather than by any ruling here. Retire them, or
+  give the fold drawer a terminal state the freeze does not currently have.
+- **The top bar's zine name and act-status live region (§3.7)** — keep, or record their removal. Four merged
+  C1 assertions depend on the name.
+- **`v21-proof.html` still badges itself `proposal · not frozen`** while this ADR calls it frozen throughout.
+  ADR-099 accepted it; the badge is stale prototype chrome, but under CLAUDE.md's DESIGN FREEZE gate the
+  label *is* the gate. Strip it in P1.
+- **[V21-SPEC §3.4](design/V21-SPEC.md#34-scope---recommendation-all-three-surfaces-and-no-more) says the
+  freeze must not extend to "Read, Fold or first-run — they have no prototype"**, yet the accepted
+  `v21-proof.html` contains both a reader and a fold drawer. The tension resolves if those are *the Proof's*
+  reader and fold drawer rather than the standalone surfaces §3.4 meant, but the spec should say so.
+- ~~`.done`'s **"Back to shelf"** is a new exit target; today every exit routes to the bench. Copy says
+  shelf, behaviour says bench — P2 picks one deliberately.~~ **Answered in P2 (§6.5 item 3): the control is
+  not built.** Neither label was honest, and the top bar already carries the only exit there is a route to.
+- ~~The `.btn-save` amendment goes into `v21-proof.html` under ADR-100's authority in the package that
+  implements it.~~ **Made in P2**: `--butter-tint` → `--butter` on both the rest and `:active` rules, with
+  the measurement recorded beside them in the file. The `.pcount` half stays with P6, which also needs the
+  reader's page index hoisted out of `ProofReadAct`.
+- **Pass 2 risk, named now so the device pass looks for it:** `.ready` reads as a status line
+  (*"Ready when you are · 8 pages · one sheet, one cut · A4"*) whose only affordance is a chevron, and it is
+  what a first-time user must open to reach §3.4's print guidance — with Save PDF sitting right below it,
+  offering no reason to. The Proof's question is *"how do I print it correctly?"*; the design answers it
+  behind a control that does not look like one. Not a redesign request under this ADR's constraint — a risk
+  to test.
+
+### 6. P1 as built — five things the code said that the plan could not {#adr-101-p1}
+
+**Landed 2026-08-11.** `ProofAct` is gone; `ProofDrawer { None, Details, Fold }` replaces it, `startAct` →
+`startDrawer`. Deleted with it: the act `AnimatedContent`, the four-way `ProofActionBar`, and
+`ProgressCreases`. `feature:editor` and `app` compile; the module's full unit suite is green.
+
+1. **`.pcount` cannot ship in P1, and the reason is not scheduling.** The frozen top bar carries a live page
+   readout — but the reader already publishes one as its own polite live region directly below it. Wiring
+   both makes TalkBack say *"Page 3 of 8"* **twice on every swipe**. The frozen design never had to notice,
+   because it draws no caption under the book. The plumbing was written, then reverted; `.pcount` lands in
+   P6, after P5 leaves one readout to place instead of two to reconcile.
+2. **Drawer traversal is not verifiable in Robolectric.** `platformTraversalStops(activity)` reads the
+   **activity window**; a `ZSheet` is a `Dialog`, i.e. its own window. Both drawer traversal tests were
+   written, run, and silently reported the *reader's* stops while claiming to check the drawer. That is a
+   cost of the right choice — window modality is exactly why §3 item 8 says to reuse `ZSheet` — so the
+   platform half moves to **device Pass 1**, where `uiautomator dump` walks every window. A semantics-tree
+   sibling assertion covers composition + drawn order in the meantime.
+3. **Hosting the climax in a drawer clipped it — and the first fix was itself the bug.** The drawer is
+   bottom-anchored and wraps its content, so a body taller than the screen does not scroll: it pushes what
+   follows it off the bottom edge, with **no scroll parent to rescue it**. The finish button and both exits
+   were mounted, laid out and unreachable.
+
+   The first fix read `(screenHeightDp * 0.88f - 174f).coerceAtLeast(240f)`, and **a floor that clamps
+   upward past the space that exists is not a floor.** Below 414dp of window height the body floored at 240
+   while the sheet demanded 414, so the defect survived in **landscape on shipped hardware** (a 430×932
+   phone reports ~411dp tall on its side, and no orientation is locked), in multi-window, in freeform, and
+   at large font scales — where a dp literal standing in for sp-driven chrome fails at *any* size. **This
+   ADR's own earlier text called that Robolectric's 470dp default being "smaller than any shipped device",
+   which was simply wrong: landscape phones are exactly that short.** Pinning a phone window in the tests
+   hid a portrait-only reproduction of a permanent condition, and filing the remainder under §5's owner
+   question was wrong too — a scroll parent is a fix, not a design choice.
+
+   Now: no floor, no arithmetic reserve, and the actions laid out **inside** the bound with a `weight`, so
+   they are unclippable at any size or font scale rather than unclipped at the sizes someone thought of.
+   Checked at 320/360/392/430/470/932dp. The clipping remains real **evidence for the frozen design's side
+   of §5's first open question** — `.done` in the band cannot be pushed off-screen by anything.
+4. **The ←/→ handler had been narrowed without anyone noticing.** Moving it from the screen root onto the
+   fold *guide* looked like a faithful relocation. It was not: Compose dispatches a preview key event down
+   the ancestor chain of the **focused** node, so once focus reached the finish button — a sibling of the
+   guide, and exactly where focus lands on the last step — the arrows left the chain and died. It now sits
+   on the drawer's outer column, which every focusable in the drawer descends from. Still not unit-tested,
+   because Robolectric's focus owner does not drive preview handlers reliably; that is now a **named device
+   Pass 1 gate** rather than a code comment standing in for evidence.
+5. **The finish action had no home, and nearly vanished.** `It's folded — show me` lived in the per-act
+   bottom bar the restructure deletes. The fold drawer now owns its guide, its finish, its climax and its
+   exits together. Exits-in-the-band was considered and rejected: the reveal happens in the drawer, and a
+   payoff you cannot act on from where you are watching it is not a payoff.
+6. **Three golden suites retired — and deleting them deleted thirteen live assertions, which review caught.**
+   The suites crop the **activity** decorView to the screen tag's bounds, and the content they frame now
+   lives in another window, so `proof_sheet_*` failed with *"paper sheet did not paint"*, which was true of
+   that bitmap. But each suite carried **two** proofs, and only one was about rasters: `captureRoboImage` is
+   a no-op under a plain unit run, while the `countColour` assertions are the half that actually executes.
+   Restored in `ProofActPaintTest`, mounted **directly against the act composables** — they are `internal`
+   and need no host — so no window boundary is involved and no baseline can go stale.
+
+   Two corrections to what this section first claimed. The parenthetical *"`ZineActionSheetGoldenTest`
+   proves node-capture inside a Dialog works"* **misdescribed that file**: it composes the sheet surface
+   *outside* a Dialog. And *"14 of the 16 rasters retired"* described intent, not the repository — all 14
+   PNGs were still committed with no test referencing them. They are deleted now. `ProofScaffoldGoldenTest`
+   survives with **live assertions and a stale baseline**, which its KDoc now says outright rather than
+   leaving a green golden whose committed image shows a screen that no longer exists.
+7. **Nine copy constants were dead, and the sentence explaining them was false.** `ACT_SHEET`, `ACT_PRINT`,
+   `ACT_FOLD`, `PRINT_AND_FOLD`, `PRINT_SETUP`, `BACK`, `NOW_FOLD_IT`, `BACK_TO_YOUR_ZINE` all fell to zero
+   references — and the comment left beside them claimed they were *"kept only until P6 re-baselines the
+   tests that assert them"* when **no test asserted them even then**. Deleted. So were four constants this
+   package *added* and never used, one of which (`CLOSE`) carried a KDoc describing a close button that was
+   never built, and another (`BACK_TO_THE_BENCH`) was a third near-duplicate of a live string at different
+   capitalisation. Only strings with a live consumer remain.
+8. **The invariant this ADR promotes had no test.** §3 item 3 makes *back dismisses an open drawer before it
+   will leave the surface* a binding modification of ADR-051 — and P1 shipped it asserted in prose, in a
+   KDoc, and nowhere else. `ZSheet`'s Dialog host does route system back to `onDismissRequest`, but "the
+   component we used probably does that" is exactly what this repository does not accept from a summary.
+   Now covered by `system back dismisses an open drawer instead of leaving the surface`.
+
+Also fixed in passing: **all three V2.1 mockups still badged themselves `proposal · not frozen`**, including
+`v21-library.html`, which ADR-100 had already shipped, reviewed twice and device-verified from. Under
+CLAUDE.md's DESIGN FREEZE gate the label *is* the gate, so it read as a live contradiction of ADR-099. Now
+`frozen · ADR-099` on all three.
+
+**One review finding PARTIALLY ACCEPTED, and carried rather than fixed.** Both frozen drawers draw a
+`.dclose` button; `ZSheet` renders none, so P1's drawers dismiss by system back or scrim tap only. That is
+a real parity gap and a real discoverability cost — the drawer covers most of the screen and nothing in it
+names a way out. It is **not** fixed here because the close button belongs beside the sheet's title, which
+`ZSheetSurface` owns, and P1's whole scope rule is *surface-local, `:core:ui` untouched* (§4) — adding a
+slot to a shared component used by eight sheets is P3's decision to take deliberately, not P1's to take in
+passing. **Booked as a Required Fix owed by P3/P4**, and the unused `Copy.Proof.CLOSE` was deleted rather
+than left as a promise. Note this is not a contradiction of the badge change above: the badge marks the
+*prototype* as the frozen spec; it does not claim Compose has reached parity, which P1 explicitly has not.
+
+**One Pass 2 item booked, distinct from the `.ready` risk already in §5.** After P1 the only route to
+printing is a band button reading **"Print details"** — which names a settings panel, not an action — while
+the retired primary said **"Print & fold"**, naming both destinations of the screen. Nothing on the surface
+uses the word *PDF*. And because `.commit` (Save PDF / Share) does not arrive until P2, `.ready` currently
+stands alone, without the neighbour that would make a secondary label legible. **P1 is therefore worse at
+answering the Proof's own question — *"how do I print it correctly?"* — than either the design it replaces
+or the design it is heading toward.** That is acceptable mid-restructure and unacceptable at the end of it:
+it must be tested against a first-time user before P2 closes, not deferred to P6's device pass.
+
+### 6.5. P2 as built — the band, and three places the freeze lost the argument {#adr-101-p2}
+
+**Landed 2026-08-11.** The band is the frozen `.band`: the two-line `.ready` row, the `.commit` pair, and
+the `.done` completion that replaces `.commit` after a save. Save PDF and Share, with the share chooser
+they raise, moved out of the print recipe; `ProofPrintAct` lost `onExportPdf` and `exportBusy` entirely.
+`feature:editor` and `app` compile; the module's full unit suite is green.
+
+1. **The commit belongs in the band, and the recipe is better for losing it.** This is the frozen
+   arrangement, and it is also what fixes §5's Pass 2 risk and §6's booked Pass 2 item at once: the surface
+   now says **PDF** on the one control that makes one, `.ready` has the neighbour that makes a secondary
+   label legible, and the print guidance stopped being the only route forward. The recipe panel is a
+   *reference you consult*; burying the screen's one action at the bottom of it made that action the thing
+   you had to go looking for.
+2. **`.ready` survives the save — the frozen band hides it.** `.band.saved` hides `.ready` *and* `.commit`.
+   That is backwards for this screen: the print recipe is most needed **after** the PDF exists, which is
+   when the user walks to a printer, and the frozen rule makes the scale-and-orientation guidance
+   unreachable at the moment it pays for itself. `.done` replaces `.commit` only. Asserted, so it cannot be
+   undone by accident (`the completion keeps the print details reachable`).
+3. **`.done` has one action, not two.** The frozen row is *"Fold it up"* beside *"Back to shelf"* — and the
+   prototype's own flash text admits the destination does not exist (*"the finished book lives in Read"*).
+   Zinely is single-project today, so that control could only be the top bar's back wearing the name of a
+   place there is no route to. Built with one action. That answers §5's open item by **not** picking either
+   label.
+4. **The snackbar was retired, and `.done` inherited its jobs — except, possibly, the spoken one.** The
+   band changes under the user's thumb at exactly the place they pressed Save, and a nudge that expires in
+   five seconds is a worse home for the payoff than a block that waits. `.done` carries the ADR-041
+   hand-off as *"Fold it up"* and keeps ADR-054's check by **naming the file the exporter actually wrote**
+   (the frozen copy says only *"In Downloads"*). The state-lifetime inversion §3 item 2 warned about is
+   handled the way it warned: `savedName` was `remember`; it is now `rememberSaveable`, because losing a
+   completion on rotation would retract a statement about the filesystem that is still true.
+
+   **The announcement is the exception, and review caught it as another sentence written before it was
+   checked.** This section first said the two lines are *"announced once, as a sentence"*. Compose fires a
+   live-region event when an **existing** node's content changes; `.done` is a *new* node the frame it
+   appears, so the property-change pass may skip it and leave only a subtree content-changed event
+   TalkBack does not read aloud. Robolectric cannot assert an announcement — and P2 deleted the snackbar
+   that *was* the shipped one, which makes this the one place the package could have made the save **less**
+   accessible while claiming the opposite. Downgraded to intent in the KDoc and added as a **device Pass 1
+   gate**; if TalkBack is silent, the fix is an explicit announcement, not a live region.
+5. **A saved PDF goes stale when the paper changes, and nothing said so.** The copy in Downloads was
+   imposed for the size that was chosen when it rendered. Change the paper and *"Saved to your phone"* goes
+   on being true about a file that no longer matches the recipe beside it — so picking a new size clears
+   `.done`, which is also the only route back to Save. Neither the freeze nor this plan had noticed the
+   interaction; it fell out of building `.done` as a persistent state rather than a toast.
+
+   Two limits on that, named rather than implied. **Paper is not the only staleness** — editing the
+   document stales the saved PDF identically, and the band cannot see edits from here; the Proof is
+   reached from the bench and re-entry drops the holder, so this is not live today, but the general
+   invariant is *"`.done` describes a file rendered from a document state"* and only one input to it is
+   handled. And **there is deliberately no other route back to Save** once `.done` is up: re-saving an
+   unchanged document writes a second identical file, which is the behaviour the frozen band also refuses.
+6. **`.ready` is one control, announced as one string.** The frozen row carries `aria-label="Print
+   details"`, which on Android *replaces* its contents: a sighted user reads the page count, the paper and
+   the privacy promise, a TalkBack user gets three words. The label is the row's own two lines and the
+   destination rides on the click action (`onClickLabel`), which is where Android puts *what happens if you
+   activate this*. Asserted on both halves, including the action label.
+7. **`exportBusy` is the drawing the frozen buttons lack — not the single-flight itself.** This section
+   first claimed *"without it a double-tap fires two concurrent renders"*, and that is false and was
+   checkable: `ExportViewModel.export` returns early while `Working` and sets that state synchronously, so
+   the guard predates P2 and holds without any UI state. What `doSave()`-is-instant HTML has no drawing
+   for is the interval — a control that looks live for two seconds and does nothing reads as a broken
+   button, not a busy one. Both commit controls disable on `exportBusy`, asserted on the merged tree
+   **and** the platform tree — CI-93, the `f4faaa4` defect being a disagreement between exactly those two.
+8. **`ProofScaffoldGoldenTest` asserted a colour the scene can no longer contain.** Its pixel half looked
+   for `coralStrong` — the retired per-act primary. The band's commit is `stamp` until P6 gives it `leaf`,
+   and coral survives on the Proof only as the `.done` seal, which is not in that scene. The two tests
+   failed honestly and were repointed; the baseline PNGs stay stale by design until P6.
+
+**Not built, and named rather than left implied.** The frozen `.btn-save` carries a second line inside the
+button (*"8 pages · A4"*) — it repeats `.ready`'s summary two rows above, and a text slot on
+`ZPrimaryButton` would be a `:core:ui` API change the package scope rule (§4) excludes. Its `butter` frame
+ring is paint, so it lands with P6; the **prototype** was amended now, under ADR-100 §4's authority, since
+that is a specification fix rather than an implementation one.
+
+**The first-time-user check §6 booked came back GO WITH FIXES, and its sharpest finding is that the
+surface still never says the word it exists for.** P2 put *PDF* on a button; the missing word was
+**print**, and a reader's honest first sentence was *"I can see how to make a file. I cannot see how to
+make a booklet."* Five fixes landed from it, all copy or one-line:
+
+1. **`.ready`'s heading goes stale the moment it is kept.** Deviation 2 above preserved the row past the
+   save and left it reading *"Ready when you are"* directly above *"Saved to your phone"* — *ready for
+   what, I just did it*. The deviation bought reachability and lost legibility. Post-save the heading is
+   now **"Before you print"**, and the label a screen reader hears changes with it.
+2. **`.done` said *"Print it whenever"*, which is a cheerful way to lose a sheet of paper.** ADR-052's four
+   rows exist because home printers silently ruin zines, and every one of them lived behind a caption
+   nothing forces you through. `.done` now reads *"Print it at 100%, landscape, one side — then fold it
+   up."* The drawer keeps the full explanation; this is the part that survives the walk to the printer.
+3. **The details drawer opened on an explainer and buried the guidance.** Titled *"Print details"*, it
+   opened on *"This is your sheet"* — a diagram of a scrambled page — with the four settings in the lower
+   of two independently scrolling halves. Recipe first now, imposition second. One line; it decides whether
+   the guidance is ever seen.
+4. **The share chooser's two options did the same thing.** *"Save to Files"* and *"Send to an app"* both
+   called `SEND`, because on Android that one OS chooser is where the user picks Files *or* an app — and
+   *"Save to Files"* was a third save-flavoured phrase beside *"Save PDF"* and *"Saved to your phone"*. A
+   menu whose branches are indistinguishable teaches the user that this app's choices are decorative. The
+   sheet is deleted; Share opens the chooser directly.
+5. **The fold climax asserted the shelf `.done` had just refused to name.** `ProofFold.DONE_BODY` said
+   *"It's on your shelf whenever you want it"* while deviation 3 declined a "Back to shelf" button on the
+   grounds that no such place exists. Reworded. Also added: the fold guide's intro now opens *"Got your
+   printed sheet?"*, because the guide is reachable before anything is printed and step 1 begins *"Fold
+   the sheet in half"* without ever saying which sheet.
+
+**Not fixed, and carried:** the frozen `.testcard` (*"New printer? Print one test sheet first"*) and its
+three `.check` rows exist nowhere in Compose — the freeze's single strongest wasted-sheet guard, and P3's
+to build. The fold-guide entry point remains an unlabelled trapezoid glyph pre-save (`.done` names it
+after), which is sequencing rather than discoverability and should be read on device. The two stacked
+green tick discs `.ready` and `.seal` now show together — a redundancy the freeze could not have flagged,
+since it never shows both.
+
+**Still owed:** both device passes, and the announcement gate in item 4 above.
+
+### 6.6. P3 as built — one panel, and a checklist that could not be told the truth {#adr-101-p3}
+
+**Landed 2026-08-11**, reconciled against two reviews the same day. The print-details drawer is one
+`.dbody` panel with one scroll, in five sections: the paper question answered inline, what the app has
+already handled, ADR-052's recipe, the test-sheet card, and the imposition explained with the sheet as its
+illustration. `ProofPrintAct` → `ProofPrintDetailsPanel`; `ProofSheetAct` → `ProofImposedSheetBlock`, an
+illustration the panel places rather than a region owning its own scroll.
+
+1. **The frozen `ALL SET` checklist is not built, and refusing it is the ruling.** Its three green ticks
+   assert *"Everything sits safely inside the edges"*, *"Your photos are sharp enough to print — checked
+   at print size, not screen size"*, and *"One cut, down the middle"*. **Only the third is true.** There is
+   no DPI or print-resolution computation anywhere in `core`, `feature` or `app` — so the second is a green
+   tick beside a check that never ran, on the one screen whose entire job is to be trusted about printing.
+   The first is no better: the imposer holds a safe-area inset, but content is clipped to the **panel**,
+   not to the safe rect, so a photo dragged to the page edge lands in exactly the strip the tick promises
+   nothing lands in. **A real print-resolution check is a feature worth building, and it is booked as one**
+   — it is not a label. Both reviews independently verified the reasoning and endorsed the refusal; the
+   evidence lens confirmed zero DPI computation repo-wide and traced `safeLocalBounds` to a validator and an
+   SVG debug renderer, nothing in the render path.
+
+   **What the first draft got wrong was the consequence.** It pointed at the honesty legend as the
+   replacement. The legend was `clearAndSetSemantics`-hidden and sat at the bottom of a scroll roughly twice
+   its viewport — *"a replacement that is aria-hidden and below the fold is not a replacement"* — and the
+   third tick, which was true by construction, went out as collateral with the two false ones. The panel
+   became five blocks of instructions to the user: **"it reads like homework."** The frozen section was the
+   one place the app said *we've got this part*. So `SECT_ALREADY` restores the reassurance with the tick
+   grammar deliberately gone — neutral dots, three facts about the **artifact** (laid out at 100%; one cut
+   down the middle; a margin at the edge no printer can reach), none of them a claim about the user's
+   content — and the legend is no longer hidden from TalkBack.
+2. **The test-sheet card existed nowhere in Compose, and it is the freeze's strongest wasted-sheet guard.**
+   *"New printer? Print one test sheet first and fold it…"* — built now, as one node to a screen reader.
+   The first-time-user review of P2 is what found its absence; nothing in the plan had.
+3. **The paper chooser sheet is deleted for a segmented control** — it was a `Dialog` raised over the
+   `Dialog` already holding the panel, to answer a two-option question whose two options fit on one row of
+   the panel that asked it. Announced as a radio group — `selectableGroup()` + `Role.RadioButton`.
+
+   **The announcement is now measured, and the first draft's version of this sentence was false.** It
+   claimed TalkBack would say *"A4, selected, 1 of 2"* on the strength of `assertIsSelected()`, which reads
+   the *merged semantics* tree — a different tree from the one a service reads, and this repository already
+   owns the defect that proves the difference matters ([ADR-059](#adr-059)). `ProofPaperSegmentsA11yTest`
+   reads the platform tree instead and finds: the selection **does** arrive, as `stateDescription`
+   (*"Selected"* / *"Not selected"*), while `isSelected` is `false` on both — Compose maps that property
+   only for `Role.Tab`. And the role **does not** reach the platform: the segment is reported as
+   `android.view.View`, not `android.widget.RadioButton`, so nothing can count it within its group. What
+   ships is *"A4, Selected"*. Both facts are assertions now, including the negative one, so a Compose
+   upgrade that fixes the role trips the test rather than passing quietly. This is [ADR-059](#adr-059)'s
+   Role→View family met by a control that declares everything correctly — which retires CI-97's *cause*
+   (the unroled "Change" button, deleted with the chooser) without retiring the family.
+4. **That control immediately exposed a live ordering defect.** Iterating `PaperSize.entries` put **US
+   Letter in the left segment**, because the enum declares `LETTER` first — against a frozen design, and a
+   test, that read A4 then US Letter. The retired chooser sheet had been inheriting the same order silently
+   for as long as it existed. The panel pins its own order now: *an enum's declaration order is not a
+   design decision.*
+5. **The `.dclose` owed since P1 is paid, and it needed a `:core:ui` change P1 was right to refuse in
+   passing.** `ZSheet`/`ZSheetSurface` take an optional `ZSheetClose(label, onClose)` — **one** parameter
+   rather than two, so "a button with no label" and "a label with no button" are unrepresentable. The label
+   is passed in because `:core:ui` does not depend on `:core:copy` ([ADR-060](#adr-060)); a design-system
+   component that hardcoded English would be the exception that ends that rule. Opt-in, because the frozen
+   trilogy draws `.dclose` on its two drawers and on none of its short chooser sheets — and that is a real
+   distinction, not an inconsistency.
+
+   **It also shipped without pixel parity, which §6.6's first draft discussed the parameter shape instead
+   of noticing.** The frozen `.dclose` is a 34×34 outlined pill, `1.5px solid var(--ink)`, 15px mark;
+   `ZIconButton` draws a 44dp rounded-12 square, no border, 22dp glyph — the app's generic top-bar button,
+   a visibly different object. `ZSheet` now draws its own: the frozen pill at 34dp **inside** a 48dp touch
+   target, the one deliberate departure, because the spec's 34px box is under the touch minimum and the two
+   sizes were only ever conflated.
+6. **Re-enabling the drawer's geometry assertion found that the reason it was disabled was wrong.** P1
+   recorded the cause as two stacked scrollers, and P3's own first draft repeated it. The actual cause is
+   that the check read **`boundsInRoot`, which is clipped**: any content below the fold of any scrollable
+   panel collapses to `Rect.Zero` and reads as *drawn at the very top*. One panel instead of two does not
+   fix that — this panel is taller than its viewport too. Reading **`positionInRoot`** does, and it makes
+   the check mean what §4.5 says: the design's order is the drawn order, whatever happens to be scrolled
+   into view when the test runs. The whole file's geometry half is stronger for it, not just this surface's.
+
+7. **Four things the reviews found the panel was not saying, all of which it now says.**
+   - **The band dropped the completion silently on a paper change.** The mechanism is right — the PDF in
+     Downloads was imposed for the old size — but the change is made inside a `Dialog`-backed drawer, so
+     `.done` vanishes behind a scrim and the user meets the effect without the cause. *"Saved to your phone"
+     became "Save PDF" while I wasn't looking; did it delete my file?"* That is the `0.9.0-beta.1` Preview
+     shape exactly ([ADR-058](#adr-058)) — correct behaviour, read from the user's chair as loss — one tap
+     deep inside the surface ADR-058 exists to protect. **The silence was the defect, never the mechanism.**
+     `Copy.Proof.paperChangedResave` names the change, names what to do, and says the old file is still in
+     Downloads; that last clause is the fear, and it is answerable with a true sentence.
+   - **`AT THE PRINT DIALOG` named a place with no route to it.** Per [ADR-052](#adr-052) this app has no
+     `PrintManager` path at all — the dialog belongs to whatever app opens the PDF — and the only place the
+     product admitted that was `savedInDownloads`, which exists only *after* a save. A recipe with no verb
+     is homework. `DIALOG_HINT` supplies the verb.
+   - **The sheet lost a line that was doing a different job from the one that replaced it.** P3 dropped
+     *"looks scrambled on purpose"* on the claim that `BOOKLET_HINT` said the same thing. It does not:
+     `BOOKLET_HINT` is abstract and is read **before** the picture, and what the user then sees is a top row
+     printed upside-down and pages running 5·4·3·6 / 8·1·2·7. Explaining imposition and pre-empting *"the
+     export is broken"* are two jobs, and the second has to be done where the alarm happens.
+     `SCRAMBLED_CAPTION` sits under the sheet.
+   - **A section titled *how it becomes a booklet* ended at a picture and declined to say how.** The fold
+     guide was reachable only from a top-bar glyph or from `.done`, neither of which is where a user
+     finishes reading this. `SEE_HOW_TO_FOLD` closes the loop the section's own title opens.
+
+**The HTML-first rule was run backwards, and that is a process failure, not a copy one.** `v21-proof.html`
+still showed the `ALL SET` checklist and still contained no recipe — the canonical design source was wrong
+in **two directions at once**, and the next person to open it as authoritative would have re-derived both
+mistakes. The handbook is explicit that the spec changes first. It is amended in this package: `.check` →
+`.already`, the recipe and its `.singlenote` added with the section label the build had invented, the
+`.stale` notice, the sheet caption, the fold link, `.ready` surviving the save with `#readyHead`, `.done`
+naming the file and carrying the recipe, and "Back to shelf" recorded as *not built* with its reason.
+
+**Also deleted:** `Copy.ProofSheet.TITLE` and `ProofPrint.TITLE`/`BODY` — lead strings for acts that no
+longer exist. Plus `PAPER_SIZE_TITLE`, `PAPER_SIZE_SUB`, `CHANGE` and the `paperSub` extension with the
+chooser sheet; `A4_DIMENSIONS_LONG`/`LETTER_DIMENSIONS_LONG`, whose only consumer was `paperSub`; the share
+chooser sheet itself with `SHARE_SUB`, `SAVE_TO_FILES` and `SEND_TO_AN_APP` — **deleted, not moved**, which
+a comment claiming otherwise survived a whole package before the evidence review caught it — and
+`ICON_FOLDER`, that sheet's glyph, whose comment went on describing "the commit row's two glyphs" after
+there was only one. `Copy.Paper.LETTER` is *"US Letter"* now, matching the frozen `.paperseg`; `HomeViewModel`
+had its own hardcoded `"Letter"` in violation of [ADR-060](#adr-060) and now reads `Copy.Paper`.
+
+**Still owed:** both device passes, and the announcement gate from §6.5 — to which P3 adds a second of the
+same kind, the stale-file notice, and one Recommended it does not fix: the panel is roughly twice its
+viewport, so `HOW IT BECOMES A BOOKLET` is entirely below the fold with nothing above it promising a
+picture. Pass 2 should read that as a first-time user before it is restructured.
+
+### 6.7. P4 as built — eight steps, and arrows that touch the paper {#adr-101-p4}
+
+**Landed 2026-08-11.** The fold drawer is the frozen guide: eight steps, a legend, a staged diagram, the
+caption and its *what you should be holding* line as one live region, and prev · dots · next.
+
+1. **Five steps became eight, and that is not a longer version of the same guide.** The built step 1 was
+   *"Fold the sheet in half three times, then open it flat"* — **three physical actions in one
+   instruction**, given to somebody holding a sheet of paper for the first time. [V21-SPEC §5.2](design/V21-SPEC.md)
+   makes one action per step the rule, and the frozen sequence separates those three folds and the unfold
+   into steps 1–4. The old sequence also never said *"fold in half the first way again"* before the cut,
+   so where the slit goes was left to a diagram to imply. That is the whole reason the count differs: the
+   missing steps were not detail, they were the instructions.
+2. **The legend did not exist, and it is what makes eight diagrams one guide.** Four marks whose meaning
+   never changes between steps — grey dashed *crease*, green *fold now*, red dashed *cut*, ink *move*.
+   Without it a reader decoding step 6 has to re-derive what a line means; with it, eight pictures share
+   one grammar. **The fourth mark is a fix, not a flourish** — the frozen legend has three, and the frozen
+   arrows are all `--jam`, the same red as the cut. So red meant *cut here* on one step and *this paper
+   travels* on seven, including step 4, whose own line reads *"Creases only — nothing is cut yet"* beneath
+   a fat red arrow. A legend that teaches a rule and then breaks it at the only irreversible action in the
+   product is worse than none. Arrows are `ink` now (a drawn pencil mark), red is the cut and only the cut,
+   *move* is named — and `v21-proof.html` was amended **first**, per the HTML-first rule.
+3. **`.foldnow` did not exist either, and it is the only thing that makes a step checkable.** An
+   instruction says what to do; *"You should be holding a tall half-sheet"* says whether you did it. A
+   user whose paper does not match that sentence goes back one step instead of finding out at the cut.
+4. **The arrows now follow [§5.3](design/V21-SPEC.md#53-fold-arrows-follow-origamis-own-conventions-not-ours),
+   and the old ones did not.** The built diagrams drew motion arrows as bare lines with a filled triangle,
+   floating in space beside the sheet — the exact defect the owner rejected as *messy* on 2026-08-09, and
+   the exact defect the Yoshizawa–Randlett convention names: *"the tail indicates precisely the reference
+   point undergoing motion."* A floating tail names nothing, so the arrow decorates instead of instructing.
+   Every tail now sits on the flap that moves and every head where it lands. The motion/action distinction
+   is built too: motion is a plain stem with a filled head, **action** (push, step 7) and **unfold**
+   (double-headed, step 4) are hollow, and **the cut carries no arrow at all** — only the blade, on the
+   line. The old step 5 pushed with *filled motion arrows*, i.e. it told the reader the paper travels when
+   what it means is *do this to the paper*.
+5. **The dots are buttons now, which the frozen markup always had them be.** Compose drew eight discs
+   under `clearAndSetSemantics`. At five steps that was a shrug; at eight it means the likeliest thing to
+   happen mid-fold — losing your place — costs six arrow-presses to check, and a screen-reader user is
+   told nothing about position beyond the counter. `Role.Tab`, not `RadioButton`: P3 **measured** that
+   `Role.RadioButton` collapses to a bare `android.view.View` whose selection survives only as a
+   `stateDescription` string. That `Role.Tab` maps `Selected` onto the platform's own `isSelected` was
+   **not** measured in P3 — it was a comment in the test that measured the other half, and this package
+   first repeated it as if it were evidence. `ProofStepDotsA11yTest` now measures it, on a selected and an
+   unselected dot, out of the real `AccessibilityNodeInfo` tree. A 10dp disc inside a target that is 44dp
+   tall and ~35dp wide on a 360dp phone — see item 7, where the first two attempts at that number were
+   both wrong.
+6. **The sheet outline moved from `paperEdge` to `ink`.** [V21-SPEC §4.1 row 8](design/V21-SPEC.md) is
+   explicit: the fold guide's own outline had been stroked in the **hard-shadow** token and sat at 1.38:1
+   against its own fill in dark theme — the load-bearing artefact of the whole surface, very nearly
+   invisible. *A drawn line follows `ink`; only a shadow follows `inkLine`.* No-op in light, where the two
+   are byte-identical. **The first build of this package wrote `onDesk` instead and claimed `ink` in this
+   very list** — the *room's* token on a *paper* surface, 1.03:1 in dark, strictly worse than the 1.51:1
+   defect the rule was written to close. The imposed page numbers had the same error (`onDeskSoft`, 1.53:1;
+   now `inkSoft`). Which family a mark belongs to — the room's or the paper's — is the whole content of
+   that rule, and getting it wrong passed every test in the module.
+7. **The nav row was clipped on every phone narrower than the test harness.** It needed 348dp intrinsically
+   (52 + 18 + 8×26 + 18 + 52); a 360dp phone leaves ~284dp inside the drawer's and the guide's padding, and
+   `ZSheet` clips — so **both arrows lost more than half their touch target on all eight steps**. Nothing
+   caught it because the module pins `@Config(qualifiers = "w430dp-…")`, and 430dp is the one width where
+   348 fits. `drawerBodyMaxHeight`'s own KDoc already records this class of blindness on the *height* axis,
+   in this package, found the same way. **Flexing the dots inside that row was the first fix, and it was
+   also wrong** — 284 − 44 − 44 − 12 = 184dp across eight dots is 23dp each, under even WCAG 2.5.8's 24×24
+   floor (adjacent targets, so the spacing exception does not apply), and this list claimed 44. The new
+   `ProofFoldNarrowTest` could not see it either: it asserted height only, on a harness that omitted the
+   drawer's own padding, so it measured a width the user never gets. The dots have **their own row** now —
+   the full 284dp, ~35dp each — for about 14dp of height in a drawer that already scrolls; the arrows are
+   the frozen 44dp `.fnav` (they had been built at 52); and the test asserts both axes inside the drawer's
+   padding. Three attempts at one number, each one measured only after it was written down.
+8. **The slit you already made stopped being drawn as an instruction.** The frozen diagrams redraw the
+   existing slit with the identical dashed red `.cutmark` on the two steps after the cut, and a reader just
+   taught *dashed red means cut along here* meets it again and reaches for the scissors twice. Dashed is an
+   instruction; solid is a fact about the paper. `.oldcut` in the spec, `existingCut()` in the code (step 6;
+   step 7 draws the same treatment inline, because its slit is a diamond rather than a line).
+9. **Step 1 now says which way up.** The diagram is drawn landscape and printed-side-up and the caption
+   assumed you would infer both; every later step inherits whichever way you started, so getting it wrong
+   is only discovered at step 8. Spec amended first.
+10. **The legend's swatches are not the diagram's colours, and that is deliberate.** The legend sits on the
+    drawer (`menu`); the diagram sits on the sheet (`paper`). Drawing the `move` swatch in the arrow's own
+    `ink` to make the mapping literal put it at **1.13:1** on the dark drawer — item 6's defect, inverted,
+    one line from where it was fixed. The V2.1 CSS gets one variable for both grounds because `--ink` flips
+    with the theme and `.drawer` is `var(--paper)`; the V1 palette this surface still paints in
+    deliberately does not flip `ink`. Shapes carry the mapping; each ground gets its own ink family.
+
+**One known limitation, recorded rather than implied away:** `inkFaint` on `paper` — the crease and ghost
+marks — is 2.65:1 light / 2.44:1 dark, under WCAG 1.4.11's 3:1 for a meaningful graphic, and in light theme
+that is a *regression* on the 4.66:1 `onDeskFaint` it replaced. It is the frozen `--ink-faint` and it is the
+right family for a mark drawn on paper, so the fix belongs to P6's token sweep, not to putting the room's
+ink back on the sheet.
+
+**Deleted:** `STEP1..5_TITLE`/`_BODY`, `INTRO_TITLE`, `stepHeading`, and the four `DIAGRAM_*` micro-labels.
+The frozen guide has no per-step titles — the counter is the heading, and the diagram is labelled by the
+**caption**, which tells a screen-reader user what the picture shows where *"Crease into eight"* did not.
+
+**Spec amended in this package**, each time *before* the Compose change: `.foldintro` (the step-1
+precondition *"Got your printed sheet?"* — the guide opens from the top bar before anything has been
+printed, and step 1 says *"the sheet"* without saying which); `.legend i.move` and `--ink` arrows;
+`.oldcut`; a solid `.ghost`; the stacked `.stepline`; the flexing `.foldnav`; and step 1's orientation
+clause. The first four went into the code first and had to be walked back through the spec — the
+HTML-first rule is a rule about **order**, and "the reasoning was good" is not a defence, because the
+whole point is that the spec, the ADR and the build cannot be allowed to disagree three ways.
+
+**Two small things also fixed:** the drawer's visible heading is the frozen *"Fold it up"* (not the
+opener's *"How to fold"*, which stays the aria-label), and `.done`'s *"Fold it up"* now resets the guide
+to step 1 — a user who folded once would otherwise press it and get the *previous* zine's finished-book
+climax, with no way back but eight left-arrows.
+
+**Both device passes are in [§6.8](#adr-101-p4-device)**, including the ←/→ key handler this package
+leaves untouched — which the pass could not get to respond. One divergence from the freeze is worth naming while it is
+still cheap to reverse: `→` on the **last** step finishes the fold, where the frozen `goStep` clamps and
+does nothing. It matches the visible primary, which is why it stands — but it is a behaviour the spec does
+not describe. Also owed: the [§5](#adr-101-open) owner question on the climax.
+Tap-to-skip on the climax reveal was recommended and is **deliberately deferred** behind that question —
+building a skip affordance for a sequence that may be retired is work spent twice.
+
+### 6.8. P4 on a device — and the re-skin the device asked for {#adr-101-p4-device}
+
+**Run 2026-08-11/12** on a physical phone (1080×2340, dark theme), the drawer walked step by step with
+`uiautomator dump` read between every tap. Both passes, per the [device-verification
+rule](../CLAUDE.md#device-verification-mandatory).
+
+**What Pass 1 confirmed working.** All eight steps walk; the counter, the caption, the *holding* line and
+the arrows' enable/disable states are correct at every step; traversal order matches the design; the
+climax lands focus on its headline; drawer state survives close and reopen; the dots respond to touch.
+
+**What Pass 1 found broken, and the one that matters most.** Every control on the Proof surface **except
+`ZToolButton`** reaches the platform as a bare `android.view.View` with `clickable=false`,
+`focusable=false`, wrapped in an unlabelled ancestor that carries the click — `Close`, `How to fold`,
+`Save PDF`, `Share`, P3's paper segments, and the eight fold dots alike. A service can activate a node
+with no name or read a name it cannot activate, never both. **Seven implementation variants were built and
+measured against the device and the platform tree did not change once** (`Role.Tab`→`Role.Button`;
+`selectable`→`clickable`; with and without `selectableGroup()`; the group label removed; `mergeDescendants`
+added; `testTag` moved ahead of the click; the target grown to 48dp; `minimumInteractiveComponentSize()`).
+It is not a fold-drawer defect: it is [ADR-059](#adr-059)'s Role→View defect, surface-wide, and it is
+booked there rather than guessed at further here. **Every Robolectric assertion passed throughout** —
+including `ProofStepDotsA11yTest`, written specifically to measure it. That test now says so in its own
+KDoc, because a harness pin that reads as device evidence is worse than no test.
+
+**The 108px shift, which the automation hit before a person could.** The nav row sat directly under the
+caption, so its position depended on the step's height; when step 1's precondition line vanished the row
+rose 108px and `Next` landed exactly where the dots row had been. Two taps in the same place — which
+*"tap the arrow when a step is done"* invites — meant *next, then jump to step 8*. The first fix pinned the
+controls to the floor of the 88%-tall drawer, and the re-skin's pass showed that had **moved** the dead
+space rather than removed it: the caption ended a third of the way down and the arrow it names sat ~450px
+below it, next to the navigation bar. Read cold, that is a page whose content failed to load. What the
+defect actually needed was a *constant* control position, not a floor — so the guide wraps its content and
+the caption block reserves the tallest caption's height (3 × 21 + 5 + 17 ≈ 88dp). Re-measured on device:
+`Next` is byte-identical at `[854,1830][980,1956]` on steps 1 through 7. Step 8 moves the row up 142px
+because the *"It's folded — show me"* primary appears; the region vacated by `Next` becomes the **step-8
+dot**, which is a no-op for a user already on step 8, so the tap-through hazard does not recur.
+
+**←/→ do nothing.** Injected `DPAD_LEFT`/`RIGHT` and `TAB` produced no step change. No hardware keyboard
+was available, so this could not be falsified further and is recorded as unverified rather than as a fix.
+
+**The re-skin, and why it is here and not in P6.** The owner asked why *"Fold it up"* did not share the
+app's handmade look. It did not because P4 deferred the V1→V2.1 token sweep to P6 — and the guide is the
+one screen a user sits with for minutes with paper in the other hand, so it was the worst possible place
+to defer it. The sweep is surface-local and was pulled forward: `onDesk→ink`, `onDeskSoft→inkSoft`,
+`onDeskFaint→inkFaint`, `field→butterTint`, `teal→leaf`, `coralStrong→jam`, `paper2→paperEdge`, and the
+`.foldstage` gained the frozen `--hard` offset — a flat, un-blurred shadow in `inkLine`, which is the whole
+tell that turns butter-tint from a rectangle into taped-down card.
+
+**Two defects the re-skin introduced, both the same shape as the one that started P4.**
+- `jam` for the current step dot. The legend two rows above spends a chip establishing that red means
+  *cut and only cut* — the very finding that moved every arrow off `--jam` — and a red *you-are-here* dot
+  spends that meaning again on something that is not a mark on paper. The freeze already said
+  `background:var(--berry)`; it was walked back to it.
+- The finished book **disappeared**. V1 `paper` was light card in both themes; V2.1 `paper` flips, and
+  `#332B22` on the drawer's still-V1 `menu` `#2B2A28` is ~1.1:1. Same class as the `onDesk` outline, one
+  token over and in the opposite direction, and it gets the diagram sheet's answer: a drawn `ink` edge.
+  **The lesson generalises past this drawer** — every V2.1 foreground pulled forward onto a surface still
+  painted in V1 has to be re-measured against *that* surface, because the two palettes do not agree about
+  what flips with the theme.
+
+**What remains V1 in this drawer, deliberately.** The `ZSheet` chrome (the drawer's own ground, its title,
+sub and close), the two nav arrow chips (`ZToolButton`), and the climax's action pair. All are shared
+components used by the Shelf and the Bench, so re-skinning them here would re-skin surfaces that are not
+in this ADR — they stay in P6 with the rest of the sweep. The visible cost is a warm butter-tint stage on
+a cold grey drawer, and it is worth naming as a **Known Limitation of the branch**, not of the release.
+
+`ProofActPaintTest` moved to the V2.1 values, and its outline guard changed target with them: `onDesk` no
+longer exists in this file, so the equivalent defect is now `inkLine` — byte-identical to `ink` in light,
+`#120E0A` in dark, i.e. invisible where it is wrong and 1.38:1 where it matters. The test asserts the
+diagram Canvas paints `ink` **and no `inkLine` at all**; the hard shadow lives on the stage Box, outside
+the crop, which is what makes the absence assertable.
+
+**One flake, pre-existing and unrelated:** `TypeBarTest > the_size_stepper_disables_at_both_ramp_ends`
+failed once in a full-module run and passes in isolation — the same behaviour `ReframeA11yTest` shows.
+Not caused by this package and not fixed by it.
+
+#### What the two reviews of the re-skin then found {#adr-101-p4-reskin-review}
+
+Both were dispatched on the finished build; neither wrote it. **Every Required Fix was accepted.**
+
+**The first-time-user lens returned NO-GO, and the reason is the worst defect in the package.** *Finishing
+the fold once locked the guide away.* The finished book draws no dots and no arrows, so `foldFinished`
+is a state with no control that leaves it — and of the three entry points, only `.done`'s hand-off reset
+it. The top-bar opener and the print panel's link both re-opened onto the climax of a fold already done.
+The hazard is written out in this ADR and in the code, and **the guard was installed at the site where it
+was noticed rather than at the state it protects** — which is the same shape as the fix-before-check
+failure §7 already records, in a new place. The fix at the time was one `openFold()` that escaped the
+terminal state; **[§6.9](#adr-101-p4-climax) then deleted the terminal state itself**, which is the fix
+that state should have had — a trap with one authorised exit is still a trap.
+
+**Three legend-grammar defects survived, all of them the mark-means-two-things failure P4 already fixed
+once.** Step 5 — the one irreversible action in the product — drew the red cut *on top of* a grey crease
+running the full width, collinear and same dash rhythm, distinguishable only by hue on a dark stage; and
+its green `now` line sat exactly on the sheet's own left edge, making green mean *the fold you are making*
+on steps 1–3 and *a fold you already made* here. Both were defects in the **frozen** `STEPS[4]`, not
+Compose drift, so both were corrected in `v21-proof.html` first: the crease now starts where the cut stops,
+a solid `.cutstop` tick says *one panel deep* in the picture as well as in the two lines of prose beside
+it, and the redundant green line is gone. **The third — steps 4 and 7 draw the hollow Yoshizawa–Randlett
+*action* arrow, a fifth mark the legend does not name — was booked here as a spec change rather than an
+edit, and is decided in [§6.9](#adr-101-p4-climax).**
+
+**The evidence lens returned GO WITH FIXES, and computed the whole surface.** Nothing was under floor —
+but the holding line was `leaf` where the freeze says `--leaf-text` (4.74:1 against 6.53:1, the tightest
+text pairing on the drawer), the cover fill was a hand-derived `leaf.copy(alpha = 0.14f)` where the palette
+publishes `leafTint`, and claim 4's "~1.1:1" was wrong in a way that mattered: V2.1 paper on the V1 drawer
+is **1.03:1 dark and 1.01:1 light**, so the book was never an object in *either* theme and dark was merely
+where the device caught it. It also found the three-state dots told apart by hue alone in light (berry vs
+`inkFaint` = 1.28:1); the current dot now carries size and ring weight as a second channel.
+
+**The most useful finding was that the shift fix had no test.** It shipped with size assertions and no
+position assertion — the same shape as the 44dp dot claim that was built at 23dp. Writing that test
+immediately falsified the fix: at **fontScale 1.3** the nav still moved 41.5dp between steps 1 and 2,
+because a reserve computed from a fixed *line count* cannot survive a font scale that changes the line
+count. The reserve is gone; the longest caption is now laid out invisibly under the real one and sets the
+height, which is correct at every scale and in every locale. `ProofFoldNarrowTest` asserts identical
+`Prev`/`Next`/dots bounds across steps 1–7 at scale 1.0 and 1.3.
+
+**And the two lenses agreed on the precondition from opposite directions**, which settled a decision this
+ADR had recorded twice, differently. P4 hoisted *"Got your printed sheet?"* out of the guide into the sheet
+subtitle and showed it always, to kill the 108px shift by deleting the variable. The user lens read it
+cold — asked at step 5 of someone visibly holding one, two lines wide, in a drawer short of them. The
+evidence lens read it as a Documentation Rule breach: the frozen `#foldIntro` is still gated to step 1 and
+Compose had moved without the spec. The gate is back, and it is safe *here* where it was not safe there
+because the anchoring changed — the drawer wraps its content on the screen's bottom edge, so losing the
+subtitle shrinks it from the **top**. Re-measured on device rather than argued: with the subtitle gated,
+`Next` is byte-identical at `[854,1830][980,1956]` on steps 1 through 7 and the step counter does not move
+either.
+
+### 6.9. The two questions P4 left open, decided {#adr-101-p4-climax}
+
+Both were delegated to the implementer with the owner's priority order — *a UI real users enjoy* first,
+*fidelity to the freeze* last, "strong input and constraints, but not sacred". Both are decided against the
+freeze, and in both cases the deciding evidence turned out to be factual rather than aesthetic.
+
+#### 1. The fold climax is retired {#adr-101-p4-climax-ruling}
+
+[§5](#adr-101-open) framed this as *retire the payoff, or give the fold drawer the terminal state the
+freeze does not have*. The argument for keeping it was the payoff. Four things retired it:
+
+1. **Both its exits pointed away from the zine.** *"Back to the bench"* and *"Make another"* were wired to
+   the same destination — `onMakeAnother = onBack` in `ZinelyNavHost` — so the screen offered two buttons,
+   one of them loud and celebratory, that did the identical thing, and the loud one lied about it. A
+   celebration whose only offer is *leave* celebrates the wrong noun.
+2. **The thing being celebrated was drawn instead of shown.** `FinishedBook` painted a *generic* booklet
+   cover in `leafTint` — not the user's zine, which was already rendered, page 1 outward, on the surface
+   behind the drawer. This is [ADR-058](#adr-058)'s Preview failure in miniature: a correct diagram standing
+   where the user's own work belongs.
+3. **The freeze has no finish action at all.** `v21-proof.html`'s fold drawer ends at step 8 and closes.
+   Inventing a terminal state would have been the *only* invention in a package whose constraint is to
+   implement the freeze, and it would have been invented to host a celebration the freeze deleted.
+4. **It was a state with no way out.** Recorded in [§6.8](#adr-101-p4-reskin-review) as a NO-GO defect and
+   patched there with `openFold()`; deleting the state is the smaller and more honest fix.
+
+**What ships:** step 8 carries one `ZPrimaryButton` — `Copy.Proof.ITS_FOLDED`, shortened from *"It's folded
+— show me"* to **"It's folded"** because there is no longer a reveal to promise. It fires a `Success`
+haptic, resets `foldStep` to 0, and closes the drawer. **The user lands on their zine.** Retired with it:
+`FinishedBook` + `BookCoverFace` (212 lines), `foldFinished`, `climaxBeat`, `CLIMAX_BEAT_DELAYS` and its
+beat `LaunchedEffect`, the `onMakeAnother` route param, five copy constants (`DONE_READY`, `BACK_TO_BENCH`,
+`MAKE_ANOTHER`, `ProofFold.DONE_HEADING`, `DONE_BODY`) and three test tags.
+
+The haptic is the celebration now. It is the only part of the payoff that did not compete with the zine for
+the user's attention.
+
+#### 2. The fifth legend mark ships, and the spec changes {#adr-101-p4-legend}
+
+[§6.8](#adr-101-p4-reskin-review) booked this as *needs a spec change, not an edit* — the four-chip row was
+held to be unable to carry a fifth at 360dp. Both halves of that turned out to be wrong in the same
+direction:
+
+- **The row was already over budget.** Four chips measure ~295dp against the ~284dp a 360dp phone leaves
+  inside the drawer's and the guide's padding. The legend was clipping *before* the fifth mark, on a fixed
+  `Row`. `FlowRow` fixes an existing defect and makes the fifth chip free — it wraps rather than clips.
+- **Collapsing steps 4 and 7 into `move` would have been wrong information, not less of it.** Under
+  Yoshizawa–Randlett a *motion* arrow (plain stem, filled head) says *this flap lands there* — one tail,
+  one destination. The hollow *action* arrow says *push, or unfold* — a force applied, expressing relative
+  motion between two parts of the paper. Steps 4 and 7 are the two steps where the user pushes the sheet
+  into itself; a filled arrow there would tell them to fold a flap somewhere it does not go. The mark is
+  not decoration the legend can afford to skip.
+
+**What ships:** `Copy.ProofFold.LEGEND_ACT = "push or pull"`, a `hollow` `LegendMark` variant drawing two
+1.4dp rules 6dp apart, and `FoldLegend` as a `FlowRow`. `v21-proof.html` was amended first — `.legend`
+gains `flex-wrap`, `.legend i.act::before` the double rule, and the fifth `<i class="act">` — per the
+HTML-first gate.
+
+#### What the two reviews of the rulings found {#adr-101-p4-climax-review}
+
+**The cold read caught what the retirement left behind, and it is the better half of the ruling.** Deleting
+the celebration was right; what replaced it was *nothing*. The finish button asks the user to **declare**
+something — *"It's folded"* is a first-person claim — and declaring it changed nothing on screen. The band
+went on headlining *"Saved to your phone"* over *"…then fold it up"*, under a leaf stamp primary reading
+**Fold it up**. Behaviourally correct, because nothing about the save had changed. Read from the user's
+chair: *the app wasn't listening*. **Asking for a report and then not reacting to it is worse than not
+asking**, and this is [ADR-058](#adr-058)'s shape one screen over — right behaviour, malfunction reading.
+
+So `.done` gained a second state, and the spec gained it first: **"Nice — that's a zine"** over *"Still in
+Downloads as "zine.pdf", if you want to print another."*, with **Fold it up** demoted to a quiet *How to
+fold* link — reachable, because forgetting step 8 five seconds later is ordinary, but no longer the loudest
+thing on a screen talking to someone who has already folded it. `folded` is `rememberSaveable` and clears on
+a new save or a paper change, because both mean a new sheet to fold. §6.9's earlier claim that *"the haptic
+is the celebration now"* was true of a reply the user cannot see; the band is the visible half.
+
+**The one place a missing word costs a sheet of paper.** Step 5's caption said *"cut in along the middle
+crease — from the folded edge, one panel deep"*. "One panel deep" is a distance **across** the paper and
+says nothing about **layers**, and the user is holding a doubled sheet at exactly that moment. A careful
+first-timer cuts the top layer only and finds out at step 7. Every other risk in this guide is recoverable
+by unfolding; this is the product's single irreversible action, and it was under-specified in the one
+dimension a first-timer worries about. Now: *"from the folded edge, **through both layers**, one panel
+deep"*. The precondition also names **scissors** — they were needed first at step 5, by which point the
+user is sitting down with paper in both hands, and a tool you have to get up for belongs beside the sheet.
+
+**The correctness lens found the 360dp claim was unmeasured**, which is this package's own recorded failure
+class. Three places asserted the legend was clipping at 360dp and that `FlowRow` fixes it; the 360dp test
+harness sat in the same package asserting the arrows and the dots and never the legend, every fold golden
+had just been deleted, and the device pass ran at **411dp**, where it does not wrap. `ProofFoldNarrowTest`
+now asserts the legend takes more than one row at 360dp *and* that the fifth chip keeps its width — either
+alone passes on a broken layout. It also found the hollow swatch **discarding its caller's `thickness`** and
+hardcoding 1.4dp, missing the frozen `.legend i.act::before` (2px rules, 3px gap); the parameter is honoured
+now, and `HOLLOW_GAP` names the air. Three stale documents went with it: a `[BookCoverFace]` KDoc link to a
+deleted symbol, a `FoldLegend` KDoc paragraph still warning about a V1 contrast trap the re-skin removed,
+and [CI-14](reviews/CI-14-motion-baseline-protocol.md)'s §4.4, whose six of seven "signature reveal" beats
+no longer have code sites. **And this ADR's own status line still said `Proposed — planning only`** with
+four packages built and device-verified.
+
+**Considered and not taken.** *Render only the marks the current step uses* — it would make the legend fit
+one row everywhere and stop being a glossary, and it is the strongest idea in either review, but it is a
+redesign of an element frozen four days ago and it trades a fixed key for one that changes under the user.
+**Booked for P6, behind a spec change.** *Rename "push or pull"* to "force" — plain words beat the precise
+noun for someone holding paper. *Steps 3 and 5 instruct by back-reference* (*"the same way as the first
+fold"*) and *"fold it the long way"* is two-way ambiguous — both are real, and both are corrections to
+frozen captions whose geometry would have to be re-derived to restate; booked rather than guessed at.
+`finishFold`'s haptic has no test, which is a suite-wide gap rather than a P4 one.
+
+#### Device pass
+
+Both rulings and the band's second state verified on RZCYA1VBQ2H (1080×2340, dark), same build. The
+five-chip legend renders on one row at this width — `crease · fold now · cut · move · push or pull` — the
+precondition names scissors, and step 8 shows a single wide **"It's folded"** with no Next arrow. Tapping it
+closes the drawer onto the reader (*"Your zine"*, page 1 of 8) with no celebration in between, and the band
+below reads **"Nice — that's a zine"** over the folded body line with *How to fold* demoted to a link that
+the platform tree reports as `android.widget.Button` — not the `android.view.View` [ADR-059](#adr-059) has
+booked against every other control on this surface. Re-opening the guide shows `STEP 1 OF 8` with the
+precondition back. `ProofScreenTest` and `ProofFoldNarrowTest` assert the same contracts in Robolectric;
+`:feature:editor` + `:core:ui` + `:app:assembleDebug` are green at **743 tests, 0 failures**.
+
+### 6.10. P5 as built — the reader stops being a carousel {#adr-101-p5}
+
+**The frozen properties this package owns**, per [ADR-089 §2.2](#adr-089), stated before the code and
+checked after it:
+
+| Frozen property | Spec | Built |
+|---|---|---|
+| Pagination | cover alone · 2\|3 · 4\|5 · 6\|7 · back alone | `bookletLeaves(n)`, derived not tabulated |
+| Leaves on screen | exactly one | one |
+| Spine side | left leaf bound right, right leaf bound left | `ReadLeaf.spineOnLeft`, asserted at every count |
+| Free sheets | cover and back cover draw no gutter, no stack | `solo` |
+| Stack edge | `.stack`, 7px, ruled, on the bound side | ✔ |
+| Gutter | `.leaf::before`, 22px shade + hairline on the fold | ✔ |
+| Corner radii | bound edge `0`, outer `--br-md` (14px); `solo` bound edge `--br-xs` (4px) | ✔ 0 / 14dp / 4dp; stack `--br-sm` 8dp |
+| Turn | swing on the spine, `.3s cubic-bezier(.22,.61,.24,1)`, never a 180° flip | 180ms out + 140ms reveal, same curve |
+| Reduced motion | short cross-fade, no transform | 120ms, no transform |
+| Gesture | two `.tapz` edges, 30% width each | ✔, disabled at the ends, **plus a drag** |
+| Leaf size | `244px` in a 390px frame | `LEAF_WIDTH_FRACTION` = 244/342 of the padded stage |
+| `.stack` | 7px, ruled, on the bound side | width tracks the leaves behind it (2–7dp) |
+| `.pcount` | *Cover* / *Page N* / *Back cover* in the top bar | wording **plus the count**; the **position** is P6's |
+| `.pgn` | page number stamped in each leaf's corner | **not built** — the leaf is the user's artwork |
+| Paint | V2.1 `paper`, hard offset shadow, `.book` tilt, stage `perspective` | **deferred to P6** — see below |
+
+Four rows are departures rather than ticks, and each is argued below: the drag, the count in the readout,
+the depth-tracking stack, and `.pgn`. The first three are amendments made to `v21-proof.html` **before** the
+Compose change, per the DESIGN FREEZE gate; `.pgn` is a frozen element deliberately not built, because it
+is chrome printed over the user's own page and [ADR-058](#adr-058) keeps the reader free of that.
+
+**Also departures, and smaller:** the leaf border is `1dp paperEdge` against a frozen `1.5px --ink`, and the
+stack's rules are drawn in `paper` on `paperEdge` where the freeze rules `--hair` on `--paper-edge` — both
+inside the P6 paint boundary. The `.book` tilt and `.stagewrap` `perspective:1500px` have no counterpart;
+those are geometry rather than colour, and are named here so P6 inherits them as work rather than finding
+them.
+
+**A rewrite, not a re-skin, and [§4](#adr-101-packages) said so.** The built reader was a `HorizontalPager`:
+eight equal pages on a carousel, swiped, neighbours peeking in at the edges, the pager itself a single
+labelled stop. That is a slide deck of a zine. A user arrives here holding — or about to hold — a folded
+object, and the screen should be a picture of that object.
+
+**The model is derived, not tabulated.** The prototype hardcodes `[[null,1],[2,3],[4,5],[6,7],[8,null]]`;
+written out, the rule is *the cover is alone on the right, the back cover is alone on the left, and
+everything between pairs up*, which is a property of a folded sheet and not of the number eight — the
+imposition engine already refuses to assume eight pages ([ADR-028](#adr-028)) and the reader has no
+business doing it either. `bookletLeaves` returns a **flat list in reading order**, which drops the
+prototype's `(spread, side)` pair: turning is `index ± 1`, and the model cannot represent a position that
+is not a page. `BookletLeavesTest` is plain JVM — no Robolectric, no Compose — and checks the *physical*
+claim at every count from 1 to 40, because getting the side wrong puts the gutter, the radii and the turn's
+pivot all wrong together, silently, in a way one screenshot at one page count cannot show.
+
+**The turn is a swing out and a reveal, not a swing in.** The frozen CSS reads as a symmetric swing, but
+what it *does* is replace the node — so the arriving leaf has no transform to animate from and simply
+appears. The accident is correct: physically, the leaf you are leaving is the one that moves, and the next
+one was already underneath. Implemented on purpose, pivoting on the spine (`TransformOrigin` follows
+`spineOnLeft`) rather than the leaf's centre, which would be the card-flip §5.2 exists to forbid.
+
+**Three defects the device found in ten minutes, all of them mine.**
+
+1. **A labelled container silently deleted both controls from the platform tree.** The stage carried
+   `contentDescription` — inherited from the pager, where the pager *was* the control — and a non-merging
+   node with a content description **removes its clickable children from the `AccessibilityNodeInfo`
+   tree**. Every Compose-semantics assertion passed: `performClick`, `assertIsEnabled`, all of it. The only
+   thing that saw it was `SurfaceTraversalOrderTest`, which reads the platform tree, and it saw it because
+   the expected list is an exact `assertEquals` rather than a subsequence. **The surface's only way to turn
+   a page had no accessibility node at all.** This is precisely the merged-vs-platform gap
+   [CLAUDE.md](../CLAUDE.md) records against `ReframeControls.ZoomButton`, in a new place, found by the
+   instrument built after that one. The label is deleted; the two edges and the readout say everything it
+   said.
+2. **The leaf ran edge-to-edge.** The pager's `contentPadding` was carrying `.stagewrap`'s padding, and
+   removing the pager removed it. A booklet touching both bezels is not an object on a desk, it is a
+   background — and being an object is the entire point of the package. `.stagewrap`'s 24px sides are
+   restored, and the frozen 244px leaf width is restated as a proportion, because otherwise the leaf is
+   fitted to whichever axis binds first and "as large as the stage allows" is not a design decision.
+3. **The gutter was painted in a token that flips.** `--shade` is a dark wash; `onDesk` is the *room's*
+   ink and goes to `#EFE9DD` in dark, so the gutter was a light wash on light paper — invisible. `ink` is
+   the paper's ink and V1's dark palette inherits it from light deliberately, *because the sheet stays
+   lit*. Same shape as P4's `onDesk`-on-paper defect, one surface over.
+
+**Paint is P6's, and the line is deliberate.** P4 pulled the fold drawer's re-skin forward because it
+*looked* wrong beside a printed sheet; the reader's problem was its *shape*. Pulling V2.1 `paper` forward
+here would repeat the defect that re-skin found the hard way — V2.1 paper on a V1 ground measured 1.03:1 in
+dark, and the book stopped being an object — and the frozen hard offset shadow needs `inkLine`, a
+V2.1-only token. **P5 changes what the reader is; P6 changes what it looks like.**
+
+**No spread view, and the freeze says why in a comment**: two mini-zine pages side by side on a phone are
+two pages you cannot read. A tablet spread stays a scope decision, not a free consequence of this HTML.
+
+#### What the two reviews of P5 found {#adr-101-p5-review}
+
+**The first-time-user lens returned NO-GO, and the sentence it opened with is the finding:** *"I tapped my
+zine and it didn't do anything."* Then a swipe, which also did nothing. By that point the screen had been
+judged frozen, and none of it had been read. Four things followed from that one reading, and all four are
+fixed — in `v21-proof.html` first, because every one of them is a gap in the **freeze** rather than drift
+introduced by the port:
+
+1. **A drag turns a leaf now.** The booklet model never required the swipe to be deleted; it required the
+   tap to be *added*. Every reading surface on this phone turns on a drag, so a reader that ignores one
+   makes its single most probable first input a silent no-op — and a silent no-op on arrival is
+   indistinguishable from a frozen screen. Both gestures run through the same `index ± 1`; the edges stay
+   the discoverable, screen-reader-reachable control.
+2. **Each edge shows a chevron, and it hides at the ends.** The tap zones were invisible and the only thing
+   naming them was an 11sp line in the top chrome — the least-read pixels on an Android screen. The chevron
+   also fixes a defect the code had *argued itself out of*: the edges disable at the ends precisely so a
+   tap is never accepted-and-ignored, but **disabled and broken look identical when there is nothing to
+   grey out**. A mark that disappears is the end-of-book signal the design had none of.
+3. **The readout counts again.** Named only, it walked *Cover → 2, 3, 4, 5, 6, 7 → Back cover* directly
+   above a band reading **"8 pages · one sheet, one cut"** — no "Page 1", no "Page 8". The honest cold
+   reading is *"page 1 is missing"*, on the one screen whose whole job is to settle whether the zine came
+   out whole. The freeze escapes this only because it *also* stamps `.pgn` on every leaf; dropping `.pgn`
+   without moving the number somewhere is what turned it from ambiguous into contradictory. It reads
+   *"Cover · 1 of 8"* now, and the earlier split between a frozen visible label and a fuller spoken one is
+   gone — the sighted reader was the one standing next to the contradicting band.
+4. **The stack edge is drawn to depth.** A flat 7dp everywhere made its own KDoc false: it could only say
+   *which side is bound*, which the gutter already says, so it read as a stripe you stop seeing by the
+   second turn. Drawn to the leaves behind it, it answers *how much is left* for free.
+
+**The correctness lens returned GO WITH FIXES and found two defects that are two-interaction reproductions,
+not theory.** Both are mine, and both were in the state machine around the turn:
+
+- **A reversed tap mid-swing left the leaf permanently tilted and half-transparent.** `LaunchedEffect(index)`
+  *cancels* on a second tap: the body restarts, returns early because it has been overtaken, and leaves the
+  `Animatable` frozen part-way with the rotation still applied. Previous enables the instant `index` moves,
+  so forward-then-back inside 180ms does it — two taps, both on enabled controls. The prototype carries the
+  invariant as `if (turning) return`, which drops the second input; collecting a `snapshotFlow { index }`
+  sequentially is the better half of that trade, because the turn always finishes seated *and* the second
+  tap is honoured.
+- **`shown` was not saveable, so a rotation replayed a turn from the wrong page** — restored at `index = 3`
+  with `shown = 0`, the effect showed the **cover** for 180ms and an animation nobody asked for before
+  landing back where the user already was. `rememberPagerState` did not have that hole; the rewrite
+  reintroduced it.
+
+**It also caught this ADR getting a number wrong in both directions at once** — the radii row read
+*"✔ (4dp / 10dp)"*, matching neither the freeze (14/4) nor the code (10/3). That is the failure class
+[§7](#adr-101-review) already records, reproduced one package later in the document that records it. The
+code now uses the published scale and the row states it.
+
+**And it caught an accessibility claim stopping one attribute short.** `SurfaceTraversalOrderTest` proves
+the two edges *have names* in the platform tree; it does not prove they can be **activated**, and on this
+surface that gap is documented rather than hypothetical — [§6.8](#adr-101-p4-device) records a device
+reporting every fold dot as `android.view.View, clickable=false`, [ADR-059](#adr-059)'s Role→View defect.
+The turn edges are built the same way those controls are, and they are the reader's *only* navigation.
+Measured both ways: `ProofReadTurnEdgesA11yTest` pins the harness, and the device says
+`android.widget.Button · clickable=true`, with `Previous page` at `enabled=false` on the cover and
+`Next page` at `enabled=false` on the back cover. **The reader's navigation is not an instance of ADR-059**
+— which also means `Box.clickable(role = Role.Button)` maps correctly here while other controls on the same
+surface do not, and that is a lead for ADR-059 rather than a coincidence.
+
+**One claim was over-generalised and is now stated as measured.** "A labelled non-merging container removes
+its clickable children from the platform tree" is not a law: `ProofFold.StepDots` is exactly that shape and
+its children *do* reach the platform. What happened here is what happened here. The general lesson is
+narrower and more useful — only the platform tree can answer this question, and one test reads it.
+
+**Also fixed from the same review:** the turn's easing is the frozen cubic-bezier rather than linear; a dead
+`wPx - stackPx` term (it could only bind below ~24dp of stage) is gone along with the comment that credited
+it with a job the width fraction does; `index` is clamped against a page count that may have shrunk under a
+restored state; and two comments left by the pager still reasoned about swipes.
+
+#### Device passes {#adr-101-p5-device}
+
+RZCYA1VBQ2H (1080×2340, dark), same build, both passes.
+
+**Pass 1 — the two review-fixed defects reproduced and cleared on hardware.** Forward-then-back inside the
+180ms swing now leaves the leaf fully seated: no tilt, no residual transparency, back on the cover with the
+back chevron correctly gone. Rotation at page 4 returns page 4 in both directions. *The 180ms replay frame
+is not catchable by `screencap`*, so the half a device cannot prove is proved by
+`StateRestorationTester` instead — it asserts the restored leaf **before** anything settles, which is where
+the defect lived and where the end state was correct even while it was broken.
+
+**The platform tree says the navigation is real**: both edges `android.widget.Button · clickable=true`,
+`Previous page` `enabled=false` on the cover, `Next page` `enabled=false` on the back cover. Walking all
+eight leaves: the stack edge sits on the bound side and is visibly thicker at page 7 than at page 2, so it
+now says *how much is left* rather than only *which side is bound*; the back cover draws none, being a free
+sheet; and the drag turns in both directions with the disabled states following.
+
+**Pass 1 found one defect nothing else would have.** In **landscape** the two turn edges followed the
+*window*, so both chevrons sat marooned ~800px out in empty desk, pointing at a leaf they no longer touched
+— and the app is **not orientation-locked**, so any user who rotates their phone gets that. The frozen
+design is a 390px frame and simply has no answer. The stage is bounded to `STAGE_MAX_WIDTH` now, which
+binds only on a landscape phone or a tablet and keeps book and controls one object; portrait is unchanged.
+
+**Known limitation, not a blocker:** in landscape the leaf is small, because a portrait page in a short
+window can only be as tall as the window and the band takes a fixed share of it. It is as large as the
+geometry allows. Reclaiming that height means changing the band, which is P2's and P6's, not P5's.
+
+**Pass 2** — walked cold from the cover. The forward chevron is the first thing that answers *"what do I
+do"*, the drag lands for anyone who never reads it, and the readout agreeing with *"8 pages"* directly below
+removes the *"page 1 is missing"* reading. At the back cover the forward chevron is simply gone and the
+readout says *"Back cover · 8 of 8"*: the book ended, and nothing suggests the app did.
+
+**`Copy.Proof.ACT_READ` had to move with the gesture** — it said *"swipe to turn the page"*, and a subtitle
+teaching a gesture the surface no longer has is worse than none: the user tries it, nothing happens, and
+the screen looks broken. It now reads *"Read · tap the edges to turn"*. The readout speaks the booklet
+(*Cover* / *Page N* / *Back cover*) while its live region keeps the denominator (*"Cover, page 1 of 8"*) —
+a sighted reader has the stack edge to judge depth by and a screen-reader user has nothing, so the visible
+text follows the freeze and the spoken text does not.
+
+### 6.11. P6 as built — the chrome, and the token sweep that was most of the work {#adr-101-p6}
+
+**The package that finishes the surface.** P1–P5 rebuilt the Proof's *structure* in the V1 palette; P6 paints
+it, and lands the one piece of chrome the earlier packages kept deferring — the `.pcount` ticket.
+
+#### The top bar's open question, answered
+
+The owner took **the frozen bar**: back icon · `.pcount` · fold icon. The zine name and the act-status live
+region are removed. Three things follow that are worth stating, because none of them is "we deleted two
+labels":
+
+1. **The name was a placeholder all along.** `ZinelyNavHost` passed `Copy.Nav.ZINE_NAME_FALLBACK` — the
+   literal string *"Your zine"* — because the real project title lives in Room metadata
+   ([ADR-042](#adr-042)) and never reached the editor's boot state. The bar was not showing the user their
+   zine's name; it was showing them the words *your zine*. The follow-up that constant was waiting for is
+   now never owed, so the constant is deleted rather than left as an invitation.
+2. **The status line's teaching job was already done, better, by P5.** *"Read · tap the edges to turn"* was
+   corrected from *"swipe"* one package ago — and in the same package the reader gained chevrons at both
+   edges that appear where the hand is and **disappear at the ends**. A sentence at the top of the screen
+   cannot signal an end. `Copy.Proof.ACT_READ` is deleted.
+3. **Its accessibility job moved rather than went.** The ticket is now the surface's one polite live region.
+   P5 had put that on a caption under the book, precisely because the top bar had no readout to be it; with
+   `.pcount` built, keeping both would make TalkBack say the page twice on every turn. The caption is gone
+   and `ProofReadCaptionTestTag` with it.
+
+The reader's index is hoisted out of `ProofReadAct` through a new `onLeafChange: (Int) -> Unit`, fired when
+the turn **lands** rather than when it starts — the ticket names what is on screen. The ticket draws in caps
+and is *spoken* in sentence case (`Copy.ProofRead.leafLabel`), so a screen reader is never handed a shouted
+string to spell out.
+
+**The C1 traversal assertion did its job, and that is the finding.** `SurfaceTraversalOrderTest` asserted the
+two doomed stops on purpose, with a comment saying it existed to make their removal visible. It failed, the
+question went to the owner, the answer is recorded here, and the list moved. A guard that costs a decision
+rather than raising an alarm is the cheap kind.
+
+#### `.flash` is not built, and that is a reading of the freeze rather than a deferral
+
+The frozen file's `.flash` toast fires on exactly two controls: the back button
+(*"Back to the Bench — nothing is lost"*) and Share (*"Opens your share sheet — the same PDF"*). Both are
+things the **prototype cannot do and the app does**. A toast that narrates a navigation the user is watching
+happen is prototype scaffolding, in the same family as the `.done` row's *"Back to shelf"*, which P2 declined
+for the same reason and whose own flash text admitted the shelf does not exist. Nothing user-facing is lost.
+
+The `.phone::after` grain is likewise not ported — it grains the simulated device, not the app — which is the
+[Library's ruling](#adr-100) on the identical rule, applied so the two surfaces cannot drift. What **is**
+built is `.stagewrap::before` (soft-light, 0.35) and `.leaf::after` (multiply, 0.4, on a finer 130dp tile):
+the desk's tooth under the book, and the paper's own tooth over the user's printing, because paper takes ink.
+
+#### The sweep was bigger than "swap the tokens"
+
+| Was (V1) | Is (V2.1) | Why it is not a rename |
+|---|---|---|
+| `ZPrimaryButton(fill = Stamp)`, `ZToolButton` | local `ProofBandButton` | The V1 design system has no parameter that expresses a V2.1 button. A leaf pill with a 1.5dp ink cut, a printed shadow and a butter offset ring is a **different object**, not a recoloured one — the conclusion the Library's re-skin reached first, and the reason it draws its own controls too. |
+| `.shadow(10.dp)` on the leaf | `zinelyV21HardShadow` | Elevation blur is a lit-room metaphor; V2.1 draws depth as a second impression of the same shape, offset and unblurred. |
+| `ink.copy(alpha = .07f)` gutter | the `shade` token | P5 mixed the wash by hand and argued in a comment about which token stays dark. V2.1 declares the answer, and it is **not a tint of anything**: `rgba(51,38,28,.07)` light, `rgba(0,0,0,.22)` dark. A shadow in a dark room is not 7% of a light-room shadow. |
+| stack rules in `paper` | `hair` | The rules are the gaps between sheets seen edge-on. Built lighter than the stack they read as a highlight — the stack was lit from inside. |
+| `field` / `fieldEdge` cards | `paper` + `hair` | V2.1 has no input-well grey and wants none: a card here is a piece of paper, and the separation is its edge. |
+| `Color.White` on a fill | `onLeaf` / `onJam` | Three sites. The frozen file carries a ✱ note about exactly this — a hardcoded cream that never flipped with the theme and measured **2.86:1** in dark on a meaning-bearing mark. |
+| `coralStrong` seal | `jamText` wax, `onJam` mark | Sealing wax is material, which is why it stays red ([§3](#adr-101-invariants)); `jamText` is the form the palette measures. |
+
+**`:core:ui` is still V1, deliberately, and that is [§4](#adr-101-packages)'s ruling rather than a shortcut.**
+The two drawers are hosted in `ZSheet`, whose ground, title and close pill remain V1 tokens, and the fold
+guide's nav arrows are still `ZToolButton`. Converting them would re-record the Library's and the Bench's
+goldens — the blast radius [ADR-098](#adr-098)'s ordering rule exists to price. The evidence that the mixture
+survives is P4's: the fold guide has drawn V2.1 `paper` inside a V1 `ZSheet` since 2026-08-11 and passed both
+device passes that way. The design system converts once, with the last V1 surface.
+
+Two paint decisions were made **against** the frozen CSS, and both are recorded rather than absorbed:
+
+- **The band's hard shadow is drawn inline.** `.band` is the one object on the surface lit from below —
+  `box-shadow: var(--hard) calc(var(--hard)*-1)`, i.e. right and **up**. `zinelyV21HardShadow` offsets both
+  axes positively by design, and bending a shared modifier for one caller is worse than four lines here.
+- **`perspective: 1500px` is not transcribed.** Compose's `cameraDistance` and CSS `perspective` share no
+  unit, and the turn as it stands was accepted on a device in P5's Pass 1. Changing the camera to chase a
+  number would put a verified animation back in play to gain nothing anyone can see.
+
+#### One red test on the branch, which P6 did not cause and did not leave
+
+`:app:testDebugUnitTest` was failing on two assertions — `HomeViewModelTest` and `LibraryZineMappingTest`
+both expected the shelf to say *"Letter"*. An earlier uncommitted change had made `shelfLabel()` read
+`Copy.Paper` instead of repeating the string, which is [ADR-060](#adr-060)'s rule, and correctly renamed the
+size to *"US Letter"* to match the frozen `.paperseg` — without updating the two tests. Fixed here rather
+than reported, because a branch that is red for an unrelated reason is a branch whose next failure nobody
+reads.
+
+#### What the two reviews of P6 found {#adr-101-p6-review}
+
+**The two lenses again returned disjoint sets, and the pattern that produced both is the one worth keeping.**
+
+The correctness lens found the sweep reproducing its own defect one token over. `ZinelyV21Colors`' KDoc says
+`inkFaint` sets **no text** — it measures 3.04:1 on paper — and the mechanical `onDeskFaint → inkFaint`
+rename put it under text in three places (`ProofPrint.kt` ×3, `ProofSheet.kt` ×2 page numbers). This is the
+same error as P4's `onDesk`-on-paper and P5's `onDesk`-on-gutter: **the rename was correct at the token level
+and wrong at the use level**, which is precisely the class a search-and-replace cannot see. All five moved to
+`inkSoft`. It also found the `.pcount` dash drawn at half weight (a `Stroke` is centred on its path, so
+clipping to the same bounds eats the outer half), the band's hard shadow reserved on the wrong edge, a golden
+header that contradicted its own baseline, and a ticket frame left stale by the reader's index.
+
+The cold lens found what only arithmetic finds. The print drawer said *"your 8 pages"* from a `const val`
+while the band and the new ticket both computed the real count — so a 12-page document would have said
+*"PAGE 3 OF 12"*, *"12 pages · one sheet, one cut"* and *"your 8 pages"* on one screen. `BOOKLET_HINT` is now
+`bookletHint(pageCount)`. It also found the ticket unbounded (a long label starved the fold button), the turn
+ripple washing the artwork on forward turns only, and measured `butterTint` on `desk` at **1.01:1** in light —
+see the open question below.
+
+#### Device passes {#adr-101-p6-device}
+
+RZCYA1VBQ2H (1080×2340), dark and light, both passes.
+
+**Pass 1 found the defect neither reviewer could have found, and it took three separately-correct facts to
+make it.** A page's default background is `Background.None`, so `SceneRenderer.effectiveBackground` fills
+nothing; the default `TextStyle.color` is `ColorRgba.BLACK`; and V2.1 `paper` flips to `#332B22` in dark. Each
+is right. Together they render the user's own artwork at **1.2:1** — invisible — on a sheet that claims to
+show what a printer will put on white paper. V1's palette had encoded the rule (*"the sheet stays lit, so ink
+on it stays dark. Do not 'fix' that"*) and the V2.1 sweep discarded it. `rememberLitSheetPalette()` restores
+the **rule**, not the colour: the whole leaf subtree takes the light palette in both themes, so no future
+caller can take the paper from one place and the edge from the other.
+
+**Then Pass 1 found it again, one surface over — which is why the fix became a wrapper.** Scrolled into the
+print drawer, the imposed sheet was painted in the room's dark palette while the two cover cards *directly
+beneath it* were lit, because those still use V1 `ZPaperSurface`. One drawer, one physical sheet of paper,
+two grounds — and the darker of the two was the one the user is about to feed into a printer.
+`rememberLitSheetPalette()` became `internal`, gained the `ProofLitPaper { }` wrapper that provides it through
+`LocalZinelyV21Colors`, and `ImposedSheet()` runs inside it. The palette goes to the **whole subtree**
+deliberately: swapping only the ground is how the creases and numerals would have gone invisible instead.
+
+`ProofActPaintTest` collapsed back from four expectations to one as a result, and that collapse is now the
+assertion — the file had dutifully pinned `#332B22` for dark, which is a test certifying a defect.
+
+**`ProofFold`'s diagram was checked and deliberately not changed.** It *outlines* the sheet rather than
+filling a paper ground, so it never claimed to be paper-coloured and nothing on it loses contrast; the rule
+is about surfaces that depict paper, not about every picture of paper.
+
+**Confirmed working on hardware:** the ticket updates with the leaf and announces as a polite live region
+(*"Cover · 1 of 8"* → *"Page 2 of 8"*); black ink on the lit leaf is legible in dark theme with real text on
+the page; `bookletHint` reads *"your 8 pages"* from the document; the band's tape, tear line, `leaf` tick and
+`butter`-ringed **Save PDF** all paint in both themes.
+
+**[ADR-059](#adr-059)'s Role→View defect reproduces across this surface** — `Back to the bench`, `How to
+fold`, the ready row and both commit buttons each publish a labelled `android.view.View` with an unlabelled
+`android.widget.Button` sibling at identical bounds. **The new lead:** `ProofReadAct`'s `TapEdge` produces a
+single correct `android.widget.Button · clickable=true` node, and it is the one control here built with the
+plain `clickable` overload rather than `clickable(interactionSource, indication = null, role = …)`. Booked
+against the ADR-059 backlog rather than fixed inside a paint package.
+
+**Pass 2** — arrived cold. The surface answers *"what have I made?"*: the page, its number, and one sentence
+that it is ready. Two findings. The ticket's ground is effectively invisible in light (the 1.01:1 above), so
+it reads as a dashed outline rather than a filled ticket — mitigated by moving its edge from `hair` to
+`inkSoft`, but whether the **ground** should change is the owner's, since `butterTint` on `desk` is the
+freeze's own pairing. And the fold glyph in the top-right corner is not self-explanatory to a sighted
+first-timer; its TalkBack label is correct, so this is a discoverability observation against the frozen bar,
+not a defect in its implementation.
+
+**One known departure stays visible on device and is accepted, not hidden:** both drawers still wear V1 sheet
+material (`ZSheet` ground, blur depth, `ZPaperSurface`), so the Proof currently wears both materials at once —
+band in V2.1 above, drawer in V1 below.
+
+**Corrected 2026-08-12, while auditing the Bench:** this paragraph first said the whole seam *"converts in the
+Bench step"*. Only part of it does. The Bench uses `ZSheet`, `zinelyShadow` and `ZinelyShadowLayer`, so those
+three genuinely convert there and the drawer *shell* follows. But `ZPaperSurface`, `ZToolButton`,
+`zinelyFocusRing` and `ZinelyTheme.elevation` are **Library-and-Proof-only** — the Bench uses the V2 shadow
+stack instead and never touches them — so no Bench package will reach them, and the Proof's blur depth and
+its V1 focus ring need a home of their own. Named here rather than left to be discovered by the surface that
+turns out not to fix them.
+
+#### The lit-sheet fix was reviewed on its own, and the review took the rule apart {#adr-101-p6-lit-review}
+
+A third review was dispatched for the palette fix alone, because it changed paint *after* both P6 reviews had
+already passed — the least-reviewed kind of change there is. **GO WITH FIXES.** It confirmed the mechanism
+(the provider genuinely reaches `SheetCell` and `CreasesAndCut`, which read `v21Colors` themselves) and, more
+usefully, confirmed the *test* cannot pass for the wrong reason: `crop()` does include the cover cards, but
+those go through V1 `ZPaperSurface`, whose paper is `#F4EFE6`/`#EDE6D9` — neither equals `#FFF6E8`, and
+`countColour` is an exact ARGB match. Worth stating, because "the assertion is discriminating" was the one
+thing that could have made the whole fix self-certifying.
+
+**It also falsified this implementer's stated criterion, with file:line.** The comment said the fold guide is
+exempt because it is *"a picture of a sheet — a schematic"*. That does not separate them: the imposed sheet's
+cells are schematic stand-ins with no user artwork anywhere on them, and `ProofFold.sheet()` fills a `paper`
+ground exactly as the reader's leaf does. Two surfaces, one criterion, opposite answers — the criterion was
+wrong, and the next reader applying it as written would have re-themed the sheet straight back.
+
+**The rule that actually holds is what a surface claims.** The leaf and the imposed sheet answer *"what will
+come out of the printer"*, so their ground is a statement about a physical object and may not change because
+a lamp went off. The fold diagram answers *"what do my hands do next"* — an instruction, drawn in the room,
+its marks keyed by a legend rather than read as output. That line is checkable, it covers all three surfaces,
+and it is the one the code now follows.
+
+**Its cost is real and is recorded rather than resolved:** in dark theme the print drawer's sheet is now lit
+and the fold drawer's sheet, one tap away, is not. Re-palletting the fold diagram means redoing the
+eight-step contrast work that cost P4 a NO-GO round — a package, not a comment fix, and one that should land
+with the `:core:ui` conversion rather than inside a paint package.
+
+**Three smaller fixes, all accepted.** The honesty legend keyed marks it no longer matched — its swatches sat
+in the room's palette while the creases and cut they identify had gone lit; they now take the sheet's palette
+and drop the paper-only `.5`/`.2` alphas, which composited to roughly 2:1 over the drawer's dark ground,
+under the 3:1 a graphical object needs. The "ONE CUT" chip spoke `jam` at 9.5sp — **4.25:1** on lit paper,
+under the floor, against both the frozen `.cutlbl{color:var(--jam-text)}` and the token's own KDoc; it is
+`jamText` now, while the 2dp cut *line* keeps `jam` as a graphical object. And three comments cited line
+numbers in a **`proof.html` that does not exist** — the frozen `.minisheet` has no vignette rule, no hatch
+and **no dead-band at all**. The band is an invention inherited from the V1 lineage, kept because the fact it
+states is true; it now says so instead of claiming an authority it never had.
+
+### 7. Review record {#adr-101-review}
+
+Two independent reviews per round, with deliberately different lenses — the first pair **before any code**.
+Every Required Fix is reconciled in the package section above.
+
+| Round | Lens | Verdict | What it was for |
+|---|---|---|---|
+| Plan | **Evidence** — recompute every number, check every citation | GO WITH FIXES (6 RF) | ADR-100 §11 found this author's defect is wrong *citations*, not wrong measurements |
+| Plan | **Plan** — falsify it, hunt for behaviour it drops | GO WITH FIXES (8 RF) | §3's whole job is to prevent silent loss; someone had to test whether it does |
+| P1 | **Behaviour loss** — diff old against new, enumerate every deletion | GO WITH FIXES (5 RF) | a restructure's failure mode is the thing nobody notices leaving |
+| P1 | **Accessibility + product** — does the surface still answer its question | GO WITH FIXES (3 RF) | the drawers are new a11y surface, and the screen's own question moved |
+| P2 | **First-time user** — walk the print route cold | GO WITH FIXES (5 RF) | P2 owns the moment a stranger commits a sheet of paper |
+| P2 | **Evidence** — every claim in §6.5 checked against the repo | GO WITH FIXES (3 RF) | §7's failure class is the checkable sentence nobody checked |
+| P3 | **First-time user / designer** — walk the panel cold, argue with each freeze departure | GO WITH FIXES (4 RF) | a panel of instructions is where confusion is cheapest to cause |
+| P3 | **Evidence** — falsify the DPI ruling, the `:core:ui` blast radius, the geometry fix | GO WITH FIXES (6 RF) | P3 deleted frozen UI on a technical argument; that argument had to hold |
+| P4 | **First-time user / designer** — fold a real sheet from the screen alone | GO WITH FIXES (4 RF) | a wrong instruction here costs a printed sheet, and the cut is irreversible |
+| P4 | **Evidence** — walk all eight steps' coordinates against the freeze, recompute every contrast | **NO-GO** (7 RF) | the geometry is the part most likely to teach a mis-fold |
+| P4 | **Verification** — re-check the seven fixes, recompute the contrasts again | GO WITH FIXES (2 RF) | a NO-GO's fixes are written under pressure, which is when this author repeats the defect |
+| P4 rulings | **First-time user** — walk the eight steps holding paper, judge the new ending on its own terms | GO WITH FIXES (3 RF) | the implementer chose to delete a payoff; someone who did not choose it had to read what is left |
+| P4 rulings | **Correctness** — hunt the orphans a 212-line deletion leaves, falsify the new tests | GO WITH FIXES (5 RF) | a retirement's failure mode is the reference that still points at what left |
+| P5 | **First-time user** — arrive at the reader cold and try to see page 2 | **NO-GO** (5 RF) | the gesture changed; only someone who does not know it can say whether it is findable |
+| P5 | **Correctness + fidelity** — every frozen property against the HTML, the animation's state machine | GO WITH FIXES (4 RF) | a rewrite's failure mode is a state machine that is right on the happy path |
+| P4 re-skin | **First-time user** — fold from the screen alone, on the built drawer | **NO-GO** (4 RF) | the owner's own question was about how the screen *feels*; only this lens answers it |
+| P4 re-skin | **Evidence** — recompute every V2.1 foreground on the still-V1 drawer | GO WITH FIXES (5 RF) | pulling a palette forward onto a surface painted in the other one is exactly where contrast dies |
+| P6 | **Correctness + fidelity** — every new modifier chain against the frozen CSS, every swept token against its own KDoc | GO WITH FIXES (5 RF) | a rename sweep is mechanical, and mechanical is how a token lands somewhere its documentation forbids |
+| P6 | **First-time user / cold** — arrive at the finished surface knowing nothing, read every number on it | GO WITH FIXES (4 RF) | P6 is the last package, so it is the last chance for anything to be measured by someone who did not build it |
+| P6 lit sheet | **Correctness** — falsify the post-device palette fix and the test that now certifies it | GO WITH FIXES (2 RF, 2 RI) | the fix changed paint after both reviews had already passed, which is the least-reviewed kind of change |
+
+**P4 is the first NO-GO in this ADR, and it was earned three ways.** The tree did not compile (a legend
+string referenced before it was declared — a first run reported BUILD SUCCESSFUL only because every task
+was `UP-TO-DATE`, which is worth remembering as a way to be told nothing while being told something). The
+package's own headline claim — *"the sheet outline moved to `ink`"* — was **false of the code that
+implemented it**, and what actually shipped was a 1.03:1 dark-theme outline, worse than the 1.51:1 defect
+the rule exists to close. And the arrow-colour and legend redesign went **Compose-first**, leaving the
+spec, this ADR and the build disagreeing three ways at once. All seven Required Fixes are reconciled in
+§6.7 above; the design lens's four are folded into the same list.
+
+**What the same review verified is the reason to keep running it.** All eight steps' coordinates — every
+sheet and ghost rect, every crease, cut, `now` line, arrow endpoint and bow — match the frozen `STEPS`
+exactly, walked one by one; the arrow primitives are a character-for-character port; the eight captions and
+eight *what-you-should-be-holding* lines are byte-identical to the freeze; the `FOLD_LAST_STEP` 4→7 change
+has no surviving five-step assumption anywhere. The part most likely to teach a user to mis-fold was sound.
+The defects were in **tokens, spec order, evidence, and a broken build** — none of which a careful reading
+of the diagram would have caught, and all of which shipped past a green suite.
+
+**And the verification pass earned its own place in this table**, because the fixes reproduced the defect
+they were fixing. The `move` legend swatch was recoloured to `ink` to match the arrows — 1.13:1 on the dark
+drawer, the same *wrong-ground* mistake as the `onDesk` outline, one line away and written in the same
+sitting. The dot geometry was claimed at 44dp, built at 23dp, and asserted by a brand-new test written
+specifically to catch that class of error which measured only the axis that was never wrong, on a harness
+missing the drawer's padding. The lesson is narrow and worth keeping: **a number written into an ADR is a
+claim, and writing the test in the same breath as the fix does not make it a measurement** — the test has
+to be able to fail.
+
+**The P3 round is the clearest case yet of the two lenses finding disjoint sets.** The design lens found
+that refusing the false checklist had also deleted the section's *job* and left the panel reading as
+homework — a defect invisible to anyone checking claims, because every remaining claim was true. The
+evidence lens found the opposite kind: three prose sentences that were checkable and wrong, a frozen
+element built without parity, a spec left contradicting the build in both directions, and an accessibility
+announcement asserted rather than measured on a surface where this repo already owns the instrument. Both
+rulings the package rested on — no DPI computation exists, and content is clipped to the panel rather than
+the safe rect — survived independent falsification. **Neither lens would have found the other's list.**
+
+**The P1 round is where the pattern finally broke — in both directions.** Everything the behaviour lens was
+told to hunt for as *silently dropped* had in fact survived: `rememberSaveable`, the live region, every
+haptic, the climax schedule, `onMakeAnother`, the error pane, the ADR-041 snackbar. What it found instead
+were three things this ADR had already **written down as handled and had not handled**: a height fix that
+was itself the bug in landscape, thirteen paint assertions deleted along with their stale rasters, and a
+copy comment whose stated reason was checkable and false. The a11y lens independently reached the same
+height defect from the other side, and added the one this author would never have found alone — that P1,
+mid-restructure, is *worse* at answering the Proof's question than the screen it replaces.
+
+So the failure mode moved. It is no longer *"the numbers are right and the citations are wrong"*; it is
+**"the fix is written before it is checked, and the ADR records the intention as the outcome"**. Three of
+§6's original five claims were overstated in exactly that way. The `git status` habit
+([memory](#adr-097)) exists for the same reason and did not cover this, because these were claims about
+*behaviour*, not about the tree.
+
+**Not one measurement was wrong.** The evidence lens re-derived the audit (5 files / 2360 lines / 24 V1
+sites / 0 V2), the Bench figures, the raster count and every contrast ratio, and reproduced all of them
+exactly. Everything it found was a citation or a relationship: a binding rule sourced to
+[V21-SPEC §3.4](design/V21-SPEC.md#34-scope---recommendation-all-three-surfaces-and-no-more), which is scope
+and does not contain it; a defect declared **inherited** that measurement shows neither artifact has; the
+register entry that actually owns the Error gap left undisposed; no `Modifies` line at all for an ADR whose
+first package retires [ADR-051](#adr-051)'s acts. **This is the third consecutive pass with that same split**
+— see [ADR-100 §11](#adr-100-review), which records it one ADR earlier — and it is now predictable enough to
+plan around: the numbers can be trusted on first draft; the sentences that place them cannot.
+
+The plan lens found the more expensive class. §3 was written as *the* list of what the prototype cannot see,
+and it missed five real invariants — the **print recipe** above all, which §1 had described as moving house
+when the frozen drawer does not contain it at all. It also priced two packages honestly for the first time:
+P4 is eight fold steps, not five; P5 is a pager→spread rewrite, not a re-skin. And it caught §4 defending the
+right conclusion with the wrong argument — the rasters would not "record twice", since 14 of 16 are retired
+outright.
+
+**Every Required Fix was ACCEPTED; none was rejected or partially accepted.** That is not deference — no
+finding was taken on authority. The *looping fold guide* and the *§3.4 binding* were both re-measured here before being conceded,
+and the print-recipe and fold-step findings were re-derived from `Copy.kt` and `ProofFold.kt` independently
+before being written in. A review that is believed without checking has the same failure mode as a summary
+believed without checking — which is the house rule this file opens with.
+## ADR-102 {#adr-102}
+
+**The Bench re-skin — and the ruling that the first draft of this ADR would have reversed.** Step 6 planning,
+opened **before any code** per [ADR-089 §2.2](#adr-089) and the precedent [ADR-101](#adr-101) set for the
+Proof.
+
+- **Status:** 🟡 **`Proposed` — 2026-08-12, planning only. Rewritten the same day after a NO-GO.** No
+  production code has been written against this ADR, which is the entire value of the two reviews that
+  killed its first draft ([§10](#adr-102-review)).
+- **Authorised by:** the owner ruling of **2026-08-11** delegating product/design/engineering authority, with
+  the priority order **(1)** a UI real users enjoy, **(2)** accessibility, clarity and interaction quality,
+  **(3)** visual and design quality, **(4)** correct maintainable implementation, **(5)** fidelity to the
+  freeze *where it does not conflict with the above* — and the standing instruction that the freeze is
+  *"strong input and constraints, but not sacred."*
+- **Supersedes:** nothing. **Bound by:** [ADR-099](#adr-099), [ADR-100 §9](#adr-100) rulings 2, 4 and 5, and
+  above all **[D-035](design/V2-SPEC-DEFECTS.md#d-035)** — *the artifact does not dim; the room around it
+  may* — which [§3](#adr-102-island) now serves rather than contradicts.
+- **Design source:** [`v21-bench.html`](design/mockups/v21-bench.html), **779 lines, 89 markup classes.**
+
+### 1. The freeze banners were wrong on all three prototypes {#adr-102-banners}
+
+`v21-bench.html` opened *"DIRECTION PROPOSAL, NOT FROZEN … v2-bench.html remains canonical until the owner
+freezes a replacement."* So did `v21-proof.html`, through **all six ADR-101 packages built against it**, and
+`v21-library.html`, through its own shipped re-skin under ADR-100.
+
+The freeze is real and dated: [ADR-099](#adr-099) is `Accepted` by the owner on 2026-08-10 *"after reviewing
+all three prototypes directly"*, [V21-SPEC](design/V21-SPEC.md) declares all three canonical and the V2
+trilogy *"Superseded on acceptance of ADR-099"*, and the corpus commit is
+`a470e15 docs(V2.1): freeze the design corpus and record its baseline`. **The three banners were never
+updated.** All three are corrected, each naming what it supersedes and admitting it went stale through a
+shipped re-skin.
+
+### 2. What the audit found {#adr-102-audit}
+
+**The Bench wears three palettes.**
+
+| Palette | Where | Evidence |
+|---|---|---|
+| **V2** (`v2Colors`) | **41** references across **17** files | the sweep everyone expected |
+| **V2, islanded** | `BenchSheetIsland` resolves **8 on-paper tokens** to their light values in both themes | `BenchStudioSurface.kt:357`, derivation at `:164`; **this is an owner ruling, not a workaround — see [§3](#adr-102-island)** |
+| **V1** (`ZinelyTheme.colors`) | `ReframeControls` **25** · `TypeBar` **16** · `ReframeOverlay` 2 · `EditorEmptyState` 1 · `EditorScreen` 1 · four adjacent editor files | `ReframeControls.kt` is the largest V1 remnant on the surface by a wide margin |
+
+**Two corrections the evidence review forced, both of which had been argued the wrong way round.**
+
+`EditorEmptyState` does bind both palettes (`:93`, `:94`), but it paints **no ground at all** — V1 supplies
+only three opaque sticker blobs, V2 supplies every piece of text. The first draft called it "a V1 ground
+under V2 text, a contrast failure waiting to be measured"; the file records at `:82-92` that this exact
+failure (**1.15:1**) was found by a device Pass 2 and **already fixed**, and that the blobs stay V1
+deliberately, because *"V2 publishes no `teal`/`coral` to move them to."* And `EditorScreen.kt:764` is the
+**Preview navigation action**, not a save-error action.
+
+**The citation debt, with its scope stated this time.** `v2-bench.html` is cited on **106 lines across 14
+files** when counted over `Bench*.kt` + `EditorScreen.kt` in editor `main` — but **123 lines / 20 files**
+across all editor `main`, and **211 occurrences / 47 files** repo-wide, including `core/copy` (10),
+`core/ui` (31) and the Bench tests. Every one now points at a superseded spec. Re-pointing is not a `sed`:
+each rule must be found in a different file, and a rule with no V2.1 counterpart is a design question.
+
+**The measurement this ADR first checked, and the one it should have.** `inkFaint` on `bench` is **2.30:1**
+in light (4.17 in dark), and the freeze passes it — every editing graphic is drawn on `paper`, never on the
+worktop, and the only three `inkFaint` uses sit on `paper` inside sheets. That check is real but it is the
+easy one, and reporting it as *the* palette clearance was the first draft's one genuinely misleading
+sentence. **The measurement that matters here has already failed on hardware twice, and §3 is about it.**
+
+### 3. Ruling 1 — the island stays. The mechanism changes {#adr-102-island}
+
+**The first draft ruled the opposite, and it was wrong on the facts.** It said `BenchSheetIsland` exists
+because *"V2 had no token for the Bench worktop"*, and proposed replacing it with `bench` + `paper`. The file
+it cited says otherwise, and so does an owner ruling:
+
+> The dark theme dims the *room*. It must not dim the *artifact*, because the artifact's ink is print colour
+> … a dimmed sheet left the user's own black text at **1.60:1** on device, while the Read/Proof screen showed
+> the same page at 16.92:1. The owner ruled that the artifact does not dim, and the frozen Bench was amended
+> to match. — `BenchStudioSurface.kt:333`, recording **[D-035](design/V2-SPEC-DEFECTS.md#d-035)**
+
+So the island is **an owner ruling plus a frozen-file amendment, arrived at from a device measurement.**
+Retiring it in favour of two ground tokens would have reinstated a defect the owner closed — and it would
+have failed for a reason no palette can fix, because **one half of the failing pair is not a token at all**:
+the user's content ink is black because it *prints*, and `zinelyV21DarkColors().paper` is `#332B22`,
+materially the same dark sheet as the `#2F2A22` that measured 1.60:1.
+
+**`EditorPageLegibilityProbeTest` exists precisely to fail when the artifact dims**, and its KDoc records
+that *"nothing token-level could have caught either"* of the two defects that produced the ruling. It is an
+invariant, not a test to re-baseline.
+
+**This is the same rule ADR-101 P6 rediscovered from scratch three days ago.** The Proof's reader leaf and
+its imposed sheet were both painting the user's printed output in the room's palette; the fix was
+`rememberLitSheetPalette()` and the `ProofLitPaper` wrapper, and the rule written there — *a subtree
+answering "this is what the printer will produce" takes paper's palette in both themes* — **is D-035, derived
+independently on a different surface**. That convergence is the finding: the rule is surface-independent, and
+it has now been paid for twice.
+
+**Ruling: the island's intent is kept and generalised; its mechanism is replaced.** The V2 runtime derivation
+gives way to the V2.1 light palette provided over the page subtree, exactly as `ProofLitPaper` does — one
+named rule serving the reader leaf, the imposed sheet and the Bench page, instead of one owner ruling, one
+runtime `copy()` and one wrapper that do not know about each other.
+
+**Four things the first draft did not answer, and this one must:**
+
+1. **The derivation is 8 tokens, not 2** — `paper, paperEdge, ink, inkSoft, inkFaint, matcha, matchaText,
+   strawberryText`. Six are content inks, not grounds; they are what draw the dashed ring, the handles and
+   the keep-clear cue. Any replacement resolves all eight or it is not a replacement.
+2. **The shadow exclusion is load-bearing.** `BenchStudioSurface.kt:145` records that an early island
+   lightened all 26 tokens including `pageShadow`/`pageContact` and reinstated **D-010** — *"a glow where a
+   contact shadow belongs"* — certified green by a re-recorded golden. The sheet's own shadow stays the
+   room's.
+3. **`benchThumbIsland` is not a copy of the same idea.** It is **five** tokens under its own owner ruling
+   **OD-23**, after a dark-theme thumb measured **1.21:1** on hardware, and its KDoc explains why the other
+   three must *not* be islanded. The first draft deleted it in a subordinate clause.
+4. **Three call sites deliberately opt *out*** — `EditorScreen.kt:852`, used at `:1225`, `:1364`, `:1511` —
+   because the island re-declares `ink`, *"which once put light ink on a dark room fill and produced an
+   invisible toolbar that every light-palette Robolectric test passed (D-035)."* Chrome takes the room;
+   artifact takes the paper. A migration that keeps the wrappers but changes what they wrap re-creates that
+   defect one palette later.
+
+### 4. Ruling 2 — the V1 remnants are in scope, for a reason V2 did not have {#adr-102-remnants}
+
+The V1 remnants are `ReframeControls` (25), `TypeBar` (16), `ReframeOverlay` (2), `EditorEmptyState`'s
+sticker blobs (1), `EditorScreen`'s Preview action (1) and four adjacent editor files. `ReframeControls`
+paints **over the page** and is larger than everything else combined.
+
+**The first draft's argument for converting them was wrong; the conclusion survives on a better one.** The
+blobs were kept on V1 by a recorded decision — *"V2 publishes no `teal`/`coral` to move them to.
+Re-colouring them would be a redesign, not a fix."* **V2.1 changes that premise:** it publishes `leaf`,
+`berry`, `butter` and `jam` as material hues. The destination that did not exist now exists, so moving them
+is a re-skin rather than a redesign — which is the *only* thing that ever blocked it.
+
+**Ruling: in scope, in P5 and P6, converted rather than accepted** — with `ReframeControls` and `TypeBar`
+given a package of their own rather than smuggled into a chrome package.
+
+### 5. Ruling 3 — `ZSheet` is shared; the rest of the Proof's V1 material is not {#adr-102-coreui}
+
+The Bench's shared `:core:ui` surface is **exactly three** symbols: `ZSheet` (`BenchAddChooser.kt:31`),
+`zinelyShadow` and `ZinelyShadowLayer` (`BenchContextBar.kt`, `BenchInkPopover.kt`). **`ZPaperSurface`,
+`ZToolButton`, `zinelyFocusRing` and `ZinelyTheme.elevation` are used by no Bench file at all**, and are
+Library-and-Proof-only. [ADR-101 §6.11](#adr-101-p6-device) claimed the whole seam *"converts in the Bench
+step"*; that was wrong and is corrected there and in its preamble.
+
+**And `zinelyShadow` is a retirement, not a conversion.** `ZinelyV21Depth.kt` already ships
+`zinelyV21HardShadow`, and the Library's V2.1 surfaces already use it. P7 replaces call sites; it does not
+re-skin a component that V2.1 has no use for.
+
+### 6. What the freeze changes that is not paint {#adr-102-structural}
+
+The first draft asserted *"no structure changes, so the usual paint-outward order holds."* **That is false in
+at least four places**, and three of them reverse or delete a ruled behaviour:
+
+| Change | Frozen evidence | Why it is not paint |
+|---|---|---|
+| **The rigid page-lift is deleted** | `.pageWrap` appears **6×** in `v2-bench.html` and **0×** in `v21-bench.html`; V2.1's `edit()` does not move the page | it is `BenchEditingSurface.kt`'s reason for existing, a conditional roadmap deliverable, and was amended by **OD-16 / D-043** |
+| **The keep-clear warn state is gone** | V2 had a resting `inkFaint` and a `strawberryText` warn; V2.1 has one `berry` rule, triggered by `.content.focusing` | **OD-10 / D-032** ruled keep-clear is *"NOT a continuous editing indicator"*; the new trigger makes it exactly that |
+| **`.guideV` changes trigger** | same `.content.focusing` selector | shipped `SnapGuides` shows on snap during drag, not on selection |
+| **Unselected elements dim** | `.el:not(.selected){opacity:.5}` under `.content.focusing` | new behaviour, owned by `BenchSelectionFocus.kt` |
+
+**These are design questions, not sweep items**, and they are the reason P1 is no longer a paint package.
+
+### 7. Explicitly out of scope, with the rulings that put them there {#adr-102-oos}
+
+Named because a decomposition that silently omits a frozen region is the failure ADR-101's reviews caught:
+
+- **The holding shelf** (`.tray`, `.th`, `.fold`, `.trayrow`, `.thumb`) — frozen, and named in the file's own
+  banner as one of eight acts, but it has no Compose counterpart: `EditorSupplyTray` was retired in C4 and
+  **OD-2 (2026-08-01)** re-seated the shelf beyond Phase C. **This ADR re-skins nothing there.**
+- **The Art surface and online search** (`.search`, `.grid`, `.tile`, `.fav`, `.chips`, `.online`,
+  `.disclosure`, `.onresults`, `.priv`) — twelve classes and **the product's only network path**. Fenced
+  twice: **OD-2**, and the owner-approved V2-BENCH-REVIEW §E.6 — *"do NOT freeze into implementation until a
+  review + legal pass clears them."* No asset-layer ADR exists and no legal pass is recorded. **Out of
+  scope, and it must stay out until both exist.**
+- **`.kb`** — the prototype's drawn stand-in for the system keyboard, deliberately not ported
+  (`EditorScreen.kt:1506`).
+
+### 8. Packages {#adr-102-packages}
+
+**Ordered by dependency, and this ADR says so.** The first draft claimed ADR-098's *"golden blast radius"*
+rule selected this order; it does not — P1 owns the riskiest change and among the fewest goldens. The real
+reason is that everything else stands on the ground.
+
+| Package | Region | Chief risk |
+|---|---|---|
+| **P1** | **The ground and the page** — `BenchStudioSurface`, `EditorPagePreview`, `SelectionChrome`, `SnapGuides`, `ResizeHandles`, `BenchEditingSurface`, `BenchSelectionFocus`. **Both islands stay**; the page moves to V2.1 with the light palette provided over it | D-035 is the whole package; `EditorPageLegibilityProbeTest` must stay green, not be re-baselined |
+| **P2** | **The four freeze changes that are not paint** ([§6](#adr-102-structural)) — page-lift deletion, keep-clear trigger and warn state, `.guideV` trigger, unselected dimming | each reverses or deletes a ruled behaviour; **each needs a ruling before it is built** |
+| **P3** | **Bottom chrome** — `BenchBottomBar`, `BenchPageNav` + thumbs, `BenchStyleRow` (incl. `.kbstack`, and the `.sw` swatch seeded from the element's own ink) | filmstrip auto-centre is arithmetic; `benchThumbIsland` stays under OD-23 |
+| **P4** | **Popovers** — `BenchContextBar`, `BenchInkPopover`, `BenchSnack`, `BenchAddChooser` **including `.supply`/`.opt` content**, not just the sheet shell | the verb bar must stay flat and quiet; the `roomColors` opt-outs must keep opting out |
+| **P5** | **Page grid** — `BenchPageGrid` | `BackHandler` is an Android addition the freeze cannot specify |
+| **P6** | **The V1 remnants** — `ReframeControls` (25), `TypeBar` (16), `ReframeOverlay`, `EditorEmptyState`'s blobs, `EditorScreen`'s Preview action, and the four adjacent editor files | `TypeBar` **must not** move into the canvas Column — infinite recomposition |
+| **P7** | **Citations, tests, rasters** — re-point the citations at the scope [§2](#adr-102-audit) states, re-baseline the colour-pinning tests, record the goldens **once** | **not 16.** That is a filename-prefix count; the affected families include `selection_chrome_*`, `resize_handles`, `preview_*`, `editor_*`, `type_bar`, `reframe_controls`, `edit_text_session` |
+| **P8** | **The shared shell** — retire `zinelyShadow`/`ZinelyShadowLayer` to `zinelyV21HardShadow`, convert `ZSheet` | cross-surface: Library **and** Proof re-skin with it ([§9](#adr-102-open)) |
+
+**The three rules the re-skin must not break**, from the freeze's own banner: **the page never tilts**;
+**the contextual verb bar is flat and quiet** — no offset shadow, no tape, no rotation, because it is a tool
+and tools do not perform; and **selection is a hand-drawn dashed ring in `ink`**, never a system box.
+
+### 9. Behaviour that must not move {#adr-102-invariants}
+
+The first draft's list read as *things that happened to be well-commented*. The additions below are the ones
+a paint change is most likely to break silently:
+
+- **The `roomColors` opt-outs** (`EditorScreen.kt:852, 1225, 1364, 1511`) — chrome takes the room, artifact
+  takes the paper, under D-035. The single most important item here.
+- **The page-shadow exclusion from the island** (`BenchStudioSurface.kt:145`) — reinstated D-010 once
+  already.
+- **`EditorPageLegibilityProbeTest` is an invariant**, not a golden. It is the only assertion in the repo
+  that fails when the artifact dims.
+- **`TypeBar` must not be moved into the canvas Column** (`EditorScreen.kt:1295`) — measure → `SetView` →
+  remeasure is an infinite recomposition; a re-skin that "tidies" an absolutely-positioned overlay into flow
+  hangs the editor.
+- **`BenchStyleRow`'s ink swatch is seeded from the element's own colour** (`EditorScreen.kt:1514`), not a
+  theme default — a token sweep will want to "fix" it.
+- Plus the previously listed: filmstrip auto-centre arithmetic (`BenchPageNav.kt:214`); `isTraversalGroup`
+  **after** `.horizontalScroll` (`:252`); `.testTag` above `.background` (`BenchBottomBar.kt:195`); drawn
+  hairlines; the disabled-but-clickable a11y trap (`BenchContextBar.kt:238`); **the filmstrip double-stop is
+  a mechanism, not a defect** (`BenchPageNav.kt:180`); reduced motion, single-flight delete and the
+  save/error interlock (`EditorScreen.kt:299, 289, 205`).
+
+### 10. Open question for the owner {#adr-102-open}
+
+**P8 crosses a seam that touches three surfaces**, closing the Proof's accepted drawer-shell departure as a
+side effect. The first draft recommended holding it back and argued from reviewer cognitive load, which a
+review correctly called the weakest available reason.
+
+**The real argument is device verification.** This repo requires two device passes per package. A package
+spanning Library + Proof + Bench bundles **six passes into one accept/reject decision**, where a single Pass
+2 finding on any surface blocks all three. **Recommendation: P8 stays last and separate**, and proceeding on
+that unless the owner says otherwise.
+
+### 11. Review record {#adr-102-review}
+
+| Round | Lens | Verdict | What it was for |
+|---|---|---|---|
+| Plan (draft 1) | **Evidence** — recompute every count, re-measure every contrast | GO WITH FIXES (5 RF) | the counts were the basis for the package sizes, and three of them were wrong |
+| Plan (draft 1) | **Plan** — falsify the decomposition, hunt what it drops | **NO-GO** | it found the ADR was about to reverse an owner ruling |
+
+**The NO-GO was earned, and by the cheapest possible failure — a document.** §3 proposed retiring
+`BenchSheetIsland` on a stated cause the cited file contradicts, which would have reinstated **D-035**: the
+user's own black text at **1.60:1** on the surface they spend the most time on. §6's table omitted roughly
+half the frozen file's regions, including the shelf and the entire network-bearing Art surface with its
+unresolved legal fence, and four live painted files — among them `ReframeControls`, the **largest** V1
+remnant on the Bench. §2 reported the contrast check that passes while never running the one that had already
+failed twice on hardware, and the evidence lens showed the `EditorEmptyState` argument was inverted, the
+`v2Colors` count was 41 rather than 30, and the coral at `EditorScreen.kt:764` is the Preview action.
+
+**Every Required Fix was accepted; none was rejected.** Each was verified against the tree first — D-035's
+text, the legibility probe, the `roomColors` opt-out comment, the V1 counts, and `.pageWrap`'s 6-to-0
+disappearance were all read before being conceded, because a review believed without checking fails the same
+way a summary believed without checking does.
+
+**The lesson this ADR now carries** is not "check the counts". It is that the Bench had already been taught,
+by two device passes and an owner ruling, the exact lesson [ADR-101 §6.11](#adr-101-p6-lit-review) learned
+again from scratch on the Proof — *the artifact does not dim* — and a re-skin planned from the frozen file
+plus a code map, without reading the rulings, was on course to un-learn it.
