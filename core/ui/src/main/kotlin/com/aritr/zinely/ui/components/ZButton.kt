@@ -290,9 +290,16 @@ public data class ZToolButtonMetrics(
         public val ProofExport: ZToolButtonMetrics =
             ZToolButtonMetrics(52.dp, 14.dp, 14.5.sp, FontWeight.SemiBold, 8.dp, 19.dp, pressTranslate = true)
 
-        /** proof.html `.stepnav button` (52×52 square: pass no text) */
+        /**
+         * proof.html `.fnav` (44×44 square, 18dp glyph: pass no text).
+         *
+         * Was 52×52 with a 22dp glyph, from the retired `.stepnav button`. The V2.1 fold guide's own
+         * `.fnav` is 44px, and at eight steps the difference stopped being cosmetic: a 52dp pair either
+         * side of eight dot targets overflowed a 360dp window, and `ZSheet` clips. Matching the freeze
+         * fixed the overflow — see ADR-101 §6.7.
+         */
         public val ProofStepNav: ZToolButtonMetrics =
-            ZToolButtonMetrics(52.dp, 0.dp, 14.5.sp, FontWeight.SemiBold, 0.dp, 22.dp)
+            ZToolButtonMetrics(44.dp, 0.dp, 14.5.sp, FontWeight.SemiBold, 0.dp, 18.dp)
     }
 }
 

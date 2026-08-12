@@ -165,7 +165,9 @@ private fun HomeUiState.toLibraryShelfState(): LibraryShelfState = when (this) {
 
 /**
  * The single **Proof** host (M5, [ADR-051](../../../../../../docs/DECISIONS.md#adr-051)) — the collapse
- * of the former Preview + Export + Completion triad into one 3-act surface ([ProofScreen]). It boots the
+ * of the former Preview + Export + Completion triad into one surface ([ProofScreen]). That surface was a
+ * three-act climb until [ADR-101](../../../../../../docs/DECISIONS.md#adr-101) P1 retired the acts; it is
+ * now the reader, a band, and two drawers. It boots the
  * *shared* editor VM (the ADR-026 single-writer seam, same back-stack-entry resolution the triad used)
  * and hosts its own read-only [ExportViewModel] over that shared document so `export == preview`
  * ([ADR-039]) without touching the single-writer autosave path. This composable owns the Android edges the
@@ -188,9 +190,13 @@ private fun ProofDestination(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // One emission per successful Save-PDF render, carrying the actual saved display name — drives the
-    // Proof's "Fold now" hand-off snackbar, whose copy names that file (the ADR-041 post-export → fold
-    // payoff, now intra-screen). extraBufferCapacity so the collector's tryEmit never suspends. A
-    // transient nudge, so it is not persisted across config change.
+    // Proof band's `.done` completion, whose copy names that file (the ADR-041 post-export → fold payoff,
+    // now intra-screen). extraBufferCapacity so the collector's tryEmit never suspends.
+    //
+    // This flow is deliberately transient and **not** replayed: the *event* must not re-fire on a config
+    // change. The screen's `.done` state is what persists, in a `rememberSaveable` there — so a rotation
+    // keeps the completion without re-announcing it, and it cannot resurrect a completion the screen
+    // cleared. (ADR-101 P2 retired the five-second snackbar this used to raise.)
     val saved = remember { MutableSharedFlow<String>(extraBufferCapacity = 1) }
 
     // Route each finished export purely by its ExportOutcome subtype (ADR-054) — no remembered target.
@@ -209,9 +215,9 @@ private fun ProofDestination(
                     } catch (e: ActivityNotFoundException) {
                         Toast.makeText(context, Copy.Nav.NO_APP_TO_OPEN, Toast.LENGTH_SHORT).show()
                     }
-                    // Save PDF → a durable copy is already in Downloads (ADR-054): raise the "Fold now"
-                    // hand-off (ADR-041), naming the file actually written. No Intent, so no
-                    // ActivityNotFound path here.
+                    // Save PDF → a durable copy is already in Downloads (ADR-054): raise the band's
+                    // completion and its fold hand-off (ADR-041), naming the file actually written. No
+                    // Intent, so no ActivityNotFound path here.
                     is ExportSaved -> saved.tryEmit(outcome.displayName)
                 }
             }
@@ -226,10 +232,10 @@ private fun ProofDestination(
             // a copy so `export == what you see` without writing through the single-writer store (ADR-026).
             val paper = rememberSaveable { mutableStateOf(uiState.document.paperSize) }
             ProofScreen(
-                // ponytail: the project title is not on the editor boot state today (it lives in the Room
-                // project metadata, ADR-042). A neutral fallback keeps the topbar honest until the real
-                // title threads through in a later batch.
-                zineName = Copy.Nav.ZINE_NAME_FALLBACK,
+                // The `zineName` this used to pass was `Copy.Nav.ZINE_NAME_FALLBACK` — a placeholder,
+                // because the real title lives in Room project metadata (ADR-042) and never reached the
+                // editor boot state. ADR-101 P6 retired the top bar's name outright, so the placeholder
+                // goes with it and nothing is owed here.
                 onBack = onBack,
                 paper = paper.value,
                 onPaperSelected = { paper.value = it },
@@ -257,12 +263,9 @@ private fun ProofDestination(
                         ExportFormat.PDF,
                     )
                 },
-                // The "Fold now" post-export hand-off (ADR-041): one nudge per successful Save-PDF.
+                // The post-export hand-off (ADR-041): one signal per successful Save-PDF, which raises
+                // the band's `.done` block and its "Fold it up".
                 savedSignals = saved,
-                // "Make another" after the fold reveal. The true multi-project "new zine" awaits that
-                // layer (the retired CompletionScreen's onKeepEditing carried the same honest deferral);
-                // for the single-project MVP it returns to the bench, where the work is already saved.
-                onMakeAnother = onBack,
                 // The Read act (ADR-058) — the finished zine, page by page. Everything it needs was
                 // already resolved here for the export path (the ADR-051 shared-VM seam), so this is
                 // three existing values threaded one level down, not a new seam: the SAME document,

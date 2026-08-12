@@ -79,8 +79,8 @@ class ZComponentsTest {
             assertEquals(52.dp, minHeight); assertEquals(14.dp, hPadding); assertEquals(14.5.sp, fontSize)
             assertEquals(FontWeight.SemiBold, fontWeight); assertEquals(19.dp, iconSize); assertTrue(pressTranslate)
         }
-        with(ZToolButtonMetrics.ProofStepNav) { // proof.html .stepnav button
-            assertEquals(52.dp, minHeight); assertEquals(22.dp, iconSize)
+        with(ZToolButtonMetrics.ProofStepNav) { // proof.html .fnav
+            assertEquals(44.dp, minHeight); assertEquals(18.dp, iconSize)
         }
     }
 
@@ -146,8 +146,8 @@ class ZComponentsTest {
             }
         }
         val node = composeRule.onNodeWithContentDescription("Next step")
-        node.assertHeightIsAtLeast(52.dp)
-        node.assertWidthIsAtLeast(52.dp)
+        node.assertHeightIsAtLeast(44.dp)
+        node.assertWidthIsAtLeast(44.dp)
     }
 
     // ----- menu items ------------------------------------------------------------------------

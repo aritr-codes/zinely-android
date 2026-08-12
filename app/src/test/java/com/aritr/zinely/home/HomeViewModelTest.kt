@@ -216,7 +216,9 @@ class HomeViewModelTest {
         val card = content.cards.single()
         assertEquals("z1", card.id)
         assertEquals("My first zine", card.title)
-        assertEquals("8-page mini · Letter", card.formatLabel)
+        // See LibraryZineMappingTest: the shelf's paper label now comes from `Copy.Paper`, where the
+        // size is "US Letter".
+        assertEquals("8-page mini · US Letter", card.formatLabel)
         assertEquals("Edited 5 minutes ago", card.editedLabel)
         job.cancel()
     }

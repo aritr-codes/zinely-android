@@ -7,12 +7,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,8 +36,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -51,6 +59,17 @@ import kotlin.math.roundToInt
 /** Stable test tags (parity-plan M1: stable test tags preserved/introduced). */
 public const val ZSheetScrimTestTag: String = "zSheetScrim"
 public const val ZSheetSurfaceTestTag: String = "zSheetSurface"
+public const val ZSheetCloseTestTag: String = "zSheetClose"
+
+/**
+ * The frozen `.dhead` close button — its action and the words a screen reader says for it.
+ *
+ * One parameter rather than two, so "a close button with no label" and "a label with no button" are
+ * unrepresentable. The label is passed in because `:core:ui` does not depend on `:core:copy`: user-facing
+ * strings live there ([ADR-060](../../../../../../../docs/DECISIONS.md#adr-060)), and a design-system
+ * component that hardcoded English would be the exception that ends that rule.
+ */
+public data class ZSheetClose(val label: String, val onClose: () -> Unit)
 
 /**
  * The frozen modal system — `.scrim` + `.sheet` — shared by all eight sheets of the trilogy.
@@ -61,8 +80,17 @@ public const val ZSheetSurfaceTestTag: String = "zSheetSurface"
  * containment ≙ the spec's `inert`), back-dismiss ≙ Escape, and TalkBack isolation for free; the
  * scrim fade and `translateY(102%)` slide are ours, driven by the frozen `--base` motion token.
  *
- * Dismissal paths, per spec: scrim tap, system back. The Dialog stays mounted until the exit slide
- * completes, so closing is animated, not a hard cut.
+ * Dismissal paths: scrim tap, system back, and — where [close] is supplied — a visible close button
+ * beside the title.
+ *
+ * **Why [close] is opt-in rather than always drawn.** The frozen trilogy draws a `.dclose` on its two
+ * full-height *drawers* and on none of its short chooser sheets, and that is a real distinction rather
+ * than an inconsistency: a chooser is a list you tap an answer from, its scrim is a hand's width away,
+ * and the whole surface is on screen at once. A drawer covers most of the display with content that
+ * scrolls, and nothing in it names a way out. So the sheets that need the affordance ask for it, and
+ * the ones that would only gain a second dismissal path do not.
+ *
+ * @param close draws the frozen `.dhead` close button. Null (default) draws none.
  */
 @Composable
 public fun ZSheet(
@@ -71,6 +99,7 @@ public fun ZSheet(
     title: String,
     modifier: Modifier = Modifier,
     sub: String? = null,
+    close: ZSheetClose? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val visibleState = remember { MutableTransitionState(false) }
@@ -114,7 +143,13 @@ public fun ZSheet(
                 enter = slideInVertically(motion.base()) { (it * 1.02f).roundToInt() },
                 exit = slideOutVertically(motion.base()) { (it * 1.02f).roundToInt() },
             ) {
-                ZSheetSurface(title = title, sub = sub, modifier = modifier, content = content)
+                ZSheetSurface(
+                    title = title,
+                    sub = sub,
+                    modifier = modifier,
+                    close = close,
+                    content = content,
+                )
             }
         }
     }
@@ -136,6 +171,7 @@ public fun ZSheetSurface(
     title: String,
     sub: String?,
     modifier: Modifier = Modifier,
+    close: ZSheetClose? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = ZinelyTheme.colors
@@ -167,17 +203,23 @@ public fun ZSheetSurface(
                 .clip(RoundedCornerShape(2.dp))
                 .background(colors.fieldEdge),
         )
-        // h3: voice 19/600, margin 2px 2px 4px
-        BasicText(
-            text = title,
-            modifier = Modifier.padding(start = 2.dp, end = 2.dp, top = 2.dp, bottom = 4.dp),
-            style = TextStyle(
-                color = colors.onDesk,
-                fontFamily = ZinelyTheme.typography.voice,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.SemiBold,
-            ),
-        )
+        // .dhead: h3 (voice 19/600, margin 2px 2px 4px) and, where asked for, the close button.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BasicText(
+                text = title,
+                modifier = Modifier.weight(1f).padding(start = 2.dp, end = 2.dp, top = 2.dp, bottom = 4.dp),
+                style = TextStyle(
+                    color = colors.onDesk,
+                    fontFamily = ZinelyTheme.typography.voice,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.SemiBold,
+                ),
+            )
+            if (close != null) ZSheetCloseButton(close)
+        }
         // .sub: 13px on-desk-soft, margin 0 2px 16px
         if (sub != null) {
             BasicText(
@@ -191,5 +233,60 @@ public fun ZSheetSurface(
             )
         }
         content()
+    }
+}
+
+/**
+ * The frozen `.dclose`: a **34×34 outlined pill**, `1.5px solid var(--ink)`, with a 15px mark.
+ *
+ * It is not [ZIconButton], and the P3 review is why. That component draws a 44dp rounded-12 square with no
+ * border and a 22dp glyph — the app's generic top-bar icon button, and a visibly different object from the
+ * outlined pill the spec draws here. The first draft used it anyway and the ADR discussed only the
+ * parameter shape, which is precisely the pixel-parity gap the handbook says must be fixed or explicitly
+ * accepted. It is fixed.
+ *
+ * The one deliberate departure: the frozen 34px box is below the 48dp touch minimum, so the pill is
+ * *drawn* at 34dp inside a 48dp target. Visual parity and a reachable control are not in tension — only
+ * the two sizes were ever conflated.
+ */
+@Composable
+private fun ZSheetCloseButton(close: ZSheetClose) {
+    val colors = ZinelyTheme.colors
+    val interactionSource = remember { MutableInteractionSource() }
+    val pill = RoundedCornerShape(17.dp)
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Button,
+                onClick = close.onClose,
+            )
+            .semantics { contentDescription = close.label }
+            .testTag(ZSheetCloseTestTag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .zinelyFocusRing(interactionSource, 17.dp)
+                .size(34.dp)
+                .clip(pill)
+                .border(1.5.dp, colors.onDesk, pill),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(Modifier.size(15.dp)) { ZSheetCloseGlyph(colors.onDesk) }
+        }
+    }
+}
+
+/** The frozen `.dclose` mark: `M6 6l12 12M18 6L6 18` on a 24-unit viewport, round caps. */
+@Composable
+private fun ZSheetCloseGlyph(tint: Color) {
+    Canvas(Modifier.fillMaxSize()) {
+        val u = size.minDimension / 24f
+        val w = 2.2f * u
+        drawLine(tint, Offset(6f * u, 6f * u), Offset(18f * u, 18f * u), w, cap = StrokeCap.Round)
+        drawLine(tint, Offset(18f * u, 6f * u), Offset(6f * u, 18f * u), w, cap = StrokeCap.Round)
     }
 }

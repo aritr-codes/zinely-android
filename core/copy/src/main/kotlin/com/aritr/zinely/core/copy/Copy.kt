@@ -34,11 +34,11 @@ public object Copy {
         public const val SHARE_CHOOSER_TITLE: String = "Share your zine"
         public const val NO_APP_TO_OPEN: String = "No app on your phone can open that yet."
 
-        /**
-         * Neutral fallback for the Proof top-bar title. CI-82 relocates it here **character-identical**;
-         * threading the real Room/ADR-042 project title through is a behavioural follow-up, not this move.
-         */
-        public const val ZINE_NAME_FALLBACK: String = "Your zine"
+        // `ZINE_NAME_FALLBACK` ("Your zine") lived here as the Proof top bar's placeholder title, against
+        // the day the real ADR-042 project title threaded through. ADR-101 P6 retired the title itself —
+        // the frozen top bar carries the page ticket where the name used to sit — so the follow-up it was
+        // waiting for will never be owed, and a string with no surface is a string that misleads the next
+        // reader into building one.
         public const val BACK_TO_EDITING: String = "‹  Back to editing"
         public const val BACK_TO_SHELF: String = "‹  Back to your shelf"
     }
@@ -468,46 +468,209 @@ public object Copy {
     /** Paper-size display names, shared by the shelf chooser and the print recipe. */
     public object Paper {
         public const val A4: String = "A4"
-        public const val LETTER: String = "Letter"
+        // "US Letter", not "Letter": the frozen `.paperseg` says so, and beside "A4" a size called
+        // "Letter" reads like a document type. ADR-101 P3's review caught the build and the spec
+        // disagreeing here.
+        public const val LETTER: String = "US Letter"
         public const val A4_DIMENSIONS: String = "210 × 297 mm"
         public const val LETTER_DIMENSIONS: String = "8.5 × 11 in"
-        public const val A4_DIMENSIONS_LONG: String = "210 × 297 mm — most of the world"
-        public const val LETTER_DIMENSIONS_LONG: String = "8.5 × 11 in — US & Canada"
+        // `A4_DIMENSIONS_LONG` / `LETTER_DIMENSIONS_LONG` were deleted by ADR-101 P3: the paper chooser
+        // sheet's sub-line was their only consumer, and the segmented control that replaced it names the
+        // size and nothing else.
     }
 
-    /** The Proof surface top bar + action bar (`ProofScreen.kt`). "Try again" is [Common.TRY_AGAIN]. */
+    /** The Proof surface top bar + band (`ProofScreen.kt`). "Try again" is [Common.TRY_AGAIN]. */
     public object Proof {
-        public const val ACT_READ: String = "Read · swipe to turn the page"
-        public const val ACT_SHEET: String = "Step 1 of 3 · The sheet"
-        public const val ACT_PRINT: String = "Step 2 of 3 · Print"
-        public const val ACT_FOLD: String = "Step 3 of 3 · Fold"
-        public const val DONE_READY: String = "Done · Your zine is ready"
-        public const val FOLD_NOW: String = "Fold now"
+        // `ACT_READ` — the top bar's status line, *"Read · tap the edges to turn"* — is retired with the
+        // line itself (ADR-101 P6). P5 had just corrected its wording from "swipe" to "tap the edges",
+        // and then replaced the job it was doing: the reader's chevrons teach the turn where the hand
+        // already is, and they *disappear* at the ends, which a sentence at the top of the screen cannot.
+        // The position it never carried is now the `.pcount` ticket's, in the frozen place.
         public const val COULDNT_MAKE_PDF: String = "Couldn’t make the PDF"
         public const val ERROR_BODY: String =
             "Your zine is safe on this device — the export just didn’t finish. Try once more."
-        public const val BACK_TO_YOUR_ZINE: String = "Back to your zine"
         public const val BACK_TO_BENCH_SAVED: String = "Back to the bench (your work is saved)"
-        public const val PRINT_AND_FOLD: String = "Print & fold"
-        public const val PRINT_SETUP: String = "Print setup"
-        public const val BACK: String = "Back"
-        public const val NOW_FOLD_IT: String = "Now fold it"
-        public const val ITS_FOLDED: String = "It’s folded — show me"
-        public const val BACK_TO_BENCH: String = "Back to bench"
-        public const val MAKE_ANOTHER: String = "Make another"
-        public fun savedToDownloads(name: String): String = "Saved “$name” to Downloads"
+
+        /**
+         * The fold guide's last step hands off to this, and it **no longer promises a reveal**.
+         *
+         * It read *"It's folded — show me"*, and what it showed was the finished-book climax this ADR
+         * retired ([ADR-101 §6.8](../../docs/DECISIONS.md#adr-101-p4-device)): a schematic drawing of a
+         * booklet, offered to somebody holding the real one. The button now acknowledges and closes the
+         * drawer, so the label stops making an offer the screen does not keep.
+         *
+         * Deleted with the climax: `DONE_READY` (a top-bar status line for a state that no longer
+         * exists), `BACK_TO_BENCH` and `MAKE_ANOTHER` (its two exits — which were wired to the *same*
+         * destination, the loud one promising a new zine and delivering the bench), and
+         * `ProofFold.DONE_HEADING` / `DONE_BODY`.
+         */
+        public const val ITS_FOLDED: String = "It’s folded"
+
+        // ── V2.1 (ADR-101 P1). Eight constants were **deleted** here, not deprecated: `ACT_SHEET`,
+        // `ACT_PRINT`, `ACT_FOLD`, `PRINT_AND_FOLD`, `PRINT_SETUP`, `BACK`, `NOW_FOLD_IT` and
+        // `BACK_TO_YOUR_ZINE` described the three-act climb the accepted design retires, and every one had
+        // dropped to zero references. An earlier draft of this comment claimed they were "kept until P6
+        // re-baselines the tests that assert them" — no test asserted them even then, which is the sort of
+        // sentence that is checkable and was checked. Only strings with a live consumer survive below.
+
+        /** The `drawer-details` title, and the band's opener into it. */
+        public const val PRINT_DETAILS: String = "Print details"
+
+        /** The `drawer-fold` title, and the top bar's right icon. */
+        public const val HOW_TO_FOLD: String = "How to fold"
+
+        /**
+         * The frozen `.dclose` on both drawers — [ADR-101](../../../../../../../docs/DECISIONS.md#adr-101)
+         * P1 booked this as owed, and P3 pays it. The word a screen reader says; the button itself is
+         * `:core:ui`'s, which cannot own copy (ADR-060).
+         */
+        public const val CLOSE: String = "Close"
+
+        // ── The band (ADR-101 P2) ────────────────────────────────────────────────────────────────
+        //
+        // The `.ready` row, the `.commit` pair and the `.done` block. The export strings moved here
+        // from `ProofPrint` with the controls they label: the band owns the commit now, and the print
+        // recipe is a drawer you consult, not the place you press Save.
+
+        /** `.ready`'s heading before anything is saved. */
+        public const val READY_WHEN_YOU_ARE: String = "Ready when you are"
+
+        /**
+         * `.ready`'s heading **after** a save.
+         *
+         * The frozen band hides this row on save, so it only ever needed one heading. P2 keeps the row —
+         * the print recipe is most needed once the PDF exists — and that immediately made the heading
+         * wrong: *"Ready when you are"* sitting above *"Saved to your phone"* means *ready for what, I
+         * just did it*. Keeping the route without renaming the signpost buys reachability and loses
+         * legibility, so the row says what it is for at the moment it is for it.
+         */
+        public const val BEFORE_YOU_PRINT: String = "Before you print"
+
+        /** `.ready`'s sub-line — what will be printed, on what, and where it stays. */
+        public fun readySummary(pages: Int, paper: String): String =
+            "${pagesWord(pages)} · one sheet, one cut · $paper · stays on your phone"
+
+        /**
+         * The whole `.ready` row is **one** control, so it is announced as one string.
+         *
+         * The frozen row carries `aria-label="Print details"`, which on a real screen reader *replaces*
+         * the heading and the summary rather than adding to them — a sighted user would get the page
+         * count, the paper and the privacy promise, and a TalkBack user would get three words. So the
+         * label is the row's own content and the destination rides on the click action instead
+         * (`onClickLabel`), which is where Android puts "what happens if you activate this".
+         */
+        public fun readyLabel(pages: Int, paper: String, saved: Boolean = false): String =
+            "${if (saved) BEFORE_YOU_PRINT else READY_WHEN_YOU_ARE}. ${readySummary(pages, paper)}"
+
+        private fun pagesWord(pages: Int): String = if (pages == 1) "1 page" else "$pages pages"
+
+        /**
+         * `.commit` — the two honest export edges, moved out of the print recipe by P2.
+         *
+         * The frozen `#shareSheet` offered *"Save to Files"* and *"Send to an app"*; both were deleted
+         * with the sheet that held them. On Android those are one surface — the OS chooser is where you
+         * pick Files *or* an app — so the two rows called the same code, and a menu whose branches are
+         * indistinguishable teaches the user that this app's choices are decorative. Worse, *"Save to
+         * Files"* was a third save-flavoured phrase beside *"Save PDF"* and *"Saved to your phone"*.
+         * Share now opens the chooser directly.
+         */
+        public const val SAVE_PDF: String = "Save PDF"
+        public const val SHARE: String = "Share"
+
+        /** `.done` — the persistent completion the band raises in place of `.commit` after a save. */
+        public const val SAVED_TO_YOUR_PHONE: String = "Saved to your phone"
+
+        /**
+         * `.done`'s body — and the **last** sentence a user reads before they walk to a printer.
+         *
+         * Two departures from the frozen *"In Downloads — print it whenever, then fold it up."*
+         *
+         * It **names the file**, because [ADR-054]'s promise is that a durable copy exists and a promise
+         * you cannot check is not one. The name is the display name the exporter actually wrote,
+         * extension included.
+         *
+         * And it carries the print recipe in three words. [ADR-052]'s four rows exist because a home
+         * printer will silently ruin a zine — fit-to-page shrink, a portrait default, double-siding — and
+         * until now every one of them lived inside a drawer nothing forces you through. *"Print it
+         * whenever"* is a cheerful way to lose a sheet of paper. The drawer remains the full explanation;
+         * this is the part that has to survive the walk.
+         */
+        public fun savedInDownloads(name: String): String =
+            "In Downloads — “$name”. Print it at 100%, landscape, one side — then fold it up."
+
+        /**
+         * **`.done`'s second state — the band's answer to [ITS_FOLDED]** (ADR-101 §6.9).
+         *
+         * The fold guide's finish button asks the user to *declare* something. Before this pair existed,
+         * declaring it changed nothing on screen: the band still headlined *"Saved to your phone"* over
+         * *"…then fold it up"* under a leaf stamp primary reading **Fold it up**. Behaviourally correct —
+         * nothing about the save had changed — and read cold as *the app wasn't listening*, which is
+         * [ADR-058](../../../../../../../docs/DECISIONS.md#adr-058)'s failure one screen over.
+         *
+         * Asking for a report and then not reacting to it is worse than not asking. So the headline
+         * becomes the reply, the body drops the instruction and keeps the file (the user may well want a
+         * second copy), and [FOLD_IT_UP] demotes to a quiet [FoldAgain][HOW_TO_FOLD] link — reachable,
+         * because forgetting step 8 five seconds later is ordinary, but no longer the loudest thing on a
+         * screen telling someone to do what they just did.
+         */
+        public const val NICE_THATS_A_ZINE: String = "Nice — that’s a zine"
+
+        /** @see NICE_THATS_A_ZINE */
+        public fun foldedInDownloads(name: String): String =
+            "Still in Downloads as “$name”, if you want to print another."
+
+        /**
+         * `.done`'s one action: the ADR-041 post-export → fold hand-off, now persistent — and the fold
+         * drawer's own visible heading (`<h3>Fold it up</h3>`), which is deliberately the same words as
+         * the button that opens it. [HOW_TO_FOLD] is that drawer's `aria-label` and the opener's label.
+         */
+        public const val FOLD_IT_UP: String = "Fold it up"
+
+        /**
+         * The band's stale-file notice — **the P3 design review's highest finding**.
+         *
+         * Changing the paper size drops `.done`, correctly: the file in Downloads was imposed for the old
+         * size, and going on saying *"Saved to your phone"* about it would be a lie. But the change is made
+         * inside a `Dialog`-backed drawer, so the band mutates behind a scrim: the user never witnesses the
+         * cause, only discovers the effect on closing, and the honest reading from their chair is *"it
+         * deleted my file"*. That is the `0.9.0-beta.1` Preview shape — correct behaviour, read as loss —
+         * one tap deep inside the surface [ADR-058] exists to protect. The mechanism was never the defect;
+         * the silence was. So the band says it out loud, and says the old file is still there, because it
+         * is.
+         */
+        public fun paperChangedResave(newPaper: String, oldPaper: String): String =
+            "Paper changed to $newPaper — save again to get a $newPaper-sized PDF. " +
+                "The $oldPaper one is still in Downloads."
     }
 
-    /** The imposed sheet act (`ProofSheet.kt`). */
+    /**
+     * The imposed sheet illustration (`ProofSheet.kt`).
+     *
+     * `TITLE` (*"This is your sheet"*) was deleted by ADR-101 P3 — the sheet stopped being an act with its
+     * own lead, and [ProofPrint.SECT_BOOKLET] heads the section that places it. `BODY` went with it on the
+     * claim that [ProofPrint.BOOKLET_HINT] said the same thing; the design review showed it did not, and
+     * [SCRAMBLED_CAPTION] is that job restored in the one position where it works.
+     */
     public object ProofSheet {
-        public const val TITLE: String = "This is your sheet"
-        public const val BODY: String =
-            "One page, printed on one side. It looks scrambled on purpose — " +
-                "the fold puts every page in order."
         public const val CONTENT_DESCRIPTION: String =
             "Your zine imposed on one landscape sheet: eight panels, " +
                 "the top row upside-down, with one cut line across the centre."
         public const val ONE_CUT: String = "ONE CUT"
+
+        /**
+         * The caption **under** the sheet, restoring the one job the deleted `BODY` was doing.
+         *
+         * P3 dropped *"This is your sheet / it looks scrambled on purpose"* on the grounds that
+         * [ProofPrint.SECT_BOOKLET] + [ProofPrint.BOOKLET_HINT] say the same thing. The design review
+         * disagreed and was right: `BOOKLET_HINT` is abstract (*"already in the order that makes a
+         * booklet"*) and is read **before** the picture. What the user then actually sees is a top row
+         * printed upside-down and pages running 5·4·3·6 / 8·1·2·7, and their first thought is *the export
+         * is broken*. Nothing else on this surface names the upside-down row. Pre-empting that alarm is a
+         * different job from explaining imposition, and it has to be done where the alarm happens.
+         */
+        public const val SCRAMBLED_CAPTION: String =
+            "Looks scrambled on purpose — the top row prints upside-down so it’s the right way up " +
+                "once it’s folded."
         public const val LEGEND_FOLD_LINES: String = "fold lines"
         public const val LEGEND_ONE_CUT: String = "the one cut"
         public const val LEGEND_PRINTER_REACH: String = "printer can’t reach here"
@@ -515,12 +678,16 @@ public object Copy {
         public const val BACK_COVER: String = "Back cover"
     }
 
-    /** The print recipe act (`ProofPrint.kt`). Share sheet title is [Nav.SHARE_CHOOSER_TITLE]. */
+    /**
+     * The print recipe act (`ProofPrint.kt`) — the four settings and the paper chooser.
+     *
+     * `SAVE_PDF` and `SHARE` **moved** to [Proof] with the controls, when ADR-101 P2 moved the commit into
+     * the band. `SHARE_SUB`, `SAVE_TO_FILES` and `SEND_TO_AN_APP` were **deleted** rather than moved, and
+     * exist nowhere in the repository: they were the in-app share chooser's title and its two rows, and P3
+     * removed that sheet because both rows opened the same OS chooser (see [Proof.SAVE_PDF]'s docs). The
+     * chooser Share now opens directly is the system's, titled [Nav.SHARE_CHOOSER_TITLE].
+     */
     public object ProofPrint {
-        public const val TITLE: String = "Print it just like this"
-        public const val BODY: String =
-            "These four settings keep your zine the right size and in the right order. " +
-                "Most printers already default to them."
         public const val SCALE_LABEL: String = "Scale"
         public const val SCALE_VALUE: String = "100% · Actual size"
         public const val SCALE_EMPHASIS: String = " — not “Fit to page”"
@@ -530,66 +697,241 @@ public object Copy {
         public const val PAPER_LABEL: String = "Paper"
         public const val SIDES_LABEL: String = "Sides"
         public const val SIDES_VALUE: String = "Single-sided — one side only"
-        public const val SAVE_PDF: String = "Save PDF"
-        public const val SHARE: String = "Share"
-        public const val PAPER_SIZE_TITLE: String = "Paper size"
-        public const val PAPER_SIZE_SUB: String =
-            "Match this to the paper in your printer, so nothing gets clipped or shrunk."
-        public const val SHARE_SUB: String =
-            "The PDF stays on your device — you choose where it goes. Nothing is uploaded by Zinely."
-        public const val SAVE_TO_FILES: String = "Save to Files"
-        public const val SEND_TO_AN_APP: String = "Send to an app"
-        public const val CHANGE: String = "Change"
+
+        // ── The one `.dbody` panel (ADR-101 P3) ─────────────────────────────────────────────────
+        //
+        // P3 replaced the paper *chooser sheet* with the frozen segmented control, so `PAPER_SIZE_TITLE`,
+        // `PAPER_SIZE_SUB` and `CHANGE` went with it — a Dialog raised over a Dialog to answer a
+        // two-option question, when the two options fit on one row of the panel that asked it.
+
+        /** `.sect` 1 — the paper question, answered inline by the segmented control. */
+        public const val SECT_PAPER: String = "What paper is in your printer?"
+
+        /**
+         * `.sect` 2 — **the honest replacement for the frozen `ALL SET` checklist.**
+         *
+         * The checklist is not built, and the reason is in [SECT_TEST]'s neighbour docs and ADR-101 §6.6:
+         * two of its three green ticks asserted checks that do not exist. But deleting the false claims
+         * also deleted the section's *job*, and the design review named the cost exactly — the panel became
+         * "entirely instructions to the user… it reads like homework". The frozen section was the one place
+         * the app said *we've got this part*, and its third tick (*one cut, down the middle*) was true by
+         * construction and went out as collateral.
+         *
+         * So the reassurance comes back, and only the tick grammar stays gone: these are facts about the
+         * **artifact we produced**, in plain lines, not check marks implying a pass on the user's content.
+         * [PAPER_HINT] moved here from under the segmented control for the same reason — it was already a
+         * we-did-this statement, orphaned in a section about a question.
+         */
+        public const val SECT_ALREADY: String = "What we’ve already done"
+        public const val PAPER_HINT: String =
+            "We lay your zine out for this exact size, so it prints at 100% — nothing shrinks to fit."
+        public const val ALREADY_CUT: String =
+            "One cut, down the middle — the red line on the sheet below is the only place the blade goes."
+        public const val ALREADY_MARGIN: String =
+            "We keep a margin at the edge of the sheet, because no printer can reach all the way to the paper’s edge."
+
+        /**
+         * `.sect` 3 — [ADR-052]'s recipe, which the frozen `.dbody` does not contain at all.
+         *
+         * Searching the prototype for these phrases returns one hit, and it is a code comment about
+         * sheet geometry. They are kept because a home printer will silently ruin a zine and this is
+         * the only place the full reason lives — the band's `.done` carries the three-word version.
+         */
+        public const val SECT_DIALOG: String = "At the print dialog"
+
+        /**
+         * The line that gives *"At the print dialog"* a referent.
+         *
+         * Straight from the design review, and it is the kind of gap only a cold read finds: the section
+         * names a dialog the user has not seen and cannot reach from this panel, then lists four settings
+         * for it. Per [ADR-052] the app has no `PrintManager` path at all — the print dialog belongs to
+         * whatever app opens the PDF — and until now the only place the product admitted that was
+         * [Proof.savedInDownloads], which exists only *after* a save. A recipe with no verb is homework.
+         */
+        public const val DIALOG_HINT: String =
+            "Zinely doesn’t print for you. Save the PDF, then open it from Downloads in your printer’s " +
+                "app — these are the settings to look for there."
+
+        /** `.sect` 4 — the frozen `.testcard`, the freeze's strongest wasted-sheet guard. */
+        public const val SECT_TEST: String = "Before you print a stack"
+        public const val TEST_SHEET_LEAD: String = "New printer?"
+        public const val TEST_SHEET_BODY: String =
+            " Print one test sheet first and fold it — check the cover’s on top and the text is upright. " +
+                "Printers flip pages differently; one sheet saves a stack."
+
+        /** `.sect` 5 — the imposition explainer, and the sheet itself as its illustration. */
+        public const val SECT_BOOKLET: String = "How it becomes a booklet"
+        /**
+         * **Takes the count rather than hardcoding eight** (ADR-101 P6). It read *"your 8 pages"* while the
+         * band two rows away computed the real number and, since P6, so does the top bar's ticket — so on
+         * any other document the surface said *"PAGE 3 OF 12"*, *"12 pages · one sheet, one cut"* and
+         * *"your 8 pages"* at once. [ProofRead.leafLabel] states the rule this broke: two readouts on one
+         * screen disagreeing about how many pages the zine has is the one thing this screen exists to
+         * settle.
+         */
+        public fun bookletHint(pageCount: Int): String =
+            "We lay your $pageCount pages onto one sheet, already in the order that makes a booklet once " +
+                "it’s folded — so you never rearrange anything yourself."
+
+        /**
+         * The panel's last line, and the only thing on it that points anywhere.
+         *
+         * A section titled *how it becomes a booklet* ended at a picture of a sheet and then declined to
+         * say how — the fold guide was reachable only from a top-bar glyph or from `.done`, neither of
+         * which is where a user finishes reading this. Closes the loop the section's own title opens.
+         */
+        public const val SEE_HOW_TO_FOLD: String = "See how to fold it"
         // The double-sided help line, built in three spans (the middle span is bold "single-sided").
         public const val SIDES_HELP_PREFIX: String = "If your printer asks about double-sided, choose "
         public const val SIDES_HELP_BOLD: String = "single-sided"
         public const val SIDES_HELP_SUFFIX: String = " (or “off”). A mini-zine prints on one side, then folds."
     }
 
-    /** The fold guide act + climax (`ProofFold.kt`). */
+    /** The fold guide drawer + climax (`ProofFold.kt`). */
     public object ProofFold {
-        public const val INTRO_TITLE: String = "Fold it into a book"
-        public const val INTRO_BODY: String = "Five steps. Take them one at a time — tap the arrow when a step is done."
+        // "Got your printed sheet?" opens the guide, because it can be opened before anything is printed
+        // and step 1 says "Fold the sheet in half" without ever saying which sheet. It is shown on step 1
+        // only: a precondition stops being useful the moment you are past it, and this drawer has eight
+        // steps to fit. `INTRO_TITLE` was deleted with the lead — the drawer's own title says it.
+        /**
+         * The precondition, step 1 only — and **the only place scissors are named**. They are first needed
+         * at step 5, by which point the user is sitting down with paper in both hands; a tool you have to
+         * get up for belongs beside the sheet, not three steps in.
+         */
+        public const val INTRO_BODY: String =
+            "Got your printed sheet and some scissors? Take the steps one at a time — tap the arrow when " +
+                "a step is done."
         public const val PREVIOUS_STEP: String = "Previous step"
         public const val NEXT_STEP: String = "Next step"
-        public const val DONE_HEADING: String = "Your zine is a book."
-        public const val DONE_BODY: String =
-            "Eight pages, made by hand, kept on this device. It’s on your shelf whenever you want it."
 
-        // The five steps — title · body.
-        public const val STEP1_TITLE: String = "Crease into eight"
-        public const val STEP1_BODY: String =
-            "Fold the sheet in half three times, then open it flat. You’ll see eight panels. " +
-                "All folds are valleys."
-        public const val STEP2_TITLE: String = "One cut — the only cut"
-        public const val STEP2_BODY: String =
-            "Fold in half short-end to short-end. Cut the slit across the two middle panels, " +
-                "and stop at the quarter lines."
-        public const val STEP3_TITLE: String = "Open it back up"
-        public const val STEP3_BODY: String =
-            "Lay the sheet flat again. The cut has become a small slot right through the middle."
-        public const val STEP4_TITLE: String = "Fold the long way"
-        public const val STEP4_BODY: String =
-            "Fold the sheet in half so the long edges meet — one wide strip. The cut opens into a " +
-                "diamond right on the fold."
-        public const val STEP5_TITLE: String = "Push in and wrap"
-        public const val STEP5_BODY: String =
-            "Push the two ends toward the middle so the panels pop into a plus, then wrap them flat — " +
-                "front cover facing out."
+        /** `.stepno` — the frozen step counter, which is also the guide's only heading. */
+        public fun stepOf(step: Int, total: Int): String = "Step $step of $total"
 
-        // Diagram captions.
-        public const val DIAGRAM_EIGHT_PANELS: String = "eight panels"
-        public const val DIAGRAM_CUT_HERE: String = "CUT HERE"
-        public const val DIAGRAM_ONE_WIDE_STRIP: String = "one wide strip"
-        public const val DIAGRAM_WRAP_TO_A_BOOK: String = "wrap to a book"
+        /** `.stepdots` — one button per step, and the group they live in. */
+        public const val FOLD_STEPS_GROUP: String = "Fold steps"
+        public fun stepDot(step: Int): String = "Step $step"
 
-        /** Numbered step heading, e.g. `1. Crease into eight`. */
-        public fun stepHeading(number: Int, title: String): String = "$number. $title"
+        /**
+         * `.legend` — five marks whose meaning **never changes between steps**, which is the property
+         * that makes the guide readable at a glance ([V21-SPEC §5.2](design/V21-SPEC.md)). Grey dashed is
+         * a crease you already made; green is the fold you are making now; red is the cut; an ink rule is
+         * paper travelling; a hollow bar is force you apply.
+         *
+         * **The list grew twice, both times for the same reason: a key implies it is complete.** The
+         * freeze had three, and every arrow was drawn in the cut's red — so red meant *cut here* on one
+         * step and *this paper travels* on seven. Naming the arrow fixed that and left the
+         * Yoshizawa–Randlett **action** arrow of steps 4 and 7 unnamed, which is the identical defect one
+         * arrow over. [LEGEND_ACT] closes it.
+         *
+         * It could not be folded into [LEGEND_MOVE] instead — the cheaper option, and the wrong one. A
+         * motion arrow has one tail and one head: *this flap lands there*. Step 4 opens the sheet out
+         * (a double-header) and step 7 pushes both ends in (a facing pair); that is relative motion,
+         * which the filled arrow cannot state. Drawing them as `move` would be wrong information, not
+         * less of it.
+         */
+        public const val LEGEND_CREASE: String = "crease"
+        public const val LEGEND_FOLD_NOW: String = "fold now"
+        public const val LEGEND_CUT: String = "cut"
+        public const val LEGEND_MOVE: String = "move"
+        public const val LEGEND_ACT: String = "push or pull"
+
+        /**
+         * **The eight steps — `.foldcap`, one physical action each** (ADR-101 P4).
+         *
+         * This replaces five steps that were a *different instruction sequence*, not a shorter version of
+         * this one. The old step 1 was *"Fold the sheet in half three times, then open it flat"* — three
+         * physical actions in one instruction, told to someone holding a sheet of paper for the first
+         * time, and the frozen rule is one action per step ([V21-SPEC §5.2](design/V21-SPEC.md)). Steps 1,
+         * 2, 3 and 4 here are those three folds and the unfold, each on its own. The old sequence also
+         * never said *"fold in half the first way again"* before the cut, so the slit's position was left
+         * to the diagram to imply.
+         *
+         * Deleted with it: `STEP1..5_TITLE`. The frozen guide has no per-step titles — the counter is the
+         * heading, and the caption is what the diagram is labelled by, which is more use to a screen
+         * reader than *"Crease into eight"* was.
+         */
+        public val STEP_CAPTIONS: List<String> = listOf(
+            // The first clause is not in the original freeze. The diagram is drawn landscape and printed
+        // side up, and step 1 assumed you would infer both — every later step inherits whichever way
+        // you started, so getting it wrong here is only discovered at step 8.
+        "Printed side up, the wide way round. Fold the sheet in half, bringing the two short edges " +
+            "together.",
+            "Fold it in half again, bringing the bottom edge up to the top.",
+            "And fold in half once more, the same way as the first fold.",
+            "Open it all the way back out. Eight panels, eight pages.",
+            // "through both layers" is the cold-read fix, and it is the only place in the guide where a
+            // missing word costs a sheet of paper. Everything else here is recoverable by unfolding; the
+            // cut is not. "One panel deep" is a distance across the paper and says nothing about depth,
+            // so a careful first-timer cuts the top layer only, and finds out at step 7.
+            "Fold in half the first way again, then cut in along the middle crease — from the folded " +
+                "edge, through both layers, one panel deep.",
+            "Open it flat and fold it the long way, so the slit sits in the middle of the folded edge.",
+            "Hold both ends and push them towards each other. The slit opens up into a plus.",
+            "Fold the four panels round into a book. Your cover lands on top.",
+        )
+
+        /**
+         * `.foldnow` — **what you should be holding once the step is done**, one line per step.
+         *
+         * The freeze's own invention and the thing that makes the guide checkable: an instruction tells
+         * you what to do, and only this tells you whether you did it. A user whose paper does not look
+         * like the sentence knows to go back one step instead of pressing on and discovering it at the
+         * cut.
+         */
+        public val STEP_HOLDING: List<String> = listOf(
+            "You should be holding a tall half-sheet.",
+            "Now a small square-ish quarter.",
+            "A little eight-page bundle.",
+            "Creases only — nothing is cut yet.",
+            "One short slit. Nothing else gets cut.",
+            "A long strip with a slot in the centre.",
+            "Four panels standing in a cross.",
+            "Done — an eight-page zine from one sheet.",
+        )
     }
 
-    /** The Read act — the finished zine, page by page (`ProofRead.kt`). */
+    /** The Read act — the finished zine, one leaf at a time (`ProofRead.kt`). */
     public object ProofRead {
-        public const val CONTENT_DESCRIPTION: String = "Your zine, page by page. Swipe to turn the page."
-        public fun pageOf(current: Int, total: Int): String = "Page $current of $total"
+        // `CONTENT_DESCRIPTION` was **deleted** by ADR-101 P5, and not because it went out of date. It
+        // labelled the stage the reader sits on, which was right while the reader was a pager — the pager
+        // *was* the control. With the booklet the controls are the two edges below, and with the stage
+        // labelled, **both of them were absent from the platform accessibility tree**: the surface's only
+        // way to turn a page had no `AccessibilityNodeInfo` at all, while every Compose-semantics
+        // assertion passed. Deleting the label restored them.
+        //
+        // Stated as measured, not as a law. `ProofFold.StepDots` is a labelled non-merging container whose
+        // clickable children *do* reach the platform (`ProofStepDotsA11yTest`), so "a labelled container
+        // hides its children" is not a general rule and must not be repeated as one — what is general is
+        // that only the platform tree can answer this, and only `SurfaceTraversalOrderTest` reads it.
+
+        /** The two `.tapz` edges. Invisible by design, so the label is the whole control. */
+        public const val PREVIOUS_PAGE: String = "Previous page"
+        public const val NEXT_PAGE: String = "Next page"
+
+        /**
+         * **The readout speaks the booklet, and still counts** (ADR-101 P5).
+         *
+         * A one-sheet zine opens *cover · 2|3 · 4|5 · 6|7 · back*, and the two ends of that are not pages
+         * you count to — they are the outside of the object. Naming them the way the frozen `.pcount` does
+         * is what makes the reader feel like a booklet rather than a list with eight entries.
+         *
+         * **But the name alone cannot ship, and the review that caught it read the screen rather than the
+         * spec.** Named only, the readout walks *Cover → 2, 3, 4, 5, 6, 7 → Back cover* directly above a
+         * band that says **"8 pages · one sheet, one cut"**. There is no "Page 1" and no "Page 8", so the
+         * honest cold reading is *"page 1 is missing"* — on the one screen whose whole job is to settle
+         * whether the zine came out whole. The freeze does not have this problem because it stamps the
+         * number on the leaf as well (`.pgn`), and Compose cannot: the leaf is the user's own artwork, and
+         * [ADR-058](../../../../../../../docs/DECISIONS.md#adr-058) keeps the reader free of furniture
+         * printed over it. So the number comes back here, where it costs nothing and contradicts nothing.
+         *
+         * One string for both the visible text and the announcement. An earlier build had them diverge —
+         * the freeze's wording on screen, the denominator only for TalkBack — which was solving the wrong
+         * half: the sighted reader is the one standing next to the contradicting band.
+         */
+        public fun leafLabel(pageNumber: Int, total: Int): String = when {
+            pageNumber == 1 -> "Cover · 1 of $total"
+            pageNumber == total -> "Back cover · $total of $total"
+            else -> "Page $pageNumber of $total"
+        }
     }
 }

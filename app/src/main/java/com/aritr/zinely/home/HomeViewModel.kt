@@ -6,6 +6,7 @@ import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.core.model.ZineCoverRecipe
@@ -368,10 +369,16 @@ private fun ZineFormat.shelfLabel(): String = when (this) {
     ZineFormat.SINGLE_SHEET_8 -> "8-page mini"
 }
 
-/** Paper-size name as people say it. */
+/**
+ * Paper-size name as people say it.
+ *
+ * Reads [Copy.Paper] rather than repeating the strings, which is what ADR-060 asks for and what this
+ * function was quietly not doing: when ADR-101 P3 renamed `LETTER` to *"US Letter"* to match the frozen
+ * `.paperseg`, the shelf went on saying *"Letter"* and the two surfaces disagreed about the same size.
+ */
 private fun PaperSize.shelfLabel(): String = when (this) {
-    PaperSize.LETTER -> "Letter"
-    PaperSize.A4 -> "A4"
+    PaperSize.LETTER -> Copy.Paper.LETTER
+    PaperSize.A4 -> Copy.Paper.A4
 }
 
 /**

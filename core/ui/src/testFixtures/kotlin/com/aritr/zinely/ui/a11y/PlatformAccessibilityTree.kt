@@ -100,6 +100,16 @@ public data class PlatformA11yNode(
      * suite did not.
      */
     val stateDescription: String?,
+    /**
+     * `AccessibilityNodeInfo.isSelected()` — the bit a service reads to say *"selected"* after a control's
+     * name.
+     *
+     * Added for ADR-101 P3, whose paper segments are a `Role.RadioButton` selectable group. The claim
+     * being tested is a claim about **this** tree: Compose maps [SemanticsProperties.Selected] through
+     * per role, and a merged-tree `assertIsSelected()` passes whether or not the mapping reaches the
+     * platform — which is exactly the shape of the defect [stateDescription] was added for.
+     */
+    val isSelected: Boolean,
 ) {
     /** True when the platform bounds have positive area — a laid-out, hit-testable control. */
     val hasNonEmptyBounds: Boolean
@@ -157,6 +167,7 @@ public fun SemanticsNodeInteraction.platformNode(activity: Activity): PlatformA1
         } else {
             null
         },
+        isSelected = info.isSelected,
     )
 }
 

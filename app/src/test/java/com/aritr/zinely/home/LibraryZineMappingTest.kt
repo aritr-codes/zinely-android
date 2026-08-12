@@ -56,7 +56,10 @@ class LibraryZineMappingTest {
         // A separator with a hard-coded stock either side reads perfectly and is wrong for half the
         // shelf, so the paper is asserted against a project that is not on the default.
         val zine = summary(paperSize = PaperSize.LETTER).toLibraryZine(NOW)
-        assertEquals("Letter · Edited 2 days ago", zine.subtitle)
+        // "US Letter", not "Letter": ADR-101 P3 renamed the size to match the frozen `.paperseg`, and
+        // `shelfLabel()` now reads `Copy.Paper` instead of repeating the string. This assertion is what
+        // was left saying the old name.
+        assertEquals("US Letter · Edited 2 days ago", zine.subtitle)
     }
 
     @Test
