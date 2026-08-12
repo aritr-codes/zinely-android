@@ -111,7 +111,7 @@
 | [ADR-099](#adr-099) | **V2.1 — the handmade design language re-freeze.** Re-skins the Library, Proof and Bench onto a printed-depth, published-scale, imperfect-display-face language derived from three reference sites. Supersedes the V2 trilogy **as the design source**, supersedes **no ADR**, keeps the no-fourth-chrome-hue rule intact — and **amends V2-CONSTITUTION §III Typography** to admit a third UI typeface (Amendment 1, owner, 2026-08-10). | Accepted |
 | [ADR-100](#adr-100) | **Six implementation rulings the V2.1 Library re-skin forced, taken under delegated owner authority.** The overflow affordance becomes a **drawn three-dot mark** rather than the `⋯` character (emoji2 and the bundled Inter both defeat the glyph); the **two paper cover stocks stop theming** because a themed cream at 1.18:1 on the dark desk turned a maker's object into a hole cut in the desk; long titles **cap at two lines** so one zine cannot push its neighbour's cover down; the count chip moves to `butter`/`onButter` and the dock's decorative ring to `butter`, both invisible in light theme at `butterTint`'s **1.01:1**; the prototype's `:nth-child` tilt/tape phase is confirmed a **prototype artifact** and corrected to `:nth-of-type` in the frozen file; and the dead V2 `ZineCover` is **deleted**, which exposed that the only recipe test in the tree still guarded the function the shelf had stopped calling. Adds the `onButter` token. **Amends the freeze** ([V21-SPEC §4.1](design/V21-SPEC.md#41-colour), [§4.3](design/V21-SPEC.md#43-depth-geometry-motion)) and restructures `v21-library.html`'s tile from a `<button>` into an `<article>` holding two sibling buttons, because a control may not contain a control and the prototype could not otherwise carry the affordance ruling 1 ships. Reviewed twice — **GO WITH FIXES** and **NO-GO** — with all fourteen Required Fixes reconciled ([§11](#adr-100-review)); both reviews independently found the same dead CSS selector first. **Both device passes accepted 2026-08-11** on `SM-A176B` / Android 16 ([record](reviews/2026-08-11-adr-100-device-verification.md)); the two paper stocks measure the same hex in both themes on glass. | Accepted |
 | [ADR-101](#adr-101) | **The Proof's climb becomes a band and two drawers.** Step 5 planning, opened before any code per [ADR-089 §2.2](#adr-089). Rules on **reconciliation, not design** — the structure was already owner-accepted with the prototype under [ADR-099](#adr-099). Audit finds the Proof is **V1 → V2.1 plus a navigation change** (24 `ZinelyTheme.colors`, **zero V2 tokens** across 2360 lines), a harder jump than the Library's re-skin. Two [ADR-100](#adr-100) ruling-4 defects found **by measurement before any code**: `.btn-save`'s `butterTint` frame ring at **1.10 / 1.13** on the band's paper ground, and `.pcount` at **1.01** light on the desk — the Library's count chip again. `.seal`'s red is kept: sealing wax is material, not signal. Names five invariants the prototype could not know about — chiefly that the frozen band has **a `.done` state and no failure state**, so [D-024](design/V2-SPEC-DEFECTS.md#d-024)'s shape is inherited — **withdrawn on reading the code**, which already replaces the whole surface on failure, a better answer than a third band state; **D-066/OD-32 are answered** on both halves (Error, and Loading via `exportBusy`). **Modifies [ADR-051](#adr-051) Decision A** — P1 retires the acts it created. Six packages, **structure before paint**: ADR-098's rule is *order by golden blast radius*, and with the structure changing that same rule yields the opposite of its usual chrome-first consequence. **Reviewed twice before any code** — evidence lens and plan lens, both GO WITH FIXES, fourteen Required Fixes reconciled ([§6](#adr-101-review)); the reviews caught §3 omitting the **print recipe**, which the frozen drawer does not contain at all, and P4 scoped at five fold steps against the frozen eight. **All six packages complete 2026-08-12**, each device-verified on both passes; P6's device Pass 1 found the surface's sharpest defect — the reader's leaf and the print drawer's imposed sheet both rendered the user's *printed output* in the room's dark palette, at 1.2:1, which no reviewer could see because it takes three separately-correct facts to produce ([§6.11](#adr-101-p6-device)). | Accepted |
-| [ADR-102](#adr-102) | **The Bench re-skin, and the ruling its first draft would have reversed.** Step 6 planning, opened before any code on ADR-101's precedent — and **rewritten the same day after a NO-GO**, which is the whole value of planning in a document. Establishes first that **the freeze banners were wrong on all three prototypes**: `v21-bench.html` still called itself a *"DIRECTION PROPOSAL, NOT FROZEN"* naming the superseded `v2-bench.html` as canonical, as did `v21-proof.html` through all six ADR-101 packages built against it ([§1](#adr-102-banners)). Audit finds the Bench wearing **three palettes** — V2 (**41** references), a V2 island, and V1 remnants led by `ReframeControls` (**25**) — and a citation debt of **106 lines** in the Bench sources, **211 repo-wide**, all pointing at a superseded spec ([§2](#adr-102-audit)). **The rejected first draft ruled that `BenchSheetIsland` be retired** on the stated ground that V2 lacked a worktop token; the file it cited records the real cause — **[D-035](design/V2-SPEC-DEFECTS.md#d-035)**, an owner ruling taken after the user's own black text measured **1.60:1** on device against a dimmed sheet. Retiring it would have reinstated that defect on the surface users spend the most time on, and `EditorPageLegibilityProbeTest` exists to fail when it does. **The island stays; only its mechanism changes** ([§3](#adr-102-island)) — unified with the `ProofLitPaper` rule ADR-101 P6 derived independently three days earlier, which is the same rule: *the artifact does not dim.* Also names **four freeze changes that are not paint** ([§6](#adr-102-structural)), and puts the shelf and the network-bearing Art surface **explicitly out of scope** under OD-2 and an unresolved legal fence ([§7](#adr-102-oos)). Eight packages, dependency-ordered. | Proposed |
+| [ADR-102](#adr-102) | **The Bench re-skin, and the ruling its first draft would have reversed.** Step 6 planning, opened before any code on ADR-101's precedent — and **rewritten the same day after a NO-GO**, which is the whole value of planning in a document. Establishes first that **the freeze banners were wrong on all three prototypes**: `v21-bench.html` still called itself a *"DIRECTION PROPOSAL, NOT FROZEN"* naming the superseded `v2-bench.html` as canonical, as did `v21-proof.html` through all six ADR-101 packages built against it ([§1](#adr-102-banners)). Audit finds the Bench wearing **three palettes** — V2 (**41** references), a V2 island, and V1 remnants led by `ReframeControls` (**25**) — and a citation debt of **106 lines** in the Bench sources, **211 repo-wide**, all pointing at a superseded spec ([§2](#adr-102-audit)). **The rejected first draft ruled that `BenchSheetIsland` be retired** on the stated ground that V2 lacked a worktop token; the file it cited records the real cause — **[D-035](design/V2-SPEC-DEFECTS.md#d-035)**, an owner ruling taken after the user's own black text measured **1.60:1** on device against a dimmed sheet. Retiring it would have reinstated that defect on the surface users spend the most time on, and `EditorPageLegibilityProbeTest` exists to fail when it does. **The island stays; only its mechanism changes** ([§3](#adr-102-island)) — re-expressed as an explicit **eight-token** V2.1 island, deliberately *not* as the wholesale light palette `ProofLitPaper` provides, because wholesale is the move that reinstated D-010 the first time. **A third review then killed this draft too**, and for the better reason: the claim that ADR-101 P6’s rule *is* D-035 is circular — D-035 explicitly declined to amend the Proof, the question was open on the owner’s desk as **[OD-31](#adr-098-od31)**, and P6 shipped an answer to it three days early. **Escalated, and the owner ruled the same day: yes, and universally — *the artifact does not dim, on any surface*.** OD-31 and D-071 close, ADR-101 P6 is retroactively authorised, Phase D package D2 unblocks, and the Bench rule now rests on an owner ruling instead of on shipped code cited back to itself. The mechanism warning survives the ruling: one invariant, two correct implementations, and the Bench may not copy the Proof’s ([§10.1](#adr-102-open)). Also names **three freeze changes that are not paint** (the fourth, unselected dimming, already ships under ADR-091) ([§6](#adr-102-structural)), and puts the shelf and the network-bearing Art surface **explicitly out of scope** under OD-2 and an unresolved legal fence ([§7](#adr-102-oos)). Eight packages, dependency-ordered. Nine Required Fixes from the third review: **eight accepted, one rejected with evidence** — the 211/47 citation figure is exact under `git grep`, and the review’s smaller count came from sweeping an in-repo `.claude/` scratch tree ([§11](#adr-102-review)). | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -6473,7 +6473,7 @@ of the ten fences D1.
 | ~~**OD-37**~~ {#adr-098-od37} | ~~the phase's opening~~ | ~~`main` — the declared, tagged baseline — carries three uncommitted fixes to failures **that are on it**: `:app`'s nav tests have been timing out undetected since C4, `ZinelyV2DimensTest` asserts a count a committed amendment changed, and four catalog goldens C4 never re-recorded. Two planning-corpus documents (`README.md`, `docs/RESEARCH.md`) are uncommitted, and `RESEARCH.md`'s missing `R12` is cited by a **committed** document. Land them, revert them, or accept a red baseline? The Phase C completion record does not disclose any of it~~ | ✅ **ANSWERED 2026-08-06.** The question was **over-escalated as put**: committing three correct, already-authored test fixes is ordinary maintenance and never needed an owner. It was ruled by being **done** — `fc33bca`, verified on a clean detached worktree. What genuinely needed the owner was the record, and it split in two, both now closed in the [Phase C addendum](COMPOSE-V2-ROADMAP.md#phase-c-addendum-record-integrity): **OD-37a** — the tag **does not move**, so the milestone stays at `fdb8319` and the verified baseline is a separate commit; **OD-37b** — ADR-095 and ADR-097 keep their figures unaltered and gain a provenance annotation each. `README.md`, `docs/RESEARCH.md`, `gradle.properties` and `37596.jpg` were **deliberately left out of scope** and remain uncommitted; none blocks a package |
 | ~~**OD-29**~~ {#adr-098-od29} | ~~**D0**~~ | ~~What does token discipline *mean* for a V2 surface? The gate forbids four literal forms; D-007 ruled that spacing stays a per-component literal, so `feature.editor` alone holds **563** `.dp`. Plausibly *"every value traces to the frozen CSS"* rather than *"no literal appears"* — but the roadmap is explicit that **until this is defined no V2 package can enrol at all**~~ | ✅ **ANSWERED 2026-08-09 — owner ruling, disposition (b): traceability.** *"Token discipline for a V2 surface means **every value is traceable to the frozen V2 source** — not that no literal appears. A raw `.dp`, `.sp`, `Color(` or `RoundedCornerShape(` is **compliant** in an enrolled V2 package when it transcribes a value the frozen trilogy declares or writes at that use site, and **non-compliant** when it is invented, interpolated from a neighbouring value, or carried over from V1 without a frozen source. Where the V2 design deliberately keeps a value at component or caller level, keeping it there is compliance, not an exemption."* **The literal ban is not preserved, because the owner's own rulings removed the destinations it presumed:** [D-006](design/V2-SPEC-DEFECTS.md#d-006--the-only-shape-token-in-v2-is-declared-and-never-used) publishes no radius, [D-007](design/V2-SPEC-DEFECTS.md#d-007--the-constitutional-8pt-rhythm-is-not-observable-in-the-frozen-css) rules that *"spacing continues to live at the component level **exactly as frozen**"*, [ADR-073](#adr-073) publishes a foundation and not a type scale, [ADR-074](#adr-074) no shadow ladder, [ADR-075](#adr-075) no durations. Measured at HEAD, `com.aritr.zinely.ui.components` — D1's own package — holds **126** `.dp`, **27** `.sp` and **12** `RoundedCornerShape(`, with **no published V2 scale to move any of them to**. Under a literal ban no V2 package could ever enrol, so **D0, D9 and the phase's exit criterion could never complete**: that is a governance contradiction, not an implementation inconvenience, and it is fixed here at the governance level. **Enforcement is delegated to D0** — it may implement the rule as a narrowed literal gate, a provenance annotation, a review discipline or a combination, and **may not redefine the rule**; where an automated check cannot decide traceability it must **not silently pass** — the package records the untraceable value. **Corpus repair owed at D0, recorded and not performed here:** `config/token-enrolment.txt`'s enrolment↔migration clause still names **V1's** targets (*"`:core:ui` spacing/radius/colour, `ZinelyColors`, `Type.kt`"*), which contradicts [ADR-080](#adr-080) Decision 2's requirement that a package enrol on migration to **V2**. No accepted ADR is amended or superseded by this ruling |
 | **OD-30** {#adr-098-od30} | **D2** | [D-004](design/V2-SPEC-DEFECTS.md#d-004--the-frozen-zine-content-is-set-in-fraunces-the-render-engine-can-only-draw-inter) — nine document-content selectors are set in Fraunces; `DocumentFontRegistry.Bundled` carries **one family, Inter**, and resolves anything else to it silently. Three prohibitions are intact, so Phase D's headline criterion (*pixel parity to the frozen Proof*) is **unachievable literally** without a fourth option: bundle Fraunces as a document family (four static instances, coverage, and a `:core:model` question about what a document records), rule the Proof's serif content *mock illustration*, narrow it to cover titles, or write the divergence into the acceptance criteria as OD-4 did for Phase C | ⏳ **open — blocks D2 and D5** |
-| **OD-31** {#adr-098-od31} | **D2** | OD-12 ruled *the artifact does not dim*, and explicitly did **not** amend the Proof — but `v2-proof.html` dims its own page. Does D-035's light-island rule extend to the Proof's `.zpage`, and if so what happens to `.zcap`, which hard-codes `#fff` on a fixed dark gradient inside the page? Probable **ninth** amendment to a frozen V2 surface | ⏳ **open — blocks D2** |
+| **OD-31** {#adr-098-od31} | **D2** | OD-12 ruled *the artifact does not dim*, and explicitly did **not** amend the Proof — but `v2-proof.html` dims its own page. Does D-035's light-island rule extend to the Proof's `.zpage`, and if so what happens to `.zcap`, which hard-codes `#fff` on a fixed dark gradient inside the page? Probable **ninth** amendment to a frozen V2 surface | ✅ **RULED — owner, 2026-08-12: yes, and universally.** *The artifact does not dim, on any surface.* Not two surfaces agreeing; one invariant. Closed on [ADR-101 P6](#adr-101-p6-lit-review)'s device evidence (~1.2:1 on the user's own artwork), which **retroactively authorises** `ProofLitPaper` — shipped three days before the ruling permitting it. `.zcap` needs no answer: the V2.1 freeze already re-declares it `var(--ink-soft)` (`v21-proof.html:215`), so the white-on-dark caption an island would have stranded no longer exists. See [D-071](design/V2-SPEC-DEFECTS.md) and [ADR-102 §10.1](#adr-102-open). **No longer blocks D2** |
 | **OD-32** {#adr-098-od32} | **D3** | The Proof has **no Loading and no Error state**; `doSave()` is synchronous and real export is not. Never-silent failure is a binding invariant in three documents and a Phase D acceptance criterion. This is [D-024](design/V2-SPEC-DEFECTS.md#d-024-ruling)'s exact shape and severity, and D-024 was answered by **amending the frozen HTML**. Amend the Proof, or rule the states out of the freeze and specify them elsewhere? | ⏳ **open — blocks D3** |
 | **OD-33** {#adr-098-od33} | **D4** | `buildChecklist()` hard-codes three **always-green** items, yet its first is *"Everything sits safely inside the edges"* — a check that can fail, and PF-2 requires a failure to get *"a gentle callout with a fix, not a blocking error"*. This is [D-032](design/V2-SPEC-DEFECTS.md#d-032)'s shape (a warn state the freeze never triggers), which needed a ruling then | ⏳ **open — blocks D4** |
 | **OD-34** {#adr-098-od34} | **D4** | `.minisheet` `:196` is fixed at `aspect-ratio:11/8.5` (Letter) **regardless of the A4/Letter switch two sections above it**. The reassurance artifact contradicts the honest paper switch. Does the mini-sheet track the selection? | ⏳ **open — blocks D4** |
@@ -8670,9 +8670,11 @@ believed without checking — which is the house rule this file opens with.
 opened **before any code** per [ADR-089 §2.2](#adr-089) and the precedent [ADR-101](#adr-101) set for the
 Proof.
 
-- **Status:** 🟡 **`Proposed` — 2026-08-12, planning only. Rewritten the same day after a NO-GO.** No
-  production code has been written against this ADR, which is the entire value of the two reviews that
-  killed its first draft ([§10](#adr-102-review)).
+- **Status:** 🟢 **`Accepted` — 2026-08-12, planning only. Two drafts killed by review before acceptance.** No
+  production code has been written against this ADR, which is the entire value of the three reviews that
+  killed its first two drafts ([§11](#adr-102-review)). Accepted once the owner closed
+  [OD-31](#adr-098-od31) — the open decision the third review found underneath §3's central ruling.
+  **P1 is clear to start.**
 - **Authorised by:** the owner ruling of **2026-08-11** delegating product/design/engineering authority, with
   the priority order **(1)** a UI real users enjoy, **(2)** accessibility, clarity and interaction quality,
   **(3)** visual and design quality, **(4)** correct maintainable implementation, **(5)** fidelity to the
@@ -8748,17 +8750,64 @@ materially the same dark sheet as the `#2F2A22` that measured 1.60:1.
 that *"nothing token-level could have caught either"* of the two defects that produced the ruling. It is an
 invariant, not a test to re-baseline.
 
-**This is the same rule ADR-101 P6 rediscovered from scratch three days ago.** The Proof's reader leaf and
-its imposed sheet were both painting the user's printed output in the room's palette; the fix was
-`rememberLitSheetPalette()` and the `ProofLitPaper` wrapper, and the rule written there — *a subtree
-answering "this is what the printer will produce" takes paper's palette in both themes* — **is D-035, derived
-independently on a different surface**. That convergence is the finding: the rule is surface-independent, and
-it has now been paid for twice.
+**ADR-101 P6 reached a rule that looks identical — and the claim that it *is* D-035 does not survive
+checking.** The Proof's reader leaf and its imposed sheet were both painting the user's printed output in the
+room's palette; the fix was `rememberLitSheetPalette()` and the `ProofLitPaper` wrapper, and the rule written
+there is *a subtree answering "this is what the printer will produce" takes paper's palette in both themes*.
+This ADR's first two drafts called that "D-035, derived independently on a different surface." **A review
+falsified it, and the falsification is worth more than the claim was.**
 
-**Ruling: the island's intent is kept and generalised; its mechanism is replaced.** The V2 runtime derivation
-gives way to the V2.1 light palette provided over the page subtree, exactly as `ProofLitPaper` does — one
-named rule serving the reader leaf, the imposed sheet and the Bench page, instead of one owner ruling, one
-runtime `copy()` and one wrapper that do not know about each other.
+D-035 says the opposite about its own scope
+([V2-SPEC-DEFECTS.md `D-035`](design/V2-SPEC-DEFECTS.md#d-035)): *"`v2-proof.html` dims its own `.page` by the
+same mechanism and is **NOT amended here** — a different frozen surface … it is Phase D's to amend, under this
+ruling."* And the question is **open on the owner's desk right now**, as
+[**OD-31 / D-071**](#adr-098-od31) — ⏳ *open, blocks Phase D package D2* — asking in as many words: *does
+D-035's light-island rule extend to the Proof's `.zpage`?*
+
+So there is no convergence of two independent derivations. There is **one owner ruling the owner explicitly
+scoped to the Bench**, plus a Proof implementation that shipped the answer to OD-31 before OD-31 was decided.
+Reading that shipped code back as evidence that the Bench should adopt its mechanism is circular, and it is
+the same failure this ADR's first draft was rejected for: an owner question settled in a subordinate clause.
+**ADR-101 P6's lit-sheet work stands on its own device measurement and is not withdrawn** — but it is a
+*candidate answer* to OD-31, not a second derivation of D-035, and it is recorded as such at
+[§6.11](#adr-101-p6-lit-review).
+
+**This blocked the Bench ruling below until the owner closed OD-31 on 2026-08-12 — *yes, and universally: the
+artifact does not dim, on any surface*. See [§10.1](#adr-102-open).** ADR-101 P6 is retroactively authorised,
+and the rule below now rests on an owner ruling rather than on a shipped implementation cited back to itself.
+
+**Ruling: the island's intent is kept; its mechanism is re-expressed in V2.1 tokens as an explicit eight-token
+island — *not* as a wholesale light palette.**
+
+The universality ruling does **not** license the wholesale form. One rule, two correct implementations: the
+Proof may keep `ProofLitPaper` because its lift comes from a separate CompositionLocal; the Bench may not,
+because its does not. What follows is why.
+
+The wholesale form is specifically the move that must not be copied. `ProofLitPaper` provides
+`zinelyV21LightColors()` entire (`ProofRead.kt:376`), which is the first cut of the Bench island — *"provided
+`zinelyV2LightColors()` wholesale"* — that reinstated **D-010** (`BenchStudioSurface.kt:145`;
+[`D-035`](design/V2-SPEC-DEFECTS.md#d-035), *"Eight, and not the ninth"*). The Proof escapes only by an
+accident of plumbing it documents itself: its lift comes from `ZinelyTheme.elevation`, a separate
+CompositionLocal. **The Bench's does not** — `BenchStudio.pageShadowLayers(colors)` reads the scheme, and
+`ZinelyV21Colors` carries `softShadow` and `contact` whose values differ by theme. Adopt the Proof's mechanism
+literally on the Bench and the sheet's shadow lights up: D-010, a third time, in the package whose entire
+purpose is not to re-break D-035.
+
+**The eight destinations, named** — the acceptance test in item 1 below is unusable until they are:
+
+| V2 island token | V2.1 destination | Note |
+|---|---|---|
+| `paper` | `paper` | |
+| `paperEdge` | `paperEdge` | |
+| `ink` | `ink` | |
+| `inkSoft` | `inkSoft` | |
+| `inkFaint` | `inkFaint` | measured **3.04:1** on paper — graphics only, **no text**, per `ZinelyV21Colors` |
+| `matcha` | `leaf` | [V21-SPEC §3.2](design/V21-SPEC.md) maps `leaf (= matcha)` |
+| `matchaText` | `leafText` | the AA-measured text form |
+| `strawberryText` | **none — deleted** | V2.1 publishes `berry`/`berryTint` only, no text form; and [§6](#adr-102-structural) row 2 records the freeze deleting the `strawberryText` keep-clear warn state that was this token's only Bench use. The two facts must be read together, or the deletion looks like an omission |
+
+`softShadow` and `contact` are **not** in the island and must not be added — that is item 2, restated as a
+token list rather than a principle.
 
 **Four things the first draft did not answer, and this one must:**
 
@@ -8781,17 +8830,41 @@ runtime `copy()` and one wrapper that do not know about each other.
 ### 4. Ruling 2 — the V1 remnants are in scope, for a reason V2 did not have {#adr-102-remnants}
 
 The V1 remnants are `ReframeControls` (25), `TypeBar` (16), `ReframeOverlay` (2), `EditorEmptyState`'s
-sticker blobs (1), `EditorScreen`'s Preview action (1) and four adjacent editor files. `ReframeControls`
-paints **over the page** and is larger than everything else combined.
+sticker blobs (1), `EditorScreen`'s Preview action (1) and **five** adjacent editor files — enumerated, because
+the phrase "four adjacent files" appeared three times in the previous draft and was never once expanded, and
+was wrong:
 
-**The first draft's argument for converting them was wrong; the conclusion survives on a better one.** The
-blobs were kept on V1 by a recorded decision — *"V2 publishes no `teal`/`coral` to move them to.
-Re-colouring them would be a redesign, not a fix."* **V2.1 changes that premise:** it publishes `leaf`,
-`berry`, `butter` and `jam` as material hues. The destination that did not exist now exists, so moving them
-is a re-skin rather than a redesign — which is the *only* thing that ever blocked it.
+| File | V1 call sites |
+|---|---|
+| `EditorContextBar.kt` | `:117`, `:118`, `:188`, `:194` |
+| `EditTextSession.kt` | `:103` (`cursorColor = colors.coralStrong`) |
+| `EditorCoverageNotice.kt` | `:94` |
+| `EditorMoveResizeHint.kt` | `:72` |
+| `EditorSaveFailure.kt` | `:145` |
 
-**Ruling: in scope, in P5 and P6, converted rather than accepted** — with `ReframeControls` and `TypeBar`
-given a package of their own rather than smuggled into a chrome package.
+`BenchStudioSurface.kt:344–353` already names this exact set as living *inside* the island's scope and still on
+V1. The file this ADR leans on hardest listed them correctly; the ADR miscounted them. `ReframeControls` paints
+**over the page** and is larger than everything else combined.
+
+**The first draft's argument for converting them was wrong. So was the second's.** The blobs were kept on V1 by
+a recorded decision — *"V2 publishes no `teal`/`coral` to move them to. Re-colouring them would be a redesign,
+not a fix."* The second draft claimed V2.1 changes that premise because it publishes *"`leaf`, `berry`, `butter`
+and `jam` as material hues."* [V21-SPEC §3.2](design/V21-SPEC.md) says otherwise, and precisely: **leaf** is
+*"your next move"*, the only action colour; **berry** is *"punctuation"*; **jam** is *"the only urgent colour"*;
+**only butter** is *"material"*, and butter is additionally *"never alone"* at **1.73:1** on paper. V2.1
+publishes **one** material hue, hedged — not four. Painting a decorative sticker cluster in the single action
+colour is the exact spend §5.1 forbids.
+
+**The premise that actually changed is the tint family.** V2.1 publishes `leafTint`, `berryTint` and
+`butterTint` — grounds carrying no voice, which is what a decorative blob needs and what V2 had none of. That is
+a real destination and a genuine change of premise, and it is narrower than the claim it replaces: three tints,
+not four hues.
+
+**Ruling: in scope, converted rather than accepted, entirely in P6** — one package, not smuggled into a chrome
+package. The previous draft said *"in P5 and P6"* while [§8](#adr-102-packages) put every remnant in P6 and P5
+on the page grid; **§8 is authoritative** and this sentence is the correction. P6 is the largest package by
+call-site count (47), and that is the right shape: `ReframeControls` and `TypeBar` both paint over the page, so
+they share P1's device-verification surface and should be judged in one pass rather than two.
 
 ### 5. Ruling 3 — `ZSheet` is shared; the rest of the Proof's V1 material is not {#adr-102-coreui}
 
@@ -8815,9 +8888,20 @@ at least four places**, and three of them reverse or delete a ruled behaviour:
 | **The rigid page-lift is deleted** | `.pageWrap` appears **6×** in `v2-bench.html` and **0×** in `v21-bench.html`; V2.1's `edit()` does not move the page | it is `BenchEditingSurface.kt`'s reason for existing, a conditional roadmap deliverable, and was amended by **OD-16 / D-043** |
 | **The keep-clear warn state is gone** | V2 had a resting `inkFaint` and a `strawberryText` warn; V2.1 has one `berry` rule, triggered by `.content.focusing` | **OD-10 / D-032** ruled keep-clear is *"NOT a continuous editing indicator"*; the new trigger makes it exactly that |
 | **`.guideV` changes trigger** | same `.content.focusing` selector | shipped `SnapGuides` shows on snap during drag, not on selection |
-| **Unselected elements dim** | `.el:not(.selected){opacity:.5}` under `.content.focusing` | new behaviour, owned by `BenchSelectionFocus.kt` |
+**Three, not four.** The previous draft listed a fourth — *"unselected elements dim … new behaviour, owned by
+`BenchSelectionFocus.kt`"* — and it is false in both halves. `v2-bench.html:291` **already** reads
+`.content.focusing .el:not(.sel-focus){opacity:.4}`, and it is **already shipped**:
+`BenchSelectionFocus.kt:22–40` composites it as a paper wash at **α 0.6**, with the exact arithmetic
+(*"CSS `opacity:.4` over paper resolves to `0.4·element + 0.6·paper`"*) and two deviations recorded under
+[ADR-091](#adr-091) rows 2.8a / 2.9a. V2.1 changes an alpha (`.4 → .5`, i.e. wash α `0.6 → 0.5`) and a class
+name (`.sel-focus → .selected`). **That is a paint change with a value edit**, and it belongs in P1 with the
+rest of the selection chrome, not in P2.
 
-**These are design questions, not sweep items**, and they are the reason P1 is no longer a paint package.
+This one matters beyond its own row. It is the single item [§11](#adr-102-review) did *not* claim to have
+re-derived from the tree — and it is the one that was wrong. The closing claim there has been narrowed
+accordingly.
+
+**These three are design questions, not sweep items**, and they are the reason P1 is no longer a paint package.
 
 ### 7. Explicitly out of scope, with the rulings that put them there {#adr-102-oos}
 
@@ -8843,13 +8927,13 @@ reason is that everything else stands on the ground.
 | Package | Region | Chief risk |
 |---|---|---|
 | **P1** | **The ground and the page** — `BenchStudioSurface`, `EditorPagePreview`, `SelectionChrome`, `SnapGuides`, `ResizeHandles`, `BenchEditingSurface`, `BenchSelectionFocus`. **Both islands stay**; the page moves to V2.1 with the light palette provided over it | D-035 is the whole package; `EditorPageLegibilityProbeTest` must stay green, not be re-baselined |
-| **P2** | **The four freeze changes that are not paint** ([§6](#adr-102-structural)) — page-lift deletion, keep-clear trigger and warn state, `.guideV` trigger, unselected dimming | each reverses or deletes a ruled behaviour; **each needs a ruling before it is built** |
+| **P2** | **The three freeze changes that are not paint** ([§6](#adr-102-structural)) — page-lift deletion, keep-clear trigger and warn state, `.guideV` trigger. The unselected dim is **not** here: it ships already, and V2.1 only moves its alpha `.4 → .5` — that lands in P1 | each reverses or deletes a ruled behaviour; **each needs a ruling before it is built** |
 | **P3** | **Bottom chrome** — `BenchBottomBar`, `BenchPageNav` + thumbs, `BenchStyleRow` (incl. `.kbstack`, and the `.sw` swatch seeded from the element's own ink) | filmstrip auto-centre is arithmetic; `benchThumbIsland` stays under OD-23 |
 | **P4** | **Popovers** — `BenchContextBar`, `BenchInkPopover`, `BenchSnack`, `BenchAddChooser` **including `.supply`/`.opt` content**, not just the sheet shell | the verb bar must stay flat and quiet; the `roomColors` opt-outs must keep opting out |
 | **P5** | **Page grid** — `BenchPageGrid` | `BackHandler` is an Android addition the freeze cannot specify |
-| **P6** | **The V1 remnants** — `ReframeControls` (25), `TypeBar` (16), `ReframeOverlay`, `EditorEmptyState`'s blobs, `EditorScreen`'s Preview action, and the four adjacent editor files | `TypeBar` **must not** move into the canvas Column — infinite recomposition |
+| **P6** | **The V1 remnants** — `ReframeControls` (25), `TypeBar` (16), `ReframeOverlay`, `EditorEmptyState`'s blobs, `EditorScreen`'s Preview action, and the **five** adjacent editor files enumerated in [§4](#adr-102-remnants). The fifth is **`EditTextSession`** — the inline text-edit surface (`.tx`, `.caret`, `.doneEdit`, `.el.editing`), which the previous draft named in P7's golden list while converting it in no package at all | `TypeBar` **must not** move into the canvas Column — infinite recomposition. `EditTextSession.kt:103`'s `cursorColor` is a live V1 binding on the one surface where an invisible caret is unrecoverable |
 | **P7** | **Citations, tests, rasters** — re-point the citations at the scope [§2](#adr-102-audit) states, re-baseline the colour-pinning tests, record the goldens **once** | **not 16.** That is a filename-prefix count; the affected families include `selection_chrome_*`, `resize_handles`, `preview_*`, `editor_*`, `type_bar`, `reframe_controls`, `edit_text_session` |
-| **P8** | **The shared shell** — retire `zinelyShadow`/`ZinelyShadowLayer` to `zinelyV21HardShadow`, convert `ZSheet` | cross-surface: Library **and** Proof re-skin with it ([§9](#adr-102-open)) |
+| **P8** | **The shared shell** — retire `zinelyShadow`/`ZinelyShadowLayer` to `zinelyV21HardShadow`, convert `ZSheet` | cross-surface: Library **and** Proof re-skin with it ([§10.2](#adr-102-open)) |
 
 **The three rules the re-skin must not break**, from the freeze's own banner: **the page never tilts**;
 **the contextual verb bar is flat and quiet** — no offset shadow, no tape, no rotation, because it is a tool
@@ -8877,7 +8961,55 @@ a paint change is most likely to break silently:
   a mechanism, not a defect** (`BenchPageNav.kt:180`); reduced motion, single-flight delete and the
   save/error interlock (`EditorScreen.kt:299, 289, 205`).
 
-### 10. Open question for the owner {#adr-102-open}
+### 10. Open questions for the owner {#adr-102-open}
+
+#### 10.1 — OD-31 — ✅ **RULED, owner, 2026-08-12: yes, and universally**
+
+> **The artifact does not dim, on any surface.**
+
+**Answered while this ADR was being reconciled.** What follows is the question as it stood, kept because the
+route to it is the finding; the ruling is recorded at [OD-31](#adr-098-od31) and
+[D-071](design/V2-SPEC-DEFECTS.md).
+
+Three consequences, in order of who owes what:
+
+1. **ADR-101 P6 is retroactively authorised.** `ProofLitPaper` stands as shipped. Nothing to revert.
+2. **§3's ruling below is no longer conditional**, and its generalisation argument is now the owner's rather
+   than mine — this is one invariant, not two surfaces that happen to agree. **P1 is unblocked.**
+3. **The mechanism warning survives the ruling untouched.** "Universal rule" does **not** mean "universal
+   implementation": the Bench must still use an explicit eight-token island, because `ProofLitPaper`'s
+   wholesale palette is safe only on a surface whose lift comes from a separate CompositionLocal. Getting the
+   ruling was never what made the wholesale form dangerous.
+
+---
+
+*The question as it stood:*
+
+[**OD-31 / D-071**](#adr-098-od31) was ⏳ **open** and blocking Phase D package D2. It asked: *does D-035's
+light-island rule extend to the Proof's `.zpage`?* D-035 explicitly declined to amend the Proof, calling it
+*"a different frozen surface … Phase D's to amend, under this ruling."*
+
+**ADR-101 P6 answered it — in code, three days ago, without noticing the question existed.** `ProofLitPaper`
+lights the reader leaf and the imposed sheet in both themes; that *is* the extension OD-31 asks about. It was
+derived honestly, from a device measurement of ~1.2:1 on the user's own artwork, and it is shipped and
+committed (`8dffe2f`). But it was not the implementer's ruling to make, and this ADR then cited it back as
+independent evidence for doing the same on the Bench — which is circular, and is the second time in this ADR's
+life that an owner question got settled in a subordinate clause.
+
+**Two questions were put to the owner; both were answered "yes, universally":**
+
+1. **Does OD-31 close on P6's shipped evidence — i.e. does the light-island rule extend to the Proof's page?**
+   If **yes**, P6 is retroactively authorised, OD-31 closes, and §3's ruling proceeds as written. If **no**,
+   ADR-101 P6's `ProofLitPaper` must be reverted or re-scoped, and that is a change to *shipped, committed,
+   device-verified* code.
+2. **Does the rule generalise beyond both — is "the artifact does not dim" a surface-independent invariant, or
+   three separate rulings that happen to agree?** §3's ruling assumes the former. It reads as true and it is
+   twice-paid-for on hardware, but it is a *product* rule about what the app promises the user, which makes it
+   the owner's and not an implementation detail.
+
+**Both were answered on 2026-08-12. P1 is clear to start.**
+
+#### 10.2 — P8's seam
 
 **P8 crosses a seam that touches three surfaces**, closing the Proof's accepted drawer-shell departure as a
 side effect. The first draft recommended holding it back and argued from reviewer cognitive load, which a
@@ -8894,6 +9026,7 @@ that unless the owner says otherwise.
 |---|---|---|---|
 | Plan (draft 1) | **Evidence** — recompute every count, re-measure every contrast | GO WITH FIXES (5 RF) | the counts were the basis for the package sizes, and three of them were wrong |
 | Plan (draft 1) | **Plan** — falsify the decomposition, hunt what it drops | **NO-GO** | it found the ADR was about to reverse an owner ruling |
+| Plan (draft 2) | **Verification** — attack the rewrite's headline claim; a post-NO-GO rewrite fails by fixing each finding's letter while overclaiming about the correction | **NO-GO** (9 RF) | it found the rewrite's one new idea was blocked by an open owner decision the ADR never mentioned |
 
 **The NO-GO was earned, and by the cheapest possible failure — a document.** §3 proposed retiring
 `BenchSheetIsland` on a stated cause the cited file contradicts, which would have reinstated **D-035**: the
@@ -8904,12 +9037,33 @@ remnant on the Bench. §2 reported the contrast check that passes while never ru
 failed twice on hardware, and the evidence lens showed the `EditorEmptyState` argument was inverted, the
 `v2Colors` count was 41 rather than 30, and the coral at `EditorScreen.kt:764` is the Preview action.
 
-**Every Required Fix was accepted; none was rejected.** Each was verified against the tree first — D-035's
-text, the legibility probe, the `roomColors` opt-out comment, the V1 counts, and `.pageWrap`'s 6-to-0
-disappearance were all read before being conceded, because a review believed without checking fails the same
-way a summary believed without checking does.
+**Draft 1's Required Fixes were all accepted.** D-035's text, the legibility probe, the `roomColors` opt-out
+comment, the V1 counts and `.pageWrap`'s 6-to-0 disappearance were each read in the tree before being conceded
+— **but that claim was overstated as written, and draft 2's review found where.** The one §6 row not
+re-derived from the tree was the one that was wrong: the unselected dim was called *"new behaviour"* while
+`v2-bench.html:291` already declares it and `BenchSelectionFocus.kt` already ships it under
+[ADR-091](#adr-091). *"Each was verified against the tree first"* was true of the items it named and false of
+the item it did not, which is exactly the shape of claim this ADR keeps having to retract.
+
+**Draft 2's nine: eight accepted, one rejected.**
+
+| RF | Disposition |
+|---|---|
+| 1 — the `ProofLitPaper` ≡ D-035 equivalence closes an open owner decision | **ACCEPTED**, and escalated — [§3](#adr-102-island) no longer claims it; [§10.1](#adr-102-open) puts OD-31 to the owner and blocks P1 on it |
+| 2 — *"exactly as `ProofLitPaper` does"* reinstates D-010 | **ACCEPTED.** §3 now rules an explicit eight-token island and forbids the wholesale palette by name, with the `softShadow`/`contact` mechanism spelled out |
+| 3 — the eight tokens have no named destinations | **ACCEPTED.** §3 carries the mapping table; `strawberryText` is the deletion §6 row 2 implies, now joined to it |
+| 4 — §4's *"material hues"* is false against V21-SPEC §3.2 | **ACCEPTED.** One material hue, hedged, not four. The conclusion survives on the **tint family** instead, which is a narrower and checkable premise change |
+| 5 — §6 row 4 is neither new nor unbuilt | **ACCEPTED.** Three freeze changes, not four; the dim moves to P1 as a value edit |
+| 6 — `EditTextSession` is in no package | **ACCEPTED.** Added to P6 by name, with `.caret`; P7 had planned to re-record its goldens |
+| 7 — *"four adjacent editor files"* is five | **ACCEPTED.** §4 enumerates all five with line numbers; the phrase is gone |
+| 8 — the 211/47 repo-wide figure is not reproducible | **REJECTED, with evidence.** `git grep -o "v2-bench.html" -- '*.kt'` returns **211 occurrences over 47 files** (209 lines); the two narrower figures re-measure exactly at **123/20** and **106/14**. The review's 200/202 came from a working-tree grep that sweeps an in-repo `.claude/` scratch tree holding 125 stray `.kt` files — the same trap that makes a naive `ZinelyTheme.colors` count read 522 instead of 116. **Scope the count with `git grep`, not `grep -r`** |
+| 9 — §4 says P5+P6, §8 says P6 | **ACCEPTED.** §8 is authoritative; the remnants are one package |
 
 **The lesson this ADR now carries** is not "check the counts". It is that the Bench had already been taught,
 by two device passes and an owner ruling, the exact lesson [ADR-101 §6.11](#adr-101-p6-lit-review) learned
 again from scratch on the Proof — *the artifact does not dim* — and a re-skin planned from the frozen file
 plus a code map, without reading the rulings, was on course to un-learn it.
+
+**And the second lesson, which cost more:** when two derivations of one rule converge, that is not evidence
+the rule is right. It is a prompt to find out whether one of them is *the other one, cited back to itself*.
+Here it was — and the owner decision underneath both, [OD-31](#adr-098-od31), had been open the whole time.
