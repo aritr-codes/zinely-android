@@ -261,7 +261,12 @@ internal fun BenchEditingSurface(
         }
     }
     val caretAlpha = benchCaretAlphaAt(elapsed, reduceMotion)
-    val caretColour = ZinelyTheme.v2Colors.matcha
+    // Frozen `.caret{background:var(--jam)}` (`v21-bench.html:161`). V2 drew it in `--matcha`, which has
+    // no V2.1 successor here. `jam` is the palette's *"only urgent colour"* and this is the one place on
+    // the page it is correct as chrome: the caret is not urgent, it is the single point on the sheet that
+    // must never be lost — and it is the mark most often sitting on the user's own dark text, where the
+    // action green would disappear. Read through the island, so it is the lit value in both themes.
+    val caretColour = ZinelyTheme.v21Colors.jam
     val caretWidthPx = with(density) { BenchCaretWidth.toPx() }
     val caretHeightPx = fontSizePx * BenchCaretHeightEm
 

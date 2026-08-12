@@ -263,9 +263,9 @@ public fun EditorPagePreview(
             imageBytes = imageBytes,
         )
         BenchFocusScrim(
-            // The island `--paper` (ADR-090), so `0.4·element + 0.6·paper` is the sheet's own paper in
+            // The island `--paper` (ADR-090), so `0.5·element + 0.5·paper` is the sheet's own paper in
             // both themes — the arithmetic the dim rests on holds at night too.
-            paper = ZinelyTheme.v2Colors.paper,
+            paper = ZinelyTheme.v21Colors.paper,
             // Bounded to the sheet: this composable fills the canvas so its coordinates agree with its
             // siblings', but a wash that filled the canvas would paint paper over the *desk* and bleach
             // the room on every selection — see [BenchFocusScrim].

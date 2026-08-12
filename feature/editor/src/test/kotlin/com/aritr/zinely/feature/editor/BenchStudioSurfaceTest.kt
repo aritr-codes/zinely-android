@@ -12,27 +12,42 @@ import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineFormat
-import com.aritr.zinely.ui.theme.ZinelyV2Grain
-import com.aritr.zinely.ui.theme.zinelyV2DarkColors
 import com.aritr.zinely.ui.theme.ZinelyV2Dimens
 import com.aritr.zinely.ui.theme.zinelyV2LightColors
+import com.aritr.zinely.ui.theme.ZinelyV21Colors
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Grain
+import com.aritr.zinely.ui.theme.zinelyV21DarkColors
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import java.io.File
-import com.aritr.zinely.ui.theme.ZinelyV2Colors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * **C1 — the studio surface**, pinned to the DESIGN-FROZEN Bench.
+ * **The studio surface**, pinned to the DESIGN-FROZEN Bench.
  *
- * Every constant this package transcribes is re-derived from
- * [`v2-bench.html`](../../../../../../../../../docs/design/mockups/v2-bench.html) **at test time**
- * rather than compared against a second copy written here, following `ZinelyV2DimensTest`'s pattern and
+ * Every constant this package transcribes is re-derived from the frozen mockup **at test time** rather
+ * than compared against a second copy written here, following `ZinelyV2DimensTest`'s pattern and
  * [ADR-073](../../../../../../../../../docs/DECISIONS.md#adr-073)'s rule: compare against the declared
  * CSS, not against a rendering of it. A transcription test that hard-codes the frozen number on both
  * sides passes the day the design changes and the implementation does not, which is the one failure it
  * exists to catch.
+ *
+ * ### Two frozen files, on purpose
+ *
+ * [`v21-bench.html`](../../../../../../../../../docs/design/mockups/v21-bench.html) is the canonical
+ * Bench ([ADR-099](../../../../../../../../../docs/DECISIONS.md#adr-099)) and [rule] reads it. But
+ * ADR-102's **P1** converted only the ground, the sheet, the folio, the selection ring, the handles and
+ * the caret; the keep-clear cue and the snap guides moved whole to **P2**, because the V2.1 freeze gives
+ * them no resting state to paint and their trigger change needs its own ruling
+ * ([§12.3](../../../../../../../../../docs/DECISIONS.md#adr-102-p1-recut)).
+ *
+ * So the marks P2 still owns are still pinned to **V2**, through [ruleV2] / [pxV2]. That is a deliberate,
+ * dated split and not an oversight: a test that pointed those rows at V2.1 today would assert a design
+ * the code has not been ruled into yet, and would go green the moment someone painted half the cue.
+ * **When P2 lands, [ruleV2] and every caller of it are deleted.**
  *
  * The keep-clear tests are the ones to read first. They are the reason
  * [D-033](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-033) existed, and they assert the
@@ -45,182 +60,391 @@ class BenchStudioSurfaceTest {
         /** A page big enough that the 17pt keep-clear margin is comfortably inside it. */
         val PAGE = PtSize(210.4725, 297.638)
         const val SCALE = 2.5f
+
+        /** The CSS initial root font size, which `rem` in the frozen file resolves against. */
+        const val CSS_ROOT_PX = 16.0
     }
 
-    private val benchCss: String = run {
-        val f = File("../../docs/design/mockups/v2-bench.html")
+    private fun css(name: String): String {
+        val f = File("../../docs/design/mockups/$name")
         assertTrue("expected :feature:editor as the working directory — missing $f", f.isFile)
-        f.readText().substringBefore("</style>")
+        return f.readText().substringBefore("</style>")
     }
+
+    /** The canonical V2.1 Bench. */
+    private val benchCss: String = css("v21-bench.html")
+
+    /** The superseded V2 Bench, read **only** for the marks ADR-102 P2 still owns. See the class docs. */
+    private val benchV2Css: String = css("v2-bench.html")
 
     /**
      * Every declaration block for [selector], joined — because a selector may legitimately carry more
-     * than one, and `.page` now does.
+     * than one.
      *
      * The first cut of this read only the *first* block, which was true of the frozen file until the
-     * [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035) amendment gave `.page` a
-     * second one holding the light-theme island's tokens. Five assertions then failed looking for `width`
-     * in a block that declares only custom properties — the test was reading CSS's shape wrong, and the
-     * spec was right.
+     * [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035) amendment gave V2's
+     * `.page` a second one holding the light-theme island's tokens. Five assertions then failed looking
+     * for `width` in a block that declares only custom properties — the test was reading CSS's shape
+     * wrong, and the spec was right. **V2.1's `.page` has no such second block** (see
+     * [the island test][`the Compose sheet island lights exactly the tokens the frozen page paints`]),
+     * but the joining stays, because it is the correct way to read CSS and not a workaround.
      */
-    private fun rule(selector: String): String {
+    private fun rule(selector: String): String = ruleIn(benchCss, selector, "V2.1")
+
+    private fun ruleV2(selector: String): String = ruleIn(benchV2Css, selector, "V2")
+
+    private fun ruleIn(source: String, selector: String, which: String): String {
         val escaped = Regex.escape(selector)
-        val blocks = Regex("""(?m)^\s*$escaped\s*\{([^}]*)}""").findAll(benchCss)
+        val blocks = Regex("""(?m)^\s*$escaped\s*\{([^}]*)}""").findAll(source)
             .map { it.groupValues[1] }.toList()
-        assertTrue("frozen Bench has no `$selector` rule", blocks.isNotEmpty())
+        assertTrue("frozen $which Bench has no `$selector` rule", blocks.isNotEmpty())
         return blocks.joinToString(";")
     }
 
-    private fun px(selector: String, property: String): Double {
-        val m = Regex("""(?<![\w-])$property\s*:\s*(-?[\d.]+)px""").find(rule(selector))
+    private fun px(selector: String, property: String): Double = pxIn(rule(selector), selector, property)
+
+    private fun pxV2(selector: String, property: String): Double = pxIn(ruleV2(selector), selector, property)
+
+    private fun pxIn(block: String, selector: String, property: String): Double {
+        val m = Regex("""(?<![\w-])$property\s*:\s*(-?[\d.]+)px""").find(block)
         assertTrue("`$selector` declares no `$property` in px", m != null)
         return m!!.groupValues[1].toDouble()
     }
 
     /**
-     * The sheet is a **light-theme island** ([D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035)):
-     * `.page` re-declares the on-paper tokens, and each one restates the **light** theme's value.
+     * The frozen V2.1 page region — every rule from the `the canvas` section banner to the next banner.
      *
-     * Both halves matter. That the tokens are re-declared is the amendment; that they equal `:root`'s
-     * light values is what makes it an amendment rather than a new palette — the owner's ruling forbids
-     * inventing a second one. Reading the light block out of the frozen file rather than transcribing
-     * hex here means this fails if either side is edited alone.
+     * **This is the island's expected set, and it is derived rather than declared.** V2's `.page` carried
+     * a second declaration block re-stating the on-paper tokens (the
+     * [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035) amendment), and the old
+     * version of this test compared the Compose island against *that block*. **`v21-bench.html:127-132`
+     * declares no custom properties at all** — the V2.1 corpus was frozen on 2026-08-09, before
+     * [OD-31](../../../../../../../../../docs/DECISIONS.md#adr-098-od31) closed on 2026-08-12 — so
+     * pointing the old test at V2.1 would derive an **empty** expected set and pass only if the island
+     * changed nothing. Two reviews caught that before any P1 code was written.
+     *
+     * Amending the frozen file to add a block existing solely so a test could read it was rejected
+     * ([§12.2](../../../../../../../../../docs/DECISIONS.md#adr-102-p1-test)). Deriving from what the
+     * page **paints** is strictly stronger: it needs no amendment, and a token added to the page region
+     * tomorrow fails the build without anyone editing a list.
      */
-    @Test
-    fun `the frozen page is a light-theme island, restating the light values and inventing no colour`() {
-        val lightRoot = Regex("""(?ms)^\s*:root\{(.*?)}""").find(benchCss)!!.groupValues[1]
-        val island = rule(".page")
-        val declared = Regex("""(--[a-z-]+)\s*:\s*(#[0-9A-Fa-f]{3,8})""").findAll(island)
-            .associate { it.groupValues[1] to it.groupValues[2].lowercase() }
-
-        assertTrue(
-            "the sheet must re-declare the on-paper tokens; found ${declared.keys}",
-            declared.keys.containsAll(
-                listOf("--paper", "--paper-edge", "--ink", "--ink-soft", "--ink-faint", "--matcha", "--strawberry-text"),
-            ),
-        )
-        declared.forEach { (token, value) ->
-            val light = Regex("""(?<![\w-])${Regex.escape(token)}\s*:\s*(#[0-9A-Fa-f]{3,8})""")
-                .find(lightRoot)?.groupValues?.get(1)?.lowercase()
-            assertEquals("`$token` on .page must restate the light theme's value, not invent one", light, value)
-        }
+    private fun pageRegionCss(): String {
+        val m = Regex("""(?ms)/\*[^*]*the canvas[^*]*\*/(.*?)/\* =""").find(benchCss)
+        assertTrue("the frozen V2.1 Bench has no `the canvas` section banner", m != null)
+        return m!!.groupValues[1]
     }
 
     /**
-     * **The Compose island overrides exactly the tokens `.page` declares — no more.**
+     * **The Compose island lights exactly the tokens the frozen page paints — no more, no fewer.**
      *
-     * This is the assertion whose absence let the first cut ship a defect. That cut provided
-     * `zinelyV2LightColors()` wholesale, lightening all twenty-six tokens rather than the spec's eight,
-     * and among the eighteen extras were `pageShadow` / `pageContact` — so in dark the sheet cast a
-     * warm-brown shadow on a dark desk, reinstating [D-010](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-010)
-     * inside the fix for [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035). Every
-     * other test stayed green, and the re-recorded dark golden certified it.
+     * This is the assertion whose absence let C1 ship a defect. That cut provided `zinelyV2LightColors()`
+     * wholesale, lightening all twenty-six tokens rather than the eight, and among the extras were
+     * `pageShadow` / `pageContact` — so in dark the sheet cast a warm-brown shadow on a dark desk,
+     * reinstating [D-010](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-010) inside the fix
+     * for D-035. Every other test stayed green, and the re-recorded dark golden certified it.
      *
-     * Both directions are checked, because only the pair is a statement about *equality* of the sets:
-     * a token the CSS declares and Kotlin misses is an un-applied amendment; a token Kotlin changes and
-     * the CSS does not is Compose inventing spec. The comparison runs over the data class's own
-     * `toString`, so a token added to [ZinelyV2Colors] tomorrow is covered without touching this test.
+     * **The same trap is live in V2.1 with a different token.** The V2.1 page's shadow is
+     * `var(--hard) var(--hard) 0 var(--ink-line)`, so the hazard is now `inkLine` — `#33261C` light,
+     * `#120E0A` dark. ADR-102 §3 forbade `softShadow`/`contact` by name, which the V2.1 page does not use
+     * at all; the warning was right and its cause was stale
+     * ([§12.1](../../../../../../../../../docs/DECISIONS.md#adr-102-island-v21)). The explicit
+     * exclusion below is what stops the third instance of D-010.
+     *
+     * Both directions are checked, because only the pair is a statement about *equality* of the sets: a
+     * token the page paints and Kotlin misses is an un-applied amendment; a token Kotlin lights and the
+     * page does not paint is Compose inventing spec. The comparison runs over the data class's own
+     * `toString`, so a token added to [ZinelyV21Colors] tomorrow is covered without touching this test.
      */
     @Test
-    fun `the Compose sheet island overrides exactly the tokens the frozen page declares`() {
-        fun fields(c: ZinelyV2Colors): Map<String, String> =
+    fun `the Compose sheet island lights exactly the tokens the frozen page paints`() {
+        fun fields(c: ZinelyV21Colors): Map<String, String> =
             Regex("""(\w+)=(Color\([^)]*\))""").findAll(c.toString())
                 .associate { it.groupValues[1] to it.groupValues[2] }
 
-        val room = zinelyV2DarkColors()
-        val changed = fields(room).filter { (k, v) -> fields(BenchStudio.sheetIsland(room))[k] != v }.keys
+        val room = zinelyV21DarkColors()
+        val lit = fields(room).filter { (k, v) -> fields(BenchStudio.sheetIslandV21(room))[k] != v }.keys
 
-        val declared = Regex("""(--[a-z-]+)\s*:\s*#""").findAll(rule(".page"))
-            .map { m ->
-                m.groupValues[1].removePrefix("--").split('-')
-                    .mapIndexed { i, w -> if (i == 0) w else w.replaceFirstChar(Char::uppercase) }.joinToString("")
+        // Every `var(--x)` in the page region, less the non-colour ladders (`--br-*`, `--gap-*`, the
+        // type roles, the grain texture and `--hard`, which is a distance) and less the shadow ink.
+        val notColours = setOf("hard", "grain", "voice", "serif", "sans")
+        val painted = Regex("""var\(--([a-z-]+)\)""").findAll(pageRegionCss())
+            .map { it.groupValues[1] }
+            .filterNot { it.startsWith("br-") || it.startsWith("gap-") || it in notColours }
+            // `--ink-line` is the page's DROP SHADOW. It falls on the bench, not on the paper, so it is
+            // the room's — lighting it would put `#33261C` under the sheet on a `#211B15` worktop.
+            .filterNot { it == "ink-line" }
+            .map { token ->
+                token.split('-').mapIndexed { i, w -> if (i == 0) w else w.replaceFirstChar(Char::uppercase) }
+                    .joinToString("")
             }.toSet()
 
         assertEquals(
-            "the sheet island and the frozen `.page` block must name the same tokens",
-            declared.sorted(), changed.sorted(),
+            "the sheet island and the frozen page region must name the same tokens",
+            painted.sorted(), lit.sorted(),
         )
         assertTrue(
             "the sheet's shadow belongs to the room, not the sheet — it must not be lightened at night",
-            "pageShadow" !in changed && "pageContact" !in changed,
+            "inkLine" !in lit,
         )
+        // The set is eight. Pinned as a number as well as a comparison, because both sides of the
+        // comparison are derived and a regex that silently matched nothing would agree with an island
+        // that lit nothing — which is exactly how the V2 version of this test would have passed on V2.1.
+        assertEquals("the V2.1 island is eight tokens", 8, lit.size)
+    }
+
+    /**
+     * The island restates the **light** theme's values and invents no colour.
+     *
+     * That the tokens are lit is the amendment; that they equal `zinelyV21LightColors()` is what makes it
+     * an amendment rather than a second palette — the owner's ruling forbids inventing one.
+     */
+    @Test
+    fun `the island restates the light palette rather than inventing a third one`() {
+        val light = zinelyV21LightColors()
+        val islanded = BenchStudio.sheetIslandV21(zinelyV21DarkColors())
+        assertEquals(light.paper, islanded.paper)
+        assertEquals(light.ink, islanded.ink)
+        assertEquals(light.inkSoft, islanded.inkSoft)
+        assertEquals(light.berry, islanded.berry)
+        assertEquals(light.berryTint, islanded.berryTint)
+        assertEquals(light.butter, islanded.butter)
+        assertEquals(light.jam, islanded.jam)
+        assertEquals(light.leaf, islanded.leaf)
+        // And the room's own values survive where they must.
+        assertEquals(zinelyV21DarkColors().inkLine, islanded.inkLine)
+        assertEquals(zinelyV21DarkColors().bench, islanded.bench)
     }
 
     // -- the sheet (rows 1.5-1.7) ------------------------------------------------------------------
 
+    /**
+     * `.page{border-radius:var(--br-xs) var(--br-md) var(--br-md) var(--br-xs)}` — **the spine.**
+     *
+     * Four values, not one: V2 drew a uniform `5px`. The two leading corners are tight and the two
+     * trailing ones generous, so the sheet reads as bound on one edge. Asserted as the resolved ladder
+     * steps rather than as literals, because the frozen file writes the `--br-*` names and
+     * [ZinelyV21Dimens] is where those live.
+     */
     @Test
-    fun `the page's radius is the frozen one, and it is the shape the grain is clipped to`() {
-        assertEquals(px(".page", "border-radius").dp, BenchStudio.PageRadius)
-        assertEquals(RoundedCornerShape(BenchStudio.PageRadius), BenchStudio.PageShape)
-    }
-
-    @Test
-    fun `the keep-clear radius is the frozen one, and is tighter than the page's`() {
-        assertEquals(px(".keepclear", "border-radius").dp, BenchStudio.KeepClearRadius)
-        assertTrue(
-            "the cue's corner is deliberately tighter than the sheet's",
-            BenchStudio.KeepClearRadius < BenchStudio.PageRadius,
+    fun `the page's radius is the frozen spine, and it is the shape the grain is clipped to`() {
+        val decl = Regex("""border-radius\s*:\s*([^;}]*)""").find(rule(".page"))!!.groupValues[1].trim()
+        val steps = Regex("""var\(--(br-[a-z]+)\)""").findAll(decl).map { it.groupValues[1] }.toList()
+        assertEquals("the frozen page radius is four values", listOf("br-xs", "br-md", "br-md", "br-xs"), steps)
+        assertEquals(ZinelyV21Dimens.radiusXs, BenchStudio.PageRadiusSpine)
+        assertEquals(ZinelyV21Dimens.radiusMd, BenchStudio.PageRadiusFree)
+        assertEquals(
+            RoundedCornerShape(
+                topStart = BenchStudio.PageRadiusSpine,
+                topEnd = BenchStudio.PageRadiusFree,
+                bottomEnd = BenchStudio.PageRadiusFree,
+                bottomStart = BenchStudio.PageRadiusSpine,
+            ),
+            BenchStudio.PageShape,
+        )
+        assertNotEquals(
+            "the spine is the point — a uniform radius is the V2 sheet",
+            BenchStudio.PageRadiusSpine, BenchStudio.PageRadiusFree,
         )
     }
 
+    /**
+     * `.page{border:1.5px solid var(--ink)}` — and it is **`ink`, not `paperEdge`**.
+     *
+     * The token change is the half worth asserting: `paperEdge` survives in the palette with no use on
+     * this page, which is why it left the island ([§12.1](../../../../../../../../../docs/DECISIONS.md#adr-102-island-v21)).
+     */
     @Test
-    fun `the page grain is the frozen tile and the effective alpha Phase A published`() {
+    fun `the page's edge is the frozen ink line, not the old paper-edge hairline`() {
+        assertEquals(px(".page", "border"), BenchStudio.PageBorder.value.toDouble(), 1e-6)
+        assertTrue("the frozen page border is --ink", rule(".page").contains("solid var(--ink)"))
+        assertTrue(
+            "`paperEdge` has no V2.1 use on the page and must not be reintroduced here",
+            !rule(".page").contains("--paper-edge"),
+        )
+    }
+
+    /**
+     * The keep-clear cue is **P2's**, so its radius is still V2's `3px` — see the class docs.
+     *
+     * Asserted against V2 deliberately. When P2 converts the cue this test moves to [rule] and the
+     * value becomes `var(--br-xs)`; until then, pinning it to V2 is what stops the cue being painted
+     * half in each palette.
+     */
+    @Test
+    fun `the keep-clear radius is still the V2 one, because P2 owns the cue`() {
+        assertEquals(pxV2(".keepclear", "border-radius").dp, BenchStudio.KeepClearRadius)
+    }
+
+    // -- the two marks P1 also re-cut: the selection ring and the handles --------------------------
+
+    /**
+     * `.el .ring{inset:-6px;border:1.6px dashed var(--ink);border-radius:var(--br-sm)}`
+     * ([`v21-bench.html:145-146`](../../../../../../../../../docs/design/mockups/v21-bench.html)).
+     *
+     * [ADR-073](../../../../../../../../../docs/DECISIONS.md#adr-073)'s rule is not a rule about the
+     * *sheet* — it is a rule about anything transcribed from the freeze. P1's first cut applied it to
+     * the sheet and hand-copied the ring and the handles, so a typo in either would have shipped
+     * green. These two tests close that.
+     *
+     * The dash *length* is deliberately not asserted against the freeze: CSS `dashed` names no
+     * period, so [SelectionOutlineDashDp] is a Compose-side choice (one stroke on, one off) and is
+     * asserted only as that relationship.
+     */
+    @Test
+    fun `the selection ring restates the frozen dashed ink ring`() {
+        val ring = rule(".el .ring")
+        assertEquals(
+            "the ring sits OUTSIDE its element, so the frozen inset is negative",
+            -SelectionOutlineInsetDp.value.toDouble(),
+            pxIn(ring, ".el .ring", "inset"),
+            0.0001,
+        )
+        assertEquals(SelectionOutlineStrokeDp.value.toDouble(), pxIn(ring, ".el .ring", "border"), 0.0001)
+        assertTrue("the frozen ring is dashed, not solid", Regex("""border\s*:[^;}]*dashed""").containsMatchIn(ring))
+        assertTrue("the frozen ring is drawn in `--ink`", Regex("""border\s*:[^;}]*var\(--ink\)""").containsMatchIn(ring))
+        assertEquals(
+            "the frozen ring radius is the `--br-sm` ladder step",
+            "br-sm",
+            Regex("""border-radius\s*:\s*var\(--(br-[a-z]+)\)""").find(ring)!!.groupValues[1],
+        )
+        assertEquals(ZinelyV21Dimens.radiusSm, SelectionOutlineRadiusDp)
+        // …and the ladder step itself, which nothing else pins. Without this the radius chain reads
+        // `frozen --br-sm → ZinelyV21Dimens.radiusSm → the constant`, with the first arrow unasserted:
+        // there is no `ZinelyV21DimensTest`, so `radiusSm` is a hand-copy until something reads `:root`.
+        assertEquals(pxIn(rule(":root"), ":root", "--br-sm").dp, ZinelyV21Dimens.radiusSm)
+    }
+
+    /**
+     * `.hnd{width:9px;height:9px;background:var(--paper);border:1.6px solid var(--ink);border-radius:2px}`
+     * ([`v21-bench.html:148-149`](../../../../../../../../../docs/design/mockups/v21-bench.html)).
+     *
+     * **The halo is not in the freeze and is asserted as such.** V2.1 drops the white ring V2 drew
+     * behind the mark; Compose keeps it because the frozen mockup's handles never sit on a photo and
+     * the app's do, and IA §C.4 wants 3:1 over *any* backdrop. That is a retained divergence, not a
+     * transcription — so it is pinned here against the freeze's silence rather than to a number.
+     */
+    @Test
+    fun `the handle mark restates the frozen rounded square`() {
+        val hnd = rule(".hnd")
+        assertEquals(
+            "the frozen handle is square",
+            pxIn(hnd, ".hnd", "width"),
+            pxIn(hnd, ".hnd", "height"),
+            0.0001,
+        )
+        assertEquals(HandleDiameterDp.value.toDouble(), pxIn(hnd, ".hnd", "width"), 0.0001)
+        assertEquals(HandleBorderDp.value.toDouble(), pxIn(hnd, ".hnd", "border"), 0.0001)
+        assertEquals(HandleRadiusDp.value.toDouble(), pxIn(hnd, ".hnd", "border-radius"), 0.0001)
+        assertTrue("the frozen handle fills with `--paper`", hnd.contains("background:var(--paper)"))
+        assertTrue("the frozen handle is bordered in `--ink`", Regex("""border\s*:[^;}]*var\(--ink\)""").containsMatchIn(hnd))
+        assertTrue(
+            "the frozen handle draws no halo — Compose's is a documented divergence, so if the freeze " +
+                "ever grows one this test must be re-read rather than deleted",
+            !hnd.contains("box-shadow") && !hnd.contains("outline"),
+        )
+        // The halo's own geometry is asserted where it can fail — on the raster, in
+        // `BenchSelectionAppearanceTest`. Restating `HandleHaloDiameterDp == HandleDiameterDp + 2·width`
+        // here would only restate its definition, and a test that cannot fail is worse than no test: it
+        // reads as coverage.
+    }
+
+    /**
+     * ⚠ **The page's and the screen's grain swapped alphas between V2 and V2.1**, and both tiles moved:
+     * V2 was page `120px/.45`, screen `150px/.35`; V2.1 is page `130px/.35`, screen `160px/.45`. Reading
+     * either number across from V2 gets it exactly wrong, which is why both are re-derived here.
+     */
+    @Test
+    fun `the page grain is the frozen tile, alpha and paper blend`() {
         val tile = Regex("""background-size\s*:\s*([\d.]+)px""").find(rule(".page::after"))!!.groupValues[1]
         assertEquals(BenchStudio.PageGrainTile, tile.toDouble().dp)
         val opacity = Regex("""opacity\s*:\s*([\d.]+)""").find(rule(".page::after"))!!.groupValues[1].toFloat()
-        // Effective strength = the tile's baked alpha × the rule's own opacity (ZinelyV2Grain's table).
-        // The baked half is read from ZinelyV2Grain, not re-typed, so this cannot agree with a drifted tile.
-        assertEquals(ZinelyV2Grain.BakedAlpha * opacity, BenchStudio.PAGE_GRAIN_ALPHA, 1e-6f)
+        // Effective strength = the tile's baked alpha × the rule's own opacity (ZinelyV21Grain's table).
+        // The baked half is read from that file, not re-typed, so this cannot agree with a drifted tile.
+        assertEquals(ZinelyV21Grain.BakedAlpha * opacity, BenchStudio.PAGE_GRAIN_ALPHA, 1e-6f)
+        // `mix-blend-mode:multiply` — paper darkens like ink. The screen's is soft-light.
+        assertTrue("the page's grain is the paper blend", rule(".page::after").contains("mix-blend-mode:multiply"))
     }
 
     @Test
-    fun `the screen grain is the frozen tile and alpha`() {
+    fun `the screen grain is the frozen tile, alpha and chrome blend`() {
         val tile = Regex("""background-size\s*:\s*([\d.]+)px""").find(rule(".phone::after"))!!.groupValues[1]
         assertEquals(BenchStudio.ScreenGrainTile, tile.toDouble().dp)
         val opacity = Regex("""opacity\s*:\s*([\d.]+)""").find(rule(".phone::after"))!!.groupValues[1].toFloat()
-        assertEquals(ZinelyV2Grain.BakedAlpha * opacity, BenchStudio.SCREEN_GRAIN_ALPHA, 1e-6f)
-    }
-
-    // -- the page's two-layer shadow (row 1.6) -----------------------------------------------------
-
-    @Test
-    fun `the page shadow is two layers, and its two tokens are distinct in both themes`() {
-        val light = BenchStudio.pageShadowLayers(zinelyV2LightColors())
-        val dark = BenchStudio.pageShadowLayers(zinelyV2DarkColors())
-        assertEquals(2, light.size)
-        assertEquals(2, dark.size)
-        // The mutation this guards: collapsing both layers onto one token renders almost right in light
-        // and wrong in dark, which is the bug the D-010 amendment exists to prevent.
-        assertNotEquals(light[0].color, light[1].color)
-        assertNotEquals(dark[0].color, dark[1].color)
-        // And the two themes must not share a value, or the page keeps a warm shadow on a dark desk.
-        assertNotEquals(light[0].color, dark[0].color)
-        assertNotEquals(light[1].color, dark[1].color)
+        assertEquals(ZinelyV21Grain.BakedAlpha * opacity, BenchStudio.SCREEN_GRAIN_ALPHA, 1e-6f)
+        assertTrue("the screen's grain is the chrome blend", rule(".phone::after").contains("mix-blend-mode:soft-light"))
     }
 
     @Test
-    fun `the page shadow's geometry is the frozen declaration, negative spread included`() {
-        val decl = Regex("""box-shadow\s*:\s*([^;]*);""").find(rule(".page"))!!.groupValues[1]
-        val layers = Regex("""(-?[\d.]+)px\s+(-?[\d.]+)px(?:\s+(-?[\d.]+)px)?""").findAll(decl).toList()
-        assertEquals("the frozen `.page` shadow is two layers", 2, layers.size)
+    fun `the ground is the worktop, not the paper it used to be`() {
+        assertTrue("`.phone` is the bench", rule(".phone").contains("background:var(--bench)"))
+        // The token that makes the island visible for the first time: while ground and sheet were both
+        // `paper`, the boundary between room and artifact was nearly invisible.
+        assertNotEquals(zinelyV21LightColors().bench, zinelyV21LightColors().paper)
+        assertNotEquals(zinelyV21DarkColors().bench, zinelyV21DarkColors().paper)
+    }
 
-        val built = BenchStudio.pageShadowLayers(zinelyV2LightColors())
-        assertEquals(layers[0].groupValues[1].toDouble().dp, built[0].dy)
-        assertEquals(layers[0].groupValues[2].toDouble().dp, built[0].blur)
-        assertEquals(layers[0].groupValues[3].toDouble().dp, built[0].spread)
-        assertEquals(layers[1].groupValues[1].toDouble().dp, built[1].dy)
-        assertEquals(layers[1].groupValues[2].toDouble().dp, built[1].blur)
+    // -- the page's hard shadow --------------------------------------------------------------------
 
-        assertTrue("the cast layer pulls back under the sheet", built[0].spread.value < 0f)
-        assertEquals("the contact layer has no spread", 0.dp, built[1].spread)
+    /**
+     * `.page{box-shadow:var(--hard) var(--hard) 0 var(--ink-line)}` — one **printed** shadow, offset on
+     * both axes, zero blur, flat ink. V2 cast two soft layers in `pageShadow`/`pageContact`; those tokens
+     * have no V2.1 counterpart and `pageShadowLayers` was deleted rather than ported.
+     */
+    @Test
+    fun `the page's shadow is the frozen hard offset in ink-line, and it is not blurred`() {
+        val decl = Regex("""box-shadow\s*:\s*([^;}]*)""").find(rule(".page"))!!.groupValues[1]
+        assertEquals(
+            "the frozen page shadow is `--hard --hard 0 --ink-line`",
+            "var(--hard) var(--hard) 0 var(--ink-line)", decl.trim(),
+        )
+        // `--hard` is the published offset, and the third value is a literal zero blur.
+        assertEquals(4.dp, ZinelyV21Dimens.hardShadow)
+    }
+
+    /**
+     * **The shadow ink stays the room's, and this is the D-010 guard restated in V2.1 terms.**
+     *
+     * `inkLine` is `#33261C` light and `#120E0A` dark. Lighting it inside the island would put a
+     * `#33261C` shadow under the sheet on a `#211B15` worktop — brighter than the ground it falls on,
+     * a glow where a contact shadow belongs. That is D-010, which this file has already caused once.
+     */
+    @Test
+    fun `the shadow ink is theme-divergent and the island leaves it to the room`() {
+        assertNotEquals(
+            "inkLine must differ by theme, or this guard is asserting nothing",
+            zinelyV21LightColors().inkLine, zinelyV21DarkColors().inkLine,
+        )
+        val dark = zinelyV21DarkColors()
+        assertEquals(
+            "the sheet's shadow belongs to the room",
+            dark.inkLine, BenchStudio.sheetIslandV21(dark).inkLine,
+        )
     }
 
     // -- the keep-clear, and why D-033 existed (rows 1.8, 1.9) -------------------------------------
+    //
+    // Pinned to **V2** throughout, for two reasons that happen to point the same way.
+    //
+    // 1. The cue is ADR-102 **P2**'s, like every other keep-clear assertion here.
+    // 2. ⚠ The V2.1 freeze **re-drifted the depiction D-033 was raised to fix.** `v21-bench.html:127`
+    //    draws `.page` at `aspect-ratio:3/4` (0.7500) against a real panel of 0.70714, and puts the cue
+    //    at a uniform `inset:14px` on a `max-width:266px` sheet — 5.3% where the engine's safe area is
+    //    8.1%. That is the same class of stylisation, at about half the magnitude, that the owner
+    //    amended `v2-bench.html` to remove (229×324, 18.5px).
+    //
+    // The **Compose** side is unaffected and that is the whole point of D-033's ruling: `keepClearInsetPx`
+    // derives from `Imposer.DEFAULT_SAFE_AREA_INSET_PT`, so it draws the engine's real boundary at any
+    // page size and would keep drawing it if the prototype depicted a circle. What these tests assert is
+    // the *join* between the transcription and the derivation, and V2 is where that join is currently
+    // ruled. Re-pointing them at V2.1 would assert a depiction the owner has not amended.
+    //
+    // Raised for P2 rather than fixed here: P1 does not own the cue, and amending a frozen file is the
+    // owner's.
 
     @Test
     fun `the frozen page carries the document's real panel aspect`() {
-        val w = px(".page", "width")
-        val h = px(".page", "height")
+        val w = pxV2(".page", "width")
+        val h = pxV2(".page", "height")
         val panel = SingleSheet8Panel()
         val frozenRatio = w / h
         val realRatio = panel.first / panel.second
@@ -230,10 +454,10 @@ class BenchStudioSurfaceTest {
 
     @Test
     fun `the derived keep-clear inset reproduces the frozen literal on the frozen page`() {
-        val pageWidth = px(".page", "width")
+        val pageWidth = pxV2(".page", "width")
         val panelWidthPt = SingleSheet8Panel().first
         val derived = BenchStudio.keepClearInsetPx(pageWidth.toFloat(), panelWidthPt)
-        val frozen = px(".keepclear", "inset")
+        val frozen = pxV2(".keepclear", "inset")
 
         // THE test of this package. The frozen number and the engine's safe area are the same boundary
         // expressed twice; if they ever stop agreeing, the cue is decorative again and D-033 is back.
@@ -248,8 +472,8 @@ class BenchStudioSurfaceTest {
     @Test
     fun `the keep-clear inset is uniform because the page shares the panel's aspect`() {
         val panel = SingleSheet8Panel()
-        val w = px(".page", "width")
-        val h = px(".page", "height")
+        val w = pxV2(".page", "width")
+        val h = pxV2(".page", "height")
         val horizontal = Imposer.DEFAULT_SAFE_AREA_INSET_PT * w / panel.first
         val vertical = Imposer.DEFAULT_SAFE_AREA_INSET_PT * h / panel.second
         // A uniform inset is only honest when these agree. On the pre-amendment 212×326 page they were
@@ -276,16 +500,16 @@ class BenchStudioSurfaceTest {
     fun `the keep-clear's two states are the frozen opacities and are far apart`() {
         assertEquals(0.32f, BenchStudio.KEEP_CLEAR_REST_ALPHA, 1e-6f)
         assertEquals(0.90f, BenchStudio.KEEP_CLEAR_WARN_ALPHA, 1e-6f)
-        val rest = Regex("""opacity\s*:\s*([\d.]+)""").find(rule(".keepclear"))!!.groupValues[1].toFloat()
-        val warn = Regex("""opacity\s*:\s*([\d.]+)""").find(rule(".keepclear.warn"))!!.groupValues[1].toFloat()
+        val rest = Regex("""opacity\s*:\s*([\d.]+)""").find(ruleV2(".keepclear"))!!.groupValues[1].toFloat()
+        val warn = Regex("""opacity\s*:\s*([\d.]+)""").find(ruleV2(".keepclear.warn"))!!.groupValues[1].toFloat()
         assertEquals(rest, BenchStudio.KEEP_CLEAR_REST_ALPHA, 1e-6f)
         assertEquals(warn, BenchStudio.KEEP_CLEAR_WARN_ALPHA, 1e-6f)
     }
 
     @Test
     fun `the warn state recolours to strawberry-text and is not merely brighter ink`() {
-        assertTrue(rule(".keepclear.warn").contains("--strawberry-text"))
-        assertTrue(rule(".keepclear").contains("--ink-faint"))
+        assertTrue(ruleV2(".keepclear.warn").contains("--strawberry-text"))
+        assertTrue(ruleV2(".keepclear").contains("--ink-faint"))
         assertNotEquals(zinelyV2LightColors().strawberryText, zinelyV2LightColors().inkFaint)
     }
 
@@ -476,39 +700,64 @@ class BenchStudioSurfaceTest {
 
     @Test
     fun `the guide stops the frozen 8px short at both ends and shows at the frozen opacity`() {
-        assertEquals(px(".guide.v", "top").dp, BenchStudio.GuideEndInset)
-        assertEquals(px(".guide.v", "bottom").dp, BenchStudio.GuideEndInset)
-        val show = Regex("""opacity\s*:\s*([\d.]+)""").find(rule(".guide.show"))!!.groupValues[1].toFloat()
+        assertEquals(pxV2(".guide.v", "top").dp, BenchStudio.GuideEndInset)
+        assertEquals(pxV2(".guide.v", "bottom").dp, BenchStudio.GuideEndInset)
+        val show = Regex("""opacity\s*:\s*([\d.]+)""").find(ruleV2(".guide.show"))!!.groupValues[1].toFloat()
         assertEquals(show, BenchStudio.GUIDE_ALPHA, 1e-6f)
     }
 
     @Test
     fun `the guide is matcha, not the V1 teal it used to be`() {
-        assertTrue("the frozen guide is --matcha", rule(".guide").contains("var(--matcha)"))
+        assertTrue("the frozen guide is --matcha", ruleV2(".guide").contains("var(--matcha)"))
     }
 
     // -- the page number (row 1.11) ----------------------------------------------------------------
 
     @Test
     fun `the page number sits at the frozen offsets`() {
-        assertEquals(px(".pagenum", "top").dp, BenchStudio.PageNumberTopInset)
+        // V2.1 seats the folio at the sheet's FOOT — V2 had it at `top:7px;right:10px`.
+        assertEquals(px(".pagenum", "bottom").dp, BenchStudio.PageNumberBottomInset)
         assertEquals(px(".pagenum", "right").dp, BenchStudio.PageNumberEndInset)
     }
 
+    /**
+     * `.pagenum{font-size:.6rem;font-weight:700;font-variant-numeric:tabular-nums}`.
+     *
+     * The size is declared in **rem**, not px, so it is resolved against the prototype's root font size
+     * rather than read as a pixel count: `.6rem × 16px = 9.6px`. Transcribing `.6` as `.6.sp` would be a
+     * folio a sixteenth of its intended size, and the unit is the only thing that says so.
+     *
+     * V2's tracking is **gone**, replaced by weight and tabular figures — which is the change that
+     * matters, since tabular figures are what stop the number shifting as the page count crosses a digit.
+     */
     @Test
-    fun `the page number is the frozen size and tracking`() {
-        // Row 1.11's planned mutation is `9px→11px`; until these two were extracted from the composable
-        // they were inline literals with nothing asserting them, so that mutation had nothing to kill.
-        assertEquals(px(".pagenum", "font-size"), BenchStudio.PageNumberSize.value.toDouble(), 1e-6)
-        val tracking = Regex("""letter-spacing\s*:\s*([\d.]+)em""").find(rule(".pagenum"))!!.groupValues[1]
-        assertEquals(tracking.toDouble(), BenchStudio.PageNumberTracking.value.toDouble(), 1e-6)
+    fun `the page number is the frozen size, weight and figures`() {
+        val rem = Regex("""font-size\s*:\s*([\d.]+)rem""").find(rule(".pagenum"))!!.groupValues[1].toDouble()
+        assertEquals(rem * CSS_ROOT_PX, BenchStudio.PageNumberSize.value.toDouble(), 1e-6)
+        assertTrue("the frozen folio is bold", rule(".pagenum").contains("font-weight:700"))
+        assertTrue("the frozen folio is tabular", rule(".pagenum").contains("font-variant-numeric:tabular-nums"))
+        assertTrue(
+            "V2's `letter-spacing` is gone; do not reintroduce it",
+            !rule(".pagenum").contains("letter-spacing"),
+        )
+    }
+
+    /**
+     * `.pagenum{color:var(--ink-soft)}` — **not `inkFaint`**, and that is a palette rule rather than a
+     * preference. [ZinelyV21Colors.inkFaint] measures 3.04:1 on paper and sets **no text at all** in
+     * V2.1; all 26 prototype uses of it as text, page numbers included, moved to `inkSoft`.
+     */
+    @Test
+    fun `the page number takes ink-soft, because ink-faint sets no text in V2_1`() {
+        assertTrue("the frozen folio is --ink-soft", rule(".pagenum").contains("var(--ink-soft)"))
+        assertTrue("the folio must not be --ink-faint", !rule(".pagenum").contains("var(--ink-faint)"))
     }
 
     @Test
     fun `the guide is the frozen hairline, which is row 1_10's other mutation`() {
         // `.guide.v{width:1px}` — the stroke SnapGuides draws. Same reason as above: row 1.10 plans a
         // `width 1→2` mutation, and nothing here was checking the width.
-        assertEquals(px(".guide.v", "width"), ZinelyV2Dimens.Hairline.value.toDouble(), 1e-6)
+        assertEquals(pxV2(".guide.v", "width"), ZinelyV2Dimens.Hairline.value.toDouble(), 1e-6)
     }
 
     /**

@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -13,6 +14,7 @@ import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.SelectionChromeGeometry
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 
 /** Test tag on the chrome Canvas. */
 public const val SelectionChromeTestTag: String = "selection-chrome"
@@ -28,14 +30,29 @@ public const val SelectionChromeTestTag: String = "selection-chrome"
  * [com.aritr.zinely.core.editor.LivePreview]), so the outline tracks the gesture without the stroke
  * fattening under zoom or snapping back at commit.
  *
- * **C2a re-skin (ADR-091 row 2.3):** the frozen `.sel` is `inset:-7px; border:1.5px solid var(--matcha);
- * border-radius:6px` (v2-bench.html `:155`) — so the outline is drawn 7 device px **outside** the box,
- * 1.5dp thick, in `--matcha`, with rounded corners. It replaced a 2dp `--coral-strong` stroke sitting
- * directly on the box edge. That re-skin does not weaken the WCAG 1.4.11 claim it inherits, it improves
- * it: on the sheet (`--paper #F7F2E7`) `--coral-strong` measures 4.11:1 and `--matcha` **5.20:1**, and
- * because [BenchSheetIsland] makes the sheet a light-theme island ([ADR-090](docs/DECISIONS.md#adr-090)),
- * 5.20:1 is the figure in **both** themes where the old one held only in light. 1.4.11 sets no minimum
- * stroke width, so 2dp → 1.5dp costs nothing against it.
+ * ### V2.1 re-skin (ADR-102 P1) — the ring is drawn, not lit
+ *
+ * The frozen `.el .ring` is `inset:-6px; border:1.6px **dashed** var(--ink); border-radius:var(--br-sm)`
+ * (`v21-bench.html:145`), and the freeze's own banner states the rule it serves: **selection is a
+ * hand-drawn dashed ring in `ink`, never a system box.** So the outline is drawn 6 device px outside the
+ * box, 1.6dp thick, dashed, in `ink`.
+ *
+ * It replaced V2's `1.5px solid var(--matcha)` at `inset:-7px`, which had itself replaced a 2dp
+ * `--coral-strong` stroke on the box edge. **`matcha` has no V2.1 successor on this surface** — ADR-102
+ * §3's table mapped it to `leaf`, and nothing in the frozen page uses `leaf` for chrome
+ * ([§12.1](../../../../../../../../docs/DECISIONS.md#adr-102-island-v21)).
+ *
+ * **The contrast claim gets stronger, not weaker.** `ink` on `paper` is the palette's AA-critical body
+ * pairing and measures far above `matcha`'s 5.20:1; because [BenchSheetIsland] lights `ink` and `paper`
+ * together in both themes, that figure holds at night as well as by day. WCAG 1.4.11 sets no minimum
+ * stroke width, so 1.5dp → 1.6dp is neutral against it — and **dashing does not weaken it either**: a
+ * dash is an absence of the mark, not a lower-contrast mark, and the segments that are drawn are drawn
+ * at full ink.
+ *
+ * ⚠ **The ring is guaranteed only over paper.** Where it crosses the user's own photograph no token can
+ * promise a ratio — that is the constraint [BenchHandleMark]'s halo exists for, and the ring has no
+ * equivalent because it is a closed figure whose far side is almost always on paper. Recorded so the
+ * difference between the two marks is a decision rather than an inconsistency.
  *
  * The inset and the radius are applied to the **rotated** quad, not to an axis-aligned bounding box: the
  * inflation happens in the element's local frame inside [SelectionChromeGeometry.outlineDevicePx], and the
@@ -47,9 +64,9 @@ public const val SelectionChromeTestTag: String = "selection-chrome"
  * @param pageOffset page-space pan applied before the screen scale — MUST match [PagePreview].
  * @param modifier sizing applied by the caller; size it identically to the sibling [PagePreview] so the
  *   device-px corners align.
- * @param color the outline stroke colour; defaults to the frozen `--matcha` token. Read through
- *   [ZinelyTheme.v2Colors] so that inside the sheet island it is the on-paper value in both themes.
- * @param alpha the frozen `.sel{transition:opacity .12s}` fade (v2-bench.html `:155`). The caller drives
+ * @param color the outline stroke colour; defaults to the frozen `--ink` token. Read through
+ *   [ZinelyTheme.v21Colors] so that inside the sheet island it is the on-paper value in both themes.
+ * @param alpha the frozen `.el .ring{transition:opacity .15s}` fade. The caller drives
  *   it and keeps passing the *last* selection's boxes while it runs down to zero — otherwise there is
  *   nothing left to fade and the outline snaps out, which is the half of a transition that is easy to
  *   forget and impossible to see in a still.
@@ -60,7 +77,7 @@ public fun SelectionChrome(
     screenPxPerPt: Float,
     pageOffset: PtPoint,
     modifier: Modifier = Modifier,
-    color: Color = ZinelyTheme.v2Colors.matcha,
+    color: Color = ZinelyTheme.v21Colors.ink,
     alpha: Float = 1f,
 ) {
     if (alpha <= 0f) return
@@ -68,6 +85,8 @@ public fun SelectionChrome(
         val strokePx = SelectionOutlineStrokeDp.toPx()
         val insetPx = SelectionOutlineInsetDp.toPx()
         val radiusPx = SelectionOutlineRadiusDp.toPx()
+        val dashPx = SelectionOutlineDashDp.toPx()
+        val dash = PathEffect.dashPathEffect(floatArrayOf(dashPx, dashPx))
         for (t in transforms) {
             val corners = SelectionChromeGeometry.outlineDevicePx(
                 t = t,
@@ -80,20 +99,33 @@ public fun SelectionChrome(
                 path = roundedQuadPath(corners, radiusPx),
                 color = color,
                 alpha = alpha,
-                style = Stroke(width = strokePx),
+                style = Stroke(width = strokePx, pathEffect = dash),
             )
         }
     }
 }
 
-/** Frozen `.sel` `border:1.5px` (v2-bench.html `:155`). */
-internal val SelectionOutlineStrokeDp = 1.5.dp
+/** Frozen `.el .ring` `border:1.6px` (`v21-bench.html:145`). */
+internal val SelectionOutlineStrokeDp = 1.6.dp
 
-/** Frozen `.sel` `inset:-7px` — outward, in screen space (v2-bench.html `:155`). */
-internal val SelectionOutlineInsetDp = 7.dp
+/** Frozen `.el .ring` `inset:-6px` — outward, in screen space (`v21-bench.html:145`). */
+internal val SelectionOutlineInsetDp = 6.dp
 
-/** Frozen `.sel` `border-radius:6px` (v2-bench.html `:155`). */
-internal val SelectionOutlineRadiusDp = 6.dp
+/** Frozen `.el .ring` `border-radius:var(--br-sm)` (`v21-bench.html:146`). */
+internal val SelectionOutlineRadiusDp = ZinelyV21Dimens.radiusSm
+
+/**
+ * The dash period. CSS names `dashed` and specifies **no** length, so the frozen file has no number to
+ * transcribe; every browser picks its own. Chrome — the renderer the prototype is read in — draws a
+ * 1.6px dashed border at roughly `2 × width` on, `2 × width` off.
+ *
+ * Recorded rather than silently chosen, and expressed against the stroke rather than as a bare `3.2.dp`,
+ * so that a future change to the ring's weight keeps the dash in proportion instead of quietly turning
+ * it into a dotted line. [BenchStudio.KeepClearDash] records the same reasoning for the other dashed
+ * mark on this surface, and reached a different number from a different stroke width — which is the
+ * point.
+ */
+internal val SelectionOutlineDashDp = SelectionOutlineStrokeDp * 2f
 
 /**
  * The frozen `border-radius:6px` on an arbitrarily **rotated** quad. `RoundRect` cannot express this —

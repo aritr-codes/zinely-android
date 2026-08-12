@@ -78,6 +78,9 @@ class BenchStyleRowGoldenTest {
     private var deskArgb = 0
     private var matchaArgb = 0
 
+    /** The V2.1 caret ink — `--jam`. See the caret probe below. */
+    private var caretArgb = 0
+
     private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
@@ -192,6 +195,10 @@ class BenchStyleRowGoldenTest {
             ZinelyTheme(darkTheme = false) {
                 deskArgb = ZinelyTheme.colors.desk.toArgb()
                 matchaArgb = ZinelyTheme.v2Colors.matcha.toArgb()
+                // Read OUTSIDE the sheet island, so this is the room's `jam` — which the island lights to
+                // the same light value inside the page. Reading it here rather than transcribing the hex
+                // keeps the probe bound to the palette.
+                caretArgb = ZinelyTheme.v21Colors.jam.toArgb()
                 Box(Modifier.testTag(HOST_TAG).background(ZinelyTheme.colors.desk)) {
                     EditorScreen(store = store, pageSizePt = PtSize(100.0, 100.0), modifier = Modifier.size(360.dp, 720.dp))
                 }
@@ -228,27 +235,32 @@ class BenchStyleRowGoldenTest {
         assertTrue("the swatch is not seeded from the edited element's own colour",
             rowCrop.pixelCountOf(coralInk.toArgb()) > 200)
 
-        // Row 3.8 — the caret's PAINT: `--matcha`, 1.5px wide. Both were named in the frozen property
-        // table's assertion column and neither was asserted; the re-review's own mutations reverted the
-        // colour to `coralStrong` and multiplied the width by eight, and both survived the whole suite.
+        // The caret's PAINT: **`--jam`** (`v21-bench.html:161`), 1.5px wide. Both were named in the frozen
+        // property table's assertion column and neither was asserted; the re-review's own mutations
+        // reverted the colour and multiplied the width by eight, and both survived the whole suite.
+        //
+        // V2 drew it in `--matcha`, which has no V2.1 successor. `jam` is the palette's *"only urgent
+        // colour"*, and the caret is the one place on the page where it is right as chrome: the insertion
+        // point is the single mark that must never be lost, and it usually sits **on the user's own dark
+        // text**, where the action green would disappear.
         //
         // Read here rather than in a component test because the caret is drawn into the field's own
-        // `drawWithContent`, so the only honest reading is the composed frame. `Done` is also `--matcha`,
-        // which is exactly why this is scoped to the FIELD's rect and not the screen's.
+        // `drawWithContent`, so the only honest reading is the composed frame. Scoped to the FIELD's rect
+        // rather than the screen's, so no other chrome in the same hue can answer the assertion.
         val fieldCrop = cropToBounds(full, field)
         // Near-match, not exact: the caret is a 1.5px rule at a fractional x, so `drawRect` antialiases
         // both its edges and — at this width — may leave no fully-covered pixel at all. An exact-equality
         // probe found nothing and reported the caret missing when it was plainly drawn. A tolerance of 24
-        // per channel is far tighter than the distance from `--matcha` to any other colour in this rect
-        // (paper, ink, and the coral the mutation substitutes are all much further away).
+        // per channel is far tighter than the distance from `--jam` to any other colour in this rect
+        // (paper and ink are both much further away).
         fun near(p: Int, q: Int): Boolean {
             fun c(v: Int, sh: Int) = (v shr sh) and 0xFF
             return listOf(16, 8, 0).all { sh -> kotlin.math.abs(c(p, sh) - c(q, sh)) <= 24 }
         }
         val matchaCols = (0 until fieldCrop.width).filter { x ->
-            (0 until fieldCrop.height).any { y -> near(fieldCrop.getPixel(x, y), matchaArgb) }
+            (0 until fieldCrop.height).any { y -> near(fieldCrop.getPixel(x, y), caretArgb) }
         }
-        assertTrue("the caret is not drawn in --matcha inside the field (row 3.8)", matchaCols.isNotEmpty())
+        assertTrue("the caret is not drawn in --jam inside the field", matchaCols.isNotEmpty())
         // A vertical rule occupies one contiguous run of columns; its width is that run. 1.5dp at xhdpi is
         // 3px, and the tolerance is ±1px for the rule's own antialiased edge — not wide enough to admit the
         // 24px an 8× mutation produces.

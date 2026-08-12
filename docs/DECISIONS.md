@@ -6488,6 +6488,7 @@ of the ten fences D1.
 | ~~**OD-44**~~ {#adr-098-od44} | ~~**D1**~~ | ~~[D-076](design/V2-SPEC-DEFECTS.md#d-076) **sub-case C** — does V1's second paper step (`paper2`, `ZPaperSurface.kt:42`) survive into V2, and if so as what?~~ | ✅ **ANSWERED 2026-08-09 — owner ruling, disposition (a): it does not survive.** *"V2 retains **no second paper step**. The `ZPaperSurface` row takes `paper`. **No token is added and V2-TOKENS is not amended.** Retiring the `usePaper2` branch itself follows its last converted caller and is D1/D9 implementation work, not part of this ruling."* **Ground — the frozen design was inspected, and it does not contain the step.** All three frozen V2 files declare `--paper` and `--paper-edge` and **nothing between them** (`v2-library.html:19`, `v2-bench.html`, `v2-proof.html:24`, plus every `[data-theme]` block). V1's own token records the step as *"its **deeper value**, not a second job"* (`ZinelyColors.kt:60`), and the **only** caller that ever passes `true` derives it from a **title hash** — `usePaper2 = h % 2 == 1` (`ShelfCoverRecipe.kt:82`) — procedural cover variety on the V1 shelf. V2 achieves cover variety by a different mechanism entirely: the cover-ink triples and the uninked paper stock ([ADR-069](#adr-069), [ADR-072](#adr-072) Decisions 1–2). **The second paper value is therefore a V1 implementation device, not a V2 design element.** **Rejected — (b) publish a token:** it would manufacture a design token the frozen corpus never declares, against [D-020](design/V2-SPEC-DEFECTS.md#d-020-ruling)'s *"future adaptive layouts require a future frozen design rather than implementation inference"* — silence is not an invitation to interpolate. **Rejected — (c) a per-component frozen value:** there is nothing frozen to transcribe; the value exists only in V1. No ADR amended |
 | ~~**OD-45**~~ {#adr-098-od45} | ~~**D1**~~ | ~~[D-077](design/V2-SPEC-DEFECTS.md#d-077) **shadow**, 2 rows (`ZButton.kt:186`, `ZPaperSurface.kt:35`) — does [ADR-071](#adr-071)'s Bench-canonical rule extend from declared/shared tokens to a shadow authored at a shared component's use site?~~ | ✅ **ANSWERED 2026-08-09 — owner ruling, disposition (b) → (b1): it does not extend; the caller supplies the frozen shadow.** *"ADR-071's Bench-canonical rule governs **declared token definitions**. It reaches `--frame-shadow` — which is a **colour** — and stops there. It does not extend to shadow **geometry**, which the frozen corpus authors only at use sites. The value therefore arrives **from the caller**. `ZinelyV2ShadowLayer` remains a primitive with no values; **no shared shadow value is published**, and [ADR-074](#adr-074) Decision 3 stands unamended. The API shape that carries the caller's value is D1's to design and is not ruled here."* **Ground — (a) is impossible in fact, not merely undesirable.** ADR-071 Decision 3 establishes that `--frame-shadow` is real in-app chrome, and it is a colour token; **no frozen `:root` declares a shadow geometry at all**, so there is no Bench-canonical shadow *value* to inherit. Every geometry is written at its use site and they disagree — measured at HEAD: `v2-proof.html:170` `0 -20px 50px -20px`, `:197` `0 6px 14px -8px`, `v2-bench.html:322` `0 2px 5px -3px`, `:342` `0 2px 5px -2px`, `v2-library.html:103` `0 16px 30px -12px`, `:114` `0 8px 16px -10px`. Elevating any one of them to canonical would publish a de-facto shared shadow — precisely the ladder ADR-074 Decision 3 rejected after finding *"25 chrome declarations, all distinct"*. **Rejected — (b2) amend the shadow policy:** it publishes what ADR-074 declined in principle, to solve a problem the frozen corpus does not have. **Also ruled by ADR-071's own precondition:** its rule reads *"**Where Library omits** implementation tokens"* — a rule about a token one file failed to declare, not about values no file declares. **No shadow parameter is chosen here.** Implementation note, not a ruling: `ZPaperSurface` already carries `shadow` as a parameter (`:35`), so its change is a default; `ZButton.kt:186` reads inline and does not |
 | ~~**OD-46**~~ {#adr-098-od46} | ~~**D1**~~ | ~~[D-077](design/V2-SPEC-DEFECTS.md#d-077) **duration / easing**, 4 rows — does ADR-071's Bench-canonical rule extend to use-site-authored duration and easing values, which [ADR-075](#adr-075) says are not tokens and which `ZinelyV2Motion` receives as parameters?~~ | ✅ **ANSWERED 2026-08-09 — owner ruling. The two axes are ruled separately, because the architecture already separates them.** **Duration — it does not extend.** *"A duration is a **use-site frozen value**. Each caller supplies its own through `ZinelyV2Motion`'s existing `frozenMillis` parameter, and **no shared default is published**."* **Ground, and it is decisive:** ADR-071 Decision 2's rule is **conditioned** — *"Where **Library omits** implementation tokens, inherit the shared V2 token definitions from Bench"* — and for the sheet transition the Library **does not omit**: it declares its own value at the use site, `v2-library.html:155` `transition:transform **.24s** cubic-bezier(.2,.8,.2,1)`, against the Proof's `v2-proof.html:170` `transform **.34s** var(--settle)`. The precondition is not met, so applying Bench-canonical here would **overwrite a frozen Library value** — a silent redesign of a frozen surface, which the HTML-first model forbids. The `scrim` precedent is the opposite case and confirms the reading: the Library genuinely omits `--scrim`, so it inherits. **Easing — no ruling was needed, and none is made.** `--settle` and `--standard` are **declared `:root` tokens**; ADR-071's Bench-canonical rule already reaches them, [ADR-075](#adr-075) already published both, and `ZinelyV2Motion` already holds them as shared with the reduced-motion collapse. Recorded so a later session does not reopen a settled axis. **ADR-071 and ADR-075 stand unamended; no duration, easing or canonical surface is chosen here.** **One follow-up obligation, recorded rather than converted into an owner question:** `v2-library.html:155`'s curve `cubic-bezier(.2,.8,.2,1)` is **neither** `--settle` (`.05,.7,.1,1`) nor `--standard` (`.2,0,0,1`), and the Library declares neither easing token. Under this ruling that curve is a **use-site frozen value** exactly as its duration is; the package that implements the V2 Library sheet must **transcribe it rather than substitute a published easing**, or raise it as a defect. It is named here so it cannot be lost |
+| **OD-47** {#adr-098-od47} | **ADR-102 P1** | **[OD-31](#adr-098-od31) closed universally on 2026-08-12, and the surfaces living under the narrow reading were never re-swept.** `BenchPageGrid.kt:287` draws every page cell with `.background(colors.paper)` under `EditorScreen.kt:1364`'s **room** provider, so in dark every page of the user's zine is a `#2F2A22` sheet. The comment there justifies it as *"chrome over the artifact, not the artifact (D-035)"* — defensible while D-035 was scoped to the Bench sheet, and not defensible under *the artifact does not dim, **on any surface***, since a grid of the user's pages is the one screen that shows them everything they have made at once. Is the page grid the artifact or chrome? Named alongside it and **not** part of this question: `ProofFold.sheet()` (`ProofFold.kt:718`) fills the room's paper into a folded-sheet illustration that carries drawn cell numbers | ⏳ **open — does not block P1's build; blocks P1's device Pass 2 honesty.** Recommended as a **P1 sibling fix** (a provider swap, same verification surface) rather than P5's, per [ADR-102 §12.5](#adr-102-od47) |
 
 **Two questions are recorded here and are deliberately *not* ODs**, because they are answered:
 
@@ -8788,10 +8789,21 @@ The wholesale form is specifically the move that must not be copied. `ProofLitPa
 `zinelyV2LightColors()` wholesale"* — that reinstated **D-010** (`BenchStudioSurface.kt:145`;
 [`D-035`](design/V2-SPEC-DEFECTS.md#d-035), *"Eight, and not the ninth"*). The Proof escapes only by an
 accident of plumbing it documents itself: its lift comes from `ZinelyTheme.elevation`, a separate
-CompositionLocal. **The Bench's does not** — `BenchStudio.pageShadowLayers(colors)` reads the scheme, and
+CompositionLocal. **The Bench's does not** — `BenchStudio.pageShadowLayers(colors)` read the scheme, and
 `ZinelyV21Colors` carries `softShadow` and `contact` whose values differ by theme. Adopt the Proof's mechanism
 literally on the Bench and the sheet's shadow lights up: D-010, a third time, in the package whose entire
 purpose is not to re-break D-035.
+
+> ⚠️ **The conclusion holds; the tokens named here are the wrong ones, and `pageShadowLayers` no longer
+> exists.** P1 deleted it: the V2.1 page casts a *hard* offset shadow in `inkLine`, so `softShadow` and
+> `contact` are not used by this surface at all and the hazard token is **`inkLine`** — which appeared
+> nowhere in this ADR before [§12.1](#adr-102-island-v21). Past tense above, and the correction there.
+
+> ⚠️ **The table below is WITHDRAWN — superseded by [§12.1](#adr-102-island-v21), 2026-08-12.** It maps the
+> tokens `v2-bench.html`'s `.page` re-declared, and was written without opening `v21-bench.html`, whose page
+> paints a different set. Four of its eight rows have no V2.1 use at all, and the hazard token is `inkLine`,
+> not `softShadow`/`contact`. The **rulings** above and below it stand; only the destinations move. Kept
+> because the route to the correction is the finding.
 
 **The eight destinations, named** — the acceptance test in item 1 below is unusable until they are:
 
@@ -8926,14 +8938,14 @@ reason is that everything else stands on the ground.
 
 | Package | Region | Chief risk |
 |---|---|---|
-| **P1** | **The ground and the page** — `BenchStudioSurface`, `EditorPagePreview`, `SelectionChrome`, `SnapGuides`, `ResizeHandles`, `BenchEditingSurface`, `BenchSelectionFocus`. **Both islands stay**; the page moves to V2.1 with the light palette provided over it | D-035 is the whole package; `EditorPageLegibilityProbeTest` must stay green, not be re-baselined |
-| **P2** | **The three freeze changes that are not paint** ([§6](#adr-102-structural)) — page-lift deletion, keep-clear trigger and warn state, `.guideV` trigger. The unselected dim is **not** here: it ships already, and V2.1 only moves its alpha `.4 → .5` — that lands in P1 | each reverses or deletes a ruled behaviour; **each needs a ruling before it is built** |
+| **P1** | **The ground and the page** — `BenchStudioSurface`, `EditorPagePreview`, `SelectionChrome`, `ResizeHandles`, `BenchEditingSurface`, `BenchSelectionFocus`. **Both islands stay**; the page moves to V2.1 with the light palette provided over it. ⚠️ `SnapGuides` and `BenchKeepClear` **moved to P2** — [§12.3](#adr-102-p1-recut); the ground token is `bench`, not `paper` — [§12.6](#adr-102-p1-corrections) | D-035 is the whole package; `EditorPageLegibilityProbeTest` must stay green, not be re-baselined — and P1 **owns its host**, so [§12.6](#adr-102-p1-corrections) governs how it may be edited |
+| **P2** | **The three freeze changes that are not paint** ([§6](#adr-102-structural)) — page-lift deletion, keep-clear trigger and warn state, `.guideV` trigger — **plus those two composables entire**, colour and trigger together ([§12.3](#adr-102-p1-recut)). The unselected dim is **not** here: it ships already, and V2.1 only moves its alpha `.4 → .5` — that lands in P1 | each reverses or deletes a ruled behaviour; **each needs a ruling before it is built** — including the `butter` guide's 1.73:1 ([§12.6](#adr-102-p1-corrections) row 4) |
 | **P3** | **Bottom chrome** — `BenchBottomBar`, `BenchPageNav` + thumbs, `BenchStyleRow` (incl. `.kbstack`, and the `.sw` swatch seeded from the element's own ink) | filmstrip auto-centre is arithmetic; `benchThumbIsland` stays under OD-23 |
 | **P4** | **Popovers** — `BenchContextBar`, `BenchInkPopover`, `BenchSnack`, `BenchAddChooser` **including `.supply`/`.opt` content**, not just the sheet shell | the verb bar must stay flat and quiet; the `roomColors` opt-outs must keep opting out |
-| **P5** | **Page grid** — `BenchPageGrid` | `BackHandler` is an Android addition the freeze cannot specify |
+| **P5** | **Page grid** — `BenchPageGrid` | `BackHandler` is an Android addition the freeze cannot specify. ⚠️ **and the grid dims the artifact today** — [OD-47 / §12.5](#adr-102-od47), open, recommended as a P1 sibling fix |
 | **P6** | **The V1 remnants** — `ReframeControls` (25), `TypeBar` (16), `ReframeOverlay`, `EditorEmptyState`'s blobs, `EditorScreen`'s Preview action, and the **five** adjacent editor files enumerated in [§4](#adr-102-remnants). The fifth is **`EditTextSession`** — the inline text-edit surface (`.tx`, `.caret`, `.doneEdit`, `.el.editing`), which the previous draft named in P7's golden list while converting it in no package at all | `TypeBar` **must not** move into the canvas Column — infinite recomposition. `EditTextSession.kt:103`'s `cursorColor` is a live V1 binding on the one surface where an invisible caret is unrecoverable |
 | **P7** | **Citations, tests, rasters** — re-point the citations at the scope [§2](#adr-102-audit) states, re-baseline the colour-pinning tests, record the goldens **once** | **not 16.** That is a filename-prefix count; the affected families include `selection_chrome_*`, `resize_handles`, `preview_*`, `editor_*`, `type_bar`, `reframe_controls`, `edit_text_session` |
-| **P8** | **The shared shell** — retire `zinelyShadow`/`ZinelyShadowLayer` to `zinelyV21HardShadow`, convert `ZSheet` | cross-surface: Library **and** Proof re-skin with it ([§10.2](#adr-102-open)) |
+| **P8** | **The shared shell** — retire `zinelyShadow`/`ZinelyShadowLayer` to `zinelyV21HardShadow`, convert `ZSheet` | cross-surface: Library **and** Proof re-skin with it ([§10.2](#adr-102-open)). ⚠️ P1 **calls `zinelyV21HardShadow` directly** and does not wait for this package — [§12.4](#adr-102-p1-shadow) |
 
 **The three rules the re-skin must not break**, from the freeze's own banner: **the page never tilts**;
 **the contextual verb bar is flat and quiet** — no offset shadow, no tape, no rotation, because it is a tool
@@ -9067,3 +9079,258 @@ plus a code map, without reading the rulings, was on course to un-learn it.
 **And the second lesson, which cost more:** when two derivations of one rule converge, that is not evidence
 the rule is right. It is a prompt to find out whether one of them is *the other one, cited back to itself*.
 Here it was — and the owner decision underneath both, [OD-31](#adr-098-od31), had been open the whole time.
+
+### 12. The P1 handoff review — what §3 and §8 could not carry {#adr-102-p1-handoff}
+
+**Status: `Accepted` — 2026-08-12, before any P1 code.** Two independent Review Agents (evidence lens;
+completeness lens) were dispatched against the tree when P1 was picked up, and both returned **NO-GO** on
+*"ADR-102 as written is a sufficient handoff to implement P1."* They were right, and the cause is one
+sentence: **§3's rulings were derived from `v2-bench.html` and a code map, and were never checked against
+`v21-bench.html`.** That is the third time in this ADR's life that the target file went unread — the first
+two cost a NO-GO each, and this one would have cost a shipped defect.
+
+This section supersedes §3's destination table and amends §8. Everything else in §3 — the ruling that the
+island stays, and the ruling that the wholesale form must not be copied — **survives unchanged**, and §12.1
+strengthens the second one.
+
+#### 12.1 — The island's tokens, re-derived from the frozen V2.1 file {#adr-102-island-v21}
+
+**§3's table is withdrawn.** Its eight rows are the tokens `v2-bench.html`'s `.page` re-declared. The V2.1
+page paints with a different set, and four of §3's rows have no V2.1 use at all:
+
+| §3 row | Fate against `v21-bench.html` |
+|---|---|
+| `paper → paper` | ✅ stands (`:127`) |
+| `ink → ink` | ✅ stands, and grows — `ink` is now the page **border** (`1.5px`, `:128`), the selection ring (`:145`) and the handle border (`:148`) |
+| `inkSoft → inkSoft` | ✅ stands (`.pagenum`, `:133`) |
+| `paperEdge → paperEdge` | ❌ **unused.** The V2.1 page border is `ink`, not `paperEdge` |
+| `inkFaint → inkFaint` | ❌ **unused.** The keep-clear is `berry`, not `inkFaint` |
+| `matcha → leaf` | ❌ **the mark no longer exists.** Nothing in the V2.1 page region uses `leaf` except the sticker stand-in |
+| `matchaText → leafText` | ❌ **unused.** `leafText` appears only on `.saved`, which is room chrome |
+| `strawberryText → none` | ✅ stands — deleted, as recorded |
+
+**The V2.1 island is these eight**, and they are *derived*, not transcribed: the colour tokens referenced
+inside the frozen file's own `the canvas` section (`v21-bench.html:124–165`, bounded by its section
+banners), less the shadow.
+
+| Token | Where it lands on the page |
+|---|---|
+| `paper` | the sheet (`:127`); the handle fill (`:148`) |
+| `ink` | the page border (`:128`); the selection ring (`:145`); the handle border (`:148`) |
+| `inkSoft` | `.pagenum` (`:133`) |
+| `berry` | `.keepclear` (`:136`) |
+| `butter` | `.guideV` (`:138`) — see §12.6 row 4, this one is contested |
+| `jam` | `.caret` (`:161`) |
+| `leaf` | `.sticker` (`:158`) |
+| `berryTint` | `.photo` (`:157`) |
+
+`leaf` and `berryTint` reach the island through prototype **content stand-ins** rather than through a live
+Compose surface — the real equivalents come from the theme-free render tape, or from P6. They are islanded
+anyway, because the island is a property of the *subtree*, not a list of today's call sites: a future mark
+that reaches for `leaf` on paper must get the lit value without anyone having to remember this table.
+
+**`inkLine` is excluded, and it is the ninth token this time.** The V2.1 page's shadow is
+`box-shadow:var(--hard) var(--hard) 0 var(--ink-line)` (`:129`) — a hard offset shadow that falls on the
+**bench**, not on the paper. `inkLine` is `#33261C` light and `#120E0A` dark; lighting it inside the island
+would put a `#33261C` shadow on a `#211B15` worktop, which is **D-010** — *a glow where a contact shadow
+belongs* — for the third time, in the package whose purpose is not to re-break D-035.
+
+So §3's mechanism warning was right and its named cause was stale. §3 warns about `softShadow` and
+`contact`; the V2.1 page uses **neither**. `inkLine` does not appear anywhere in ADR-102 before this
+section. The warning stands, re-aimed: **the hazard token is `inkLine`.** `softShadow` and `contact` remain
+excluded on the same principle and are now simply unused by this surface.
+
+#### 12.2 — The acceptance test is derived, not declared {#adr-102-p1-test}
+
+`BenchStudioSurfaceTest`'s both-directions test compares the Compose island against the tokens
+`v2-bench.html`'s `.page` **declares**. `v21-bench.html:127-132` declares none — the V2.1 file was drawn
+without a light-island block, because the freeze was drawn before OD-31 closed. Pointed at V2.1 as written,
+that test derives an empty expected set and **passes only if the island changes nothing**.
+
+The obvious fix — amend the frozen file to add a `.page` custom-property block — is rejected. It would
+amend a frozen design file for no reason except to give a test something to read, and it would leave the
+same hand-maintained list in two places.
+
+**Ruling: the test derives the expected set from the frozen file's page region** (`the canvas` section
+banner to the next banner), filtering `var(--…)` to colour tokens and subtracting `inkLine`. This is
+strictly better than what V2 had: it tracks the freeze automatically, it needs no amendment, and a token
+added to the page region tomorrow fails the build without anyone editing a list. **No amendment to
+`v21-bench.html` is required by P1**, and the ADR's earlier expectation that one would be is withdrawn.
+
+#### 12.3 — P1 and P2 are re-cut, because as drawn they block each other {#adr-102-p1-recut}
+
+`v21-bench.html:136-140`: `.keepclear` and `.guideV` both rest at `opacity:0` and are revealed *only* by
+`.content.focusing~…` at `.85`, with **one colour each and no warn state**. The shipped composables have a
+resting state, and the keep-clear has a `strawberryText` warn.
+
+§8 put those two files in P1 and their trigger changes in P2. There is no paint-only conversion between
+those two facts: P1 must either pre-empt P2 or invent a resting state the freeze does not have. §3's own
+table makes the circularity explicit — it deletes `strawberryText` *citing §6 row 2*, which is P2's.
+
+**Ruling: `BenchKeepClear` and `SnapGuides` leave P1 and land whole in P2**, colour and trigger together.
+P1 keeps their *island membership* (`berry`, `butter` above) so that P2 inherits a lit sheet and changes
+only behaviour. P1's file list is therefore **`BenchStudioSurface` (less the keep-clear composable),
+`EditorPagePreview`, `SelectionChrome`, `ResizeHandles`, `BenchEditingSurface`, `BenchSelectionFocus`.**
+
+This is the same shape as RF5 in §11: a row was placed by what it *looked* like rather than by what it
+would take to build, and the boundary is what pays.
+
+#### 12.4 — The hard-shadow helper moves into P1 {#adr-102-p1-shadow}
+
+The V2.1 page's shadow is `zinelyV21HardShadow` (`ZinelyV21Depth.kt:50`), and §8 lists that seam's
+conversion as **P8** — last. §8's stated ordering rule is *"everything else stands on the ground"*, and the
+ground's shadow was scheduled to ship after everything standing on it.
+
+`zinelyV21HardShadow` **already exists and is already used by the Library's V2.1 surfaces**, so nothing has
+to be built. **Ruling: P1 calls it directly.** P8 keeps what it was actually for — retiring `zinelyShadow` /
+`ZinelyShadowLayer` and converting `ZSheet` — and shrinks by one line of prose, not by a deliverable.
+
+#### 12.5 — OD-47: `BenchPageGrid` dims the artifact, today {#adr-102-od47}
+
+⏳ **Open — owner's.** [`BenchPageGrid.kt:287`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/BenchPageGrid.kt)
+draws every page cell with `.background(colors.paper)` under
+[`EditorScreen.kt:1364`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt)'s
+**room** provider, so in dark every page of the user's zine is drawn as a `#2F2A22` sheet.
+
+The comment above that provider justifies it: *"this is chrome over the artifact, not the artifact
+(D-035)"*. Under **D-035** that reading was defensible, because D-035 was scoped to the Bench sheet and a
+grid is not that sheet. Under **OD-31 — *the artifact does not dim, on any surface*, closed 2026-08-12** —
+it is not: a grid of the user's pages **is** the artifact, and it is the one screen that shows the user
+every page they have made at once.
+
+This is exactly the failure mode §11's lesson names. The rule was generalised on 2026-08-12; the surfaces
+that had been living under the *narrow* reading were never re-swept, and this one was found only because
+P1's review was told to ask what *other* surface draws the same thing.
+
+**Recommendation: fix in P1 as a sibling**, not in P5. It is a provider swap, it is on the same
+device-verification surface, and the alternative is shipping a package titled *"D-035 is the whole
+package"* alongside a live OD-31 violation two taps away. **But it is a product call about what counts as
+the artifact, and after this ADR's history it is not being settled in a subordinate clause.**
+
+`ProofFold.sheet()` (`ProofFold.kt:718`) has the same shape and is already on record; it is not P1's, and
+it is named here so the sweep is not lost.
+
+#### 12.6 — Corrections of record {#adr-102-p1-corrections}
+
+Neither review found these decisive, and all of them would have cost time on a device:
+
+1. **The Bench's ground is `bench`, not `paper`.** `v21-bench.html:108` — `.phone{background:var(--bench)}`.
+   `BenchStudioSurface.kt:313`'s KDoc insists at length that the Bench's ground is paper *"and reading one
+   for the other is the mistake this comment exists to prevent"*. True of V2; false of V2.1. This is the
+   change that makes the island **visible for the first time** — today ground and sheet are the same
+   colour, so the boundary is nearly invisible, and under `bench` the room genuinely darkens around a lit
+   sheet. Every chrome/artifact boundary in §9 gets its stakes raised by that one token, and §9 does not
+   say so.
+2. **The page's border and radius change materially.** `1px paperEdge` → `1.5px ink`, and the radius
+   becomes **asymmetric** — `4/14/14/4`, a spine (`:128`). `BenchStudio.PageShape` is a single-value
+   `RoundedCornerShape` and its test pins `px(".page","border-radius")`; the shape type, the test and the
+   grain clip all change. §6 asserts the freeze makes exactly three non-paint changes. It makes more.
+3. **The page's grain changes material, tile, blend and strength.** V2.1 is `ZinelyV21Grain` at 130dp /
+   `multiply` / `.35`; the screen's is 160dp / `soft-light` / `.45`. The shipped values are 120dp/`.45` and
+   150dp/`.35` — **the two alphas swap**. Named in no package's file list.
+4. **`.guideV` is `butter`, and V2.1's own spec forbids it.** [V21-SPEC §3.2](design/V21-SPEC.md) and
+   `ZinelyV21Colors.kt:112` both say butter carries *"no action, no text, and no state alone"*, and
+   `ZinelyV21ContrastTest.kt:144` pins `butter/paper` at **1.73:1** with the comment that butter alone
+   never clears 1.4.11. A lone dashed butter guide on paper carries a state — *this snap fired* — at
+   1.73:1. **This is a freeze-versus-spec conflict, not an implementation choice**, and it goes to P2 with
+   §12.3 rather than being resolved by whoever paints the line first.
+5. **The handle loses its halo, and changes shape.** `v21-bench.html:148` is a **9px rounded square**,
+   `paper` filled, `1.6px ink` bordered, with no `box-shadow` halo. The shipped 13dp circle carries a
+   `rgba(255,255,255,.7)` ring whose KDoc cites
+   [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) — *"handles use a dual-tone/halo stroke to hold **3:1** over
+   any user photo"*. A handle sits on the user's photograph, where **no token can be guaranteed**; that is
+   the whole reason the halo exists. Dropping it to match the CSS trades a measured a11y guarantee for
+   fidelity, which is the exact trade the owner's priority order puts **accessibility above**. **Ruling:
+   P1 takes the freeze's size, shape and tokens, and keeps the halo**, recorded as a deliberate departure
+   in the same family as the eight handles OD-11 preserved against a four-handle freeze.
+6. **`.pagenum` moves** top-right → bottom-right (`:133`).
+7. **Three §9 citations have drifted, and one is wrong.** `BenchStudioSurface.kt:145` is `KeepClearDash`;
+   the page-shadow exclusion is `:147-151`. `EditorScreen.kt:1514` is off by three; the ink swatch is
+   `:1517`. And `EditorScreen.kt:1512` reads `ZinelyTheme.v2Colors` **freshly**, not the hoisted
+   `roomColors` — §3 and §9 both describe all four opt-outs as one value flowing to four places. It does
+   not. Same result today; a rename sweep misses that one silently, which is precisely the defect §9 exists
+   to prevent.
+8. **§8 P7's golden families over-count P1 by eight.** `preview_*` (7) and `styled_block_preview` are
+   hosted by `PagePreview` — the theme-free `drawIntoCanvas` replay of the `core:render` tape — not by
+   `EditorPagePreview`. They carry no theme colour and P1 cannot invalidate them. **P1 re-records 8–10
+   rasters** (`selection_chrome_*` ×3, `resize_handles_*` ×2, `editor_screen_*` ×2,
+   `bench_editing_state_light`, and probably `editor_empty_state_*` ×2). Re-recording the other eight would
+   launder an unrelated change through record mode — the trap this corpus has already named twice.
+   **What actually shipped is nine, and the composition differs from that prediction**: it includes
+   `bench_page_grid_open_light` (the grid hosts the sheet, which is exactly the cross-surface hit this
+   package kept failing to anticipate) and excludes both `editor_empty_state_*` (the empty state paints no
+   sheet). The count was right for the wrong reasons; the list is corrected here rather than in prose.
+
+9. **The filmstrip is a named P1→P3 interim state.** `BenchPageGrid`'s thumbnails and the sheet now draw
+   the same artifact in two vocabularies: the sheet takes the V2.1 `1.5px ink` border and the hard shadow,
+   the thumbnails keep V2's hairline and soft shadow. Their *papers* differ by 1.04:1, which is
+   imperceptible and not the point — the **marks** differ, and a reader comparing a thumbnail to the page it
+   names sees two eras of the same drawing. P1 does not fix it: `BenchPageGrid` is P3's, and re-skinning it
+   from inside P1 is how this session has repeatedly reproduced a defect one layer over. It is recorded here
+   so P3 inherits it as work rather than discovering it as a regression.
+10. **Two colour probes in the test suite were falsified by the re-skin, and the second one by P1's own
+    fix.** `BenchC3Test.the_canvas_clips_whatever_leaves_it` asserted the canvas clips by hunting a token
+    colour above the canvas: first `--matcha` (justified by *"nothing else up there is greenish"* — P1's
+    `leafText` recolour then walked 32 antialiased label pixels through the ±24 window), then `--paper`
+    (justified by *"the brightest thing the canvas holds"* — V2.1 puts `background:var(--paper)` on the
+    chrome above the canvas, so it found 1460 pixels of top bar). **A probe whose discriminator is "nothing
+    else on screen is this colour" cannot survive a re-skin, because chrome and artifact share one palette
+    by design.** The test now rasterises twice — element held, element deleted — and asserts the rows above
+    the canvas are identical, which is what the claim always meant and is true in any palette. Worth
+    generalising: the same shape of probe appears elsewhere in the corpus.
+
+#### 12.7 — Review record {#adr-102-p1-review}
+
+| Round | Lens | Verdict | What it was for |
+|---|---|---|---|
+| P1 handoff | **Evidence** — falsify each claim against the frozen file and the tree | **NO-GO** | found §3's table describes no V2.1 surface, and that `inkLine` — the only theme-divergent token the V2.1 page reads — appears nowhere in the ADR |
+| P1 handoff | **Completeness** — what does P1 drop; what other surface draws the same thing | **NO-GO** | found P1↔P2 mutually blocking, P1 depending on P8, and **OD-31 being violated today by `BenchPageGrid`** |
+| P1 diff | **Evidence** — validate the tree, treat KDoc as untrusted | **GO WITH FIXES** | four Required Fixes, all applied: `TextStyle(…)` discarding `LocalTextStyle.current`, and three stale KDoc claims |
+| P1 diff | **Consistency** — does P1 diverge from the Library/Proof idiom, and what else draws this | **GO WITH FIXES** | P1 *converges*; surfaced the filmstrip interim state (§12.6 row 9) and the hand-transcribed ring/handle constants |
+
+**Test evidence.** `:feature:editor:testDebugUnitTest` in **verify** mode: 760 tests, 0 failures, 1 skipped.
+The nine rasters P1 touches were recorded with `-Proborazzi.test.record=true`, inspected, and then re-run
+in verify mode without the record flag — recorded goldens are not assertions until a verify run says so.
+`EditorPageLegibilityProbeTest` and the island's both-directions test were green throughout and were never
+re-baselined; both exist to fail if the artifact dims, and neither was permitted to move.
+
+**Device verification: both passes run 2026-08-12 on RZCYA1VBQ2H (SM-A176B, Android 16), and P1's scope
+passes both** — [full report](reviews/2026-08-12-adr-102-p1-device-verification.md). Every constant P1
+transcribes was re-measured from the raster: the sheet is `paper` **in dark theme** on a `bench` ground,
+with an `ink` border and a `4dp` `inkLine` shadow that correctly follows the room (dark `#120E0A`, light
+`#33261C`); the page number is bottom-right in `inkSoft`; the ring is dashed `ink`; the handles are 9.1dp
+rounded squares filled exactly `paper`, carrying the retained halo; the caret is `jam`; and the
+unselected dim measures **α = 0.49**, decisively `.5` and not `.4`.
+
+**Bounded, and the bounds are in the report.** Only the ground, the shadow and the dim were read in both
+themes — one light raster exists and it has a live selection. At 2.625 px/dp the raster cannot separate
+1.5dp from 1.6dp, so the border and ring rows certify presence and colour, not width. And the pass raised
+a parity question rather than closing one: the handles are centred on the element's corner, ~5.5dp from
+where `box-sizing:border-box` puts the freeze's.
+
+Three things the device added that the suite could not:
+
+1. **OD-47 is confirmed, measured.** In dark theme the page grid draws every page as a dark slab
+   (`(50,45,37)`) while the filmstrip forty pixels below draws the same pages as paper (`(247,242,231)`).
+   The grid cannot answer *"which page do I want?"* in dark. Light theme is fine. P1 neither caused nor
+   worsened it — `bench_page_grid_dark.png`, a golden **P1 did not touch**, already carries the defect at
+   §12.5's stated value. It blocks **P3**, and it is the strongest argument yet for taking §12.5's ruling.
+2. **The focus wash covers the page's own border and page number**, dimming both to 0.5 with the
+   unselected elements. Pre-existing (`BenchFocusScrim` has always washed the whole page), but invisible
+   until P1 gave the page a real border — P1 *revealed* it. Routed to **P2**; narrowing the wash is a
+   behaviour change needing a ruling, not a value edit.
+3. **The platform a11y tree carries three unbooked defects** beyond [ADR-059](#adr-059)'s known Role→View
+   one: the entire nudge/transform pad reports `clickable=false` while `enabled=true` (ADR-058's
+   `ZoomButton` shape, one screen over); the filmstrip splits label from action — the `clickable="true"`
+   ancestor carries no `content-desc` while the labelled child carries no action, and the *current* page
+   has no clickable node at all; and `Bring forward` is clipped to 12dp at the screen edge. None are P1's;
+   all three need booking. ⚠ A first draft of this list claimed the filmstrip thumbnails failed **WCAG
+   2.5.8** at 26×34dp. That was wrong twice over — the targets are the 33×48dp ancestors, and 2.5.8's AA
+   threshold is 24×24 CSS px, not 48dp (48dp is Material guidance; 44×44 is AAA 2.5.5). Recorded because
+   a false normative accessibility citation in this log is worse than a missing one.
+
+**The lesson this section adds** is narrower than §11's and cost less, because it was paid by a review
+rather than by a device: §11 taught that a re-skin planned without reading the *rulings* un-learns them.
+§12 is the same failure one file over — a re-skin planned without reading the *target* file. §3 read
+`v2-bench.html` carefully enough to catch itself twice, and then wrote a table of destinations for a
+surface it had not opened.

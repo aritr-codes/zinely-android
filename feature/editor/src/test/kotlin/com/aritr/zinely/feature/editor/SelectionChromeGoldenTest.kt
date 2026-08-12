@@ -29,6 +29,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.core.render.SceneRenderer
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlin.math.ceil
@@ -84,6 +85,9 @@ class SelectionChromeGoldenTest {
          * puts in the hundreds, while a blank page leaves none.
          */
         const val CHROME_MATCHA_PIXELS = 100
+
+        /** The dashed ink ring's flat core, measured off the real capture. See [countInkRing]. */
+        const val CHROME_RING_PIXELS = 40
 
         // AA stroke edges (rotated outline, guide lines) jitter a fraction of pixels run-to-run; the same
         // committed tolerance RasterGoldenTest.aa() uses absorbs that without masking a placement bug.
@@ -186,6 +190,36 @@ class SelectionChromeGoldenTest {
         return n
     }
 
+    /**
+     * Count of pixels carrying the V2.1 selection ring's exact ink.
+     *
+     * **The discriminator changes kind, not just value.** V2's `--matcha` was an *olive* and had to be
+     * proved by a hue signature, because AA blending moved it far enough that no exact match survived.
+     * V2.1's ring is `--ink` (`#33261C`) — the darkest thing the palette has, and the same colour the
+     * page's own body text is set in. A hue predicate would therefore count the **content** as well as
+     * the chrome and pass with the ring deleted.
+     *
+     * So this counts pixels **near** the ring's own ink, which the content cannot supply: the sheet's
+     * text is rendered by the export tape at the model's own colour (black), and `#33261C` is more than
+     * the tolerance away from it on every channel. The island guarantees the token is the light value
+     * here in both themes, which is what makes comparing against a fixed hex legitimate at all.
+     *
+     * **Near, not exact, and the axis-aligned case is why.** An exact-colour probe saw **10** pixels on
+     * the unrotated ring and comfortably more on the rotated one — because a 1.6dp stroke landing on
+     * fractional coordinates splits across two pixel rows and antialiases *both*, so a straight segment
+     * may have no fully-covered pixel anywhere along it while a diagonal one does. Reading that as "the
+     * ring is missing" would have been exactly backwards. The tolerance is the same ±24 the caret probe
+     * uses, for the same reason and against a wider margin.
+     */
+    private fun Bitmap.countInkRing(): Int {
+        val ink = zinelyV21LightColors().ink.toArgb()
+        fun near(p: Int): Boolean =
+            listOf(16, 8, 0).all { sh -> kotlin.math.abs(((p shr sh) and 0xFF) - ((ink shr sh) and 0xFF)) <= 24 }
+        var n = 0
+        for (y in 0 until height) for (x in 0 until width) if (near(getPixel(x, y))) n++
+        return n
+    }
+
     @Test
     fun axis_aligned_selection_outline() {
         val bmp = pageBitmap { m ->
@@ -197,13 +231,14 @@ class SelectionChromeGoldenTest {
                 modifier = m,
             )
         }
-        // C2a (ADR-091 row 2.3) re-skinned this stroke: 2dp `--coral-strong` on the box edge became
-        // 1.5dp `--matcha` 7px outside it. The token is what this assertion pins; the threshold is lower
-        // than the old 50 because a 1.5dp stroke has a correspondingly thinner flat-colour core, and the
-        // number below is measured off the real capture rather than derived from the width.
+        // ADR-102 P1 re-skinned this stroke again: 1.5dp solid `--matcha` 7px outside the box became
+        // 1.6dp **dashed** `--ink` 6px outside it — the freeze's own rule that selection is a hand-drawn
+        // dashed ring, never a system box. The token is what this assertion pins; the threshold is lower
+        // than the solid stroke's because a dash paints roughly half the perimeter, and the number is
+        // measured off the real capture rather than derived from the width.
         assertTrue(
-            "selection outline did not paint the matcha token on the page (saw ${bmp.countMatchaGuide()})",
-            bmp.countMatchaGuide() > CHROME_MATCHA_PIXELS,
+            "selection outline did not paint the ink token on the page (saw ${bmp.countInkRing()})",
+            bmp.countInkRing() > CHROME_RING_PIXELS,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_axis_aligned.png", aa())
     }
@@ -220,8 +255,8 @@ class SelectionChromeGoldenTest {
             )
         }
         assertTrue(
-            "rotated selection outline did not paint the matcha token on the page (saw ${bmp.countMatchaGuide()})",
-            bmp.countMatchaGuide() > CHROME_MATCHA_PIXELS,
+            "rotated selection outline did not paint the ink token on the page (saw ${bmp.countInkRing()})",
+            bmp.countInkRing() > CHROME_RING_PIXELS,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_rotated.png", aa())
     }

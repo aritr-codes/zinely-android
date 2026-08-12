@@ -32,11 +32,16 @@ import org.robolectric.annotation.GraphicsMode
  * **The dim is an arithmetic claim, so it is tested as one.**
  *
  * [ADR-091 §2.1](../../../../../../../../../docs/DECISIONS.md#adr-091) accepts a `--paper` wash in place of
- * the frozen per-element `opacity:.4` on exactly one ground: over paper, CSS `opacity:.4` composites to
- * `0.4·element + 0.6·paper`, and a 60 % paper wash produces the **same pixel**. If that is true the
+ * the frozen per-element opacity on exactly one ground: over paper, CSS `opacity:x` composites to
+ * `x·element + (1−x)·paper`, and a `(1−x)` paper wash produces the **same pixel**. If that is true the
  * substitution is exact; if it is off by one step it is a different design wearing the spec's name.
  *
- * So these tests do not assert that a scrim exists, that its alpha field is `0.6f`, or that a composable
+ * ADR-102 P1 moved the freeze from `.4` to **`.5`** (`v21-bench.html:153`), which makes `x` and `1−x`
+ * the same number *for this one value*. The two are still different quantities and are still written
+ * separately here — collapsing them would make the test agree with a wash that had stopped being the
+ * complement, and it would do so silently the next time the freeze moves.
+ *
+ * So these tests do not assert that a scrim exists, that its alpha field matches a constant, or that a composable
  * was called — a test that rebuilds the production constant cannot fail (the corpus's rule 2). They
  * rasterise the composite and compare the **landed pixel** against the number CSS would have produced,
  * computed independently here from the frozen `.4`.
@@ -62,8 +67,17 @@ class BenchSelectionFocusTest {
         /** The desk the sheet sits on: the V2 dark room, where the escaped wash was most visible. */
         val DESK = Color(0xFF2F2A22)
 
-        /** The frozen `.content.focusing .el:not(.sel-focus){opacity:.4}` — the spec value, not the wash. */
-        const val FROZEN_ELEMENT_OPACITY = 0.4f
+        /**
+         * The frozen `.content.focusing .el:not(.selected){opacity:.5}` (`v21-bench.html:153`) — the
+         * spec value, **not** the wash.
+         *
+         * V2.1 lifted it from `.4`, so the complement lifted with it and the two now happen to be the
+         * same number. That coincidence is why this constant stays separate from `BenchFocusDimAlpha`:
+         * collapsing them would be right for exactly one value of the freeze, and the whole point of
+         * this test is that the wash is the *complement* of the element's opacity rather than equal
+         * to it.
+         */
+        const val FROZEN_ELEMENT_OPACITY = 0.5f
     }
 
     /**
@@ -180,10 +194,10 @@ class BenchSelectionFocusTest {
 
     /**
      * **Row 2.8, the decisive one.** The dimmed element's landed pixel must equal what the frozen
-     * `opacity:.4` would have produced. The expectation is computed from `0.4` and the *undimmed* pixels
-     * measured in the same run, so it cannot drift with the production constant.
+     * `opacity:.5` would have produced. The expectation is computed from [FROZEN_ELEMENT_OPACITY] and the
+     * *undimmed* pixels measured in the same run, so it cannot drift with the production constant.
      *
-     * Mutation: `BenchFocusDimAlpha` 0.6 → 0.4 fails by ~40 per channel; → 0f fails by ~100.
+     * Mutation: `BenchFocusDimAlpha` 0.5 → 0.4 or → 0.6 fails by ~25 per channel; → 0f fails by ~100.
      */
     @Test
     fun `a dimmed element lands on exactly the pixel the frozen opacity would have produced`() {

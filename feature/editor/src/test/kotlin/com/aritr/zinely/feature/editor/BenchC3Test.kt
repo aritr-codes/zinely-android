@@ -305,9 +305,15 @@ class BenchC3Test {
         // modifier deleted, which is the definition of decoration.
         //
         // The overflow used is real product content rather than a contrived one: on SNUG the sheet FILLS
-        // the canvas, so a selected element sitting at the page's TOP edge puts half of each matcha resize
-        // handle above the canvas — over the `Preview` bar. That is the same defect the panned page
-        // produced on device (paper on the chrome), in the one direction Robolectric can be made to show.
+        // the canvas (`centreOffset.y` is `coerceAtLeast(0.0)`, so page-top == canvas-top), and a selected
+        // element sitting at the page's TOP edge puts its **selection chrome** above the canvas — the ring
+        // at `SelectionOutlineInsetDp` 6dp, and half of each 12dp handle halo — over the `Preview` bar.
+        // That is the same defect the panned page produced on device (paper on the chrome), in the one
+        // direction Robolectric can be made to show.
+        //
+        // ⚠ P1 shrank the halo envelope 16dp → 12dp, so the headroom this test works in fell from ~8dp to
+        // ~6dp. It is still several pixel rows, but a package that shrinks the chrome again should re-read
+        // this test rather than assume it still has something to see.
         //
         // The direction is not a detail, and the first cut got it wrong. Aimed DOWNWARD the test was pure
         // decoration and the `clipToBounds()` mutation survived it: the supply sheet is a later sibling in
@@ -322,35 +328,58 @@ class BenchC3Test {
         // overflowing, which needs the pan to exceed the slack, which needs the clearance term, which needs
         // an IME. Robolectric has none. That is
         // [device checklist](../../../../../../../docs/DECISIONS.md#adr-093-device-checklist) item 10.
+        //
+        // **The probe is a DIFFERENCE, not a colour — and it is the third probe this test has had.** Two
+        // palette probes were falsified in a row, and the pattern is the finding:
+        //
+        //  - `--matcha` +/-24, justified as *"above the canvas the only things drawn are the `Preview`
+        //    bar's dark ground and its coral label."* P1 recoloured that label to `leafText` `#3E6330`
+        //    for an unrelated contrast fix and its antialiased edges walked through the window: 32 false
+        //    hits on a canvas that clips correctly.
+        //  - `--paper` +/-24, chosen as *"the brightest thing the canvas holds against the darkest thing
+        //    above it."* V2.1 writes `background:var(--paper)` on the chrome above the canvas too, so the
+        //    probe found 1460 pixels of top bar and called them spill.
+        //
+        // Any probe whose discriminator is *"nothing else on screen is this colour"* is one re-skin away
+        // from lying, in either direction, because chrome and artifact share one palette by design. So the
+        // screen is rasterised twice — once holding the overflowing element, once after deleting it — and
+        // the claim becomes what it always meant: **the element's presence must change nothing above the
+        // canvas.** That is true in every palette, and it needs no theory about what else is on screen.
         val store = store()
-        placedText(store, box = Transform(20.0, 0.0, 60.0, 12.0), withTopBar = true)
+        val id = placedText(store, box = Transform(20.0, 0.0, 60.0, 12.0), withTopBar = true)
         val canvas = canvasBounds()
         assertTrue("the canvas must start below the window top or this test is vacuous (${canvas.top})",
             canvas.top > 1f)
 
-        // The frozen `--matcha:#5E6B2F`, not `ZinelyTheme.v2Colors.matcha`: the handles are drawn on the
-        // D-035 sheet island, which restates the LIGHT value in both themes, so the literal is the truthful
-        // probe — one written against the token would go looking for whatever the token became.
-        //
-        // NEAR-match, and exact equality was tried first and was wrong: the handle is a thin ring, not a
-        // fill, so at this scale it antialiases against the paper behind it and the raster contains **no**
-        // pure `#5E6B2F` pixel anywhere. An exact probe therefore found nothing whether the canvas clipped
-        // or not — a green test asserting the absence of a colour that was never present. The band searched
-        // is above the canvas, where the only things drawn are the `Preview` bar's dark ground and its
-        // coral label, so a +/-24 window cannot be satisfied by anything but spilled handle ink.
-        val handle = 0xFF5E6B2F.toInt()
-        val raster = composeRule.activity.window.decorView.rasterizeToBitmap()
-        var handleInkAboveCanvas = 0
+        val held = composeRule.activity.window.decorView.rasterizeToBitmap()
+        store.dispatch(Intent.Delete(setOf(id)))
+        composeRule.waitForIdle()
+        val gone = composeRule.activity.window.decorView.rasterizeToBitmap()
+
         // Up to the row BEFORE the boundary row: `canvas.top` is fractional, so the pixel row it lands in
         // is legitimately part-canvas and antialiases against what is under it.
-        for (y in 0 until (canvas.top.toInt() - 1).coerceAtLeast(0)) for (x in 0 until raster.width) {
-            val px = raster.getPixel(x, y)
-            val near = listOf(16, 8, 0).all {
-                kotlin.math.abs(((px shr it) and 0xFF) - ((handle shr it) and 0xFF)) <= 24
+        val lastCleanRow = (canvas.top.toInt() - 1).coerceAtLeast(0)
+        fun differing(fromY: Int, toY: Int): Int {
+            var n = 0
+            for (y in fromY until toY) for (x in 0 until held.width) {
+                if (held.getPixel(x, y) != gone.getPixel(x, y)) n++
             }
-            if (near) handleInkAboveCanvas++
+            return n
         }
-        assertEquals("nothing the canvas holds may paint above the canvas", 0, handleInkAboveCanvas)
+        // Vacuity guard, and the one the colour probes could not carry: deleting the element must visibly
+        // change **the canvas**. A placement that missed the page, a Delete that no-opped, or a clip that
+        // erased the element outright all leave the rows above the canvas identical for the wrong reason.
+        //
+        // Bounded to the canvas on purpose. A first cut swept every row below the boundary, which includes
+        // the style row, the context bar and the tray — all of which repaint on the selection change Delete
+        // causes whether or not the element ever rendered on the page. That guard would have passed on an
+        // empty canvas, i.e. it guarded nothing it named.
+        assertTrue(
+            "deleting the element changed nothing INSIDE the canvas — the overflow this test needs never " +
+                "rendered, so the assertion below would pass on an empty page",
+            differing(canvas.top.toInt() + 1, canvas.bottom.toInt().coerceAtMost(held.height)) > 0,
+        )
+        assertEquals("nothing the canvas holds may paint above the canvas", 0, differing(0, lastCleanRow))
     }
 
     @Test

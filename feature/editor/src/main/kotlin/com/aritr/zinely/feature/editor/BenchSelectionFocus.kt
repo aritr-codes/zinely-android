@@ -21,15 +21,15 @@ public const val BenchFocusScrimTestTag: String = "bench-focus-scrim"
  * The frozen selection **dim** and **materialise**, drawn as one paper wash over the sheet
  * ([ADR-091 §2](../../../../../../../../docs/DECISIONS.md#adr-091)).
  *
- * The Bench gives every element its own DOM node, so `.content.focusing .el:not(.sel-focus){opacity:.4}`
+ * The Bench gives every element its own DOM node, so `.content.focusing .el:not(.selected){opacity:.5}`
  * and `@keyframes mat{opacity:0→1}` are one-line declarations there. Zinely renders a page as **one tape
  * into one canvas**, and there is no per-element alpha in that tape — nor may there be one in the model,
  * because an `opacity` on `Element` would serialise into the document and reach the exported PDF. A dim
  * that prints is a data-loss bug wearing a UI feature's clothes.
  *
  * So the dim is composited **after** the render instead of inside it, and the arithmetic is exact rather
- * than approximate: CSS `opacity:.4` over paper resolves to `0.4·element + 0.6·paper`, which is precisely
- * what a `--paper` wash at **α 0.6** produces over that same element. One render pass, and — unlike
+ * than approximate: CSS `opacity:.5` over paper resolves to `0.5·element + 0.5·paper`, which is precisely
+ * what a `--paper` wash at **α 0.5** produces over that same element. One render pass, and — unlike
  * rendering the page twice at two alphas — **z-order is untouched**, so selecting a background photo does
  * not lift it over the caption sitting on top of it.
  *
@@ -105,14 +105,23 @@ private fun Path.appendQuad(quad: List<PtPoint>) {
 }
 
 /**
- * The frozen `.content.focusing` wash alpha. The freeze dims the element to `opacity:.4`; over paper that
- * composites to `0.4·element + 0.6·paper`, so the *wash* is the complement — **0.6**, not 0.4. Getting
- * this the obvious way round would be a visibly weaker dim, and the arithmetic is the whole reason the
- * composite is admissible in place of a per-element alpha.
+ * The frozen `.content.focusing` wash alpha. The freeze dims the element to `opacity:.5`; over paper that
+ * composites to `0.5·element + 0.5·paper`, so the *wash* is the complement — **0.5**. Getting this the
+ * obvious way round would be a visibly weaker dim, and the arithmetic is the whole reason the composite
+ * is admissible in place of a per-element alpha.
+ *
+ * **V2.1 lifts the element from `.4` to `.5`** (`v21-bench.html:153`, was `v2-bench.html:291`) — the
+ * unselected page reads a little less faded, so what you are *not* editing stays legible as context.
+ * The complement happens to be `.5` on both sides of the arithmetic here, which is a coincidence of this
+ * particular value and **not** a sign the two numbers are the same quantity: at `.4` the wash was `.6`.
+ * Stated because a future edit that "simplifies" the two to one constant would be right for exactly one
+ * value of the freeze.
+ *
+ * The selector renamed with it, `.sel-focus` → `.selected`; nothing in this file keys off the class name.
  */
-internal const val BenchFocusDimAlpha: Float = 0.6f
+internal const val BenchFocusDimAlpha: Float = 0.5f
 
-/** Frozen `.content.focusing .el{transition:opacity .18s}` (v2-bench.html `:152`). */
+/** Frozen `.content.focusing .el:not(.selected){transition:opacity .18s}` (v21-bench.html `:153`). */
 internal const val BenchFocusDimMillis: Int = 180
 
 /** Frozen `.sel` / `.handle` `transition:opacity .12s` (v2-bench.html `:155`, `:157`). */

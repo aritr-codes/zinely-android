@@ -77,6 +77,7 @@ import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.render.android.readImageIntrinsics
 import com.aritr.zinely.ui.theme.LocalZinelyV2Colors
+import com.aritr.zinely.ui.theme.LocalZinelyV21Colors
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -737,9 +738,9 @@ public fun EditorScreen(
                     else -> false
                 }
             }
-            // C1 rows 1.1 and 1.2 — the studio ground and the grain over the whole screen. Last in the
-            // chain so it draws beneath the Column's children and the grain lays over all of them, which
-            // is what `.phone::after{z-index:60}` does in the frozen file.
+            // The studio ground and the grain over the whole screen. Last in the chain so it draws beneath
+            // the Column's children and the grain lays over all of them, which is what
+            // `.phone::after{z-index:90}` does in the frozen file (`v21-bench.html:113`; V2 said 60).
             .benchStudioGround(),
     ) {
         // C4 row 4.9: the frozen `.status` strip, the first thing in the phone (`v2-bench.html:390`
@@ -759,9 +760,18 @@ public fun EditorScreen(
             ) {
                 TextButton(
                     onClick = onPreview,
-                    // Desk-level nav action — the coral accent sourced from the frozen `--coral` token
-                    // (the migrated Legacy `primary` role, byte-identical) instead of the Material default.
-                    colors = ButtonDefaults.textButtonColors(contentColor = ZinelyTheme.colors.coral),
+                    // Room-level nav action, in V2.1's `leafText` — the action colour as text.
+                    //
+                    // **Converted by P1 although this control is P6's, because P1 broke it.** It was V1
+                    // `coral` (#E76F51) as bare text with no fill, which measured 2.77:1 on the old
+                    // `paper` ground — already under AA. Moving the ground to `bench` took it to
+                    // **2.18:1**, below even the 3:1 large-text floor, and it ships. A package may not
+                    // darken the room under a control and leave the control where it fell.
+                    //
+                    // `leafText` measures 4.88:1 light and 9.38:1 dark on `bench`. It is read from the
+                    // ROOM here without an opt-out because this control sits OUTSIDE the island
+                    // altogether — it is above the canvas, not over the sheet.
+                    colors = ButtonDefaults.textButtonColors(contentColor = ZinelyTheme.v21Colors.leafText),
                     modifier = Modifier
                         .testTag(EditorPreviewActionTestTag)
                         .semantics { contentDescription = Copy.Editor.PREVIEW },
@@ -850,6 +860,14 @@ public fun EditorScreen(
             // Read BEFORE the island opens, so the chrome that floats over the sheet can be drawn in the
             // room's palette rather than the sheet's — see the `.ctx` bar below.
             val roomColors = ZinelyTheme.v2Colors
+            // The V2.1 half of the same read. P1 made [BenchSheetIsland] provide BOTH palettes, so an
+            // opt-out that restored only the V2 one would hand back the room for `v2Colors` and keep the
+            // LIT sheet palette for `v21Colors` — chrome drawn half in the room and half on the paper.
+            // No live defect when this was written (all three opt-out subtrees still read `v2Colors`),
+            // and that is exactly why it is fixed now: P2–P4 convert those subtrees, and the failure
+            // would arrive as light ink on a dark bar with every light-palette test passing. D-035's
+            // defect, one palette later.
+            val roomColors21 = ZinelyTheme.v21Colors
             BenchSheetIsland(modifier = Modifier.fillMaxSize()) {
                 // The page footprint reads as paper — the frozen `--paper` sheet (bench.html `.panel`),
                 // instead of the bare desk showing through. Purely a host backing UNDER the render: the
@@ -969,7 +987,9 @@ public fun EditorScreen(
                         BenchPageNumber(
                             pageNumber = uiState.currentPageIndex + 1,
                             pageCount = uiState.document.pages.size,
-                            modifier = Modifier.align(Alignment.TopEnd),
+                            // `.pagenum{right:9px;bottom:6px}` — V2.1 moved the folio to the sheet's
+                            // foot. The insets travel with the composable; only the corner is here.
+                            modifier = Modifier.align(Alignment.BottomEnd),
                         )
                     }
                     EditorPagePreview(
@@ -1222,7 +1242,10 @@ public fun EditorScreen(
                 // The alignment modifier is built out here because `align` needs the BoxScope receiver,
                 // which the provider's lambda does not carry.
                 val ctxModifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                CompositionLocalProvider(LocalZinelyV2Colors provides roomColors) {
+                CompositionLocalProvider(
+                    LocalZinelyV2Colors provides roomColors,
+                    LocalZinelyV21Colors provides roomColors21,
+                ) {
                 BenchContextBar(
                     visible = ctxVisible,
                     // `styleable` is the same test the Style control already applies (ADR-055): a text box
@@ -1361,7 +1384,10 @@ public fun EditorScreen(
                 //
                 // Room palette: this is chrome over the artifact, not the artifact (D-035), and the sheet
                 // island above re-declares `ink`.
-                CompositionLocalProvider(LocalZinelyV2Colors provides roomColors) {
+                CompositionLocalProvider(
+                    LocalZinelyV2Colors provides roomColors,
+                    LocalZinelyV21Colors provides roomColors21,
+                ) {
                     BenchPageGrid(
                         visible = pageGridOpen,
                         pages = uiState.document.pages,
@@ -1508,7 +1534,10 @@ public fun EditorScreen(
         // Room palette, for the same reason the context bar carries the same provider: this is chrome, not
         // artifact, and the sheet island re-declares `ink` — which once put light ink on a dark room fill
         // and produced an invisible toolbar that every light-palette Robolectric test passed (D-035).
-        CompositionLocalProvider(LocalZinelyV2Colors provides ZinelyTheme.v2Colors) {
+        CompositionLocalProvider(
+                    LocalZinelyV2Colors provides ZinelyTheme.v2Colors,
+                    LocalZinelyV21Colors provides ZinelyTheme.v21Colors,
+                ) {
             BenchStyleRow(
                 visible = editingElement != null,
                 // Row 3.9: seeded from the element's own computed colour (`v2-bench.html:553`), so the

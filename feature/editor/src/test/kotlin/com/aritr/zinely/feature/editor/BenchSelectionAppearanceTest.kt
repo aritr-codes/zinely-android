@@ -19,7 +19,9 @@ import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.zinelyV2LightColors
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -137,25 +139,36 @@ class BenchSelectionAppearanceTest {
     }
 
     /**
-     * Row 2.5 — the mark is a **circle**, and the halo is present. Both are what changed; both are what a
-     * constants test would have missed. The corner of the mark's bounding box must be halo/paper (a circle
-     * does not reach its corners) while its centre carries the paper fill.
+     * The mark is a **rounded square** in `ink`, and the halo is still there. Both are what changed in
+     * V2.1, and both are what a constants test would have missed.
      *
-     * Mutation: `CircleShape` → the old `RoundedCornerShape(4.dp)` fills the corner with the border colour
-     * and the first assertion fails.
+     * ### The shape assertion inverted, and that is the point
+     *
+     * V2's mark was a 13dp **circle** and the old version of this test proved it by sampling the diagonal
+     * where a square would still paint. V2.1's `.hnd` is a 9px square with `border-radius:2px`
+     * (`v21-bench.html:148-149`), so the same sample now proves the opposite thing, and the test would
+     * have gone green in the wrong direction if it had only had its numbers updated.
+     *
+     * ### The halo is retained against the freeze, deliberately
+     *
+     * `v21-bench.html` specifies no `box-shadow` on `.hnd`. It is kept under
+     * [ADR-102 §12.6 row 5](../../../../../../../../../docs/DECISIONS.md#adr-102-p1-corrections), because
+     * a handle sits on the **user's photograph** where no token can promise a ratio, and IA §C.4 requires
+     * a dual-tone stroke holding 3:1 over any image. This test is the only assertion that fails if a
+     * later "fidelity" pass deletes it.
      */
     @Test
     @Config(qualifiers = "xhdpi")
-    fun `the handle mark is a circle carrying the frozen halo`() {
+    fun `the handle mark is a rounded square carrying the retained halo`() {
         composeRule.setContent {
             ZinelyTheme(darkTheme = false) {
-                // The mark alone, over a colour that is neither paper, matcha nor white — so every layer
+                // The mark alone, over a colour that is neither paper, ink nor white — so every layer
                 // the frozen handle stacks is distinguishable from the backdrop it covers.
                 Box(
                     modifier = Modifier.size(40.dp).background(BACKDROP).testTag(HOST),
                     contentAlignment = Alignment.Center,
                 ) {
-                    BenchHandleMark(color = ZinelyTheme.v2Colors.matcha)
+                    BenchHandleMark(color = ZinelyTheme.v21Colors.ink)
                 }
             }
         }
@@ -163,15 +176,17 @@ class BenchSelectionAppearanceTest {
         val cx = b.width / 2
         val cy = b.height / 2
 
-        val paper = zinelyV2LightColors().paper.toArgb()
+        val paper = zinelyV21LightColors().paper.toArgb()
         assertEquals("the mark's centre is --paper filled", paper, b.getPixel(cx, cy))
 
-        // The halo band runs from the mark's edge (13dp ÷ 2) to the envelope's (16dp ÷ 2) — only 1.5dp
+        // The halo band runs from the mark's edge (9dp ÷ 2) to the envelope's (12dp ÷ 2) — only 1.5dp
         // wide, which at density 1 is a 1.5px band every sample of which is anti-aliased against one of
         // its two neighbours. Hence @Config(xhdpi): at 2× the band is 3px and its middle is clean. The
         // radius is derived from the measured bitmap rather than hard-coded, so the sample follows.
+        // Sampled on an AXIS, where a square's edge and a circle's are furthest from disagreeing.
         val pxPerDp = b.width / 40f
-        val haloMidRadius = Math.round((13f / 2 + 16f / 2) / 2 * pxPerDp)
+        val haloMidRadius =
+            Math.round((HandleDiameterDp.value / 2 + HandleHaloDiameterDp.value / 2) / 2 * pxPerDp)
         // ...is inside the 16dp halo envelope but outside the 13dp mark ⇒ the halo, and
         // the halo is translucent, so the pixel that lands is `rgba(255,255,255,.7)` composited over the
         // backdrop. Asserting that exact composite rather than "looks whitish" is what makes the frozen
@@ -189,17 +204,37 @@ class BenchSelectionAppearanceTest {
             worst <= 2,
         )
 
-        // Is the **mark** round? Sampled on its diagonal at 5dp from centre — the one place the two
-        // candidate shapes disagree. A 13dp circle has radius 6.5, and (5,5) is 7.07 away, so it falls
-        // OUTSIDE the mark, in the halo. The old 13dp rounded square (corner radius 4) still covers that
-        // point — its corner arc is centred at (2.5,2.5) and (5,5) is only 3.54 from it, inside — so it
-        // would paint matcha there. Sampling the halo envelope's corner instead would prove nothing: the
-        // halo is round under either mark, which is exactly how an earlier draft of this test passed with
-        // the square deliberately reinstated.
-        val diag = Math.round(5f * pxPerDp)
+        // Is the **mark** square? Sampled on its diagonal at 3.5dp from centre — the one place the two
+        // candidate shapes disagree, and the assertion runs the opposite way to V2's.
+        //
+        //  - The frozen 9dp rounded square (radius 2) COVERS (3.5, 3.5): its corner arc is centred at
+        //    (2.5, 2.5) and the point is 1.41 from that centre, between the arc's inner radius (2 − 1.6
+        //    = 0.4) and its outer (2) — so the pixel is the **border**, i.e. `ink`.
+        //  - A 9dp circle has radius 4.5, and (3.5, 3.5) is 4.95 away — OUTSIDE it, in the halo.
+        //
+        // So this fails if the mark reverts to a circle, and it fails if the border colour reverts to
+        // anything but ink. Sampling the halo envelope's corner instead would prove nothing: the halo
+        // follows the mark's shape, which is exactly how an earlier draft of this test passed with the
+        // wrong shape deliberately reinstated.
+        val diag = Math.round(3.5f * pxPerDp)
         val onDiagonal = b.getPixel(cx + diag, cy + diag)
-        assertEquals(
-            "the mark is not a circle — its diagonal at 5dp is painted, so a square still covers it",
+        // Near-match, not equality: a 1.6dp arc lands on fractional coordinates and anti-aliases against
+        // both of its neighbours, so a diagonal sample may never be a fully-covered ink pixel. The rest of
+        // the suite moved to ±24 for exactly this reason; the discriminator survives it, because the two
+        // candidates here are nowhere near 24 apart. V2.1 light `ink` is `#33261C`; the halo composites to
+        // near-white, and the backdrop `#102030` sits 35 away on its worst channel.
+        val ink = zinelyV21LightColors().ink.toArgb()
+        val inkDelta = (0..2).maxOf { i ->
+            val shift = 16 - 8 * i
+            Math.abs(((onDiagonal shr shift) and 0xFF) - ((ink shr shift) and 0xFF))
+        }
+        assertTrue(
+            "the mark is not the frozen rounded square in ink — its diagonal at 3.5dp should be border, " +
+                "saw #${Integer.toHexString(onDiagonal)} against #${Integer.toHexString(ink)}",
+            inkDelta <= 24,
+        )
+        assertNotEquals(
+            "a circle would leave the diagonal in the halo — the mark has reverted to V2's shape",
             haloPixel,
             onDiagonal,
         )
