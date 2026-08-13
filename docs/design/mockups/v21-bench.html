@@ -182,12 +182,12 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   border-radius:inherit}
 .pagenum{position:absolute;right:9px;bottom:6px;font-size:.6rem;font-weight:700;
   color:var(--ink-soft);font-variant-numeric:tabular-nums}
-/* the printer's reach — shown only while something is selected */
-.keepclear{position:absolute;inset:14px;border:1.5px dashed var(--berry);border-radius:var(--br-xs);
+/* the printer's reach — shown only while a gesture crosses it (OD-48; press W to demo) */
+.keepclear{position:absolute;inset:14px;border:1.5px dashed var(--jam);border-radius:var(--br-xs);
   opacity:0;transition:opacity .18s;pointer-events:none}
 .guideV{position:absolute;left:50%;top:8px;bottom:8px;width:0;border-left:1.5px dashed var(--butter);
   opacity:0;transition:opacity .18s;pointer-events:none}
-.content.focusing~.keepclear,.content.focusing~.guideV{opacity:.85}
+.content.focusing~.guideV{opacity:.85} .keepclear.warn{opacity:.9}
 .content{position:absolute;inset:14px;display:flex;flex-direction:column;gap:var(--gap-sm);padding:var(--gap-xs)}
 
 /* an element and its selection — a drawn ring, not a system box */
@@ -643,7 +643,7 @@ function select(node){
   const l=ELS[+node.dataset.i].label;
   cap('Selected · '+l, node.dataset.kind==='text'
     ? 'Its verbs sit below the element, never over it. Double-tap to edit in place, or tap Ink to recolour.'
-    : 'Move it, resize from the handles, or use its verbs. The dashed border is where a home printer can still reach.');
+    : 'Move it, resize from the handles, or use its verbs. Push it too near the edge and a dashed line says where a home printer stops reaching.');
 }
 function deselect(){
   if(sel){ sel.classList.remove('selected','editing'); sel=null; }
@@ -838,4 +838,12 @@ document.querySelectorAll('.ctl[data-t]').forEach(b=>b.onclick=()=>{
   b.classList.toggle('on',off);
 });
 addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeOverlays(); deselect(); } });
+// OD-48: the boundary is warn-only, and this prototype has no drag — so `.warn` has no gesture
+// here to raise it. W toggles it, purely so the frozen state can be *seen*. The CSS rule is the
+// specification; this key is not part of the product. Deliberately the LAST lines in the file:
+// citations point at line numbers throughout, and anything inserted above shifts them.
+addEventListener('keydown',e=>{
+  if(e.key!=='w'&&e.key!=='W') return;
+  document.querySelector('.keepclear').classList.toggle('warn');
+});
 </script>

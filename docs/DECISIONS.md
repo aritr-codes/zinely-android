@@ -8904,7 +8904,7 @@ at least four places**, and three of them reverse or delete a ruled behaviour:
 | Change | Frozen evidence | Why it is not paint |
 |---|---|---|
 | **The rigid page-lift is deleted** | `.pageWrap` appears **6×** in `v2-bench.html` and **0×** in `v21-bench.html`; V2.1's `edit()` does not move the page | it is `BenchEditingSurface.kt`'s reason for existing, a conditional roadmap deliverable, and was amended by **OD-16 / D-043** |
-| **The keep-clear warn state is gone** | V2 had a resting `inkFaint` and a `strawberryText` warn; V2.1 has one `berry` rule, triggered by `.content.focusing` | **OD-10 / D-032** ruled keep-clear is *"NOT a continuous editing indicator"*; the new trigger makes it exactly that |
+| **The keep-clear warn state is gone** ⚠ **— reversed by [OD-48](#adr-102-p2b)** | V2 had a resting `inkFaint` and a `strawberryText` warn; V2.1 ~~has one `berry` rule, triggered by `.content.focusing`~~. **The freeze was amended 2026-08-13**: the cue is `jam`, `.content.focusing` no longer reveals it, and `.keepclear.warn{opacity:.9}` is the mark's one rule | **OD-10 / D-032** ruled keep-clear is *"NOT a continuous editing indicator"*; the new trigger makes it exactly that. This row read the freeze correctly and then let the objection stand unanswered for two packages — the resting reveal *was* the continuous indicator, and OD-48 is where that finally cost something |
 | **`.guideV` changes trigger** | same `.content.focusing` selector | shipped `SnapGuides` shows on snap during drag, not on selection |
 **Three, not four.** The previous draft listed a fourth — *"unselected elements dim … new behaviour, owned by
 `BenchSelectionFocus.kt`"* — and it is false in both halves. `v2-bench.html:291` **already** reads
@@ -9115,7 +9115,7 @@ page paints with a different set, and four of §3's rows have no V2.1 use at all
 | `matchaText → leafText` | ❌ **unused.** `leafText` appears only on `.saved`, which is room chrome |
 | `strawberryText → none` | ✅ stands — deleted, as recorded |
 
-**The V2.1 island is these eight**, and they are *derived*, not transcribed: the colour tokens referenced
+**The V2.1 island is these eight** — seven since [OD-48](#adr-102-p2b) — and they are *derived*, not transcribed: the colour tokens referenced
 inside the frozen file's own `the canvas` section (`v21-bench.html:174–219`, bounded by its section
 banners), less the shadow.
 
@@ -9124,7 +9124,7 @@ banners), less the shadow.
 | `paper` | the sheet (`:127`); the handle fill (`:148`) |
 | `ink` | the page border (`:128`); the selection ring (`:145`); the handle border (`:148`) |
 | `inkSoft` | `.pagenum` (`:133`) |
-| `berry` | `.keepclear` (`:136`) |
+| ~~`berry`~~ | ~~`.keepclear`~~ — ⚠ **dropped by [OD-48](#adr-102-p2b).** The cue is now `jam`, so the page region paints no `berry` and the island lights seven. The table was never the authority — the frozen file is, and the derived test failed the moment the CSS changed |
 | `butter` | `.guideV` (`:138`) — see §12.6 row 4, this one is contested |
 | `jam` | `.caret` (`:161`) |
 | `leaf` | `.sticker` (`:158`) |
@@ -9165,9 +9165,12 @@ added to the page region tomorrow fails the build without anyone editing a list.
 
 #### 12.3 — P1 and P2 are re-cut, because as drawn they block each other {#adr-102-p1-recut}
 
-`v21-bench.html:186-189`: `.keepclear` and `.guideV` both rest at `opacity:0` and are revealed *only* by
-`.content.focusing~…` at `.85`, with **one colour each and no warn state**. The shipped composables have a
-resting state, and the keep-clear has a `strawberryText` warn.
+`v21-bench.html:186-189`, **as frozen when this section was written**: `.keepclear` and `.guideV` both rest
+at `opacity:0` and are revealed *only* by `.content.focusing~…` at `.85`, with **one colour each and no warn
+state**. The shipped composables have a resting state, and the keep-clear has a `strawberryText` warn.
+⚠ [OD-48](#adr-102-p2b) has since amended that rule — the cue is `jam`, raised by `.keepclear.warn`, and
+`.content.focusing` reveals the guide alone. The re-cut argument below is unaffected: it turns on the cue
+and the guide changing *trigger* in P2, which is exactly what happened, twice.
 
 §8 put those two files in P1 and their trigger changes in P2. There is no paint-only conversion between
 those two facts: P1 must either pre-empt P2 or invent a resting state the freeze does not have. §3's own
@@ -9384,6 +9387,289 @@ rather than by a device: §11 taught that a re-skin planned without reading the 
 `v2-bench.html` carefully enough to catch itself twice, and then wrote a table of destinations for a
 surface it had not opened.
 
+#### 12.12 — OD-49: the warning answers for the selection, not for the gesture {#adr-102-p2c}
+
+**Ruled 2026-08-13 by the owner**, on [P2b's device pass](reviews/2026-08-13-adr-102-p2b-device-verification.md),
+which failed both ways. The owner's gate: **fix the nudge gap before merge.** Two candidate rules were put
+up — a timed echo after a discrete move, or a change of predicate — and the predicate won because it closes
+both findings with less code.
+
+**The rule.** `BenchStudio.keepClearWarn` used to read *only* the in-flight gesture. It now reads:
+
+| frame | answers with |
+|---|---|
+| a gesture in flight | its **live, snapped** geometry — unchanged |
+| a handle resize | its override — unchanged |
+| an in-place session (text edit, reframe) | **nothing**, deliberately — see below |
+| anything else | the **selection's committed** geometry |
+
+So the predicate moved from *"a gesture is crossing"* to *"the selection is crossing"*.
+
+**This amends [D-032 / OD-10](design/V2-SPEC-DEFECTS.md#d-032-ruling), and says so.** That ruling held the
+warning to *"transient guidance, not document state"* and *"the warning cannot outlive the gesture that
+raised it"*. The second phrase is what the device falsified: a mark that stops speaking while the thing it
+warns about is still true does not read as transience, it reads as **resolution** — *"good, I must have got
+it back inside."* What survives, and is what OD-10 was actually protecting, is that **an unheld page never
+warns**: nothing at idle, nothing on an unselected page, nothing about content the maker is not working on.
+Still no persisted flag, nothing in the reducer, nothing to clear — deselect and the answer is false again,
+derived, from the same document.
+
+⚠ **An in-place session is excluded, and that is a product-principle call rather than a convenience.** Typing
+asks *"what do these words say?"*; reframing asks *"which part of the photo shows?"*. A print alarm raised
+there answers a question the maker is not holding **and cannot act on** — the box cannot be moved from inside
+either session. That is [ADR-058](#adr-058)'s "Preview" shape in miniature, and this repo has a rule about it
+([every screen answers the user's current question](../CLAUDE.md#product-principle-every-screen-answers-the-users-current-question)).
+The session ends with the element still selected, so the warning arrives one beat later, when it is
+actionable. **The question was raised by a failing golden**, not by taste: `BenchStyleRowGoldenTest`'s frozen
+editing scene places a text box that genuinely overhangs the foot (y 76+18 against an 83pt limit), its caret
+probe caught the new boundary crossing the field, and the honest answer turned out to be that the boundary
+should not have been there.
+
+**The non-visual half ships with it, because the finding was an accessibility finding.** An element whose
+drawn extent leaves the reach now carries `stateDescription` =
+[`Copy.A11y.OUTSIDE_PRINT_REACH`](../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) —
+*"Too close to the edge — may be cut off when printed"*. A **state**, not an announcement: the platform
+speaks a state change on the focused node *and* re-reads it on every later focus, so a maker who nudges past
+the edge hears it happen and one who arrives afterwards can still find out. It is stated for **every**
+element, not only the selected one — exploring the page by touch should reveal an overhanging box without
+having to select it first, and unlike the drawn mark this costs no ink. The wording names the consequence
+rather than the boundary, because [BP-4](design/V2-BENCH-PRINCIPLES.md) forbids teaching the vocabulary
+(*"the maker never learns the word 'bleed'"*) and there is no standard name to borrow.
+
+**The state carries the selection word with it** — `"Selected, Too close to the edge…"` /
+`"Not selected, …"`, via `Copy.A11y.outsidePrintReachState(selected)`. A review caught the first cut giving
+back less than it added: an explicit `stateDescription` **replaces** Compose's own *"Selected"* /
+*"Not selected"*, and for `Role.Button` that default is the only channel selection ever reaches the platform
+through. Warning about the printer at the cost of no longer saying what is selected would have been a net
+loss for exactly the maker OD-49 exists for.
+
+**No freeze amendment.** The prototype specifies the mark's *appearance* (`.keepclear.warn`); its trigger has
+lived in D-032 since 2026-08-01 and has never been in the HTML. OD-48 amended the file because it changed a
+CSS rule; this changes a behaviour the file does not describe.
+
+**Mutation-checked, four ways** (2026-08-13, after the review's coverage findings were answered). Row 2 is
+there because a review proved the first cut of the cross-page test **vacuous**: it asserted `false` on a page
+whose element was already clear of the boundary, so deleting the id filter outright left it green. Rewriting
+it to use a *crossing* element made the filter the only thing holding the assertion up:
+
+| Mutation | Kills |
+|---|---|
+| the committed-geometry branch back to `return false` | 5 — the nudge case, the reframe pair, the multi-selection, the deselection sequence |
+| that branch's `filter { it.id in selection }` deleted, so the page answers for elements nobody selected | 4 — including *"an unheld page never warns"*, D-032's surviving half |
+| `stateDescription` never set | 2 — the nudged element, and the unselected one |
+| the state set to the bare `OUTSIDE_PRINT_REACH`, dropping the selection word | the same 2 — so RF1's fix is guarded, not just applied |
+
+**`feature:editor`: 772 tests, 771 executed, 1 skipped, 0 failures. `core:copy`: 7, 0 failures**
+(`./gradlew --no-daemon :feature:editor:testDebugUnitTest :core:copy:test`, suite timestamp 2026-08-13
+15:40:01–15:42:32; the one skip is
+`ReframeA11yTest.an_undisplayable_photo_leaves_the_adjustment_verbs_inert_and_silent`, pre-existing and
+unrelated; `core:copy` was found up to date and not re-executed, so its figure stands on the hash, not on a
+fresh run). Repository-wide: **1,695 tests across twelve modules, 1,694 executed, 0 failures** — stitched from
+each module's last run rather than one sweep: six `core:*` modules (`data`, `data-storage`, `editor`,
+`imposition`, `model`, `render`) and `data-android` date from 2026-08-06, `core:ui` from 08-12, and they stand
+on Gradle's up-to-date check rather than a fresh execution. Counts are read from the JUnit XML.
+
+⚠ **Three corrections a review forced into this paragraph, all of the same family.** The first draft said
+*767*, a count taken before the last four tests existed. The second said *772 green*, which silently promoted
+a skip to a pass. And both cited a run whose XML **predated the source files it vouched for** — the mutation
+work had edited `BenchStudioSurface.kt` after the green, so the evidence described a tree that no longer
+existed. That is exactly the failure the project's own verification-evidence rule names, committed while
+writing the section that claims the rule was followed.
+
+**The third correction is the instructive one, because the first attempt to fix it was also wrong.** The
+repaired paragraph claimed *"the run was taken after the last edit"* — and a second review read the mtimes:
+reverting the last mutation had rewritten `BenchStudioSurface.kt` 90 seconds *after* that suite finished. The
+tree was still provably the right one (the re-run restored every result file from cache, which is a statement
+about input hashes), but the sentence asserted a clock ordering that the clock contradicted.
+
+So the numbers above come from a suite executed at **15:40:01–15:42:32**, after every source file this ruling
+touches — the latest being `EditorScreenGoldenTest.kt` at 15:39:24. A run proves the tree it ran in; connect
+it to the tree you ship with a hash or a fresh execution, never with a claim about ordering you have not read.
+
+**Device-verified 2026-08-13 — both passes PASS**, and they agree, which the previous two did not
+([record](reviews/2026-08-13-adr-102-p2c-device-verification.md)):
+
+| state | boundary | measured |
+|---|---|---|
+| selected, inside the reach | none | 0 px |
+| **nudged** across, no gesture ever | **drawn** | α **.886**, **3.51:1** — P2b measured **zero** here |
+| in-place text session, box overhanging | none | 0 px where the boundary would be |
+| session ended, still selected + outside | **drawn** | identical mark, to the byte (**U4 closed**) |
+| deselected, still outside | none | 0 px |
+
+✅ **The spoken half is now verified at the platform level — debt booked 2026-08-13, closed the same day.**
+
+It was booked because the string could not be captured: `uiautomator dump` has **no `state-description`
+attribute at all**, `dumpsys accessibility` dumps no node attributes, and Samsung's TTS logs no utterance text.
+TalkBack was enabled and audibly spoke, but the only *recordable* evidence was a **merged Compose semantics**
+assertion, which [CLAUDE.md](../CLAUDE.md#pass-1--developer-verification) is explicit is not the platform tree.
+
+The closing move is
+[`KeepClearPlatformStateTest`](../app/src/androidTest/java/com/aritr/zinely/KeepClearPlatformStateTest.kt):
+an instrumented probe that walks the real tree through `UiAutomation.rootInActiveWindow` and reads
+`AccessibilityNodeInfo.getStateDescription()`. On `RZCYA1VBQ2H` (SM-A176B, Android 16) the node reads
+verbatim:
+
+```
+cls=android.widget.Button  desc=Text: hi
+    state=Selected, Too close to the edge — may be cut off when printed
+```
+
+Two tests, both green on hardware, and **mutation-checked on the device**: dropping the selection word from
+`ElementSemanticsLayer` fails both, printing the real platform string in the failure. A device test that
+cannot fail is a screenshot, not an assertion.
+
+This also re-verifies a change that landed **after** the passes above were accepted — the review fix that made
+the state carry `"Selected"` / `"Not selected"` — which by the mandatory-verification rule could not stand on
+a pass that predates it.
+
+⚠ **The probe's first cut reported `states=[]` against an app that was answering correctly**, and nearly filed
+a second false defect on this ruling. Touching `uiAutomation` is what *attaches* the accessibility client, and
+Compose only exports semantics after it observes one; reading `rootInActiveWindow` in the same breath returns
+the `ComposeView` with none of its content — indistinguishable from the defect the probe hunts. A full tree
+dump is what told the two apart. The probe now settles before polling, and carries the reason in its own
+KDoc. Same lesson as the caret below: **when an a11y or colour probe reports nothing, suspect the probe first.**
+
+🔭 `BenchPageGrid`, `BenchPageNav` and `EditorContextBar` still ship `stateDescription` on merged-semantics
+evidence alone. This test is the pattern that closes them; extending it to those three is not OD-49's scope.
+
+⚠ **A colour probe nearly filed a false defect**, and the correction is worth keeping: the first scan of the
+text-session frame reported a boundary at α `.985` in the one state that must be silent. It was the **caret**,
+which is also `jam` (`v21-bench.html:215`), plus Samsung's red cursor handle. The editor now has two `jam`
+marks on one page, so *"is this hue present"* has stopped being a safe proxy for *"is this mark drawn"*.
+Looking at the screenshot is what caught it.
+
+**Still carried, and now stated at its narrowest:** a maker can always find out while **holding** the element,
+and still never finds out while **not** — deselect and the page says nothing, though the content is still
+outside. Unchanged from [§12.11](#adr-102-p2b)'s open question and not OD-49's to answer; it wants a
+committed-state signal or a check at Preview/Print.
+
+| finding from P2b | ruled |
+|---|---|
+| **the nudge path never warns** (measured: zero cue pixels) | **fixed** — a nudge leaves the selection crossing, and a crossing selection warns |
+| **U4** — release reads as resolution | **fixed** — the mark stays while the element is selected and outside |
+| **no non-visual form at all** (133 platform nodes, no mention) | **fixed** — a spoken state on every crossing element |
+
+#### 12.11 — OD-48: the boundary is warn-only, and the freeze was amended to say so {#adr-102-p2b}
+
+**Ruled 2026-08-13 by the owner** on [the P2b brief](proposals/2026-08-13-p2b-warn-only-boundary.md), which
+[§12.10](#adr-102-p2-pass2) deferred U2 into. Option (a): **the resting cue is deleted.** The keep-clear
+boundary is drawn only while a gesture is carrying content across the printer's reach, and in every other
+frame — idle, selected, editing, or holding something well inside the margin — it does not exist.
+
+**The freeze changed first, and this is the record of that.** Per the
+[HTML-first workflow](../CLAUDE.md#design-freeze), `v21-bench.html` was amended before any Compose was
+touched:
+
+| line | before | after |
+|---|---|---|
+| `:186` | `.keepclear{…border:1.5px dashed var(--berry)…}` | `…dashed var(--jam)…` |
+| `:190` | `.content.focusing~.keepclear,.content.focusing~.guideV{opacity:.85}` | `.content.focusing~.guideV{opacity:.85} .keepclear.warn{opacity:.9}` |
+| `select()` caption | *"The dashed border is where a home printer can still reach"* | *"Push it too near the edge and a dashed line says where a home printer stops reaching"* |
+
+The prototype has no drag, so `.warn` has nothing there to raise it; a `W` key toggles it purely so the state
+can be **seen**, and the file says in a comment that the CSS rule is the specification and the key is not part
+of the product. That key exists because of a filed defect: V2 declared `.keepclear.warn` and
+[D-032](design/V2-SPEC-DEFECTS.md#d-032) found *"the class is never added anywhere in the file's 254 lines of
+script"* — a frozen state no reviewer could ever look at. Repeating that in V2.1, in the very amendment that
+makes warn the mark's only state, would have been the same defect with the stakes raised. **Line numbers were held stable, and this took two attempts.** At least **55 citations across 21 files** point
+into this file. Every edited hunk is line-count-neutral, and the demo handler is appended as the **last lines
+of the file**, after which nothing can shift.
+
+⚠ Both halves of that sentence were wrong when first written, and both were caught by review rather than by
+me. The count said *29* — carried over from P7's re-anchoring work and never re-counted. And the handler was
+first inserted mid-script at `:658`, on the reasoning that the highest citation was `:503`; it was not.
+`docs/proposals/2026-08-12-od47-and-handle-placement.md:144` cites `` `:701` `` in the **continuation form**
+— a bare `` `:NNN` `` following a full citation earlier in the sentence — which a `v21-bench.html:NNN` grep
+cannot see. The 7-line insert had moved it. So *55* is a **floor**, not a count, and the only safe place to
+add a line to this file is the end of it. The fix is the general one; the grep that missed it would have
+missed the next case too.
+
+**What the ruling buys, beyond U2.** The mark's colour stops lying. §12.10 withdrew the *diagnosis* behind
+U1 (*"the colour of a mistake"*) but carried the reading, and warn-only answers the reading directly rather
+than by argument: a mark that appears **only** when something is wrong is entitled to an alarm colour. It is
+also [BP-4](design/V2-BENCH-PRINCIPLES.md)'s *"a gentle nudge only when text or faces cross it"* implemented
+without residue, and it extends [OD-10](design/V2-SPEC-DEFECTS.md#d-032-ruling)'s *"transient guidance, not
+document state"* to the one part of this mark that was never held to it.
+
+⚠ **The accessibility argument inverted, and the inversion is in our favour.** §12.9 accepted the `berry` cue
+at **2.07:1** as *decorative*, and rested that acceptance on the `jam` warning at **3.66:1** being the one
+mark clearing WCAG 1.4.11. OD-48 deletes the mark that failed and keeps the mark that passed: this boundary
+now draws 3.66:1 or nothing at all. Half of [D-064](design/V2-SPEC-DEFECTS.md#d-064)'s question is therefore
+closed **by deletion rather than by argument** — the `butter` snap guide at 1.60:1 is the only sub-floor mark
+left on the sheet, and it is still pinned there deliberately.
+
+**A consequence nobody planned: the island is now seven tokens.** The resting cue was the sheet's only `berry`
+mark, so the frozen page region no longer paints the token and `BenchStudio.sheetIslandV21` no longer lights
+it. This was not noticed and then implemented — the test that derives the island's set from the frozen file
+failed the moment the CSS changed, in both directions, which is what [§12.2](#adr-102-p1-test) built it for.
+`berry` now keeps the **room's** value inside the sheet, asserted from that side too.
+
+**Device-verified 2026-08-13, and BOTH PASSES FAILED** —
+[the record](reviews/2026-08-13-adr-102-p2b-device-verification.md). Not because the ruling is wrong: every
+specified behaviour is on the glass, measured. Because the *release* is unhandled, in two ways that turn out
+to be one way.
+
+| what the device said | |
+|---|---|
+| warn held mid-gesture | `(213,93,59)` on paper `(253,243,230)`, implied α **.886** vs nominal `.90` |
+| the same, in the dark room | **byte-identical** — the island is exact, and [OD-31](#adr-098-od31) holds |
+| paint order | verified *by* that alpha: under the wash it would read `.445` |
+| at rest / on selection / while editing text | **nothing drawn** — OD-48, visible |
+| after release, content left outside | **nothing drawn** — [D-032](design/V2-SPEC-DEFECTS.md#d-032-ruling), honoured where it counts |
+| contrast | **3.51:1**, not the published 3.66:1 — see below |
+
+⚠ **3.66:1 is a computation and has been quoted as an observation.** It is `jam` at `.90` over the flat
+`paper` token; the sheet's grain darkens the reference and the rendered mark measures **3.51:1**. It clears
+1.4.11's 3:1 either way, so no conclusion moves — but P2's Pass 1 hit exactly this gap on the cue (2.07
+computed, 2.01 measured) and the lesson did not travel two sections. **Figures in these rulings should say
+which kind of number they are.**
+
+⚠ **Required Fix — the nudge path cannot warn, and OD-48 is what exposed it.** `Move left/right/up/down`,
+`Make larger/smaller` and `Rotate` are discrete intents, not gestures, so `keepClearWarn` — which reads
+`Interaction.Transforming`/`resizeOverride` — returns `false` for every one of them. Measured: nudging content
+across the reach draws **zero** cue pixels. Before OD-48 that path was covered *by accident*, because
+selecting the element drew the resting boundary. This ruling removed the accident and left nothing behind it,
+which means **the accessible way to move an element is the one way you are never warned.** The same gap seen
+from the other side: the boundary appears nowhere in the platform `AccessibilityNodeInfo` tree (133 nodes, no
+mention of margin/printer/reach/safe), so it has no non-visual form at all — never a regression, but now the
+only signal.
+
+⚠ **Pass 2 — U4: the warning's disappearance reads as the problem being solved.** Recorded on the device
+before the implementation was allowed to explain it: *"good — I must have got it back inside."* The content
+was still outside. This is U2's exact shape reflected: U2 said a mark that arrives with selection reads as
+*caused by* it; U4 says a mark that leaves on release reads as *fixed by* it. Same defect — the mark's timing
+narrating something untrue about the maker's page.
+
+**Neither failure argues for reverting.** The room is quieter, the pro grid is gone, and the alarm colour
+finally only ever means alarm — all three confirmed on glass. What both failures say is that the product has
+**no way to tell a maker "this is still outside" once the gesture ends**, and never had; the resting cue only
+implied it. That is the next package, and it is a design question — a committed-state signal, or a check at
+Preview/Print where *"how do I print this correctly?"* is the question the screen already answers, plus a
+non-gesture path for the nudge buttons and TalkBack. **Not a merge blocker for OD-48's own change, which does
+what it was ruled to do; a blocker for calling the boundary finished.**
+
+The suite is green (763 tests, `feature:editor`) and the warn state's alpha is asserted on a real drag in a
+real `EditorScreen` raster — but a Robolectric raster is not a screen, which is how the nudge gap survived a
+green suite in the first place. Nothing in the unit tests knows the nudge buttons exist. (Green means the **`feature:editor`** suite;
+other modules' results predate today and were not re-run.)
+
+⚠ **The accepted risk, stated plainly because it is easy to leave implied.** Nothing in this product now
+shows the printer's reach outside a crossing gesture — not the Bench at rest, not `EditorPagePreview`, not
+the Proof. And [D-032](design/V2-SPEC-DEFECTS.md#d-032-ruling) forbids warning at idle *even for content
+already sitting in the margin*, so an element that arrives outside the boundary — imported, pasted, or left
+there by a previous session — is **never** flagged unless someone happens to drag it. That was true before
+OD-48 as well; what OD-48 removes is the resting cue a maker could have noticed it against. The judgement is
+that a boundary shown constantly is the pro grid BP-4 rejects, and that the cost falls on a case the product
+never handled anyway. It is a judgement and not a proof, and Pass 2 on glass is where it gets tested.
+
+| Finding | Ruled |
+|---|---|
+| **U2** — tied to selection, not to the page | **fixed by deletion** — option (a), warn-only. Freeze amended first, then Compose |
+| **U1** — the alarm colour | **answered** — the mark now only ever means alarm, so the hue is no longer arguing with the moment |
+| **U1′** — unlabelled | **carried, and narrowed** — still unlabelled, but it now appears at the moment it is about, which is the only teaching BP-4 permits |
+| **U4** — the warning vanishing on release reads as the problem being solved *(new, from this package's own device pass)* | **open** — the next package's, with the nudge/TalkBack gap it shares a cause with |
+
 #### 12.10 — P2's Pass 2: the boundary the toolbar was covering, and the argument that is not this package's {#adr-102-p2-pass2}
 
 **Ruled 2026-08-13 by the owner**, on P2's [device verification](reviews/2026-08-13-adr-102-p2-device-verification.md),
@@ -9455,7 +9741,7 @@ decorative-mark question loses one of the two marks it was being asked about.
 | **U3** — the bar covers the boundary's bottom edge and the folio | **fixed for the verb bar** — reserve its band before fitting the page; device-verified, boundary clears the card by 21dp. **Not** fixed for the Type bar or `.inkpop`, which share the same inset |
 | **U1** — "the colour of a mistake" | **cause withdrawn, finding carried** — pink/magenta *is* the safe-zone convention (red is the bleed line, which this product does not draw), but that is external evidence and does not retract the reading. Travels to P2b |
 | **U1′** — unlabelled | **carried** — [BP-4](design/V2-BENCH-PRINCIPLES.md) forbids teaching the vocabulary (*"the maker never learns the word bleed"*), so a label is not the available fix |
-| **U2** — tied to selection, not to the page | **deferred to its own package** — a freeze amendment, briefed separately |
+| **U2** — tied to selection, not to the page | **deferred to its own package** — a freeze amendment, briefed separately. *Ruled the same day as option (a), warn-only: [§12.11 / OD-48](#adr-102-p2b).* |
 
 #### 12.9 — P2: the keep-clear cue and the snap guide, and the mark that was nearly deleted {#adr-102-p2-marks}
 
@@ -9493,10 +9779,10 @@ one accessible mark on the page and kept two decorative ones.
 
 | | |
 |---|---|
-| Keep-clear **warn** | **kept** — `jam` at `.90`, **3.66:1 in both themes**. A departure the freeze does not contain, in the same family as the handle halo (§12.6 row 5) and the eight handles ([OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)) |
-| Keep-clear **rest** | frozen `berry` at .85 — **accepted below 3:1 as decorative** |
+| Keep-clear **warn** | **kept** — `jam` at `.90`, **3.66:1 computed in both themes** (⚠ *computed*: measured **3.51:1** on the grained sheet, [P2b's device pass](reviews/2026-08-13-adr-102-p2b-device-verification.md); both clear 3:1). A departure the freeze does not contain, in the same family as the handle halo (§12.6 row 5) and the eight handles ([OD-11](design/V2-SPEC-DEFECTS.md#d-034-ruling)) |
+| Keep-clear **rest** | frozen `berry` at .85 — **accepted below 3:1 as decorative**. ⚠ **Superseded the same day by [OD-48](#adr-102-p2b): this mark no longer exists.** The acceptance was live for one package |
 | Snap guide | frozen `butter` at .85, **dashed**, 1.5dp — **accepted below 3:1 as decorative** |
-| Trigger | frozen — both rest at `opacity:0`, revealed only while a selection is live |
+| Trigger | frozen — both rest at `opacity:0`, revealed only while a selection is live. ⚠ **Superseded by [OD-48](#adr-102-p2b)** for the cue, which is now raised by a crossing and not by a selection; the guide's trigger is unchanged |
 | Keep-clear inset | **shipped, not frozen** — the engine's real safe area, because the prototype has one page size and the product has several |
 
 The acceptance rests on redundancy, and it is stated so it can be argued with: the resting cue says *the
@@ -9510,6 +9796,14 @@ hue survives at any alpha.**
 **Pinned so the acceptance stays visible.** `BenchStudioSurfaceTest` asserts the warning clears 3:1 *and*
 that both resting marks sit **below** it. Raising either above the floor is not a bug fix — it means this
 ruling changed, and the test says so by failing.
+
+⚠ **[OD-48](#adr-102-p2b) then removed one of the two**, hours later and for a reason that has nothing to do
+with contrast. The redundancy argument above is worth re-reading in that light: it says the resting cue
+carries *"the printer's reach is about here"* and the warning carries *"you are crossing it"*, and that only
+the second is unobtainable elsewhere. OD-48 deleted the first on Pass 2 grounds. So the surface now draws
+**either 3.66:1 or nothing**, and the sub-floor acceptance this section spent a ruling on survives for the
+`butter` guide alone. The assertion that pinned the `berry` mark below the floor is gone with the mark, which
+is the one thing it said should never happen quietly — recorded here so it did not.
 
 **The review caught the ruling breaking its own premise.** The warning was first written as `jamText` —
 the direct heir to V2's `strawberryText`. But `sheetIslandV21` lights `jam` and **does not light
@@ -9539,10 +9833,13 @@ wash: the cue measured **1.42:1** and the warning **1.82:1**, against the 3.66:1
 
 The freeze does not do that. `.content.focusing .el:not(.selected){opacity:.5}` (`v21-bench.html:207`) dims
 **elements**; `.keepclear` is a *sibling* of `.content` and is dimmed by nothing. **And the review found the
-stronger form of this argument, which is not a reading at all:** the freeze reveals the cue with
+stronger form of this argument, which is not a reading at all:** the freeze **as it stood on 2026-08-13,
+before [OD-48](#adr-102-p2b) amended that very line** revealed the cue with
 `.content.focusing~.keepclear{opacity:.85}` (`v21-bench.html:190`), and the general-sibling combinator `~`
 matches only what *follows* `.content`. The pre-fix Compose order was not a defensible-but-different reading
-of the freeze — it was structurally un-implementable as the freeze writes it. Compose implements the dim
+of the freeze — it was structurally un-implementable as the freeze writes it. (The amended rule still reads
+`.content.focusing~.guideV`, so the argument survives the amendment word for word; it simply now rests on
+the guide rather than on the cue.) Compose implements the dim
 as one composite bounded to the page rect — for reasons `BenchFocusScrim` records and which still hold — and
 a composite cannot tell a mark from an element. **The cue's trigger is the wash's trigger**, so there was no
 state of the app in which the cue appeared undimmed, and nothing ever looked like a regression.

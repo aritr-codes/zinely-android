@@ -158,28 +158,30 @@ internal object BenchStudio {
     val PageNumberEndInset: Dp = 9.dp
 
     /**
-     * `.content.focusing~.keepclear,.content.focusing~.guideV{opacity:.85}` — the **one** revealed alpha
-     * V2.1 gives either mark (`v21-bench.html:190`). Both rest at `opacity:0`, so this is not a "rest"
-     * value with a brighter sibling; it is the only value, and the resting form is *absence*.
+     * `.keepclear.warn{opacity:.9}` (`v21-bench.html:190`) — the cue's **only** alpha, because after
+     * [OD-48](../../../../../../../../../docs/DECISIONS.md#adr-102-p2b) it has only one state.
      *
-     * V2 had `.32` resting / `.9` warning. P2 keeps a warning — see [KEEP_CLEAR_WARN_ALPHA] — but the
-     * resting cue is now genuinely hidden until a selection is live.
-     */
-    const val KEEP_CLEAR_FOCUS_ALPHA: Float = 0.85f
-
-    /**
-     * The warning's alpha. **The freeze has no warning at all**, and keeping one is a deliberate
-     * departure ruled by the owner on 2026-08-13
-     * ([ADR-102 §12.9](../../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks)).
+     * Three specifications have now passed through this constant, and the direction is one way:
+     * V2 drew the boundary permanently at `.32` with a `.9` warning; V2.1's first freeze rested it at
+     * `opacity:0` and revealed it at `.85` on *selection*; OD-48 removed the selection reveal too. The
+     * mark now appears only while a gesture is carrying content across the printer's reach — which is
+     * [BP-4](../../../../../../../../../docs/design/V2-BENCH-PRINCIPLES.md)'s *"a gentle nudge only when
+     * text or faces cross it"* and [D-032](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-032)'s
+     * *"transient guidance, not document state"* applied without a residue.
      *
-     * The reason is measured, not aesthetic. Of the five marks this surface can draw, four sit below
-     * WCAG 1.4.11's 3:1 — the frozen `berry` cue at **2.07:1**, the frozen `butter` guide at **1.60:1**,
-     * V2's resting cue at **1.40:1** and V2's `matcha` guide at **2.42:1**. The warning (`jam` at this
-     * alpha, **3.66:1**, in *both* themes) is the only one that clears the floor, and it
-     * is the only one carrying information the user cannot get anywhere else: *your content is crossing
-     * the printer's reach.* Implementing the freeze literally would have deleted the single accessible
-     * mark on the page. Same family as the handle halo the freeze also lacks (§12.6 row 5), and the
-     * same [OD-11](../../../../../../../../../docs/DECISIONS.md#adr-098-od11) capability rule.
+     * ⚠ **The accessibility argument inverted, and it is worth reading twice.** §12.9 accepted the
+     * frozen `berry` cue at **2.07:1** *as decorative*, resting that acceptance on the warning (`jam` at
+     * this alpha, **3.66:1** in both themes — that figure is *computed* on flat tokens; the device
+     * measured **3.51:1** through the sheet's grain, and both clear the floor) being the one mark on the
+     * surface that clears WCAG 1.4.11's 3:1 floor. OD-48 deletes the decorative mark rather than the accessible one, so the boundary no
+     * longer draws anything below the floor at all. The sub-3:1 marks left on this surface are the
+     * `butter` snap guide (**1.60:1**) and nothing else.
+     *
+     * Keeping a warning at all remains a departure — **the freeze had none** — ruled by the owner on
+     * 2026-08-13 ([ADR-102 §12.9](../../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks)) under
+     * the [OD-11](../../../../../../../../../docs/DECISIONS.md#adr-098-od11) capability rule, in the same
+     * family as the handle halo the freeze also lacks (§12.6 row 5). OD-48 promoted that departure from
+     * *an extra state* to *the whole mark*, and the freeze was amended to match before this file was.
      */
     const val KEEP_CLEAR_WARN_ALPHA: Float = 0.90f
 
@@ -233,14 +235,19 @@ internal object BenchStudio {
     }
 
     /**
-     * The V2.1 sheet island — **eight tokens again, and a different eight**
+     * The V2.1 sheet island — **seven tokens**, and none of V2's reasoning
      * ([ADR-102 §12.1](../../../../../../../../../docs/DECISIONS.md#adr-102-island-v21)).
+     *
+     * It was eight until [OD-48](../../../../../../../../../docs/DECISIONS.md#adr-102-p2b) deleted the
+     * resting keep-clear cue, which was the only mark on the sheet painted in `berry`. The count is not
+     * the invariant — *what the page paints* is — and this doc says seven only so a reader comparing it
+     * against V2's eight does not read the difference as drift.
      *
      * ### It is derived from the frozen file, not carried over from V2
      *
      * ADR-102 §3 published a destination table mapping V2's eight to V2.1 — and it was written without
      * opening `v21-bench.html`. Four of its rows have no V2.1 use at all: the page's border is `ink`
-     * rather than `paperEdge`, the keep-clear is `berry` rather than `inkFaint`, and `matcha`'s mark
+     * rather than `paperEdge`, the keep-clear is `jam` (`berry` until OD-48) rather than `inkFaint`, and `matcha`'s mark
      * (`matchaText` with it) no longer exists on this surface. Two reviews returned NO-GO on it before
      * any code was written. The set below is what the frozen file's own `the canvas` section
      * (`v21-bench.html:174–219`) actually paints, and `BenchStudioSurfaceTest` re-derives it from that
@@ -274,7 +281,14 @@ internal object BenchStudio {
             paper = light.paper,
             ink = light.ink,
             inkSoft = light.inkSoft,
-            berry = light.berry,
+            // ⚠ `berry` is **not** here, and its absence is a consequence rather than an oversight. It was
+            // on this list for exactly one mark — the resting keep-clear cue — and OD-48 deleted that mark,
+            // so the frozen page region no longer paints the token anywhere. The island's rule is that it
+            // names what the sheet paints and nothing else, and `the Compose sheet island lights exactly
+            // the tokens the frozen page paints` fails in *both* directions, so it caught this the moment
+            // the CSS changed. `berryTint` stays: the `.photo` stand-in still fills with it
+            // (`v21-bench.html:210-211`) — a review corrected this comment, which said `.el`, a selector
+            // that carries no background at all.
             berryTint = light.berryTint,
             butter = light.butter,
             jam = light.jam,
@@ -307,11 +321,31 @@ internal object BenchStudio {
      * Row 1.9's trigger — whether `.keepclear.warn` shows this frame.
      *
      * The [D-032](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-032-ruling) ruling
-     * (OD-10, 2026-08-01) settles what the frozen file never said: the warning is **transient
-     * guidance, not document state**. Idle never warns — not even with content already sitting in the
-     * margin — and the warning cannot outlive the gesture that raised it. So this reads *only* the
-     * in-flight interaction and returns `false` for every other frame by construction: there is no
-     * persisted flag, nothing in the reducer, and nothing to clear.
+     * (OD-10, 2026-08-01) settled what the frozen file never said: the warning is **transient guidance,
+     * not document state**. Idle never warns — not even with content already sitting in the margin — and
+     * the warning cannot outlive the gesture that raised it.
+     *
+     * ### ⚠ [OD-49](../../../../../../../../../docs/DECISIONS.md#adr-102-p2c) narrows that, and the device
+     * is why
+     *
+     * Reading *only* the in-flight gesture left two holes that
+     * [P2b's device pass](../../../../../../../../../docs/reviews/2026-08-13-adr-102-p2b-device-verification.md)
+     * walked straight into. **The nudge path never warns at all** — `Move left`, `Make smaller`, `Rotate`
+     * are discrete intents, never "in flight" — so the *accessible* way to move an element was the one way
+     * you were never told. And **release read as resolution**: let go with content outside and the mark
+     * vanishes, which a first-time reader reports as *"good, I must have got it back inside."*
+     *
+     * Before [OD-48](../../../../../../../../../docs/DECISIONS.md#adr-102-p2b) both were covered by
+     * accident, because selecting anything drew the resting boundary. OD-48 removed the accident. So the
+     * predicate is now **"the selection is crossing"** rather than **"a gesture is crossing"**: an
+     * in-flight gesture still answers with its live, snapped geometry, and every other frame answers with
+     * the selection's **committed** geometry.
+     *
+     * What survives of D-032 is the part that was actually load-bearing: **an unheld page never warns.**
+     * Nothing is drawn at idle, nothing on an unselected page, nothing about content the maker is not
+     * currently working on — and still no persisted flag, nothing in the reducer, nothing to clear. What is
+     * given up is the phrase *"cannot outlive the gesture"*, which turned out to describe a mark that
+     * stopped speaking while the thing it warned about was still true.
      *
      * The geometry is the manipulated element's **drawn extent** against the keep-clear rect. Two
      * consequences worth stating, because neither is arbitrary:
@@ -336,8 +370,13 @@ internal object BenchStudio {
      *
      * @param resizeOverride the directly-baked handle-resize frame; wins over [live], exactly as in
      *   [EditorPagePreview], so the cue and the render never disagree about which gesture is running.
-     * @return `true` only while an interaction is in flight whose live geometry leaves the keep-clear
-     *   rect.
+     * @param selection the ids the maker is holding. What the warning answers for in every frame with no
+     *   gesture in flight — and the reason an empty set is silent.
+     * @return `true` when the geometry the maker is currently answerable for leaves the keep-clear rect:
+     *   an in-flight gesture's **live** frame, or otherwise the selection's **committed** one. `false` for
+     *   an unheld page and for an in-place session, always. ⚠ This tag said *"only while an interaction is
+     *   in flight"* until OD-49 and was left behind when the body was rewritten — a review caught it, and
+     *   it is the sentence a reader checks the behaviour against.
      */
     fun keepClearWarn(
         page: Page,
@@ -346,9 +385,26 @@ internal object BenchStudio {
         resizeOverride: Map<String, Transform>?,
         screenPxPerPt: Float,
         pageSizePt: PtSize,
+        selection: Set<String> = emptySet(),
         insetPt: Double = Imposer.DEFAULT_SAFE_AREA_INSET_PT,
     ): Boolean {
-        val moving: Collection<Transform> = when {
+        val answering: Collection<Transform> = when {
+            // **An in-place session answers its own question, and this is not it.** Typing into a text box
+            // asks *"what do these words say?"*; reframing asks *"which part of the photo shows?"*. Neither
+            // asks where the printer stops, and neither can act on the answer — the box cannot be moved
+            // from inside either session. A print alarm raised there is [ADR-058](../../../../../../../../../docs/DECISIONS.md#adr-058)'s
+            // "Preview" failure in miniature: a good answer at a moment the maker did not ask it. The
+            // session ends with the element still selected, so the warning arrives one beat later, when it
+            // is actionable. ⚠ This is not the golden's convenience: `BenchStyleRowGoldenTest`'s editing
+            // scene places a box that genuinely overhangs the foot (y 76+18 against an 83pt limit), and it
+            // failing is what raised the question.
+            //
+            // ⚠ **First, so the ruling's table is what the code enforces.** It sat below the resize branch,
+            // where a non-null `resizeOverride` during a session would have warned anyway — unreachable
+            // today only because the handles are gated on `!editing && reframing == null` at the call site.
+            // Ordering the branch correctly is cheaper than depending on that gate never leaking, and no
+            // test pinned the old order.
+            interaction is Interaction.EditingText || interaction is Interaction.Reframing -> return false
             resizeOverride != null -> resizeOverride.values
             interaction is Interaction.Transforming && live != null -> {
                 val s = screenPxPerPt.toDouble()
@@ -363,17 +419,36 @@ internal object BenchStudio {
                     thresholdPt = LiveSnap.thresholdPt(s),
                 ).transforms.filterKeys { it in interaction.ids }.values
             }
-            // Idle, a text session, a reframe, a selection with no gesture — all "not interacting".
-            else -> return false
+            // **No gesture: the selection's committed geometry answers instead** (OD-49). This branch used
+            // to `return false`, and the device pass is what proved the cost — see the KDoc above. An empty
+            // selection still returns false here, because `none {}` is false: an unheld page never warns,
+            // which is the half of D-032 that survives intact.
+            else -> page.elements.filter { it.id in selection }.map { it.transform }
         }
         if (insetPt <= 0.0) return false
-        return moving.any { t ->
-            val box = rotatedBoundsPt(t)
-            box.x < insetPt ||
-                box.y < insetPt ||
-                box.x + box.width > pageSizePt.width - insetPt ||
-                box.y + box.height > pageSizePt.height - insetPt
-        }
+        return answering.any { crossesKeepClear(it, pageSizePt, insetPt) }
+    }
+
+    /**
+     * Whether one element's **drawn extent** leaves the keep-clear rect — the geometry half of
+     * [keepClearWarn], extracted because [ElementSemanticsLayer] needs the same answer per element to
+     * speak it, and two implementations of *"is this outside the printer's reach"* would eventually
+     * disagree about a rotated photo's corner.
+     *
+     * Rotation is expanded rather than ignored, for the reason [keepClearWarn] records: the claim is about
+     * what is *drawn*, and a turned photo's corner enters the margin while its unrotated box still clears.
+     */
+    fun crossesKeepClear(
+        transform: Transform,
+        pageSizePt: PtSize,
+        insetPt: Double = Imposer.DEFAULT_SAFE_AREA_INSET_PT,
+    ): Boolean {
+        if (insetPt <= 0.0) return false
+        val box = rotatedBoundsPt(transform)
+        return box.x < insetPt ||
+            box.y < insetPt ||
+            box.x + box.width > pageSizePt.width - insetPt ||
+            box.y + box.height > pageSizePt.height - insetPt
     }
 
     /**
@@ -552,23 +627,28 @@ internal fun Modifier.benchPageSurface(): Modifier {
 /**
  * Rows 1.8 and 1.9 — the keep-clear cue: the print boundary, drawn.
  *
- * V2.1 (P2): a **1.5dp dashed `berry`** rectangle at the document's safe area, radius `--br-xs`, revealed
- * at `.85` only while a selection is live — `opacity:0` otherwise — and `.9` in `jamText` while warning.
+ * V2.1 (P2b): a **1.5dp dashed `jam`** rectangle at the document's safe area, radius `--br-xs`, drawn at
+ * `.9` **only while a gesture is carrying content across it** and `opacity:0` in every other frame.
  *
- * ### The trigger is the change, and the resting form is now absence
+ * ### The mark has one state, and that is [OD-48](../../../../../../../../../docs/DECISIONS.md#adr-102-p2b)
  *
- * V2 drew this cue permanently at `.32`. `v21-bench.html:186-190` rests it at `opacity:0` and reveals it
- * with `.content.focusing`, which is on whenever a selection is live. A boundary the user is not currently
- * working against is one more line on their page; the freeze's judgement is that it earns its ink only
- * while they are placing something, and P2 implements that as written.
+ * V2 drew this permanently at `.32`. V2.1's first freeze rested it at `opacity:0` and revealed it at `.85`
+ * on `.content.focusing` — a live selection. P2's device pass then found that reading confusing in a way
+ * no arithmetic could answer: an unlabelled dotted rectangle in an alarm colour arriving at the instant of
+ * selection reads as *caused by* the selection, and a boundary that comes and goes with what you are
+ * holding claims to be a limit on the **element** when it is a property of the **page**. The owner ruled
+ * warn-only on 2026-08-13. `v21-bench.html:190` was amended first — the reveal rule now names `.guideV`
+ * alone, and the cue is raised by `.keepclear.warn` — and this file follows the amended freeze.
  *
- * ### The warning is kept, and the freeze does not have one
+ * The gain is not only the confusion. A mark that appears *only* when something is wrong is a mark whose
+ * alarm colour is finally telling the truth, and it is the reading [BP-4] asked for in the first place:
+ * *"a gentle nudge only when text or faces cross it"*, explicitly *"not a visible pro grid"*.
  *
- * Ruled by the owner on 2026-08-13 — see [BenchStudio.KEEP_CLEAR_WARN_ALPHA] for the measurements. Four
- * of this surface's five marks sit below WCAG 1.4.11's 3:1, including both of the freeze's; the warning
- * at 3.66:1 is the only one that clears it and the only one carrying information available nowhere else.
- * The two resting marks are accepted below the floor **as decorative**, on the same reasoning as
- * [D-064](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md) and recorded with it.
+ * ### The warning is kept, and the freeze did not have one
+ *
+ * Ruled by the owner on 2026-08-13 — see [BenchStudio.KEEP_CLEAR_WARN_ALPHA], which also records how
+ * OD-48 inverted §12.9's accessibility argument: the mark accepted **as decorative** below WCAG 1.4.11's
+ * 3:1 floor is the one that was deleted, so this boundary now draws only its 3.66:1 state or nothing.
  *
  * ### The warn state is transient, and that is a ruling
  *
@@ -584,8 +664,10 @@ internal fun Modifier.benchPageSurface(): Modifier {
  * *"text or a face"* of the IA is superseded for implementation — nothing here analyses the content of
  * a photo, no detection engine is added, and the privacy principle is not engaged.
  *
- * @param warn whether an interaction is currently in flight whose geometry crosses this boundary.
- * @param focusing whether a selection is live — the frozen `.content.focusing`. False hides the cue.
+ * @param warn whether the geometry the maker is answerable for crosses this boundary — an in-flight
+ *   gesture's live frame, or otherwise the selection's committed one ([BenchStudio.keepClearWarn], and
+ *   OD-49 for why it is no longer *"an interaction in flight"*). The cue's only trigger since OD-48; false
+ *   draws nothing at all.
  * @param panelWidthPt the document panel's width in points, so the inset is the engine's real safe
  *   area rather than a transcribed pixel count — see [BenchStudio]. **Kept over the freeze's flat
  *   `inset:14px`**: the prototype has one page size and the product has several, so a transcribed
@@ -594,15 +676,13 @@ internal fun Modifier.benchPageSurface(): Modifier {
 @Composable
 internal fun BenchKeepClear(
     warn: Boolean,
-    focusing: Boolean,
     panelWidthPt: Double,
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
     val density = LocalDensity.current
-    // `berry` is the freeze's cue colour; `jam` is V2.1's answer to V2's `strawberryText`. The warning
-    // wins when both are true, which is the only case that matters: a warning is raised *by* an in-flight
-    // gesture, so it can never fire outside a live selection.
+    // `jam` is V2.1's answer to V2's `strawberryText`, and since OD-48 it is the cue's only colour —
+    // `berry` drew the resting boundary that ruling deleted, and nothing here selects between them now.
     //
     // **`jam`, not `jamText`, and the reason is the island.** `sheetIslandV21` lights `jam` and does not
     // light `jamText` — so inside the sheet `jam` is the light `#CF4A28` in both themes, while `jamText`
@@ -611,22 +691,14 @@ internal fun BenchKeepClear(
     // `jam` measures **3.66:1** at this alpha, in both themes, with no island change and no new
     // departure — and it is the correct token regardless, because this is a 1.5dp stroke and `jamText`
     // exists for text.
-    val color = if (warn) colors.jam else colors.berry
-    // The frozen `opacity:0 → .85` fade, over the same 180ms `.18s` the focus wash runs for — the two
-    // are triggered by the same predicate and should not arrive a frame apart. ⚠ Same *duration*, not
-    // the same curve: `EditorPagePreview`'s wash uses a bare `tween` (Compose's `FastOutSlowIn`) while
-    // this takes `ZinelyV2Standard`. Both honour reduced motion. Claiming they "arrive together" would
-    // be a shade stronger than the truth, and a review said so. Unifying the easing is a change to a
-    // shipped animation and belongs to whoever owns that file, not to this cue.
-    //
-    // `warn` is OR-ed into the trigger
-    // rather than assumed to imply it: the day someone raises a warning without a selection, the mark
-    // that says so must still be on screen.
-    val target = when {
-        warn -> BenchStudio.KEEP_CLEAR_WARN_ALPHA
-        focusing -> BenchStudio.KEEP_CLEAR_FOCUS_ALPHA
-        else -> 0f
-    }
+    val color = colors.jam
+    // The frozen `opacity:0 → .9` fade, over the frozen `.18s`. ⚠ It no longer shares a trigger with
+    // `EditorPagePreview`'s focus wash — before OD-48 both fired on the live selection, and the note here
+    // was about the two arriving a frame apart. They are now unrelated events: the wash follows selection,
+    // this follows a gesture crossing the boundary. The *duration* still matches, which is the freeze's,
+    // and the easing still differs (the wash uses a bare `tween`) — a divergence a review flagged and one
+    // that belongs to whoever owns that file.
+    val target = if (warn) BenchStudio.KEEP_CLEAR_WARN_ALPHA else 0f
     // Through the motion seam, not around it: `standard` — the freeze names a bare `.18s` with no easing,
     // and this fade informs rather than settles — and it collapses to 0ms under reduced motion. The first
     // cut of this called `tween()` directly and C9's policy scan caught it, which is exactly what that

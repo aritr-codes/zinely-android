@@ -994,7 +994,14 @@ public fun EditorScreen(
                     // arithmetic losing to glass, the two must not be written as the same number — a review
                     // caught this one saying `.425`.)
                     //
-                    // The cue's trigger *is* the wash's trigger, so it was never once seen undimmed.
+                    // The cue's trigger *was* the wash's trigger, so it was never once seen undimmed.
+                    // OD-48 has since split the two — the cue fires on a crossing, the wash on a
+                    // selection — but this Box must still sit above the wash. The reason changed with
+                    // OD-49 and the conclusion did not: it is no longer "the cue only fires during a
+                    // gesture, and a gesture implies the wash", because a crossing selection now warns
+                    // with no gesture at all. It is that a **crossing requires a selection**, and a
+                    // selection is the wash's own trigger. The z-order is what keeps the one accessible
+                    // mark at its measured 3.51:1.
                     //
                     // Geometry is unchanged: the same `paperX/paperY/paperWidth/paperHeight` the sheet uses,
                     // so D-033 still holds — the furniture is still positioned by the page box, it is simply
@@ -1005,10 +1012,13 @@ public fun EditorScreen(
                             .size(paperWidth, paperHeight),
                     ) {
                         BenchKeepClear(
-                            // D-032: transient guidance. The cue warns only while an interaction is in
-                            // flight; `live`/`resizeOverride` are exactly the in-flight gesture, and both
-                            // are null the instant it ends, so the warning cannot outlive the act — which
-                            // is the whole of the ruling, and why no reducer state backs this.
+                            // D-032 as **amended by OD-49**: still transient, but transient with the
+                            // *selection* rather than with the gesture. `live`/`resizeOverride` answer while
+                            // a gesture runs; `selection` answers every other frame. The paragraph that
+                            // stood here — *"the warning cannot outlive the act, which is the whole of the
+                            // ruling"* — is the half the device falsified, and a review found it still
+                            // quoted as current one line above the argument that discards it.
+                            // Nothing is persisted either way: no reducer state backs this.
                             //
                             // The resolve below duplicates the one EditorPagePreview makes this frame.
                             // That is deliberate rather than plumbed: it is a pure call on identical
@@ -1022,15 +1032,15 @@ public fun EditorScreen(
                                 resizeOverride = resizeOverride,
                                 screenPxPerPt = uiState.view.screenPxPerPt,
                                 pageSizePt = pageSizePt,
+                                // OD-49: with no gesture in flight this is what the warning answers for —
+                                // the selection's committed geometry. An empty set warns about nothing,
+                                // which is how an unheld page stays silent.
+                                selection = uiState.selection,
                             ),
-                            // The frozen `.content.focusing`. `EditorPagePreview` decides it by whether
-                            // any selected id resolves to an element **on the page being shown**, not by
-                            // whether the selection set is non-empty — and a review caught this reading
-                            // the looser predicate. A selection id that is not on the visible page would
-                            // then have turned the cue on with the wash off: one screen, two answers to
-                            // "is the user focused on something here?".
-                            focusing = uiState.document.pages[uiState.currentPageIndex]
-                                .elements.any { it.id in uiState.selection },
+                            // ⚠ There is no `focusing` argument any more. OD-48 made the crossing the
+                            // cue's only trigger, so `keepClearWarn` above is now the whole predicate —
+                            // and the selection state the freeze used to reveal on is not consulted here
+                            // at all. The wash and the cue no longer answer the same question.
                             panelWidthPt = pageSizePt.width,
                         )
                         BenchPageNumber(
@@ -1147,6 +1157,10 @@ public fun EditorScreen(
                             // verb does — the fade, the snack, and its Undo. Without this the element
                             // simply vanished for a screen-reader user while a sighted user got an undo.
                             onDelete = { softDelete(setOf(it)) },
+                            // OD-49's non-visual half. The drawn warning needs a gesture or a selection;
+                            // this needs neither, because a maker reading the page by touch should be able
+                            // to discover that a box is off the edge without first selecting it.
+                            pageSizePt = pageSizePt,
                         )
                     }
                 }

@@ -1,7 +1,14 @@
 # P2b — should the keep-clear boundary appear on selection, or only on crossing?
 
-**Status** 🟦 proposal, awaiting an owner ruling. Booked by [ADR-102 §12.10](../DECISIONS.md#adr-102-p2-pass2)
-out of P2's device Pass 2 (finding U2). Nothing here is implemented.
+**Status** ✅ **RULED 2026-08-13 — option (a), warn-only.** Booked by
+[ADR-102 §12.10](../DECISIONS.md#adr-102-p2-pass2) out of P2's device Pass 2 (finding U2); the ruling and its
+consequences are recorded in [ADR-102 §12.11 / OD-48](../DECISIONS.md#adr-102-p2b), which is the authority
+from here. Implemented the same day: `v21-bench.html` amended first, then Compose, tests and this file.
+**Device verification is still owed** — both passes, on the new behaviour.
+
+> This document keeps its original argument below, unedited, because the ruling agreed with its
+> recommendation and the evidence behind it is the reason the ruling could be made in one pass. What it
+> **cannot** do is stay the record: the four questions at the foot were answered by OD-48, not here.
 
 **Why it is a separate package.** It is a **freeze amendment** — the HTML specification changes first — and it
 would delete the mark [§12.9](../DECISIONS.md#adr-102-p2-marks) has just spent a ruling accepting as

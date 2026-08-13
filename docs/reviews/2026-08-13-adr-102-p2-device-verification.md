@@ -175,15 +175,34 @@ says *"the maker never learns the word 'bleed'"*, and the industry has no standa
 ("live area" / "safe zone" / "safety margin" all mean the same thing and vary by vendor). Labelling it is not
 available.
 
-**U2 — deferred to its own package.** It is a freeze amendment and it would delete the mark §12.9 just
-accepted as decorative. Briefed at [P2b](../proposals/2026-08-13-p2b-warn-only-boundary.md).
+**U2 — deferred to its own package, and then ruled the same day.** It is a freeze amendment and it deletes
+the mark §12.9 had just accepted as decorative, so it was briefed separately at
+[P2b](../proposals/2026-08-13-p2b-warn-only-boundary.md) rather than settled inside this fix. The owner ruled
+**option (a), warn-only** — [ADR-102 §12.11 / OD-48](../DECISIONS.md#adr-102-p2b). The resting cue is gone:
+the boundary is drawn only while a gesture carries content across it.
+
+That also answers **U1** without arguing about hue. A mark that appears only when something is wrong is
+entitled to look like a warning; the reading recorded on this device was that an alarm colour arrived at a
+moment nothing was wrong, and there is no longer such a moment. **U1′ narrows rather than closes** — the mark
+is still unlabelled, but it now appears at the instant it is about, which is the only teaching BP-4 allows.
+
+⚠ **The passes below were run against the pre-OD-48 build and do not verify it.** Everything measured here —
+paint order, alphas, geometry, the reserve — still holds, because OD-48 changed the cue's *trigger* and
+*colour*, not its z-order or its box. But the questions Pass 2 would now ask are new ones (*is a maker
+pushing content off the edge still told, when nothing announced the boundary beforehand?*) and no device has
+been asked them. Both passes are owed on the amended build before merge.
 
 ## Acceptance
 
 | | verdict |
 |---|---|
-| Pass 1 | **PASS**, after the paint-order fix and with the warn's post-fix reading stated as unmeasured |
-| Pass 2 | **PASS with one finding carried** — U3 fixed and re-verified, U1 withdrawn, U1′ carried, U2 briefed separately |
+| Pass 1 *(pre-OD-48 build)* | **PASS**, after the paint-order fix and with the warn's post-fix reading stated as unmeasured |
+| Pass 2 *(pre-OD-48 build)* | **PASS with one finding carried** — U3 fixed and re-verified, U1 withdrawn, U1′ carried, U2 briefed separately |
+
+⚠ Both rows are qualified in the table itself and not only in the paragraph above it, because a reader
+skimming to a verdict finds the table. An unmarked **PASS** against a build that no longer exists is the
+failure mode commit `0d7cc57` was written about — *three freeze banners that lied* — and it is cheap to
+avoid twice.
 
 **The two passes disagree, and the disagreement is the finding.** Pass 1 says the cue is now exactly what the
 freeze specifies, at the alpha the freeze names, in both themes. Pass 2 says a mark that is correct, unlabelled,

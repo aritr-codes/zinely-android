@@ -1,6 +1,14 @@
 # P2 before it starts — the keep-clear, the snap guide, and the state nobody measured
 
-**Date** 2026-08-13 · **For** the owner · **Status** Proposal; one question, and it is not the one on file.
+**Date** 2026-08-13 · **For** the owner · **Status** ✅ **RULED — and half of it superseded the same day.**
+
+> The ruling on this brief is [ADR-102 §12.9](../DECISIONS.md#adr-102-p2-marks). Hours later
+> [OD-48 / §12.11](../DECISIONS.md#adr-102-p2b) **deleted the resting cue** on Pass 2 grounds, so two rows of
+> the recommendation below no longer describe the product: *"Keep-clear rest — frozen `berry` at .85,
+> accepted as decorative"* and *"Trigger — frozen, both hidden at rest, revealed only while focusing"*. The
+> boundary is now drawn **only** while a gesture carries content across it, in `jam`, at `.9`. The rest of
+> this brief — the surface-wide contrast measurements and the case for keeping a warn state at all — is what
+> OD-48 built on and stands unchanged. The ADR is the authority; this file is the argument that produced it.
 
 P2 is `BenchKeepClear` + `SnapGuides`, colour and trigger together
 ([ADR-102 §12.3](../DECISIONS.md#adr-102-p1-recut)). [§12.6 row 4](../DECISIONS.md#adr-102-p1-corrections)

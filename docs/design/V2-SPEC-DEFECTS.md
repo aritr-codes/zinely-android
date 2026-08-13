@@ -4453,6 +4453,17 @@ face-detection problem dissolves rather than being decided:
 >
 > **The warning is therefore transient guidance, not document state.**
 
+> ⚠ **Amended 2026-08-13 by [OD-49](../DECISIONS.md#adr-102-p2c), which is the authority for the trigger from
+> here.** Two of the four bullets above no longer hold: the warning is raised by **the selection crossing**,
+> not by the interaction, so it *does* survive the end of a gesture and content left in the area **while the
+> element is still selected** does warn. The device is why — reading only the in-flight gesture meant the
+> accessible nudge buttons could never warn at all, and a mark that vanished on release read as the problem
+> being solved. What this ruling got right and OD-49 keeps is the *load-bearing* half stated below: **an
+> unheld page never warns.** Idle is silent, an unselected page is silent, and nothing is persisted. An
+> in-place text or reframe session is silent too, on this entry's own logic — it is answering a different
+> question. See also [OD-48](../DECISIONS.md#adr-102-p2b), which deleted the resting cue this trigger was
+> written against.
+
 **Why this closes the face question without answering it.** The trigger is the *geometry of the element
 being manipulated* against the keep-clear rect — the element's bounds, not what the element depicts. A photo
 is tested as a box like any other element, so nothing needs to know whether a face is inside it. The written

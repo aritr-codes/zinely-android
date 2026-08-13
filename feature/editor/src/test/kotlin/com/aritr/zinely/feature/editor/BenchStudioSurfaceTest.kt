@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
 import com.aritr.zinely.core.imposition.Imposer
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -189,10 +190,11 @@ class BenchStudioSurfaceTest {
             "the sheet's shadow belongs to the room, not the sheet — it must not be lightened at night",
             "inkLine" !in lit,
         )
-        // The set is eight. Pinned as a number as well as a comparison, because both sides of the
-        // comparison are derived and a regex that silently matched nothing would agree with an island
-        // that lit nothing — which is exactly how the V2 version of this test would have passed on V2.1.
-        assertEquals("the V2.1 island is eight tokens", 8, lit.size)
+        // The set is seven — eight until OD-48 deleted the resting cue, the sheet's only `berry` mark.
+        // Pinned as a number as well as a comparison, because both sides of the comparison are derived and
+        // a regex that silently matched nothing would agree with an island that lit nothing — which is
+        // exactly how the V2 version of this test would have passed on V2.1.
+        assertEquals("the V2.1 island is seven tokens", 7, lit.size)
     }
 
     /**
@@ -208,12 +210,13 @@ class BenchStudioSurfaceTest {
         assertEquals(light.paper, islanded.paper)
         assertEquals(light.ink, islanded.ink)
         assertEquals(light.inkSoft, islanded.inkSoft)
-        assertEquals(light.berry, islanded.berry)
         assertEquals(light.berryTint, islanded.berryTint)
         assertEquals(light.butter, islanded.butter)
         assertEquals(light.jam, islanded.jam)
         assertEquals(light.leaf, islanded.leaf)
-        // And the room's own values survive where they must.
+        // And the room's own values survive where they must — `berry` among them since OD-48, which is
+        // the same statement as its absence from the island and worth asserting from this side too.
+        assertEquals(zinelyV21DarkColors().berry, islanded.berry)
         assertEquals(zinelyV21DarkColors().inkLine, islanded.inkLine)
         assertEquals(zinelyV21DarkColors().bench, islanded.bench)
     }
@@ -552,39 +555,57 @@ class BenchStudioSurfaceTest {
     }
 
     /**
-     * **P2: the resting form is absence, and both marks share one revealed alpha.**
+     * **P2b: the two marks no longer share a trigger, and the cue's resting form is absence in every
+     * frame that is not a crossing.**
      *
-     * V2 gave the cue `.32` resting and `.9` warning — two states, both always painted. V2.1 rests both
-     * the cue and the guide at `opacity:0` and reveals them together at `.85`. Derived from the freeze's
-     * own combined selector rather than transcribed, so the two constants cannot drift apart from each
-     * other or from the file that sets them.
+     * Until [OD-48](../../../../../../../../docs/DECISIONS.md#adr-102-p2b) the freeze revealed the cue and
+     * the guide together, in one rule, on `.content.focusing`. The amended freeze reveals only the guide
+     * there; the cue is raised by `.keepclear.warn`. Both alphas are still read out of the frozen file
+     * rather than transcribed, so neither constant can drift from the file that sets it — and the
+     * *separation* is asserted too, because the cheapest way to undo this ruling is to quietly put
+     * `.keepclear` back into the selector on the left.
      */
     @Test
-    fun `the keep-clear and the guide rest at zero and share the one frozen revealed alpha`() {
-        val reveal = Regex("""\.content\.focusing~\.keepclear\s*,\s*\.content\.focusing~\.guideV\s*\{[^}]*opacity\s*:\s*([\d.]+)""")
+    fun `the guide is revealed by focus, the cue only by a crossing, and each rests at zero`() {
+        val guideReveal = Regex("""\.content\.focusing~\.guideV\s*\{[^}]*opacity\s*:\s*([\d.]+)""")
             .find(benchCss)!!.groupValues[1].toFloat()
-        assertEquals("the cue takes the frozen revealed alpha", reveal, BenchStudio.KEEP_CLEAR_FOCUS_ALPHA, 1e-6f)
-        assertEquals("so does the guide — it is one rule in the freeze", reveal, BenchStudio.GUIDE_ALPHA, 1e-6f)
+        assertEquals("the guide takes the frozen revealed alpha", guideReveal, BenchStudio.GUIDE_ALPHA, 1e-6f)
+
+        val cueReveal = Regex("""\.keepclear\.warn\s*\{[^}]*opacity\s*:\s*([\d.]+)""")
+            .find(benchCss)!!.groupValues[1].toFloat()
+        assertEquals("the cue takes the frozen warn alpha", cueReveal, BenchStudio.KEEP_CLEAR_WARN_ALPHA, 1e-6f)
+
+        assertFalse(
+            "OD-48 removed the cue from the focus reveal; restoring it there re-creates the finding",
+            Regex("""\.content\.focusing~\.keepclear""").containsMatchIn(benchCss),
+        )
         assertTrue("the cue's resting form is absence", rule(".keepclear").contains("opacity:0"))
         assertTrue("so is the guide's", rule(".guideV").contains("opacity:0"))
     }
 
     /**
-     * **P2: the warn state is a departure the freeze does not contain — pinned as one.**
+     * **P2b: the warn state is now the whole mark, and it is the accessible one.**
      *
-     * Ruled by the owner on 2026-08-13 ([ADR-102 §12.9](../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks)).
-     * The measurement is the argument, so the measurement is the test: of the marks this surface can
-     * draw, the warning is the **only** one that clears WCAG 1.4.11's 3:1, and both of the freeze's own
-     * marks fail it. That is why the warning survived a freeze that has no warning.
+     * The departure was ruled on 2026-08-13 ([ADR-102 §12.9](../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks));
+     * [OD-48](../../../../../../../../docs/DECISIONS.md#adr-102-p2b) then deleted the resting cue and
+     * amended the freeze to carry the warn state instead. So the assertion that used to guard *"the
+     * freeze has no `.keepclear.warn`"* now guards its opposite — the earlier form of this test would
+     * fail, correctly, and this is the re-reading it asked for rather than the deletion it warned against.
      *
-     * If the frozen file ever grows a `.keepclear.warn`, the first assertion fails — and the right
-     * response is to re-read this ruling against it, not to delete the test.
+     * The measurement is still the argument. §12.9 accepted the `berry` cue below WCAG 1.4.11's 3:1 *as
+     * decorative* on the strength of the warning clearing it; OD-48 removed the mark that failed and kept
+     * the mark that passed, so the boundary now draws 3.66:1 or nothing. The `butter` guide is the only
+     * sub-floor mark left on the surface, and it is still pinned there deliberately.
      */
     @Test
-    fun `the warn state is a documented departure, and it is the only mark on the sheet that clears 3 to 1`() {
-        assertFalse(
-            "the V2.1 freeze specifies no warn state; keeping one is the departure this test guards",
+    fun `the warn state is the cue's only state, and it is the mark that clears 3 to 1`() {
+        assertTrue(
+            "OD-48 amended the freeze to specify the warn state; Compose follows the file, not the reverse",
             benchCss.contains(".keepclear.warn"),
+        )
+        assertTrue(
+            "and the frozen cue is drawn in jam — berry drew the resting boundary OD-48 deleted",
+            rule(".keepclear").contains("dashed var(--jam)"),
         )
         assertEquals(0.90f, BenchStudio.KEEP_CLEAR_WARN_ALPHA, 1e-6f)
 
@@ -616,14 +637,11 @@ class BenchStudioSurfaceTest {
                     "available nowhere else",
                 onPaper(c, c.jam, BenchStudio.KEEP_CLEAR_WARN_ALPHA) >= 3.0,
             )
-            // The two accepted-as-decorative marks, pinned BELOW the floor so the acceptance stays
-            // visible. Raising either above 3:1 is not a bug fix here — it would mean the D-064 question
-            // was answered the other way, and this ruling has to be revisited rather than quietly
-            // outgrown.
-            assertTrue(
-                "the frozen berry cue is accepted below the floor; if it clears 3:1 the ruling changed",
-                onPaper(c, c.berry, BenchStudio.KEEP_CLEAR_FOCUS_ALPHA) < 3.0,
-            )
+            // The one accepted-as-decorative mark left, pinned BELOW the floor so the acceptance stays
+            // visible. Raising it above 3:1 is not a bug fix here — it would mean the D-064 question was
+            // answered the other way, and this ruling has to be revisited rather than quietly outgrown.
+            // (Its sibling, the resting berry cue, is not asserted any more because it is not drawn any
+            // more. OD-48 closed that half of D-064 by deletion rather than by argument.)
             assertTrue(
                 "the frozen butter guide is accepted below the floor; same",
                 onPaper(c, c.butter, BenchStudio.GUIDE_ALPHA) < 3.0,
@@ -653,9 +671,10 @@ class BenchStudioSurfaceTest {
         Interaction.Transforming(pageIndex = 0, ids = setOf("a"), before = mapOf("a" to t), token = 1L)
 
     @Test
-    fun `idle never warns, even with content already inside the keep-clear area`() {
-        // The bullet the ruling spends most of its words on: this is NOT a validity indicator. A zine
-        // that has been left with a photo in the margin is not a zine the Bench nags about.
+    fun `an unheld page never warns, even with content already in the keep-clear area`() {
+        // The half of D-032 that OD-49 keeps, and the bullet the original ruling spent most of its words
+        // on: this is NOT a validity indicator. A zine left with a photo in the margin is not a zine the
+        // Bench nags about — you have to be holding the thing for it to speak.
         assertEquals(
             false,
             BenchStudio.keepClearWarn(
@@ -665,6 +684,158 @@ class BenchStudioSurfaceTest {
                 resizeOverride = null,
                 screenPxPerPt = SCALE,
                 pageSizePt = PAGE,
+                selection = emptySet(),
+            ),
+        )
+    }
+
+    /**
+     * **OD-49, and the reason it exists.** No gesture, no live transform — a selected element sitting
+     * across the boundary because a *nudge* put it there.
+     *
+     * [P2b's device pass](../../../../../../../../docs/reviews/2026-08-13-adr-102-p2b-device-verification.md)
+     * measured **zero** cue pixels for this case on hardware. `Move left` is an `Intent.Nudge`, never an
+     * `Interaction.Transforming`, so the old gesture-only predicate could not see it — which made the
+     * accessible way to move an element the one way you were never warned. Before OD-48 it was covered by
+     * accident, because selection alone drew the resting boundary.
+     */
+    @Test
+    fun `a selection left across the boundary warns with no gesture at all`() {
+        assertEquals(
+            true,
+            BenchStudio.keepClearWarn(
+                page = pageOf(crossing()),
+                interaction = Interaction.Idle,
+                live = null,
+                resizeOverride = null,
+                screenPxPerPt = SCALE,
+                pageSizePt = PAGE,
+                selection = setOf("a"),
+            ),
+        )
+    }
+
+    /**
+     * **An in-place session is not a moment to raise a print alarm**, and the rule is not the golden's
+     * convenience — `BenchStyleRowGoldenTest`'s frozen editing scene happens to place a box that overhangs
+     * the foot, and its failure is what raised the question.
+     *
+     * Typing asks *"what do these words say?"*; the boundary answers *"where does the printer stop?"*. The
+     * maker cannot move the box from inside the session either, so the alarm is unactionable as well as
+     * unasked — [ADR-058](../../../../../../../../docs/DECISIONS.md#adr-058)'s shape exactly. The element
+     * stays selected when the session ends, so the warning arrives one beat later, when it can be acted on.
+     */
+    @Test
+    fun `an in-place text session does not raise the warning, and ending it does`() {
+        val page = pageOf(crossing())
+        assertEquals(
+            "while typing: the screen is answering a different question",
+            false,
+            BenchStudio.keepClearWarn(
+                page, Interaction.EditingText(id = "a", token = 1L), null, null, SCALE, PAGE, setOf("a"),
+            ),
+        )
+        assertEquals(
+            "session over, still selected, still overhanging — now it says so",
+            true,
+            BenchStudio.keepClearWarn(page, Interaction.Idle, null, null, SCALE, PAGE, setOf("a")),
+        )
+    }
+
+    /**
+     * Reframing is [EditingText][Interaction.EditingText]'s twin, and shares its branch for the same
+     * reason: the reframe surface answers *"which part of this photo do I want?"*, and the frame itself
+     * does not move while it runs. The element stays selected, so the answer arrives when the sheet closes.
+     */
+    @Test
+    fun `a reframe session does not raise the warning, and ending it does`() {
+        val page = pageOf(crossing())
+        val reframing = Interaction.Reframing(
+            pageIndex = 0,
+            id = "a",
+            before = ImageElement(id = "a", transform = crossing(), assetId = "sha"),
+            token = 1L,
+        )
+        assertEquals(
+            "while reframing: a different question, and the frame is not what is being moved",
+            false,
+            BenchStudio.keepClearWarn(page, reframing, null, null, SCALE, PAGE, setOf("a")),
+        )
+        assertEquals(
+            "sheet closed, still selected, still overhanging — now it says so",
+            true,
+            BenchStudio.keepClearWarn(page, Interaction.Idle, null, null, SCALE, PAGE, setOf("a")),
+        )
+    }
+
+    /**
+     * **Any** member crossing is enough. A maker who selects two boxes and pushes the pair left has one
+     * of them leave the printer's reach first, and the mark exists to say so at that moment — not once
+     * the whole group is out.
+     */
+    @Test
+    fun `a multi-selection warns when only one of its members crosses`() {
+        val page = Page(
+            index = 0,
+            role = PageRole.INTERIOR,
+            elements = listOf(
+                TextElement(id = "a", transform = inside(), text = "x"),
+                TextElement(id = "b", transform = crossing(), text = "y"),
+            ),
+        )
+        assertEquals(
+            "the offending member is selected with a clear one",
+            true,
+            BenchStudio.keepClearWarn(page, Interaction.Idle, null, null, SCALE, PAGE, setOf("a", "b")),
+        )
+        assertEquals(
+            "selecting only the clear one says nothing about its neighbour",
+            false,
+            BenchStudio.keepClearWarn(page, Interaction.Idle, null, null, SCALE, PAGE, setOf("a")),
+        )
+    }
+
+    /**
+     * The selection set is document-wide; the `page` argument is the one on screen. An id that belongs to
+     * another page must not light this page's boundary — the mark would be pointing at nothing the maker
+     * can see, which is worse than silence.
+     *
+     * The page here holds a **crossing** element deliberately. A review caught the first cut of this test
+     * using a clear one, where `false` held for two reasons and the one the test named was not load-bearing:
+     * deleting `filter { it.id in selection }` outright left it green. With `crossing()` the only thing
+     * standing between this assertion and `true` is the id filter.
+     */
+    @Test
+    fun `a selection id from another page does not warn on this one`() {
+        assertEquals(
+            false,
+            BenchStudio.keepClearWarn(
+                page = pageOf(crossing()),
+                interaction = Interaction.Idle,
+                live = null,
+                resizeOverride = null,
+                screenPxPerPt = SCALE,
+                pageSizePt = PAGE,
+                selection = setOf("an-element-on-page-3"),
+            ),
+        )
+    }
+
+    @Test
+    fun `a selection that clears the boundary does not warn`() {
+        // The mirror, so the test above cannot be satisfied by "any selection warns" — which would make
+        // the mark mean "you have selected something", i.e. the resting cue OD-48 deleted, restored by
+        // the back door.
+        assertEquals(
+            false,
+            BenchStudio.keepClearWarn(
+                page = pageOf(inside()),
+                interaction = Interaction.Idle,
+                live = null,
+                resizeOverride = null,
+                screenPxPerPt = SCALE,
+                pageSizePt = PAGE,
+                selection = setOf("a"),
             ),
         )
     }
@@ -756,21 +927,37 @@ class BenchStudioSurfaceTest {
         )
     }
 
+    /**
+     * **What survives of D-032 after OD-49: the warning does not outlive the *selection*.**
+     *
+     * The original test asserted it did not outlive the *gesture*, and that is precisely the behaviour
+     * P2b's Pass 2 recorded as a lie — release, mark vanishes, *"good, I must have got it back inside"*,
+     * when the content was still outside. So the boundary moved: the gesture ending no longer clears it,
+     * deselection does.
+     *
+     * The mutation this still guards is the one that mattered — a **persisted flag**. Nothing here is
+     * remembered: drop the selection and the answer is false again, from the same document, because the
+     * predicate is derived every frame and there is nothing to clear.
+     */
     @Test
-    fun `the warning does not survive the end of the interaction`() {
-        // THE mutation of row 1.9. Same document, same offending geometry, gesture over: `live` is null
-        // and the reducer is back to Idle, and the answer must flip to false. If this ever passes with a
-        // persisted flag behind it, the warning has become document state and the ruling is broken.
+    fun `the warning does not survive deselection, and no longer ends with the gesture`() {
         val offending = pageOf(crossing())
         assertEquals(
+            "during the drag",
             true,
             BenchStudio.keepClearWarn(
-                offending, transforming(crossing()), LiveTransform(), null, SCALE, PAGE,
+                offending, transforming(crossing()), LiveTransform(), null, SCALE, PAGE, setOf("a"),
             ),
         )
         assertEquals(
+            "released, still selected, still outside — OD-49: it keeps saying so",
+            true,
+            BenchStudio.keepClearWarn(offending, Interaction.Idle, null, null, SCALE, PAGE, setOf("a")),
+        )
+        assertEquals(
+            "deselected — nothing held, nothing said, and nothing was stored to clear",
             false,
-            BenchStudio.keepClearWarn(offending, Interaction.Idle, null, null, SCALE, PAGE),
+            BenchStudio.keepClearWarn(offending, Interaction.Idle, null, null, SCALE, PAGE, emptySet()),
         )
     }
 

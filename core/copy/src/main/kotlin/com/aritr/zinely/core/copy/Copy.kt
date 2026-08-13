@@ -71,6 +71,38 @@ public object Copy {
         public const val PHOTO: String = "Photo"
         /** Spoken label for a non-empty text element. */
         public fun textLabel(text: String): String = "Text: $text"
+
+        /**
+         * Spoken **state** for an element whose drawn extent leaves the printer's reach — the non-visual
+         * twin of the keep-clear warning ([OD-49](../../../../../../../../docs/DECISIONS.md#adr-102-p2c)).
+         *
+         * Said as a state rather than an alert because the platform speaks a state change on the focused
+         * node *and* re-reads it on every later focus: a maker who nudges past the edge hears it when it
+         * happens, and a maker who arrives afterwards can still find out. A one-shot announcement would
+         * only ever serve the first of those.
+         *
+         * ⚠ **No jargon, by [BP-4](../../../../../../../../docs/design/V2-BENCH-PRINCIPLES.md)** — *"the
+         * maker never learns the word 'bleed'"*. It names the consequence (*may be cut off*) rather than
+         * the boundary, because the boundary has no name this product is allowed to teach.
+         */
+        public const val OUTSIDE_PRINT_REACH: String = "Too close to the edge — may be cut off when printed"
+
+        /**
+         * The element's spoken state when it is **both** outside the printer's reach and selected — or not.
+         *
+         * ⚠ **A state description does not add to the platform's; it replaces it.** Compose supplies
+         * *"Selected"* / *"Not selected"* for a node carrying `Selected` **only when no explicit
+         * `stateDescription` is set**, and for `Role.Button` that fallback is the only channel selection
+         * reaches the platform on at all — the defect `BenchPageGrid.kt:302-307` records from a device pass,
+         * where every grid cell announced itself unselected. So setting the reach text alone would have
+         * silenced *"selected"* on exactly the elements a maker is nudging, which is where selection is the
+         * precondition for every verb. A review caught it; the merged-semantics test could not, because
+         * `SemanticsProperties.Selected` is still perfectly present in the tree it reads.
+         *
+         * Only crossing elements get an explicit string; everything else keeps the platform's own wording.
+         */
+        public fun outsidePrintReachState(selected: Boolean): String =
+            if (selected) "Selected, $OUTSIDE_PRINT_REACH" else "Not selected, $OUTSIDE_PRINT_REACH"
     }
 
     /**
