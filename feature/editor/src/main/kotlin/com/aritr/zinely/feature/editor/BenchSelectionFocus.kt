@@ -13,6 +13,7 @@ import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.ExportScale
+import kotlin.math.min
 
 /** Test tag on the focus-scrim Canvas. */
 public const val BenchFocusScrimTestTag: String = "bench-focus-scrim"
@@ -110,7 +111,7 @@ private fun Path.appendQuad(quad: List<PtPoint>) {
  * obvious way round would be a visibly weaker dim, and the arithmetic is the whole reason the composite
  * is admissible in place of a per-element alpha.
  *
- * **V2.1 lifts the element from `.4` to `.5`** (`v21-bench.html:153`, was `v2-bench.html:291`) — the
+ * **V2.1 lifts the element from `.4` to `.5`** (`v21-bench.html:207`, was `v2-bench.html:291`) — the
  * unselected page reads a little less faded, so what you are *not* editing stays legible as context.
  * The complement happens to be `.5` on both sides of the arithmetic here, which is a coincidence of this
  * particular value and **not** a sign the two numbers are the same quantity: at `.4` the wash was `.6`.
@@ -121,7 +122,7 @@ private fun Path.appendQuad(quad: List<PtPoint>) {
  */
 internal const val BenchFocusDimAlpha: Float = 0.5f
 
-/** Frozen `.content.focusing .el:not(.selected){transition:opacity .18s}` (v21-bench.html `:153`). */
+/** Frozen `.content.focusing .el:not(.selected){transition:opacity .18s}` (`v21-bench.html:207`). */
 internal const val BenchFocusDimMillis: Int = 180
 
 /** Frozen `.sel` / `.handle` `transition:opacity .12s` (v2-bench.html `:155`, `:157`). */
@@ -143,6 +144,25 @@ internal fun benchPageRect(screenPxPerPt: Float, pageOffset: PtPoint, pageSizePt
         bottom = bottomRight.y.toFloat(),
     )
 }
+
+/**
+ * **Contain-fit of the page into the canvas** — `min(w/pw, h/ph)`, the single px-per-point source every
+ * layer reads through `uiState.view.screenPxPerPt`.
+ *
+ * Pure and extracted for one reason: `heightPx` is no longer the height the canvas measures. It is that
+ * height less [BenchContextBarReservedHeightDp], because the context bar floats *over* the sheet — so the
+ * arithmetic that decides how big the page is now has a term in it that is easy to get wrong and impossible
+ * to see in a screenshot. Guarding the degenerate inputs here rather than at the call site means the guard
+ * is testable: a zero or negative canvas (first frame, or a reserve taller than the canvas on a very short
+ * screen) must yield `1f` and never a zero or infinite scale, because that number divides page coordinates
+ * in every layer above it.
+ */
+internal fun benchCanvasFitScale(widthPx: Float, heightPx: Float, pageSizePt: PtSize): Float =
+    if (pageSizePt.width <= 0.0 || pageSizePt.height <= 0.0 || widthPx <= 0f || heightPx <= 0f) {
+        1f
+    } else {
+        min(widthPx / pageSizePt.width, heightPx / pageSizePt.height).toFloat()
+    }
 
 /** Frozen `.el.materialize{animation:mat .3s var(--settle)}` (v2-bench.html `:160`). */
 internal const val BenchMaterialiseMillis: Int = 300

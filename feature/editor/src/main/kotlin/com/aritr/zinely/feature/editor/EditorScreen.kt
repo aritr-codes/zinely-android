@@ -740,7 +740,7 @@ public fun EditorScreen(
             }
             // The studio ground and the grain over the whole screen. Last in the chain so it draws beneath
             // the Column's children and the grain lays over all of them, which is what
-            // `.phone::after{z-index:90}` does in the frozen file (`v21-bench.html:113`; V2 said 60).
+            // `.phone::after{z-index:90}` does in the frozen file (`v21-bench.html:162`; V2 said 60).
             .benchStudioGround(),
     ) {
         // C4 row 4.9: the frozen `.status` strip, the first thing in the phone (`v2-bench.html:390`
@@ -802,13 +802,16 @@ public fun EditorScreen(
             // Fit the whole page into the measured canvas (contain), top-left anchored (pan stays zero for
             // the MVP host; true centring/zoom is a follow-up). The scale is the single px-per-point source.
             val widthPx = constraints.maxWidth.toFloat()
-            val heightPx = constraints.maxHeight.toFloat()
+            // **The canvas is not as tall as it measures.** `BenchContextBar` floats over the sheet at this
+            // Box's bottom edge, so the height the page may actually occupy is the measured height less the
+            // band that bar sits in — see [BenchContextBarReservedHeightDp] for why that band is reserved
+            // always rather than only while the bar is up. P2's device Pass 2 (finding U3) found the bar
+            // covering the keep-clear boundary's bottom edge and the folio; this is the fix, and it is a
+            // *fit* change rather than new chrome, so nothing frozen moves.
+            val reservedBottomPx = with(LocalDensity.current) { BenchContextBarReservedHeightDp.toPx() }
+            val heightPx = (constraints.maxHeight.toFloat() - reservedBottomPx).coerceAtLeast(0f)
             val scale: Float = remember(widthPx, heightPx, pageSizePt) {
-                if (pageSizePt.width <= 0.0 || pageSizePt.height <= 0.0 || widthPx <= 0f || heightPx <= 0f) {
-                    1f
-                } else {
-                    min(widthPx / pageSizePt.width, heightPx / pageSizePt.height).toFloat()
-                }
+                benchCanvasFitScale(widthPx, heightPx, pageSizePt)
             }
             val interaction = uiState.interaction
             // The SAME predicate the style row is raised on (`editingElement != null`), deliberately, and
@@ -962,6 +965,44 @@ public fun EditorScreen(
                             .size(paperWidth, paperHeight)
                             .benchPageSurface()
                             .testTag(EditorPaperSurfaceTestTag),
+                    )
+                    EditorPagePreview(
+                        uiState = uiState,
+                        defaults = uiState.document.defaults,
+                        pageSizePt = pageSizePt,
+                        live = live,
+                        modifier = Modifier.fillMaxSize(),
+                        resizeOverride = resizeOverride,
+                        styleOverride = styleOverride,
+                        imageBytes = imageBytes,
+                        // ADR-093 row 3.11: the in-place field below is the only drawing of this element
+                        // while the session is open, so the tape must not paint it a second time.
+                        hiddenElementId = editingElement?.id,
+                        // C4 row 4.13: the leaving element, and how far through leaving it is.
+                        deleting = deletingId?.let { it to deleteProgress },
+                    )
+                    // **Above the wash, and the device is why.** The furniture used to be nested inside the
+                    // sheet box above, which put it *under* [EditorPagePreview]'s focus scrim. The freeze
+                    // dims `.el:not(.selected)` (`v21-bench.html:207`) — it dims *elements*; Compose
+                    // implements the dim as one composite bounded to the page rect ([BenchFocusScrim], and
+                    // it stays a composite for the reasons recorded there), so it also washed every mark on
+                    // the sheet. That divergence is invisible in a screenshot test, which reads nominal
+                    // alphas, and it halved the marks on glass: P2's device pass measured the cue at an
+                    // effective **.42** rather than `.85`, and the warning — the one mark ADR-102 §12.9
+                    // rests on clearing 3:1 — at **1.82:1** rather than 3.66:1. (`.425` is what the model
+                    // predicts; `.42` is what the screen gave. In a comment whose whole subject is correct
+                    // arithmetic losing to glass, the two must not be written as the same number — a review
+                    // caught this one saying `.425`.)
+                    //
+                    // The cue's trigger *is* the wash's trigger, so it was never once seen undimmed.
+                    //
+                    // Geometry is unchanged: the same `paperX/paperY/paperWidth/paperHeight` the sheet uses,
+                    // so D-033 still holds — the furniture is still positioned by the page box, it is simply
+                    // no longer painted beneath the wash.
+                    Box(
+                        modifier = Modifier
+                            .offset(x = paperX, y = paperY)
+                            .size(paperWidth, paperHeight),
                     ) {
                         BenchKeepClear(
                             // D-032: transient guidance. The cue warns only while an interaction is in
@@ -982,6 +1023,14 @@ public fun EditorScreen(
                                 screenPxPerPt = uiState.view.screenPxPerPt,
                                 pageSizePt = pageSizePt,
                             ),
+                            // The frozen `.content.focusing`. `EditorPagePreview` decides it by whether
+                            // any selected id resolves to an element **on the page being shown**, not by
+                            // whether the selection set is non-empty — and a review caught this reading
+                            // the looser predicate. A selection id that is not on the visible page would
+                            // then have turned the cue on with the wash off: one screen, two answers to
+                            // "is the user focused on something here?".
+                            focusing = uiState.document.pages[uiState.currentPageIndex]
+                                .elements.any { it.id in uiState.selection },
                             panelWidthPt = pageSizePt.width,
                         )
                         BenchPageNumber(
@@ -992,21 +1041,6 @@ public fun EditorScreen(
                             modifier = Modifier.align(Alignment.BottomEnd),
                         )
                     }
-                    EditorPagePreview(
-                        uiState = uiState,
-                        defaults = uiState.document.defaults,
-                        pageSizePt = pageSizePt,
-                        live = live,
-                        modifier = Modifier.fillMaxSize(),
-                        resizeOverride = resizeOverride,
-                        styleOverride = styleOverride,
-                        imageBytes = imageBytes,
-                        // ADR-093 row 3.11: the in-place field below is the only drawing of this element
-                        // while the session is open, so the tape must not paint it a second time.
-                        hiddenElementId = editingElement?.id,
-                    // C4 row 4.13: the leaving element, and how far through leaving it is.
-                    deleting = deletingId?.let { it to deleteProgress },
-                    )
                     // ADR-093 rows 3.8/3.11: the text is edited ON the page, at its own box, inside the
                     // panned wrapper so it rides the pan rigidly with everything else. This replaces the
                     // detached bottom sheet the editor shipped with — see [BenchEditingSurface].

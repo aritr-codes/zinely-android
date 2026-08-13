@@ -1,6 +1,10 @@
 # Two open decisions before P2 — OD-47 and handle placement
 
-**Date** 2026-08-12 · **For** the owner · **Status** Proposal; neither question is settled here.
+**Date** 2026-08-12 · **For** the owner · **Status** ✅ **RULED 2026-08-12 — all six rows of §3 accepted as
+recommended.** The rulings live in [ADR-102 §12.5](../DECISIONS.md#adr-102-od47) (OD-47 closed as filed;
+the consistency defect goes to P5) and [§12.8](../DECISIONS.md#adr-102-p1-handles) (handle marks to the
+ring, hit targets unmoved, ring inset corrected to 5.2dp). This file is kept as the evidence behind them,
+not as an open question.
 
 Research brief on the two items [ADR-102 §12](../DECISIONS.md#adr-102-p1-handoff) left open. Each section
 gives the verified facts first, then the options, then a recommendation. Evidence labels follow
@@ -37,7 +41,7 @@ were measured at **1.21:1** in dark). The grid was considered at the same moment
 for the reason OD-47 now overlooks.
 
 ✅ **VERIFIED — both freezes paint the card in the room's `--paper`.** `v2-bench.html:439`
-(`.pgcell{background:var(--paper)}`) and `v21-bench.html:381` (`.pgc{background:var(--paper);
+(`.pgcell{background:var(--paper)}`) and `v21-bench.html:434` (`.pgc{background:var(--paper);
 border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink-line)}`). Neither declares a light island.
 **So making the cards light is a departure from the frozen specification, not a parity fix.**
 
@@ -73,7 +77,7 @@ excluded it. On a device, forty pixels apart, that reads as a malfunction whatev
 | Theme | foreground | background | ratio | AA needs |
 |---|---|---|---|---|
 | Dark | `#857C69` (`ZinelyV2Colors.kt:227`) | `#2F2A22` (`:220`) | **3.45:1** (3.31:1 against the grained `(50,45,37)`) | 4.5:1 |
-| Light | `#8C8269` | `(253,243,231)` | **3.47:1** | 4.5:1 |
+| Light | `#8C8269` | ~~`(253,243,231)`~~ → `(247,242,231)` = `#F7F2E7`, the token exactly (device, 2026-08-13) | ~~**3.47:1**~~ → **3.41:1** | 4.5:1 |
 
 The text is `BenchCellNumberSize = 9.sp` (`BenchPageGrid.kt:91`), nowhere near 1.4.3's large-scale threshold
 (≥18 pt, or ≥14 pt bold), so **4.5:1 applies and both themes miss it**. This is a real AA failure, it is
@@ -137,7 +141,7 @@ changes under a cell-scoped fix (light room == light island).
 ⚠️ **Sequencing fact that changes the answer.** `BenchPageGrid.kt` is still V2-era (zero `ZinelyV21`
 references), and ADR-102 §8's table assigns `BenchPageGrid` to **P5**. 🟨 **Derived, not cited** — §8's P5
 row says only *"Page grid — BenchPageGrid … ⚠️ and the grid dims the artifact today"*; the *extent* of the
-rewrite is my reading of `v21-bench.html:381-384` and `:701` against the current file, and it is total:
+rewrite is my reading of `v21-bench.html:434-437` and `:701` against the current file, and it is total:
 3/4 aspect (not .66), `1.5px ink` border, a `3px 3px 0 inkLine` hard shadow, `leafTint`/`leafText` for the
 current cell, and **no Cover/Back label** (the frozen grid button emits a bare number). On that reading,
 any fix landed today is thrown away by P5 — and P5 needs the same ruling regardless.
@@ -178,7 +182,7 @@ terms.
 
 Two separate facts, kept apart because an earlier draft ran them together: `.el` has no padding and no
 border, so the absolutely-positioned containing block *is* the element box; and `*{box-sizing:border-box}`
-(`v21-bench.html:94`) makes `.hnd`'s `width:9px` its **outer** size, which is what puts the centre at −5.5.
+(`v21-bench.html:137`) makes `.hnd`'s `width:9px` its **outer** size, which is what puts the centre at −5.5.
 `box-sizing` is **irrelevant to `.ring`**, which sets all four insets with `width:auto` and stretches to
 fit regardless.
 

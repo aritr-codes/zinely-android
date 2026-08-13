@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
+import kotlin.math.roundToInt
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.zinelyV2LightColors
 import com.aritr.zinely.ui.theme.zinelyV21LightColors
@@ -104,8 +105,9 @@ class BenchSelectionAppearanceTest {
      * Row 2.3 — the outline is drawn **outside** the element's box. Composed at a known transform, the
      * pixel on the box edge must be clear of the stroke and the stroke must be found beyond it.
      *
-     * Mutation: `SelectionOutlineInsetDp` 7 → 0 puts the stroke on the edge itself and the first assertion
-     * (edge is clean) fails.
+     * Mutation: `SelectionOutlineInsetDp` 5.2 → 0 puts the stroke on the edge itself and the first
+     * assertion (edge is clean) fails. (The constant read 7dp in V2 and 6dp during P1's transcription;
+     * 5.2dp is the CSS stroke *centre* — [ADR-102 §12.8](../../../../../../../docs/DECISIONS.md).)
      */
     @Test
     fun `the outline stands off the element's edge rather than sitting on it`() {
@@ -129,11 +131,22 @@ class BenchSelectionAppearanceTest {
 
         // On the box's left edge (x = 40): nothing drawn there any more.
         assertEquals("the box edge itself carries no stroke", paper, b.getPixel(40, midY))
-        // Seven px outside it: the stroke. Scanned across a small band because a 1.5dp stroke straddles
-        // pixel boundaries and asserting one exact column would be asserting the rasteriser, not the spec.
-        val band = (31..35).map { b.getPixel(it, midY) }
+        // …and the stroke is found where the constant says it is. Scanned across a band because a 1.6dp
+        // stroke straddles pixel boundaries and asserting one exact column would be asserting the
+        // rasteriser, not the spec — but the band is now **derived from the constant** rather than the
+        // hard-coded `31..35` a first version used. That literal was written for V2's 7dp inset, survived
+        // the change to 6dp, and would have gone on passing at any inset that happened to land in it;
+        // when the ring moved to its corrected 5.2dp it finally fell out of the window, and the failure
+        // read as "the ring is missing" rather than "the band is stale".
+        //
+        // Scanned ALONG the edge, not across it. The ring is **dashed** — `2 × stroke` on, `2 × stroke`
+        // off — so a horizontal five-pixel band can land entirely in a gap and report "no ring" about a
+        // ring that is there. The first version of this fix did exactly that and read as a missing ring;
+        // a vertical run of 20px crosses three dash periods and cannot.
+        val strokeAt = 40 - SelectionOutlineInsetDp.value.roundToInt()
+        val band = (strokeAt - 1..strokeAt + 1).flatMap { x -> (60..80).map { y -> b.getPixel(x, y) } }
         assertTrue(
-            "no stroke found 7px outside the box — saw ${band.map { Integer.toHexString(it) }}",
+            "no stroke found along the ring's stroke centre (x≈$strokeAt) over 20px of its edge",
             band.any { it != paper },
         )
     }
@@ -146,7 +159,7 @@ class BenchSelectionAppearanceTest {
      *
      * V2's mark was a 13dp **circle** and the old version of this test proved it by sampling the diagonal
      * where a square would still paint. V2.1's `.hnd` is a 9px square with `border-radius:2px`
-     * (`v21-bench.html:148-149`), so the same sample now proves the opposite thing, and the test would
+     * (`v21-bench.html:198-199`), so the same sample now proves the opposite thing, and the test would
      * have gone green in the wrong direction if it had only had its numbers updated.
      *
      * ### The halo is retained against the freeze, deliberately

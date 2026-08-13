@@ -235,7 +235,7 @@ class BenchStyleRowGoldenTest {
         assertTrue("the swatch is not seeded from the edited element's own colour",
             rowCrop.pixelCountOf(coralInk.toArgb()) > 200)
 
-        // The caret's PAINT: **`--jam`** (`v21-bench.html:161`), 1.5px wide. Both were named in the frozen
+        // The caret's PAINT: **`--jam`** (`v21-bench.html:215`), 1.5px wide. Both were named in the frozen
         // property table's assertion column and neither was asserted; the re-review's own mutations
         // reverted the colour and multiplied the width by eight, and both survived the whole suite.
         //

@@ -336,9 +336,25 @@ private fun BenchPageCell(
                     .padding(start = BenchCellLabelInsetStart, top = BenchCellLabelInsetTop),
             )
         }
+        // `inkSoft`, not the frozen `--ink-faint`, and this is a deliberate departure from `.pgcell span`.
+        //
+        // **The frozen colour fails WCAG 1.4.3 AA in both themes.** `inkFaint` on the card measures
+        // **3.45:1** in dark (`#857C69` on `#2F2A22`) and **3.41:1** in light (`#8C8269` on `#F7F2E7`)
+        // against a 4.5:1 requirement — [BenchCellNumberSize] is 9sp, nowhere near 1.4.3's large-scale
+        // threshold of 18pt (or 14pt bold). Found 2026-08-12 while checking whether OD-47 had an
+        // accessibility argument; it did not, but this did, and it is a different defect.
+        //
+        // `inkSoft` measures **6.25:1** dark and **6.78:1** light against the `paper` token (6.91:1 light
+        // against the grained pixels a device shows — the figures answer different questions and this file
+        // says which). It is also the token V2.1's own `.pgc` names (`color:var(--ink-soft)`,
+        // `v21-bench.html:436`), so this converges on P5's rewrite rather than diverging from it —
+        // **as a name, not as a value**: `.pgc` locally restates `--ink-soft` as a lit, theme-invariant
+        // `#6E5947`, while this reads `ZinelyTheme.v2Colors.inkSoft`, which is `#5B5347` light and
+        // `#B4AB97` dark. P5 makes them the same colour; today they are the same *choice*. Permitted after freeze as an accessibility fix — the one
+        // carve-out the handbook names, and the one OD-47's own change could not claim.
         Text(
             text = "$pageNumber",
-            color = colors.inkFaint,
+            color = colors.inkSoft,
             fontSize = BenchCellNumberSize,
             fontFamily = ZinelyTheme.v2Typography.work,
             modifier = Modifier

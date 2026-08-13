@@ -4282,12 +4282,18 @@ on the way into a double-tap and make text editing flicker.
 existing ruling; it is filed because the HTML-first workflow requires the canonical file to be corrected rather
 than quietly diverged from.
 
-`v2-bench.html:159` positions exactly four handles:
+`v2-bench.html:297` (cited here as `:159` until 2026-08-12; the file moved, the rule did not) positions exactly
+four handles:
 
 ```css
 .handle.tl{left:-10px;top:-10px}.handle.tr{right:-10px;top:-10px}
 .handle.bl{left:-10px;bottom:-10px}.handle.br{right:-10px;bottom:-10px}
 ```
+
+> **2026-08-12 — closed forward in V2.1, count only.** `v21-bench.html:201-206` now positions **eight**:
+> the same four corners plus `.hnd.t/.b/.l/.r` at the edge midpoints. The count question D-036 raises is
+> settled in the shipped direction (eight, per [OD-11](DECISIONS.md#adr-098-od11)); the *position* question
+> it did not ask — that ∓10px never centred the mark on the corner — is [ADR-102 §12.8](../DECISIONS.md#adr-102-p1-handles)'s.
 
 `ResizeHandle.entries` in `:core:editor` has **eight** — those four corners and four edge midpoints — and
 `TransformMath.resizeByHandle` gives them different behaviour: a corner resizes **both** axes, an edge resizes

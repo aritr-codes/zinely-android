@@ -276,6 +276,22 @@ internal val BenchContextBarRadiusDp = 16.dp
 internal val BenchContextBarPaddingDp = 8.dp
 internal val BenchContextBarGapDp = 6.dp
 internal val BenchContextBarButtonHeightDp = 40.dp
+
+/**
+ * The verb row's **laid-out** height, which is the frozen drawn 40dp — *not* Material's 48dp interactive
+ * floor.
+ *
+ * The distinction cost two wrong answers, so it is written down. A review argued the row must measure 48,
+ * citing this file's own `the frozen 40dp verb still offers a 48dp touch target`. That test is correct and
+ * so is the floor — but `minimumInteractiveComponentSize` grows the **touch target**, which extends beyond
+ * the layout box without enlarging it or its parent. Measured in place
+ * (`EditorScreenGoldenTest."the sheet is fitted above the context bar"`), the bar's footprint from the canvas
+ * foot is **68dp** = `12 + 8 + 40 + 8`. The row is 40.
+ *
+ * It stays a named constant rather than folding back into the reserve because *which* of the two numbers
+ * this is has now been got wrong from both directions, and the name is where the answer lives.
+ */
+internal val BenchContextBarRowHeightDp = BenchContextBarButtonHeightDp
 internal val BenchContextBarButtonRadiusDp = 10.dp
 internal val BenchContextBarLabelGapDp = 2.dp
 internal val BenchContextBarIconDp = 17.dp
@@ -287,3 +303,44 @@ internal const val BenchContextBarEnterMillis: Int = 200
 
 /** `transform:translateY(14px)` — a fixed rise, not a fraction of the bar's own height. */
 internal val BenchContextBarEnterOffsetDp = 14.dp
+
+/**
+ * **The vertical band this bar occupies at the canvas's foot** — `inset + (padding + row + padding)`, where
+ * `row` is the button's **layout** height, not its drawn one.
+ *
+ * ### Two wrong answers, from opposite directions, before a measurement settled it
+ *
+ * The first cut added a **second** [BenchContextBarInsetDp] for the padding *above* the card — which is
+ * transparent and occupies nothing — giving 80dp against a real band of 68. It over-reserved, so the fix
+ * appeared to work and the sheet simply sat 12dp higher than it needed to.
+ *
+ * A review then argued the opposite error: that [BenchContextBarRowHeightDp] must be Material's **48dp**
+ * interactive floor rather than the frozen 40, citing this file's own
+ * `the frozen 40dp verb still offers a 48dp touch target`. That test is right and the floor is real, but it
+ * measures a **touch target** — `minimumInteractiveComponentSize` extends the target past the layout box
+ * without growing it. Taking that correction would have over-reserved by 8dp instead.
+ *
+ * Neither was settled by argument. `EditorScreenGoldenTest` composes the bar and measures
+ * `canvas.bottom - bar.top`: **68dp**, i.e. `inset + padding + 40 + padding`, and it now asserts this
+ * constant against that measurement — so the next person to reason about it from the constants alone will
+ * be corrected by the suite rather than by a device.
+ *
+
+ * It exists because the bar **floats over the sheet**, and P2's device Pass 2 found it covering the bottom
+ * edge of the keep-clear boundary and the page folio with it. A boundary whose whole job is to say *where
+ * the bottom limit is* was hiding exactly that, and it was hidden by chrome summoned on the same tap — the
+ * cue and the bar answer to one predicate, so they arrive together and then fight for the same pixels.
+ *
+ * [EditorScreen] subtracts this from the canvas height before fitting the sheet, so the page is sized and
+ * centred in the residual band above the bar.
+ *
+ * **Reserved unconditionally, not only while the bar is up**, and that is the whole of the design decision.
+ * Reserving it on visibility would resize the sheet on every select and deselect — the page jumping under
+ * the finger that just tapped it, which is a worse defect than the one being fixed — and `screenPxPerPt`
+ * keys the gesture `pointerInput`, so a scale change at selection is the same hazard the viewport push is
+ * already deferred to avoid. A constant, slightly smaller page costs nothing a maker can perceive; a page
+ * that changes size when touched costs trust.
+ */
+internal val BenchContextBarReservedHeightDp =
+    BenchContextBarInsetDp + BenchContextBarPaddingDp + BenchContextBarRowHeightDp +
+        BenchContextBarPaddingDp

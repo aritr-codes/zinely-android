@@ -36,7 +36,7 @@ import org.robolectric.annotation.GraphicsMode
  * `x·element + (1−x)·paper`, and a `(1−x)` paper wash produces the **same pixel**. If that is true the
  * substitution is exact; if it is off by one step it is a different design wearing the spec's name.
  *
- * ADR-102 P1 moved the freeze from `.4` to **`.5`** (`v21-bench.html:153`), which makes `x` and `1−x`
+ * ADR-102 P1 moved the freeze from `.4` to **`.5`** (`v21-bench.html:207`), which makes `x` and `1−x`
  * the same number *for this one value*. The two are still different quantities and are still written
  * separately here — collapsing them would make the test agree with a wash that had stopped being the
  * complement, and it would do so silently the next time the freeze moves.
@@ -68,7 +68,7 @@ class BenchSelectionFocusTest {
         val DESK = Color(0xFF2F2A22)
 
         /**
-         * The frozen `.content.focusing .el:not(.selected){opacity:.5}` (`v21-bench.html:153`) — the
+         * The frozen `.content.focusing .el:not(.selected){opacity:.5}` (`v21-bench.html:207`) — the
          * spec value, **not** the wash.
          *
          * V2.1 lifted it from `.4`, so the complement lifted with it and the two now happen to be the

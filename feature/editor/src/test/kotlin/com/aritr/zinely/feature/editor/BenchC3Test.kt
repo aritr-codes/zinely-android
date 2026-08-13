@@ -307,7 +307,7 @@ class BenchC3Test {
         // The overflow used is real product content rather than a contrived one: on SNUG the sheet FILLS
         // the canvas (`centreOffset.y` is `coerceAtLeast(0.0)`, so page-top == canvas-top), and a selected
         // element sitting at the page's TOP edge puts its **selection chrome** above the canvas — the ring
-        // at `SelectionOutlineInsetDp` 6dp, and half of each 12dp handle halo — over the `Preview` bar.
+        // at `SelectionOutlineInsetDp` 5.2dp, and half of each 12dp handle halo — over the `Preview` bar.
         // That is the same defect the panned page produced on device (paper on the chrome), in the one
         // direction Robolectric can be made to show.
         //

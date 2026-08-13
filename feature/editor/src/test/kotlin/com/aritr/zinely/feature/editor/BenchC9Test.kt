@@ -476,7 +476,8 @@ class BenchC9Test {
             }
 
             // The chrome half of the row: the weakest ink the Bench draws, over the ground it is actually
-            // drawn on. `BenchPageGrid` writes each cell's page number in `inkFaint` (`:341`) onto the
+            // drawn on. `BenchPageGrid` writes each cell's page number in `inkSoft` (`:353`; it was
+            // `inkFaint` until the 2026-08-12 AA fix, which is what the amendment below records) onto the
             // **cell**, whose ground is a flat `colors.paper` (`:287`). Two things about that ground are
             // easy to get wrong, and this row got both wrong before the device corrected it:
             //
@@ -519,11 +520,34 @@ class BenchC9Test {
             //
             // Four computed readings of one row, three of them wrong, and the hardware right the first
             // time. Being wrong once is not a reason to trust the correction.
-            val ratio = contrastRatio(c.inkFaint, c.paper)
+            // ⚠ AMENDED 2026-08-12 — the badge is now `inkSoft`, and that change is what makes the
+            // paragraph above stop being load-bearing.
+            //
+            // `inkFaint` measured **3.45:1 dark / 3.41:1 light** flat: over the ≥3:1 control floor, under
+            // 1.4.3's 4.5:1 for 9sp text, and — by this row's own `softLightExtreme` instrument —
+            // **2.969 / 2.525**, i.e. under every floor on the table. Which of those three numbers binds
+            // a decorative page number was D-064's open question, and the honest reading is that the
+            // token was passing only on the most generous instrument available.
+            //
+            // `inkSoft` measures **6.25:1 dark / 6.78:1 light** and clears 4.5:1 with room, so the answer
+            // no longer depends on which instrument or which floor D-064 settles on. **That does not
+            // resolve D-064** — the question of whether per-pixel worst case is the right instrument over
+            // grain is still the owner's, and it still binds other badges. It removes this pairing from
+            // the set of things riding on the answer.
+            val ratio = contrastRatio(c.inkSoft, c.paper)
             assertTrue(
                 "$theme cell badge on the cell's paper: ${"%.3f".format(ratio)}:1 " +
                     "is below the ≥3:1 control floor",
                 ratio >= ControlFloor,
+            )
+            // The stricter floor, asserted separately so the failure message says which one broke: 9sp is
+            // not large-scale text under 1.4.3 by any reading (≥18pt, or ≥14pt bold), so if this badge is
+            // text at all, 4.5:1 is its floor. Kept as its own assertion rather than folded into the one
+            // above because the two would then fail with the same message for different reasons.
+            assertTrue(
+                "$theme cell badge is ${"%.3f".format(ratio)}:1 — a 9sp number is not large-scale text, " +
+                    "so 1.4.3 AA wants 4.5:1",
+                ratio >= 4.5f,
             )
         }
 
@@ -538,8 +562,8 @@ class BenchC9Test {
             grid.contains(".background(colors.paper)"),
         )
         assertTrue(
-            "BenchPageGrid no longer writes its page number in `colors.inkFaint` — same failure, other side",
-            grid.contains("color = colors.inkFaint"),
+            "BenchPageGrid no longer writes its page number in `colors.inkSoft` — same failure, other side",
+            grid.contains("color = colors.inkSoft"),
         )
     }
 

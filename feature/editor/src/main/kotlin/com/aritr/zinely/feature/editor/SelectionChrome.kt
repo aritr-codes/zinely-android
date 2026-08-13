@@ -33,7 +33,7 @@ public const val SelectionChromeTestTag: String = "selection-chrome"
  * ### V2.1 re-skin (ADR-102 P1) — the ring is drawn, not lit
  *
  * The frozen `.el .ring` is `inset:-6px; border:1.6px **dashed** var(--ink); border-radius:var(--br-sm)`
- * (`v21-bench.html:145`), and the freeze's own banner states the rule it serves: **selection is a
+ * (`v21-bench.html:188`), and the freeze's own banner states the rule it serves: **selection is a
  * hand-drawn dashed ring in `ink`, never a system box.** So the outline is drawn 6 device px outside the
  * box, 1.6dp thick, dashed, in `ink`.
  *
@@ -105,13 +105,26 @@ public fun SelectionChrome(
     }
 }
 
-/** Frozen `.el .ring` `border:1.6px` (`v21-bench.html:145`). */
+/** Frozen `.el .ring` `border:1.6px` (`v21-bench.html:188`). */
 internal val SelectionOutlineStrokeDp = 1.6.dp
 
-/** Frozen `.el .ring` `inset:-6px` — outward, in screen space (`v21-bench.html:145`). */
-internal val SelectionOutlineInsetDp = 6.dp
+/**
+ * How far the ring's **stroke centre-line** sits outside the element box: `5.2dp`, not the frozen `6`.
+ *
+ * `.el .ring{inset:-6px;border:1.6px}` puts the ring's **outer edge** at `-6px`, and a CSS border paints
+ * *inside* its box, so the stroke's centre-line is at `-6 + 1.6/2 = -5.2px` (`v21-bench.html:188`).
+ * Compose's [Stroke] is centred on the path, so the number this constant must carry is the centre-line's,
+ * and transcribing the CSS literal put the ring **0.8dp too far out**.
+ *
+ * ⚠ The mistake is worth keeping visible, because it survived the very rule meant to catch it: ADR-073
+ * says *compare against the declared CSS, not a rendering of it*, and the test that did exactly that
+ * asserted `SelectionOutlineInsetDp == -inset` — the raw number, read without the box model. Reading the
+ * declaration is not the same as reading the geometry it declares. Corrected 2026-08-12 alongside
+ * [HandleRingOffsetDp], with which it forms one figure: 5.5 and 5.2 are 0.3dp apart.
+ */
+internal val SelectionOutlineInsetDp = 5.2.dp
 
-/** Frozen `.el .ring` `border-radius:var(--br-sm)` (`v21-bench.html:146`). */
+/** Frozen `.el .ring` `border-radius:var(--br-sm)` (`v21-bench.html:189`). */
 internal val SelectionOutlineRadiusDp = ZinelyV21Dimens.radiusSm
 
 /**

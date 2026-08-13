@@ -81,7 +81,7 @@ Dark theme; the light raster's ring is under the focus wash and cannot serve.
 
 Three honest qualifications, because the rows above are the ones most tempting to over-read:
 
-- **The dash period is not in the freeze.** `v21-bench.html:145` says only `dashed`; CSS leaves the period
+- **The dash period is not in the freeze.** `v21-bench.html:188` says only `dashed`; CSS leaves the period
   to the UA. `on = off = 2 × stroke` is `SelectionChrome.SelectionOutlineDashDp`'s own definition, so a row
   claiming the freeze as its source would be citing the implementation back as its specification — the
   exact failure this branch's head commit is named for. The measurement confirms the implementation
@@ -230,6 +230,12 @@ change proposed.
 **Pass 2 verdict for P1's own surface: PASS**, with one Recommended finding (§2.2) routed to P2.
 **Pass 2 for the page grid: FAIL** — filed as OD-47, blocking P3, not P1.
 
+> **Superseded 2026-08-12, later the same day.** OD-47 was closed *as filed* — its OD-31 premise is false,
+> because the grid draws no artifact. The measurement below stands; it was re-filed as a **consistency**
+> defect owned by **P5**, not a dimming one blocking P3. See
+> [ADR-102 §12.5](../DECISIONS.md#adr-102-od47). This report is a dated record and is not edited to match;
+> this pointer exists because "blocker" is what a future session will grep for.
+
 ---
 
 ## Acceptance
@@ -251,7 +257,7 @@ Four items leave this pass **open and owed to someone else**:
 |---|---|---|
 | Handle centring departs from the freeze by ~5.5 dp (§1.3) | Parity question, unresolved | P1 follow-up / P2 |
 | Focus wash covers the page border and page number (§2.2) | Recommended Improvement | P2 |
-| Page grid renders the artifact dark in dark theme (§2.3) | **Release Blocker for P3**, open decision | OD-47 / P3 |
+| Page grid renders the artifact dark in dark theme (§2.3) | ~~**Release Blocker for P3**, open decision~~ → re-filed same day as a **consistency** defect (the grid draws no artifact); the measurement stands | ~~OD-47 / P3~~ → **P5**, [§12.5](../DECISIONS.md#adr-102-od47) |
 | Nudge pad `clickable=false`; filmstrip label/action split; `Bring forward` clipped (§1.6 items 2–4) | Technical Debt / a11y, unbooked | needs booking |
 
 Evidence (screenshots and the accessibility dumps) is in the session scratchpad; it is not committed —

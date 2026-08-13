@@ -1,6 +1,7 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
@@ -21,6 +22,7 @@ import com.aritr.zinely.ui.theme.zinelyV21DarkColors
 import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -38,16 +40,17 @@ import org.junit.Test
  * ### Two frozen files, on purpose
  *
  * [`v21-bench.html`](../../../../../../../../../docs/design/mockups/v21-bench.html) is the canonical
- * Bench ([ADR-099](../../../../../../../../../docs/DECISIONS.md#adr-099)) and [rule] reads it. But
- * ADR-102's **P1** converted only the ground, the sheet, the folio, the selection ring, the handles and
- * the caret; the keep-clear cue and the snap guides moved whole to **P2**, because the V2.1 freeze gives
- * them no resting state to paint and their trigger change needs its own ruling
- * ([§12.3](../../../../../../../../../docs/DECISIONS.md#adr-102-p1-recut)).
+ * Bench ([ADR-099](../../../../../../../../../docs/DECISIONS.md#adr-099)) and [rule] reads it. **P2
+ * landed on 2026-08-13** ([§12.9](../../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks)), so
+ * the keep-clear cue and the snap guide — the last two marks pinned to V2 — now read V2.1 like the rest.
  *
- * So the marks P2 still owns are still pinned to **V2**, through [ruleV2] / [pxV2]. That is a deliberate,
- * dated split and not an oversight: a test that pointed those rows at V2.1 today would assert a design
- * the code has not been ruled into yet, and would go green the moment someone painted half the cue.
- * **When P2 lands, [ruleV2] and every caller of it are deleted.**
+ * An earlier version of this note promised that *"when P2 lands, [ruleV2] and every caller of it are
+ * deleted."* **That was too broad, and the remaining callers say why.** What survives is not V2 styling
+ * waiting to be converted; it is the D-032 warn-trigger geometry (`:500-530`), which V2.1's freeze does
+ * not specify **because the warn state is a departure the freeze does not contain**. Those rows have no
+ * V2.1 address to move to, and pointing them at one would be inventing a specification. They stay on
+ * [ruleV2] until the freeze grows a `.keepclear.warn` — which is exactly what
+ * `the warn state is a documented departure…` asserts it currently has not.
  *
  * The keep-clear tests are the ones to read first. They are the reason
  * [D-033](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-033) existed, and they assert the
@@ -117,7 +120,7 @@ class BenchStudioSurfaceTest {
      * **This is the island's expected set, and it is derived rather than declared.** V2's `.page` carried
      * a second declaration block re-stating the on-paper tokens (the
      * [D-035](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035) amendment), and the old
-     * version of this test compared the Compose island against *that block*. **`v21-bench.html:127-132`
+     * version of this test compared the Compose island against *that block*. **`v21-bench.html:177-182`
      * declares no custom properties at all** — the V2.1 corpus was frozen on 2026-08-09, before
      * [OD-31](../../../../../../../../../docs/DECISIONS.md#adr-098-od31) closed on 2026-08-12 — so
      * pointing the old test at V2.1 would derive an **empty** expected set and pass only if the island
@@ -264,22 +267,28 @@ class BenchStudioSurfaceTest {
     }
 
     /**
-     * The keep-clear cue is **P2's**, so its radius is still V2's `3px` — see the class docs.
+     * The keep-clear cue's radius, **now V2.1's** — P2 converted the cue on 2026-08-13, so this moved
+     * from [pxV2] to [rule] exactly as the note it replaced said it would.
      *
-     * Asserted against V2 deliberately. When P2 converts the cue this test moves to [rule] and the
-     * value becomes `var(--br-xs)`; until then, pinning it to V2 is what stops the cue being painted
-     * half in each palette.
+     * The freeze writes `var(--br-xs)` rather than a pixel count, so this resolves the custom property
+     * instead of reading a number that is not there. Radius, colour and trigger all moved in the same
+     * change, which was the whole point of §12.3's re-cut.
      */
     @Test
-    fun `the keep-clear radius is still the V2 one, because P2 owns the cue`() {
-        assertEquals(pxV2(".keepclear", "border-radius").dp, BenchStudio.KeepClearRadius)
+    fun `the keep-clear radius is the frozen --br-xs, converted with the rest of the cue in P2`() {
+        val declared = Regex("""border-radius\s*:\s*var\(--br-xs\)""")
+        assertTrue(
+            "the frozen V2.1 cue names the radius token rather than a pixel value",
+            declared.containsMatchIn(rule(".keepclear")),
+        )
+        assertEquals(ZinelyV21Dimens.radiusXs, BenchStudio.KeepClearRadius)
     }
 
     // -- the two marks P1 also re-cut: the selection ring and the handles --------------------------
 
     /**
      * `.el .ring{inset:-6px;border:1.6px dashed var(--ink);border-radius:var(--br-sm)}`
-     * ([`v21-bench.html:145-146`](../../../../../../../../../docs/design/mockups/v21-bench.html)).
+     * ([`v21-bench.html:188-189`](../../../../../../../../../docs/design/mockups/v21-bench.html)).
      *
      * [ADR-073](../../../../../../../../../docs/DECISIONS.md#adr-073)'s rule is not a rule about the
      * *sheet* — it is a rule about anything transcribed from the freeze. P1's first cut applied it to
@@ -289,17 +298,31 @@ class BenchStudioSurfaceTest {
      * The dash *length* is deliberately not asserted against the freeze: CSS `dashed` names no
      * period, so [SelectionOutlineDashDp] is a Compose-side choice (one stroke on, one off) and is
      * asserted only as that relationship.
+     *
+     * ### The inset assertion is the one that was wrong, and it is worth reading twice
+     *
+     * The first version of this test asserted `SelectionOutlineInsetDp == -inset` — the CSS number,
+     * straight across. That **passed while the ring was 0.8dp too far out**, because `inset:-6px` is
+     * where the ring's *outer edge* goes and a CSS border paints inside its box, while Compose's
+     * `Stroke` is centred on the path. The number Compose needs is `-6 + border/2 = -5.2`.
+     *
+     * ADR-073 says compare against the declared CSS rather than a rendering of it, and this test did
+     * exactly that and was still wrong — **reading the declaration is not the same as reading the
+     * geometry it declares.** So the assertion now derives the centre-line from the freeze's own two
+     * numbers rather than transcribing one of them.
      */
     @Test
     fun `the selection ring restates the frozen dashed ink ring`() {
         val ring = rule(".el .ring")
+        val outerEdge = pxIn(ring, ".el .ring", "inset")
+        val stroke = pxIn(ring, ".el .ring", "border")
         assertEquals(
-            "the ring sits OUTSIDE its element, so the frozen inset is negative",
-            -SelectionOutlineInsetDp.value.toDouble(),
-            pxIn(ring, ".el .ring", "inset"),
+            "the ring's STROKE CENTRE is half a border inside the frozen outer edge — not the edge itself",
+            -(outerEdge + stroke / 2),
+            SelectionOutlineInsetDp.value.toDouble(),
             0.0001,
         )
-        assertEquals(SelectionOutlineStrokeDp.value.toDouble(), pxIn(ring, ".el .ring", "border"), 0.0001)
+        assertEquals(SelectionOutlineStrokeDp.value.toDouble(), stroke, 0.0001)
         assertTrue("the frozen ring is dashed, not solid", Regex("""border\s*:[^;}]*dashed""").containsMatchIn(ring))
         assertTrue("the frozen ring is drawn in `--ink`", Regex("""border\s*:[^;}]*var\(--ink\)""").containsMatchIn(ring))
         assertEquals(
@@ -316,7 +339,7 @@ class BenchStudioSurfaceTest {
 
     /**
      * `.hnd{width:9px;height:9px;background:var(--paper);border:1.6px solid var(--ink);border-radius:2px}`
-     * ([`v21-bench.html:148-149`](../../../../../../../../../docs/design/mockups/v21-bench.html)).
+     * ([`v21-bench.html:198-199`](../../../../../../../../../docs/design/mockups/v21-bench.html)).
      *
      * **The halo is not in the freeze and is asserted as such.** V2.1 drops the white ring V2 drew
      * behind the mark; Compose keeps it because the frozen mockup's handles never sit on a photo and
@@ -335,6 +358,38 @@ class BenchStudioSurfaceTest {
         assertEquals(HandleDiameterDp.value.toDouble(), pxIn(hnd, ".hnd", "width"), 0.0001)
         assertEquals(HandleBorderDp.value.toDouble(), pxIn(hnd, ".hnd", "border"), 0.0001)
         assertEquals(HandleRadiusDp.value.toDouble(), pxIn(hnd, ".hnd", "border-radius"), 0.0001)
+        // The mark's displacement, derived from the freeze's two numbers rather than transcribed:
+        // `left:-10px` on a 9px border-box mark ⇒ centre at -10 + 9/2 = -5.5px. Corrected 2026-08-12;
+        // Compose drew these at 0 because ADR-091 row 2.6 called the offset "satisfied by construction"
+        // on arithmetic that was already false in V2.
+        val corner = rule(".hnd.tl")
+        assertEquals(
+            "the frozen mark's centre sits OUTSIDE the box by half its width less the offset",
+            -(pxIn(corner, ".hnd.tl", "left") + pxIn(hnd, ".hnd", "width") / 2),
+            HandleRingOffsetDp.value.toDouble(),
+            0.0001,
+        )
+        // …and the edge handles land on the same line, which is what makes the eight one figure. The
+        // freeze writes them as `calc(50% - 4.5px)`, i.e. the mark's centre on the edge's midpoint.
+        assertTrue(
+            "the frozen file must carry the four edge handles the app has always drawn (D-036)",
+            Regex("""\.hnd\.t\s*\{""").containsMatchIn(benchCss) && Regex("""\.hnd\.r\s*\{""").containsMatchIn(benchCss),
+        )
+        assertEquals(
+            "an edge handle's free axis is centred: calc(50% - width/2)",
+            pxIn(hnd, ".hnd", "width") / 2,
+            Regex("""calc\(50%\s*-\s*([\d.]+)px\)""").find(rule(".hnd.t"))!!.groupValues[1].toDouble(),
+            0.0001,
+        )
+        // …and its BOUND axis carries the same 5.5px the corners do. Asserted separately because the free
+        // axis above is the half-width and the bound axis is the standoff — a review found only the first
+        // of the two here, which left the edge handles' actual displacement unpinned.
+        assertEquals(
+            "an edge handle's bound axis stands off exactly as far as a corner's",
+            -(pxIn(rule(".hnd.t"), ".hnd.t", "top") + pxIn(hnd, ".hnd", "width") / 2),
+            HandleRingOffsetDp.value.toDouble(),
+            0.0001,
+        )
         assertTrue("the frozen handle fills with `--paper`", hnd.contains("background:var(--paper)"))
         assertTrue("the frozen handle is bordered in `--ink`", Regex("""border\s*:[^;}]*var\(--ink\)""").containsMatchIn(hnd))
         assertTrue(
@@ -426,7 +481,7 @@ class BenchStudioSurfaceTest {
     // Pinned to **V2** throughout, for two reasons that happen to point the same way.
     //
     // 1. The cue is ADR-102 **P2**'s, like every other keep-clear assertion here.
-    // 2. ⚠ The V2.1 freeze **re-drifted the depiction D-033 was raised to fix.** `v21-bench.html:127`
+    // 2. ⚠ The V2.1 freeze **re-drifted the depiction D-033 was raised to fix.** `v21-bench.html:177`
     //    draws `.page` at `aspect-ratio:3/4` (0.7500) against a real panel of 0.70714, and puts the cue
     //    at a uniform `inset:14px` on a `max-width:266px` sheet — 5.3% where the engine's safe area is
     //    8.1%. That is the same class of stylisation, at about half the magnitude, that the owner
@@ -496,21 +551,84 @@ class BenchStudioSurfaceTest {
         assertEquals(0f, BenchStudio.keepClearInsetPx(229f, 0.0), 0f)
     }
 
+    /**
+     * **P2: the resting form is absence, and both marks share one revealed alpha.**
+     *
+     * V2 gave the cue `.32` resting and `.9` warning — two states, both always painted. V2.1 rests both
+     * the cue and the guide at `opacity:0` and reveals them together at `.85`. Derived from the freeze's
+     * own combined selector rather than transcribed, so the two constants cannot drift apart from each
+     * other or from the file that sets them.
+     */
     @Test
-    fun `the keep-clear's two states are the frozen opacities and are far apart`() {
-        assertEquals(0.32f, BenchStudio.KEEP_CLEAR_REST_ALPHA, 1e-6f)
-        assertEquals(0.90f, BenchStudio.KEEP_CLEAR_WARN_ALPHA, 1e-6f)
-        val rest = Regex("""opacity\s*:\s*([\d.]+)""").find(ruleV2(".keepclear"))!!.groupValues[1].toFloat()
-        val warn = Regex("""opacity\s*:\s*([\d.]+)""").find(ruleV2(".keepclear.warn"))!!.groupValues[1].toFloat()
-        assertEquals(rest, BenchStudio.KEEP_CLEAR_REST_ALPHA, 1e-6f)
-        assertEquals(warn, BenchStudio.KEEP_CLEAR_WARN_ALPHA, 1e-6f)
+    fun `the keep-clear and the guide rest at zero and share the one frozen revealed alpha`() {
+        val reveal = Regex("""\.content\.focusing~\.keepclear\s*,\s*\.content\.focusing~\.guideV\s*\{[^}]*opacity\s*:\s*([\d.]+)""")
+            .find(benchCss)!!.groupValues[1].toFloat()
+        assertEquals("the cue takes the frozen revealed alpha", reveal, BenchStudio.KEEP_CLEAR_FOCUS_ALPHA, 1e-6f)
+        assertEquals("so does the guide — it is one rule in the freeze", reveal, BenchStudio.GUIDE_ALPHA, 1e-6f)
+        assertTrue("the cue's resting form is absence", rule(".keepclear").contains("opacity:0"))
+        assertTrue("so is the guide's", rule(".guideV").contains("opacity:0"))
     }
 
+    /**
+     * **P2: the warn state is a departure the freeze does not contain — pinned as one.**
+     *
+     * Ruled by the owner on 2026-08-13 ([ADR-102 §12.9](../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks)).
+     * The measurement is the argument, so the measurement is the test: of the marks this surface can
+     * draw, the warning is the **only** one that clears WCAG 1.4.11's 3:1, and both of the freeze's own
+     * marks fail it. That is why the warning survived a freeze that has no warning.
+     *
+     * If the frozen file ever grows a `.keepclear.warn`, the first assertion fails — and the right
+     * response is to re-read this ruling against it, not to delete the test.
+     */
     @Test
-    fun `the warn state recolours to strawberry-text and is not merely brighter ink`() {
-        assertTrue(ruleV2(".keepclear.warn").contains("--strawberry-text"))
-        assertTrue(ruleV2(".keepclear").contains("--ink-faint"))
-        assertNotEquals(zinelyV2LightColors().strawberryText, zinelyV2LightColors().inkFaint)
+    fun `the warn state is a documented departure, and it is the only mark on the sheet that clears 3 to 1`() {
+        assertFalse(
+            "the V2.1 freeze specifies no warn state; keeping one is the departure this test guards",
+            benchCss.contains(".keepclear.warn"),
+        )
+        assertEquals(0.90f, BenchStudio.KEEP_CLEAR_WARN_ALPHA, 1e-6f)
+
+        fun lum(x: Color): Double {
+            fun ch(v: Float) = if (v <= 0.03928f) v / 12.92 else Math.pow((v + 0.055) / 1.055, 2.4)
+            return 0.2126 * ch(x.red) + 0.7152 * ch(x.green) + 0.0722 * ch(x.blue)
+        }
+        fun onPaper(c: ZinelyV21Colors, fg: Color, alpha: Float): Double {
+            val bg = c.paper
+            val mix = Color(
+                red = fg.red * alpha + bg.red * (1 - alpha),
+                green = fg.green * alpha + bg.green * (1 - alpha),
+                blue = fg.blue * alpha + bg.blue * (1 - alpha),
+            )
+            val a = lum(mix)
+            val b = lum(bg)
+            return (maxOf(a, b) + 0.05) / (minOf(a, b) + 0.05)
+        }
+
+        // **Both rooms, resolved through the island — not the light palette twice.** An earlier cut read
+        // `zinelyV21LightColors()` alone, reasoning that the island makes the sheet's paper identical in
+        // both themes. The paper, yes; a token the island does NOT light, no. `jamText` is not in the
+        // island's set, so under that cut the warning painted the dark room's `#E4856D` on light paper at
+        // 2.26:1 and the test said 4.96. This is why the loop runs over the room and not the palette.
+        for (room in listOf(zinelyV21LightColors(), zinelyV21DarkColors())) {
+            val c = BenchStudio.sheetIslandV21(room)
+            assertTrue(
+                "the warning must clear 1.4.11 in BOTH themes — it is the one mark carrying information " +
+                    "available nowhere else",
+                onPaper(c, c.jam, BenchStudio.KEEP_CLEAR_WARN_ALPHA) >= 3.0,
+            )
+            // The two accepted-as-decorative marks, pinned BELOW the floor so the acceptance stays
+            // visible. Raising either above 3:1 is not a bug fix here — it would mean the D-064 question
+            // was answered the other way, and this ruling has to be revisited rather than quietly
+            // outgrown.
+            assertTrue(
+                "the frozen berry cue is accepted below the floor; if it clears 3:1 the ruling changed",
+                onPaper(c, c.berry, BenchStudio.KEEP_CLEAR_FOCUS_ALPHA) < 3.0,
+            )
+            assertTrue(
+                "the frozen butter guide is accepted below the floor; same",
+                onPaper(c, c.butter, BenchStudio.GUIDE_ALPHA) < 3.0,
+            )
+        }
     }
 
     // -- the warn trigger, D-032's ruling (row 1.9) -------------------------------------------------
@@ -698,17 +816,34 @@ class BenchStudioSurfaceTest {
 
     // -- the centre guide (row 1.10) ---------------------------------------------------------------
 
+    /**
+     * The guide's end-inset, now read from V2.1's `.guideV`. The value did not move — `8px` in both
+     * freezes — but the *source* did, and leaving it pointed at V2 after P2 converted the line would
+     * mean the one number still transcribed from a superseded file is the one nobody would think to
+     * check. The revealed opacity is asserted with the cue's, in the shared-selector test above.
+     */
     @Test
-    fun `the guide stops the frozen 8px short at both ends and shows at the frozen opacity`() {
-        assertEquals(pxV2(".guide.v", "top").dp, BenchStudio.GuideEndInset)
-        assertEquals(pxV2(".guide.v", "bottom").dp, BenchStudio.GuideEndInset)
-        val show = Regex("""opacity\s*:\s*([\d.]+)""").find(ruleV2(".guide.show"))!!.groupValues[1].toFloat()
-        assertEquals(show, BenchStudio.GUIDE_ALPHA, 1e-6f)
+    fun `the guide stops the frozen 8px short at both ends`() {
+        assertEquals(px(".guideV", "top").dp, BenchStudio.GuideEndInset)
+        assertEquals(px(".guideV", "bottom").dp, BenchStudio.GuideEndInset)
     }
 
+    /**
+     * `.guideV{border-left:1.5px dashed var(--butter)}` — the three things P2 changed about the line,
+     * asserted where they can fail. `butter`'s contrast is a ruled acceptance, not an oversight; the
+     * measurement and the ruling live on [SnapGuides] and in ADR-102 §12.9.
+     */
     @Test
-    fun `the guide is matcha, not the V1 teal it used to be`() {
-        assertTrue("the frozen guide is --matcha", ruleV2(".guide").contains("var(--matcha)"))
+    fun `the guide is butter, dashed, and the page's own border weight`() {
+        val guide = rule(".guideV")
+        assertTrue("V2.1 draws the guide in --butter (V2 was --matcha)", guide.contains("var(--butter)"))
+        assertTrue("and dashes it, where V2 drew it solid", guide.contains("dashed"))
+        assertEquals(
+            "at the same 1.5px the page's own border takes",
+            pxIn(guide, ".guideV", "border-left"),
+            BenchStudio.PageBorder.value.toDouble(),
+            0.0001,
+        )
     }
 
     // -- the page number (row 1.11) ----------------------------------------------------------------
@@ -753,12 +888,11 @@ class BenchStudioSurfaceTest {
         assertTrue("the folio must not be --ink-faint", !rule(".pagenum").contains("var(--ink-faint)"))
     }
 
-    @Test
-    fun `the guide is the frozen hairline, which is row 1_10's other mutation`() {
-        // `.guide.v{width:1px}` — the stroke SnapGuides draws. Same reason as above: row 1.10 plans a
-        // `width 1→2` mutation, and nothing here was checking the width.
-        assertEquals(pxV2(".guide.v", "width"), ZinelyV2Dimens.Hairline.value.toDouble(), 1e-6)
-    }
+    // The V2 assertion that used to live here pinned `.guide.v{width:1px}` against `ZinelyV2Dimens
+    // .Hairline` and described it as "the stroke SnapGuides draws". P2 moved that stroke to
+    // `BenchStudio.PageBorder` (1.5dp) and the assertion went on passing — it compared two V2 constants
+    // to each other and had stopped describing the product. It is replaced by the width clause of
+    // `the guide is butter, dashed, and the page's own border weight`, which reads V2.1's `.guideV`.
 
     /**
      * The real panel: `A4.landscape()` tiled by [ZineFormat.SINGLE_SHEET_8]'s grid — the same derivation

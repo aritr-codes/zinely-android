@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
@@ -39,6 +40,25 @@ public const val SnapGuidesTestTag: String = "snap-guides"
  * trigger is still the existing `:core:editor` `Snap`/`LiveSnap`, and a `SnapGuides` still only ever
  * draws guides that fired this frame, so the `.show` opacity is the resting default.
  *
+ * ### V2.1 re-skin (P2, [ADR-102 §12.9](../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks))
+ *
+ * `.guideV{border-left:1.5px dashed var(--butter)}` at `opacity:.85` (`v21-bench.html:189-190`). Three
+ * changes: `matcha` → `butter`, solid → **dashed**, and 1dp → 1.5dp. The end-inset and the page-derived
+ * geometry above are unchanged.
+ *
+ * ⚠ **`butter` composites to 1.60:1 on the sheet's paper, and that is a ruled, measured acceptance** —
+ * not an oversight and not a value to "fix" by darkening. `ZinelyV21ContrastTest` pins `butter/paper` at
+ * 1.73:1 precisely to keep butter below the text floor, and V2.1's own spec says butter carries *"no
+ * action, no text, and no state alone"*. A snap guide is arguably a state, which made this a
+ * freeze-versus-spec conflict ([§12.6 row 4](../../../../../../../../docs/DECISIONS.md#adr-102-p1-corrections)).
+ * The owner ruled on 2026-08-13 that the guide is **decorative** in 1.4.11's sense: it reports an
+ * alignment the user can watch happening to their own element, during their own drag, and it is
+ * redundant with the element's visible position. Worth knowing what that costs: V2's `matcha` guide was
+ * 2.18:1 — also a failure — so this is not a regression from a compliant state. **There has never been
+ * one.** If [D-064](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md) later rules that the floor
+ * binds decorative marks, this line and the keep-clear cue move together, and neither frozen hue
+ * survives at any alpha.
+ *
  * The frozen file draws only the **vertical** guide, because that is the only one its prototype ever
  * fires. The engine produces both axes, so the 8dp end-inset is applied symmetrically — a horizontal
  * guide stops 8dp short of the left and right edges. Stated rather than assumed: the alternative,
@@ -58,7 +78,8 @@ public const val SnapGuidesTestTag: String = "snap-guides"
  * @param pageOffset page-space pan applied before the screen scale — MUST match [PagePreview].
  * @param pageSizePt the sheet, in points — the rectangle [endInset] is measured from.
  * @param modifier sized identically to the sibling [PagePreview] so the device-px positions align.
- * @param color the guide stroke colour; defaults to the frozen `--matcha` token.
+ * @param color the guide stroke colour; defaults to the frozen `--butter` token at `.85`, read through
+ *   [ZinelyTheme.v21Colors] so it takes the on-paper value inside the sheet island in both themes.
  * @param endInset how far the line stops short of the **page's** edges — the frozen 8px.
  */
 @Composable
@@ -68,12 +89,17 @@ public fun SnapGuides(
     pageOffset: PtPoint,
     pageSizePt: PtSize,
     modifier: Modifier = Modifier,
-    color: Color = ZinelyTheme.v2Colors.matcha.copy(alpha = BenchStudio.GUIDE_ALPHA),
+    color: Color = ZinelyTheme.v21Colors.butter.copy(alpha = BenchStudio.GUIDE_ALPHA),
     endInset: Dp = BenchStudio.GuideEndInset,
 ) {
     Canvas(modifier = modifier.testTag(SnapGuidesTestTag)) {
         if (guides.isEmpty()) return@Canvas
-        val strokePx = ZinelyV2Dimens.Hairline.toPx()
+        val strokePx = BenchStudio.PageBorder.toPx()
+        // The frozen `dashed`, on the same reasoning [BenchStudio.KeepClearDash] records for the other
+        // dashed mark: CSS names the style and no length, so this reproduces what the prototype's own
+        // renderer draws rather than inventing a number the freeze does not contain.
+        val dashPx = BenchStudio.KeepClearDash.toPx()
+        val dash = PathEffect.dashPathEffect(floatArrayOf(dashPx, dashPx))
         val inset = endInset.toPx()
         val toDevice = ExportScale.previewPageToDevice(screenPxPerPt.toDouble(), pageOffset)
         // The sheet's own rectangle in device px, through the same seam the render uses — the frozen
@@ -90,11 +116,11 @@ public fun SnapGuides(
             when (g.axis) {
                 SnapAxis.VERTICAL -> {
                     if (bottom <= top) continue
-                    drawLine(color, Offset(mapped.x.toFloat(), top), Offset(mapped.x.toFloat(), bottom), strokeWidth = strokePx)
+                    drawLine(color, Offset(mapped.x.toFloat(), top), Offset(mapped.x.toFloat(), bottom), strokeWidth = strokePx, pathEffect = dash)
                 }
                 SnapAxis.HORIZONTAL -> {
                     if (right <= left) continue
-                    drawLine(color, Offset(left, mapped.y.toFloat()), Offset(right, mapped.y.toFloat()), strokeWidth = strokePx)
+                    drawLine(color, Offset(left, mapped.y.toFloat()), Offset(right, mapped.y.toFloat()), strokeWidth = strokePx, pathEffect = dash)
                 }
             }
         }

@@ -191,6 +191,35 @@ class SelectionChromeGoldenTest {
     }
 
     /**
+     * Count of pixels carrying the V2.1 guide's **butter** signature (P2, ADR-102 §12.9).
+     *
+     * **A third token, a third discriminator, and the reason is worth keeping.** V1's guide was `--teal`
+     * and was found by `G−R`; V2's `--matcha` is an olive whose `G−R` is 4 after AA, so
+     * [countMatchaGuide] moved to `G−B`. V2.1's `--butter` (`#F6B22C`) inverts that again: it is a warm
+     * amber, `R > G > B` with a large `R−B`, and it scores **`G > r`: false** — the matcha probe cannot
+     * see it at all, which is exactly how this recolour was caught rather than silently re-recorded.
+     *
+     * So the discriminator here is `R−B`, the one thing butter has in quantity that neither the paper
+     * (`R−B` ≈ 8 on `#FFF6E8`) nor the ink ring (near-neutral, dark) nor matcha (`R−B` ≈ 14 and `G ≥ R`)
+     * has. `r > g` excludes matcha's remaining olive blends outright.
+     *
+     * ⚠ **Butter composites to 1.60:1 on paper**, so this probe is looking for a genuinely faint mark —
+     * the count is real but the threshold is necessarily lower than matcha's was at a stronger hue. That
+     * faintness is the ruled acceptance, not a bug; see [SnapGuides].
+     */
+    private fun Bitmap.countButterGuide(): Int {
+        var n = 0
+        for (y in 0 until height) for (x in 0 until width) {
+            val p = getPixel(x, y)
+            val r = (p shr 16) and 0xFF
+            val g = (p shr 8) and 0xFF
+            val b = p and 0xFF
+            if (r > g && r - b >= 40) n++
+        }
+        return n
+    }
+
+    /**
      * Count of pixels carrying the V2.1 selection ring's exact ink.
      *
      * **The discriminator changes kind, not just value.** V2's `--matcha` was an *olive* and had to be
@@ -319,13 +348,31 @@ class SelectionChromeGoldenTest {
                 )
             }
         }
-        // 1dp AA guides blend with the page, so prove them by the matcha hue signature, not exact colour.
-        // A vertical + horizontal line at 2.5 px/pt, less the frozen 8dp each end, leaves ~640 matching
-        // pixels; a blank/undrawn guide layer leaves none, and the page's own greys leave none either.
+        // AA guides blend with the page, so prove them by hue signature, not exact colour. P2 recoloured
+        // this line matcha -> butter and dashed it, so the probe moved with it — see [countButterGuide].
+        // The dash halves the painted length, and butter is a much fainter mark than matcha was, so the
+        // threshold is lower than the old 50: what it still discriminates is a drawn guide from none.
         assertTrue(
-            "snap guides did not paint the frozen --matcha token on the page",
-            bmp.countMatchaGuide() > 50,
+            "snap guides did not paint the frozen --butter token on the page",
+            bmp.countButterGuide() > 20,
         )
+        // …and that it is DASHED, which no colour probe can see. A solid line down the page's height
+        // would leave one unbroken run; the frozen `dashed` leaves many. Counted on the vertical guide's
+        // own column, so a horizontal guide crossing it cannot fill the gaps in for it.
+        val guideX = (0 until bmp.width).maxBy { x ->
+            (0 until bmp.height).count { y -> bmp.getPixel(x, y).let { p ->
+                ((p shr 16) and 0xFF) > ((p shr 8) and 0xFF) && (((p shr 16) and 0xFF) - (p and 0xFF)) >= 40
+            } }
+        }
+        var runs = 0
+        var inRun = false
+        for (y in 0 until bmp.height) {
+            val p = bmp.getPixel(guideX, y)
+            val painted = ((p shr 16) and 0xFF) > ((p shr 8) and 0xFF) && (((p shr 16) and 0xFF) - (p and 0xFF)) >= 40
+            if (painted && !inRun) runs++
+            inRun = painted
+        }
+        assertTrue("the frozen guide is dashed, not solid — found $runs run(s) down its column", runs >= 3)
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_snap_guides.png", aa())
     }
 }

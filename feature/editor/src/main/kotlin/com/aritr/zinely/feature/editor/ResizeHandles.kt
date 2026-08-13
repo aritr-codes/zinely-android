@@ -1,5 +1,7 @@
 package com.aritr.zinely.feature.editor
 
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -61,7 +63,7 @@ public const val ResizeHandleTagPrefix: String = "resize-handle-"
  * @param modifier sized identically to the sibling [PagePreview]/[SelectionChrome] so handle device-px
  *   positions align.
  * **V2.1 re-skin (ADR-102 P1):** the frozen `.hnd` is a **9px rounded square** (`border-radius:2px`),
- * `--paper` filled, `border:1.6px solid var(--ink)` (`v21-bench.html:148-149`). It replaced V2's 13dp
+ * `--paper` filled, `border:1.6px solid var(--ink)` (`v21-bench.html:198-199`). It replaced V2's 13dp
  * `--matcha`-bordered circle, which had itself replaced a 15dp `--coral-strong` rounded square from V1.
  *
  * ### The halo is kept, and the freeze does not have one
@@ -88,6 +90,37 @@ public const val ResizeHandleTagPrefix: String = "resize-handle-"
  * @param color the handle's border colour; defaults to the frozen `--ink` token. Read through
  *   [ZinelyTheme.v21Colors] so that inside the sheet island it is the on-paper value in both themes.
  */
+/**
+ * Where a handle's **drawn mark** sits relative to its hit target: [ringOffsetPx] outward on each axis the
+ * handle touches, turned with the element.
+ *
+ * Extracted as a pure function for one reason — **the composable had no way to assert that the mark moved
+ * at all.** After the 2026-08-12 ruling ([ADR-102 §12.8](../../../../../../../../docs/DECISIONS.md#adr-102-p1-handles))
+ * the suite proved the CSS declares 5.5px, that the constant equals the derived CSS value, and that the hit
+ * target does *not* move — and then set `HandleRingOffsetDp` to zero would still have passed every one of
+ * them, with only the goldens objecting, in the same change that re-recorded the goldens. A review caught
+ * that the guard had been built on the wrong side of the change. This is the right side.
+ *
+ * [ResizeHandle.local] is the unit-frame corner/edge — `(±1,±1)` for corners, `(±1,0)`/`(0,±1)` for edges —
+ * so its sign is the outward direction and its **zero** is what makes an edge handle stay centred on its
+ * edge. That reproduces the frozen rules exactly: `.hnd.tl{left:-10px;top:-10px}` on a 9px `border-box`
+ * mark centres at `-10 + 9/2 = -5.5` per axis, and `.hnd.t{left:calc(50% - 4.5px);top:-10px}` is 5.5 out on
+ * the bound axis and centred on the free one (`v21-bench.html:201-206`).
+ *
+ * Note the corner figure is **5.5 per axis**, i.e. 7.78 along the diagonal — prose calling it "5.5 out along
+ * the diagonal" is loose, and the CSS is per-axis.
+ */
+internal fun handleMarkOffsetPx(handle: ResizeHandle, ringOffsetPx: Float, rotationDegrees: Double): Offset {
+    val ox = handle.local.x.toFloat() * ringOffsetPx
+    val oy = handle.local.y.toFloat() * ringOffsetPx
+    // `handleDevicePx` already rotates the POINT; this rotates the offset from it, with the same matrix
+    // (`AffineTransform2D.rotateDeg`: x·cos − y·sin, x·sin + y·cos) so the marks stay on the turned ring.
+    val r = Math.toRadians(rotationDegrees)
+    val c = cos(r).toFloat()
+    val s = sin(r).toFloat()
+    return Offset(ox * c - oy * s, ox * s + oy * c)
+}
+
 @Composable
 public fun ResizeHandles(
     uiState: EditorUiState,
@@ -119,6 +152,7 @@ public fun ResizeHandles(
     val pageOffset = uiState.view.pageOffset
     val density = LocalDensity.current
     val hitSizePx = with(density) { 48.dp.toPx() }
+    val ringOffsetPx = with(density) { HandleRingOffsetDp.toPx() }
 
     Box(modifier = modifier) {
         for (handle in ResizeHandle.entries) {
@@ -126,6 +160,7 @@ public fun ResizeHandles(
             HandleTarget(
                 handle = handle,
                 centerPx = center,
+                markOffsetPx = handleMarkOffsetPx(handle, ringOffsetPx, transform.rotationDegrees),
                 hitSizePx = hitSizePx,
                 color = color,
                 alpha = alpha,
@@ -166,15 +201,26 @@ public fun ResizeHandles(
 
 /**
  * One 48dp handle hit-target placed (centred) on [centerPx], drawing the frozen handle mark — a 9dp
- * paper-filled **rounded square** with a 1.6dp [color] border (`v21-bench.html:148-149`) and the
- * retained 1.5dp white halo.
- * Owns the per-handle drag loop: [beginSession] on first drag → token; [onDrag] each move with the handle's
- * accumulated device-px position → the live-baked transform; [commitSession]/[cancelSession] on end/cancel.
+ * paper-filled **rounded square** with a 1.6dp [color] border (`v21-bench.html:198-199`) and the
+ * retained 1.5dp white halo — displaced by [markOffsetPx] so it sits on the ring.
+ *
+ * ### [centerPx] and [markOffsetPx] are separated on purpose, and the separation is load-bearing
+ *
+ * [centerPx] is the element's **geometric** corner/edge point, and it does three jobs: it places this hit
+ * box, it keys the [pointerInput], and — the dangerous one — it **seeds the drag accumulator** at
+ * `onDragStart`, which `TransformMath.resizeByHandle` reads as *the corner's new position*. Displace
+ * [centerPx] and every resize gains a 5.5dp bias on frame one, silently: the drag anchor assertions in
+ * `ResizeHandlesTest` are `> 30.0`-style inequalities that such a bias sails through.
+ *
+ * So the mark moves and the point does not. The trade, stated rather than discovered later: **the 48dp
+ * target stays centred on the corner, not on the mark it draws.** They differ by 5.5dp, well inside a
+ * target 5.3× the mark's size, and the alternative is a wrong resize.
  */
 @Composable
 private fun HandleTarget(
     handle: ResizeHandle,
     centerPx: PtPoint,
+    markOffsetPx: Offset,
     hitSizePx: Float,
     color: Color,
     alpha: Float,
@@ -230,12 +276,15 @@ private fun HandleTarget(
             },),
         contentAlignment = Alignment.Center,
     ) {
-        BenchHandleMark(color = color)
+        BenchHandleMark(
+            color = color,
+            modifier = Modifier.offset { IntOffset(markOffsetPx.x.roundToInt(), markOffsetPx.y.roundToInt()) },
+        )
     }
 }
 
 /**
- * The frozen handle mark (`v21-bench.html:148-149`): a 9px `--paper`-filled **rounded square**, radius
+ * The frozen handle mark (`v21-bench.html:198-199`): a 9px `--paper`-filled **rounded square**, radius
  * 2px, with a 1.6px [color] border — plus the retained halo, which the freeze does not specify.
  *
  * The freeze sets `*{box-sizing:border-box}` (`:94`), so 9px is the **outer** size and the border eats
@@ -266,13 +315,29 @@ internal fun BenchHandleMark(color: Color, modifier: Modifier = Modifier) {
     }
 }
 
-/** Frozen `.hnd` `width/height:9px` — outer size, `box-sizing:border-box` (`v21-bench.html:148`). */
+/** Frozen `.hnd` `width/height:9px` — outer size, `box-sizing:border-box` (`v21-bench.html:198`). */
 internal val HandleDiameterDp = 9.dp
 
-/** Frozen `.hnd` `border:1.6px solid var(--ink)` (`v21-bench.html:148`). */
+/**
+ * How far the drawn mark sits **outside** the element box, on each axis it touches.
+ *
+ * `.hnd.tl{left:-10px}` on a 9px border-box mark ⇒ centre at `-10 + 9/2 = -5.5px`, and the edge handles'
+ * `calc(50% - 4.5px)` is the same statement on the free axis (`v21-bench.html:201-206`). The ring's stroke
+ * centre is at `-6 + 1.6/2 = -5.2px`, so the marks are threaded **on** the ring, 0.3px off it — one figure.
+ *
+ * ⚠ This is a **correction, not a re-skin value.** Compose drew the marks at offset 0 — on the box corner,
+ * 5.5dp inside the freeze — because [ADR-091](../../../../../../../../docs/DECISIONS.md#adr-091) row 2.6
+ * asserted the frozen offset was *"satisfied by construction"*. That arithmetic was false in V2 as well
+ * (`-10 + 13/2 = -3.5`, not 0), and "satisfied by construction" is a phrase that ends testing, so nothing
+ * ever failed. The four edge handles' placement is an owner ruling of 2026-08-12 (the freeze had never
+ * specified it) recorded in the same amendment banner that adds them to the frozen file.
+ */
+internal val HandleRingOffsetDp = 5.5.dp
+
+/** Frozen `.hnd` `border:1.6px solid var(--ink)` (`v21-bench.html:198`). */
 internal val HandleBorderDp = 1.6.dp
 
-/** Frozen `.hnd` `border-radius:2px` — a written literal, not a `--br-*` step (`v21-bench.html:149`). */
+/** Frozen `.hnd` `border-radius:2px` — a written literal, not a `--br-*` step (`v21-bench.html:199`). */
 internal val HandleRadiusDp = 2.dp
 
 internal val HandleShape: RoundedCornerShape = RoundedCornerShape(HandleRadiusDp)

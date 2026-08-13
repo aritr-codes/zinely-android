@@ -1,5 +1,7 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -10,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -100,17 +103,8 @@ internal object BenchStudio {
     val PageRadiusSpine: Dp = ZinelyV21Dimens.radiusXs
     val PageRadiusFree: Dp = ZinelyV21Dimens.radiusMd
 
-    /**
-     * `.keepclear{border-radius:3px}` — **still the V2 value, deliberately.**
-     *
-     * V2.1 draws the cue at `var(--br-xs)` (4px) in `berry`, revealed by `.content.focusing` with no
-     * resting state at all. That is one change, not two: the freeze gives the cue no resting form to
-     * paint, so its colour and its trigger convert together in **P2**
-     * ([ADR-102 §12.3](../../../../../../../../../docs/DECISIONS.md#adr-102-p1-recut)). Moving the
-     * radius here and leaving the colour would be a cue drawn half in each palette — the exact
-     * one-layer-over failure this package is under instruction to avoid.
-     */
-    val KeepClearRadius: Dp = 3.dp
+    /** `.keepclear{border-radius:var(--br-xs)}` — converted with the colour and the trigger in P2. */
+    val KeepClearRadius: Dp = ZinelyV21Dimens.radiusXs
 
     val PageShape: RoundedCornerShape = RoundedCornerShape(
         topStart = PageRadiusSpine,
@@ -163,17 +157,37 @@ internal object BenchStudio {
     val PageNumberBottomInset: Dp = 6.dp
     val PageNumberEndInset: Dp = 9.dp
 
-    /** `.keepclear{opacity:.32}` at rest. */
-    const val KEEP_CLEAR_REST_ALPHA: Float = 0.32f
+    /**
+     * `.content.focusing~.keepclear,.content.focusing~.guideV{opacity:.85}` — the **one** revealed alpha
+     * V2.1 gives either mark (`v21-bench.html:190`). Both rest at `opacity:0`, so this is not a "rest"
+     * value with a brighter sibling; it is the only value, and the resting form is *absence*.
+     *
+     * V2 had `.32` resting / `.9` warning. P2 keeps a warning — see [KEEP_CLEAR_WARN_ALPHA] — but the
+     * resting cue is now genuinely hidden until a selection is live.
+     */
+    const val KEEP_CLEAR_FOCUS_ALPHA: Float = 0.85f
 
-    /** `.keepclear.warn{opacity:.9}`. */
+    /**
+     * The warning's alpha. **The freeze has no warning at all**, and keeping one is a deliberate
+     * departure ruled by the owner on 2026-08-13
+     * ([ADR-102 §12.9](../../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks)).
+     *
+     * The reason is measured, not aesthetic. Of the five marks this surface can draw, four sit below
+     * WCAG 1.4.11's 3:1 — the frozen `berry` cue at **2.07:1**, the frozen `butter` guide at **1.60:1**,
+     * V2's resting cue at **1.40:1** and V2's `matcha` guide at **2.42:1**. The warning (`jam` at this
+     * alpha, **3.66:1**, in *both* themes) is the only one that clears the floor, and it
+     * is the only one carrying information the user cannot get anywhere else: *your content is crossing
+     * the printer's reach.* Implementing the freeze literally would have deleted the single accessible
+     * mark on the page. Same family as the handle halo the freeze also lacks (§12.6 row 5), and the
+     * same [OD-11](../../../../../../../../../docs/DECISIONS.md#adr-098-od11) capability rule.
+     */
     const val KEEP_CLEAR_WARN_ALPHA: Float = 0.90f
 
     /** `.guide.v{top:8px;bottom:8px}` — the centre guide stops short of the page's corners. */
     val GuideEndInset: Dp = 8.dp
 
-    /** `.guide.show{opacity:.6}` — a guide is only ever drawn in its fired state. */
-    const val GUIDE_ALPHA: Float = 0.6f
+    /** `.content.focusing~.guideV{opacity:.85}` — a guide is only ever drawn in its fired state. */
+    const val GUIDE_ALPHA: Float = 0.85f
 
     /**
      * CSS names `dashed` and specifies **no** dash length; every browser picks its own, so the frozen
@@ -229,7 +243,7 @@ internal object BenchStudio {
      * rather than `paperEdge`, the keep-clear is `berry` rather than `inkFaint`, and `matcha`'s mark
      * (`matchaText` with it) no longer exists on this surface. Two reviews returned NO-GO on it before
      * any code was written. The set below is what the frozen file's own `the canvas` section
-     * (`v21-bench.html:124–165`) actually paints, and `BenchStudioSurfaceTest` re-derives it from that
+     * (`v21-bench.html:174–219`) actually paints, and `BenchStudioSurfaceTest` re-derives it from that
      * file rather than trusting this list.
      *
      * `leaf` and `berryTint` reach the island through the prototype's **content stand-ins** (`.sticker`,
@@ -396,7 +410,7 @@ public const val BenchPageNumberTestTag: String = "bench-page-number"
 /**
  * The studio ground and the grain over the whole screen.
  *
- * `.phone{background:var(--bench)}` (`v21-bench.html:108`), with `.phone::after` laying the chrome grain
+ * `.phone{background:var(--bench)}` (`v21-bench.html:158`), with `.phone::after` laying the chrome grain
  * over everything at 160px / soft-light / `.45`.
  *
  * ### The ground is `bench`. It was `paper`, and the change is not cosmetic
@@ -457,9 +471,10 @@ internal fun Modifier.benchStudioGround(): Modifier {
  *
  * ### Why this provides two palettes
  *
- * P1 converts the ground, the sheet, the selection chrome, the handles and the caret to V2.1. It does
- * **not** convert the keep-clear cue or the snap guides — those moved to P2 whole, because the freeze
- * gives them no resting state to paint and their trigger change is P2's ruling
+ * P1 converted the ground, the sheet, the selection chrome, the handles and the caret to V2.1, and **P2
+ * converted the keep-clear cue and the snap guide on 2026-08-13**
+ * ([§12.9](../../../../../../../../../docs/DECISIONS.md#adr-102-p2-marks)) — they moved whole, colour and
+ * trigger together, because the freeze gives them no resting state to paint and that was P2's ruling
  * ([ADR-102 §12.3](../../../../../../../../../docs/DECISIONS.md#adr-102-p1-recut)) — and it does not
  * convert the Type bar, the text-edit session sheet, the save-failure banner, the "Saved" chip, the
  * coverage notice, the move/resize hint or the Reframe chrome, which are P6's.
@@ -491,7 +506,7 @@ internal fun BenchSheetIsland(
 
 /**
  * The sheet: `--paper`, a **1.5px `--ink` border**, the spine radius, the **hard offset shadow**, and
- * the page's own grain clipped to that shape (`v21-bench.html:127-132`).
+ * the page's own grain clipped to that shape (`v21-bench.html:177-182`).
  *
  * ### Three of the four layers changed material, not just value
  *
@@ -537,8 +552,23 @@ internal fun Modifier.benchPageSurface(): Modifier {
 /**
  * Rows 1.8 and 1.9 — the keep-clear cue: the print boundary, drawn.
  *
- * A 1px dashed `--ink-faint` rectangle at the document's safe area, radius 3, at `.32` opacity while
- * resting and `.9` in `--strawberry-text` while warning.
+ * V2.1 (P2): a **1.5dp dashed `berry`** rectangle at the document's safe area, radius `--br-xs`, revealed
+ * at `.85` only while a selection is live — `opacity:0` otherwise — and `.9` in `jamText` while warning.
+ *
+ * ### The trigger is the change, and the resting form is now absence
+ *
+ * V2 drew this cue permanently at `.32`. `v21-bench.html:186-190` rests it at `opacity:0` and reveals it
+ * with `.content.focusing`, which is on whenever a selection is live. A boundary the user is not currently
+ * working against is one more line on their page; the freeze's judgement is that it earns its ink only
+ * while they are placing something, and P2 implements that as written.
+ *
+ * ### The warning is kept, and the freeze does not have one
+ *
+ * Ruled by the owner on 2026-08-13 — see [BenchStudio.KEEP_CLEAR_WARN_ALPHA] for the measurements. Four
+ * of this surface's five marks sit below WCAG 1.4.11's 3:1, including both of the freeze's; the warning
+ * at 3.66:1 is the only one that clears it and the only one carrying information available nowhere else.
+ * The two resting marks are accepted below the floor **as decorative**, on the same reasoning as
+ * [D-064](../../../../../../../../../docs/design/V2-SPEC-DEFECTS.md) and recorded with it.
  *
  * ### The warn state is transient, and that is a ruling
  *
@@ -555,27 +585,67 @@ internal fun Modifier.benchPageSurface(): Modifier {
  * a photo, no detection engine is added, and the privacy principle is not engaged.
  *
  * @param warn whether an interaction is currently in flight whose geometry crosses this boundary.
+ * @param focusing whether a selection is live — the frozen `.content.focusing`. False hides the cue.
  * @param panelWidthPt the document panel's width in points, so the inset is the engine's real safe
- *   area rather than a transcribed pixel count — see [BenchStudio].
+ *   area rather than a transcribed pixel count — see [BenchStudio]. **Kept over the freeze's flat
+ *   `inset:14px`**: the prototype has one page size and the product has several, so a transcribed
+ *   pixel count would draw a boundary that is not the printer's.
  */
 @Composable
 internal fun BenchKeepClear(
     warn: Boolean,
+    focusing: Boolean,
     panelWidthPt: Double,
     modifier: Modifier = Modifier,
 ) {
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
     val density = LocalDensity.current
-    val color = if (warn) colors.strawberryText else colors.inkFaint
-    val alpha = if (warn) BenchStudio.KEEP_CLEAR_WARN_ALPHA else BenchStudio.KEEP_CLEAR_REST_ALPHA
+    // `berry` is the freeze's cue colour; `jam` is V2.1's answer to V2's `strawberryText`. The warning
+    // wins when both are true, which is the only case that matters: a warning is raised *by* an in-flight
+    // gesture, so it can never fire outside a live selection.
+    //
+    // **`jam`, not `jamText`, and the reason is the island.** `sheetIslandV21` lights `jam` and does not
+    // light `jamText` — so inside the sheet `jam` is the light `#CF4A28` in both themes, while `jamText`
+    // would resolve to the *room's* value and paint dark-theme `#E4856D` on light paper: **2.26:1**, and
+    // this whole ruling rests on the warning being the one mark that clears 3:1. A review caught it.
+    // `jam` measures **3.66:1** at this alpha, in both themes, with no island change and no new
+    // departure — and it is the correct token regardless, because this is a 1.5dp stroke and `jamText`
+    // exists for text.
+    val color = if (warn) colors.jam else colors.berry
+    // The frozen `opacity:0 → .85` fade, over the same 180ms `.18s` the focus wash runs for — the two
+    // are triggered by the same predicate and should not arrive a frame apart. ⚠ Same *duration*, not
+    // the same curve: `EditorPagePreview`'s wash uses a bare `tween` (Compose's `FastOutSlowIn`) while
+    // this takes `ZinelyV2Standard`. Both honour reduced motion. Claiming they "arrive together" would
+    // be a shade stronger than the truth, and a review said so. Unifying the easing is a change to a
+    // shipped animation and belongs to whoever owns that file, not to this cue.
+    //
+    // `warn` is OR-ed into the trigger
+    // rather than assumed to imply it: the day someone raises a warning without a selection, the mark
+    // that says so must still be on screen.
+    val target = when {
+        warn -> BenchStudio.KEEP_CLEAR_WARN_ALPHA
+        focusing -> BenchStudio.KEEP_CLEAR_FOCUS_ALPHA
+        else -> 0f
+    }
+    // Through the motion seam, not around it: `standard` — the freeze names a bare `.18s` with no easing,
+    // and this fade informs rather than settles — and it collapses to 0ms under reduced motion. The first
+    // cut of this called `tween()` directly and C9's policy scan caught it, which is exactly what that
+    // scan is for: a new animation is the easiest place in this codebase to silently drop the a11y
+    // contract, because nothing about `animateFloatAsState` looks like a policy decision.
+    val alpha by animateFloatAsState(
+        targetValue = target,
+        animationSpec = ZinelyTheme.v2Motion.standard(BenchFocusDimMillis),
+        label = "keep-clear-reveal",
+    )
     Box(
         modifier = modifier
             .fillMaxSize()
             .testTag(BenchKeepClearTestTag)
             .drawBehind {
+                if (alpha <= 0f) return@drawBehind
                 val inset = BenchStudio.keepClearInsetPx(size.width, panelWidthPt)
                 if (inset <= 0f || inset * 2f >= size.width || inset * 2f >= size.height) return@drawBehind
-                val stroke = with(density) { ZinelyV2Dimens.Hairline.toPx() }
+                val stroke = with(density) { BenchStudio.PageBorder.toPx() }
                 // CSS puts the border OUTSIDE the inset — `inset:18.5px` with a 1px border paints
                 // 18.5→19.5 — while drawRoundRect centres its stroke on the path. Half a stroke of
                 // outward offset makes the two describe the same pixels (review Obs 3).
@@ -598,7 +668,7 @@ internal fun BenchKeepClear(
 
 /**
  * `.pagenum`: `"3 / 12"` at `.6rem` **`--ink-soft`**, bold, tabular figures, 9px from the right and
- * **6px from the bottom** of the sheet (`v21-bench.html:133-134`).
+ * **6px from the bottom** of the sheet (`v21-bench.html:183-184`).
  *
  * ### Three changes, and one of them is a rule
  *

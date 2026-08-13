@@ -33,6 +33,56 @@
      │  shipped re-skins -- corrected 2026-08-12 while planning the Bench's.        │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
+<!-- AMENDED 2026-08-12 by owner ruling (OD-47 disposition).  THE PAGE GRID'S CARDS ARE LIT.
+     .pgc restates the six on-paper tokens it paints with, so a card reads as PAPER on any desk --
+     the same device the filmstrip's .pthumb uses (OD-23) and for the same reason, arrived at the
+     other way round.
+
+     OD-47 was filed under OD-31, "the artifact does not dim".  That premise is FALSE here and the
+     ruling does not rest on it: .pgc draws no page content, so there is no artifact on this surface
+     to dim, and v2-bench.html:138 said exactly that when the filmstrip was lit and the grid was
+     deliberately left dark.  What changed the answer is not OD-31 -- it is that ONE SCREEN was
+     rendering the same eight pages two ways, forty pixels apart, and the smaller rendering was the
+     legible one.  A card that stands for a sheet of paper reads as paper on any desk.
+
+     NOTHING ELSE ABOUT THE GRID CHANGES.  3/4 aspect, --br-sm, the 1.5px ink border, the 3px 3px 0
+     hard shadow, the bare tabular number, .pgc.on's leaf tint, the .pgrid panel's own --paper
+     ground and 2px ink top rule: all as the freeze left them.  The panel is CHROME and keeps the
+     room; only the CARDS are lit.
+
+     THIS RATIFIES NOTHING EITHER.  P5 owns the implementation; until P5 lands, this file and the app
+     disagree about the card, deliberately and on the record.  The spec moved first because that is
+     the order the workflow requires -- it is not a description of what the app draws today.
+
+     ⚠ THIS AMENDMENT DOES NOT FIX THE CARD'S NUMBER, and did not need to.  The V2-era grid drew its
+     number in --ink-faint: 3.45:1 dark / 3.41:1 light against the paper token, and 3.31:1 dark against
+     the grained pixels a device shows (light is 3.41:1 by both -- the grain is invisible on light
+     paper) -- an AA failure at 9sp in BOTH themes, which lighting
+     the card does not touch.  It was fixed independently on 2026-08-12 (--ink-faint -> --ink-soft,
+     6.25:1 / 6.78:1), which is why .pgc above specifies --ink-soft: the app and this file already
+     agree on the NUMBER's token, and disagree only about the card's ground.  See ADR-102 12.5. -->
+
+<!-- AMENDED 2026-08-12 by owner ruling (handle placement).  THE FROZEN BENCH DRAWS EIGHT HANDLES,
+     AND ALL EIGHT SIT ON THE RING.
+
+     Two changes, one figure.  (1) The four EDGE handles are added -- D-036 recommendation (a),
+     outstanding since 2026-08-02: the editor has always had eight and the freeze drew four, and a
+     freeze that under-draws a shipped capability is the spec's defect, not the app's.  (2) Their
+     placement is ruled here because the freeze had never specified it: each edge handle sits 5.5px
+     outward along its edge's normal, which is where the corners already are.
+
+     THE ARITHMETIC, since it is the whole point.  With box-sizing:border-box, .hnd{width:9px} at
+     left:-10px centres at -10 + 9/2 = -5.5px.  .ring{inset:-6px;border:1.6px} paints its border
+     INSIDE its box, so the stroke centre-line is at -6 + 1.6/2 = -5.2px.  The handles are therefore
+     threaded ON the ring, 0.3px off it -- one figure, not two concentric ones.  The edge rules
+     below use calc(50% - 4.5px) on the free axis to put the mark's centre on the edge's midpoint.
+
+     THIS RATIFIES NOTHING.  Compose currently centres its handles on the box corner -- 5.5px inside
+     where this file has always put them -- because ADR-091 row 2.6 asserted the frozen offset was
+     "satisfied by construction", which was false arithmetic (-10 + 13/2 = -3.5, not 0, in V2).  The
+     implementation moves to this file, not the reverse.  Nothing here is edited to match code. -->
+
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -150,6 +200,10 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .el.selected .hnd{opacity:1}
 .hnd.tl{left:-10px;top:-10px} .hnd.tr{right:-10px;top:-10px}
 .hnd.bl{left:-10px;bottom:-10px} .hnd.br{right:-10px;bottom:-10px}
+/* the four edge handles — AMENDED 2026-08-12, see the banner. Centre on the edge's midpoint,
+   5.5px outward, i.e. on the ring: calc(50% - 4.5px) puts the 9px mark's centre at 50%. */
+.hnd.t{left:calc(50% - 4.5px);top:-10px} .hnd.b{left:calc(50% - 4.5px);bottom:-10px}
+.hnd.l{left:-10px;top:calc(50% - 4.5px)} .hnd.r{right:-10px;top:calc(50% - 4.5px)}
 .content.focusing .el:not(.selected){opacity:.5;transition:opacity .18s}
 .t-title{font-family:var(--voice);font-weight:700;font-size:1.28rem;line-height:1.1}
 .t-body{font-family:var(--serif);font-size:.79rem;line-height:1.5;color:var(--ink-soft)}
@@ -378,7 +432,13 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 .pghead{display:flex;align-items:center;justify-content:space-between;margin:var(--gap-xs) var(--gap-hair) var(--gap-md)}
 .pghead h3{margin:0}
 .pgg{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap-md)}
-.pgc{aspect-ratio:3/4;border-radius:var(--br-sm);background:var(--paper);border:1.5px solid var(--ink);
+/* AMENDED 2026-08-12 (OD-47 disposition) — the card is LIT.  These six restatements are the whole
+   amendment: every token .pgc paints with takes its light value in both themes, so a card reads as
+   paper on any desk.  --ink-line is restated too because the hard shadow falls on the CARD's own
+   plane here, unlike the sheet's, which falls on the bench and must follow the room. */
+.pgc{--paper:#FFF6E8;--ink:#33261C;--ink-soft:#6E5947;--ink-line:#33261C;
+  --leaf-tint:#DCE8CE;--leaf-text:#3E6330;
+  aspect-ratio:3/4;border-radius:var(--br-sm);background:var(--paper);border:1.5px solid var(--ink);
   cursor:pointer;display:grid;place-items:center;font-size:.72rem;font-weight:700;color:var(--ink-soft);
   box-shadow:3px 3px 0 var(--ink-line);font-variant-numeric:tabular-nums}
 .pgc.on{background:var(--leaf-tint);color:var(--leaf-text)}
@@ -554,7 +614,9 @@ $('content').innerHTML=ELS.map((e,i)=>
   `<div class="el ${e.cls||''}" tabindex="0" data-i="${i}" data-kind="${e.kind}"
         aria-label="${e.label}. Tap to select.">
      <span class="ring"></span><span class="hnd tl"></span><span class="hnd tr"></span>
-     <span class="hnd bl"></span><span class="hnd br"></span>${e.html}</div>`).join('');
+     <span class="hnd bl"></span><span class="hnd br"></span>
+     <span class="hnd t"></span><span class="hnd b"></span>
+     <span class="hnd l"></span><span class="hnd r"></span>${e.html}</div>`).join('');
 
 let sel=null;
 function toolsFor(kind){
