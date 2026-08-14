@@ -64,7 +64,8 @@ import androidx.compose.ui.semantics.selected
  * consequence of that stance is stated rather than left implicit: when [onLongClick] is supplied this
  * modifier **suppresses the platform's own long-press buzz** (`hapticFeedbackEnabled = false`), because a
  * caller that fires its own verb inside [onLongClick] would otherwise play two — the fifth, unnamed verb
- * V1's `ShelfCard` had to silence for the same reason. A caller that wants the platform buzz fires it
+ * V1's `ShelfCard` (since deleted) had to silence for the same reason. A caller that wants the platform
+ * buzz fires it
  * itself, so the vocabulary stays in one place.
  *
  * ## Long-press, and why it is here rather than at the call site

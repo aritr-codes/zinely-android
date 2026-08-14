@@ -96,7 +96,7 @@ internal class HomeViewModel @Inject constructor(
     val events: Flow<HomeShelfEvent> = eventQueue.receiveAsFlow()
 
     /** Queued one-shot "open this project" navigation events (ADR-046 §5) — consumed by the nav
-     * destination (navigation is a destination-layer concern), never by [HomeScreen] itself. */
+     * destination (navigation is a destination-layer concern), never by the shelf screen itself. */
     private val openQueue = Channel<String>(Channel.BUFFERED)
 
     /**
