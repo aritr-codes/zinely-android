@@ -29,7 +29,12 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * **CI-25** golden net for [ReframeControls], light + dark (roadmap §C1; the frozen [TypeBarGoldenTest]
  * two-proof shape). Captured mid-session at the centred-Fill baseline (100% zoom), so the golden pins the
- * floating stepper pill + the bottom desk toolbar (fit segment · reset · Cancel · Done).
+ * paper precision pad (nudge cross + zoom stepper) and the desk band under it (two fit chips · Cancel ·
+ * Reset · Done).
+ *
+ * ⚠ The stored PNGs are **stale until CI re-records them** — `captureRoboImage` is a no-op under plain
+ * `testDebugUnitTest`, so this file going green locally says nothing about the pixels after the V2.1
+ * re-skin ([ADR-102 §12.16](../../../../../../../../docs/DECISIONS.md#adr-102-reframe)).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -53,11 +58,13 @@ class ReframeControlsGoldenTest {
     private fun host(darkTheme: Boolean, content: @Composable () -> Unit) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
-                deskArgb = ZinelyTheme.colors.desk.toArgb()
+                // The V2.1 desk, not V1's: the session's own band paints `v21Colors.desk`, and a host on
+                // the old token would put a different ground behind the same component every capture.
+                deskArgb = ZinelyTheme.v21Colors.desk.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
-                        .background(ZinelyTheme.colors.desk)
+                        .background(ZinelyTheme.v21Colors.desk)
                         .padding(16.dp),
                 ) { content() }
             }

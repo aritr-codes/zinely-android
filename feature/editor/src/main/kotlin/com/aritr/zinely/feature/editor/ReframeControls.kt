@@ -2,27 +2,21 @@ package com.aritr.zinely.feature.editor
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -31,35 +25,43 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CropFree
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.ui.components.zinelyV21Frame
+import com.aritr.zinely.ui.components.zinelyV21Pressable
+import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 
 /** Test tag on the Reframe controls band (present only during a Reframe session). */
 public const val ReframeControlsTestTag: String = "reframe-controls"
@@ -67,30 +69,92 @@ public const val ReframeControlsTestTag: String = "reframe-controls"
 /** Test tag on the "Reframe" affordance chip shown on a selected photo. */
 public const val ReframeChipTestTag: String = "reframe-chip"
 
+/* ── the spec's measurements (`docs/design/mockups/v21-reframe.html`) ───────────────────────────────── */
+
+/** `.pad` — the precision card: `--paper`, 1.5px ink, `--br-md`, a 2px printed shadow. */
+private val PadRadius = ZinelyV21Dimens.radiusMd
+private val PadPaddingH = ZinelyV21Dimens.gapMd
+private val PadPaddingV = ZinelyV21Dimens.gapSm
+private val PadGap = ZinelyV21Dimens.gapLg
+
+/** `.nudge button{34px}` / `.nudge svg{16px}` and `.zoom button{40px}` / `.zoom svg{20px}`. */
+private val NudgeCellSize = 34.dp
+private val NudgeGlyphSize = 16.dp
+private val NudgeGap = ZinelyV21Dimens.gapHair
+private val ZoomButtonSize = 40.dp
+private val ZoomGlyphSize = 20.dp
+private val ZoomGap = ZinelyV21Dimens.gapSm
+
+/** `.zoom b{min-width:46px;font-size:.78rem}` — 12.48sp at the prototype's 16px root. */
+private val ZoomReadoutWidth = 46.dp
+private val ZoomReadoutSize = 12.48.sp
+
+/** `.fit{--br-md; padding:var(--gap-sm) var(--gap-md)}`, `b{.82rem}` / `span{.68rem}`. */
+private val FitRadius = ZinelyV21Dimens.radiusMd
+private val FitPaddingH = ZinelyV21Dimens.gapMd
+private val FitPaddingV = ZinelyV21Dimens.gapSm
+private val FitLineGap = 1.dp
+private val FitTitleSize = 13.12.sp
+private val FitSubSize = 10.88.sp
+
+/** `.aff{--br-pill; padding:var(--gap-xs) var(--gap-sm); font-size:.7rem}`, `svg{13px}`. */
+private val AffPaddingH = ZinelyV21Dimens.gapSm
+private val AffPaddingV = ZinelyV21Dimens.gapXs
+private val AffTextSize = 11.2.sp
+private val AffGlyphSize = 13.dp
+
 /**
- * The Reframe-mode chrome (ADR-053, frozen bench.html) — restored as the frozen **two surfaces**:
+ * The Reframe session's chrome, in V2.1's language
+ * ([`v21-reframe.html`](../../../../../../../../docs/design/mockups/v21-reframe.html),
+ * [ADR-102 §12.16](../../../../../../../../docs/DECISIONS.md#adr-102-reframe)).
  *
- * 1. A floating `--menu` stepper pill (bench `.reframebar`): the discrete **authoritative** cross-shaped
- *    2D nudge pad + zoom steppers — the a11y path; gestures are an enhancement (RF1).
- * 2. The bottom `--desk` toolbar (bench `toolbar[data-mode="reframe"]` + `#rfCancel` + `#rfDone`): the fit
- *    segmented control (Fill / Whole photo, with plain-language sublabels), an in-session Reset, the full
- *    **Cancel** text action, and the primary coral **Done** (`.proof`).
+ * ### What this is a re-skin *of*
  *
- * It swaps in over the supply tray + context bar while a session is open (bench `toolbar[data-mode="reframe"]`).
+ * The session ADR-053 specified, act for act. Every control it had, it keeps — the fit binary, the four
+ * nudge arrows, the zoom steppers and their readout, an in-session Reset, Cancel and Done — and every
+ * ability gate with them: a verb that cannot change anything stays visibly and audibly unavailable rather
+ * than lit, tappable and inert. Nothing about the [FramingDraft] wiring moves.
  *
- * Every control drives the ephemeral [FramingDraft] through the host (never the reducer) except Cancel /
- * Done, which end the session ([Intent.CancelReframe] / [Intent.CommitReframe]). Reset is the *in-session*
- * draft reset to the centred-Fill baseline — distinct from the one-shot [Intent.ResetFraming] menu action.
+ * ⚠ **Reset, Cancel and Done are deliberately ungated**, and that is not an oversight in the gating above.
+ * They are the ways *out* of a state where nothing else can move: a session pinned at both zoom limits with
+ * no pan room would otherwise offer a maker six dead controls and no exit.
  *
- * Every adjustment control is painted from [abilities], so a verb that cannot change anything is visibly
- * and audibly unavailable rather than lit, tappable and inert (the fit segments, Reset, Cancel and Done
- * always work — they are the ways *out* of a state where nothing else can move).
+ * ### What changed, and the rule behind all of it
  *
- * @param fit the current draft fit (drives the segmented selected-state).
+ * **A session changes your tools, not your room.** The old surface repainted the room: a floating
+ * `--menu` pill over a `--desk` toolbar — two grounds the rest of V2.1 does not have — with V1's
+ * `coralStrong` on Done and on the selected fit segment. V2.1 defines no coral at all, so entering
+ * Reframe looked like leaving the app. Now the pad is a `--paper` card on the bench, the band is the
+ * Bench's own `.bar`, and the primary is `--leaf` under `--on-leaf` like every other primary.
+ *
+ * **Done wears [BenchAddButton]'s clothes, ring included.** The one-ring-per-screen rule is not broken
+ * by this: `.add` is not on screen during a session, Done stands where it stood and Done is the primary.
+ * The ring moves with primacy rather than multiplying.
+ *
+ * **The fit choice is two chips, not a segmented control** — it is one binary, and the corpus already has
+ * a two-state chip. The wording is unchanged and stays in outcome language — "Fill" / "crops edges",
+ * "Whole photo" / "may add margins" — which the research brief found beats naming the mechanism
+ * ("bleed", "trim", "safe area") for a beginner.
+ *
+ * ⚠ **The glyphs stay Material, deliberately.** [com.aritr.zinely.ui.theme.ZinelyV2Icons]'s contract is
+ * that it *is* the frozen V2 trilogy's marks — `ZinelyV2IconsTest` asserts the set matches those three
+ * files exactly and holds "nothing extra". The arrows, the ±, and the reset spiral come from a fourth
+ * file, so adding them there would break that contract to win a detail no user can name. Recorded rather
+ * than quietly reconciled.
+ *
+ * ⚠ **The pad is not optional and must not be hidden.** Inside a session the photo is moved by dragging
+ * and scaled by pinching, and nothing registers a custom accessibility action for either —
+ * [EditorA11y.elementCustomActions]'s move/scale verbs act on the *element*, not on the framing draft. So
+ * these buttons are the single-pointer alternative WCAG 2.5.1 (Pointer Gestures, A) and 2.5.7 (Dragging
+ * Movements, AA) require, and the W3C's own worked example for both is a pan/zoom surface with exactly
+ * these controls. A later pass that "de-clutters" by collapsing this behind a disclosure removes a
+ * conformance mechanism and calls it tidying. If it is ever collapsed, the nudge and zoom verbs must
+ * exist as custom actions on the photo **first**.
+ *
+ * @param fit the current draft fit (drives the chips' selected state).
  * @param zoomPercent the current zoom as a whole percent, for the stepper readout.
  * @param abilities which adjustments can currently change anything — see [ReframeAbilities].
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 public fun ReframeControls(
     fit: FrameFit,
@@ -104,79 +168,107 @@ public fun ReframeControls(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = ZinelyTheme.v21Colors
     Column(
         modifier = modifier
             .testTag(ReframeControlsTestTag)
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
     ) {
-        // Surface 1 — the floating stepper pill (bench `.reframebar`): cross nudge pad + zoom steppers.
-        ReframeStepperBar(
+        ReframePad(
             zoomPercent = zoomPercent,
             abilities = abilities,
             onNudge = onNudge,
             onZoom = onZoom,
         )
 
-        // Surface 2 — the bottom desk toolbar: fit segmented control + reset · Cancel · Done. A FlowRow so
-        // the frozen single bar holds on a real phone but wraps (never crushes an off-screen action) on a
-        // narrow width — bench parity where there's room, graceful degradation where there isn't.
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = ZinelyTheme.colors.desk,
-            contentColor = ZinelyTheme.colors.onDesk,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                // No inset padding here: this stands in the same slot as [BenchBottomBar], which takes
+                // none either — the Bench applies the navigation-bar inset once, at the scaffold.
+                .background(colors.desk),
+            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
         ) {
-            FlowRow(
+            // `.fitrow{padding:0 var(--gap-lg) var(--gap-sm)}`
+            Row(
                 modifier = Modifier
-                    .windowInsetsPadding(WindowInsets.navigationBars)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
+                    .padding(horizontal = ZinelyV21Dimens.gapLg),
+                horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
             ) {
-                FitSegment(fit = fit, onFit = onFit)
-                ToolIconButton(Icons.Filled.Refresh, Copy.A11y.RESET_FRAMING) { onReset() }
+                FitChip(Copy.Reframe.FILL, Copy.Reframe.CROPS_EDGES, FrameFit.FILL, fit, onFit, Modifier.weight(1f))
+                FitChip(
+                    Copy.Reframe.WHOLE_PHOTO,
+                    Copy.Reframe.MAY_ADD_MARGINS,
+                    FrameFit.WHOLE,
+                    fit,
+                    onFit,
+                    Modifier.weight(1f),
+                )
+            }
+            // `.bar{padding:var(--gap-sm) var(--gap-lg) var(--gap-lg)}` — the Bench's own bar, so the
+            // session's actions land where the Bench's actions were.
+            //
+            // The top `gapSm` is transcribed here rather than left to the parent's `spacedBy`: the CSS
+            // gives 8 + 8 between the chips and this row, and Done's `--frame` ring paints 5dp up into
+            // that gap. A review caught the band sitting 8dp tight.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = ZinelyV21Dimens.gapLg,
+                        end = ZinelyV21Dimens.gapLg,
+                        top = ZinelyV21Dimens.gapSm,
+                        bottom = ZinelyV21Dimens.gapLg,
+                    ),
+                horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 CancelButton(onCancel)
-                DoneButton(onDone)
+                ReframeIconButton(Icons.Filled.Refresh, Copy.A11y.RESET_FRAMING, onReset)
+                DoneButton(onDone, Modifier.weight(1f))
             }
         }
     }
 }
 
 /**
- * The floating stepper pill (bench `.reframebar`, `--menu` rounded card with a hairline + lift): the
- * authoritative accessible motion path — a cross-shaped 2D nudge pad and a zoom stepper.
+ * `.pad` — the precision card: the nudge cross and the zoom stepper on one sheet of paper.
+ *
+ * Why it is a card and not a floating pill: the corpus has exactly one raised-paper idiom (ink edge,
+ * printed shadow, no blur) and this is it. V1's `--menu` ground and 6dp Material elevation were the two
+ * things that made the old bar read as a different app's dialog.
  */
 @Composable
-private fun ReframeStepperBar(
+private fun ReframePad(
     zoomPercent: Int,
     abilities: ReframeAbilities,
     onNudge: (Int, Int) -> Unit,
     onZoom: (Double) -> Unit,
 ) {
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = ZinelyTheme.colors.menu,
-        contentColor = ZinelyTheme.colors.onDesk,
-        border = BorderStroke(1.dp, ZinelyTheme.colors.fieldEdge),
-        shadowElevation = 6.dp,
+    val colors = ZinelyTheme.v21Colors
+    val shape = RoundedCornerShape(PadRadius)
+    Row(
+        modifier = Modifier
+            // Nothing that clips may sit left of the shadow — it paints outside the node.
+            .zinelyV21Pressable(false, ZinelyV21Press.Flat, colors.inkLine, shape)
+            .clip(shape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
+            .padding(horizontal = PadPaddingH, vertical = PadPaddingV),
+        horizontalArrangement = Arrangement.spacedBy(PadGap),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            NudgePad(abilities = abilities, onNudge = onNudge)
-            ZoomStep(zoomPercent = zoomPercent, abilities = abilities, onZoom = onZoom)
-        }
+        NudgePad(abilities = abilities, onNudge = onNudge)
+        ZoomStep(zoomPercent = zoomPercent, abilities = abilities, onZoom = onZoom)
     }
 }
 
 /**
- * The cross-shaped 3×3 nudge pad (bench `.nudgepad`): Up / Left / Right / Down arranged on the cross, with
- * the corners left as inert spacers. 2D position is two axes of discrete targets — not one 1-D adjustable.
+ * The cross-shaped 3×3 nudge pad: Up / Left / Right / Down on the cross, the corners inert spacers. 2D
+ * position is two axes of discrete targets — not one 1-D adjustable.
  */
 @Composable
 private fun NudgePad(abilities: ReframeAbilities, onNudge: (Int, Int) -> Unit) {
@@ -186,18 +278,21 @@ private fun NudgePad(abilities: ReframeAbilities, onNudge: (Int, Int) -> Unit) {
     val v = abilities.panVertically
     // No group-level semantics wrapper: each cell carries its own spoken label (a parent
     // clearAndSetSemantics would clear the children TalkBack + the a11y tests navigate to).
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(NudgeGap)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(NudgeGap)) {
             NudgeSpacer()
             NudgeCell(Icons.Filled.ArrowUpward, Copy.Reframe.MOVE_PHOTO_UP, v) { onNudge(0, -1) }
             NudgeSpacer()
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        // `Icons.Filled`, deliberately not the AutoMirrored arrows the deprecation warning asks for: these
+        // name a physical direction, not a reading order. Under RTL the mirrored glyph would point right
+        // on the button that moves the photo left.
+        Row(horizontalArrangement = Arrangement.spacedBy(NudgeGap)) {
             NudgeCell(Icons.Filled.ArrowBack, Copy.Reframe.MOVE_PHOTO_LEFT, h) { onNudge(-1, 0) }
             NudgeSpacer()
             NudgeCell(Icons.Filled.ArrowForward, Copy.Reframe.MOVE_PHOTO_RIGHT, h) { onNudge(1, 0) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(NudgeGap)) {
             NudgeSpacer()
             NudgeCell(Icons.Filled.ArrowDownward, Copy.Reframe.MOVE_PHOTO_DOWN, v) { onNudge(0, 1) }
             NudgeSpacer()
@@ -205,19 +300,33 @@ private fun NudgePad(abilities: ReframeAbilities, onNudge: (Int, Int) -> Unit) {
     }
 }
 
-/** A 34dp cross cell (bench `.nudgepad button`): field fill, hairline edge, decorative glyph + spoken label. */
+/** One 34dp cross cell: `--paper` under a 1.5dp ink edge, a printed shadow, a decorative glyph. */
 @Composable
 private fun NudgeCell(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val nudge = benchTap(action = onClick)
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusSm)
     Box(
         modifier = Modifier
             .testTag("reframe-$description")
-            .size(34.dp)
-            // Fade the WHOLE chip — edge, fill and glyph — as the Type bar's stepper does (bench
-            // `:disabled{opacity:.4}`). Ahead of the paint modifiers so the layer wraps them all.
-            .alpha(if (enabled) 1f else 0.4f)
-            .clip(RoundedCornerShape(8.dp))
-            .background(ZinelyTheme.colors.field)
-            .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(8.dp))
+            .size(NudgeCellSize)
+            // `.nudge button:disabled{opacity:.35;box-shadow:none}` — the corpus's one disabled
+            // convention, on the WHOLE chip (edge, fill and glyph), ahead of the paint modifiers so the
+            // layer wraps them all. V1 faded to .4 here; V2.1's `--disabledAlpha` is .35 everywhere.
+            .alpha(if (enabled) 1f else ZinelyV21Dimens.disabledAlpha)
+            // A disabled control loses its shadow too, so it does not sit proud of the card it cannot act on.
+            .then(
+                if (enabled) {
+                    Modifier.zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+                } else {
+                    Modifier
+                },
+            )
+            .clip(shape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
             // `semantics`, NOT `clearAndSetSemantics`: the latter wipes the `disabled` flag that
             // `clickable(enabled = false)` sets, so an unavailable control would still announce itself as
             // actionable — a screen-reader user would be told to tap something that cannot respond.
@@ -225,34 +334,50 @@ private fun NudgeCell(icon: ImageVector, description: String, enabled: Boolean, 
             // `class=android.widget.Button, clickable=true, enabled=false`. The role rides the clickable
             // (see [ZoomButton] for what happens when it does not), and the glyph is an
             // `Icon(contentDescription = null)`, so nothing forces a second node.
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .clickable(
+                enabled = enabled,
+                interactionSource = interaction,
+                indication = null,
+                role = Role.Button,
+                onClick = nudge,
+            )
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = ZinelyTheme.colors.onDesk, modifier = Modifier.size(16.dp))
+        Icon(icon, contentDescription = null, tint = colors.inkSoft, modifier = Modifier.size(NudgeGlyphSize))
     }
 }
 
-/** An inert corner of the cross (bench `.nudgepad .spacer`): keeps the grid square, takes no input. */
+/** An inert corner of the cross: keeps the grid square, takes no input. */
 @Composable
 private fun NudgeSpacer() {
-    Spacer(Modifier.size(34.dp))
+    Spacer(Modifier.size(NudgeCellSize))
 }
 
-/** The zoom stepper (bench `.zoomstep`): − · readout · + . */
+/** The zoom stepper: − · readout · + . */
 @Composable
 private fun ZoomStep(zoomPercent: Int, abilities: ReframeAbilities, onZoom: (Double) -> Unit) {
+    val colors = ZinelyTheme.v21Colors
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(ZoomGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ZoomButton(Icons.Filled.Remove, Copy.Reframe.ZOOM_OUT, abilities.zoomOut) { onZoom(1.0 / Framing.ZOOM_STEP) }
         Text(
             text = Copy.Reframe.zoomPercentText(zoomPercent),
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
+            // A number, so it is quiet and tabular — `--ink-soft`, never `--ink-faint`, which fails AA
+            // at this size on paper (the finding ADR-102 §12.5 records against the page grid's card).
+            color = colors.inkSoft,
+            fontWeight = FontWeight.Bold,
+            fontSize = ZoomReadoutSize,
+            fontFamily = ZinelyV21Fonts.Work,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+            // `font-variant-numeric:tabular-nums` — so 100% and 132% do not shuffle the pad's width
+            // as the stepper runs. The `min-width:46px` alone does not stop the digits dancing.
+            style = TextStyle(fontFeatureSettings = "tnum"),
+            textAlign = TextAlign.Center,
             modifier = Modifier
-                .width(50.dp)
+                .widthIn(min = ZoomReadoutWidth)
                 .clearAndSetSemantics { contentDescription = Copy.Reframe.zoomPercentAnnouncement(zoomPercent) },
         )
         ZoomButton(Icons.Filled.Add, Copy.Reframe.ZOOM_IN, abilities.zoomIn) { onZoom(Framing.ZOOM_STEP) }
@@ -260,7 +385,7 @@ private fun ZoomStep(zoomPercent: Int, abilities: ReframeAbilities, onZoom: (Dou
 }
 
 /**
- * A 40dp zoom step button (bench `.zoomstep button`): field fill, hairline edge, a +/− glyph.
+ * A 40dp zoom step: a pill of `--paper` under an ink edge, a +/− glyph.
  *
  * **The glyph is an [Icon], not a `Text`, and that is an accessibility decision rather than a visual one.**
  * A physical-device check of the platform tree found this control arriving as *three* nodes — the click
@@ -269,207 +394,313 @@ private fun ZoomStep(zoomPercent: Int, abilities: ReframeAbilities, onZoom: (Dou
  * labelled node, which reports `enabled=true`, so a disabled zoom step announced itself as available: D3's
  * whole point, lost at the last hop. Marking the `Text` decorative was not enough; a cleared node is still
  * a node. [NudgeCell] never had the fault because `Icon(contentDescription = null)` contributes nothing,
- * so this now uses exactly that shape and collapses to one `android.widget.Button` carrying label, role
- * and disabled state together.
+ * so this uses exactly that shape and collapses to one `android.widget.Button` carrying label, role and
+ * disabled state together.
  *
  * The Compose test tree cannot see any of this — it reports the merged node, where everything resolves
  * correctly, which is why `assertIsNotEnabled` passed throughout against a control that was telling the
- * platform otherwise. The bench's `+`/`−` are rendered as the Material `Add`/`Remove` vectors at the same
- * weight; there is no committed golden for this bar, and post-freeze accessibility fixes are permitted.
+ * platform otherwise.
  */
 @Composable
 private fun ZoomButton(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val zoom = benchTap(action = onClick)
+    val shape = BenchBarShape
     Box(
         modifier = Modifier
             .testTag("reframe-$description")
-            .size(40.dp)
-            .alpha(if (enabled) 1f else 0.4f)
-            .clip(RoundedCornerShape(11.dp))
-            .background(ZinelyTheme.colors.field)
-            .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(11.dp))
+            .size(ZoomButtonSize)
+            .alpha(if (enabled) 1f else ZinelyV21Dimens.disabledAlpha)
+            .then(
+                if (enabled) {
+                    Modifier.zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+                } else {
+                    Modifier
+                },
+            )
+            .clip(shape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
             // `role` on the clickable itself, and the glyph explicitly stripped of semantics.
             //
             // Both are load-bearing, and a physical-device check is what found it: with the role in a
             // trailing `semantics {}` block and a plain `Text` child, this button reached the platform as
             // `class=android.view.View, clickable=false, enabled=true` — no button role, no click action
             // and, fatally for D3, **no disabled state** — while the `−` glyph leaked as its own
-            // traversable TextView. The Compose test tree showed none of that: it reports the merged node,
-            // where the description and the disabled flag both resolve correctly, so `assertIsNotEnabled`
-            // passed against a control that told TalkBack it was enabled.
-            //
-            // [NudgeCell] never had the fault because its `Icon(contentDescription = null)` contributes no
-            // semantics at all, so nothing forced the extra node. The difference was the child, not the
-            // modifier chain — which is why the two looked identical and behaved differently.
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            // traversable TextView.
+            .clickable(
+                enabled = enabled,
+                interactionSource = interaction,
+                indication = null,
+                role = Role.Button,
+                onClick = zoom,
+            )
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = ZinelyTheme.colors.onDesk, modifier = Modifier.size(20.dp))
-    }
-}
-
-/** Fill / Whole-photo segmented control (bench `.fitseg`); the selected segment carries `selected` semantics. */
-@Composable
-private fun FitSegment(fit: FrameFit, onFit: (FrameFit) -> Unit) {
-    Row(
-        modifier = Modifier
-            .height(IntrinsicSize.Min)
-            .clip(RoundedCornerShape(13.dp))
-            .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(13.dp)),
-    ) {
-        FitOption(Copy.Reframe.FILL, Copy.Reframe.CROPS_EDGES, FrameFit.FILL, fit, onFit)
-        // The inter-segment hairline (bench `.fitseg button+button{border-left:…}`).
-        Box(Modifier.width(1.dp).fillMaxHeight().background(ZinelyTheme.colors.fieldEdge))
-        FitOption(Copy.Reframe.WHOLE_PHOTO, Copy.Reframe.MAY_ADD_MARGINS, FrameFit.WHOLE, fit, onFit)
+        Icon(icon, contentDescription = null, tint = colors.inkSoft, modifier = Modifier.size(ZoomGlyphSize))
     }
 }
 
 /**
- * A fit segment (bench `.fitseg button`): a plain-language primary label over a small helper sublabel
- * (`<small>`), so the choice is legible without jargon. The spoken label stays just the primary label.
+ * One fit chip: a plain-language title over a small helper line, `--paper` at rest and `--leaf` when on.
+ *
+ * The spoken label stays just the title — the helper line is disclosure, and a screen reader that read
+ * "Fill, crops edges" on every pass would be reading the manual aloud twice.
+ *
+ * ⚠ **`selected` is load-bearing, and it is the *only* thing that may set this chip's state.** Compose
+ * supplies *"Selected"* / *"Not selected"* as the platform `stateDescription` for a node carrying
+ * `SemanticsProperties.Selected` — but **only when no explicit `stateDescription` is set**, because a
+ * state description replaces the platform's rather than adding to it. That is not a guess: an explicit
+ * one was written here first, on the theory that `Role.Button` never carried the state at all, and
+ * deleting it again left `ReframeControlsRolePlatformA11yTest` green. The platform was already saying it.
+ *
+ * The theory came from reading `uiautomator dump`, where both chips print `selected="false"` — true, and
+ * irrelevant: `isSelected` is a different attribute from the spoken state, Compose maps `Selected` onto it
+ * for `Role.Tab` alone, and the XML does not print `stateDescription` at all. **A dump that does not show
+ * a thing is not evidence the thing is absent**, which is the reverse of the lesson `BenchPageGrid`'s
+ * cells taught and cost about as much.
+ *
+ * So the chip keeps V1's semantics unchanged, and the standing hazard is written down instead: the day
+ * this chip wants to say anything else about itself — the way an element outside the printer's reach does
+ * ([Copy.A11y.outsidePrintReachState]) — that string must carry *"Selected"* with it or it silences this
+ * one. [ReframeControlsRolePlatformA11yTest.the_platform_is_told_which_fit_is_chosen] is the guard.
  */
 @Composable
-private fun FitOption(label: String, sublabel: String, value: FrameFit, current: FrameFit, onFit: (FrameFit) -> Unit) {
+private fun FitChip(
+    label: String,
+    sublabel: String,
+    value: FrameFit,
+    current: FrameFit,
+    onFit: (FrameFit) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = ZinelyTheme.v21Colors
     val isSel = value == current
-    Box(
-        modifier = Modifier
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    // A fit is a selection landing, like a page or a swatch.
+    val choose = benchTap(ZinelyHaptic.Snap) { onFit(value) }
+    val shape = RoundedCornerShape(FitRadius)
+    Column(
+        modifier = modifier
             .testTag("reframe-fit-$label")
-            .background(if (isSel) ZinelyTheme.colors.coralStrong else ZinelyTheme.colors.field)
-            .clickable { onFit(value) }
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+            .clip(shape)
+            .background(if (isSel) colors.leaf else colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
+            .clickable(interactionSource = interaction, indication = null, onClick = choose)
             .clearAndSetSemantics {
                 contentDescription = label
                 role = Role.Button
                 selected = isSel
+                onClick { choose(); true }
             }
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        contentAlignment = Alignment.Center,
+            .padding(horizontal = FitPaddingH, vertical = FitPaddingV),
+        verticalArrangement = Arrangement.spacedBy(FitLineGap),
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = label,
-                color = if (isSel) Color.White else ZinelyTheme.colors.onDesk,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = sublabel,
-                color = if (isSel) Color.White.copy(alpha = 0.85f) else ZinelyTheme.colors.onDeskSoft,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Medium,
-            )
-        }
+        Text(
+            text = label,
+            color = if (isSel) colors.onLeaf else colors.ink,
+            fontSize = FitTitleSize,
+            fontWeight = FontWeight.Bold,
+            fontFamily = ZinelyV21Fonts.Work,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+        )
+        Text(
+            text = sublabel,
+            color = if (isSel) colors.onLeaf else colors.inkSoft,
+            fontSize = FitSubSize,
+            fontFamily = ZinelyV21Fonts.Work,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+        )
     }
 }
 
-/** A 48dp icon tool (bench `.tool.icononly`): field fill, hairline edge, decorative glyph + spoken label. */
+/** A 44dp `.icon-btn` — the Bench's own, so Cancel and Reset sit where the Bench's icon actions sit. */
 @Composable
-private fun ToolIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+private fun ReframeIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val act = benchTap(action = onClick)
+    val shape = BenchBarShape
     Box(
         modifier = Modifier
             .testTag("reframe-$description")
-            .size(48.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(ZinelyTheme.colors.field)
-            .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(14.dp))
-            .clickable(onClick = onClick)
+            .size(BenchIconBtnSize)
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+            .clip(shape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
+            .clickable(interactionSource = interaction, indication = null, onClick = act)
             .clearAndSetSemantics {
                 contentDescription = description
                 role = Role.Button
+                onClick { act(); true }
             },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = ZinelyTheme.colors.onDesk, modifier = Modifier.size(18.dp))
-    }
-}
-
-/** The full-text Cancel action (bench `#rfCancel` `.tool`): discards the session ([Intent.CancelReframe]). */
-@Composable
-private fun CancelButton(onCancel: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(ZinelyTheme.colors.field)
-            .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(14.dp))
-            .clickable(onClick = onCancel)
-            .clearAndSetSemantics {
-                contentDescription = Copy.Reframe.CANCEL_REFRAMING
-                role = Role.Button
-            }
-            .padding(horizontal = 15.dp, vertical = 14.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(Copy.Reframe.CANCEL, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = ZinelyTheme.colors.onDesk)
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = colors.inkSoft,
+            modifier = Modifier.size(BenchIconBtnGlyphSize),
+        )
     }
 }
 
 /**
- * The primary coral Done action (bench `#rfDone` `.proof`): a coral-strong pill with white "Done" + a check,
- * the one live coral action while reframing. Commits the session ([Intent.CommitReframe]).
+ * `.text-btn` — Cancel, **with its word**.
+ *
+ * A first draft made this an `.icon-btn` like Reset, which put an unlabelled ✕ next to an unlabelled ↻ on
+ * the one surface where the difference between *throw this away* and *start it over* is the whole
+ * decision. V1, for all its coral, drew the word. An independent review read the same screen and reached
+ * the same finding; the specification was amended before the Compose, not after.
  */
 @Composable
-private fun DoneButton(onDone: () -> Unit) {
-    // A plain clickable Row (not Surface(onClick)) so the clickable sits OUTSIDE clearAndSetSemantics — a
-    // Surface's onClick lives inside the semantics-clearing boundary and its click never fires under test.
-    Row(
+private fun CancelButton(onCancel: () -> Unit) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val cancel = benchTap(action = onCancel)
+    val shape = BenchBarShape
+    Box(
         modifier = Modifier
-            .shadow(8.dp, RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp))
-            .background(ZinelyTheme.colors.coralStrong)
-            .clickable(onClick = onDone)
+            .testTag("reframe-${Copy.Reframe.CANCEL_REFRAMING}")
+            .height(BenchIconBtnSize)
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+            .clip(shape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
+            .clickable(interactionSource = interaction, indication = null, onClick = cancel)
+            .clearAndSetSemantics {
+                // The spoken label stays the long form — "Cancel" alone is ambiguous out of context,
+                // and a screen reader has no bar to read it in.
+                contentDescription = Copy.Reframe.CANCEL_REFRAMING
+                role = Role.Button
+                onClick { cancel(); true }
+            }
+            .padding(horizontal = ZinelyV21Dimens.gapMd),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = Copy.Reframe.CANCEL,
+            color = colors.ink,
+            fontSize = FitTitleSize,
+            fontWeight = FontWeight.Bold,
+            fontFamily = ZinelyV21Fonts.Work,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+        )
+    }
+}
+
+/**
+ * The primary Done — `.add`'s clothes, ring included ([ReframeControls]'s KDoc says why that does not
+ * break the one-ring-per-screen rule). Commits the session ([Intent.CommitReframe]).
+ */
+@Composable
+private fun DoneButton(onDone: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val done = benchTap(action = onDone)
+    Row(
+        modifier = modifier
+            .height(BenchAddHeight)
+            // Ring first so it lands under the shadow; neither may sit right of a clip.
+            .zinelyV21Frame(colors.butterTint, BenchBarShape)
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Hero, colors.inkLine, BenchBarShape)
+            .clip(BenchBarShape)
+            .background(colors.leaf)
+            .border(BenchChromeBorder, colors.ink, BenchBarShape)
+            .clickable(interactionSource = interaction, indication = null, onClick = done)
+            .testTag("reframe-${Copy.Reframe.DONE_REFRAMING}")
             .clearAndSetSemantics {
                 contentDescription = Copy.Reframe.DONE_REFRAMING
                 role = Role.Button
-            }
-            .padding(horizontal = 22.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(9.dp),
+                onClick { done(); true }
+            },
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(Copy.Reframe.DONE, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-        Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(19.dp))
+        Icon(
+            Icons.Filled.Check,
+            contentDescription = null,
+            tint = colors.onLeaf,
+            modifier = Modifier.size(BenchAddGlyphSize),
+        )
+        Text(
+            text = Copy.Reframe.DONE,
+            color = colors.onLeaf,
+            fontSize = BenchAddTextSize,
+            fontWeight = FontWeight.Bold,
+            fontFamily = ZinelyV21Fonts.Work,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+        )
     }
 }
 
 /**
- * The persistent "Reframe" affordance chip (ADR-053 RF2, bench `.reframe-aff`): a selected photo always
- * advertises that it can be reframed, so the pan/zoom gesture is discoverable without a missing handle.
- * Tapping it enters Reframe ([Intent.BeginReframe]).
+ * The persistent "Reframe" affordance chip (ADR-053 RF2): a selected photo always advertises that it can
+ * be reframed, so the pan/zoom gesture is discoverable without a missing handle. Tapping it enters
+ * Reframe ([Intent.BeginReframe]).
  *
- * @param teach the first-run coach-mark (bench `.reframe-aff.teach`): pulse twice to draw the eye the first
- *   time a photo is selected on this install. The caller passes `false` under reduced motion (WCAG 2.3.3)
- *   and once the coach has been seen — so the pulse is opt-in and never reaches an animation-averse user.
+ * ⚠ **It is `--paper` on an ink edge now, not translucent ink over the photo.** V1 laid `ink` at 62%
+ * over the picture, which is a scrim — and a scrim's contrast depends on the photo underneath it, so the
+ * one thing this chip must do (be legible on *any* photo) was the one thing it could not promise. An
+ * opaque paper chip on a printed shadow reads the same over a white sky and a black jacket, and it is the
+ * same chip the rest of V2.1 uses.
+ *
+ * @param teach the first-run coach-mark: pulse twice to draw the eye the first time a photo is selected
+ *   on this install. The caller passes `false` under reduced motion (WCAG 2.3.3) and once the coach has
+ *   been seen — so the pulse is opt-in and never reaches an animation-averse user.
  */
 @Composable
 public fun ReframeAffordanceChip(onClick: () -> Unit, modifier: Modifier = Modifier, teach: Boolean = false) {
-    // Two gentle scale pulses (bench affPulse ×2), then rest. Finite — not an infinite transition — so it
-    // teaches once and stops; `teach` is already reduced-motion-gated by the caller, so no motion here at all
-    // when animations are off.
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val open = benchTap(action = onClick)
+    // Two gentle scale pulses, then rest. Finite — not an infinite transition — so it teaches once and
+    // stops; `teach` is already reduced-motion-gated by the caller, so no motion here at all when
+    // animations are off.
     val pulse = remember { Animatable(1f) }
     LaunchedEffect(teach) {
         if (teach) repeat(2) { pulse.animateTo(1.08f, tween(300)); pulse.animateTo(1f, tween(600)) }
     }
-    Surface(
-        // Click via Modifier.clickable (OUTSIDE clearAndSetSemantics), not Surface(onClick) — the latter
-        // buries the click action inside the cleared-semantics boundary, so a test/AT click never lands.
+    val shape = BenchBarShape
+    Row(
         modifier = modifier
             .graphicsLayer { scaleX = pulse.value; scaleY = pulse.value }
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+            .clip(shape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
             .testTag(ReframeChipTestTag)
-            .clickable(onClick = onClick)
+            // Click via Modifier.clickable (OUTSIDE clearAndSetSemantics), not Surface(onClick) — the
+            // latter buries the click action inside the cleared-semantics boundary, so a test/AT click
+            // never lands.
+            .clickable(interactionSource = interaction, indication = null, onClick = open)
             .clearAndSetSemantics {
                 contentDescription = Copy.Reframe.REFRAME_THIS_PHOTO
                 role = Role.Button
-            },
-        // bench `.reframe-aff`: ink at 62% over the photo, paper text, tight 11dp corners.
-        shape = RoundedCornerShape(11.dp),
-        color = ZinelyTheme.colors.ink.copy(alpha = 0.62f),
-        contentColor = ZinelyTheme.colors.paper,
+                onClick { open(); true }
+            }
+            .padding(horizontal = AffPaddingH, vertical = AffPaddingV),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-        ) {
-            Icon(Icons.Filled.CropFree, contentDescription = null, modifier = Modifier.size(13.dp))
-            Text(Copy.Reframe.REFRAME, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-        }
+        Icon(Icons.Filled.CropFree, contentDescription = null, tint = colors.ink, modifier = Modifier.size(AffGlyphSize))
+        Text(
+            text = Copy.Reframe.REFRAME,
+            color = colors.ink,
+            fontSize = AffTextSize,
+            fontWeight = FontWeight.Bold,
+            fontFamily = ZinelyV21Fonts.Work,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+        )
     }
 }
