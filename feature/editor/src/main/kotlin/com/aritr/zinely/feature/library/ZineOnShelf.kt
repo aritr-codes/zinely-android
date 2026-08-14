@@ -164,7 +164,7 @@ internal fun ZineOnShelf(
                     // "Camping trip, A4, 2 days ago" six times over is a list nobody can skim by ear.
                     label = zine.title,
                     interactionSource = interaction,
-                    onClick = { onOpen(index) },
+                    onClick = { haptics.perform(ZinelyHaptic.Tick); onOpen(index) },
                     onLongClick = {
                         haptics.perform(ZinelyHaptic.Boundary)
                         onActions(index)
@@ -247,7 +247,9 @@ internal fun ZineOnShelf(
         MoreButton(
             title = zine.title,
             ink = colors.inkSoft,
-            onClick = { onActions(index) },
+            // The same sheet the long press opens, and the long press already buzzes — a tile whose two
+            // routes to one sheet feel different is a tile that seems to have failed on the quiet one.
+            onClick = { haptics.perform(ZinelyHaptic.Tick); onActions(index) },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .testTag(zineShelfMoreTestTag(index)),

@@ -98,4 +98,22 @@ public object ZinelyV21Dimens {
      * misregistration. **Reserved for the one primary action on a screen** (Save PDF, Add).
      */
     public val frameRing: Dp = 5.dp
+
+    /**
+     * `.icon-btn:disabled{opacity:.35}` (`v21-bench.html:345`) — **the corpus's one disabled treatment**,
+     * and the reason it is a token rather than a literal at each site.
+     *
+     * The freeze declares `:disabled` on exactly one selector, so every other disabled control in the app
+     * is *borrowing* this number rather than transcribing its own rule. It lived as
+     * `BenchContextBarDisabledAlpha` in `BenchContextBar.kt` and was read across the file boundary by
+     * `BenchStyleRow` — one surface importing another surface's private constant, which is how a shared
+     * value ends up owned by whichever file happened to need it first.
+     *
+     * ⚠ It is an **opacity**, and how it is applied is not part of the token. `.icon-btn` fades whole
+     * (ground, border and glyph together), which is what `graphicsLayer { alpha = }` gives; but a control
+     * whose child colour is load-bearing — the ink swatch on `BenchStyleRow`'s chip, which row 3.9 requires
+     * to be the element's *true* ink — must pre-multiply instead, or the layer alpha falsifies it. Same
+     * number, two applications, and the choice belongs to the caller.
+     */
+    public const val disabledAlpha: Float = 0.35f
 }

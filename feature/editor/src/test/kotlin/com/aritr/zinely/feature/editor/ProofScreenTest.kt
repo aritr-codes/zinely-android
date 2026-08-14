@@ -34,6 +34,8 @@ import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -178,7 +180,7 @@ class ProofScreenTest {
      * the test can fire to reach `.done`.
      */
     private fun setProofBand(
-        exportBusy: Boolean = false,
+        busyTarget: ProofExportTarget? = null,
         saved: MutableSharedFlow<String> = MutableSharedFlow(extraBufferCapacity = 1),
         startDrawer: ProofDrawer = ProofDrawer.None,
     ) {
@@ -190,7 +192,7 @@ class ProofScreenTest {
                     paper = paper,
                     onPaperSelected = { paper = it },
                     onExportPdf = { lastExport = it },
-                    exportBusy = exportBusy,
+                    busyTarget = busyTarget,
                     savedSignals = saved,
                     pages = pages(),
                     startDrawer = startDrawer,
@@ -265,7 +267,7 @@ class ProofScreenTest {
      */
     @Test
     fun `the commit row disables while a render is in flight`() {
-        setProofBand(exportBusy = true)
+        setProofBand(busyTarget = ProofExportTarget.SAVE)
         composeRule.onNodeWithTag(ProofSavePdfTestTag).assertIsNotEnabled()
         composeRule.onNodeWithTag(ProofShareTestTag).assertIsNotEnabled()
     }
@@ -278,13 +280,63 @@ class ProofScreenTest {
      */
     @Test
     fun `the busy commit row reports disabled buttons on the platform tree`() {
-        setProofBand(exportBusy = true)
+        setProofBand(busyTarget = ProofExportTarget.SAVE)
 
         val save = composeRule.onNodeWithTag(ProofSavePdfTestTag).platformNode(composeRule.activity)
         assertFalse("Save PDF must be disabled to the platform while a render is in flight", save.isEnabled)
 
         val share = composeRule.onNodeWithTag(ProofShareTestTag).platformNode(composeRule.activity)
         assertFalse("Share must be disabled to the platform while a render is in flight", share.isEnabled)
+    }
+
+    /**
+     * **The defect a user reported, in test form.** Tap Share and Save PDF reacted too, because one
+     * `exportBusy` Boolean drove both buttons — so the screen answered a question about one control with
+     * a change to two, and the honest reading from the user's chair was *"both buttons became active"*.
+     *
+     * Note what this asserts and what it does not. Both buttons still go non-interactive (single-flight is
+     * real, and a live button whose tap is dropped is a worse lie) — the guard is that only the **running**
+     * one wears the in-flight treatment, in both directions.
+     */
+    @Test
+    fun `a running save names itself and leaves share alone`() {
+        setProofBand(busyTarget = ProofExportTarget.SAVE)
+
+        composeRule.onNodeWithText(Copy.Proof.SAVING).assertExists()
+        // The other button is untouched by someone else's render: still its own label, never a second
+        // in-flight message.
+        composeRule.onNodeWithText(Copy.Proof.SHARE).assertExists()
+        composeRule.onNodeWithText(Copy.Proof.PREPARING_SHARE).assertDoesNotExist()
+    }
+
+    /** The same in the other direction — the report was symmetric, so the guard is too. */
+    @Test
+    fun `a running share names itself and leaves save alone`() {
+        setProofBand(busyTarget = ProofExportTarget.SEND)
+
+        composeRule.onNodeWithText(Copy.Proof.PREPARING_SHARE).assertExists()
+        composeRule.onNodeWithText(Copy.Proof.SAVE_PDF).assertExists()
+        composeRule.onNodeWithText(Copy.Proof.SAVING).assertDoesNotExist()
+    }
+
+    /**
+     * TalkBack's half of the same fact, read off the **platform** tree rather than the merged semantics
+     * one — this file has been bitten by that difference before (CI-93, `f4faaa4`). A sighted user gets
+     * the label swap; without this, a TalkBack user gets two identically-disabled buttons and no way to
+     * tell which one is working.
+     */
+    @Test
+    fun `only the running export is announced as working, on the platform tree`() {
+        setProofBand(busyTarget = ProofExportTarget.SEND)
+
+        val share = composeRule.onNodeWithTag(ProofShareTestTag).platformNode(composeRule.activity)
+        assertTrue(
+            "the running Share must announce its state — was ${share.stateDescription}",
+            share.stateDescription?.toString() == Copy.Proof.EXPORT_WORKING,
+        )
+
+        val save = composeRule.onNodeWithTag(ProofSavePdfTestTag).platformNode(composeRule.activity)
+        assertNull("the idle Save PDF must announce no state at all", save.stateDescription)
     }
 
     /**
@@ -486,6 +538,34 @@ class ProofScreenTest {
             .assertTextEquals(
                 Copy.Proof.paperChangedResave(newPaper = Copy.Paper.LETTER, oldPaper = Copy.Paper.A4),
             )
+    }
+
+    /**
+     * **Re-picking the size you are already on is not a change.** Found on device: tapping the selected
+     * segment dropped a real completion and raised *"Paper changed to US Letter — save again to get a US
+     * Letter-sized PDF. The US Letter one is still in Downloads."* — one size named twice, in a sentence
+     * that contradicts itself, about an event that never happened. It also threw away a save the user
+     * still had.
+     *
+     * A segmented control invites this exact tap, because tapping the selected segment is how people check
+     * which one is selected.
+     */
+    @Test
+    fun `re-picking the current paper changes nothing and retracts nothing`() {
+        val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        setProofBand(saved = saved)
+        saved.tryEmit("zine.pdf")
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(ProofReadyTestTag).performClick()
+        // A4 is the mounted default — this taps the segment that is already on.
+        segment(Copy.Paper.A4).performClick()
+        composeRule.onNodeWithTag(ZSheetCloseTestTag).performClick()
+        composeRule.waitForIdle()
+
+        // The completion survives, and nothing claims a change.
+        composeRule.onNodeWithTag(ProofDoneTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(ProofPaperChangedTestTag).assertDoesNotExist()
     }
 
     /**
@@ -787,7 +867,7 @@ class ProofScreenTest {
             ZinelyTheme {
                 ProofScreen(
                     onBack = { backCount++ },
-                    exportFailed = true,
+                    failedTarget = ProofExportTarget.SAVE,
                     onRetryExport = { retried++ },
                 )
             }

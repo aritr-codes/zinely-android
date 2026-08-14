@@ -13,12 +13,15 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.up
+import androidx.compose.ui.unit.dp
 import com.aritr.zinely.ui.golden.cropToBounds
 import com.aritr.zinely.ui.golden.pixelCountOf
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -33,9 +36,9 @@ import org.robolectric.annotation.GraphicsMode
  * rows 4.1, 4.2, 4.10, 4.11, 4.12).
  *
  * **This is where C4's paint is asserted.** [BenchC4Test] reads order, enabled-ness, timing and geometry
- * off the semantics tree, and none of those can see a `--chrome` ground, a 1px `--chrome-line` hairline,
- * `--matcha` under `--on-matcha` on `Add`, `--matcha-text` on the saved chip, or the snack's inverted
- * `--ink` ground with `--accent-on-ink` on its one button.
+ * off the semantics tree, and none of those can see a `--desk` ground, `--leaf` under `--on-leaf` on
+ * `Add`, `--leaf-text` on a `--leaf-tint` saved chip, or the snack's inverted `--ink` ground with its
+ * `--ink-line` border and its underlined `--paper` button.
  *
  * The raster alone is **not** those assertions: `changeThreshold = 0.02f` means a hairline across a wide
  * bar is far too small to move the gate — that lesson was paid for in C3, where the mutation that deleted
@@ -71,23 +74,45 @@ class BenchC4GoldenTest {
     }
 
     private var deskArgb = 0
-    private var matchaArgb = 0
-    private var chromeArgb = 0
-    private var inkArgb = 0
-    private var accentOnInkArgb = 0
-    private var matchaTextArgb = 0
+    private var v21DeskArgb = 0
+    private var v21LeafArgb = 0
+    private var v21ButterTintArgb = 0
+    private var v21InkArgb = 0
+    private var v21InkLineArgb = 0
+    private var v21PaperArgb = 0
+    private var v21LeafTextArgb = 0
+    private var v21LeafTintArgb = 0
     private var inkSoftArgb = 0
 
     private fun host(darkTheme: Boolean, content: @Composable () -> Unit) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
+                // P3: read the V2.1 tokens. The bar's ground is `desk` (it was `chrome`), its filled
+                // control is `leaf` under `onLeaf` (was `matcha`/`matchaText`), and the glyph tint is
+                // V2.1's `inkSoft` — a different value from V2's, which is why the disabled-alpha probe
+                // found zero full-strength pixels and reported a drawn control as missing.
+                // `deskArgb` and the host ground stay on `ZinelyTheme.colors` — this class also records the
+                // snack and status-strip goldens, which are not P3's surfaces and must not move.
                 deskArgb = ZinelyTheme.colors.desk.toArgb()
-                matchaArgb = ZinelyTheme.v2Colors.matcha.toArgb()
-                chromeArgb = ZinelyTheme.v2Colors.chrome.toArgb()
-                inkArgb = ZinelyTheme.v2Colors.ink.toArgb()
-                accentOnInkArgb = ZinelyTheme.v2Colors.accentOnInk.toArgb()
-                matchaTextArgb = ZinelyTheme.v2Colors.matchaText.toArgb()
-                inkSoftArgb = ZinelyTheme.v2Colors.inkSoft.toArgb()
+                // The bar's own ground: V2.1's `desk`, which is a different value from the host's legacy
+                // `colors.desk` above. Kept as its own field rather than repointing `deskArgb`, so the
+                // host's yardstick and the bar's cannot be confused for each other again.
+                v21DeskArgb = ZinelyTheme.v21Colors.desk.toArgb()
+                v21LeafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
+                v21ButterTintArgb = ZinelyTheme.v21Colors.butterTint.toArgb()
+                // P4: the **snack** is a converted surface now, so these read V2.1. Its ground is still an
+                // inverted `ink`, but the value is V2.1's; its border is `inkLine` (the corpus's one
+                // shadow-ink border, because an ink border on an ink ground is invisible); and its action
+                // lost `--accent-on-ink` entirely — it is the snack's own `paper`, underlined.
+                v21InkArgb = ZinelyTheme.v21Colors.ink.toArgb()
+                v21InkLineArgb = ZinelyTheme.v21Colors.inkLine.toArgb()
+                v21PaperArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                // P6a: the status strip's chip is now `.saved` — `leafText` on a `leafTint` pill, where V2
+                // set it as bare `--matcha-text`. The old field is gone rather than left pointing at a
+                // token this file no longer draws.
+                v21LeafTextArgb = ZinelyTheme.v21Colors.leafText.toArgb()
+                v21LeafTintArgb = ZinelyTheme.v21Colors.leafTint.toArgb()
+                inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
@@ -122,28 +147,38 @@ class BenchC4GoldenTest {
         val bar = boundsOf(BenchBottomBarTestTag)
         val barCrop = cropToBounds(full, bar)
 
-        // Row 4.1 — the `--chrome` ground. A 66dp bar at xhdpi is tens of thousands of pixels; 2000 is far
-        // above any incidental match and far below the real fill.
-        assertTrue("the bar did not paint its --chrome ground ($name)", barCrop.pixelCountOf(chromeArgb) > 2000)
+        // P3 — the bar's ground is now `desk` (it was `chrome`), and it is the room's own colour: the bar
+        // no longer declares a surface distinct from the desk it sits on.
+        assertTrue("the bar did not paint its --desk ground ($name)", barCrop.pixelCountOf(v21DeskArgb) > 2000)
 
-        // Row 4.1 — `border-top:1px solid var(--chrome-line)`. Compared against the ground **as actually
-        // painted** and read from the full raster in root coordinates, for the two reasons C3 recorded: the
-        // rule composites over `--chrome` so it equals neither token, and a re-crop can round a pixel onto
-        // the desk and "differ" whether or not a hairline exists.
+        // P3 — **and it must have NO top hairline.** V2's `.bar` carried `border-top:1px solid
+        // var(--chrome-line)`; V2.1's (`v21-bench.html:341`) declares `background` and nothing else, so the
+        // first scanline is uniform ground. This assertion is inverted rather than deleted: the boundary
+        // between room and bar disappearing is a visible design decision, and a deleted test would let it
+        // come back silently. Read from the full raster in root coordinates for the reason C3 recorded — a
+        // re-crop can round a pixel onto the desk and "differ" whether or not a rule exists.
         val left = bar.left.toInt() + 2
         val right = bar.right.toInt() - 2
         val ground = full.getPixel(left, (bar.top + bar.height / 2f).toInt())
         var hairline = 0
         for (x in left until right) if (full.getPixel(x, bar.top.toInt() + 1) != ground) hairline++
         assertTrue(
-            "the bar's top hairline is missing ($name): only $hairline/${right - left} px on its first " +
-                "scanline differ from its own ground",
-            hairline > (right - left) / 2,
+            "the bar drew a top hairline ($name): $hairline/${right - left} px on its first scanline " +
+                "differ from its own ground, and V2.1's `.bar` has no border",
+            hairline == 0,
         )
 
-        // Row 4.4 — `Add` is the bar's one filled control, `--matcha`. A 44dp-tall pill across most of the
-        // bar's width is many thousands of pixels at xhdpi.
-        assertTrue("Add did not paint its --matcha fill ($name)", barCrop.pixelCountOf(matchaArgb) > 2000)
+        // Row 4.4 — `Add` is the bar's one filled control, now `--leaf` (was `--matcha`). A 48dp-tall pill
+        // across most of the bar's width is many thousands of pixels at xhdpi.
+        assertTrue("Add did not paint its --leaf fill ($name)", barCrop.pixelCountOf(v21LeafArgb) > 2000)
+
+        // P3 — and it is the screen's one `--frame` ring: `.add` alone wears the butter-tint misregistration
+        // band. Asserted here because it is the single most visible thing this conversion adds, and a golden
+        // threshold of 2% would not notice a 5dp band going missing.
+        assertTrue(
+            "Add did not paint its --butter-tint misregistration ring ($name)",
+            barCrop.pixelCountOf(v21ButterTintArgb) > 200,
+        )
 
         cropToBounds(full, boundsOf(HOST_TAG)).captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }
@@ -192,13 +227,24 @@ class BenchC4GoldenTest {
     }
 
     /**
-     * Row 4.2's `:active{transform:scale(.94)}`, measured rather than declared: the mutation `.94`→`.8`
-     * survived every test in C4 because nothing looked at a pressed control. `graphicsLayer` scaling does
-     * not move the semantics box, so the drawn box is found in the raster — the outline is the only
-     * `--chrome-line` in the button's slot, so its extent **is** the drawn width.
+     * **P3: the press changed kind, so this test changed what it measures.**
+     *
+     * V2's `.icon-btn:active` was `transform:scale(.94)` and this test measured the control getting
+     * *narrower*. V2.1's (`v21-bench.html:346`) is `transform:translate(2px,2px); box-shadow:0 0 0` — the
+     * object keeps its size, **moves** down-right, and sheds its shadow. Asserting a shrink here after the
+     * conversion would have been the strictly worse failure: a green test measuring a property the design no
+     * longer has.
+     *
+     * So: the drawn box's **left edge** must move right by [ZinelyV21Press]`.Flat.travel`, and its width must
+     * not change. Both halves are needed — a control that shrank *and* moved would satisfy either one alone,
+     * and V2.1 explicitly does not shrink (text metrics must not change under a finger).
+     *
+     * The expectations are literals rather than reads of the tier under test, for the reason the original
+     * test recorded: computing the expectation from the constant makes the assertion agree with whatever the
+     * constant becomes, which is exactly how the `.94` → `.8` mutation survived this test's first cut.
      */
     @Test
-    fun a_pressed_icon_button_shrinks_to_the_frozen_ninety_four_percent() {
+    fun a_pressed_icon_button_travels_two_dp_and_keeps_its_size() {
         host(darkTheme = false) {
             BenchBottomBar(
                 canUndo = true, canRedo = true, doneEnabled = true,
@@ -207,25 +253,55 @@ class BenchC4GoldenTest {
         }
         val slot = boundsOf(BenchBarUndoTag)
         val restingWidth = drawnWidth(hostBitmap(), slot)
+        val restingLeft = drawnLeft(hostBitmap(), slot)
 
-        composeRule.mainClock.autoAdvance = false
         composeRule.onNodeWithTag(BenchBarUndoTag).performTouchInput { down(center) }
-        composeRule.mainClock.advanceTimeBy(BenchBarPressMillis + 100L)
         composeRule.waitForIdle()
         val pressedWidth = drawnWidth(hostBitmap(), slot)
+        val pressedLeft = drawnLeft(hostBitmap(), slot)
         composeRule.onNodeWithTag(BenchBarUndoTag).performTouchInput { up() }
 
-        // The literal `.94`, **not** `BenchIconBtnPressedScale`: computing the expectation from the
-        // constant under test makes the assertion agree with any value the constant takes, which is how
-        // the `.94` → `.8` mutation survived this test's first cut. Same defect as the two timing tests,
-        // found the same way.
-        val expected = restingWidth * 0.94f
+        val travelPx = with(composeRule.density) { 2.dp.toPx() }
         assertTrue(
-            "a pressed control must draw at the frozen .94 (resting ${restingWidth}px, pressed " +
-                "${pressedWidth}px, expected ~${expected}px)",
-            kotlin.math.abs(pressedWidth - expected) <= 2f,
+            "a pressed control must travel the frozen 2dp down-right (resting left ${restingLeft}px, " +
+                "pressed ${pressedLeft}px, expected ~${restingLeft + travelPx}px)",
+            kotlin.math.abs((pressedLeft - restingLeft) - travelPx) <= 1.5f,
         )
-        assertTrue("the frozen pressed scale is .94", BenchIconBtnPressedScale == 0.94f)
+        // ⚠ The raster's extent is **object + shadow**, so it legitimately narrows by exactly the shed
+        // shadow — 2dp — while the object itself does not resize. The first cut of this test asserted the
+        // extent was unchanged and failed at 92→88px, which is the correct behaviour reported as a defect.
+        // Asserting the *exact* shrink is the stronger check anyway: it pins the collapse to Flat's own
+        // resting depth, so a tier swap (Flat→Raised, or a pressed depth that stayed at 2) fails here.
+        assertTrue(
+            "…and the 2dp shadow must collapse with it, narrowing the drawn extent by exactly that much " +
+                "(resting ${restingWidth}px, pressed ${pressedWidth}px)",
+            kotlin.math.abs((restingWidth - pressedWidth) - travelPx) <= 1.5f,
+        )
+        // The object did not resize: its far edge is where the resting shadow's far edge was. This is the
+        // half that says "pushed into the desk" rather than "shrank under the finger".
+        assertTrue(
+            "the pressed object's right edge must land on the resting shadow's " +
+                "(resting ${restingLeft + restingWidth}px, pressed ${pressedLeft + pressedWidth}px)",
+            kotlin.math.abs((pressedLeft + pressedWidth) - (restingLeft + restingWidth)) <= 1.5f,
+        )
+        assertEquals("the frozen Flat travel is 2dp", 2.dp, ZinelyV21Press.Flat.travel)
+        assertEquals("…and it presses flush, shedding all of its depth", 0.dp, ZinelyV21Press.Flat.pressed)
+    }
+
+    /**
+     * The left edge of everything drawn inside [slot] that differs from the ground — the pressed object's
+     * position. Measured against the *resting* reading, never against the slot: the semantics box does not
+     * move with a `Modifier.offset` press, which is the whole reason this has to come out of the raster.
+     */
+    private fun drawnLeft(full: android.graphics.Bitmap, slot: androidx.compose.ui.geometry.Rect): Float {
+        val y0 = slot.top.toInt() + 2
+        val y1 = slot.bottom.toInt() - 2
+        val pad = 6
+        val x0 = (slot.left.toInt() - pad).coerceAtLeast(0)
+        val x1 = (slot.right.toInt() + pad).coerceAtMost(full.width - 1)
+        val ground = full.getPixel(x0, y0)
+        val xs = (x0..x1).filter { x -> (y0..y1).any { y -> full.getPixel(x, y) != ground } }
+        return if (xs.isEmpty()) 0f else xs.first().toFloat()
     }
 
     /**
@@ -277,8 +353,23 @@ class BenchC4GoldenTest {
      * covered, which is what a stroke width *is*.
      */
     private fun glyphInkMass(full: android.graphics.Bitmap, slot: androidx.compose.ui.geometry.Rect): Long {
-        val inset = 6
-        val ground = full.getPixel(slot.left.toInt() + 2, slot.top.toInt() + 2)
+        // ⚠ P3: the window must sit **inside the pill**, corners included. At 50% radius a fixed 6px inset
+        // still clips desk at the four corners, and that contamination — not the stroke — is most of what
+        // the first two readings measured. 22% of the control's width leaves a centred square comfortably
+        // within the pill and still larger than the 20dp glyph it has to contain.
+        val inset = (slot.width * 0.22f).toInt()
+        // Sample the ground **inside** the control, not at its box corner. V2's `.icon-btn` was an
+        // outline over the bar's own chrome, so the corner and the interior were the same colour; V2.1's is
+        // a pill with its own `paper` ground, and the corner pixel now falls outside the rounded edge on
+        // `desk`. Sampling there made every interior pixel read as deviation and the measured mass jumped
+        // 6.7× — reported as a stroke defect when the stroke had moved 1.7 → 1.9, about 12%. The reading
+        // must start where the loop starts.
+        // …and take it on the pill's **horizontal midline**, not its top-left corner. At 50% radius the
+        // corner is round: 6px in from an 88px control is still 53px from the corner's centre against a
+        // 44px radius, i.e. outside the pill and on `desk`. The first fix moved the sample and the measured
+        // mass did not budge, which is what proved the point was still outside. The midline at x+inset is
+        // inside the ground and clear of the 20dp glyph.
+        val ground = full.getPixel(slot.left.toInt() + inset, slot.center.y.toInt())
         fun ch(v: Int, sh: Int) = (v shr sh) and 0xFF
         var mass = 0L
         for (x in slot.left.toInt() + inset until slot.right.toInt() - inset) {
@@ -308,9 +399,16 @@ class BenchC4GoldenTest {
 
         val full = hostBitmap()
         val chip = cropToBounds(full, boundsOf(BenchSavedChipTestTag))
-        // Row 4.10 — the chip is `--matcha-text`. 11sp of text is a few hundred pixels of glyph; 40 clears
-        // antialiasing while staying far under the real count, and a chip drawn in `--ink` fails it.
-        assertTrue("the saved chip is not painted in --matcha-text ($name)", chip.pixelCountOf(matchaTextArgb) > 40)
+        // `.saved{color:var(--leaf-text)}` — which now paints the check glyph as well as the word, so the
+        // real count is higher than V2's, not lower. 40 still clears antialiasing while staying far under
+        // it, and a chip drawn in `--ink` (or in the retired `--matcha-text`) fails it.
+        assertTrue("the saved chip is not painted in --leaf-text ($name)", chip.pixelCountOf(v21LeafTextArgb) > 40)
+        // …and it now has a *ground*, which V2's bare coloured text did not. This is the half that would
+        // silently survive a revert to plain text on the strip, so it is asserted separately.
+        assertTrue(
+            "the saved chip has no --leaf-tint pill behind it ($name)",
+            chip.pixelCountOf(v21LeafTintArgb) > 100,
+        )
 
         cropToBounds(full, boundsOf(HOST_TAG)).captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }
@@ -336,15 +434,33 @@ class BenchC4GoldenTest {
         // Row 4.11 — the ground **inverts**: `--ink` under `--paper` text. This is the property that makes
         // the surface read as a system message rather than as more chrome, and it is the one a re-skin of
         // the wrong snackbar (there are three in-tree) would silently lose.
-        assertTrue("the snack did not paint its inverted --ink ground ($name)", snack.pixelCountOf(inkArgb) > 2000)
+        assertTrue(
+            "the snack did not paint its inverted --ink ground ($name)",
+            snack.pixelCountOf(v21InkArgb) > 2000,
+        )
 
-        // Row 4.12 — `--accent-on-ink` on the one button, which exists in the palette **only** for this
-        // pairing. Scoped to the action's own rect so the message's `--paper` cannot stand in for it.
+        // Row 4.12, **inverted by ADR-102 P4.** `--accent-on-ink` existed in the palette solely for this
+        // pairing and V2.1 retires it (`v21-bench.html:485-490`): the action is the snack's own `paper`,
+        // underlined, because the butter it was tried at measured 1.59:1 in dark. So the assertion is now
+        // that the action carries paper — and that no re-tinted accent has crept back in its place.
         val action = cropToBounds(full, boundsOf(BenchSnackActionTestTag))
         assertTrue(
-            "the snack's Undo is not painted in --accent-on-ink ($name)",
-            action.pixelCountOf(accentOnInkArgb) > 20,
+            "the snack's Undo is not painted in the snack's own --paper ($name)",
+            action.pixelCountOf(v21PaperArgb) > 20,
         )
+
+        // …and the surface gained a border V2 did not have, drawn in `--ink-line` rather than `--ink`.
+        //
+        // **Only assertable in dark**, and that is the point rather than a limitation: `ink` and `inkLine`
+        // are the *same* value in light (`#33261C`) and diverge only in dark (`#F6EAD6` against `#120E0A`).
+        // A light-theme count would pass whichever token the border used, which is exactly the vacuity
+        // this suite keeps finding. Asserted where the two can disagree.
+        if (darkTheme) {
+            assertTrue(
+                "the snack has no --ink-line border ($name); an --ink one would vanish into its own ground",
+                snack.pixelCountOf(v21InkLineArgb) > 100,
+            )
+        }
 
         cropToBounds(full, boundsOf(HOST_TAG)).captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }

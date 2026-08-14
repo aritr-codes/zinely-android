@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.height
@@ -181,6 +182,36 @@ class ShelfSheetsTest {
         composeRule.onNodeWithTag(HomeRenameConfirmTestTag).performClick()
 
         assertEquals("z1" to "Tuesday", renamed)
+    }
+
+    /**
+     * The rename field is no longer `ZTextField` — when it was split off, that component painted `--field`
+     * under a coral focus border, which the V2.1 sheets cannot wear and cannot recolour from outside.
+     * (`ZTextField` has since been converged onto `.search input` — paper under an ink border — so the
+     * original reason no longer holds; the split stands on the sheet's own face, not on that.) Its **keyboard
+     * behaviour is the part that must not change**, and the Done key is the half a re-implementation
+     * silently drops: it is invisible in a screenshot, it has no test tag of its own, and the Save button
+     * beside it keeps working, so the loss reads as nothing at all until someone types a name and
+     * presses the only key their thumb is already on.
+     */
+    @Test
+    fun `the rename field keeps its Done key, and Done commits the trimmed name`() {
+        var renamed: String? = null
+        setContent {
+            ShelfRenameSheet(
+                visible = true,
+                title = card.title,
+                onDismiss = {},
+                onRename = { renamed = it },
+            )
+        }
+
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextClearance()
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performTextInput("  Tuesday  ")
+        // Throws if no IME action is set on the field — which is the assertion.
+        composeRule.onNodeWithTag(HomeRenameFieldTestTag).performImeAction()
+
+        assertEquals("Tuesday", renamed)
     }
 
     @Test

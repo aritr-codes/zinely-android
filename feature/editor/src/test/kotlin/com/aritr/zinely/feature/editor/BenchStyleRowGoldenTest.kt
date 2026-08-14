@@ -47,9 +47,10 @@ import org.robolectric.annotation.GraphicsMode
  * the [EditTextSessionGoldenTest] two-proof shape.
  *
  * **This is where the row's painted properties are actually asserted.** The behavioural suite
- * ([BenchC3Test]) can read order, enabled-ness and geometry from the semantics tree, but a `--sheet`
- * ground, a 1px `--chrome-line` hairline, `--matcha` under `--on-matcha` on `Done`, and the ink swatch
- * taking the element's own colour are all *paint* — the only honest reading of them is the raster.
+ * ([BenchC3Test]) can read order, enabled-ness and geometry from the semantics tree, but a `--paper`
+ * ground, a 1.5px `--ink` top rule, V2.1's new dashed `--hair` perforation along the bottom, `--leaf`
+ * under `--on-leaf` on `Done`, and the ink swatch taking the element's own colour are all *paint* — the
+ * only honest reading of them is the raster.
  *
  * The swatch is seeded with the coral content ink rather than the default, so the golden distinguishes
  * "reports the element's colour" from "draws a theme default" (row 3.9); a swatch drawn from `--ink` would
@@ -76,7 +77,12 @@ class BenchStyleRowGoldenTest {
     private val coralInk = Color(0xFFA63C22)
 
     private var deskArgb = 0
-    private var matchaArgb = 0
+
+    /** `.doneEdit{background:var(--leaf)}` (`v21-bench.html:282`). V2 filled this chip with `--matcha`. */
+    private var leafArgb = 0
+
+    /** `.styletb{background:var(--paper)}` (`v21-bench.html:267`). V2's ground was `--sheet`. */
+    private var paperTokenArgb = 0
 
     /** The V2.1 caret ink — `--jam`. See the caret probe below. */
     private var caretArgb = 0
@@ -85,7 +91,8 @@ class BenchStyleRowGoldenTest {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
                 deskArgb = ZinelyTheme.colors.desk.toArgb()
-                matchaArgb = ZinelyTheme.v2Colors.matcha.toArgb()
+                leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
+                paperTokenArgb = ZinelyTheme.v21Colors.paper.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
@@ -112,15 +119,15 @@ class BenchStyleRowGoldenTest {
         val row = cropToBounds(full, composeRule.onNodeWithTag(BenchStyleRowTestTag)
             .fetchSemanticsNode().boundsInRoot)
 
-        // 3.5 — `border-top:1px solid var(--chrome-line)`: the row's first scanline must differ from the
+        // 3.5 — `border-top:1.5px solid var(--ink)`: the row's first scanline must differ from the
         // row's own interior ground. Two earlier shapes of this assertion both failed to bite, and both
         // failures are worth keeping:
         //
-        //  * equality with `--chrome-line` — wrong, because the rule is composited over `--sheet` and the
+        //  * equality with the rule's token — wrong, because the rule is composited over the ground and the
         //    result is neither token;
-        //  * inequality with the `--sheet` TOKEN, read from a re-cropped bitmap — wrong, because the crop's
-        //    rounded top edge can land a pixel above the row, on the desk, which differs from `--sheet`
-        //    whether or not a hairline was ever drawn. It passed with the hairline deleted.
+        //  * inequality with the GROUND token, read from a re-cropped bitmap — wrong, because the crop's
+        //    rounded top edge can land a pixel above the row, on the desk, which differs from the ground
+        //    whether or not a rule was ever drawn. It passed with the rule deleted.
         //
         // So the comparison is against the ground **as actually painted**, sampled from the row's middle,
         // and both are read in root coordinates from the full raster — no second crop to round.
@@ -130,15 +137,33 @@ class BenchStyleRowGoldenTest {
         val ground = full.getPixel(left, (rowRect.top + rowRect.height / 2f).toInt())
         var hairline = 0
         for (x in left until right) if (full.getPixel(x, rowRect.top.toInt() + 1) != ground) hairline++
-        assertTrue("the top hairline is missing ($name): only $hairline/${right - left} px on the row's " +
+        assertTrue("the top rule is missing ($name): only $hairline/${right - left} px on the row's " +
             "first scanline differ from its own ground", hairline > (right - left) / 2)
 
-        // 3.7 — the `Done` chip's `--matcha` fill. A pill of h34 at this density is thousands of pixels;
-        // 500 is far below it and far above any incidental match.
-        assertTrue("Done did not paint its --matcha fill ($name)", row.pixelCountOf(matchaArgb) > 500)
+        // 3.5, V2.1's addition — `border-bottom:1.5px dashed var(--hair)` (`v21-bench.html:268`). The
+        // interesting property is not that the bottom edge is marked but that it is marked *intermittently*:
+        // a solid rule and a dashed one are the same assertion under "differs from the ground", and the
+        // difference between them is the whole point of the perforation. So this is a two-sided count —
+        // enough differing pixels that the rule exists, few enough that it cannot be solid.
+        var dash = 0
+        for (x in left until right) if (full.getPixel(x, rowRect.bottom.toInt() - 1) != ground) dash++
+        val span = right - left
+        assertTrue("the bottom dashed rule is missing ($name): $dash/$span px differ", dash > span / 8)
+        assertTrue("the bottom rule is drawn SOLID ($name): $dash/$span px differ, a dash leaves gaps",
+            dash < span * 4 / 5)
 
-        // 3.9 — the swatch reports the ELEMENT's ink, so the seeded coral must be on screen. A 14dp dot is
-        // ~780px at xhdpi; 200 survives the circle's antialiased rim.
+        // 3.7 — the `Done` chip's `--leaf` fill (`v21-bench.html:282`); V2 filled it with `--matcha`. The
+        // pill is thousands of pixels at this density; 500 is far below it and far above any incidental
+        // match.
+        assertTrue("Done did not paint its --leaf fill ($name)", row.pixelCountOf(leafArgb) > 500)
+
+        // V2.1's ground is `--paper`, where V2's was `--sheet`. Asserted as a token count rather than left
+        // to the raster: the two are near neighbours in the light palette, and a 2 % change threshold does
+        // not see a swap between them.
+        assertTrue("the row's ground is not --paper ($name)", row.pixelCountOf(paperTokenArgb) > 500)
+
+        // 3.9 — the swatch reports the ELEMENT's ink, so the seeded coral must be on screen. A 15dp dot is
+        // ~900px at xhdpi; 200 survives the circle's antialiased rim and its 1.5dp ink ring.
         assertTrue("the ink swatch is not the element's own colour ($name)",
             row.pixelCountOf(coralInk.toArgb()) > 200)
 
@@ -194,7 +219,8 @@ class BenchStyleRowGoldenTest {
         composeRule.setContent {
             ZinelyTheme(darkTheme = false) {
                 deskArgb = ZinelyTheme.colors.desk.toArgb()
-                matchaArgb = ZinelyTheme.v2Colors.matcha.toArgb()
+                leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
+                paperTokenArgb = ZinelyTheme.v21Colors.paper.toArgb()
                 // Read OUTSIDE the sheet island, so this is the room's `jam` — which the island lights to
                 // the same light value inside the page. Reading it here rather than transcribing the hex
                 // keeps the probe bound to the palette.
@@ -230,7 +256,7 @@ class BenchStyleRowGoldenTest {
         // `BenchC3Test.the_screen_hands_the_edited_elements_id_to_the_tape`, both of which the mutation
         // battery confirms are non-vacuous. An earlier KDoc here claimed the stronger thing.
         // Row 3.9 at the screen: the swatch must be the ELEMENT's coral, which only a screen that reads
-        // `editingElement.style.color` can produce. A 14dp dot at xhdpi is ~780px; 200 clears its AA rim.
+        // `editingElement.style.color` can produce. A 15dp dot at xhdpi is ~900px; 200 clears its AA rim.
         val rowCrop = cropToBounds(full, row)
         assertTrue("the swatch is not seeded from the edited element's own colour",
             rowCrop.pixelCountOf(coralInk.toArgb()) > 200)

@@ -879,14 +879,31 @@ private class FoldDiagramScope(
         pathOf(points), color, style = Stroke(width = w(wUnits), join = StrokeJoin.Round),
     )
 
-    /** The eight imposed page numbers, so every diagram is drawn on *the sheet the printer produced*. */
+    /**
+     * The eight imposed page numbers, so every diagram is drawn on *the sheet the printer produced* —
+     * read from the engine through [decorativeImpositionRows], never from a literal.
+     *
+     * ⚠ This function held a raw array until ADR-102, and it was **wrong in five of its eight cells**:
+     * `5 4 3 6 / 8 1 2 7` where the engine imposes `5 4 3 2 / 6 7 8 1`. That is the same bad sheet
+     * [ADR-050](../../../../../../../../docs/DECISIONS.md#adr-050) had already found in the HTML and
+     * corrected once — for the Print Details illustration only. This second illustration, in the frozen
+     * `v21-proof.html`, was never corrected, and Compose copied it faithfully. So the user's fold guide
+     * and the user's PDF disagreed about where page 2 goes, with the PDF right.
+     *
+     * ADR-050's ruling is the fix, not the numbers: *"Compose derives the sheet from the convention and
+     * never re-encodes a raw layout array."* Any future engine or convention change now reaches this
+     * diagram on its own.
+     */
     private fun cells() {
-        listOf(
-            Triple(q1 - 22f, cy - 46f, "5"), Triple(q1 + 22f, cy - 46f, "4"),
-            Triple(q3 - 22f, cy - 46f, "3"), Triple(q3 + 22f, cy - 46f, "6"),
-            Triple(q1 - 22f, cy + 50f, "8"), Triple(q1 + 22f, cy + 50f, "1"),
-            Triple(q3 - 22f, cy + 50f, "2"), Triple(q3 + 22f, cy + 50f, "7"),
-        ).forEach { (x, y, t) -> cellNumber(t, x, y - 3f, 9f) }
+        val xs = listOf(q1 - 22f, q1 + 22f, q3 - 22f, q3 + 22f)
+        val ys = listOf(cy - 46f, cy + 50f)
+        decorativeImpositionRows().forEachIndexed { row, panels ->
+            val y = ys.getOrNull(row) ?: return@forEachIndexed
+            panels.forEachIndexed { col, panel ->
+                val x = xs.getOrNull(col) ?: return@forEachIndexed
+                cellNumber(panel.pageNumber.toString(), x, y - 3f, 9f)
+            }
+        }
     }
 
     // `.cellno` is text drawn ON the sheet, so it follows the paper's own ink family (`inkSoft`), not

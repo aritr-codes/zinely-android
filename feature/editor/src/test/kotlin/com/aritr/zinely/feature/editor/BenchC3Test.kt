@@ -36,6 +36,7 @@ import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -603,7 +604,7 @@ class BenchC3Test {
 
     @Test
     fun the_style_row_is_absent_at_rest_and_docked_while_editing() {
-        // Row 3.4: `.kbstack` is `translateY(110%)` — offscreen — except under `.editing`. Absent rather
+        // Row 3.4: `.kbstack` is `translateY(102%)` — offscreen — except under `.editing`. Absent rather
         // than merely translated: a `graphicsLayer` moves pixels, not nodes, and four controls left in the
         // accessibility tree at rest is a defect (`SurfaceTraversalOrderTest` reads that tree directly).
         val store = store()
@@ -646,7 +647,7 @@ class BenchC3Test {
         val row = composeRule.onNodeWithTag(BenchStyleRowTestTag).fetchSemanticsNode().boundsInRoot
 
         assertTrue("Done sits after the Ink chip", done.left > ink.right)
-        // The spacer is real: the gap before Done is wider than the row's own 6dp inter-chip gap.
+        // The spacer is real: the gap before Done is wider than the row's own 8dp inter-chip gap.
         val gap = done.left - ink.right
         assertTrue("the .grow spacer separates them", gap > with(composeRule.density) { BenchStyleRowGap.toPx() })
         assertTrue("Done reaches the row's trailing edge", row.right - done.right < with(composeRule.density) {
@@ -655,8 +656,8 @@ class BenchC3Test {
     }
 
     @Test
-    fun the_chips_are_spaced_by_the_frozen_six_px_gap() {
-        // Frozen `.styletb{gap:6px}` (`v2-bench.html:261`) — asserted on the chips' ANNOUNCED bounds, which
+    fun the_chips_are_spaced_by_the_frozen_eight_px_gap() {
+        // Frozen `.styletb{gap:var(--gap-sm)}` (`v21-bench.html:267`) — asserted on the chips' ANNOUNCED bounds, which
         // makes it two assertions in one. The gap is a frozen property in its own right; and because a
         // chip's node covers its padding only when `testTag` sits above `.padding`, a chip that reports its
         // inner content box instead shows this gap as 6 + 12 + 12 = 30dp. That defect shipped once — the
@@ -671,15 +672,31 @@ class BenchC3Test {
             .onNodeWithTag("$BenchStyleRowTestTag-$label", useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
 
-        val expected = with(composeRule.density) { 6.dp.toPx() }
+        val expected = with(composeRule.density) { 8.dp.toPx() }
         val font = chip(Copy.BenchVerbs.FONT)
         val size = chip(Copy.BenchVerbs.SIZE)
         val ink = chip(Copy.BenchVerbs.INK)
         assertEquals("Font→Size gap", expected, size.left - font.right, 1f)
         assertEquals("Size→Ink gap", expected, ink.left - size.right, 1f)
-        // And the chips are drawn at the frozen h34, padding included — the same node, so the two readings
-        // cannot drift apart.
-        assertEquals(with(composeRule.density) { 34.dp.toPx() }, font.height, 1f)
+        // ⚠ V2.1's chips declare NO height (`v21-bench.html:269-272`), where V2 pinned `height:34px`.
+        assertEquals("the chips share one content-derived height", font.height, ink.height, 0.5f)
+        // ⚠ **The line above is a sibling comparison, and on its own it proves nothing about the property
+        // it is named for.** Re-pinning `height:34.dp` makes both chips 34dp and it still passes; so do the
+        // padding readings below, because a 34dp chip around a 15dp swatch leaves 9.5dp top and bottom,
+        // which clears the 8dp floor and is perfectly centred. A review pointed out that **no assertion in
+        // this file would have failed if the frozen "no declared height" regressed to a pinned one** — the
+        // comment here even conceded the gap and then pointed at the checks that do not close it.
+        //
+        // The chip is its content plus 8dp above and below; against a 15dp swatch and a 12.48sp line that
+        // lands near 31–32dp and cannot reach 34 without the type growing. So the pinned value is excluded
+        // by name. Written against the LITERAL 34dp rather than a constant, for the reason the swatch test
+        // below gives: an expectation phrased in terms of the code under test walks through mutations.
+        assertNotEquals(
+            "the chip height is derived, not pinned — 34dp is V2's `height:34px` returning",
+            with(composeRule.density) { 34.dp.toPx() },
+            ink.height,
+            1f,
+        )
 
         // Frozen `.styletb .chip{padding:0 12px}` (`:262`), measured from the chip's announced left edge
         // to the swatch — the only landmark inside a chip that keeps its own node, since
@@ -690,11 +707,22 @@ class BenchC3Test {
             .fetchSemanticsNode().boundsInRoot
         assertEquals("the Ink chip's leading padding", with(composeRule.density) { 12.dp.toPx() },
             swatch.left - ink.left, 1f)
+
+        // Frozen `.chip{padding:var(--gap-sm) var(--gap-md)}` — the VERTICAL half, which V2 never had to
+        // assert because a pinned `height:34px` made it decorative. It is load-bearing now: with the height
+        // gone, deleting the vertical padding is what makes the chip collapse onto its own text. Asserted as
+        // a floor plus a centring, because whether the swatch or the label is the taller child is a font
+        // question, and the padding is the same either way.
+        val padV = with(composeRule.density) { 8.dp.toPx() }
+        assertTrue("the chip pads its content vertically (${swatch.top - ink.top}px)",
+            swatch.top - ink.top >= padV - 1f)
+        assertEquals("and the content sits centred in it",
+            swatch.top - ink.top, ink.bottom - swatch.bottom, 1.5f)
     }
 
     @Test
-    fun the_ink_swatch_is_the_frozen_fourteen_px_dot() {
-        // Row 3.9: `editSw.style.background = getComputedStyle(t).color` (`v2-bench.html:553`). The chip is
+    fun the_ink_swatch_is_the_frozen_fifteen_px_dot() {
+        // Row 3.9: `editSw.style.background = getComputedStyle(t).color`. The chip is
         // inert but the dot is not decorative — it is the one thing about it that tells the truth.
         val store = store()
         val id = placedText(store)
@@ -703,15 +731,16 @@ class BenchC3Test {
         store.dispatch(Intent.BeginEditText(id))
         composeRule.waitForIdle()
 
-        // The frozen `.sw{width:14px;height:14px}` (`v2-bench.html:263`), asserted against the LITERAL 14dp.
-        // Written against `BenchStyleSwatchSize` it was circular — the expectation was the constant under
-        // test, so the re-review's `14.dp → 22.dp` mutation walked straight through it. This test is named
-        // for what it actually holds, too: the dot's *colour* (row 3.9's real subject) is a painted property
-        // and is asserted on the raster in `BenchStyleRowGoldenTest`, which is the only honest place for it.
+        // The frozen `.chip .sw{width:15px;height:15px}` (`v21-bench.html:279`) — V2 drew 14 — asserted
+        // against the LITERAL 15dp. Written against `BenchStyleSwatchSize` it was circular: the expectation
+        // was the constant under test, so the re-review's `14.dp → 22.dp` mutation walked straight through
+        // it. This test is named for what it actually holds, too: the dot's *colour* (row 3.9's real
+        // subject) is a painted property and is asserted on the raster in `BenchStyleRowGoldenTest`, which
+        // is the only honest place for it.
         val sw = composeRule.onNodeWithTag("$BenchStyleRowTestTag-swatch", useUnmergedTree = true)
             .fetchSemanticsNode().size
-        assertEquals(with(composeRule.density) { 14.dp.roundToPx() }, sw.width)
-        assertEquals(with(composeRule.density) { 14.dp.roundToPx() }, sw.height)
+        assertEquals(with(composeRule.density) { 15.dp.roundToPx() }, sw.width)
+        assertEquals(with(composeRule.density) { 15.dp.roundToPx() }, sw.height)
     }
 
     // --- Row 3.8: the caret -----------------------------------------------------------------------

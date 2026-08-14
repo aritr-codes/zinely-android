@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.ui.golden.cropToBounds
 import com.aritr.zinely.ui.golden.pixelCountOf
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
+import com.aritr.zinely.ui.golden.topRowRiseOf
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -49,15 +50,22 @@ class EditorSaveFailureGoldenTest {
     }
 
     private var deskArgb = 0
+    private var inkArgb = 0
 
     private fun host(darkTheme: Boolean, content: @Composable () -> Unit) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
-                deskArgb = ZinelyTheme.colors.desk.toArgb()
+                // ⚠ The host desk is **V2.1's**, not `ZinelyTheme.colors.desk`. The component inside went
+                // V2.1 in ADR-102 P6a while this host stayed V2, so the recorded raster was a frame in
+                // one design language around a component in another — a picture depicting neither corpus.
+                // Caught by review, not by the suite: the only non-image assertion here counted the host
+                // background, which the wrong desk satisfies exactly as well as the right one.
+                deskArgb = ZinelyTheme.v21Colors.desk.toArgb()
+                inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
-                        .background(ZinelyTheme.colors.desk)
+                        .background(ZinelyTheme.v21Colors.desk)
                         .padding(16.dp),
                 ) { content() }
             }
@@ -81,6 +89,30 @@ class EditorSaveFailureGoldenTest {
         assertTrue(
             "the host desk did not paint ($name)",
             bmp.pixelCountOf(deskArgb) > 100,
+        )
+        // ⚠ **The raster alone asserts nothing** — a golden records whatever it is shown, and until this
+        // block existed the desk count above was the only claim in the file, satisfied by the host's own
+        // background whatever the component did. So the two properties that actually distinguish the V2.1
+        // banner from its V2 ancestor are read off the pixels, in both themes:
+        //
+        //  1. `.snack{background:var(--ink)}` — the banner's ground is the corpus's INK, on both themes.
+        //     V2's notice was a `paper`/`desk` card, so this is the byte that flips with the re-skin, and
+        //     it is the one a re-record would silently accept.
+        //  2. `.snack{transform:rotate(-.6deg)}` — the settled lean, read as the **rise across the
+        //     banner's own width**: the ink ground starts lower on one side than the other, and it cannot
+        //     for an untilted pill. A corner-pixel probe was written first and thrown away — the banner is
+        //     `radiusPill`, so its bounding-box corner is desk with the lean and without it, and the
+        //     `graphicsLayer` rotation does not move layout bounds either. That test would have passed on
+        //     a flat banner: the same "cannot fail for the right reason" defect this batch was fixing.
+        val inkPixels = bmp.pixelCountOf(inkArgb)
+        assertTrue(
+            "the banner's ground is `--ink` — $inkPixels px found ($name)",
+            inkPixels > 500,
+        )
+        val rise = bmp.topRowRiseOf(inkArgb)
+        assertTrue(
+            "the banner leans — ink top rises ${rise}px across its width ($name)",
+            rise >= 4,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }

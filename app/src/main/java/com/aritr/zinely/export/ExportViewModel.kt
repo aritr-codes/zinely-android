@@ -17,11 +17,22 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
-/** What the export screen shows. [Working] marks which card is rendering; [Error] is a transient banner. */
+/**
+ * What the export screen shows.
+ *
+ * Both non-idle states name the [ExportDestination] they belong to, and that is the whole point: the Proof
+ * offers **two** commit actions (Save PDF, Share), and until ADR-102 neither state said which one was
+ * running. The screen could only ask *"is an export happening?"*, so it answered for both buttons at once —
+ * tap Share and Save PDF dimmed too, and a failed Share removed the Save button from the screen. The VM
+ * knew the answer the whole time and kept it private.
+ *
+ * ⚠ [ExportFormat] is **not** that discriminator and cannot stand in for it: both buttons export PDF. Only
+ * the destination separates them.
+ */
 internal sealed interface ExportUiState {
     data object Idle : ExportUiState
-    data class Working(val format: ExportFormat) : ExportUiState
-    data class Error(val message: String) : ExportUiState
+    data class Working(val format: ExportFormat, val destination: ExportDestination) : ExportUiState
+    data class Error(val message: String, val destination: ExportDestination) : ExportUiState
 }
 
 /**
@@ -58,11 +69,6 @@ internal class ExportViewModel @Inject constructor(
     private val _outcomes = Channel<ExportOutcome>(Channel.BUFFERED)
     val outcomes: Flow<ExportOutcome> = _outcomes.receiveAsFlow()
 
-    // The destination of the last export, so "Try again" reproduces the same attempt (a Save retries a
-    // Save; a Share retries a Share). This is retry *input*, NOT delivery routing — routing is decided
-    // solely by the emitted [ExportOutcome] subtype in the host (ADR-054 Decision 2/3).
-    private var lastDestination: ExportDestination? = null
-
     fun export(
         document: ZineDocument,
         pageSizePt: PtSize,
@@ -71,9 +77,8 @@ internal class ExportViewModel @Inject constructor(
         destination: ExportDestination,
     ) {
         if (_state.value is ExportUiState.Working) return // ignore taps while a render is in flight
-        lastDestination = destination
         viewModelScope.launch {
-            _state.value = ExportUiState.Working(format)
+            _state.value = ExportUiState.Working(format, destination)
             _state.value = try {
                 _outcomes.send(exporter.export(document, pageSizePt, imageBytes, format, destination))
                 ExportUiState.Idle
@@ -82,26 +87,38 @@ internal class ExportViewModel @Inject constructor(
             } catch (oom: OutOfMemoryError) {
                 // The one Error we handle: the ~33 MB full-sheet bitmap (ADR-011) can OOM on a low-heap
                 // device — a friendly banner beats a crash. Other Errors (linkage/VM) propagate (Codex).
-                ExportUiState.Error("This zine is a bit big to render right now. Please try again.")
+                ExportUiState.Error(
+                    "This zine is a bit big to render right now. Please try again.",
+                    destination,
+                )
             } catch (e: Exception) {
-                ExportUiState.Error("Couldn’t make your file just now. Please try again.")
+                ExportUiState.Error("Couldn’t make your file just now. Please try again.", destination)
             }
         }
     }
 
-    /** Re-run the last export after a failure — same destination, against the freshly-passed live document. */
+    /**
+     * Re-run the failed export — same destination, against the freshly-passed live document.
+     *
+     * The destination is read **off the error being shown**, not off a remembered field. That field
+     * existed (`lastDestination`) and was deleted with this change: it could disagree with the error on
+     * screen, and it made the VM the only place that knew which action had failed while the screen said
+     * only "something failed". Retry now cannot retry an action other than the one the user is looking at.
+     */
     fun retry(
         document: ZineDocument,
         pageSizePt: PtSize,
         imageBytes: AssetBytesSource,
         format: ExportFormat,
     ) {
-        val destination = lastDestination ?: return
+        val destination = (_state.value as? ExportUiState.Error)?.destination ?: return
         export(document, pageSizePt, imageBytes, format, destination)
     }
 
-    /** Dismiss a transient export error (user acknowledged the banner). */
-    fun dismissError() {
-        if (_state.value is ExportUiState.Error) _state.value = ExportUiState.Idle
-    }
+    // `dismissError()` used to live here and is deliberately gone (ADR-102 §12.14). It had exactly one
+    // caller — the host, immediately before `retry()` — and once retry started reading the destination off
+    // the Error being shown, that call became the thing that would break it. Left in place it was a method
+    // whose only documentation was a warning not to call it, which is a trap for the next reader rather
+    // than an API. The error pane offers "Try again" and nothing else; if a real dismiss affordance is ever
+    // designed, it comes back with a caller.
 }

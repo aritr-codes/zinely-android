@@ -1,6 +1,5 @@
 package com.aritr.zinely.feature.editor
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,9 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -37,7 +33,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.ui.components.zinelyV21Frame
+import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 import com.aritr.zinely.ui.theme.ZinelyV2IconPaint
 import com.aritr.zinely.ui.theme.ZinelyV2Icons
 import com.aritr.zinely.ui.theme.toImageVector
@@ -71,53 +72,74 @@ public const val AddActionLabel: String = Copy.BenchBar.ADD
 public const val UndoActionLabel: String = Copy.BenchBar.UNDO
 public const val RedoActionLabel: String = Copy.BenchBar.REDO
 
-/** Frozen `.bar{height:66px}` (`v2-bench.html:267`). */
-internal val BenchBarHeight = 66.dp
-
-/** Frozen `.bar{gap:10px}` (`v2-bench.html:267`). */
-internal val BenchBarGap = 10.dp
+/**
+ * ⚠ **V2.1's `.bar` declares no height** (`v21-bench.html:341`), where V2 pinned `height:66px`. The bar is
+ * now exactly its padding plus its tallest child — the 48dp `.add` — and that is transcribed rather than
+ * re-pinned: writing a height back would make the freeze's padding decorative, and would silently outvote
+ * `.add` the day it changes. ADR-102 does not say whether the omission was deliberate; the frozen file is
+ * canonical either way, so this follows it and flags it.
+ *
+ * The intrinsic height is `8 + 48 + 16 = 72dp` at rest, against V2's 66.
+ */
+internal val BenchBarGap = ZinelyV21Dimens.gapSm
 
 /**
- * Frozen `.bar{padding:0 16px 4px}` (`v2-bench.html:267`) — the bottom pad is **asymmetric**, and it is a
- * real 4dp rather than a rounding artefact. Under `align-items:center` only the *difference* between top and
- * bottom padding reaches layout, so the row's content sits 2dp above the box's centre; the height and the
- * pad are therefore asserted together, never one standing in for the other.
+ * Frozen `.bar{padding:var(--gap-sm) var(--gap-lg) var(--gap-lg)}` (`v21-bench.html:341`) — 8 top, 16 sides,
+ * 16 bottom.
+ *
+ * V2's pad was `0 16 4`, which under `align-items:center` sat the content 2dp *above* centre. V2.1's is
+ * generous and asymmetric the other way: the bar sits **off the foot of the phone**, not flush against it.
  */
-internal val BenchBarPaddingH = 16.dp
-internal val BenchBarPaddingBottom = 4.dp
+internal val BenchBarPaddingTop = ZinelyV21Dimens.gapSm
+internal val BenchBarPaddingH = ZinelyV21Dimens.gapLg
+internal val BenchBarPaddingBottom = ZinelyV21Dimens.gapLg
 
-/** Frozen `.icon-btn{width:44px;height:44px}` (`v2-bench.html:268`). */
+/** Frozen `.icon-btn{width:44px;height:44px}` (`v21-bench.html:342`) — unchanged from V2. */
 internal val BenchIconBtnSize = 44.dp
 
-/** Frozen `.icon-btn`/`.add{border-radius:12px}` (`v2-bench.html:268`, `:271`). */
-internal val BenchBarRadius = 12.dp
+/**
+ * Frozen `.icon-btn`/`.add{border-radius:var(--br-pill)}` (`v21-bench.html:342`, `:349`).
+ *
+ * V2 drew both at a 12dp rounded rectangle. V2.1's chrome controls are **pills**, expressed as a percent
+ * shape rather than [ZinelyV21Dimens.radiusPill]'s 999dp so a `RoundedCornerShape` outline stays exact for
+ * the press shadow and the frame ring, both of which build their geometry from this shape.
+ */
+internal val BenchBarShape: RoundedCornerShape = RoundedCornerShape(percent = 50)
 
-/** Frozen `.icon-btn:disabled{opacity:.35}` (`v2-bench.html:269`). */
+/** Frozen `.icon-btn`/`.add`/`.chip`/`.gridbtn`/`.fpage{border:1.5px solid var(--ink)}`. */
+internal val BenchChromeBorder = 1.5.dp
+
+/**
+ * Frozen `.icon-btn:disabled{opacity:.35; box-shadow:none}` (`v21-bench.html:345`).
+ *
+ * ⚠ The **shadow half is not an alpha**. A disabled control sheds its depth entirely rather than fading it,
+ * which is a different statement from a pressed one: pressed means *"you are pushing this"*, disabled means
+ * *"there is nothing here to push"*. [ZinelyV21Pressable][com.aritr.zinely.ui.components.zinelyV21Pressable]
+ * deliberately cannot express it — its KDoc names this exact case — so the call site states it.
+ */
 internal const val BenchIconBtnDisabledAlpha: Float = 0.35f
 
-/** Frozen `.icon-btn:active{transform:scale(.94)}` (`v2-bench.html:269`). */
-internal const val BenchIconBtnPressedScale: Float = 0.94f
-
-/** Frozen `.add:active{transform:scale(.98)}` (`v2-bench.html:272`). */
-internal const val BenchAddPressedScale: Float = 0.98f
-
-/** Frozen `.icon-btn{transition:...,transform .1s}` / `.add{transition:transform .1s}` (`:268`, `:271`). */
-internal const val BenchBarPressMillis: Int = 100
-
-/** Frozen `.icon-btn svg{width:20px}` and its inherited `stroke-width:1.7` (`v2-bench.html:270`). */
+/**
+ * Frozen `.icon-btn svg{width:20px;height:20px;stroke-width:1.9}` (`v21-bench.html:347-348`). V2's stroke
+ * was 1.7: the whole language got a heavier pen.
+ */
 internal val BenchIconBtnGlyphSize = 20.dp
-internal const val BenchIconBtnStroke: Float = 1.7f
+internal const val BenchIconBtnStroke: Float = 1.9f
 
-/** Frozen `.add{height:44px}` (`v2-bench.html:271`). */
-internal val BenchAddHeight = 44.dp
+/** Frozen `.add{height:48px}` (`v21-bench.html:349`), up from V2's 44. */
+internal val BenchAddHeight = 48.dp
 
-/** Frozen `.add{font-size:14.5px;font-weight:600}` and `gap:8px` (`v2-bench.html:271`). */
-internal val BenchAddTextSize = 14.5.sp
-internal val BenchAddGap = 8.dp
+/**
+ * Frozen `.add{font-size:1rem;font-weight:700;gap:var(--gap-sm)}` (`v21-bench.html:349-352`).
+ *
+ * `1rem` is the prototype's root size, 16px, and the weight is a real 700 where V2 asked for 600.
+ */
+internal val BenchAddTextSize = 16.sp
+internal val BenchAddGap = ZinelyV21Dimens.gapSm
 
-/** Frozen `.add svg{width:18px}` and its stated `stroke-width:2` (`v2-bench.html:272`). */
-internal val BenchAddGlyphSize = 18.dp
-internal const val BenchAddStroke: Float = 2f
+/** Frozen `.add svg{width:20px;height:20px;stroke-width:2.4}` (`v21-bench.html:355`). */
+internal val BenchAddGlyphSize = 20.dp
+internal const val BenchAddStroke: Float = 2.4f
 
 /**
  * The frozen bottom bar — `.bar` and its four controls (`v2-bench.html:267-272`, markup `:464-468`);
@@ -187,19 +209,25 @@ internal fun BenchBottomBar(
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(BenchBarHeight)
-            // The tag sits ABOVE the ground and the padding, so the node's bounds are the whole 66dp bar
-            // including its hairline. C3 learned this the hard way: below the padding, every geometric
-            // assertion silently measures the inner content box, and a raster probe aimed at the top
-            // hairline reads the controls instead.
+            // The tag sits ABOVE the ground and the padding, so the node's bounds are the whole bar. C3
+            // learned this the hard way: below the padding, every geometric assertion silently measures the
+            // inner content box, and a raster probe aimed at the top edge reads the controls instead.
             .testTag(BenchBottomBarTestTag)
-            .background(colors.chrome)
-            .benchBarHairline(colors.chromeLine)
-            .padding(start = BenchBarPaddingH, end = BenchBarPaddingH, bottom = BenchBarPaddingBottom),
+            // ⚠ **No hairline.** V2's `.bar` carried a `--chrome-line` rule along its top edge; V2.1's
+            // (`v21-bench.html:341`) declares `background` and nothing else. The bar and the room are the
+            // same `desk`, so the boundary the hairline used to draw is now drawn by the controls' own ink
+            // borders — which is the language's whole move: marks, not surfaces.
+            .background(colors.desk)
+            .padding(
+                top = BenchBarPaddingTop,
+                start = BenchBarPaddingH,
+                end = BenchBarPaddingH,
+                bottom = BenchBarPaddingBottom,
+            ),
         horizontalArrangement = Arrangement.spacedBy(BenchBarGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -238,13 +266,28 @@ internal fun BenchBottomBar(
 }
 
 /**
- * Frozen `.icon-btn` — a 44dp square with a 1px `--chrome-line` outline over nothing, its glyph in
- * `--ink-soft`.
+ * Frozen `.icon-btn` (`v21-bench.html:342-348`) — a 44dp **pill** in `paper`, drawn with a 1.5dp `ink`
+ * border, its glyph in `inkSoft`, sitting on [ZinelyV21Press.Flat]'s 2dp printed shadow.
  *
- * A disabled instance carries **no `clickable`** rather than `clickable(enabled = false)`, so the platform
- * `AccessibilityNodeInfo` reports it non-clickable too. That distinction is not pedantry: it is the exact
- * defect [ADR-058](../../../../../../../../docs/DECISIONS.md#adr-058) shipped through a green Robolectric
- * suite, and C3's device pass re-verified the fix by dumping the real tree rather than the merged one.
+ * ### Three V2 habits this sheds
+ *
+ * The V2 control was a 12dp rounded rectangle with a 1dp `--chrome-line` outline **over nothing** — the
+ * chrome ground showed through it — and it pressed by scaling to `.94`. All three are gone: the pill has its
+ * own `paper` ground, the outline is real ink at the language's 1.5dp pen, and the press is a translate with
+ * the shadow collapsing under it. Nothing here animates: a V2.1 press is a position, not a transition, which
+ * is why [zinelyV21Pressable]'s KDoc notes `prefers-reduced-motion` needs no branch.
+ *
+ * ### Disabled sheds its depth, and that is not an alpha
+ *
+ * `.icon-btn:disabled` is `opacity:.35` **and** `box-shadow:none`. The alpha fades the whole control (see
+ * below); the shadow is removed outright by dropping [zinelyV21Pressable] from the chain. A faded shadow
+ * would still say *"this object stands off the desk"* about a control that cannot be pushed.
+ *
+ * A disabled instance also carries **no `clickable`** rather than `clickable(enabled = false)`, so the
+ * platform `AccessibilityNodeInfo` reports it non-clickable too. That distinction is not pedantry: it is the
+ * exact defect [ADR-058](../../../../../../../../docs/DECISIONS.md#adr-058) shipped through a green
+ * Robolectric suite, and C3's device pass re-verified the fix by dumping the real tree rather than the merged
+ * one.
  */
 @Composable
 private fun BenchIconButton(
@@ -254,32 +297,38 @@ private fun BenchIconButton(
     testTag: String,
     onClick: () -> Unit,
 ) {
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed && enabled) BenchIconBtnPressedScale else 1f,
-        animationSpec = ZinelyTheme.v2Motion.standard(BenchBarPressMillis),
-        label = "bench-icon-btn-press",
-    )
+    // Through [benchTap], like every other Bench control — this button IS Undo, Redo and Done, so one
+    // seam serves three and cannot drift between them.
+    val activate = benchTap(action = onClick)
     Box(
         modifier = Modifier
             .size(BenchIconBtnSize)
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                // The frozen `opacity:.35` is on the **button**, not on its glyph: it fades the 1px
-                // `--chrome-line` outline too. Fading only the tint left a full-strength outlined box with
-                // a faint mark inside it — heavier chrome than the freeze draws, in the state the freeze
-                // draws most carefully, and at the very first frame every user sees. Caught by independent
-                // review; the golden probe could not see it because it measures glyph pixels only.
+                // The frozen `opacity:.35` is on the **button**, not on its glyph: it fades the border too.
+                // Fading only the tint left a full-strength outlined box with a faint mark inside it —
+                // heavier chrome than the freeze draws, in the state the freeze draws most carefully, and at
+                // the very first frame every user sees. Caught by independent review; the golden probe could
+                // not see it because it measures glyph pixels only.
                 alpha = if (enabled) 1f else BenchIconBtnDisabledAlpha
             }
-            .clip(RoundedCornerShape(BenchBarRadius))
-            .border(1.dp, colors.chromeLine, RoundedCornerShape(BenchBarRadius))
+            // ⚠ Nothing that clips may sit to the LEFT of the press — the shadow paints outside the node's
+            // own bounds, and a clip above it cuts the shadow off. The `clip` is deliberately downstream.
             .then(
                 if (enabled) {
-                    Modifier.clickable(interactionSource = interaction, indication = null, onClick = onClick)
+                    Modifier.zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, BenchBarShape)
+                } else {
+                    Modifier
+                },
+            )
+            .clip(BenchBarShape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, BenchBarShape)
+            .then(
+                if (enabled) {
+                    Modifier.clickable(interactionSource = interaction, indication = null, onClick = activate)
                 } else {
                     Modifier
                 },
@@ -288,7 +337,7 @@ private fun BenchIconButton(
             .clearAndSetSemantics {
                 contentDescription = label
                 role = Role.Button
-                if (enabled) onClick { onClick(); true } else disabled()
+                if (enabled) onClick { activate(); true } else disabled()
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -304,7 +353,21 @@ private fun BenchIconButton(
 }
 
 /**
- * Frozen `.add` — the bar's one filled control, `--matcha` under `--on-matcha`.
+ * Frozen `.add` (`v21-bench.html:349-355`) — the bar's one filled control, `leaf` under `onLeaf`, and the
+ * **only object on this screen that wears the misregistration ring**.
+ *
+ * ### The ring is the point, and it is reserved
+ *
+ * `.add` stacks two shadows: [ZinelyV21Press.Hero]'s 4dp printed shadow *and* `0 0 0 var(--frame)` in
+ * `butterTint` — a flat band riso-printing borrowed from the reference sites as a plate that missed
+ * ([V21-SPEC §4.3](../../../../../../../../docs/design/V21-SPEC.md)). [zinelyV21Frame]'s KDoc states the
+ * rule this call site has to keep: it is for **the one primary action on a screen**, because a second ring
+ * makes both of them decoration.
+ *
+ * Applied *before* the press in the chain, which is what puts it underneath: CSS paints the first-declared
+ * shadow layer on top, and of two chained `drawBehind`s the left one paints first. Both travel with the
+ * press, because `Modifier.offset` moves the whole node — under a finger the object approaches the desk and
+ * the ring goes with it, exactly as `transform` carries a `box-shadow`.
  *
  * `flex:1` is `Modifier.weight(1f)`, passed in by the caller: it takes the residual width between the two
  * fixed 44s on its left and the one on its right, so the bar reflows correctly at every width and font
@@ -312,26 +375,25 @@ private fun BenchIconButton(
  */
 @Composable
 private fun BenchAddButton(onAdd: () -> Unit, modifier: Modifier) {
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) BenchAddPressedScale else 1f,
-        animationSpec = ZinelyTheme.v2Motion.standard(BenchBarPressMillis),
-        label = "bench-add-press",
-    )
+    val addWithHaptic = benchTap(action = onAdd)
     Row(
         modifier = modifier
             .height(BenchAddHeight)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(RoundedCornerShape(BenchBarRadius))
-            .background(colors.matcha)
-            .clickable(interactionSource = interaction, indication = null, onClick = onAdd)
+            // Ring first so it lands under the shadow; neither may sit right of a clip.
+            .zinelyV21Frame(colors.butterTint, BenchBarShape)
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Hero, colors.inkLine, BenchBarShape)
+            .clip(BenchBarShape)
+            .background(colors.leaf)
+            .border(BenchChromeBorder, colors.ink, BenchBarShape)
+            .clickable(interactionSource = interaction, indication = null, onClick = addWithHaptic)
             .testTag(BenchBarAddTag)
             .clearAndSetSemantics {
                 contentDescription = AddActionLabel
                 role = Role.Button
-                onClick { onAdd(); true }
+                onClick { addWithHaptic(); true }
             },
         horizontalArrangement = Arrangement.spacedBy(BenchAddGap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
@@ -342,23 +404,17 @@ private fun BenchAddButton(onAdd: () -> Unit, modifier: Modifier) {
                 ZinelyV2IconPaint.Stroke(BenchAddStroke),
             ),
             contentDescription = null,
-            tint = colors.onMatcha,
+            tint = colors.onLeaf,
             modifier = Modifier.size(BenchAddGlyphSize),
         )
         Text(
             text = AddActionLabel,
-            color = colors.onMatcha,
+            color = colors.onLeaf,
             fontSize = BenchAddTextSize,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = ZinelyTheme.v2Typography.work,
+            // `.add{font-weight:700}` — a real Bold, where V2 asked for 600.
+            fontWeight = FontWeight.Bold,
+            fontFamily = ZinelyV21Fonts.Work,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
         )
     }
-}
-
-/**
- * Frozen `.bar{border-top:1px solid var(--chrome-line)}`. Drawn rather than composed as a divider so the
- * bar stays one node in the semantics tree, and at `1.dp` so it is a hairline at every density.
- */
-private fun Modifier.benchBarHairline(colour: Color): Modifier = drawBehind {
-    drawRect(color = colour, size = Size(size.width, 1.dp.toPx()))
 }

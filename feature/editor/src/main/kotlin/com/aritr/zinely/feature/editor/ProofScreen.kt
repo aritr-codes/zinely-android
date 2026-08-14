@@ -56,6 +56,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -211,7 +212,7 @@ private const val SheetChrome = 110f
  * painting in V1 tokens; the surface chrome and the V1→V2.1 token sweep are P6. Goldens are recorded once,
  * at the end, so nothing here is a raster commitment.
  *
- * The recoverable export-error overlay ([exportFailed], the frozen `#errwrap`) replaces the reader **and**
+ * The recoverable export-error overlay ([failedTarget], the frozen `#errwrap`) replaces the reader **and**
  * the band, leaving only the top bar's loss-safe back — one recovery action, never one competing with a
  * live Save. That is why the band needs no failure state of its own, and it is what answers the
  * still-open D-066 / OD-32.
@@ -240,13 +241,14 @@ private const val SheetChrome = 110f
  * @param onPaperSelected the user picked a paper size in the print details. Changing it also clears any
  *   `.done` state, because the PDF in Downloads was rendered at the *old* size — see [ProofBand].
  * @param onExportPdf export — the host renders the PDF and hands it to the [ProofExportTarget] edge.
- * @param exportBusy an export is in flight — the `.commit` pair disables. This is the **visible** half of
- *   a single-flight; the enforcing half is `ExportViewModel.export`, which returns early while `Working`
- *   and sets that state synchronously, so a double-tap could never have started two renders. What the
- *   frozen buttons lack is any drawing for the interval between — a control that looks live for two
- *   seconds and does nothing reads as a broken button, not as a busy one.
- * @param exportFailed the last export could not be rendered — show the recoverable error overlay.
- * @param onRetryExport the error overlay's "Try again" — re-fires the last export.
+ * @param busyTarget **which** export is in flight, or `null`. This is the visible half of a single-flight;
+ *   the enforcing half is `ExportViewModel.export`, which returns early while `Working` and sets that
+ *   state synchronously, so a double-tap could never have started two renders. What the frozen buttons
+ *   lack is any drawing for the interval between — a control that looks live for two seconds and does
+ *   nothing reads as a broken button, not as a busy one. It was a Boolean until ADR-102, and a Boolean
+ *   cannot say *which*, so both commit buttons reacted to either tap.
+ * @param failedTarget **which** export failed, or `null` — shows the recoverable error overlay, named.
+ * @param onRetryExport the error overlay's "Try again" — re-fires the export named by [failedTarget].
  * @param savedSignals one emission per **successful Save-PDF** render, carrying the actual saved display
  *   name (e.g. `zine.pdf`) the exporter wrote to Downloads. Each raises the band's `.done` block, whose
  *   copy NAMES that file and its destination — the check that makes [ADR-054]'s *we kept a copy*
@@ -260,8 +262,8 @@ public fun ProofScreen(
     paper: PaperSize = PaperSize.A4,
     onPaperSelected: (PaperSize) -> Unit = {},
     onExportPdf: (ProofExportTarget) -> Unit = {},
-    exportBusy: Boolean = false,
-    exportFailed: Boolean = false,
+    busyTarget: ProofExportTarget? = null,
+    failedTarget: ProofExportTarget? = null,
     onRetryExport: () -> Unit = {},
     savedSignals: Flow<String> = emptyFlow(),
     pages: List<Page> = emptyList(),
@@ -309,7 +311,7 @@ public fun ProofScreen(
     // reader remounts at the cover while this still holds the leaf the user was on, and the ticket would
     // read "Page 5 of 8" over the cover for one frame *and speak the correction*. Resetting on the way in
     // costs nothing: the ticket is hidden for the whole of the error state.
-    LaunchedEffect(exportFailed) { if (exportFailed) leafPage = 1 }
+    LaunchedEffect(failedTarget) { if (failedTarget != null) leafPage = 1 }
     LaunchedEffect(savedSignals) {
         savedSignals.collect { savedName = it; staleFrom = null; folded = false }
     }
@@ -382,7 +384,7 @@ public fun ProofScreen(
         Column(Modifier.fillMaxSize()) {
             ProofTopBar(
                 // Null while the error pane stands in for the reader — there is no leaf to name.
-                ticket = if (exportFailed || pages.isEmpty()) {
+                ticket = if (failedTarget != null || pages.isEmpty()) {
                     null
                 } else {
                     Copy.ProofRead.leafLabel(leafPage.coerceIn(1, pages.size), pages.size)
@@ -395,7 +397,7 @@ public fun ProofScreen(
                 onOpenFold = { open(ProofDrawer.Fold) },
             )
 
-            if (exportFailed) {
+            if (failedTarget != null) {
                 // Replaces the reader AND the band so there is exactly one recovery action; the top bar's
                 // loss-safe back stays available. This carries forward the retired ExportScreen's error
                 // surfacing — a failed render must never be silent — and is why the band needs no failure
@@ -425,7 +427,7 @@ public fun ProofScreen(
                     savedName = savedName,
                     folded = folded,
                     staleFrom = staleFrom,
-                    exportBusy = exportBusy,
+                    busyTarget = busyTarget,
                     onOpenDetails = { open(ProofDrawer.Details) },
                     onSavePdf = { onExportPdf(ProofExportTarget.SAVE) },
                     onShare = { onExportPdf(ProofExportTarget.SEND) },
@@ -459,11 +461,19 @@ public fun ProofScreen(
             // recipe above it now says to print. Dropping `.done` puts Save PDF back in the band, which
             // is the honest reading and also the only way to re-save. It is also done behind a scrim, so
             // the band must SAY it happened; `staleFrom` is what carries that (see the note in the band).
+            // ⚠ **Re-picking the size you are already on is not a change**, and this handler used to treat
+            // it as one: it dropped `.done`, and raised a note reading *"Paper changed to US Letter — save
+            // again to get a US Letter-sized PDF. The US Letter one is still in Downloads."* — a sentence
+            // that names one size twice and contradicts itself, about an event that did not happen. It
+            // also threw away a save the user still had. A segmented control invites exactly this tap,
+            // because tapping the selected segment is how you check which one is selected.
             onPaperSelected = { picked ->
-                if (savedName != null) staleFrom = paper.displayName
-                savedName = null
-                folded = false
-                onPaperSelected(picked)
+                if (picked != paper) {
+                    if (savedName != null) staleFrom = paper.displayName
+                    savedName = null
+                    folded = false
+                    onPaperSelected(picked)
+                }
             },
             onOpenFold = { open(ProofDrawer.Fold) },
         )
@@ -827,7 +837,7 @@ private val TicketDash = 3.dp
  *   instead of re-issuing the instruction (ADR-101 §6.9).
  * @param staleFrom the paper size a dropped `.done` had been rendered for, or null. Non-null raises
  *   [ProofPaperChangedNote] above the restored commit pair.
- * @param exportBusy a render is in flight — both commit controls disable (the single-flight).
+ * @param busyTarget which export is in flight, or null — both controls block, only that one says so.
  */
 @Composable
 private fun ProofBand(
@@ -836,7 +846,7 @@ private fun ProofBand(
     savedName: String?,
     folded: Boolean,
     staleFrom: String?,
-    exportBusy: Boolean,
+    busyTarget: ProofExportTarget?,
     onOpenDetails: () -> Unit,
     onSavePdf: () -> Unit,
     onShare: () -> Unit,
@@ -889,7 +899,7 @@ private fun ProofBand(
         )
         if (savedName == null) {
             if (staleFrom != null) ProofPaperChangedNote(from = staleFrom, to = paper.displayName)
-            ProofCommitRow(exportBusy = exportBusy, onSavePdf = onSavePdf, onShare = onShare)
+            ProofCommitRow(busyTarget = busyTarget, onSavePdf = onSavePdf, onShare = onShare)
         } else {
             ProofDoneBlock(savedName = savedName, folded = folded, onFoldItUp = onFoldItUp)
         }
@@ -1077,9 +1087,23 @@ private fun ProofPaperChangedNote(from: String, to: String) {
  * `.commit` — Save PDF and Share, the two honest export backends ([ADR-052] drops the frozen third,
  * *Print*: there is no OS path that can promise actual size).
  *
- * Both disable while [exportBusy]. That state has no drawing in the frozen prototype, which is a gap the
- * prototype could not see: HTML's `doSave()` is instant, and a real 8-page render is not. Without it the
- * first double-tap fires two concurrent renders at the same destination.
+ * Both go non-interactive while an export runs, and **only the one that is running says so**. That state
+ * has no drawing in the frozen prototype, which is a gap the prototype could not see: HTML's `doSave()` is
+ * instant, and a real 8-page render is not. Without it the first double-tap fires two concurrent renders
+ * at the same destination.
+ *
+ * ⚠ It was drawn wrong for exactly as long as it existed. [busyTarget] was a Boolean `exportBusy`, so both
+ * buttons dimmed together and a user who tapped Share watched Save PDF react — reported as *"both buttons
+ * become active"*, which is the honest reading of two controls answering one tap. The fix is not in this
+ * row: the destination now travels in [ExportUiState] itself, and this row merely asks each button about
+ * itself.
+ *
+ * **Disabling stays coupled, and that is deliberate.** The VM is single-flight — a tap arriving during a
+ * render is dropped ([ExportViewModel.export]) — so leaving the other button live would make it a control
+ * that visibly does nothing. Two different treatments carry the two different facts: the running button
+ * keeps full opacity and swaps to a present participle; the blocked one dims. True concurrency is a
+ * separate question (two ~33 MB sheet renders at once is the OOM the VM already special-cases) and is not
+ * built on this report.
  *
  * The frozen `.btn-save` also carries a second line (*"8 pages · A4"*) inside the button. It is not built:
  * it repeats `.ready`'s summary two rows above.
@@ -1091,7 +1115,12 @@ private fun ProofPaperChangedNote(from: String, to: String) {
  * surface moves and the design system can be swept in one piece.
  */
 @Composable
-private fun ProofCommitRow(exportBusy: Boolean, onSavePdf: () -> Unit, onShare: () -> Unit) {
+private fun ProofCommitRow(
+    busyTarget: ProofExportTarget?,
+    onSavePdf: () -> Unit,
+    onShare: () -> Unit,
+) {
+    val anyBusy = busyTarget != null
     val haptics = ZinelyTheme.haptics
     Row(
         // `.commit{margin-top:var(--gap-md)}` — and the band's own `spacedBy(12.dp)` already **is** that
@@ -1100,20 +1129,24 @@ private fun ProofCommitRow(exportBusy: Boolean, onSavePdf: () -> Unit, onShare: 
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
     ) {
+        val savingNow = busyTarget == ProofExportTarget.SAVE
+        val sharingNow = busyTarget == ProofExportTarget.SEND
         ProofBandButton(
-            text = Copy.Proof.SAVE_PDF,
+            text = if (savingNow) Copy.Proof.SAVING else Copy.Proof.SAVE_PDF,
             onClick = { haptics.perform(ZinelyHaptic.Tick); onSavePdf() },
             hero = true,
             ring = true,
-            enabled = !exportBusy,
+            enabled = !anyBusy,
+            busy = savingNow,
             modifier = Modifier.weight(1f).testTag(ProofSavePdfTestTag),
             icon = { tint -> StrokedGlyph(ICON_SAVE, tint) },
         )
         ProofBandButton(
-            text = Copy.Proof.SHARE,
+            text = if (sharingNow) Copy.Proof.PREPARING_SHARE else Copy.Proof.SHARE,
             onClick = { haptics.perform(ZinelyHaptic.Tick); onShare() },
             hero = false,
-            enabled = !exportBusy,
+            enabled = !anyBusy,
+            busy = sharingNow,
             modifier = Modifier.testTag(ProofShareTestTag),
             icon = { tint -> ShareGlyph(tint) },
         )
@@ -1142,6 +1175,9 @@ private fun ProofBandButton(
     hero: Boolean,
     enabled: Boolean,
     modifier: Modifier = Modifier,
+    // The button is the one currently exporting. Distinct from `!enabled`: both are non-interactive, and
+    // they must not look alike, or the screen is back to answering one tap with two controls.
+    busy: Boolean = false,
     // Only `.btn-save` wears the ring — `.foldit` is the same leaf pill without one. Two booleans rather
     // than one variant enum, because the corpus genuinely varies them independently.
     ring: Boolean = false,
@@ -1156,10 +1192,15 @@ private fun ProofBandButton(
     Row(
         modifier = modifier
             .heightIn(min = 52.dp)
-            .alpha(if (enabled) 1f else 0.4f)
+            // The running control stays at full strength — it is the one thing on screen that IS
+            // happening. Only a button blocked by someone else's render dims.
+            .alpha(if (enabled || busy) 1f else 0.4f)
+            .semantics {
+                if (busy) stateDescription = Copy.Proof.EXPORT_WORKING
+            }
             .offset { if (pressed) IntOffset(press.travel.roundToPx(), press.travel.roundToPx()) else IntOffset.Zero }
             .then(
-                if (ring) Modifier.zinelyV21Frame(ZinelyV21Dimens.frameRing, colors.butter, pill) else Modifier,
+                if (ring) Modifier.zinelyV21Frame(colors.butter, pill) else Modifier,
             )
             .zinelyV21HardShadow(if (pressed) press.pressed else press.rest, colors.inkLine, pill)
             .zinelyFocusRing(interactionSource, ZinelyV21Dimens.radiusPill)

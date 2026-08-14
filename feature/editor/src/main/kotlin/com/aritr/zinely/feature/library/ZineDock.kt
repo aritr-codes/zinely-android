@@ -227,7 +227,7 @@ private fun StartButton(onStart: () -> Unit) {
             // around it, was invisible in light and barely there in dark. A design's emphasis idiom that
             // only appears at night is not an idiom. `--butter` puts it at 1.56 and 8.71, and matches
             // the count chip it now shares a screen with.
-            .zinelyV21Frame(ZinelyV21Dimens.frameRing, colors.butter, StartShape)
+            .zinelyV21Frame(colors.butter, StartShape)
             .zinelyV21HardShadow(
                 offset = press.rest - (press.rest - press.pressed) * travel,
                 color = colors.inkLine,

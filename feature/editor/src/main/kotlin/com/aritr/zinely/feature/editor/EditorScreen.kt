@@ -759,7 +759,9 @@ public fun EditorScreen(
                 horizontalArrangement = Arrangement.End,
             ) {
                 TextButton(
-                    onClick = onPreview,
+                    // The one nav action the Bench offers, and it was the last silent control on this
+                    // screen. The Library's equivalent — "Make a zine" — has always ticked.
+                    onClick = benchTap(action = onPreview),
                     // Room-level nav action, in V2.1's `leafText` — the action colour as text.
                     //
                     // **Converted by P1 although this control is P6's, because P1 broke it.** It was V1
@@ -1415,42 +1417,6 @@ public fun EditorScreen(
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
 
-                // C5 rows 5.11-5.15: the frozen `.pgrid` (`v2-bench.html:374-383`, markup `:470`).
-                //
-                // **Inside the canvas, for the same reason `.snack` above is.** The markup at `:470` sits
-                // within `.canvasArea` (opened `:416`, closed `:471`) and the rule is
-                // `position:absolute; inset:0` — not `fixed` — so the frozen grid covers **the canvas and
-                // nothing else**: the status strip above it and the filmstrip and bar below it stay
-                // visible and live while it is open. The first cut of C5 made it a full-screen Dialog and
-                // recorded, in this comment and in ADR-095 row 5.11, that the freeze said `fixed`. It does
-                // not. Independent review caught it by reading the HTML rather than the ADR — the second
-                // time in two packages that this exact mistake has been made in this exact file.
-                //
-                // The Dialog was chosen to get system Back for free. That is a real problem and it is not
-                // solved by covering more of the screen than the design does; it is recorded as an
-                // observation for the device passes instead of being fixed by a silent redesign.
-                //
-                // Room palette: this is chrome over the artifact, not the artifact (D-035), and the sheet
-                // island above re-declares `ink`.
-                CompositionLocalProvider(
-                    LocalZinelyV2Colors provides roomColors,
-                    LocalZinelyV21Colors provides roomColors21,
-                ) {
-                    BenchPageGrid(
-                        visible = pageGridOpen,
-                        pages = uiState.document.pages,
-                        currentPageIndex = uiState.currentPageIndex,
-                        // Choosing a page here does what choosing one on the strip does, and then stands
-                        // the grid down — a picker that stayed open after picking would be a panel, which
-                        // is what "summoned, never default" refuses.
-                        onSelectPage = { idx ->
-                            if (reframing != null) commitReframe()
-                            dispatch(Intent.GoToPage(idx))
-                            pageGridOpen = false
-                        },
-                        onDismiss = { pageGridOpen = false },
-                    )
-                }
             }
         }
 
@@ -1603,6 +1569,46 @@ public fun EditorScreen(
                 // D-043 / OD-16: the pan's clearance term. See [benchEditPanMagnitudeDp].
                 onDockedTopChanged = { styleRowDockedTopPx = it },
                 modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+
+        // C5 rows 5.11-5.15: the frozen `.pgrid` — **and it is no longer inside the canvas.**
+        //
+        // ⚠ This is the THIRD reading of where this panel lives, and the first two were both wrong in the
+        // same way: they answered from the CSS rule and not from the markup. V2's `.pgrid` was
+        // `position:absolute; inset:0` *inside* `.canvasArea`, so C5 correctly covered the canvas only
+        // after an earlier cut had made it a full-screen Dialog on the false claim that the freeze said
+        // `fixed`. **V2.1 moved the element.** `v21-bench.html:573` declares `.pgrid` as a direct child of
+        // `.phone` — `.canvasArea` closes at `:530` — alongside `.scrim` (`:571`), `.sheet` (`:572`) and
+        // `.snack` (`:570`), and its rule is now `left:0;right:0;bottom:0` with `translateY(103%)`. It is
+        // a bottom sheet, so its bottom edge is the SCREEN's bottom edge; anchored to the canvas it would
+        // have risen to a stop mid-screen with the filmstrip and bar still lit beneath it, which reads as
+        // a panel that failed to open rather than as a sheet. Verified against the markup nesting rather
+        // than the rule, which is what both earlier readings skipped.
+        //
+        // Emitted after the style row and before nothing: the frozen z-order is `.kbstack` 40, `.scrim`
+        // 50, `.pgrid` 54, `.snack` 60, and in Compose paint order is declaration order.
+        //
+        // Room palette: this is chrome over the artifact, not the artifact (D-035). Read from the theme
+        // directly rather than from the canvas's `roomColors`, which is scoped inside the island's host —
+        // out here the theme's own palette IS the room's.
+        CompositionLocalProvider(
+            LocalZinelyV2Colors provides ZinelyTheme.v2Colors,
+            LocalZinelyV21Colors provides ZinelyTheme.v21Colors,
+        ) {
+            BenchPageGrid(
+                visible = pageGridOpen,
+                pages = uiState.document.pages,
+                currentPageIndex = uiState.currentPageIndex,
+                // Choosing a page here does what choosing one on the strip does, and then stands the grid
+                // down — a picker that stayed open after picking would be a panel, which is what
+                // "summoned, never default" refuses.
+                onSelectPage = { idx ->
+                    if (reframing != null) commitReframe()
+                    dispatch(Intent.GoToPage(idx))
+                    pageGridOpen = false
+                },
+                onDismiss = { pageGridOpen = false },
             )
         }
     }

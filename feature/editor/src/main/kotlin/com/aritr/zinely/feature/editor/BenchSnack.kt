@@ -2,8 +2,10 @@ package com.aritr.zinely.feature.editor
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -25,10 +27,13 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 
 /** Test tag on the frozen snackbar (`.snack`). */
 public const val BenchSnackTestTag: String = "bench-snack"
@@ -36,63 +41,122 @@ public const val BenchSnackTestTag: String = "bench-snack"
 /** Test tag on its one action (`.snack button`). */
 public const val BenchSnackActionTestTag: String = "bench-snack-action"
 
-/** Frozen `.snack{left:14px;right:14px}` (`v2-bench.html:361`). */
+/** Frozen `.snack{left:14px;right:14px}` (`v21-bench.html:450`) — unchanged from V2. */
 internal val BenchSnackInsetH = 14.dp
 
-/** Frozen `.snack{bottom:12px}` (`v2-bench.html:361`). */
+/**
+ * The snack's bottom inset **in this host's coordinates**, which is not the frozen number.
+ *
+ * ⚠ **Deviation, and it is a re-parenting rather than a re-measurement.** V2 put `.snack` inside
+ * `.canvasArea` at `bottom:12px`; V2.1 makes it a direct child of `.phone` at `bottom:88px`
+ * (`v21-bench.html:472`, markup `:570`). The 88 is measured from the *phone's* foot and therefore spans the
+ * bottom bar and the page-navigation row — both of which sit **below** the canvas `EditorScreen` anchors
+ * this composable to, so transcribing 88 literally would push the snack 88dp up from a floor that is
+ * already above the bar. The equivalent in canvas coordinates is the 12 that is here.
+ *
+ * Moving the anchor is `EditorScreen`'s call, not P4's, and it is left for the owner: the honest fix is to
+ * hoist the snack to the screen root and then transcribe the 88.
+ */
 internal val BenchSnackInsetBottom = 12.dp
 
-/** Frozen `.snack{border-radius:12px}` (`v2-bench.html:361`). */
-internal val BenchSnackRadius = 12.dp
+/**
+ * Frozen `.snack{border-radius:var(--br-pill)}` (`v21-bench.html:480`), where V2 drew a 12dp radius.
+ * A percent shape rather than [ZinelyV21Dimens.radiusPill]'s 999dp, for the reason `BenchBarShape` records.
+ */
+internal val BenchSnackShape: RoundedCornerShape = RoundedCornerShape(percent = 50)
 
-/** Frozen `.snack{padding:12px 14px}` (`v2-bench.html:361`). */
-internal val BenchSnackPaddingH = 14.dp
-internal val BenchSnackPaddingV = 12.dp
+/**
+ * Frozen `.snack{padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg)}` (`v21-bench.html:480`) —
+ * top 12, right 8, bottom 12, left 16. Asymmetric on purpose: the line needs the room, the button already
+ * carries its own 12dp of padding on the right.
+ */
+internal val BenchSnackPadding = PaddingValues(
+    start = ZinelyV21Dimens.gapLg,
+    top = ZinelyV21Dimens.gapMd,
+    end = ZinelyV21Dimens.gapSm,
+    bottom = ZinelyV21Dimens.gapMd,
+)
 
-/** Frozen `.snack{gap:10px}` (`v2-bench.html:361`). */
-internal val BenchSnackGap = 10.dp
+/** Frozen `.snack{gap:var(--gap-md)}` (`v21-bench.html:479`) — 12, where V2 gapped 10. */
+internal val BenchSnackGap = ZinelyV21Dimens.gapMd
 
-/** Frozen `.snack{font-size:13px}` and `.snack button{font-size:13px}` (`v2-bench.html:361`, `:364`). */
-internal val BenchSnackTextSize = 13.sp
+/** Frozen `.snack{border:1.5px solid var(--ink-line)}` (`v21-bench.html:479`) — **new in V2.1**; see [BenchSnack]. */
+internal val BenchSnackBorder = 1.5.dp
 
-/** Frozen `.snack{transform:translateY(16px)}` at rest (`v2-bench.html:362`). */
-internal val BenchSnackEnterOffset = 16.dp
+/** Frozen `.snack{font-size:.79rem}` (`v21-bench.html:480`) — 12.64sp at the prototype's 16px root. */
+internal val BenchSnackTextSize = 12.64.sp
 
-/** Frozen `.snack{transition:transform .22s var(--standard),opacity .22s}` (`v2-bench.html:362`). */
-internal const val BenchSnackMillis: Int = 220
+/** Frozen `.snack button{font-size:.78rem}` (`v21-bench.html:466`) — the action reads a hair smaller than the line. */
+internal val BenchSnackActionTextSize = 12.48.sp
 
-/** Frozen `del()` — the soft-delete snack stands for **3200ms** (`v2-bench.html:627`). */
+/** Frozen `.snack button{padding:var(--gap-xs) var(--gap-md)}` (`v21-bench.html:490`). */
+internal val BenchSnackActionPaddingH = ZinelyV21Dimens.gapMd
+internal val BenchSnackActionPaddingV = ZinelyV21Dimens.gapXs
+
+/** Frozen `.snack{transform:translateY(8px) …}` at rest (`v21-bench.html:481`). V2 rose 16. */
+internal val BenchSnackEnterOffset = 8.dp
+
+/**
+ * Frozen `.snack{transform:… rotate(-.6deg)}` (`v21-bench.html:481`, `:483`) — **new in V2.1**, and it is
+ * carried in *both* states, so it is a resting property rather than part of the entrance.
+ *
+ * The toast is a scrap of paper dropped on the desk, not a system surface: the tilt is what says so. It is
+ * the one place in this file where V2.1 adds a mark rather than replacing one.
+ */
+internal const val BenchSnackRotationDeg: Float = -0.6f
+
+/** Frozen `.snack{transition:opacity .18s,transform .18s}` (`v21-bench.html:482`). V2 asked for 220ms. */
+internal const val BenchSnackMillis: Int = 180
+
+/** Frozen `toast()` — the snack stands for **3200ms** (`v21-bench.html:751`). Unchanged from V2. */
 public const val BenchSnackDeleteMillis: Long = 3200L
 
 /**
- * Frozen `applyInk()` — the buttonless ink snack stands for **1600ms** (`v2-bench.html:617`).
+ * The buttonless ink snack stands for **1600ms**.
  *
  * C4 owns the *variant*, not what raises it: the ink path itself is **C6**'s. Declared here so the value
  * lives beside the one it is deliberately different from, and so C6 inherits a constant rather than a
  * re-measurement.
+ *
+ * ⚠ **No longer frozen.** V2's `applyInk()` gave the buttonless toast its own shorter life; V2.1 has a
+ * single `toast(msg, undoable)` with one 3200ms timer for both variants (`v21-bench.html:747-751`). The
+ * value is kept because shortening the dwell of a toast nobody can act on is a behaviour the product
+ * already ships and P4 is a re-skin — but it is now a product decision with no frozen backing, and it is
+ * `EditorScreen` that reads it. Owner call.
  */
 public const val BenchSnackInkMillis: Long = 1600L
 
 /**
- * The frozen snackbar — `.snack` (`v2-bench.html:361-364`, markup `:443`);
- * [ADR-094](../../../../../../../../docs/DECISIONS.md#adr-094) rows 4.11, 4.12 and 4.15.
+ * The frozen snackbar — `.snack` (`v21-bench.html:450-468`, markup `:570`);
+ * [ADR-094](../../../../../../../../docs/DECISIONS.md#adr-094) rows 4.11, 4.12 and 4.15, re-skinned to V2.1
+ * by [ADR-102](../../../../../../../../docs/DECISIONS.md#adr-102) package P4.
  *
- * ### An inverted surface, and the one token that exists for it
+ * ### An inverted surface, and the one border rule that has to bend for it
  *
- * `--ink` ground under `--paper` text is the only place in the Bench where the artifact's ink becomes a
- * *surface*. Its action label is `--accent-on-ink`, a token the palette publishes **solely** for this
- * pairing — matcha re-tuned to hold on a dark ground, because plain `--matcha` does not. Using
- * `colors.matcha` here would pass every structural test and fail the contrast one, which is why row 4.12's
- * mutation is exactly that substitution.
+ * `ink` ground under `paper` text is the only place in the Bench where the artifact's ink becomes a
+ * *surface*, and V2.1 gives it a **border** V2 did not have — `1.5px solid var(--ink-line)`. The freeze
+ * annotates its own exception at `v21-bench.html:473-478`: everything else in the language is outlined in
+ * `ink`, and an ink outline on an ink ground is invisible, so this one control is outlined in the *shadow*
+ * ink instead. The rule being kept is *"a border contrasts with what it sits on"*, not *"a border is
+ * always ink"*.
+ *
+ * ### The action label lost `--accent-on-ink`, and that token is retired here
+ *
+ * V2 drew `Undo` in a matcha re-tuned for a dark ground. V2.1 draws it in the snack's own `paper` and
+ * **underlines** it (`v21-bench.html:485-490`): the freeze's own note records that the butter it tried
+ * first measured 7.89:1 in light and 1.59:1 in dark, where the ink ground turns cream. Colour was doing
+ * the work of saying *"this is the action"*; the underline does it at any theme. Substituting `butter`
+ * back is exactly the mutation row 4.12 forbids, one token over.
  *
  * ### Why it is not [ZSnackbar]
  *
- * `ZSnackbar` is the V1 component the Library and the Proof use, and it is not this shape: this one is
- * frozen at a 12dp radius on `--ink`, enters from `translateY(16px)` over `.22s`, and carries an action
- * that is sometimes absent. The two are not a re-skin of one another and collapsing them would change the
- * Library. Recorded as a deviation from ADR-089 row 4.9's *"delete/undo surface"* in ADR-094.
+ * `ZSnackbar` is the V1 component the Library and the Proof use, and it is not this shape: this one is a
+ * tilted pill on `ink`, enters from `translateY(8px)` over `.18s`, and carries an action that is sometimes
+ * absent. The two are not a re-skin of one another and collapsing them would change the Library. Recorded
+ * as a deviation from ADR-089 row 4.9's *"delete/undo surface"* in ADR-094.
  *
- * @param visible drives both the frozen properties — the 16dp rise and the fade — from one flag.
+ * @param visible drives both the frozen animated properties — the 8dp rise and the fade — from one flag.
+ *   The tilt is **not** one of them; see [BenchSnackRotationDeg].
  * @param message the line. `Text deleted.` in the delete case; `Ink · <name>` in C6's.
  * @param actionLabel `null` gives the **buttonless** variant (row 4.15). The freeze hides the button by
  *   setting `display:none` on it and restores it on timeout; a null label is the same thing said once.
@@ -105,9 +169,11 @@ internal fun BenchSnack(
     onAction: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
     val progress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
+        // Still routed through the V2 motion object: V2.1 changed the duration, not the arrival, and this
+        // is where the reduced-motion downgrade lives ([ADR-075]). Same call [BenchStyleRow] makes.
         animationSpec = ZinelyTheme.v2Motion.standard(BenchSnackMillis),
         label = "bench-snack",
     )
@@ -122,11 +188,17 @@ internal fun BenchSnack(
             .graphicsLayer {
                 alpha = progress
                 translationY = rise
+                // The tilt is in BOTH the rest and the shown rule, so it is not animated: the scrap of
+                // paper is lying crooked on the desk the whole time, it does not straighten as it lands.
+                rotationZ = BenchSnackRotationDeg
             }
             .testTag(BenchSnackTestTag)
-            .clip(RoundedCornerShape(BenchSnackRadius))
+            .clip(BenchSnackShape)
             .background(colors.ink)
-            .padding(horizontal = BenchSnackPaddingH, vertical = BenchSnackPaddingV),
+            // ⚠ `inkLine`, not `ink` — the one border in the corpus drawn in the shadow ink, because its
+            // own ground IS ink. See the class note; do not "correct" this to `colors.ink`.
+            .border(BenchSnackBorder, colors.inkLine, BenchSnackShape)
+            .padding(BenchSnackPadding),
         horizontalArrangement = Arrangement.spacedBy(BenchSnackGap, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -134,7 +206,8 @@ internal fun BenchSnack(
             text = message,
             color = colors.paper,
             fontSize = BenchSnackTextSize,
-            fontFamily = ZinelyTheme.v2Typography.work,
+            fontFamily = ZinelyV21Fonts.Work,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
             modifier = Modifier
                 .weight(1f)
                 // The message is the whole point of the surface appearing, so it announces itself. Polite,
@@ -144,21 +217,34 @@ internal fun BenchSnack(
                     contentDescription = message
                 },
         )
+        // Undo takes a deletion back — the one Bench action whose window closes on its own, so the
+        // hand is told it landed before the surface disappears.
+        val act = benchTap(action = onAction)
         if (actionLabel != null) {
             Text(
                 text = actionLabel,
-                color = colors.accentOnInk,
-                fontSize = BenchSnackTextSize,
+                // `paper`, underlined — see the class note. `butter` here is the retired exception.
+                color = colors.paper,
+                fontSize = BenchSnackActionTextSize,
                 fontWeight = FontWeight.Bold,
-                fontFamily = ZinelyTheme.v2Typography.work,
+                fontFamily = ZinelyV21Fonts.Work,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                // `text-underline-offset:3px;text-decoration-thickness:1.5px` have no Compose equivalent —
+                // the underline is drawn at the platform's own offset and weight. Recorded, not faked.
+                textDecoration = TextDecoration.Underline,
                 modifier = Modifier
-                    .clickable(onClick = onAction)
+                    .clip(BenchSnackShape)
+                    .clickable(onClick = act)
                     .testTag(BenchSnackActionTestTag)
                     .clearAndSetSemantics {
                         contentDescription = actionLabel
                         role = Role.Button
-                        onClick { onAction(); true }
-                    },
+                        onClick { act(); true }
+                    }
+                    .padding(
+                        horizontal = BenchSnackActionPaddingH,
+                        vertical = BenchSnackActionPaddingV,
+                    ),
             )
         }
     }

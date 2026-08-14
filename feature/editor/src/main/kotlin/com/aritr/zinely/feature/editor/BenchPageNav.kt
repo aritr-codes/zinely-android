@@ -45,15 +45,23 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.render.SceneRenderer
 import com.aritr.zinely.render.android.AssetBytesSource
+import com.aritr.zinely.ui.components.zinelyV21OuterRing
+import com.aritr.zinely.ui.components.zinelyV21Pressable
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 import com.aritr.zinely.ui.theme.LocalZinelyV2Colors
 import com.aritr.zinely.ui.theme.ZinelyV2Colors
-import com.aritr.zinely.ui.theme.zinelyV2LightColors
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
+import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV2IconPaint
 import com.aritr.zinely.ui.theme.ZinelyV2Icons
@@ -75,56 +83,81 @@ public fun benchThumbTag(pageNumber: Int): String = "bench-thumb-$pageNumber"
 /** Per-thumb miniature test tag — the interior OD-22 made the real page. */
 public fun benchThumbPageTag(pageNumber: Int): String = "bench-thumb-page-$pageNumber"
 
-/** Frozen `.navrow{height:56px; gap:8px; padding:0 10px}` (`v2-bench.html:275`). */
-internal val BenchNavRowHeight = 56.dp
-internal val BenchNavRowGap = 8.dp
-internal val BenchNavRowPaddingH = 10.dp
+/**
+ * Frozen `.navrow{gap:var(--gap-sm); padding:var(--gap-sm) var(--gap-md) var(--gap-xs)}`
+ * (`v21-bench.html:328`).
+ *
+ * ⚠ **V2.1 declares no `height`**, where V2 pinned 56. Like `.bar`, the row is now its padding plus its
+ * tallest child (the 38dp `.gridbtn`), which comes to `8 + 38 + 4 = 50`. The padding is also no longer
+ * symmetric: 8 above, 4 below, so the row sits closer to the bar beneath it than to the sheet above.
+ */
+internal val BenchNavRowGap = ZinelyV21Dimens.gapSm
+internal val BenchNavRowPaddingTop = ZinelyV21Dimens.gapSm
+internal val BenchNavRowPaddingH = ZinelyV21Dimens.gapMd
+internal val BenchNavRowPaddingBottom = ZinelyV21Dimens.gapXs
 
-/** Frozen `.gridbtn{34×34; border-radius:9px}` and `svg{17px; stroke-width:1.8}` (`:277-278`). */
-internal val BenchGridBtnSize = 34.dp
-internal val BenchGridBtnRadius = 9.dp
+/**
+ * Frozen `.gridbtn{38×38; border-radius:var(--br-sm); border:1.5px solid var(--ink); background:var(--paper);
+ * color:var(--ink-soft); box-shadow:2px 2px 0 var(--ink-line)}` and `svg{17px; stroke-width:1.8}`
+ * (`v21-bench.html:329-332`).
+ *
+ * ⚠ **This one is `--br-sm`, not a pill** — the only V2.1 chrome button on the Bench that is not. Its
+ * neighbours in `.bar` are pills; the grid button is a small square with softened corners, which is what
+ * the frozen file says and is transcribed rather than regularised.
+ */
+internal val BenchGridBtnSize = 38.dp
+internal val BenchGridBtnRadius = ZinelyV21Dimens.radiusSm
 internal val BenchGridGlyphSize = 17.dp
 internal const val BenchGridGlyphStroke: Float = 1.8f
 
-/** Frozen `.filmstrip{gap:7px; padding:9px 4px}` (`:279`). */
-internal val BenchStripGap = 7.dp
-internal val BenchStripPaddingH = 4.dp
-internal val BenchStripPaddingV = 9.dp
+/** Frozen `.filmstrip{gap:var(--gap-sm); padding:var(--gap-hair) 0 var(--gap-xs)}` (`v21-bench.html:333`). */
+internal val BenchStripGap = ZinelyV21Dimens.gapSm
+internal val BenchStripPaddingH = 0.dp
+internal val BenchStripPaddingTop = ZinelyV21Dimens.gapHair
+internal val BenchStripPaddingBottom = ZinelyV21Dimens.gapXs
 
-/** Frozen `.pthumb{width:26px;height:34px}` (`:282`). */
-internal val BenchThumbWidth = 26.dp
-internal val BenchThumbHeight = 34.dp
-
-/**
- * Frozen `.pthumb{border-radius:1.5px 3px 3px 1.5px}` (`:282`) — **asymmetric on purpose**. The two
- * left corners are squarer because that edge is the sheet's *spine*; a uniform radius would draw a
- * rounded card, which is the "slider pip" the freeze's physicality audit replaced.
- */
-internal val BenchThumbRadiusSpine = 1.5.dp
-internal val BenchThumbRadiusOuter = 3.dp
-
-/** Frozen `.pthumb::before{width:2px}` — the spine edge (`:284`), `--matcha` on cover and back (`:285`). */
-internal val BenchThumbSpineWidth = 2.dp
-
-/** Frozen `.pthumb{transition:transform .2s var(--settle),box-shadow .2s}` (`:283`). */
-internal const val BenchThumbMillis: Int = 200
-
-/** Frozen `.pthumb.cur{transform:scale(1.16) translateY(-2px)}` (`:288`). */
-internal const val BenchThumbCurScale: Float = 1.16f
-internal val BenchThumbCurLift = 2.dp
+/** Frozen `.fpage{width:29px;height:38px}` (`v21-bench.html:335`), up from V2's 26×34. */
+internal val BenchThumbWidth = 29.dp
+internal val BenchThumbHeight = 38.dp
 
 /**
- * Frozen `.pthumb{box-shadow:0 2px 5px -2px}` (`:283`) rising to `.cur{box-shadow:0 9px 16px -6px}`
- * (`:288`). Compose's single-`elevation` shadow cannot transcribe a three-part CSS shadow literally; the
- * *blur* is the part that carries the read, so the elevation is set to the frozen blur-ish y-offset and
- * animated over [BenchThumbMillis] like the transform beside it.
+ * Frozen `.fpage{border-radius:var(--br-xs)}` (`v21-bench.html:335`) — **uniform**, where V2 drew an
+ * asymmetric `1.5 3 3 1.5`.
+ *
+ * ⚠ The spine goes with it. V2's thumbnail carried a 2dp `--matcha` edge and squarer left corners so the
+ * sheet read as *bound*; V2.1's `.fpage` declares neither. Deleting a detail this deliberate is the kind
+ * of thing a later reader assumes was an oversight, so it is recorded here rather than only in the diff.
+ *
+ * ⚠ **This paragraph used to explain the deletion by saying the strip "is a row of page numbers, and the
+ * number is what identifies the page now". That was true for about a day.** The 2026-08-13 owner ruling
+ * (AMENDMENT LOG A2) struck the number too, and the interior became a live miniature — so the sentence
+ * survived as an explanation of a design that had already been replaced, sitting *above* the ⚠ block that
+ * replaced it, which is the order a reader meets them in. Corrected in place, and left visible: KDoc that
+ * narrates a superseded intent is worse than none, because it reads as current.
  */
-internal val BenchThumbShadow = 2.dp
-internal val BenchThumbCurShadow = 9.dp
+internal val BenchThumbRadius = ZinelyV21Dimens.radiusXs
 
-/** Frozen `.pthumb.cur::after` — a 4px `--strawberry` dot, 7px above the sheet (`:289`). */
-internal val BenchThumbDotSize = 4.dp
-internal val BenchThumbDotGap = 7.dp
+// ⚠ `BenchThumbNumberSize = 9.6.sp` stood here, citing `.fpage{font-size:.6rem;font-variant-numeric:
+// tabular-nums}`. The 2026-08-13 owner ruling (AMENDMENT LOG A2) struck those properties from the frozen
+// file — the sheet's interior is the page, not its number — so the constant had no rule behind it and no
+// reference in front of it. Deleted rather than left: a constant quoting a declaration that no longer
+// exists is how a later reader reinstates a number nobody wants.
+
+/**
+ * Frozen `.fpage.on{box-shadow:0 0 0 3px var(--berry)}` (`v21-bench.html:338-340`). The rule's `color`
+ * half fell with the page number (AMENDMENT LOG A2); the ring is the whole state now.
+ *
+ * ⚠ **The current page no longer moves.** V2 scaled it 1.16×, lifted it 2dp, raised its shadow from 2 to 9
+ * and hung a 4dp strawberry dot above it. V2.1 draws a flat 3dp `berry` ring and darkens the number — no
+ * transform, no elevation, no dot, and therefore no `.2s` settle to animate.
+ *
+ * The colour is ruled, not chosen: the frozen file carries the reasoning inline (`:338-339`) and
+ * [V21-SPEC §163-164](../../../../../../../../docs/design/V21-SPEC.md) states it — *"the current page in the
+ * filmstrip was ringed butter. That is a state, and V2-TOKENS assigns the current-page dot to strawberry, so
+ * it is now berry."* **Butter is material, never a state**; a token sweep that "corrects" this ring to butter
+ * is reintroducing the defect the ruling closed.
+ */
+internal val BenchThumbCurrentRing = 3.dp
 
 /**
  * The frozen page navigator — `.navrow`, `.gridbtn`, `.filmstrip` and the `.pthumb` sheets
@@ -201,7 +234,7 @@ internal fun BenchPageNav(
     imageBytes: AssetBytesSource = EmptyAssetBytes,
 ) {
     if (pages.isEmpty()) return
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
     val scroll = rememberScrollState()
     // Row 5.10: the frozen `setPage()` scrolls the selected sheet to the centre of the strip
     // (`scrollIntoView({inline:'center'})`, `:727`).
@@ -219,6 +252,9 @@ internal fun BenchPageNav(
     var placed by remember { mutableStateOf(false) }
     LaunchedEffect(currentPageIndex, viewportPx, pages.size) {
         if (viewportPx <= 0) return@LaunchedEffect
+        // `BenchStripPaddingH` is 0 in V2.1 (`.filmstrip{padding:2px 0 4px}`); it stays in the arithmetic
+        // rather than being folded away, because the term is what makes this expression the strip's geometry
+        // instead of a coincidence that happens to hold while one value is zero.
         val centre = with(density) {
             (BenchStripPaddingH + BenchThumbWidth / 2 + (BenchThumbWidth + BenchStripGap) * currentPageIndex)
                 .roundToPx()
@@ -231,13 +267,18 @@ internal fun BenchPageNav(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(BenchNavRowHeight)
             .testTag(BenchNavRowTestTag)
-            .background(colors.chrome)
-            // Frozen `border-top:1px solid var(--chrome-line)`, drawn rather than composed so the row
-            // stays one node — the same choice, for the same reason, as C4's bar hairline.
-            .drawBehind { drawRect(color = colors.chromeLine, size = Size(size.width, 1.dp.toPx())) }
-            .padding(horizontal = BenchNavRowPaddingH),
+            // P3: `desk`, and **no top rule**. V2's `.navrow` carried a `--chrome-line` border-top; V2.1's
+            // (`v21-bench.html:328`) declares only a background, exactly as `.bar` does. The room runs
+            // continuously from the sheet down to the foot of the phone, and the controls' own ink borders
+            // are what separate them from it.
+            .background(colors.desk)
+            .padding(
+                top = BenchNavRowPaddingTop,
+                start = BenchNavRowPaddingH,
+                end = BenchNavRowPaddingH,
+                bottom = BenchNavRowPaddingBottom,
+            ),
         horizontalArrangement = Arrangement.spacedBy(BenchNavRowGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -254,7 +295,12 @@ internal fun BenchPageNav(
                 // parent and their `traversalIndex` is never consulted. Declared here, the group and the
                 // scroll container are one node and the ordering applies.
                 .semantics { isTraversalGroup = true }
-                .padding(horizontal = BenchStripPaddingH, vertical = BenchStripPaddingV),
+                .padding(
+                    start = BenchStripPaddingH,
+                    end = BenchStripPaddingH,
+                    top = BenchStripPaddingTop,
+                    bottom = BenchStripPaddingBottom,
+                ),
             horizontalArrangement = Arrangement.spacedBy(BenchStripGap),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -274,16 +320,28 @@ internal fun BenchPageNav(
     }
 }
 
-/** Frozen `.gridbtn` — a 34dp outlined square holding the 17dp four-pane glyph (`:277-278`, `:482-484`). */
+/**
+ * Frozen `.gridbtn` (`v21-bench.html:329-332`) — a 38dp `paper` square, `--br-sm` corners, a 1.5dp `ink`
+ * border and [ZinelyV21Press.Flat]'s 2dp printed shadow, holding the 17dp four-pane glyph in `inkSoft`.
+ *
+ * The press is the language's own: translate down-right, shadow to nothing. Nothing here animates.
+ */
 @Composable
 private fun BenchGridButton(onOpenGrid: () -> Unit) {
-    val colors = ZinelyTheme.v2Colors
+    val colors = ZinelyTheme.v21Colors
+    val openGrid = benchTap(action = onOpenGrid)
+    val shape = RoundedCornerShape(BenchGridBtnRadius)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
     Box(
         modifier = Modifier
             .size(BenchGridBtnSize)
-            .clip(RoundedCornerShape(BenchGridBtnRadius))
-            .border(1.dp, colors.chromeLine, RoundedCornerShape(BenchGridBtnRadius))
-            .clickable(onClick = onOpenGrid)
+            // Nothing that clips may precede the press — the shadow paints outside the node.
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+            .clip(shape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
+            .clickable(interactionSource = interaction, indication = null, onClick = openGrid)
             .testTag(BenchGridButtonTestTag)
             .semantics {
                 contentDescription = Copy.PageNav.ALL_PAGES
@@ -335,9 +393,22 @@ private fun BenchGridButton(onOpenGrid: () -> Unit) {
  * same failure [D-035](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-035) found on the canvas.
  *
  * Pure, so the set is asserted against the frozen `.pthumb` block without a composition.
+ *
+ * ### ⚠ The lit values are V2.1's, and the scheme type is still V2's
+ *
+ * The five tokens are lifted from **`zinelyV21LightColors()`**, not `zinelyV2LightColors()`, while the
+ * returned scheme stays a [ZinelyV2Colors] because that is the type `LocalZinelyV2Colors` publishes and
+ * what the miniature renderer reads. The type is a seam; the *values* are the specification.
+ *
+ * That distinction was missed once, and it was visible: the strip kept V2's `#F7F2E7` paper while
+ * [benchGridCardIsland] had already moved to V2.1's `#FFF6E8`, so **one screen drew the same eight pages
+ * on two different papers** — a filmstrip sheet and a grid card differing by a byte the eye reads as two
+ * kinds of paper on one desk. That is precisely the defect OD-47 assigns to P5 and that
+ * [BenchPageGrid]'s own KDoc claims to be closing; the strip simply was not converted with it. Found by
+ * review, by opening both islands rather than by trusting either file's account of itself.
  */
 internal fun benchThumbIsland(room: ZinelyV2Colors): ZinelyV2Colors {
-    val light = zinelyV2LightColors()
+    val light = zinelyV21LightColors()
     return room.copy(
         paper = light.paper,
         paperEdge = light.paperEdge,
@@ -387,40 +458,17 @@ private fun BenchPageThumb(
     imageBytes: AssetBytesSource,
     onClick: () -> Unit,
 ) {
-    val colors = ZinelyTheme.v2Colors
-    val motion = ZinelyTheme.v2Motion
-    val scale by animateFloatAsState(
-        targetValue = if (current) BenchThumbCurScale else 1f,
-        animationSpec = motion.settle(BenchThumbMillis),
-        label = "bench-thumb-scale",
-    )
-    val lift by animateDpAsState(
-        targetValue = if (current) -BenchThumbCurLift else 0.dp,
-        animationSpec = motion.settle(BenchThumbMillis),
-        label = "bench-thumb-lift",
-    )
-    // The frozen `.pthumb{transition:transform .2s var(--settle),box-shadow .2s}` (`v2-bench.html:283`)
-    // names the shadow alongside the transform. Stepping it while the lift eases is what makes a lifted
-    // sheet look like it snapped rather than rose. The freeze gives the shadow **no easing function** —
-    // the settle curve is on the transform only — so this runs it on the settle curve anyway, which is a
-    // 200ms difference in shape nobody can see on a 9dp shadow and keeps one spec for one gesture. An
-    // earlier version of this comment misquoted the rule as easing both; the file is quoted verbatim now.
-    val elevation by animateDpAsState(
-        targetValue = if (current) BenchThumbCurShadow else BenchThumbShadow,
-        animationSpec = motion.settle(BenchThumbMillis),
-        label = "bench-thumb-shadow",
-    )
-    val shape = RoundedCornerShape(
-        topStart = BenchThumbRadiusSpine,
-        topEnd = BenchThumbRadiusOuter,
-        bottomEnd = BenchThumbRadiusOuter,
-        bottomStart = BenchThumbRadiusSpine,
-    )
-    // Frozen `.pthumb[data-cover]::before{--matcha}` — set by `buildFilm()` on the first and last sheet.
-    val cover = benchCoverAt(pageNumber, pageCount) != BenchCover.NONE
-    // OD-23's island. Read from the ROOM's scheme, so the spine, the current border and the dot below can
-    // still be taken from `colors` — they are the row's marks on the sheet, not the page's ink.
-    val sheet = benchThumbIsland(colors)
+    val colors = ZinelyTheme.v21Colors
+    val shape = RoundedCornerShape(BenchThumbRadius)
+    // Snap, not Tick: moving the strip is a selection landing, not a button firing.
+    val pick = benchTap(ZinelyHaptic.Snap, onClick)
+    // OD-23's island, still read from the ROOM's scheme so the ring below is taken from `colors` — it is
+    // the row's mark on the sheet, not the page's ink.
+    // `remember`ed on the room, not recomputed per item: the island builds a whole light scheme and then
+    // copies the room over it, and this composable runs once per sheet. Unremembered that is 2N scheme
+    // allocations per frame in a surface that scrolls. Cheap to hold, and the key is the only input.
+    val room = ZinelyTheme.v2Colors
+    val sheet = remember(room) { benchThumbIsland(room) }
 
     Box(
         modifier = Modifier
@@ -437,12 +485,12 @@ private fun BenchPageThumb(
             // the current sheet's shadow tail against a neighbour 7dp away. Reading order is a conformance
             // path (CI-29/30/31); a shadow tail is not. Post-freeze accessibility improvements are allowed
             // in terms (CLAUDE.md, DESIGN FREEZE), so the order is kept and the tail is given up.
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                translationY = lift.toPx()
-            }
-            .selectable(selected = current, onClick = onClick, role = Role.Tab)
+            //
+            // ⚠ **P3 removed the transform that argument was about.** V2's current sheet scaled 1.16× and
+            // lifted 2dp; V2.1's does neither, so there is no overhang, no z-order question and nothing to
+            // animate. The paragraph above is kept because the *conclusion* it reached — reading order is a
+            // conformance path — is what still holds the `traversalIndex` below in place.
+            .selectable(selected = current, onClick = pick, role = Role.Tab)
             .semantics {
                 contentDescription = benchPageLabel(pageNumber, pageCount)
                 stateDescription =
@@ -456,16 +504,25 @@ private fun BenchPageThumb(
         Box(
             modifier = Modifier
                 .size(width = BenchThumbWidth, height = BenchThumbHeight)
-                .shadow(
-                    elevation = elevation,
-                    shape = shape,
-                    ambientColor = colors.frameShadow,
-                    spotColor = colors.frameShadow,
+                // `.fpage.on{box-shadow:0 0 0 3px var(--berry)}` — the current page's whole signal, and a
+                // ring **outside** the sheet: it must not eat the 29×38 the miniature is drawn into, and
+                // the strip's 8dp gap is what gives it room. Drawn for the current sheet only, so a
+                // non-current one is a plain bordered sheet with no depth at all — V2.1's filmstrip does
+                // not float its sheets off the desk.
+                .then(
+                    if (current) {
+                        Modifier.zinelyV21OuterRing(BenchThumbCurrentRing, colors.berry, shape)
+                    } else {
+                        Modifier
+                    },
                 )
                 .clip(shape)
                 // OD-23: the sheet's own paper, from the island — not the room's. See [benchThumbIsland].
                 .background(sheet.paper)
-                .border(1.dp, if (current) colors.matcha else sheet.paperEdge, shape),
+                // Uniform 1.5dp `ink` on every sheet, current or not. V2 switched this border to `matcha`
+                // for the current page; V2.1 says the *ring* carries that state, and doubling it into the
+                // border too would make the current sheet differ from its neighbours in two ways at once.
+                .border(BenchChromeBorder, colors.ink, shape),
         ) {
             // The interior: the page itself (OD-22). Drawn first, so the spine edge below stays on top of
             // it — a sheet's edge is in front of its ink, not behind it.
@@ -484,27 +541,11 @@ private fun BenchPageThumb(
                         .size(width = BenchThumbWidth, height = BenchThumbHeight),
                 )
             }
-            Box(
-                modifier = Modifier
-                    .size(width = BenchThumbSpineWidth, height = BenchThumbHeight)
-                    .background(if (cover) colors.matcha else colors.deskEdge),
-            )
-        }
-        if (current) {
-            // Frozen `.cur::after` — 4px, 7px *above* the sheet, centred. It is drawn with a negative
-            // offset rather than inside the sheet, because the freeze puts it outside: `top:-7px` on a
-            // box the strip does not clip (`overflow-y:visible`, `:279`).
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    // `top:-7px` places the dot's TOP edge 7px above the sheet — so the offset is the gap
-                    // itself, not the gap plus the dot. Getting that wrong puts it 4px too high, which at
-                    // this size is the difference between "a berry on the sheet" and "a speck in the row".
-                    .graphicsLayer { translationY = -BenchThumbDotGap.toPx() }
-                    .size(BenchThumbDotSize)
-                    .clip(CircleShape)
-                    .background(colors.strawberry),
-            )
+            // ⚠ **The spine and the strawberry dot are gone**, and both were deliberate in V2: a 2dp
+            // `--matcha` edge that made covers read as *bound*, and a 4dp dot 7dp above the current sheet.
+            // V2.1's `.fpage` declares neither — the ring is the only state and the border is uniform. The
+            // cover distinction survives where it is actually spoken, in [benchPageLabel]; it is no longer
+            // drawn. Recorded here because a later reader will otherwise take the absence for an oversight.
         }
     }
 }

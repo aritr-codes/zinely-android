@@ -1,7 +1,5 @@
 package com.aritr.zinely.feature.library
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,13 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -45,12 +38,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.a11y.zinelyV2Control
+import com.aritr.zinely.ui.components.ZinelyV21FocusOffsetLibrary
+import com.aritr.zinely.ui.components.zinelyFocusRing
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
+import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Press
-import com.aritr.zinely.ui.theme.ZinelyV2Standard
 
 /** `.fail` — the whole error column, so a test can assert its presence and its absence. */
 internal const val ZineShelfFailTestTag: String = "shelf-fail"
@@ -232,14 +227,6 @@ private fun RetryButton(onRetry: () -> Unit, modifier: Modifier = Modifier) {
     val focused by interaction.collectIsFocusedAsState()
     val pressed by interaction.collectIsPressedAsState()
 
-    val press = ZinelyV21Press.Raised
-    val duration = if (ZinelyTheme.v2Motion.reduceMotion) 0 else RetryPressDurationMillis
-    val travel by animateFloatAsState(
-        targetValue = if (pressed) 1f else 0f,
-        animationSpec = tween(durationMillis = duration, easing = ZinelyV2Standard),
-        label = "zineRetryPress",
-    )
-
     Text(
         text = RetryLabelText,
         style = TextStyle(
@@ -253,17 +240,18 @@ private fun RetryButton(onRetry: () -> Unit, modifier: Modifier = Modifier) {
             // Before `zinelyV2Control`, which ends in `clearAndSetSemantics` and would swallow a tag
             // chained after it — the seam's own KDoc.
             .testTag(ZineRetryTestTag)
-            .graphicsLayer {
-                val t = press.travel.toPx() * travel
-                translationX = t
-                translationY = t
-            }
-            .zinelyV21HardShadow(
-                offset = press.rest - (press.rest - press.pressed) * travel,
-                color = colors.inkLine,
-                shape = RetryShape,
-            )
-            .drawBehind { if (focused) drawRetryFocusRing(colors.ink) }
+            // ⚠ This press used to be an ANIMATION — a `tween` interpolating both the travel and the
+            // shadow's length. It is now the shared primitive, and that is a correction rather than a
+            // tidy-up: [zinelyV21Pressable]'s own contract says the V2.1 press is not an animation, the
+            // object is simply in one of two places. Two `.retry` pills on two screens moved differently
+            // — this one eased, the boot failure's snapped — which is the exact shape of inconsistency a
+            // shared design language exists to prevent. Caught while converging the focus ring, not by
+            // any test: nothing here could see it, because both readings were "correct".
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, RetryShape)
+            // `.start`'s ring, at the Library's own `outline-offset:5px`. Drawn by the shared modifier,
+            // and to the RIGHT of the press so it travels with the object, as a CSS outline does under a
+            // `transform`.
+            .zinelyFocusRing(focused, ZinelyV21Dimens.radiusPill, ZinelyV21FocusOffsetLibrary)
             .clip(RetryShape)
             .background(colors.paper)
             .border(RetryBorderWidth, colors.ink, RetryShape)
@@ -279,18 +267,6 @@ private fun RetryButton(onRetry: () -> Unit, modifier: Modifier = Modifier) {
     )
 }
 
-/** A CSS outline grows outward from its offset; see [ZineDock]'s ring for the full derivation. */
-private fun DrawScope.drawRetryFocusRing(ink: Color) {
-    val stroke = RetryFocusWidth.toPx()
-    val out = RetryFocusOffset.toPx() + stroke / 2f
-    drawRoundRect(
-        color = ink,
-        topLeft = Offset(-out, -out),
-        size = Size(size.width + 2 * out, size.height + 2 * out),
-        cornerRadius = CornerRadius(ZinelyV21Dimens.radiusPill.toPx() + out),
-        style = Stroke(width = stroke),
-    )
-}
 
 /**
  * `max-width:28ch` — the advance width of 28 `0` glyphs in the paragraph's own style, which is what the
@@ -356,9 +332,7 @@ private val RetryShape: Shape = RoundedCornerShape(ZinelyV21Dimens.radiusPill)
 private val RetryBorderWidth = 1.5.dp
 private val RetryMarginTop = ZinelyV21Dimens.gapSm
 
-/** No `transition` is declared on `.retry`; `.start`'s .14s is the corpus's own press duration. */
-private const val RetryPressDurationMillis = 140
-
-/** `.start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}`, borrowed. */
-private val RetryFocusWidth = 2.dp
-private val RetryFocusOffset = 5.dp
+// The press duration and the two focus-ring numbers that used to live here are gone. `.retry` declares
+// no `transition` at all — the 140ms was borrowed from `.start` to animate a press the language does not
+// animate — and the ring is now drawn by the shared `zinelyFocusRing`, at the Library offset it
+// publishes. Both were correct-looking local copies of something that belongs in one place.

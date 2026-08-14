@@ -17,6 +17,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -42,26 +44,62 @@ class ZComponentsTest {
     // ----- frozen preset pins ---------------------------------------------------------------
 
     @Test
-    fun `primary button presets match the frozen coral CTAs`() {
-        with(ZPrimaryButtonMetrics.Shelf) { // shelf.html .start
-            assertEquals(56.dp, minHeight); assertEquals(30.dp, hPadding); assertEquals(18.dp, radius)
+    fun `primary button presets match the frozen V2 1 filled actions`() {
+        with(ZPrimaryButtonMetrics.Shelf) { // v21-library.html .start
+            assertEquals(56.dp, minHeight); assertEquals(30.dp, hPadding)
+            assertEquals(ZinelyV21Dimens.radiusPill, radius)
             assertEquals(17.sp, fontSize); assertEquals(10.dp, gap); assertEquals(20.dp, iconSize)
             assertEquals(0.34f, restShadowAlpha)
         }
-        with(ZPrimaryButtonMetrics.Bench) { // bench.html .proof
-            assertEquals(52.dp, minHeight); assertEquals(22.dp, hPadding); assertEquals(16.dp, radius)
+        with(ZPrimaryButtonMetrics.Bench) { // v21-bench.html .add
+            assertEquals(52.dp, minHeight); assertEquals(22.dp, hPadding)
+            assertEquals(ZinelyV21Dimens.radiusPill, radius)
             assertEquals(15.5.sp, fontSize); assertEquals(9.dp, gap); assertEquals(19.dp, iconSize)
             assertEquals(0.32f, restShadowAlpha)
         }
-        with(ZPrimaryButtonMetrics.Proof) { // proof.html .primary
-            assertEquals(54.dp, minHeight); assertEquals(22.dp, hPadding); assertEquals(16.dp, radius)
+        with(ZPrimaryButtonMetrics.Proof) { // v21-proof.html .btn-save
+            assertEquals(54.dp, minHeight); assertEquals(22.dp, hPadding)
+            assertEquals(ZinelyV21Dimens.radiusPill, radius)
             assertEquals(16.sp, fontSize); assertEquals(10.dp, gap); assertEquals(20.dp, iconSize)
             assertEquals(0.32f, restShadowAlpha)
         }
     }
 
+    /**
+     * **Inverted, ADR-102 P8.** V2's three radii — 18 / 16 / 16 — are gone: every button in the three
+     * V2.1 prototypes is `--br-pill`. Asserted as an absence rather than deleted with the old values,
+     * so a returning rounded-rectangle button fails rather than silently re-skinning three surfaces.
+     */
     @Test
-    fun `tool button presets match the frozen field-filled family`() {
+    fun `no primary preset carries a V2 rounded-rectangle radius`() {
+        val v2Radii = setOf(18.dp, 16.dp)
+        listOf(ZPrimaryButtonMetrics.Shelf, ZPrimaryButtonMetrics.Bench, ZPrimaryButtonMetrics.Proof)
+            .forEach { assertFalse(it.radius in v2Radii) }
+    }
+
+    /**
+     * **Inverted, ADR-102 P8.** The press vocabulary is four counted tiers and nothing else. V2's
+     * press was `translateY(1px) scale(.99)` interpolated by `animateFloatAsState`; V2.1's is a whole
+     * number of dp of offset with a shortened hard shadow, so **no tier travels a fraction of a dp**
+     * and none sheds more than it rests on. A reintroduced scale press has no tier to express it, and
+     * an interpolated fifth tier (the fabrication D-006 and D-007 both refused) fails the count.
+     */
+    @Test
+    fun `the press vocabulary is four offset-only tiers`() {
+        val tiers = listOf(
+            ZinelyV21Press.Hero, ZinelyV21Press.Raised, ZinelyV21Press.Flat, ZinelyV21Press.Inline,
+        )
+        assertEquals(4, tiers.toSet().size)
+        tiers.forEach { tier ->
+            assertEquals(tier.travel.value, tier.travel.value.toInt().toFloat(), 0f)
+            assertTrue(tier.pressed <= tier.rest)
+        }
+        // `.dclose`, `.iconbtn`, `.icon-btn` and `.fnav` press FLUSH — the shadow goes to nothing.
+        assertEquals(0.dp, ZinelyV21Press.Flat.pressed)
+    }
+
+    @Test
+    fun `tool button presets match the frozen bordered secondary family`() {
         with(ZToolButtonMetrics.ShelfSort) { // shelf.html .sortbtn
             assertEquals(48.dp, minHeight); assertEquals(14.dp, hPadding); assertEquals(13.5.sp, fontSize)
             assertEquals(FontWeight.Medium, fontWeight); assertEquals(6.dp, gap); assertEquals(15.dp, iconSize)

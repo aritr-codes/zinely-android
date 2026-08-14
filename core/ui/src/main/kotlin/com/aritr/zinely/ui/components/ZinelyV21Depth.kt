@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import androidx.compose.ui.unit.IntOffset
 import com.aritr.zinely.ui.theme.ZinelyV21Press
 
@@ -57,11 +58,22 @@ public fun Modifier.zinelyV21HardShadow(offset: Dp, color: Color, shape: Shape):
     }
 
 /**
- * The `--frame: 5px` **stacked ring** — a flat colour band sitting outside the object, borrowed from
- * the reference sites as riso misregistration ([V21-SPEC §4.3](docs/design/V21-SPEC.md)).
+ * A flat colour band drawn **outside** an object's bounds — the geometry behind every CSS
+ * `box-shadow: 0 0 0 Npx COLOUR` in the corpus, at any width and in any colour.
  *
- * **Reserved for the one primary action on a screen** (Save PDF, Add). Its whole job is to be the only
- * thing wearing it; a second ring on the same screen makes both of them decoration.
+ * This is the mechanism, and it carries no policy. [zinelyV21Frame] is the `--frame: 5px`
+ * misregistration ring built on it, and *that* is the one with a rule attached.
+ *
+ * ### Why the two are separate names
+ *
+ * They were one function, and the single name made a false promise. `zinelyV21Frame`'s KDoc reserved it
+ * for "the one primary action on a screen" — while `BenchPageNav` routed the current page's **3dp berry
+ * state ring** through it, giving the Bench two rings from a primitive documented as allowing one. The
+ * pixels were right both times (`.fpage.on{box-shadow:0 0 0 3px var(--berry)}` is a real frozen rule);
+ * what was wrong was that a contract lived on a function that could not enforce it, so the only thing
+ * standing between the corpus and a screen full of rings was whether a reader noticed the paragraph.
+ * A review noticed instead. Splitting the name puts the reservation where it can be counted: **grep for
+ * `zinelyV21Frame` and every hit should be a screen's single primary action.**
  *
  * CSS writes this as `0 0 0 5px` — a third box-shadow idiom that is not depth at all, and
  * [ZinelyV2ShadowLayer] names the trap directly ("CSS reaches for a shadow because a real border would
@@ -86,7 +98,7 @@ public fun Modifier.zinelyV21HardShadow(offset: Dp, color: Color, shape: Shape):
  * one paints first, i.e. underneath. **So apply the frame first in the chain** and the ring lands under
  * the hard shadow, as it does in the prototypes.
  */
-public fun Modifier.zinelyV21Frame(width: Dp, color: Color, shape: Shape): Modifier =
+public fun Modifier.zinelyV21OuterRing(width: Dp, color: Color, shape: Shape): Modifier =
     drawBehind {
         val w = width.toPx()
         if (w <= 0f) return@drawBehind
@@ -96,6 +108,17 @@ public fun Modifier.zinelyV21Frame(width: Dp, color: Color, shape: Shape): Modif
             style = Stroke(width = w),
         )
     }
+
+/**
+ * The `--frame: 5px` misregistration ring ([V21-SPEC §4.3](docs/design/V21-SPEC.md)) — [zinelyV21OuterRing]
+ * with the width fixed, because the width is not the caller's to choose.
+ *
+ * **Reserved for the one primary action on a screen** (Save PDF, Add). Its whole job is to be the only
+ * thing wearing it; a second ring on the same screen makes both of them decoration. A state ring, a
+ * selection ring, or a ring at any other width is [zinelyV21OuterRing] — same paint, no claim.
+ */
+public fun Modifier.zinelyV21Frame(color: Color, shape: Shape): Modifier =
+    zinelyV21OuterRing(ZinelyV21Dimens.frameRing, color, shape)
 
 /**
  * The complete V2.1 press: the object travels down-right and its shadow shortens, together.

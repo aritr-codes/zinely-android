@@ -1,9 +1,11 @@
 package com.aritr.zinely.export
 
 import android.annotation.SuppressLint
+import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.media.MediaScannerConnection
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -38,8 +40,10 @@ internal class DownloadsWriter @Inject constructor(
 
     /**
      * Writes [body]'s bytes to Downloads as a copy named from [title] with extension [ext] and type
-     * [mime]. Returns the final display name actually written — the legacy path may have appended a
-     * `" (N)"` collision suffix. Throws on IO/MediaStore failure; the API 29+ path removes its pending
+     * [mime]. Returns the final display name actually written — **both** paths resolve collisions and
+     * both now report the resolved name: the legacy path appends its own `" (N)"` suffix, and the API 29+
+     * path reads back the `DISPLAY_NAME` MediaStore chose. Throws on IO/MediaStore failure; the API 29+
+     * path removes its pending
      * row first, so Downloads is never left holding a partial file.
      */
     @SuppressLint("NewApi") // requiresLegacyWrite(SDK_INT) is the version guard around the API 29+ branch.
@@ -61,6 +65,14 @@ internal class DownloadsWriter @Inject constructor(
             resolver.openOutputStream(uri)?.use(body)
                 ?: throw IOException("Could not open an output stream for \"$displayName\".")
             resolver.update(uri, clearPendingValues(), null, null)
+            // ⚠ Read the name back. MediaStore is free to REWRITE the requested DISPLAY_NAME to avoid a
+            // collision — a second "zine.pdf" lands as "zine (7).pdf" — and this path used to return the
+            // name it *asked* for, so the completion promised a file that did not exist while a stale
+            // "zine.pdf" from an earlier session sat next to it. ADR-054's whole point is that the
+            // promise is checkable; the KDoc even claimed this behaviour ("the final display name
+            // actually written") for a branch that could not deliver it. Found by pulling Downloads
+            // after a device save, not by any test.
+            return actualDisplayName(resolver, uri) ?: displayName
         } catch (t: Throwable) {
             // Remove the half-written pending row so a partial file never appears in Downloads. This
             // cleanup is best-effort: a delete failure must not mask the original cause, so swallow it
@@ -68,7 +80,6 @@ internal class DownloadsWriter @Inject constructor(
             runCatching { resolver.delete(uri, null, null) }
             throw t
         }
-        return displayName
     }
 
     // ---- API 24–28 (public Downloads File + media scan) ----
@@ -84,6 +95,19 @@ internal class DownloadsWriter @Inject constructor(
         return name
     }
 }
+
+/**
+ * The `DISPLAY_NAME` MediaStore actually stored for [uri], or `null` if it cannot be read.
+ *
+ * Null-tolerant on purpose: a name we cannot verify is a reason to fall back to the requested one, never a
+ * reason to fail a save that has already succeeded on disk.
+ */
+@RequiresApi(Build.VERSION_CODES.Q)
+private fun actualDisplayName(resolver: ContentResolver, uri: Uri): String? = runCatching {
+    resolver.query(uri, arrayOf(MediaStore.Downloads.DISPLAY_NAME), null, null, null)?.use { c ->
+        if (c.moveToFirst()) c.getString(0) else null
+    }
+}.getOrNull()
 
 /** MediaStore.Downloads (and `IS_PENDING`) exist only from API 29 (Q); below that we write a File. */
 internal fun requiresLegacyWrite(sdkInt: Int): Boolean = sdkInt < Build.VERSION_CODES.Q

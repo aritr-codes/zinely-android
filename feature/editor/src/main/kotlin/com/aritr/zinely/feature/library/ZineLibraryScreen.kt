@@ -259,7 +259,10 @@ public fun ZineLibraryScreen(
             )
 
             // `body.is-error{.shelf:none;.empty:none;.fail:flex}` — the shelf is gone, not merely empty.
-            is LibraryShelfState.Error -> ZineShelfFail(onRetry, Modifier.fillMaxSize())
+            // Retry answers the hand like every other control on this screen; the failure surface was
+            // the one that did not.
+            is LibraryShelfState.Error ->
+                ZineShelfFail({ haptics.perform(ZinelyHaptic.Tick); onRetry() }, Modifier.fillMaxSize())
 
             // `body.is-empty{.shelf:none;.empty:flex}`. The shelf and the invitation are alternatives,
             // and the half that matters is the *absence*: a screen that renders both looks correct in a
@@ -347,12 +350,23 @@ public fun ZineLibraryScreen(
         onDismiss = { openSheet = null },
         onAction = { action ->
             val zine = actionTarget ?: return@ZineActionSheet
+            // Every row answers the hand, not only the two that change the shelf. Three of these five
+            // buzzed and three did not, which reads as the quiet ones having failed. `Tick` for the rows
+            // that lead somewhere; `Snap`/`Boundary` below stay as they are, because duplicating and
+            // deleting are a different kind of event and the finger should be able to tell.
             when (action) {
-                ZineAction.Open -> { openSheet = null; onOpenZine(zine.id) }
-                ZineAction.ShareExport -> { openSheet = null; onShareExport(zine.id) }
+                ZineAction.Open -> { haptics.perform(ZinelyHaptic.Tick); openSheet = null; onOpenZine(zine.id) }
+                ZineAction.ShareExport -> {
+                    haptics.perform(ZinelyHaptic.Tick)
+                    openSheet = null
+                    onShareExport(zine.id)
+                }
                 // Rename replaces the sheet with the existing input rather than closing to nothing: the
                 // field is the reason the row was pressed.
-                ZineAction.Rename -> { openSheet = LibrarySheet.Rename(zine.id, zine.title) }
+                ZineAction.Rename -> {
+                    haptics.perform(ZinelyHaptic.Tick)
+                    openSheet = LibrarySheet.Rename(zine.id, zine.title)
+                }
                 ZineAction.Duplicate -> {
                     haptics.perform(ZinelyHaptic.Snap)
                     openSheet = null

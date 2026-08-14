@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.LocalZinelyMotion
 import com.aritr.zinely.ui.theme.ZinelyMotion
+import androidx.compose.ui.test.onNodeWithText
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -53,6 +55,16 @@ class ZComponentGoldenTest {
     private companion object {
         const val GOLDEN_DIR = "src/test/roborazzi"
         const val GALLERY_TAG = "zComponentGallery"
+
+        /** `--leaf`, the V2.1 action colour, per theme (`ZinelyV21Colors.kt:167`, `:203`). */
+        val LEAF_LIGHT = Color(0xFF4E7A3C).toArgb()
+        val LEAF_DARK = Color(0xFF8FAE6B).toArgb()
+
+        /** `--coral-strong` and `--stamp`: V2's two fills, and V2.1 has neither. */
+        val RETIRED_FILLS = mapOf(
+            "coral-strong" to Color(0xFFC64E34).toArgb(),
+            "stamp" to Color(0xFF264653).toArgb(),
+        )
         fun aa() = RoborazziOptions(
             compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.02f),
         )
@@ -92,8 +104,11 @@ class ZComponentGoldenTest {
             ZStatusPane(
                 title = "Couldn't open your shelf",
                 body = "Your zines are safe on this device.",
-                badgeBackground = ZinelyTheme.colors.coralStrong.copy(alpha = 0.14f),
-                badgeContent = ZinelyTheme.colors.coralText,
+                // V2.1's urgent colour is jam; the gallery must not be the one thing still feeding coral
+                // into a palette that no longer has it, or the absence assertions below would be asserting
+                // against their own host.
+                badgeBackground = ZinelyTheme.v21Colors.jam.copy(alpha = 0.14f),
+                badgeContent = ZinelyTheme.v21Colors.jamText,
                 badgeIcon = { tint -> CheckGlyph(tint) },
                 cta = { ZStampButton(text = "Try again", onClick = {}) },
             )
@@ -123,6 +138,24 @@ class ZComponentGoldenTest {
         return Bitmap.createBitmap(full, x, y, w, h)
     }
 
+    /**
+     * **The inversion.** The two assertions this replaces demanded that `--coral-strong` and `--stamp`
+     * paint; V2.1 deleted both fills, so demanding their presence is the wrong claim, and simply
+     * deleting the demand would leave the gallery unguarded against a coral button creeping back in a
+     * later merge — which is exactly the regression the originals were watching for. So the mark is
+     * asserted ABSENT, at full strength: not "fewer than 200 pixels", but not one pixel.
+     *
+     * `--coral-text` is deliberately NOT covered: [ZMenuItem] still draws its `danger` and
+     * `ZSelectedStyle.Coral` inks from the old palette, so the gallery legitimately still contains it.
+     * That is a conversion still owed, not a regression this file may pin shut.
+     */
+    private fun assertNoRetiredFills(bmp: Bitmap, theme: String) {
+        RETIRED_FILLS.forEach { (name, argb) ->
+            val n = bmp.countColour(argb)
+            assertTrue("$name is retired in V2.1 but painted $n pixels in the $theme gallery", n == 0)
+        }
+    }
+
     private fun Bitmap.countColour(argb: Int): Int {
         var n = 0
         for (yy in 0 until height) for (xx in 0 until width) if (getPixel(xx, yy) == argb) n++
@@ -132,31 +165,32 @@ class ZComponentGoldenTest {
     @Test
     fun component_gallery_light() {
         val bmp = galleryBitmap(darkTheme = false)
-        // Behavioural: the coral primary fill must actually paint (frozen --coral-strong).
+        // Behavioural: the action fill must actually paint. V2.1 has no coral and no stamp — the two
+        // `ZPrimaryFill` names are kept as public API but `Coral` now means `--leaf` and `Stamp` means
+        // `--paper` (`ZButton.kt:110-117`).
         assertTrue(
-            "coral-strong did not paint in the light gallery",
-            bmp.countColour(Color(0xFFC64E34).toArgb()) > 200,
+            "leaf did not paint in the light gallery",
+            bmp.countColour(LEAF_LIGHT) > 200,
         )
-        // And the stamp fill (buttons + snackbar).
-        assertTrue(
-            "stamp did not paint in the light gallery",
-            bmp.countColour(Color(0xFF264653).toArgb()) > 200,
-        )
+        assertNoRetiredFills(bmp, "light")
         bmp.captureRoboImage("$GOLDEN_DIR/z_components_light.png", aa())
     }
 
     @Test
     fun component_gallery_dark() {
         val bmp = galleryBitmap(darkTheme = true)
-        // Dark desk (#201F1E) must be the gallery ground; coral CTA identical in dark.
+        // Dark desk (#201F1E) must be the gallery ground; the action fill is leaf's dark twin — unlike
+        // coral, which was the same value in both themes, `--leaf` is re-mixed for the dark palette
+        // (`ZinelyV21Colors.kt:167` vs `:203`), so the dark gallery is what proves the swap happened.
         assertTrue(
             "dark desk did not paint in the dark gallery",
             bmp.countColour(Color(0xFF201F1E).toArgb()) > 1000,
         )
         assertTrue(
-            "coral-strong did not paint in the dark gallery",
-            bmp.countColour(Color(0xFFC64E34).toArgb()) > 200,
+            "leaf did not paint in the dark gallery",
+            bmp.countColour(LEAF_DARK) > 200,
         )
+        assertNoRetiredFills(bmp, "dark")
         bmp.captureRoboImage("$GOLDEN_DIR/z_components_dark.png", aa())
     }
 }

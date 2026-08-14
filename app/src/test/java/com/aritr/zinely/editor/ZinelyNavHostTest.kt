@@ -8,10 +8,11 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.aritr.zinely.feature.editor.BenchBottomBarTestTag
 import com.aritr.zinely.feature.editor.HomeEmptyHeadline
+import com.aritr.zinely.export.ExportDestination
+import com.aritr.zinely.feature.editor.ProofExportTarget
 import com.aritr.zinely.feature.editor.ProofBackTestTag
 import com.aritr.zinely.feature.editor.ProofScreenTestTag
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -231,8 +232,10 @@ class ZinelyNavHostTest {
         composeRule.runOnUiThread { navController.navigate(EditorRoute("ghost")) }
         waitForText("Couldn’t open this project.")
 
-        // Then the error is not a dead end (Codex RF2)
-        composeRule.onNodeWithText("‹  Back to your shelf").performClick()
+        // Then the error is not a dead end (Codex RF2). Addressed by tag, not by text: the V2.1 `.retry`
+        // pill routes through `zinelyV2Control`, whose `clearAndSetSemantics` replaces the label's text
+        // node with a contentDescription — so the way out is now spoken, not read.
+        composeRule.onNodeWithTag(BootFailureActionTestTag).performClick()
         waitForHome()
     }
 
@@ -294,6 +297,36 @@ class ZinelyNavHostTest {
         composeRule.runOnUiThread { navController.popBackStack() }
         waitForEditor()
         assertEquals(id, navController.currentBackStackEntry?.toRoute<EditorRoute>()?.projectId)
+    }
+}
+
+/**
+ * The two-way mapping between the feature-local [ProofExportTarget] and the app-level
+ * [ExportDestination] — the seam ADR-102 §12.14's fix rests on, and the one place it can silently invert.
+ *
+ * `toTarget()` was added so a *running* export could name the button that started it. Invert it and the
+ * user-reported defect comes back mirrored — Save PDF says "Preparing…" while Share is the one rendering —
+ * and no other test notices: `ProofScreenTest` injects a `busyTarget` directly, and `ExportViewModelTest`
+ * never sees a `ProofExportTarget` at all. Caught by review, not by the suite.
+ */
+class ProofExportTargetMappingTest {
+
+    @Test
+    fun `every target survives the round trip through its destination`() {
+        // Given each export button
+        // When mapped to a destination and back
+        // Then it is the same button — not merely *a* button
+        ProofExportTarget.entries.forEach { target ->
+            assertEquals(target, target.toDestination().toTarget())
+        }
+    }
+
+    @Test
+    fun `and each destination is the one that button actually means`() {
+        // The round trip alone passes for a consistently-swapped pair, so the pairing is pinned too:
+        // Share hands the file to another app; Save keeps a durable copy.
+        assertEquals(ExportDestination.TRANSPORT, ProofExportTarget.SEND.toDestination())
+        assertEquals(ExportDestination.DOWNLOADS, ProofExportTarget.SAVE.toDestination())
     }
 }
 

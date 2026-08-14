@@ -30,9 +30,11 @@ import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -121,29 +123,48 @@ class BenchC4Test {
 
     // --- Row 4.1: the bar's box ---------------------------------------------------------------------
 
+    /**
+     * **P3: the bar has no frozen height any more, so this asserts the thing that replaced it.**
+     *
+     * V2 pinned `.bar{height:66px}`. V2.1 (`v21-bench.html:341`) declares only `padding: 8 16 16`, so the
+     * bar is its padding plus its tallest child — the 48dp `.add` — and `8 + 48 + 16 = 72`.
+     *
+     * The 72 is written as that sum rather than as a literal, because a literal here would be the old
+     * defect wearing a new number: it would keep passing if `.add` changed height and the bar stopped
+     * containing it. What must hold is that the bar *is* its content, which is what the second assertion
+     * says outright.
+     */
     @Test
-    fun the_bar_is_the_frozen_height() {
-        // `.bar{flex:none;height:66px}` (`v2-bench.html:267`). Mutation: 66 → any other height.
+    fun the_bar_is_its_padding_plus_its_tallest_control() {
         setScreen(store())
-        assertEquals(px(66.dp), bounds(BenchBottomBarTestTag).height, 0.5f)
+        val bar = bounds(BenchBottomBarTestTag)
+        val add = bounds(BenchBarAddTag)
+        assertEquals(px(8.dp + 48.dp + 16.dp), bar.height, 0.5f)
+        assertEquals(
+            "the bar's height must be produced by its content, not pinned independently of it",
+            px(8.dp) + add.height + px(16.dp),
+            bar.height,
+            0.5f,
+        )
     }
 
     @Test
-    fun the_bars_bottom_padding_is_asymmetric_exactly_as_frozen() {
-        // Frozen `padding:0 16px 4px` — the 4px at the bottom and nothing at the top is what makes the
-        // controls sit high in the bar. Measured as the gap under the last control, because that is the
-        // only observable the padding produces: 66 − 4 = 62 of content, a 44 control centred in it leaves
-        // 9 above and 9 + 4 = 13 below. Mutation `4px` → `0` makes it 11 and this fails.
+    fun the_bars_padding_is_asymmetric_exactly_as_frozen() {
+        // Frozen `padding: var(--gap-sm) var(--gap-lg) var(--gap-lg)` — 8 top, 16 bottom. V2's was `0 16 4`,
+        // which sat the controls high in a bar flush to the foot; V2.1 lifts the whole bar off the edge.
+        // Measured under `.add`, the tallest control, so the reading is the padding itself with no centring
+        // arithmetic in the way. Mutation `16` → `4` at the bottom fails here.
         setScreen(store())
         val bar = bounds(BenchBottomBarTestTag)
-        val done = bounds(BenchBarDoneTag)
-        assertEquals(px(13.dp), bar.bottom - done.bottom, 0.5f)
-        assertEquals(px(9.dp), done.top - bar.top, 0.5f)
+        val add = bounds(BenchBarAddTag)
+        assertEquals(px(8.dp), add.top - bar.top, 0.5f)
+        assertEquals(px(16.dp), bar.bottom - add.bottom, 0.5f)
     }
 
     @Test
     fun the_bar_keeps_the_frozen_side_padding_and_gap() {
-        // `padding:0 16px` and `gap:10px` (`:267`), read off the drawn controls rather than the source.
+        // `padding: … var(--gap-lg) …` and `gap:var(--gap-sm)` (`v21-bench.html:341`), read off the drawn
+        // controls rather than the source. The gap went 10 → 8 with the ladder.
         setScreen(store())
         val bar = bounds(BenchBottomBarTestTag)
         val undo = bounds(BenchBarUndoTag)
@@ -151,7 +172,7 @@ class BenchC4Test {
         val done = bounds(BenchBarDoneTag)
         assertEquals(px(16.dp), undo.left - bar.left, 0.5f)
         assertEquals(px(16.dp), bar.right - done.right, 0.5f)
-        assertEquals(px(10.dp), redo.left - undo.right, 0.5f)
+        assertEquals(px(8.dp), redo.left - undo.right, 0.5f)
     }
 
     // --- Row 4.2 / D-009: the paint is 44, the target is not ----------------------------------------
@@ -214,14 +235,15 @@ class BenchC4Test {
 
     @Test
     fun add_takes_the_residual_width_between_the_three_fixed_controls() {
-        // `.add{flex:1}` (`:271`). Asserted as arithmetic on the bar's own width rather than as a
-        // measured literal, so it stays true on any host. Mutation: `flex:1` → a fixed width.
+        // `.add{flex:1}` (`v21-bench.html:349`). Asserted as arithmetic on the bar's own width rather than
+        // as a measured literal, so it stays true on any host. Mutation: `flex:1` → a fixed width.
+        // P3: the gap is 8 (was 10) and `.add` is 48 tall (was 44).
         setScreen(store())
         val bar = bounds(BenchBottomBarTestTag)
         val add = bounds(BenchBarAddTag)
-        val expected = bar.width - px(16.dp) * 2 - px(44.dp) * 3 - px(10.dp) * 3
+        val expected = bar.width - px(16.dp) * 2 - px(44.dp) * 3 - px(8.dp) * 3
         assertEquals(expected, add.width, 0.5f)
-        assertEquals(px(44.dp), add.height, 0.5f)
+        assertEquals(px(48.dp), add.height, 0.5f)
     }
 
     // --- Rows 4.4a-4.4d: the chooser ----------------------------------------------------------------
@@ -351,15 +373,33 @@ class BenchC4Test {
     // --- Rows 4.9 / 4.10: the status strip ----------------------------------------------------------
 
     @Test
-    fun the_status_strip_is_the_frozen_height_and_does_not_grow() {
-        // `.status{flex:none;height:26px}` (`:190`). **Both clauses are carried by the height assertion**:
-        // in a flex column a `flex:1` strip would take the residual space and measure far more than 26dp,
-        // so a fixed 26 is what "does not grow" means here. The second assertion is about *placement* —
-        // the strip is the first thing in the phone, above `.canvasArea` — and saying so plainly matters:
-        // an earlier comment credited it with catching `flex:none` → `flex:1`, which it does not do.
+    fun the_status_strip_is_its_frozen_padding_and_does_not_grow() {
+        // ⚠ **V2.1's `.status` declares no height** (`v21-bench.html:165-166`), where V2 pinned 26px. So
+        // the old `assertEquals(px(26.dp), …)` is not merely stale — re-pinning any height would make the
+        // freeze's new `padding:var(--gap-lg) var(--gap-lg) var(--gap-xs)` decorative.
+        //
+        // `flex:none` survives, and *that* is what "does not grow" now means: the strip is exactly its
+        // padding plus its tallest child. With the chip hidden the child is a zero-height slot, so the
+        // strip measures its own padding — 16 + 4 — and a `flex:1` regression, which would take the whole
+        // residual column, fails it by hundreds of pixels.
         setScreen(store())
         val strip = bounds(BenchStatusStripTestTag)
-        assertEquals(px(26.dp), strip.height, 0.5f)
+        // The frozen scale, stated as values so a silent edit of the constants is caught even on a build
+        // where the chip happens to be up.
+        assertEquals(ZinelyV21Dimens.gapLg, BenchStatusPaddingTop)
+        assertEquals(ZinelyV21Dimens.gapLg, BenchStatusPaddingH)
+        assertEquals(ZinelyV21Dimens.gapXs, BenchStatusPaddingBottom)
+        // `flex:none`: the strip is its padding plus its tallest child and never the residual column. The
+        // chip is the tallest thing it can hold, so padding + a 48dp ceiling bounds every legal state,
+        // while a `flex:1` regression measures the whole phone and fails by hundreds of pixels.
+        assertTrue(
+            "the strip must not take the residual column height: ${strip.height}",
+            strip.height <= px(BenchStatusPaddingTop + BenchStatusPaddingBottom + 48.dp),
+        )
+        assertTrue(
+            "…and it must at least be its own padding",
+            strip.height >= px(BenchStatusPaddingTop + BenchStatusPaddingBottom) - 0.5f,
+        )
         assertEquals("the strip is the first thing in the phone", 0f, strip.top, 0.5f)
         assertTrue(
             "…and the canvas begins directly beneath it",
@@ -368,13 +408,20 @@ class BenchC4Test {
     }
 
     @Test
-    fun the_saved_chip_speaks_the_line_without_its_flower() {
-        // Row 4.10's copy. The `✿` is decoration (VOICE rule 7) and D-021 keeps the literal character in
-        // the paint; the live region announces the sentence. Mutation: announce the flower too.
+    fun the_saved_chip_speaks_the_line_the_paint_no_longer_carries() {
+        // **Inverted from V2.** The frozen `.saved` markup (`v21-bench.html:514`) is a check glyph and the
+        // single word `Saved`; V2's `✿` and ` · on this device` are gone from the paint, so the constants
+        // that named them are gone with them and this asserts their *absence* rather than deleting the
+        // claim. D-021 keeps the literal characters a frozen file draws — and this frozen file draws none.
+        //
+        // The reassurance is not lost, only relocated: the live region still speaks the whole sentence.
         assertEquals("Saved on this device", BenchSavedSpokenLabel)
-        assertEquals("✿", BenchSavedMark)
         assertEquals("Saved", BenchSavedWord)
-        assertEquals(" · on this device", BenchSavedQualifier)
+        assertTrue(
+            "the spoken line must still carry the privacy qualifier the chip stopped drawing",
+            BenchSavedSpokenLabel.contains("on this device"),
+        )
+        assertFalse("the flower must not come back to the chip", BenchSavedWord.contains("✿"))
     }
 
     // --- Rows 4.11-4.14: the snack and the soft delete ----------------------------------------------
@@ -436,10 +483,12 @@ class BenchC4Test {
     }
 
     @Test
-    fun the_snack_enters_from_sixteen_dp_below_where_it_comes_to_rest() {
-        // Row 4.11's `translateY(16px) → 0`. `graphicsLayer`'s translation moves the node's bounds in the
-        // root, so the rise is readable rather than merely declared — the mutation 16 → 0 survived the
-        // whole suite before this existed, because nothing else in C4 looks at where the snack starts.
+    fun the_snack_enters_from_eight_dp_below_where_it_comes_to_rest() {
+        // Row 4.11's `translateY(8px) → 0` (`v21-bench.html:481`); V2 rose 16. `graphicsLayer`'s
+        // translation moves the node's bounds in the root, so the rise is readable rather than merely
+        // declared — the mutation 16 → 0 survived the whole suite before this existed, because nothing
+        // else in C4 looks at where the snack starts. The frozen `rotate(-.6deg)` is in BOTH the rest and
+        // the shown rule, so it contributes the same constant to each reading and cancels in the rise.
         val store = store()
         setScreen(store)
         placedText(store)
@@ -469,14 +518,14 @@ class BenchC4Test {
         val rise = entering.top - resting.top
         assertTrue(
             "the snack must enter from below its resting place: entering=$entering resting=$resting",
-            rise > px(8.dp),
+            rise > px(4.dp),
         )
-        assertTrue("…and by no more than the frozen 16dp: $rise", rise <= px(16.dp) + 0.5f)
+        assertTrue("…and by no more than the frozen 8dp: $rise", rise <= px(8.dp) + 0.5f)
     }
 
     @Test
     fun the_snack_sits_at_the_frozen_insets() {
-        // Row 4.11: `left/right:14px; bottom:12px` (`:361`). Mutation: any inset change.
+        // Row 4.11: `left/right:14px` (`v21-bench.html:472`). Mutation: any inset change.
         val store = store()
         setScreen(store)
         placedText(store)
@@ -488,14 +537,25 @@ class BenchC4Test {
 
         val snack = bounds(BenchSnackTestTag)
         val canvas = bounds(EditorCanvasTestTag)
-        assertEquals(px(14.dp), snack.left - canvas.left, 0.5f)
-        assertEquals(px(14.dp), canvas.right - snack.right, 0.5f)
-        // Measured against the **canvas**, because that is what the freeze positions it against: the
-        // `.snack` markup (`v2-bench.html:443`) is inside `.canvasArea` (`:392`), which declares
-        // `position:relative` (`:194`), so `bottom:12px` resolves there and not against the phone. The
-        // first cut of this test asserted 12dp from the window's own bottom and passed — encoding a
-        // geometry the freeze never specified. Independent review caught it by reading the HTML.
-        assertEquals(px(12.dp), canvas.bottom - snack.bottom, 0.5f)
+        // ⚠ The frozen `rotate(-.6deg)` is a **layer** transform, and `boundsInRoot` reports the
+        // axis-aligned box that contains the rotated rect — so the measured node is a shade wider and
+        // taller than the drawn pill. The slack is derived from the frozen angle and the node's own size
+        // rather than widened by hand, so it shrinks if the tilt is ever removed and a real inset change
+        // of even a dp or two still fails.
+        val tilt = kotlin.math.abs(
+            kotlin.math.sin(Math.toRadians(BenchSnackRotationDeg.toDouble())),
+        ).toFloat()
+        val slackX = snack.height * tilt / 2f + 0.5f
+        val slackY = snack.width * tilt / 2f + 0.5f
+        assertEquals(px(14.dp), snack.left - canvas.left, slackX)
+        assertEquals(px(14.dp), canvas.right - snack.right, slackX)
+        // Measured against the **canvas**, because that is what `EditorScreen` anchors it to. ⚠ The frozen
+        // `.snack` is a child of `.phone` at `bottom:88px` in V2.1 (`v21-bench.html:450`, markup `:570`),
+        // where V2 put it inside `.canvasArea` at `bottom:12px`. The 88 is measured from the phone's foot
+        // and spans the bar and the page-navigation row, both of which sit below this canvas — so the
+        // canvas-relative equivalent is the 12 asserted here. Re-anchoring the composable is `EditorScreen`'s
+        // change and not P4's; see [BenchSnackInsetBottom].
+        assertEquals(px(12.dp), canvas.bottom - snack.bottom, slackY)
         // It still takes no layout height: the bar is exactly where it would be with no snack up.
         assertTrue(
             "the snack must overlay the canvas, not displace the chrome below it",

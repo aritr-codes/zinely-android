@@ -83,4 +83,21 @@ class EditorEmptyStateTest {
         // is never announced — proves silence, not just that the tag is queryable (Codex review).
         composeRule.onNodeWithText("⌄", substring = true).assertDoesNotExist()
     }
+
+    @Test
+    fun the_supply_cluster_is_silent() {
+        // The chevron above has been proven silent since the day it landed. The three craft marks beside
+        // it were only *claimed* silent — the KDoc said the cluster "adds nothing to the a11y tree", no
+        // test ever asked, and it was false: each glyph is a `Text`, so each published a `TextView` and
+        // TalkBack read "✿", "❀", "★" before the headline. Found by dumping the platform tree on a
+        // device (`uiautomator dump`, RZCYA1VBQ2H); invisible to the merged semantics tree these tests
+        // read, which is why this assertion is written against the *text*, exactly as the chevron's is.
+        composeRule.setContent {
+            ZinelyTheme { EditorEmptyState() }
+        }
+        for (glyph in listOf("✿", "❀", "★")) {
+            composeRule.onNodeWithText(glyph, substring = true)
+                .assertDoesNotExist()
+        }
+    }
 }

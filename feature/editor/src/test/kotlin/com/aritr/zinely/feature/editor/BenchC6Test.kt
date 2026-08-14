@@ -43,8 +43,8 @@ import com.aritr.zinely.ui.theme.ZinelyPaperTintId
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.zinelyContentInks
-import com.aritr.zinely.ui.theme.zinelyV2DarkColors
-import com.aritr.zinely.ui.theme.zinelyV2LightColors
+import com.aritr.zinely.ui.theme.zinelyV21DarkColors
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -65,7 +65,7 @@ import org.robolectric.annotation.Config
  * | row | where it is closed instead | why not here |
  * |---|---|---|
  * | 6.1b/6.1c the card's fill, hairline, radius and shadow | [BenchC6GoldenTest] | they are paint, and a raster assertion is the honest instrument for paint |
- * | 6.5b the 1px `--desk-edge` halo, 6.6 the `.sel` ring's own pixels | [BenchC6GoldenTest] | both are drawn *outside* the layout bounds, so no semantics node can measure them |
+ * | 6.5b the **absence** of V2's halo, 6.6 the `.pot.on` ring's own pixels | [BenchC6GoldenTest] | both live *outside* the layout bounds, so no semantics node can measure them |
  * | 6.12c the shield's `stroke-width:1.7` | [BenchC6GoldenTest] | a stroke weight is a count of dark pixels, which is exactly what C5 row 5.2a had to split out |
  * | 6.15's **platform** clause | the mandatory device passes | `Role.RadioButton`'s announcement rides the platform tree, not the merged semantics tree (CI-26) |
  *
@@ -417,14 +417,15 @@ class BenchC6Test {
     }
 
     /**
-     * Row 6.1e — `.inkpop{transform:translateY(14px)}` at rest, released over `.22s var(--standard)`.
+     * Row 6.1e — `.inkpop{transform:translateY(10px)}` at rest, released over `.18s`
+     * (`v21-bench.html:240`). V2 asked for 14px over `.22s`.
      *
      * Measured mid-flight with the clock held, against the resting position taken after it lands: the
-     * offset is a *fixed* 14px in the freeze, not a fraction of the card's own height, so a card that
+     * offset is a *fixed* 10px in the freeze, not a fraction of the card's own height, so a card that
      * slid its full height would pass any "it moves" assertion and fail this one.
      */
     @Test
-    fun the_popover_rises_fourteen_dp_into_place() {
+    fun the_popover_rises_ten_dp_into_place() {
         val store = store()
         setScreen(store)
         placedText(store)
@@ -447,14 +448,14 @@ class BenchC6Test {
         val rise = entering.top - resting.top
         assertTrue(
             "the card must enter from below its resting place: entering=$entering resting=$resting",
-            rise > px(7.dp),
+            rise > px(4.dp),
         )
-        assertTrue("…and by no more than the frozen 14dp: $rise", rise <= px(14.dp) + 0.5f)
+        assertTrue("…and by no more than the frozen 10dp: $rise", rise <= px(10.dp) + 0.5f)
         // The measured bound is a range, because the first readable frame is already part-way through
         // the ease and pinning it would encode a frame number. The frozen value itself is exact, so it
-        // is asserted as a value as well — 10dp or 8dp would satisfy the range above and neither is 14.
-        assertEquals("`translateY(14px)` is the frozen offset", 14.dp, BenchInkPopoverEnterOffsetDp)
-        assertEquals("`.22s` is the frozen duration", 220, BenchInkPopoverEnterMillis)
+        // is asserted as a value as well — 14dp or 8dp would satisfy the range above and neither is 10.
+        assertEquals("`translateY(10px)` is the frozen offset", 10.dp, BenchInkPopoverEnterOffsetDp)
+        assertEquals("`.18s` is the frozen duration", 180, BenchInkPopoverEnterMillis)
     }
 
     /** Row 6.2 — the header carries the frozen title and the frozen dismiss, and both are reachable. */
@@ -492,9 +493,20 @@ class BenchC6Test {
         val card = bounds(BenchInkPopoverTestTag)
         val done = bounds(BenchInkDoneTestTag)
         val title = composeRule.onNodeWithText(Copy.BenchInk.TITLE).fetchSemanticsNode().boundsInRoot
-        // `.inkpop{padding:12px 14px 14px}` inside a 1px border: the header's content box ends 15dp in.
-        val inset = px(14.dp) + px(1.dp)
-        assertEquals("Done's right edge is the card's content edge", card.right - inset, done.right, 2f)
+        // **Restated, not relaxed.** The old number (V2's `.inkpop{padding:12px 14px 14px}` plus a 1px
+        // border = 15dp) described a box that no longer exists, and it failed by exactly the 3dp it was
+        // wrong by. V2.1 freezes `.inkpop{padding:var(--gap-md) var(--gap-md) var(--gap-lg)}`
+        // (`v21-bench.html:238`) — 12dp on the sides — and the 1.5dp ink border adds nothing to that:
+        // Compose's `border` is a DRAW, painted over the first 1.5dp of the padding, where CSS's border
+        // is part of the box and pushes the content in. Neither the 1.5dp border nor the Done pill's
+        // 2dp resting shadow (also draw-only) is inside any node's bounds. The control was never
+        // misplaced — it sits exactly on the content edge — so this is the expectation catching up.
+        // Transcribed from the freeze rather than read from `BenchInkPopoverPadding`, per this file's
+        // rule that the constant and the assertion may not agree with each other on a wrong value.
+        val inset = px(12.dp)
+        // Tolerance tightened 2f -> 1f: the padding is whole pixels and `SpaceBetween` puts the last
+        // child's right edge on the Row's, so the only slack left is rounding.
+        assertEquals("Done's right edge is the card's content edge", card.right - inset, done.right, 1f)
         // …and the two are genuinely apart, which is what "space-between" means on a 411dp card.
         assertTrue(
             "Done must not sit against the title (title ends ${title.right}, Done starts ${done.left})",
@@ -511,7 +523,7 @@ class BenchC6Test {
      * costs to print, hidden by the confirmation that you changed it.
      *
      * Asserted as paint, because z-order is paint: in the light palette the snack's `--ink` ground and
-     * the popover's `--sheet` are at opposite ends of the scale, so one pixel inside the note settles it.
+     * the popover's `--paper` are at opposite ends of the scale, so one pixel inside the note settles it.
      */
     @Test
     fun the_popover_is_drawn_above_the_snack_it_raises() {
@@ -526,25 +538,25 @@ class BenchC6Test {
         val note = composeRule.onNodeWithTag(BenchInkUseNoteTestTag, useUnmergedTree = true)
             .fetchSemanticsNode().boundsInWindow
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
-        val sheet = zinelyV2LightColors().sheet.toArgb()
-        val ink = zinelyV2LightColors().ink.toArgb()
+        val paper = zinelyV21LightColors().paper.toArgb()
+        val ink = zinelyV21LightColors().ink.toArgb()
         // Counted across the whole note rather than sampled at one pixel: the note carries a shield
-        // glyph and a sentence, both in `--ink-faint`, and a single probe lands on whichever it hits.
+        // glyph and a sentence, both in `--ink-soft`, and a single probe lands on whichever it hits.
         // What settles the z-order is how much of the note's own GROUND survives.
-        var onSheet = 0
+        var onPaper = 0
         var total = 0
         for (y in note.top.toInt() until note.bottom.toInt()) {
             for (x in note.left.toInt() until note.right.toInt()) {
                 total++
-                if (channelDistance(bmp.getPixel(x, y), sheet) < channelDistance(bmp.getPixel(x, y), ink)) {
-                    onSheet++
+                if (channelDistance(bmp.getPixel(x, y), paper) < channelDistance(bmp.getPixel(x, y), ink)) {
+                    onPaper++
                 }
             }
         }
         assertTrue(
-            "only $onSheet of $total pixels of the ink note stand on the popover's --sheet; the snack is " +
+            "only $onPaper of $total pixels of the ink note stand on the popover's --paper; the snack is " +
                 "drawn over the card it should sit behind",
-            onSheet > total / 2,
+            onPaper > total / 2,
         )
     }
 
@@ -577,38 +589,41 @@ class BenchC6Test {
     // The swatches (rows 6.4-6.6)
     // =================================================================================================
 
-    /** Row 6.4/6.5 — fourteen swatches for a text element, each the frozen 26dp. */
+    /** Row 6.4/6.5 — fourteen pots for a text element, each the frozen 30dp (`v21-bench.html:250`). */
     @Test
-    fun every_swatch_is_the_frozen_twenty_six_dp() {
+    fun every_swatch_is_the_frozen_thirty_dp() {
         val store = store()
         setScreen(store)
         openInk(store)
         assertEquals("ten inks plus four neutrals", 14, count(BenchInkSwatchTestTag))
         val first = swatchBounds(0)
-        assertEquals(px(26.dp), first.width, 1f)
-        assertEquals(px(26.dp), first.height, 1f)
+        assertEquals(px(30.dp), first.width, 1f)
+        assertEquals(px(30.dp), first.height, 1f)
     }
 
-    /** Row 6.4b — `.swrow{gap:7px}`, measured edge to edge between two swatches of one band. */
+    /** Row 6.4b — `.pots{gap:var(--gap-sm)}` (`v21-bench.html:249`), measured edge to edge within a band. */
     @Test
-    fun the_swatch_row_keeps_the_frozen_seven_dp_gap() {
+    fun the_swatch_row_keeps_the_frozen_eight_dp_gap() {
         val store = store()
         setScreen(store)
         openInk(store)
         val a = swatchBounds(0)
         val b = swatchBounds(1)
-        assertEquals(px(7.dp), b.left - a.right, 1f)
+        assertEquals(px(8.dp), b.left - a.right, 1f)
     }
 
     /**
-     * Row 6.5c — `.sw2:active{transform:scale(.9)}` over `transition:transform .1s`.
+     * **Inverted by ADR-102 P4 — the pot no longer shrinks under a finger, and must not start again.**
      *
-     * Under a **held** pointer, with the clock advanced past the transition. C5 tried to excuse the
-     * equivalent row with *"a 100ms press transform has no assertable resting state"*; independent review
-     * refused it, and the same refusal applies here.
+     * V2's `.sw2:active{transform:scale(.9)}` over `transition:transform .1s` is gone: `.pot`
+     * (`v21-bench.html:250-251`) declares no `:active` at all, because V2.1 says press with a *printed*
+     * translation and a pot has no shadow to shed. This test is kept rather than deleted, pointing the
+     * other way, so the scale reappearing fails here instead of shipping.
+     *
+     * Held pointer, clock advanced well past what the old transition would have taken.
      */
     @Test
-    fun a_pressed_swatch_shrinks_to_the_frozen_nine_tenths() {
+    fun a_pressed_swatch_does_not_shrink() {
         val store = store()
         setScreen(store)
         openInk(store)
@@ -616,28 +631,28 @@ class BenchC6Test {
         composeRule.mainClock.autoAdvance = false
         composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)[0]
             .performTouchInput { down(center) }
-        composeRule.mainClock.advanceTimeBy(BenchInkSwatchPressMillis + 100L)
+        composeRule.mainClock.advanceTimeBy(300L)
         composeRule.waitForIdle()
         val pressed = swatchBounds(0)
-        assertEquals("scale(.9) of the frozen 26dp", rest.width * 0.9f, pressed.width, 1f)
+        assertEquals("the pot holds its 30dp under a finger", rest.width, pressed.width, 1f)
+        assertEquals("…on both axes", rest.height, pressed.height, 1f)
         composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)[0]
             .performTouchInput { up() }
-        assertEquals("`.1s` is the frozen transition", 100, BenchInkSwatchPressMillis)
     }
 
     /**
      * Row 6.16 / [D-009](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-009--no-control-in-the-frozen-trilogy-declares-a-minimum-touch-target-and-most-measure-well-under-48dp) —
-     * *extend the target, keep the paint*. The paint stays 26dp (asserted above); the target reaches the
-     * 48dp floor without `minimumInteractiveComponentSize()`, which would have moved the 7dp gaps.
+     * *extend the target, keep the paint*. The paint stays 30dp (asserted above); the target reaches the
+     * 48dp floor without `minimumInteractiveComponentSize()`, which would have moved the 8dp gaps.
      */
     @Test
-    fun a_swatch_paints_at_twenty_six_and_is_touchable_at_forty_eight() {
+    fun a_swatch_paints_at_thirty_and_is_touchable_at_forty_eight() {
         val store = store()
         setScreen(store)
         openInk(store)
         val node = composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
             .fetchSemanticsNodes()[0]
-        assertEquals("the paint does not grow", px(26.dp), node.boundsInRoot.width, 1f)
+        assertEquals("the paint does not grow", px(30.dp), node.boundsInRoot.width, 1f)
         assertTrue(
             "the target reaches the floor: ${node.touchBoundsInRoot.width}px wide, " +
                 "${node.touchBoundsInRoot.height}px tall against ${px(48.dp)}px",
@@ -843,30 +858,25 @@ class BenchC6Test {
         val card = composeRule.onNodeWithTag(BenchInkPopoverTestTag).fetchSemanticsNode().boundsInWindow
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
 
-        // Mid-height at the card's left edge: past the 1dp hairline, inside the 14dp start padding, and
-        // clear of the corner radius — the card's own ground and nothing else.
+        // Mid-height at the card's left edge: past the 1.5dp ink border, inside the 12dp start padding,
+        // and clear of the corner radius — the card's own ground and nothing else. The V2.1 printed
+        // shadow falls down-RIGHT and outside the node, so unlike V2's soft throw it cannot tint this.
         val fill = bmp.getPixel(card.left.toInt() + 4, card.center.y.toInt())
-        // Asserted as "which palette did this come from", not as byte-equality: the card's own
-        // `zinelyShadow` throw tints its ground by a couple of units per channel (measured #272219
-        // against a token of #252017), and a probe that failed on that would be measuring the shadow.
-        // The two candidate answers are ~#252017 and ~#FBF7EE, so the comparison has no near-miss.
-        //
-        // This half cannot fail under the island alone — `sheet` is not among the eight tokens
-        // `BenchStudio.sheetIsland` overrides, so a popover sourced from the island keeps this ground.
-        // It stands against the coarser break: a wholesale light palette under a dark room. The island's
-        // own failure mode is the second assertion's.
-        val toRoom = channelDistance(fill, zinelyV2DarkColors().sheet.toArgb())
-        val toIsland = channelDistance(fill, zinelyV2LightColors().sheet.toArgb())
+        // Asserted as "which palette did this come from", not as byte-equality. Under V2.1 the card's
+        // ground is `paper`, which `BenchStudio.sheetIslandV21` DOES override — so this half now catches
+        // the island break as well as the coarser one (a wholesale light palette under a dark room).
+        val toRoom = channelDistance(fill, zinelyV21DarkColors().paper.toArgb())
+        val toIsland = channelDistance(fill, zinelyV21LightColors().paper.toArgb())
         assertTrue(
-            "the popover's ground is #%06X — %d from the room's --sheet and %d from the island's; chrome "
+            "the popover's ground is #%06X — %d from the room's --paper and %d from the island's; chrome "
                 .format(fill and 0xFFFFFF, toRoom, toIsland) + "over the artifact takes the room's",
             toRoom < toIsland,
         )
 
-        // …and the popover's own title is legible on it. The TITLE and not `Done`: the island overrides
-        // exactly eight tokens (`BenchStudio.sheetIsland`), and `ink` — the title's colour — is the one
-        // C2b measured at 1.05:1. `Done` is `inkFaint`, a mid-grey that stays readable on either ground
-        // and cannot fail; a first form of this probe measured it and let the mutation through.
+        // …and the popover's own title is legible on it. The TITLE and not `Done`: `ink` — the title's
+        // colour — is the token C2b measured at 1.05:1, while `Done` carries its own `leaf` ground and
+        // `onLeaf` label and stays readable whichever palette it came from, so it cannot fail. A first
+        // form of this probe measured it and let the mutation through.
         // `Ink` matches one node: the Neutrals swatch of the same name publishes a contentDescription,
         // not text.
         val title = composeRule.onNodeWithText(Copy.BenchInk.TITLE).fetchSemanticsNode().boundsInWindow

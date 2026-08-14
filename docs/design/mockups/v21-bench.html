@@ -334,10 +334,10 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .filmstrip::-webkit-scrollbar{display:none}
 .fpage{flex:none;width:29px;height:38px;border-radius:var(--br-xs);background:var(--paper);
   border:1.5px solid var(--ink);cursor:pointer;display:grid;place-items:center;
-  font-size:.6rem;font-weight:700;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  overflow:hidden}
 /* "which page am I on" is a state, and V2-TOKENS assigns the current-page dot
-   to strawberry/berry.  Butter is material, never a state. */
-.fpage.on{box-shadow:0 0 0 3px var(--berry);color:var(--ink)}
+   to strawberry/berry.  Butter is material, never a state.  See AMENDMENT LOG A2. */
+.fpage.on{box-shadow:0 0 0 3px var(--berry)}
 .bar{flex:none;display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-lg) var(--gap-lg);background:var(--desk)}
 .icon-btn{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
   background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
@@ -751,7 +751,7 @@ const N=8;
 function drawFilm(){
   $('filmstrip').innerHTML=Array.from({length:N},(_,i)=>
     `<button class="fpage ${i+1===cur?'on':''}" aria-label="Page ${i+1}" aria-current="${i+1===cur}"
-       onclick="goPage(${i+1})">${i+1}</button>`).join('');
+       onclick="goPage(${i+1})"></button>`).join('');
 }
 function goPage(n){ cur=n; drawFilm(); document.querySelector('.pagenum').textContent=n;
   closeOverlays(); cap('Page '+n,'The filmstrip moves you without leaving the page you are working on.'); }
@@ -771,7 +771,7 @@ $('gridBtn').onclick=e=>{ e.stopPropagation(); openGrid(); };
 function openSupply(){
   $('sheet').innerHTML='<div class="grip"></div><h3>Add to your page</h3><div class="supply">'
    +`<button class="opt" data-a="text"><span class="ico">${ICON.font}</span><span class="tx"><b>Text</b><span>Type words onto the page</span></span></button>`
-   +`<button class="opt" data-a="photo"><span class="ico">${ICON.replace}</span><span class="tx"><b>Photo</b><span>From your phone — it never leaves the device</span></span></button>`
+   +`<button class="opt" data-a="photo"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Photo</b><span>From your phone — it never leaves the device</span></span></button>`
    +`<button class="opt" data-a="art"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Art</b><span>Stickers, icons, frames, patterns · bundled + online</span></span></button>`
    +'</div>';
   $('sheet').querySelectorAll('.opt').forEach(o=>o.onclick=e=>{ e.stopPropagation();
@@ -847,3 +847,73 @@ addEventListener('keydown',e=>{
   document.querySelector('.keepclear').classList.toggle('warn');
 });
 </script>
+
+<!-- ===========================================================================
+     AMENDMENT LOG — appended, never inserted.
+
+     This file ends with a keydown handler that says why: "Deliberately the LAST lines in the file:
+     citations point at line numbers throughout, and anything inserted above shifts them."  The
+     2026-08-14 amendments below were FIRST written as comment blocks beside the rules they amend —
+     +13 lines at :285 and +19 at :794 — which silently invalidated 117 `v21-bench.html:NNN` citations
+     in the Kotlin sources and re-created, against the current spec, exactly the citation debt ADR-102
+     §2 had just finished booking against the superseded one.  A review caught it by diffing the cited
+     numbers against `git show HEAD:`, not by reading the prose.
+
+     The rule this file already stated about itself is therefore restated as a mechanism: **amendments
+     live here; the rules they amend change in place, line-for-line.**  A2 below deletes two properties
+     and adds one, in the same two lines.  A3 swaps one glyph expression for another on one line.  A1
+     could not be done in place at all — a new selector is a new line — so its rule lives in the
+     trailing <style> beneath this log, where the cascade still gives it the last word and the line
+     count above it is untouched.
+     ===========================================================================
+
+     A1 · 2026-08-14 (P3) — `.doneEdit` presses.  It rested at 2px with no `:active` rule, where
+     `.chip`, `.icon-btn`, `.add`, `.opt`, `.tile` and `.ctl` all carry theirs.  A 2px rest with a flush
+     press is exactly the Flat tier the corpus already assigns to `.chip` — the chip standing beside it
+     in this very row — so this transcribes that tier rather than inventing a fifth.  Filed as an
+     omission, not a design statement: the row's ONE live control did not answer a finger, which reads
+     as unresponsive rather than quiet.
+
+     ⚠ THIS AMENDMENT'S FIRST WORDING CLAIMED `.doneEdit` WAS THE ONLY SUCH CONTROL.  It was not: P5
+     found `.pgc` and `.dclose` in the same state and resolved them the same way, by rest depth.  The
+     correction is kept rather than tidied away because the false half is the interesting one — a claim
+     of uniqueness made from the six selectors that happened to be on screen.
+
+     ⚠ Adding an interaction state is not, strictly, a bug fix, and DESIGN FREEZE lists "interaction
+     redesign" as not allowed.  A review flagged it as an owner call rather than an implementer one.
+     Recorded here so the owner can reverse it in one line.
+
+     ---------------------------------------------------------------------------
+
+     A2 · 2026-08-13 (owner ruling, P3) — `.fpage`'s interior is the PAGE, not its number.  This
+     prototype has no document, so it drew the page number as a stand-in for identity.  The product has
+     one: the strip renders a live miniature through the canvas's own SceneRenderer tape.  Same shape as
+     OD-22, which deleted `.pthumb i` from `v2-bench.html` for the same reason — the specification moves,
+     not the implementation — and the same reason ADR-102's P3 row keeps `benchThumbIsland` under OD-23:
+     that island exists only to give this miniature legible ink.  The type properties are struck
+     (`font-size`, `font-weight`, `color`, `font-variant-numeric`, and `.fpage.on`'s `color`);
+     everything else about `.fpage` is transcribed exactly.  The accepted price is OD-22's: at 29×38 a
+     miniature reads as "something is on this page, and roughly where", not "which photo".
+
+     ---------------------------------------------------------------------------
+
+     A3 · 2026-08-14 (bug fix) — the Photo row's glyph.  `Photo` shipped wearing `ICON.replace`: two
+     arrows chasing each other round a circle.  That glyph means "swap this for another one", and it is
+     correct where it lives on the selection bar — but on a chooser whose whole question is *"what would
+     you like to add?"* the same shape reads as refresh, or as sync, and sync is the one thing this app
+     has promised never to do.  A first-time device pass stopped on it for exactly that reason, before
+     knowing what the icon was for.
+
+     The picture glyph — frame plus horizon — was already in the file, one line below, on `Art`.  So
+     this is not a new visual idea; it is the existing mark moved onto the row it describes.
+
+     ⚠ `Art` now collides on the same mark, and the two rows must not ship side by side wearing it.  Art
+     is unbuilt (V2 future; this chooser presents Text + Photo only), so the collision is deferred
+     rather than solved: **Art needs its own mark before Art ships.**  Left visible rather than papered
+     over, because a silently duplicated glyph is how the first one got onto the wrong row.
+     =========================================================================== -->
+<style>
+/* A1 — see the AMENDMENT LOG above.  Here rather than beside `.doneEdit` because a new selector cannot
+   be added in place without shifting every citation below it; a later <style> wins the cascade. */
+.doneEdit:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
+</style>

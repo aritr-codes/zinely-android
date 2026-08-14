@@ -58,22 +58,22 @@ class BenchContextBarTest {
     private companion object {
         const val HOST = "ctx-host"
 
-        /** Neither `sheet` nor `chrome-line`, so the bar's own fill and border are both distinguishable. */
+        /** Neither `paper` nor `ink`, so the bar's own fill and border are both distinguishable. */
         val BACKDROP = Color(0xFF102030)
     }
 
-    private var sheetArgb: Int = 0
+    private var paperArgb: Int = 0
     private var inkArgb: Int = 0
-    private var consequenceArgb: Int = 0
-    private var chromeLineArgb: Int = 0
+    private var jamTextArgb: Int = 0
+    private var inkSoftArgb: Int = 0
 
     private fun host(verbs: List<BenchVerb>, visible: Boolean = true) {
         composeRule.setContent {
             ZinelyTheme {
-                sheetArgb = ZinelyTheme.v2Colors.sheet.toArgb()
-                inkArgb = ZinelyTheme.v2Colors.ink.toArgb()
-                consequenceArgb = ZinelyTheme.v2Colors.consequence.toArgb()
-                chromeLineArgb = ZinelyTheme.v2Colors.chromeLine.toArgb()
+                paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
+                jamTextArgb = ZinelyTheme.v21Colors.jamText.toArgb()
+                inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
                 Box(
                     Modifier.size(360.dp, 200.dp).testTag(HOST).background(BACKDROP),
                     contentAlignment = Alignment.BottomCenter,
@@ -156,76 +156,114 @@ class BenchContextBarTest {
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").assertIsEnabled()
     }
 
-    // ── Row 2.11 — `flex:1` ─────────────────────────────────────────────────────────────────────────
+    // ── Row 2.11 — `flex:1` is GONE, and `min-width:50px` replaces it ───────────────────────────────
 
+    /**
+     * **Inverted by ADR-102 P4.** V2's `.ctx button` carried `flex:1` inside a bar pinned
+     * `left:12px;right:12px`, so the five verbs shared the canvas's whole width between them. V2.1 drops
+     * both: the verbs are sized by `min-width:50px` (`v21-bench.html:230`) plus their own content, and the
+     * bar is a content-width pill centred on the canvas (`:223`). So the assertion is turned around — the
+     * card must be **narrower than the space it is offered**, and no verb may fall under the frozen floor.
+     *
+     * Kept rather than deleted because `flex:1` returning would be invisible everywhere else: a
+     * full-width row still looks like a toolbar, and the golden's 2 % threshold would not notice.
+     */
     @Test
-    fun `every verb takes an equal share of the row, whatever its label measures`() {
+    fun `a verb sits on the fifty dp floor and the bar does not stretch to the canvas`() {
         host(benchContextVerbs(BenchVerbKind.TEXT))
-        // "Delete" is twice the length of "Ink". Under `flex:none` they would measure differently; under
-        // the frozen `flex:1` over a `min-width:0` basis they are equal.
-        val widths = benchContextVerbs(BenchVerbKind.TEXT).map { verb ->
-            composeRule.onNodeWithTag("$BenchContextBarTestTag-${verb.label}")
+        val widths = benchContextVerbs(BenchVerbKind.TEXT).associate { verb ->
+            verb.label to composeRule.onNodeWithTag("$BenchContextBarTestTag-${verb.label}")
                 .fetchSemanticsNode().boundsInWindow.width
         }
-        widths.forEach { assertEquals(widths.first().toDouble(), it.toDouble(), 1.0) }
+        val floor = with(composeRule.density) { BenchContextBarButtonMinWidthDp.toPx() }
+        widths.forEach { (label, w) ->
+            assertTrue("$label measures ${w}px, under the frozen 50dp floor of ${floor}px", w >= floor - 1f)
+        }
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        val hostB = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
+        // The card is its five verbs plus four 2dp gaps plus 4dp of padding a side — measurably less than
+        // the 360dp host. Under V2's `flex:1` strip it would be the host less 24dp.
+        val sum = widths.values.sum() +
+            with(composeRule.density) { (BenchContextBarGapDp * 4 + BenchContextBarPaddingDp * 2).toPx() }
+        assertEquals("the card is exactly its content", sum.toDouble(), bar.width.toDouble(), 1.5)
+        assertTrue(
+            "the card measures ${bar.width}px against a ${hostB.width}px host — it is still a strip",
+            bar.width < hostB.width - with(composeRule.density) { 48.dp.toPx() },
+        )
     }
 
     @Test
-    fun `the frozen 40dp verb still offers a 48dp touch target`() {
-        // The freeze draws a 40px control. Material floors every interactive component at 48dp, so the
-        // DRAWN box is the frozen 40 and the TARGET is 48 - measured here at 96px on xhdpi. That gap is
-        // deliberately not fought: D-009 records that no control in the frozen trilogy declares a minimum
-        // target and most measure under 48dp, so the platform floor is the freeze being improved on, not
-        // a parity failure. Asserted so nobody later "fixes" the bar down to a 40dp target.
+    fun `the frozen verb clears the 48dp touch floor on its own`() {
+        // V2 drew a 40dp control and leaned on Compose's pointer-input minimum to reach Material's 48dp
+        // floor. V2.1's `.ctx button` declares no height at all, and its own parts — 8 + 17 + 2 + ~15 + 8
+        // — stack to 50, which is also the `min-width` the freeze gives it. So the DRAWN box now clears
+        // the floor without help, and the two readings that used to diverge agree. Asserted so nobody
+        // later "fixes" the bar back down under it.
         host(benchContextVerbs(BenchVerbKind.TEXT))
         val h = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}")
             .fetchSemanticsNode().boundsInWindow.height
         val floor = with(composeRule.density) { 48.dp.toPx() }
         val drawn = with(composeRule.density) { BenchContextBarButtonHeightDp.toPx() }
-        assertEquals(floor.toDouble(), h.toDouble(), 1.0)
-        assertTrue("the drawn height is the frozen 40dp, under the target floor", drawn < floor)
+        assertEquals(drawn.toDouble(), h.toDouble(), 1.0)
+        assertTrue("the drawn height clears the target floor by itself", drawn >= floor)
     }
 
     // ── Row 2.10 — the bar's own geometry ───────────────────────────────────────────────────────────
 
+    /**
+     * **Rewritten by ADR-102 P4.** V2 pinned `.ctx` at `left:12px;right:12px;bottom:12px` — a full-width
+     * strip. V2.1 pins it at `left:50%;transform:translateX(-50%);bottom:12px` (`v21-bench.html:223`): a
+     * content-width pill, centred, 12dp off the foot. So the bottom inset is still 12 and the horizontal
+     * insets are no longer a specification at all — what replaces them is that the two side gaps are
+     * *equal* and that neither is 12.
+     */
     @Test
-    fun `the bar is inset the frozen 12dp from the left, right and bottom edges`() {
+    fun `the bar is twelve dp off the bottom edge and centred, not inset`() {
         host(benchContextVerbs(BenchVerbKind.TEXT))
         val bmp = hostBitmap()
-        // The frozen 12, transcribed HERE from `v2-bench.html:211` rather than read from the production
+        // The frozen 12, transcribed HERE from `v21-bench.html:223` rather than read from the production
         // constant. Reading the constant made this test agree with any value the constant took - an
         // inset-12->0 mutation survived it, which is the whole reason the number is written out twice.
         val inset = with(composeRule.density) { 12.dp.toPx() }.toInt()
 
-        // Scan the row through the bar's vertical middle: everything left of the inset is backdrop, and
-        // the first non-backdrop pixel is the bar's own edge.
         val barBounds = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val hostBounds = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
-        assertEquals(inset.toDouble(), (barBounds.left - hostBounds.left).toDouble(), 1.0)
-        assertEquals(inset.toDouble(), (hostBounds.right - barBounds.right).toDouble(), 1.0)
         assertEquals(inset.toDouble(), (hostBounds.bottom - barBounds.bottom).toDouble(), 1.0)
 
-        // And the host's own corner is not the bar. It is NOT pure backdrop either — the frozen
-        // `0 12px 30px -12px` shadow tints the pixels around the bar, which is what the first version of
-        // this probe forgot and why it asserted equality with BACKDROP and failed.
-        assertNotEquals(sheetArgb, bmp.getPixel(2, bmp.height - 3))
+        val leftGap = barBounds.left - hostBounds.left
+        val rightGap = hostBounds.right - barBounds.right
+        assertEquals("the card is centred, so its two side gaps are equal", leftGap.toDouble(), rightGap.toDouble(), 1.0)
+        assertTrue(
+            "…and it is content-width, not a strip inset 12dp: leftGap=$leftGap",
+            leftGap > inset * 2,
+        )
+
+        // **Inverted:** V2's `0 12px 30px -12px` shadow tinted the pixels around the bar, and this probe
+        // asserted the corner was NOT pure backdrop because of it. `.ctx` now declares no shadow of either
+        // material — the freeze's own banner (`v21-bench.html:220-222`) says a tool does not perform — so
+        // the corner is exactly the backdrop again, and any shadow creeping back fails here.
+        assertEquals("the bar throws no shadow onto the canvas", BACKDROP.toArgb(), bmp.getPixel(2, bmp.height - 3))
     }
 
     @Test
-    fun `the bar is rounded, not square`() {
+    fun `the bar is a pill, not a rounded rectangle`() {
         host(benchContextVerbs(BenchVerbKind.TEXT))
         val bmp = hostBitmap()
         val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val hostB = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
         val left = (bar.left - hostB.left).toInt()
         val top = (bar.top - hostB.top).toInt()
-        val r = with(composeRule.density) { 16.dp.toPx() }.toInt()
+        // `border-radius:var(--br-pill)` on a card whose height is 4 + 50 + 4 = 58dp, so the arc's radius
+        // is half of that: the corner is cut far more deeply than V2's 16dp was.
+        val r = (bar.height / 2f).toInt()
 
-        // Probe INSIDE the 1dp border but still outside a radius-16 arc: (4,4) is 39.6px from the arc's
-        // centre at (32,32) on xhdpi, so a rounded bar has not painted it, while a square bar has. The
-        // first version sampled (1,1) - which is the border ring at any radius, so radius-16->0 survived.
-        assertNotEquals("the corner is cut by the radius", sheetArgb, bmp.getPixel(left + 4, top + 4))
-        assertEquals("past the arc, the top edge is the bar's fill", sheetArgb, bmp.getPixel(left + r + 6, top + 2))
+        // Probe INSIDE a 16dp arc but still OUTSIDE the pill's. A point `a` in from both edges is outside
+        // an arc of radius `r` when `a < r(1 - 1/√2)`, i.e. `a < .293r`; `.22r` clears that for the pill
+        // while sitting comfortably inside the smaller arc V2 drew. Written as a fraction of the measured
+        // radius rather than as a pixel count, so it does not encode this raster's density.
+        val a = (r * 0.22f).toInt()
+        assertNotEquals("the corner is cut by the pill radius", paperArgb, bmp.getPixel(left + a, top + a))
+        assertEquals("past the arc, the top edge is the bar's fill", paperArgb, bmp.getPixel(left + r + 6, top + 5))
     }
 
     @Test
@@ -237,8 +275,8 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `the bar enters from exactly 14dp below where it settles`() {
-        // Row 2.10's enter is a FIXED 14px rise, not a fraction of the bar's height — so the assertion has
+    fun `the bar enters from exactly 8dp below where it settles`() {
+        // Row 2.10's enter is a FIXED 8px rise (V2 rose 14), not a fraction of the bar's height — so the assertion has
         // to catch it mid-flight and compare against where it lands, which is the only way to tell 14 from
         // "some slide". The clock is driven by hand: with autoAdvance on, the animation is over before the
         // first measurement and every enter offset looks identical.
@@ -270,35 +308,36 @@ class BenchContextBarTest {
         composeRule.mainClock.advanceTimeBy(BenchContextBarEnterMillis + 100L)
         val settled = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow.top
         val expected = with(composeRule.density) { BenchContextBarEnterOffsetDp.toPx() }
-        // A couple of frames of easing have already run at `start`, so the gap is at most the full 14dp
-        // and unmistakably more than zero — which is what a `14 -> 0` mutation removes entirely.
+        // A couple of frames of easing have already run at `start`, so the gap is at most the full 8dp
+        // and unmistakably more than zero — which is what an `8 -> 0` mutation removes entirely.
         assertTrue("entered from below: $start vs $settled", start > settled)
-        assertTrue("and by no more than the frozen 14dp", start - settled <= expected + 1f)
+        assertTrue("and by no more than the frozen 8dp", start - settled <= expected + 1f)
     }
 
     // ── Row 2.12 — `.danger` ────────────────────────────────────────────────────────────────────────
 
     @Test
-    fun `Delete is drawn in consequence, and its neighbours are not`() {
+    fun `Delete is drawn in jam-text, and its neighbours are not`() {
         host(benchContextVerbs(BenchVerbKind.TEXT))
         val bmp = hostBitmap()
         // The darkest pixel of each control is its glyph. Delete's must differ from Edit's: dropping
         // `.danger` makes them identical, which is exactly the mutation this kills.
         assertNotEquals(inkOf(bmp, Copy.BenchVerbs.EDIT), inkOf(bmp, Copy.BenchVerbs.DELETE))
 
-        // …and differing is not enough: `.danger` names ONE colour. Swapping `consequence` for any other
-        // dark tint would survive the line above, so the glyph is placed against both candidates and must
-        // land nearer `consequence` than `ink` — while Edit's lands the other way round. (Nearer, not
-        // equal: the sampled pixel is an antialiased 1.7px stroke, so it carries some `sheet` with it.)
-        val consequence = consequenceArgb
-        val ink = inkArgb
+        // …and differing is not enough: `.ctx button.danger{color:var(--jam-text)}` (`v21-bench.html:232`)
+        // names ONE colour — jam is V2.1's only urgent one. Swapping it for any other dark tint would
+        // survive the line above, so the glyph is placed against both candidates and must land nearer
+        // `jamText` than the `inkSoft` its neighbours use — while Edit's lands the other way round.
+        // (Nearer, not equal: the sampled pixel is an antialiased stroke carrying some `paper` with it.)
         assertTrue(
-            "Delete's glyph is drawn in consequence, not in ink",
-            dist(inkOf(bmp, Copy.BenchVerbs.DELETE), consequence) < dist(inkOf(bmp, Copy.BenchVerbs.DELETE), ink),
+            "Delete's glyph is drawn in jamText, not in inkSoft",
+            dist(inkOf(bmp, Copy.BenchVerbs.DELETE), jamTextArgb) <
+                dist(inkOf(bmp, Copy.BenchVerbs.DELETE), inkSoftArgb),
         )
         assertTrue(
-            "…and Edit's is drawn in ink, not in consequence",
-            dist(inkOf(bmp, Copy.BenchVerbs.EDIT), ink) < dist(inkOf(bmp, Copy.BenchVerbs.EDIT), consequence),
+            "…and Edit's is drawn in inkSoft, not in jamText",
+            dist(inkOf(bmp, Copy.BenchVerbs.EDIT), inkSoftArgb) <
+                dist(inkOf(bmp, Copy.BenchVerbs.EDIT), jamTextArgb),
         )
     }
 
@@ -320,50 +359,68 @@ class BenchContextBarTest {
 
     @Test
     fun `an inert verb is drawn inert, and not merely announced so`() {
-        // Row 2.13a's other half. `enabled = false` on a TextButton dims via LocalContentColor, and this
-        // bar overrides the content colour explicitly — so without the alpha the control says "disabled"
-        // to TalkBack and "tap me" to the eye. `.icon-btn:disabled{opacity:.35}` (v2-bench.html:206) is
-        // the corpus's own answer, transcribed here rather than read from production so the constant and
-        // the assertion cannot agree with each other on a wrong value.
+        // Row 2.13a's other half: without the alpha the control says "disabled" to TalkBack and "tap me"
+        // to the eye. `.icon-btn:disabled{opacity:.35}` (`v21-bench.html:345`) is the corpus's own answer,
+        // transcribed here rather than read from production so the constant and the assertion cannot agree
+        // with each other on a wrong value.
         host(benchContextVerbs(BenchVerbKind.TEXT))
         val bmp = hostBitmap()
-        val ink = inkArgb
         val font = inkOf(bmp, Copy.BenchVerbs.FONT)
         val edit = inkOf(bmp, Copy.BenchVerbs.EDIT)
         assertNotEquals("Font is dimmed; Edit is not", edit, font)
-        // .35 alpha over `sheet` lands between the two, and much nearer sheet than full ink.
+        // .35 alpha over `paper` lands between the two, and much nearer paper than full inkSoft.
         assertTrue("the dimmed glyph is lighter than the live one", luma(font) > luma(edit))
-        assertTrue("…and still darker than the sheet it sits on", luma(font) < luma(sheetArgb))
-        assertTrue("the dim is the frozen .35, not an arbitrary fade", dist(font, ink) > dist(font, sheetArgb))
+        assertTrue("…and still darker than the paper it sits on", luma(font) < luma(paperArgb))
+        assertTrue(
+            "the dim is the frozen .35, not an arbitrary fade",
+            dist(font, inkSoftArgb) > dist(font, paperArgb),
+        )
     }
 
     @Test
-    fun `the bar carries the frozen 1px chrome-line border`() {
+    fun `the bar carries the frozen 1_5dp ink border`() {
         // Row 2.10 claimed a border nothing read. The straight middle of the left edge is unaffected by
-        // the corner arcs, so the ring there is the border colour and nothing else.
+        // the corner arcs, so the ring there is the border colour and nothing else. V2.1 draws it in real
+        // `ink` at 1.5dp, where V2 used a 1dp `--chrome-line`.
         host(benchContextVerbs(BenchVerbKind.TEXT))
         val bmp = hostBitmap()
         val hostB = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
         val barB = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val x = (barB.left - hostB.left).toInt() + 1
         val y = ((barB.top + barB.bottom) / 2f - hostB.top).toInt()
-        val chromeLine = chromeLineArgb
         assertTrue(
-            "the bar's edge is chrome-line, not its own sheet fill",
-            dist(bmp.getPixel(x, y), chromeLine) < dist(bmp.getPixel(x, y), sheetArgb),
+            "the bar's edge is ink, not its own paper fill",
+            dist(bmp.getPixel(x, y), inkArgb) < dist(bmp.getPixel(x, y), paperArgb),
         )
     }
 
     // ── Pixel helpers ───────────────────────────────────────────────────────────────────────────────
 
-    /** The darkest pixel inside a verb's box — its glyph, whatever the glyph happens to be. */
+    /**
+     * The darkest pixel inside a verb's box — its glyph, whatever the glyph happens to be.
+     *
+     * **The probe, not the paint.** It used to scan the whole box inset 2px, and once V2.1 made `.ctx`
+     * a content-width pill that read the wrong thing entirely. The bar's radius is now half its height
+     * (29dp), and the card's own padding is 4dp — so the arc at each END of the pill cuts *through* the
+     * first and last verbs' boxes. Inside Edit's box and inside Delete's box the corners are therefore
+     * canvas, and [BACKDROP] (`#102030`, luma 96) is darker than any glyph drawn in `inkSoft` or
+     * `jamText` on `paper`. Both ends returned the same backdrop pixel, and `assertNotEquals` failed on
+     * two verbs that are painted in different colours. The `ink` border traced by that same arc is the
+     * other non-glyph the old range could reach.
+     *
+     * So the scan is narrowed to the middle 40 % of the box, which the pill's arc cannot reach at any
+     * y the box occupies, and which always contains the whole 17dp icon — the glyph the caller asked
+     * for. Written as a fraction of the measured box rather than as a pixel count, so it does not
+     * encode this raster's density.
+     */
     private fun inkOf(bmp: Bitmap, label: String): Int {
         val hostB = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
         val b = composeRule.onNodeWithTag("$BenchContextBarTestTag-$label").fetchSemanticsNode().boundsInWindow
+        val margin = b.width * 0.3f
         var best = 0
         var bestScore = Int.MAX_VALUE
         for (y in (b.top - hostB.top).toInt() + 2 until (b.bottom - hostB.top).toInt() - 2) {
-            for (x in (b.left - hostB.left).toInt() + 2 until (b.right - hostB.left).toInt() - 2) {
+            for (x in (b.left + margin - hostB.left).toInt() until (b.right - margin - hostB.left).toInt()) {
                 val p = bmp.getPixel(x, y)
                 val score = luma(p)
                 if (score < bestScore) { bestScore = score; best = p }

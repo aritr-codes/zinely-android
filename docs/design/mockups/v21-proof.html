@@ -887,8 +887,8 @@ function act(x0, y0, x1, y1, heads){
   pts.push(p(len-H,-S), p(len-H,-W));
   return `<polygon class="hollow" points="${pts.join(' ')}"/>`;
 }
-const cells = () => [[Q1-22,CY-46,'5'],[Q1+22,CY-46,'4'],[Q3-22,CY-46,'3'],[Q3+22,CY-46,'6'],
-                     [Q1-22,CY+50,'8'],[Q1+22,CY+50,'1'],[Q3-22,CY+50,'2'],[Q3+22,CY+50,'7']]
+const cells = () => [[Q1-22,CY-46,'5'],[Q1+22,CY-46,'4'],[Q3-22,CY-46,'3'],[Q3+22,CY-46,'2'],
+                     [Q1-22,CY+50,'6'],[Q1+22,CY+50,'7'],[Q3-22,CY+50,'8'],[Q3+22,CY+50,'1']]
   .map(([x,y,t]) => `<text class="cellno" x="${x}" y="${y}">${t}</text>`).join('');
 
 const STEPS = [
@@ -1070,3 +1070,25 @@ addEventListener('keydown', e => {
   else if (e.key === 'ArrowRight') foldOpen ? foldStep(1)  : turn(1);
 });
 </script>
+
+<!-- ===========================================================================
+     AMENDMENT LOG — deliberately the LAST lines in the file, so nothing above
+     shifts and existing line citations stay valid.
+
+     P1 (ADR-102, 2026-08-14) — BUG FIX under DESIGN FREEZE (freeze permits bug
+     fixes; this changes no layout, no interaction and no visual language).
+
+     `cells()` (the eight page numbers drawn on the flat sheet in fold steps 1
+     and 4) read  top 5 4 3 6 / bottom 8 1 2 7.  That sheet does not exist.  The
+     imposition engine — the physical-print-validated authority per ADR-007 —
+     imposes  top 5 4 3 2 / bottom 6 7 8 1, and ADR-050 already ruled this exact
+     array wrong and corrected it ONCE, for the `.minisheet` illustration only.
+     This second illustration was missed by that correction and kept the bad
+     numbers, so the fold guide and the exported PDF disagreed about five of the
+     eight pages, with the PDF correct.  Corrected in place, line for line.
+
+     Compose does NOT copy these literals.  Per ADR-050 it derives the sheet from
+     the engine convention (`decorativeImpositionRows()`); the numbers here are
+     documentation of that derivation, and a future convention change must be
+     made in the engine, where both surfaces will follow it.
+=========================================================================== -->
