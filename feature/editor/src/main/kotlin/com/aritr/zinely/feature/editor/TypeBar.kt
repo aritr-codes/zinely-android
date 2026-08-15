@@ -351,7 +351,15 @@ internal fun TypeBar(
                 modifier = Modifier
                     .width(IntrinsicSize.Max)
                     .padding(horizontal = ZinelyV21Dimens.gapLg, vertical = ZinelyV21Dimens.gapMd),
-                verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+                // `.typebar{gap:var(--gap-md)}` — 12dp, and **it is a touch-target measurement, not a
+                // rhythm choice** (spec note dated 2026-08-15). A device dump reported Bold/Italic at
+                // 48.0 x 46.1dp: the row below them is the 30dp [Swatch], whose input-layer expansion
+                // reaches 9dp past its paint, which is further than an 8dp gap. The Colour row claims that
+                // strip first (the pruning walk visits siblings in reverse) and the Style row's granted
+                // 48dp target is cut back into its own paint. At 12dp the pot's reach lands inside the gap
+                // and every row keeps its full target. Raising the toggles to 48dp would NOT have fixed
+                // it — the strip is taken from whatever paint is there.
+                verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
             ) {
                 TypeRow(Copy.Type.ROW_SIZE) {
                     SizeStepper(
@@ -383,7 +391,9 @@ internal fun TypeBar(
                     )
                 }
                 TypeRow(Copy.Type.ROW_STYLE) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // `.tytog{gap:var(--gap-sm)}`. This was a bare `6.dp` — a literal with no source, in
+                    // the one cluster of the four that did not use the token its siblings all use.
+                    Row(horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
                         // Both toggles route through the shared verb the Ctrl/Cmd+B/I shortcuts also call,
                         // so the pointer and keyboard paths are one implementation (ADR-055 §4). The
                         // toggleable `on` is ignored: the verb re-reads `element.style`, the same flip.
@@ -777,7 +787,7 @@ private fun StyleToggle(
 private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
     Row(
         modifier = Modifier.selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        horizontalArrangement = Arrangement.spacedBy(SwatchGap),
     ) {
         TextInk.entries.forEach { ink -> Swatch(ink = ink, selected = ink.rgba == color, onInk = onInk) }
     }
@@ -810,15 +820,19 @@ private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
  * `ViewConfiguration.minimumTouchTargetSize` regardless (`NodeCoordinator.touchBoundsInRoot`);
  * [TypeBarTest] asserts exactly that on this swatch.
  *
- * **Honest ceiling, and its one stale number.** Expansion is 48dp, but the pitch is smaller than that, so
- * neighbouring expansions overlap and Compose prunes the overlap before reporting bounds to the
- * accessibility layer (`SemanticsOwner` intersects each node against the unaccounted region, which
- * `AndroidComposeViewAccessibilityDelegateCompat` hands to `setBoundsInScreen`). At V1's 40dp pitch (32dp
- * paint + 8dp gap) that was **measured** as four of five swatches reporting 40×48 to TalkBack rather than
- * 48×48 — clearing WCAG 2.5.8 AA (24×24) but under Material's 48dp guideline. ⚠ V2.1's `.pot` is 30dp on
- * the same 8dp gap, so the pitch is **38dp** and that measurement no longer describes this control. It
- * must be re-dumped on a device, not re-reasoned from here. Tapping is unaffected either way: a hit inside
- * the paint always wins outright, and the gaps resolve to the nearest pot.
+ * **The pitch is [SwatchGap] + [SwatchSize] = 48dp, and that number is the whole reason the gap is 18dp.**
+ * Expansion is 48dp; if the pitch is smaller, neighbouring expansions overlap and Compose prunes the
+ * overlap before reporting bounds to the accessibility layer (`SemanticsOwner.getAllUncoveredSemanticsNodes`
+ * intersects each node against the unaccounted region, which `AndroidComposeViewAccessibilityDelegateCompat`
+ * hands to `setBoundsInScreen`). That is not a theory: at V1's 40dp pitch four of five swatches were
+ * measured reporting 40×48, and at V2.1's first 38dp pitch (30dp pot + `gapSm`) a device dump reported
+ * **38.1 × 48.0dp** for Ink / Coral / Teal / Blue — only Ochre reached 48×48, and only because it has no
+ * right-hand neighbour. Both cleared WCAG 2.5.8 AA (24×24) and both were under Material's 48dp guideline.
+ * At 48dp pitch the expansions abut exactly and nothing is pruned. Tapping was unaffected throughout: a hit
+ * inside the paint always wins outright, and the gaps resolve to the nearest pot.
+ *
+ * `TypeBarSwatchPlatformA11yTest` asserts this on the **platform** tree, which is the only tree that can
+ * fail: `touchBoundsInRoot` is the *pre*-pruning value and reported a flat 48dp all through the defect.
  *
  * Reserving the modifier here was a real layout bug, not a harmless belt-and-braces: it answers the
  * `IntrinsicSize.Max` query above (it overrides `measure`, not the intrinsics, so the default
@@ -872,6 +886,18 @@ private fun Swatch(ink: TextInk, selected: Boolean, onInk: (TextInk) -> Unit) {
 
 /** `.pot{width:30px;height:30px}`. */
 private val SwatchSize = 30.dp
+
+/**
+ * `.tyinks{--gap-pot:18px}` — the ink row's gap, and the one number in this card derived from the
+ * PLATFORM rather than from the corpus.
+ *
+ * It is `48dp - `[SwatchSize], not a spacing token: 18dp is exactly the gap at which the swatch pitch
+ * reaches the platform's minimum touch target, so two neighbouring expansions abut instead of overlapping
+ * and neither is pruned out of the accessibility tree (see [Swatch]). Every other cluster in the card sits
+ * on `gapSm`; this one cannot, and rounding it up to `gapXl` (24dp) would widen the Colour row 24dp to buy
+ * nothing. If either the pot size or `ViewConfiguration.minimumTouchTargetSize` moves, this moves with it.
+ */
+private val SwatchGap = 18.dp
 
 /** `.pot[aria-checked="true"]::after{inset:-5px}` — how far the ring sits outside the pot. */
 private val SwatchRingInset = 5.dp

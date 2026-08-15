@@ -148,8 +148,16 @@ class TypeBarGoldenTest {
     }
 
     /**
-     * The card's `width:max-content` width, **measured rather than derived** — 278.5dp under this
+     * The card's `width:max-content` width, **measured rather than derived** — 318.5dp under this
      * fixture's density and font scale.
+     *
+     * ⚠ Was 278.5dp until 2026-08-15. The +40dp is `SwatchGap` going 8dp → 18dp so the swatch PITCH
+     * reaches the platform's 48dp minimum touch target (30 + 18 = 48); a device dump had four of the five
+     * pots reporting 38.1dp wide to the accessibility tree because neighbouring 48dp expansions overlapped
+     * and the overlap is pruned before `setBoundsInScreen`. The pots still paint 30dp — no control
+     * inflated, which is what the number below is here to prove — and the card is still inside the frozen
+     * `max-width:calc(100% - 24px)` on the narrowest phone
+     * ([TypeBarTest.the_card_honours_the_frozen_max_width_on_the_smallest_supported_phone]).
      *
      * V1's version of this KDoc computed the number from the rules (`28 + 60 + 192 = 280`) and named
      * Colour as the widest row. The V2.1 re-skin moves both terms in that sum and in opposite directions:
@@ -173,8 +181,8 @@ class TypeBarGoldenTest {
         val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
         with(composeRule.density) {
             assertEquals(
-                "the Type bar is not the measured 278.5dp wide; got ${card.width.toDp()}",
-                278.5f, card.width.toDp().value, 0.5f,
+                "the Type bar is not the measured 318.5dp wide; got ${card.width.toDp()}",
+                318.5f, card.width.toDp().value, 0.5f,
             )
         }
     }

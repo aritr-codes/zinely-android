@@ -197,9 +197,17 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    measurement of the room and not a token — and the room did not change.  A first draft of this rule
    wrote 76px, which a review caught as a literal with no source: exactly the interpolation this file
    claims not to do, in the one place nobody looks. */
+/* ⚠ 2026-08-15 — THE ROW GAP IS --gap-md (12px), NOT --gap-sm (8px), FOR THE SAME REASON THE POT GAP
+   BELOW IS 18px: the vertical axis of the same touch-target measurement.  The device dump reported Bold
+   and Italic at 48.0 x 46.1 dp — under the minimum on the VERTICAL axis, and not because those buttons
+   are 46px (a 46px control is granted a 48px target for free).  The pot below them is 30px, so its own
+   expansion reaches 9px past its paint, which is further than an 8px row gap; the Colour row claims that
+   strip first and the Style row's target is pruned back into its own paint.  At 12px the pot's 9px reach
+   lands inside the gap and every row keeps the target it was granted.  The card grows 12px taller in
+   total, which is the whole cost. */
 .typebar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--gap-md) + 74px);
   z-index:34;width:max-content;max-width:calc(100% - 24px);
-  display:flex;flex-direction:column;align-items:stretch;gap:var(--gap-sm);
+  display:flex;flex-direction:column;align-items:stretch;gap:var(--gap-md);
   background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-lg);
   padding:var(--gap-md) var(--gap-lg);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line)}
@@ -308,8 +316,26 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    separates any fill from the card's --paper ground whatever the fill becomes, which is
    the reasoning `v21-bench.html:274-278` already records for `.chip .sw`.  V1 painted the
    Coral swatch through `ZinelyTheme.colors.coralText` — a themed lookup, on the one
-   control whose whole contract is that it is not themed. */
-.tyinks{display:flex;gap:var(--gap-sm)}
+   control whose whole contract is that it is not themed.
+
+   ⚠ 2026-08-15 — THE POT GAP IS 18px, NOT --gap-sm, AND THE REASON IS A TOUCH TARGET.
+   Measured, not reasoned: `adb shell uiautomator dump` on a SM-A176B (Android 16, density
+   override 420) with this panel open reported Ink / Coral / Teal / Blue at 38.1 x 48.0 dp
+   on the PLATFORM accessibility tree — under the 48dp minimum on the horizontal axis.
+   Only Ochre came back 48.0 x 48.0, and only because it has no right-hand neighbour.
+
+   The pot paints at 30px and that does not move.  What was wrong is the PITCH: 30px pot +
+   8px gap = 38px, while the platform expands every control's touch bounds to 48px, so two
+   neighbouring expansions overlap by 10px and the tree prunes the overlap before it
+   reports a hit-rect.  A control that paints correctly therefore reported a target 10dp
+   narrower than the one it was granted.  18px is the exact gap at which the pitch reaches
+   48px and the expansions stop colliding — 30 + 18 = 48 — so it is named here rather than
+   rounded up to --gap-xl (24px), which would widen the row 24px for nothing.
+
+   Named, not a literal, for the same reason every other number in this file is: it is a
+   measurement of the platform's minimum target divided against the pot, and the next
+   reader needs to see which of the two it follows if either moves. */
+.tyinks{--gap-pot:18px;display:flex;gap:var(--gap-pot)}
 .pot{width:30px;height:30px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
   cursor:pointer;padding:0;position:relative}
 .pot[aria-checked="true"]::after{content:"";position:absolute;inset:-5px;border:1.6px dashed var(--ink);

@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.Role
@@ -229,6 +230,17 @@ private fun BarButton(
                 contentDescription = description
                 role = Role.Button
                 if (state != null) stateDescription = state
+                // ⚠ `clearAndSetSemantics` replaces this node's own semantics as well as its
+                // descendants', so it deletes the `OnClick` action `IconButton` set — and the platform
+                // derives `AccessibilityNodeInfo.isClickable` and `ACTION_CLICK` from that action alone.
+                // Without this line every button in the transform row reports `clickable=false
+                // focusable=false` to TalkBack while still working under a finger: measured on device
+                // (SM-A176B, Android 16) as nine `android.widget.Button` nodes, all non-clickable, while
+                // `Reframe`/`Delete` one bar above reported `clickable=true`. Re-declaring the action is
+                // what the Align/Style clusters in `TypeBar.kt` already do; this bar was the one that
+                // cleared without restoring. This row is the WCAG 2.5.7 non-dragging alternative to
+                // nudge/scale/rotate, so losing it costs exactly the users it exists for.
+                onClick { fire(); true }
             },
     ) {
         Box(

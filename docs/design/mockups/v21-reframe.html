@@ -34,6 +34,25 @@
      │  in a session offers a single-pointer path.  (a) does not license removing   │
      │  (b).  That tension is the most important thing this file records.           │
      │                                                                             │
+     │  AMENDMENT 2026-08-15 -- THE PHOTO IS NOT CLIPPED, AND THE PAGE NEVER DIMS.  │
+     │  This file specified `.frame{overflow:hidden}` and said nothing about a      │
+     │  scrim, so the shipped behaviour appeared in no specification at all.  Both  │
+     │  readings were wrong, and ADR-090 / OD-12 is why: THE ARTIFACT DOES NOT      │
+     │  DIM; THE ROOM AROUND IT MAY.                                                │
+     │                                                                             │
+     │    * The photo is NOT clipped to the frame.  Its overflow spills out and is  │
+     │      dimmed, because that spill IS the teach -- the picture moves, and you   │
+     │      see what is being cropped away.  Clipping it deletes the teach.         │
+     │    * The scrim is bounded to THE PHOTO'S OWN RECTANGLE, minus the frame      │
+     │      window.  It is not a stage-wide dimmer.  Where the photo does not       │
+     │      overflow (the fit binary's WHOLE, which letterboxes inside the frame)   │
+     │      no scrim paints at all.                                                 │
+     │    * The PAGE is never dimmed.  Entering Reframe must not repaint the        │
+     │      user's paper -- it is the same rule this file already states as A       │
+     │      SESSION CHANGES YOUR TOOLS, NOT YOUR ROOM, applied to the sheet.  The   │
+     │      earlier whole-stage scrim turned a cream sheet muddy taupe on device,   │
+     │      which is that rule exactly inverted.                                    │
+     │                                                                             │
      │  STATUS.  PROPOSAL.  The owner freezes; nothing here is authoritative until  │
      │  they do.  Companion to v21-bench.html / v21-library.html / v21-proof.html,  │
      │  whose token block, fonts and reset this file shares byte-for-byte.          │
@@ -138,8 +157,13 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   border:1.5px solid var(--ink);border-radius:var(--br-sm);box-shadow:var(--hard) var(--hard) 0 var(--ink-line);
   overflow:hidden}
 
-/* The photo's frame — the box the photo is being fitted INTO.  During a session it
-   is the one lit thing on the page: everything else on the page dims to --hair. */
+/* The photo's frame — the box the photo is being fitted INTO.  It is the one LIT thing
+   on the page: other elements recede to --hair, an ink weight, NOT a scrim over them.
+
+   AMENDMENT 2026-08-15 (see header): `overflow:hidden` below is a PROTOTYPE CONVENIENCE,
+   not the specified behaviour.  The real surface does not clip the photo — the overflow
+   spills and is dimmed, bounded to the photo's own rectangle.  Nothing dims the page.
+   ADR-090 / OD-12: the artifact does not dim; the room around it may. */
 .frame{position:absolute;left:14%;top:18%;width:72%;height:46%;overflow:hidden;
   border-radius:var(--br-xs);background:var(--desk-edge)}
 .frame img,.frame .fake{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(1.18);

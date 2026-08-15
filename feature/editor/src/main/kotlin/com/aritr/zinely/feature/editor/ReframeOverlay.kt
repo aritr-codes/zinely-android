@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.PathEffect
@@ -164,30 +163,37 @@ public fun ReframeOverlay(
             // box-ratio fallback, and painting the photo through it would show a distorted picture the page
             // will never render. Unreachable in practice (a master that decodes has a readable header), but
             // drawing nothing beats drawing a lie (Observation O-1).
-            if (framable && decoded != null) {
-                val dst = photoDestPx(draft, frame, pratio, bratio)
-                if (dst.width >= 1f && dst.height >= 1f) {
-                    drawImage(
-                        image = decoded.bitmap,
-                        dstOffset = IntOffset(dst.left.roundToInt(), dst.top.roundToInt()),
-                        dstSize = IntSize(dst.width.roundToInt(), dst.height.roundToInt()),
-                    )
-                }
+            val dst = if (framable) photoDestPx(draft, frame, pratio, bratio) else null
+            if (dst != null && decoded != null && dst.width >= 1f && dst.height >= 1f) {
+                drawImage(
+                    image = decoded.bitmap,
+                    dstOffset = IntOffset(dst.left.roundToInt(), dst.top.roundToInt()),
+                    dstSize = IntSize(dst.width.roundToInt(), dst.height.roundToInt()),
+                )
             }
-            // 2) Scrim everything except the frame window (four rects; extended well past the stage so the
-            // rotated case still covers). Dims the overflow so the frame reads as the kept region.
+            // 2) Scrim the PHOTO'S OVERFLOW ONLY — `dst - frame`, never the stage.
             //
-            // ⚠ Accepted deviation, new with the rounded frame: the spec is `.frame{overflow:hidden}`, so
-            // there the photo is *clipped* to the rounded rect. Here it is deliberately unclipped (the
-            // "the picture moves" teach), and these four rects are square, so in each 4dp corner arc a
-            // sliver of photo paints outside the ground and outside the boundary, undimmed. It did not
-            // exist while the boundary was a square `drawRect`; the radius creates it. Clipping the photo
-            // to a rounded rect and drawing it twice would close it, and is not worth 4dp of corner.
-            val big = maxOf(size.width, size.height) * 2f
-            drawRect(scrim, topLeft = Offset(-big, -big), size = Size(big * 2f, frame.top + big)) // above
-            drawRect(scrim, topLeft = Offset(-big, frame.bottom), size = Size(big * 2f, big)) // below
-            drawRect(scrim, topLeft = Offset(-big, frame.top), size = Size(frame.left + big, frame.height)) // left
-            drawRect(scrim, topLeft = Offset(frame.right, frame.top), size = Size(big, frame.height)) // right
+            // ⚠ INVARIANT (ADR-090 / OD-12: *"the artifact does not dim; the room around it may"*). This
+            // used to paint four rects sized `max(size)*2` — i.e. everything outside the frame, to the
+            // edges of the stage and past them. On a device that dimmed the user's cream paper sheet to a
+            // muddy taupe the moment Reframe opened, and every other element on it: the rule exactly
+            // inverted, the artifact dimmed and the room untouched. Verified on hardware, not theorised.
+            //
+            // The scrim's job is narrow and worth keeping: make the frame read as *the kept region* by
+            // showing the spilled part of the photo, dimmed, so the "the picture moves" teach shows what
+            // is being cropped away. That needs the photo's overflow and nothing else. So the rects are
+            // bounded to [dst] — no photo (unmeasurable/undecodable) or no overflow (WHOLE letterboxes
+            // inside the frame) means no scrim paints at all.
+            //
+            // ⚠ Accepted deviation, from the rounded frame — and note it is now only about CORNERS. The
+            // spec's `.frame{overflow:hidden}` is a prototype convenience, not the specified behaviour
+            // (`v21-reframe.html`, amendment 2026-08-15): unclipped-and-dimmed IS the spec. What still
+            // deviates is that these rects are square while the frame is rounded, so in each 4dp corner arc
+            // a sliver of photo paints outside the ground and outside the boundary, undimmed. Clipping the
+            // photo to a rounded rect and drawing it twice would close it, and is not worth 4dp of corner.
+            if (dst != null) {
+                for (r in photoScrimRectsPx(dst, frame)) drawRect(scrim, topLeft = r.topLeft, size = r.size)
+            }
             // 3) The drawn boundary — `.frame::after{border:1.6px dashed var(--ink);border-radius:var(--br-xs)}`.
             val dashPx = SelectionOutlineDashDp.toPx()
             drawRoundRect(
@@ -235,6 +241,30 @@ private fun frameRectPx(element: ImageElement, screenPxPerPt: Double, pageOffset
     val w = (element.transform.widthPt * screenPxPerPt).toFloat()
     val h = (element.transform.heightPt * screenPxPerPt).toFloat()
     return Rect(left, top, left + w, top + h)
+}
+
+/**
+ * The set difference `dst - frame`: the parts of the drawn photo that spill outside the frame window, as up
+ * to four non-overlapping rects (above / below / left / right of the window), each clipped to [dst].
+ *
+ * ⚠ INVARIANT (ADR-090 / OD-12): **nothing here may fall outside [dst]**. The scrim dims the user's
+ * cropped-away photo; it must never dim the page the photo sits on. Clamping the window's edges into
+ * [dst]'s range is what guarantees it — it also makes every returned rect non-negative, and returns an
+ * empty list when the photo does not overflow at all (WHOLE letterboxes *inside* the frame, so there is no
+ * overflow to dim and no scrim should paint).
+ */
+internal fun photoScrimRectsPx(dst: Rect, frame: Rect): List<Rect> {
+    if (dst.isEmpty) return emptyList() // degenerate photo rect: nothing drawn, so nothing to dim
+    val l = frame.left.coerceIn(dst.left, dst.right)
+    val r = frame.right.coerceIn(dst.left, dst.right)
+    val t = frame.top.coerceIn(dst.top, dst.bottom)
+    val b = frame.bottom.coerceIn(dst.top, dst.bottom)
+    return listOf(
+        Rect(dst.left, dst.top, dst.right, t), // above
+        Rect(dst.left, b, dst.right, dst.bottom), // below
+        Rect(dst.left, t, l, b), // left
+        Rect(r, t, dst.right, b), // right
+    ).filter { it.width > 0f && it.height > 0f }
 }
 
 /**

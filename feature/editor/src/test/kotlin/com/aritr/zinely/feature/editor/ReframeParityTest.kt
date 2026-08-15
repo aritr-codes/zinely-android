@@ -142,4 +142,42 @@ class ReframeParityTest {
             assertEquals("cropped aspect must equal the box aspect for ${iw}x$ih", bratio, croppedAspect, 1e-9)
         }
     }
+
+    /**
+     * ADR-090 / OD-12 — *"the artifact does not dim; the room around it may."* The scrim dims the photo's
+     * cropped-away overflow and nothing else. The shipped bug was four rects sized `max(stage)*2`, which
+     * dimmed the paper sheet itself; this asserts the containment that fix rests on.
+     */
+    @Test
+    fun `the scrim never paints outside the photo`() {
+        val frame = Rect(100f, 100f, 300f, 300f)
+
+        // Given a FILL photo overflowing the frame — then every scrim rect lies inside the photo, and
+        // none of them intrudes on the frame window.
+        val dst = photoDestPx(FramingDraft(FrameFit.FILL, 1.0, 0.0, 0.0), frame, 2.0, 1.0)
+        val rects = photoScrimRectsPx(dst, frame)
+        assertEquals("a wide photo in a square frame overflows left and right", 2, rects.size)
+        for (r in rects) {
+            val inside = r.left >= dst.left && r.top >= dst.top && r.right <= dst.right && r.bottom <= dst.bottom
+            assertEquals("scrim must not escape the photo: $r vs $dst", true, inside)
+            assertEquals("scrim must not cover the kept region: $r", false, r.overlaps(frame))
+        }
+
+        // Given overflow on BOTH axes (zoomed FILL) — then all four rects appear and together they cover
+        // exactly the overflow: photo area minus frame area. Without the clamp the rects would spill past
+        // the photo and this area sum would come out too large — which is the bug, stated as arithmetic.
+        val zoomed = photoDestPx(FramingDraft(FrameFit.FILL, 2.5, 0.0, 0.0), frame, 2.0, 1.0)
+        val four = photoScrimRectsPx(zoomed, frame)
+        assertEquals("a zoomed photo overflows on all four sides", 4, four.size)
+        assertEquals(
+            "the scrim must cover exactly the overflow",
+            (zoomed.width * zoomed.height - frame.width * frame.height).toDouble(),
+            four.sumOf { (it.width * it.height).toDouble() },
+            1e-3,
+        )
+
+        // Given no overflow (WHOLE letterboxes inside the frame) — then nothing is dimmed at all.
+        val whole = photoDestPx(FramingDraft(FrameFit.WHOLE, 1.0, 0.0, 0.0), frame, 2.0, 1.0)
+        assertEquals("WHOLE has no overflow, so no scrim", emptyList<Rect>(), photoScrimRectsPx(whole, frame))
+    }
 }
