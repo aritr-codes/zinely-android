@@ -378,6 +378,11 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 
 # 9. Decor / graphics strategy
 
+> ⚠ **§9.1–§9.5 are SUPERSEDED by [SUPPLIES-SPEC.md](SUPPLIES-SPEC.md)** (2026-08-15), which specifies the
+> model, render, validation and accessibility contracts in full. They are kept below as the argument that
+> produced them, with each superseded ruling marked in place. **Where the two differ, SUPPLIES-SPEC wins.**
+> §9.6 (ships now / waits / never) is direction and stays authoritative here.
+
 **Decor is a first-class primitive and ships.** Not because composition tools have shapes, but because **the app decorates itself with tape, stamps and cut paper while withholding all three from the maker** — a product contradicting itself. Without it, Zinely is a text-and-photo editor; with it, it is a composition tool.
 
 ## 9.1 What a DecorElement is
@@ -390,10 +395,10 @@ Not a vector-drawing surface — that is a different product. A `DecorElement` c
 |---|---|
 | `supplyId` | Which of the sixteen authored primitives |
 | `transform` | Position, size, rotation — same `Transform` every element already uses |
-| `ink` | One of the five named colours. Single-coverage, so tinting is exact |
+| `ink` | ⚠ **SUPERSEDED** — read *"one swatch from the content palette"*. "Five named colours" was an error: five is the count of V2.1 **chrome** roles, and [ADR-090](../DECISIONS.md#adr-090) keeps chrome off the sheet. See [SUPPLIES-SPEC §0 O-A](SUPPLIES-SPEC.md) |
 | `mirrored: Boolean` | Nine of sixteen are asymmetric, so mirror earns its place |
 
-🟨 **INFERRED** (from `Document.kt` structure, not yet written): this is a schema v1→v2 addition with a migrator. Existing documents contain no decor, so migration is additive and total.
+⚠ **SUPERSEDED — there is no schema bump and no migrator.** `Element` is a `@Serializable` sealed interface and `JsonDocumentSerializer.kt:39` sets `classDiscriminator = "type"`, so kotlinx registers the subclass automatically. The earlier 🟨 INFERRED note was right that migration is additive and total, and wrong about the mechanism: nothing needs migrating. [SUPPLIES-SPEC §2.1](SUPPLIES-SPEC.md).
 
 ## 9.2 The vocabulary — sixteen primitives, four families
 
@@ -420,13 +425,14 @@ Sixteen is argued from shipped systems, not a study: this repo's own cover gramm
 
 **Behaves** — identically to every other element: two-finger transform, snap guides, nudge, layering, undo. **Decor is not special**, which is the point: one selection model, three primitives.
 
-**Tilt** — a small rotation derived deterministically from the element id, so it is stable forever and survives reload. **No shuffle, no re-roll, no random position.** Randomness may set an initial value; it may never be a running behaviour.
+**Tilt** — ⚠ **WITHDRAWN.** Supplies land at **0°**. The frozen bench states the rule itself (`v21-bench.html:22-23`): *"the page never tilts. You are working on it; it sits square to you. (Tilt is for objects at rest…)"* — and a supply is placed *on* the page, in the act of working. A pre-tilted supply is a compositional decision the app made and the maker didn't. [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md); the app's craft knowledge is expressed as **per-family default size** instead (§5.2). The ban on shuffle, re-roll and random position stands and is reinforced.
 
 ## 9.4 Accessibility of Decor — part of its definition
 
 A decor element is not done when it renders. It is done when it has:
 - a spoken label naming the object, size and ink — *"Star, medium, berry ink"* — never "decor element 3";
-- ✅ **the eleven shared custom actions** (`EditorA11y.kt:61-77`), inherited by being an ordinary element — move ×4, larger, smaller, rotate ×2, forward, backward, delete. It needs no type-specific action;
+- ✅ **the eleven shared custom actions** (`EditorA11y.kt:61-77`), inherited by being an ordinary element — move ×4, larger, smaller, rotate ×2, forward, backward, delete;
+- ⚠ **SUPERSEDED — it needs two type-specific actions, total 13.** The frozen spec fixes the decor verb set at **Replace / Ink / Delete** (`v21-bench.html:71`), and the Constitution requires every gesture-driven action to have a named custom action — so `REPLACE_SUPPLY` and `CHANGE_INK` are both required. [SUPPLIES-SPEC §8](SUPPLIES-SPEC.md);
 - ⚠ an explicit branch in `EditorA11y.label()` — the `when` is exhaustive over sealed `Element` with no `else`, so this is a **compile error**, not a silent gap. The safe case.
 
 ## 9.5 The blast radius, corrected
@@ -438,7 +444,9 @@ A decor element is not done when it renders. It is done when it has:
 | `as?` casts | **13** repo-wide (6 in `EditorScreen.kt`: 367, 664, 1108, 1127, 1304, 1341) | Silent no-op |
 | `is`-guards | **4** — `LivePreview.kt:78` · `EditorA11y.kt:51,57` · `EditorGestures.kt:52` | Silent skip |
 
-✅ **PDF export is already vector-capable** (`PdfPageRenderer.kt:13-18`), so authored supplies print as vectors at any size — no raster stickers.
+⚠ **CORRECTED — this was true of the backend and false of the tape.** The PDF canvas can draw a vector path, but `core:render` emits only `FillRect`, `DrawImage` and `DrawTextBox` (`DrawCommand.kt:26,40,55`) — **there is no path-drawing command**, so nothing in the pipeline can ask it to. Vector supplies require a new `DrawShape` command plus pure-Kotlin geometry types. The cost is smaller than it sounds — there is exactly **one** replayer (ADR-028), so a single `when` arm serves preview, PNG, PDF and imposed sheets — but it is not zero, and this row previously implied it was. [SUPPLIES-SPEC §3](SUPPLIES-SPEC.md).
+
+⚠ **The blast radius above is necessary but not sufficient.** It counts the type-switch sites correctly; it does not count the new `DrawCommand` variant, the `AffineTransform2D.scale` factory, the replayer branch, the second anti-aliased `Paint`, the golden-tolerance policy, or the test fixtures. See [SUPPLIES-SPEC §10](SUPPLIES-SPEC.md) for the full sequence.
 
 ## 9.6 What ships now, what waits
 
@@ -509,7 +517,7 @@ Select a photo on a page that is half of a spread → **"Run this photo across b
 | Layer | What it does | Status |
 |---|---|---|
 | `SceneRenderer.render()` | `List<DrawCommand>`, pure Kotlin, rasterises nothing | ✅ ships |
-| `PdfPageRenderer` | `DrawCommand` → PDF bytes, **vector-capable** | ✅ ships |
+| `PdfPageRenderer` | `DrawCommand` → PDF bytes, **vector-capable** — but only for the three commands that exist; no path command ([SUPPLIES-SPEC §3.1](SUPPLIES-SPEC.md)) | ✅ ships |
 | `RasterPageRenderer` | `DrawCommand` → `Bitmap` at 300 px/pt | ✅ ships, called from **no `src/main` code** |
 | `SheetComposer.writePng` | imposed sheet → PNG | ✅ ships |
 | `ZineExporter:175` | `ExportFormat.PNG -> composer.writePng(...)` | ✅ ships, **unreachable** |
@@ -560,7 +568,7 @@ Every core creative operation is already reachable without a drag gesture — be
 |---|---|---|---|---|---|
 | **Text** | content + style — *"Text: 'summer', large, leaf ink"* | ✅ **12** = 11 + edit | 48dp | ✅ nudge/scale/rotate row (OD-11, WCAG 2.5.7) | page → elements in z-order → chrome |
 | **Image** | source + framing state | ✅ **13** = 11 + reframe + reset | 48dp | ✅ same | same |
-| **Decor** | object + size + ink — *"Star, medium, berry ink"* | **11 inherited** — no type-specific action, and none is needed | 48dp | ✅ inherited | same |
+| **Decor** | object + size + colour — *"Star, medium, berry"* | ⚠ **13** = 11 + replace + change-colour ([SUPPLIES-SPEC §8](SUPPLIES-SPEC.md)) — the earlier "11, none needed" was wrong: the frozen decor verb set is Replace / Ink / Delete | 48dp | ✅ inherited | same |
 | **Page** | *"Page 3 of 8, 4 items"* | go to · duplicate · **reorder** | 48dp | ⚠ **reorder needs a non-drag path** — "move earlier"/"move later" custom actions, not drag-only | grid order |
 | **Controls** | verb, not icon name | activate | ⚠ **two defects** | — | after content |
 | **Selection** | announced on change via `Announce` effect | — | — | ✅ `SelectAt` is tap-based | — |
@@ -712,7 +720,7 @@ The line alphabet · the tilt law · the stamped-label rule · the four motion c
 
 | # | Work | Depends on | Cost basis |
 |---|---|---|---|
-| X1 | **Decor primitive + sixteen supplies.** ADR first. ⚠ fix `BenchContextBar.kt:125` first — it *throws*. Schema v1→v2 + migrator | N2, A3/A7 | ✅ verified blast radius (§9.5) |
+| X1 | **Decor primitive + sixteen supplies** — specified in full by [SUPPLIES-SPEC.md](SUPPLIES-SPEC.md), whose §0 carries four open owner calls. ADR first. ⚠ fix `BenchContextBar.kt:125` (*throws*) **and `:129` `else -> null`** (silently no context bar — the quieter and more dangerous of the two). **No schema bump, no migrator** — kotlinx auto-registers the sealed subclass | N2, A3/A7, **X3b** | ⚠ **re-costed**: blast radius (§9.5) is necessary but not sufficient — add `DrawShape` + geometry types + `AffineTransform2D.scale` + replayer branch + AA `Paint` + golden tolerance + test fixtures ([SUPPLIES-SPEC §10](SUPPLIES-SPEC.md)) |
 | X2 | **Supplies tray** | X1 | 🟨 new surface, HTML spec first |
 | X3 | **Take a photo** | — | ✅ `FileProvider` already declared |
 | X3b | **Photocopier filter** ↑ *promoted from X13* — 1-bit Floyd–Steinberg over a downscaled bitmap | X3 | 🟨 pure Kotlin, fits `core:render`. With X3 it completes **shoot → dither → print**, the loop that makes Zinely a zine tool rather than a photo-layout tool |
@@ -724,7 +732,7 @@ The line alphabet · the tilt law · the stamped-label rule · the four motion c
 | X9 | **Spreads — all four** | X7 | ✅ geometry proven; ⚠ per-edge safe-area is the one engine change |
 | X10 | **Page images, reading order** | N11 | ✅ exporter ships; add per-page mode |
 | X11 | **Colophon** — paper default, typefaces + licences, one offline sentence, version | N6 | ✅ verified absent |
-| X12 | **Share-sheet receive** | — | 🟨 manifest + one destination decision |
+| X12 | **Share-sheet receive** ⚠ **RE-SEQUENCED to the front of X1's block** — see [SUPPLIES-SPEC §6](SUPPLIES-SPEC.md). Zinely declares exactly one `intent-filter` and it is the launcher, so *see something → share it into your zine* does nothing. It is independent of the whole decor programme, touches no network, and is the clearest expression of the Android advantage | — | ⚠ **re-costed**: small in code, **not** small in verification — `MainActivity` declares no `launchMode`, so `singleTop` + `onNewIntent`, task affinity, `ACTION_SEND_MULTIPLE`, permission-less URI reads and cold-start-into-import all come with it |
 | ~~X13~~ | **Photocopier filter — promoted to X3b.** ✅ The zine vocabulary is a *process* vocabulary, not an asset one (§16.3): the cut-and-paste look exists because the photocopier made showing your method free. This is the single highest identity-per-line item in the product and it was sequenced thirteenth | — | — |
 | X14 | **Actual-size preview** — true mm via `DisplayMetrics.xdpi` | — | 🟨 |
 | X15 | Retire the Material icon tile; replace the kebab | N2 | ✅ |

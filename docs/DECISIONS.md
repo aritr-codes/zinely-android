@@ -10822,3 +10822,137 @@ was narrowed to scope and sequencing, and permanence was escalated once with a d
 recommendation. **The owner adopted it on 2026-08-15.** Recorded because [§VI](design/V2-CONSTITUTION.md) requires
 amendments to be the owner's explicit act, and because the near-miss is instructive: *reading a constitution for
 its prohibitions and missing its permissions is the same error as the Amendment 1 failure, in the other direction.*
+
+---
+
+## ADR-105 {#adr-105}
+
+### The third primitive — `DecorElement`, and the draw command that does not exist yet
+
+**Status:** `Accepted` · 2026-08-15 · Owner-adopted (*"proceed with the decisions that will be best for Zinely"*)
+**Implements:** [ADR-104](#adr-104)'s curated-supply half, under [Amendment 3](design/V2-CONSTITUTION.md#amendment-log)
+**Specification:** [SUPPLIES-SPEC.md](design/SUPPLIES-SPEC.md) — supersedes [ZINE-DIRECTION.md §9.1–§9.5](design/ZINE-DIRECTION.md)
+**Sequenced behind:** X3b, the photocopier filter (§D-4 below)
+
+#### Context
+
+[ADR-104](#adr-104) closed online asset search and committed Zinely to owning the material vocabulary it
+provides. That decided *where supplies come from*. It did not decide *what a supply is in the model, how it
+reaches paper, or what it costs* — and the direction document's answer to the last question was wrong in a
+way that only reading the render layer exposes.
+
+#### Decision
+
+**Decor is a third `Element` — `DecorElement(supplyId, ink, mirrored)` — and the sealed set closes at three.**
+The document stores an *identifier*, never geometry: outlines live in `SupplyCatalog` as reviewed Kotlin
+source. Same intent-not-pixels seam that lets `ImageElement` carry an `assetId` instead of bytes
+([ADR-027](#adr-027)). A supply therefore cannot be hand-edited into something unauthored, documents stay
+small, and redrawing a supply improves every zine that already used it.
+
+**A new `DrawShape` command is required, and this corrects a published claim.** `ZINE-DIRECTION.md:441` read
+*"PDF export is already vector-capable, so authored supplies print as vectors at any size."* True of the
+backend, **false of the tape**: `core:render` emits only `FillRect`, `DrawImage` and `DrawTextBox`
+(`DrawCommand.kt:26,40,55`). The PDF canvas can draw a path; nothing in the pipeline can ask it to.
+
+The cost is nonetheless smaller than the correction implies, because there is exactly **one** replayer
+([ADR-028](#adr-028)): a single `is DrawShape ->` arm in `CanvasReplayer` serves preview, PNG export, PDF
+export **and** imposed multi-up sheets. And because supply outlines need no I/O — unlike image bytes — they
+resolve inside `SceneRenderer.buildScene`, so its documented purity (*"no asset resolver, no I/O, no
+Android"*) survives untouched and the whole supply system unit-tests in pure JVM with no device.
+
+#### The four escalated calls, and how they were decided
+
+**D-1 · Decor tints from the content palette — all three bands.** The frozen amendment note said *"the five
+named inks"*; that was an error introduced in the ADR-104 pass. Five is the count of V2.1 **chrome** roles,
+and [ADR-090](#adr-090) exists to keep chrome values off the sheet. Its likeliest origin is `TextInk`
+(`TypeBar.kt:104-109`), which really is five — but five **because those values are contrast-corrected so
+text stays legible**, with `:102` already warning the set is *"Distinct from the image spot-ink field set —
+the two must not be conflated (ADR-055 Decision 6)."* A supply is coverage, not a glyph; nothing is read
+against it, so the constraint that justifies five has no purchase here, and importing it would perform
+exactly the conflation ADR-055 forbids. Decor therefore uses the three bands `applyInk` already applies
+(D-003). **Binding language: swatches, never "nineteen inks"** — a neutral is not an ink and a paper tint is
+not an ink.
+
+*Consequence, filed not fixed:* the product carries three colour vocabularies that disagree on values
+(`TextInk` 5 · the bench popover's 19 swatches · cover inks). Each divergence is individually justified;
+nothing states which set a **new** surface joins. That predates this ADR and belongs to the terminology pass.
+
+**D-2 · §IV's skeuomorphism ban governs chrome, not content.** §IV names *"deckle edges, torn paper"* among
+banned costumes, and two of the sixteen are exactly that. §V's growth table already permits *"Asset packs /
+stickers / motifs… tintable coverage not colour"*, which is precisely this design — so the permission was
+granted before this document existed. §IV's own sentence draws the line: *warmth is structural, never a
+costume*. A torn edge on the app's furniture is software pretending to be an object it isn't; a torn edge
+the maker places on their page **is** the object. The rule, stated once: **§IV governs the studio; supplies
+are what the studio is stocked with.**
+
+**D-3 · The sixteen are `§9.2`'s published set, restored verbatim.** An earlier draft silently replaced 11
+of 16, losing the **halftone dot cluster** — the one item carrying ADR-104's thesis that zine vocabulary is
+a *process* vocabulary — and the dividers §9.2 argues a composition tool cannot do without. Reopening a
+settled vocabulary is churn; the redraft is withdrawn.
+
+**D-4 · The photocopier filter (X3b) ships before the sixteen.** ADR-104 concluded *"this is why the
+photocopier filter outranks the supply set."* **Shoot → dither → print** is the loop that makes Zinely a
+zine tool rather than a photo-layout tool, and it needs no vocabulary at all. Supplies improve a zine; the
+filter is what makes the output *look like* one. Decorating a product before it has its voice is the wrong
+order.
+
+#### Consequences
+
+- **No schema version bump and no migrator.** `Element` is a `@Serializable` sealed interface and
+  `JsonDocumentSerializer.kt:39` sets `classDiscriminator = "type"`, so kotlinx registers the subclass
+  automatically. `ZINE-DIRECTION.md §9.1`'s *"schema v1→v2 + migrator"* was right that migration is additive
+  and total, and wrong about the mechanism: nothing needs migrating. Forward compatibility remains one-way —
+  `ignoreUnknownKeys` does not rescue an unknown sealed discriminator — so decor must land **before** any
+  curated pack, never alongside one.
+- **Supplies land flat, at 0°, reversing `§9.3`'s deterministic-hash tilt.** The frozen bench states the rule
+  itself: *"the page never tilts. You are working on it; it sits square to you."* A supply is placed *on* the
+  page, in the act of working, so the tilt law does not reach it — and a pre-tilted supply is a compositional
+  decision the app made and the maker didn't. The app's craft knowledge is expressed as **per-family default
+  size** instead: tape lands long, a stamp lands small.
+- **Decor needs two type-specific accessibility actions, not zero.** `§9.4` said *"no type-specific action,
+  and none is needed."* The frozen spec fixes the decor verb set at **Replace / Ink / Delete**, and the
+  Constitution requires every gesture-driven action to have a named custom action — so `REPLACE_SUPPLY` and
+  `CHANGE_INK` are both required. Decor is **13**, matching Image.
+- **Validation cannot check what its module cannot see.** `:core:data` is deliberately Android-free with
+  `:core:model` as its only project dependency, so it validates `supplyId` shape only; catalogue and palette
+  membership are checked at the render/UI boundary. An off-palette colour is never an error — it renders
+  correctly, and refusing to open the zine would be the worse harm.
+- **The unit-square outline must fold a scale term.** `SceneRenderer.localToPage` is translate × rotate with
+  **no scale**, so a 0..1 outline would render 1pt square. The scale is non-uniform, which makes stretched
+  stamps wrong rather than stylish — so the *editor* constrains `mark.*` and `shape.circle` to uniform scale
+  while tape and cut paper stretch freely. An `AffineTransform2D.scale` factory is a new addition to
+  `:core:model`.
+- **Shape goldens cannot assert at zero tolerance.** `CanvasReplayer.fillPaint` pins `isAntiAlias = false` so
+  fills diff exactly; curved supplies need their own anti-aliased paint. Tests assert the emitted tape — the
+  stronger assertion, and the one thing all four surfaces share — plus one device golden per family at a
+  stated tolerance. Print is unaffected: the PDF backend ignores AA.
+- **Favourites and recents are deferred, not banned.** An earlier draft banned them and argued for it; the
+  frozen file says they *"stay specified (deferred in sequencing, not removed from the spec)"*, and removing
+  drawn controls would be an amendment no design session may make. The product argument was also weak — *"the
+  drawer is the same every time you open it"* describes a cabinet nobody uses.
+- **The highest-value item in the specification is not a supply.** Zinely declares exactly one
+  `intent-filter` and it is the launcher, so *see something → share it into your zine* does nothing.
+  `ACTION_SEND` receive is independent of the whole decor programme, touches no network, and is the clearest
+  expression of the Android advantage. It is re-sequenced to the front. It is small in code and **not** small
+  in verification: no `launchMode` is declared, so `singleTop` + `onNewIntent`, task affinity,
+  `ACTION_SEND_MULTIPLE`, permission-less URI reads and cold-start-into-import all come with it.
+- **In-house authorship needs a record, not an assertion.** ADR-104's `source → verify licence → curate →
+  package → ship` governs *packs*; these sixteen are drawn in-house and carry no third-party licence. But
+  provenance is a process, so each supply ships a one-line attestation — authored from scratch, no reference
+  art traced — plus a colophon entry.
+
+#### Process note
+
+Two independent Review Agents falsified the first draft: one returned **GO WITH FIXES**, one **NO-GO**. The
+NO-GO was correct and its sharpest finding was that the draft asserted *"§9 is corrected accordingly"* about
+an edit that had not been made — a claim of repository state the author had not produced. Fourteen Required
+Fixes were reconciled individually.
+
+One reviewer finding was **rejected on evidence**: the ink count was filed as a Required Fix citing
+`ZinelyContentInks.kt:34` (*"three categories, not nineteen inks"*), but the owner's D-003 ruling four lines
+below reads *"The complete maker palette consists of: Inks · Paper Tints · Neutrals"*, and `applyInk` applies
+any of the nineteen swatches. The count stands; the **language** prohibition is what is real, and is adopted.
+
+Recorded because the corrected claims were shipping in a direction document that other work was costing
+against, and because the pattern is worth naming: *a capability the backend has is not a capability the
+pipeline has, and the difference is invisible until you read the tape.*

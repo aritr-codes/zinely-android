@@ -71,11 +71,32 @@
        · The decor verb set at the context bar -- Replace / Ink / Delete -- is untouched.
 
      WHAT THE SURFACE IS NOW EXPECTED TO DO.  Browse ~16 authored primitives in four families,
-     tap or drag to place, tint from the five named inks, mirror, scale, rotate, layer.  It is a
+     tap or drag to place, tint from the CONTENT PALETTE -- the three bands the ink popover already
+     ships (Inks / Paper tints / Neutrals, per D-003) -- mirror, scale, rotate, layer.  It is a
      MATERIAL CABINET, not a stock browser with its network unplugged.  There must be no disabled
      search, no "coming soon", no empty online state and no fake opt-in: a user must never be able
      to tell that an online version was ever drawn.  If it feels thin, the answer is a second
      authored pack -- never a search field that returns the same sixteen things. -->
+
+<!-- CORRECTED 2026-08-15 (bug fix to the note above; the freeze permits bug fixes).  The ADR-104
+     amendment originally said decor is tinted "from the five named inks".  That was wrong and the
+     error was introduced here, not inherited.  FIVE is the count of V2.1 CHROME roles -- leaf /
+     berry / jam / butter / inkFaint -- and ADR-090 exists to keep chrome values OFF the sheet.
+     Tinting page content from them would break the colour-role law twice over: butter is material
+     only, never an action and never text, and berry is punctuation rather than a fill.
+
+     The likeliest origin is TypeBar.kt:104-109, where TextInk really is five.  But that set is five
+     for a reason that does not reach decor: those values are CONTRAST-CORRECTED so text stays
+     legible ("yellow-as-text #7A5E12, AA on both papers"), and TypeBar.kt:102 already warns the set
+     is "Distinct from the image spot-ink field set -- the two must not be conflated (ADR-055
+     Decision 6)".  A supply is COVERAGE, not a glyph; nothing is read against it, so the constraint
+     that justifies five has no purchase, and applying it anyway would conflate exactly the two sets
+     ADR-055 says not to conflate.
+
+     Decor therefore tints from the CONTENT PALETTE -- the three bands applyInk already applies
+     (Inks 10 / Paper tints 5 / Neutrals 4), per the owner's D-003 ruling quoted in
+     ZinelyContentInks.kt:41-45.  Say SWATCHES, never "nineteen inks": a neutral is not an ink and a
+     paper tint is not an ink.  Specified in full at docs/design/SUPPLIES-SPEC.md section 0 O-A. -->
 
 <!-- AMENDED 2026-08-12 by owner ruling (OD-47 disposition).  THE PAGE GRID'S CARDS ARE LIT.
      .pgc restates the six on-paper tokens it paints with, so a card reads as PAPER on any desk --
