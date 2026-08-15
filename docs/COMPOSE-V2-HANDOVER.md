@@ -784,7 +784,7 @@ Constitutional invariants — breaking one is a NO-GO no matter how good the scr
 - **Print honesty** — no fake "Print"; 100% actual size; Save PDF + Share ([ADR-052](DECISIONS.md#adr-052)).
 - **READ-first** — the finished-book reveal is Read's, not the Bench's ([ADR-058](DECISIONS.md#adr-058)).
 - **Chrome = matcha + strawberry + consequence only** — warmth comes from content, never new chrome colour.
-- **Privacy** — no network/analytics/cloud; offline-first; optional asset search sends a keyword only, never content.
+- **Privacy** — no network/analytics/cloud; offline-first. **No network path exists for assets at any stage** ([ADR-104](DECISIONS.md#adr-104) / [Constitution Amendment 3](design/V2-CONSTITUTION.md#amendment-log), 2026-08-15, which withdrew the previously permitted opt-in keyword-only asset search).
 - **Accessibility is not optional** — platform-tree truth; every gesture has a named action twin + visible fallback;
   AA gated in CI.
 - **Every screen answers its one user question**; a correct answer to the wrong question is a defect.

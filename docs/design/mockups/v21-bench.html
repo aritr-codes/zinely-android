@@ -12,7 +12,7 @@
      │    · Ink is a popover of named spot inks, tints, neutrals, presets           │
      │    · text edits IN PLACE, with a style bar above the keyboard                │
      │    · Add stays three verbs: Text / Photo / Art                               │
-     │    · Art is one surface: bundled offline, online search strictly opt-in      │
+     │    · Art is one surface: BUNDLED ONLY.  See the ADR-104 amendment below.     │
      │    · the shelf gathers material; the filmstrip moves between pages           │
      │    · undo is a snack, not a dialogue                                         │
      │                                                                             │
@@ -32,6 +32,50 @@
      │  that used to sit here said the opposite and was left stale through two      │
      │  shipped re-skins -- corrected 2026-08-12 while planning the Bench's.        │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
+
+<!-- AMENDED 2026-08-15 by owner ruling (Constitution AMENDMENT 3 / ADR-104).  ART IS BUNDLED ONLY.
+     THE ONLINE ASSET SEARCH IS REMOVED FROM THIS SPECIFICATION, PERMANENTLY.
+
+     WHAT IS REMOVED.  Four things, all of them the online half of one surface:
+       · the header line "Art is one surface: bundled offline, online search strictly opt-in"
+       · the `art . online` control that opened the Art sheet with the online panel showing
+       · the search field placeholder "Search bundled + online", and the online opt-in toggle
+         with its disclosure panel ("Zinely sends only your search word to open-image libraries
+         (Openverse, Wikimedia)...")
+       · the Art option's subtitle "Stickers, icons, frames, patterns . bundled + online"
+     The four generic chips (Illustrations / Icons / Frames / Patterns) are replaced by the four
+     AUTHORED FAMILIES: Tape & fixings / Stamps & marks / Cut paper / Cut shapes.
+
+     WHY.  Keyword-only networking protects the user's PRIVACY -- which is the risk the
+     Constitution's clause was written against.  It does nothing about PROVENANCE.  Zinely's
+     output is printed, distributed and potentially SOLD, and an aggregator's licence label is a
+     claim rather than a warranty: Openverse's own documentation disclaims verification of both
+     licensing and attribution accuracy.  Recolouring is an adaptation, so a CC-BY or CC-BY-SA
+     obligation would follow the asset into a stranger's zine.
+
+     THE CONFLICT, AND WHY THE PRODUCT DECISION SUPERSEDES THIS FILE.  V2-BENCH-REVIEW.md:368-370
+     -- the owner-approved freeze itself -- fenced this surface: "do NOT freeze into implementation
+     until a review + legal pass clears them: the asset-layer ADR (H3 online-search licensing,
+     CC0/MIT-first)".  That ADR was never written and no legal pass was ever recorded, so the online
+     half was NEVER frozen into implementation; DECISIONS.md:2795 states it plainly -- "anticipating
+     is not authorising".  ADR-104 is that ADR and performs that legal pass.  The Constitution's
+     permitted future network touch (V2-CONSTITUTION.md III, V) is withdrawn by AMENDMENT 3, the
+     owner's explicit act of 2026-08-15.  A mockup cannot decide product scope; the Constitution can,
+     and now has.
+
+     WHAT REMAINS FROZEN.  Everything else on this surface, unchanged:
+       · Add stays THREE verbs -- Text / Photo / Art.  The third verb is PARITY, not an addition.
+       · Art remains ONE surface, reached the same way, with the same tile grid and the same
+         placement behaviour.
+       · The favourites star stays specified (deferred in sequencing, not removed from the spec).
+       · The decor verb set at the context bar -- Replace / Ink / Delete -- is untouched.
+
+     WHAT THE SURFACE IS NOW EXPECTED TO DO.  Browse ~16 authored primitives in four families,
+     tap or drag to place, tint from the five named inks, mirror, scale, rotate, layer.  It is a
+     MATERIAL CABINET, not a stock browser with its network unplugged.  There must be no disabled
+     search, no "coming soon", no empty online state and no fake opt-in: a user must never be able
+     to tell that an online version was ever drawn.  If it feels thin, the answer is a second
+     authored pack -- never a search field that returns the same sixteen things. -->
 
 <!-- AMENDED 2026-08-12 by owner ruling (OD-47 disposition).  THE PAGE GRID'S CARDS ARE LIT.
      .pgc restates the six on-paper tokens it paints with, so a card reads as PAPER on any desk --
@@ -379,12 +423,10 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 .opt .tx{display:flex;flex-direction:column;gap:var(--gap-hair)}
 .opt .tx b{font-family:var(--voice);font-weight:700;font-size:1rem;color:var(--ink)}
 .opt .tx span{font-size:.73rem;color:var(--ink-soft)}
-.search{display:flex;align-items:center;gap:var(--gap-sm);background:var(--paper);border:1.5px solid var(--ink);
-  border-radius:var(--br-pill);padding:var(--gap-sm) var(--gap-md);margin-bottom:var(--gap-md);box-shadow:2px 2px 0 var(--ink-line)}
-.search svg{width:16px;height:16px;flex:none;fill:none;stroke:var(--ink-faint);stroke-width:2}
-.search input{flex:1;border:0;background:none;font-family:var(--sans);font-size:.86rem;color:var(--ink);
-  outline:0;min-width:0}
-.search input::placeholder{color:var(--ink-soft)}
+/* REMOVED 2026-08-15 (ADR-104): .search styled the Art sheet's query box.  Sixteen authored supplies
+   in four named families are BROWSED, not searched, and a query box over sixteen things teaches the
+   user to expect a seventeenth.  (The Shelf's own zine search is a different, local control in
+   v21-library.html and is untouched.) */
 .chips{display:flex;gap:var(--gap-sm);overflow-x:auto;padding-bottom:var(--gap-sm);scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip2{flex:none;font-family:var(--sans);font-size:.76rem;font-weight:600;color:var(--ink-soft);
@@ -406,23 +448,10 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 /* ✱ butter is the FILL; the ink outline carries the state, so §3.2 holds and the
    shape clears 1.4.11 in light theme (butter alone on paper is 1.73:1). */
 .fav.on{color:var(--butter);-webkit-text-stroke:.7px var(--ink);paint-order:stroke fill}
-.online{margin-top:var(--gap-md);border:1.5px dashed var(--ink);border-radius:var(--br-md);overflow:hidden}
-.online .head{display:flex;align-items:center;justify-content:space-between;padding:var(--gap-md) var(--gap-md);
-  cursor:pointer;background:var(--butter-tint)}
-.online .head b{display:flex;align-items:center;gap:var(--gap-sm);font-family:var(--voice);font-weight:700;
-  font-size:.94rem}
-.online .head svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7}
-.toggle{width:38px;height:22px;border-radius:var(--br-pill);background:var(--paper);
-  border:1.5px solid var(--ink);position:relative;flex:none}
-.toggle::after{content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;
-  border-radius:var(--br-pill);background:var(--ink-faint);transition:transform .18s,background .18s}
-.online.on .toggle::after{transform:translateX(15px);background:var(--leaf)}
-.disclosure{display:none;padding:var(--gap-md) var(--gap-md);font-size:.76rem;line-height:1.5;color:var(--ink-soft)}
-.online.on .disclosure{display:block}
-.onresults{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap-sm);margin:var(--gap-md) 0}
-.priv{display:flex;gap:var(--gap-sm);align-items:flex-start;font-size:.72rem;color:var(--ink-soft);
-  border-top:1.5px dashed var(--hair);padding-top:var(--gap-sm)}
-.priv svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;margin-top:var(--gap-hair)}
+/* REMOVED 2026-08-15 (ADR-104): .online / .toggle / .disclosure / .onresults / .priv styled the
+   online opt-in panel, its switch, its privacy disclosure and its results grid.  Deleted with the
+   markup rather than left behind -- a spec that still styles a removed control has not removed it,
+   and the next implementer would reasonably read dead CSS as an unimplemented requirement. */
 
 .pgrid{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--paper);
   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
@@ -564,7 +593,7 @@ is about <b>material</b> — the page, the shelf, the ink pots, the supply drawe
   <button class="ctl" onclick="openInk()">ink</button>
   <button class="ctl" onclick="edit()">edit in place</button>
   <button class="ctl" onclick="openSupply()">add</button>
-  <button class="ctl" onclick="openArt()">art · online</button>
+  <button class="ctl" onclick="openArt()">art</button>
   <button class="ctl" onclick="openGrid()">all pages</button>
   <span class="grp">direction — judge each move on its own</span>
   <button class="ctl on" data-t="hard">hard offset shadow</button>
@@ -772,7 +801,7 @@ function openSupply(){
   $('sheet').innerHTML='<div class="grip"></div><h3>Add to your page</h3><div class="supply">'
    +`<button class="opt" data-a="text"><span class="ico">${ICON.font}</span><span class="tx"><b>Text</b><span>Type words onto the page</span></span></button>`
    +`<button class="opt" data-a="photo"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Photo</b><span>From your phone — it never leaves the device</span></span></button>`
-   +`<button class="opt" data-a="art"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Art</b><span>Stickers, icons, frames, patterns · bundled + online</span></span></button>`
+   +`<button class="opt" data-a="art"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Art</b><span>Tape, stamps and cut paper</span></span></button>`
    +'</div>';
   $('sheet').querySelectorAll('.opt').forEach(o=>o.onclick=e=>{ e.stopPropagation();
     const a=o.dataset.a;
@@ -783,22 +812,19 @@ function openSupply(){
   });
   showSheet('Adding','Add stays three verbs — Text · Photo · Art. Your photos and your work never leave the device.');
 }
-const CHIPS=['Illustrations','Icons','Frames','Patterns'];
-const tile=(shape,online)=>`<button class="tile" data-shape="${shape}">${svg(DECOR[shape]||DECOR.leaf)}`
-  +(online?'':'<span class="fav" role="button" aria-label="Favourite">☆</span>')+'</button>';
+// AMENDED 2026-08-15 (ADR-104 / Constitution Amendment 3).  The four generic chips became the four
+// AUTHORED FAMILIES; the search field, the online panel and its disclosure are gone.  A cabinet is
+// browsed by family, not searched -- sixteen things do not need a query box, and a box that filters
+// sixteen things teaches the user to expect a seventeenth that does not exist.
+const FAMILIES=['Tape & fixings','Stamps & marks','Cut paper','Cut shapes'];
+const tile=(shape)=>`<button class="tile" data-shape="${shape}">${svg(DECOR[shape]||DECOR.leaf)}`
+  +'<span class="fav" role="button" aria-label="Favourite">☆</span></button>';
 function openArt(){
   const shapes=['leaf','berry','star','wave','leaf','star','berry','wave'];
   $('sheet').innerHTML='<div class="grip"></div><h3>Art</h3>'
-   +`<div class="search">${svg('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>')}<input placeholder="Search bundled + online" aria-label="Search art"></div>`
    +`<div class="lbl">Recent · ⭐ favourites</div><div class="grid">${['leaf','star'].map(s=>tile(s)).join('')}</div>`
-   +`<div class="chips">${CHIPS.map((c,i)=>`<button class="chip2${i?'':' on'}">${c}</button>`).join('')}</div>`
-   +`<div class="lbl">Bundled with Zinely · always offline</div><div class="grid">${shapes.map(s=>tile(s)).join('')}</div>`
-   +'<div class="online" id="online"><div class="head" id="onlineHead">'
-   +`<b>${svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/>')} Search online</b><span class="toggle"></span></div>`
-   +'<div class="disclosure">Zinely sends <b>only your search word</b> to open-image libraries (Openverse, Wikimedia). Your zine and your photos never leave your phone.'
-   +`<div class="onresults">${['berry','wave','star','leaf'].map(s=>tile(s,1)).join('')}</div>`
-   +`<div class="priv">${svg('<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/>')} Downloaded art keeps its credit and stays print-safe (CC0 / public-domain first).</div>`
-   +'</div></div>';
+   +`<div class="chips">${FAMILIES.map((c,i)=>`<button class="chip2${i?'':' on'}">${c}</button>`).join('')}</div>`
+   +`<div class="lbl">Supplies</div><div class="grid">${shapes.map(s=>tile(s)).join('')}</div>`;
   $('sheet').querySelectorAll('.chip2').forEach(c=>c.onclick=e=>{ e.stopPropagation();
     $('sheet').querySelectorAll('.chip2').forEach(x=>x.classList.remove('on')); c.classList.add('on'); });
   $('sheet').querySelectorAll('.fav').forEach(f=>f.onclick=e=>{ e.stopPropagation();
@@ -807,12 +833,10 @@ function openArt(){
     if(e.target.classList.contains('fav')) return;
     e.stopPropagation(); closeOverlays();
     selectByKind('decor'); toast('Placed on the page',true); });
-  const on=$('online');
-  $('onlineHead').onclick=e=>{ e.stopPropagation(); on.classList.toggle('on');
-    cap('Adding · Art', on.classList.contains('on')
-      ? 'Online search is opt-in. Only a keyword leaves the phone — never your work; results are print-safe.'
-      : 'Bundled art needs no network. Online stays dark until you ask for it.'); };
-  showSheet('Adding · Art','One Art surface — search spans bundled and online, chips filter, Recent cuts long-session friction.');
+  // The label reads "Supplies", not "Bundled with Zinely · always offline".  Offline is an invisible
+  // strength, not a slogan (ADR-104): naming it here would advertise the absence of the thing we just
+  // removed, which is exactly the dead-feature smell the amendment forbids.
+  showSheet('Adding · Art','One Art surface — four families of authored supplies, Recent and ⭐ cut long-session friction.');
 }
 function showSheet(s,h){
   $('scrim').classList.add('show'); $('sheet').classList.add('show');

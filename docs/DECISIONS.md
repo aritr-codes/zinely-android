@@ -9389,6 +9389,99 @@ rather than by a device: §11 taught that a re-skin planned without reading the 
 `v2-bench.html` carefully enough to catch itself twice, and then wrote a table of destinations for a
 surface it had not opened.
 
+#### 12.17 — The Type bar, and the tap that fell through the card {#adr-102-typebar}
+
+The Type bar was the last panel on the Bench still furnished by V1: a `--menu` card under a `--fieldEdge`
+hairline at `shadowElevation = 6.dp`, with a joined three-way segment filled `coralStrong` under white and
+a swatch that resolved its ink through a *themed* token. One ground V2.1 does not define, a blurred shadow
+in a language whose shadows are all flat and offset, and — again — coral.
+
+**Nothing the bar does changes.** Four rows, a ten-stop size ramp behind a 400 ms settle window, three
+alignments, two toggles that genuinely compose, five inks, and no commit because cancel is undo. Every
+declared divergence ADR-055 made from the frozen HTML survives intact: alignment stays a radio group
+rather than three `aria-pressed` buttons, the readout keeps the `contentDescription` the prototype marked
+`aria-hidden`, and the Bold/Italic pair stays two checkboxes.
+
+**The specification came first**, as the HTML-first rule requires: `docs/design/mockups/v21-typebar.html`
+(a **PROPOSAL, not frozen** — freezing is the owner's call, as with `v21-reframe.html`). It is a
+transcription rather than a design: the card is `.inkpop`'s card, the size stepper is the Reframe pad's
+`.zoom` — the control ADR-055 §4 *already named* as its precedent, so the two wearing one set of clothes
+is the specification catching up with the ADR — the row label is `.inklbl`, the swatch is `.pot` ring and
+all, and the alignment row stops being a joined segment because V2.1 has none: what it has for *one choice
+of N, spelled out in words* is the Proof's `.paperseg`.
+
+**Two decisions the corpus did not answer, both resolved onto existing tiers rather than new ones.** A
+square two-state glyph button takes `.chip2`'s colour rule and the shipped 46dp geometry — and a 2dp rest
+shadow that is neither's, because `.chip2` is a flat chip lying on the desk and this card has left the
+surface. And the press tier throughout is `Flat`, not `.paperseg`'s `Raised`: **depth is assigned by where
+a control lives, not by which rule it was copied from.** Both deviations are declared in the file rather
+than smuggled, which a review confirmed by checking every citation in it against the current corpus.
+
+**The finding worth the whole section: a floating card must swallow its own taps.**
+
+Dropping `Surface` for a `Box` dropped, silently, the one thing `Surface` contributes beyond paint — an
+empty `Modifier.pointerInput(Unit) {}`. Nothing in the diff looked like a behaviour change and the panel
+rendered correctly. But a tap on the card's padding, or in the gap between two controls, now found nothing
+and **fell through to the canvas beneath**, deselecting the element and closing the bar. The panel would
+shut when a finger *nearly* hit a button — which reads as the app throwing the tool away for missing.
+
+It had a second effect that is easy to miss and worse: it disarmed every touch-target expansion on the
+card. A tap just outside a chip's 40dp paint resolves as a **speculative** minimum-touch-target hit, and a
+speculative hit loses to a real one deeper in the tree — so with the canvas taking the real hit, the 48dp
+targets on ten controls were decorative while still *reporting* 48dp to `touchBoundsInRoot`. The test that
+asserts the reported bound passed throughout. The one that caught it was
+`a_tap_outside_the_stepper_chips_frozen_paint_still_steps_the_size`, written a year earlier precisely
+because *"reported bounds and hit-testing are separate code paths, so a 48dp number in the a11y tree is not
+by itself proof that a finger 3dp off the chip does anything."* It cost four bisecting runs to find, and it
+would have cost a device pass and a bug report otherwise.
+
+**One accessibility fix taken while in there.** The stepper is the only control in this card that is ever
+disabled, and its `−`/`+` were a `Text` child. That is the shape measured on `ReframeControls.ZoomButton`:
+a text child contributes semantics of its own, the platform gets the click and its DISABLED flag on one
+node and the label on another, TalkBack lands on the labelled one, and a disabled stepper announces itself
+as available. `Icon(contentDescription = null)` collapses the control to one `android.widget.Button`
+carrying all three. The specification had drifted here too — it declared a font for a text glyph while
+citing a `.zoom button` that uses an `<svg>` — so the HTML was corrected first and the Compose followed.
+
+**Also corrected in the tests, not relaxed:** the golden tier pinned the card at "the frozen 280dp",
+computed from the rules with Colour named as the widest row. The re-skin moves both terms of that sum in
+opposite directions — pots 32→30dp, the label to uppercase on `.13em` tracking — and the net is 1.5dp,
+which is exactly the kind of near-agreement that makes a recomputed figure look verified when it is not.
+The assertion now records a **measured** 278.5dp and claims nothing about which row produced it, because
+which row is widest at a given font scale is one of the two questions this specification still owes a
+device.
+
+**Device pass 1, `SM-A176B` / Android 16, dark theme — and what the platform tree said.** Every control
+now reaches the platform correctly: `Smaller` / `Larger` as `android.widget.Button, clickable=true`;
+`Left` / `Center` / `Right` as `android.widget.RadioButton` with `checked=true` on the current alignment;
+`Bold` / `Italic` as `android.widget.CheckBox`; the five pots as `android.widget.RadioButton`, the chosen
+one `checked=true` and wearing the dashed ring at exactly the specified `inset:-5px`. The alignment
+buttons measure 126px — a full 48dp — which the same dump had reported before the pointer sink went in,
+while the taps that bound was promising went to the canvas.
+
+**The one finding the pass produced is a disagreement between two panels, not a fault in either.** The
+Type bar renders on **light** paper in dark theme; the Reframe pad, four taps away on the same bench,
+renders on **dark** paper. Both read `--paper`. The difference is where each is composed:
+`EditorScreen.kt` wraps its canvas in `BenchSheetIsland` (§12.1, so the sheet stays light in both themes),
+and `TypeBar` at `:1380` and `ReframeOverlay` at `:1112` fall inside that block while `ReframeControls` at
+`:1464` falls outside it. Nothing decided that; the brace did.
+
+It matters twice. Two floating tool cards over one surface should not be two different colours — a Pass 2
+will read it as one of them being broken. And it decides the contrast question recorded in
+`v21-typebar.html`: the five ink pots measure 1.17:1 to 4.19:1 against a **dark** card and 15.14:1 down to
+3.10:1 against a light one, so which card the panel is standing on is what determines whether that caption
+describes a real problem. **Both readings are defensible** — a tool card is chrome and chrome follows the
+room; or a tool that acts on the sheet belongs to the sheet — and picking one changes the look of a panel
+whose specification is not frozen, so it is booked here rather than settled unilaterally.
+
+**Still open, and owner-owed:** which palette the two floating tool cards share (above); freezing
+`v21-typebar.html`; how the panel closes (the context bar is
+withheld while it is open, so the control that opened it is not on screen to close it — V1's shipped
+behaviour, out of a re-skin's scope, and the first thing a Pass 2 will stop on); the word *"Coral"* on a
+swatch in a palette that abolished coral; the two device measurements (the 38dp `.pot` pitch, which
+invalidates `Swatch`'s recorded 40×48 TalkBack bounds, and the widest row at the largest font scale on a
+360dp screen); and both device-verification passes, which had not run when this was written.
+
 #### 12.16 — Reframe: a session changes your tools, not your room {#adr-102-reframe}
 
 The last surface still wearing V1. `ReframeControls.kt` was untouched by the whole re-skin, so entering a
@@ -9481,6 +9574,66 @@ here.
 **Stale by construction:** `reframe_controls_light.png` / `reframe_controls_dark.png` cannot be re-recorded
 locally (`captureRoboImage` is a no-op under plain `testDebugUnitTest`), so the golden suite going green
 says nothing about the pixels until CI re-records them.
+
+##### 12.16a — The frame inside the session, and a guide that must not follow the theme
+
+The band above was re-skinned before the thing it operates on. `ReframeOverlay.kt` — the layer that draws
+the frame, the dim and the guides over the photo — was still V1, so a **hard coral rectangle** sat inside
+a pad and a band that were by then entirely `--paper` / `--leaf` / `--ink`. It was the last coral on the
+Bench, and coral is the reliable V1 tell.
+
+No new design decision was needed: `v21-reframe.html` already specifies this layer, and the ruling is in
+its own comment — *"THE BOUNDARY IS A DRAWN LINE, NOT A SYSTEM RECTANGLE. Dashed ink, the same hand as the
+selection ring — because it means the same thing: this is the edge you are working to."* So the boundary is
+now `1.6dp dashed --ink` at `--br-xs`, reading `SelectionOutlineStrokeDp` and `SelectionOutlineDashDp`
+directly rather than transcribing a second pair of numbers from the same declaration; `.frame`'s
+`background:var(--desk-edge)` is drawn under the photo, which is what shows through where a **Whole photo**
+fit letterboxes and used to be indistinguishable page paper; and the dim moved off V1's `colors.scrim`.
+
+**Three things a review caught, and the general lesson in the second one.**
+
+*The scrim had the right value for the wrong reason.* It was first read from `BenchGridScrimColor` — same
+pixels, but that constant is documented as a **modal backdrop**, and this dim is a permanent crop dimmer
+that never animates to full. Anyone darkening the modal scrim so a sheet reads better over a busy bench
+would have silently changed how much of the user's cropped-away photo stays visible, with nothing linking
+the two. The value is hoisted to `ZinelyV21Scrim` with both jobs named on it — which is what
+`BenchPageGrid`'s own KDoc had already prescribed and nobody had done.
+
+*A token is not automatically the better choice.* The rule-of-thirds guides were moved from a hardcoded
+white to `--paper`, reasoning that a token-derived guide keeps the room's voice in both themes. That is
+wrong, and instructively so: **the guides lie over the user's photograph, which does not change with the
+app's theme.** Theming them adds a failure mode rather than removing one — in dark, `--paper` is `#332B22`
+and the guide becomes a near-black line over an arbitrary image — while gaining nothing in light, where it
+is indistinguishable from white. The repo already had the answer and the change walked past it:
+`HandleHaloColor` is a hardcoded `Color.White` for exactly this reason, and `SelectionChrome`'s own KDoc
+records that *no token can promise a ratio over a photograph*. Reverted. **Token discipline is a rule about
+chrome; it does not extend to marks whose backdrop is the user's content.**
+
+*One accepted deviation, created by the fix.* The spec is `.frame{overflow:hidden}` — the photo is clipped
+to the rounded rect. Here it is deliberately unclipped so the overflow can spill and be dimmed (the "the
+picture moves" teach), and the dim is four square rects, so a sliver of undimmed photo paints inside each
+4dp corner arc. It did not exist while the boundary was a square rectangle; the radius creates it.
+Recorded rather than closed.
+
+**Also corrected, and worth its own line:** the review re-read every frozen address these files cite and
+found two committed ones stale — `SelectionChrome.kt` pointed `.el .ring` at `v21-bench.html:188`
+(actually `.guideV`; the rule is `:195-196`) and `BenchPageGrid.kt` pointed `.scrim` at `:376-378`
+(actually `.opt .ico`). The quoted declarations were right in both cases and only the addresses had
+rotted, which is the failure mode that makes a stale citation dangerous: it reads as verified. There is
+still no mechanical guard — see the `TokenDisciplineTest` gap above, whose regex does not recognise
+`v21-*` markers at all.
+
+**Device pass 1, `SM-A176B` / Android 16, dark theme.** The coral rectangle is gone; the boundary is a
+dashed ink line that follows the element's rotation with its corners rounded to `--br-xs`, the scrim dims
+the spill outside it, and Cancel leaves the document untouched. ⚠ The rule-of-thirds guides were
+**invisible** over the photo under test — a white document scan — which is the limitation the code's own
+comment states rather than a new one: nothing can promise a mark contrast over arbitrary content, and this
+is the case that proves the token version would have been no better. The spec has no thirds grid at all,
+so whether to keep them is still the owner's call.
+
+⚠ This layer draws **inside** `BenchSheetIsland` (`EditorScreen.kt:1112`), so its `--desk-edge` ground and
+`--ink` boundary resolve to the island's lit values in both themes — correct for a mark on the sheet, and
+the same brace that puts the Type bar on light paper while the Reframe *pad* stands on dark. See §12.17.
 
 #### 12.15 — The Bench did not answer the hand {#adr-102-bench-haptics}
 
@@ -10497,3 +10650,175 @@ device pass behind it; restored, and noted there. The *consistency* lens found t
 had displaced ~37 line citations across 14 files, half of them written by this same change: the
 citation-drift defect §12.8 congratulates itself for sweeping, re-created in the act of sweeping it. All 37
 were re-anchored by content match rather than by arithmetic.
+
+---
+
+## ADR-103 {#adr-103}
+
+### The world is a small press — the spatial metaphor, named
+
+**Status:** `Accepted` · 2026-08-15 · Owner-adopted as [Constitution Amendment 2](design/V2-CONSTITUTION.md#amendment-log)
+**Supersedes:** [DESIGN-LANGUAGE.md](design/DESIGN-LANGUAGE.md) in full
+**Direction document:** [ZINE-DIRECTION.md §2](design/ZINE-DIRECTION.md)
+
+#### Context
+
+Four documents named four different places — a café, a studio, a craft table, a desk — and no document could
+answer the object question: *"what is a Type bar, in this world?"* That is not a philosophical gap. It is why
+surfaces drifted apart: with no shared answer to *what is this screen*, each screen invented its own.
+
+The Constitution's §I felt promise — *"a quiet café where you make tiny books with your hands"* — was carrying
+two jobs at once, and is authoritative on only one of them. It fixes the **emotional register** and is silent
+on the **spatial metaphor**.
+
+#### Decision
+
+> **Zinely is a small press that fits in one hand. The café is how it feels; the press is what it is.**
+
+Three places, matching the three navigation destinations exactly: the **Shelf** (`HomeRoute`, finished copies),
+the **Bench** (`EditorRoute`, the lit work surface), the **press run** (`ProofRoute`, where the sheet comes off).
+Plus one statement of craft, the **colophon**.
+
+#### Why this candidate and not the others
+
+| Test | Café | Studio | Desk | Scrapbook | **Small press** |
+|---|---|---|---|---|---|
+| Explains §II's vocabulary law — *"paper, ink, presses, shelves, folds"* | ✗ not one café noun | partly | partly | ✗ | **✓ every noun** |
+| Explains the north star being a verb — *"FINISHING. One word."* | ✗ | ✗ | ✗ | ✗ | **✓ its whole purpose** |
+| Explains [ADR-090](#adr-090)/OD-12 — the artifact is lit, the room may darken | ✗ | partly | partly | ✗ | **✓ the sheet is under the lamp** |
+| Survives one focal zone (a phone has no peripheral vision) | ✓ | **✗ fatal** | ✓ | ✓ | **✓ a bench, not a room** |
+| Answers *"what is a Type bar?"* | **✗ unanswerable** | vague | ✓ | ✗ | **✓ a tool you picked up** |
+
+"Studio" fails hardest and most usefully: a studio is a room you look *around*, and a phone has one focal zone.
+**A bench is a studio scaled to a phone.**
+
+#### Consequences
+
+1. **The café is retained as register, not place.** Quiet, warm, unhurried, private, yours — still binding.
+2. **Every surface belongs to one of the three places, or is mis-homed** and gets redesigned or removed.
+3. **Settings becomes the colophon** — the printer's note stating how the thing was made. It carries the paper
+   default, the typefaces *with their licences*, one offline sentence, and the version. This discharges a real
+   OFL obligation (three notices ship today reachable from no UI) in the one place self-description reads as
+   craft rather than defensiveness.
+4. **`DESIGN-LANGUAGE.md` is superseded in full.** Its craft-table metaphor (`:64-65`), coral-on-charcoal palette
+   (`:71-73`), tilt-and-tape licence (`:74-75`), marker-face typography (`:78-80`) and overshoot motion
+   (`:208-213`) had each been overruled elsewhere without the document ever saying so.
+5. **The overshoot contradiction is resolved.** `DESIGN-LANGUAGE.md:208-213` permitted spring overshoot;
+   `V2-BENCH-PRINCIPLES.md:143` forbade it. **The latter wins: paper is damped, not rubber.**
+6. **Motion gains four named physical causes** — set down · pressed · drawer pulled · mark made. Anything that
+   cannot name one does not ship. This bans parallax, idle drift, overshoot and cross-fades by cause rather
+   than by taste.
+7. **Future features must be a new supply, a new mark, or a shorter path to the press run.** That single test
+   rejects feeds, profiles, collaboration, template marketplaces and AI layout without further debate.
+
+#### What it does not mean
+
+Not drawing a press (no machinery, no wood grain) · not simulating paper (no texture PNG, no page curl —
+*tactility is earned by the printed object, never faked on glass*) · not print jargon (the maker never meets
+bleed, imposition, gutter, signature or creep) · not irreversibility (undo stays) · not licensing retro.
+
+---
+
+## ADR-104 {#adr-104}
+
+### The asset layer — curated, generative, personal; no network, permanently
+
+**Status:** `Accepted` · 2026-08-15 · Owner-adopted as [Constitution Amendment 3](design/V2-CONSTITUTION.md#amendment-log)
+**Discharges:** [V2-BENCH-REVIEW §E.6](design/V2-BENCH-REVIEW.md)'s condition — *"do NOT freeze into implementation
+until a review + legal pass clears them: the asset-layer ADR (H3 online-search licensing, CC0/MIT-first)"*
+**Direction document:** [ZINE-DIRECTION.md §16](design/ZINE-DIRECTION.md)
+
+#### Context
+
+§E.6 of the owner-approved freeze fenced the Art surface's online half behind an asset-layer ADR **and a legal
+pass**. Neither was ever written — recorded at [§2.3 above](#adr-102): *"the invariant anticipates the
+keyword-only search, but anticipating is not authorising, and the authorisation is the ADR that was never
+written."* `Copy.kt:233` carries the same fence in code: *"Art stays fenced behind C8 per OD-21."*
+
+**This ADR is that ADR, and it performs that legal pass.**
+
+#### Decision
+
+> **Model D — curated + generative + personal.** Zinely's material library has three sources: **Supplies**
+> (~16 authored primitives shipped in the binary), **Variation** (rotate · mirror · scale · named-ink tint ·
+> layer · bleed), and **the user's own materials** (camera · photo picker · share sheet · clipboard), with the
+> photocopier filter as the transform that turns any of them into zine material.
+>
+> **There is no network path for assets, at any stage.** Growth happens through curated packs —
+> **source → verify licence → curate → package → ship** — never through live external search.
+
+#### Why — and one argument explicitly discarded
+
+⚠ **The choice-overload argument was dropped after research.** Scheibehenne et al.'s meta-analysis (~50 studies,
+~5,000 participants) finds the mean effect of assortment size on satisfaction is essentially **d ≈ 0**, and the
+jam study has failed direct replication. It would not have survived scrutiny. What holds:
+
+| Ground | Evidence |
+|---|---|
+| **Constraint helps, up to a point** | ~145 empirical studies show an **inverted-U** between constraint and creativity — none and too much both hurt. Also warns against going too small |
+| **The designers who did this say why** | PICO-8's Joseph White names the enemy: *"a cozy design space is not decision fatigue"*, and says the 16 colours give cartridges *"their own particular look and feel."* Kid Pix spent its budget on **eight ways to erase the canvas** rather than more stamps |
+| **Tiny vocabularies genuinely produce unbounded variety** | Truchet: **one** tile, four rotations, *"an infinity of pleasing designs."* 10 PRINT: **two** characters. The mechanism is orientation × adjacency, not quantity |
+| **A large library without excellent search is worse than none** | Baymard: **67–90%** abandonment on mediocre list/filter usability vs **17–33%** with better tooling on the identical task. Search is exactly what a curated set gives us no reason to build |
+| **The zine vocabulary is a *process* vocabulary** | Willis's material history: the cut-and-paste look exists because the photocopier made *showing your production method* free. The market has crystallised this as image-**processing** kits, not clip-art. **This is why the photocopier filter outranks the supply set** |
+
+**Provenance is the ground the Constitution's original clause did not cover.** Keyword-only protects the user's
+*privacy* — the risk §III was written against. It does nothing about whether an asset is what an aggregator
+claims. Openverse's own documentation states it *"does not verify licensing information for individual works, or
+whether the generated attribution is accurate."* Zinely's output is **printed, distributed and potentially sold**,
+so an unverified licence claim travels into a commercial artifact we do not control.
+
+**The named APIs are individually disqualifying.** Unsplash mandates hotlinking, mandates reporting download
+events back to Unsplash, and asserts ownership of interaction telemetry. Pexels allows **200 requests/hour** on a
+key that, shipped in an APK, is shared across every install. The Noun Project's asset URLs **expire within an hour**.
+
+#### The binding sourcing rule
+
+> **No asset whose licence obligation can follow the user's exported zine.**
+
+| Verdict | Sources | Basis |
+|---|---|---|
+| ✅ Permitted | MIT / ISC / Apache-2.0 icon sets — Feather, **Lucide (ISC, not MIT)**, Tabler, Phosphor, Heroicons, Bootstrap Icons, Material Symbols | Attribution satisfied **in the APK**, never in the user's PDF |
+| ✅ Permitted | CC0 illustration — Openclipart, Open Doodles, Humaaans | No attribution anywhere; unlimited commercial use |
+| ❌ Rejected | **OpenMoji** (CC BY-SA 4.0) | Recolouring is a remix; ShareAlike would follow into a stranger's zine |
+| ❌ Rejected | **The Noun Project** | Per-icon tiers, no bulk redistribution grant; CC BY 3.0 demands attribution wherever displayed |
+| ⚠ Unresolved | Public Domain Vectors · The Met · Smithsonian · Wikimedia PD-old | Primary licence text could not be retrieved (403 / 429 / ECONNRESET). **Unresolved is not rejected** — but nothing ships on a site's reputation |
+
+**Every bundled third-party asset carries a traceable record**: source · licence · attribution requirement ·
+modification permission · redistribution permission. Curation and provenance is a **process**, not a feature.
+
+#### Font findings (the legal pass, applied)
+
+1. ✅ **The exported PDF owes nothing.** OFL **clause 5** (operative, not the preamble): *"The requirement for
+   fonts to remain under this license does not apply to any document created using the Font Software."* The
+   grant covers **embed** by name.
+2. ⚠ **Averia Sans Libre carries Reserved Font Names** — `'Averia'` and `'Averia Libre'`; Fraunces and Inter
+   declare none. The OFL definitions make **subsetting** a Modified Version on two limbs (*"deleting… components"*,
+   *"changing formats"*), clause 3 then restricts the primary name presented to users, and the **TERMINATION**
+   paragraph — *not* clause 5 — voids the licence on breach. **Decision: ship the statics unmodified. No
+   subsetting.** The cure is the `name` table, not the UI label; shipping unmodified means clause 3 never attaches.
+3. ✅ **Three distinct OFL notices ship, not four** — `render-android/src/main/assets/fonts/OFL.txt` is
+   byte-identical to `feature/editor/src/main/assets/fonts/OFL-Inter.txt` (sha256 `262481e8…`). All four files
+   **stay**: the `feature/editor` directory holds notices and no font binaries, covering the chrome faces in
+   `core/ui/src/main/res/font/`. Correct for distribution-inclusion; the **colophon** makes them reachable.
+
+#### Consequences
+
+1. **No dead online UI, ever.** No disabled search, no *"coming soon"*, no empty network state, no fake opt-in.
+   A user must never be able to tell an online version was drawn. If Supplies feels thin, the answer is **a
+   second authored pack**, never a search field returning the same sixteen things.
+2. **Art becomes more important, not less.** `Text + Photo + Art` is the add triad; **Supplies** is the drawer.
+3. **Offline is an invisible strength, not a slogan.** The removed online UI is **not** replaced by *"works
+   offline"* messaging. Reassurance is stated once, in the colophon.
+4. **`v21-bench.html` is amended** under this ADR — the `art · online` control, the search field, the online
+   disclosure panel and the *"bundled + online"* subtitle are struck; the four generic chips become the four
+   authored families. Recorded as a frozen-spec amendment, not housekeeping.
+5. **Supply identity is a stable `supplyId` string**, never an index, so a curated pack adds ids without renumbering.
+
+#### Process note
+
+A design session first ruled *"not now, not opt-in, **not later**"* without citing §III or §V. An independent
+review caught that the third clause was **constitutional and therefore not the session's to make**. The ruling
+was narrowed to scope and sequencing, and permanence was escalated once with a drafted amendment and a
+recommendation. **The owner adopted it on 2026-08-15.** Recorded because [§VI](design/V2-CONSTITUTION.md) requires
+amendments to be the owner's explicit act, and because the near-miss is instructive: *reading a constitution for
+its prohibitions and missing its permissions is the same error as the Amendment 1 failure, in the other direction.*
