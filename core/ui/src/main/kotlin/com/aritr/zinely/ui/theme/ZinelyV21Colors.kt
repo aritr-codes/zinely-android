@@ -217,3 +217,30 @@ public fun zinelyV21DarkColors(): ZinelyV21Colors = ZinelyV21Colors(
     softShadow = Color(0x9E000000),
     contact = Color(0x80000000),
 )
+
+/**
+ * `.scrim{background:rgba(38,26,16,.44)}` — the one V2.1 scrim, for **every** surface that dims what is
+ * behind it. `.44 × 255 = 112 = 0x70`.
+ *
+ * ⚠ **A literal, and not a token.** The rule sits outside `:root` in all three prototypes
+ * (`v21-bench.html:359`, `v21-proof.html:323`, `v21-library.html:343` — the Library writes `.42`), so the
+ * `prefers-color-scheme` block cannot reach it and V2.1 publishes no `--scrim` among the 25 the contrast
+ * gate measured. Recorded as the same defect recurring rather than as a value anybody chose.
+ *
+ * ### Why it is here rather than in three files
+ *
+ * It was in three: `ZSheet.ScrimFill`, `BenchPageGrid.BenchGridScrimColor`, and V1's `colors.scrim` that
+ * `ReframeOverlay` read. `BenchPageGrid`'s KDoc already said what to do about that — *"the scrim is shared
+ * chrome … whoever converts `.sheet` should hoist this rather than write a second one"* — and a review
+ * pointed out that the third caller had quietly borrowed the **grid's** constant instead: Reframe's dim is
+ * not a modal backdrop but a permanent crop dimmer, never animated to full, and anyone darkening the modal
+ * scrim so a sheet reads better over a busy bench would have silently changed how much of the user's
+ * cropped-away photo stays visible. Same pixels, wrong reason, and nothing linking the two.
+ *
+ * So the name is purpose-neutral and the callers are listed rather than implied: **modal backdrops**
+ * ([com.aritr.zinely.ui.components.ZSheet], `BenchPageGrid`) and **the Reframe crop dimmer**
+ * (`ReframeOverlay`), which are different jobs wearing one value because the corpus declares one value.
+ * A future surface that needs a *different* dim needs a different constant and a rule in the prototypes,
+ * not an edit here.
+ */
+public val ZinelyV21Scrim: Color = Color(0x70261A10)

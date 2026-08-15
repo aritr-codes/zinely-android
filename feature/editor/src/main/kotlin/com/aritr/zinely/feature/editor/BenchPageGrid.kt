@@ -63,6 +63,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Colors
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Press
+import com.aritr.zinely.ui.theme.ZinelyV21Scrim
 import com.aritr.zinely.ui.theme.ZinelyV2IconPaint
 import com.aritr.zinely.ui.theme.ZinelyV2Icons
 import com.aritr.zinely.ui.theme.toImageVector
@@ -73,8 +74,9 @@ import kotlin.math.roundToInt
 public const val BenchPageGridTestTag: String = "bench-page-grid"
 
 /**
- * Test tag on the frozen `.scrim` the grid raises with itself (`v21-bench.html:376-378`, `openGrid()`
- * at `:783`).
+ * Test tag on the frozen `.scrim` the grid raises with itself (`v21-bench.html:359-361`, `openGrid()`
+ * at `:759`). ⚠ Both addresses were stale (`:376-378` is `.opt .ico`; `:783` is inside `openGrid`'s body,
+ * not its head) and were re-read against the current file by a review.
  */
 public const val BenchPageGridScrimTestTag: String = "bench-page-grid-scrim"
 
@@ -111,18 +113,14 @@ internal const val BenchGridEnterPercent: Float = 1.03f
 internal const val BenchGridEnterMillis: Int = 300
 
 /**
- * Frozen `.scrim{background:rgba(38,26,16,.44); transition:opacity .22s}` (`v21-bench.html:376-378`).
+ * Frozen `.scrim{background:rgba(38,26,16,.44)}` (`v21-bench.html:359`), with `transition:opacity .22s`
+ * at `:360`. Hoisted to [ZinelyV21Scrim], which is where the value and its reasoning now live; this alias
+ * stays because the grid's own tests and call sites read it by this name.
  *
- * A literal, because the frozen file writes a literal: no `--scrim` token exists in `:root`, so there
- * is nothing in [ZinelyV21Colors] to read it from and inventing one would be a token this corpus does
- * not have. `.44 × 255 = 112 = 0x70`.
- *
- * ⚠ The scrim is **shared chrome** — `.sheet` raises the same one (`showSheet()`, `:837`). It is drawn
- * here because P5's panel is the first V2.1 surface that needs it and the chooser is still on V1's
- * [com.aritr.zinely.ui.components.ZSheet], which brings its own. Whoever converts `.sheet` should hoist
- * this rather than write a second one.
+ * ⚠ The address in this KDoc used to read `:376-378`, which is `.opt .ico` — the same stale-citation
+ * class of bug ADR-102 §12.16 records against the corpus generally. Re-read against the current file.
  */
-internal val BenchGridScrimColor = Color(0x70261A10)
+internal val BenchGridScrimColor = ZinelyV21Scrim
 internal const val BenchGridScrimMillis: Int = 220
 
 /**

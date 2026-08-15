@@ -33,7 +33,9 @@ public const val SelectionChromeTestTag: String = "selection-chrome"
  * ### V2.1 re-skin (ADR-102 P1) — the ring is drawn, not lit
  *
  * The frozen `.el .ring` is `inset:-6px; border:1.6px **dashed** var(--ink); border-radius:var(--br-sm)`
- * (`v21-bench.html:188`), and the freeze's own banner states the rule it serves: **selection is a
+ * (`v21-bench.html:195-196`; this read `:188` until a review re-checked it against the current file —
+ * line 188 is `.guideV`, and the declaration quoted here was right while its address was not), and the
+ * freeze's own banner states the rule it serves: **selection is a
  * hand-drawn dashed ring in `ink`, never a system box.** So the outline is drawn 6 device px outside the
  * box, 1.6dp thick, dashed, in `ink`.
  *

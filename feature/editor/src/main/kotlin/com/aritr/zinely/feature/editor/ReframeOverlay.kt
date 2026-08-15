@@ -9,11 +9,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -27,13 +29,16 @@ import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.render.android.readImageIntrinsics
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Scrim
 import kotlin.math.roundToInt
 
 /** Test tag on the Reframe preview overlay canvas. */
 public const val ReframeOverlayTestTag: String = "reframe-overlay"
 
 /**
- * The Reframe preview overlay (ADR-053, frozen bench.html `.reframing`): the photo pans/zooms **inside a
+ * The Reframe preview overlay (ADR-053; V2.1 paint per ADR-102 §12.16, `v21-reframe.html` `.frame`,
+ * superseding the V1 `bench.html .reframing` this file was first written against): the photo pans/zooms **inside a
  * fixed frame**, its cropped-away overflow shown dimmed (the "the picture moves" teach), with a rule-of-
  * thirds window over the frame. It is a **preview-only** layer — it paints the decoded photo through the
  * ephemeral [draft] and never mutates the document; the reducer sees only the baked [Intent.CommitReframe]
@@ -67,8 +72,40 @@ public fun ReframeOverlay(
     onDraft: (FramingDraft) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scrim = ZinelyTheme.colors.scrim
-    val outline = ZinelyTheme.colors.coralStrong
+    // V2.1 (ADR-102 §12.16, `v21-reframe.html` `.frame`). What changed is paint, not geometry:
+    //
+    //  * the **boundary** was `coralStrong` at 2dp solid — the last coral on the Bench, and a system
+    //    rectangle drawn over the user's photograph. The spec draws it by hand instead: *"THE BOUNDARY IS
+    //    A DRAWN LINE, NOT A SYSTEM RECTANGLE. Dashed ink, the same hand as the selection ring — because
+    //    it means the same thing: this is the edge you are working to."* So it is literally the ring's
+    //    hand: [SelectionOutlineStrokeDp] and [SelectionOutlineDashDp], the same `1.6px dashed var(--ink)`
+    //    declaration, read from the same constants rather than re-transcribed into a second pair.
+    //  * the **scrim** was `ZinelyTheme.colors.scrim` (V1). V2.1 declares no `--scrim` in its token block;
+    //    the prototypes declare one in their own sheets (`v21-bench.html:359`, `rgba(38,26,16,.44)`), now
+    //    hoisted to [ZinelyV21Scrim]. ⚠ Read it from *there* and not from `BenchGridScrimColor`, which is
+    //    what this first did: that constant is documented as a **modal backdrop**, and this dim is a
+    //    permanent crop dimmer that never animates to full. Same value, different job — so darkening the
+    //    modal scrim must not silently change how much of the user's cropped-away photo stays visible.
+    //  * the **frame ground** is new: `.frame{background:var(--desk-edge)}`. It is what shows through in
+    //    [FrameFit.WHOLE], where the contained photo letterboxes — previously the page's own paper, so the
+    //    letterbox bars were invisible and the frame lost its edges wherever the photo did not reach.
+    val colors = ZinelyTheme.v21Colors
+    val scrim = ZinelyV21Scrim
+    val boundary = colors.ink
+    val frameGround = colors.deskEdge
+    // ⚠ The thirds lie **over the user's photograph**, and stay a hardcoded white on purpose.
+    //
+    // This was briefly changed to follow `--paper`, on the reasoning that a token-derived guide keeps the
+    // room's voice in both themes. A review killed it and was right: the photograph does not change with
+    // the app's theme, so theming the guide adds a failure mode instead of removing one — in dark, `--paper`
+    // is #332B22 and the guide becomes a near-black line over an arbitrary image, invisible on anything but
+    // a bright photo, for no gain in light where it is indistinguishable from white anyway.
+    //
+    // No token can promise a ratio over a photograph — the constraint [SelectionChrome] records for the
+    // ring — and the repo already has one answer to that problem: [HandleHaloColor], a hardcoded
+    // `Color.White` at .7 behind the resize marks, for exactly this reason. This is the same answer at a
+    // lighter weight.
+    val thirds = Color.White
     val bratio = element.transform.widthPt / element.transform.heightPt
 
     // Aspect and pixels come from two DIFFERENT decodes, deliberately (M7-01).
@@ -117,7 +154,11 @@ public fun ReframeOverlay(
     ) {
         val frame = frameRectPx(element, screenPxPerPt.toDouble(), pageOffset)
         val center = frame.center
+        val frameRadius = CornerRadius(ZinelyV21Dimens.radiusXs.toPx(), ZinelyV21Dimens.radiusXs.toPx())
         rotate(degrees = element.transform.rotationDegrees.toFloat(), pivot = center) {
+            // 0) `.frame{background:var(--desk-edge)}` — the frame's own ground, under the photo. Seen only
+            // where the photo does not reach it (WHOLE letterboxes; a mid-drag FILL cannot gap).
+            drawRoundRect(frameGround, topLeft = frame.topLeft, size = frame.size, cornerRadius = frameRadius)
             // 1) The movable photo (unclipped: overflow spills out to be dimmed by the scrim).
             // Gated on `framable`, not merely on `decoded`: without a measured intrinsic the aspect is the
             // box-ratio fallback, and painting the photo through it would show a distorted picture the page
@@ -135,14 +176,34 @@ public fun ReframeOverlay(
             }
             // 2) Scrim everything except the frame window (four rects; extended well past the stage so the
             // rotated case still covers). Dims the overflow so the frame reads as the kept region.
+            //
+            // ⚠ Accepted deviation, new with the rounded frame: the spec is `.frame{overflow:hidden}`, so
+            // there the photo is *clipped* to the rounded rect. Here it is deliberately unclipped (the
+            // "the picture moves" teach), and these four rects are square, so in each 4dp corner arc a
+            // sliver of photo paints outside the ground and outside the boundary, undimmed. It did not
+            // exist while the boundary was a square `drawRect`; the radius creates it. Clipping the photo
+            // to a rounded rect and drawing it twice would close it, and is not worth 4dp of corner.
             val big = maxOf(size.width, size.height) * 2f
             drawRect(scrim, topLeft = Offset(-big, -big), size = Size(big * 2f, frame.top + big)) // above
             drawRect(scrim, topLeft = Offset(-big, frame.bottom), size = Size(big * 2f, big)) // below
             drawRect(scrim, topLeft = Offset(-big, frame.top), size = Size(frame.left + big, frame.height)) // left
             drawRect(scrim, topLeft = Offset(frame.right, frame.top), size = Size(big, frame.height)) // right
-            // 3) The frame outline + rule-of-thirds window.
-            drawRect(outline, topLeft = frame.topLeft, size = frame.size, style = Stroke(width = 2.dp.toPx()))
-            val third = Color.White.copy(alpha = 0.34f)
+            // 3) The drawn boundary — `.frame::after{border:1.6px dashed var(--ink);border-radius:var(--br-xs)}`.
+            val dashPx = SelectionOutlineDashDp.toPx()
+            drawRoundRect(
+                boundary,
+                topLeft = frame.topLeft,
+                size = frame.size,
+                cornerRadius = frameRadius,
+                style = Stroke(
+                    width = SelectionOutlineStrokeDp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(dashPx, dashPx)),
+                ),
+            )
+            // 4) The rule-of-thirds window. ⚠ OPEN (owner call): the V2.1 Reframe spec has no thirds grid
+            // — it is V1 chrome the re-skin retinted rather than re-decided, because deleting a guide is a
+            // redesign and this change is a transcription. Recorded in ADR-102 §12.16 as a question.
+            val third = thirds.copy(alpha = 0.34f)
             val tw = 1.dp.toPx()
             for (i in 1..2) {
                 val x = frame.left + frame.width * i / 3f

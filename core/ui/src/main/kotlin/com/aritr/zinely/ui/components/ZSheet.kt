@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import com.aritr.zinely.ui.theme.ZinelyV21Scrim
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
@@ -383,7 +384,7 @@ private fun ZSheetCloseGlyph(tint: Color) {
  * — it was not among the 25 the contrast gate measured. Recorded as the same defect recurring rather
  * than as a value that was chosen. `ZineActionSheet` records it identically for the Library's `.42`.
  */
-private val ScrimFill = Color(0x70261A10)
+private val ScrimFill = ZinelyV21Scrim
 
 /** `transform:translateY(103%)` of the sheet's own height — V2 wrote 102%. */
 private const val SheetSlide = 1.03f

@@ -575,6 +575,7 @@ class TypeBarTest {
             }
     }
 
+
     @Test
     fun a_tap_outside_the_stepper_chips_frozen_paint_still_steps_the_size() {
         // The sibling test above asserts the REPORTED bound (`touchBoundsInRoot`). This one asserts the
@@ -666,8 +667,11 @@ class TypeBarTest {
 
         fun rightOf(label: String) =
             composeRule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.right
+        // By contentDescription, not by text: `.tylab{text-transform:uppercase}` renders "SIZE" while the
+        // string — and what a screen reader says — stays "Size". [TypeRow] splits the two deliberately,
+        // and this is the reader that has to agree with the split.
         fun leftOf(label: String) =
-            composeRule.onNodeWithText(label).fetchSemanticsNode().boundsInRoot.left
+            composeRule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.left
 
         // The last control of each row, top to bottom: Size · Align · Style · Colour.
         val rightEdges = listOf(rightOf("Larger"), rightOf("Right"), rightOf("Italic"), rightOf("Ochre"))
