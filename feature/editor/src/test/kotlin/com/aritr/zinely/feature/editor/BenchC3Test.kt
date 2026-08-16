@@ -3,6 +3,8 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -630,6 +632,18 @@ class BenchC3Test {
         composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.SIZE}").assertIsNotEnabled()
         composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.INK}").assertIsNotEnabled()
         composeRule.onNodeWithTag("$BenchStyleRowTestTag-done").assertIsEnabled()
+
+        // F-1: "disabled" is not an explanation. Each chip announces WHY, as state rather than as name —
+        // and the two sentences differ, because only one of the two absences is permanent. `Font` has no
+        // capability behind it; `Size` and `Ink` are live on the selection bar one tap away (D-042).
+        fun state(label: String) = composeRule
+            .onNodeWithTag("$BenchStyleRowTestTag-$label")
+            .fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription)
+
+        assertEquals(Copy.BenchVerbs.NOT_YET, state(Copy.BenchVerbs.FONT))
+        assertEquals(Copy.BenchVerbs.FINISH_TYPING, state(Copy.BenchVerbs.SIZE))
+        assertEquals(Copy.BenchVerbs.FINISH_TYPING, state(Copy.BenchVerbs.INK))
+        assertEquals("the one live control must not carry a reason", null, state("done"))
     }
 
     @Test

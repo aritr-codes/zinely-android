@@ -13,6 +13,12 @@ import com.aritr.zinely.core.model.TextStyle
  * backend replays each as a single `save → concat(localToPage) → clip(localClip) → draw → restore`
  * with no push/pop stack to keep balanced. All coordinates are page-local **points**; the backend
  * supplies the page→device scale.
+ *
+ * ⚠ **"Points" is a statement about *page* space, not about every command's local space.** It held
+ * for all three original commands because their [localToPage] carries no scale, so local units *were*
+ * points. [DrawShape] breaks that coincidence: its outline is authored in a unit square and the size
+ * lives in the transform (SUPPLIES-SPEC §3.4.1). A command whose local space is not points therefore
+ * cannot carry a points-valued [localClip] — see [DrawShape.localClip], which is fixed at `null`.
  */
 public sealed interface DrawCommand {
     /** Element-local → page-space affine (points → points). Identity for page-level fills. */
@@ -44,7 +50,53 @@ public data class DrawImage(
     val box: PtRect,
     override val localToPage: AffineTransform2D,
     override val localClip: PtRect?,
+    /**
+     * The photocopier filter (X3b, ADR-106). Carried on the tape rather than baked into the asset so
+     * the one replayer applies it identically on all four surfaces — see [photocopy] and
+     * [copierGridSize] for why the dot grid is derived from [box] in points and not from the decode
+     * density. Trailing and defaulted: an existing tape construction stays valid.
+     */
+    val copier: Boolean = false,
 ) : DrawCommand
+
+/**
+ * One placed supply: a filled, single-colour [outline] (SUPPLIES-SPEC §3.3).
+ *
+ * **Fill only, even-odd** — see [SupplyOutline] for the authoring invariant the fill rule exists to
+ * serve. There is no stroke surface here, so there is nothing about caps, joins or miters for the
+ * four backends to disagree on.
+ *
+ * The outline is resolved (from [SupplyCatalog]) rather than referenced by id, which is where this
+ * command deliberately differs from [DrawImage]: an outline is code, so resolving it costs no I/O and
+ * the tape can stay self-contained without any backend gaining a resolver dependency (§3.4).
+ *
+ * **[localToPage] carries the size.** The outline is authored in a unit square, so the fold is
+ * `translate(x,y) · [T(c)·R(deg)·T(-c)] · scale(w,h) · mirror?` (§3.4.1) — without that `scale` term
+ * every supply would render 1pt × 1pt. The scale is non-uniform in general; keeping a stamp square is
+ * an **editor** constraint, not a render one.
+ *
+ * ⚠ **Not emitted yet.** `SceneRenderer` still draws `DecorElement` as nothing and the replayer draws
+ * this as nothing: the tape end of the supply system is package P2, arming the two ends is P3. The
+ * command exists first so that the thing all four surfaces share is settled before anything paints.
+ */
+public data class DrawShape(
+    val outline: SupplyOutline,
+    val ink: ColorRgba,
+    override val localToPage: AffineTransform2D,
+) : DrawCommand {
+    /**
+     * Always `null`, and **not a constructor parameter** — the clip is inexpressible rather than
+     * merely discouraged.
+     *
+     * Every other command's local space is points, so a points-valued clip means what it says. This
+     * one's local space is the unit square, so a `PtRect(0,0,w,h)` clip — the value the other two
+     * element commands pass, and the value anyone would copy — would clip the supply to a `w × h`
+     * sliver of a shape that is only 1 × 1 wide. There is nothing to clip anyway: an outline is
+     * authored inside its own square (SUPPLIES-SPEC §4.1) and so cannot overflow the box the way a
+     * FILL-fitted photo can.
+     */
+    override val localClip: PtRect? get() = null
+}
 
 /**
  * Text **layout intent** — not laid-out glyphs (ADR-027). The backend builds a `StaticLayout` from

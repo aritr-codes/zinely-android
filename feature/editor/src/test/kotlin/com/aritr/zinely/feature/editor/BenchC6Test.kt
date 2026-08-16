@@ -916,6 +916,49 @@ class BenchC6Test {
         assertEquals("Size keeps its OD-9 route", 1, count(TypeBarTestTag))
     }
 
+    /**
+     * **F-15 — Back stands the Type bar down instead of leaving the editor.**
+     *
+     * This is a regression test for a defect found on a device, not a hypothetical. Before the
+     * `BackHandler`, Back with the panel open fell through to the editor's own handler and returned the
+     * user to the shelf — the whole editing context discarded in one press, from a surface opened to
+     * change a font size (reproduced twice, SM-A176B / Android 16). It is the same rule the page grid
+     * (`BenchC5Test.back_stands_the_grid_down_and_leaves_the_editor_where_it_was`) and the ink popover
+     * already follow.
+     *
+     * The `isFinishing` assertion is the one that would have caught it: the panel closing is not enough
+     * if the Activity is on its way out behind it.
+     *
+     * The selection assertion is the other half. Closing the panel must not deselect — `styleTarget` is
+     * derived from the selection, so clearing it would close the panel twice over and lose the user's
+     * place in the element they were styling.
+     */
+    @Test
+    fun back_stands_the_type_bar_down_and_keeps_both_the_editor_and_the_selection() {
+        val store = store()
+        setScreen(store)
+        placedText(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").performClick()
+        composeRule.waitForIdle()
+        assertEquals("Size did not open the Type bar", 1, count(TypeBarTestTag))
+        val selectedBefore = store.uiState.value.selection
+
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+
+        assertEquals("Back did not stand the Type bar down", 0, count(TypeBarTestTag))
+        assertTrue(
+            "Back finished the editor instead of closing the Type bar",
+            !composeRule.activity.isFinishing,
+        )
+        assertEquals(
+            "Closing the panel deselected the element it was styling",
+            selectedBefore,
+            store.uiState.value.selection,
+        )
+    }
+
     /** Row 6.15 — every swatch is named, and the name is the colour's, because that is its whole meaning. */
     @Test
     fun every_swatch_announces_the_ink_it_is() {

@@ -125,6 +125,19 @@ class BenchInkPresetPlatformA11yTest {
                 verb.enabled,
                 node.isClickable,
             )
+            // F-1: a dim verb says why, and TalkBack reads THIS tree — the merged-tree assertion in
+            // `BenchContextBarTest` proves the value is set, only this one proves it arrives. It must ride
+            // state, never the name, so the control is still announced as `Font`.
+            assertEquals(
+                "${verb.label} must tell the platform why it is dim, and only when it is",
+                verb.unavailableBecause,
+                node.stateDescription?.toString(),
+            )
+            assertEquals(
+                "the reason must not migrate into the name",
+                verb.label,
+                node.contentDescription?.toString(),
+            )
         }
     }
 

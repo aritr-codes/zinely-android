@@ -703,17 +703,46 @@ press flush inside a card exactly like this one. The Reframe pad is the nearest 
 Depth follows where a control lives.</p>
 
 <p class="cap"><b>Two things that need a device before this can be frozen.</b>
-<br><b>1. The swatch pitch.</b> <code>.pot</code> is 30&nbsp;px on a <code>--gap-sm</code> gap — a 38&nbsp;px
-pitch, where V1's frozen 32&nbsp;px&nbsp;+&nbsp;8 gave 40. <code>Swatch</code>'s KDoc records a measured
-consequence of that pitch: neighbouring 48&nbsp;dp touch expansions overlap, Compose prunes the overlap
-before reporting bounds, and four of five swatches report <b>40×48</b> to TalkBack rather than 48×48 —
-clearing WCAG&nbsp;2.5.8 (24×24) but under Material's guideline. A 38&nbsp;px pitch changes that number and
-the KDoc's measurement no longer describes the shipped control. It must be re-dumped, not re-reasoned.
-<br><b>2. The card's width at a large font scale.</b> The <code>max-width:calc(100% - 24px)</code> floor is
-transcribed from the frozen rule, but this card's rows changed width: the alignment row grew (three gapped
-buttons instead of one joined segment) and the colour row shrank (30&nbsp;px pots). Which row is now widest,
-and whether the widest still fits a 360&nbsp;dp screen at the largest font scale, is a measurement — and the
-last time it was guessed, five swatches blew the card to exactly 360&nbsp;dp.
+<br><b>1. The swatch pitch. <span style="color:var(--leaf-text)">— RESOLVED 2026-08-15, but the dump is
+still owed.</span></b> This item's premise is now stale and is recorded rather than deleted, because the
+number it names is the one that caused the problem. It read: <i>"<code>.pot</code> is 30&nbsp;px on a
+<code>--gap-sm</code> gap — a 38&nbsp;px pitch, where V1's frozen 32&nbsp;px&nbsp;+&nbsp;8 gave 40"</i>, and
+warned that <code>Swatch</code>'s KDoc measurement — neighbouring 48&nbsp;dp touch expansions overlap,
+Compose prunes the overlap before reporting bounds, and four of five swatches report <b>40×48</b> to
+TalkBack rather than 48×48 — would no longer describe the shipped control.
+<br>Both sides have since moved to <b>48</b>, independently and to the same number. This file declares
+<code>.tyinks{--gap-pot:18px}</code> against a 30&nbsp;px <code>.pot</code>, and the shipped
+<code>TypeBar.kt</code> declares <code>SwatchSize&nbsp;=&nbsp;30.dp</code> with
+<code>SwatchGap&nbsp;=&nbsp;18.dp</code> — <b>a 48&nbsp;dp pitch on both sides</b>, so the expansions no
+longer overlap and there is nothing left for Compose to prune. A Robolectric test now asserts it against the
+<i>platform</i> node rather than the merged tree
+(<code>every_type_bar_control_reports_a_full_48dp_target_to_the_platform</code>).
+<br><b>What is still owed:</b> the caption asked for a <i>device</i> dump — <i>"re-dumped, not
+re-reasoned"</i> — and a platform-node assertion in Robolectric is not that. The
+<code>uiautomator</code> dump of the shipped Type bar is the last piece of this item, and the KDoc on
+<code>Swatch</code> must be corrected to whatever it reports.
+<br><b>2. The card's width at a large font scale. <span style="color:var(--berry)">— MEASURED 2026-08-15.
+The answer is NO, and this item is now a design decision rather than a measurement.</span></b> The
+<code>max-width:calc(100% - 24px)</code> floor is transcribed from the frozen rule, but this card's rows
+changed width: the alignment row grew (three gapped buttons instead of one joined segment) and the colour row
+shrank (30&nbsp;px pots). Which row is now widest, and whether the widest still fits a 360&nbsp;dp screen at
+the largest font scale, is a measurement — and the last time it was guessed, five swatches blew the card to
+exactly 360&nbsp;dp.
+<br><b>Measured on device</b> (SM-A176B, density 420, <code>font_scale&nbsp;2.0</code>, 411&nbsp;dp screen):
+<b>Size 359&nbsp;dp · Align 355&nbsp;dp · Style 356&nbsp;dp · <span style="color:var(--berry)">Colour
+364&nbsp;dp</span></b>. <b>Colour is the widest</b>, and it is the worst-behaved row for a structural reason:
+its five 48&nbsp;dp swatches are <b>fixed</b> and do not scale with the font, while its label does — so the
+row grows with font scale and <i>none</i> of that growth is absorbable. It fits the 411&nbsp;dp screen with
+about 19&nbsp;dp spare. On a <b>360&nbsp;dp</b> screen the card's own floor leaves <b>336&nbsp;dp</b> and the
+row needs <b>364&nbsp;dp</b> — <b>it overflows by roughly 28&nbsp;dp.</b> Guessed, five swatches blew the card
+to exactly 360; measured, they blow it past.
+<br><b>A second defect appears at the same scale, and does not need the 360&nbsp;dp case.</b> The
+<code>Align</code> row's <b>Right</b> button <b>wraps mid-word</b> — it renders as <code>Righ</code> /
+<code>t</code> on two lines (bounds 242&nbsp;px tall against its siblings' 142). That is visible on the
+411&nbsp;dp screen today.
+<br><b>What is now owed is a ruling, not a ruler.</b> The Colour row must wrap, scroll, or stop pinning its
+swatches to a fixed 48&nbsp;dp at large font scales — and each of those is a design choice this file has to
+make before it can be frozen.
 <br>A third item stood here — the five ink fills against the dark <code>--paper</code> — filed as needing a
 device. It needed arithmetic instead, and the arithmetic is below.</p>
 
@@ -746,3 +775,62 @@ scope, but it is the first thing a first-time pass will stop on, and the corpus'
 a row of five, next to a card that has just had all its coral removed. The value is right and must not move;
 only the name is odd. Renaming it touches <code>Copy.Type.INK_CORAL</code>, the announcement it composes,
 the test tag derived from it and the copy tests that assert it — so it is proposed here and not taken.</p>
+
+<!-- ============ ANSWERS TO BOTH, RESEARCHED 2026-08-15 ============ -->
+<p class="cap"><b>Both questions now have researched answers. Neither is taken; both are recommended.</b>
+Evidence and citations: <code>docs/BETA-UX-REVIEW.md</code> F-14 and the 2026-08-15 research pass.</p>
+
+<p class="cap"><b>1. How the panel closes — the fix is three behaviours, and none of them is a button.</b>
+The strongest finding is that <b>the affordance is not the problem; the word "Done" is.</b> GNOME's HIG
+draws the line exactly where this file needs it: <i>instant-apply</i> surfaces get a plain <b>close</b>
+control, and only <i>explicit-apply</i> surfaces get Done + Cancel — where Cancel resets to the pre-open
+state. This panel is instant-apply and its cancel <i>is</i> Undo, so a "Done" would advertise a commit model
+it does not have. That is the trap to avoid, and it is worth stating because the shipped bottom bar's Done
+is currently what closes this panel by side effect.
+<br><b>Recommended, in order, and all three are behaviour rather than visual design</b> — so none of them
+reopens a freeze:
+<br>&nbsp;&nbsp;<b>(a) Register <code>BackHandler</code>.</b> One line. The corpus's other overlays
+(<code>pageGridOpen</code>, <code>inkPopoverOpen</code>) already do; this one does not. <b>The internal
+inconsistency is the sharper argument than any external guideline</b> — and no platform document actually
+states "Back must dismiss a non-modal overlay", so this rests on Material's own standard sheets consuming
+Back once integrated, TalkBack mapping swipe-down-then-left to Back, and this app's own precedent. Three
+converging practical signals, not a written rule. It also matters most for accessibility: if Back does
+nothing here, a screen-reader user's one canonical "get me out" gesture fails silently.
+<br>&nbsp;&nbsp;<b>(b) Tap-outside closes the panel <i>before</i> it deselects.</b> This is the documented
+behaviour of both closest analogues — Procreate (<i>"tap off your text… to close the Edit Style panel"</i>)
+and Keynote iOS (<i>"to close the text formatting controls, tap outside the controls"</i>). Closing before
+deselecting preserves the selection, which is what a maker wants when they put a style panel away mid-edit.
+<br>&nbsp;&nbsp;<b>(c) A <code>CustomAccessibilityAction</code>, "Close type options."</b> Zero pixels, and
+it is Android's own documented answer for a dismissal that otherwise depends on an untargeted spatial
+gesture. Neither Back nor tap-outside fully covers Switch Access, which only reaches focusable nodes — there
+is no "empty canvas" for it to tap.
+<br><b>On a visible close control — the one place this file's situation genuinely differs.</b> Procreate and
+Keynote both keep a visible anchor on screen; this panel does not, because the context bar is withheld.
+Canva is the one surveyed app that likewise replaces its toolbar, and it is also the one that ships an
+explicit close icon. That is probably not a coincidence, and it means the Procreate/Keynote precedent does
+not rebut adding one here. <b>Recommendation: ship (a)–(c) first and re-run a first-time pass.</b> If people
+still hunt for the exit, add a chevron labelled <b>Close</b> — never <i>Done</i>. A visible affordance is
+the fix for a <i>demonstrated</i> discoverability failure, and it is the only one of these options that
+costs a design change.</p>
+
+<p class="cap"><b>2. The word "Coral" — rename it to <code>Brick</code>, on a measurement rather than on
+taste.</b> Measuring both vocabularies as <i>text</i> against both papers settles it: <b>not one Bench maker
+ink meets AA at normal text size</b>, and every Type bar value is a darkened form of one that does. The two
+sets are not rivals — <b>one is the other, corrected</b>. Two of the five already keep the Bench name
+(<code>Ink</code>, <code>Ochre</code>), so the convention exists and was simply applied to two swatches and
+not the other three. <code>Coral&nbsp;#A63C22</code> measures 5.96&nbsp;/&nbsp;5.28 and is the
+contrast-corrected form of Bench <code>Brick&nbsp;#B0503F</code>, which measures 4.82&nbsp;/&nbsp;<b>4.27</b>
+— failing AA on Cream by a hair, exactly the near-miss that earns a darkened twin. So the rename does not
+invent a name; it restores the one the convention already implies, and retiring the abolished word falls out
+as a consequence rather than being the goal.
+<br><b>The rule this file should freeze, which is worth more than the rename:</b> <i>a text ink carries the
+NAME of the Bench maker ink it corrects, and a darker VALUE chosen to clear AA as normal text on both
+papers. The name names the material; the value serves legibility.</i> Under it,
+<code>Teal→Aqua</code> and <code>Blue→Cornflower</code> follow — held back deliberately so the renames land
+once, under a stated convention, rather than twice.
+<br><b>A defect found while answering this, which must not be bundled with a rename.</b>
+<code>Teal&nbsp;#2A9D8F</code> measures <b>3.10&nbsp;/&nbsp;2.75</b> — it <b>fails AA as text on both
+papers</b>, clearing AA-Large on <code>--paper</code> by 0.10 and failing even that on Cream. It is the one
+member of a set whose entire justification is contrast correction that was never actually corrected. That
+needs a corrected <i>value</i>, measured on device, and it is an accessibility fix rather than a naming
+one.</p>

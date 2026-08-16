@@ -110,16 +110,25 @@ internal val BenchOptTitleSize = 16.sp
 internal val BenchOptSubtitleSize = 11.68.sp
 
 /**
- * The frozen **Add chooser** — `openSupply()`'s sheet (`v21-bench.html:772-785`, CSS `:370-381`), with two
+ * The frozen **Add chooser** — `openSupply()`'s sheet (`v21-bench.html:821-835`, CSS `:435-446` — ⚠ these
+ * addresses were re-verified 2026-08-16 after ADR-104's amendment shifted the file by ~+49 lines; the
+ * previous citations pointed at `toast()`), with two
  * of its three rows; [ADR-094](../../../../../../../../docs/DECISIONS.md#adr-094) rows 4.4a–4.4d, re-skinned
  * to V2.1 by [ADR-102](../../../../../../../../docs/DECISIONS.md#adr-102) package P4.
  *
  * ### Why two rows and not three
  *
- * The freeze narrates its own intent at `v21-bench.html:784` — *"Add stays three verbs — Text · Photo ·
+ * The freeze narrates its own intent at `v21-bench.html:834` — *"Add stays three verbs — Text · Photo ·
  * Art."* [OD-21](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling) released **only Text
- * and Photo** into C4 and left `Art` where OD-2 put it, behind C8 and behind
- * [V2-BENCH-REVIEW §E.6](../../../../../../../../docs/design/V2-BENCH-REVIEW.md)'s legal pass. The ruling's
+ * and Photo** into C4 and left `Art` where OD-2 put it.
+ *
+ * ⚠ **Both fences named in the first draft of this KDoc have since moved, and neither moved in Compose's
+ * favour.** *"Behind C8"* is stale — there is no C8 (`COMPOSE-V2-ROADMAP.md`), and the live fence is OD-2's
+ * re-seating plus [ADR-105](../../../../../../../../docs/DECISIONS.md#adr-105) D-4, which puts the
+ * photocopier filter **ahead** of the supplies. [V2-BENCH-REVIEW §E.6](../../../../../../../../docs/design/V2-BENCH-REVIEW.md)'s
+ * legal pass is **discharged** (ADR-104 is `Accepted`), so the licensing reason for the fence is gone while
+ * the model reason is not: `DecorElement`, `DrawShape` and `AffineTransform2D.scale` do not exist, and the
+ * sixteen supplies are named in prose and drawn nowhere. The ruling's
  * own words for this are *"a fence reassignment, not a capability reassignment"*: the frozen markup still
  * has three rows, and what changed is which package may build which one.
  *
@@ -127,7 +136,7 @@ internal val BenchOptSubtitleSize = 11.68.sp
  * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling)'s *drawn and invents nothing* —
  * but C3's own Pass 2 produced this programme's sharpest sentence against exactly that pattern: a control
  * that reports truthfully and then does nothing when tapped invites the press harder than a blank one does.
- * A row that does not exist yet promises nothing; C8 adds it.
+ * A row that does not exist yet promises nothing; the phase that lands `DecorElement` adds it.
  *
  * ### Why the sheet is [ZSheet] and not a new surface
  *

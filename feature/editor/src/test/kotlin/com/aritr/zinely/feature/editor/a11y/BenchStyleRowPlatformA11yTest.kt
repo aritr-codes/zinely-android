@@ -47,19 +47,24 @@ class BenchStyleRowPlatformA11yTest {
         composeRule.waitForIdle()
     }
 
-    private fun assertInert(label: String) {
+    private fun assertInert(label: String, because: String) {
         val node = composeRule.onNodeWithContentDescription(label).platformNode(composeRule.activity)
         assertEquals("$label must carry Role.Button to the platform tree", "android.widget.Button", node.className)
         assertFalse("$label is drawn-and-inert (OD-9) and must report DISABLED to the platform", node.isEnabled)
         assertFalse("$label must not be offered as clickable — nothing happens if it is activated", node.isClickable)
+        // F-1: the reason is only worth writing if TalkBack can hear it, and TalkBack reads THIS tree. The
+        // merged-tree assertions in `BenchC3Test` prove the value is set; only this one proves it arrives.
+        assertEquals("$label must tell the platform why it is dim", because, node.stateDescription?.toString())
+        // ...and it must arrive as STATE, never folded into the name: the chip is still called `Size`.
+        assertEquals("the reason must not migrate into the name", label, node.contentDescription?.toString())
     }
 
     @Test
     fun the_three_inert_chips_report_disabled_and_unclickable_to_the_platform() {
         render()
-        assertInert(Copy.BenchVerbs.FONT)
-        assertInert(Copy.BenchVerbs.SIZE)
-        assertInert(Copy.BenchVerbs.INK)
+        assertInert(Copy.BenchVerbs.FONT, Copy.BenchVerbs.NOT_YET)
+        assertInert(Copy.BenchVerbs.SIZE, Copy.BenchVerbs.FINISH_TYPING)
+        assertInert(Copy.BenchVerbs.INK, Copy.BenchVerbs.FINISH_TYPING)
     }
 
     @Test

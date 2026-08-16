@@ -27,7 +27,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyPress
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -143,9 +142,15 @@ class TypeBarTest {
     private fun textOf(s: EditorStore): TextElement =
         s.uiState.value.document.pages[0].elements.first { it is TextElement } as TextElement
 
-    /** Open the Type bar via the Style control — the only path a user has. */
+    /**
+     * Open the Type bar via the Style control — the only path a user has.
+     *
+     * The `performScrollTo` this used to carry is gone with F-2: the transform row wraps instead of
+     * scrolling, so there is no scrollable ancestor and the call threw *"Semantic Node has no parent layout
+     * with a Scroll SemanticsAction"*. The control is simply on screen now, which is the point.
+     */
     private fun openTypeBar() {
-        composeRule.onNodeWithContentDescription("Text style").performScrollTo().performClick()
+        composeRule.onNodeWithContentDescription("Text style").performClick()
         composeRule.waitForIdle()
     }
 
@@ -457,7 +462,7 @@ class TypeBarTest {
         composeRule.onNodeWithContentDescription("Size 14 point").assertExists()
 
         // Close well inside the settle window.
-        composeRule.onNodeWithContentDescription("Text style").performScrollTo().performClick()
+        composeRule.onNodeWithContentDescription("Text style").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TypeBarTestTag).assertDoesNotExist()
 

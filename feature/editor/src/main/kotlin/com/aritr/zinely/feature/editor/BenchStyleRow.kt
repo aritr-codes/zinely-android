@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -237,9 +238,12 @@ internal fun BenchStyleRow(
                 horizontalArrangement = Arrangement.spacedBy(BenchStyleRowGap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                InertChip(Copy.BenchVerbs.FONT)
-                InertChip(Copy.BenchVerbs.SIZE)
-                InertChip(Copy.BenchVerbs.INK, swatch = inkSwatch)
+                // The three reasons are not the same sentence, and saying so is the whole point of F-1:
+                // `Font` is a capability the product does not have, while `Size` and `Ink` are one tap away
+                // on the selection bar the moment this row stands down (D-042).
+                InertChip(Copy.BenchVerbs.FONT, because = Copy.BenchVerbs.NOT_YET)
+                InertChip(Copy.BenchVerbs.SIZE, because = Copy.BenchVerbs.FINISH_TYPING)
+                InertChip(Copy.BenchVerbs.INK, because = Copy.BenchVerbs.FINISH_TYPING, swatch = inkSwatch)
                 // Frozen `.grow{flex:1}` — the chips pack left, Done anchors right.
                 Box(Modifier.weight(1f))
                 DoneChip(onDone)
@@ -269,9 +273,20 @@ internal fun BenchStyleRow(
  * *heavier* chrome than the freeze does. Written as pre-multiplied colours rather than a `graphicsLayer`
  * alpha for one reason — a layer would take the swatch down with it, and row 3.9 requires the swatch to
  * report the element's true ink. A dimmed coral is pale pink, which is a false value, not a quiet one.
+ *
+ * ### It says why it is dim
+ *
+ * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps the chip drawn and
+ * forbids inventing a capability for it; it does not make it mute, and a device pass found that silence is
+ * what a first-time user reads as breakage (`docs/BETA-UX-REVIEW.md` F-1). [because] rides
+ * `stateDescription`, never `contentDescription` — the chip keeps the verb name the row is labelled by, so
+ * nothing about the frozen vocabulary moves, and explaining an absence claims no capability.
+ *
+ * @param because why this chip is inert, announced as state. Not optional: a drawn-and-disabled control
+ *   that cannot say why is the defect F-1 recorded.
  */
 @Composable
-private fun InertChip(label: String, swatch: Color? = null) {
+private fun InertChip(label: String, because: String, swatch: Color? = null) {
     val colors = ZinelyTheme.v21Colors
     Row(
         modifier = Modifier
@@ -290,6 +305,8 @@ private fun InertChip(label: String, swatch: Color? = null) {
                 contentDescription = label
                 role = Role.Button
                 disabled()
+                // OD-9 keeps the chip drawn; this says WHY it is dim. State, not name.
+                stateDescription = because
             }
             .padding(horizontal = BenchStyleChipPaddingH, vertical = BenchStyleChipPaddingV),
         horizontalArrangement = Arrangement.spacedBy(BenchStyleRowGap),

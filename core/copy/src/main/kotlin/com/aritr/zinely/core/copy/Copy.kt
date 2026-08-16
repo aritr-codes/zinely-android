@@ -41,6 +41,65 @@ public object Copy {
         public const val BRAND: String = "Zinely"
     }
 
+    /**
+     * **Share-in** — what Zinely says when another app hands it photos (`ShareInbox.kt`, `MainActivity.kt`,
+     * `EditorViewModel.kt`; SUPPLIES-SPEC §6, re-sequenced by
+     * [ADR-105](../../../../../../../docs/DECISIONS.md#adr-105)).
+     *
+     * Three sentences, each answering a question the maker is holding at that exact moment:
+     *
+     *  - [CHOOSE_ZINE] — *"where did my photo go?"*. Shown when the share lands on the shelf, which is
+     *    where a cold start lands. Without it the app opens on a grid of covers and says nothing about
+     *    the photo the maker just sent it. It says **which action** completes the transfer ("open a
+     *    zine") rather than merely reporting that something was received, because a report the maker
+     *    cannot act on is not an answer.
+     *  - [ADDING_TO_OPEN_ZINE] — the same question, answered for the maker who already has a zine open.
+     *    ⚠ It is **not** redundant with the photos simply appearing: the editor's spoken
+     *    [importSummary] can be dropped (the announcement channel is replay-free, so an emission with no
+     *    collector — the Proof screen is showing, the editor is mid-boot — is discarded), and an import
+     *    that reports nothing at all is indistinguishable from a share the app ignored.
+     *  - [ONLY_PHOTOS] — the honest refusal for a non-image share. Names what Zinely *does* take, not
+     *    what the file was: the maker knows what they shared, and a refusal that only says "no" makes
+     *    them guess at the rule.
+     *  - [importSummary] — the count, once the import has actually run. Spoken through the editor's
+     *    existing live region, the same channel every other import outcome uses.
+     *
+     * ⚠ **The failure half is spoken, not shown** — [importSummary] rides `announceForAccessibility`,
+     * so a maker without TalkBack sees photos appear and is told nothing about the ones that did not.
+     * That is the *existing* import pipeline's behaviour (`ImagePickResult.Failure` → `Announcer`), and
+     * this path deliberately inherits it rather than inventing a second, better-informed failure surface
+     * for one entry point. Recorded as a known gap in **D-081**, not as a claim that it is right.
+     */
+    public object ShareIn {
+        public const val CHOOSE_ZINE: String = "Open a zine and your photos will be added to it."
+        public const val ADDING_TO_OPEN_ZINE: String = "Adding your photos to this zine."
+        public const val ONLY_PHOTOS: String = "Zinely can only add photos."
+
+        /**
+         * What the editor announces once a share-in batch has finished importing.
+         *
+         * Both halves are reported, in that order, because they are two different facts and collapsing
+         * them would let a partial import read as a whole one. A batch where nothing at all succeeded is
+         * still an announcement — silence after a share is indistinguishable from the app ignoring it.
+         *
+         * @param added photos that reached the page.
+         * @param failed photos that could not be read or decoded (revoked grant, corrupt, unsupported).
+         */
+        public fun importSummary(added: Int, failed: Int): String {
+            val addedPart = when (added) {
+                0 -> null
+                1 -> "Photo added."
+                else -> "$added photos added."
+            }
+            val failedPart = when (failed) {
+                0 -> null
+                1 -> "One photo couldn’t be added."
+                else -> "$failed photos couldn’t be added."
+            }
+            return listOfNotNull(addedPart, failedPart).joinToString(" ")
+        }
+    }
+
     /** Nav-host / share plumbing strings (`ZinelyNavHost.kt`, CI-82/CI-83). */
     public object Nav {
         public const val SHARE_CHOOSER_TITLE: String = "Share your zine"
@@ -128,8 +187,64 @@ public object Copy {
         public const val SIZE: String = "Size"
         public const val INK: String = "Ink"
         public const val REFRAME: String = "Reframe"
+
+        /** The photocopier filter's toggle (`v21-bench.html:678`, ADR-106). It names the machine, not
+         *  the algorithm: nobody asks a copier for Floyd–Steinberg. */
+        public const val COPIER: String = "Copier"
+
+        /** [COPIER]'s spoken state — it is the one verb on this bar that is a toggle, and a toggle that
+         *  does not say which way it is set is a button that appears not to work. No frozen file draws a
+         *  visual on-state; that half is [D-082](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-082) Q4.
+         *
+         *  Shares the `stateDescription` channel with [NOT_YET] and friends below, and cannot collide with
+         *  them: a disabled verb has no setting to report, a toggle is live by construction. */
+        public const val COPIER_ON: String = "On"
+        public const val COPIER_OFF: String = "Off"
         public const val REPLACE: String = "Replace"
         public const val DELETE: String = "Delete"
+
+        /**
+         * Why a **drawn but disabled** verb is disabled, announced as its state.
+         *
+         * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) ruled that a control
+         * the freeze draws stays drawn and **invents no capability**. It did not rule that the control
+         * stays *silent*, and a device pass found silence is what a first-time user reads as breakage —
+         * the same defect, and the same remedy, as the Reframe pad's dead entry state
+         * (`docs/BETA-UX-REVIEW.md` F-1, F-4). Explaining an absence invents nothing; it is the opposite.
+         *
+         * The two reasons are kept apart because they are answerable by the user in opposite ways: one is
+         * a capability the product does not have yet, the other is a thing the user can fix in one move.
+         * Collapsing them into a single "unavailable" would throw away the half that is actionable.
+         */
+        public const val NOT_YET: String = "Not available yet"
+
+        /** Size and Ink on a still-blank box — the reducer refuses to style one (ADR-055). */
+        public const val TYPE_FIRST: String = "Type something first"
+
+        /**
+         * `Size` and `Ink` on the **editing** row (`BenchStyleRow`), which the freeze draws with no handler.
+         *
+         * Distinct from [NOT_YET] because it is not a missing capability: both verbs are live on the
+         * selection bar, and D-042 records that the two surfaces are mutually exclusive by construction
+         * (`styleTarget` is gated on `interaction !is Interaction.EditingText`). So the honest sentence is
+         * the route, not an apology — the user is a step from the control they are reaching for.
+         *
+         * ### Why it says *finish typing* and not *tap Done*
+         *
+         * It named the button first, and independent review caught that as a **lie in the state a new user
+         * meets first**: `Add → Text` opens this row on a box that is still blank, and `Done` on a blank box
+         * does not hand back a stylable element — the reducer removes it (`EditorReducer` on
+         * `resultText.isBlank()`). Naming the button promised a thing that deletes itself.
+         *
+         * The obvious repair — choose between this and [TYPE_FIRST] from `editingElement.text` — is wrong
+         * for a subtler reason: the draft is feature-ephemeral (ADR-029 §5.6) and does not reach the store
+         * until commit, so that text reads *blank* for the whole of the typing. It would announce "Type
+         * something first" to a user who has just written a paragraph.
+         *
+         * One sentence covers both without either fault: finishing the typing is exactly the condition —
+         * type, then leave the session — and it is true whether the box currently holds words or not.
+         */
+        public const val FINISH_TYPING: String = "Finish typing to change this"
     }
 
     /**
@@ -145,6 +260,18 @@ public object Copy {
          * ([OD-21](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling)).
          */
         public const val ADD: String = "Add"
+
+        /**
+         * Why the page-level `Done` is dim, in the two states OD-14 withholds it — *"a control that is
+         * drawn and disabled says why"*, the rule F-1 established for the style row and F-6 inherited here.
+         *
+         * Two strings rather than one because the two states end differently: a text session is finished
+         * by the row's own `Done`, an ink session by the card's. A single "Finish what you started" would
+         * be true of both and useful for neither. Both ride `stateDescription`, never `contentDescription`
+         * — the control's name is `Done` in every state, and only its availability changes.
+         */
+        public const val DONE_AFTER_TEXT: String = "Finish your text first"
+        public const val DONE_AFTER_INK: String = "Close the ink panel first"
     }
 
     /**
@@ -230,8 +357,114 @@ public object Copy {
     }
 
     /**
+     * **The sixteen supplies** — the Zinely cabinet's whole vocabulary
+     * ([SUPPLIES-SPEC §4](../../../../../../../docs/design/SUPPLIES-SPEC.md),
+     * [ADR-105](../../../../../../../docs/DECISIONS.md#adr-105) step S6). *Art* is the verb; Supplies is
+     * the drawer (§1).
+     *
+     * ### Why the id lives next to the word
+     *
+     * `DecorElement.supplyId` is the durable half — it is written into every saved document and must match
+     * `^[a-z]+\.[a-z]+$` (§2.2, enforced by the document validator). The display name is the disposable
+     * half: it can be reworded without touching a single zine. Keeping them in **one** map rather than two
+     * parallel lists is the whole point — a `supplyId` with no name, or a name with no supply, is then not
+     * expressible rather than merely tested for.
+     *
+     * ⚠ **The id prefix is not the family.** Five prefixes (`tape`, `fix`, `mark`, `paper`, `shape`) carry
+     * four families, because *Tape & fixings* holds one tape and three fixings. Anything that needs the
+     * family must read [BY_FAMILY], never `supplyId.substringBefore('.')`.
+     *
+     * ### The names, and where they depart from §4's prose
+     *
+     * §4 restores `ZINE-DIRECTION.md` §9.2's sixteen verbatim, and that prose is a *specification*, not a
+     * set of labels: two entries are slash-pairs (*star/asterisk*, *cut label/speech tag*) and a screen
+     * reader cannot say a slash. So the naming here picks one word per supply, and departs in exactly five
+     * places, each for a reason that shows up in speech:
+     *
+     *  - `mark.asterisk` → **Star**, not *"star/asterisk"*. §8's own worked example of a decor content
+     *    description is *"Star, medium, berry"* — the spec had already chosen.
+     *  - `paper.tag` → **Speech tag**, not *"cut label/speech tag"*. *Label* is what every other control on
+     *    the Bench already is; *speech tag* names the thing on the page.
+     *  - `tape.torn` → **Torn tape**, not *"torn tape strip"*. §4 flags this and `paper.strip` (*torn
+     *    strip*) as near-neighbours and keeps both deliberately — one is tape, one is paper. But *"Torn
+     *    strip"* is a **prefix of** *"Torn tape strip"*, and a listener who hears the shorter one cannot
+     *    know they did not simply miss a word. Dropping *strip* from the tape makes the two differ on their
+     *    second syllable instead of their fourth, which is the only difference speech can carry.
+     *  - `mark.halftone` → **Halftone dots**, not *"halftone dot cluster"*. *Cluster* is print-shop
+     *    vocabulary describing the drawing, and [BP-4] forbids teaching the maker a word they did not ask
+     *    for.
+     *  - `paper.window` → **Window frame**, not *"cut-out window frame"*. The supply is spoken under its
+     *    family heading, and that heading is already the word *Cut* — "Cut paper · Cut-out window frame"
+     *    spends a listener's attention saying *cut* twice before it says what the thing is. This departure
+     *    went unlisted in the first draft of this KDoc, which claimed four; the reconciliation against
+     *    `v21-bench.html` found the fifth, which is the argument for reconciling the two files at all.
+     *
+     * `mark.registration` keeps its trade word because there is no plainer name for the thing, and it is
+     * one of the two **process** marks that carry ADR-104's thesis — renaming it to *"cross"* would file it
+     * with the geometry it is deliberately not.
+     *
+     * ### The `Ink` collision, checked and clear
+     *
+     * §8 warns that *"`Ink` is ambiguous"*. **No supply is named `Ink`** — the collision §8 names is
+     * between two *swatches*: [BenchInk.INK] is the single string serving both `ZinelyMakerInkId.Ink` and
+     * `ZinelyNeutralId.Ink` (`BenchInkPopover.kt:188` and `:202`), and it is also the word on the context
+     * bar's verb ([BenchVerbs.INK]). That defect is real and is **not this object's to fix**: band-
+     * qualifying a swatch changes a drawn label in a frozen popover. Recorded, not repaired here.
+     *
+     * What this object owes is the promise that S6 does not make it worse — so `SuppliesCopyTest` pins that
+     * no supply name equals any shipped swatch name or bench verb. The day someone renames `mark.asterisk`
+     * to *"Ink star"* or the popover renames a swatch to *"Staple"*, that assertion breaks first.
+     */
+    public object Supplies {
+
+        // — the four family headings (§4's table, and the picker's own headings per §0 O-C) —
+        public const val TAPE_AND_FIXINGS: String = "Tape & fixings"
+        public const val STAMPS_AND_MARKS: String = "Stamps & marks"
+        public const val CUT_PAPER: String = "Cut paper"
+        public const val CUT_SHAPES: String = "Cut shapes"
+
+        /**
+         * Family heading → its supplies, `supplyId` → spoken and drawn name, both in §4's frozen order.
+         *
+         * Ordered maps throughout: the drawer is *"the same every time you open it"* is the one claim §9
+         * withdrew, but the **order** is still frozen design — sixteen items on one screen have no sort
+         * control and no search, so position is the only way a maker finds a supply twice.
+         */
+        public val BY_FAMILY: Map<String, Map<String, String>> = linkedMapOf(
+            TAPE_AND_FIXINGS to linkedMapOf(
+                "tape.torn" to "Torn tape",
+                "fix.corner" to "Photo corner",
+                "fix.staple" to "Staple",
+                "fix.clip" to "Paper clip",
+            ),
+            STAMPS_AND_MARKS to linkedMapOf(
+                "mark.asterisk" to "Star",
+                "mark.arrow" to "Arrow",
+                "mark.halftone" to "Halftone dots",
+                "mark.registration" to "Registration cross",
+            ),
+            CUT_PAPER to linkedMapOf(
+                "paper.strip" to "Torn strip",
+                "paper.window" to "Window frame",
+                "paper.tag" to "Speech tag",
+                "paper.underline" to "Marker underline",
+            ),
+            CUT_SHAPES to linkedMapOf(
+                "shape.rect" to "Rectangle",
+                "shape.circle" to "Circle",
+                "shape.triangle" to "Triangle",
+                "shape.rule" to "Straight rule",
+            ),
+        )
+
+        /** Every supply, flattened — derived from [BY_FAMILY] so the two can never disagree. */
+        public val NAMES: Map<String, String> =
+            BY_FAMILY.values.flatMap { it.entries }.associate { it.key to it.value }
+    }
+
+    /**
      * The bar's Add chooser (`BenchAddChooser.kt`, `v2-bench.html:719-721`; ADR-094). Two rows only — Art
-     * stays fenced behind C8 per OD-21 — and each row's spoken label is [optionLabel], one target rather
+     * stays fenced per OD-2 and ADR-105's sequencing (C8, named here in an earlier draft, does not exist) — and each row's spoken label is [optionLabel], one target rather
      * than three fragments.
      */
     public object AddChooser {
@@ -472,11 +705,37 @@ public object Copy {
         public const val MOVE_PHOTO_DOWN: String = "Move photo down"
         public const val ZOOM_OUT: String = "Zoom out"
         public const val ZOOM_IN: String = "Zoom in"
+
+        /**
+         * `.padhint` (`v21-reframe.html`, revised 2026-08-15) — the pad's **entry state**, which the frozen
+         * file never specified until a device pass found it (`docs/BETA-UX-REVIEW.md` F-4).
+         *
+         * A newly placed photo's frame is seeded to the photo's own aspect, so at 100% Fill there is no
+         * overflow on either axis and the implementation correctly disables all four nudges *and* `Zoom
+         * out`. Five dead controls, and nothing said why — the same defect as F-1 on the Bench, one surface
+         * along, and the reason the house rule is written once for both.
+         *
+         * It is an **instruction, not an error**: no warning colour, no icon, the pad's own quiet ink. It
+         * names the act that revives the pad rather than the state that killed it, and that act is `Zoom
+         * in`, which is never disabled at the entry state — so the hint can never advise a control the user
+         * cannot reach.
+         */
+        public const val ZOOM_IN_TO_MOVE: String = "Zoom in to move the photo"
         public const val FILL: String = "Fill"
         public const val CROPS_EDGES: String = "crops edges"
         public const val WHOLE_PHOTO: String = "Whole photo"
         public const val MAY_ADD_MARGINS: String = "may add margins"
         public const val CANCEL_REFRAMING: String = "Cancel reframing"
+
+        /**
+         * The **drawn** word on Reset — its spoken label stays the long [A11y.RESET_FRAMING].
+         *
+         * F-9: the control shipped as a bare circular arrow between two worded neighbours, and that glyph
+         * is the *rotate* glyph on the Bench's own transform row, one surface away. Same glyph family,
+         * different act, adjacent surfaces. The spoken label was always right, so this was a purely visual
+         * defect and the fix is a word (`v21-reframe.html`, revised 2026-08-15: `Reset` is a `.text-btn`).
+         */
+        public const val RESET: String = "Reset"
         public const val DONE_REFRAMING: String = "Done reframing"
         public const val REFRAME_THIS_PHOTO: String = "Reframe this photo"
         public const val CANCEL: String = "Cancel"

@@ -12,6 +12,7 @@ import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -41,13 +42,19 @@ class BenchBottomBarPlatformA11yTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    private fun render(canUndo: Boolean = false, canRedo: Boolean = false, doneEnabled: Boolean = true) {
+    private fun render(
+        canUndo: Boolean = false,
+        canRedo: Boolean = false,
+        doneEnabled: Boolean = true,
+        doneUnavailableBecause: String? = null,
+    ) {
         composeRule.setContent {
             ZinelyTheme {
                 BenchBottomBar(
                     canUndo = canUndo,
                     canRedo = canRedo,
                     doneEnabled = doneEnabled,
+                    doneUnavailableBecause = doneUnavailableBecause,
                     onUndo = {},
                     onRedo = {},
                     onAdd = {},
@@ -105,5 +112,53 @@ class BenchBottomBarPlatformA11yTest {
         // withheld — and must be withheld to TalkBack, not merely greyed.
         render(doneEnabled = false)
         assertWithheld(Copy.EditText.DONE)
+    }
+
+    @Test
+    fun a_withheld_done_tells_the_platform_WHY_and_a_live_one_says_nothing() {
+        // F-1's rule, F-6's second reason. Without this a screen-reader user hears "Done, disabled" and has
+        // no way to learn what would revive it — the same defect F-1 fixed one file over on the style row.
+        //
+        // `stateDescription`, never `contentDescription`: the control's NAME is `Done` in every state, and
+        // folding the reason into the name would rename a button according to why it cannot be pressed.
+        // Asserted on the PLATFORM node because that is the tree TalkBack reads; the merged tree can carry
+        // a state the platform never publishes.
+        render(doneEnabled = false, doneUnavailableBecause = Copy.BenchBar.DONE_AFTER_INK)
+        assertEquals(
+            "a withheld Done must say what would revive it",
+            Copy.BenchBar.DONE_AFTER_INK,
+            node(Copy.EditText.DONE).stateDescription?.toString(),
+        )
+        assertEquals(
+            "its name must not change with its availability",
+            Copy.EditText.DONE,
+            node(Copy.EditText.DONE).contentDescription?.toString(),
+        )
+    }
+
+    @Test
+    // Its own test rather than a second half of the one above: `setContent` may be called once per
+    // activity, so two renders in one method throw before either assertion runs.
+    fun a_live_done_carries_no_state_at_all() {
+        // The half a "just always publish it" simplification would break. A live control has nothing to
+        // explain, and an instruction on it would be advice to do what the user is already free to do.
+        render()
+        assertNull("a live Done must carry no state", node(Copy.EditText.DONE).stateDescription)
+    }
+
+    @Test
+    fun the_two_withheld_states_do_not_give_the_same_reason() {
+        // Two states end differently — a text session by the row's own Done, an ink session by the card's —
+        // so one shared sentence would be true of both and useful for neither. Pinned as a literal pair
+        // because a later "de-duplication" collapsing them is exactly the change this guards against.
+        assertTrue(
+            "the text and ink reasons must differ",
+            Copy.BenchBar.DONE_AFTER_TEXT != Copy.BenchBar.DONE_AFTER_INK,
+        )
+        render(doneEnabled = false, doneUnavailableBecause = Copy.BenchBar.DONE_AFTER_TEXT)
+        assertEquals(
+            Copy.BenchBar.DONE_AFTER_TEXT,
+            node(Copy.EditText.DONE).stateDescription?.toString(),
+        )
     }
 }

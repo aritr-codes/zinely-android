@@ -117,6 +117,8 @@ class EditorPagePersistenceTest {
             assetStore = NoAssetStore(),
             imageDecoder = ImportMasterDecoder(context.contentResolver),
             onboardingStore = SeenOnboardingStore(),
+            // An empty share inbox — this suite is about persistence of place, not share-in.
+            shareInbox = ShareInbox(),
             assetsDir = File(context.cacheDir, "assets").apply { mkdirs() },
             mainDispatcher = dispatcher,
             ioDispatcher = dispatcher,

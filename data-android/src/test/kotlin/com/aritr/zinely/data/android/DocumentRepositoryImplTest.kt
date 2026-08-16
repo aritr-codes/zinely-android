@@ -9,6 +9,7 @@ import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.data.storage.FileSystemOps
 import com.aritr.zinely.core.data.storage.NioFileSystemOps
 import com.aritr.zinely.core.data.validation.DefaultDocumentValidator
+import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -106,14 +107,14 @@ class DocumentRepositoryImplTest {
     fun `load of a newer-than-supported schema fails with SchemaTooNew`() = runTest {
         val root = tempRoot()
         // Well-formed JSON declaring a schema version this build does not support yet.
-        writeFile(docPath(root, "proj1"), """{"schemaVersion":2}""".toByteArray())
+        writeFile(docPath(root, "proj1"), """{"schemaVersion":${CURRENT_SCHEMA_VERSION + 1}}""".toByteArray())
 
         val error = (repo(root).load("proj1") as DataResult.Failure).error
 
         assertTrue("expected SchemaTooNew, got $error", error is DataError.SchemaTooNew)
         error as DataError.SchemaTooNew
-        assertEquals(2, error.documentVersion)
-        assertEquals(1, error.supportedVersion)
+        assertEquals(CURRENT_SCHEMA_VERSION + 1, error.documentVersion)
+        assertEquals(CURRENT_SCHEMA_VERSION, error.supportedVersion)
     }
 
     @Test
@@ -189,14 +190,14 @@ class DocumentRepositoryImplTest {
     @Test
     fun `load does not roll back to a stale backup when the primary is a newer schema`() = runTest {
         val root = tempRoot()
-        writePrimaryWithValidBackup(root, "proj1", """{"schemaVersion":2}""".toByteArray())
+        writePrimaryWithValidBackup(root, "proj1", """{"schemaVersion":${CURRENT_SCHEMA_VERSION + 1}}""".toByteArray())
 
         val result = repo(root).load("proj1")
 
         assertTrue("must not roll back to backup, got $result", result is DataResult.Failure)
         val error = (result as DataResult.Failure).error
         assertTrue("expected SchemaTooNew, got $error", error is DataError.SchemaTooNew)
-        assertEquals(2, (error as DataError.SchemaTooNew).documentVersion)
+        assertEquals(CURRENT_SCHEMA_VERSION + 1, (error as DataError.SchemaTooNew).documentVersion)
     }
 
     @Test

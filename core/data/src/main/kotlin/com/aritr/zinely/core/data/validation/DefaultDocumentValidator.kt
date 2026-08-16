@@ -4,6 +4,7 @@ import com.aritr.zinely.core.model.Background
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.Crop
 import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.TextElement
@@ -93,6 +94,35 @@ public class DefaultDocumentValidator : DocumentValidator {
                 }
                 validateTextStyle(element.style, "$path.style", issues)
             }
+            is DecorElement -> validateSupplyId(element.supplyId, "$path.supplyId", issues)
+        }
+    }
+
+    /**
+     * The **only two** decor rules, and the boundary is deliberate (SUPPLIES-SPEC §2.2 ruling).
+     *
+     * `:core:data` declares `api(project(":core:model"))` as its only project dependency and is
+     * "deliberately Android-free", so it checks what `:core:model` can see and nothing more:
+     * - `decor.supplyId.blank`
+     * - `decor.supplyId.malformed` — must be `family.name`, both lowercase.
+     *
+     * Explicitly **not** checked here, and neither is an omission:
+     * - **catalogue membership.** `SupplyCatalog` lives in `:core:render`; the reverse dependency edge
+     *   would invert the layering and drag the render layer into the document validator. An unknown
+     *   `supplyId` renders as nothing and is reported by the editor, which is the layer that knows.
+     * - **palette membership of `ink`.** An off-palette colour renders correctly, so refusing to open
+     *   the zine over it would be the worse harm. `ZinelyContentInks` also lives in `:core:ui`, an
+     *   Android library — reaching it from here would break the pure-JVM CI job outright.
+     */
+    private fun validateSupplyId(supplyId: String, path: String, issues: MutableList<ValidationIssue>) {
+        if (supplyId.isBlank()) {
+            issues += error("decor.supplyId.blank", "decor supplyId is blank", path)
+        } else if (!SUPPLY_ID.matches(supplyId)) {
+            issues += error(
+                "decor.supplyId.malformed",
+                "supplyId '$supplyId' is not a lowercase 'family.name' key",
+                path,
+            )
         }
     }
 
@@ -146,5 +176,8 @@ public class DefaultDocumentValidator : DocumentValidator {
     private companion object {
         private val SHA256 = Regex("^[0-9a-f]{64}$")
         fun isSha256(value: String): Boolean = SHA256.matches(value)
+
+        /** `family.name`, both lowercase — SUPPLIES-SPEC §2.2's regex, verbatim. */
+        private val SUPPLY_ID = Regex("""^[a-z]+\.[a-z]+$""")
     }
 }

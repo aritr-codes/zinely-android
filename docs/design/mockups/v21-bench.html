@@ -448,12 +448,12 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
    in four named families are BROWSED, not searched, and a query box over sixteen things teaches the
    user to expect a seventeenth.  (The Shelf's own zine search is a different, local control in
    v21-library.html and is untouched.) */
-.chips{display:flex;gap:var(--gap-sm);overflow-x:auto;padding-bottom:var(--gap-sm);scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip2{flex:none;font-family:var(--sans);font-size:.76rem;font-weight:600;color:var(--ink-soft);
-  background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-pill);
-  padding:var(--gap-sm) var(--gap-md);cursor:pointer}
-.chip2.on{background:var(--leaf);color:var(--on-leaf)}
+/* REMOVED 2026-08-16 (AMENDMENT LOG A5): .chips / .chip2 styled the Art sheet's four family chips.
+   Filtering is ruled out (SUPPLIES-SPEC §9, "no tags, no filters, no sort") and the four families now
+   head their own sections in .lbl, so nothing is left for a chip to do.  Deleted with the markup, on the
+   rule the ADR-104 removal above states: a spec that still styles a removed control has not removed it.
+   (.chip, in the Type bar, is a DIFFERENT control, untouched.)  A4 cites this line, so the rule it cites
+   is preserved verbatim, dead but quoted: .chip2.on{background:var(--leaf);color:var(--on-leaf)} */
 .lbl{font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--ink-soft);margin:var(--gap-md) 0 var(--gap-sm)}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap-sm)}
@@ -632,6 +632,7 @@ const ICON={
   colour:svg('<path d="M12 3a9 9 0 100 18c1 0 2-.8 2-2 0-1.4-1.4-1.6-1.4-3 0-1 .8-1.8 1.9-1.8H16a5 5 0 005-5c0-3.4-4-6.2-9-6.2z"/><circle cx="8" cy="11" r="1.2"/><circle cx="12" cy="8" r="1.2"/>'),
   reframe:svg('<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M9 6v12M15 6v12"/>'),
   replace:svg('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/>'),
+  copier:svg('<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.1"/><circle cx="13" cy="8.5" r="1.6"/><circle cx="17" cy="10.5" r="1.1"/><circle cx="10" cy="14" r="1.6"/><circle cx="15" cy="15" r="1.1"/>'),
   del:svg('<path d="M5 7h14"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/>')
 };
 const DECOR={
@@ -668,19 +669,22 @@ $('content').innerHTML=ELS.map((e,i)=>
      <span class="hnd t"></span><span class="hnd b"></span>
      <span class="hnd l"></span><span class="hnd r"></span>${e.html}</div>`).join('');
 
-let sel=null;
+let sel=null,copierOn=false;   /* A4 — the Copier toggle's setting, so the prototype can demonstrate it. */
 function toolsFor(kind){
   if(kind==='text')  return [['Edit',ICON.edit,edit],['Font',ICON.font],['Size',ICON.size],['Ink',ICON.colour,openInk],['Delete',ICON.del,del,1]];
-  if(kind==='photo') return [['Reframe',ICON.reframe],['Replace',ICON.replace],['Delete',ICON.del,del,1]];
+  // 'Copier' is the X3b photocopier filter (ADR-105 D-4, ADR-106) — the one verb this frozen bar gained
+  // after the freeze, added HERE first, per CLAUDE.md's HTML-first rule. It is a toggle on the selected
+  // photo, so it needs no sheet and no parameters: the filter has none.
+  if(kind==='photo') return [['Reframe',ICON.reframe],['Copier',ICON.copier],['Replace',ICON.replace],['Delete',ICON.del,del,1]];
   return [['Replace',ICON.replace],['Ink',ICON.colour,openInk],['Delete',ICON.del,del,1]];
 }
 function buildCtx(kind){
   $('ctx').innerHTML='';
   toolsFor(kind).forEach(t=>{
     const b=document.createElement('button');
-    if(t[3]) b.className='danger';
+    if(t[3]) b.className='danger'; if(t[0]==='Copier'){b.classList.toggle('on',copierOn);b.setAttribute('aria-pressed',copierOn);}   /* A4 */
     b.innerHTML=t[1]+'<span>'+t[0]+'</span>';
-    b.onclick=e=>{ e.stopPropagation(); if(typeof t[2]==='function') t[2](); };
+    b.onclick=e=>{ e.stopPropagation(); if(t[0]==='Copier'){copierOn=!copierOn;b.classList.toggle('on',copierOn);b.setAttribute('aria-pressed',copierOn);} if(typeof t[2]==='function') t[2](); };   /* A4 */
     $('ctx').appendChild(b);
   });
 }
@@ -838,26 +842,26 @@ function openSupply(){
 // browsed by family, not searched -- sixteen things do not need a query box, and a box that filters
 // sixteen things teaches the user to expect a seventeenth that does not exist.
 const FAMILIES=['Tape & fixings','Stamps & marks','Cut paper','Cut shapes'];
-const tile=(shape)=>`<button class="tile" data-shape="${shape}">${svg(DECOR[shape]||DECOR.leaf)}`
+const tile=([id,name,d])=>`<button class="tile" data-supply="${id}" aria-label="${name}" title="${name}">${svg(d)}`
   +'<span class="fav" role="button" aria-label="Favourite">☆</span></button>';
 function openArt(){
-  const shapes=['leaf','berry','star','wave','leaf','star','berry','wave'];
+  const SUP=[['tape.torn','Torn tape','<path d="M4 8h16v8H4z"/><path d="M4 8l-1.6 2 1.6 2-1.6 2 1.6 2"/><path d="M20 8l1.6 2-1.6 2 1.6 2-1.6 2"/>'],['fix.corner','Photo corner','<path d="M5 5h14v14H5z"/><path d="M5 13V5h8z"/>'],['fix.staple','Staple','<path d="M4 15V9h16v6"/><path d="M4 15h5M15 15h5"/>'],['fix.clip','Paper clip','<path d="M15 7v8a4 4 0 01-8 0V7a2.6 2.6 0 015.2 0v8a1.2 1.2 0 01-2.4 0V8"/>'],
+   ['mark.asterisk','Star',DECOR.star],['mark.arrow','Arrow','<path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>'],['mark.halftone','Halftone dots','<circle cx="7" cy="8" r="1.5"/><circle cx="13" cy="7" r="2.2"/><circle cx="18" cy="10" r="1.3"/><circle cx="9" cy="14" r="2.2"/><circle cx="15" cy="13" r="1.5"/><circle cx="18" cy="17" r="1"/><circle cx="11" cy="19" r="1.3"/>'],['mark.registration','Registration cross','<circle cx="12" cy="12" r="6"/><path d="M12 2v20M2 12h20"/>'],
+   ['paper.strip','Torn strip','<path d="M8 5h8v14H8z"/><path d="M8 5l2-1.6 2 1.6 2-1.6 2 1.6"/><path d="M8 19l2 1.6 2-1.6 2 1.6 2-1.6"/>'],['paper.window','Window frame','<path d="M3 4h18v16H3z"/><path d="M8 9h8v6H8z"/>'],['paper.tag','Speech tag','<path d="M4 5h16v10H9l-4 4v-4H4z"/>'],['paper.underline','Marker underline','<path d="M4 14c4 2 12 2 16-1"/><path d="M4 18c4 2 12 2 16-1"/>'],
+   ['shape.rect','Rectangle','<rect x="4" y="6" width="16" height="12"/>'],['shape.circle','Circle','<circle cx="12" cy="12" r="8"/>'],['shape.triangle','Triangle','<path d="M12 4l8 15H4z"/>'],['shape.rule','Straight rule','<path d="M3 12h18"/><path d="M3 9.5v5M21 9.5v5"/>']];
   $('sheet').innerHTML='<div class="grip"></div><h3>Art</h3>'
-   +`<div class="lbl">Recent · ⭐ favourites</div><div class="grid">${['leaf','star'].map(s=>tile(s)).join('')}</div>`
-   +`<div class="chips">${FAMILIES.map((c,i)=>`<button class="chip2${i?'':' on'}">${c}</button>`).join('')}</div>`
-   +`<div class="lbl">Supplies</div><div class="grid">${shapes.map(s=>tile(s)).join('')}</div>`;
-  $('sheet').querySelectorAll('.chip2').forEach(c=>c.onclick=e=>{ e.stopPropagation();
-    $('sheet').querySelectorAll('.chip2').forEach(x=>x.classList.remove('on')); c.classList.add('on'); });
+   +`<div class="lbl">Recent · ⭐ favourites</div><div class="grid">${[SUP[8],SUP[6]].map(tile).join('')}</div>`
+   +FAMILIES.map((f,i)=>`<div class="lbl">${f}</div><div class="grid">${SUP.slice(i*4,i*4+4).map(tile).join('')}</div>`).join('');
   $('sheet').querySelectorAll('.fav').forEach(f=>f.onclick=e=>{ e.stopPropagation();
     f.classList.toggle('on'); f.textContent=f.classList.contains('on')?'★':'☆'; });
   $('sheet').querySelectorAll('.tile').forEach(t=>t.onclick=e=>{
     if(e.target.classList.contains('fav')) return;
     e.stopPropagation(); closeOverlays();
     selectByKind('decor'); toast('Placed on the page',true); });
-  // The label reads "Supplies", not "Bundled with Zinely · always offline".  Offline is an invisible
-  // strength, not a slogan (ADR-104): naming it here would advertise the absence of the thing we just
-  // removed, which is exactly the dead-feature smell the amendment forbids.
-  showSheet('Adding · Art','One Art surface — four families of authored supplies, Recent and ⭐ cut long-session friction.');
+  // A5: four family headings, no chip row and no filter -- the whole cabinet is on the screen at once.
+  // No heading says "Bundled with Zinely · always offline" either: offline is an invisible strength, not
+  // a slogan (ADR-104), and naming it advertises the absence of the thing we just removed.
+  showSheet('Adding · Art','One Art surface — all sixteen supplies at once, shelved in four families.  Recent and ⭐ cut long-session friction.');
 }
 function showSheet(s,h){
   $('scrim').classList.add('show'); $('sheet').classList.add('show');
@@ -956,9 +960,157 @@ addEventListener('keydown',e=>{
      is unbuilt (V2 future; this chooser presents Text + Photo only), so the collision is deferred
      rather than solved: **Art needs its own mark before Art ships.**  Left visible rather than papered
      over, because a silently duplicated glyph is how the first one got onto the wrong row.
+
+     ---------------------------------------------------------------------------
+
+     A4 · 2026-08-16 (owner ruling, D-082 Q4) — `Copier` is a TOGGLE and the freeze gave it no on
+     appearance.  Measured on a physical device (SM-A176B / Android 16): the context bar before the tap
+     and after it are pixel-identical — same glyph, same weight, same colour — so the only feedback a
+     sighted maker gets is the halftone on the canvas, which is invisible when the photo is small,
+     scrolled off, or sitting behind this very bar.  A screen reader was already served (`COPIER_ON` /
+     `COPIER_OFF` on `stateDescription`); the eye was not.  The owner ruled the freeze gains a checked
+     appearance for a context-bar verb.
+
+     **Nothing new is drawn.**  This file already has one vocabulary for "this control is currently on",
+     and it is `.<control>.on{background:var(--leaf);color:var(--on-leaf)}` — `.chip2.on` (:456) and
+     `.ctl.on` (:529) both.  `.ctx button.on` is that pair, on the selector that needed it.  The three
+     other on-states were considered and rejected by their own stated rules: `--butter-tint` is what
+     `.ctx button:hover` already spends and V21-SPEC §3.2 forbids butter as a state at all (butter is
+     material); `.fpage.on`'s berry ring is A2's *current-page* assignment, a different question; and
+     `.pgc.on`'s `leaf-tint` ground measures #333B27 against a #332B22 dark paper — the same defect
+     ADR-100 §4 booked against `butterTint`, an on-state you cannot see.  `leaf`/`on-leaf` is legible in
+     both themes because both halves flip.
+
+     A new selector cannot be added in place without shifting citations, so like A1 it lives in the
+     trailing <style>, where the cascade gives it the last word over `.ctx button:hover` (equal
+     specificity, later wins).  The JS demonstrating it changed IN PLACE, on the three lines it needed.
+
+     ---------------------------------------------------------------------------
+
+     A5 · 2026-08-16 (implementer ruling under owner delegation, on the D-082 precedent) — the Art sheet
+     drew a chooser for things that do not exist, with a control that does nothing.  `openArt()` built
+     EIGHT tiles from four prototype glyphs — `leaf`, `berry`, `star`, `wave` — three of which are not
+     supplies at all, and a row of four family chips whose handler toggled `.on` and filtered nothing.
+     SUPPLIES-SPEC §4 names the sixteen; this file drew none of them.  Filed as a DEFECT: a freeze that
+     specifies the wrong count of the wrong objects is not a specification of this product.
+
+     **THE RULING — one grid, sixteen tiles, shelved under four family headings.  Not four filtered
+     pages of four.**  The question was put as open; it is not, and three of the four answers are already
+     written down:
+
+       · SUPPLIES-SPEC §9 — *"No categories beyond the four. **No tags, no filters, no sort.**"*  A chip
+         that filters IS a filter.  This is text, not inference.
+       · §1's cabinet table opens on the distinction: *"You can see everything at once"* versus *"You
+         search because you can't"* — and closes with *"where a design choice could go either way, the
+         cabinet wins."*  A filter showing four hides twelve; it is the right-hand column.
+       · This file, at :68, already froze the shape: *"Art remains ONE surface … with the same tile grid"*
+         — singular.  Four filtered pages is four grids that happen to share a frame.
+       · The ADR-104 note at :840-843 removed the search box because *"a box that filters sixteen things
+         teaches the user to expect a seventeenth that does not exist."*  A chip row filtering the same
+         sixteen is that box with four buttons instead of a caret.  Its own reasoning reaches it.
+
+     **The chips are therefore REMOVED, not re-tasked.**  The strongest case for re-tasking is that §9
+     bans *filters*, not *jumps*, so a chip could become a section anchor.  It fails on the freeze's own
+     terms before it reaches any measurement: changing a control's semantics from filter to navigation is
+     an INTERACTION REDESIGN, which DESIGN FREEZE forbids outright, while deleting a control the spec has
+     just emptied is removal of dead UI — which §9 explicitly endorses elsewhere (*"shipping the shelf
+     before any pack exists is dead UI"*).  Re-tasking is the more freeze-breaking of the two options, not
+     the safer one.  And a chip row that does not filter cannot say which tile belongs to which family,
+     which is the one thing the four families exist to say (§4: *"the edge tells you which hand made
+     it"*; §5.2 gives each family its own landing scale).  `.lbl` — already in the file, already a section
+     heading — says it, four times.  The families are not weakened by this; they are the only structure
+     left on the surface.
+
+     A MEASUREMENT CORROBORATES, and is recorded so it can be falsified.  Computed from this file's own
+     boxes (390px phone, `.sheet` `max-height:86%` of 812 = **698.3px**; content width 358, so a 4-column
+     `.grid` tile is 83.5px): grip 21.0 + `h3` 45.8 + Recent row 118.9 + four `.lbl`+`.grid` family
+     sections 475.5 + `--gap-xl` bottom padding 24, **less the 12px the `h3`'s bottom margin and the first
+     `.lbl`'s top margin collapse into one** = **≈673px.  The whole cabinet fits on one screen with ~25px
+     to spare** — §9's *"sixteen items fit on one screen"* is literally true, not aspirational.  Re-add
+     the chip row and it costs ~41.6px, total ≈**714.7px**, and the sheet scrolls.  ⚠ This is box
+     arithmetic, not a screenshot, and its ~25px of slack rests on an assumed 1.55 line-height for two
+     runs of text the file never states (`h3` in Averia, and `.lbl`), so `normal` could move it.  It is
+     therefore CORROBORATING, not load-bearing: the ruling above stands without it.  (The first draft of
+     this entry made it the deciding term AND double-counted the collapsed margin — 685.1 and 726.7 —
+     caught in review.  Both errors were conservative; neither changed the conclusion.)
+
+     **Nothing new is drawn.**  Every token is one this file already spends: `.lbl` (`--ink-soft` on
+     `--paper`, 6.16:1 light / 6.32:1 dark), and the tile grounds untouched — `--leaf-text` on
+     `--leaf-tint` 5.43 / 6.44, `--jam-text` on `--berry-tint` 5.00 / 5.08, `--ink-soft` on
+     `--butter-tint` 5.61 / 5.61, and the `--ink` outline 11.48 / 9.83 against those tints (13.66 / 11.70
+     against bare `--paper`).  All clear AA in both
+     themes.  No new CSS rule was added at all — A1 and A4 each needed one; this needed none, which is
+     the tell that the corpus already had the vocabulary.  The `leaf-tint`-on-paper ground A4 rejected
+     (1.19:1 in *both* themes — ADR-100 §4's invisible tint) is not used here either.
+
+     ⚠ **A4's citation of `.chip2.on` (:456).**  Removing the rule would have removed the evidence for an
+     owner ruling filed the same day.  The REMOVED block at :451-456 therefore quotes the declaration
+     verbatim on :456, so A4's line still resolves to the text it cites.  `.ctl.on` (:529) is untouched
+     and remains live, so the on-state vocabulary A4 reasons from still has one shipping instance.
+
+     ⚠ **The sixteen glyphs in `SUP` DEPICT the supplies; they are not the authored outlines.**
+     SUPPLIES-SPEC §4.1 puts those in `SupplyCatalog` as reviewed Kotlin with a per-supply attestation
+     (S5), and a mockup must not become their source.  What the freeze specifies here is that sixteen
+     DISTINGUISHABLE marks appear, in §4's order, under §4's four headings.  `mark.asterisk` reuses this
+     file's existing `DECOR.star` rather than drawing a seventeenth glyph for a mark it already has.
+
+     ⚠ **Two names the spec left ambiguous, chosen and flagged rather than silently settled.**  §4 writes
+     *"star/asterisk"* (id `mark.asterisk`, but §8's worked content description says *"Star, medium,
+     berry"*, and this file's shelf already says `star`) — **"Star"** is used.  §4 writes *"cut
+     label/speech tag"* — **"Speech tag"** is used.  `core:copy`'s S6 names were being written in
+     parallel; if it landed either differently, the copy wins and this file changes, not the reverse.
+
+     RECONCILED the same day, and the rule was exercised in both directions.  S6 (`Copy.Supplies`) chose
+     **Star** and **Speech tag** independently — the two flagged above agree.  It also shortened three
+     names this file had taken verbatim from §4's prose, each for a reason that only exists in speech,
+     and under the rule just stated THE COPY WINS: *torn tape strip* → **Torn tape** (it is a prefix
+     collision with `paper.strip`'s *Torn strip*, and a listener who hears the short one cannot know they
+     did not miss a word), *halftone dot cluster* → **Halftone dots** (*cluster* is print-shop
+     vocabulary), *cut-out window frame* → **Window frame** (the family heading is already the word
+     *Cut*).  This file's `aria-label`s now match `Copy.Supplies.NAMES` for all sixteen.  The third of
+     those was NOT in S6's own list of departures — its KDoc claimed four and there are five — which is
+     the argument for reconciling two files rather than trusting either: neither noticed alone.
+
+     ⚠ **An accepted price.**  `.tile:nth-child(3n)` / `(4n)` (:463-464) is positional, and `.grid` resets
+     the count per section, so all four family rows now carry the identical leaf · leaf · berry · butter
+     tint-and-tilt pattern where the old eight-tile grid varied.  Fixing it needs a new selector; A4's
+     bar is that a new rule needs a ruling.  Left as an observation for the owner, visible rather than
+     quietly patched.
+
+     ⚠ **One defect fixed in passing, which the freeze permits as an accessibility fix:** the tile was an
+     unlabelled `<button>` wrapping a bare `<svg>` — it announced nothing.  It now carries `aria-label`
+     and `title` from the supply's own name, which is §8's naming contract arriving at the chooser.
+
+     ⚠ **A SECOND a11y defect on the same tile is NOT fixed, and is booked here rather than left to be
+     rediscovered:** `.fav` is `role="button"` INSIDE the tile's `<button>`.  Interactive nesting is
+     invalid ARIA and has no valid Compose transcription — a control cannot contain a control.  It
+     predates this amendment and favourites are ⚠ DEFERRED per §9, so the mockup keeps it; but whoever
+     implements the star owes a shape that is a sibling of the tile, not a child of it.
+
+     Line-for-line, per the rule at the head of this log, and stated exactly rather than roundly — an
+     earlier wording of this paragraph claimed more than was true and a review took it apart, which is the
+     mechanism working.  The CSS removal is **six lines replacing six** (:451-456).  `openArt()`'s data
+     and markup are **seven replacing seven** (:848-854), and `tile()` and the trailing comment are
+     one-for-one and three-for-three.  Inside that seven-line window the lines DO move — the old
+     `innerHTML=` at :849 is now :852 — so the honest claim is the one that matters to a citation: **no
+     line at or after :855 moves, and nothing outside :451-456 and :845-864 is touched at all.**  Only
+     this log grew.  The trailing <style> moves from :988-994 (its position after A4, before this entry)
+     to :1099-1105; nothing cites it by number, and the two comments inside it name their amendments
+     rather than their lines.
+
+     ⚠ **AND THE INVARIANT IS ALREADY BROKEN UPSTREAM — found by the same review, not owed to this
+     change.**  SUPPLIES-SPEC cites this file at `:819` (the four families), `:820` (the ☆), `:839` (the
+     Art caption) and `:420-423` (the search removal).  They are at **:844**, **:846**, **:864** and
+     **:447-450**, and they were already stale before this amendment: that document was written against
+     an earlier revision, and A4 moved four more lines besides.  A5 shifts them no further.  **Booked as a
+     reconciliation pass owed to SUPPLIES-SPEC, not to this file** — this is now the second amendment to
+     assert the line-for-line invariant while the citing document is out of step with it, and the third
+     will be harder to unwind.
      =========================================================================== -->
 <style>
 /* A1 — see the AMENDMENT LOG above.  Here rather than beside `.doneEdit` because a new selector cannot
    be added in place without shifting every citation below it; a later <style> wins the cascade. */
 .doneEdit:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
+/* A4 — the checked appearance for a toggling verb.  Same reason for living here as A1. */
+.ctx button.on{background:var(--leaf);color:var(--on-leaf)}
 </style>

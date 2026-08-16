@@ -2682,7 +2682,7 @@ live count, and does not move `Preview`.
 | **Artifacts** | [`v2-bench.html`](mockups/v2-bench.html) `:132-146`, `:341-346`, `:541-558` · [V2-BENCH-IA-INTERACTION.md §D.1](V2-BENCH-IA-INTERACTION.md) and **§A.2** · [V2-BENCH-REVIEW.md §E.4](V2-BENCH-REVIEW.md) · [`Document.kt`](../../core/model/src/main/kotlin/com/aritr/zinely/core/model/Document.kt) |
 | **Found** | 2026-08-01, during **Phase C planning** ([ADR-089](../DECISIONS.md#adr-089)) |
 | **Severity** | **Net-new capability presented as a re-skin** — no longer blocks anything in Phase C |
-| **Status** | ⏳ **OPEN — owner ruling required, but no longer by Phase C.** [OD-2 (2026-08-01)](../DECISIONS.md#adr-089) re-seated H1 and `DecorElement` beyond the phase; this entry now awaits the phase that takes them |
+| **Status** | ◐ **PARTIALLY RESOLVED 2026-08-16 — Q4 closed, Q1–Q3 carried forward.** See [the ruling](#d-029-ruling-2026-08-16). `DecorElement` is **unfenced**: OD-2 re-seated it *beyond Phase C*, Phase C completed 2026-08-06, and [ADR-105](../DECISIONS.md#adr-105) is the phase that took it. Q1–Q3 are about the **holding tray**, not the element, and move to X2 where the tray lives |
 
 **What the freeze specifies completely.** The tray's appearance and one gesture: `.tray` with its header, the `.trayrow`, `.mat-item` bits set down by hand at ±1–2px, the `＋ keep` action, the collapse toggle, and *"tapping a shelf item places it at page centre, pre-selected, with a materialise-at-spot animation"* ([§D.1](V2-BENCH-IA-INTERACTION.md)).
 
@@ -2710,6 +2710,67 @@ So the tray **must** persist, and nothing says where, in what, or for how long.
 **This entry stays open, and that is the point.** The four questions — where a gathered material lives, whether it survives the process, what its scope is, and how it relates to [ADR-025](../DECISIONS.md#adr-025)'s mark-and-sweep root set — are unchanged and unanswered. What changed is *who has to answer them and when*: not the phase that merely **meets** the capability while re-skinning a screen, but the phase that **takes** it. Phase C now transcribes `.tray` and `.decor` as frozen-and-unimplemented ([ADR-089](../DECISIONS.md#adr-089) rows 1.17 and the deliberately absent C7), and [§E.4](V2-BENCH-REVIEW.md)'s *"persistence of place"* build invariant travels with the capability rather than being quietly satisfied by a page index alone ([ADR-089](../DECISIONS.md#adr-089) row 9.3).
 
 No phase has been assigned. Assigning one is a roadmap act, and the ruling did not make it — see [COMPOSE-V2-ROADMAP.md § Re-seated beyond Phase C](../COMPOSE-V2-ROADMAP.md#re-seated-beyond-phase-c).
+
+#### ✓ RULING — 2026-08-16: the fence expired; Q4 closes, Q1–Q3 move {#d-029-ruling-2026-08-16}
+
+*Ruled by the implementer under explicit owner delegation, on the [D-082](#d-082-rulings) precedent. Reversible
+by any owner ruling that says otherwise.*
+
+**Q4 — `DecorElement` — RESOLVED.** OD-2 did not forbid the element; it re-seated it *"beyond Phase C"*, and
+**the fence has expired by its own terms**: Phase C completed 2026-08-06 ([ADR-097](../DECISIONS.md#adr-097)
+`Accepted`), and [ADR-105](../DECISIONS.md#adr-105) is the phase that **takes** it — that ADR decides
+`DecorElement` and the missing shape command explicitly. What was missing was not a decision but a
+*recording*: nobody wrote down that the fence had lapsed, so the code still cites OD-2 as live
+(`BenchContextBar.kt`'s `error("… until DecorElement is re-seated (OD-2)")`). **The phase assignment is
+hereby made: the supplies programme (ADR-105 / SUPPLIES-SPEC) takes `DecorElement`.** ADR-105 already answers
+Q4's substance — the blast radius, the additive-and-defaulted schema argument, and the single-replayer
+consequence — so nothing here is being decided fresh; it is being *closed*.
+
+✅ **IMPLEMENTED 2026-08-16 (package P1).** Schema **v1→v2** landed with an identity migrator, `Element` is
+closed at three, `AffineTransform2D.scale` exists, `benchVerbKindOf`'s `else -> null` is deleted, and
+`SceneRenderer` emits **nothing** for decor until P2 adds `DrawShape`. 1385 tests, 0 failures, four mutations
+verified. Two corrections the implementation fed back: the spec's *"no schema bump, no migrator"* was wrong
+on **both** counts and is now corrected at [SUPPLIES-SPEC §2.1](SUPPLIES-SPEC.md) — a bump without a
+contiguous migrator chain throws `MissingMigratorException` and would have broken **every existing zine**,
+which is the exact opposite of what the bump is for.
+
+⚠ **One correction to the record, found while ruling.** SUPPLIES-SPEC §10 counts ~17 call sites for this
+change. The real count is **34 sites across 9 files** — confirmed exactly by the implementation — and the
+largest omission is `EditorReducer.kt` with **10**: the MVI reducer, through which every move, resize,
+duplicate, z-order and ink verb routes, and which appears in neither S2′ nor S7′. Anyone budgeting this
+package from the spec's number will be wrong by 2×.
+
+⚠ **And the sharper number, which the implementation found and which changes how this package is reviewed:
+only 5 of the 34 sites are compiler-enforced.** The other 29 are `as?` casts and `is` guards, which fail
+*silently* rather than at build time — a decor element simply falls through them and does nothing. The
+compiler finds 5; the other 29 are found by tests or by a user. That is the whole reason this package ships
+with a reducer suite rather than a "it compiles" claim. (§10's S2′ also lists four else-less `when`s where
+there are five — it omits `benchVerbKindOf`, which its own footnote then discusses.)
+
+⚠ **Carried to S7, not fixed here:** `EditorScreen`'s `onVerb` routes `Copy.BenchVerbs.INK` to a popover
+whose target is `ctxElement as? TextElement`, so a decor **Ink** tap would open an *empty* popover. It is
+safe today only because the decor Ink verb ships disabled under the OD-9 class. **S7 must fix the routing,
+not merely enable the verb** — enabling it alone would ship a control that opens nothing.
+The related trap is `benchVerbKindOf`'s `else -> null`: a decor element would silently get **no context bar
+and no compile error**, so that arm must be deleted rather than extended.
+
+**Q1–Q3 — scope, home, and the ADR-025 GC relationship — CARRIED FORWARD, unanswered, to X2 (the Supplies
+tray).** They were always questions about the *holding tray*, not about the element: where a **gathered**
+material lives, whether it survives the process, and whether the shelf is a GC root. The Art sheet needs none
+of them — it places a supply directly onto the page, where the ordinary document rules already answer all
+three. [SUPPLIES-SPEC §1](SUPPLIES-SPEC.md) deliberately declines to specify the tray, and
+[D-020](#d-020-ruling)'s rule still binds: *where the corpus is silent, silence is not an invitation to
+interpolate.* **Do not build the tray.** These three questions travel with it.
+
+**Q5 — forward compatibility — RULED, and it is a change from the spec's assumption.** SUPPLIES-SPEC §2.1
+says no `schemaVersion` bump is needed. That is right about *migrators* and wrong about *risk*, and the
+asymmetry matters: ADR-106's `copier` is a defaulted **field**, so an older build drops it silently, but
+`DecorElement` is a new sealed **discriminator**, and an older build **fails to parse the document
+entirely**. A beta tester holding `0.9.0-beta.1` who opens a zine containing one supply gets a broken zine,
+not a plainer one. **Ruling: bump `schemaVersion` when `DecorElement` lands.** The
+`NewerSchemaVersionException` path ([ADR-021](../DECISIONS.md#adr-021)) exists precisely so a downgrade fails
+*honestly* instead of cryptically, and that is the whole difference between "this zine needs a newer Zinely"
+and "this zine is broken."
 
 ---
 
@@ -4645,3 +4706,683 @@ D-022 replacing the Library's scrim with the corpus token. Extended once more on
 rather than by implementation**, and the first entry since Phase A to reach the owner **unruled**. Governed by
 [V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
 [COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*
+
+---
+
+### D-078 — OD-11 kept a control set the freeze never draws, and on a real device it does not fit {#d-078}
+
+| | |
+|---|---|
+| **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) (DESIGN-FROZEN, ADR-099) · [`EditorContextBar.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorContextBar.kt) `:160-195` · the [**D-034** ruling (OD-11)](#d-034) |
+| **Found** | 2026-08-15, during **device Pass 2** on SM-A176B (Android 16, density 420) — [BETA-UX-REVIEW.md F-2](../BETA-UX-REVIEW.md) |
+| **Severity** | **One control is unreachable to sight and one is an 8dp touch target.** Does not block: the row is scrollable, so no function is lost to a screen reader |
+| **Status** | 🟨 **OPEN — awaiting owner ruling** |
+
+**This is a consequence of OD-11, not a new disagreement.** [D-034](#d-034) established that the frozen
+`.ctx` is a **verb** bar (`Edit · Font · Size · Ink · Delete`) while the shipped `EditorContextBar` is a
+**transform** bar (nudge ×4, scale ×2, rotate ×2, reorder ×2, Style). The owner ruled **OD-11 — keep both**,
+correctly, because the shipped bar is a WCAG 2.5.7 conformance path.
+
+What OD-11 did not do — and could not, since the question had not arisen — is say **how the transform bar
+lays out when it does not fit**. The freeze draws no transform row at all: `v21-bench.html` contains no
+`bring forward`, no `send backward`, no `z-order` and no nudge control. There is therefore nothing to verify
+parity against, which is precisely the *omission* class this register owns.
+
+**What the device shows.** The row declares up to eleven controls (eight transform + two reorder + Style,
+with `Delete` withheld under OD-14) into a 403dp container that needs roughly 499dp:
+
+- `Send backward` is **absent from the platform `AccessibilityNodeInfo` tree entirely**
+- `Bring forward` measures `[1059,2077][1080,2203]` — **21px, or 8dp of a 48dp target**
+- the row *is* `.horizontalScroll(rememberScrollState())`, but carries **no fade edge and no deliberate
+  half-button peek**, so the 8dp sliver reads as a rendering glitch rather than as "there is more"
+
+The first-time-user reading is the finding: **the user never learns those controls exist.** Pass 1 measured
+the geometry; Pass 2 supplied why it matters.
+
+**Why this is not fixed from an implementation session.** The clipping alone could be patched — but every
+available fix is a *design* act on a surface the freeze does not draw: add an edge fade, force a half-button
+peek, wrap to two rows, move reorder into an overflow, or reduce the set. Choosing among those is
+specification, not repair, and this register is the queue that feeds that choice.
+
+**Options, for the ruling.**
+
+| | Option | Cost | Note |
+|---|---|---|---|
+| **(a)** | Specify a scroll affordance — edge fade plus a guaranteed partial-button peek at rest | S | Smallest; keeps every control and the conformance path intact. **Recommended.** |
+| **(b)** | Move the two reorder controls into an overflow | M | Reduces the row to nine, but hides the two controls Pass 2 already found undiscoverable |
+| **(c)** | Wrap to two rows when the measured width overflows | M | Costs vertical space on the surface whose whole point is the artifact |
+| **(d)** | Draw the transform row into `v21-bench.html` properly and specify the overflow there | L | The thorough answer; it is an owner amendment to a frozen artifact |
+
+Option (a) is recommended because it is the only one that changes no control's availability — the defect is
+that the row *lies about its own extent*, not that it holds too much.
+
+---
+
+### D-079 — the frozen corpus states the privacy promise four times, and the rule says once {#d-079}
+
+| | |
+|---|---|
+| **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `:306-307`, `:466` · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
+| **Found** | 2026-08-16, reconciling [BETA-UX-REVIEW.md F-11](../BETA-UX-REVIEW.md) against the frozen files |
+| **Severity** | No function is lost. It is a **voice** defect, and the rule it breaks is one the owner adopted six days ago |
+| **Status** | 🟨 **OPEN — awaiting owner ruling** |
+
+**The rule is not in dispute and must not be re-litigated.** [R12](DESIGN-RULES.md) — *"Privacy is
+reassurance, never a wall. Surface it as a gift, **once**, warmly"* — is restated in
+[VOICE.md](VOICE.md) and hardened by **[ADR-104](../DECISIONS.md#adr-104) Consequence 3**, owner-adopted
+2026-08-15: *"Offline is an invisible strength, not a slogan. The removed online UI is **not** replaced by
+'works offline' messaging. Reassurance is stated once, in the colophon."* What needs a ruling is only
+**which single instance survives**, and **where the colophon lives** — because there is no colophon in any
+`.kt` file today, so the one place ADR-104 designates does not yet exist.
+
+**What ships, and what the freeze actually draws.** F-11 counted three assertions; the corpus carries five,
+and the split matters because the two halves need different remedies.
+
+| # | String | Screen | Frozen source | Class |
+|---|---|---|---|---|
+| 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html:306-307` | **parity failure** |
+| 2 | `From your phone — it never leaves the device` | Add sheet, Photo row | `v21-bench.html:824` | spec |
+| 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html:466` | spec |
+| 4 | `… · A4 · stays on your phone` | Proof, ready row | `v21-proof.html:593`, `:1019` | spec |
+| 5 | `Saved on this device` | Editor status chip | **none** — the freeze says only `Saved` | implementation addition, **spoken only** |
+
+Instance 5 is the sharp one: it exists in the accessibility tree and nowhere else, so a screen-reader user
+hears the promise **one more time** than a sighted user sees it. The freeze also specifies a **sixth**
+instance Compose has not built — `v21-bench.html:873`'s `toast('Saved — everything stays on your phone')`.
+
+**Only #1 is repairable without an amendment**, because it is the only one with no frozen source on its own
+surface. Striking any of 2–4 edits a frozen file and is therefore an owner act, not a parity fix.
+
+⚠ **One collision to settle rather than step around.** [ADR-033](../DECISIONS.md#adr-033) (Accepted) calls
+for the editor's privacy line; ADR-104 Consequence 3 (later, and owner-adopted) forbids replacing removed
+online UI with offline messaging. [V1-DESIGN-ELEVATION.md §18.1](../V1-DESIGN-ELEVATION.md) says in terms
+that this collision *"must not be resolved by me alone"*. §18.2 already ruled the duplication a **rule
+violation, not a rule to change**, and nominated the "On this device" chip as the instance to drop — that
+chip has since become dead code (`Copy.kt:297`, `:558`, `:565` have zero references), and the duplication
+outlived it.
+
+**Options, for the ruling.**
+
+| | Option | Cost | Note |
+|---|---|---|---|
+| **(a)** | Delete instance #1 now as a parity fix; amend the frozen files later to leave exactly one of 2–4 | S | Legal today without touching a frozen file. **Recommended** — it is the instance with no spec behind it |
+| **(b)** | Rule which single instance survives and amend all the others in one pass | M | The thorough answer, and the one ADR-104 actually asks for; needs the colophon to exist first |
+| **(c)** | Amend R12 to permit a per-surface reassurance | S | Re-opens a rule adopted 2026-08-15; recorded for completeness, not recommended |
+
+Related: [D-050](#d-050) owns the same composable's *supply cue* wording and is also open. [D-072](#d-072)
+is a different thing — a dead `.privacyline` CSS rule in `v2-proof.html`.
+
+
+---
+
+### D-080 · The frozen `Art` sheet gives its own entry no glyph, filters nothing, and specifies no empty state {#d-080}
+
+**Status: 🟦 OPEN — owner amendment required.** Raised 2026-08-16 while scoping
+[F-3](../BETA-UX-REVIEW.md) of the beta UX review. Nothing here blocks today's work: the sheet itself is
+fenced by [OD-2](#d-029) and sequenced behind [ADR-105](../DECISIONS.md#adr-105) D-4. It is filed **now**
+precisely because it will otherwise be discovered by whichever phase finally builds it, at the moment it is
+most expensive.
+
+**1 · The `Art` row wears the `Photo` row's glyph — the same defect as [D-051](#d-051), one line down.**
+`v21-bench.html:824` and `:825` carry byte-identical inline SVG:
+
+```
+svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')
+```
+
+That is a picture frame with a mountain in it — the photo icon — and the freeze hands it to *"Tape, stamps
+and cut paper"* as well. A chooser whose three verbs are `Text · Photo · Art` and whose last two look
+identical is a chooser with two verbs and a duplicate. An implementer cannot invent the missing glyph: it is
+drawn material in a frozen file, and D-051 established that the fix is an amendment.
+
+**2 · The four family chips are drawn and filter nothing.** `:847` renders `Tape & fixings · Stamps &
+marks · Cut paper · Cut shapes` with `.on` on the first, and `:849-850` moves `.on` and stops — the
+`Supplies` grid at `:848` is a hardcoded eight-tile list that never changes. So the freeze specifies the
+*control* and not the *behaviour*, and the honest reading is that a Compose implementation has nothing to
+transcribe. Either the chips filter (and the spec must say against what), or they are a taxonomy label and
+should not look like a control.
+
+**3 · Neither grid has an empty or loading state.** `Recent · ⭐ favourites` (`:846`) is drawn with two
+tiles always present, but favourites are explicitly *deferred in sequencing, not removed*
+([ADR-105](../DECISIONS.md#adr-105)) — so the first real user meets this block with nothing in it and the
+freeze does not say what they see. The `Supplies` grid has the same gap for the (unlikely but real) case of
+a catalogue that fails to load.
+
+**Why this is one entry and not three.** All three are omissions in the same twenty-line block, they will be
+read by the same implementer on the same day, and each is cheap to rule on together and expensive to
+rediscover separately.
+
+**Not in scope here:** whether the sheet is built at all (that is [D-029](#d-029) and ADR-105's sequencing),
+and the empty state's *cue wording*, which is [D-050](#d-050) and already owner-owned.
+
+---
+
+### D-081 — share-in has no frozen surface, so a shared photo's destination and its multi-image placement are product policy nobody has ruled {#d-081}
+
+| | |
+|---|---|
+| **Artifacts** | [`SUPPLIES-SPEC.md §6`](SUPPLIES-SPEC.md) · [`ZINE-DIRECTION.md` X12](ZINE-DIRECTION.md) · [ADR-105](../DECISIONS.md#adr-105) · `app/src/main/java/com/aritr/zinely/editor/ShareInbox.kt` · `app/src/main/AndroidManifest.xml` |
+| **Found** | 2026-08-16, implementing S1 (`ACTION_SEND` / `ACTION_SEND_MULTIPLE` receive) |
+| **Severity** | **Not blocking** — the smallest defensible behaviour ships; eight questions are deferred, none of which can lose work |
+| **Status** | ✅ **RULED 2026-08-16 — all eight, by the implementer under explicit owner delegation** (*"feel free to research them on your own and answer; do not depend on the owner"*). Three shipped, four accepted on the record, one deferred. See [the rulings](#d-081-rulings) below |
+
+**What is specified.** [SUPPLIES-SPEC §6](SUPPLIES-SPEC.md) rules that share-in *"is the highest-value item in
+this document"*, names its cost honestly (a task-unique launch mode + `onNewIntent`, task affinity,
+multi-image handling, permission-less URI reads, cold-start-into-import), and
+[ADR-105](../DECISIONS.md#adr-105) re-sequences it to the front. All of that is about **plumbing** — and the
+warning was earned: that cost list originally said `singleTop`, which the device falsified (see the ADR-105
+amendment). The plumbing was the part that broke.
+
+**What is not specified anywhere.** Where a shared photo *goes*, and what a share of five photos *looks like*
+when it gets there. No frozen HTML file draws share-in — there is no share-in surface in the V2.1 trilogy —
+so there is nothing to transcribe, and the [HTML-first workflow](../../CLAUDE.md#html-first-ui-workflow-mandatory)
+forbids inventing one in Compose.
+
+**What shipped, and why it is the smallest defensible thing.** A shared photo lands in **the zine the maker
+opens next** — or, if a zine is already open, in that one. The rejected alternatives, and the reason each was
+rejected:
+
+- **A new zine per share.** Answers "which zine?" on the maker's behalf and multiplies the shelf. A share is
+  not a decision to start something.
+- **The most-recent zine.** A guess, and a wrong guess writes into work the maker did not name — the
+  `0.9.0-beta.1` failure mode ([ADR-058](../DECISIONS.md#adr-058)) in a new place.
+- **A zine chooser.** A new designed surface, which this implementation has no authority to draw. It is also
+  redundant: the **Library already is the chooser**, it is already the start destination, and *"which zine do
+  I want?"* is already the question it exists to answer.
+
+So share-in adds **no route and no screen**. Feedback is one toast when the share lands with no zine open
+(`Copy.ShareIn.CHOOSE_ZINE`), one toast when it lands with a zine open
+(`Copy.ShareIn.ADDING_TO_OPEN_ZINE` — an earlier draft stayed silent here on the reasoning that the photos
+are visibly there, and review falsified it: the editor's spoken count rides a replay-free channel and is
+dropped when nothing is collecting, which can leave a whole share reporting nothing), and an honest refusal
+for a non-image share (`Copy.ShareIn.ONLY_PHOTOS`).
+
+**Eight questions for the owner** — all eight now [ruled](#d-081-rulings), with two more (Q9, Q10) opened by
+the fixes. ⚠ **The eight below are written in the present tense and three of them no longer describe the
+product**: Q2's stack, Q3's silence and Q8's self-chooser were all fixed. They are kept unedited because the
+register's convention is that a question is answered underneath, never rewritten — but read the rulings
+before believing any tense here.
+
+1. **Is "the zine you open next" the product rule?** If the answer is a chooser or a new zine, it needs a
+   frozen surface first, and this entry is where that is recorded.
+2. **Multi-image placement.** Every imported photo uses the one existing centred default
+   (`defaultImagePlacement`, ≤60 % of each page edge), so a five-photo share arrives as a **stack** — the
+   maker sees one photo and must drag it aside to find the next. A cascade offset would fix it in about six
+   lines, and was deliberately *not* written: a rule about how dropped photos land on a page is a
+   compositional decision, which [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) reserves to the design, not to the
+   implementation.
+3. **The failure half is spoken, not shown.** A photo that cannot be read (revoked grant, corrupt, a type the
+   filter let through) is reported by `Copy.ShareIn.importSummary` through the editor's accessibility live
+   region — so a maker without TalkBack sees the successful photos appear and is told nothing about the ones
+   that did not. This is the **existing** import pipeline's behaviour (`ImagePickResult.Failure` →
+   `Announcer`), inherited deliberately rather than forked into a second, better-informed failure surface for
+   one entry point. It is recorded as a gap, not defended as correct; the fix belongs to the whole import
+   path, not to share-in.
+
+4. **A five-photo share is five undo presses.** Each import is its own `CommitAddImage`, so the maker who
+   shares a batch and immediately regrets it undoes it one photo at a time. Batching them into a single
+   undoable command is possible; whether a share *is* one act or five is a product question, not a
+   mechanical one, and it sits in the same family as the stacking question above.
+5. **The `CHOOSE_ZINE` toast makes a promise process death breaks.** The inbox is in-memory by design — the
+   sender's read grant is task-scoped, so a persisted URI would be a handle that no longer opens — but that
+   means "open a zine and your photos will be added to it" is false if the app is killed before the maker
+   acts on it: opening a zine then does nothing, and says nothing. Raised by review; no cheap honest fix
+   exists without persisting URIs that would not resolve, so it is filed rather than papered over.
+
+*The last three were added 2026-08-16, after the `singleTask` fix (ADR-105 amendment) changed what the
+feature does on a real device.*
+
+6. **Back after a share now exits Zinely, not back to the sender.** This is a direct consequence of
+   `singleTask`: the whole Zinely task comes forward, so Back walks Zinely's own stack instead of returning
+   to Gallery the way a second-task share did. It is the correct trade — the alternative permanently broke
+   the shared-into zine — but it is a real change to what the maker experiences after sharing, and no frozen
+   surface describes it. Accept, or specify a return path.
+7. **The toast can name the wrong destination during editor boot.** `ShareInbox.hasOpenZine` is "is anything
+   collecting", and the drain collector is launched *last* in the editor's `ready()` (deliberately — the
+   autosave binder can throw before it). A share arriving inside that window therefore reads "no zine open"
+   and says `CHOOSE_ZINE`, while the photo actually lands in the zine that is opening. Nothing is lost; the
+   sentence is just wrong for a moment. Raised by review.
+8. **Zinely is now a share target for its own export.** The Read/Print PNG export shares with `image/png`,
+   which matches the new filter — so Zinely appears in the chooser when the maker shares a page Zinely just
+   rendered, and accepting it re-imports a rendered page as a photo. Harmless and slightly absurd; either
+   exclude the component from that chooser or accept it on the record.
+
+#### The rulings {#d-081-rulings}
+
+*2026-08-16. The owner delegated these to the implementer rather than answering them, so each is recorded with
+the evidence it rests on and is reversible by an owner ruling that says otherwise. Research pass with
+citations; the three that shipped were implemented, tested and mutation-verified.*
+
+**Shipped.**
+
+- **Q3 — the failure half is now visible.** ✅ **FIXED, and fixed for the whole import path.** An
+  AT-only error report inverts the WCAG model: [3.3.1](https://www.w3.org/TR/UNDERSTANDING-WCAG20/minimize-error-identified.html)
+  requires the error be *described in text*, and the live-region techniques exist to make that text **reach**
+  assistive technology, never to be the only place it exists. `Copy.ShareIn.importSummary` has exactly one
+  call site, so one change covers every caller — the summary now also rides a `SharedFlow` collected in the
+  nav host and shown as a `Toast`. The a11y `announce()` is **kept alongside it, provisionally.**
+  ⚠ **The first version of this ruling justified that with a false claim** — that whether TalkBack speaks
+  `Toast` text *"could not be confirmed from Android's own documentation"*. Review falsified it: **AOSP is
+  Android's own documentation**, and this repo has a house skill for exactly the case where the public docs
+  run out. The source is unambiguous — `ToastPresenter.show()` builds a
+  `TYPE_NOTIFICATION_STATE_CHANGED` event, populates it with the toast's own text and sends it, with the
+  AOSP comment *"treat toasts as notifications since they are used to announce a transient piece of
+  information to the user"*; API 30 moved text-toast rendering to SystemUI and preserved that path verbatim.
+  Two further facts the same reading turned up: nothing deduplicates a `TYPE_ANNOUNCEMENT` against a
+  `TYPE_NOTIFICATION_STATE_CHANGED`, so the double-report almost certainly **speaks the sentence twice**;
+  and `View.announceForAccessibility` is deprecated in API 36. So the evidence now points at dropping
+  `announce()` and keeping the toast. It is kept only because *emitted with the text* and *spoken* are still
+  two different claims, and the second is TalkBack policy. **Pre-registered question for the listen pass:
+  is the summary spoken twice?** If yes, `announce()` goes. Recorded at length because the wrong reason was
+  in the code and in this register before anyone checked a source that was available the whole time.
+- **Q2 — five photos no longer land as one.** ✅ **FIXED in the share-in drain only.** An exact stack is not a
+  deferred decision, it is the decision *"stack them"* made by accident, and it is the expensive one: the
+  maker sees one photo where five arrived, and the honest first reading is *"it lost four of my photos"* —
+  the `0.9.0-beta.1` shape this handbook is built around. [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) reserves
+  compositional decisions to design, but the incumbent behaviour was *equally* unruled, so the tie broke
+  toward the option that cannot be misread as data loss. Every comparable tool cascades rather than stacks
+  ([Figma](https://help.figma.com/hc/en-us/articles/4409078832791-Copy-and-paste-objects)). `defaultImagePlacement`
+  is untouched, so the one-photo picker path is unchanged. **Marked provisional in the code**: a placement
+  policy is design's to rule, and this is a floor, not a proposal.
+- **Q8 — Zinely is out of its own share sheet.** ✅ **FIXED.** `EXTRA_EXCLUDE_COMPONENTS` is the supported
+  mechanism and the Android docs name this exact use case — *"hide your app's share targets when your users
+  share from within your app"* ([Send simple data to other apps](https://developer.android.com/training/sharing/send)) —
+  and `minSdk = 24` is precisely the level it landed in, so no version guard. Appearing in its own chooser
+  told the maker something false about what Zinely is for. **Two corrections the device forced, in the
+  honest direction:**
+  ⚠ **The premise is not true today.** Going to look for the loop on hardware found that the only share the
+  UI can actually reach is the Proof's, and it exports **`application/pdf`** — `ZinelyNavHost` requests
+  `ExportFormat.PDF` at both of its two call sites, and nothing in `src/main` ever requests `PNG`. So the
+  PNG export that "matches Zinely's own `image/*` filter" is a capability of `ZineExporter`, not a path a
+  maker can walk, and Zinely was never actually offering to share a zine to itself. The exclusion is kept as
+  defence-in-depth — the exporter *does* support PNG, and the day a surface shares one the loop appears with
+  no warning — but it fixes a latent defect, not a live one, and the ✅ above should be read that way.
+  ⚠ **Best-effort, not guaranteed.** The extra is honoured by whatever activity handles `ACTION_CHOOSER`;
+  the sharesheet is a Mainline module (Android 14+) and OEM replacements' handling is undocumented — review
+  found no authoritative source either way. **Still device-unverified**, and now unverifiable through the
+  UI: the Samsung chooser correctly showed no Zinely for the PDF share, which proves the mime type, not the
+  exclusion.
+
+**Accepted on the record — no code.**
+
+- **Q1 — "the zine you open next" is the product rule.** ✅ **AFFIRMED.** Comparable apps either decide for
+  the user (Google Keep's share-in silently creates a new note) or drop them in their own editor; none asks
+  *"which document?"*, because none has a shelf that already **is** that question. Zinely does, and the
+  Library's stated question is *"which zine do I want?"* — a chooser would be a second screen asking what the
+  first screen exists to ask. ⚠ One hole remains and it is **design's, not implementation's**: after a share
+  with no zine open, the only trace of the pending photos is a 3.5-second toast. A "photos waiting" mark on
+  the Library would fix it and **needs a frozen surface first**, so it is a design item, not a patch.
+- **Q6 — Back after a share exits Zinely.** ✅ **ACCEPTED.** Returning to the sender is controlled by the
+  *sender's* intent flags, which Zinely does not own ([Tasks and the back stack](https://developer.android.com/guide/components/activities/tasks-and-back-stack)).
+  Faking it would re-open the single-writer defect the ADR-105 amendment records as falsified on hardware.
+- **Q5 — `CHOOSE_ZINE` versus process death.** ✅ **ACCEPTED.** The in-memory inbox is forced, not chosen: the
+  grant *"lapses"* the moment the receiving component is destroyed
+  ([CommonsWare](https://commonsware.com/blog/2016/08/10/uri-access-lifetime-shorter-than-you-might-think.html)),
+  so persisting a URI trades a stale sentence for a stale *file handle*, which is strictly worse. After a
+  kill, every possible sentence about pending photos is false.
+- **Q7 — the boot-window toast can name the wrong destination.** ✅ **ACCEPTED**, and this is the one that was
+  genuinely close. The obvious fix — an explicit open/closed flag — trades a *transient* lie for its
+  *durable* mirror: a boot that throws would then report "a zine is open" while nothing drains at all.
+  A momentary wrong sentence that loses nothing beats a permanent one. Revisit if a device pass reproduces it.
+
+**Two new questions the fixes themselves opened.** *Both were self-reported by the implementer and confirmed
+by independent review; both were judged **not** merge blockers, and both belong here rather than in a code
+comment, which is where they were first written.*
+
+- **Q9 — an import that lands while the Proof is on top reports nothing to anyone.** ✅ **FIXED 2026-08-16.**
+  Both drains are now one `ImportReportSink(viewModel)` composable, called from the editor **and** the Proof,
+  each collector wrapped in `repeatOnLifecycle(RESUMED)` — the gate is what stops one emission reaching two
+  live collectors and toasting twice, since navigation-compose keeps the outgoing destination composed
+  through a transition. Two regression tests, both mutation-verified against deleting the Proof's sink.
+  ⚠ **The gate itself is NOT pinned by a test, and that was measured rather than assumed:** widening the
+  production gate from `RESUMED` to `CREATED` left all four tests green, because by the time the share
+  arrives the transition has settled and the editor is no longer composed at all — Robolectric offers no
+  deterministic way to land an emission *inside* the transition window, which is exactly the window the gate
+  closes. The second test therefore stands as an **outcome** guard (it catches a duplicate sink, a replayed
+  flow, a collector that never stops, a toast that fires per recomposition) and not as a proof of the gate.
+  Verifying the gate is a device-pass item: offer to the inbox mid-transition and count what the maker hears.
+  The residual gap is honest and small — during the transition neither destination is resumed and these
+  flows are replay-free, so an emission landing in that few-hundred-millisecond window is still dropped.
+  *(Original finding, kept:)* The toast
+  collector and the pre-existing a11y drain *both* live in `EditorDestination`, and the Proof stacks above
+  it — so on the Proof an import is silent to sighted makers **and** to TalkBack. Review found this worse
+  than first reported (the a11y half was assumed safe) and also established the limit of the damage: the
+  Proof shares the editor's ViewModel, so the drain keeps running and **the photos still land and are
+  durable**. This is silence, not loss. The a11y half is a pre-existing condition already on this record, so
+  the change does not regress it — it fails to fix it in one state. Hoisting both collectors to the nav
+  host's root closes both halves in about four lines.
+- **Q10 — the cascade is per-batch, not per-page.** ⏳ **OPEN.** Two consecutive single-photo shares each
+  start from the centred default, so the second lands exactly on the first — Q2's *"it lost my photo"*
+  misreading, one level up. Still a strict improvement on the status quo, which stacked within a batch too,
+  and reaching it needs two separate shares rather than one ordinary five-photo one. The fix (seed the index
+  from the images already on the page) is small, but it is a **placement policy**, which
+  [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) reserves to design — so deferring it is consistent with how Q2 was
+  ruled rather than an exception to it.
+
+**Deferred.**
+
+- **Q4 — one undo per share.** ⏭ **DEFERRED to the roadmap.** A share *is* one act, so one undo is the
+  product-correct answer — but `EditorReducer` has no composite command, and building `BatchCommand` with its
+  own inversion touches the core command algebra that undo, redo and coalescing all depend on. Five undo
+  presses is annoying, not lossy; and now that Q2 makes a five-photo share *look* like five things, five
+  presses reads as consistent rather than broken.
+
+**What is *not* in question.** Nothing here touches the privacy invariant: a shared URI is read, decoded and
+written to app-private storage, and no shared byte leaves the device. The inbox holds URIs in memory only —
+the sender's read grant dies with the task, so a persisted URI would be a handle that no longer opens.
+
+---
+
+*Opened 2026-07-28 during the Compose V2 implementation programme; register verified against every entry's
+status line on 2026-07-29 (package A10) and again on 2026-07-30 at the **Phase A closeout**, when the
+D-002, D-006 and D-016 owner rulings were recorded — and extended the same day by **D-017**, **D-018** and
+**D-019**, raised by Phase B / B1 and ruled on the same day ([ADR-081](../DECISIONS.md#adr-081)), then by
+**D-020**, raised by Phase B / B2 and likewise ruled the same day
+([ADR-082](../DECISIONS.md#adr-082)), and finally by **D-021** and **D-022**, raised by Phase B / B3
+([ADR-083](../DECISIONS.md#adr-083)) and **both ruled the same day** — D-021 confirming the frozen characters,
+D-022 replacing the Library's scrim with the corpus token. Extended once more on **2026-07-31** by
+**[D-023](#d-023)**, raised against Phase B / B4 ([ADR-084](../DECISIONS.md#adr-084)) **by independent review
+rather than by implementation**, and the first entry since Phase A to reach the owner **unruled**. Governed by
+[V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
+[COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*
+
+---
+
+### D-082 — the photocopier filter is ordered to ship first and no frozen file draws it {#d-082}
+
+| | |
+|---|---|
+| **Artifact** | [`docs/design/mockups/v21-bench.html`](mockups/v21-bench.html) `toolsFor('photo')` `:674`; [ZINE-DIRECTION.md X3b](ZINE-DIRECTION.md); [PRODUCT-DIRECTION.md §280](PRODUCT-DIRECTION.md); [BETA-DIRECTION.md §3.11](BETA-DIRECTION.md) |
+| **Found** | 2026-08-16, implementing X3b under [ADR-105 D-4](../DECISIONS.md#adr-105) |
+| **Severity** | Design omission — **did not block the engine; it blocked the control**, and the control was built anyway. Read the status line before treating the amendment as settled |
+| **Status** | ✅ **RULED 2026-08-16 — all five, by the implementer under explicit owner delegation.** The freeze amendment is **RATIFIED**; Q4 was **falsified on a device and fixed**. [ADR-106](../DECISIONS.md#adr-106) moves to `Accepted`. See [the rulings](#d-082-rulings) |
+
+**What the corpus specifies.** Four documents name the filter and all four say the same two things: *1-bit
+Floyd–Steinberg over a downscaled bitmap*, and *pure Kotlin, fits `core:render`, no dependency*. That is a
+complete specification of an **algorithm**.
+
+**What no document specifies.** Everything a *design* would have to say:
+
+1. **The dot size.** No file names a resolution, an lpi, an angle, or a dot shape. "Downscaled" is a
+   direction, not a number. ADR-106 decided **150 dpi**, measured in page points so preview and export agree
+   — a decision made because the work could not proceed without one, not because a design ruled it.
+2. **Where the control lives, and what it is called.** No frozen surface draws it. The Bench's photo bar was
+   frozen at three verbs (`Reframe · Replace · Delete`) and the register's own rule is that *amending a frozen
+   surface is an owner act*. ADR-106 amended it anyway, to a fourth verb `Copier`, **HTML first** — the order
+   CLAUDE.md prescribes, by a hand the register does not authorise. Ratify or revert; it is one commit either way.
+3. **Whether the filter is one thing or a family.** The riso/ink identity documents talk about *grain,
+   halftone, one-ink reproduction* as a set. Shipped here as a single boolean with no parameters, because a
+   boolean is what a spec-less feature is entitled to be.
+4. **What a toggled-*on* verb looks like** — raised by review, and the register's own kind of finding. `.ctx
+   button` declares one appearance and no state: `Copier` is the first verb on that bar that is a *setting*,
+   and the freeze has no vocabulary for one. A `stateDescription` now announces On/Off, so a screen reader is
+   served; a sighted maker whose photo is small or half-covered by the bar still has to look at the canvas to
+   know. Not invented here — [OD-9](#d-031-ruling)'s rule is that a control the freeze draws invents nothing.
+   A fifth question rides with it: **how should a halftone look in a page thumbnail**, where the dots are
+   minified rather than magnified.
+
+**Why it was not simply deferred.** [ADR-105 §D-4](../DECISIONS.md#adr-105) sequences this **ahead of** the
+sixteen supplies, on the reasoning that *"decorating a product before it has its voice is the wrong order"*.
+An engine with no control is dead code, which [SUPPLIES-SPEC §9](SUPPLIES-SPEC.md)'s own Amendment-3 rule
+forbids. So the choice was a spec-less control or a stalled instruction, and the smaller, more reversible
+error was taken with this entry attached to it.
+
+#### The rulings {#d-082-rulings}
+
+*2026-08-16, by the implementer under explicit owner delegation. Q4 is the only one decided by evidence
+rather than by argument, and it is the only one that changed the product.*
+
+- **Q2 — the freeze amendment: RATIFIED.** ✅ The register's rule is that amending a frozen surface is an
+  owner act, and the delegation is the owner act. Three things make ratifying the smaller error than
+  reverting. (a) The **order** CLAUDE.md actually protects was honoured — the HTML was amended first and the
+  Compose transcribed from it, which is the thing the rule exists to prevent going backwards. (b) Reverting
+  ships a dead engine, which [SUPPLIES-SPEC §9](SUPPLIES-SPEC.md)'s Amendment-3 rule forbids outright, so
+  "revert" is not a neutral option — it trades a spec-less control for a spec-less *pile of unreachable
+  code*. (c) The amendment **adds a verb to a bar whose whole vocabulary is verbs**; it invents no new
+  grammar, unlike [D-024](#d-024), which added two entire screen states and was ratified anyway. Precedent
+  runs the same way in [D-033](#d-033) and [D-010](#d-010): this register's owner has amended frozen surfaces
+  three times when the alternative was a design that could not describe the product.
+- **Q4 — the toggle had no visual on-state: FALSIFIED ON A DEVICE, and fixed.** 🔴→✅ This was filed as an
+  open question and it was really a **defect**. Measured on SM-A176B / Android 16: the context bar was
+  captured before and after tapping `Copier`, and the two crops are **pixel-identical** — same icon, same
+  weight, same colour. The halftone does appear on the canvas, and the canvas is exactly what a maker cannot
+  rely on seeing: the photo may be small, scrolled away, or behind the bar that holds the button. So the
+  control reads as *"tapped, nothing happened"* — ADR-058's class, and precisely the "correct but
+  misleading" failure the handbook says is cheaper to fix than most because its cause is known. A
+  `stateDescription` served the screen reader and left the sighted maker with nothing, which is the
+  **inverse** of [D-081](#d-081) Q3 and, filed on the same day, ought to have been the tell. **Ruling: the
+  freeze gains a checked appearance for a context-bar verb**, reusing the Bench's existing on-state
+  vocabulary rather than inventing one — HTML first, then Compose. **Implemented and re-verified on the same
+  device: PASS.** `.ctx button.on` takes `leaf`/`on-leaf`, the pair `.chip2.on` and `.ctl.on` already use for
+  exactly this meaning — so the amendment adds a *rule*, not a vocabulary. Three alternatives were rejected
+  by the corpus's own rules: butter is already spent on `:hover` and [V21-SPEC §3.2](V21-SPEC.md) forbids it
+  as a state at all, the berry ring is the current-*page* assignment, and `leaf-tint` on dark paper is
+  ADR-100 §4's invisible-tint defect again. Contrast measured at 4.70:1 light / 6.95:1 dark — light clears AA
+  by only ~4 %, so re-measure if either token moves. The before/after crops are now unmistakably different,
+  which was the entire test.
+- **Q1 — 150 dpi: AFFIRMED, provisionally.** ✅ It is a decided number, not a specified one, and it survives
+  the only test that matters here: on a real device the halftone reads as a photocopy rather than as noise or
+  as a grey smear. Measured in page points so preview and export cannot diverge, which is the part that would
+  have been expensive to get wrong. Re-open if a print pass says the dots are coarse on paper.
+- **Q3 — one boolean, not a family: AFFIRMED.** ✅ A spec-less feature is entitled to be exactly as small as
+  its specification. Grain, halftone and one-ink reproduction may later be a set; nothing is foreclosed,
+  because a `Boolean` widens to an enum without a schema break the same way it was added without one.
+- **Q5 — halftones in a page thumbnail: AFFIRMED as implemented.** ✅ Filtering is disabled when magnifying
+  (a bilinear magnify averages the dots back into the grey the halftone exists to destroy) and left on when
+  minifying, where it suppresses moiré. The two cases genuinely want opposite answers.
+
+**Device verification.** ✅ **Pass 1 (developer) — PASS.** `Copier` publishes to the platform tree as an
+enabled, clickable `android.widget.Button` named `Copier`; tapping it renders the halftone on the canvas; the
+element beneath it stays unfiltered, so the flag is per-element as designed. ⚠ `stateDescription` is
+structurally invisible to `uiautomator dump` ([DEVICE-VERIFICATION.md §2](../DEVICE-VERIFICATION.md)), so the
+spoken On/Off still owes a **TalkBack listen pass**. 🔴 **Pass 2 (first-time user) — FAILED, on Q4 above**,
+and the disagreement between the passes is the finding: Pass 1 was satisfied by a control that did what it
+said, while Pass 2 could not tell it had done anything. Re-run both after the on-state lands. No print pass
+yet — the claim is about ink on paper and only paper can close it.
+
+---
+
+## Resolved
+
+| ID | Defect | Resolved |
+|---|---|---|
+| **D-033** | The frozen page is not the document's page, and the keep-clear inset is not the document's safe area | 2026-08-01 — owner ruling, option (c): **the frozen Bench is amended**, on the [D-024](#d-024) precedent. `.page` 212×326 → **229×324** (ratio 0.70679, 0.11px off ideal) so the depiction carries the real panel's aspect; `.keepclear` 16px → **18.5px**, the engine's `safeAreaInsetPt = 17.0` scaled — the two axes agreeing to 0.01px is what licenses one uniform number. The page box is now canonical geometry for `.keepclear`, `.guide`, `.pagenum`, D-032's intersection test and the Compose viewport. [Amendment](#d-033-amendment) and entry kept above. |
+| **D-035** | The dark theme dims the sheet, and the document's own ink does not follow it | 2026-08-02 — owner ruling (**OD-12**), option (a): *"the editor represents the physical printed artifact"*, so the artifact **does not dim** and only the room around it may. The frozen `.page` becomes a light-theme island restating eight on-paper tokens; `.phone` still dims; the five ADR-055 content inks are untouched and print fidelity is unchanged. The sheet's **shadow stays the room's** — lightening it reinstated [D-010](#d-010--the-page-shadow-is-hard-coded-to-the-light-theme-and-does-not-adapt-in-the-dark) inside this fix, caught in review. [Ruling](#d-035-ruling) and entry kept above. |
+| **D-037** | The dim shipped without either of the two ways the freeze gives the user out of it | 2026-08-02 — owner ruling (**OD-13**), option **(a)**: **selection is a transient editing state, not a modal one.** A tap anywhere outside the selection dismisses it — blank paper, the studio desk, or another element (which **transfers**, in one reduction, with no intermediate clear). No confirmation step, no persistent selection mode. Scoped by the owner as *completion of an existing capability, not a new feature*: `Intent.ClearSelection`, its reducer branch, the selection state and their tests were all already in the repository, and only the interaction that dispatches them was missing. Implemented as one `onTap → Intent.SelectAt` ([ADR-091](../DECISIONS.md#adr-091) row 2.14), which suffices because `SelectAt`'s hit-test **miss** branch already reduces to `ClearSelection`'s exact state. Raised, and closed, by the device pass that exists for it. [Ruling](#d-037-ruling) and entry kept above. |
+| **D-034** | The frozen contextual bar and the shipped one are different controls, and the shipped one is an accessibility conformance path | 2026-08-02 — owner ruling (**OD-11**), option **(b) keep both**: the frozen `.ctx` is the contextual editing **vocabulary**, `EditorContextBar` is an accessibility-preserving **transform** affordance, and *"these are not mutually exclusive."* The frozen bar is **additive**; the transform controls remain, because a parity phase does not remove or weaken a WCAG 2.5.7 path ([ADR-029](../DECISIONS.md#adr-029) §6). Review's option **(e)** also accepted: C2 splits into **C2a** (selection — unblocked) and **C2b** (`.ctx*`), the fence having covered rows 2.10–2.13 only. [Ruling](#d-034-ruling) and entry kept above. |
+| **D-031** | The frozen Bench draws four controls that go nowhere, and drops one the product ships | 2026-08-01 — owner ruling (**OD-9**): the freeze specifies the **editing surface, not the whole application flow**. Font and Size stay drawn as contextual affordances and invent no capability (ADR-055 excludes font choice, so Font is **specified-but-unreachable**; Size routes to the shipped Type bar). Read reuses [ADR-086](../DECISIONS.md#adr-086)'s Editor → Proof hand-off, back reuses the existing stack, and **redo is kept** — a control the freeze omits is not thereby deleted. Applying the ruling immediately surfaced [D-034](#d-034), which it does not reach. [Ruling](#d-031-ruling) and entry kept above. |
+| **D-032** | The keep-clear cue has a frozen appearance, no trigger, and a written trigger the product cannot compute | 2026-08-01 — owner ruling (OD-10, C1 half): the warn state is **transient guidance, not document state**. It shows only while an in-flight interaction would move content into the keep-clear area, and disappears when the interaction ends; content already inside after editing draws no persistent warning. None of the three offered options was taken — the trigger became the manipulated element's **bounds**, so face detection is not needed and [PRD §5](../PRD.md#5-product-principles-non-negotiable) is not engaged. [Ruling](#d-032-ruling) and entry kept above. |
+| **D-001** | `v2-bench.html`'s header contradicts the freeze record | 2026-08-01 — closed by **Phase C / C0**, the documentation-only package that existed for it: the stale header line deleted, the stale footer clause stripped, D-005's stand-in note and the [D-010 amendment](#d-010-amendment) kept. No selector, declaration or script touched. [Closure](#d-001-closure) and entry kept above. |
+| **D-010** | The page shadow is hard-coded to the light theme and does not adapt in the dark | 2026-08-01 — owner ruling (OD-3 of [ADR-089](../DECISIONS.md#adr-089)): **amend the frozen Bench and Proof** with a dedicated `--page-shadow` (cast) + `--page-contact` (contact) pair, preserving light byte-for-byte and re-deriving dark from the Library's own pair. Spec first, per D-024's precedent; **Compose deferred** to Phase C / C1 and Phase D. The [amendment](#d-010-amendment) and the entry are kept above. |
+| **D-003** | The maker palette is ten inks or nineteen, depending on which document you read | 2026-07-28 — owner ruling: three bands, three categories, three collections. Entry kept above with its full resolution. |
+| **D-020** | The shelf states a fixed two-column grid with no breakpoint, and Phase B verifies on foldables | 2026-07-30 — owner ruling: two columns, no breakpoint, no responsive behaviour, no maximum cover width, **and none of them to be invented**; *"future adaptive layouts require a future frozen design rather than implementation inference"*. No code change owed — B2 had already transcribed the freeze. Entry kept above. |
+| **D-005** | The Library and the Bench set the same role in two different serifs at two different weights | 2026-07-28 — owner ruling: the Constitution outranks both frozen files. Canonical serif is **Fraunces at 500**; the Library's 600 reflected its Georgia fallback. No code change owed. Entry kept above. |
+| **D-007** | The constitutional 8pt rhythm is not observable in the frozen CSS | 2026-07-28 — owner ruling: §III is an implementation **aspiration**, not a token inventory. **No spacing scale is published**; spacing stays per-component exactly as frozen. Entry kept above. |
+| **D-015** | Two concepts are each drawn twice, with different geometry | 2026-07-29 — owner ruling: **do not deduplicate, canonicalize, or pick a preferred version**. Each geometry is an independent design asset; similarity is not evidence of identity. Convergence, if ever wanted, belongs in the corpus first. No code change owed. Entry kept above. |
+| **D-013** | The Library and the Bench bake different alpha into the same grain | 2026-07-29 — owner ruling: **deliberate, not drift**. Paper and printed covers are different physical materials; grain strength is **not** normalised and stays exactly as frozen. No code change owed, and no corpus cleanup owed either. Entry kept above. |
+| **D-014** | The paper material cannot be drawn at all on API 24–28 | 2026-07-29 — owner ruling: rendering **flat paper is correct**, not a fallback. No emulation, no approximation, no `minSdk` bump — where the platform cannot express the design, implementation omits and discloses. Ships as a Known Limitation. Entry kept above. |
+| **D-011** | The Library declares neither easing token and animates on a curve found nowhere else | 2026-07-28 — owner ruling: the Bench and Proof are the **canonical V2 motion language**; the Library's curve reflects its earlier freeze. Phase B uses the canonical tokens. No code change owed. Entry kept above. |
+| **D-002** | Two frozen cover inks put their titles below AA for normal text | 2026-07-30 — owner ruling: the governing floor for cover titles is **3.0:1**. No frozen colour changes, no HTML change, no design amendment; wording that implied a stricter level was clarified instead. `ZinelyContentInksTest`'s existing 3.0 gate is confirmed. Entry kept above. |
+| **D-006** | The only shape token in V2 is declared and never used | 2026-07-30 — owner ruling: **dead specification — delete it from the frozen HTML**, and introduce no 18px radius token. `--r:18px` removed from `v2-bench.html` and `v2-proof.html`; `ZinelyV2Dimens` still publishes no radius. Entry kept above. |
+| **D-016** | Two of Phase A's acceptance criteria cannot be met by a phase forbidden to touch product surface | 2026-07-30 — owner ruling: **only the token-routing clause re-seats, to Phase D**; *"confirmed to be the same migration"* is **satisfied by confirmation** of the architecture and strategy ([ADR-080](../DECISIONS.md#adr-080), now `Accepted`). **Phase A passes its gate.** Entry kept above. |
+| **D-017** | The frozen Library shows six covers and states no rule for giving a cover to a seventh zine | 2026-07-30 — owner ruling: **assign once at creation and persist**; do **not** derive from the title, round-robin, or infer from neighbours. The assignment *is* part of the zine's identity. B1's title hash deleted; persistence owed at **B5**. Entry kept above. |
+| **D-018** | The cover's ink band specifies `multiply`, which Android cannot honour below API 29 | 2026-07-30 — owner ruling: **follow D-014 — omit the band**. No emulation, no substitute blend mode. Ships as one Known Limitation together with D-014's flat paper. Entry kept above. |
+| **D-021** | The sheet's icons are Unicode characters, and half of them are not in the app's own font | 2026-07-30 — owner ruling: **keep the literal characters exactly as frozen**; no substitution, no redesign, and **bundled-font coverage does not justify changing the design**. Platform fallback accepted; a future design revision may replace the glyphs explicitly. No code change owed — B3 had already transcribed them. Entry kept above. |
+| **D-022** | The Library's scrim is a theme-invariant literal, while the corpus publishes a theme-aware one | 2026-07-30 — owner ruling: **the corpus is authoritative**; implement the published light/dark values. **Code changed** (`ZineActionScrim` takes `ZinelyV2Colors.scrim`), making this the only V2 value not transcribed from the frozen Library file. Third of the D-005 / D-011 set: where the Library contradicts a corpus token, the corpus wins. Entry kept above. |
+| **D-024** | The frozen Library specifies a two-state screen; the real shelf has four states | 2026-07-31 — owner ruling: **Loading and Error are product states and belong in the canonical design.** Not prose, not invented in Compose — **the frozen HTML was amended** (`.ph`/`body.is-loading`, `.fail`/`.retry`/`body.is-error`), the first V2 amendment that *adds* design. Two further rulings with it: the **dock stands in all four states** (it belongs to the workspace, not the loaded content — no second workspace grammar), and the **loading debounce is implementation, not design**, kept out of the HTML and recorded as a seam in [ADR-086](../DECISIONS.md#adr-086). Entry kept above. |
+| **D-025** | Seven frozen actions have no destinations, and four need UI the freeze does not contain | 2026-07-31 — owner ruling: **reuse existing behaviour; invent no new product concept.** Rename/Delete/Make a zine take their existing flows (delete keeps its undo), Share & export **routes into the existing Proof** — and there is **no shelf-level export**. Consequence accepted: V1 chrome inside a V2 screen until the phase that re-skins it. Entry kept above. |
+| **D-026** | D-017 assigns a cover "at creation", but existing zines predate the field and a duplicate is created too | 2026-07-31 — owner ruling: **a cover is persistent visual identity; assign once at creation and persist. A duplicate generates a NEW cover — duplicate content, not visual identity.** Completes D-017: not from the title, not round-robin, not from neighbours, **and not inherited**. **Legacy zines receive a cover on first presentation, then persist it** — ruled explicitly, not inferred. Entry kept above. |
+| **D-019** | The frozen trilogy has no right-to-left reading, and a printed cover has a physical handedness | 2026-07-30 — owner ruling: **the printed artifact does not mirror**, in any locale; binding edge, fore-edge and crease stay exactly as frozen. Chrome may adapt to RTL; artifacts do not. Entry kept above. |
+
+*(Resolved entries stay in place rather than being deleted — the record of what was once contradictory
+is what stops it being reintroduced.)*
+
+---
+
+*Opened 2026-07-28 during the Compose V2 implementation programme; register verified against every entry's
+status line on 2026-07-29 (package A10) and again on 2026-07-30 at the **Phase A closeout**, when the
+D-002, D-006 and D-016 owner rulings were recorded — and extended the same day by **D-017**, **D-018** and
+**D-019**, raised by Phase B / B1 and ruled on the same day ([ADR-081](../DECISIONS.md#adr-081)), then by
+**D-020**, raised by Phase B / B2 and likewise ruled the same day
+([ADR-082](../DECISIONS.md#adr-082)), and finally by **D-021** and **D-022**, raised by Phase B / B3
+([ADR-083](../DECISIONS.md#adr-083)) and **both ruled the same day** — D-021 confirming the frozen characters,
+D-022 replacing the Library's scrim with the corpus token. Extended once more on **2026-07-31** by
+**[D-023](#d-023)**, raised against Phase B / B4 ([ADR-084](../DECISIONS.md#adr-084)) **by independent review
+rather than by implementation**, and the first entry since Phase A to reach the owner **unruled**. Governed by
+[V2-CONSTITUTION.md](V2-CONSTITUTION.md); process defined in
+[COMPOSE-IMPLEMENTATION-RULES.md](../COMPOSE-IMPLEMENTATION-RULES.md).*
+
+---
+
+### D-083 — one word, three meanings: `Ink` is a verb, a maker ink and a neutral, and TalkBack says all three the same {#d-083}
+
+| | |
+|---|---|
+| **Artifacts** | `core/copy/.../Copy.kt` (`BenchInk.INK`, `BenchVerbs.INK`) · `feature/editor/.../BenchInkPopover.kt` (`ZinelyMakerInkId.Ink`, `ZinelyNeutralId.Ink`) · [SUPPLIES-SPEC §8](SUPPLIES-SPEC.md) |
+| **Found** | 2026-08-16, implementing S6 (the sixteen supply names) — found by *looking for* a collision the spec predicted, and finding it one layer above where it was predicted |
+| **Severity** | **Shipped accessibility defect, not a supplies defect.** Not blocking S6; blocks nothing currently in flight |
+| **Status** | ⏳ **OPEN** — needs a frozen-popover label change, which is an amendment |
+
+**The defect.** A single constant, `Copy.BenchInk.INK` (`"Ink"`), is the drawn and spoken label for **two
+different swatches** — `ZinelyMakerInkId.Ink`, a maker ink, and `ZinelyNeutralId.Ink`, a neutral — and the
+*same word* is `Copy.BenchVerbs.INK`, the context-bar verb that opens the popover containing both. Three
+meanings, one string, already shipping. A TalkBack user sweeping the palette hears "Ink" twice with nothing
+to separate the two swatches, and hears it a third time on the control that got them there.
+
+**Why it surfaced now, and why it was not fixed here.** [SUPPLIES-SPEC §8](SUPPLIES-SPEC.md) predicted this
+collision as a risk *for the sixteen supply names*, and required the supplies to disambiguate. They did not
+have to: **none of the sixteen is called `Ink`**. The prediction was right about the word and wrong about the
+layer — the collision is in the shipped ink palette, and it was there before the supplies existed. Fixing it
+means band-qualifying a label the frozen popover **draws**, which is a freeze amendment, and it belongs to
+the terminology pass (§0 O-A), not to a naming package that happened to walk past it.
+
+**What S6 did instead — pinned it from one side.** `SuppliesCopyTest` asserts that no supply name equals any
+of the nineteen swatch names or any bench verb, with `Ink` named explicitly in its own assertion. That cannot
+fix the existing collision, but it makes it **impossible to make worse**, and a future rename that reaches for
+`Ink` re-breaks the build. This is the honest half of the fix and is recorded as such rather than as a close.
+
+#### ✓ RULING — 2026-08-16: the five naming departures stand {#d-083-ruling}
+
+*Ruled by the implementer under explicit owner delegation, on the [D-082](#d-082-rulings) precedent.*
+
+S6's names depart from §4's prose in five places, and **all five are the same problem**: the spec wrote
+*descriptions* where the product needs *labels*, and a label is spoken aloud.
+
+- `mark.asterisk` → **Star**, not "star/asterisk". A screen reader cannot say a slash, and §8's own worked
+  example is *"Star, medium, berry"* — the spec had already chosen, in the section that governs speech.
+- `paper.tag` → **Speech tag**, not "cut label/speech tag". Same slash; and *label* is what every other Bench
+  control already is, so reusing it here would be a fourth meaning for a word that has three.
+- `tape.torn` → **Torn tape**, not "torn tape strip". The sharpest of the four: *"Torn strip"* (`paper.strip`)
+  is a **prefix of** *"Torn tape strip"*, so a listener who hears the shorter one cannot know they did not
+  simply miss a word. The two now diverge on the second syllable.
+- `mark.halftone` → **Halftone dots**, not "halftone dot cluster". *Cluster* is print-shop vocabulary about
+  the drawing rather than about the mark, and BP-4 forbids teaching the maker a word they did not ask for.
+- `paper.window` → **Window frame**, not "cut-out window frame". The supply is spoken under its family
+  heading, and the heading is already the word *Cut* — *"Cut paper · Cut-out window frame"* spends the
+  listener's attention saying *cut* twice before it says what the thing is.
+
+⚠ **The fifth was found by reconciliation, not by review, and that is the finding.** S6 shipped claiming
+**four** departures; it had made five. Nobody caught it reading `Copy.kt`, because a list that says "four"
+and then reads plausibly is exactly the shape a reader confirms. It surfaced only when the Art sheet
+amendment (**A5**) put the sixteen HTML `aria-label`s beside `Copy.Supplies.NAMES` and they disagreed in
+three places. **Two artefacts that must agree are a cheaper instrument than a careful reader of either one**
+— and the reconciliation rule now has a direction written down: where the frozen mockup and `core:copy`
+disagree on a *spoken* name, **the copy wins**, because it is what a screen reader actually reads out.
+[SUPPLIES-SPEC §4](SUPPLIES-SPEC.md) now says so at the table, and the mockup's labels were changed to match.
+
+`mark.registration` **keeps** its trade word. There is no plainer name, and "cross" would file a *process*
+mark under the geometry it is deliberately not.
+
+⚠ **One structural trap S6 documented and everything downstream must respect:** the id prefix is **not** the
+family. Five prefixes (`tape` · `fix` · `mark` · `paper` · `shape`) carry four families, because *Tape &
+fixings* is one tape plus three fixings. Read the family from `Copy.Supplies.BY_FAMILY`, never from
+`supplyId.substringBefore('.')`.
+
+---
+
+### D-084 — the frozen Art sheet drew eight tiles of four prototype glyphs, three of which are not supplies {#d-084}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`openArt()`, `.chips` / `.chip2`) · [SUPPLIES-SPEC §4 / §9](SUPPLIES-SPEC.md) |
+| **Found** | 2026-08-16, preparing P-G (the Art sheet in Compose) — found by trying to *implement* the freeze, which is when a freeze is actually read |
+| **Severity** | **Blocks P-G.** A Compose implementation of this surface had nothing correct to copy |
+| **Status** | ✅ **RULED + AMENDED 2026-08-16** (amendment **A5** in the file's own log) |
+
+**The defect.** `openArt()` built **eight** tiles from four prototype glyphs — `leaf`, `berry`, `star`,
+`wave` — of which only `star` is a supply at all; and above them sat a row of four family chips whose click
+handler toggled `.on` and **filtered nothing**. [SUPPLIES-SPEC §4](SUPPLIES-SPEC.md) names sixteen supplies;
+the frozen file drew none of them. *A freeze that specifies the wrong count of the wrong objects is not a
+specification of this product* — which is why this is a defect and not a difference of taste.
+
+#### ✓ RULING — 2026-08-16: one grid, sixteen tiles, four family headings — and the chips are removed, not re-tasked {#d-084-ruling}
+
+*Ruled by the implementer under explicit owner delegation, on the [D-082](#d-082-rulings) precedent.*
+
+The scoping pass had left "grid vs. filtered pages" open as a design question. **It is not open** — it was
+already answered in writing three times, and the ruling only had to read:
+
+- **§9, verbatim:** *"No categories beyond the four. **No tags, no filters, no sort.**"* A chip that filters
+  is a filter. Text, not inference.
+- **§1's cabinet table** turns on *"you can see everything at once"* versus *"you search because you can't"*,
+  and closes *"where a design choice could go either way, the cabinet wins."* A filter showing four hides twelve.
+- **The frozen file itself** (`:68`): *"Art remains ONE surface … with the same tile grid"* — singular.
+
+**Why the chips die rather than becoming scroll-anchors.** This was the strongest counter-case (§9 bans
+*filters*, not *jumps*), and it fails on the freeze's own terms: re-tasking a control from filter to
+navigation is an **interaction redesign**, which DESIGN FREEZE forbids outright, whereas deleting a control
+the spec has just emptied is removal of dead UI, which §9 endorses elsewhere. **Re-tasking is the more
+freeze-breaking option, not the safer one** — the intuition runs the other way, and the intuition is wrong.
+Secondarily, a chip row that does not filter cannot say *which tile belongs to which family*, which is the
+one thing the four families exist to say; `.lbl`, already in the file, says it four times.
+
+A box-arithmetic measurement corroborates (≈673px of content in a 698.3px sheet; the chip row would cost
+~41.6px and force a scroll) and is recorded in the amendment log as **corroborating, not load-bearing** —
+its ~25px of slack rests on a line-height the file never states.
+
+**Two findings booked rather than fixed:**
+
+- ⚠ **`.fav` is `role="button"` inside the tile's own `<button>`** — invalid interactive nesting, and
+  pre-existing. Favourites are deferred (§9), so nothing ships broken today, but **whoever implements the
+  star owes a sibling, not a child.**
+- ⚠ **`.tile:nth-child(3n)`/`(4n)` is positional and `.grid` now resets per family section**, so all four
+  rows carry an identical tint-and-tilt pattern where the old eight-tile grid varied. Fixing it needs a new
+  CSS rule, and a new rule needs a ruling — left visible for the owner rather than quietly patched.
+
+**One defect fixed in passing** (permitted post-freeze as an accessibility fix): the tile was an unlabelled
+`<button>` wrapping a bare `<svg>` and announced nothing. It now carries `aria-label` and `title` from
+`Copy.Supplies.NAMES`, which is also how the fifth naming departure in [D-083](#d-083-ruling) was found.
+
+---
+
+### D-085 — TalkBack said "Rect shape" and "Corner fix": the supply's spoken name was derived from its id {#d-085}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../EditorA11y.kt:38-67` (`decorLabel`) · `core/copy/.../Copy.kt` (`Copy.Supplies`) |
+| **Found** | 2026-08-16, by the Review Agent on package **P2** — as a **Required Fix that P2 correctly refused to make**, being outside its scope (types and catalogue, no `feature:editor`) and in a file another agent held |
+| **Severity** | **Shipped accessibility defect.** Sixteen supplies, sixteen wrong labels, for screen-reader users only |
+| **Status** | ✅ **FIXED 2026-08-16** — `decorLabel` is now a `Copy.Supplies.NAMES` lookup; `DecorLabelTest` (4 tests) pins it |
+
+**The defect.** `decorLabel` built a spoken name by splitting the `supplyId` on its dot and speaking the
+halves: `shape.rect` → *"Rect shape"*, `fix.corner` → *"Corner fix"*, `mark.asterisk` → *"Asterisk mark"*.
+Every one of the sixteen was wrong, and one of them — *"fix"* — is not even a noun. **It is also a shipped
+instance of the exact trap [ADR-105 §4](../DECISIONS.md#adr-105) warns about:** the id prefix is not the
+family. Five prefixes carry four families, because *Tape & fixings* is one tape plus three fixings.
+
+**Why it survived.** The function was pure, total, non-empty, and had a KDoc that *justified* the
+derivation — as an interim measure, honestly labelled, ending *"when S6 lands, this function is replaced by
+a `Copy` lookup and this KDoc goes with it."* S6 landed. **The excuse expired and nothing noticed, because
+an expiry condition written in prose has no expiry mechanism.** There was no test on this function at all.
+
+**Two findings from fixing it, both about the test rather than the code:**
+
+- **The first regression guards I wrote were wrong, not strict.** "No supply is spoken as a rearrangement
+  of its id" failed on `tape.torn`, whose authored name genuinely *is* "Torn tape" — the old derivation
+  landed on the right words for one of the sixteen by coincidence. A second guard ("the id prefix is never
+  spoken") failed for the same reason. **Both were re-deriving the correct answer from the id in order to
+  check it — which is the precise mistake they were written to catch.** They are deleted, and the reasoning
+  is kept in the test file where the next person will meet it.
+- **The surviving assertion is equality against `Copy.Supplies.NAMES` for all sixteen**, which needs no
+  reasoning at all: there is one authored source, and either the label came from it or it did not. *A test
+  that has to compute the expected value is a second implementation, and it can be wrong in the same way.*

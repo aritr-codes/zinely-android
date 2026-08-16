@@ -7,8 +7,19 @@ import kotlinx.serialization.Serializable
  * The schema version the current app **writes**. Bumped whenever the persisted shape changes; the
  * migration framework (`:core:data`) chains `vN → vN+1` migrators up to this value on open
  * (S2 spike §6, [docs/DECISIONS.md ADR-020]).
+ *
+ * **v2 (2026-08-16) — `DecorElement`.** Bumped deliberately, *against* SUPPLIES-SPEC §2.1, on the
+ * authority of [D-029's 2026-08-16 ruling](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16)
+ * Q5. The spec is right that no **migrator** is needed (nothing structural changes for existing
+ * documents) and wrong about the **risk**, and the asymmetry is the whole point: ADR-106's `copier` is a
+ * defaulted *field*, so a build predating it drops it silently and the zine still opens plainer. A new
+ * sealed *discriminator* is not survivable — `0.9.0-beta.1` fails to parse the whole document, and
+ * `ignoreUnknownKeys` does not rescue an unknown polymorphic type. The bump routes that into
+ * `NewerSchemaVersionException` ([ADR-021]), which is the difference between "this zine needs a newer
+ * Zinely" and "this zine is broken". The v1→v2 step is therefore an **identity** migrator
+ * (`DocumentMigrations` requires a contiguous chain; see `JsonDocumentSerializer.MIGRATORS`).
  */
-public const val CURRENT_SCHEMA_VERSION: Int = 1
+public const val CURRENT_SCHEMA_VERSION: Int = 2
 
 /**
  * The root of a zine document — a `@Serializable` tree persisted as JSON (S2 spike §3,
@@ -80,6 +91,14 @@ public data class ImageElement(
     val assetId: String,
     val crop: Crop = Crop.FULL,
     val fit: Fit = Fit.FIT,
+    /**
+     * The photocopier filter (X3b, [ADR-106](../../../../../../../docs/DECISIONS.md#adr-106)): when
+     * `true` the photo prints 1-bit dithered. A **presentation** flag, not a new asset — the
+     * content-addressed master bytes are never rewritten, so the filter is reversible by unsetting it
+     * and the same `assetId` can be filtered on one page and not on another. Defaulted, so an older
+     * document reads unfiltered and no schema bump or migrator is needed.
+     */
+    val copier: Boolean = false,
 ) : Element
 
 /** A run of text with a style. */
@@ -91,6 +110,50 @@ public data class TextElement(
     override val zIndex: Int = 0,
     val text: String,
     val style: TextStyle = TextStyle(),
+) : Element
+
+/**
+ * A placed supply — one authored mark from the Zinely cabinet, laid down in one colour
+ * (SUPPLIES-SPEC §2, [ADR-105]). The **third and final** member of [Element] (§7).
+ *
+ * Carries an *identifier*, never geometry: the outline lives in `SupplyCatalog` (`:core:render`) as
+ * code, so a document stays small, a supply cannot be hand-edited into something unauthored, and
+ * redrawing a supply improves every zine that used it. Same intent-not-pixels seam that lets
+ * [ImageElement] carry an `assetId` instead of bytes (ADR-022/027).
+ *
+ * Deliberately absent, per §2's rejection table: `opacity` (riso lays ink down or it doesn't),
+ * `strokeWidth`/`strokeColor` (a mark is ink, not a stroked outline), `path` (that would put an
+ * authoring tool in the document), `secondaryInk` (a pack feature, additive later).
+ *
+ * **Where the spec was silent, this follows [ImageElement]'s existing shape:** `zIndex` is defaulted
+ * to `0` exactly as its two siblings are — SUPPLIES-SPEC §2's sketch omits the default, and matching
+ * the siblings costs nothing and keeps the wire tolerant of a hand-written element.
+ */
+@Serializable
+@SerialName("decor")
+public data class DecorElement(
+    override val id: String,
+    override val transform: Transform,
+    override val zIndex: Int = 0,
+    /**
+     * Stable catalogue key, `family.name` — e.g. `tape.torn`. Never a content hash: supplies are
+     * authored, not imported. Shape is enforced by `DefaultDocumentValidator` (`^[a-z]+\.[a-z]+$`);
+     * catalogue **membership** is deliberately *not* checked there — `:core:data` is Android-free and
+     * `api(project(":core:model"))`-only, so it cannot see the catalogue (SUPPLIES-SPEC §2.2 ruling).
+     */
+    val supplyId: String,
+    /**
+     * The single colour the mark is laid down in. Supplies are outlines rather than images precisely
+     * so this is possible; single-coverage, so tinting is exact. Not validated against any palette —
+     * an off-palette colour renders correctly, and refusing to open the zine would be the worse harm.
+     */
+    val ink: ColorRgba,
+    /**
+     * Reflects the outline across its own vertical centre line (nine of the sixteen supplies are
+     * asymmetric). This genuinely cannot ride on [Transform]: it has no scale term, and the validator
+     * errors on non-positive width/height, so negative-scale is doubly unavailable.
+     */
+    val mirrored: Boolean = false,
 ) : Element
 
 /**

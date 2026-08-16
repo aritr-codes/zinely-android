@@ -112,7 +112,12 @@ class JsonDocumentSerializerTest {
             }
         }
         val migrating = JsonDocumentSerializer(DocumentMigrations(listOf(migrator), targetVersion = 2))
-        val v1Json = serializer.serialize(sample(schemaVersion = 1))
+        // Hand-rewrite the stamped version rather than asking `serialize` for a v1 payload: since the
+        // v1→v2 bump (ADR-105) `serialize` always normalises to CURRENT_SCHEMA_VERSION, so a v1 request
+        // would come back as v2 and this migrator would never run — the assertion would still pass and
+        // prove nothing.
+        val v1Json = serializer.serialize(sample())
+            .replace("\"schemaVersion\":$CURRENT_SCHEMA_VERSION", "\"schemaVersion\":1")
         val decoded = migrating.deserialize(v1Json)
         assertEquals(2, decoded.schemaVersion)
     }

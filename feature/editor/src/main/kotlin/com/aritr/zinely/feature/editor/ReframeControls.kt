@@ -45,10 +45,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -69,6 +71,12 @@ public const val ReframeControlsTestTag: String = "reframe-controls"
 /** Test tag on the "Reframe" affordance chip shown on a selected photo. */
 public const val ReframeChipTestTag: String = "reframe-chip"
 
+/**
+ * Test tag on `.padhint` — the pad's entry-state instruction. Present **only** while every nudge is dead,
+ * so `assertDoesNotExist` is the assertion that the hint never goes stale (F-4).
+ */
+public const val ReframePadHintTestTag: String = "reframe-pad-hint"
+
 /* ── the spec's measurements (`docs/design/mockups/v21-reframe.html`) ───────────────────────────────── */
 
 /** `.pad` — the precision card: `--paper`, 1.5px ink, `--br-md`, a 2px printed shadow. */
@@ -76,6 +84,19 @@ private val PadRadius = ZinelyV21Dimens.radiusMd
 private val PadPaddingH = ZinelyV21Dimens.gapMd
 private val PadPaddingV = ZinelyV21Dimens.gapSm
 private val PadGap = ZinelyV21Dimens.gapLg
+
+/**
+ * `.pad{gap:var(--gap-sm)}` in its **column** direction — the space between the control row and
+ * `.padhint`. It is the card's own vertical padding value, so the hint sits inside the card's rhythm
+ * rather than looking bolted under it.
+ */
+private val PadHintGap = ZinelyV21Dimens.gapSm
+
+/**
+ * `.padhint{font-size:12.5px}`. Sp, not dp: it is prose, and the one thing on this card that must grow
+ * with the reader's text size — the controls around it are fixed 34/40px targets and do not.
+ */
+private val PadHintSize = 12.5.sp
 
 /** `.nudge button{34px}` / `.nudge svg{16px}` and `.zoom button{40px}` / `.zoom svg{20px}`. */
 private val NudgeCellSize = 34.dp
@@ -226,8 +247,9 @@ public fun ReframeControls(
                 horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CancelButton(onCancel)
-                ReframeIconButton(Icons.Filled.Refresh, Copy.A11y.RESET_FRAMING, onReset)
+                ReframeTextButton(Copy.Reframe.CANCEL, Copy.Reframe.CANCEL_REFRAMING, onCancel)
+                // F-9: a word, not the rotate glyph. Same clothes as its neighbour, sized to its text.
+                ReframeTextButton(Copy.Reframe.RESET, Copy.A11y.RESET_FRAMING, onReset)
                 DoneButton(onDone, Modifier.weight(1f))
             }
         }
@@ -240,6 +262,19 @@ public fun ReframeControls(
  * Why it is a card and not a floating pill: the corpus has exactly one raised-paper idiom (ink edge,
  * printed shadow, no blur) and this is it. V1's `--menu` ground and 6dp Material elevation were the two
  * things that made the old bar read as a different app's dialog.
+ *
+ * ### The entry state, and why the card is now a column
+ *
+ * A newly placed photo's frame is seeded to its own aspect, so at 100% Fill it overflows on neither axis and
+ * [ReframeAbilities] correctly reports all four nudges *and* `Zoom out` unavailable. Five dead controls at
+ * the moment the surface opens, and until F-4 the pad said nothing about why — a device pass read that as
+ * breakage, which is the same finding, and the same house rule, as the Bench's drawn-and-dim verbs
+ * (`docs/BETA-UX-REVIEW.md` F-1/F-4).
+ *
+ * The spec's answer is `.padhint` (`v21-reframe.html`, revised 2026-08-15): the card gains a column so the
+ * hint takes its own line, and the controls keep the row they always had. **`flex-wrap` was tried first and
+ * is wrong** — the spec records the arithmetic — which matters here only as the reason the controls keep an
+ * explicit inner row instead of being allowed to reflow.
  */
 @Composable
 private fun ReframePad(
@@ -250,19 +285,74 @@ private fun ReframePad(
 ) {
     val colors = ZinelyTheme.v21Colors
     val shape = RoundedCornerShape(PadRadius)
-    Row(
+    /**
+     * The visible hint's non-visual twin, and the **whole** accessibility half of F-4.
+     *
+     * The first attempt was a traversal group plus `traversalIndex = -1f` on the hint, reasoning that it
+     * reproduced `aria-describedby` by having the explanation read first. **Measured, it does nothing here.**
+     * Compose publishes children in declaration order and expresses re-sorting through
+     * `AccessibilityNodeInfo.setTraversalBefore/After`, which is `UNDEFINED` on every node this repo's
+     * harness has probed — so the platform tree still hands a service the five dead buttons first and the
+     * explanation eighth. Both instruments agreed: `platformTraversalStops` and a device
+     * `uiautomator dump` returned the identical order with the index set and with it removed.
+     *
+     * So the reason goes **on the controls**, which is the remedy the corpus already uses for exactly this
+     * (F-1's `stateDescription` on the Bench's dim verbs) and needs no ordering to work: whichever dead
+     * control the maker reaches first tells them what to do. Null whenever the visible hint is absent, so
+     * the two can never disagree — one condition, two channels.
+     */
+    val padReason = Copy.Reframe.ZOOM_IN_TO_MOVE
+        .takeIf { abilities.zoomIn && !abilities.panHorizontally && !abilities.panVertically }
+    Column(
         modifier = Modifier
             // Nothing that clips may sit left of the shadow — it paints outside the node.
             .zinelyV21Pressable(false, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
             .background(colors.paper)
             .border(BenchChromeBorder, colors.ink, shape)
-            .padding(horizontal = PadPaddingH, vertical = PadPaddingV),
-        horizontalArrangement = Arrangement.spacedBy(PadGap),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = PadPaddingH, vertical = PadPaddingV)
+            // The spec's `role="group" aria-label="Framing controls"` is deliberately NOT transcribed as a
+            // `contentDescription` here: that would merge the seven controls away. The group's real purpose
+            // — `aria-describedby`, so the explanation is heard on entering rather than after five dead
+            // buttons — is bought instead by putting the reason ON the dead controls; see [padReason].
+            .semantics { isTraversalGroup = true },
+        verticalArrangement = Arrangement.spacedBy(PadHintGap),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        NudgePad(abilities = abilities, onNudge = onNudge)
-        ZoomStep(zoomPercent = zoomPercent, abilities = abilities, onZoom = onZoom)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(PadGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            NudgePad(abilities = abilities, onNudge = onNudge, unavailableBecause = padReason)
+            // Deliberately NOT given [padReason]: `Zoom out` is dead because 100% is the floor, which is a
+            // different sentence from the nudges', and "Zoom in to move the photo" on the zoom-OUT button
+            // would be nonsense. The nudges are what the hint is about.
+            ZoomStep(zoomPercent = zoomPercent, abilities = abilities, onZoom = onZoom)
+        }
+        // Frozen: shown only while EVERY nudge is unavailable, and **not composed at all** the moment one
+        // goes live — not merely hidden. A stale instruction that is still in the tree is worse than none:
+        // TalkBack would read "Zoom in to move the photo" on a pad whose arrows already work.
+        //
+        // ⚠ The `zoomIn` term is NOT in the spec's sentence, and it is load-bearing. The spec asserts the
+        // hint "can never contradict itself by advising an unavailable control" because `Zoom in` is live at
+        // the entry state — true for Fill, and false one tap away: `Framing.abilities()` returns
+        // `ReframeAbilities.NONE` for `FrameFit.WHOLE`, and `EditorScreen` uses the same NONE for the inert
+        // state before the photo's aspect resolves (M7-01). Both leave every nudge dead with `Zoom in` dead
+        // too, and the hint would then point at a control the maker cannot press. Found by review; the
+        // condition names what the sentence actually needs rather than what the entry state happens to have.
+        if (padReason != null) {
+            Text(
+                text = Copy.Reframe.ZOOM_IN_TO_MOVE,
+                // `.padhint{color:var(--ink-soft)}` — the pad's own quiet ink, deliberately NOT jam. It is
+                // an instruction, and an instruction in a warning colour is read as a failure.
+                color = colors.inkSoft,
+                fontSize = PadHintSize,
+                fontFamily = ZinelyV21Fonts.Work,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.testTag(ReframePadHintTestTag),
+            )
+        }
     }
 }
 
@@ -271,7 +361,11 @@ private fun ReframePad(
  * position is two axes of discrete targets — not one 1-D adjustable.
  */
 @Composable
-private fun NudgePad(abilities: ReframeAbilities, onNudge: (Int, Int) -> Unit) {
+private fun NudgePad(
+    abilities: ReframeAbilities,
+    onNudge: (Int, Int) -> Unit,
+    unavailableBecause: String? = null,
+) {
     // Per axis, not per arrow: pan room is symmetric about the centre, and the clamp that would stop a
     // rightward nudge is the same one that stops a leftward one.
     val h = abilities.panHorizontally
@@ -281,20 +375,20 @@ private fun NudgePad(abilities: ReframeAbilities, onNudge: (Int, Int) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(NudgeGap)) {
         Row(horizontalArrangement = Arrangement.spacedBy(NudgeGap)) {
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowUpward, Copy.Reframe.MOVE_PHOTO_UP, v) { onNudge(0, -1) }
+            NudgeCell(Icons.Filled.ArrowUpward, Copy.Reframe.MOVE_PHOTO_UP, v, unavailableBecause) { onNudge(0, -1) }
             NudgeSpacer()
         }
         // `Icons.Filled`, deliberately not the AutoMirrored arrows the deprecation warning asks for: these
         // name a physical direction, not a reading order. Under RTL the mirrored glyph would point right
         // on the button that moves the photo left.
         Row(horizontalArrangement = Arrangement.spacedBy(NudgeGap)) {
-            NudgeCell(Icons.Filled.ArrowBack, Copy.Reframe.MOVE_PHOTO_LEFT, h) { onNudge(-1, 0) }
+            NudgeCell(Icons.Filled.ArrowBack, Copy.Reframe.MOVE_PHOTO_LEFT, h, unavailableBecause) { onNudge(-1, 0) }
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowForward, Copy.Reframe.MOVE_PHOTO_RIGHT, h) { onNudge(1, 0) }
+            NudgeCell(Icons.Filled.ArrowForward, Copy.Reframe.MOVE_PHOTO_RIGHT, h, unavailableBecause) { onNudge(1, 0) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(NudgeGap)) {
             NudgeSpacer()
-            NudgeCell(Icons.Filled.ArrowDownward, Copy.Reframe.MOVE_PHOTO_DOWN, v) { onNudge(0, 1) }
+            NudgeCell(Icons.Filled.ArrowDownward, Copy.Reframe.MOVE_PHOTO_DOWN, v, unavailableBecause) { onNudge(0, 1) }
             NudgeSpacer()
         }
     }
@@ -302,7 +396,13 @@ private fun NudgePad(abilities: ReframeAbilities, onNudge: (Int, Int) -> Unit) {
 
 /** One 34dp cross cell: `--paper` under a 1.5dp ink edge, a printed shadow, a decorative glyph. */
 @Composable
-private fun NudgeCell(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
+private fun NudgeCell(
+    icon: ImageVector,
+    description: String,
+    enabled: Boolean,
+    unavailableBecause: String? = null,
+    onClick: () -> Unit,
+) {
     val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -341,7 +441,11 @@ private fun NudgeCell(icon: ImageVector, description: String, enabled: Boolean, 
                 role = Role.Button,
                 onClick = nudge,
             )
-            .semantics { contentDescription = description },
+            .semantics {
+                contentDescription = description
+                // F-4's non-visual half: a dead arrow says what would revive it. State, never the name.
+                if (!enabled) unavailableBecause?.let { stateDescription = it }
+            },
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = null, tint = colors.inkSoft, modifier = Modifier.size(NudgeGlyphSize))
@@ -519,9 +623,27 @@ private fun FitChip(
     }
 }
 
-/** A 44dp `.icon-btn` — the Bench's own, so Cancel and Reset sit where the Bench's icon actions sit. */
+/**
+ * `.text-btn` — a secondary session action, **with its word**.
+ *
+ * ### Both of them carry one, and the second took a device pass to earn
+ *
+ * A first draft made both `.icon-btn`s, which put an unlabelled ✕ beside an unlabelled ↻ on the one
+ * surface where the difference between *throw this away* and *start it over* is the whole decision. V1,
+ * for all its coral, drew the word. Cancel was given its word then — and Reset kept the glyph, which
+ * F-9 found out was not good enough: the circular arrow is the **rotate** glyph on the Bench's own
+ * transform row, one surface away. Same glyph family, different act, adjacent surfaces.
+ *
+ * Both defects were visual only; the spoken labels were right throughout, which is why neither showed up
+ * in any accessibility assertion. The spec was amended first in both cases (`v21-reframe.html`
+ * `.text-btn`, revised 2026-08-15) and the Compose follows it, never the reverse.
+ *
+ * @param word what is drawn — short, because it sits in a bar with two neighbours.
+ * @param spokenLabel what is announced, and deliberately the **long** form: "Reset" and "Cancel" alone
+ *   are ambiguous out of context, and a screen reader has no bar to read them in.
+ */
 @Composable
-private fun ReframeIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+private fun ReframeTextButton(word: String, spokenLabel: String, onClick: () -> Unit) {
     val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -529,65 +651,26 @@ private fun ReframeIconButton(icon: ImageVector, description: String, onClick: (
     val shape = BenchBarShape
     Box(
         modifier = Modifier
-            .testTag("reframe-$description")
-            .size(BenchIconBtnSize)
+            // Keyed on the SPOKEN label, not the word: it is the stable identifier (it survived F-9
+            // unchanged, which is the whole point of the finding) and it is what the existing suites
+            // already address these two controls by.
+            .testTag("reframe-$spokenLabel")
+            .height(BenchIconBtnSize)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
             .background(colors.paper)
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(interactionSource = interaction, indication = null, onClick = act)
             .clearAndSetSemantics {
-                contentDescription = description
+                contentDescription = spokenLabel
                 role = Role.Button
                 onClick { act(); true }
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            icon,
-            contentDescription = null,
-            tint = colors.inkSoft,
-            modifier = Modifier.size(BenchIconBtnGlyphSize),
-        )
-    }
-}
-
-/**
- * `.text-btn` — Cancel, **with its word**.
- *
- * A first draft made this an `.icon-btn` like Reset, which put an unlabelled ✕ next to an unlabelled ↻ on
- * the one surface where the difference between *throw this away* and *start it over* is the whole
- * decision. V1, for all its coral, drew the word. An independent review read the same screen and reached
- * the same finding; the specification was amended before the Compose, not after.
- */
-@Composable
-private fun CancelButton(onCancel: () -> Unit) {
-    val colors = ZinelyTheme.v21Colors
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val cancel = benchTap(action = onCancel)
-    val shape = BenchBarShape
-    Box(
-        modifier = Modifier
-            .testTag("reframe-${Copy.Reframe.CANCEL_REFRAMING}")
-            .height(BenchIconBtnSize)
-            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
-            .clip(shape)
-            .background(colors.paper)
-            .border(BenchChromeBorder, colors.ink, shape)
-            .clickable(interactionSource = interaction, indication = null, onClick = cancel)
-            .clearAndSetSemantics {
-                // The spoken label stays the long form — "Cancel" alone is ambiguous out of context,
-                // and a screen reader has no bar to read it in.
-                contentDescription = Copy.Reframe.CANCEL_REFRAMING
-                role = Role.Button
-                onClick { cancel(); true }
             }
             .padding(horizontal = ZinelyV21Dimens.gapMd),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = Copy.Reframe.CANCEL,
+            text = word,
             color = colors.ink,
             fontSize = FitTitleSize,
             fontWeight = FontWeight.Bold,

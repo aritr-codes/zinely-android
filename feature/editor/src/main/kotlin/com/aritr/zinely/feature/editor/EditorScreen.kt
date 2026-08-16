@@ -369,6 +369,23 @@ public fun EditorScreen(
     // Type-bar visibility is surface-only state (a disclosure flag, not a styling draft): the bar is
     // non-modal and the reducer neither knows nor needs to know it is open.
     var typeBarOpen by remember { mutableStateOf(false) }
+    // Back stands the panel down instead of leaving the editor — the same rule the page grid and the ink
+    // popover already follow, and the same reason: a prototype has no Back, so the freeze cannot specify
+    // it, and an overlay you summoned is one Android expects Back to dismiss.
+    //
+    // This one was measured before it was written, and the omission was worse than an inconsistency. With
+    // the panel open on a device, Back fell through to the editor's own handler and returned the user to
+    // the shelf — the entire editing context discarded in one press, from a surface opened to change a
+    // font size (BETA-UX-REVIEW.md F-15, reproduced twice on SM-A176B / Android 16).
+    //
+    // It costs most for the people with the fewest alternatives: TalkBack maps swipe-down-then-left to
+    // Back, so a screen-reader user performing the one canonical "get me out of here" gesture left the
+    // editor, with nothing announced to warn them.
+    //
+    // Closing the panel must NOT deselect. The selection is what the panel is styling, and a maker who
+    // puts the panel away is not done with the element — `styleTarget` is derived from the selection, so
+    // clearing the selection here would close the panel twice over and lose the user's place.
+    BackHandler(enabled = typeBarOpen) { typeBarOpen = false }
 
     // ----- C6 (ADR-096) -------------------------------------------------------------------
     // The frozen ink popover is summoned by the `Ink` verb and by nothing else — `.inkpop` has no rest
@@ -674,6 +691,10 @@ public fun EditorScreen(
     // bar; a constant would be right on the device it was measured on and quietly wrong everywhere else.
     // `NaN` until the first layout pass, which the consumer reads as "no lift yet" rather than guessing.
     var styleRowDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
+    // F-5: the ink popover docks in the same place, over the same page, and until now only the row's
+    // occlusion was paid for. A second edge rather than one shared variable, because the two panels report
+    // independently and a single slot would be written by whichever laid out last — including the hidden one.
+    var inkPopoverDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
     var canvasTopPx by remember { mutableFloatStateOf(Float.NaN) }
 
     // The frozen `.kbstack` is anchored to the PHONE (`left/right/bottom:0; z-index:35`, `:259`) — not to
@@ -923,14 +944,33 @@ public fun EditorScreen(
                 // Rest geometry only: `paperY` is the un-panned band above the sheet and the element's
                 // bottom is its page-space bottom, so the target is a function of where things are BEFORE
                 // the gesture. It cannot chase the animation it drives.
-                val panTargetDp: Dp = if (!editing) {
+                //
+                // F-5, 2026-08-16: **two panels dock here, and the rule was only ever applied to one.**
+                // `BenchInkPopover` replaces the context bar in the same bottom inset and covers the same
+                // page — so a maker picking ink could not see the type they were colouring. Nothing about
+                // the rule changes; only which panel is the occluder, and which element must clear it. The
+                // editing row wins when both could apply.
+                //
+                // ⚠ That state is **reachable**, and an earlier draft of this comment claimed it was not.
+                // `ctxVisible` hides the *bar*, but a session also starts from a tap that re-hits the
+                // already-sole-selected element (`EditorGestures.kt`) and from the `Edit text` custom action
+                // (`EditorA11y.kt`) — neither goes through the bar. The row is the correct occluder there:
+                // it docks below the popover and the typed line is what must clear. Pre-existing to F-5
+                // (C6 could produce it too), and flagged for a device look rather than ruled on here.
+                val occludingPanelTopPx = if (editing) styleRowDockedTopPx else inkPopoverDockedTopPx
+                // The element the panel is about: the one under the session, or — with the popover up —
+                // the selected text it is recolouring. `inkTarget` at the popover's call site is this same
+                // expression; both read `ctxElement`, so they cannot name different elements.
+                val occludedElement = editingElement
+                    ?: (ctxElement as? TextElement).takeIf { inkPopoverOpen }
+                val panTargetDp: Dp = if (occludedElement == null) {
                     0.dp
                 } else {
-                    val occluderTopCanvasPx = styleRowDockedTopPx - canvasTopPx
-                    val edited = editingElement
+                    val occluderTopCanvasPx = occludingPanelTopPx - canvasTopPx
+                    val edited = occludedElement
                     // Before the first layout pass there is no measurement, so there is no lift. One frame
                     // late is invisible; guessing the literal here would reinstate D-043 for that frame.
-                    if (edited == null || occluderTopCanvasPx.isNaN()) {
+                    if (occluderTopCanvasPx.isNaN()) {
                         0.dp
                     } else {
                         val bottomPx =
@@ -1228,6 +1268,13 @@ public fun EditorScreen(
                         },
                         modifier = Modifier
                             .align(Alignment.TopCenter)
+                            // The hint is composed after the page gesture surface, but that surface is
+                            // `fillMaxSize()` over the WHOLE canvas — so wherever the two overlap, the one
+                            // control this notice has is competing with a full-screen tap handler whose miss
+                            // branch deselects. Measured: an injected tap on `Got it` at a 400dp host does not
+                            // reach its handler and the selection is cleared instead, while the same button's
+                            // semantics action works and the same tap works at 800dp.
+                            .zIndex(1f)
                             .padding(top = 8.dp),
                     )
                 }
@@ -1301,7 +1348,13 @@ public fun EditorScreen(
                     // `styleable` is the same test the Style control already applies (ADR-055): a text box
                     // the reducer would refuse to style must not be offered Size or Ink (D-040).
                     verbs = ctxKind?.let {
-                        benchContextVerbs(it, styleable = (ctxElement as? TextElement)?.text?.isNotBlank() ?: true)
+                        benchContextVerbs(
+                            it,
+                            styleable = (ctxElement as? TextElement)?.text?.isNotBlank() ?: true,
+                            // The toggle reads its state from the document, never from local UI state —
+                            // so Undo, a page change and a reload all move the announced state with it.
+                            copierOn = (ctxElement as? ImageElement)?.copier ?: false,
+                        )
                     }.orEmpty(),
                     onVerb = { verb ->
                         val id = ctxElement?.id
@@ -1317,6 +1370,9 @@ public fun EditorScreen(
                             // place `Coral`, `Teal` and `Blue` remain reachable.
                             Copy.BenchVerbs.INK -> inkPopoverOpen = true
                             Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
+                            // X3b (ADR-106): a toggle, so tapping it again is the undo the user reaches
+                            // for first — and Undo is the one they reach for second. Both work.
+                            Copy.BenchVerbs.COPIER -> if (id != null) dispatch(Intent.ToggleCopier(id))
                             Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
                             // Font and Replace ship disabled and never arrive here (ADR-092 §1(c), D-038).
                             else -> Unit
@@ -1353,6 +1409,8 @@ public fun EditorScreen(
                     // what the frozen `applyInk(c, PRESETS[i][0])` passes.
                     onPreset = { preset -> applyInk(preset.name, preset.applied.value) },
                     onDone = { inkPopoverOpen = false },
+                    // F-5: the same clearance term the editing row feeds, from the panel that replaces it.
+                    onDockedTopChanged = { inkPopoverDockedTopPx = it },
                     // The frozen stacking order is explicit and this is the only place it can be
                     // expressed: `.ctx` is `z-index:30` (`:357`), `.snack` is `38` (`:444`) and
                     // `.inkpop` is `42` (`:377`) — the popover sits ABOVE the snack. `BenchSnack` is
@@ -1482,7 +1540,26 @@ public fun EditorScreen(
                 canRedo = uiState.canRedo,
                 // Row 4.8a: withheld for the whole of a text session, because C3's style-row chip
                 // owns "finish" while one is open and two visible Dones is OD-14's defect.
-                doneEnabled = editingElement == null,
+                //
+                // F-6 extends the SAME rule to the ink popover rather than writing a second one — but on
+                // the finding's real cause, not its stated one. ⚠ The device disproves the *visual* claim:
+                // the popover's Done is a `--leaf` pill, this bar's is a dark stroked ✓, and the second
+                // green pill beside it is `+ Add`. What a dump does show is two nodes named exactly
+                // "Done" — `TextView[text=Done]` inside the card and `Button[content-desc=Done]` here —
+                // which is OD-14's defect stated in the channel that cannot dress its way out of it.
+                // The condition already existed and the popover simply sat outside it — so the fix is the
+                // missing term, not a new mechanism. Whatever owns "finish" right now is the only control
+                // allowed to say so.
+                doneEnabled = editingElement == null && !inkPopoverOpen,
+                // F-1's rule reaching the control F-6 just gave a second reason to be dim. Derived from the
+                // same two terms above and in the same order, so the reason cannot name a state the button
+                // is not in — the text session is checked first because it is the one that also hides the
+                // popover's route in.
+                doneUnavailableBecause = when {
+                    editingElement != null -> Copy.BenchBar.DONE_AFTER_TEXT
+                    inkPopoverOpen -> Copy.BenchBar.DONE_AFTER_INK
+                    else -> null
+                },
                 // Undoing from the bar during the delete window takes the snack down with it. Without
                 // this the snack kept standing after its own delete had already been reversed, still
                 // offering `Undo` — and a second press would have taken back whatever preceded the

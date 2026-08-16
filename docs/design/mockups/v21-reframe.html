@@ -53,6 +53,19 @@
      │      earlier whole-stage scrim turned a cream sheet muddy taupe on device,   │
      │      which is that rule exactly inverted.                                    │
      │                                                                             │
+     │  REVISED 2026-08-15 — device Pass 2 (docs/BETA-UX-REVIEW.md).  Three changes,│
+     │  each marked at its site:                                                    │
+     │    * F-4  THE ENTRY STATE, which this file never specified.  A newly placed  │
+     │      photo's frame is seeded to its own aspect, so at 100% Fill five of the  │
+     │      seven controls are correctly dead -- and the surface said nothing about  │
+     │      why.  `.padhint` names the act that revives the pad.  The pad is now a  │
+     │      column; see the CSS note for why `flex-wrap` was wrong.                 │
+     │    * F-9  RESET CARRIES A WORD.  Its glyph is the ROTATE glyph on the Bench's│
+     │      own transform row, one surface away.  Visual only -- the aria-label was  │
+     │      always right.                                                           │
+     │    * F-10 THE VERB SURVIVES.  The naming question this file leaves to the    │
+     │      owner now carries device evidence and a recommendation: keep "Reframe". │
+     │                                                                             │
      │  STATUS.  PROPOSAL.  The owner freezes; nothing here is authoritative until  │
      │  they do.  Companion to v21-bench.html / v21-library.html / v21-proof.html,  │
      │  whose token block, fonts and reset this file shares byte-for-byte.          │
@@ -199,8 +212,17 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    and +/- buttons.  A later pass that "cleans up the clutter" by hiding this behind a
    disclosure removes a conformance mechanism, not chrome.  If it is ever collapsed, the
    nudge and zoom verbs must FIRST exist as custom actions on the photo itself. */
+/* REVISED 2026-08-15 (Pass 2 F-4) — the pad becomes a COLUMN so `.padhint` can take its own
+   line without changing how the controls sit.
+   NOT `flex-wrap:wrap`, which was tried first and is wrong here: `.pad` is absolutely
+   positioned with `left:50%` and no width, so its available width is 390 - 195 = 195px and it
+   is shrink-to-fit.  Under `nowrap` a flex container's min-content main size is the SUM of its
+   items (~291px), so the pad sized to its tools.  Under `wrap` it becomes the LARGEST SINGLE
+   ITEM (~169px), which is below 195 — the pad would collapse to 195px and the zoom steppers
+   would drop under the arrow grid.  Keeping the control row at `nowrap` inside a column
+   preserves the original geometry exactly. */
 .pad{position:absolute;left:50%;bottom:calc(var(--gap-sm) + 124px);transform:translateX(-50%);z-index:30;
-  display:flex;align-items:center;gap:var(--gap-lg);background:var(--paper);
+  display:flex;flex-direction:column;align-items:center;gap:var(--gap-sm);background:var(--paper);
   border:1.5px solid var(--ink);border-radius:var(--br-md);padding:var(--gap-sm) var(--gap-md);
   box-shadow:2px 2px 0 var(--ink-line)}
 .nudge{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:var(--gap-hair)}
@@ -219,6 +241,16 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .zoom button:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 .zoom button:disabled{opacity:.35;box-shadow:none;cursor:default}
 .zoom svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+
+/* REVISED 2026-08-15 (Pass 2 F-4) — the entry-state hint.
+   --ink-soft, NOT --ink-faint and emphatically NOT --berry: this is not an error and not a
+   warning, it is an instruction.  It sits at the pad's own type scale so it reads as part of
+   the tool rather than as a notice bolted under it.  Shown only while every nudge is
+   unavailable; removed from the DOM (not merely hidden) the moment one goes live, so it is
+   never announced to a screen reader as stale advice. */
+.padrow{display:flex;align-items:center;gap:var(--gap-lg)}
+.padhint{margin:0;text-align:center;color:var(--ink-soft);
+  font-size:12.5px;letter-spacing:.005em}
 /* the readout is a NUMBER, so it is tabular and quiet — the same treatment the page
    grid's card number gets, and --ink-soft rather than --ink-faint for the same AA reason */
 .zoom b{min-width:46px;text-align:center;font-size:.78rem;font-weight:700;color:var(--ink-soft);
@@ -227,6 +259,11 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 /* ============ the band — the Bench's own bar, wearing session tools ======= */
 .bar{flex:none;display:flex;align-items:center;gap:var(--gap-sm);
   padding:var(--gap-sm) var(--gap-lg) var(--gap-lg);background:var(--desk)}
+/* RETAINED DELIBERATELY, 2026-08-15: no markup in this file uses `.icon-btn` any more — Reset
+   was the last one and now carries a word (F-9). It is kept because the Bench and the Proof
+   both draw icon-only controls from this same geometry, and this file is the corpus companion
+   they share a token block with byte-for-byte. Deleting it here would fork the shared style
+   set to make one file tidier. If the corpus ever centralises it, delete it here first. */
 .icon-btn{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
   background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
@@ -234,10 +271,14 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .icon-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;
   stroke-linecap:round;stroke-linejoin:round}
 
-/* CANCEL KEEPS ITS WORD.  A first draft of this file made both secondary actions `.icon-btn`s,
-   which put an unlabelled ✕ next to an unlabelled ↻ on the one surface where the difference
-   between "throw this away" and "start it over" is the whole decision — and V1, for all its
-   coral, drew the word.  Same clothes as `.icon-btn`, sized to its text. */
+/* BOTH SECONDARY ACTIONS KEEP THEIR WORDS.  A first draft made both `.icon-btn`s, which put an
+   unlabelled ✕ next to an unlabelled ↻ on the one surface where the difference between "throw
+   this away" and "start it over" is the whole decision — and V1, for all its coral, drew the
+   word. Cancel was given its word then; Reset kept the glyph, and a device pass found out why
+   that was not good enough (F-9): the circular arrow is the ROTATE glyph on the Bench's own
+   transform row, one surface away. REVISED 2026-08-15 — Reset is a `.text-btn` too, and the
+   rule this comment states is now applied consistently rather than to one of the two.
+   Same clothes as `.icon-btn`, sized to its text. */
 .text-btn{height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
   background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:.82rem;font-weight:700;
   cursor:pointer;padding:0 var(--gap-md);box-shadow:2px 2px 0 var(--ink-line)}
@@ -313,7 +354,15 @@ What changes is that the room stops changing when you enter it.</p>
   </div>
 
   <!-- the precision pad: the single-pointer path, and a conformance mechanism.  See the CSS note. -->
-  <div class="pad">
+  <!-- REVISED 2026-08-15 (Pass 2 F-4 / R-2).  The pad is a GROUP and it is DESCRIBED BY the
+       hint.  Without `aria-describedby` the hint is visual-only — and a TalkBack user is
+       exactly who F-4 hurts most: five buttons reporting `enabled=false` and no reason given
+       in the one channel they have.  `aria-describedby` rather than a live region, because the
+       hint is a standing property of the pad's current state, not an event; it is announced
+       when focus reaches the group, and it leaves the DOM the moment a nudge goes live so it
+       can never be read as stale advice. -->
+  <div class="pad" role="group" aria-label="Framing controls" aria-describedby="padhint-1">
+    <div class="padrow">
     <div class="nudge">
       <span class="sp"></span>
       <button aria-label="Move photo up"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
@@ -330,6 +379,51 @@ What changes is that the room stops changing when you enter it.</p>
       <b>118%</b>
       <button aria-label="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     </div>
+    </div><!-- /.padrow -->
+    <!-- REVISED 2026-08-15 (Pass 2 F-4).  THE ENTRY STATE, WHICH THIS FILE NEVER SPECIFIED.
+         A newly placed photo's frame is seeded to the photo's own aspect, so at 100% Fill it
+         has no overflow on either axis — and the implementation correctly disables all four
+         nudges AND Zoom out, leaving one live control out of seven.  The logic is right; the
+         SILENCE is the defect.  On device this reads as a broken screen, not as "there is
+         nothing to move yet": you open a surface called Reframe and five of its seven controls
+         are dead with no reason given.
+         The line below is shown ONLY while every nudge is unavailable, and disappears the
+         instant one becomes live.  It is not an error and must not wear error colour — it is
+         the same outcome-language voice as "crops edges": it names the ACT that makes the pad
+         work, not the state that stopped it.
+         Do NOT fix this by hiding the pad: the header already records that the arrows and
+         steppers are the single-pointer alternative WCAG 2.5.1 / 2.5.7 require.
+
+         THE PREDICATE, stated once so it is not restated differently elsewhere: show the hint
+         while EVERY nudge is unavailable.  Zoom out is not part of the test — it is dead in the
+         same state for the same reason, but the hint names the act that revives the PAD, and
+         zooming in is that act.
+
+         CORRECTED 2026-08-16 — this comment originally closed with the sentence "Zoom in is
+         never disabled at the entry state, so the hint can never contradict itself by advising
+         an unavailable control."  That sentence is kept here because the half of it that is
+         false is the more useful half.  It was written with exactly ONE entry state in view:
+         a freshly placed photo at 100% Fill, where the frame is seeded to the photo's own
+         aspect, all four nudges and Zoom out are dead, and Zoom in is the one live control —
+         the state this whole note exists to explain.  For Fill the claim holds.  It does not
+         generalise, and the file was asserting it unconditionally.
+         `Framing.abilities()` returns `ReframeAbilities.NONE` the moment the draft's fit is
+         `Whole photo` (FramingDraft.kt), and NONE is all four flags false — zoomIn among them,
+         not only the pan pair.  EditorScreen falls back to the same NONE for the inert state
+         before a placed photo's aspect has resolved (M7-01).  In both states every nudge is
+         dead AND Zoom in is dead, so the unqualified sentence would have the surface advising
+         a control the user cannot press.  It is not theoretical: on device, tapping the
+         `Whole photo` chip reads back Zoom in enabled=false beside four arrows at
+         enabled=false.
+         SO THE PREDICATE CARRIES A THIRD TERM, and the Compose implementation is right to be
+         stricter than the withdrawn sentence: show the hint while Zoom in is AVAILABLE and
+         every nudge is unavailable.  The zoomIn term is not a refinement of the old guarantee,
+         it IS the old guarantee — moved out of prose, where it could only be asserted, and
+         into the predicate, where it can be tested.  Where the term is false the hint stays
+         away, which is the right silence in both cases: `Whole photo` is not a state that
+         zooming in can rescue (choosing Fill is), and the pre-aspect state has nothing to say
+         yet because nothing about the frame is known. -->
+    <p class="padhint" id="padhint-1">Zoom in to move the photo</p>
   </div>
 
   <div class="fitrow">
@@ -341,11 +435,16 @@ What changes is that the room stops changing when you enter it.</p>
     </button>
   </div>
 
+  <!-- REVISED 2026-08-15 (Pass 2 F-9).  Reset carries a WORD, not only a glyph.
+       It sat between two worded controls as a bare circular arrow — and that glyph is
+       the ROTATE glyph one surface away: the Bench transform row uses circular arrows
+       for "Rotate clockwise" / "Rotate counterclockwise".  Same glyph family, different
+       act, adjacent surfaces.  The aria-label was always correct ("Reset framing"), so
+       this is a VISUAL defect only, and the fix is a word.  Evidence: device Pass 2,
+       docs/BETA-UX-REVIEW.md F-9. -->
   <div class="bar">
     <button class="text-btn" aria-label="Cancel reframing">Cancel</button>
-    <button class="icon-btn" aria-label="Reset framing">
-      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
-    </button>
+    <button class="text-btn" aria-label="Reset framing">Reset</button>
     <button class="done">
       <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg> Done
     </button>
@@ -383,3 +482,15 @@ future pass wants the room quieter, the nudge and zoom verbs must exist as custo
 designer's word. The user holds the question <i>"how much of my photo will show?"</i>, and the research
 brief argues for <i>Move photo</i> or <i>Fit photo</i> instead. Renaming a shipped verb touches the context
 bar, the chip, the custom accessibility action and its copy tests, so it is proposed here and not taken.</p>
+
+<p class="cap"><b>Evidence for that question, added 2026-08-15 — the verb survives.</b> A first-time-user
+device pass walked into this surface cold (<code>docs/BETA-UX-REVIEW.md</code> F-10). The finding is that
+the <i>panel answers the question the button asked</i>: <b>Fill · crops edges</b> against <b>Whole photo ·
+may add margins</b> states the outcome on arrival, so whatever "Reframe" fails to promise, the screen
+delivers within one tap. The evidence does <b>not</b> support renaming, and the rename's cost — context
+bar, chip, custom action, copy tests — is unchanged. <i>Recommendation: keep "Reframe."</i>
+<br>The same pass did find a genuine naming collision, and it is not this one: Reframe's nudges announce
+<b>"Move photo up"</b> while the Bench's transform row announces <b>"Move up"</b> — one moves the image
+inside its frame, the other moves the frame across the page. For TalkBack the two are near
+indistinguishable. Renaming <i>Reframe</i> to <i>Move photo</i> would make that collision worse, not
+better, which is a second and independent reason to leave the verb alone.</p>

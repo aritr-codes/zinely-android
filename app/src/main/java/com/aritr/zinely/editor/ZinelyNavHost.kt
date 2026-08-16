@@ -63,7 +63,9 @@ import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Press
 import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Intent
+import com.aritr.zinely.MainActivity
 import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.Lifecycle
@@ -232,6 +234,11 @@ private fun ProofDestination(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    // The Proof stacks ABOVE the editor over the same ViewModel, so without this a share landing here is
+    // reported to nobody — D-081 Q9. The sink's RESUMED gate is what stops the two destinations from both
+    // reporting it during the transition between them.
+    ImportReportSink(viewModel)
+
     // One emission per successful Save-PDF render, carrying the actual saved display name — drives the
     // Proof band's `.done` completion, whose copy names that file (the ADR-041 post-export → fold payoff,
     // now intra-screen). extraBufferCapacity so the collector's tryEmit never suspends.
@@ -253,7 +260,32 @@ private fun ProofDestination(
                     // so the no-app-installed failure is narrowed to it.
                     is ExportReady -> try {
                         context.startActivity(
-                            Intent.createChooser(shareIntent(outcome.uri, outcome.mime), Copy.Nav.SHARE_CHOOSER_TITLE),
+                            Intent.createChooser(
+                                shareIntent(outcome.uri, outcome.mime),
+                                Copy.Nav.SHARE_CHOOSER_TITLE,
+                            ).apply {
+                                // **Zinely must not appear in Zinely's own share sheet** (D-081 ruling #8).
+                                // Share-in (ADR-105) registered an `image/*` filter on MainActivity, and
+                                // `ZineExporter` can emit `image/png` — which matches it, so such a share
+                                // would offer "send this zine to Zinely", a loop that re-imports the export
+                                // as a photo.
+                                //
+                                // ⚠ Latent, not live, and the device is what established that: `outcome.mime`
+                                // is `application/pdf` for every share a maker can currently reach, because
+                                // both `ExportFormat` requests below ask for PDF and nothing in `src/main`
+                                // asks for PNG. Verified on hardware — the Samsung chooser offers no Zinely
+                                // for the Proof's share, which proves the mime type and NOT this exclusion.
+                                // It stays because the day any surface shares a PNG the loop appears with no
+                                // warning, and this line is cheaper than the bug report.
+                                // EXTRA_EXCLUDE_COMPONENTS (API 24; minSdk is 24, so no
+                                // guard) goes on the **chooser**, not the inner send Intent: the chooser is
+                                // the Activity that reads it, and on the payload it would just be an unread
+                                // extra handed to whatever app the maker picked.
+                                putExtra(
+                                    Intent.EXTRA_EXCLUDE_COMPONENTS,
+                                    arrayOf(ComponentName(context, MainActivity::class.java)),
+                                )
+                            },
                         )
                     } catch (e: ActivityNotFoundException) {
                         Toast.makeText(context, Copy.Nav.NO_APP_TO_OPEN, Toast.LENGTH_SHORT).show()
@@ -713,9 +745,60 @@ private val RetryBorderWidth = 1.5.dp
 
 
 /**
+ * **Everything one [EditorViewModel] has to say about an import, spoken and shown.** Both halves live in
+ * one composable so they cannot drift apart, and it is called from **both** the editor and the Proof —
+ * which is [D-081](../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-081) Q9, and the reason it exists.
+ *
+ * The bug it fixes: both drains used to sit in [EditorDestination] alone, and the Proof stacks *above* the
+ * editor, so a share that landed while the maker was on the Proof reported **nothing to anyone** — not the
+ * toast, not the live region. Review found it worse than first reported (the a11y half was assumed safe)
+ * and also bounded it: the Proof resolves the *same* ViewModel off the editor's back-stack entry, so the
+ * drain keeps running and the photos still land and are durable. It was silence, never loss.
+ *
+ * **`repeatOnLifecycle(RESUMED)`, and the state is load-bearing.** Navigation-compose keeps the outgoing
+ * destination composed through a transition, so a plain `LaunchedEffect` in both places would let one
+ * emission reach two live collectors and toast twice. Exactly one entry is RESUMED at a time, so this
+ * collects in exactly one place. The cost is honest and small: during the transition itself neither is
+ * resumed, and these flows are replay-free, so an emission landing inside that window is still dropped —
+ * the same pre-existing class of gap the announcement channel has always had, now narrowed from "the whole
+ * time the Proof is open" to a few hundred milliseconds.
+ */
+@Composable
+private fun ImportReportSink(viewModel: EditorViewModel) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Drain the VM's announcement channel to TalkBack. Bound to the View (composable-only), so it
+    // lives here, not in the VM. Conflated buffer in the VM tolerates a brief subscriber gap.
+    val view = LocalView.current
+    LaunchedEffect(view, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.announcements.collect { text -> view.announceForAccessibility(text) }
+        }
+    }
+
+    // The **visible** half of an import report (D-081 ruling #3, WCAG 3.3.1): "2 photos added, 3 couldn't
+    // be" has to be readable, not only speakable, or a sighted maker watching 3 of 5 shared photos appear
+    // is told nothing. A Toast rather than the editor's BenchSnack: the snack is a frozen surface with its
+    // own copy contract driven by local state inside EditorScreen, so reusing it is a freeze question —
+    // a Toast is a system surface no HTML draws. LENGTH_LONG because a two-clause sentence is not a "Saved".
+    //
+    // `applicationContext`, not the Activity: LENGTH_LONG is 3.5 s, and below API 30 the toast's view is
+    // the app's own and outlives a destroyed Activity for that whole window. Holding the Activity there is
+    // a leak with a timer on it.
+    val toastContext = LocalContext.current.applicationContext
+    LaunchedEffect(viewModel, toastContext, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.importSummaries.collect { text ->
+                Toast.makeText(toastContext, text, Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+}
+
+/**
  * Hosts one [EditorViewModel] and renders its [EditorBootState]. The VM owns the store/binder for the
  * project's lifetime; this composable only (a) drives the autosave binder off the UI lifecycle and
- * (b) drains a11y announcements to the platform live region — neither belongs in the VM (Codex rec 1).
+ * (b) reports imports through [ImportReportSink] — neither belongs in the VM (Codex rec 1).
  * [onBack] returns to the shelf from the boot-error state: with the seed-on-miss retired a missing
  * project is a normal user path, and the root editor error must not be a dead end (ADR-046 §3).
  */
@@ -724,12 +807,7 @@ private fun EditorDestination(onPreview: () -> Unit, onBack: () -> Unit) {
     val viewModel: EditorViewModel = hiltViewModel()
     val boot by viewModel.bootState.collectAsStateWithLifecycle()
 
-    // Drain the VM's announcement channel to TalkBack. Bound to the View (composable-only), so it
-    // lives here, not in the VM. Conflated buffer in the VM tolerates a brief subscriber gap.
-    val view = LocalView.current
-    LaunchedEffect(view) {
-        viewModel.announcements.collect { text -> view.announceForAccessibility(text) }
-    }
+    ImportReportSink(viewModel)
 
     // The system photo picker (ADR-031 §5). The launcher lives here (Compose-only); the VM-held
     // PhotoPicker bridges it to the import pipeline. Bind the launch action while composed; unbind on

@@ -17,7 +17,11 @@ plugins {
 // alpha (Step 4, 2026-07-07): the physical print/fold verification cleared the ADR-047 gate and
 // the preview-text report was triaged to the ADR-028 Latin-first charset limitation.
 // "0.9.0-beta.1" = the first build put in front of the named beta cohort.
-val zinelyVersionName = "0.9.0-beta.1"
+// "0.9.0-beta.2" = the second cohort build (2026-08-16): share-in, the photocopier filter, decor
+// elements (document schema v1 -> v2), and the Art sheet's sixteen supplies. Still 0.9.x rather than
+// 0.10.0 because the two device passes that would accept those surfaces have not run — see the known
+// limitations in CHANGELOG.md, which are the reason this is an increment and not a milestone.
+val zinelyVersionName = "0.9.0-beta.2"
 
 // Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
 // or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
@@ -95,8 +99,10 @@ android {
         // was ever distributed with an upgrade path); 2 was the first beta *build*, which was
         // assembled and smoke-tested but never cut — and it was already installed on a verification
         // device, so shipping the real beta under 2 would be an install that silently refuses to
-        // update. 3 is the artifact actually distributed as 0.9.0-beta.1.
-        versionCode = 3
+        // update. 3 is the artifact actually distributed as 0.9.0-beta.1. 4 is 0.9.0-beta.2, and the
+        // bump is not bookkeeping: anyone holding beta.1 has versionCode 3 installed, and an APK
+        // carrying the same code is refused as an update rather than offered as one.
+        versionCode = 4
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

@@ -3,6 +3,7 @@ package com.aritr.zinely.core.render
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.Background
 import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
@@ -42,7 +43,8 @@ public object SceneRenderer {
             }
             // Stable sort: equal zIndex keeps author (list) order; emitted back-to-front (painter's).
             for (element in page.elements.sortedBy { it.zIndex }) {
-                add(element.toCommand())
+                // `null` = an element kind that deliberately emits nothing yet; see [toCommand].
+                element.toCommand()?.let { add(it) }
             }
         }
         return Scene(pageSizePt, commands)
@@ -50,7 +52,13 @@ public object SceneRenderer {
 
     public fun emit(scene: Scene): List<DrawCommand> = scene.commands
 
-    private fun Element.toCommand(): DrawCommand {
+    /**
+     * One element → one draw command, or `null` for an element kind that emits **nothing yet**.
+     *
+     * `null` is not an error path and not a fallthrough — the `when` below is exhaustive, so a fourth
+     * element kind would still be a compile error here.
+     */
+    private fun Element.toCommand(): DrawCommand? {
         val box = PtRect(0.0, 0.0, transform.widthPt, transform.heightPt)
         val localToPage = localToPage(transform)
         return when (this) {
@@ -69,7 +77,23 @@ public object SceneRenderer {
                 box = box,
                 localToPage = localToPage,
                 localClip = box,
+                copier = copier,
             )
+            // ⚠ NOT A BUG, AND NOT AN OVERSIGHT — package P1 draws decor deliberately as nothing.
+            //
+            // The command that draws a supply is `DrawShape`. It now exists — package **P2** landed the
+            // type, `SupplyOutline` and `SupplyCatalog` — but nothing emits one yet: the remaining half
+            // is the unit-square fold (SUPPLIES-SPEC §3.4.1), `translate · rotate · scale(w,h) · mirror?`,
+            // and it lands with the replay arm as package **P3**, so the tape and the paint arrive
+            // together. P1's job was the *seam* — a DecorElement that round-trips, survives every
+            // reducer verb and reaches the a11y layer; P2's was the vocabulary the fold will speak.
+            //
+            // Emitting `null` rather than a placeholder command is the honest shape: a placeholder
+            // would have to invent geometry, and the tape is the thing all four surfaces (canvas,
+            // proof, PDF, PNG) share, so an invented command would be wrong in four places at once.
+            // When P3 lands, this arm returns a `DrawShape` and `toCommand`'s return type can go back
+            // to non-null.
+            is DecorElement -> null
         }
     }
 

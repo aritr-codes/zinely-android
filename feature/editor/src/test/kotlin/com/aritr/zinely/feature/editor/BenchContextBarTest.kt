@@ -14,6 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsEnabled
@@ -22,11 +26,16 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.DecorElement
+import com.aritr.zinely.core.model.ImageElement
+import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -66,6 +75,7 @@ class BenchContextBarTest {
     private var inkArgb: Int = 0
     private var jamTextArgb: Int = 0
     private var inkSoftArgb: Int = 0
+    private var leafArgb: Int = 0
 
     private fun host(verbs: List<BenchVerb>, visible: Boolean = true) {
         composeRule.setContent {
@@ -74,6 +84,7 @@ class BenchContextBarTest {
                 inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
                 jamTextArgb = ZinelyTheme.v21Colors.jamText.toArgb()
                 inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
+                leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
                 Box(
                     Modifier.size(360.dp, 200.dp).testTag(HOST).background(BACKDROP),
                     contentAlignment = Alignment.BottomCenter,
@@ -114,10 +125,82 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `the photo verbs are the frozen three, in the frozen order`() {
+    fun `the photo verbs are the frozen four, in the frozen order`() {
+        // `Copier` is the amendment ADR-106 made to this freeze, in `v21-bench.html:678` before it was
+        // made here. Order is asserted, not just membership: a permutation is the wrong bar.
         assertEquals(
-            listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.REPLACE, Copy.BenchVerbs.DELETE),
+            listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.COPIER, Copy.BenchVerbs.REPLACE, Copy.BenchVerbs.DELETE),
             benchContextVerbs(BenchVerbKind.PHOTO).map { it.label },
+        )
+    }
+
+    @Test
+    fun `Copier is live, unlike the two verbs the bar draws without a behaviour`() {
+        val copier = benchContextVerbs(BenchVerbKind.PHOTO).single { it.label == Copy.BenchVerbs.COPIER }
+        assertEquals(true, copier.enabled)
+        assertEquals(false, copier.danger)
+        host(benchContextVerbs(BenchVerbKind.PHOTO))
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.COPIER}").assertIsEnabled()
+    }
+
+    @Test
+    fun `Copier announces which way it is set, and Reframe and Delete announce no state at all`() {
+        // Review caught this shipping as a stateless button: announced "Copier" before the tap and
+        // "Copier" after it, with the only difference on a canvas a screen reader cannot read.
+        host(benchContextVerbs(BenchVerbKind.PHOTO, copierOn = true))
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.COPIER}")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, Copy.BenchVerbs.COPIER_ON))
+        // The live ordinary verbs must NOT gain one — a state on a control that has none is noise.
+        //
+        // `Replace` is deliberately absent from this list, and the omission is the interesting part: it
+        // ships disabled and therefore DOES carry a state, its `unavailableBecause` reason. Both features
+        // ride `stateDescription` and they cannot collide (a disabled verb has no setting; a toggle is
+        // live by construction) — but a blanket "only Copier has a state" would have been false, and the
+        // first draft of this test asserted exactly that.
+        for (label in listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.DELETE)) {
+            composeRule.onNodeWithTag("$BenchContextBarTestTag-$label")
+                .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription).not())
+        }
+    }
+
+    @Test
+    fun `Copier off announces off, not silence`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO, copierOn = false))
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.COPIER}")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, Copy.BenchVerbs.COPIER_OFF))
+    }
+
+    /**
+     * **D-082 Q4 — a toggle that looks the same either way.** Measured on device (SM-A176B / Android 16):
+     * the bar before the tap and after it were pixel-identical, so the only feedback was the halftone on
+     * the canvas — nothing at all when the photo is small, scrolled off, or behind this bar. The freeze
+     * gained `.ctx button.on{background:var(--leaf);color:var(--on-leaf)}` (amendment A4) first.
+     *
+     * The **ground** is the assertion, not the mark: in light theme `onLeaf` and `paper` are the same
+     * cream (`#FFF6E8`), so a glyph-colour probe would read identically on and off and prove nothing.
+     */
+    @Test
+    fun `Copier on is drawn on a leaf ground, and its neighbours are not`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO, copierOn = true))
+        val bmp = hostBitmap()
+        val on = groundOf(bmp, Copy.BenchVerbs.COPIER)
+        assertTrue(
+            "a Copier that is on sits on leaf, not on the card's paper",
+            dist(on, leafArgb) < dist(on, paperArgb),
+        )
+        // The neighbours must not gain the ground with it — a bar that fills every verb says nothing.
+        val reframe = groundOf(bmp, Copy.BenchVerbs.REFRAME)
+        assertTrue("Reframe is not a toggle and keeps paper", dist(reframe, paperArgb) < dist(reframe, leafArgb))
+    }
+
+    /** The other half of the pair — [host] may set content only once, so the off state is its own test. */
+    @Test
+    fun `Copier off keeps the bar's own paper, so the setting is the visible difference`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO, copierOn = false))
+        val off = groundOf(hostBitmap(), Copy.BenchVerbs.COPIER)
+        assertTrue(
+            "an off Copier draws no ground of its own",
+            dist(off, paperArgb) < dist(off, leafArgb),
         )
     }
 
@@ -130,11 +213,61 @@ class BenchContextBarTest {
         assertEquals(setOf(Copy.BenchVerbs.DELETE), text intersect photo)
     }
 
+    /**
+     * Given a `DecorElement`, when its verb set is asked for, then it is the frozen Replace / Ink /
+     * Delete — in that order.
+     *
+     * Replaces `the decor set fails loudly instead of defaulting to empty`, which asserted the
+     * `error(... OD-2)` that used to sit here. That fence expired by its own terms — OD-2 re-seated
+     * `DecorElement` *"beyond Phase C"*, Phase C completed 2026-08-06, and D-029's 2026-08-16 ruling
+     * assigns ADR-105 as the phase that takes it. The old test is not weakened, it is *superseded*:
+     * loud failure was the right behaviour for an unreachable kind and the wrong behaviour for a
+     * reachable one, and the thing it was really guarding — "a bar with no verbs" — is asserted below.
+     */
     @Test
-    fun `the decor set fails loudly instead of defaulting to empty`() {
-        // Row 2.13: `decor` is unreachable while DecorElement is re-seated (OD-2). An empty list would
-        // let a future kind render a bar with no verbs and nobody would notice.
-        assertThrows(IllegalStateException::class.java) { benchContextVerbs(BenchVerbKind.DECOR) }
+    fun `the decor set is the frozen Replace, Ink, Delete in order`() {
+        val decor = benchContextVerbs(BenchVerbKind.DECOR).map { it.label }
+        assertEquals(
+            listOf(Copy.BenchVerbs.REPLACE, Copy.BenchVerbs.INK, Copy.BenchVerbs.DELETE),
+            decor,
+        )
+    }
+
+    @Test
+    fun `every element kind yields a non-empty bar - no kind can render verbless`() {
+        // The invariant the retired `error(...)` was standing in for, now asserted positively and over
+        // ALL kinds rather than the one that happened to be unreachable.
+        BenchVerbKind.entries.forEach { kind ->
+            assertTrue("$kind must have verbs", benchContextVerbs(kind).isNotEmpty())
+        }
+    }
+
+    @Test
+    fun `decor Delete is live while Replace and Ink ship drawn-and-inert`() {
+        // P1 is the seam, not the Art sheet: Replace needs a supply chooser and Ink needs the decor
+        // branch of `.inkpop`, both S7. Delete is a shared verb that already works on any element id.
+        // OD-9's class — "a control the freeze draws is kept drawn and invents nothing".
+        val byLabel = benchContextVerbs(BenchVerbKind.DECOR).associateBy { it.label }
+        assertFalse(byLabel.getValue(Copy.BenchVerbs.REPLACE).enabled)
+        assertFalse(byLabel.getValue(Copy.BenchVerbs.INK).enabled)
+        assertTrue(byLabel.getValue(Copy.BenchVerbs.DELETE).enabled)
+        assertTrue(byLabel.getValue(Copy.BenchVerbs.DELETE).danger)
+    }
+
+    /**
+     * The defect D-029's ruling names by hand: `benchVerbKindOf` used to end `else -> null`, so a
+     * `DecorElement` would have produced **no context bar and no compile error** — a supply selectable
+     * and verbless, forever, under a green suite. This asserts the total mapping directly.
+     */
+    @Test
+    fun `benchVerbKindOf is total - every element kind maps to a kind`() {
+        val t = Transform(0.0, 0.0, 10.0, 10.0)
+        assertEquals(BenchVerbKind.TEXT, benchVerbKindOf(TextElement("t", t, 0, "hi")))
+        assertEquals(BenchVerbKind.PHOTO, benchVerbKindOf(ImageElement("i", t, 0, "a".repeat(64))))
+        assertEquals(
+            BenchVerbKind.DECOR,
+            benchVerbKindOf(DecorElement("d", t, 0, "tape.torn", ColorRgba.BLACK)),
+        )
     }
 
     @Test
@@ -154,6 +287,44 @@ class BenchContextBarTest {
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.FONT}").assertIsNotEnabled()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertIsEnabled()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").assertIsEnabled()
+    }
+
+    /**
+     * **F-1 — a control that is drawn and disabled says why.**
+     *
+     * [OD-9](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps `Font` and `Replace`
+     * drawn and forbids inventing a capability for them. It does not make them mute, and a first-time
+     * device pass found that silence is what reads as breakage rather than as "not built yet"
+     * (`docs/BETA-UX-REVIEW.md` F-1). Explaining an absence invents nothing.
+     *
+     * The reason rides `stateDescription`, **not** the name: `Font` stays `Font`, so the verb-set
+     * assertions above keep working and TalkBack announces a state rather than a differently-named control.
+     *
+     * The two reasons are asserted apart because they are answerable in opposite ways — `NOT_YET` is a
+     * capability the product lacks, `TYPE_FIRST` is one move the user can make right now. A single
+     * "unavailable" would throw away the half that is actionable.
+     */
+    @Test
+    fun `a drawn but disabled verb announces why, and an enabled one announces no state`() {
+        host(benchContextVerbs(BenchVerbKind.TEXT, styleable = false))
+
+        fun config(label: String) = composeRule
+            .onNodeWithTag("$BenchContextBarTestTag-$label")
+            .fetchSemanticsNode()
+            .config
+
+        fun state(label: String) = config(label).getOrNull(SemanticsProperties.StateDescription)
+
+        assertEquals(Copy.BenchVerbs.NOT_YET, state(Copy.BenchVerbs.FONT))
+        assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.SIZE))
+        assertEquals(Copy.BenchVerbs.TYPE_FIRST, state(Copy.BenchVerbs.INK))
+        assertEquals("an enabled verb must not carry a reason", null, state(Copy.BenchVerbs.EDIT))
+
+        // The name is untouched — this is the assertion that fails if the reason ever migrates into it.
+        assertEquals(
+            listOf(Copy.BenchVerbs.FONT),
+            config(Copy.BenchVerbs.FONT).getOrNull(SemanticsProperties.ContentDescription),
+        )
     }
 
     // ── Row 2.11 — `flex:1` is GONE, and `min-width:50px` replaces it ───────────────────────────────
@@ -427,6 +598,25 @@ class BenchContextBarTest {
             }
         }
         return best
+    }
+
+    /**
+     * A verb's **ground** — the pixel at its horizontal centre, 10 % down its box.
+     *
+     * 10 % of the 50dp button is 5dp, inside its 8dp top padding, so nothing but the fill (or the card's
+     * `paper` showing through) is ever painted there. It was 15 % first, which is 7.5dp — half a dp of
+     * headroom by that reasoning, and review flagged the failure mode as the nasty kind: in **light**
+     * theme `onLeaf` and `paper` are the same cream `#FFF6E8`, so a probe that slipped onto the glyph
+     * would fail the on-assertion while the screen looked right. Taken at the centre x for the same
+     * reason [inkOf] narrows its scan: the pill's arc cannot reach the middle.
+     */
+    private fun groundOf(bmp: Bitmap, label: String): Int {
+        val hostB = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
+        val b = composeRule.onNodeWithTag("$BenchContextBarTestTag-$label").fetchSemanticsNode().boundsInWindow
+        return bmp.getPixel(
+            ((b.left + b.right) / 2f - hostB.left).toInt(),
+            (b.top + b.height * 0.10f - hostB.top).toInt(),
+        )
     }
 
     private fun luma(argb: Int): Int = (argb and 0xFF) + ((argb shr 8) and 0xFF) + ((argb shr 16) and 0xFF)

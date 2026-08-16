@@ -229,6 +229,28 @@ class ImageFramingSessionTest {
         assertEquals(start.document, EditorReducer.reduce(start, Intent.ResetFraming("nope")).model.document)
     }
 
+    // — the photocopier filter (X3b, ADR-106) —
+
+    @Test
+    fun `ToggleCopier turns the filter on, then off again, and never touches framing or bytes`() {
+        val start = model(img("i", crop = Crop(0.2, 0.2, 0.8, 0.8), fit = Fit.FIT))
+        val on = EditorReducer.reduce(start, Intent.ToggleCopier("i"))
+        assertTrue(image(on.model, "i").copier)
+        assertTrue(on.effects.any { it is Effect.Autosave })
+        // Reversible by the same verb — the product promise the filter must keep.
+        val off = EditorReducer.reduce(on.model, Intent.ToggleCopier("i"))
+        assertEquals(start.document, off.model.document)
+        // …and by Undo, which is the other way a user takes it back.
+        assertEquals(start.document, EditorReducer.reduce(on.model, Intent.Undo).model.document)
+    }
+
+    @Test
+    fun `ToggleCopier on a missing id or a text element is a no-op, never a throw`() {
+        val start = model(img("i"), TextElement(id = "t", transform = Transform(0.0, 0.0, 5.0, 5.0), text = "x"))
+        assertEquals(start.document, EditorReducer.reduce(start, Intent.ToggleCopier("nope")).model.document)
+        assertEquals(start.document, EditorReducer.reduce(start, Intent.ToggleCopier("t")).model.document)
+    }
+
     // — placement default + migration (ADR-053 §2/§3) —
 
     @Test

@@ -230,9 +230,27 @@ width/height, so negative-scale is doubly unavailable.
 no migrator.**
 
 ⚠ This **contradicts `ZINE-DIRECTION.md:715` (X1)**, which costs the work as *"Schema v1→v2 + migrator"*,
-and §9.1's 🟨 INFERRED note saying the same. Both are corrected there; this is the authoritative statement.
-Existing documents contain no decor, so nothing needs migrating — the additive-and-total argument was right
-about the *outcome* and wrong about the *mechanism*.
+and §9.1's 🟨 INFERRED note saying the same.
+
+🔴 **CORRECTED 2026-08-16 BY IMPLEMENTATION — and the sentence above was wrong twice, in opposite
+directions. `ZINE-DIRECTION.md:715` was right and this section was not.** What actually shipped is
+**schema v1→v2 *with* a migrator**, and the two errors are worth separating because they fail differently:
+
+1. **The bump is required, and this section's "no bump" was the dangerous half.** Ruled in
+   [D-029 Q5](V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16): `copier` (ADR-106) was a *defaulted field*, so an
+   old build silently drops it, but `DecorElement` is a **new sealed discriminator**, so `0.9.0-beta.1`
+   **fails to parse the whole document**. A beta tester who opens a zine containing one supply gets a broken
+   zine, not a plainer one. ADR-021's `NewerSchemaVersionException` is what turns that into an honest *"this
+   zine needs a newer Zinely"* — and it is now load-bearing for a **released** beta.
+2. **A migrator is required by mechanism even though nothing needs migrating.** `DocumentMigrations` demands
+   a **contiguous chain** and throws `MissingMigratorException` on a gap, so bumping to 2 without a 1→2 entry
+   breaks *every existing zine* — the exact opposite of what the bump is for. An **identity** migrator ships.
+   The "additive and total" argument was right about the *content* and wrong about the *plumbing*: nothing
+   needs transforming, and something still has to be registered.
+
+The general lesson, which is why this correction is this long: *"no migration is needed"* is a statement
+about data, and *"no migrator is needed"* is a statement about a registry that enforces its own continuity.
+They are not the same sentence, and only one of them was true.
 
 ⚠ **Forward-compatibility is one-way.** A document containing `decor` fails to parse on a build predating
 this change; `ignoreUnknownKeys = true` does not rescue an unknown sealed discriminator. Already true of
@@ -270,7 +288,13 @@ that in a doc comment.
 
 The load-bearing engineering finding of this pass, and it corrects a published claim.
 
-### 3.1 The constraint
+### 3.1 The constraint — ✅ **CLOSED 2026-08-16 by package P2**
+
+> **This section is kept as written and marked, not rewritten.** It states the constraint that motivated
+> the whole design, and P2 removed it: `core:render` now emits **four** commands, and the fourth is
+> `DrawShape`. `SupplyOutline` and `SupplyCatalog`'s first four supplies ship with it. What remains open
+> is the *replayer arm* (P3) — `CanvasReplayer` matches `DrawShape` and deliberately draws nothing, so
+> the tape exists and the ink does not yet reach paper.
 
 `core:render` emits exactly three commands — `FillRect`, `DrawImage`, `DrawTextBox`
 (`DrawCommand.kt:26,40,55`). **There is no path-drawing command.**
@@ -301,7 +325,43 @@ effects, mask filters, colour filters and exotic blend modes, and `PdfDocument.P
 unsupported operations. **A solid-colour SrcOver fill stays vector**, and even-odd maps to the `f*`
 operator. AA is simply ignored by the PDF backend — which is why §3.5's decision costs nothing in print.
 
-Still worth one spike, kept to a single page, diffing **PDF operators rather than pixels**.
+**✅ The spike ran (2026-08-16) and closed the question — including the shape of the spike itself.**
+
+Everything above is confirmed against the code. Export draws through `android.graphics.pdf.PdfDocument`'s
+`Canvas` (`PdfPageRenderer.kt:38,45,48,57`; `SheetComposer.kt:59-83`) — there is **no content-stream writer
+and no hand-emitted operator anywhere in the repo**, so Skia's PDF device produces the vectors for us and
+even-odd does reach the file as `f*`. The cost of a path is one `DrawCommand` subtype, one `is DrawShape ->`
+arm and one extra `Paint`. There was never an operator problem to design around.
+
+**But the proposed spike — "diff PDF operators rather than pixels" — was the wrong instrument**, and that is
+the more useful result. An operator diff needs a PDF parser we do not have, and it cannot see the one error
+this design can actually make. The right check is a **hole test**: render a ring whose inner and outer
+subpaths are wound the **same direction**, and assert the centre pixel is paper-white while just-inside-the-
+wall is not, on both the PNG and the PDF rasterised back (the harness already exists —
+`PdfSurfaceParityInstrumentedTest.kt:124-125,196-197` with `PdfRasterizer`). Same-direction winding is
+load-bearing: opposite winding passes under *both* fill rules and proves nothing. That one check fails on a
+dropped fill rule, a missing scale fold, a wrong composition order, and a silent raster fallback — with no
+PDF parsing at all.
+
+**Five constraints the spike attached to §3.3**, each of which would otherwise ship silently:
+
+1. **`localClip` must always be `null`.** `DrawCommand.kt:15` says *"all coordinates are page-local points"*,
+   but a unit outline's local space is `0..1`; a points-valued clip would crop it to a 1×1pt sliver.
+2. **The unit-square fold needs a scale term.** `SceneRenderer.localToPage` is translate·rotate with **no
+   scale**, so a unit outline renders 1pt × 1pt. The scale is **non-uniform** — `CanvasReplayer`'s
+   `uniformScale()` is the wrong helper.
+3. **`DrawShape` needs its own `Paint`.** The shared `fillPaint` pins `isAntiAlias=false`; mutating it moves
+   every existing `FillRect` golden. The PDF backend ignores AA entirely, so `isAntiAlias=true` costs nothing
+   in print — which is exactly what §3.5 assumed.
+4. **Even-odd lives on `Path.fillType`, not on the `Paint`.** Forget it and every hole fills *identically on
+   all four surfaces* — meaning surface-parity testing is structurally blind to it. This is the one defect
+   our parity strategy cannot catch, so it gets its own assertion.
+5. **No `MaskFilter`, no `PathEffect`, no perspective row.** Those are the triggers that make SkPDF quietly
+   rasterise instead of emitting vectors. A torn edge is torn in the authored geometry, never filtered.
+
+⚠ Two claims remain strong rather than settled: nothing ran on a device, so *"`f*` reaches the file"* and
+*"AA is ignored"* are verified against upstream Skia source but are assumptions for our API level until the
+hole test runs. And no independent Review Agent read the spike.
 
 ### 3.3 The command
 
@@ -312,13 +372,19 @@ Still worth one spike, kept to a single page, diffing **PDF operators rather tha
  * Fill only, **even-odd**: holes work without authoring winding direction correctly, which matters
  * because outlines are drawn by hand rather than generated. A supply that reads as an outline is a
  * closed ring, not a stroke — so there is no cap/join/miter surface to get wrong or to diff against.
+ *
+ * [localClip] is always `null` here, and that is an invariant rather than a default: this command's local
+ * space is the authored **unit square** (0..1), not the page-local points every other `DrawCommand` uses,
+ * so a clip expressed in points would crop the supply to a 1x1pt sliver (§3.2).
  */
 public data class DrawShape(
     val outline: SupplyOutline,
     val ink: ColorRgba,
     override val localToPage: AffineTransform2D,
-    override val localClip: PtRect? = null,
-) : DrawCommand
+) : DrawCommand {
+    /** Not a defaulted parameter — see above. A caller must not be able to pass one. */
+    override val localClip: PtRect? get() = null
+}
 
 /** Pure-Kotlin geometry — no `android.graphics.Path` in `core:render`. Authored in a unit square (0..1). */
 public data class SupplyOutline(val subpaths: List<Subpath>)
@@ -331,6 +397,19 @@ public sealed interface Segment {
 
 Subpaths are always closed — a fill of an open path is its implicit closure anyway, so a `closed` flag
 would be a lie you could set to `false`. Quadratics are omitted: every quadratic is a cubic.
+
+**As shipped (P2), with three departures from the block above** — the block is amended to match the code,
+because the code is now the thing that runs:
+
+1. **`localClip` is `get() = null`, not a defaulted parameter.** The earlier draft called the null an
+   invariant one paragraph after making it a value a caller could pass. A defaulted parameter is a
+   *suggestion*; this is a **property with no setter**, so the `PtRect(0, 0, w, h)` that every other
+   element command legitimately passes cannot be handed to this one and crop a supply to a sliver.
+2. **`Segment.to` is hoisted onto the interface**, so a traversal can walk the outline without a `when`
+   over the segment kinds — which the unit-square check and the shoelace area check both need.
+3. **Unit-square containment is enforced in `Subpath.init`, control points included** (§4.1 rule 1). This
+   is why it matters that it is enforced by *construction* rather than by a test: it binds the twelve
+   outlines nobody has drawn yet, and the twelve are the ones a house-style designer will hand over.
 
 ### 3.4 Purity is preserved — and the seam differs from `DrawImage` on purpose
 
@@ -376,12 +455,29 @@ Consequence: **shape goldens cannot assert at zero tolerance.** Decision — **a
 tape** (the stronger test, and exactly the thing shared by all four surfaces), **plus one device golden per
 family at a stated tolerance** (four goldens). Print is unaffected: AA is ignored by the PDF backend (§3.2).
 
+**The load-bearing check is none of those four — it is the hole test** (§3.2), and it is named here so the
+golden plan is not mistaken for the proof. Render a ring whose inner and outer subpaths are wound the
+**same direction**; assert the centre is paper-white and just-inside-the-wall is not, on the PNG *and* on
+the PDF rasterised back. One assertion catches a dropped fill rule, a missing scale fold, a wrong
+composition order, and a silent raster fallback. Four tolerance goldens catch none of them reliably: a
+dropped fill rule fills the holes **identically on every surface**, so cross-surface comparison is blind to
+it by construction, and a tolerance wide enough to absorb AA is wide enough to absorb a small solid region.
+
+P2 has already pinned the half that lives in pure Kotlin — `SupplyOutlineRingTest` proves the
+representation *can* express a same-direction-wound ring, which is the precondition. The pixels are P3's.
+
 ---
 
 ## 4. The vocabulary — §9.2's sixteen, restored
 
-The four families are frozen (`v21-bench.html:819`). The sixteen below are **`ZINE-DIRECTION.md §9.2`
+The four families are frozen (`v21-bench.html:844`). The sixteen below are **`ZINE-DIRECTION.md §9.2`
 verbatim**; the first draft's redraft is withdrawn (§0 O-C).
+
+> **This table is the vocabulary, not the labels.** Two of the sixteen are written here as slash-pairs and
+> a screen reader cannot say a slash, so the *spoken and drawn* name of each supply lives in one place —
+> `Copy.Supplies.BY_FAMILY` — which departs from this prose in five places and documents why at each one
+> ([D-083](V2-SPEC-DEFECTS.md#d-083-ruling)). Where the two disagree, **the copy wins**; the
+> Art sheet's `aria-label`s were reconciled to it on 2026-08-16 (amendment **A5**).
 
 | Family | The four | The distinction it holds |
 |---|---|---|
@@ -415,6 +511,19 @@ in-house and carry no third-party licence. But ADR-104 also says *"curation and 
 not a feature"*, and S5 is exactly where an outline gets traced off an icon set by a well-meaning
 contributor. **S5's definition of done is a one-line attestation per supply** — authored from scratch, no
 reference art traced, repo licence — plus a colophon entry alongside the font licences (X11).
+
+**The attestation binds the engineer-authored four as well** (P2, 2026-08-16), and that is worth stating
+because the temptation runs the other way: `shape.rect` and `shape.circle` are *obviously* not traced off
+anyone's icon set, so an attestation on them reads as ceremony. It is not — an attestation that appears
+only where it feels necessary is an attestation nobody can rely on, because its absence stops meaning
+anything. It lives in `SupplyCatalog`'s KDoc until X11 gives it a colophon to move into.
+
+**Of the four rules in this section, only two can be machine-checked, and P2 checked both.** Rule 1 (unit
+square) is now enforced *by construction* in `Subpath.init`, control points included; rule 2 (encloses an
+area) is a shoelace test rather than a segment count. Rules 3 and 4 — fill-only, and no winding-dependent
+self-intersection — are **unassertable by design**: winding-independence is a property of a shape's
+relationship to a fill rule, not of its coordinates. That gap *is* the argument for §4.1's "reviewed like
+code, not a data file": the two rules a machine cannot check are exactly the two a reviewer must.
 
 ### 4.2 Why torn edges are permitted here and banned in the chrome
 
@@ -503,9 +612,11 @@ and the clearest expression of the Android advantage: an iOS-first competitor ca
 thing you are making* feel this ordinary. It touches no network.
 
 ⚠ **It is small in code and not small in verification.** `MainActivity` declares no `launchMode`, so a
-single-Activity app receiving `ACTION_SEND` needs `singleTop` + `onNewIntent`, task-affinity behaviour,
+single-Activity app receiving `ACTION_SEND` needs a task-unique `launchMode` + `onNewIntent`, task-affinity behaviour,
 multi-image handling, permission-less URI reads, and cold-start-into-import. Called out because the first
-draft called it "small" without qualification.
+draft called it "small" without qualification. Vindicated on hardware: `singleTop` — the obvious answer,
+and the one the first implementation shipped — is *wrong*, because the share sheet launches with
+`FLAG_ACTIVITY_NEW_TASK`. See [ARCHITECTURE §8](../ARCHITECTURE.md#8-navigation).
 
 ⚠ **This re-sequences X12.** `ZINE-DIRECTION.md:747` places share-sheet receive in NEXT and Direct Share /
 clipboard in LATER. Moving it first is a §15 edit, made there — not shadowed from here.
@@ -567,12 +678,14 @@ There is no `EDIT` action for decor because there is nothing inside a supply to 
 ## 9. What Supplies is not
 
 - **No search field.** Sixteen items fit on one screen; a search box over sixteen advertises an absence.
-  This is the frozen file's own reasoning (`v21-bench.html:420-423`) and what ADR-104 physically removed.
+  This is the frozen file's own reasoning (`v21-bench.html:447-450`) and what ADR-104 physically removed.
+  Amendment **A5** applied the same reasoning to the four family *chips*, which filtered the same sixteen:
+  a chip row is that box with four buttons instead of a caret, so it was removed, not re-tasked.
 - **No categories beyond the four.** No tags, no filters, no sort.
 - **Favourites and recents are ⚠ DEFERRED, not banned.** The first draft banned them and argued for it.
   That was wrong on authority and on product. `v21-bench.html:70` — written under ADR-104 — says *"The
   favourites star stays specified (deferred in sequencing, **not removed from the spec**)"*; the sheet
-  draws `☆` on every tile (`:820`) and captions it *"Recent and ⭐ cut long-session friction"* (`:839`);
+  draws `☆` on every tile (`:846`) and captions it *"Recent and ⭐ cut long-session friction"* (`:864`);
   `ZINE-DIRECTION.md:655` says *"Not struck, just not first."* Banning them would remove controls the
   frozen file draws — a new amendment I have no authority to make. And the product argument was weak: *"the
   drawer is the same every time you open it"* describes a cabinet nobody uses. A real cabinet is exactly
@@ -610,3 +723,27 @@ removing**, and it is the more dangerous of the two because it is quiet.
 **The claim most worth attacking first:** §3.2's vector invariant. The paint-level reasoning is sound and
 better-sourced than the first draft's text analogy, but it is still argument rather than measurement. One
 page, diffing PDF operators, settles it.
+
+> ✅ **Attacked, 2026-08-16, and it held — but the proposed instrument did not.** The spike found export
+> draws through `PdfDocument`'s `Canvas`, so Skia emits the operators and there was never a missing-operator
+> problem to solve. It also found that "diff PDF operators" is the *wrong* check: it needs a parser we do
+> not have and is blind to the one error this design can make. §3.2 and §3.5 now specify the hole test
+> instead. **A spike is allowed to reject its own method, and this one's method was the part that was wrong.**
+
+### 10.1 What has actually landed, 2026-08-16
+
+| Step | State |
+|---|---|
+| **S1** | ✅ Shipped. Also found the `singleTop` second-task defect on device, which no test could see. |
+| **S2 / S2′** | ✅ Shipped as one change (P1). Schema **v1 → v2 with an identity migrator** — the migrator is required because `DocumentMigrations` enforces a contiguous chain and throws on a gap. |
+| **S3** | ✅ Shipped (P2). `DrawShape` · `SupplyOutline` · `SupplyCatalog`. |
+| **S4** | ⏳ **Stubbed, not done.** `CanvasReplayer` matches `DrawShape` and draws nothing, deliberately and visibly. This is P3 and it is the next thing. |
+| **S5** | ⏳ **4 of 16.** The *Cut shapes* quarter shipped early — that family is derivable geometry (rect, circle, triangle, rule) needing no house style, so it could be engineer-authored without pre-empting a designer. The **twelve remain gated on O-B/O-C** and are the hand-drawn ones; `outlineOf()` returns `null` for each. |
+| **S6** | ✅ Shipped. Sixteen names in `core:copy`, five documented departures from §4's prose. |
+| **S7 / S7′** | ⏳ Not started. `EditorScreen`'s `INK` routing (`ctxElement as? TextElement`) would open an **empty** popover for a decor element — safe only because the verb ships disabled, so S7 must fix the routing, not just enable the verb. |
+| **S8** | ✅ Shipped with S2. |
+| **S9** | ⏳ Not started, and it cannot start until S4 puts ink on the page. |
+
+**The sequencing lesson S5 taught:** it was written as one indivisible block of design work, and a quarter
+of it was not design work at all. A step that mixes "needs a house style" with "is a rectangle" will always
+look blocked by its hardest quarter.

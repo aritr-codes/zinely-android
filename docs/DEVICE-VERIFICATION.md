@@ -114,6 +114,39 @@ adb shell settings put secure accessibility_enabled 0
 verifiable over `adb`; *what is said* still needs a human ear, and any claim about wording is a Pass-2
 observation, not a machine result.
 
+### 3.1 What the current build owes a human ear — pre-registered questions
+
+*A listen pass is worth far more when the questions are written **before** it, so the answer cannot be
+rationalised afterwards. These are open, and each names what changes if the answer goes the wrong way.*
+
+1. **Is an import summary spoken TWICE?** ([D-081](design/V2-SPEC-DEFECTS.md#d-081-rulings) Q3.) Share two
+   photos where one cannot be decoded. The sentence rides two channels on purpose — a `Toast` and
+   `announceForAccessibility` — and AOSP shows `ToastPresenter` already emits the toast's own text as a
+   `TYPE_NOTIFICATION_STATE_CHANGED` event, with nothing deduplicating it against the announcement's
+   `TYPE_ANNOUNCEMENT`. **If it doubles, the `announce()` call is deleted** (it is deprecated in API 36
+   anyway) and the toast carries it alone.
+2. **Does `Copier` say which way it is set?** ([D-082](design/V2-SPEC-DEFECTS.md#d-082-rulings) Q4.) Select a
+   photo, focus `Copier`, listen; tap; listen again. It should say "On" / "Off" as *state*, after the name.
+   `uiautomator dump` **structurally cannot show `stateDescription`** (§2), so this is the only instrument
+   that can check it. The visual half already passed on hardware.
+3. **Does an import landing mid-transition get announced at all?** ([D-081](design/V2-SPEC-DEFECTS.md#d-081-rulings)
+   Q9.) Share into the app while moving between the bench and the Proof. Both collectors are gated on
+   `RESUMED` so exactly one speaks — but during the transition *neither* is resumed, and the flows are
+   replay-free. Robolectric cannot land an emission in that window; a thumb can. Silence here is a known,
+   accepted few-hundred-millisecond gap — the question is whether it is actually reachable by a human hand.
+4. **Do two ink swatches both say "Ink"?** ([D-083](design/V2-SPEC-DEFECTS.md#d-083).) Open the ink popover
+   and sweep the palette. One constant serves a maker ink *and* a neutral, and the verb that opened the
+   popover is the same word. This is a shipped defect found by reading; confirm what it sounds like.
+
+### 3.2 What the current build owes a printer
+
+**The photocopier filter's entire claim is about ink on paper**, and no screen can close it
+([ADR-106](DECISIONS.md#adr-106)). Print one page with a `Copier`-filtered photo on it and answer: do the
+dots read as a photocopy, or as noise? Is 150 dpi too coarse — or too fine to survive a home printer, which
+is the failure that would not show on a screen at all? A "too coarse" answer re-opens
+[D-082](design/V2-SPEC-DEFECTS.md#d-082-rulings) Q1, which was affirmed only *provisionally* and on screen
+evidence.
+
 ---
 
 ## 4. Reading app-private files
@@ -145,7 +178,18 @@ there is no UI for it.
   newline; `KEYCODE_BACK` only hides the keyboard. Tap the keyboard's Done key by pixel.
 - **Scrollable rows hide controls.** The `EditorContextBar` transform row scrolls; "Text style" and
   "Delete" sit off-screen until it is swiped. A node clipped to e.g. `12×48dp` at a screen edge is scroll
-  clipping, **not** a touch-target defect.
+  clipping, **not** a touch-target defect. *(Retired by the F-2 wrap — the row no longer scrolls. Kept
+  because the reasoning generalises to any scrolling row.)*
+- **A synthetic `am start … ACTION_SEND` is not a share, and it fails in both directions.** It cannot
+  *grant* what a real share grants — `--grant-read-uri-permission` on a `content://media/…` URI still
+  yields `SecurityException: com.aritr.zinely has no access to …` in the app's own log, because the shell
+  cannot delegate a MediaStore read it holds by a different route. And it cannot *reproduce* what a real
+  share does, because the share sheet adds `FLAG_ACTIVITY_NEW_TASK` while `am start -n` does not — which
+  is precisely the flag that exposed the `singleTop` second-task defect ([ARCHITECTURE
+  §8](ARCHITECTURE.md#8-navigation)). Drive the real sender: launch Gallery, open a photo, tap Share, and
+  find the target in the chooser's own node dump (`uiautomator dump | grep -i zinely` — it may sit behind
+  **More**). Then confirm the task count with `dumpsys activity activities | grep aritr`: **more than one
+  `MainActivity` record is itself the bug.**
 - **A one-pixel shortfall in a reported hit-rect is rounding, not a small target.** Compose reports the
   *touch bounds* around the content, not the content's own box. Odd-width content puts both edges on a
   half-pixel, and `getBoundsInScreen` rounds the two edges in **opposite** directions (`0.5` up, `48.5`

@@ -260,9 +260,9 @@ erDiagram
     }
     ELEMENT {
         string id
-        string type "IMAGE | TEXT | (future) SHAPE"
+        string type "IMAGE | TEXT | DECOR"
         json   transform "x,y,w,h,rotationDeg,zIndex — POINTS"
-        json   payload "image: assetId,crop,fit | text: text,style"
+        json   payload "image: assetId,crop,fit,copier | text: text,style | decor: supplyId,ink,mirrored"
     }
     ASSET {
         string id PK
@@ -413,6 +413,8 @@ flowchart LR
     Proof -->|"back / make another"| Editor
 ```
 
+**External entry — share-in ([ADR-105](DECISIONS.md#adr-105), [SUPPLIES-SPEC §6](design/SUPPLIES-SPEC.md)).** `MainActivity` declares a second `intent-filter` (`ACTION_SEND` / `ACTION_SEND_MULTIPLE`, `image/*`) and `launchMode="singleTask"`, so photos handed to Zinely by any other app reach the **live** Activity through `onNewIntent` instead of stacking a second one over the maker's open zine. `singleTop` was the first attempt and the device falsified it: the system share sheet launches its target with `FLAG_ACTIVITY_NEW_TASK`, and `singleTop` only collapses a relaunch onto the *same* task — so a real Gallery share opened a **second task** (`dumpsys activity activities` showed two live `MainActivity` records), `onNewIntent` never fired, and the second instance's editor could not take the single-writer slot the first one still held, so the shared photo's own zine answered *"That zine is still saving"* and never opened again. The failure was invisible to every unit test and to the synthetic `am start` probe, both of which have only one task. **It adds no route and no screen.** The received `content://` URIs are queued in an app-scoped, in-memory `ShareInbox`; whichever `EditorViewModel` is (or becomes) alive collects them and imports each through the *existing* [ADR-031](DECISIONS.md#adr-031) §5 path — `AndroidImagePickDecodePipeline.decodeAndStore` → `ImportMasterDecoder` → `FileAssetStore` → `Intent.CommitAddImage`. Share-in replaces the **pick**, nothing else; there is no second import pipeline, no second placement rule and no second undo story. A shared photo therefore lands in *the zine the maker opens next* (or the one already open), because the Library is already the chooser and already the start destination; every accepted share is acknowledged by a toast naming where the photos are going, because the editor's spoken count rides a replay-free announcement channel and is dropped when nothing is collecting it. Nothing is uploaded, re-shared or resolved outward, and the inbox is deliberately not persisted — the sender's read grant dies with the task, so a persisted URI would be a handle that no longer opens. Two behaviours that were open questions when this paragraph was first written are now [ruled and implemented](design/V2-SPEC-DEFECTS.md#d-081-rulings): a multi-photo share **cascades** rather than stacking at the one centred default (in the drain only — the single-photo picker path is unchanged), and the failure half of an import is **shown as well as spoken**, because an assistive-technology-only error report inverts WCAG 3.3.1. Zinely also excludes itself from its own chooser, since its PNG export matches its own `image/*` filter. The remaining open questions — and the four consequences accepted rather than fixed — are filed as [D-081](design/V2-SPEC-DEFECTS.md#d-081).
+
 **Back-stack policy ([ADR-046](DECISIONS.md#adr-046)):** returning editor → Home is only ever a *pop* (no code path navigates to Home), so two `EditorRoute` entries never coexist; a fast reopen of a just-closed project awaits the [ADR-026](DECISIONS.md#adr-026) single-writer release inside the editor bootstrap (`EditorAutosaveBinderFactory.awaitNoSession`, the same `AutosaveSessionGate` 5 s policy the repository's mutation gate uses — timeout ⇒ a warm "still saving" boot error). The [ADR-030](DECISIONS.md#adr-030) §4 `"default"` seed-on-miss is retired: a missing document is an honest boot error with a back-to-shelf action, and first run lands on the Empty-shelf **Start a zine** CTA. Leaving the shelf commits pending undoable deletes (leaving = snackbar dismissal). Welcome and Settings remain future routes ([SCREEN-INVENTORY](design/SCREEN-INVENTORY.md)).
 
 ## 9. Error handling
@@ -443,6 +445,24 @@ Coroutines/Flow; inject `CoroutineDispatcher`s. Imposition/layout math on `Defau
 | Manual ground truth | Print + fold a real sheet (or SVG proof sheet when no printer) | [spike](spikes/imposition-engine.md) |
 
 See `android-skills:android-tdd`. The imposition engine is built **test-first** against the [R1.2 oracle](RESEARCH.md#r12-page--cell-mapping-the-oracle--verified).
+
+### 11.0 Two headless traps that read as "the feature is broken"
+
+Both were measured while covering share-in, and both cost real time because the symptom is *silence*, which
+looks exactly like a defect.
+
+- **`composeRule.waitUntil` counts virtual time, not real time.** Its timeout is the test clock's, so a
+  20 000 ms budget can elapse in a few real milliseconds — and any work parked on a real dispatcher
+  (`withContext(Dispatchers.IO) { decode }`) has not started, let alone finished, when the wait gives up.
+  The absence of a result then reads as "the production code never fired". A host test that awaits genuinely
+  asynchronous work needs a real-time wait that also pumps the main thread — real `Thread.sleep` plus
+  `waitForIdle()` per turn — not `waitUntil`. See `ShareInHostTest.awaitRealWork`.
+- **The real `FileAssetStore` cannot complete a write in this JVM.** It ends in a directory fsync through
+  `android.system.Os`, which the Windows JVM does not serve, so the import writes `assets/.tmp/importNNNN.tmp`
+  and never returns. This is the same limitation `ZinelyNavHostTest.seedZine` already documents for the
+  document store. A host test that exercises import substitutes an in-memory `AssetStore` (real sha256,
+  memory sink) and re-provides the rest of the module verbatim — one substitution, named, rather than a fake
+  graph.
 
 ### 11.1 The four-surface verification harness (F4)
 
@@ -619,15 +639,25 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    **Welcome and Settings** (not Room-gated — Welcome is a local first-run flag routing to Home,
    see item 4; Settings needs only the local prefs store).
 
-2. **Sticker/decoration element type → new ADR.** Today `core:model`/`core:render` know only
-   `ImageElement` and `TextElement`. The [sticker picker](design/SCREEN-INVENTORY.md#sticker-picker)
-   wants a bundled, app-owned, non-GC'd decoration. 🟦 The **recommended** path (an ADR choice, not a
-   design-forced inevitability) is a dedicated sticker `Element` variant in
-   [`core:model`](#4-data-models--storage): a **schema version bump** (`DocumentSerializer` + a
-   migration), a new `SceneRenderer` draw command in [`core:render`](#5-rendering-pipeline--one-scene-two-backends) with
-   **preview==export** parity, and a **bundled sticker catalog** kept distinct from the *user*
-   content-addressed asset store ([ADR-031](DECISIONS.md#adr-031)) — program assets, license-clear, not
-   GC'd. 🔭 V1 expression.
+2. **Decoration element type — ✅ the model half has landed; the draw half has not.**
+   `Element` is now `ImageElement | TextElement | DecorElement` and is **closed** at three
+   ([ADR-105](DECISIONS.md#adr-105), [SUPPLIES-SPEC §2](design/SUPPLIES-SPEC.md)). `DecorElement`
+   carries `supplyId` (a `family.name` catalogue key, never geometry and never a content hash), an
+   `ink`, and a `mirrored` flag; a supply is authored code, so it needs no asset-store entry and no GC
+   root — which is what removed most of the cost this item anticipated.
+   **Shipped in package P1:** the schema (`CURRENT_SCHEMA_VERSION` **1 → 2**, with an *identity*
+   v1→v2 migrator — the bump exists so an older build fails honestly via
+   `NewerSchemaVersionException` rather than failing to parse an unknown sealed discriminator,
+   [D-029 ruling Q5](design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16)), `AffineTransform2D.scale`,
+   validation (`decor.supplyId.blank` / `.malformed` only — `:core:data` is Android-free and cannot
+   see the catalogue), every reducer/a11y/context-bar seam, and a **documented no-op in
+   `SceneRenderer`**.
+   **Not yet built:** the `DrawShape` command, `SupplyOutline`/`SupplyCatalog` in `:core:render`, the
+   `render-android` replay branch with its own anti-aliased `Paint`, the sixteen authored outlines,
+   and the Art sheet. Until those land a supply round-trips, moves, restacks and deletes — and
+   **draws nothing**. 🔭 The persistent *Supplies tray* is a separate, still-open question
+   ([D-029](design/V2-SPEC-DEFECTS.md#d-029) Q1–Q3, sequenced at X2); the Art sheet places a supply
+   straight onto the page, where the ordinary document rules already answer it.
 
 3. **Template/preset model → new ADR.** The [template picker](design/SCREEN-INVENTORY.md#template-picker)
    needs a `TemplateCatalog` of pre-authored page layouts. For a *new* project, the cleanest expression

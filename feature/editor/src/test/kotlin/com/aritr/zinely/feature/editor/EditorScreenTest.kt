@@ -992,4 +992,33 @@ class EditorScreenTest {
         ).forEach { composeRule.onNodeWithTag("$EditorContextBarTestTag-$it").assertExists() }
     }
 
+
+    @Test
+    fun the_hints_own_button_wins_the_tap_against_the_full_screen_gesture_surface() {
+        // A real defect, found by a reviewer refusing to accept "the test host was unrealistic" as a cause.
+        //
+        // The page gesture surface is `fillMaxSize()` over the WHOLE canvas (`EditorScreen.kt:1118`) and its
+        // tap miss-branch deselects (D-037). The hint is composed after it, but composition order was not
+        // enough: an injected tap on `Got it` reached the gesture surface instead of the button, so the hint
+        // vanished because the SELECTION went away — not because it was dismissed — and returned on the next
+        // selection with the "seen" flag never written. Measured before the fix: `seen=false, selection=[]`.
+        //
+        // This test asserts the two halves that distinguish a dismissal from a deselection, which no existing
+        // test did: the callback fires AND the selection survives. The `zIndex` is what makes both true.
+        var seen = false
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        val id = store.uiState.value.selection.single()
+        setScreen(store, onMoveResizeHintSeen = { seen = true })
+
+        composeRule.onNodeWithTag(MoveResizeHintDismissTag).performClick()
+        composeRule.waitForIdle()
+
+        assertTrue("the tap must reach the hint's own button, not the surface beneath it", seen)
+        assertEquals(
+            "dismissing a teaching hint must not deselect the element it teaches about",
+            setOf(id),
+            store.uiState.value.selection,
+        )
+    }
 }

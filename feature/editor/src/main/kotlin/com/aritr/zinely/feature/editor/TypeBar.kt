@@ -831,6 +831,13 @@ private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
  * At 48dp pitch the expansions abut exactly and nothing is pruned. Tapping was unaffected throughout: a hit
  * inside the paint always wins outright, and the gaps resolve to the nearest pot.
  *
+ * **Confirmed on device 2026-08-15** (SM-A176B, Android 16, density 420). `uiautomator` reports all five
+ * swatches at 126 × 126px — a flat **48.0 × 48.0dp** — with bounds that abut exactly:
+ * Ink `[307,1574][433,1700]`, Coral `[433,…]`, Teal `[559,…]`, Blue `[685,…]`, Ochre `[811,1574][937,1700]`.
+ * Ochre is no longer the only one to reach 48×48. This is the dump `v21-typebar.html` asked for when it
+ * said the measurement *"must be re-dumped, not re-reasoned"* — the paragraph above previously rested on
+ * `TypeBarSwatchPlatformA11yTest` alone, which is Robolectric's platform tree rather than the device's.
+ *
  * `TypeBarSwatchPlatformA11yTest` asserts this on the **platform** tree, which is the only tree that can
  * fail: `touchBoundsInRoot` is the *pre*-pruning value and reported a flat 48dp all through the defect.
  *

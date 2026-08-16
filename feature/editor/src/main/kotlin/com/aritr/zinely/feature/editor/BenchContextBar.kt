@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.TextFields
@@ -46,11 +47,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.TextElement
@@ -86,6 +89,28 @@ internal data class BenchVerb(
     val icon: ImageVector,
     val danger: Boolean = false,
     val enabled: Boolean = true,
+    /**
+     * Why this verb is disabled, announced as its **state** rather than folded into its name.
+     *
+     * `stateDescription`, not `contentDescription`: the verb's name is `Font`, and it stays `Font` — a
+     * label that reads "Font, not available yet" is a *different control's* name and would break every
+     * copy test that asserts the verb set. State is the axis that changes; the name is not.
+     *
+     * Null for an enabled verb, and null is meaningful: a verb with no reason is either live or disabled
+     * for something the user cannot act on, and inventing a sentence for that would be noise.
+     */
+    val unavailableBecause: String? = null,
+    /**
+     * `null` for the ordinary verbs, which *do* something. Non-null makes this verb a **toggle** and is
+     * its current setting — published as a [stateDescription], because a control whose only feedback is
+     * a change on the canvas tells a screen reader nothing, and tells a maker whose photo is small or
+     * half-covered by the bar not much more. `Copier` is the only one, and it exists because review
+     * caught it shipping as a stateless button ([D-082](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-082) Q4).
+     *
+     * It shares [unavailableBecause]'s channel and can never collide with it: a disabled verb has no
+     * setting to report, and a toggle is live by construction.
+     */
+    val checked: Boolean? = null,
 )
 
 /**
@@ -93,10 +118,17 @@ internal data class BenchVerb(
  * directly rather than through a composition — and asserted as **set-equality plus order**, because a
  * permutation would satisfy "each verb exists" and still be the wrong bar.
  */
-internal fun benchContextVerbs(kind: BenchVerbKind, styleable: Boolean = true): List<BenchVerb> = when (kind) {
+internal fun benchContextVerbs(
+    kind: BenchVerbKind,
+    styleable: Boolean = true,
+    copierOn: Boolean = false,
+): List<BenchVerb> = when (kind) {
     BenchVerbKind.TEXT -> listOf(
         BenchVerb(Copy.BenchVerbs.EDIT, Icons.Filled.Edit),
-        BenchVerb(Copy.BenchVerbs.FONT, Icons.Filled.TextFields, enabled = false),
+        BenchVerb(
+            Copy.BenchVerbs.FONT, Icons.Filled.TextFields, enabled = false,
+            unavailableBecause = Copy.BenchVerbs.NOT_YET,
+        ),
         // [styleable] is false for a still-blank box, which the reducer refuses to style (ADR-055) — so
         // these two are drawn and inert there, exactly as `Font` is, under the same OD-9 class. Found by
         // review, not by a test: with them live, tapping either on a blank box set `typeBarOpen`, which
@@ -105,31 +137,73 @@ internal fun benchContextVerbs(kind: BenchVerbKind, styleable: Boolean = true): 
         // so it never re-ran. The bar did not come back until a non-blank box was selected. A dead end
         // that swallowed the toolbar, and the mirror image of what `TypeBarTest` already forbids on the
         // transform bar (D-040).
-        BenchVerb(Copy.BenchVerbs.SIZE, Icons.Filled.FormatSize, enabled = styleable),
-        BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette, enabled = styleable),
+        BenchVerb(
+            Copy.BenchVerbs.SIZE, Icons.Filled.FormatSize, enabled = styleable,
+            unavailableBecause = Copy.BenchVerbs.TYPE_FIRST.takeUnless { styleable },
+        ),
+        BenchVerb(
+            Copy.BenchVerbs.INK, Icons.Filled.Palette, enabled = styleable,
+            unavailableBecause = Copy.BenchVerbs.TYPE_FIRST.takeUnless { styleable },
+        ),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
     BenchVerbKind.PHOTO -> listOf(
         BenchVerb(Copy.BenchVerbs.REFRAME, Icons.Filled.Crop),
+        // The one verb this bar gained after its freeze, and the freeze was amended first
+        // (`v21-bench.html:678`) exactly as CLAUDE.md's HTML-first rule requires — never the reverse.
+        // (Was cited as :674, which is the *text* list; corrected by review after counting the lines.)
+        // It is live, not drawn-and-inert like Font and Replace: the whole feature is one boolean on
+        // the selected photo, so there is nothing left to invent ([ADR-106]).
+        BenchVerb(Copy.BenchVerbs.COPIER, Icons.Filled.Grain, checked = copierOn),
         // Disabled for the same reason as Font, discovered the same way: `Intent.ReplaceImage` exists in
         // the reducer and is dispatched from nowhere, and reaching it needs a picker bound to an existing
         // element — a new effect parameterisation, i.e. a flow, not a re-skin. OD-9's class ("a control the
         // freeze draws is kept drawn and invents nothing") applies; the capability question is
         // [D-038](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-038), for the owner.
-        BenchVerb(Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz, enabled = false),
+        BenchVerb(
+            Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz, enabled = false,
+            unavailableBecause = Copy.BenchVerbs.NOT_YET,
+        ),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
-    // Unreachable by construction: nothing in the document produces this kind yet. Returning an empty
-    // list would let a future DecorElement quietly render a bar with no verbs; failing loudly is the
-    // behaviour row 2.13 asks for.
-    BenchVerbKind.DECOR -> error("decor verbs are unreachable until DecorElement is re-seated (OD-2)")
+    // Reachable as of ADR-105 / package P1. The `error(...)` that stood here cited OD-2 as live; OD-2
+    // re-seated DecorElement *"beyond Phase C"*, Phase C completed 2026-08-06, and
+    // [D-029's 2026-08-16 ruling](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16)
+    // assigns the supplies programme as the phase that takes it. The fence expired; this is the record.
+    //
+    // The frozen verb set is Replace / Ink / Delete (`v21-bench.html:71`), and it is transcribed whole.
+    // Two of the three are drawn-and-inert under exactly the OD-9 class Font and Replace-photo already
+    // sit in — "a control the freeze draws is kept drawn and invents nothing":
+    //  - `Replace` needs the Art sheet to pick a replacement supply from (S7), which is a flow.
+    //  - `Ink` needs the decor branch of `.inkpop` plus an `Intent` that recolours a DecorElement (S7);
+    //    `BenchInkPopover` is text-only today and its own call site says so.
+    // Delete is live because it is a shared verb that already works on any element id.
+    BenchVerbKind.DECOR -> listOf(
+        BenchVerb(
+            Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz, enabled = false,
+            unavailableBecause = Copy.BenchVerbs.NOT_YET,
+        ),
+        BenchVerb(
+            Copy.BenchVerbs.INK, Icons.Filled.Palette, enabled = false,
+            unavailableBecause = Copy.BenchVerbs.NOT_YET,
+        ),
+        BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
+    )
 }
 
-/** The kind of a selected element, or `null` for kinds that have no frozen verb set yet. */
-internal fun benchVerbKindOf(element: Element): BenchVerbKind? = when (element) {
+/**
+ * The kind of a selected element. **Total** — every [Element] has a verb set.
+ *
+ * The `else -> null` that used to close this `when` was the single most dangerous line in the supplies
+ * blast radius, and the quietest: a `DecorElement` would have produced *no context bar and no compile
+ * error*, so a supply could be selected and simply have no verbs, forever, with a green test suite.
+ * D-029's ruling names it specifically. **Do not reintroduce an `else` here** — the exhaustive `when`
+ * is the mechanism by which a fourth element kind is forced to declare its verbs.
+ */
+internal fun benchVerbKindOf(element: Element): BenchVerbKind = when (element) {
     is TextElement -> BenchVerbKind.TEXT
     is ImageElement -> BenchVerbKind.PHOTO
-    else -> null
+    is DecorElement -> BenchVerbKind.DECOR
 }
 
 /**
@@ -250,7 +324,7 @@ internal fun BenchContextBar(
  * The icon is decorative and the caption is the name, so [clearAndSetSemantics] publishes one node with
  * one label — not an icon and a text the reader would announce twice.
  *
- * ### It has no ground, no border and no press
+ * ### It has no ground (unless it is on), no border and no press
  *
  * `background:none;border:0` — the verb is drawn entirely by its own marks on the card's `paper`, and
  * `.ctx button` declares no `:active`, so there is no press tier and no
@@ -263,9 +337,21 @@ internal fun BenchContextBar(
 @Composable
 private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = ZinelyTheme.v21Colors
+    // `.ctx button.on{background:var(--leaf);color:var(--on-leaf)}` — the freeze's A4 amendment, made in
+    // the HTML first. A toggle with no on appearance was measured on device (SM-A176B / Android 16) as
+    // pixel-identical before and after its tap; the halftone on the canvas is not feedback when the photo
+    // is small, scrolled away, or behind this bar. `leaf`/`onLeaf` is the corpus's existing on-state pair
+    // (`.chip2.on`, `.ctl.on`), reused rather than replaced: both halves flip with the theme, so unlike a
+    // tint ground it stays visible in dark (ADR-100 §4's invisible-`butterTint` finding).
+    val checkedOn = verb.checked == true
     // `.ctx button{color:var(--ink-soft)}` with `.ctx button.danger{color:var(--jam-text)}` — jam is the
-    // one urgent colour in V2.1 and Delete is the one verb entitled to it.
-    val tint = if (verb.danger) colors.jamText else colors.inkSoft
+    // one urgent colour in V2.1 and Delete is the one verb entitled to it. `.on` wins over both by the
+    // cascade: the amendment's <style> is later in the file at equal specificity.
+    val tint = when {
+        checkedOn -> colors.onLeaf
+        verb.danger -> colors.jamText
+        else -> colors.inkSoft
+    }
     // Delete is the one verb that cannot be taken back by pressing it again — Boundary says so in the
     // hand before the snackbar says it in words. Every other verb is an ordinary action.
     val fire = benchTap(if (verb.danger) ZinelyHaptic.Boundary else ZinelyHaptic.Tick, onClick)
@@ -281,6 +367,8 @@ private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modi
             // costs nothing extra, since the verb has no ground or border to fade.
             .graphicsLayer { alpha = if (verb.enabled) 1f else ZinelyV21Dimens.disabledAlpha }
             .clip(BenchContextBarButtonShape)
+            // Below the `clickable`, so the ripple still draws over the checked ground.
+            .then(if (checkedOn) Modifier.background(colors.leaf) else Modifier)
             .then(if (verb.enabled) Modifier.clickable(onClick = fire) else Modifier)
             .testTag("$BenchContextBarTestTag-${verb.label}")
             .clearAndSetSemantics {
@@ -306,7 +394,22 @@ private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modi
                 // A disabled verb carries **no `clickable` at all** rather than `clickable(enabled=false)`,
                 // so the platform `AccessibilityNodeInfo` reports it non-clickable too — the distinction
                 // ADR-058 shipped past a green Robolectric suite.
-                if (verb.enabled) onClick { fire(); true } else disabled()
+                if (verb.enabled) {
+                    onClick { fire(); true }
+                    // A toggle verb ([BenchVerb.checked]) must say which way it is set, or it announces
+                    // identically before and after a tap — the same class of defect as the page grid's
+                    // invisible `selected` (ADR-102 §12) and ADR-058's enabled-looking disabled button.
+                    // `stateDescription` rather than `Role.Switch` for exactly the reason `BenchPageGrid`
+                    // gives: it reaches the platform tree whatever the role does, and the freeze draws a
+                    // button, not a switch. Post-freeze accessibility work is allowed.
+                    verb.checked?.let {
+                        stateDescription = if (it) Copy.BenchVerbs.COPIER_ON else Copy.BenchVerbs.COPIER_OFF
+                    }
+                } else {
+                    disabled()
+                    // OD-9 keeps the control drawn; this says WHY it is dim. State, not name.
+                    verb.unavailableBecause?.let { stateDescription = it }
+                }
             }
             .padding(BenchContextBarButtonPaddingDp),
         horizontalAlignment = Alignment.CenterHorizontally,

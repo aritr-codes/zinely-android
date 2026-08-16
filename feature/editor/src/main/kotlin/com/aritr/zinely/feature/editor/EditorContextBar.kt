@@ -1,18 +1,17 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -45,6 +44,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -112,10 +112,21 @@ private val CtxGlyphSize = 17.dp
  * they have shipped since ADR-029 — a presentation this package is not chartered to re-decide. Flagged
  * for the owner.
  *
- * The control row **scrolls horizontally** (same pattern as [BenchPageNav]'s filmstrip): with up to eleven
- * ≥48dp controls the set overflows a narrow phone, so scrolling keeps every control reachable without
- * shrinking any target below 48dp. Scrolling changes layout only — no action, intent, gating, or semantic
- * label changes.
+ * The control row **wraps** (F-2). With up to eleven ≥48dp controls the set cannot fit one line on a
+ * narrow phone, and every target must stay ≥48dp, so the only remaining axis is vertical: the row runs
+ * onto a second line instead of running off the screen. Wrapping changes layout only — no action, intent,
+ * gating, or semantic label changes.
+ *
+ * ⚠ **It scrolled until F-2, and reachable turned out not to mean discoverable.** On the reviewed device
+ * the tenth control laid out 21px wide at the screen edge and the eleventh was off-screen entirely, so the
+ * platform tree carried nine and the maker's own report was *"I never learned those controls existed."*
+ *
+ * A scroll hint was implemented first and then **deleted after the device disproved it**: the clipped
+ * control is a 21px slice of an *empty* pill — its glyph is centred 40px beyond the screen edge — so a
+ * gradient over it faded nothing, and a gradient over the desk is the desk. There was no half-seen button
+ * to make legible, which is the assumption the hint was built on. That is recorded here rather than
+ * quietly replaced, because the mistake is instructive: the fade passed three unit tests and a mutation
+ * check, and was still the wrong fix.
  *
  * **Style (FR-3, [ADR-055]).** A selected **text** box additionally gets a Style (`Aa`) control that
  * toggles the [TypeBar]. It is not a general control: it is `null` for a photo, for a multi-selection, and
@@ -139,6 +150,7 @@ private val CtxGlyphSize = 17.dp
 // the arrow the wrong way. The glyph is decorative regardless (cleared from the a11y tree), so the
 // deprecation hint toward AutoMirrored does not apply here.
 @Suppress("DEPRECATION")
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 public fun EditorContextBar(
     selection: Set<String>,
@@ -157,13 +169,23 @@ public fun EditorContextBar(
         color = ZinelyTheme.v21Colors.desk,
         contentColor = ZinelyTheme.v21Colors.ink,
     ) {
-        Row(
+        // F-2: the row **wraps** rather than scrolls. It scrolled for two months and nobody found out —
+        // on the reviewed device the tenth control laid out 21px wide at the screen edge and the eleventh
+        // was off-screen entirely, so the platform tree carried nine and the maker's own report was *"I
+        // never learned those controls existed."*
+        //
+        // A scroll hint was tried first and rejected on the device that motivated it: the clipped control
+        // is a 21px slice of an EMPTY pill — its glyph is centred 40px past the screen edge — so a fade
+        // over it faded nothing, and a fade over the desk is the desk. There was no half-seen button to
+        // make legible. Wrapping removes the failure instead of annotating it: every control is on screen,
+        // at full size, with no gesture to discover. The cost is one extra row of chrome on a narrow
+        // phone, which is the cheaper of the two.
+        FlowRow(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(CtxPadding)
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(CtxGap),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(CtxPadding),
+            horizontalArrangement = Arrangement.spacedBy(CtxGap, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(CtxGap),
         ) {
             BarButton(Icons.Filled.KeyboardArrowLeft, Copy.A11y.MOVE_LEFT) { dispatch(Intent.Nudge(PtPoint(-EditorA11y.NUDGE_STEP_PT, 0.0))) }
             BarButton(Icons.Filled.KeyboardArrowRight, Copy.A11y.MOVE_RIGHT) { dispatch(Intent.Nudge(PtPoint(EditorA11y.NUDGE_STEP_PT, 0.0))) }

@@ -3156,6 +3156,85 @@ Also reconciled: the `.phone::after` "prototype bezel, not product UI" annotatio
 
 **A note on the suite's one flake:** `ReframeSessionTest.an_unreadable_photo_is_refused_entry_to_reframe` failed once and passed on re-run — the Robolectric NATIVE decoder hazard `feature/editor/build.gradle.kts` already documents, and which its per-test probe exists to catch. Not introduced by C1, and not silently swallowed.
 
+### Amendment request (2026-08-16) — *the artifact does not dim* names one sentence and four different mechanisms {#adr-090-amendment-scrim}
+
+⏳ **REQUEST — awaiting owner adoption. Nothing in this section is in force**, and the paragraphs above it
+are unchanged. Raised by [F-12](BETA-UX-REVIEW.md#f-12--adr-090-does-not-distinguish-transient-scrim-from-sustained-dimming--observation)
+of the beta UX review as an Observation. It is filed here because ADR-090 is where the rule is *read*;
+see [Where an adopted change would actually land](#adr-090-amendment-scrim-where) — this ADR is not where
+it would be *written*.
+
+**What ADR-090 currently says.** One sentence, twice: the [device table](#adr-090-device-verification) row
+`sheet, dark | #F7F2E7 | V2 light paper exactly — the artifact does not dim`, and the prose above —
+*"[OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling) ruled it the same day: the artifact does not dim, the
+room around it may."* [OD-31](#adr-098-od31) (2026-08-12, on [D-071](design/V2-SPEC-DEFECTS.md)) then
+extended it from the Bench sheet to **every surface**. Neither the ruling nor this ADR's record of it says
+anything about *for how long*, *by what mechanism*, or *over which pixels* — so read literally it forbids
+every dark rectangle that ever crosses the page, which is not what the shipped product does on any of the
+four surfaces that draw one.
+
+**The distinction it fails to draw.** The finding proposes **transient scrim vs. sustained dimming**. That
+axis does not survive the evidence below — two of the four permitted mechanisms are *sustained*. The axis
+the code actually already obeys is **what is dimmed**, and it has three strands the one sentence collapses
+into none: **duration**, **target** (the artifact · the room · a part of the user's content the artifact
+will not carry), and **direction** (darken toward the room vs. wash toward paper).
+
+**The evidence, measured from the repository rather than from the finding.**
+
+| Surface | Mechanism | Duration | What it acts on |
+|---|---|---|---|
+| **Add sheet** — and every `ZSheet` caller | full-screen `Box.fillMaxSize().background(ScrimFill)` in a `Dialog`, inside an `AnimatedVisibility` gated on the **same** `visible` flag as the sheet, with the scrim's own tap bound to `onDismiss` ([`ZSheet.kt:140-156`](../core/ui/src/main/kotlin/com/aritr/zinely/ui/components/ZSheet.kt#L140), `:387`) | **transient** — cannot outlive the sheet; the gesture that closes one closes both | everything, page included |
+| **Page grid** | the same `ZinelyV21Scrim`, `fadeIn`/`fadeOut` over `BenchGridScrimMillis = 220`, scrim tap = dismiss ([`BenchPageGrid.kt:123-124`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/BenchPageGrid.kt#L123), `:319-327`) | **transient** | everything, page included |
+| **Reframe, before `a80cc07`** | scrim rects spanning `max(size)*2` in every direction | **sustained** — the whole framing session | **the page itself.** This is the one the rule caught, and it was right to |
+| **Reframe, now** | `photoScrimRectsPx(dst, frame)`, the set difference `dst - frame`, carrying the invariant *"nothing here may fall outside [dst]"* ([`ReframeOverlay.kt:174-195`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/ReframeOverlay.kt#L174), `:247-254`) | **sustained** | only the photo's **cropped-away overflow** — content that will not print |
+| **Selection focus** | not a scrim at all: a **paper wash** at `BenchFocusDimAlpha = .5f`, clipped to `pageRect` because washing the canvas *"inverts ADR-090 exactly: the room is what may dim and the sheet is what may not"* ([`BenchSelectionFocus.kt:56-63`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/BenchSelectionFocus.kt#L56), `:123`) | **sustained** while a selection stands — made dismissable, not removed, by [OD-13](design/V2-SPEC-DEFECTS.md#d-037-ruling) | content **on the artifact**, lightened toward paper rather than darkened |
+
+Three corrections to the finding's own premises follow from that table, and are recorded rather than
+smoothed over, because each one would have sent a fix somewhere wrong:
+
+1. **The Add sheet does not dim the page "exactly as Reframe used to."** Same literal —
+   `ZinelyV21Scrim`, `0x70261A10` ([`ZinelyV21Colors.kt:246`](../core/ui/src/main/kotlin/com/aritr/zinely/ui/theme/ZinelyV21Colors.kt#L246)) — different job, and the repository
+   already says so in the one place it matters: *"that constant is documented as a **modal backdrop**, and
+   this dim is a permanent crop dimmer that never animates to full. Same value, different job"*
+   ([`ReframeOverlay.kt:84-87`](../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/ReframeOverlay.kt#L84)). The distinction the finding asks the ADR to state is already stated in
+   Kotlin, by an implementer who needed it and could not cite it.
+2. **`a80cc07` did not enforce the rule literally.** It did not remove Reframe's dim; it re-aimed it, from
+   the stage to `dst - frame` clamped inside the photo's own destination rect. A **sustained** dim of the
+   user's own pixels survives that commit deliberately — which is the counter-example to the transient /
+   sustained axis, produced by the very fix the finding cites as evidence for it.
+3. **A sustained dim on the artifact is also already permitted**, in the fourth row: the selection wash.
+   It escapes the rule not by being brief but by washing *toward paper* and staying inside `pageRect`.
+
+**What it should say instead — the owner's call, with three options.**
+
+| | Reading | Cost |
+|---|---|---|
+| **(a)** | *The artifact does not dim. The room around it may, and so may any part of the user's content the artifact will not carry.* Duration is not the test; **target** is. Scopes cleanly over all five rows: the two modal scrims dim a page that is momentarily not the subject, Reframe dims pixels that will not print, the selection wash is not a darkening at all | one clause added to a ruling that has held five times; nothing in `src/main` changes |
+| **(b)** | The finding as filed: **transient scrim is permitted, sustained dimming is not** | contradicted by rows 4 and 5 above. Adopting it re-opens `a80cc07`'s overflow dim and OD-13's selection wash as fresh defects, and neither is one |
+| **(c)** | Leave OD-31 literal and treat Reframe's surviving overflow dim as a defect | deletes the *"the picture moves"* teach `a80cc07` was careful to keep, and leaves the frame reading as a window over nothing rather than as the kept region |
+
+**Recommended: (a).** It is the reading the code already implements on every surface, which is the weakest
+claim that explains all five rows and the only one that costs nothing to adopt. It also states the thing
+`v21-reframe.html:160` asks for — *other page elements recede* — as permitted rather than forbidden, which
+matters because `a80cc07`'s own message records that recession as **implemented by nothing** and an open
+Pass 2 risk.
+
+**Where an adopted change would actually land** {#adr-090-amendment-scrim-where}
+
+The rule is not this ADR's to change. Its authoritative home is
+[OD-12](design/V2-SPEC-DEFECTS.md#d-035-ruling) on [D-035](design/V2-SPEC-DEFECTS.md#d-035), extended by
+**OD-31** on **D-071**; ADR-090 records the reading and its device evidence. So an adopted (a) is a **new
+owner ruling in [V2-SPEC-DEFECTS.md](design/V2-SPEC-DEFECTS.md)**, cross-referenced from here — the
+Documentation Rule's *one authoritative location*, and the same route
+[D-059](design/V2-SPEC-DEFECTS.md#d-059) and [OD-47](#adr-102-od47) took when OD-12's *implementation* was
+found narrower than its *principle*. This section is a request, not that ruling, and stays marked ⏳ until
+one exists.
+
+**Not proposed here, deliberately:** no scrim token is published to `:root`. `ZSheet.kt:378-386` records
+that the `.scrim` literal sits outside `:root` in all three frozen files and *"V2.1 publishes no scrim
+token"* — a real defect, but a **token-layer** one that survives whichever reading above is adopted, and
+folding it in would let a wording amendment carry a colour change.
+
 ---
 
 ## ADR-091 {#adr-091}
@@ -10934,12 +11013,102 @@ order.
   `intent-filter` and it is the launcher, so *see something → share it into your zine* does nothing.
   `ACTION_SEND` receive is independent of the whole decor programme, touches no network, and is the clearest
   expression of the Android advantage. It is re-sequenced to the front. It is small in code and **not** small
-  in verification: no `launchMode` is declared, so `singleTop` + `onNewIntent`, task affinity,
+  in verification: no `launchMode` is declared, so a task-unique launch mode + `onNewIntent`, task affinity,
   `ACTION_SEND_MULTIPLE`, permission-less URI reads and cold-start-into-import all come with it.
+  ⚠ **This bullet originally named `singleTop`, and the device falsified it — see the amendment below.**
 - **In-house authorship needs a record, not an assertion.** ADR-104's `source → verify licence → curate →
   package → ship` governs *packs*; these sixteen are drawn in-house and carry no third-party licence. But
   provenance is a process, so each supply ships a one-line attestation — authored from scratch, no reference
   art traced — plus a colophon entry.
+
+#### Amendment (2026-08-16) — `DecorElement` shipped, and the schema argument was wrong in both directions
+
+This ADR decided `DecorElement`; package P1 landed it, and two of the surrounding claims did not survive
+contact. Recorded here because both are the kind of error that is invisible until a *user* meets it.
+
+- **The schema bumped, v1 → v2, with an identity migrator.** [SUPPLIES-SPEC §2.1](design/SUPPLIES-SPEC.md)
+  said *"no schema version bump, and no migrator"*; both halves were wrong, and they were wrong in opposite
+  directions. The **bump** is required because `DecorElement` is a new sealed *discriminator*, not a
+  defaulted field like ADR-106's `copier` — an older build does not drop it, it **fails to parse the whole
+  document** ([D-029 Q5](design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16)). The **migrator** is required
+  because `DocumentMigrations` enforces a contiguous chain and throws `MissingMigratorException` on a gap, so
+  a bump with no 1→2 entry would have broken *every existing zine* — the precise opposite of the bump's
+  purpose. Nothing needs transforming; something still has to be registered. ⚠ [ADR-021](#adr-021)'s
+  `NewerSchemaVersionException` is therefore now **load-bearing for a released beta**: it is what makes a
+  downgrade say *"this zine needs a newer Zinely"* instead of failing cryptically.
+- **`Element` is closed at three.** `AffineTransform2D.scale(sx, sy)` was added to `:core:model` (it did not
+  exist, and without it every supply would render 1pt × 1pt). Validation is limited to two `supplyId` rules —
+  blank and malformed — with **no catalogue or palette lookup**, because `:core:data` is model-only and
+  Android-free and a catalogue check would drag the render layer through it. `SceneRenderer` emits **nothing**
+  for decor until P2 adds `DrawShape`; that no-op is documented so the next reader does not read it as a bug.
+- **The blast radius was 34 sites across 9 files, and only 5 of them are compiler-enforced.** The rest are
+  `as?` casts and `is` guards that fail *silently*. This is why the package ships with a reducer suite rather
+  than a "it compiles" claim, and it is the number to quote the next time an additive sealed member is costed.
+
+#### Amendment (2026-08-16) — share-in's task model, decided on hardware
+
+The re-sequencing bullet above ordered share-in to the front but decided none of its mechanics. Implementing
+it forced four decisions that belong on the record, because each is a permanent constraint and one of them
+was got wrong first:
+
+1. **`MainActivity` is `launchMode="singleTask"`.** The obvious answer — the one that shipped first, and the
+   one this ADR's own cost list named — is `singleTop`, and it is **wrong**. The system share sheet launches
+   its target with `FLAG_ACTIVITY_NEW_TASK`, and `singleTop` only collapses a relaunch onto the *same* task.
+   A real Samsung Gallery share therefore opened a **second task**: `dumpsys activity activities` showed two
+   live `MainActivity` records (t1339, t1341) and `onNewIntent` never fired. Both instances share one process
+   and so one `@Singleton` `AutosaveCoordinatorFactory`, so the second one's editor could not take the
+   [ADR-026](#adr-026) single-writer slot the first still held — the zine the photo was shared into answered
+   *"That zine is still saving"* **permanently**, and the photo never landed. `singleTask` makes the instance
+   task-unique so the share reaches the live Activity; nothing is lost above it, because this app declares
+   exactly one Activity and its navigation stack is Compose state inside it. The named alternatives do not
+   fit: `singleInstancePerTask` is the opposite (one instance *per task*, i.e. many tasks), `taskAffinity` is
+   already package-default and cannot refuse a sender-forced new task, and `FLAG_ACTIVITY_*` belongs to the
+   sender — which is exactly why the fix has to be declarative.
+2. **The inbox is in-memory and app-scoped, never persisted.** The sender's read grant dies with the
+   receiving Activity, so a persisted URI would be a handle that no longer opens.
+3. **A shared photo lands in the zine the maker opens next** (or the one already open). The Library is
+   already the chooser and already the start destination; share-in adds no route and no screen.
+4. **Share-in replaces the *pick*, nothing else** — the existing [ADR-031](#adr-031) §5 import path is
+   reused whole, so there is no second import pipeline, placement rule or undo story.
+
+Two consequences are accepted rather than fixed, and are filed as questions in
+[D-081](design/V2-SPEC-DEFECTS.md#d-081): Back after a share now walks Zinely's own stack rather than
+returning to the sender, and Zinely's own PNG export matches its own `image/*` filter, so Zinely appears in
+the chooser when sharing a page it just rendered.
+
+**How this was found is the durable part.** Every unit test passed, and so did a synthetic
+`am start -a ACTION_SEND`, because neither has a second task — the probe cannot set the flag that causes the
+defect. It took driving a real Gallery share on hardware. The regression guard that now exists
+(`ShareInboxTest`) asserts the *declaration*, not the behaviour, and says so: Robolectric does not simulate
+the task stack and never will reproduce this.
+
+#### Amendment (2026-08-16) — what P2 settled, and the one edge it needs sanctioned
+
+**A test-only `:core:render` → `:core:copy` dependency is sanctioned.** `SupplyCatalog`'s tests cross-check
+their four supply ids against `Copy.Supplies.NAMES` and `BY_FAMILY` rather than against a list retyped in
+the test — so the catalogue and the spoken vocabulary cannot drift apart silently. Production render code
+stays copy-ignorant: `core:render` knows ids, never names. The edge is `testImplementation` and stays there.
+
+**Catalogue incompleteness is a `null` at the render boundary, never a validation failure.** `outlineOf()`
+returns `null` for the twelve outlines nobody has drawn yet (§2.2). A document referencing one is *valid*
+and simply draws nothing — because the alternative is that a document authored on a later build fails to
+open on an earlier one, which is the forward-compatibility behaviour this ADR already documents as
+lossy-and-silent by design.
+
+**§4.1's four authoring rules split two-and-two, and that split is the argument for reviewed Kotlin source.**
+Rule 1 (unit square) is enforced by construction in `Subpath.init`, control points included; rule 2 (encloses
+an area) is a shoelace check. Rules 3 and 4 — fill-only, and no winding-dependent self-intersection — are
+**unassertable by design**, because winding-independence is a property of a shape's relationship to a fill
+rule rather than of its coordinates. A data file could carry the two rules a machine checks and lose the two
+it cannot; source under review carries all four.
+
+**This ADR warned about the id prefix, and the warning was already being violated when it was written.**
+`EditorA11y.decorLabel` derived spoken supply names from `supplyId.substringBefore('.')`, so TalkBack said
+*"Rect shape"* and *"Corner fix"* for all sixteen — five prefixes carrying four families is precisely the
+trap named in §4. Fixed and recorded as [D-085](design/V2-SPEC-DEFECTS.md#d-085). *A documented trap with no
+test is a prediction, not a guard.*
+
+---
 
 #### Process note
 
@@ -10956,3 +11125,115 @@ any of the nineteen swatches. The count stands; the **language** prohibition is 
 Recorded because the corrected claims were shipping in a direction document that other work was costing
 against, and because the pattern is worth naming: *a capability the backend has is not a capability the
 pipeline has, and the difference is invisible until you read the tape.*
+
+---
+
+## ADR-106 {#adr-106}
+
+### The photocopier filter — a flag on the tape, not a filtered asset
+
+**Status:** `Accepted` · 2026-08-16 · adopted by the implementer **under explicit owner delegation** of
+[D-082](design/V2-SPEC-DEFECTS.md#d-082)'s five questions, all five now [ruled](design/V2-SPEC-DEFECTS.md#d-082-rulings).
+The freeze amendment is **ratified**; Q4 (*"what does a toggled-on verb look like?"*) turned out not to be a
+question but a **defect**, falsified on a device — the button was pixel-identical before and after the tap —
+and the freeze gains a checked appearance for a context-bar verb. Reversible by any owner ruling that says so
+**Implements:** [ADR-105 §D-4](#adr-105) (*"the photocopier filter (X3b) ships before the sixteen"*), [ZINE-DIRECTION.md X3b](design/ZINE-DIRECTION.md)
+**Amends:** the frozen Bench's photo verb set — `v21-bench.html:678` gains a fourth verb, `Copier`, and
+`.ctx button.on` gains the checked appearance D-082 Q4's device failure forced (amendment log A4). See D-082 Q2/Q4
+
+#### Context
+
+Four direction documents specify this filter and all four specify the same thing: *1-bit Floyd–Steinberg over
+a downscaled bitmap, pure Kotlin, fits `core:render`, no dependency*. None of them specifies a dot size, a
+control, or a place to put one. The algorithm was frozen; the design was not.
+
+#### Decision
+
+**The filter is a `Boolean` on `ImageElement`, carried on the draw tape, applied by the one replayer.** Three
+layers were available and only one keeps the product's core promise:
+
+| Layer | Verdict |
+|---|---|
+| **Import / decode** — filter the bytes on the way in | ✗ The asset store is content-addressed by `sha256` of the import master ([ADR-022](#adr-022)). Filtering there mints a *second* asset, makes the effect irreversible, and makes *"the same photo, filtered on page 2 and not on page 5"* impossible. It also silently rewrites what the maker imported, which is the one thing an archive must not do |
+| **Per-surface, in the backends** | ✗ There are four surfaces and the filter would have to be re-decided in each. This is precisely the divergence the tape exists to prevent |
+| **A per-element property, carried on the tape** | ✅ Additive and defaulted, so it survives save/load with **no schema bump and no migrator** — the same kotlinx argument [ADR-105](#adr-105) already made for `DecorElement`. It inherits the pipeline's existing equivalence guarantee rather than restating it. ⚠ **Qualified:** backward compatibility is total; *forward* is lossy-and-silent. `schemaVersion` is unchanged, so `0.9.0-beta.1` opens a filtered document successfully, drops `copier`, and writes the loss back on the next save — the downgrade `NewerSchemaVersionException` exists to catch ([ADR-021](#adr-021)). Acceptable only because the field is presentation, not content; **an owner ruling that this ships to real users should bump the version** |
+
+**There is exactly one replayer, and it was verified rather than assumed.** `CanvasReplayer` is the only
+consumer of `DrawImage` in `src/main`, and it draws through the single `ImageBlitter`
+([ADR-028 §5](#adr-028)) for the editor canvas, the page grid, the Proof and PDF/PNG export alike. One
+`if (command.copier)` therefore reaches all four at once — which is why the filter costs what it costs, and
+equally why a mistake here would be four bugs. **One qualification review supplied:** the Reframe overlay
+draws the photo with Compose's own `drawImage`, outside the tape entirely, so a filtered photo shows
+*unfiltered* while Reframe is open. Defensible — Reframe is a modal view of the source you are framing — but
+it is a fifth surface, and "exactly one replayer" is true of the tape, not of the app.
+
+**The dot grid is measured in page points, not pixels — the load-bearing decision.** The editor decodes at
+screen density and the exporter at `300/72`. Dithering the *decoded* bitmap would give the same photo a fine
+grain on paper and a coarse one on screen: preview == export ([ADR-006](#adr-006)) would hold for geometry and
+break for texture — worse than breaking outright, because it looks correct until it is printed. So
+`copierGridSize(extentPt, sourcePx)` derives the grid from the destination's size **in points** at a fixed
+`COPIER_DOTS_PER_INCH = 150`, and the backend magnifies the small 1-bit bitmap with `isFilterBitmap = false`:
+a bilinear magnify averages the dots back into the grey the halftone exists to destroy. `150` is a decided
+number, not a specified one ([D-082](design/V2-SPEC-DEFECTS.md#d-082) Q1).
+
+**And the grid alone was not enough — review falsified the first version of this paragraph.** Two leaks
+remained. (a) `copierGridSize` clamps to the pixels available, and *"available"* was the surface's own decode,
+so on an ordinary low-density phone the editor clamped where the 300 dpi exporter never did — the coarser
+dots on screen being exactly the tell that only appears on paper. (b) Even at an equal grid, resampling
+600 px → 300 and 360 px → 300 yields different samples, and error diffusion turns any difference into a
+different pattern; *"identical bit for bit"* was false. **The fix is one line: a copier photo decodes at
+`COPIER_DOTS_PER_POINT`, not at the surface's density.** `inSampleSizeFor` then depends only on the master
+and the page, both surface-independent, so the clamp and the samples agree by construction — and the export
+path stops decoding at 300 dpi only to throw it away. Recorded because the claim was in the code, the KDoc
+*and* this ADR before anyone checked whether the arithmetic supported it.
+
+**The control is a toggle, because the filter has no parameters.** `Copier` sits fourth in the Bench's photo
+bar, between `Reframe` and `Replace`; tapping it again turns it off, and `Undo` also turns it off, because the
+reducer bakes it into one `EditImageCommand` whose inverse it already knows how to compute — no new command
+type, no session. **The frozen HTML was amended before the Compose was written**, per CLAUDE.md's HTML-first
+rule; but amending a freeze is an owner act and this one carries no ruling, which is the second half of D-082.
+
+#### Consequences
+
+- **`:core:render` stays Android-free.** `Photocopier.kt` takes an `IntArray` and returns an `IntArray`; the
+  entire Android half is ~20 lines in `ImageBlitter` that resample, read pixels and hand them over.
+- **Cost, measured — on a desktop JVM, by a throwaway harness that is not in the tree.** Ten timed runs of
+  `photocopy` over an 875 × 1240 grid (a full-bleed A5 photo, the worst realistic case) after three warm-up
+  passes: **29.9 ms**, i.e. ≈28 ns per dot; a typical placed photo (~125 k dots) ≈ **3–4 ms**. Assume 3–5×
+  on a mid phone. No benchmark ships, so this number is a measurement someone must repeat, not a test that
+  will fail if it regresses. It is per *draw* — and `PagePreview` already re-decodes the master on every
+  draw pass, so the filter is added to a path that was never cheap rather than making a cheap one expensive.
+  **No caching was added:** a filtered-bitmap cache is real lifecycle state and belongs to a package that
+  has measured the need on a device. The one thing that *was* cheapened is export, which no longer decodes
+  at 300 dpi for a 150 dpi filter.
+- **Device-verified, and the two passes disagreed — which is the finding.** Both
+  [passes](../CLAUDE.md#device-verification-mandatory) were run on SM-A176B / Android 16. **Pass 1 passed:**
+  the verb reaches the platform tree as an enabled, clickable `android.widget.Button`, the halftone renders,
+  and the element beneath it stays unfiltered, so the flag is per-element as designed. The save/load claim
+  this ADR rests on was verified the only way it can be — `am force-stop`, cold relaunch, reopen: the
+  halftone comes back and the photo underneath is still unfiltered, so the flag round-trips through the
+  document with no schema bump and no migrator, and it round-trips *per element*. **Pass 2 failed:** the
+  context bar is *pixel-identical* before and after the tap, so a maker whose photo is small, scrolled away
+  or behind the bar reads the toggle as a button that did nothing. Pass 1 was satisfied by a control that did
+  what it said; Pass 2 could not tell it had done anything. Fixed by giving the freeze a checked appearance
+  (D-082 Q4) — `.ctx button.on` on the `leaf`/`on-leaf` pair the Bench already uses for exactly this meaning
+  — and **Pass 2 re-run on the same device: PASS**, the before/after crops now unmistakably different. Still owed: a **TalkBack listen pass** — `stateDescription` is structurally invisible to
+  `uiautomator dump` — and a **print pass**, because the whole claim is about how the ink looks on paper and
+  only paper can close that.
+- **The tests are exact, not golden — and the sharpest one exists because of two successive misses.** The
+  diffusion weights are pinned by hand-computed 2 × 1 and 2 × 2 expectations plus an ink-conservation
+  property. First miss: a 7/16 → 5/16 mutation passed *both* original exact tests; only the mean-brightness
+  property caught it. Second miss, found by review: the exact test written to close that gap **still did not
+  close it** — it discriminated 7 from 5, and every numerator from 6 to 16 passed the whole suite. The test
+  now brackets the numerator from both sides (one case that fails below 7, one that fails above), which is
+  the only shape that pins an integer. Worth recording twice over: *a hand-computed expectation is only as
+  sharp as the case you happened to pick, and "I worked it out by hand" is not "it discriminates".*
+- **The toggle announces its state.** It shipped in the first version as a stateless button — announced
+  "Copier" before the tap and "Copier" after, with the only difference on a canvas a screen reader cannot
+  read. `stateDescription` (not `Role.Switch`, for the reason `BenchPageGrid` records: it reaches the
+  platform tree whatever the role does). **A visual on-state is still missing** and is unspecified —
+  [D-082](design/V2-SPEC-DEFECTS.md#d-082) Q4.
+- **Filtering-off is conditional.** A page thumbnail minifies a ~300-dot halftone into ~30 px, where
+  nearest-neighbour is moiré and nothing else; the hard-dot paint is used only when the destination has at
+  least a device pixel per dot. Right for magnification, wrong for minification — and the freeze has nothing
+  to say about how a halftone should look at thumbnail size.

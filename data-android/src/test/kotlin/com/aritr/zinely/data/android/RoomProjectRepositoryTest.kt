@@ -8,6 +8,7 @@ import com.aritr.zinely.core.data.repository.getOrNull
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.data.storage.FileSystemOps
 import com.aritr.zinely.core.data.storage.NioFileSystemOps
+import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -202,7 +203,7 @@ class RoomProjectRepositoryTest {
         // Given — well-formed JSON declaring a schema this build does not support (SchemaTooNew, not Corrupt)
         val dir = root.resolve("projects/toonew")
         Files.createDirectories(dir)
-        val payload = """{"schemaVersion":2}""".toByteArray()
+        val payload = """{"schemaVersion":${CURRENT_SCHEMA_VERSION + 1}}""".toByteArray()
         Files.write(dir.resolve("document.json"), payload)
 
         // When

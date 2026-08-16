@@ -98,10 +98,30 @@ public class JsonDocumentSerializer internal constructor(
         const val ENCODING_KEY = "_encoding"
 
         /**
-         * The ordered JSON-tree migrator chain. Empty at schema v1 (no history yet). When the first
-         * structural `v1 -> v2` change lands, add the migrator here and a golden fixture test; if a
-         * non-JSON format is ever adopted, migration moves to per-version typed snapshots ([ADR-020]).
+         * The ordered JSON-tree migrator chain. If a non-JSON format is ever adopted, migration moves
+         * to per-version typed snapshots ([ADR-020]).
+         *
+         * **v1 → v2 is an identity step, on purpose.** `DecorElement` (ADR-105) changes nothing about
+         * an existing document — no field moved, no field was renamed, and no v1 document contains a
+         * `decor` element, so there is genuinely nothing to transform. SUPPLIES-SPEC §2.1 concluded
+         * from that that no version bump was needed; [D-029's 2026-08-16 ruling]
+         * (../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16) Q5 overrules
+         * it, because the bump is not about *migrating forward* — it is about failing *backward*
+         * honestly, via `NewerSchemaVersionException`, when a build predating decor meets a document
+         * carrying an unknown sealed discriminator it cannot parse at all.
+         *
+         * The migrator is required by mechanism, not by content: [DocumentMigrations] demands a
+         * contiguous `vN -> vN+1` chain and throws [MissingMigratorException] on a gap, so without
+         * this step every already-saved v1 zine would refuse to open.
          */
-        val MIGRATORS: List<DocumentMigrator> = emptyList()
+        val MIGRATORS: List<DocumentMigrator> = listOf(IdentityMigrator(from = 1))
+
+        /** A structural no-op step, for a version bump that exists purely to gate old readers out. */
+        private class IdentityMigrator(from: Int) : DocumentMigrator {
+            override val fromVersion: Int = from
+            override val toVersion: Int = from + 1
+            // `DocumentMigrations` stamps `schemaVersion` itself after each step; migrators must not.
+            override fun migrate(input: JsonObject): JsonObject = input
+        }
     }
 }

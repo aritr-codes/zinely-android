@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -196,7 +197,12 @@ internal const val BenchAddStroke: Float = 2.4f
  *   ([ADR-058](../../../../../../../../docs/DECISIONS.md#adr-058) branch), so the semantics below are set
  *   explicitly rather than inferred from `clickable(enabled = …)` alone.
  * @param canRedo the same for Redo. The freeze draws it `disabled` at rest and so does this.
- * @param doneEnabled `false` for the whole of a text session — see *`Done` is two-state* above.
+ * @param doneEnabled `false` for the whole of a text session — see *`Done` is two-state* above — and,
+ *   since F-6, for the whole of an ink session too. Both are the same rule (OD-14: never two live `Done`s),
+ *   not two rules: whatever panel owns "finish" right now is the only control allowed to say it.
+ * @param doneUnavailableBecause why it is dim, spoken as `stateDescription` and read only when
+ *   [doneEnabled] is `false` — the two states withhold it for different reasons and a screen-reader user
+ *   otherwise hears "Done, disabled" and stops. Null is honest for a caller that has no reason to give.
  */
 @Composable
 internal fun BenchBottomBar(
@@ -208,6 +214,7 @@ internal fun BenchBottomBar(
     onAdd: () -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
+    doneUnavailableBecause: String? = null,
 ) {
     val colors = ZinelyTheme.v21Colors
     Row(
@@ -261,6 +268,7 @@ internal fun BenchBottomBar(
             enabled = doneEnabled,
             testTag = BenchBarDoneTag,
             onClick = onDone,
+            unavailableBecause = doneUnavailableBecause,
         )
     }
 }
@@ -296,6 +304,7 @@ private fun BenchIconButton(
     enabled: Boolean,
     testTag: String,
     onClick: () -> Unit,
+    unavailableBecause: String? = null,
 ) {
     val colors = ZinelyTheme.v21Colors
     val interaction = remember { MutableInteractionSource() }
@@ -337,7 +346,16 @@ private fun BenchIconButton(
             .clearAndSetSemantics {
                 contentDescription = label
                 role = Role.Button
-                if (enabled) onClick { activate(); true } else disabled()
+                if (enabled) {
+                    onClick { activate(); true }
+                } else {
+                    disabled()
+                    // F-1's rule, applied where F-6 created a second reason to be dim: a drawn control that
+                    // is disabled says why. State, not name — "Done" is still what this button is called.
+                    // Undo and Redo pass nothing and correctly stay silent: nothing revives them but doing
+                    // something, which is not an instruction anyone needs.
+                    unavailableBecause?.let { stateDescription = it }
+                }
             },
         contentAlignment = Alignment.Center,
     ) {

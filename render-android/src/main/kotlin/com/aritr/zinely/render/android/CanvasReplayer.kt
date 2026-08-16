@@ -8,6 +8,7 @@ import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.render.DrawCommand
 import com.aritr.zinely.core.render.DrawImage
+import com.aritr.zinely.core.render.DrawShape
 import com.aritr.zinely.core.render.DrawTextBox
 import com.aritr.zinely.core.render.FillRect
 import kotlin.math.abs
@@ -36,7 +37,8 @@ import kotlin.math.sqrt
  * [pageToDevice]; it is unused until image replay lands (G4).
  *
  * Scope: [FillRect], [DrawTextBox], and [DrawImage] (the latter only when an [imageBlitter] is wired —
- * it needs an `AssetBytesSource`, supplied in app/export wiring).
+ * it needs an `AssetBytesSource`, supplied in app/export wiring). [DrawShape] is accepted and draws
+ * **nothing** — see the arm in [draw] for why that is a decision rather than a gap.
  */
 public class CanvasReplayer(
     private val fontResolver: FontResolver = FontResolver.Default,
@@ -97,6 +99,33 @@ public class CanvasReplayer(
                 // page space, so the decode footprint = destRect × decodePxPerPt × localScale (§5.1).
                 blitter.draw(canvas, command, decodePxPerPt, command.localToPage.uniformScale())
             }
+            // ⚠ NOT A BUG, AND NOT AN OVERSIGHT — package P2 replays a supply deliberately as nothing.
+            //
+            // P2 adds the command, the outline type and the catalogue; **arming this arm is P3**, and it
+            // is not one line. What P3 owes, each item load-bearing:
+            //
+            //   1. Its OWN Paint — `isAntiAlias = true`, because a torn edge drawn with the pinned
+            //      `fillPaint` above is visibly jagged. Never mutate `fillPaint`: that would move every
+            //      existing FillRect golden. SkPDF ignores the AA flag, so print is unaffected (§3.5).
+            //   2. `Path.fillType = EVEN_ODD` — on the **Path**, not the Paint, which has no such field.
+            //      Forget it and every hole fills identically on all four surfaces, so surface-parity
+            //      testing is structurally blind to the mistake. It needs its own assertion: a ring whose
+            //      inner and outer subpaths are wound the SAME direction (opposite winding passes under
+            //      both fill rules and proves nothing) — see `SupplyOutlineRingTest` in `:core:render`
+            //      for the geometry, and the PDF-parity harness for the pixels.
+            //   3. No `MaskFilter`, no `PathEffect`, no perspective row in the matrix — each makes SkPDF
+            //      silently rasterise instead of emitting vector operators. A torn edge is torn in the
+            //      authored outline, never with a filter (§5, and SUPPLIES-SPEC §4.1).
+            //   4. `localToPage` here carries a NON-uniform scale (the unit-square fold, §3.4.1), so
+            //      `uniformScale()` below is meaningless for this command — it is an image-decode
+            //      heuristic, not a geometry term.
+            //
+            // Drawing nothing is the honest state, not a silent one: nothing emits a `DrawShape` yet
+            // (`SceneRenderer` still maps `DecorElement` to `null`), so this arm is unreachable in
+            // production and pinned by `ShapeReplayDrawsNothingTest` rather than left to be discovered.
+            // A placeholder rect would have been worse than nothing in four places at once — this is the
+            // one replayer shared by preview, PNG, PDF and the imposed sheet.
+            is DrawShape -> Unit
         }
     }
 

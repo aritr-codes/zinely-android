@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -268,6 +270,11 @@ internal fun benchInkName(id: ZinelyNeutralId): String = when (id) {
  * @param presets the three recipes — [benchInkPresets].
  * @param selected the element's current ink, or `null` when it matches no swatch in any offered band.
  * @param inkCount distinct inks in the whole zine, for the `.inkuse` note. Live, never a constant.
+ * @param onDockedTopChanged the card's settled top edge in window coordinates, for the same clearance term
+ *   the editing row feeds ([benchEditPanMagnitudeDp], D-043 / OD-16). F-5: a maker was being asked to pick
+ *   ink for type this card was covering. ⚠ Nothing is reported while hidden — `AnimatedVisibility` composes
+ *   no layout at all in that state — so the last value goes **stale** the moment the card leaves. The
+ *   consumer must therefore gate on its own open flag rather than trust this edge, and does.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -281,6 +288,7 @@ internal fun BenchInkPopover(
     onPreset: (BenchInkPreset) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
+    onDockedTopChanged: (Float) -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
     val motion = if (ZinelyTheme.motion.reduceMotion) 0 else BenchInkPopoverEnterMillis
@@ -288,7 +296,11 @@ internal fun BenchInkPopover(
     val enterPx = with(LocalDensity.current) { BenchInkPopoverEnterOffsetDp.roundToPx() }
     AnimatedVisibility(
         visible = visible,
-        modifier = modifier,
+        // F-5: this card occludes the page exactly as the editing row does, so it owes the page the same
+        // clearance the row already pays ([benchEditPanMagnitudeDp], D-043 / OD-16). Read on the OUTER
+        // node, above `AnimatedVisibility`'s own slide, for the reason `BenchStyleRow` records: measured
+        // inside the animation the pan would chase the card's entrance instead of its docked position.
+        modifier = modifier.onGloballyPositioned { onDockedTopChanged(it.positionInWindow().y) },
         enter = slideInVertically(tween(motion, easing = ZinelyV2Standard)) { enterPx } + fadeIn(spec),
         exit = slideOutVertically(tween(motion, easing = ZinelyV2Standard)) { enterPx } + fadeOut(spec),
     ) {
