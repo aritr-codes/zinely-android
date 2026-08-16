@@ -69,6 +69,64 @@ C1 is not *fully* closed until C0 (specification reconciliation) resolves two pa
 [the C1 milestone record](docs/reviews/C1-conformance-guardrails.md) and
 [ADR-059](docs/DECISIONS.md#adr-059).
 
+## [0.9.0-beta.2] — 2026-08-16 — Share a photo straight in, and photocopy it
+
+The second build for the beta cohort. `versionCode 4`, signed with the same release key as
+`beta.1`, so it installs **over** your existing copy and keeps your zines.
+
+### Added — send a photo to Zinely from anywhere on your phone
+
+Zinely now appears in your phone's own **Share** sheet. Find a photo in your gallery, your camera
+roll, a chat — tap Share, choose Zinely, and it lands on the page you were working on. Share several
+at once and they cascade down the page instead of stacking in one spot.
+
+- **Nothing disappears quietly.** If a photo can't be read, you're told how many arrived and how many
+  didn't — in a sentence, not a code.
+- **It opens the zine you were in**, not a new empty one. That sounds obvious; it took a fix to be true
+  (see below).
+
+### Added — the photocopier
+
+A per-photo filter that makes an image look the way a photo actually reproduces on a home printer or a
+copy shop machine: broken into dots, high contrast, honest about being a copy. It's a toggle on a
+selected photo, and it's reversible — your original is never altered.
+
+### Fixed — a shared-in zine could become impossible to open again
+
+Sharing a photo into Zinely opened a **second copy of the app in its own task**. The zine you shared
+into was then unreachable: tapping the icon showed you the other copy. Photos were never lost, but the
+work could look lost, which is the same thing from where you're sitting. Found by inspecting the
+phone's own task records — no automated test can see them.
+
+### Fixed — screen-reader labels for supplies
+
+TalkBack read the internal name of each supply rather than its real one — *"Rect shape"*, *"Corner
+fix"*. It now reads the actual names.
+
+### Groundwork you can't see yet
+
+Decorative supplies — tape, staples, torn paper, halftone marks — now exist in the file format and the
+drawing engine, and four of the sixteen are drawn. **Nothing appears on a page yet**: the drawing
+step that puts them on paper is the next piece of work. This is listed here because it changes the
+saved file format, which the next section is about.
+
+### ⚠ Known limitations — please read before reporting these
+
+- **Zines saved in `beta.2` cannot be opened by `beta.1`.** The document format moved from v1 to v2.
+  Upgrading is safe and your existing zines open normally; **going back is not**. If you uninstall or
+  roll back to `beta.1`, anything you made or edited in `beta.2` will not open.
+- **The photocopier has not been verified in print.** Its entire claim is about ink on paper, and no
+  screen can test that. The dot size (150 dpi) is a provisional choice, and a home printer may render
+  it too coarse or too fine. Please print one and say what you see — that feedback is the test.
+- **The screen-reader listen pass has not been run.** Four specific questions are written down and
+  unanswered, including whether an import summary is announced **twice** (once as a toast, once as an
+  announcement). If you use TalkBack and hear something doubled or wrong, that's a known gap, not a
+  surprise.
+- **Supplies are not usable.** The Art sheet, the decor controls, and twelve of the sixteen outlines
+  are not built. The verb is disabled deliberately.
+- **The word "Ink" still means three things** in the app — a control, a colour, and a shade of grey —
+  and a screen reader says all three identically.
+
 ## [0.9.0-beta.1] — 2026-07-22 — Read your zine
 
 The first build handed to the named beta cohort, and the first signed with the real Zinely release
