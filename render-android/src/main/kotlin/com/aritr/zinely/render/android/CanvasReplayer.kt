@@ -3,6 +3,7 @@ package com.aritr.zinely.render.android
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Path
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.PtRect
@@ -11,6 +12,8 @@ import com.aritr.zinely.core.render.DrawImage
 import com.aritr.zinely.core.render.DrawShape
 import com.aritr.zinely.core.render.DrawTextBox
 import com.aritr.zinely.core.render.FillRect
+import com.aritr.zinely.core.render.Segment
+import com.aritr.zinely.core.render.SupplyOutline
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -36,9 +39,8 @@ import kotlin.math.sqrt
  * `px/pt` for preview. [decodePxPerPt] is the **separate** image-decode resolution, never inferred from
  * [pageToDevice]; it is unused until image replay lands (G4).
  *
- * Scope: [FillRect], [DrawTextBox], and [DrawImage] (the latter only when an [imageBlitter] is wired —
- * it needs an `AssetBytesSource`, supplied in app/export wiring). [DrawShape] is accepted and draws
- * **nothing** — see the arm in [draw] for why that is a decision rather than a gap.
+ * Scope: [FillRect], [DrawTextBox], [DrawShape], and [DrawImage] (the last only when an [imageBlitter]
+ * is wired — it needs an `AssetBytesSource`, supplied in app/export wiring).
  */
 public class CanvasReplayer(
     private val fontResolver: FontResolver = FontResolver.Default,
@@ -49,6 +51,21 @@ public class CanvasReplayer(
     private val fillPaint = Paint().apply {
         style = Paint.Style.FILL
         isAntiAlias = false
+        isDither = false
+    }
+
+    /**
+     * [DrawShape]'s own paint — deliberately **not** [fillPaint] (SUPPLIES-SPEC §3.5).
+     *
+     * Anti-aliasing is on because a supply is a torn, stamped or curved outline and reads as jagged
+     * without it; the pinned `fillPaint` above must keep AA *off* so axis-aligned fills stay diffable
+     * at zero tolerance, and mutating it would have moved every committed FillRect golden. The two
+     * paints are the whole reason that trade-off costs nothing. Print is unaffected either way: the
+     * PDF backend ignores the AA flag entirely (§3.2).
+     */
+    private val shapePaint = Paint().apply {
+        style = Paint.Style.FILL
+        isAntiAlias = true
         isDither = false
     }
 
@@ -99,33 +116,23 @@ public class CanvasReplayer(
                 // page space, so the decode footprint = destRect × decodePxPerPt × localScale (§5.1).
                 blitter.draw(canvas, command, decodePxPerPt, command.localToPage.uniformScale())
             }
-            // ⚠ NOT A BUG, AND NOT AN OVERSIGHT — package P2 replays a supply deliberately as nothing.
+            // P3 — the supply reaches paper, on all four surfaces at once. Four load-bearing details:
             //
-            // P2 adds the command, the outline type and the catalogue; **arming this arm is P3**, and it
-            // is not one line. What P3 owes, each item load-bearing:
-            //
-            //   1. Its OWN Paint — `isAntiAlias = true`, because a torn edge drawn with the pinned
-            //      `fillPaint` above is visibly jagged. Never mutate `fillPaint`: that would move every
-            //      existing FillRect golden. SkPDF ignores the AA flag, so print is unaffected (§3.5).
-            //   2. `Path.fillType = EVEN_ODD` — on the **Path**, not the Paint, which has no such field.
-            //      Forget it and every hole fills identically on all four surfaces, so surface-parity
-            //      testing is structurally blind to the mistake. It needs its own assertion: a ring whose
-            //      inner and outer subpaths are wound the SAME direction (opposite winding passes under
-            //      both fill rules and proves nothing) — see `SupplyOutlineRingTest` in `:core:render`
-            //      for the geometry, and the PDF-parity harness for the pixels.
-            //   3. No `MaskFilter`, no `PathEffect`, no perspective row in the matrix — each makes SkPDF
-            //      silently rasterise instead of emitting vector operators. A torn edge is torn in the
-            //      authored outline, never with a filter (§5, and SUPPLIES-SPEC §4.1).
-            //   4. `localToPage` here carries a NON-uniform scale (the unit-square fold, §3.4.1), so
-            //      `uniformScale()` below is meaningless for this command — it is an image-decode
-            //      heuristic, not a geometry term.
-            //
-            // Drawing nothing is the honest state, not a silent one: nothing emits a `DrawShape` yet
-            // (`SceneRenderer` still maps `DecorElement` to `null`), so this arm is unreachable in
-            // production and pinned by `ShapeReplayDrawsNothingTest` rather than left to be discovered.
-            // A placeholder rect would have been worse than nothing in four places at once — this is the
-            // one replayer shared by preview, PNG, PDF and the imposed sheet.
-            is DrawShape -> Unit
+            //   1. [shapePaint], never [fillPaint]. AA is on here because a torn edge drawn without it
+            //      is visibly jagged; mutating the shared paint would have moved every committed
+            //      FillRect golden instead. SkPDF ignores the AA flag, so print is unaffected (§3.5).
+            //   2. Even-odd lives on `Path.fillType` — see [toPath]. The Paint has no such field.
+            //   3. No MaskFilter, no PathEffect, and no perspective row can reach the CTM (an
+            //      [AffineTransform2D] has no third row) — each of those makes SkPDF silently
+            //      rasterise instead of emitting vector operators (§3.2 constraint 5).
+            //   4. The outline is in **unit** space, not points: `command.localToPage` carries the
+            //      element's size through the §3.4.1 scale fold, and it is non-uniform in general —
+            //      which is why [uniformScale] is not consulted here. It is an image-decode heuristic,
+            //      not a geometry term.
+            is DrawShape -> {
+                shapePaint.color = command.ink.toArgb()
+                canvas.drawPath(command.outline.toPath(), shapePaint)
+            }
         }
     }
 
@@ -162,6 +169,38 @@ private fun AffineTransform2D.toMatrix(): Matrix = Matrix().apply {
             0f, 0f, 1f,
         ),
     )
+}
+
+/**
+ * The pure [SupplyOutline] → [android.graphics.Path] conversion — the whole platform seam for supplies,
+ * kept a free function so it is exercisable without a [Canvas], a replayer or a bitmap.
+ *
+ * **`fillType = EVEN_ODD` is the load-bearing line in this file.** It lives on the Path because the
+ * Paint has no such field, and forgetting it is the one defect surface-parity testing is structurally
+ * blind to: a non-zero fill closes every hole *identically* on preview, PNG, PDF and the imposed sheet,
+ * so the four surfaces would agree perfectly on the wrong picture. Only a ring whose contours wind the
+ * **same** direction renders differently under the two rules, which is why that geometry — not a
+ * golden — is the proof (`ShapeReplayTest`, and `SupplyOutlineRingTest` for the representation).
+ *
+ * Coordinates stay in the authored **unit square**; the size arrives through the command's
+ * `localToPage` (SUPPLIES-SPEC §3.4.1), already concatenated onto the canvas by the replay quad.
+ * [close] per subpath makes the implicit closure explicit — a fill would close it anyway, and saying so
+ * keeps the emitted geometry identical to what the outline documents.
+ */
+internal fun SupplyOutline.toPath(): Path = Path().apply {
+    fillType = Path.FillType.EVEN_ODD
+    for (subpath in subpaths) {
+        moveTo(subpath.start.x.toFloat(), subpath.start.y.toFloat())
+        for (segment in subpath.segments) when (segment) {
+            is Segment.LineTo -> lineTo(segment.to.x.toFloat(), segment.to.y.toFloat())
+            is Segment.CubicTo -> cubicTo(
+                segment.c1.x.toFloat(), segment.c1.y.toFloat(),
+                segment.c2.x.toFloat(), segment.c2.y.toFloat(),
+                segment.to.x.toFloat(), segment.to.y.toFloat(),
+            )
+        }
+        close()
+    }
 }
 
 /** Clips to [rect] in the current (already-concatenated) local space. */

@@ -214,6 +214,8 @@ Use **Mermaid** diagrams aggressively — prefer a diagram over long prose where
 - **Privacy invariant:** no networking libraries, no analytics SDKs, no code path that uploads user content. A PR that adds network access must justify itself against [PRD principles](docs/PRD.md#5-product-principles-non-negotiable).
 - **Build:** Gradle KTS + version catalog; `jvmToolchain(21)`.
 - **Testing:** pure-JVM unit tests for `core` + mappers; ViewModel integration with fakes; Compose UI tests; Roborazzi screenshot/diff tests for render fidelity. Follow Given-When-Then.
+- **A green unit suite is not a green golden suite.** `testDebugUnitTest` **does not compare goldens** — only `verifyRoborazziDebug` does, and it needs `--rerun-tasks` because the source-tree PNGs are not a tracked task input, so a cached verify can pass without comparing anything. Run `bash tools/grun.sh gold` before claiming a change is visually neutral. *A golden that is never verified is a screenshot, not a test* — 36 stale golden assertions once rode a green 1,801-test local run all the way to CI.
+- **Re-recording goldens is a reviewed act, never a fix.** Read the `*_compare.png` diffs **first**: a re-record blesses a regression exactly as smoothly as it blesses an intended change. Record on the pinned CI image (`record-goldens.yml`), which is the host that gates them.
 - Use the `android-skills:` skills (`android-dev`, `compose`, `kotlin-flows`, etc.) for implementation detail.
 
 ## Device Verification (MANDATORY)

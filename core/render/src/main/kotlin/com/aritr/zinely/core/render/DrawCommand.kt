@@ -75,9 +75,13 @@ public data class DrawImage(
  * every supply would render 1pt × 1pt. The scale is non-uniform in general; keeping a stamp square is
  * an **editor** constraint, not a render one.
  *
- * ⚠ **Not emitted yet.** `SceneRenderer` still draws `DecorElement` as nothing and the replayer draws
- * this as nothing: the tape end of the supply system is package P2, arming the two ends is P3. The
- * command exists first so that the thing all four surfaces share is settled before anything paints.
+ * **Emitted and painted** (P3). `SceneRenderer` emits this for a `DecorElement` whose `supplyId` has an
+ * authored outline, and `CanvasReplayer` draws it with its own anti-aliased `Paint` and
+ * `Path.FillType.EVEN_ODD`. A supply with no authored outline yet emits nothing — twelve of the sixteen
+ * are still unauthored, and that is a `null` from `SupplyCatalog.outlineOf`, never a validation failure.
+ *
+ * The command was defined a package *before* anything could paint it, so that the one thing all four
+ * surfaces share was settled before any surface had an opinion about it.
  */
 public data class DrawShape(
     val outline: SupplyOutline,

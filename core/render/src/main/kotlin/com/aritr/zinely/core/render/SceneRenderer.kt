@@ -43,7 +43,7 @@ public object SceneRenderer {
             }
             // Stable sort: equal zIndex keeps author (list) order; emitted back-to-front (painter's).
             for (element in page.elements.sortedBy { it.zIndex }) {
-                // `null` = an element kind that deliberately emits nothing yet; see [toCommand].
+                // `null` = a supply whose outline is not authored yet; see [toCommand].
                 element.toCommand()?.let { add(it) }
             }
         }
@@ -53,7 +53,12 @@ public object SceneRenderer {
     public fun emit(scene: Scene): List<DrawCommand> = scene.commands
 
     /**
-     * One element → one draw command, or `null` for an element kind that emits **nothing yet**.
+     * One element → one draw command, or `null` for a supply whose outline is not authored yet.
+     *
+     * Every *element kind* now emits — P3 armed the last one. The remaining `null` is narrower and
+     * permanent in shape: an unauthored, misspelled or newer-schema `supplyId` has no outline, and
+     * §2.2 puts that check here at the render boundary rather than in the document validator so it
+     * draws nothing instead of making the zine refuse to open.
      *
      * `null` is not an error path and not a fallthrough — the `when` below is exhaustive, so a fourth
      * element kind would still be a compile error here.
@@ -79,22 +84,48 @@ public object SceneRenderer {
                 localClip = box,
                 copier = copier,
             )
-            // ⚠ NOT A BUG, AND NOT AN OVERSIGHT — package P1 draws decor deliberately as nothing.
-            //
-            // The command that draws a supply is `DrawShape`. It now exists — package **P2** landed the
-            // type, `SupplyOutline` and `SupplyCatalog` — but nothing emits one yet: the remaining half
-            // is the unit-square fold (SUPPLIES-SPEC §3.4.1), `translate · rotate · scale(w,h) · mirror?`,
-            // and it lands with the replay arm as package **P3**, so the tape and the paint arrive
-            // together. P1's job was the *seam* — a DecorElement that round-trips, survives every
-            // reducer verb and reaches the a11y layer; P2's was the vocabulary the fold will speak.
-            //
-            // Emitting `null` rather than a placeholder command is the honest shape: a placeholder
-            // would have to invent geometry, and the tape is the thing all four surfaces (canvas,
-            // proof, PDF, PNG) share, so an invented command would be wrong in four places at once.
-            // When P3 lands, this arm returns a `DrawShape` and `toCommand`'s return type can go back
-            // to non-null.
-            is DecorElement -> null
+            // P3: a supply now emits. `null` survives here for exactly one reason — an **unauthored**
+            // `supplyId`. Twelve of the sixteen are still owed to a designer, and §2.2 rules that
+            // catalogue membership is checked at this boundary rather than in the document validator,
+            // precisely so an unknown id draws nothing instead of refusing to open the zine. A
+            // misspelled or newer-schema id lands here too, and takes the same silent-but-safe route.
+            is DecorElement -> SupplyCatalog.outlineOf(supplyId)?.let { outline ->
+                DrawShape(
+                    outline = outline,
+                    ink = ink,
+                    localToPage = unitSquareFold(localToPage, transform, mirrored),
+                )
+            }
         }
+    }
+
+    /**
+     * Reflection about the unit square's own vertical centre line, `x → 1 - x`
+     * (`translate(1,0) · scale(-1,1)`). Applied in **unit** space, i.e. innermost, so it mirrors the
+     * drawing rather than the placement: a mirrored supply occupies the identical page box.
+     */
+    private val MIRROR_X_IN_UNIT_SQUARE = AffineTransform2D(-1.0, 0.0, 0.0, 1.0, 1.0, 0.0)
+
+    /**
+     * The unit-square fold (SUPPLIES-SPEC §3.4.1) — the term [localToPage] alone cannot supply.
+     *
+     * `translate(x,y) · [T(c)·R(deg)·T(-c)] · scale(w,h) · mirror?`, right-to-left in application
+     * order: mirror the drawing, blow the unit square up to the element's box, then place and rotate
+     * it exactly as every other element is placed. Without the `scale` term a supply renders
+     * **1pt × 1pt** — [localToPage] is translate·rotate and carries no scale at all, which is the
+     * defect §3.4.1 was written about.
+     *
+     * The scale is **non-uniform** whenever `w != h`, and that is legal here: stretching tape is what
+     * tape does. Keeping a stamp square is an *editor* constraint (§3.4.1), never a render one — the
+     * tape stays dumb, so nothing below inspects the `supplyId` to decide.
+     */
+    private fun unitSquareFold(
+        localToPage: AffineTransform2D,
+        t: Transform,
+        mirrored: Boolean,
+    ): AffineTransform2D {
+        val scaled = localToPage.times(AffineTransform2D.scale(t.widthPt, t.heightPt))
+        return if (mirrored) scaled.times(MIRROR_X_IN_UNIT_SQUARE) else scaled
     }
 
     /** Page background wins; `None` falls back to the document default; `None`/`None` ⇒ no fill. */

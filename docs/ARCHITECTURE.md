@@ -652,10 +652,17 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    validation (`decor.supplyId.blank` / `.malformed` only — `:core:data` is Android-free and cannot
    see the catalogue), every reducer/a11y/context-bar seam, and a **documented no-op in
    `SceneRenderer`**.
-   **Not yet built:** the `DrawShape` command, `SupplyOutline`/`SupplyCatalog` in `:core:render`, the
-   `render-android` replay branch with its own anti-aliased `Paint`, the sixteen authored outlines,
-   and the Art sheet. Until those land a supply round-trips, moves, restacks and deletes — and
-   **draws nothing**. 🔭 The persistent *Supplies tray* is a separate, still-open question
+   **Built since (P2 + P3, 2026-08-16):** `DrawShape`, `SupplyOutline` and `SupplyCatalog` in
+   `:core:render`; `SceneRenderer` emitting the command through the §3.4.1 unit-square fold; and the
+   `render-android` replay branch with its own anti-aliased `Paint` and `Path.FillType.EVEN_ODD`. A supply
+   with an authored outline now **draws**, on preview, PNG and the imposed sheet — one replayer arm, four
+   surfaces.
+   **Still not built:** twelve of the sixteen authored outlines (only the `shape.*` family exists; the rest
+   need a designer), and the Art sheet. A supply with no authored outline draws nothing — `outlineOf()`
+   returns `null` at the render boundary, which is deliberately *not* a validation failure, so a document
+   made on a later build stays openable here.
+   ⚠ **The PDF surface is unproven rather than broken:** `PdfDocument` cannot run under Robolectric, so the
+   print half of the hole test has never executed. 🔭 The persistent *Supplies tray* is a separate, still-open question
    ([D-029](design/V2-SPEC-DEFECTS.md#d-029) Q1–Q3, sequenced at X2); the Art sheet places a supply
    straight onto the page, where the ordinary document rules already answer it.
 

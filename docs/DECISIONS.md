@@ -11082,6 +11082,70 @@ defect. It took driving a real Gallery share on hardware. The regression guard t
 (`ShareInboxTest`) asserts the *declaration*, not the behaviour, and says so: Robolectric does not simulate
 the task stack and never will reproduce this.
 
+#### Amendment (2026-08-16) — the Art sheet, and the ruling that a supply with no outline is *drawn, disabled, and explains itself*
+
+**The decision.** All sixteen supply tiles are drawn. The twelve with no authored outline are rendered
+**inert** — dim, shadow shed, not `clickable`, `stateDescription = "Not yet"` — rather than omitted.
+
+Three options were weighed and two rejected on stated grounds:
+
+- **Draw only the four authored.** Rejected: the freeze specifies sixteen under four family headings, so
+  dropping three families is the visual redesign DESIGN FREEZE forbids outright.
+- **Draw sixteen, all live.** Rejected, and this is the one worth remembering: `SceneRenderer` emits
+  nothing for an unauthored id, so tapping such a tile would place a **real, selectable, movable element
+  that paints no pixels**. That is the `0.9.0-beta.1` *"it lost my work"* failure in miniature — a screen
+  behaving exactly as specified while the honest reading from the maker's chair is that it broke.
+- **Draw sixteen, twelve inert.** Taken. The tile's picture is the *freeze's own* `SUP` depiction, which
+  amendment A5 explicitly separates from the authored outlines, so the glyph exists for all sixteen
+  independently of `SupplyCatalog`. **The `null` governs pickability, not the picture** — no null ever
+  reaches the screen as a blank tile.
+
+⚠ **This diverges from `BenchAddChooser`, deliberately and visibly.** That surface omits its Art row
+entirely — *absent, not disabled* — on the grounds that dead UI teaches a maker to expect something that
+does not exist. The distinguishing principle claimed here is that **the freeze specifies these sixteen
+tiles and specifies no Art-row obligation**: one is a control the spec draws, the other is a control the
+spec never promised. Recorded rather than smoothed over, because a codebase with two opposite answers to
+"how do we show what isn't built yet" needs to know it has them and why.
+
+The cost is booked as [D-086](design/V2-SPEC-DEFECTS.md#d-086): dimness is not spoken and
+`stateDescription` is not seen, so **a TalkBack user is currently better informed than a sighted one**.
+That is a Pass 2 question, raised before Pass 2 ran, and it is not answered here.
+
+**The sheet has no production call site, on purpose.** The Add chooser's Art row was not added, because
+there is no placement `Intent` yet — a row that opens a cabinet a maker cannot take anything out of is the
+dead UI the paragraph above is about. It lands with placement.
+
+#### Amendment (2026-08-16) — P3 armed the replayer, and what it proved versus what it asserted
+
+**The supplies draw.** `SceneRenderer` emits `DrawShape` for a `DecorElement` with an authored outline
+through the fold `translate(x,y) · [T(c)·R(deg)·T(-c)] · scale(w,h) · mirror?`, and `CanvasReplayer` paints
+it with a dedicated anti-aliased `Paint` and `Path.FillType.EVEN_ODD`. One arm, four surfaces — verified by
+grep that `CanvasReplayer`'s `when (command)` is the **only** exhaustive `DrawCommand` switch in the repo.
+
+**What separates this package from one that merely passes: every claim was attacked by mutation.** Six
+mutations, each reverted: the fill rule, the scale term, the composition order, the mirror's side, the
+shape paint's AA, and the shared `fillPaint`'s AA. Five turned something red. **The sixth did not** — the
+shared `fillPaint` could be flipped to anti-aliased with the entire unit suite staying green, because that
+half of the trade-off lived only in a *test name*. It now has an assertion, and that assertion was itself
+confirmed to fail under the mutation before being accepted.
+
+**The hole test catches less than its own comment claimed, and the correction is the lesson.** It was
+documented as failing on a missing scale fold and a wrong composition order. Mutation showed both left it
+green: it builds `localToPage` by hand and never routes through `SceneRenderer`, so the fold is not on its
+path. No coverage was missing — the **attribution** was wrong. Corrected in place rather than deleted,
+because the next person to touch the fold would otherwise have believed that test was watching them.
+
+**A test was passing for a false reason.** `DecorEmitsNothingTest` asserted decor emitted nothing while its
+fixture used `tape.torn` — one of the twelve *unauthored* supplies. It would have kept passing after the
+arm was armed, proving only that an outline nobody has drawn draws nothing. Replaced with
+`DecorUnauthoredSupplyTest`, which now interleaves an authored supply and asserts it lands at its own z.
+*A green test whose stated rationale is false is worse than a missing one: it occupies the space where the
+real test would have gone.*
+
+**The print surface is unproven, and is recorded as such.** `PdfDocument` does not run under Robolectric,
+so the PDF twin of the hole test is compile-checked and has never executed. Together with the photocopier's
+print pass, that is now the second claim in this system that only hardware can close.
+
 #### Amendment (2026-08-16) — what P2 settled, and the one edge it needs sanctioned
 
 **A test-only `:core:render` → `:core:copy` dependency is sanctioned.** `SupplyCatalog`'s tests cross-check
