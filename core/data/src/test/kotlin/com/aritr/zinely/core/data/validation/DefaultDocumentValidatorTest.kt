@@ -4,6 +4,7 @@ import com.aritr.zinely.core.model.Background
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.Crop
 import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
@@ -48,7 +49,71 @@ class DefaultDocumentValidatorTest {
         return ZineDocument(format = ZineFormat.SINGLE_SHEET_8, paperSize = PaperSize.LETTER, pages = pages)
     }
 
+    private fun decor(id: String, supplyId: String = "tape.torn") =
+        DecorElement(id = id, transform = unitTransform(), supplyId = supplyId, ink = ColorRgba(1, 2, 3))
+
     private fun codes(doc: ZineDocument): List<String> = validator.validate(doc).issues.map { it.code }
+
+    // — decor (SUPPLIES-SPEC §2.2): exactly two rules, and the absences are as load-bearing as the rules —
+
+    @Test
+    fun `given a well-formed supplyId, when validating, then a decor element raises no issue`() {
+        val result = validator.validate(validDocument(listOf(decor("dec-0"))))
+        assertTrue(result.isValid, result.issues.toString())
+        assertTrue(result.issues.isEmpty(), result.issues.toString())
+    }
+
+    @Test
+    fun `given a blank supplyId, when validating, then decor supplyId blank is an error`() {
+        val issues = validator.validate(validDocument(listOf(decor("dec-0", supplyId = "   ")))).issues
+        val issue = issues.single { it.code == "decor.supplyId.blank" }
+        assertEquals(Severity.ERROR, issue.severity)
+        assertEquals("pages[0].elements[0].supplyId", issue.path)
+        // Blank must not ALSO trip the regex rule — one defect, one issue.
+        assertFalse(issues.any { it.code == "decor.supplyId.malformed" }, issues.toString())
+    }
+
+    @Test
+    fun `given a supplyId that is not lowercase family dot name, when validating, then it is malformed`() {
+        // No dot; two dots; uppercase; digits; leading dot — every one must be refused.
+        listOf("tape", "tape.torn.extra", "Tape.torn", "tape.torn2", ".torn", "tape.").forEach { bad ->
+            val codes = codes(validDocument(listOf(decor("dec-0", supplyId = bad))))
+            assertTrue(codes.contains("decor.supplyId.malformed"), "'$bad' should be malformed, got $codes")
+        }
+    }
+
+    @Test
+    fun `an unknown-but-well-formed supplyId and an off-palette ink are deliberately NOT rejected`() {
+        // The §2.2 ruling: `:core:data` is Android-free and model-only, so it cannot see `SupplyCatalog`
+        // (`:core:render`) or the ink palette (`:core:ui`). An unknown supply renders as nothing and is
+        // reported by the editor; an off-palette ink renders correctly. Refusing to OPEN the zine over
+        // either would be the worse harm. If this test ever fails, a layering violation was added.
+        val exotic = DecorElement(
+            id = "dec-0",
+            transform = unitTransform(),
+            supplyId = "notafamily.notasupply",
+            ink = ColorRgba(17, 200, 99, 128),
+        )
+        assertTrue(validator.validate(validDocument(listOf(exotic))).isValid)
+    }
+
+    @Test
+    fun `decor is subject to the shared element rules - blank id and non-positive geometry`() {
+        val codes = codes(
+            validDocument(
+                listOf(
+                    DecorElement(
+                        id = "  ",
+                        transform = Transform(0.0, 0.0, 0.0, 10.0),
+                        supplyId = "tape.torn",
+                        ink = ColorRgba.BLACK,
+                    ),
+                ),
+            ),
+        )
+        assertTrue(codes.contains("element.id.blank"), codes.toString())
+        assertTrue(codes.contains("transform.size.nonPositive"), codes.toString())
+    }
 
     @Test
     fun `a structurally sound document is valid with no issues`() {

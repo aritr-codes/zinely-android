@@ -46,6 +46,21 @@ public data class AffineTransform2D(
             AffineTransform2D(1.0, 0.0, 0.0, 1.0, tx, ty)
 
         /**
+         * Scale about the origin, **non-uniformly** when `sx != sy`.
+         *
+         * Added for the supplies fold (SUPPLIES-SPEC §3.4.1): a supply outline is authored in a unit
+         * square, so without a scale term in `localToPage` every supply would render 1pt × 1pt. The
+         * fold is `translate(x,y) · [T(c)·R(deg)·T(-c)] · scale(w,h) · mirror?`, and `w != h` in
+         * general — which is why this takes two factors and not one.
+         *
+         * Uniformity is an **editor** constraint, not a render one: `mark.*` and `shape.circle` are
+         * constrained to uniform scale by the editor, while tape and cut paper stretch freely, because
+         * stretching tape is what tape does. Nothing here enforces that — the tape stays dumb.
+         */
+        public fun scale(sx: Double, sy: Double): AffineTransform2D =
+            AffineTransform2D(sx, 0.0, 0.0, sy, 0.0, 0.0)
+
+        /**
          * An **exact** 180° rotation about `(cx, cy)`: `(x, y) → (2cx - x, 2cy - y)`.
          * Exact (no trigonometric residue) because the imposition only ever needs half-turns;
          * this keeps panel transforms deterministic and round-trip-clean.

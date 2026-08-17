@@ -11,6 +11,9 @@ import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.render.DrawImage
 import com.aritr.zinely.core.render.ImageBlit
 import com.aritr.zinely.core.render.computeImageBlit
+import com.aritr.zinely.core.render.COPIER_DOTS_PER_POINT
+import com.aritr.zinely.core.render.copierGridSize
+import com.aritr.zinely.core.render.photocopy
 import kotlin.math.roundToInt
 
 /**
@@ -31,6 +34,13 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
     private val imagePaint = Paint().apply {
         isAntiAlias = true
         isFilterBitmap = true
+        isDither = false
+    }
+
+    /** Photocopier paint: every smoothing switch **off**, so a dithered dot magnifies to a hard dot. */
+    private val copierPaint = Paint().apply {
+        isAntiAlias = false
+        isFilterBitmap = false
         isDither = false
     }
 
@@ -55,16 +65,63 @@ public class ImageBlitter(private val assetBytes: AssetBytesSource) {
             boxWidthPt = command.box.width,
             boxHeightPt = command.box.height,
         )
-        val bitmap = decodeVisibleRegion(command.assetId, intrinsicW, intrinsicH, blit, decodePxPerPt, localScale)
+        // ⚠ A copier photo decodes at the FILTER's density, not the surface's — this line is what makes
+        // preview == export true rather than nearly true. Review found the first version broken here: with
+        // the surface density, the editor (screen px/pt) and the exporter (300/72) fed the dither two
+        // differently-resampled sets of pixels, and error diffusion turns any difference into a different
+        // dot pattern. Pinning the decode to `COPIER_DOTS_PER_POINT` makes `inSampleSizeFor` a function of
+        // the master and the page alone, so both surfaces dither byte-identical input. It also stops the
+        // export path decoding at 300dpi only to throw most of it away.
+        val decodeDensity = if (command.copier) COPIER_DOTS_PER_POINT else decodePxPerPt
+        val bitmap = decodeVisibleRegion(command.assetId, intrinsicW, intrinsicH, blit, decodeDensity, localScale)
         if (bitmap == null) {
             drawPlaceholder(canvas, command.box)
             return
         }
+        val drawn = if (command.copier) photocopied(bitmap, blit, localScale) else bitmap
         try {
-            canvas.drawBitmap(bitmap, null, blit.destRect.toRectF(), imagePaint)
+            // Filtering off is right when the dot grid is being MAGNIFIED and wrong when it is being
+            // minified — a page thumbnail draws a ~300-dot halftone into ~30px, where nearest-neighbour
+            // is moiré and nothing else (review finding). So the hard-dot paint is used only when the
+            // destination has at least a device pixel per dot.
+            val destPx = blit.destRect.width * decodePxPerPt * localScale
+            val hardDots = command.copier && drawn.width <= destPx
+            canvas.drawBitmap(drawn, null, blit.destRect.toRectF(), if (hardDots) copierPaint else imagePaint)
         } finally {
-            bitmap.recycle()
+            drawn.recycle()
+            if (drawn !== bitmap) bitmap.recycle()
         }
+    }
+
+    /**
+     * The photocopier filter (X3b, ADR-106) — the **only** Android half of it: resample to the pure
+     * dot grid, hand the pixels to [photocopy], hand back a 1-bit-valued bitmap. All of the algorithm
+     * and all of the sizing law live in `:core:render`.
+     *
+     * The grid comes from `destRect × localScale` in **page points**, never from the decoded bitmap,
+     * which is what makes the editor's dots and the exporter's dots the same physical size (ADR-006).
+     * The magnification back up to `destRect` is left to `drawBitmap` under [copierPaint], whose
+     * filtering is off — a bilinear magnify would grey the dots back into the halftone's opposite.
+     *
+     * Falls back to the unfiltered bitmap if allocation fails, because a photo is better than a hole.
+     */
+    private fun photocopied(source: Bitmap, blit: ImageBlit, localScale: Double): Bitmap {
+        val gridW = copierGridSize(blit.destRect.width * localScale, source.width)
+        val gridH = copierGridSize(blit.destRect.height * localScale, source.height)
+        // `runCatching` here deliberately catches Error too, OutOfMemoryError included: a second full-size
+        // allocation is exactly where a low-memory device gives out, and an unfiltered photo is a better
+        // answer than a crashed export. The one place this file bends "never swallow", and it says so.
+        return runCatching {
+            val small = Bitmap.createScaledBitmap(source, gridW, gridH, true)
+            val pixels = try {
+                IntArray(gridW * gridH).also { small.getPixels(it, 0, gridW, 0, 0, gridW, gridH) }
+            } finally {
+                // `finally`, not a trailing call: `createScaledBitmap` returns `source` itself when no
+                // scaling is needed, and a throw inside getPixels would otherwise leak the copy.
+                if (small !== source) small.recycle()
+            }
+            Bitmap.createBitmap(photocopy(pixels, gridW, gridH), gridW, gridH, Bitmap.Config.ARGB_8888)
+        }.getOrDefault(source)
     }
 
     /**

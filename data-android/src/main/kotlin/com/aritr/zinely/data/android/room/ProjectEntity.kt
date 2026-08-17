@@ -21,4 +21,12 @@ internal data class ProjectEntity(
     val createdAtEpochMs: Long,
     val updatedAtEpochMs: Long,
     val documentSchemaVersion: Int,
+    /**
+     * The persisted cover, by enum name, mirroring `meta.json` (schema v2, B5). Nullable because the
+     * v1→v2 migration adds the columns to rows that predate them — those projects are **legacy** and
+     * are assigned a cover on first presentation ([D-026](docs/design/V2-SPEC-DEFECTS.md#d-026-ruling)).
+     * Like every column here this is index, not authority: the sidecar wins on disagreement.
+     */
+    val coverSurface: String? = null,
+    val coverStamp: String? = null,
 )

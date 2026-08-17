@@ -15,12 +15,15 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.render.android.SelectionChromeGeometry
 import kotlin.math.max
 import kotlin.math.min
@@ -48,12 +51,22 @@ public const val ElementNodeTagPrefix: String = "element-node-"
  * @param uiState the history-free editor projection (current page, selection, view scale/offset).
  * @param dispatch forwards an [Intent] into the store.
  * @param modifier sized identically to the sibling [PagePreview] so node device-px bounds align.
+ * @param onDelete the host's delete verb. Defaults to a bare `Intent.Delete`, which is what every caller
+ *   outside the editor screen wants; the screen passes its **soft** delete so the accessibility path is
+ *   reversible on exactly the same terms as the visible one.
+ * @param pageSizePt the page's size in points. Supplied, an element whose drawn extent leaves the printer's
+ *   reach carries [Copy.A11y.OUTSIDE_PRINT_REACH] as its spoken **state** — the non-visual twin of
+ *   `BenchKeepClear`, added by [OD-49](../DECISIONS.md#adr-102-p2c) after a device pass found that the
+ *   accessible way to move an element was the one way the crossing was never reported. `null` (the
+ *   default) keeps every existing caller's semantics byte-identical.
  */
 @Composable
 public fun ElementSemanticsLayer(
     uiState: EditorUiState,
     dispatch: (Intent) -> Unit,
     modifier: Modifier = Modifier,
+    onDelete: (String) -> Unit = { dispatch(Intent.Delete(setOf(it))) },
+    pageSizePt: PtSize? = null,
 ) {
     val page = uiState.document.pages[uiState.currentPageIndex]
     val screenPxPerPt = uiState.view.screenPxPerPt.toDouble()
@@ -77,8 +90,14 @@ public fun ElementSemanticsLayer(
             val hDp = with(density) { hPx.toDp() }
 
             val selected = element.id in uiState.selection
-            val actions = EditorA11y.elementCustomActions(element, dispatch)
+            val actions = EditorA11y.elementCustomActions(element, dispatch, onDelete)
             val description = EditorA11y.label(element)
+            // The same geometry the visible warning uses — one helper, so the spoken answer and the drawn
+            // one cannot disagree about a rotated photo's corner. Stated for **every** element, not only
+            // the selected one: a maker exploring the page by touch should learn that a box is off the
+            // edge without having to select it first, and unlike the mark this costs no ink.
+            val outsideReach = pageSizePt != null &&
+                BenchStudio.crossesKeepClear(element.transform, pageSizePt)
 
             // Semantics-ONLY (no clickable/selectable): the node must not consume pointer input, or it
             // would steal taps/drags from the page gesture layer beneath it. TalkBack still focuses and
@@ -92,6 +111,10 @@ public fun ElementSemanticsLayer(
                         contentDescription = description
                         role = Role.Button
                         this.selected = selected
+                        // Carries the selection word with it — see [Copy.A11y.outsidePrintReachState]. An
+                        // explicit state description REPLACES the platform's own, and for `Role.Button`
+                        // that fallback is the only way `selected` is spoken at all.
+                        if (outsideReach) stateDescription = Copy.A11y.outsidePrintReachState(selected)
                         traversalIndex = index.toFloat()
                         onClick(label = "Select") { dispatch(Intent.Select(element.id)); true }
                         customActions = actions

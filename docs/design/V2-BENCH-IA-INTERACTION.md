@@ -1,5 +1,17 @@
 # V2-BENCH-IA-INTERACTION.md — the Bench: information architecture, journeys & interaction model
 
+> ### ⚠ AMENDED 2026-08-15 — the Art surface is bundled-only
+>
+> Where this document specifies the Art surface as **"search field spanning bundled + online"** with an online privacy
+> seam (keyword only, downloads joining Recent), that capability is **withdrawn** by
+> [ADR-104](../DECISIONS.md#adr-104) / [Constitution Amendment 3](V2-CONSTITUTION.md#amendment-log).
+>
+> **The Art surface is now:** ~16 authored supplies in four families — *Tape & fixings · Stamps & marks · Cut paper ·
+> Cut shapes* — browsed rather than searched, tinted from the five named inks, mirrored, scaled, rotated and layered.
+> No search field, no online panel, no downloads. The **Recent + ⭐ favourites** rail survives as specified.
+>
+> Everything else in this document stands. Read the online-search passages as history.
+
 > **Status:** Phases **4** (information architecture), **6** (user journeys) and **7** (interaction model)
 > of the [Bench initiative](V2-BENCH-RESEARCH.md). Inherits the [principles & editing philosophy](V2-BENCH-PRINCIPLES.md)
 > ([BP-n]/[EP-n]), the [research](V2-BENCH-RESEARCH.md) ([BR§n]) and the [critique](V2-BENCH-CRITIQUE.md)

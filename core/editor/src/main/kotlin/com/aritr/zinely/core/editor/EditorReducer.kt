@@ -1,6 +1,7 @@
 package com.aritr.zinely.core.editor
 
 import com.aritr.zinely.core.model.Crop
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Fit
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
@@ -13,6 +14,28 @@ import com.aritr.zinely.core.model.Transform
  * The pure MVI reducer (ADR-029 §2). `reduce(model, intent)` is total, synchronous, and side-effect-free:
  * I/O is **returned** as [Effect]s (autosave, image decode, a11y announce), never performed. Determinism is
  * preserved without a clock/RNG — element ids and session tokens both draw from [EditorModel.nextToken].
+ *
+ * ### How [com.aritr.zinely.core.model.DecorElement] routes through here (ADR-105 / SUPPLIES-SPEC §2)
+ *
+ * This file carries **ten** type-switch sites — the largest concentration in the codebase, and the one
+ * SUPPLIES-SPEC §10 omits from both S2′ and S7′ (corrected by
+ * [D-029's 2026-08-16 ruling](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16)).
+ * Only one of them is an exhaustive `when` (the `DoubleTapAt` seam); the other nine are `as?` casts, so
+ * **the compiler would not have found them.** They fall into two groups, and the split is the invariant:
+ *
+ * - **Type-agnostic verbs — decor is a first-class citizen.** `Nudge`, `ScaleBy`, `RotateBy`,
+ *   `BeginTransform`/`CommitTransform`, `Reorder`, `Delete` and undo/redo never name an element type;
+ *   they go through `Element.withTransform` / `Element.withZIndex` ([Elements.kt]), whose exhaustive
+ *   `when`s gained real decor arms. A supply moves, resizes, rotates, restacks, deletes and undoes
+ *   exactly as a photo does.
+ * - **Type-specific verbs — decor is a silent no-op, and that is correct.** `StyleText`,
+ *   `BeginEditText`/`CommitText`, `ReplaceImage`, `ResetFraming`, `ToggleCopier`, `BeginReframe` each
+ *   resolve their target with `as? TextElement` / `as? ImageElement`, so a decor id yields `null` and
+ *   the existing "absent ⇒ no-op" branch runs. These are left as casts on purpose: adding a decor arm
+ *   would mean inventing a behaviour the spec does not give them.
+ *
+ * Decor's own verbs — Replace supply and Change ink (SUPPLIES-SPEC §8) — are **not** in this reducer
+ * yet; they arrive with the Art sheet (S7). Nothing here pretends otherwise.
  */
 public object EditorReducer {
 
@@ -66,7 +89,12 @@ public object EditorReducer {
             ?.let { id -> currentPage(model).elements.firstOrNull { it.id == id } }) {
             is TextElement -> openTextSession(model, hit.id)
             is ImageElement -> openReframeSession(model, hit.id)
-            else -> Reduction(model) // empty space / unknown ⇒ no-op
+            // Named, not left to the `else`: a supply has nothing inside it to open — no text to edit and
+            // no framing to adjust — so double-tap on decor is a **deliberate** no-op, not an unhandled
+            // case. (`Replace supply` is a sheet, not an in-place session; SUPPLIES-SPEC §7/S7.) The arm
+            // exists so the next reader sees a decision rather than a fallthrough.
+            is DecorElement -> Reduction(model)
+            else -> Reduction(model) // empty space (null hit) ⇒ no-op
         }
 
         // — image reframe: begin/commit/cancel session + replace/reset one-shots (ADR-053) —
@@ -105,6 +133,13 @@ public object EditorReducer {
             val reset = el?.copy(crop = Crop.FULL, fit = Fit.FILL)
             if (el == null || reset == el) Reduction(model) // absent or already at default ⇒ no-op
             else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, reset!!))
+        }
+        is Intent.ToggleCopier -> {
+            val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? ImageElement
+            // One undoable command, and its own inverse — the filter is a flag, so "turn it off" is the
+            // same edit run again (ADR-106). A missing id or a text element is a no-op, never a throw.
+            if (el == null) Reduction(model)
+            else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, el.copy(copier = !el.copier)))
         }
 
         // — transform: begin/commit/cancel + a11y twins —
@@ -329,7 +364,19 @@ public object EditorReducer {
         val target = cmd.touchedPageIndex()?.coerceIn(0, doc.pages.lastIndex)
         val nav = target != null && target != model.currentPageIndex
         // Undoing a page delete restores the selection that page carried (Codex required-fix #8).
-        val selection = if (!redo && cmd is DeletePageCommand) cmd.priorSelection else model.selection
+        val carried = if (!redo && cmd is DeletePageCommand) cmd.priorSelection else model.selection
+        // ...but a selection may not outlive the element it points at. Undoing a *placement* removes the
+        // element the placement auto-selected, and carrying the id forward left the editor holding a
+        // selection of nothing: the frozen bar hid (it resolves the element and finds none) while the
+        // transform bar still offered Delete, and the model still read `Selected` where the freeze's own
+        // `undo()` captions `Rest` (`v2-bench.html:721`). Found by C9's return-to-Rest invariant, which is
+        // the cross-package kind of defect no single package's review was scoped to see.
+        //
+        // Filtered against the whole document rather than the current page: element ids are unique, page
+        // changes clear the selection anyway (`leavePage`), and an undo that navigates has already moved
+        // `currentPageIndex` by the time this is read.
+        val liveIds = doc.pages.asSequence().flatMap { it.elements.asSequence() }.map { it.id }.toSet()
+        val selection = carried.intersect(liveIds)
         val next = model.copy(
             document = doc,
             history = history,

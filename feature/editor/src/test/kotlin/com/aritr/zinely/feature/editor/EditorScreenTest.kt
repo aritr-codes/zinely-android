@@ -6,17 +6,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.click
 import androidx.compose.ui.unit.dp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -24,6 +33,7 @@ import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +46,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
@@ -53,6 +64,23 @@ class EditorScreenTest {
 
     private val scope = CoroutineScope(Dispatchers.Unconfined)
     private val pageSizePt = PtSize(100.0, 100.0)
+
+    /**
+     * A text box the frozen pan leaves **fully on screen**, for the tests that assert the C3 in-place
+     * editing surface is visible.
+     *
+     * On this host the canvas is ~132dp for a 100pt page (**1.32 dp/pt**). The arithmetic below was written
+     * when the pan was an unconditional 96dp: only page-space y ≳ 73pt survived it, and 76–94pt landed at
+     * 4–28dp. An earlier cut used 55pt, which left a ~3dp sliver on screen — `assertIsDisplayed` passes on
+     * any non-empty intersection, so that assertion would have been decoration.
+     *
+     * Since [OD-16](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-043-ruling) the pan is clamped to
+     * the slack above the page, which on this host is **0**, so nothing is lifted here at all and this box is
+     * visible by a wider margin than the arithmetic claims. The position is kept, not relaxed: it is what
+     * makes these tests independent of the clamp, so they still say what they said if the clamp regresses.
+     * [a_top_of_page_element_stays_in_view_while_it_is_edited] below is the row that pins the clamp itself.
+     */
+    private val midPageTextBox = Transform(20.0, 76.0, 20.0, 18.0)
 
     private fun store(): EditorStore {
         val runner = object : EditorEffectRunner {
@@ -292,7 +320,12 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         assertTrue(store.uiState.value.document.pages[0].elements.isEmpty())
 
-        composeRule.onNodeWithTag(SupplyAddWordsTag).performClick()
+        // C4 (OD-21): `Add words` is now a row in the frozen chooser rather than a shelf card. The
+        // destination is unchanged — OD-21 requires `addTextAndEdit` by name — so what this test proves
+        // is unchanged too: the box arrives AND the C3 session opens on it, in one tap of Text.
+        composeRule.onNodeWithTag(BenchBarAddTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchAddChooserTextTag).performClick()
         composeRule.waitForIdle()
 
         val page = store.uiState.value.document.pages[0]
@@ -303,26 +336,25 @@ class EditorScreenTest {
     }
 
     @Test
-    fun on_a_blank_page_the_add_actions_are_not_duplicated_the_tray_owns_them() {
-        // ADR-033 de-dup: a blank page raises the invitation overlay AND the persistent tray. The overlay
-        // is invitation-only (no buttons), so each add action exists exactly once on screen — in the tray
-        // (the thumb-zone home, DESIGN-RULES 3/7). Guards against re-adding buttons to the empty state.
+    fun on_a_blank_page_the_add_actions_are_not_duplicated_the_bar_owns_them() {
+        // ADR-033's de-dup, restated for C4's bar (ADR-094 row 4.7). A blank page raises the invitation
+        // overlay AND the persistent bar. The overlay is invitation-only, so the add affordance exists
+        // exactly once on screen — and after OD-21 that affordance is one `Add`, not two cards. Guards
+        // against re-adding buttons to the empty state, and against the bar drawing a second add verb.
         val store = store()
         setScreen(store)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorEmptyStateTestTag).assertIsDisplayed()
 
-        // Exactly one "Add a photo" / "Add words" affordance — the tray's, not a second in the overlay.
+        // Exactly one add affordance — the bar's — and the chooser's rows are not on screen until it
+        // is pressed, so the empty state cannot be reading as a second place to add something.
         assertTrue(
-            composeRule.onAllNodesWithText(AddPhotoActionLabel, substring = true, useUnmergedTree = true)
+            composeRule.onAllNodesWithText(AddActionLabel, substring = true, useUnmergedTree = true)
                 .fetchSemanticsNodes().size == 1,
         )
-        assertTrue(
-            composeRule.onAllNodesWithText(AddWordsActionLabel, substring = true, useUnmergedTree = true)
-                .fetchSemanticsNodes().size == 1,
-        )
-        composeRule.onNodeWithTag(SupplyAddPhotoTag).assertIsDisplayed()
-        composeRule.onNodeWithTag(SupplyAddWordsTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchBarAddTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchAddChooserTextTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchAddChooserPhotoTag).assertDoesNotExist()
     }
 
     @Test
@@ -449,8 +481,13 @@ class EditorScreenTest {
     @Test
     fun opening_a_text_session_replaces_the_hint_with_the_edit_overlay() {
         // The hint never blocks editing: opening a text session yields the hint and raises the overlay.
+        //
+        // C3: the editing surface is now in place ON the element (ADR-093 row 3.8), so this test's box has
+        // to sit where the frozen −96dp pan does not carry it off the top of the canvas — see
+        // [midPageTextBox] and D-043. The box's position was arbitrary before and is deliberate now; what
+        // is asserted is unchanged and still `assertIsDisplayed`.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi"))
         val id = store.uiState.value.selection.single()
         setScreen(store)
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
@@ -468,7 +505,7 @@ class EditorScreenTest {
         val store = store()
         setScreen(store, savedSignals = MutableSharedFlow())
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
     }
 
     @Test
@@ -480,12 +517,12 @@ class EditorScreenTest {
         composeRule.mainClock.autoAdvance = false
         setScreen(store, savedSignals = signals)
         composeRule.waitForIdle() // the collector is now subscribed (replay=0 SharedFlow)
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
 
         signals.tryEmit(Unit)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
     }
 
     @Test
@@ -501,20 +538,34 @@ class EditorScreenTest {
         signals.tryEmit(Unit)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
 
-        // Past the visible window + the fade-out: the chip removes itself.
-        composeRule.mainClock.advanceTimeBy(SavedConfirmationVisibleMs + 1000L)
+        // Still up at 1500ms — a 400ms window would be long gone. Literal, not `SavedConfirmationVisibleMs`:
+        // advancing by the constant under test cannot see a change to it, and the mutation 1600 → 400
+        // survived this test until these two literals replaced it.
+        composeRule.mainClock.advanceTimeBy(1500L)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+
+        // Past the visible window + the .4s fade-out: the chip removes itself.
+        composeRule.mainClock.advanceTimeBy(700L)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
     }
 
     @Test
-    fun the_saved_confirmation_yields_while_the_move_resize_hint_is_visible() {
-        // Competing-chrome guard (Codex review #2): placing the first element BOTH selects it (raising the
-        // move/resize hint at TopCenter, up to 320dp wide) and autosaves. On a narrow canvas a TopEnd
-        // "Saved" chip would overlap the centered hint, so the chip yields — the teaching hint wins, the
-        // chip simply skips that window.
+    fun the_saved_chip_and_the_move_resize_hint_coexist_without_overlapping() {
+        // The competing-chrome guard (Codex review #2) restated for C4. Its original form was a *yield*:
+        // placing the first element BOTH selects it (raising the move/resize hint at TopCenter, up to
+        // 320dp wide) and autosaves, and a TopEnd chip floating over a narrow canvas would have landed on
+        // top of the centered hint — so the chip skipped that window entirely.
+        //
+        // C4 moves the chip off the canvas: the freeze puts `.saved` inside `.status`
+        // (`v2-bench.html:190-192`, markup `:390`), which sits above `.canvasArea`. The two surfaces can
+        // no longer occupy the same pixels, so withholding the reassurance would now be a silent loss of
+        // a shipped capability - exactly what OD-11 forbids - rather than a collision fix. The guard
+        // therefore becomes what it was always protecting: **they do not overlap**. Recorded as a
+        // deviation in ADR-094 row 4.10 rather than left to this comment.
         val signals = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
         val store = store()
         store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects → hint
@@ -526,8 +577,15 @@ class EditorScreenTest {
         signals.tryEmit(Unit)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        // Save fired, but the chip stays hidden because the hint owns the top of the canvas.
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+
+        val chip = composeRule.onNodeWithTag(BenchSavedChipTestTag).fetchSemanticsNode().boundsInRoot
+        val hint = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).fetchSemanticsNode().boundsInRoot
+        assertTrue(
+            "the chip must clear the teaching hint, not sit on it: chip=$chip hint=$hint",
+            chip.bottom <= hint.top || hint.bottom <= chip.top ||
+                chip.right <= hint.left || hint.right <= chip.left,
+        )
     }
 
     @Test
@@ -576,7 +634,7 @@ class EditorScreenTest {
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
         // A save was "scheduled", but with a failure on record the chip stays hidden; the banner shows.
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
     }
 
@@ -620,13 +678,13 @@ class EditorScreenTest {
         signals.tryEmit(Unit)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
 
         // A failure appears mid-window: chip yields to the banner (past its fade-out).
         errorVisible.value = true
         composeRule.mainClock.advanceTimeBy(500L)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
 
         // Dismiss the failure while the original 1600ms window would still be open: the chip must stay
@@ -634,7 +692,7 @@ class EditorScreenTest {
         errorVisible.value = false
         composeRule.mainClock.advanceTimeBy(500L)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(EditorSavedConfirmationTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertDoesNotExist()
     }
 
     @Test
@@ -653,14 +711,42 @@ class EditorScreenTest {
 
     @Test
     fun an_open_text_session_raises_the_edit_overlay() {
+        // Mid-page for the same reason as above: C3 edits in place, and the frozen pan is a real −96dp.
         val store = store()
-        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        store.dispatch(Intent.PlaceText(midPageTextBox, "hi"))
         val id = store.uiState.value.selection.single()
         setScreen(store)
         composeRule.onNodeWithTag(EditTextSessionTestTag).assertDoesNotExist()
 
         store.dispatch(Intent.BeginEditText(id))
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun a_top_of_page_element_stays_in_view_while_it_is_edited() {
+        // **This test used to assert the opposite, and the inversion is the record of D-043's remedy.**
+        //
+        // Until 2026-08-03 it was `the_frozen_pan_lifts_a_top_of_page_element_out_of_view`, and it passed:
+        // the frozen `edit()` panned a literal −96dp (ADR-093 row 3.1), which the prototype can afford
+        // because its 324px page sits inside a taller canvas with slack above it, and the shipped page —
+        // *contained* in the canvas — has almost none. A box near the page top was carried off the screen
+        // by the gesture meant to reveal it, and the assertion was `assertIsNotDisplayed`: evidence, not
+        // approval. It is what D-043 rested on.
+        //
+        // [OD-16](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-043-ruling) made −96 a **maximum**
+        // spent as `slack + clearance`. A box this high needs no clearance, so the lift collapses to the
+        // slack and cannot take the element out of the canvas. Same box, same host, opposite outcome —
+        // which is exactly how a defect's closure should read in the suite that found it.
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        val id = store.uiState.value.selection.single()
+        setScreen(store)
+
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(EditTextSessionTestTag).assertExists()
         composeRule.onNodeWithTag(EditTextSessionTestTag).assertIsDisplayed()
     }
 
@@ -707,5 +793,232 @@ class EditorScreenTest {
 
         composeRule.onNodeWithTag(EditorSaveFailureTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(EditorCoverageNoticeTestTag).assertDoesNotExist()
+    }
+
+    // ── C2b — the frozen `.ctx` verb bar, as assembled (ADR-092) ───────────────────────────────────
+
+    private fun selectedText(): EditorStore = store().also {
+        it.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "Hi"))
+    }
+
+    @Test
+    fun the_verb_bar_follows_the_selection_and_yields_to_an_open_session() {
+        val store = selectedText()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertIsDisplayed()
+
+        // ADR-092 §3: the freeze itself hides `.ctx` while a session owns the element (v2-bench.html:582).
+        store.dispatch(Intent.BeginEditText(store.uiState.value.selection.single()))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertDoesNotExist()
+    }
+
+    /**
+     * The one that would have caught it.
+     *
+     * The verb bar floats at the canvas's bottom edge, so it is composed **inside** [BenchSheetIsland] —
+     * and the island re-declares eight tokens from the light palette, `ink` among them, so that the
+     * artifact does not dim at night (D-035/OD-12). The bar took that light `ink` while keeping the room's
+     * dark `--sheet` for its own fill: dark ink on a dark card, measured at **1.05:1** on a device. Every
+     * unit test passed, because Robolectric's default qualifiers are the *light* palette, where the two
+     * sources happen to agree. Only `qualifiers = "night"` can tell them apart.
+     *
+     * Asserted as contrast rather than as a colour, because the defect is not "the wrong token" — it is
+     * "a control the user cannot see", and that is what should fail.
+     */
+    @Test
+    @Config(qualifiers = "night")
+    fun the_verb_bar_is_legible_at_night() {
+        setScreen(selectedText())
+        composeRule.waitForIdle()
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
+
+        // The bar's own fill, taken from a gap between two verbs rather than from a glyph.
+        val fill = bmp.getPixel(bar.left.toInt() + 2, bar.center.y.toInt())
+        val edit = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}")
+            .fetchSemanticsNode().boundsInWindow
+        var widest = 0
+        for (y in edit.top.toInt() + 2 until edit.bottom.toInt() - 2) {
+            for (x in edit.left.toInt() + 2 until edit.right.toInt() - 2) {
+                val p = bmp.getPixel(x, y)
+                val d = listOf(0, 8, 16).sumOf { s ->
+                    kotlin.math.abs(((p shr s) and 0xFF) - ((fill shr s) and 0xFF))
+                }
+                if (d > widest) widest = d
+            }
+        }
+        // The defect measured 7 across all three channels combined. Correct dark theme is cream on near
+        // black — several hundred. 150 sits far from both, so this is not a threshold tuned to today's
+        // pixels; it is the gap between "readable" and "not drawn at all".
+        assertTrue("the verb label must be legible against the bar it sits on (was $widest)", widest > 150)
+    }
+
+    /**
+     * The second one the device found, and the one no single package could have predicted.
+     *
+     * C2a made a tap outside the selection dismiss it (OD-13); C2b floated a card over the canvas. Their
+     * intersection is the card's own dead space — 8dp of padding and 6dp between each pair of verbs —
+     * which passed the tap straight through to the canvas underneath. Aiming at the toolbar and missing by
+     * three density-independent pixels therefore deselected the element and took the toolbar away with it:
+     * measured on hardware, four times out of four. Neither package is wrong on its own, which is exactly
+     * why this is asserted at the assembly and not in either component's own suite.
+     */
+    @Test
+    fun a_tap_that_lands_on_the_bar_but_misses_a_verb_keeps_the_selection() {
+        val store = selectedText()
+        setScreen(store)
+        composeRule.waitForIdle()
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        val edit = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}")
+            .fetchSemanticsNode().boundsInWindow
+        // The card's top-left padding: inside the bar, above and left of the first verb — the frozen 8dp.
+        val x = ((bar.left + edit.left) / 2f) - bar.left
+        val y = ((bar.top + edit.top) / 2f) - bar.top
+        composeRule.onNodeWithTag(BenchContextBarTestTag).performTouchInput { click(Offset(x, y)) }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        assertEquals(1, store.uiState.value.selection.size)
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.EDIT}").assertExists()
+    }
+
+    // ── D-039 — one capability, one visible presentation at a time ─────────────────────────────────
+
+    /**
+     * The assertion that replaced its own opposite.
+     *
+     * C2b shipped with a test that *pinned* two `Delete` controls as the priced cost of OD-11's additive,
+     * and device Pass 2 found that price too high: the same verb offered twice on one screen reads as a
+     * malfunction to a first-time user. The owner's D-039 ruling keeps both bars and assigns them
+     * responsibilities instead — element verbs to the frozen bar, transform verbs to the shipped one — so
+     * the count that used to be 2 must now be exactly 1.
+     */
+    @Test
+    fun only_one_control_offers_Delete_while_the_frozen_bar_is_up() {
+        setScreen(selectedText())
+        composeRule.waitForIdle()
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithContentDescription(Copy.BenchVerbs.DELETE).fetchSemanticsNodes().size,
+        )
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertExists()
+        composeRule.onNodeWithTag("$EditorContextBarTestTag-${Copy.A11y.DELETE}").assertDoesNotExist()
+    }
+
+    /**
+     * The other half, and the one that keeps the ruling honest: *"no functionality is removed."* The
+     * transform bar's Delete is withheld only while another visible control offers it. Open the Type bar
+     * and the frozen bar stands down — so Delete must come straight back, or this would be a capability
+     * lost rather than a presentation assigned.
+     */
+    @Test
+    fun the_transform_bar_takes_Delete_back_the_moment_the_frozen_bar_stands_down() {
+        val store = selectedText()
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertDoesNotExist()
+        composeRule.onNodeWithTag("$EditorContextBarTestTag-${Copy.A11y.DELETE}").assertExists()
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithContentDescription(Copy.A11y.DELETE).fetchSemanticsNodes().size,
+        )
+    }
+
+    private fun selectedPhoto(): EditorStore = store().also {
+        it.dispatch(
+            Intent.CommitAddImage(
+                ImageElement(id = "photo", transform = Transform(20.0, 20.0, 40.0, 30.0), assetId = "a"),
+            ),
+        )
+    }
+
+    /**
+     * The pair a first-time user actually met on the device: `Reframe` on the photo and `Reframe` in the
+     * bar, 150px apart, at the same moment. The written note was *"did I do something wrong?"* — so the
+     * chip yields to the bar, which says the same word with a label rather than over the artwork.
+     */
+    @Test
+    fun the_on_canvas_Reframe_chip_yields_to_the_bar_that_offers_the_same_verb() {
+        setScreen(selectedPhoto())
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REFRAME}").assertExists()
+        composeRule.onNodeWithTag(ReframeChipTestTag).assertDoesNotExist()
+        // One Delete for a photo too — the frozen bar's.
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithContentDescription(Copy.BenchVerbs.DELETE).fetchSemanticsNodes().size,
+        )
+    }
+
+    /**
+     * The ruling protects the transform verbs absolutely — they are what ADR-029 §6 exists for, being the
+     * verbs `drag` has no single-pointer twin for. Whatever the frozen bar is doing, all ten stay put.
+     */
+    /**
+     * D-040 — the dead end review found, which no test covered and Pass 2 would have.
+     *
+     * `benchVerbKindOf` keys on element *type*, so a still-blank box got the full text set. Tapping `Size`
+     * set `typeBarOpen`, which hid the frozen bar (its own `!typeBarOpen` term) while the Type bar declined
+     * to appear (`styleTarget` is null for a blank box) — and the reset effect is keyed on `styleTarget?.id`,
+     * still null, so it never re-ran. The bar stayed gone across later selections too. Now Size and Ink are
+     * inert there, in the class OD-9 already established for `Font`, so the tap cannot happen.
+     */
+    @Test
+    fun a_still_blank_text_box_is_offered_neither_Size_nor_Ink() {
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "   "))
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").assertIsNotEnabled()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.INK}").assertIsNotEnabled()
+        // Delete stays live — a blank box is exactly the one you most want to get rid of.
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertIsEnabled()
+    }
+
+    @Test
+    fun the_ten_transform_verbs_are_never_withheld() {
+        setScreen(selectedPhoto())
+        composeRule.waitForIdle()
+        listOf(
+            Copy.A11y.MOVE_LEFT, Copy.A11y.MOVE_RIGHT, Copy.A11y.MOVE_UP, Copy.A11y.MOVE_DOWN,
+            Copy.A11y.MAKE_LARGER, Copy.A11y.MAKE_SMALLER,
+            Copy.A11y.ROTATE_CLOCKWISE, Copy.A11y.ROTATE_COUNTERCLOCKWISE,
+            Copy.A11y.BRING_FORWARD, Copy.A11y.SEND_BACKWARD,
+        ).forEach { composeRule.onNodeWithTag("$EditorContextBarTestTag-$it").assertExists() }
+    }
+
+
+    @Test
+    fun the_hints_own_button_wins_the_tap_against_the_full_screen_gesture_surface() {
+        // A real defect, found by a reviewer refusing to accept "the test host was unrealistic" as a cause.
+        //
+        // The page gesture surface is `fillMaxSize()` over the WHOLE canvas (`EditorScreen.kt:1118`) and its
+        // tap miss-branch deselects (D-037). The hint is composed after it, but composition order was not
+        // enough: an injected tap on `Got it` reached the gesture surface instead of the button, so the hint
+        // vanished because the SELECTION went away — not because it was dismissed — and returned on the next
+        // selection with the "seen" flag never written. Measured before the fix: `seen=false, selection=[]`.
+        //
+        // This test asserts the two halves that distinguish a dismissal from a deselection, which no existing
+        // test did: the callback fires AND the selection survives. The `zIndex` is what makes both true.
+        var seen = false
+        val store = store()
+        store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi"))
+        val id = store.uiState.value.selection.single()
+        setScreen(store, onMoveResizeHintSeen = { seen = true })
+
+        composeRule.onNodeWithTag(MoveResizeHintDismissTag).performClick()
+        composeRule.waitForIdle()
+
+        assertTrue("the tap must reach the hint's own button, not the surface beneath it", seen)
+        assertEquals(
+            "dismissing a teaching hint must not deselect the element it teaches about",
+            setOf(id),
+            store.uiState.value.selection,
+        )
     }
 }

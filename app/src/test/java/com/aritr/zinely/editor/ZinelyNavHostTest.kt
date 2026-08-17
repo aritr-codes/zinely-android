@@ -3,13 +3,16 @@ package com.aritr.zinely.editor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.aritr.zinely.feature.editor.BenchBottomBarTestTag
 import com.aritr.zinely.feature.editor.HomeEmptyHeadline
+import com.aritr.zinely.export.ExportDestination
+import com.aritr.zinely.feature.editor.ProofExportTarget
 import com.aritr.zinely.feature.editor.ProofBackTestTag
 import com.aritr.zinely.feature.editor.ProofScreenTestTag
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -92,11 +95,34 @@ class ZinelyNavHostTest {
     }
 
     /**
-     * A shelf card prints its title inside `clearAndSetSemantics{}` — one node, one announcement —
-     * so the title is reachable as the card's label, never as a text node. Tests address the object
-     * the way a screen reader does.
+     * Waits for the editor to be **Ready** — its frozen bottom bar drawn.
+     *
+     * These three call sites used to wait for the text `"Add a photo"`, the V1 supply tray's photo
+     * card. C4 ([ADR-094](../../../../../../../docs/DECISIONS.md#adr-094)) retired that shelf for the
+     * frozen `.bar`, so the string stopped existing on the editor and both tests that waited for it
+     * timed out at 10s — since 026d15a, undetected, because C4's verification run did not include
+     * `:app`. Discovered by C5's full verification and fixed here rather than in the C5 package.
+     *
+     * The bar's own tag, not a label: it is what "Ready" actually draws, and it cannot be retired by a
+     * copy change the way the phrase it replaces was.
      */
-    private fun cardLabel(title: String) = "$title, finished zine. Open on the bench."
+    private fun waitForEditorReady(timeoutMs: Long = 10_000) {
+        composeRule.waitUntil(timeoutMs) {
+            composeRule.onAllNodesWithTag(BenchBottomBarTestTag).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    /**
+     * A zine on the shelf prints its title inside `clearAndSetSemantics{}` — one node, one
+     * announcement — so the title is reachable as the object's label, never as a text node. Tests
+     * address the object the way a screen reader does.
+     *
+     * **B5 changed what this label says**, because the route now hosts the V2 Library
+     * ([ADR-086](../../../../../../../docs/DECISIONS.md#adr-086)). V1's card announced *"X, finished
+     * zine. Open on the bench."*; the V2 cover announces the zine's name and nothing else — the whole
+     * design is *"covers only, no metadata line"*, and the spoken name follows the drawn one.
+     */
+    private fun cardLabel(title: String) = title
 
     private fun waitForCard(title: String, timeoutMs: Long = 10_000) {
         composeRule.waitUntil(timeoutMs) {
@@ -162,7 +188,7 @@ class ZinelyNavHostTest {
         waitForCard(SEEDED_TITLE)
         tapCard(SEEDED_TITLE)
         waitForEditor()
-        waitForText("Add a photo") // Ready: the supply tray is up
+        waitForEditorReady() // Ready: the frozen bar is up
         composeRule.runOnUiThread { navController.popBackStack() }
         waitForHome()
 
@@ -172,7 +198,7 @@ class ZinelyNavHostTest {
         waitForEditor()
 
         // Then the editor awaits the single-writer slot and boots Ready — no spurious boot error
-        waitForText("Add a photo")
+        waitForEditorReady()
         assertEquals(id, navController.currentBackStackEntry?.toRoute<EditorRoute>()?.projectId)
     }
 
@@ -206,8 +232,10 @@ class ZinelyNavHostTest {
         composeRule.runOnUiThread { navController.navigate(EditorRoute("ghost")) }
         waitForText("Couldn’t open this project.")
 
-        // Then the error is not a dead end (Codex RF2)
-        composeRule.onNodeWithText("‹  Back to your shelf").performClick()
+        // Then the error is not a dead end (Codex RF2). Addressed by tag, not by text: the V2.1 `.retry`
+        // pill routes through `zinelyV2Control`, whose `clearAndSetSemantics` replaces the label's text
+        // node with a contentDescription — so the way out is now spoken, not read.
+        composeRule.onNodeWithTag(BootFailureActionTestTag).performClick()
         waitForHome()
     }
 
@@ -220,7 +248,7 @@ class ZinelyNavHostTest {
         waitForCard(SEEDED_TITLE)
         tapCard(SEEDED_TITLE)
         waitForEditor()
-        waitForText("Add a photo")
+        waitForEditorReady()
         composeRule.runOnUiThread { navController.navigate(ProofRoute(id)) }
 
         // Then the Proof surface is up (one destination, not three)
@@ -238,7 +266,72 @@ class ZinelyNavHostTest {
         composeRule.runOnUiThread { navController.popBackStack() }
         waitForHome()
     }
+
+    @Test
+    fun `Share and export from the shelf stacks Home then Editor then Proof`() {
+        // Given the V2 Library's sheet (B5) — `Share & export` routes into the EXISTING Proof flow
+        // (D-025), and there is no shelf-level export concept.
+        val id = seedZine()
+        setHost()
+        waitForCard(SEEDED_TITLE)
+
+        // When the row is chosen
+        // Addressed by their spoken names rather than by test tags: the Library's tags are `internal`
+        // to `:feature:editor`, and a host-level test should reach the surfaces the way the platform
+        // does anyway — the `⋯` by its `aria-label`, the row by the words on it.
+        composeRule.onNodeWithContentDescription("Actions for $SEEDED_TITLE").performClick()
+        composeRule.onNodeWithContentDescription(SHARE_AND_EXPORT).performClick()
+
+        // Then the Proof is up over an editor that actually exists on the stack.
+        //
+        // **This is the assertion, and it is on the stack rather than on a rendered screen.**
+        // `ProofRoute` resolves the *shared* editor ViewModel via `getBackStackEntry(EditorRoute(id))`
+        // — the ADR-026 single-writer seam — so a direct `navigate(ProofRoute)` finds no such entry and
+        // **throws at runtime**. The mutation is a crash, not a wrong pixel, and only the stack shows it.
+        composeRule.waitUntil(10_000) {
+            navController.currentDestination?.hasRoute<ProofRoute>() == true
+        }
+        assertEquals(id, navController.currentBackStackEntry?.toRoute<ProofRoute>()?.projectId)
+
+        // and back lands on the bench, not the shelf — "reuse the flow" means its behaviour too.
+        composeRule.runOnUiThread { navController.popBackStack() }
+        waitForEditor()
+        assertEquals(id, navController.currentBackStackEntry?.toRoute<EditorRoute>()?.projectId)
+    }
+}
+
+/**
+ * The two-way mapping between the feature-local [ProofExportTarget] and the app-level
+ * [ExportDestination] — the seam ADR-102 §12.14's fix rests on, and the one place it can silently invert.
+ *
+ * `toTarget()` was added so a *running* export could name the button that started it. Invert it and the
+ * user-reported defect comes back mirrored — Save PDF says "Preparing…" while Share is the one rendering —
+ * and no other test notices: `ProofScreenTest` injects a `busyTarget` directly, and `ExportViewModelTest`
+ * never sees a `ProofExportTarget` at all. Caught by review, not by the suite.
+ */
+class ProofExportTargetMappingTest {
+
+    @Test
+    fun `every target survives the round trip through its destination`() {
+        // Given each export button
+        // When mapped to a destination and back
+        // Then it is the same button — not merely *a* button
+        ProofExportTarget.entries.forEach { target ->
+            assertEquals(target, target.toDestination().toTarget())
+        }
+    }
+
+    @Test
+    fun `and each destination is the one that button actually means`() {
+        // The round trip alone passes for a consistently-swapped pair, so the pairing is pinned too:
+        // Share hands the file to another app; Save keeps a durable copy.
+        assertEquals(ExportDestination.TRANSPORT, ProofExportTarget.SEND.toDestination())
+        assertEquals(ExportDestination.DOWNLOADS, ProofExportTarget.SAVE.toDestination())
+    }
 }
 
 /** The ADR-042 §4 adoption fallback title every on-disk-seeded test project carries. */
 private const val SEEDED_TITLE = "My zine"
+
+/** `.act` — the frozen row's own words (`v2-library.html:127`), which are also its spoken name. */
+private const val SHARE_AND_EXPORT = "Share & export"

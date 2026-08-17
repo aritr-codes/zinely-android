@@ -23,9 +23,24 @@ RAND_m, RAND_a, RAND_q, RAND_r = 2147483647, 16807, 127773, 2836
 BSize, BM = 0x100, 0xff
 PerlinN = 0x1000
 
+# The two frozen grain sources this generator serves. Selected by name on the command line so that
+# neither tile can be produced by editing a constant and forgetting to put it back -- the V2 tile is
+# committed and guards 10 catalog goldens, and regenerating it with V2.1's parameters would repaint
+# every V2 paper surface without a single test naming the cause.
+#
+# V2.1 differs in every field: a lower frequency and a third octave (coarser, more structured grain),
+# a larger tile, and NO stitching, which the V2.1 source omits.
+PRESETS = {
+    # v2-{library,proof,bench}.html  -- baseFrequency .9, 2 octaves, stitched, 140px
+    'v2': dict(tile=140, base_freq=0.9, octaves=2, stitch=True),
+    # v21-{library,proof,bench}.html -- baseFrequency .85, 3 octaves, unstitched, 160px
+    'v21': dict(tile=160, base_freq=0.85, octaves=3, stitch=False),
+}
+
 TILE = 140
 BASE_FREQ = 0.9
 OCTAVES = 2
+STITCH = True
 SEED = 0
 
 
@@ -145,6 +160,21 @@ def noise2(channel, vx, vy, stitch):
 
 
 def turbulence(channel, x, y, fx, fy, octaves, tile_w, tile_h):
+    # stitchTiles: 'stitch' for V2, absent (the initial value, 'noStitch') for V2.1. When it is
+    # absent the frequency is NOT snapped and no wrap is tracked -- the function is simply sampled,
+    # and the tile's edges do not meet. That is what the V2.1 source asks for, so it is what is
+    # generated; the visible consequence at these frequencies is nil (see the seam note at the
+    # bottom of this file), but generating a stitched tile for an unstitched source would be
+    # substituting our judgement for the specification's.
+    if not STITCH:
+        fSum, vx, vy, ratio = 0.0, x * fx, y * fy, 1.0
+        for _ in range(octaves):
+            fSum += noise2(channel, vx, vy, None) / ratio
+            vx *= 2
+            vy *= 2
+            ratio *= 2
+        return fSum
+
     # stitchTiles='stitch': adjust the base frequency so an integral number of periods
     # spans the tile, then track the wrap points per octave (SVG 1.1, feTurbulence).
     lo = math.floor(tile_w * fx) / tile_w
@@ -236,8 +266,16 @@ def write_png(path, lum, alpha, w, h):
 
 if __name__ == '__main__':
     import sys, hashlib
+    if len(sys.argv) < 3 or sys.argv[1] not in PRESETS:
+        sys.exit('usage: gen_grain.py {%s} <out.png>' % '|'.join(PRESETS))
+    preset = PRESETS[sys.argv[1]]
+    TILE, BASE_FREQ = preset['tile'], preset['base_freq']
+    OCTAVES, STITCH = preset['octaves'], preset['stitch']
+    out = sys.argv[2]
+    print('preset           : %s  tile=%d freq=%s octaves=%d stitch=%s'
+          % (sys.argv[1], TILE, BASE_FREQ, OCTAVES, STITCH))
+
     lum, alpha = build()
-    out = sys.argv[1]
     size = write_png(out, lum, alpha, TILE, TILE)
 
     # --- verification -------------------------------------------------------
@@ -267,13 +305,20 @@ if __name__ == '__main__':
         return total
 
     eps = 1e-6
-    probes = [0.0, 7.3, 31.7, 70.0, 111.1, 139.0]
+    probes = [0.0, 7.3, 31.7, 70.0, 111.1, TILE - 1.0]
     f = lambda x, y: turbulence(0, x, y, BASE_FREQ, BASE_FREQ, OCTAVES, TILE, TILE)
     seam = max(max(abs(f(TILE - eps, t) - f(0.0, t)), abs(f(t, TILE - eps) - f(t, 0.0))) for t in probes)
     control = max(abs(unstitched(0, TILE - eps, t) - unstitched(0, 0.0, t)) for t in probes)
     print('function seam    : %.3e   (control, stitching off: %.3e)' % (seam, control))
     print('stitch wraps fired:', WRAPS[0])
 
-    assert WRAPS[0] > 0, 'stitchTiles requested but the wrap never fired'
-    assert seam < 1e-4, 'the stitched function is not continuous across the tile boundary'
-    assert control > 1e-2, 'the control is not discriminating -- the seam check proves nothing'
+    if STITCH:
+        assert WRAPS[0] > 0, 'stitchTiles requested but the wrap never fired'
+        assert seam < 1e-4, 'the stitched function is not continuous across the tile boundary'
+        assert control > 1e-2, 'the control is not discriminating -- the seam check proves nothing'
+    else:
+        # The mirror assertions. An unstitched source must produce an unstitched tile: if the wrap
+        # ever fires here, the preset has leaked into the stitched path and the tile is not the one
+        # the frozen SVG describes -- silently better-behaved, and silently not the specification.
+        assert WRAPS[0] == 0, 'stitchTiles absent but the wrap fired anyway'
+        assert seam > 1e-2, 'an unstitched function should NOT be continuous across the boundary'

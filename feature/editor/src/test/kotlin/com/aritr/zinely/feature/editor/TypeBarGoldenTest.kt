@@ -148,26 +148,41 @@ class TypeBarGoldenTest {
     }
 
     /**
-     * The frozen card width (bench `.typebar{width:max-content}` + `padding:12px 14px`, widest row =
-     * Colour at 5x32 + 4x8 = 192px): 28 + 60 + 192 = 280dp.
+     * The card's `width:max-content` width, **measured rather than derived** — 318.5dp under this
+     * fixture's density and font scale.
+     *
+     * ⚠ Was 278.5dp until 2026-08-15. The +40dp is `SwatchGap` going 8dp → 18dp so the swatch PITCH
+     * reaches the platform's 48dp minimum touch target (30 + 18 = 48); a device dump had four of the five
+     * pots reporting 38.1dp wide to the accessibility tree because neighbouring 48dp expansions overlapped
+     * and the overlap is pruned before `setBoundsInScreen`. The pots still paint 30dp — no control
+     * inflated, which is what the number below is here to prove — and the card is still inside the frozen
+     * `max-width:calc(100% - 24px)` on the narrowest phone
+     * ([TypeBarTest.the_card_honours_the_frozen_max_width_on_the_smallest_supported_phone]).
+     *
+     * V1's version of this KDoc computed the number from the rules (`28 + 60 + 192 = 280`) and named
+     * Colour as the widest row. The V2.1 re-skin moves both terms in that sum and in opposite directions:
+     * the pots go 32dp → 30dp, taking 10dp off the Colour cluster, while the row label goes from 11sp
+     * sentence case to `.6rem` uppercase on `.13em` tracking, which widens the label column. The net is
+     * 1.5dp, which is exactly the kind of near-agreement that makes a recomputed figure look verified when
+     * it is not. **Which row is widest at a given font scale is a measurement** — it is open question 2 in
+     * `v21-typebar.html`, still owed a device — so this asserts the fixture's measured width and claims
+     * nothing about which row produced it.
      *
      * Asserted in the golden tier too, and not only in [TypeBarTest], because this is the number a golden
      * silently bakes in: record a PNG off a wrong card and the wrong card *becomes* the reference.
      *
      * What it guards is `Swatch`/`StyleToggle` re-inflating (the ADR-055 §8 defect, which put Colour at
-     * 272dp and the card edge-to-edge at `w360dp`). What it does **not** guard — stated because the
-     * tempting assumption is load-bearing and wrong — is the Size row: an inflated stepper cluster is
-     * 170dp, still under Colour's 192dp, so `SpaceBetween` absorbs it and this width never moves. That
-     * regression is pinned in paint terms by
-     * [TypeBarTest.the_size_stepper_paints_the_frozen_40dp_chips_at_the_frozen_8dp_pitch], and here only
-     * by the golden PNG itself, once recorded.
+     * 272dp and the card edge-to-edge at `w360dp`). What it does **not** guard is a stepper-cluster
+     * regression, which stays under the widest row and is absorbed by `SpaceBetween`; that one is pinned
+     * in paint terms by
+     * [TypeBarTest.the_size_stepper_paints_the_frozen_40dp_chips_at_the_frozen_8dp_pitch].
      */
     private fun assertFrozenCardWidth() {
         val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
         with(composeRule.density) {
             assertEquals(
-                "the Type bar is not the frozen 280dp wide; got ${card.width.toDp()}",
-                280f, card.width.toDp().value, 0.5f,
+                "the Type bar is not the measured 318.5dp wide; got ${card.width.toDp()}",
+                318.5f, card.width.toDp().value, 0.5f,
             )
         }
     }
@@ -223,16 +238,18 @@ class TypeBarGoldenTest {
     @Test
     fun the_disabled_step_chip_fades_whole_not_only_its_glyph() {
         showCard(darkTheme = false, element = MinSizeText)
-        val unfadedEdge = Color(0xFFDED4C2).toArgb() // bench --field-edge, light
+        // V2.1 `--ink`, light (`v21-typebar.html` `.tysize button{border:1.5px solid var(--ink)}`). Was
+        // V1's `--field-edge` #DED4C2, a token V2.1 does not define.
+        val unfadedEdge = Color(0xFF33261C).toArgb()
 
-        // Non-vacuity: at the ramp floor "Larger" is still enabled, so the frozen edge IS on screen —
-        // proving the crop and the colour are right before the disabled case asserts an absence.
+        // Non-vacuity: at the ramp floor "Larger" is still enabled, so the edge IS on screen — proving the
+        // crop and the colour are right before the disabled case asserts an absence.
         assertTrue(
-            "the enabled Larger chip did not paint the frozen field-edge",
+            "the enabled Larger chip did not paint the ink edge",
             stepChipBitmap("Larger").countColour(unfadedEdge) > 50,
         )
         assertEquals(
-            "the disabled Smaller chip still paints a full-strength edge; opacity:.4 fades the whole chip",
+            "the disabled Smaller chip still paints a full-strength edge; opacity:.35 fades the whole chip",
             0,
             stepChipBitmap("Smaller").countColour(unfadedEdge),
         )

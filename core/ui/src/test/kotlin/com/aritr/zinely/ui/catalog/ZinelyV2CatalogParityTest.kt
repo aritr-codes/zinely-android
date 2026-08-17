@@ -292,7 +292,9 @@ class ZinelyV2CatalogParityTest {
                 "$identical",
             identical.isEmpty(),
         )
-        assertEquals("the frozen set is 36 marks", 36, ZinelyV2Icons.All.size)
+        // 37 since C4: `Redo` is the mark the frozen file gained when OD-21 amended the Bench
+        // (`v2-bench.html:466`) — the amendment is the source of the count, not the catalogue.
+        assertEquals("the frozen set is 37 marks", 37, ZinelyV2Icons.All.size)
     }
 
     // ----- material parity ----------------------------------------------------------------------

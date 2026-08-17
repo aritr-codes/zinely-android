@@ -1,28 +1,24 @@
 package com.aritr.zinely.feature.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 
 /** Test tag on the move/resize hint container. */
 public const val EditorMoveResizeHintTestTag: String = "editor-move-resize-hint"
@@ -36,23 +32,41 @@ public const val MoveResizeHintText: String = Copy.MoveResizeHint.TEXT
 /** The dismiss affordance label (the implicit/explicit "got it" VOICE requires for a one-time hint). */
 public const val MoveResizeHintDismissLabel: String = Copy.Common.GOT_IT
 
+/** The V2 sticky's own `max-width:320px`, kept: the line is one sentence and reads badly wider. */
+private val HintMaxWidth = 320.dp
+
 /**
- * The one-time **move/resize hint** (docs/design/VOICE.md §3 "Hints"; editor-visual-direction.md §6
- * slice 5). When a beginner first selects a placed element the resize handles appear, but the two core
- * manipulations — *drag to move*, *pinch to resize* — are gestures with no discrete-control twin, so a
- * first-timer can miss them. This is the gentle, scrapbook-styled note that teaches exactly those two
- * moves, then gets out of the way.
+ * The one-time **move/resize hint** (docs/design/VOICE.md §3 "Hints"). When a beginner first selects a
+ * placed element the resize handles appear, but the two core manipulations — *drag to move*, *pinch to
+ * resize* — are gestures with no discrete-control twin, so a first-timer can miss them. This is the gentle
+ * note that teaches exactly those two moves, then gets out of the way.
  *
- * Deliberately **not** a generic tooltip: a tilted paper sticky (the workbench feel), one warm line,
- * and an explicit "Got it". It is non-modal and non-blocking — the card declares no `pointerInput`, so
- * touches fall straight through to the canvas gesture surface beneath it; only the dismiss button (a
- * real ≥48dp [TextButton]) consumes its own tap. The host also auto-dismisses it the instant a live
- * drag/resize begins, so discovering the gesture is itself the dismissal.
+ * ### ⚠ Unfrozen surface — the analogy is `.snack`, and it replaces V2's invented sticky
  *
- * Accessibility: paper card + ink text (theme colours → AA contrast), the instruction is always-present
- * text (never hidden behind motion — there is no motion here, so the reduced-motion path is a no-op),
- * and the dismiss target is touch-safe. The decorative tilt and glyph carry no meaning and are not
- * announced separately (the line is the spoken content).
+ * The frozen prototype has no coach mark: it teaches through its own caption strip (`.hint`,
+ * `v21-bench.html:490`), which is **prototype narration** — it lives outside the phone frame, explaining
+ * the demo to someone reading a design file. Transcribing it would put the caption *inside* the product,
+ * which is exactly the class of mistake `cap()` and `"the bench"` are excluded for. So the caption's
+ * selector name is a false friend and is deliberately not the source here.
+ *
+ * The real analogy is `.snack` (`:467-485`): a single line of message floating over the page with one
+ * control on its end — this hint's shape, element for element. Taking it also **retires a V2 invention**:
+ * V2 drew this as a tilted `--paper` sticky with a decorative `✋`, a surface that existed nowhere in the
+ * freeze and that the corpus does not otherwise draw. The `-0.6°` lean `.snack` carries in its settled
+ * state keeps the handmade feel the sticky was reaching for, without a second dialect for it.
+ *
+ * The hand glyph goes with the sticky. It was `clearAndSetSemantics`-silenced decoration on a surface
+ * whose whole content is one sentence; `.snack` draws its message and nothing else, and a mark that is
+ * hidden from every reader and adds nothing to any other is not a loss when it leaves.
+ *
+ * It is non-modal and non-blocking — the row declares no `pointerInput`, so touches fall straight through
+ * to the canvas gesture surface beneath it; only the dismiss button consumes its own tap. The host also
+ * auto-dismisses it the instant a live drag/resize begins, so discovering the gesture is itself the
+ * dismissal.
+ *
+ * Accessibility: the instruction is always-present text (never hidden behind motion — there is no motion
+ * here, so the reduced-motion path is a no-op), the whole row merges into one spoken label, and the
+ * dismiss target stays a real ≥48dp button ([NoticeAction]).
  *
  * Stateless: the host owns the screen-local "already dismissed" flag and the visibility gate; this
  * composable only renders and reports the dismiss tap via [onDismiss].
@@ -65,50 +79,39 @@ public fun EditorMoveResizeHint(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // A tilted paper sticky on the desk (this teaching note has no bench.html counterpart — the frozen
-    // prototype has no coach/hint surface; it is a WCAG/onboarding affordance). Frozen sticky vocabulary:
-    // a `--paper` sheet with `--ink` text, off the abused Material `secondaryContainer` (a baseline lilac
-    // absent from the riso palette).
-    val colors = ZinelyTheme.colors
+    val colors = ZinelyTheme.v21Colors
     Row(
         modifier = modifier
             .testTag(EditorMoveResizeHintTestTag)
-            .graphicsLayer { rotationZ = -1.5f }
-            .widthIn(max = 320.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(colors.paper)
-            .padding(start = 14.dp, end = 4.dp)
-            // One merged label for TalkBack: the teaching line is the content; glyph/tilt are decorative.
+            .widthIn(max = HintMaxWidth)
+            .graphicsLayer { rotationZ = NoticeRotation }
+            .clip(NoticeShape)
+            .background(colors.ink)
+            // `inkLine`, not `ink` — this box's own ground is `ink`; see [NoticeBorder].
+            .border(NoticeBorder, colors.inkLine, NoticeShape)
+            .padding(
+                start = NoticePaddingStart,
+                end = NoticePaddingEnd,
+                top = NoticePaddingV,
+                bottom = NoticePaddingV,
+            )
+            // One merged label for TalkBack: the teaching line is the content, and the button keeps its
+            // own node because `mergeDescendants` does not swallow a clickable child's semantics.
             .semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(NoticeGap),
     ) {
-        // Decorative hand — kept out of the spoken label (the line below is the content); the merged
-        // node would otherwise read "✋, Drag to move it…".
-        Text(
-            text = "✋",
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.ink,
-            modifier = Modifier.clearAndSetSemantics {},
-        )
         Text(
             text = MoveResizeHintText,
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.ink,
+            style = TextStyle(
+                fontFamily = ZinelyV21Fonts.Work,
+                fontSize = NoticeTextSize,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                color = colors.paper,
+            ),
+            // `.snack span{flex:1}`.
             modifier = Modifier.weight(1f, fill = false),
         )
-        TextButton(
-            onClick = onDismiss,
-            modifier = Modifier
-                .heightIn(min = 48.dp)
-                .testTag(MoveResizeHintDismissTag),
-        ) {
-            Text(
-                text = MoveResizeHintDismissLabel,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = colors.ink,
-            )
-        }
+        NoticeAction(MoveResizeHintDismissLabel, MoveResizeHintDismissTag, onDismiss)
     }
 }

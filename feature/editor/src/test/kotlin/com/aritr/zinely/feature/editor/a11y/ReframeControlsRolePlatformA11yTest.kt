@@ -19,11 +19,12 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * CI-30 (`Role`) for the [ReframeControls] surface on the **platform** accessibility tree (CI-26
- * [platformNode]). Every Reframe control sets `role = Role.Button` (ReframeControls.kt:196, 243, 281, 317,
- * 336, 361, 399); the sibling demo [ReframeControlsPlatformA11yTest] pins the one "Zoom in" stepper (the
- * `f4faaa4` control). This suite extends that to the rest of the band — nudge pad, both zoom steps, the fit
- * segments, Reset, Cancel and Done — so every control TalkBack announces as a Button is proven to carry
- * `android.widget.Button` to the platform, not just to Compose's merged tree.
+ * [platformNode]). Every Reframe *command* sets `role = Role.Button`; the sibling demo
+ * [ReframeControlsPlatformA11yTest] pins the one "Zoom in" stepper (the `f4faaa4` control). This suite
+ * extends that to the rest of the band — nudge pad, both zoom steps, the fit chips, Reset, Cancel and Done
+ * — so every control TalkBack announces as a Button is proven to carry `android.widget.Button` to the
+ * platform, not just to Compose's merged tree. The fit chips carry a second contract on top of that one,
+ * asserted in [the_platform_is_told_which_fit_is_chosen].
  *
  * `ReframeControls` is rendered standalone (no photo), so it does **not** touch the Robolectric NATIVE
  * image decoder that flakes in the full-screen [com.aritr.zinely.feature.editor.ReframeA11yTest].
@@ -87,12 +88,52 @@ class ReframeControlsRolePlatformA11yTest {
         assertPlatformButton("Zoom in")
         assertPlatformButton("Zoom out")
 
-        // Fit segments, Reset, Cancel, Done.
+        // Fit chips, Reset, Cancel, Done. The chips stay in this sweep deliberately: a `selectable` would
+        // have delivered their state at the cost of the click action asserted here, and
+        // [the_platform_is_told_which_fit_is_chosen] is what makes that trade unnecessary. Both properties
+        // must hold at once, so both are asserted.
         assertPlatformButton("Fill")
         assertPlatformButton("Whole photo")
         assertPlatformButton("Reset framing")
         assertPlatformButton("Cancel reframing")
         assertPlatformButton("Done reframing")
+    }
+
+    /**
+     * **The fit chips tell the platform which one is on** — and this test exists because nothing asserted
+     * that, not because it was broken.
+     *
+     * The V2.1 re-skin's Pass 1 read `uiautomator dump`, saw `selected="false"` on *both* chips, and
+     * concluded the active fit was announced no differently from the inactive one. That conclusion was
+     * wrong, and how it was disproved is why the test is worth keeping: the explicit `stateDescription`
+     * written to "fix" it was deleted again, and this assertion stayed green. Compose supplies
+     * *"Selected"* / *"Not selected"* for any node carrying `SemanticsProperties.Selected`. The dump's
+     * `selected="false"` is a true fact about a **different** attribute — `isSelected`, which Compose maps
+     * `Selected` onto for `Role.Tab` alone — and the XML never prints `stateDescription` at all. A dump
+     * that does not show a thing is not evidence the thing is absent.
+     *
+     * What it guards is real and was undefended: the platform's fallback holds **only while no explicit
+     * `stateDescription` is set**, because one replaces the platform's rather than adding to it. The day a
+     * chip wants to say anything else about itself — the way an element outside the printer's reach does
+     * ([com.aritr.zinely.core.copy.Copy.A11y.outsidePrintReachState], which has to carry *"Selected"*
+     * along with its own text for exactly this reason) — this test is what fails.
+     *
+     * `isSelected` staying false is pinned deliberately too, so the day Compose starts honouring it for
+     * this role the test says so rather than quietly agreeing with a comment.
+     */
+    @Test
+    fun the_platform_is_told_which_fit_is_chosen() {
+        render() // rendered at FrameFit.FILL
+
+        val fill = composeRule.onNodeWithContentDescription("Fill").platformNode(composeRule.activity)
+        val whole = composeRule.onNodeWithContentDescription("Whole photo").platformNode(composeRule.activity)
+
+        assertEquals("the chosen fit's state never reaches a service", "Selected", fill.stateDescription)
+        assertEquals("the other fit's state never reaches a service", "Not selected", whole.stateDescription)
+        assertTrue(
+            "Compose now maps Selected → isSelected for this role; prefer that and simplify this test",
+            !fill.isSelected && !whole.isSelected,
+        )
     }
 
     /**

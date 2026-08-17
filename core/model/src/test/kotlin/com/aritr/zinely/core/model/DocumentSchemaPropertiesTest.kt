@@ -69,7 +69,18 @@ class DocumentSchemaPropertiesTest {
             Arbitraries.strings().ofMaxLength(40),
             textStyles(),
         ).`as` { id, t, z, s, style -> TextElement(id, t, z, s, style) }
-        return Arbitraries.oneOf(image, text)
+        // The third primitive (ADR-105 / SUPPLIES-SPEC §2). Built exactly like its two siblings, and
+        // supplied to the SAME `oneOf`, so every existing property — round-trip and re-encode
+        // stability — now also runs against documents carrying decor, without a new property.
+        val decor = Combinators.combine(
+            ids, transforms(), zIndices,
+            // Well-formed `family.name` keys: the wire contract is what is under test here, not the
+            // validator's regex (that has its own tests in `:core:data`).
+            Arbitraries.of("tape.torn", "mark.star", "shape.circle", "rule.thick"),
+            colors(),
+            Arbitraries.of(true, false),
+        ).`as` { id, t, z, supplyId, ink, mirrored -> DecorElement(id, t, z, supplyId, ink, mirrored) }
+        return Arbitraries.oneOf(image, text, decor)
     }
 
     private fun pages(): Arbitrary<Page> =

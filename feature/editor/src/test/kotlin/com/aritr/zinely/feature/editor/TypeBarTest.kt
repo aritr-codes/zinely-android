@@ -7,6 +7,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.NativeKeyEvent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -26,8 +27,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyPress
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
@@ -117,11 +118,15 @@ class TypeBarTest {
     // text-only cases are unaffected either way.
     private val photo = reframeTestPhoto()
 
-    private fun render(s: EditorStore) {
+    private fun render(s: EditorStore, fontScale: Float = 1f) {
         announced.clear()
         haptics.events.clear()
         composeRule.setContent {
-            CompositionLocalProvider(LocalHapticFeedback provides haptics) {
+            val base = LocalDensity.current
+            CompositionLocalProvider(
+                LocalHapticFeedback provides haptics,
+                LocalDensity provides Density(base.density, fontScale),
+            ) {
                 ZinelyTheme {
                     EditorScreen(
                         store = s,
@@ -137,9 +142,15 @@ class TypeBarTest {
     private fun textOf(s: EditorStore): TextElement =
         s.uiState.value.document.pages[0].elements.first { it is TextElement } as TextElement
 
-    /** Open the Type bar via the Style control — the only path a user has. */
+    /**
+     * Open the Type bar via the Style control — the only path a user has.
+     *
+     * The `performScrollTo` this used to carry is gone with F-2: the transform row wraps instead of
+     * scrolling, so there is no scrollable ancestor and the call threw *"Semantic Node has no parent layout
+     * with a Scroll SemanticsAction"*. The control is simply on screen now, which is the point.
+     */
     private fun openTypeBar() {
-        composeRule.onNodeWithContentDescription("Text style").performScrollTo().performClick()
+        composeRule.onNodeWithContentDescription("Text style").performClick()
         composeRule.waitForIdle()
     }
 
@@ -205,7 +216,12 @@ class TypeBarTest {
 
         composeRule.onNodeWithContentDescription("Text style").assertDoesNotExist()
         composeRule.onNodeWithContentDescription("Move right").assertExists()
-        composeRule.onNodeWithContentDescription("Delete").assertExists()
+        // Delete is deliberately NOT asserted here any more. C2b put a Delete on the frozen `.ctx` bar too,
+        // and D-039 then ruled that one capability gets one visible presentation at a time — so with a
+        // photo selected the frozen bar owns Delete and this bar withholds it. The claim this test makes
+        // is about *Style*, and the transform verbs around it, which are untouched in every case; whether
+        // Delete is here or there is EditorScreenTest's subject, not this file's.
+        composeRule.onNodeWithTag("$EditorContextBarTestTag-Delete").assertDoesNotExist()
         composeRule.onNodeWithTag(TypeBarTestTag).assertDoesNotExist()
     }
 
@@ -446,7 +462,7 @@ class TypeBarTest {
         composeRule.onNodeWithContentDescription("Size 14 point").assertExists()
 
         // Close well inside the settle window.
-        composeRule.onNodeWithContentDescription("Text style").performScrollTo().performClick()
+        composeRule.onNodeWithContentDescription("Text style").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TypeBarTestTag).assertDoesNotExist()
 
@@ -570,6 +586,7 @@ class TypeBarTest {
             }
     }
 
+
     @Test
     fun a_tap_outside_the_stepper_chips_frozen_paint_still_steps_the_size() {
         // The sibling test above asserts the REPORTED bound (`touchBoundsInRoot`). This one asserts the
@@ -661,8 +678,11 @@ class TypeBarTest {
 
         fun rightOf(label: String) =
             composeRule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.right
+        // By contentDescription, not by text: `.tylab{text-transform:uppercase}` renders "SIZE" while the
+        // string — and what a screen reader says — stays "Size". [TypeRow] splits the two deliberately,
+        // and this is the reader that has to agree with the split.
         fun leftOf(label: String) =
-            composeRule.onNodeWithText(label).fetchSemanticsNode().boundsInRoot.left
+            composeRule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.left
 
         // The last control of each row, top to bottom: Size · Align · Style · Colour.
         val rightEdges = listOf(rightOf("Larger"), rightOf("Right"), rightOf("Italic"), rightOf("Ochre"))
@@ -688,8 +708,8 @@ class TypeBarTest {
         openTypeBar()
 
         val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
-        // The widest row is Colour (five 32dp swatches + four 8dp gaps) plus the label column and the
-        // card's 14dp side padding — comfortably inside the 430dp device the golden tier pins.
+        // The widest row is Colour (five 30dp pots + four 18dp `SwatchGap`s = 222dp) plus the label column
+        // and the card's 16dp side padding — comfortably inside the 430dp device the golden tier pins.
         with(composeRule.density) {
             assertTrue(
                 "the Type bar filled its parent (${card.width.toDp()}) instead of hugging its widest row",
@@ -707,7 +727,15 @@ class TypeBarTest {
         // Five swatches at 48 instead of the frozen 32 made Colour the widest row by 80dp:
         //   28 (card padding) + 60 (label + gap) + 272 (5x48 + 4x8) = exactly 360dp
         // i.e. edge-to-edge on this device, over the frozen `max-width:calc(100% - 24px)` (= 336dp), and
-        // clipping below 360dp. The frozen cluster is 192dp, which puts the card at 280dp.
+        // clipping below 360dp. The frozen cluster was 192dp, which put the card at 280dp.
+        //
+        // ⚠ The expected width moved to 318.5dp with the 2026-08-15 touch-target fix, and it is the SAME
+        // invariant, not a relaxed one: `SwatchGap` went 8dp -> 18dp so the swatch pitch reaches the
+        // platform's 48dp minimum (see `every_type_bar_control_reports_a_full_48dp_target_to_the_platform`),
+        // which widens the Colour cluster by 40dp to 222dp. The cap it is measured against — the frozen
+        // `max-width:calc(100% - 24px)` = 336dp — has not moved, and the card is still under it with 17.5dp
+        // to spare. What this second assertion pins is that the width is EXPLAINED: 32 (card padding) +
+        // 64.5 (label + gap) + 222 (5x30 + 4x18). Anything wider means a control is inflated again.
         //
         // The sibling test above could not see this: it is pinned to the 430dp bench viewport and only
         // asserts `< 430dp`, which a 360dp card passes. This one pins the smallest phone we support and
@@ -721,20 +749,151 @@ class TypeBarTest {
                 "the Type bar is ${card.width.toDp()} — over the frozen max-width of 336dp on a 360dp phone",
                 card.width.toDp() <= 336.dp,
             )
-            // …and it got there by matching the frozen paint, not by being squeezed: bench's own
-            // max-content width is 280dp, so anything wider means a control is still inflated.
+            // …and it got there by matching the spec's paint, not by being squeezed.
             assertTrue(
-                "the Type bar is ${card.width.toDp()}, not the frozen max-content 280dp",
-                card.width.toDp() <= 281.dp,
+                "the Type bar is ${card.width.toDp()}, not the spec's max-content 318.5dp",
+                card.width.toDp() <= 319.dp,
             )
         }
-        // The cap must not have been bought with the touch target — still expanded at the input layer.
-        val swatch = composeRule.onNodeWithContentDescription("Teal").fetchSemanticsNode().touchBoundsInRoot
+        // The cap must not have been bought with the touch target. Asserted on the PLATFORM tree, not on
+        // `touchBoundsInRoot` — see [every_type_bar_control_reports_a_full_48dp_target_to_the_platform]
+        // for why the latter cannot fail.
+        assertPlatformTargetAtLeast48("Teal")
+    }
+
+    /**
+     * The same cap at **fontScale 2.0**, the accessibility setting that actually threatens it.
+     *
+     * This exists because a device pass reported the card standing ~3dp from the screen edge at this
+     * setting, i.e. the frozen `max-width:calc(100% - 24px)` being violated, and read the cause as Compose
+     * "not expressing" the max-width at all. It does express it —`EditorScreen.kt` gives the bar a
+     * symmetric `padding(horizontal = 12.dp)`, which lowers the incoming max constraint that the card's
+     * `width(IntrinsicSize.Max)` then clamps against (`MaxIntrinsicWidthModifier` enforces the incoming
+     * constraints; only `requiredWidth(IntrinsicSize.Max)` would not). So the guard is real, and this test
+     * is what says so at the scale where it has to work: on a 360dp phone the card must stay inside 336dp
+     * however wide the labels grow. If a device disagrees, the difference is the finding — start with the
+     * 4dp `zinelyV21HardShadow`, which paints OUTSIDE the node and is not in any of these bounds.
+     */
+    @Test
+    @Config(qualifiers = "w360dp-h780dp-xhdpi")
+    fun the_card_honours_the_frozen_max_width_at_the_largest_font_scale() {
+        render(storeWithText(), fontScale = 2f)
+        openTypeBar()
+
+        val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
         with(composeRule.density) {
             assertTrue(
-                "swatch touch target shrank to ${swatch.width.toDp()} on a narrow screen",
-                swatch.width.toDp() >= 47.9.dp,
+                "at fontScale 2.0 the Type bar is ${card.width.toDp()} — over the frozen 336dp cap",
+                card.width.toDp() <= 336.dp,
             )
+        }
+    }
+
+    /**
+     * **Every control in the card must report at least 48 x 48 dp to the PLATFORM accessibility tree.**
+     *
+     * This replaces an assertion that could not fail. The old one read
+     * `onNodeWithContentDescription("Teal").fetchSemanticsNode().touchBoundsInRoot` and asserted
+     * `>= 47.9.dp` — but `touchBoundsInRoot` is the **pre-pruning** value: it is the raw input-layer
+     * expansion of the control's paint to `ViewConfiguration.minimumTouchTargetSize`, computed without
+     * reference to any neighbour. It returns a flat 48dp whatever the pitch, so the assertion was true by
+     * construction and stayed green through two separate real defects.
+     *
+     * What TalkBack actually receives is the *pruned* rect. `SemanticsOwner.getAllUncoveredSemanticsNodes`
+     * walks the tree keeping a `Region` of unclaimed screen, intersects each node's touch bounds against
+     * it, and subtracts. Siblings are visited in **reverse declaration order**, so the LAST row claims
+     * first and the rows above it are cut. The device dump that prompted this test (SM-A176B, Android 16,
+     * density override 420) reported:
+     *
+     *     Ink / Coral / Teal / Blue   38.1 x 48.0 dp   <- pitch 38dp (30dp pot + 8dp gapSm), horizontal
+     *     Ochre                       48.0 x 48.0 dp   <- no right-hand neighbour to collide with
+     *     Bold / Italic               48.0 x 46.1 dp   <- the Colour row's 9dp reach across an 8dp row gap
+     *
+     * Both are fixed by pitch, not by paint: `SwatchGap` 8dp -> 18dp (30 + 18 = 48) and the card's row gap
+     * `gapSm` -> `gapMd` (12 > the pot's 9dp reach). Neither control's painted size moved.
+     *
+     * Rendered through the whole [EditorScreen], deliberately: pruning is a property of the SURFACE, and a
+     * standalone `TypeBar` would answer a question about a screen that does not exist. Robolectric runs the
+     * real `AndroidComposeView` accessibility provider, so this is the same computation a device performs —
+     * the harness's own limits are recorded in `PlatformAccessibilityTree`.
+     */
+    @Test
+    fun every_type_bar_control_reports_a_full_48dp_target_to_the_platform() {
+        render(storeWithText())
+        openTypeBar()
+
+        // The colour row, where the horizontal collision was. Ochre is included even though it never
+        // failed: it is the control that proves the cause was the neighbour and not the pot.
+        listOf("Ink", "Coral", "Teal", "Blue", "Ochre").forEach { assertPlatformTargetAtLeast48(it) }
+        // The style row, where the vertical collision was — cut by the Colour row BELOW it.
+        listOf("Bold", "Italic").forEach { assertPlatformTargetAtLeast48(it) }
+        // The two rows that were already clean, pinned so a future gap change cannot quietly break them.
+        listOf("Smaller", "Larger", "Left", "Center", "Right").forEach { assertPlatformTargetAtLeast48(it) }
+    }
+
+    /**
+     * The **platform** hit-rect for a control, in dp, asserted against Material's 48dp minimum.
+     *
+     * `boundsInScreen` is what `uiautomator dump` prints and what a service consumes; a shortfall here is
+     * the exact defect the device measured, and no merged-tree assertion can see it.
+     */
+    private fun assertPlatformTargetAtLeast48(label: String) {
+        val bounds = composeRule.onNodeWithContentDescription(label)
+            .platformNode(composeRule.activity)
+            .boundsInScreen
+        with(composeRule.density) {
+            val w = bounds.width().toDp()
+            val h = bounds.height().toDp()
+            assertTrue(
+                "$label reports ${w.value} x ${h.value} dp to the platform tree — under the 48dp minimum. " +
+                    "The paint is fine; the PITCH is not (neighbouring 48dp expansions overlap and the " +
+                    "overlap is pruned before setBoundsInScreen).",
+                w >= 47.9.dp && h >= 47.9.dp,
+            )
+        }
+    }
+
+    /**
+     * **The selected option in each radio group reports `clickable=false` to the platform — and that is
+     * Compose, not this card.**
+     *
+     * The same device dump found `Left` and `Teal` (the chosen align and the chosen ink) carrying
+     * `clickable=false` while their unselected siblings carried `clickable=true`. It is not a semantics
+     * declaration this file got wrong, and it is not reachable from here: both shapes are affected —
+     * [AlignOption], which re-declares everything under `clearAndSetSemantics`, and [Swatch], which uses
+     * the stock `Modifier.selectable` — and the ONLY property they share is `SemanticsProperties.Selected`.
+     * `AndroidComposeViewAccessibilityDelegateCompat` gates the platform click on it: a node carrying
+     * `Selected == true` is published without `isClickable` and without `ACTION_CLICK`, on the reasoning
+     * that re-activating an already-chosen option is a no-op. Every Compose `selectable` behaves this way,
+     * including Material's own `RadioButton` and `Tab`.
+     *
+     * The only way to change it is to stop declaring `Selected` and hand-roll a `stateDescription`, which
+     * trades a framework-localised "Selected" for an English literal and loses the property this same
+     * suite (and `ReframeControlsRolePlatformA11yTest`) asserts reaches a service. That is a worse card,
+     * not a better one, so the behaviour is PINNED here rather than fought: this test fails the day the
+     * framework changes its mind, and the fix is then to delete the test, not to chase it.
+     *
+     * What must never regress is the half that matters — the state is still announced, and every option
+     * the user has NOT chosen is still activatable.
+     */
+    @Test
+    fun the_platform_gates_a_selected_radio_click_and_still_announces_its_state() {
+        render(storeWithText()) // START-aligned by default; the default RGBA matches no TextInk…
+        openTypeBar()
+        composeRule.onNodeWithContentDescription("Teal").performClick() // …so commit one.
+        composeRule.waitForIdle()
+
+        fun node(label: String) = composeRule.onNodeWithContentDescription(label).platformNode(composeRule.activity)
+
+        // The chosen option of each group: no click published, but the state is.
+        listOf("Left", "Teal").forEach {
+            assertTrue("$it is selected, so Compose withholds the platform click", !node(it).isClickable)
+            assertEquals("$it must still tell a service it is the chosen one", "Selected", node(it).stateDescription)
+        }
+        // Every option the user has not chosen stays reachable — the half a regression would break.
+        listOf("Center", "Right", "Ink", "Coral", "Blue", "Ochre").forEach {
+            assertTrue("$it is not selected and must be clickable to the platform", node(it).isClickable)
+            assertEquals("Not selected", node(it).stateDescription)
         }
     }
 

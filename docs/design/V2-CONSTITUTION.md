@@ -5,9 +5,14 @@
 > a design, or a line of code conflicts with this one, this one wins.
 >
 > **Stability contract.** This document is meant to be stable for *years*. It is amended rarely, deliberately,
-> and only by the owner — never as a side-effect of implementation. The frozen screens ([Library](mockups/v2-library.html) ·
-> [Bench](mockups/v2-bench.html) · [Proof](mockups/v2-proof.html)) are the *application* of this constitution;
-> this is the constitution itself.
+> and only by the owner — never as a side-effect of implementation. The frozen screens are the *application*
+> of this constitution; this is the constitution itself. **Since 2026-08-10 those screens are the V2.1
+> corpus** ([Library](mockups/v21-library.html) · [Bench](mockups/v21-bench.html) ·
+> [Proof](mockups/v21-proof.html)), which superseded the V2 trilogy as the canonical design source under
+> [ADR-099](../DECISIONS.md#adr-099). The V2 files ([v2-library](mockups/v2-library.html) ·
+> [v2-bench](mockups/v2-bench.html) · [v2-proof](mockups/v2-proof.html)) remain the parity target for every
+> surface not yet re-skinned. The constitution itself is unchanged by that, except through
+> [Amendment 1](#amendment-log).
 >
 > **Authority chain.** Constitution → frozen HTML specifications → [ADRs](../DECISIONS.md) → implementation.
 > Read [COMPOSE-IMPLEMENTATION-GUIDE.md](../COMPOSE-IMPLEMENTATION-GUIDE.md) for how implementation obeys it.
@@ -131,12 +136,76 @@ These are the constraints implementation must never violate. Detail lives in the
 invariant is stated here.
 
 ### Typography
-**Fraunces (voice/display) + Inter (work/body). Permanent.** Fraunces carries headings, titles, and the product's
-voice; Inter carries UI, metadata, and running work. No third UI typeface. This pairing is fixed across V2.
+
+> ⚖️ **AMENDED 2026-08-10 — Amendment 1, the only amendment to date.** See [§VI](#vi-amendment). The clause as
+> ratified on 2026-07-28 read:
+>
+> > **Fraunces (voice/display) + Inter (work/body). Permanent.** Fraunces carries headings, titles, and the
+> > product's voice; Inter carries UI, metadata, and running work. No third UI typeface. This pairing is fixed
+> > across V2.
+
+**Fraunces (editorial) + Inter (work) + Averia Sans Libre (voice). Permanent.** Averia carries headings, screen
+titles and the maker's own short strings — the product's *voice*. Fraunces carries long-form editorial: zine body,
+captions, pull quotes, guide prose. Inter carries UI, metadata and running work. **No fourth UI typeface.**
+
+**The rule that makes three faces safe rather than amateur:** *the imperfect face never sets running text.* Voice
+is for short strings; Work is for anything the user operates; Editorial is for anything long. A violation of that
+sentence is a violation of this constitution, not a style preference.
 
 ### Spacing
 An **8pt rhythm** governs layout. Spacing is calm and generous; the page is given room. Density is never used to
 fit more chrome — if something doesn't fit calmly, it is the wrong thing to show here.
+
+> ✅ **Scope ruled by the owner, 2026-08-10 — this clause is *not* amended, it is read as written.**
+> V2.1's measured spacing ladder ([V21-SPEC §3.3](V21-SPEC.md)) is `2 · 4 · 8 · 12 · 16 · 24 · 36`, and four
+> steps — 2, 4, 12, 36 — are off an 8pt grid. Three readings were put to the owner; the one chosen is the
+> narrowest: **the 8pt rhythm governs *layout* — the room a page is given — and never bound sub-component
+> insets, hairlines or the gaps inside a control.** The sentences that follow this clause say what it is for
+> in its own words: *calm and generous*, *density is never used to fit more chrome*. A 2 px hairline inset is
+> not a density decision.
+>
+> So: **layout spacing is 8pt** (`8 · 16 · 24` carry the ladder's structural steps, and 36 is the corpus's
+> published outer step, from Maeve's `4/8/16/24/36`). No clause changes, no pixel changes, and no frozen
+> corpus is re-cut for grid purity — which the other two readings would each have required.
+>
+> ### ✅ Closed 2026-08-10 — **the rhythm is a generosity principle, not a modular grid**
+>
+> The mapping below was falsified and the question went back to the owner, who ruled: **reading 1 — the
+> clause never was a grid rule, so `12` never conflicted with it.** The evidence is the clause's own corpus.
+> [D-007](../DECISIONS.md) measured the **V2 frozen trilogy — ratified under this very constitution — at
+> 16.7% on-grid**, and was Accepted on exactly that finding. If *"an 8pt rhythm governs layout"* were a
+> literal grid, the design this document was written to govern violated it in five declarations out of six,
+> and no one recorded a defect. A clause its own corpus never obeyed was never operating as a grid.
+>
+> What it *does* govern is the sentence it is made of: **spacing is calm and generous; density is never used
+> to fit more chrome.** That is a test a screen passes or fails, and it is the one to apply. V2.1's ladder
+> ([V21-SPEC §3.3](V21-SPEC.md)) is compatible with it in full, at every step, layout and inset alike.
+>
+> **Consequences.** No clause amended, no pixel moved, and the layout/inset split below is **withdrawn
+> rather than corrected** — it was answering a question that turned out not to exist. Implementation
+> transcribes the corpus value at each address, which is what [Principle 11](#principles) required anyway.
+>
+> The falsified mapping is kept below rather than deleted, because the failure is the instructive part.
+>
+> ### ~~⚠️ The mapping under that ruling is falsified, and the question is open again~~ *(superseded)*
+>
+> This note originally continued: *"`--gap-hair`, `--gap-xs` and `--gap-md` are sub-component values and out
+> of this clause's scope"*, and set its own tripwire — *if a **future** surface uses `--gap-md: 12px` to
+> space layout, the ruling has been stretched.* **A third review found the tripwire was already tripped, by
+> the frozen corpus, at freeze time.** `--gap-md` is the corpus's workhorse: ~59 declarations, spacing a page
+> grid (`.pgg`), the canvas region (`.canvasArea`), panels (`.band`, `.dbody`, `.testcard`), and page-level
+> states (`.empty`, `.sh-head`) across all three prototypes.
+>
+> The distinction that matters: **the owner ruled on *scope* — layout, not insets — and that ruling stands.
+> The classification of `gap-md` as an inset was the implementer's, and it is wrong.** It was presented here
+> as though it were part of the ruling; it was not. Under the ruling as written, 12px spacing a panel is
+> layout, so the corpus is off the 8pt rhythm in ~59 places.
+>
+> **Owner call, reopened** — the same three readings, now with real evidence under them: the rhythm is a
+> *generosity* principle rather than a grid and `12` never conflicted · the corpus is re-cut to the grid
+> (a visual change to a frozen design) · the clause is amended to name the real ladder. Recorded at
+> [V21-SPEC §8 row 11](V21-SPEC.md) and [ADR-099 §6](../DECISIONS.md#adr-099-review-2). **Nothing in Compose
+> may depend on the answer until it is given** — see [ZinelyV21Dimens].
 
 ### Motion
 **Calm, sparing, and meaningful.** Motion marks the two emotional peaks (e.g. a paper-settle), not every
@@ -182,9 +251,16 @@ in-app "Print" button; home-print hand-off = **Save PDF + Share** (`PrintManager
 
 ### Data & privacy
 **No networking libraries, no analytics SDKs, no cloud, no account.** Offline-first; the document tree is local
-serialized JSON ([ADR-003](../DECISIONS.md#adr-003)). The single permitted future network touch — optional online asset
-search — sends **only a keyword, never user content**, and the app is fully usable with it off. Any change that
-adds network access must justify itself against the [PRD principles](../PRD.md).
+serialized JSON ([ADR-003](../DECISIONS.md#adr-003)). **There is no permitted network touch. Zinely does not perform
+online asset searches — not now, not later, not optionally, not behind a flag, not as an experimental mode**
+([Amendment 3](#amendment-log); [ADR-104](../DECISIONS.md#adr-104)). The claim is deliberately *falsifiable*: a reader
+can verify it from the manifest and the dependency graph, which no policy statement can match. Any change that adds
+network access is a constitutional amendment, not an implementation decision.
+
+> *Superseded by Amendment 3 (2026-08-15), retained so the change is legible: this clause formerly read
+> "The single permitted future network touch — optional online asset search — sends **only a keyword, never user
+> content**, and the app is fully usable with it off." It was withdrawn because keyword-only protects the user's
+> **privacy** but not an asset's **provenance**, and Zinely's output is printed, distributed and potentially sold.*
 
 ---
 
@@ -230,7 +306,7 @@ inheritance test before it is designed:
 | **Asset packs / stickers / motifs** | Bundled, CC0/PD-first, tintable *coverage not colour* (1 asset × N inks). Live in `content.*`. Never add chrome. |
 | **Templates** | Starter material that gets someone *making* fast — one filtering choice, not a gallery to browse. The product is the making, not the catalogue. |
 | **Larger zines (16-page, booklets, saddle-stitch, duplex)** | **Staged** onto the frozen Proof room, which already *adapts by page count* — the maker never picks a format. Booklet/duplex ship as the next roadmap stage, honouring print honesty; the flip-edge default is a device-verification item, not a design assertion. |
-| **Online asset library** | Optional, opt-in, **keyword-only** request; never user content; fully usable offline. The privacy invariant is not negotiable. |
+| ~~**Online asset library**~~ | **Withdrawn by [Amendment 3](#amendment-log) (2026-08-15).** Zinely owns the material vocabulary it provides. Growth happens through **curated packs** — sourced, licence-verified, bundled and shipped — and through **the user's own materials** (camera, photo picker, share sheet, clipboard). Never through a live external search. |
 | **Cover recipes** | Extend the frozen recipe grammar `{ title × ink × mark × paper × motif × layout }`. Recipe-driven, no per-edit render ([ADR-069](../DECISIONS.md#adr-069)). The three layout archetypes are the recipe's frozen set. |
 | **Collaboration** | Only if it can be done without a server holding user content and without turning the product into a feed. If it can't inherit the privacy/offline/collection principles, it is out of scope by design — it belongs on the roadmap, not in the product, until it can. |
 
@@ -245,6 +321,44 @@ This constitution is amended only by the **owner**, deliberately, as an explicit
 implementation, and never by a design or engineering session on its own initiative. An amendment names what
 changed and why, and (if it touches a frozen surface) updates that surface's HTML spec in the same act. Absent
 such an amendment, every statement here is final and binding on all downstream work.
+
+### Amendment log
+
+| # | Date | Clause | What changed, and why |
+|---|---|---|---|
+| **1** | **2026-08-10** | [§III Typography](#typography) | **A third UI typeface is admitted: Averia Sans Libre, as the *voice* face.** V2.1 ([ADR-099](../DECISIONS.md#adr-099)) re-skins the trilogy onto a handmade design language whose voice depends on a *deliberately imperfect* display face — one generated by averaging handwriting samples. Fraunces can be warm but not wonky, and the wobble is the whole difference between "tasteful" and "made by a person" ([V21-SPEC §3.1](V21-SPEC.md)). Fraunces is **not dropped**; it moves from *voice/display* to *editorial*, which is the role its long-form cuts were always doing. Cost, measured in a built APK rather than estimated: **123.6 KB**, and subsetting cannot reduce it (an earlier 121.9 KB was a local `zlib` estimate and is retracted — see [ADR-099 §5](../DECISIONS.md#adr-099-gaps)). The compensating constraint — *the imperfect face never sets running text* — is written into the clause itself. **Owner's explicit act, requested and ruled on 2026-08-10** after the conflict was surfaced by implementation; the three V2.1 prototypes already render in Averia, so §VI's "updates that surface's HTML spec in the same act" is satisfied by the frozen V2.1 corpus. |
+
+| **2** | **2026-08-15** | [§I Felt promise](#felt-promise) | **The spatial metaphor is named: Zinely is a small press that fits in one hand.** §I's image — *"a quiet café where you make tiny books with your hands"* — was carrying both the emotional register and the spatial metaphor, and is authoritative on the first while silent on the second. That silence was measurable: four documents named four different places and none could answer *"what is this screen?"* **The register is unchanged and remains binding.** The world now has three places — **Shelf**, **Bench**, **press run** — plus the **colophon**. Reconciles rather than overrules: the north star *"FINISHING. One word."* and §II's vocabulary law (*"paper, ink, presses, shelves, and folds"*) already described a press. Consequent: [DESIGN-LANGUAGE.md](DESIGN-LANGUAGE.md) is **superseded in full**. See [ADR-103](../DECISIONS.md#adr-103). |
+| **3** | **2026-08-15** | [§III Data & privacy](#data--privacy) · [§V How the product grows](#how-the-product-grows) | **The permitted future online asset search is withdrawn, permanently.** §III's *"single permitted future network touch"* and §V's **Online asset library** growth row are struck. Zinely's material library is **bundled, generative and personal**: authored supplies shipped in the binary, transformations over them, and the user's own camera, photo picker, share sheet and clipboard. No network path exists for assets at any stage. **Rationale:** keyword-only protects the user's *privacy* — what the clause was written for — but does nothing about **provenance**, and Zinely's output is printed, distributed and potentially sold commercially. An aggregator's licence label is a claim, not a warranty: Openverse's own documentation disclaims verification of both licensing and attribution accuracy. Recolouring is an adaptation, so CC-BY and CC-BY-SA obligations would follow into a stranger's zine. **This also resolves an internal contradiction:** §III forbade *"networking libraries"* in the same breath as permitting a keyword search that requires one; the first sentence now wins without exception. Growth moves to curated packs (**source → verify licence → curate → package → ship**) and to the user's own materials. See [ADR-104](../DECISIONS.md#adr-104). |
+
+**Evidence for Amendment 3** (§VI requires the owner's *explicit act*). A design session ruled *"no network — not
+now, not opt-in, **not later**"* without citing §III or §V, and an independent review caught that the third clause
+was constitutional and therefore not the session's to make. The ruling was **narrowed to what the session was
+empowered to decide** (scope and sequencing), and the permanence question was put to the owner once, with a drafted
+amendment and a recommendation to adopt. The owner adopted it on **2026-08-15**: *"Adopt Amendment 3… The
+Constitution's currently permitted future online asset search should be closed permanently."* The reasoning the
+owner recorded: *"We should not build an asset system whose trustworthiness depends on external sources we do not
+control."* The amendment was written only after that ruling. **§VI's "updates that surface's HTML spec in the same
+act" is satisfied by the `v21-bench.html` amendment landed under ADR-104.**
+
+⚠️ **This amendment, like Amendment 1, exists because a conflict was caught rather than planned** — and the failure
+mode was the mirror image. Amendment 1 was written after a session *added* something §III forbade; Amendment 3 was
+nearly written after a session *removed* something §III permitted. **Reading a constitution for its prohibitions and
+missing its permissions is the same error in the other direction**, and §V's growth table is exactly where that
+error hides.
+
+**Evidence for Amendment 1** (recorded because §VI requires the amendment to be the owner's *explicit act*, and
+an implementer's summary is not evidence of one). Implementation stopped on finding the conflict and put it to
+the owner as a choice, with the alternatives stated: amend §III explicitly · drop Averia and keep the clause ·
+let ADR-099 carry the change implicitly. The owner chose **"Amend §III explicitly"** on **2026-08-10**, in the
+same session that accepted the V2.1 corpus (*"all looks perfect for the version we are building for. I
+accept."*). The amendment was written only after that ruling, never in anticipation of it.
+
+⚠️ **This amendment exists because the conflict was caught, not because it was planned.** ADR-099 was written
+claiming *"V2-CONSTITUTION.md survives in full — every principle survives"*, and that claim was **false**: the ADR
+bundles a third UI typeface, which §III forbade in terms. The error was found while writing the Compose type
+layer, *after* the owner had accepted the ADR on the strength of that very sentence. Recorded plainly, because a
+constitution that quietly acquires exceptions is worth less than one that logs them.
 
 ---
 

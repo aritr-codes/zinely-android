@@ -2,6 +2,7 @@ package com.aritr.zinely.ui.a11y
 
 import android.app.Activity
 import android.graphics.Rect
+import android.os.Build
 import android.view.View
 import android.view.ViewGroup
 import android.view.accessibility.AccessibilityNodeInfo
@@ -72,6 +73,43 @@ public data class PlatformA11yNode(
     val boundsInScreen: Rect,
     /** `AccessibilityNodeInfo.getContentDescription()` — the spoken label, for cross-checking identity. */
     val contentDescription: String?,
+    /**
+     * `AccessibilityNodeInfo.isLongClickable()` — whether the platform advertises a **second** gesture.
+     *
+     * Added for B3, whose shelf item is the first V2 control with one. Distinct from [longClickLabel] on
+     * purpose: a long press can be present and anonymous, which is the shape the implementation guide's
+     * *"every gesture has a named custom action twin"* rule exists to rule out, so a test that only checked
+     * this bit could not tell a discoverable gesture from a hidden one.
+     */
+    val isLongClickable: Boolean,
+    /**
+     * The label the platform reports for `ACTION_LONG_CLICK`, or `null` when the action is unnamed or absent.
+     *
+     * Read off `actionList` rather than a convenience getter because there is no getter: an action's label is
+     * carried by the `AccessibilityAction` entry itself.
+     */
+    val longClickLabel: String?,
+    /**
+     * `AccessibilityNodeInfo.getStateDescription()` — what the platform says the control's **state** is, as
+     * distinct from its name.
+     *
+     * Added for C5. Compose maps `SemanticsProperties.Selected` through to `isSelected` for `Role.Tab` and
+     * **not** for `Role.Button`, so the page grid drew its current cell with a 2dp ring that no service could
+     * see while every merged-tree assertion passed. `stateDescription` reaches the platform whatever the
+     * role, and nothing here could read it until now — which is why Device Pass 1 found that defect and the
+     * suite did not.
+     */
+    val stateDescription: String?,
+    /**
+     * `AccessibilityNodeInfo.isSelected()` — the bit a service reads to say *"selected"* after a control's
+     * name.
+     *
+     * Added for ADR-101 P3, whose paper segments are a `Role.RadioButton` selectable group. The claim
+     * being tested is a claim about **this** tree: Compose maps [SemanticsProperties.Selected] through
+     * per role, and a merged-tree `assertIsSelected()` passes whether or not the mapping reaches the
+     * platform — which is exactly the shape of the defect [stateDescription] was added for.
+     */
+    val isSelected: Boolean,
 ) {
     /** True when the platform bounds have positive area — a laid-out, hit-testable control. */
     val hasNonEmptyBounds: Boolean
@@ -111,12 +149,25 @@ public fun SemanticsNodeInteraction.platformNode(activity: Activity): PlatformA1
         )
 
     val bounds = Rect().also { info.getBoundsInScreen(it) }
+    val longClick = info.actionList.firstOrNull { it.id == AccessibilityNodeInfo.ACTION_LONG_CLICK }
     return PlatformA11yNode(
         className = info.className?.toString(),
         isClickable = info.isClickable,
         isEnabled = info.isEnabled,
         boundsInScreen = bounds,
         contentDescription = info.contentDescription?.toString(),
+        isLongClickable = info.isLongClickable,
+        longClickLabel = longClick?.label?.toString(),
+        // API 30+. Robolectric runs each suite at ITS OWN configured SDK, and several suites that use this
+        // harness sit below 30 — calling it unconditionally threw `NoSuchMethodError` in four of them, from a
+        // reader they had no interest in. Below 30 the platform has no state description to report, so `null`
+        // is the honest answer rather than a degraded one.
+        stateDescription = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            info.stateDescription?.toString()
+        } else {
+            null
+        },
+        isSelected = info.isSelected,
     )
 }
 

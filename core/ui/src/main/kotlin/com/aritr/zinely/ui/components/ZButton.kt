@@ -1,6 +1,5 @@
 package com.aritr.zinely.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -33,10 +31,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.ui.theme.ZinelyShadowLayer
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 
 /**
  * The button vocabulary of the DESIGN-FROZEN trilogy. Four primitives, transcribed from the frozen
@@ -50,11 +50,32 @@ import com.aritr.zinely.ui.theme.ZinelyTheme
  *
  * No haptic parameters: verbs fire per action, not per widget — callers own
  * [com.aritr.zinely.ui.theme.ZinelyHaptics.perform].
+ *
+ * ### V2.1 — ADR-102 P8
+ *
+ * Every button in the three V2.1 prototypes is the same object: **paper or a flat content colour,
+ * under a `1.5px solid var(--ink)` border, at `--br-pill`, over a `Npx Npx 0 var(--ink-line)` printed
+ * shadow.** What varies is the fill and the depth. So the four primitives below keep their metrics
+ * presets and their signatures — five call sites in two other modules are pinned to them — and change
+ * only what they paint:
+ *
+ * - **the press is no longer an animation.** `animateFloatAsState` driving `translationY` + `scale`
+ *   is deleted; the object offsets down-right and its shadow shortens, in one step, via
+ *   [zinelyV21Pressable]. There is nothing to downgrade under `prefers-reduced-motion` because the
+ *   state change *is* the position;
+ * - **the soft coral/stamp bloom is deleted.** V2.1 has no blurred shadow on any button. The
+ *   [ZPrimaryButton] `shadow` parameter and [ZPrimaryButtonMetrics.restShadowAlpha] survive as API
+ *   (concurrent call sites still pass them) but are **no longer painted** — noted at each;
+ * - **`--field` / `--field-edge` / coral / stamp are gone from the palette.** The fills below are the
+ *   corpus's own `--leaf` / `--paper`, and the inks are `--ink` / `--ink-soft` / `--jam-text`;
+ * - **no `--frame` ring.** `.start` and `.btn-save` both wear one, and both are *one per screen*. A
+ *   shared primitive that hard-coded it would put a ring on every screen that mounts it, so the ring
+ *   stays at the call site ([BenchBottomBar]'s `.add` is the pattern).
  */
 
-// ----- primary (coral CTA) ------------------------------------------------------------------
+// ----- primary (the screen's filled action) --------------------------------------------------
 
-/** Frozen scalars of the one coral action per surface. */
+/** Frozen scalars of the one filled action per surface. */
 @Immutable
 public data class ZPrimaryButtonMetrics(
     val minHeight: Dp,
@@ -63,30 +84,47 @@ public data class ZPrimaryButtonMetrics(
     val fontSize: TextUnit,
     val gap: Dp,
     val iconSize: Dp,
-    /** Alpha of the resting `0 8px 20px rgba(198,78,52,a)` shadow layer. */
+    /**
+     * **Vestigial under V2.1 and no longer painted.** It was the alpha of the resting
+     * `0 8px 20px rgba(198,78,52,a)` bloom; V2.1 draws no blurred shadow on any button. Kept because
+     * removing a property of a public data class is a source-breaking change, and P8 is explicitly
+     * forbidden from moving this API while other packages are editing its call sites.
+     */
     val restShadowAlpha: Float,
 ) {
     public companion object {
-        /** shelf.html `.start` */
+        /** `v21-library.html .start` */
         public val Shelf: ZPrimaryButtonMetrics =
-            ZPrimaryButtonMetrics(56.dp, 30.dp, 18.dp, 17.sp, 10.dp, 20.dp, 0.34f)
+            ZPrimaryButtonMetrics(56.dp, 30.dp, ZinelyV21Dimens.radiusPill, 17.sp, 10.dp, 20.dp, 0.34f)
 
-        /** bench.html `.proof` */
+        /** `v21-bench.html .add` */
         public val Bench: ZPrimaryButtonMetrics =
-            ZPrimaryButtonMetrics(52.dp, 22.dp, 16.dp, 15.5.sp, 9.dp, 19.dp, 0.32f)
+            ZPrimaryButtonMetrics(52.dp, 22.dp, ZinelyV21Dimens.radiusPill, 15.5.sp, 9.dp, 19.dp, 0.32f)
 
-        /** proof.html `.primary` */
+        /** `v21-proof.html .btn-save` */
         public val Proof: ZPrimaryButtonMetrics =
-            ZPrimaryButtonMetrics(54.dp, 22.dp, 16.dp, 16.sp, 10.dp, 20.dp, 0.32f)
+            ZPrimaryButtonMetrics(54.dp, 22.dp, ZinelyV21Dimens.radiusPill, 16.sp, 10.dp, 20.dp, 0.32f)
     }
 }
 
+/**
+ * The two fills the corpus gives a full-width action.
+ *
+ * The names are V2's and are kept because they are public API; what they *mean* is now
+ * `v21-proof.html`'s pair — [Coral] is `.btn-save`'s `--leaf` on `--on-leaf`, [Stamp] is
+ * `.btn-share`'s `--paper` on `--ink-soft`. Neither coral nor stamp exists in the V2.1 palette.
+ */
 public enum class ZPrimaryFill { Coral, Stamp }
 
 /**
- * The coral (or proof's `.primary.stamp`) call to action. [metrics] is required — each surface
- * passes its own frozen preset. [shadow] overrides the fill's default rest shadow (shelf's retry
- * button is `.start` metrics + stamp fill + the token `--shadow-2`, shelf.html:414).
+ * `.start` / `.btn-save` / `.btn-share`: a filled pill under a 1.5px ink border, on the
+ * [ZinelyV21Press.Hero] tier — 4dp at rest, `translate(2px,2px)` and 1dp pressed. The tier is the one
+ * the corpus table assigns those three classes by name; it is not read off the depth.
+ *
+ * [metrics] is required — each surface passes its own frozen preset.
+ *
+ * @param shadow **ignored under V2.1** — it overrode the V2 blurred bloom, and there is no bloom. The
+ *   parameter is retained so concurrently-edited call sites keep compiling.
  */
 @Composable
 public fun ZPrimaryButton(
@@ -95,48 +133,30 @@ public fun ZPrimaryButton(
     metrics: ZPrimaryButtonMetrics,
     modifier: Modifier = Modifier,
     fill: ZPrimaryFill = ZPrimaryFill.Coral,
-    shadow: List<ZinelyShadowLayer>? = null,
+    @Suppress("UNUSED_PARAMETER") shadow: List<ZinelyShadowLayer>? = null,
     enabled: Boolean = true,
     icon: (@Composable (tint: Color) -> Unit)? = null,
 ) {
-    val colors = ZinelyTheme.colors
+    val colors = ZinelyTheme.v21Colors
     val background = when (fill) {
-        ZPrimaryFill.Coral -> colors.coralStrong
-        ZPrimaryFill.Stamp -> colors.stamp
+        ZPrimaryFill.Coral -> colors.leaf
+        ZPrimaryFill.Stamp -> colors.paper
     }
-    // 0 8px 20px rgba(<fill>, a), 0 2px 0 rgba(0,0,0,.12) — first layer coral(198,78,52) or
-    // stamp(38,70,83,.3) per proof.html `.primary.stamp`.
-    val restShadow = shadow ?: listOf(
-        ZinelyShadowLayer(
-            dy = 8.dp,
-            blur = 20.dp,
-            color = when (fill) {
-                ZPrimaryFill.Coral -> colors.coralStrong.copy(alpha = metrics.restShadowAlpha)
-                ZPrimaryFill.Stamp -> colors.stamp.copy(alpha = 0.3f)
-            },
-        ),
-        ZinelyShadowLayer(dy = 2.dp, blur = 0.dp, color = Color.Black.copy(alpha = 0.12f)),
-    )
+    val contentColor = when (fill) {
+        ZPrimaryFill.Coral -> colors.onLeaf
+        ZPrimaryFill.Stamp -> colors.inkSoft
+    }
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val press by animateFloatAsState(
-        targetValue = if (pressed) 1f else 0f,
-        animationSpec = ZinelyTheme.motion.fast(),
-        label = "primaryPress",
-    )
     val shape = RoundedCornerShape(metrics.radius)
     Row(
         modifier = modifier
+            // Ring and shadow both paint outside the node, so both precede the `clip`.
             .zinelyFocusRing(interactionSource, metrics.radius)
-            .graphicsLayer {
-                // :active{ transform:translateY(1px) scale(.99) } at --fast
-                translationY = press * 1.dp.toPx()
-                scaleX = 1f - press * 0.01f
-                scaleY = 1f - press * 0.01f
-            }
-            .zinelyShadow(restShadow, shape)
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Hero, colors.inkLine, shape)
             .clip(shape)
             .background(background)
+            .border(BorderWidth, colors.ink, shape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -149,27 +169,28 @@ public fun ZPrimaryButton(
         horizontalArrangement = Arrangement.spacedBy(metrics.gap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icon != null) Box(Modifier.size(metrics.iconSize)) { icon(Color.White) }
+        if (icon != null) Box(Modifier.size(metrics.iconSize)) { icon(contentColor) }
         BasicText(
             text = text,
             style = TextStyle(
-                color = Color.White,
-                fontFamily = ZinelyTheme.typography.shell,
+                color = contentColor,
+                fontFamily = ZinelyV21Fonts.Work,
                 fontSize = metrics.fontSize,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.01.em,
+                fontWeight = FontWeight.Bold,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
             ),
         )
     }
 }
 
-// ----- stamp (secondary emphasis, flat) -----------------------------------------------------
+// ----- stamp (secondary emphasis) ------------------------------------------------------------
 
 /**
- * bench.html/proof.html `.btn-stamp` (byte-identical): stamp fill, `--shadow-2`, no press/hover
- * transforms in the spec. Consumers: bench + proof error retry, proof empty CTA. Shelf's retry is
- * NOT this — it is [ZPrimaryButton] with [ZPrimaryButtonMetrics.Shelf], [ZPrimaryFill.Stamp] and
- * `shadow = ZinelyTheme.elevation.shadow2`.
+ * `v21-proof.html .btn-share`: `--paper` under the same ink border, `--ink-soft` label, and the same
+ * [ZinelyV21Press.Hero] depth its sibling `.btn-save` carries — the corpus puts two Hero buttons on
+ * that one row, which is why the tier table stopped calling Hero *"the one primary action"*.
+ *
+ * V2 drew this flat, with `--shadow-2` and no press rule at all. V2.1 gives it both.
  */
 @Composable
 public fun ZStampButton(
@@ -178,14 +199,17 @@ public fun ZStampButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val colors = ZinelyTheme.v21Colors
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusPill)
     val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
     Box(
         modifier = modifier
-            .zinelyFocusRing(interactionSource, 16.dp)
-            .zinelyShadow(ZinelyTheme.elevation.shadow2, shape)
+            .zinelyFocusRing(interactionSource, ZinelyV21Dimens.radiusPill)
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Hero, colors.inkLine, shape)
             .clip(shape)
-            .background(ZinelyTheme.colors.stamp)
+            .background(colors.paper)
+            .border(BorderWidth, colors.ink, shape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -193,17 +217,18 @@ public fun ZStampButton(
                 role = Role.Button,
                 onClick = onClick,
             )
-            .defaultMinSize(minHeight = 52.dp)
-            .padding(horizontal = 26.dp),
+            .defaultMinSize(minHeight = StampMinHeight)
+            .padding(horizontal = StampPadding),
         contentAlignment = Alignment.Center,
     ) {
         BasicText(
             text = text,
             style = TextStyle(
-                color = Color(0xFFF4EFE6),
-                fontFamily = ZinelyTheme.typography.shell,
-                fontSize = 16.sp,
+                color = colors.inkSoft,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontSize = StampFontSize,
                 fontWeight = FontWeight.SemiBold,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
             ),
         )
     }
@@ -212,9 +237,16 @@ public fun ZStampButton(
 // ----- icon button --------------------------------------------------------------------------
 
 /**
- * bench.html/proof.html `.iconbtn`: 44×44, radius 12, transparent, 22px icon. The 44px visual is
- * wrapped in the frozen ≥48dp touch target ([minimumInteractiveComponentSize]). Disabled =
- * on-desk-faint at 50% (bench undo/redo).
+ * `v21-proof.html .iconbtn` / `v21-bench.html .icon-btn` (byte-identical): a 44×44 paper pill under a
+ * 1.5px ink border, a 20px `--ink-soft` glyph, and `2px 2px 0 var(--ink-line)`. The 44px visual is
+ * wrapped in the frozen ≥48dp touch target.
+ *
+ * **Press tier [ZinelyV21Press.Flat]** — both class names appear in the tier table's Flat row, and
+ * both `:active` rules write `box-shadow:0 0 0`: it presses **flush**.
+ *
+ * **Disabled is not a press.** `.icon-btn:disabled{opacity:.35;box-shadow:none}` — the shadow is
+ * dropped outright rather than shortened, and the dim reaches the border and the fill, not only the
+ * glyph. V2 dimmed the glyph alone at `.5` because it had no border to dim.
  */
 @Composable
 public fun ZIconButton(
@@ -224,14 +256,16 @@ public fun ZIconButton(
     enabled: Boolean = true,
     icon: @Composable (tint: Color) -> Unit,
 ) {
-    val colors = ZinelyTheme.colors
+    val colors = ZinelyTheme.v21Colors
     val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusPill)
     // 44×44 visual inside an explicit 48dp touch box — the frozen ≥48dp target. (An outer
     // minimumInteractiveComponentSize() is overridden by the inner size(44) under test; the
     // explicit wrapper is unambiguous.)
     Box(
         modifier = modifier
-            .size(48.dp)
+            .size(IconButtonTouchTarget)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -244,22 +278,31 @@ public fun ZIconButton(
     ) {
         Box(
             Modifier
-                .zinelyFocusRing(interactionSource, 12.dp)
-                .size(44.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .alpha(if (enabled) 1f else 0.5f),
+                .zinelyFocusRing(interactionSource, ZinelyV21Dimens.radiusPill)
+                // `:disabled{box-shadow:none}` — absent, not shortened. Chaining nothing is how a
+                // caller states the two behaviours [zinelyV21Pressable] deliberately cannot express.
+                .then(
+                    if (enabled) {
+                        Modifier.zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+                    } else {
+                        Modifier
+                    },
+                )
+                .alpha(if (enabled) 1f else IconDisabledAlpha)
+                .size(IconButtonSize)
+                .clip(shape)
+                .background(colors.paper)
+                .border(BorderWidth, colors.ink, shape),
             contentAlignment = Alignment.Center,
         ) {
-            Box(Modifier.size(22.dp)) {
-                icon(if (enabled) colors.onDesk else colors.onDeskFaint)
-            }
+            Box(Modifier.size(IconGlyphSize)) { icon(colors.inkSoft) }
         }
     }
 }
 
-// ----- tool (field-filled, bordered secondary) ----------------------------------------------
+// ----- tool (bordered secondary) -------------------------------------------------------------
 
-/** Frozen scalars of the field-filled bordered button family. Radius is 14px in every variant. */
+/** Frozen scalars of the bordered secondary family. Radius is `--br-pill` in every V2.1 variant. */
 @Immutable
 public data class ZToolButtonMetrics(
     val minHeight: Dp,
@@ -268,39 +311,64 @@ public data class ZToolButtonMetrics(
     val fontWeight: FontWeight,
     val gap: Dp,
     val iconSize: Dp,
-    /** shelf `.sortbtn` speaks in on-desk-soft; every other variant in on-desk. */
+    /** `.btn-share`-style variants speak in `--ink-soft`; every other variant in `--ink`. */
     val softText: Boolean = false,
-    /** proof `.exportrow .tool:active{ translateY(1px) }` — the only pressed rule in the family. */
+    /**
+     * **Vestigial under V2.1.** It gated the one V2 variant that had a `:active{translateY(1px)}`
+     * rule. Every V2.1 button presses, so the tier is chosen by shape (icon-only → Flat, text →
+     * Raised) and this flag no longer selects anything. Kept as public API for the same reason
+     * [ZPrimaryButtonMetrics.restShadowAlpha] is.
+     */
     val pressTranslate: Boolean = false,
 ) {
     public companion object {
-        /** shelf.html `.sortbtn` */
+        /** shelf sort control */
         public val ShelfSort: ZToolButtonMetrics =
             ZToolButtonMetrics(48.dp, 14.dp, 13.5.sp, FontWeight.Medium, 6.dp, 15.dp, softText = true)
 
-        /** bench.html `.tool` (and `.tool.icononly`: pass no text) */
+        /** bench tool (and the icon-only variant: pass no text) */
         public val BenchTool: ZToolButtonMetrics =
             ZToolButtonMetrics(48.dp, 15.dp, 14.sp, FontWeight.Medium, 8.dp, 18.dp)
 
-        /** proof.html `.ghostbtn` */
+        /** proof ghost button */
         public val ProofGhost: ZToolButtonMetrics =
             ZToolButtonMetrics(52.dp, 16.dp, 14.5.sp, FontWeight.SemiBold, 8.dp, 18.dp)
 
-        /** proof.html `.exportrow .tool` */
+        /** proof export-row tool */
         public val ProofExport: ZToolButtonMetrics =
             ZToolButtonMetrics(52.dp, 14.dp, 14.5.sp, FontWeight.SemiBold, 8.dp, 19.dp, pressTranslate = true)
 
-        /** proof.html `.stepnav button` (52×52 square: pass no text) */
+        /**
+         * `v21-proof.html .fnav` (44×44 square, 18dp glyph: pass no text).
+         *
+         * Was 52×52 with a 22dp glyph, from the retired `.stepnav button`. The V2.1 fold guide's own
+         * `.fnav` is 44px, and at eight steps the difference stopped being cosmetic: a 52dp pair either
+         * side of eight dot targets overflowed a 360dp window, and `ZSheet` clips. Matching the freeze
+         * fixed the overflow — see ADR-101 §6.7.
+         */
         public val ProofStepNav: ZToolButtonMetrics =
-            ZToolButtonMetrics(52.dp, 0.dp, 14.5.sp, FontWeight.SemiBold, 0.dp, 22.dp)
+            ZToolButtonMetrics(44.dp, 0.dp, 14.5.sp, FontWeight.SemiBold, 0.dp, 18.dp)
     }
 }
 
 /**
- * The `.tool`/`.ghostbtn`/`.sortbtn`/`.stepnav` family: `--field` fill, 1px `--field-edge` border,
- * radius 14. Icon-only (null [text]) renders the square variant (`.tool.icononly` 48×48, stepnav
- * 52×52 — the square side is [ZToolButtonMetrics.minHeight]). Disabled = `opacity:.4`
- * (proof stepnav). [danger] = coral-text label+icon (bench `.tool.danger`).
+ * The bordered secondary family: `--paper` fill, 1.5px `--ink` border, `--br-pill`.
+ *
+ * **Icon-only (null [text]) is transcribed; the text variants are extrapolated, and the two are not
+ * the same kind of claim.** Icon-only *is* `v21-proof.html .fnav` — **[ZinelyV21Press.Flat]**, named
+ * in the tier table by that class, with `:disabled{opacity:.3;box-shadow:none}` read off the rule.
+ *
+ * The four text-bearing presets have **no V2.1 selector at all**: `.sortbtn`, `.tool`, `.ghostbtn` and
+ * `.exportrow .tool` were V2 classes and none survives the re-freeze, which is why their companion
+ * entries below no longer cite one. They are given **[ZinelyV21Press.Raised]** because `.retry` is the
+ * corpus's paper-on-ink-border secondary *text* button and wears that tier — an extrapolation from the
+ * nearest surviving class, stated as one. It is not interpolated between tiers, which is the thing
+ * [ZinelyV21Press] forbids; a call site that knows better should be re-pointed at a real selector when
+ * its own package converts.
+ *
+ * [danger] = `.act.danger`'s `--jam-text` label and icon. `--jam` is the corpus's only urgent colour,
+ * and as *text* it is always `--jam-text` (the one documented exception is the Library's 28.8px
+ * display `!`, which is not this).
  */
 @Composable
 public fun ZToolButton(
@@ -313,30 +381,34 @@ public fun ZToolButton(
     danger: Boolean = false,
     icon: (@Composable (tint: Color) -> Unit)? = null,
 ) {
-    val colors = ZinelyTheme.colors
+    val colors = ZinelyTheme.v21Colors
     val contentColor = when {
-        danger -> colors.coralText
-        metrics.softText -> colors.onDeskSoft
-        else -> colors.onDesk
+        danger -> colors.jamText
+        metrics.softText -> colors.inkSoft
+        else -> colors.ink
     }
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusPill)
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val press by animateFloatAsState(
-        targetValue = if (metrics.pressTranslate && pressed) 1f else 0f,
-        animationSpec = ZinelyTheme.motion.fast(),
-        label = "toolPress",
-    )
     val iconOnly = text == null
+    val press = if (iconOnly) ZinelyV21Press.Flat else ZinelyV21Press.Raised
     Row(
         modifier = modifier
             .minimumInteractiveComponentSize()
-            .zinelyFocusRing(interactionSource, 14.dp)
-            .graphicsLayer { translationY = press * 1.dp.toPx() }
-            .alpha(if (enabled) 1f else 0.4f)
+            .zinelyFocusRing(interactionSource, ZinelyV21Dimens.radiusPill)
+            // `.fnav:disabled{box-shadow:none}` — the depth is absent while disabled, not shortened.
+            .then(
+                if (enabled) {
+                    Modifier.zinelyV21Pressable(pressed, press, colors.inkLine, shape)
+                } else {
+                    Modifier
+                },
+            )
+            // `opacity:.3` on the whole control, so the border dims with the label.
+            .alpha(if (enabled) 1f else ToolDisabledAlpha)
             .clip(shape)
-            .background(colors.field)
-            .border(1.dp, colors.fieldEdge, shape)
+            .background(colors.paper)
+            .border(BorderWidth, colors.ink, shape)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -356,9 +428,10 @@ public fun ZToolButton(
                 text = text,
                 style = TextStyle(
                     color = contentColor,
-                    fontFamily = ZinelyTheme.typography.shell,
+                    fontFamily = ZinelyV21Fonts.Work,
                     fontSize = metrics.fontSize,
                     fontWeight = metrics.fontWeight,
+                    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 ),
             )
         }
@@ -367,3 +440,24 @@ public fun ZToolButton(
 
 private fun Modifier.describedAs(description: String): Modifier =
     semantics { contentDescription = description }
+
+// ---------------------------------------------------------------------------------------------
+// The frozen values shared by the family.
+// ---------------------------------------------------------------------------------------------
+
+/** `border:1.5px solid var(--ink)` — every button in all three prototypes. */
+private val BorderWidth = 1.5.dp
+
+/** `.icon-btn{width:44px;height:44px}` and its 20px glyph, drawn inside the 48dp touch minimum. */
+private val IconButtonTouchTarget = 48.dp
+private val IconButtonSize = 44.dp
+private val IconGlyphSize = 20.dp
+
+/** `.icon-btn:disabled{opacity:.35}` and `.fnav:disabled{opacity:.3}`. */
+private const val IconDisabledAlpha = 0.35f
+private const val ToolDisabledAlpha = 0.3f
+
+/** `.btn-share{padding:0 var(--gap-lg);font-size:.88rem}` — over the frozen 52dp minimum. */
+private val StampMinHeight = 52.dp
+private val StampPadding = ZinelyV21Dimens.gapLg
+private val StampFontSize = 14.08.sp

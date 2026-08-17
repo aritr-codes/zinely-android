@@ -42,6 +42,39 @@ class DecorativeImpositionOrderTest {
         )
     }
 
+    /**
+     * The **fold guide** draws the same sheet, and it is the surface that drifted: `ProofFold.cells()`
+     * held a literal `5 4 3 6 / 8 1 2 7` — five of eight cells wrong — while the exported PDF used the
+     * engine. A user comparing their fold guide to their own printout found it; no test could, because
+     * those numbers are `drawText` on a Canvas with no semantics and no golden.
+     *
+     * So the assertion is ADR-050's actual rule rather than the numbers: *the diagram derives from the
+     * convention and never re-encodes a raw layout array.* Asserting the numbers a second time would
+     * have passed happily while the literal sat two files away.
+     */
+    @Test
+    fun `the fold diagram derives its cells from the engine, not from a literal`() {
+        // Given the fold guide's own source
+        val source = java.io.File(
+            "src/main/kotlin/com/aritr/zinely/feature/editor/ProofFold.kt",
+        ).readText()
+        val cells = source.substringAfter("private fun cells()").substringBefore("\n    }")
+
+        // When the eight page numbers are drawn
+        // Then they come from the engine derivation...
+        assertTrue(
+            "ProofFold.cells() must read decorativeImpositionRows() (ADR-050)",
+            cells.contains("decorativeImpositionRows()"),
+        )
+        // ...and no page number is written into the diagram by hand.
+        val literals = Regex("""["'](\d)["']""").findAll(cells).map { it.groupValues[1] }.toList()
+        assertEquals(
+            "ProofFold.cells() must not hardcode page numbers: $literals",
+            emptyList<String>(),
+            literals,
+        )
+    }
+
     @Test
     fun `top row is flipped and bottom row is upright, per the convention's rotations`() {
         // Given the canonical engine convention

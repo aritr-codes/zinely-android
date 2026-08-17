@@ -9,7 +9,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
@@ -26,6 +25,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
@@ -134,8 +134,9 @@ class EditorContextBarTest {
         val id = store.uiState.value.selection.single()
         setBar(store)
 
-        // Delete is the trailing control; scroll it into view first (the bar scrolls horizontally).
-        composeRule.onNodeWithContentDescription("Delete").performScrollTo().performClick()
+        // Delete is the trailing control. It needed a `performScrollTo` until F-2 made the row wrap; with
+        // no scrollable ancestor that call now throws, and the control is on screen anyway.
+        composeRule.onNodeWithContentDescription("Delete").performClick()
         composeRule.waitForIdle()
 
         val present = store.uiState.value.document.pages[0].elements.any { it.id == id }
@@ -151,5 +152,46 @@ class EditorContextBarTest {
         store.dispatch(Intent.ClearSelection)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(EditorContextBarTestTag).assertDoesNotExist()
+    }
+
+    // --- F-2: every control is on screen, at full size --------------------------------------------
+
+    @Test
+    // The device that produced the finding: 360dp wide, eleven ≥48dp controls. The qualifier IS the
+    // subject here — on a wide host the row never wrapped and the defect never existed.
+    @Config(qualifiers = "w360dp-h740dp")
+    fun every_control_is_displayed_on_a_narrow_phone_and_none_is_a_sliver() {
+        // `assertIsDisplayed`, deliberately, and not the `assertExists` the older tests above use: existing
+        // in the tree is exactly what the ten controls did while the row scrolled, and it is what let this
+        // ship for two months. What was actually wrong is that two of them were never on screen.
+        val store = storeWithSelectedText()
+        setBar(store)
+
+        val minTarget = 48f * composeRule.density.density
+        listOf(
+            "Move left", "Move right", "Move up", "Move down",
+            "Make larger", "Make smaller", "Rotate clockwise", "Rotate counterclockwise",
+            "Bring forward", "Send backward", "Delete",
+        ).forEach { label ->
+            val node = composeRule.onNodeWithContentDescription(label)
+            node.assertIsDisplayed()
+            // The other half of the fix, and the one a "shrink them until they fit" regression would break:
+            // wrapping is chosen precisely so no target has to give up its 48dp.
+            val bounds = node.fetchSemanticsNode().touchBoundsInRoot
+            assertEquals("$label must keep a full 48dp target — got $bounds", minTarget, bounds.width, 1.5f)
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w1280dp-h800dp")
+    fun a_wide_host_still_lays_the_controls_out_in_one_line() {
+        // Wrapping must be a consequence of the width, not a new house style: where they fit, they fit.
+        val store = storeWithSelectedText()
+        setBar(store)
+
+        val tops = listOf("Move left", "Delete").map {
+            composeRule.onNodeWithContentDescription(it).fetchSemanticsNode().boundsInRoot.top
+        }
+        assertEquals("first and last control must share one line on a wide host", tops[0], tops[1], 1f)
     }
 }

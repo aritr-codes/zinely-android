@@ -46,6 +46,17 @@ class DocumentSchemaTest {
                         text = "hello",
                         style = TextStyle(sizePt = 18.0, color = ColorRgba(1, 2, 3, 200), bold = true),
                     ),
+                    // The third primitive (ADR-105 / SUPPLIES-SPEC §2), pinned into the same hand-picked
+                    // wire-contract sample as image and text — every non-default field set, so a dropped
+                    // or renamed field fails the round-trip rather than silently defaulting back.
+                    DecorElement(
+                        id = "dec-1",
+                        transform = Transform(xPt = 30.0, yPt = 40.0, widthPt = 60.0, heightPt = 20.0, rotationDegrees = 12.0),
+                        zIndex = 2,
+                        supplyId = "tape.torn",
+                        ink = ColorRgba(200, 40, 90, 255),
+                        mirrored = true,
+                    ),
                 ),
             ),
             Page(index = 7, role = PageRole.BACK_COVER),
@@ -74,6 +85,31 @@ class DocumentSchemaTest {
         val encoded = json.encodeToString(ZineDocument.serializer(), doc)
         assertTrue(encoded.contains("\"type\":\"image\""), encoded)
         assertTrue(encoded.contains("\"type\":\"text\""), encoded)
+        assertTrue(encoded.contains("\"type\":\"decor\""), encoded)
+    }
+
+    /**
+     * Given a page carrying a supply, when the document is written and read back, then every decor
+     * field survives byte-for-byte and the wire keys are the frozen names.
+     *
+     * The keys are asserted literally, not just structurally: `supplyId`, `ink` and `mirrored` are the
+     * on-disk contract for every zine anyone saves from here on, and a rename is a silent data loss for
+     * documents already written (SUPPLIES-SPEC §2).
+     */
+    @Test
+    fun `a decor element round-trips with its supplyId, ink and mirror flag intact`() {
+        val doc = sampleDocument()
+        val encoded = json.encodeToString(ZineDocument.serializer(), doc)
+        assertTrue(encoded.contains("\"supplyId\":\"tape.torn\""), encoded)
+        assertTrue(encoded.contains("\"mirrored\":true"), encoded)
+
+        val decoded = json.decodeFromString(ZineDocument.serializer(), encoded)
+        val decor = decoded.pages[0].elements.filterIsInstance<DecorElement>().single()
+        assertEquals("tape.torn", decor.supplyId)
+        assertEquals(ColorRgba(200, 40, 90, 255), decor.ink)
+        assertEquals(true, decor.mirrored)
+        assertEquals(2, decor.zIndex)
+        assertEquals(12.0, decor.transform.rotationDegrees)
     }
 
     @Test

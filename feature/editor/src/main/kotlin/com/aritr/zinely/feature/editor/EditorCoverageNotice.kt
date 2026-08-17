@@ -7,10 +7,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,14 +19,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.rememberReduceMotion
 
 /** Test tag on the unsupported-character coverage notice. */
 public const val EditorCoverageNoticeTestTag: String = "editor-coverage-notice"
@@ -60,9 +62,15 @@ public const val EditorCoverageNoticeTestTag: String = "editor-coverage-notice"
  * barging over ongoing speech, and — because the rendered text only changes when the *set* of unprintable
  * scripts changes — it does not re-announce on every keystroke of the same script.
  *
- * **Shares the frozen save-failure treatment** (bench.html `.snackbar`): the `--stamp` pill with light
- * `--paper` text. No new visual language is introduced — this is an existing surface carrying new copy,
- * which is why it is a legal post-freeze accessibility affordance rather than a redesign.
+ * ### ⚠ Unfrozen surface — the analogy is `.snack`, minus its button
+ *
+ * `v21-bench.html` never types a character it cannot print, so it draws nothing for this state. Its one
+ * message-over-the-page surface is `.snack` (`:467-485`), and this notice takes it whole — the same
+ * inverted `ink`/`paper` box, the same pill, the same `-0.6°` lean, through the shared
+ * [NoticeShape]/[NoticeTextSize] transcription in [EditorSaveFailure]. It takes **no** `.snack button`,
+ * because it has no action to offer: the notice is a status that clears itself, and a control that only
+ * hides a still-true statement is the noise the paragraph above rules out. Dropping the one element the
+ * analogy does not need is the reason this stays transcription rather than becoming invention.
  *
  * **Reduced-motion safe.** With [reduceMotion] on, the fade degrades to an instant appear/disappear; the
  * static state (real text when present, absent otherwise) is always correct.
@@ -87,26 +95,32 @@ public fun EditorCoverageNotice(
     AnimatedVisibility(
         visible = !coverage.isFullyCovered,
         modifier = modifier,
-        enter = if (reduceMotion) EnterTransition.None else fadeIn(tween(durationMillis = 150)),
-        exit = if (reduceMotion) ExitTransition.None else fadeOut(tween(durationMillis = 200)),
+        enter = if (reduceMotion) EnterTransition.None else fadeIn(tween(NoticeFadeInMillis)),
+        exit = if (reduceMotion) ExitTransition.None else fadeOut(tween(NoticeFadeOutMillis)),
     ) {
-        val colors = ZinelyTheme.colors
+        val colors = ZinelyTheme.v21Colors
         Row(
             modifier = Modifier
                 .testTag(EditorCoverageNoticeTestTag)
-                .clip(RoundedCornerShape(12.dp))
-                // The frozen actionable-message surface (bench.html `.snackbar`): a `--stamp` pill with
-                // light `--paper` text — the same warm home the save-failure banner borrows, reused here
-                // so this notice introduces no new visual language.
-                .background(colors.stamp)
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .graphicsLayer { rotationZ = NoticeRotation }
+                .clip(NoticeShape)
+                .background(colors.ink)
+                // `inkLine`, not `ink` — this box's own ground is `ink`; see [NoticeBorder].
+                .border(NoticeBorder, colors.inkLine, NoticeShape)
+                // With no trailing button, `.snack`'s asymmetric 8dp end padding would leave the sentence
+                // hard against the pill's curve. The start value is used on both ends, which is the same
+                // box the freeze draws — its right side is short only to make room for a control.
+                .padding(horizontal = NoticePaddingStart, vertical = NoticePaddingV),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = Copy.Coverage.unsupported(lastNames),
-                style = MaterialTheme.typography.bodyMedium,
-                // Snackbar body: light `--paper` on the `--stamp` pill (bench.html `.snackbar color:#F4EFE6`).
-                color = colors.paper,
+                style = TextStyle(
+                    fontFamily = ZinelyV21Fonts.Work,
+                    fontSize = NoticeTextSize,
+                    lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                    color = colors.paper,
+                ),
                 // Preventive, not a loss that already happened → Polite (never barges over speech). The
                 // text is stable while the same scripts are present, so this does not re-announce per key.
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },

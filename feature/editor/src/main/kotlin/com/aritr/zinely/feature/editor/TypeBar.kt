@@ -1,30 +1,30 @@
 package com.aritr.zinely.feature.editor
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -37,15 +37,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign as ComposeTextAlign
@@ -58,8 +70,14 @@ import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.TextStyle
+import com.aritr.zinely.ui.components.zinelyV21HardShadow
+import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Dimens
+import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.ZinelyV21Press
 import com.aritr.zinely.ui.theme.rememberReduceMotion
+import java.util.Locale
 import kotlinx.coroutines.delay
 
 /** Test tag on the Type bar surface; absent from the tree unless a single non-blank text box is selected. */
@@ -267,26 +285,53 @@ internal fun TypeBar(
         }
     }
 
-    Surface(
-        modifier = modifier.testTag(TypeBarTestTag),
-        // bench `.typebar`: a floating `--menu` card, hairline edge, 16px corners, lifted off the desk.
-        shape = RoundedCornerShape(16.dp),
-        color = ZinelyTheme.colors.menu,
-        contentColor = ZinelyTheme.colors.onDesk,
-        border = BorderStroke(1.dp, ZinelyTheme.colors.fieldEdge),
-        shadowElevation = 6.dp,
+    // `v21-typebar.html` `.typebar` — **`.inkpop`'s card**, and deliberately not a card of its own. Same
+    // app, same canvas, same job: a floating tray of controls belonging to the element that summoned it,
+    // standing where `.inkpop` and `.ctx` stand. `--paper` ground, 1.5dp ink edge, `--br-lg`, and the 4dp
+    // `--hard` offset shadow the corpus gives anything that has left the surface.
+    //
+    // V1 asked for a `--menu` ground, a `--fieldEdge` hairline and `shadowElevation = 6.dp`: one ground
+    // V2.1 does not define, and a *blurred* shadow in a language whose shadows are all flat and offset.
+    // Those three together are what made this panel read as another app's dialog parked on the Bench.
+    val cardColors = ZinelyTheme.v21Colors
+    val cardShape = RoundedCornerShape(ZinelyV21Dimens.radiusLg)
+    Box(
+        modifier = modifier
+            .testTag(TypeBarTestTag)
+            // Nothing that clips may sit left of the shadow — it paints outside the node.
+            .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, cardColors.inkLine, cardShape)
+            .clip(cardShape)
+            .background(cardColors.paper)
+            .border(BenchChromeBorder, cardColors.ink, cardShape)
+            // ⚠ **The card must swallow the taps that land on its own paper**, and this empty
+            // `pointerInput` is the whole of that. It is not decoration: `Surface` installs exactly this
+            // (`Modifier.pointerInput(Unit) {}`) and dropping `Surface` for a `Box` dropped it silently.
+            //
+            // Without it, a tap on the card's padding — or in the gap between two controls, or 3dp off a
+            // stepper chip — finds nothing here and falls through to the canvas underneath, which
+            // deselects the element and closes the bar. So the panel would shut when a finger *nearly*
+            // hit a button, which reads as the app throwing the tool away for missing.
+            //
+            // It also silently disarmed the input-layer touch-target expansion on the controls: a hit
+            // just outside a chip's paint resolves as a *speculative* minimum-touch-target hit, and a
+            // speculative hit loses to a real one further down the tree. With the canvas taking the real
+            // hit, every 48dp expansion on this card was decorative. That is what actually failed —
+            // [TypeBarTest.a_tap_outside_the_stepper_chips_frozen_paint_still_steps_the_size], the test
+            // written to prove the expansion is real, which caught it exactly as designed.
+            .pointerInput(Unit) {},
     ) {
-        // bench pins `font-family:var(--shell)` on the Type bar's own rules (`.tyval`, `.tytog button`,
-        // `.fitseg button`) rather than leaving it to inheritance. Compose's inheritance goes the other
+        // The spec pins `font-family:var(--sans)` on the panel's own rules (`.tyval`, `.tytog button`,
+        // `.tyalign button`) rather than leaving it to inheritance. Compose's inheritance goes the other
         // way: `MaterialTheme` ends in `ProvideTextStyle(typography.bodyLarge)`, and that scale is still
         // deliberately on `FontFamily.Default` until the last screen is reskinned (Type.kt), so an
-        // unstyled `Text` here would paint Roboto — a face `--shell`'s stack lists only as a fallback the
-        // app makes unreachable by bundling Inter. One provision covers every `Text` in the card, and
-        // zeroes the 0.5sp tracking `bodyLarge` also carries (the frozen rules declare none; the label
-        // sets its own 0.02em below).
+        // unstyled `Text` here would paint Roboto — a face `--sans`'s stack lists only as a fallback the
+        // app makes unreachable by bundling its own. One provision covers every `Text` in the card, and
+        // zeroes the 0.5sp tracking `bodyLarge` also carries (the rules declare none; the label sets its
+        // own .13em below). `--sans` is V2.1's [ZinelyV21Fonts.Work], not V1's `typography.shell`.
         ProvideTextStyle(
             LocalTextStyle.current.copy(
-                fontFamily = ZinelyTheme.typography.shell,
+                fontFamily = ZinelyV21Fonts.Work,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                 letterSpacing = 0.sp,
             ),
         ) {
@@ -299,10 +344,22 @@ internal fun TypeBar(
                 // takes the largest, and hands that down as a fixed width the rows' `fillMaxWidth` resolves
                 // against. Without it a row's `fillMaxWidth` would resolve against the incoming max (the
                 // screen).
+                // `.typebar{padding:var(--gap-md) var(--gap-lg); gap:var(--gap-sm)}`. The padding is
+                // symmetric vertically where `.inkpop`'s is not: `.inkpop` carries an `h4` whose own margin
+                // already opens its top, and this card has no heading, so the extra bottom would be padding
+                // with nothing to balance.
                 modifier = Modifier
                     .width(IntrinsicSize.Max)
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                    .padding(horizontal = ZinelyV21Dimens.gapLg, vertical = ZinelyV21Dimens.gapMd),
+                // `.typebar{gap:var(--gap-md)}` — 12dp, and **it is a touch-target measurement, not a
+                // rhythm choice** (spec note dated 2026-08-15). A device dump reported Bold/Italic at
+                // 48.0 x 46.1dp: the row below them is the 30dp [Swatch], whose input-layer expansion
+                // reaches 9dp past its paint, which is further than an 8dp gap. The Colour row claims that
+                // strip first (the pruning walk visits siblings in reverse) and the Style row's granted
+                // 48dp target is cut back into its own paint. At 12dp the pot's reach lands inside the gap
+                // and every row keeps its full target. Raising the toggles to 48dp would NOT have fixed
+                // it — the strip is taken from whatever paint is there.
+                verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapMd),
             ) {
                 TypeRow(Copy.Type.ROW_SIZE) {
                     SizeStepper(
@@ -334,7 +391,9 @@ internal fun TypeBar(
                     )
                 }
                 TypeRow(Copy.Type.ROW_STYLE) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // `.tytog{gap:var(--gap-sm)}`. This was a bare `6.dp` — a literal with no source, in
+                    // the one cluster of the four that did not use the token its siblings all use.
+                    Row(horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
                         // Both toggles route through the shared verb the Ctrl/Cmd+B/I shortcuts also call,
                         // so the pointer and keyboard paths are one implementation (ADR-055 §4). The
                         // toggleable `on` is ignored: the verb re-reads `element.style`, the same flip.
@@ -413,19 +472,28 @@ private fun TypeRow(label: String, control: @Composable () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = label,
-            // bench `.tylab{min-width:46px}` — a floor, not a fixed width: under `space-between` a fixed
-            // width would clip a longer label instead of widening the label column, and the frozen spec
-            // says min-width. Padding sits outside the floor so the row's 14dp gap is additive to it.
+            // `text-transform:uppercase` is a *rendering* transform: the string stays the shipped "Size" /
+            // "Align" / "Style" / "Colour" and a screen reader reads it in its own case. Compose has no
+            // such transform — uppercasing the string uppercases what TalkBack speaks too — so the case is
+            // split explicitly, display here and spoken in the `semantics` below. `Locale.ROOT`, not the
+            // default locale: a Turkish device would otherwise render "Sıze" from a dotted i.
+            text = label.uppercase(Locale.ROOT),
+            // `.tylab{min-width:46px}` — a floor, not a fixed width: under `space-between` a fixed width
+            // would clip a longer label instead of widening the label column, and the spec says min-width.
+            // Padding sits outside the floor so the row's gap is additive to it.
             modifier = Modifier
-                .padding(end = 14.dp)
-                .widthIn(min = 46.dp),
-            color = ZinelyTheme.colors.onDeskSoft,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            // bench `.tylab{letter-spacing:.02em}` — the one Type bar rule that asks for tracking, so it
-            // overrides the card-level zero rather than inheriting it.
-            letterSpacing = 0.02.em,
+                .padding(end = ZinelyV21Dimens.gapLg)
+                .widthIn(min = 46.dp)
+                .semantics { contentDescription = label },
+            color = ZinelyTheme.v21Colors.inkSoft,
+            // `.tylab{font-size:.6rem;font-weight:700;letter-spacing:.13em}` — `.inklbl`
+            // (`v21-bench.html:247-248`) verbatim: the corpus's own row label INSIDE a floating card,
+            // which is exactly what these four are. `.inklbl`'s `margin` is the one thing dropped, this
+            // being a flex row rather than a stacked popover section. V1 drew them at 11sp/.02em sentence
+            // case — the V1 caption scale, which has no V2.1 counterpart.
+            fontSize = 9.6.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.13.em,
         )
         control()
     }
@@ -448,148 +516,216 @@ private fun SizeStepper(index: Int, onStep: (Int) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StepButton("−", Copy.Type.SMALLER, enabled = index > 0) { onStep(-1) }
+        StepButton(Icons.Filled.Remove, Copy.Type.SMALLER, enabled = index > 0) { onStep(-1) }
         Text(
             text = Copy.Type.sizePtLabel(TypeSizesPt[index].toInt()),
+            // `min-width:58px`, not `width` — the same correction `.tyval` states over `.zoom b`'s 46:
+            // 58dp is the box the settling burst must not shift inside, and a *floor* survives a font
+            // scale that a fixed width clips.
             modifier = Modifier
-                .width(58.dp)
+                .widthIn(min = 58.dp)
                 .clearAndSetSemantics { contentDescription = Copy.Type.sizePointAnnouncement(TypeSizesPt[index].toInt()) },
             textAlign = ComposeTextAlign.Center,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            // bench `.tyval{font-variant-numeric:tabular-nums}`. Not cosmetic: the readout is a centred
-            // number inside a fixed 58dp box that changes on every tap, so proportional digits shift the
-            // glyph run mid-burst. Tabular figures hold the centre still. Carried on `style` because
-            // `Text` has no `fontFeatureSettings` parameter — the card's provided style is the base, so
-            // the Inter family it sets is preserved.
+            // `.tyval{font-size:.78rem;font-weight:700;color:var(--ink-soft)}` — a number, so it is quiet
+            // and tabular; `--ink-soft` and never `--ink-faint`, which fails AA at this size on paper.
+            fontSize = 12.48.sp,
+            fontWeight = FontWeight.Bold,
+            color = ZinelyTheme.v21Colors.inkSoft,
+            // `font-variant-numeric:tabular-nums`. Not cosmetic: the readout is a centred number that
+            // changes on every tap, so proportional digits shift the glyph run mid-burst. Tabular figures
+            // hold the centre still; the `min-width` alone does not stop the digits dancing. Carried on
+            // `style` because `Text` has no `fontFeatureSettings` parameter — the card's provided style is
+            // the base, so the `--sans` family it sets is preserved.
             style = LocalTextStyle.current.copy(fontFeatureSettings = "tnum"),
         )
-        StepButton("+", Copy.Type.LARGER, enabled = index < TypeSizesPt.lastIndex) { onStep(1) }
+        StepButton(Icons.Filled.Add, Copy.Type.LARGER, enabled = index < TypeSizesPt.lastIndex) { onStep(1) }
     }
 }
 
 /**
- * A 40dp stepper button (bench `.tysize button`, `:disabled{opacity:.4}`).
+ * A 40dp stepper button — `.tysize button`, which the spec declares IS the Reframe pad's `.zoom button`
+ * (`v21-reframe.html:192-196`), the control ADR-055 §4 already named as this one's precedent. So it is
+ * built as [ZoomButton] is built, down to the disabled convention: `opacity:.35` on the WHOLE chip and the
+ * shadow dropped, so a control that cannot act does not sit proud of the card. V1 faded to `.4`, which is
+ * the same gesture at a V1 number.
  *
- * **One box: the frozen 40dp chip IS the control.** The chip carries the click, the label and the paint,
- * exactly as [Swatch] (32dp) and [StyleToggle] (46dp) do. The ≥48dp touch target is not a layout box —
- * Compose expands any clickable under `ViewConfiguration.minimumTouchTargetSize` at the *input* layer, so
+ * **One box: the 40dp chip IS the control.** The chip carries the click, the label and the paint, exactly
+ * as [Swatch] (30dp) and [StyleToggle] (46dp) do. The ≥48dp touch target is not a layout box — Compose
+ * expands any clickable under `ViewConfiguration.minimumTouchTargetSize` at the *input* layer, so
  * `touchBoundsInRoot` reports 48dp off a 40dp paint for free. DESIGN-RULES 1 + 7: grow the target, never
  * the design — and a layout box IS the design, because it is what the row's gaps measure from.
  *
  * ponytail: no `minimumInteractiveComponentSize` and not the house [zinelyControl] helper (which bundles
  * one). That modifier only *reserves layout space* (its own KDoc: "not needed for touch target expansion
  * to happen. It only affects layout") — and reserving it here is precisely the parity defect: a 48dp box
- * around a 40dp chip insets the paint 4dp, painting the frozen `.tysize{gap:8px}` as 12dp and standing the
+ * around a 40dp chip insets the paint 4dp, painting `.tysize{gap:var(--gap-sm)}` as 12dp and standing the
  * Size row's painted right edge 4dp inside the shared row edge that `.tyrow{justify-content:space-between}`
- * freezes. The stepper's only neighbour is the non-clickable readout, so the expanded targets overlap
+ * fixes. The stepper's only neighbour is the non-clickable readout, so the expanded targets overlap
  * nothing and both buttons still reach TalkBack at a full 48x48.
+ *
+ * ⚠ **The glyph is an [Icon], not a `Text`, and that is an accessibility fix rather than a visual choice.**
+ * This is the one control in the card that is ever *disabled*, and a `Text` child contributes semantics of
+ * its own that stop the chain collapsing: the platform then receives the click and its `disabled` flag on
+ * one node and the spoken label on another, TalkBack lands on the labelled one, and a disabled stepper
+ * announces itself as available. That exact defect was measured on the sibling `ReframeControls.ZoomButton`
+ * and is written up there; `Icon(contentDescription = null)` contributes nothing, so the whole control
+ * collapses to one `android.widget.Button` carrying label, role and disabled state together. Compose's own
+ * test tree cannot see it — `assertIsNotEnabled` passes under either arrangement.
+ *
+ * The spec's `.tysize button` declares `font-family`/`font-size`/`font-weight` for a text `&minus;`/`+`
+ * where the `.zoom button` it cites uses an `<svg>`; that is an undeclared divergence in the proposal, and
+ * this file resolves it toward the cited source. `v21-typebar.html` needs the same correction before it is
+ * frozen.
  */
 @Composable
-private fun StepButton(glyph: String, description: String, enabled: Boolean, onClick: () -> Unit) {
+private fun StepButton(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val shape = BenchBarShape
     Box(
         modifier = Modifier
             .testTag("$TypeBarTestTag-$description")
             .size(40.dp)
-            // bench `.tysize button:disabled{opacity:.4}` fades the WHOLE chip — edge, fill and glyph —
-            // not just the glyph. Group opacity (CompositingStrategy.Auto), like CSS; measure-transparent,
-            // and ahead of the paint modifiers so the layer wraps them all (ADR-055 §8).
-            .alpha(if (enabled) 1f else 0.4f)
-            .clip(RoundedCornerShape(11.dp))
-            .background(ZinelyTheme.colors.field)
-            .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(11.dp))
+            // `.tysize button:disabled{opacity:.35}` fades the WHOLE chip — edge, fill and glyph — not
+            // just the glyph. Group opacity (CompositingStrategy.Auto), like CSS; measure-transparent, and
+            // ahead of the paint modifiers so the layer wraps them all (ADR-055 §8).
+            .alpha(if (enabled) 1f else ZinelyV21Dimens.disabledAlpha)
+            .then(
+                if (enabled) {
+                    Modifier.zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+                } else {
+                    Modifier
+                },
+            )
+            .clip(shape)
+            .background(colors.paper)
+            .border(BenchChromeBorder, colors.ink, shape)
             .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                // indication = null, as [zinelyControl] does: the frozen chip has no ripple, and a
-                // default ripple here spins the measure/draw loop when the bar is disposed mid-press.
+                interactionSource = interaction,
+                // indication = null, as [zinelyControl] does: the chip has no ripple, and a default ripple
+                // here spins the measure/draw loop when the bar is disposed mid-press.
                 indication = null,
                 enabled = enabled,
+                // `role` on the clickable itself, not in a trailing `semantics {}` block — the other half
+                // of the [ZoomButton] finding.
+                role = Role.Button,
                 onClick = onClick,
             )
-            .semantics {
-                contentDescription = description
-                role = Role.Button
-            },
+            .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = glyph,
-            fontSize = 20.sp,
-            color = ZinelyTheme.colors.onDesk,
-        )
+        Icon(icon, contentDescription = null, tint = colors.inkSoft, modifier = Modifier.size(20.dp))
     }
 }
 
 /**
- * Alignment (bench `.fitseg` visuals, `#alLeft/#alCenter/#alRight`).
+ * Alignment — `.tyalign`. **No longer a joined segmented control**, and that is the one structural change
+ * in this re-skin rather than a repaint.
  *
- * **The deliberate divergence from the frozen HTML (ADR-055 §4):** the prototype spells alignment as
- * three independent `aria-pressed` buttons, which would let a screen-reader user believe all three can
- * be pressed at once. Alignment is one choice of three, so the Compose semantic layer says so —
- * [selectableGroup] + [Role.RadioButton]. Only the *semantics* diverge; the paint is the frozen segment.
+ * V1 drew a single box with hairline dividers and filled the chosen third with coral under white. V2.1 has
+ * no joined segment anywhere and no coral at all; what it *does* have for "one choice of N, spelled out in
+ * words" is the Proof's `.paperseg` — separate `--paper` buttons on a `--gap-sm` gap, the chosen one
+ * `--leaf` under `--on-leaf`. Same three options, same three words, same radio semantics. The dividers go
+ * with the box that needed them.
+ *
+ * **The deliberate divergence from the frozen HTML (ADR-055 §4) is unchanged:** the prototype spells
+ * alignment as three independent `aria-pressed` buttons, which would let a screen-reader user believe all
+ * three can be pressed at once. Alignment is one choice of three, so the Compose semantic layer says so —
+ * [selectableGroup] + [Role.RadioButton]. Only the *semantics* diverge; the paint is the spec's.
  */
 @Composable
 private fun AlignSegment(align: TextAlign, onAlign: (TextAlign) -> Unit) {
     Row(
-        modifier = Modifier
-            .height(IntrinsicSize.Min)
-            .clip(RoundedCornerShape(13.dp))
-            .border(1.dp, ZinelyTheme.colors.fieldEdge, RoundedCornerShape(13.dp))
-            .selectableGroup(),
+        modifier = Modifier.selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
     ) {
         AlignOption(Copy.Type.ALIGN_LEFT, TextAlign.START, align, onAlign)
-        SegmentDivider()
         AlignOption(Copy.Type.ALIGN_CENTER, TextAlign.CENTER, align, onAlign)
-        SegmentDivider()
         AlignOption(Copy.Type.ALIGN_RIGHT, TextAlign.END, align, onAlign)
     }
 }
 
-/** The inter-segment hairline (bench `.fitseg button+button{border-left:…}`). */
-@Composable
-private fun SegmentDivider() {
-    Box(Modifier.width(1.dp).fillMaxHeight().background(ZinelyTheme.colors.fieldEdge))
-}
-
-/** One alignment segment (bench `.fitseg button`, 46px min): a radio in a segmented coat. */
+/**
+ * One alignment button — `.tyalign button`, 46dp floor, `--br-md`, an ink edge in both states.
+ *
+ * The press tier is [ZinelyV21Press.Flat] (2dp rest, flush when pressed) and **not** `.paperseg`'s own
+ * 3dp: `.paperseg` rests in a drawer, this rests in a floating card, and depth in V2.1 is assigned by
+ * where a control lives rather than by which rule it was copied from. Every control in this card carries
+ * the same tier for that reason — the Reframe pad's, the nearest case by *situation*.
+ */
 @Composable
 private fun AlignOption(label: String, value: TextAlign, current: TextAlign, onAlign: (TextAlign) -> Unit) {
+    val colors = ZinelyTheme.v21Colors
     val isSel = value == current
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
     Box(
         modifier = Modifier
             .testTag("$TypeBarTestTag-align-$label")
-            // ponytail: 46dp, the frozen `.fitseg button` size, matching the shipped ReframeControls
+            // ponytail: 46dp, the spec's `.tyalign button` floor, matching the shipped ReframeControls
             // segment. NOT lifted with minimumInteractiveComponentSize — see [Swatch]: that modifier would
-            // only widen the *layout*, pushing the card past the frozen `max-width`, while the 48dp touch
-            // target it looks like it buys is already applied at the input layer without it.
-            // Widen by growing the frozen segment in bench.html first if this ever needs to be 48.
+            // only widen the *layout*, pushing the card past the `max-width`, while the 48dp touch target
+            // it looks like it buys is already applied at the input layer without it.
+            // Widen by growing the button in `v21-typebar.html` first if this ever needs to be 48.
             .defaultMinSize(minWidth = 46.dp, minHeight = 46.dp)
-            .background(if (isSel) ZinelyTheme.colors.coralStrong else ZinelyTheme.colors.field)
-            .selectable(
-                selected = isSel,
-                role = Role.RadioButton,
-                onClick = { onAlign(value) },
-            )
-            // Merge (not clear) so the segment speaks as one radio: the label rides along with the
-            // `selected` + role + click action that `selectable` installed on this same node. A
-            // clearAndSetSemantics here would drop the click and the group's selection state with it.
-            .semantics(mergeDescendants = true) { contentDescription = label }
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+            .clip(shape)
+            .background(if (isSel) colors.leaf else colors.paper)
+            // The edge stays `--ink` in both states, as every V2.1 control's does. V1 swapped the border to
+            // coral when on and so drew the "on" state twice.
+            .border(BenchChromeBorder, colors.ink, shape)
+            .clickable(interactionSource = interaction, indication = null, onClick = { onAlign(value) })
+            // ⚠ `clearAndSetSemantics`, re-declaring everything — NOT `selectable` + a merging
+            // `semantics`. A device dump is what settled this, and the old arrangement failed it:
+            //
+            //     Left   android.view.View   clickable=false   checked=false
+            //
+            // The `Text` child contributes semantics of its own, so the merge splits the control and the
+            // node carrying the LABEL — the node a service reads — kept neither the radio role, nor the
+            // click action, nor the chosen state. The swatches in the same card reach the platform as
+            // `android.widget.RadioButton, clickable=true` because [Swatch] has no child at all, and the
+            // steppers do because their glyph is an `Icon(contentDescription = null)`. This row cannot
+            // drop its child: the words ARE the control.
+            //
+            // So it takes `ReframeControls.FitChip`'s shape instead — clear the subtree and state the
+            // four properties explicitly. An earlier version of this comment warned that
+            // `clearAndSetSemantics` "would drop the click and the group's selection state"; it does, and
+            // then you put them back, which is the half that was missing.
+            .clearAndSetSemantics {
+                contentDescription = label
+                role = Role.RadioButton
+                selected = isSel
+                onClick { onAlign(value); true }
+            }
+            .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            color = if (isSel) Color.White else ZinelyTheme.colors.onDesk,
-            fontSize = 13.sp,
+            color = if (isSel) colors.onLeaf else colors.inkSoft,
+            fontSize = 12.48.sp,
             fontWeight = FontWeight.SemiBold,
         )
     }
 }
 
 /**
- * Bold / Italic (bench `.tytog button`, `aria-pressed`). Independent toggles, not a group (ADR-055 §4):
- * bold and italic genuinely compose, so [Role.Checkbox] — the Compose idiom for `aria-pressed`, and what
- * Material's own icon toggles use — is the honest reading. The glyph wears the style it applies.
+ * Bold / Italic — `.tytog button`. Independent toggles, not a group (ADR-055 §4): bold and italic genuinely
+ * compose, so [Role.Checkbox] — the Compose idiom for `aria-pressed`, and what Material's own icon toggles
+ * use — is the honest reading. The glyph wears the style it applies.
+ *
+ * Three things are taken from three places, which is why the spec spells them out rather than naming one
+ * ancestor: the **colour rule** is the corpus's two-state `.chip2` (`--paper`/`--ink-soft` at rest,
+ * `--leaf`/`--on-leaf` when on); the **geometry** is the shipped 46dp box, kept because it is one of the
+ * two things the card's shared right edge is measured from and a re-skin does not move measurements; and
+ * the **2dp rest shadow** is neither of those — `.chip2` has none at all, being a flat chip lying on the
+ * desk, while everything in this card has left the surface. No new press tier, no new radius.
+ *
+ * A `Text` glyph is correct here where it is not in [StepButton]: these toggles are never disabled, so
+ * there is no disabled bit for the split node to lose, and this exact shape was read on a device and heard
+ * under TalkBack during the ADR-055 gate (the note above [TypeRow]).
  */
 @Composable
 private fun StyleToggle(
@@ -600,33 +736,42 @@ private fun StyleToggle(
     fontStyle: FontStyle,
     onToggle: (Boolean) -> Unit,
 ) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
     Box(
         modifier = Modifier
             .testTag("$TypeBarTestTag-${label.lowercase()}")
-            // 46dp, the frozen `.tytog button` floor — the same call [AlignOption] makes two functions
-            // down, for the same reason (see [Swatch]).
+            // 46dp, the `.tytog button` floor — the same call [AlignOption] makes above, for the same
+            // reason (see [Swatch]).
             .defaultMinSize(minWidth = 46.dp, minHeight = 46.dp)
-            .clip(RoundedCornerShape(11.dp))
-            .background(if (on) ZinelyTheme.colors.coralStrong else ZinelyTheme.colors.field)
-            .border(
-                1.dp,
-                if (on) ZinelyTheme.colors.coralStrong else ZinelyTheme.colors.fieldEdge,
-                RoundedCornerShape(11.dp),
-            )
-            .toggleable(
-                value = on,
-                role = Role.Checkbox,
-                onValueChange = onToggle,
-            )
-            .semantics(mergeDescendants = true) { contentDescription = label },
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
+            .clip(shape)
+            .background(if (on) colors.leaf else colors.paper)
+            // `--ink` in both states. V1 swapped the border to coral when on, drawing the "on" state twice.
+            .border(BenchChromeBorder, colors.ink, shape)
+            .clickable(interactionSource = interaction, indication = null, onClick = { onToggle(!on) })
+            // The same device finding as [AlignOption], on the same shape: with a `toggleable` and a
+            // merging `semantics`, the `B` and `I` glyphs split the node and the platform received
+            // `Bold  android.view.View  clickable=false  checked=false` — no checkbox role, no click
+            // action, and no on/off state, which is the whole of what this control says. Cleared and
+            // re-declared, and `toggleableState` rather than `selected` because a checkbox's platform
+            // state is `isChecked`.
+            .clearAndSetSemantics {
+                contentDescription = label
+                role = Role.Checkbox
+                toggleableState = ToggleableState(on)
+                onClick { onToggle(!on); true }
+            },
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = glyph,
-            fontSize = 17.sp,
+            fontSize = 16.8.sp,
             fontWeight = weight,
             fontStyle = fontStyle,
-            color = if (on) Color.White else ZinelyTheme.colors.onDesk,
+            color = if (on) colors.onLeaf else colors.inkSoft,
         )
     }
 }
@@ -642,61 +787,101 @@ private fun StyleToggle(
 private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
     Row(
         modifier = Modifier.selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(SwatchGap),
     ) {
         TextInk.entries.forEach { ink -> Swatch(ink = ink, selected = ink.rgba == color, onInk = onInk) }
     }
 }
 
 /**
- * A 32dp ink swatch (bench `.tyinks .swatch`): selected wears a 2px `--on-desk` ring.
+ * A 30dp ink pot — `.pot` (`v21-bench.html:250-253`), transcribed. The ink popover's pot **is** this
+ * control: a colour swatch, single-select, in a floating card on this canvas. So the selected state is the
+ * corpus's dashed outer ring rather than V1's 2dp solid inner one — the same hand as the selection ring on
+ * the page, meaning the same thing: this is the one that is chosen.
  *
- * The **paint** is the theme's token, the **committed value** is the fixed paper-space RGBA — the two
- * are deliberately not the same lookup. ADR-055 Decision 6 pins the *ink* theme-independently (printed
- * ink cannot depend on the viewer's theme); it says nothing about the swatch, and the frozen bench
- * paints each swatch with its CSS variable. Only Coral actually differs (`--coral-text` is overridden on
- * dark paper); the other four resolve to the same value in both themes.
+ * ⚠ **The fill is a model value, not a token, and the ink edge is why that is safe.** Every pot's fill is
+ * now the paper-space RGBA [TextInk] commits — printed ink, theme-independent by ADR-055 Decision 6 — and
+ * it must not resolve through a themed token, or a zine styled at night would print differently from one
+ * styled at noon. V1 painted the Coral swatch through `ZinelyTheme.colors.coralText`, a themed lookup on
+ * the one control whose whole contract is that it is not themed; that is what changed here. The 1.5dp
+ * `--ink` ring is what separates any fill from the card's `--paper` ground whatever the fill becomes,
+ * which is the reasoning `v21-bench.html:274-278` already records for `.chip .sw`.
  *
- * **No `minimumInteractiveComponentSize` — the target survives without it, at the frozen pitch.** The
+ * **What the ring does not do:** it guarantees every pot is *found*, not that two pots are told *apart*.
+ * On a dark card `--pen-ink` (#23201C) measures 1.17:1 against `--paper` (#332B22) and `--pen-blue` 1.38:1
+ * — so the two darkest read as very nearly the card itself, and as very nearly each other. The values
+ * cannot move (ADR-055 D6), so the answer if it reads as a defect is a *treatment*, and that is an owner's
+ * design decision. Recorded in `v21-typebar.html`'s closing caption with all five measurements.
+ *
+ * **No `minimumInteractiveComponentSize` — the target survives without it, at the spec's pitch.** The
  * modifier does not create the target; it only reserves *layout* space for one ("This modifier is not
  * needed for touch target expansion to happen. It only affects layout" — its own KDoc). The target comes
  * from the input layer, which expands any clickable's touch bounds to
  * `ViewConfiguration.minimumTouchTargetSize` regardless (`NodeCoordinator.touchBoundsInRoot`);
  * [TypeBarTest] asserts exactly that on this swatch.
  *
- * **Honest ceiling:** expansion is 48dp, but the frozen 40dp pitch (32dp paint + 8dp gap) makes
- * neighbouring expansions overlap, and Compose prunes the overlap before reporting bounds to the
- * accessibility layer (`SemanticsOwner` intersects each node against the unaccounted region, which
- * `AndroidComposeViewAccessibilityDelegateCompat` hands to `setBoundsInScreen`). So four of the five
- * swatches report **40×48** to TalkBack, not 48×48 — clearing WCAG 2.5.8 AA (24×24) but under Material's
- * 48dp guideline. Tapping is unaffected: a hit inside the 32dp paint always wins outright, and the 8dp
- * gaps resolve to the nearest swatch. 40dp is the pitch the frozen spec asks for; widening it is a
- * re-freeze of `.tyinks`, not a code change (ADR-055 §8).
+ * **The pitch is [SwatchGap] + [SwatchSize] = 48dp, and that number is the whole reason the gap is 18dp.**
+ * Expansion is 48dp; if the pitch is smaller, neighbouring expansions overlap and Compose prunes the
+ * overlap before reporting bounds to the accessibility layer (`SemanticsOwner.getAllUncoveredSemanticsNodes`
+ * intersects each node against the unaccounted region, which `AndroidComposeViewAccessibilityDelegateCompat`
+ * hands to `setBoundsInScreen`). That is not a theory: at V1's 40dp pitch four of five swatches were
+ * measured reporting 40×48, and at V2.1's first 38dp pitch (30dp pot + `gapSm`) a device dump reported
+ * **38.1 × 48.0dp** for Ink / Coral / Teal / Blue — only Ochre reached 48×48, and only because it has no
+ * right-hand neighbour. Both cleared WCAG 2.5.8 AA (24×24) and both were under Material's 48dp guideline.
+ * At 48dp pitch the expansions abut exactly and nothing is pruned. Tapping was unaffected throughout: a hit
+ * inside the paint always wins outright, and the gaps resolve to the nearest pot.
  *
- * Reserving it here was a real layout bug, not a harmless belt-and-braces: the modifier answers the
+ * **Confirmed on device 2026-08-15** (SM-A176B, Android 16, density 420). `uiautomator` reports all five
+ * swatches at 126 × 126px — a flat **48.0 × 48.0dp** — with bounds that abut exactly:
+ * Ink `[307,1574][433,1700]`, Coral `[433,…]`, Teal `[559,…]`, Blue `[685,…]`, Ochre `[811,1574][937,1700]`.
+ * Ochre is no longer the only one to reach 48×48. This is the dump `v21-typebar.html` asked for when it
+ * said the measurement *"must be re-dumped, not re-reasoned"* — the paragraph above previously rested on
+ * `TypeBarSwatchPlatformA11yTest` alone, which is Robolectric's platform tree rather than the device's.
+ *
+ * `TypeBarSwatchPlatformA11yTest` asserts this on the **platform** tree, which is the only tree that can
+ * fail: `touchBoundsInRoot` is the *pre*-pruning value and reported a flat 48dp all through the defect.
+ *
+ * Reserving the modifier here was a real layout bug, not a harmless belt-and-braces: it answers the
  * `IntrinsicSize.Max` query above (it overrides `measure`, not the intrinsics, so the default
  * `LayoutModifierNode` intrinsics re-run `measure` and return the inflated 48dp). Five swatches at 48dp
- * instead of the frozen 32dp made the Colour row the widest by 80dp and blew the card out to exactly
- * 360dp — over the frozen `max-width:calc(100% - 24px)`, and edge-to-edge on a 360dp phone. The frozen
- * 32dp paint on a 40dp pitch is what ships; the target is 48dp either way.
+ * instead of 32 made the Colour row the widest by 80dp and blew the card out to exactly 360dp — over
+ * `max-width:calc(100% - 24px)`, and edge-to-edge on a 360dp phone.
  */
 @Composable
 private fun Swatch(ink: TextInk, selected: Boolean, onInk: (TextInk) -> Unit) {
-    val paint = when (ink) {
-        TextInk.Coral -> ZinelyTheme.colors.coralText
-        else -> Color(ink.rgba.r, ink.rgba.g, ink.rgba.b, ink.rgba.a)
-    }
+    val colors = ZinelyTheme.v21Colors
+    val paint = Color(ink.rgba.r, ink.rgba.g, ink.rgba.b, ink.rgba.a)
+    val shape = BenchBarShape
     Box(
         modifier = Modifier
             .testTag("$TypeBarTestTag-ink-${ink.label}")
-            .size(32.dp)
-            .clip(RoundedCornerShape(9.dp))
+            .size(SwatchSize)
+            // `.pot[aria-checked="true"]::after{inset:-5px;border:1.6px dashed}` — an OUTER ring, so it is
+            // drawn behind rather than inset into the 30dp box. The pot's own size is unchanged by
+            // selection, which is what keeps the row from reflowing as the choice moves along it.
+            .drawBehind {
+                if (!selected) return@drawBehind
+                val out = SwatchRingInset.toPx()
+                val w = SwatchRingStroke.toPx()
+                // A CSS border paints INSIDE its box, so `inset:-5px` puts the ring's *outer edge* at -5
+                // and its stroke centre-line — which is what Compose's [Stroke] is centred on — half a
+                // stroke further in. Transcribing the literal would stand the ring 0.8dp too far out, the
+                // exact error [SelectionOutlineInsetDp] records against the same declaration.
+                val edge = -out + w / 2f
+                val ringW = size.width + 2f * out - w
+                val ringH = size.height + 2f * out - w
+                val dash = w * 2f
+                drawRoundRect(
+                    color = colors.ink,
+                    topLeft = Offset(edge, edge),
+                    size = Size(ringW, ringH),
+                    cornerRadius = CornerRadius(ringH / 2f, ringH / 2f),
+                    style = Stroke(width = w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))),
+                )
+            }
+            .clip(shape)
             .background(paint)
-            .border(
-                2.dp,
-                if (selected) ZinelyTheme.colors.onDesk else Color.Transparent,
-                RoundedCornerShape(9.dp),
-            )
+            .border(BenchChromeBorder, colors.ink, shape)
             .selectable(
                 selected = selected,
                 role = Role.RadioButton,
@@ -705,3 +890,24 @@ private fun Swatch(ink: TextInk, selected: Boolean, onInk: (TextInk) -> Unit) {
             .semantics { contentDescription = ink.label },
     )
 }
+
+/** `.pot{width:30px;height:30px}`. */
+private val SwatchSize = 30.dp
+
+/**
+ * `.tyinks{--gap-pot:18px}` — the ink row's gap, and the one number in this card derived from the
+ * PLATFORM rather than from the corpus.
+ *
+ * It is `48dp - `[SwatchSize], not a spacing token: 18dp is exactly the gap at which the swatch pitch
+ * reaches the platform's minimum touch target, so two neighbouring expansions abut instead of overlapping
+ * and neither is pruned out of the accessibility tree (see [Swatch]). Every other cluster in the card sits
+ * on `gapSm`; this one cannot, and rounding it up to `gapXl` (24dp) would widen the Colour row 24dp to buy
+ * nothing. If either the pot size or `ViewConfiguration.minimumTouchTargetSize` moves, this moves with it.
+ */
+private val SwatchGap = 18.dp
+
+/** `.pot[aria-checked="true"]::after{inset:-5px}` — how far the ring sits outside the pot. */
+private val SwatchRingInset = 5.dp
+
+/** `.pot[aria-checked="true"]::after{border:1.6px dashed}` — the selection ring's hand, [SelectionChrome]'s. */
+private val SwatchRingStroke = SelectionOutlineStrokeDp

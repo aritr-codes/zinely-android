@@ -8,28 +8,36 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.IntOffset
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
@@ -42,10 +50,15 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aritr.zinely.ui.theme.rememberReduceMotion
 import com.aritr.zinely.core.copy.Copy
@@ -63,14 +76,18 @@ import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.render.android.readImageIntrinsics
+import com.aritr.zinely.ui.theme.LocalZinelyV2Colors
+import com.aritr.zinely.ui.theme.LocalZinelyV21Colors
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Test tag on the editor canvas Box (the measured, gesture-bearing area). */
@@ -240,6 +257,92 @@ public fun EditorScreen(
     // live, so keystrokes route here without a prior tap.
     val editorKeyFocus = remember { FocusRequester() }
     val reduceMotion = rememberReduceMotion()
+    // ----- C4 (ADR-094) -------------------------------------------------------------------
+    // The Add chooser (rows 4.4a-4.4d). Open/closed only: the sheet itself is ZSheet, per OD-21.
+    var addChooserOpen by remember { mutableStateOf(false) }
+
+    // ----- C5 (ADR-095) -------------------------------------------------------------------
+    // The page grid is *summoned*, never default (row 5.11a): this flag is the whole of its existence,
+    // and while it is false the overlay composes nothing at all.
+    var pageGridOpen by remember { mutableStateOf(false) }
+    // Back stands the grid down instead of leaving the editor. The frozen HTML cannot specify this — a
+    // prototype has no back button — but on Android an overlay you summoned is an overlay Back dismisses,
+    // and the grid consumes every touch beneath it, so without this its only exits are `Done` and a cell.
+    BackHandler(enabled = pageGridOpen) { pageGridOpen = false }
+
+    // The frozen soft delete (rows 4.13-4.14). `del()` fades the element and shows a snack with
+    // Undo; `undo()` restores it. The product already has a real undo stack, so the snack's Undo
+    // dispatches Intent.Undo rather than carrying a private copy of the deleted element — one
+    // history, one restore path, and the bar's Undo lights up for free because canUndo is already
+    // true. The fade runs BEFORE the dispatch, because a dispatched delete has nothing left to fade.
+    var deletingId by remember { mutableStateOf<String?>(null) }
+    var deleteProgress by remember { mutableFloatStateOf(0f) }
+    var snackVisible by remember { mutableStateOf(false) }
+    var snackMessage by remember { mutableStateOf("") }
+    // Which snack is up. The delete snack carries `Undo`; the ink snack (C6, row 4.15) carries no
+    // button at all and stands for 1600ms rather than 3200 — the frozen `applyInk` builds it that way
+    // because an ink is one undoable command the bar's own Undo already reverses.
+    var snackAction by remember { mutableStateOf<String?>(null) }
+    val c4Scope = rememberCoroutineScope()
+    // One job, cancelled on re-entry: two deletes in quick succession must not leave the first
+    // coroutine to clear `snackVisible` out from under the second, which is how a snackbar ends up
+    // dismissing itself 200ms after it appears.
+    val deleteJob = remember { arrayOfNulls<Job>(1) }
+
+    // Frozen `del()` (`v2-bench.html:620-629`), in the order the freeze performs it: fade, then
+    // remove, then say so. Row 4.13 asserts the three together because any one alone reads as a
+    // different interaction - a fade with no snack is a disappearance, a snack with no fade is a
+    // report about something that already vanished.
+    // C9 row 9.2a: the frozen rule's selector is `*`, so this fade honours it like every other V2 animation.
+    // It was the one call site in the Bench that did not — it read `tween(BenchDeleteFadeMillis)` flat, and
+    // under a reduced-motion preference the element still faded for 200ms before vanishing. Hoisted out of
+    // the lambda because `softDelete` runs in a coroutine, where a CompositionLocal cannot be read.
+    val deleteFadeMillis = ZinelyTheme.v2Motion.durationMillis(BenchDeleteFadeMillis)
+    val softDelete: (Set<String>) -> Unit = { ids ->
+        val id = ids.firstOrNull()
+        if (id != null) {
+            val label = benchDeleteLabel(currentState().document.pages, id)
+            deleteJob[0]?.cancel()
+            deleteJob[0] = c4Scope.launch {
+                deletingId = id
+                animate(0f, 1f, animationSpec = tween(deleteFadeMillis)) { v, _ ->
+                    deleteProgress = v
+                }
+                dispatch(Intent.Delete(ids))
+                deletingId = null
+                deleteProgress = 0f
+                snackMessage = benchDeletedMessage(label)
+                snackAction = UndoActionLabel
+                snackVisible = true
+                delay(BenchSnackDeleteMillis)
+                snackVisible = false
+            }
+        }
+    }
+
+    // Frozen `applyInk()` (`v2-bench.html:699-704`), in the order the freeze performs it: set the ink,
+    // then say which one. The other two writes it makes are already delivered here by unidirectional
+    // data flow rather than by this lambda — `$('editSw').style.background` is `BenchStyleRow`'s own
+    // `inkSwatch`, which reads the element's live style, and `flashSaved()` is the `.status` chip C4
+    // moved the autosave reassurance into, which the document change raises by itself.
+    //
+    // One `Intent.StyleText` per tap: an immediate-commit style change, so each ink is one undoable
+    // command and the buttonless snack is honest — the bar's Undo is right there.
+    val applyInk: (String, Color) -> Unit = { name, color ->
+        val id = uiState.selection.singleOrNull()
+        if (id != null) {
+            dispatch(Intent.StyleText(id, color = color.toColorRgba()))
+            deleteJob[0]?.cancel()
+            deleteJob[0] = c4Scope.launch {
+                snackMessage = Copy.BenchInk.applied(name)
+                snackAction = null
+                snackVisible = true
+                delay(BenchSnackInkMillis)
+                snackVisible = false
+            }
+        }
+    }
+
     val bratioOf = { el: ImageElement -> el.transform.widthPt / el.transform.heightPt }
     val adjustDraft = { d: FramingDraft? -> reframeDraft = d; reframeAdjusted = true }
     // What the open draft can still change ([ReframeAbilities]) — computed once and used for BOTH the
@@ -266,6 +369,82 @@ public fun EditorScreen(
     // Type-bar visibility is surface-only state (a disclosure flag, not a styling draft): the bar is
     // non-modal and the reducer neither knows nor needs to know it is open.
     var typeBarOpen by remember { mutableStateOf(false) }
+    // Back stands the panel down instead of leaving the editor — the same rule the page grid and the ink
+    // popover already follow, and the same reason: a prototype has no Back, so the freeze cannot specify
+    // it, and an overlay you summoned is one Android expects Back to dismiss.
+    //
+    // This one was measured before it was written, and the omission was worse than an inconsistency. With
+    // the panel open on a device, Back fell through to the editor's own handler and returned the user to
+    // the shelf — the entire editing context discarded in one press, from a surface opened to change a
+    // font size (BETA-UX-REVIEW.md F-15, reproduced twice on SM-A176B / Android 16).
+    //
+    // It costs most for the people with the fewest alternatives: TalkBack maps swipe-down-then-left to
+    // Back, so a screen-reader user performing the one canonical "get me out of here" gesture left the
+    // editor, with nothing announced to warn them.
+    //
+    // Closing the panel must NOT deselect. The selection is what the panel is styling, and a maker who
+    // puts the panel away is not done with the element — `styleTarget` is derived from the selection, so
+    // clearing the selection here would close the panel twice over and lose the user's place.
+    BackHandler(enabled = typeBarOpen) { typeBarOpen = false }
+
+    // ----- C6 (ADR-096) -------------------------------------------------------------------
+    // The frozen ink popover is summoned by the `Ink` verb and by nothing else — `.inkpop` has no rest
+    // state in the freeze either (`openInk` is its only `add('show')`). Surface-only state, like
+    // `typeBarOpen`: the reducer neither knows nor needs to know a popover is open.
+    var inkPopoverOpen by remember { mutableStateOf(false) }
+    // Back stands it down rather than leaving the editor, exactly as it does for the page grid, and for
+    // the same reason: a prototype has no Back, so the freeze cannot specify this, and an overlay you
+    // summoned is one Android expects Back to dismiss.
+    BackHandler(enabled = inkPopoverOpen) { inkPopoverOpen = false }
+
+    // ── D-039: who is presenting a capability right now ────────────────────────────────────────────
+    //
+    // The owner's ruling keeps BOTH bars (OD-11, ADR-029 §6) and forbids showing the same action twice at
+    // the same moment, resolving it by **assigning responsibilities**:
+    //
+    //   the frozen `.ctx` bar  →  the ELEMENT verbs   (Edit · Font · Size · Ink · Delete · Reframe · Replace)
+    //   EditorContextBar       →  the TRANSFORM verbs (move ×4 · scale ×2 · rotate ×2 · order ×2)
+    //
+    // which is the split ADR-029 §6 already justifies: the transform bar exists because *drag* has no
+    // single-pointer twin, and move/scale/rotate/order are the verbs that argument covers. `Delete` and
+    // `Style` are not — they are element verbs the frozen bar now presents, with a word rather than a
+    // glyph, so while it is up those two stand down and the on-canvas Reframe chip stands down with them.
+    // Nothing is removed: each yields only while another visible control offers the same capability, and
+    // every one of them returns the moment the frozen bar does not (an open session, an open Type bar, a
+    // Reframe, a multi-selection, or a kind with no frozen verb set).
+    //
+    // Hoisted this high because the three sites it governs are in three different scopes: the chip inside
+    // the sheet island, the frozen bar inside the canvas, the transform bar below both.
+    val ctxElement = uiState.selection.singleOrNull()?.let { id ->
+        uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
+    }
+    val ctxKind = ctxElement?.let { benchVerbKindOf(it) }
+    // C9 row 9.1: the Bench's four states, derived in one place. The `!EditingText` term spelled out here
+    // is subsumed by `benchState == Selected`; `ctxKind != null` stays, because it asks a different
+    // question (a single element, of a kind the freeze gives verbs to). So the one behavioural change is
+    // the term the freeze writes and this call site did not: `showSheet` removes `.ctx`
+    // (`v2-bench.html:847`). Nothing regressed by adding it — the Add chooser is a Dialog, so the bar it
+    // now suppresses was already behind another window; the point is that the rule lives in the model
+    // rather than being delegated to a platform accident. (`showDelete = !ctxVisible` below therefore
+    // offers Delete on the transform bar while the chooser is up — also behind the Dialog. That "behind a
+    // Dialog ⇒ unreachable" premise is exactly the merged-semantics assumption ADR-059/CI-26 distrusts,
+    // so it is on the device Pass 1 platform-tree checklist rather than settled by this comment.)
+    val benchState = benchStateOf(uiState.selection, uiState.interaction, addChooserOpen)
+    val ctxVisible = benchState == BenchState.Selected &&
+        ctxKind != null &&
+        reframing == null &&
+        !typeBarOpen &&
+        // The freeze's own swap: `openInk` runs `ctx.classList.remove('show')` and `inkClose` restores
+        // it (`v2-bench.html:692`, `:697`). Two floating cards share this 12dp inset, so one of them is
+        // always the one that is up.
+        !inkPopoverOpen
+
+    // The popover belongs to the element that summoned it. Any change of that element — a reselect, a
+    // deselect, a page change, a delete — stands it down, which is the freeze doing the same at four
+    // separate sites (`:621`, `:628`, `:649`, `:712`). Keyed on the id rather than the element, so
+    // applying an ink (which changes the element and not its id) leaves it open, as the prototype does.
+    LaunchedEffect(ctxElement?.id) { inkPopoverOpen = false }
+
     // Any change of the styleable element closes the bar (ADR-055 §3: "a selection change to a non-text
     // or empty element closes the Type bar"). Keyed on the id, so committing a style through the bar —
     // which changes the element but not its id — leaves it open, exactly as the frozen prototype does.
@@ -492,8 +671,39 @@ public fun EditorScreen(
         }
     }
 
+    // The element under an open text session, or null. Hoisted to the screen root because C3 needs it on
+    // both sides of the layout: inside the canvas (to suppress it from the render tape and to place the
+    // in-place field on it) and outside it (to seed the style row's ink swatch, and to raise the row at
+    // all). Null while a delete races the session closed; every consumer then draws nothing, and the
+    // session's own token guard no-ops the trailing commit.
+    val editingElement = (uiState.interaction as? Interaction.EditingText)?.let { session ->
+        uiState.document.pages[uiState.currentPageIndex].elements
+            .firstOrNull { it.id == session.id } as? TextElement
+    }
+    // The frozen editing row's Done ends the session by clearing focus — see its call site for why that,
+    // and not a dispatch, is the correct end (the draft is feature-ephemeral).
+    val focusManager = LocalFocusManager.current
+
+    // D-043 / OD-16, 2026-08-03: the amended pan is `min(96dp, slack + clearance)`, and the clearance term
+    // needs two window-space edges that live on opposite sides of this layout — where the `.kbstack` docks,
+    // and where the canvas starts. Both are reported by layout rather than derived from insets and a height
+    // constant, because the row's height moves with the font scale and the canvas's top moves with the top
+    // bar; a constant would be right on the device it was measured on and quietly wrong everywhere else.
+    // `NaN` until the first layout pass, which the consumer reads as "no lift yet" rather than guessing.
+    var styleRowDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
+    // F-5: the ink popover docks in the same place, over the same page, and until now only the row's
+    // occlusion was paid for. A second edge rather than one shared variable, because the two panels report
+    // independently and a single slot would be written by whichever laid out last — including the hidden one.
+    var inkPopoverDockedTopPx by remember { mutableFloatStateOf(Float.NaN) }
+    var canvasTopPx by remember { mutableFloatStateOf(Float.NaN) }
+
+    // The frozen `.kbstack` is anchored to the PHONE (`left/right/bottom:0; z-index:35`, `:259`) — not to
+    // the canvas — so the editing row must overlay the whole screen, above the supply tray, rather than
+    // dock at the canvas's bottom edge. It rode the canvas in the first cut of C3 and the screen-level
+    // golden caught it floating in the middle of the screen with the tray still showing beneath.
+    Box(modifier = modifier) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             // The editor's keyboard receiver, serving the two grammars that need one: the Reframe session
             // (bench: reframe owns the keyboard) and the FR-3 bold/italic shortcuts. Every branch routes
             // through the SAME shared verbs the on-screen controls use, so keyboard and touch never diverge.
@@ -548,8 +758,18 @@ public fun EditorScreen(
                     Key.Minus -> { reframeZoom(1.0 / Framing.ZOOM_STEP); true }
                     else -> false
                 }
-            },
+            }
+            // The studio ground and the grain over the whole screen. Last in the chain so it draws beneath
+            // the Column's children and the grain lays over all of them, which is what
+            // `.phone::after{z-index:90}` does in the frozen file (`v21-bench.html:162`; V2 said 60).
+            .benchStudioGround(),
     ) {
+        // C4 row 4.9: the frozen `.status` strip, the first thing in the phone (`v2-bench.html:390`
+        // sits directly inside `.phone`, above `.canvasArea`). It carries the autosave chip that
+        // `EditorSavedConfirmation` used to float over the canvas - one message, one presentation,
+        // per OD-14 - and its left slot is deliberately empty; see [BenchStatusStrip].
+        BenchStatusStrip(savedVisible = savedVisible && !saveErrorVisible)
+
         // The "Preview" entry to the unified Proof surface (M5, ADR-051). A quiet top-end nav
         // action (not a thumb-zone craft supply — it advances the journey, it doesn't place content);
         // shown only when the host supplies a destination, so the editor's tested layout is unchanged
@@ -560,10 +780,21 @@ public fun EditorScreen(
                 horizontalArrangement = Arrangement.End,
             ) {
                 TextButton(
-                    onClick = onPreview,
-                    // Desk-level nav action — the coral accent sourced from the frozen `--coral` token
-                    // (the migrated Legacy `primary` role, byte-identical) instead of the Material default.
-                    colors = ButtonDefaults.textButtonColors(contentColor = ZinelyTheme.colors.coral),
+                    // The one nav action the Bench offers, and it was the last silent control on this
+                    // screen. The Library's equivalent — "Make a zine" — has always ticked.
+                    onClick = benchTap(action = onPreview),
+                    // Room-level nav action, in V2.1's `leafText` — the action colour as text.
+                    //
+                    // **Converted by P1 although this control is P6's, because P1 broke it.** It was V1
+                    // `coral` (#E76F51) as bare text with no fill, which measured 2.77:1 on the old
+                    // `paper` ground — already under AA. Moving the ground to `bench` took it to
+                    // **2.18:1**, below even the 3:1 large-text floor, and it ships. A package may not
+                    // darken the room under a control and leave the control where it fell.
+                    //
+                    // `leafText` measures 4.88:1 light and 9.38:1 dark on `bench`. It is read from the
+                    // ROOM here without an opt-out because this control sits OUTSIDE the island
+                    // altogether — it is above the canvas, not over the sheet.
+                    colors = ButtonDefaults.textButtonColors(contentColor = ZinelyTheme.v21Colors.leafText),
                     modifier = Modifier
                         .testTag(EditorPreviewActionTestTag)
                         .semantics { contentDescription = Copy.Editor.PREVIEW },
@@ -574,21 +805,44 @@ public fun EditorScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
+                // D-045, 2026-08-03: the canvas clips to its own bounds, as the frozen
+                // `.canvasArea{overflow:hidden}` (`v2-bench.html:171`) has always said and this host never
+                // implemented. It cost nothing while the pan was zero and everything once C3 made it real:
+                // on device the panned sheet painted straight over the top bar, leaving `Preview` invisible
+                // and — read off the platform `AccessibilityNodeInfo` tree, which still gave it its full
+                // bounds and `clickable=true` — pressable. A control you cannot see and can press is the
+                // defect; the paper over the chrome is only how you notice it.
+                //
+                // It lands in the same change as the OD-16 clamp on purpose, and the order is not
+                // arbitrary: clipping alone would have converted D-043 from a defect you can see into one
+                // you cannot (the over-lifted element would be cut off rather than drawn on the chrome),
+                // and clamping alone leaves the paper on the top bar whenever clearance genuinely needs
+                // the full 96dp. Either one shipped by itself makes the other worse.
+                .clipToBounds()
+                .onGloballyPositioned { canvasTopPx = it.positionInWindow().y }
                 .testTag(EditorCanvasTestTag),
         ) {
             // Fit the whole page into the measured canvas (contain), top-left anchored (pan stays zero for
             // the MVP host; true centring/zoom is a follow-up). The scale is the single px-per-point source.
             val widthPx = constraints.maxWidth.toFloat()
-            val heightPx = constraints.maxHeight.toFloat()
+            // **The canvas is not as tall as it measures.** `BenchContextBar` floats over the sheet at this
+            // Box's bottom edge, so the height the page may actually occupy is the measured height less the
+            // band that bar sits in — see [BenchContextBarReservedHeightDp] for why that band is reserved
+            // always rather than only while the bar is up. P2's device Pass 2 (finding U3) found the bar
+            // covering the keep-clear boundary's bottom edge and the folio; this is the fix, and it is a
+            // *fit* change rather than new chrome, so nothing frozen moves.
+            val reservedBottomPx = with(LocalDensity.current) { BenchContextBarReservedHeightDp.toPx() }
+            val heightPx = (constraints.maxHeight.toFloat() - reservedBottomPx).coerceAtLeast(0f)
             val scale: Float = remember(widthPx, heightPx, pageSizePt) {
-                if (pageSizePt.width <= 0.0 || pageSizePt.height <= 0.0 || widthPx <= 0f || heightPx <= 0f) {
-                    1f
-                } else {
-                    min(widthPx / pageSizePt.width, heightPx / pageSizePt.height).toFloat()
-                }
+                benchCanvasFitScale(widthPx, heightPx, pageSizePt)
             }
             val interaction = uiState.interaction
-            val editing = interaction is Interaction.EditingText
+            // The SAME predicate the style row is raised on (`editingElement != null`), deliberately, and
+            // not the looser `interaction is EditingText`. They differ in exactly one state — a delete
+            // racing the session closed leaves the interaction open with no element — and under the looser
+            // form the page would stay lifted 96dp while the row slid away beneath it, with nothing on
+            // screen to explain either. One predicate, so the two cannot disagree.
+            val editing = editingElement != null
 
             // Push the measured scale into the model so every layer shares it (idempotent — the reducer
             // no-ops an equal view). Deferred until no gesture/edit session is open (Codex RF3): a viewport
@@ -596,11 +850,51 @@ public fun EditorScreen(
             // cleanup — which would strand a `Transforming` session and a non-null `live`. Re-runs when the
             // interaction returns to Idle, so the latest scale is applied the instant the gesture ends.
             val idle = interaction is Interaction.Idle
-            LaunchedEffect(scale, idle) {
-                if (idle) dispatch(Intent.SetViewport(scale, PtPoint(0.0, 0.0)))
+            // C1 row 1.3 — `.canvasArea{display:flex;align-items:center;justify-content:center}`. The
+            // sheet is centred in the residual height instead of pinned to the top-left as the MVP host
+            // left it.
+            //
+            // Centring is expressed as the **viewport's** `pageOffset`, not as a `contentAlignment` on
+            // the canvas Box, and that choice is load-bearing. Every layer over this canvas — the render
+            // tape, the snap guides, the selection chrome, the gesture surface, the resize handles, the
+            // Reframe overlay and its affordance chip — is `fillMaxSize()` and maps page points through
+            // `ExportScale.previewPageToDevice(screenPxPerPt, pageOffset)`, i.e.
+            // `devicePx = (pagePt + pageOffset) × scale`. Moving the paper with a layout alignment would
+            // have moved the paper *only*, and left every one of those layers drawing at the old origin:
+            // the exact divergence the paper-backing comment below was written about. Moving the shared
+            // offset moves all of them at once, because there is one seam and they all already read it.
+            //
+            // Pan is therefore real from here, which retires the "harmless while the MVP host pins pan at
+            // zero" caveat below — the paper backing now applies the offset too.
+            val centreOffset = remember(widthPx, heightPx, scale, pageSizePt) {
+                if (scale <= 0f) {
+                    PtPoint(0.0, 0.0)
+                } else {
+                    PtPoint(
+                        x = ((widthPx / scale - pageSizePt.width) / 2.0).coerceAtLeast(0.0),
+                        y = ((heightPx / scale - pageSizePt.height) / 2.0).coerceAtLeast(0.0),
+                    )
+                }
+            }
+            LaunchedEffect(scale, centreOffset, idle) {
+                if (idle) dispatch(Intent.SetViewport(scale, centreOffset))
             }
 
-            Box(modifier = Modifier.fillMaxSize()) {
+            // D-035: the canvas stack is the artifact, so it is a light-theme island — the sheet and
+            // everything drawn on it keep paper-coloured surroundings at night, while the room around
+            // this Box (bar, tray, page strip, context bar) goes on dimming. See [BenchSheetIsland].
+            // Read BEFORE the island opens, so the chrome that floats over the sheet can be drawn in the
+            // room's palette rather than the sheet's — see the `.ctx` bar below.
+            val roomColors = ZinelyTheme.v2Colors
+            // The V2.1 half of the same read. P1 made [BenchSheetIsland] provide BOTH palettes, so an
+            // opt-out that restored only the V2 one would hand back the room for `v2Colors` and keep the
+            // LIT sheet palette for `v21Colors` — chrome drawn half in the room and half on the paper.
+            // No live defect when this was written (all three opt-out subtrees still read `v2Colors`),
+            // and that is exactly why it is fixed now: P2–P4 convert those subtrees, and the failure
+            // would arrive as light ink on a dark bar with every light-palette test passing. D-035's
+            // defect, one palette later.
+            val roomColors21 = ZinelyTheme.v21Colors
+            BenchSheetIsland(modifier = Modifier.fillMaxSize()) {
                 // The page footprint reads as paper — the frozen `--paper` sheet (bench.html `.panel`),
                 // instead of the bare desk showing through. Purely a host backing UNDER the render: the
                 // SceneRenderer contract
@@ -613,7 +907,7 @@ public fun EditorScreen(
                 // mid-session (most obviously the soft keyboard opening under an inline edit) moved the
                 // paper immediately and left the render behind, until the session ended. Both now lag
                 // together, which is invisible, instead of diverging, which reads as the app losing the
-                // page. Same shape as EditorPageStrip's thumbnails, where one scale drives both the output
+                // page. Same shape as BenchPageNav's thumbs, where one scale drives both the output
                 // box and the render and they cannot disagree.
                 //
                 // The remaining coupling is `pageOffset`: the render translates by it, this backing does
@@ -621,109 +915,296 @@ public fun EditorScreen(
                 // day pan becomes real, this offset must be applied here too or the two diverge again.
                 val density = LocalDensity.current
                 val paperScale = uiState.view.screenPxPerPt
+                val paperOffset = uiState.view.pageOffset
                 val paperWidth = with(density) { (pageSizePt.width * paperScale).toFloat().toDp() }
                 val paperHeight = with(density) { (pageSizePt.height * paperScale).toFloat().toDp() }
+                // Both read from `uiState.view`, never from the locally measured `scale`/`centreOffset`:
+                // the viewport push is deferred while a gesture or text session is open, so a mid-session
+                // canvas resize must move the paper and the render *together*, late, rather than moving
+                // one of them immediately. Same lockstep the paperScale comment above describes — now
+                // extended to the offset, which centring made load-bearing.
+                val paperX = with(density) { (paperOffset.x * paperScale).toFloat().toDp() }
+                val paperY = with(density) { (paperOffset.y * paperScale).toFloat().toDp() }
+                // C3 (ADR-093 rows 3.1, 3.1a, 3.3): entering a text session pans the WHOLE page as a
+                // rigid body — frozen `edit()` sets `pageWrap.style.transform=translateY(-96px)` (`:551`)
+                // and `endEdit()` settles it back to `translateY(0)` (`:558`).
+                //
+                // The wrapper is a `graphicsLayer` translation over the page layers, and that is the
+                // whole point of row 3.1: nothing inside re-lays-out, so every element keeps identical
+                // page-space bounds and the render, the chrome, the gesture surface and the semantics
+                // mirror cannot drift apart mid-pan. A layout offset would have moved them at different
+                // times. It wraps the page layers only — the context bar, the Type bar and the room
+                // notices are siblings of `.pageWrap` in the freeze too, and do not ride it.
+                // D-043 / OD-16, 2026-08-03 — the frozen file was amended first and this transcribes the
+                // amendment: −96 is the **maximum** lift, spent as `slack + clearance`. The rule itself is
+                // the pure [benchEditPanMagnitudeDp]; everything here is the measurement it consumes,
+                // taken from the same `uiState.view` geometry the paper and the render read, so the pan
+                // cannot be computed against a viewport the page is not actually drawn at.
+                //
+                // Rest geometry only: `paperY` is the un-panned band above the sheet and the element's
+                // bottom is its page-space bottom, so the target is a function of where things are BEFORE
+                // the gesture. It cannot chase the animation it drives.
+                //
+                // F-5, 2026-08-16: **two panels dock here, and the rule was only ever applied to one.**
+                // `BenchInkPopover` replaces the context bar in the same bottom inset and covers the same
+                // page — so a maker picking ink could not see the type they were colouring. Nothing about
+                // the rule changes; only which panel is the occluder, and which element must clear it. The
+                // editing row wins when both could apply.
+                //
+                // ⚠ That state is **reachable**, and an earlier draft of this comment claimed it was not.
+                // `ctxVisible` hides the *bar*, but a session also starts from a tap that re-hits the
+                // already-sole-selected element (`EditorGestures.kt`) and from the `Edit text` custom action
+                // (`EditorA11y.kt`) — neither goes through the bar. The row is the correct occluder there:
+                // it docks below the popover and the typed line is what must clear. Pre-existing to F-5
+                // (C6 could produce it too), and flagged for a device look rather than ruled on here.
+                val occludingPanelTopPx = if (editing) styleRowDockedTopPx else inkPopoverDockedTopPx
+                // The element the panel is about: the one under the session, or — with the popover up —
+                // the selected text it is recolouring. `inkTarget` at the popover's call site is this same
+                // expression; both read `ctxElement`, so they cannot name different elements.
+                val occludedElement = editingElement
+                    ?: (ctxElement as? TextElement).takeIf { inkPopoverOpen }
+                val panTargetDp: Dp = if (occludedElement == null) {
+                    0.dp
+                } else {
+                    val occluderTopCanvasPx = occludingPanelTopPx - canvasTopPx
+                    val edited = occludedElement
+                    // Before the first layout pass there is no measurement, so there is no lift. One frame
+                    // late is invisible; guessing the literal here would reinstate D-043 for that frame.
+                    if (occluderTopCanvasPx.isNaN()) {
+                        0.dp
+                    } else {
+                        val bottomPx =
+                            ((edited.transform.yPt + edited.transform.heightPt + paperOffset.y) * paperScale)
+                                .toFloat()
+                        with(density) {
+                            -benchEditPanMagnitudeDp(
+                                maxPanDp = -BenchEditPanDp.value,
+                                slackAboveDp = paperY.value,
+                                elementBottomDp = bottomPx.toDp().value,
+                                occluderTopDp = occluderTopCanvasPx.toDp().value,
+                            ).dp
+                        }
+                    }
+                }
+                val panDp by animateDpAsState(
+                    targetValue = panTargetDp,
+                    animationSpec = ZinelyTheme.v2Motion.settle(BenchEditPanMillis),
+                    label = "bench-edit-pan",
+                )
                 Box(
                     modifier = Modifier
-                        .size(paperWidth, paperHeight)
-                        .background(ZinelyTheme.colors.paper)
-                        .testTag(EditorPaperSurfaceTestTag),
-                )
-                EditorPagePreview(
-                    uiState = uiState,
-                    defaults = uiState.document.defaults,
-                    pageSizePt = pageSizePt,
-                    live = live,
-                    modifier = Modifier.fillMaxSize(),
-                    resizeOverride = resizeOverride,
-                    styleOverride = styleOverride,
-                    imageBytes = imageBytes,
-                )
-                // The page gesture surface and resize handles are inert while a text session is open (Codex
-                // RF1): otherwise a stray long-press/double-tap replaces `EditingText`, and the session's
-                // onDispose commits a now-stale token → the draft is silently dropped. The handles also yield
-                // to an in-flight page drag (`live != null`) so the two never run concurrent sessions (RF2).
-                // The page gesture surface + handles are inert while a text session OR a Reframe session is
-                // open: during reframe the ReframeOverlay owns pointer input (drag pans / pinch zooms the
-                // photo), and a stray page long-press/double-tap must not replace the session.
-                if (!editing && reframing == null) {
+                        .fillMaxSize()
+                        .graphicsLayer { translationY = panDp.toPx() },
+                ) {
+                    // C1 (ADR-089 rows 1.5-1.9, 1.11): the bare paper rectangle becomes the frozen sheet —
+                    // its hairline edge, radius, two-layer shadow and grain — and carries the two marks the
+                    // frozen page carries: the keep-clear boundary and the page number. This box IS the
+                    // canonical page geometry per D-033, which is why the furniture is nested inside it
+                    // rather than positioned against the canvas.
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .editorTransformGestures(
+                            .offset(x = paperX, y = paperY)
+                            .size(paperWidth, paperHeight)
+                            .benchPageSurface()
+                            .testTag(EditorPaperSurfaceTestTag),
+                    )
+                    EditorPagePreview(
+                        uiState = uiState,
+                        defaults = uiState.document.defaults,
+                        pageSizePt = pageSizePt,
+                        live = live,
+                        modifier = Modifier.fillMaxSize(),
+                        resizeOverride = resizeOverride,
+                        styleOverride = styleOverride,
+                        imageBytes = imageBytes,
+                        // ADR-093 row 3.11: the in-place field below is the only drawing of this element
+                        // while the session is open, so the tape must not paint it a second time.
+                        hiddenElementId = editingElement?.id,
+                        // C4 row 4.13: the leaving element, and how far through leaving it is.
+                        deleting = deletingId?.let { it to deleteProgress },
+                    )
+                    // **Above the wash, and the device is why.** The furniture used to be nested inside the
+                    // sheet box above, which put it *under* [EditorPagePreview]'s focus scrim. The freeze
+                    // dims `.el:not(.selected)` (`v21-bench.html:207`) — it dims *elements*; Compose
+                    // implements the dim as one composite bounded to the page rect ([BenchFocusScrim], and
+                    // it stays a composite for the reasons recorded there), so it also washed every mark on
+                    // the sheet. That divergence is invisible in a screenshot test, which reads nominal
+                    // alphas, and it halved the marks on glass: P2's device pass measured the cue at an
+                    // effective **.42** rather than `.85`, and the warning — the one mark ADR-102 §12.9
+                    // rests on clearing 3:1 — at **1.82:1** rather than 3.66:1. (`.425` is what the model
+                    // predicts; `.42` is what the screen gave. In a comment whose whole subject is correct
+                    // arithmetic losing to glass, the two must not be written as the same number — a review
+                    // caught this one saying `.425`.)
+                    //
+                    // The cue's trigger *was* the wash's trigger, so it was never once seen undimmed.
+                    // OD-48 has since split the two — the cue fires on a crossing, the wash on a
+                    // selection — but this Box must still sit above the wash. The reason changed with
+                    // OD-49 and the conclusion did not: it is no longer "the cue only fires during a
+                    // gesture, and a gesture implies the wash", because a crossing selection now warns
+                    // with no gesture at all. It is that a **crossing requires a selection**, and a
+                    // selection is the wash's own trigger. The z-order is what keeps the one accessible
+                    // mark at its measured 3.51:1.
+                    //
+                    // Geometry is unchanged: the same `paperX/paperY/paperWidth/paperHeight` the sheet uses,
+                    // so D-033 still holds — the furniture is still positioned by the page box, it is simply
+                    // no longer painted beneath the wash.
+                    Box(
+                        modifier = Modifier
+                            .offset(x = paperX, y = paperY)
+                            .size(paperWidth, paperHeight),
+                    ) {
+                        BenchKeepClear(
+                            // D-032 as **amended by OD-49**: still transient, but transient with the
+                            // *selection* rather than with the gesture. `live`/`resizeOverride` answer while
+                            // a gesture runs; `selection` answers every other frame. The paragraph that
+                            // stood here — *"the warning cannot outlive the act, which is the whole of the
+                            // ruling"* — is the half the device falsified, and a review found it still
+                            // quoted as current one line above the argument that discards it.
+                            // Nothing is persisted either way: no reducer state backs this.
+                            //
+                            // The resolve below duplicates the one EditorPagePreview makes this frame.
+                            // That is deliberate rather than plumbed: it is a pure call on identical
+                            // inputs, so the two agree by construction, and hoisting the result out of a
+                            // sibling composable would mean writing state during composition to read it
+                            // one frame stale — a worse trade for a few rect operations.
+                            warn = BenchStudio.keepClearWarn(
+                                page = uiState.document.pages[uiState.currentPageIndex],
+                                interaction = uiState.interaction,
+                                live = live,
+                                resizeOverride = resizeOverride,
                                 screenPxPerPt = uiState.view.screenPxPerPt,
-                                pageOffset = uiState.view.pageOffset,
                                 pageSizePt = pageSizePt,
+                                // OD-49: with no gesture in flight this is what the warning answers for —
+                                // the selection's committed geometry. An empty set warns about nothing,
+                                // which is how an unheld page stays silent.
+                                selection = uiState.selection,
+                            ),
+                            // ⚠ There is no `focusing` argument any more. OD-48 made the crossing the
+                            // cue's only trigger, so `keepClearWarn` above is now the whole predicate —
+                            // and the selection state the freeze used to reveal on is not consulted here
+                            // at all. The wash and the cue no longer answer the same question.
+                            panelWidthPt = pageSizePt.width,
+                        )
+                        BenchPageNumber(
+                            pageNumber = uiState.currentPageIndex + 1,
+                            pageCount = uiState.document.pages.size,
+                            // `.pagenum{right:9px;bottom:6px}` — V2.1 moved the folio to the sheet's
+                            // foot. The insets travel with the composable; only the corner is here.
+                            modifier = Modifier.align(Alignment.BottomEnd),
+                        )
+                    }
+                    // ADR-093 rows 3.8/3.11: the text is edited ON the page, at its own box, inside the
+                    // panned wrapper so it rides the pan rigidly with everything else. This replaces the
+                    // detached bottom sheet the editor shipped with — see [BenchEditingSurface].
+                    if (interaction is Interaction.EditingText && editingElement != null) {
+                        BenchEditingSurface(
+                            session = interaction,
+                            element = editingElement,
+                            dispatch = dispatch,
+                            screenPxPerPt = uiState.view.screenPxPerPt,
+                            pageOffset = uiState.view.pageOffset,
+                            modifier = Modifier.align(Alignment.TopStart),
+                            onCoverageChanged = { editCoverage = it },
+                        )
+                    }
+                    // The page gesture surface and resize handles are inert while a text session is open (Codex
+                    // RF1): otherwise a stray long-press/double-tap replaces `EditingText`, and the session's
+                    // onDispose commits a now-stale token → the draft is silently dropped. The handles also yield
+                    // to an in-flight page drag (`live != null`) so the two never run concurrent sessions (RF2).
+                    // The page gesture surface + handles are inert while a text session OR a Reframe session is
+                    // open: during reframe the ReframeOverlay owns pointer input (drag pans / pinch zooms the
+                    // photo), and a stray page long-press/double-tap must not replace the session.
+                    if (!editing && reframing == null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .editorTransformGestures(
+                                    screenPxPerPt = uiState.view.screenPxPerPt,
+                                    pageOffset = uiState.view.pageOffset,
+                                    pageSizePt = pageSizePt,
+                                    currentState = currentState,
+                                    dispatch = dispatch,
+                                    onPreview = { live = it },
+                                    // The single double-tap seam (ADR-053 §4): the reducer retargets by the
+                                    // topmost element type — text → inline edit, image → Reframe.
+                                    onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
+                                ),
+                        )
+                        if (live == null) {
+                            ResizeHandles(
+                                uiState = uiState,
                                 currentState = currentState,
                                 dispatch = dispatch,
-                                onPreview = { live = it },
-                                // The single double-tap seam (ADR-053 §4): the reducer retargets by the
-                                // topmost element type — text → inline edit, image → Reframe.
-                                onDoubleTap = { pagePoint -> dispatch(Intent.DoubleTapAt(pagePoint)) },
-                            ),
-                    )
-                    if (live == null) {
-                        ResizeHandles(
-                            uiState = uiState,
-                            currentState = currentState,
-                            dispatch = dispatch,
-                            onResize = { resizeOverride = it },
+                                onResize = { resizeOverride = it },
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
+                    }
+
+                    // The Reframe preview overlay (ADR-053): the movable photo layer + scrim + rule-of-thirds,
+                    // driven by the ephemeral draft. Only while a session is open and its photo still exists (a
+                    // delete races it closed; the token guard then no-ops any trailing commit).
+                    val reframeEl = reframing?.let { rf ->
+                        uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == rf.id } as? ImageElement
+                    }
+                    val currentDraft = reframeDraft
+                    if (reframeEl != null && currentDraft != null && reframeReadable == true) {
+                        ReframeOverlay(
+                            element = reframeEl,
+                            draft = currentDraft,
+                            screenPxPerPt = uiState.view.screenPxPerPt,
+                            pageOffset = uiState.view.pageOffset,
+                            imageBytes = imageBytes,
+                            onAspect = { reframePratio = it },
+                            onDraft = { adjustDraft(it) },
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
-                }
 
-                // The Reframe preview overlay (ADR-053): the movable photo layer + scrim + rule-of-thirds,
-                // driven by the ephemeral draft. Only while a session is open and its photo still exists (a
-                // delete races it closed; the token guard then no-ops any trailing commit).
-                val reframeEl = reframing?.let { rf ->
-                    uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == rf.id } as? ImageElement
-                }
-                val currentDraft = reframeDraft
-                if (reframeEl != null && currentDraft != null && reframeReadable == true) {
-                    ReframeOverlay(
-                        element = reframeEl,
-                        draft = currentDraft,
-                        screenPxPerPt = uiState.view.screenPxPerPt,
-                        pageOffset = uiState.view.pageOffset,
-                        imageBytes = imageBytes,
-                        onAspect = { reframePratio = it },
-                        onDraft = { adjustDraft(it) },
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
-
-                // The persistent "Reframe" affordance chip (RF2): a single-selected photo, not editing/
-                // reframing, always advertises that it can be reframed. Positioned just below the photo box.
-                val selectedImage = uiState.selection.singleOrNull()?.let { id ->
-                    uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id } as? ImageElement
-                }
-                if (reframing == null && !editing && selectedImage != null) {
-                    val spp = uiState.view.screenPxPerPt
-                    val off = uiState.view.pageOffset
-                    val chipX = (selectedImage.transform.xPt + selectedImage.transform.widthPt / 2.0 + off.x) * spp
-                    val chipY = (selectedImage.transform.yPt + selectedImage.transform.heightPt + off.y) * spp
-                    ReframeAffordanceChip(
-                        onClick = { dispatch(Intent.BeginReframe(selectedImage.id)) },
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .offset { IntOffset((chipX - 44.dp.toPx()).roundToInt(), (chipY - 36.dp.toPx()).roundToInt()) },
-                        // First-run coach-mark: pulse only when the flag is loaded-unseen AND motion is
-                        // allowed (WCAG 2.3.3). `null` (still loading) or seen ⇒ no pulse, never a flash.
-                        teach = reframeCoachSeen == false && !reduceMotion,
-                    )
-                }
-                // The accessible element mirror is suppressed during a Reframe session: its custom actions
-                // (move/scale/rotate/delete) act on the underlying photo's geometry, which the reframe
-                // commit rebuilds from `before` — so a mid-reframe element action would be silently
-                // reverted. The Reframe controls carry the a11y path (nudge/zoom/fit/reset) while it's open,
-                // matching how the page gesture surface is already inert here.
-                if (reframing == null) {
-                    ElementSemanticsLayer(
-                        uiState = uiState,
-                        dispatch = dispatch,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    // The persistent "Reframe" affordance chip (RF2): a single-selected photo, not editing/
+                    // reframing, always advertises that it can be reframed. Positioned just below the photo box.
+                    val selectedImage = uiState.selection.singleOrNull()?.let { id ->
+                        uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id } as? ImageElement
+                    }
+                    // `&& !ctxVisible` is D-039: while the frozen bar is up it presents `Reframe` as a labelled
+                    // verb, so the chip would be the same offer twice on one screen — the exact pair a
+                    // first-time user read as a malfunction in C2b's Pass 2. It returns whenever the bar is not
+                    // up, which is every case ADR-053 RF2 built it for except the one the bar now covers.
+                    if (reframing == null && !editing && selectedImage != null && !ctxVisible) {
+                        val spp = uiState.view.screenPxPerPt
+                        val off = uiState.view.pageOffset
+                        val chipX = (selectedImage.transform.xPt + selectedImage.transform.widthPt / 2.0 + off.x) * spp
+                        val chipY = (selectedImage.transform.yPt + selectedImage.transform.heightPt + off.y) * spp
+                        ReframeAffordanceChip(
+                            onClick = { dispatch(Intent.BeginReframe(selectedImage.id)) },
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .offset { IntOffset((chipX - 44.dp.toPx()).roundToInt(), (chipY - 36.dp.toPx()).roundToInt()) },
+                            // First-run coach-mark: pulse only when the flag is loaded-unseen AND motion is
+                            // allowed (WCAG 2.3.3). `null` (still loading) or seen ⇒ no pulse, never a flash.
+                            teach = reframeCoachSeen == false && !reduceMotion,
+                        )
+                    }
+                    // The accessible element mirror is suppressed during a Reframe session: its custom actions
+                    // (move/scale/rotate/delete) act on the underlying photo's geometry, which the reframe
+                    // commit rebuilds from `before` — so a mid-reframe element action would be silently
+                    // reverted. The Reframe controls carry the a11y path (nudge/zoom/fit/reset) while it's open,
+                    // matching how the page gesture surface is already inert here.
+                    if (reframing == null) {
+                        ElementSemanticsLayer(
+                            uiState = uiState,
+                            dispatch = dispatch,
+                            modifier = Modifier.fillMaxSize(),
+                            // C4 row 4.13: TalkBack's Delete takes the same reversible path the visible
+                            // verb does — the fade, the snack, and its Undo. Without this the element
+                            // simply vanished for a screen-reader user while a sighted user got an undo.
+                            onDelete = { softDelete(setOf(it)) },
+                            // OD-49's non-visual half. The drawn warning needs a gesture or a selection;
+                            // this needs neither, because a maker reading the page by touch should be able
+                            // to discover that a box is off the edge without first selecting it.
+                            pageSizePt = pageSizePt,
+                        )
+                    }
                 }
 
                 // First-run invitation: when the current page is blank and no text session is open, a
@@ -747,8 +1228,16 @@ public fun EditorScreen(
                     // app having lost track of where the page is, which is why an undo that merely revealed
                     // this was reported as undo corrupting the layout. A paper-sized box also *constrains*
                     // the text, so the lines wrap to the sheet instead of being clipped by the display.
+                    //
+                    // C1: the sheet is no longer top-left anchored, so a paper-*sized* box at the canvas
+                    // origin is no longer a paper-*placed* one. It takes the same `paperX`/`paperY` the
+                    // sheet does, from the same viewport offset — which is the point of putting centring
+                    // in `pageOffset` rather than in a layout alignment: there is one number to follow,
+                    // and following it is what keeps this overlay on the paper it is about.
                     Box(
-                        modifier = Modifier.size(paperWidth, paperHeight),
+                        modifier = Modifier
+                            .offset(x = paperX, y = paperY)
+                            .size(paperWidth, paperHeight),
                         contentAlignment = Alignment.Center,
                     ) {
                         EditorEmptyState(
@@ -779,6 +1268,13 @@ public fun EditorScreen(
                         },
                         modifier = Modifier
                             .align(Alignment.TopCenter)
+                            // The hint is composed after the page gesture surface, but that surface is
+                            // `fillMaxSize()` over the WHOLE canvas — so wherever the two overlap, the one
+                            // control this notice has is competing with a full-screen tap handler whose miss
+                            // branch deselects. Measured: an injected tap on `Got it` at a 400dp host does not
+                            // reach its handler and the selection is cleared instead, while the same button's
+                            // semantics action works and the same tap works at 800dp.
+                            .zIndex(1f)
                             .padding(top = 8.dp),
                     )
                 }
@@ -790,12 +1286,10 @@ public fun EditorScreen(
                 // phone-width canvas a TopEnd chip could overlap the centered hint (Codex review #2). The
                 // teaching hint wins; the chip simply skips that one window. Passive (no pointer input);
                 // it fades itself out after the transient window.
-                EditorSavedConfirmation(
-                    visible = savedVisible && !showMoveResizeHint && !saveErrorVisible,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 8.dp, end = 8.dp),
-                )
+                // C4 row 4.10: retired. The autosave reassurance now lives in the frozen `.status`
+                // strip at the top of the screen, which is where the freeze puts it. The capability is
+                // unchanged - same signal, same 1600ms window - so OD-11 holds; only the presentation
+                // moved, and leaving both would have been OD-14's defect.
 
                 // The warm save-failure banner (ADR-035) — the honest correction to the optimistic
                 // "Saved ✨". Reuses the existing app-scoped SaveFailureSink (ADR-026 §5); no second save
@@ -824,6 +1318,109 @@ public fun EditorScreen(
                         .align(Alignment.TopCenter)
                         .padding(top = 8.dp),
                 )
+
+                // The frozen contextual verb bar — .ctx (ADR-092). ADDED beside EditorContextBar, never
+                // in place of it: OD-11 ruled the frozen bar additive, because the shipped one is the
+                // WCAG 2.5.7 single-pointer path (ADR-029 §6) and a parity phase does not remove one.
+                //
+                // It hides while the Type bar is open, and that is the freeze's own pattern rather than
+                // an invention: opening the ink popover runs ctx.classList.remove('show') and closing it
+                // restores the bar (v2-bench.html:582, :520). Two floating cards at the same canvas edge
+                // would otherwise stack.
+                // The bar is composed inside the sheet island for its geometry — it floats at the canvas's
+                // bottom edge — but it is NOT part of the sheet, so it must not inherit the sheet's
+                // palette. [BenchStudio.sheetIsland] re-declares exactly eight tokens, and `ink` is one of
+                // them: drawn under the island the bar took the *light* ink onto its own *room* `--sheet`
+                // fill, which in dark theme is dark-on-dark — measured at 1.05:1 on a device, an invisible
+                // toolbar that every Robolectric test passed because they all run the light palette. The
+                // ruling was already written at the island's own comment above ("the room around this Box
+                // — bar, tray, page strip, context bar — goes on dimming", D-035); this restores it.
+                //
+                // The alignment modifier is built out here because `align` needs the BoxScope receiver,
+                // which the provider's lambda does not carry.
+                val ctxModifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                CompositionLocalProvider(
+                    LocalZinelyV2Colors provides roomColors,
+                    LocalZinelyV21Colors provides roomColors21,
+                ) {
+                BenchContextBar(
+                    visible = ctxVisible,
+                    // `styleable` is the same test the Style control already applies (ADR-055): a text box
+                    // the reducer would refuse to style must not be offered Size or Ink (D-040).
+                    verbs = ctxKind?.let {
+                        benchContextVerbs(
+                            it,
+                            styleable = (ctxElement as? TextElement)?.text?.isNotBlank() ?: true,
+                            // The toggle reads its state from the document, never from local UI state —
+                            // so Undo, a page change and a reload all move the announced state with it.
+                            copierOn = (ctxElement as? ImageElement)?.copier ?: false,
+                        )
+                    }.orEmpty(),
+                    onVerb = { verb ->
+                        val id = ctxElement?.id
+                        when (verb.label) {
+                            Copy.BenchVerbs.EDIT -> if (id != null) dispatch(Intent.BeginEditText(id))
+                            // OD-9 routed Size to the shipped Type bar, and it stays there.
+                            Copy.BenchVerbs.SIZE -> typeBarOpen = true
+                            // C6 (ADR-096 row 6.1): Ink now opens the frozen `.inkpop`, which is what
+                            // the freeze binds it to. Until this package it borrowed the Type bar,
+                            // because `.inkpop` was outside C2b's fence and blocked on D-028 — recorded
+                            // then as a temporary route, closed now. The Type bar keeps its own ink row:
+                            // OD-11 makes the frozen surface additive, and its five inks are the only
+                            // place `Coral`, `Teal` and `Blue` remain reachable.
+                            Copy.BenchVerbs.INK -> inkPopoverOpen = true
+                            Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
+                            // X3b (ADR-106): a toggle, so tapping it again is the undo the user reaches
+                            // for first — and Undo is the one they reach for second. Both work.
+                            Copy.BenchVerbs.COPIER -> if (id != null) dispatch(Intent.ToggleCopier(id))
+                            Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
+                            // Font and Replace ship disabled and never arrive here (ADR-092 §1(c), D-038).
+                            else -> Unit
+                        }
+                    },
+                    modifier = ctxModifier,
+                )
+
+                // C6 rows 6.1-6.14: the frozen `.inkpop` (`v2-bench.html:377-390`, markup `:506`).
+                //
+                // It sits in the same 12dp inset the bar above it does, because the freeze gives them the
+                // same three offsets — and it *replaces* that bar rather than stacking on it, which is
+                // `openInk`/`inkClose`'s own behaviour and is why `ctxVisible` carries `!inkPopoverOpen`.
+                //
+                // Room palette, inside the same provider as the bar: this is chrome over the artifact,
+                // not the artifact (D-035). Drawn under the sheet island it would take the island's light
+                // `ink` onto the room's `sheet` — the exact 1.05:1 defect C2b measured on a device.
+                //
+                // Text-only by construction: `.inkpop` is reachable from the `Ink` verb, and the freeze
+                // gives that verb to a text element only (`toolsFor`, `:601-603`). The `Ink`-bearing third
+                // branch is the DECOR fallback OD-2 re-seated beyond Phase C.
+                val inkTarget = ctxElement as? TextElement
+                BenchInkPopover(
+                    visible = inkPopoverOpen && inkTarget != null,
+                    bands = benchInkBands(ZinelyTheme.contentInks, BenchVerbKind.TEXT),
+                    presets = benchInkPresets(ZinelyTheme.contentInks),
+                    // The element's OWN ink, not the last tap: the ring survives undo, a page change and
+                    // a reselect, and an ink applied from the Type bar (Coral, Teal, Blue — in no frozen
+                    // band) correctly rings nothing rather than ringing something stale.
+                    selected = inkTarget?.style?.color?.toComposeColor(),
+                    inkCount = benchInkCount(uiState.document.pages),
+                    onPick = { swatch -> applyInk(swatch.name, swatch.value) },
+                    // OD-24: the recipe's PRIMARY ink, and the snack says the recipe's name — which is
+                    // what the frozen `applyInk(c, PRESETS[i][0])` passes.
+                    onPreset = { preset -> applyInk(preset.name, preset.applied.value) },
+                    onDone = { inkPopoverOpen = false },
+                    // F-5: the same clearance term the editing row feeds, from the panel that replaces it.
+                    onDockedTopChanged = { inkPopoverDockedTopPx = it },
+                    // The frozen stacking order is explicit and this is the only place it can be
+                    // expressed: `.ctx` is `z-index:30` (`:357`), `.snack` is `38` (`:444`) and
+                    // `.inkpop` is `42` (`:377`) — the popover sits ABOVE the snack. `BenchSnack` is
+                    // composed after this call, so without a zIndex the snack drew over the card and
+                    // covered the `.inkuse` note; measured on device. Raising the popover rather than
+                    // reordering the composition keeps the snack above the verb bar, which is the other
+                    // half of the frozen order.
+                    modifier = ctxModifier.zIndex(1f),
+                )
+                }
 
                 // The Type bar (FR-3, ADR-055, bench `.typebar`): a floating card pinned to the bottom of
                 // the canvas — bench `position:absolute; bottom:calc(74px + safe-area)`, i.e. it FLOATS
@@ -854,35 +1451,65 @@ public fun EditorScreen(
                     )
                 }
 
-                // The text-edit overlay: only while a session is open and its element still exists (a delete
-                // races it closed; the session's onDispose/token guard then no-ops the trailing commit).
-                if (interaction is Interaction.EditingText) {
-                    val editing = uiState.document.pages[uiState.currentPageIndex].elements
-                        .firstOrNull { it.id == interaction.id } as? TextElement
-                    if (editing != null) {
-                        Surface(
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
-                                .imePadding(),
-                            // The text-edit overlay is a paper input panel — frozen `--paper`/`--ink`
-                            // (bench edits in-place on the panel; this bottom sheet is the Compose host's
-                            // input surface), off the abused Material `surface`/`onSurface` roles.
-                            color = ZinelyTheme.colors.paper,
-                            contentColor = ZinelyTheme.colors.ink,
-                            tonalElevation = 3.dp,
-                        ) {
-                            EditTextSession(
-                                session = interaction,
-                                element = editing,
-                                dispatch = dispatch,
-                                onCoverageChanged = { editCoverage = it },
-                            )
-                        }
-                    }
-                }
+                // C4 rows 4.11-4.12: the frozen `.snack` (`v2-bench.html:361-364`, markup `:443`).
+                //
+                // **Inside the canvas, not on the screen.** The markup at `:443` sits within
+                // `.canvasArea` (`:392`), and `.canvasArea` declares `position:relative` (`:194`) — so the
+                // frozen `bottom:12px` resolves against the *canvas*, which ends above the page strip and
+                // the bar. The first cut of C4 put this in the screen's root Box and justified it with the
+                // claim that `.snack` is positioned against `.phone`; that claim was false, and the test
+                // that locked it encoded the wrong geometry as frozen. Independent review caught it by
+                // reading the HTML rather than the ADR. Anchored here, the confirmation appears over the
+                // artifact it is about, and it still takes no layout height — so it cannot resize the
+                // sheet, which is the half of the old reasoning that was true.
+                BenchSnack(
+                    visible = snackVisible,
+                    message = snackMessage,
+                    // Null for the ink snack (row 4.15 / C6): the frozen `applyInk` hides the button.
+                    actionLabel = snackAction,
+                    onAction = {
+                        deleteJob[0]?.cancel()
+                        snackVisible = false
+                        dispatch(Intent.Undo)
+                    },
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                )
+
             }
         }
+
+        // C5 rows 5.1-5.10: the frozen `.navrow` — the grid button and the filmstrip of little sheets,
+        // replacing V1's tilted cards. Every page of the document stays reachable exactly as before; the
+        // capability is untouched and only the paint changed (OD-9, D-009).
+        //
+        // It is emitted HERE, between the canvas and the bar, because that is the frozen stacking order:
+        // `v2-bench.html:481` opens `.navrow` and `:488` opens `.bar`, both in `.phone`'s normal flow, so
+        // the sheets sit *above* Undo/Redo/Add/Done. C5 first shipped them the other way round and this
+        // ADR's own device checklist described the frozen order while the build did the opposite — caught
+        // by independent review, not by a test, because nothing asserted the two rows' relative order.
+        // `SurfaceTraversalOrderTest` now does.
+        //
+        // Each thumb mini-renders its page through the SAME render path the canvas uses — which after
+        // OD-22 is the specification, not a divergence from it: the frozen `.pthumb i` rules were deleted
+        // from `v2-bench.html` because a live miniature is the only way to see another page without
+        // going there. Reads pages / current / size / defaults from the same hoisted state and dispatches
+        // Intent.GoToPage; the reducer clears selection + returns to Idle on the switch. Threads the
+        // host's imageBytes so a thumb's images match the canvas.
+        BenchPageNav(
+            pages = uiState.document.pages,
+            currentPageIndex = uiState.currentPageIndex,
+            pageSizePt = pageSizePt,
+            defaults = uiState.document.defaults,
+            // Leaving the panel commits the open framing first (bench: never strand a session on an
+            // off-screen photo), then navigates.
+            onSelectPage = { idx ->
+                if (reframing != null) commitReframe()
+                dispatch(Intent.GoToPage(idx))
+            },
+            onOpenGrid = { pageGridOpen = true },
+            modifier = Modifier.fillMaxWidth(),
+            imageBytes = imageBytes,
+        )
 
         // The supply tray: the visible shelf of craft supplies that replaces the app's lone "Add image"
         // FAB. Every primary action lives here in the thumb zone — add a photo (the old FAB's
@@ -908,35 +1535,57 @@ public fun EditorScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
         } else {
-            EditorSupplyTray(
+            BenchBottomBar(
                 canUndo = uiState.canUndo,
                 canRedo = uiState.canRedo,
-                onAddPhoto = { dispatch(Intent.RequestAddImage) },
-                onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
-                onUndo = { dispatch(Intent.Undo) },
+                // Row 4.8a: withheld for the whole of a text session, because C3's style-row chip
+                // owns "finish" while one is open and two visible Dones is OD-14's defect.
+                //
+                // F-6 extends the SAME rule to the ink popover rather than writing a second one — but on
+                // the finding's real cause, not its stated one. ⚠ The device disproves the *visual* claim:
+                // the popover's Done is a `--leaf` pill, this bar's is a dark stroked ✓, and the second
+                // green pill beside it is `+ Add`. What a dump does show is two nodes named exactly
+                // "Done" — `TextView[text=Done]` inside the card and `Button[content-desc=Done]` here —
+                // which is OD-14's defect stated in the channel that cannot dress its way out of it.
+                // The condition already existed and the popover simply sat outside it — so the fix is the
+                // missing term, not a new mechanism. Whatever owns "finish" right now is the only control
+                // allowed to say so.
+                doneEnabled = editingElement == null && !inkPopoverOpen,
+                // F-1's rule reaching the control F-6 just gave a second reason to be dim. Derived from the
+                // same two terms above and in the same order, so the reason cannot name a state the button
+                // is not in — the text session is checked first because it is the one that also hides the
+                // popover's route in.
+                doneUnavailableBecause = when {
+                    editingElement != null -> Copy.BenchBar.DONE_AFTER_TEXT
+                    inkPopoverOpen -> Copy.BenchBar.DONE_AFTER_INK
+                    else -> null
+                },
+                // Undoing from the bar during the delete window takes the snack down with it. Without
+                // this the snack kept standing after its own delete had already been reversed, still
+                // offering `Undo` — and a second press would have taken back whatever preceded the
+                // delete. One reversal, one affordance. (Independent review, C4.)
+                onUndo = {
+                    deleteJob[0]?.cancel()
+                    snackVisible = false
+                    dispatch(Intent.Undo)
+                },
                 onRedo = { dispatch(Intent.Redo) },
+                onAdd = { addChooserOpen = true },
+                // Row 4.8b: the frozen `deselect()` branch. `SelectAt` with a miss reduces to
+                // ClearSelection's exact state - the same one line C2a used for tap-to-dismiss, so
+                // there is one deselect path and not two that can drift.
+                onDone = { dispatch(Intent.ClearSelection) },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
 
-        // The page navigator: makes all pages of the SINGLE_SHEET_8 document reachable (before this
-        // only page 0 was). Each card mini-renders its page through the SAME render path the canvas
-        // uses, so it reads as a real workbench; reads pages / current / size / defaults from the same
-        // hoisted state and dispatches Intent.GoToPage; the reducer clears selection + returns to Idle
-        // on the switch. Threads the host's imageBytes so a card's images match the canvas.
-        EditorPageStrip(
-            pages = uiState.document.pages,
-            currentPageIndex = uiState.currentPageIndex,
-            pageSizePt = pageSizePt,
-            defaults = uiState.document.defaults,
-            // Leaving the panel commits the open framing first (bench: never strand a session on an
-            // off-screen photo), then navigates.
-            onSelectPage = { idx ->
-                if (reframing != null) commitReframe()
-                dispatch(Intent.GoToPage(idx))
-            },
-            modifier = Modifier.fillMaxWidth(),
-            imageBytes = imageBytes,
+        // C4 rows 4.4a-4.4d: the frozen Add chooser, Text and Photo only (OD-21). A Dialog, so where it
+        // is declared does not affect layout.
+        BenchAddChooser(
+            visible = addChooserOpen,
+            onDismiss = { addChooserOpen = false },
+            onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
+            onAddPhoto = { dispatch(Intent.RequestAddImage) },
         )
 
         // The transform context bar is hidden during a Reframe session — the Reframe controls take over.
@@ -951,8 +1600,92 @@ public fun EditorScreen(
                 // Style is offered only where it can act (FR-3, ADR-055): a single, non-blank text box,
                 // outside an inline edit session. Anything else — a photo, a multi-selection, a
                 // still-blank box the reducer would refuse anyway — gets the bar exactly as before.
+                //
+                // D-039 deliberately does NOT touch this one. `Size` and `Ink` on the frozen bar open the
+                // same Type bar, so it is tempting to call Style a third door onto one room — but the
+                // ruling is about *identical actions presented twice*, and the evidence Pass 2 produced was
+                // two controls wearing the same word (`Delete`, `Reframe`). "Text style" is a different
+                // offer that happens to share a destination, so standing it down is beyond the minimum the
+                // ruling asks for. (An earlier draft of this comment also claimed withholding Style would
+                // strand the open panel with no toggle. Review showed that is false — Style would only be
+                // withheld while `ctxVisible`, which requires `!typeBarOpen`, i.e. only while the panel is
+                // already closed. The sentence is gone: a wrong invariant in a comment is worse than none.)
                 onStyle = styleTarget?.let { { typeBarOpen = !typeBarOpen } },
                 styleOpen = typeBarOpen,
+                // Same rule for Delete, the one verb the two bars have always shared (ADR-092 row 2.13d).
+                showDelete = !ctxVisible,
+            )
+        }
+    }
+        // Frozen `.kbstack` — `left/right/bottom:0; z-index:35` on the phone (`:259`), so it overlays the
+        // supply tray rather than sitting above it in the flow. The row itself carries `imePadding()`, so
+        // on a real device it rides directly on top of the system keyboard; the frozen `.kb` beneath it is
+        // the prototype's drawn stand-in for that keyboard and is deliberately not ported.
+        //
+        // Room palette, for the same reason the context bar carries the same provider: this is chrome, not
+        // artifact, and the sheet island re-declares `ink` — which once put light ink on a dark room fill
+        // and produced an invisible toolbar that every light-palette Robolectric test passed (D-035).
+        CompositionLocalProvider(
+                    LocalZinelyV2Colors provides ZinelyTheme.v2Colors,
+                    LocalZinelyV21Colors provides ZinelyTheme.v21Colors,
+                ) {
+            BenchStyleRow(
+                visible = editingElement != null,
+                // Row 3.9: seeded from the element's own computed colour (`v2-bench.html:553`), so the
+                // swatch reports the maker's ink rather than a theme default.
+                inkSwatch = editingElement?.style?.color
+                    ?.let { Color(it.r, it.g, it.b, it.a) }
+                    ?: ZinelyTheme.v2Colors.ink,
+                // Frozen `#doneEdit → endEdit()` (`:563`). It clears focus rather than dispatching, and
+                // that is deliberate: the draft lives inside the session composable (feature-ephemeral by
+                // ADR-029 §5.6, and never reaches the store until commit), so the only correct way to end
+                // it from outside is the same focus-loss path a tap-away already takes. Dispatching an end
+                // would close the session first and the field's dispose-commit would then be rejected by
+                // its own token guard — silently dropping the draft. One draft, one commit, one undo entry.
+                onDone = { focusManager.clearFocus() },
+                // D-043 / OD-16: the pan's clearance term. See [benchEditPanMagnitudeDp].
+                onDockedTopChanged = { styleRowDockedTopPx = it },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+
+        // C5 rows 5.11-5.15: the frozen `.pgrid` — **and it is no longer inside the canvas.**
+        //
+        // ⚠ This is the THIRD reading of where this panel lives, and the first two were both wrong in the
+        // same way: they answered from the CSS rule and not from the markup. V2's `.pgrid` was
+        // `position:absolute; inset:0` *inside* `.canvasArea`, so C5 correctly covered the canvas only
+        // after an earlier cut had made it a full-screen Dialog on the false claim that the freeze said
+        // `fixed`. **V2.1 moved the element.** `v21-bench.html:573` declares `.pgrid` as a direct child of
+        // `.phone` — `.canvasArea` closes at `:530` — alongside `.scrim` (`:571`), `.sheet` (`:572`) and
+        // `.snack` (`:570`), and its rule is now `left:0;right:0;bottom:0` with `translateY(103%)`. It is
+        // a bottom sheet, so its bottom edge is the SCREEN's bottom edge; anchored to the canvas it would
+        // have risen to a stop mid-screen with the filmstrip and bar still lit beneath it, which reads as
+        // a panel that failed to open rather than as a sheet. Verified against the markup nesting rather
+        // than the rule, which is what both earlier readings skipped.
+        //
+        // Emitted after the style row and before nothing: the frozen z-order is `.kbstack` 40, `.scrim`
+        // 50, `.pgrid` 54, `.snack` 60, and in Compose paint order is declaration order.
+        //
+        // Room palette: this is chrome over the artifact, not the artifact (D-035). Read from the theme
+        // directly rather than from the canvas's `roomColors`, which is scoped inside the island's host —
+        // out here the theme's own palette IS the room's.
+        CompositionLocalProvider(
+            LocalZinelyV2Colors provides ZinelyTheme.v2Colors,
+            LocalZinelyV21Colors provides ZinelyTheme.v21Colors,
+        ) {
+            BenchPageGrid(
+                visible = pageGridOpen,
+                pages = uiState.document.pages,
+                currentPageIndex = uiState.currentPageIndex,
+                // Choosing a page here does what choosing one on the strip does, and then stands the grid
+                // down — a picker that stayed open after picking would be a panel, which is what
+                // "summoned, never default" refuses.
+                onSelectPage = { idx ->
+                    if (reframing != null) commitReframe()
+                    dispatch(Intent.GoToPage(idx))
+                    pageGridOpen = false
+                },
+                onDismiss = { pageGridOpen = false },
             )
         }
     }

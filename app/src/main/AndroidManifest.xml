@@ -18,15 +18,49 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Zinely">
+        <!--
+            The launch mode is load-bearing for share-in, not a preference. A share must reach the LIVE
+            Activity through `onNewIntent`; a second instance means two nav graphs and two editors over
+            one document, and since only one of them can hold the ADR-026 single-writer slot, the other
+            one's editor refuses to open at all ("That zine is still saving").
+
+            `singleTop` is not enough, and the device is what proved it. The system share sheet launches
+            its target with FLAG_ACTIVITY_NEW_TASK, and `singleTop` only collapses a relaunch that lands
+            on top of the SAME task — so a real Gallery share spawned a second task while the first one
+            was still holding the writer slot. Measured: `dumpsys activity activities` showed two live
+            MainActivity records (t1339 and t1341), `onNewIntent` never fired, and the shared photo could
+            never land because the zine it belonged to could no longer be opened.
+
+            `singleTask` makes the instance task-unique, so the share is routed to the existing Activity
+            wherever it lives. Nothing above it is lost: this app has exactly one Activity, and the
+            navigation stack is Compose state inside it.
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.Zinely">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+                Share-in (SUPPLIES-SPEC §6 / S1, re-sequenced to the front by ADR-105): every app on the
+                phone becomes an input device for a zine. `image/*` only — the filter states what Zinely
+                can actually use, and `ShareInbox.acceptedShareIn` re-checks it because a filter routes
+                implicit intents but does not bind explicit ones. Receive-only: nothing here grants any
+                app read access to Zinely's content, and no shared byte leaves the device.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
 

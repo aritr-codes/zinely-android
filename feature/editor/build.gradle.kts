@@ -71,6 +71,17 @@ android {
             all { test ->
                 test.maxParallelForks = 1
 
+                // ADR-098 D0 row 0.2. `config/token-enrolment.txt` *defines* which packages
+                // TokenDisciplineTest scans, and the test reads it from the filesystem at runtime —
+                // so without this declaration Gradle cannot see that the file affects the result,
+                // and a warm-cache build that changes only the enrolment list reports the task
+                // UP-TO-DATE and skips the gate. Declaring it as an input is what makes enrolment
+                // and its enforcement land in the same build, which is ADR-080 Decision 2's
+                // same-commit coupling expressed in the build rather than only in prose.
+                test.inputs.file(rootProject.layout.projectDirectory.file("config/token-enrolment.txt"))
+                    .withPropertyName("tokenEnrolmentList")
+                    .withPathSensitivity(org.gradle.api.tasks.PathSensitivity.RELATIVE)
+
                 // Recycle the test JVM periodically. Added on the belief that Robolectric NATIVE's image
                 // decoder was *exhaustible*; that was wrong (see ReframeTestPhoto.fullImageDecodeAvailable
                 // for the evidence that killed it, and the two diagnoses before this one). It is kept
@@ -144,6 +155,10 @@ dependencies {
     // collectAsStateWithLifecycle in EditorScreen (CLAUDE.md). Same 2.6.1 as -ktx — no version bump.
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    // `BackHandler` for C5's summoned page grid (ADR-095 row 5.11a). Back closing a full-canvas overlay
+    // is a platform contract, not a frozen-design property — the freeze has no Back to describe. Same
+    // artifact and version :app already uses; nothing new enters the graph.
+    implementation(libs.androidx.activity.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     // Unit tests run on the JVM via Robolectric NATIVE (real Skia) — no emulator, fits the existing

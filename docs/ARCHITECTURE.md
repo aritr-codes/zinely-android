@@ -124,6 +124,83 @@ Three properties of this layer are load-bearing and easy to lose:
   this itself. Confirmed as the migration architecture, and not a parallel design system, by the **D-016** owner
   ruling of 2026-07-30; full token routing of the product surfaces is a **Phase D** exit criterion.
 
+### 2.2 The V2 Library surface (`:feature:editor` → `feature.library`) {#22-the-v2-library-surface}
+
+Phase B builds the V2 Library in a **new package**, `com.aritr.zinely.feature.library`, inside `:feature:editor`
+— additively, exactly as Phase A was: V1's `HomeScreen`/`ShelfCover` keep their route and are not edited, so the
+app still shows the V1 shelf while V2 is assembled beside it ([ADR-081](DECISIONS.md#adr-081); a `:feature:home`
+module split remains deferred per [ADR-043](DECISIONS.md#adr-043)).
+
+| Piece | Type | Decision |
+|---|---|---|
+| The Maker's Cover — a printed paper object: stock, grain, band, stamp, clamped serif title, grounded shadow | `ZineCover` | [ADR-081](DECISIONS.md#adr-081) |
+| Which cover a zine gets — six surfaces × six stamps, **to be assigned once at creation and persisted by the caller** (never derived from the title) — B1 ships `ZineCoverSurface`/`ZineCoverStamp` only; the assigner itself lands in **B5**, next to the persisted field | `ZineCoverRecipe` | [ADR-081](DECISIONS.md#adr-081) + the **D-017** ruling; supersedes [ADR-069](DECISIONS.md#adr-069)'s hash for V2 |
+| The shelf — two fixed columns of covers, frozen gaps, and the quiet "Your shelf" heading **as a full-width cell inside the scroll**, so it scrolls away rather than pinning | `ZineShelf`, `ZineShelfItem` | [ADR-082](DECISIONS.md#adr-082); the fixed column count is the **[D-020](design/V2-SPEC-DEFECTS.md#d-020-ruling)** ruling — no breakpoint, no responsive behaviour, no maximum cover width, and none to be inferred here |
+| A cover *on* the shelf — the press transform, the focus ring, tap → open, long-press → actions, and the always-visible `⋯` that is the same door for anyone who never finds the gesture | `ZineOnShelf` | [ADR-083](DECISIONS.md#adr-083) |
+| The action sheet — five rows in the frozen order over a scrim, with the zine's format and date **disclosed here** rather than stamped on every cover | `ZineActionSheet`, `ZineActionSheetSurface`, `ZineActionScrim`, `ZineActionTarget` | [ADR-083](DECISIONS.md#adr-083) |
+| What the sheet can do — Open · Share & export · Rename · Duplicate · **Delete, set apart by a band of the desk and printed in the consequence ink** | `ZineAction` | [ADR-083](DECISIONS.md#adr-083); the sheet reports the choice and does **not** dismiss. The frozen file wires no handler to the five rows at all, so this is a **deferral to B5 rather than a transcription** — what follows each action is undesigned, and holding still is the narrowest thing an implementation can do |
+| The empty state — a loose sheet, an arrow and a little book, under a serif line and two of body copy. It **replaces** the shelf rather than sitting inside it (`body.is-empty .shelf{display:none}`), so the choice between them belongs to **B5** and its project data | `ZineShelfEmpty` | [ADR-084](DECISIONS.md#adr-084) |
+| The landing zone — a full-width band fading up into the desk, inert to touch, holding the one primary action on the screen | `ZineDock` | [ADR-084](DECISIONS.md#adr-084); the CTA **reports** the press and routes nowhere — the frozen file wires no handler to `.start`, so the paper chooser is B5's hand-over, on the same reading as the sheet's five rows |
+
+Several properties are load-bearing:
+
+- **A printed cover draws in ONE layer.** Compose composites blend modes within the current layer, and a child
+  node's backdrop is transparent — so a `multiply` band in its own node silently becomes `SrcOver`. Stock, grain,
+  hairline, spine, band and fore-edge therefore share a single `DrawScope`, and the cover paints grain inline
+  rather than through `Modifier.zinelyV2Grain` (which draws noise *after* content — right for a page, wrong for ink).
+- **Its geometry is physical, not logical.** The frozen CSS states the cover's handedness physically (radii
+  `6px 9px 9px 6px`, crease `left:9px`, fore-edge `right:0`), so the shape is `AbsoluteRoundedCornerShape`:
+  logical corners would mirror under RTL while the `Brush`-drawn crease would not, creasing the cover down its
+  own cut edge. **D-019**, ruled: a *printed artifact* never mirrors, in any locale; chrome may. The title still
+  follows the layout direction — text is content, not the object's geometry.
+- **A cover the platform cannot print is short one mark, not approximated.** No grain below API 29 (**D-014**)
+  and no ink band either (**D-018** — `multiply` is missing on the same devices, and the ruling is omit, not
+  emulate). One platform ceiling, two absent marks, **one** Known Limitation for the release notes.
+- **CSS `box-shadow` lives in `:core:ui`, not here.** `Modifier.zinelyV2Shadow` renders the
+  `ZinelyV2ShadowLayer` lists [ADR-074](DECISIONS.md#adr-074) published as data: multiple layers in painter's
+  order, spread that is negative wherever it appears, dy without dx. The Bench and Proof need the same
+  primitive in Phases C and D.
+- **The shelf paints no ground, and the screen owes it.** `.shelf` declares no `background` — the desk belongs
+  to `.phone`, which is the app window and therefore **B5**'s screen. `ZineShelf` is transparent on purpose, so
+  the room's colour is decided in one place rather than two. A `background(desk)` on the shelf would look
+  correct in every raster until B5 disagreed with it.
+- **A control collapses to one node, so a second control cannot live inside it.** `Modifier.zinelyV2Control`
+  ends in `clearAndSetSemantics` — that is what carries role and name to the *platform* tree (A8), and it also
+  makes anything nested beneath unreachable by a screen reader. So the `⋯` is a **sibling** of the cover, not a
+  child of it, and B1's `overlay` slot on `ZineCover` was **deleted** rather than worked around: a fallback path
+  hidden from assistive technology is the opposite of a fallback. The seam now carries the long press itself
+  (`onLongClick` + a **required** `onLongClickLabel`), so gestures and their spoken names stay in one place.
+- **The Library's iconography is text, and it stays text.** `.ic` holds a literal character, and three of the
+  six frozen marks (`✎`, `⧉`, `⋯`) are absent from the bundled Inter, so the device's fallback draws them and
+  their shape varies by manufacturer. **[D-021](design/V2-SPEC-DEFECTS.md#d-021-ruling)**, ruled: keep them
+  exactly as frozen — *"bundled-font coverage does not justify changing the design"* — with platform fallback
+  accepted and no substitution from A7's icon set. Their variation is **specified behaviour** for the device
+  passes to record, not a defect to fix. B4's `＋` (U+FF0B, the *fullwidth* plus) is the seventh such mark and
+  is absent from all seven bundled faces too — the same ruling, no new question.
+- **The dock is inert and the empty state is not a layer.** `.dock{pointer-events:none}` with
+  `pointer-events:auto` on the button alone: the band covers the bottom ~150dp of the shelf, so a `ZineDock`
+  that consumed touches would make the last row of covers unreachable through a region that looks like empty
+  desk. And `.empty` is the shelf's *alternative*, not its overlay — B4 ships both halves and B5 chooses
+  between them, exactly as B2 shipped a shelf and left the desk to the screen.
+- **A CSS margin on a centre-aligned flex item moves it by half its value.** `align-items:center` centres the
+  *margin box*, so `.plus{margin-top:-2px}` on a zero-height line box lifts the glyph **1px**, and
+  `.arrow{margin-bottom:18px}` lifts the arrow 9px. Transcribed as padding rather than `Modifier.offset`,
+  which would move it the whole way. Applied correctly to the two main-axis margins in `ZineShelfEmpty` and
+  wrongly to the one cross-axis margin in `ZineDock` until review caught it — see
+  [ADR-084](DECISIONS.md#adr-084) decision 6.
+- **A miniature of a printed object is drawn in a content ink, not a chrome one.** `.book-ill` hard-codes
+  `#7C8A3F`, which is `ZinelyMakerInkId.Matcha` — so the little book keeps its colour at night while every
+  chrome token around it inverts. Drawn from `v2Colors.matcha` instead it would be `#5E6B2F` by day and
+  `#93A257` by night, both plausible and both wrong. The same split **D-019** draws between artifact and
+  chrome, applied to colour rather than to handedness.
+- **The scrim is the one V2 value not taken from the frozen Library file.**
+  **[D-022](design/V2-SPEC-DEFECTS.md#d-022-ruling)**, ruled: the Library writes `rgba(30,25,18,.36)` as a
+  literal outside its own `:root`, so it could not vary by theme; the corpus publishes a theme-aware `--scrim`
+  (`ink@.34` light, `black@.50` dark) and **the corpus is authoritative**. `ZineActionScrim` takes the token.
+  Third of the same set as **D-005** (the serif) and **D-011** (the easings), and together they are a rule:
+  where the Library file contradicts a token the corpus publishes, the corpus wins — the Library's value
+  records *when* it was authored, not what was intended.
+
 ## 3. Data flow
 
 ```mermaid
@@ -147,7 +224,7 @@ UI models are mapped from domain/data models inside ViewModels and contain only 
 
 **Storage split ([ADR-003](DECISIONS.md#adr-003)):** Room stores queryable **metadata**; the zine **document tree** is `kotlinx.serialization` JSON in a per-project file (not relational). Images are **copied in** ([ADR-004](DECISIONS.md#adr-004)). Document schema is versioned **independently** of the Room schema. The diagram below is the *logical* model; only `ZINE_PROJECT` is a real table — the rest is the serialized document.
 
-> **⚠️ Current implementation (checkout state).** The Room-backed `ProjectRepository` **landed in S6.1** ([ADR-042](DECISIONS.md#adr-042)): `data-android` now has a `projects` Room table (v1, schema exported) as a **rebuildable index** behind the `RoomProjectRepository` binding in [DataModule](../data-android/src/main/kotlin/com/aritr/zinely/data/android/di/DataModule.kt) — the **files stay the source of truth** (`DocumentRepositoryImpl` writes `projects/<id>/document.json` via `core:data-storage`'s atomic `AtomicFileStore`, plus an atomic `meta.json` sidecar for title/createdAt), with an idempotent reconcile scan adopting on-disk projects (including the S4 `"default"` seed) and rows re-derived from disk after every mutation. At the **UI level** the shelf is fully wired ([ADR-046](DECISIONS.md#adr-046), [§8](#8-navigation-technical)): `HomeRoute` is the start destination, cards open the editor per project, and the [ADR-030](DECISIONS.md#adr-030) §4 seed-on-miss is retired (`EditorBootstrap` is load-only; `NotFound` is an honest boot error) — shelf actions ([ADR-044](DECISIONS.md#adr-044)) shipped on it in S6.3, and the S6.4 thumbnail pipeline ([ADR-045](DECISIONS.md#adr-045)) was **deleted in 2026-07 without ever being drawn** ([ADR-069](DECISIONS.md#adr-069)). Image assets are persisted by the content-addressed `FileAssetStore`; the asset **GC/sweeper is deferred** ([ADR-031](DECISIONS.md#adr-031)).
+> **⚠️ Current implementation (checkout state).** The Room-backed `ProjectRepository` **landed in S6.1** ([ADR-042](DECISIONS.md#adr-042)): `data-android` now has a `projects` Room table (**v2** since the V2 Library's B5 package, schema exported) as a **rebuildable index** behind the `RoomProjectRepository` binding in [DataModule](../data-android/src/main/kotlin/com/aritr/zinely/data/android/di/DataModule.kt) — the **files stay the source of truth** (`DocumentRepositoryImpl` writes `projects/<id>/document.json` via `core:data-storage`'s atomic `AtomicFileStore`, plus an atomic `meta.json` sidecar for title/createdAt **and, since B5, the zine's cover** — `coverSurface`/`coverStamp`, assigned once at creation and never re-derived ([D-017](design/V2-SPEC-DEFECTS.md#d-017-ruling)), carried across renames, re-drawn for a duplicate ([D-026](design/V2-SPEC-DEFECTS.md#d-026-ruling)), and back-filled onto a legacy sidecar on first presentation — reaching the index through an **additive** `Migration(1, 2)` (two nullable `TEXT` columns) rather than a destructive fallback, so an installed database keeps its rows), with an idempotent reconcile scan adopting on-disk projects (including the S4 `"default"` seed) and rows re-derived from disk after every mutation. At the **UI level** the shelf is fully wired ([ADR-046](DECISIONS.md#adr-046), [§8](#8-navigation-technical)): `HomeRoute` is the start destination — since B5 it hosts the **V2 `ZineLibraryScreen`** rather than V1's `HomeScreen` ([ADR-086](DECISIONS.md#adr-086)); `HomeViewModel` is unchanged and its state is mapped to the shelf at the route — cards open the editor per project, and the [ADR-030](DECISIONS.md#adr-030) §4 seed-on-miss is retired (`EditorBootstrap` is load-only; `NotFound` is an honest boot error) — shelf actions ([ADR-044](DECISIONS.md#adr-044)) shipped on it in S6.3, and the S6.4 thumbnail pipeline ([ADR-045](DECISIONS.md#adr-045)) was **deleted in 2026-07 without ever being drawn** ([ADR-069](DECISIONS.md#adr-069)). Image assets are persisted by the content-addressed `FileAssetStore`; the asset **GC/sweeper is deferred** ([ADR-031](DECISIONS.md#adr-031)).
 
 ```mermaid
 erDiagram
@@ -164,6 +241,8 @@ erDiagram
         long   updatedAt
         string format "ZINE8_SINGLE_SHEET"
         string paperSize "LETTER | A4"
+        string coverSurface "nullable — assigned once, see D-017"
+        string coverStamp "nullable"
         string thumbnailPath
         string documentPath
         int    documentSchemaVersion
@@ -181,9 +260,9 @@ erDiagram
     }
     ELEMENT {
         string id
-        string type "IMAGE | TEXT | (future) SHAPE"
+        string type "IMAGE | TEXT | DECOR"
         json   transform "x,y,w,h,rotationDeg,zIndex — POINTS"
-        json   payload "image: assetId,crop,fit | text: text,style"
+        json   payload "image: assetId,crop,fit,copier | text: text,style | decor: supplyId,ink,mirrored"
     }
     ASSET {
         string id PK
@@ -197,7 +276,7 @@ erDiagram
 
 **Units rule:** the scene model is stored in **physical points (1/72")**, never pixels. Pixels exist only in cached previews/exports. `Transform` = `x, y, width, height, rotationDeg, zIndex`.
 
-**Schema evolution:** new document fields are optional/defaulted with `ignoreUnknownKeys=true`; only the small Room metadata table uses `@AutoMigration` ([R4.2](RESEARCH.md#r42-recommendation--recommendation)). Protobuf is the [🔭 future](ROADMAP.md#future-vision) option if write-amplification matters.
+**Schema evolution:** new document fields are optional/defaulted with `ignoreUnknownKeys=true`; only the small Room metadata table is migrated in place (`@AutoMigration`, plus the hand-written additive `MIGRATION_1_2` that added the cover columns) ([R4.2](RESEARCH.md#r42-recommendation--recommendation)). Protobuf is the [🔭 future](ROADMAP.md#future-vision) option if write-amplification matters.
 
 ## 5. Rendering pipeline — one scene, two backends
 
@@ -334,6 +413,8 @@ flowchart LR
     Proof -->|"back / make another"| Editor
 ```
 
+**External entry — share-in ([ADR-105](DECISIONS.md#adr-105), [SUPPLIES-SPEC §6](design/SUPPLIES-SPEC.md)).** `MainActivity` declares a second `intent-filter` (`ACTION_SEND` / `ACTION_SEND_MULTIPLE`, `image/*`) and `launchMode="singleTask"`, so photos handed to Zinely by any other app reach the **live** Activity through `onNewIntent` instead of stacking a second one over the maker's open zine. `singleTop` was the first attempt and the device falsified it: the system share sheet launches its target with `FLAG_ACTIVITY_NEW_TASK`, and `singleTop` only collapses a relaunch onto the *same* task — so a real Gallery share opened a **second task** (`dumpsys activity activities` showed two live `MainActivity` records), `onNewIntent` never fired, and the second instance's editor could not take the single-writer slot the first one still held, so the shared photo's own zine answered *"That zine is still saving"* and never opened again. The failure was invisible to every unit test and to the synthetic `am start` probe, both of which have only one task. **It adds no route and no screen.** The received `content://` URIs are queued in an app-scoped, in-memory `ShareInbox`; whichever `EditorViewModel` is (or becomes) alive collects them and imports each through the *existing* [ADR-031](DECISIONS.md#adr-031) §5 path — `AndroidImagePickDecodePipeline.decodeAndStore` → `ImportMasterDecoder` → `FileAssetStore` → `Intent.CommitAddImage`. Share-in replaces the **pick**, nothing else; there is no second import pipeline, no second placement rule and no second undo story. A shared photo therefore lands in *the zine the maker opens next* (or the one already open), because the Library is already the chooser and already the start destination; every accepted share is acknowledged by a toast naming where the photos are going, because the editor's spoken count rides a replay-free announcement channel and is dropped when nothing is collecting it. Nothing is uploaded, re-shared or resolved outward, and the inbox is deliberately not persisted — the sender's read grant dies with the task, so a persisted URI would be a handle that no longer opens. Two behaviours that were open questions when this paragraph was first written are now [ruled and implemented](design/V2-SPEC-DEFECTS.md#d-081-rulings): a multi-photo share **cascades** rather than stacking at the one centred default (in the drain only — the single-photo picker path is unchanged), and the failure half of an import is **shown as well as spoken**, because an assistive-technology-only error report inverts WCAG 3.3.1. Zinely also excludes itself from its own chooser, since its PNG export matches its own `image/*` filter. The remaining open questions — and the four consequences accepted rather than fixed — are filed as [D-081](design/V2-SPEC-DEFECTS.md#d-081).
+
 **Back-stack policy ([ADR-046](DECISIONS.md#adr-046)):** returning editor → Home is only ever a *pop* (no code path navigates to Home), so two `EditorRoute` entries never coexist; a fast reopen of a just-closed project awaits the [ADR-026](DECISIONS.md#adr-026) single-writer release inside the editor bootstrap (`EditorAutosaveBinderFactory.awaitNoSession`, the same `AutosaveSessionGate` 5 s policy the repository's mutation gate uses — timeout ⇒ a warm "still saving" boot error). The [ADR-030](DECISIONS.md#adr-030) §4 `"default"` seed-on-miss is retired: a missing document is an honest boot error with a back-to-shelf action, and first run lands on the Empty-shelf **Start a zine** CTA. Leaving the shelf commits pending undoable deletes (leaving = snackbar dismissal). Welcome and Settings remain future routes ([SCREEN-INVENTORY](design/SCREEN-INVENTORY.md)).
 
 ## 9. Error handling
@@ -364,6 +445,24 @@ Coroutines/Flow; inject `CoroutineDispatcher`s. Imposition/layout math on `Defau
 | Manual ground truth | Print + fold a real sheet (or SVG proof sheet when no printer) | [spike](spikes/imposition-engine.md) |
 
 See `android-skills:android-tdd`. The imposition engine is built **test-first** against the [R1.2 oracle](RESEARCH.md#r12-page--cell-mapping-the-oracle--verified).
+
+### 11.0 Two headless traps that read as "the feature is broken"
+
+Both were measured while covering share-in, and both cost real time because the symptom is *silence*, which
+looks exactly like a defect.
+
+- **`composeRule.waitUntil` counts virtual time, not real time.** Its timeout is the test clock's, so a
+  20 000 ms budget can elapse in a few real milliseconds — and any work parked on a real dispatcher
+  (`withContext(Dispatchers.IO) { decode }`) has not started, let alone finished, when the wait gives up.
+  The absence of a result then reads as "the production code never fired". A host test that awaits genuinely
+  asynchronous work needs a real-time wait that also pumps the main thread — real `Thread.sleep` plus
+  `waitForIdle()` per turn — not `waitUntil`. See `ShareInHostTest.awaitRealWork`.
+- **The real `FileAssetStore` cannot complete a write in this JVM.** It ends in a directory fsync through
+  `android.system.Os`, which the Windows JVM does not serve, so the import writes `assets/.tmp/importNNNN.tmp`
+  and never returns. This is the same limitation `ZinelyNavHostTest.seedZine` already documents for the
+  document store. A host test that exercises import substitutes an in-memory `AssetStore` (real sha256,
+  memory sink) and re-provides the rest of the module verbatim — one substitution, named, rather than a fake
+  graph.
 
 ### 11.1 The four-surface verification harness (F4)
 
@@ -540,15 +639,25 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    **Welcome and Settings** (not Room-gated — Welcome is a local first-run flag routing to Home,
    see item 4; Settings needs only the local prefs store).
 
-2. **Sticker/decoration element type → new ADR.** Today `core:model`/`core:render` know only
-   `ImageElement` and `TextElement`. The [sticker picker](design/SCREEN-INVENTORY.md#sticker-picker)
-   wants a bundled, app-owned, non-GC'd decoration. 🟦 The **recommended** path (an ADR choice, not a
-   design-forced inevitability) is a dedicated sticker `Element` variant in
-   [`core:model`](#4-data-models--storage): a **schema version bump** (`DocumentSerializer` + a
-   migration), a new `SceneRenderer` draw command in [`core:render`](#5-rendering-pipeline--one-scene-two-backends) with
-   **preview==export** parity, and a **bundled sticker catalog** kept distinct from the *user*
-   content-addressed asset store ([ADR-031](DECISIONS.md#adr-031)) — program assets, license-clear, not
-   GC'd. 🔭 V1 expression.
+2. **Decoration element type — ✅ the model half has landed; the draw half has not.**
+   `Element` is now `ImageElement | TextElement | DecorElement` and is **closed** at three
+   ([ADR-105](DECISIONS.md#adr-105), [SUPPLIES-SPEC §2](design/SUPPLIES-SPEC.md)). `DecorElement`
+   carries `supplyId` (a `family.name` catalogue key, never geometry and never a content hash), an
+   `ink`, and a `mirrored` flag; a supply is authored code, so it needs no asset-store entry and no GC
+   root — which is what removed most of the cost this item anticipated.
+   **Shipped in package P1:** the schema (`CURRENT_SCHEMA_VERSION` **1 → 2**, with an *identity*
+   v1→v2 migrator — the bump exists so an older build fails honestly via
+   `NewerSchemaVersionException` rather than failing to parse an unknown sealed discriminator,
+   [D-029 ruling Q5](design/V2-SPEC-DEFECTS.md#d-029-ruling-2026-08-16)), `AffineTransform2D.scale`,
+   validation (`decor.supplyId.blank` / `.malformed` only — `:core:data` is Android-free and cannot
+   see the catalogue), every reducer/a11y/context-bar seam, and a **documented no-op in
+   `SceneRenderer`**.
+   **Not yet built:** the `DrawShape` command, `SupplyOutline`/`SupplyCatalog` in `:core:render`, the
+   `render-android` replay branch with its own anti-aliased `Paint`, the sixteen authored outlines,
+   and the Art sheet. Until those land a supply round-trips, moves, restacks and deletes — and
+   **draws nothing**. 🔭 The persistent *Supplies tray* is a separate, still-open question
+   ([D-029](design/V2-SPEC-DEFECTS.md#d-029) Q1–Q3, sequenced at X2); the Art sheet places a supply
+   straight onto the page, where the ordinary document rules already answer it.
 
 3. **Template/preset model → new ADR.** The [template picker](design/SCREEN-INVENTORY.md#template-picker)
    needs a `TemplateCatalog` of pre-authored page layouts. For a *new* project, the cleanest expression

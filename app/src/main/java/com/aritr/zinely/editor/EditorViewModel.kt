@@ -8,10 +8,13 @@ import androidx.navigation.toRoute
 import com.aritr.zinely.core.data.asset.AssetStore
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.data.storage.DocumentSnapshotProvider
 import com.aritr.zinely.core.editor.EditorModel
+import com.aritr.zinely.core.editor.Intent as EditorIntent
 import com.aritr.zinely.core.imposition.Imposer
 import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.data.android.EditorAutosaveBinder
 import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.di.EditorAutosaveBinderFactory
@@ -21,6 +24,7 @@ import com.aritr.zinely.home.BUSY_MESSAGE
 import com.aritr.zinely.feature.editor.AutosaveSink
 import com.aritr.zinely.feature.editor.DefaultEditorEffectRunner
 import com.aritr.zinely.feature.editor.EditorStore
+import com.aritr.zinely.feature.editor.ImagePickResult
 import com.aritr.zinely.feature.editor.SaveErrorKind
 import com.aritr.zinely.feature.editor.SavedSignal
 import com.aritr.zinely.render.android.AssetBytesSource
@@ -64,6 +68,63 @@ internal sealed interface EditorBootState {
 }
 
 /**
+ * `SavedStateHandle` key for **persistence of place** — C9 row 9.3.
+ *
+ * Scoped to the editor's `SavedStateHandle`, which is per navigation entry, so it is already per project:
+ * two zines cannot share a remembered page. Survives process death; does not survive leaving the editor,
+ * which is correct — reopening a zine is what §E.4's invariant is about, and that goes through a fresh
+ * entry whose handle the platform restores.
+ */
+internal const val KEY_PAGE_INDEX: String = "c9.pageIndex"
+
+/**
+ * The restore half of row 9.3, as a pure function — the house's *pure helper extraction* convention, and
+ * the only part of persistence of place that has a decision in it.
+ *
+ * Clamping is the whole guard: a remembered index cannot outlive the pages it referred to. It can only
+ * ever be too large (a shorter document than the one the maker left), because [OD-2](../../../../../../docs/DECISIONS.md#adr-089)
+ * re-seated variable page counts, so nothing in Phase C grows a document. `pageCount = 0` is defended
+ * anyway rather than assumed impossible — an empty document reaching here would otherwise throw inside a
+ * `coerceIn` with a reversed range, and turning a missing page into a crash is a poor trade.
+ */
+internal fun restoredPageIndex(saved: Int?, pageCount: Int): Int =
+    (saved ?: 0).coerceIn(0, (pageCount - 1).coerceAtLeast(0))
+
+/**
+ * **The share-in cascade** (D-081 ruling #2) — the [index]-th photo of a [count]-photo share is offset
+ * down-right from the centred [base] placement, so a five-photo share reads as five photos.
+ *
+ * Before this, every import used the one centred [defaultImagePlacement], so a multi-photo share arrived as
+ * one photo with the rest exactly underneath it. The honest first reading of that screen is *"it lost four
+ * of my photos"* — a data-loss report about a feature that lost nothing.
+ *
+ * **Deliberately not in [defaultImagePlacement].** The picker places one photo at a time, where a cascade
+ * would be an unexplained off-centre drop; only the batch path has a stacking problem, so only the batch
+ * path pays for it.
+ *
+ * The step is [CASCADE_STEP_PT], **capped at `room / (count - 1)`** so the last photo of the share is still
+ * fully on the page — which is also what makes every origin distinct: the centred base leaves
+ * `room == base.xPt` (≥ 20 % of the page edge, since a default placement is ≤ 60 % of it), so the cap is
+ * always positive and no two photos can land on the same point.
+ *
+ * ⚠ **Provisional.** Placement policy is reserved to design by SUPPLIES-SPEC §5.1 and design has not ruled;
+ * this is a tie broken toward the option that cannot be misread as data loss, not a chosen aesthetic.
+ */
+internal fun cascadedPlacement(base: Transform, index: Int, count: Int, pageSizePt: PtSize): Transform {
+    if (index <= 0) return base
+    val spans = (count - 1).coerceAtLeast(1)
+    val roomX = (pageSizePt.width - base.widthPt - base.xPt).coerceAtLeast(0.0)
+    val roomY = (pageSizePt.height - base.heightPt - base.yPt).coerceAtLeast(0.0)
+    return base.copy(
+        xPt = base.xPt + minOf(CASCADE_STEP_PT, roomX / spans) * index,
+        yPt = base.yPt + minOf(CASCADE_STEP_PT, roomY / spans) * index,
+    )
+}
+
+/** ~4 mm at 72 dpi: visibly a second sheet, not a misalignment. Provisional — see [cascadedPlacement]. */
+private const val CASCADE_STEP_PT = 12.0
+
+/**
  * Owns the editor's MVI [EditorStore], its effect runner, and the app-side autosave [binder] for the
  * lifetime of one open project (ADR-030 §1/§2). Lifecycle = [viewModelScope] (survives rotation).
  *
@@ -89,6 +150,7 @@ internal class EditorViewModel @Inject constructor(
     private val assetStore: AssetStore,
     private val imageDecoder: ImportMasterDecoder,
     private val onboardingStore: EditorOnboardingStore,
+    private val shareInbox: ShareInbox,
     @param:AssetsDir private val assetsDir: File,
     // @param: pins the qualifier to the constructor value parameter (what Dagger reads) and opts out of
     // the KT-73255 default-target migration warning — same convention as EditorAutosaveBinderFactory.
@@ -98,6 +160,29 @@ internal class EditorViewModel @Inject constructor(
 
     /** The project to open — threaded from the type-safe [EditorRoute] (Codex rec E), not a stray constant. */
     private val projectId: String = savedStateHandle.toRoute<EditorRoute>().projectId
+
+    /**
+     * **Persistence of place — C9 row 9.3** ([ADR-097](../../../../../../../docs/DECISIONS.md#adr-097)).
+     *
+     * [V2-BENCH-REVIEW §E.4](../../../../../../../docs/design/V2-BENCH-REVIEW.md) makes reopening *"exactly
+     * as left"* **a build invariant, freeze-blocking for the Compose build** — and it is the one signal the
+     * prototype cannot show, because a prototype is never killed and restarted.
+     *
+     * Two things this deliberately is **not**:
+     *
+     * - **Not the shelf half.** §E.4's invariant covers the page *and* the gathered materials. Owner ruling
+     *   [OD-2](../../../../../../../docs/DECISIONS.md#adr-089) re-seated H1 beyond Phase C, so C9 owes the
+     *   **page** half only; the shelf half carries forward to the package that builds the shelf, unweakened.
+     * - **Not a second state owner.** [ADR-005](../../../../../../../docs/DECISIONS.md#adr-005) makes the
+     *   editor MVI with [EditorStore] owning state. The handle is a *carrier* across process death, written
+     *   from the store and read exactly once, at boot, into the initial model. Nothing in the UI reads the
+     *   page index from here.
+     *
+     * `SavedStateHandle` rather than the document, because a page index is where the *maker* is, not what
+     * the *zine* is — persisting it into `ZineDocument` would be a schema change, which is precisely the
+     * "new document-model concept" OD-2 forbids Phase C.
+     */
+    private val savedPageIndex: SavedStateHandle = savedStateHandle
 
     private val _bootState = MutableStateFlow<EditorBootState>(EditorBootState.Loading)
     val bootState: StateFlow<EditorBootState> = _bootState.asStateFlow()
@@ -115,6 +200,21 @@ internal class EditorViewModel @Inject constructor(
     fun announce(text: String) {
         _announcements.tryEmit(text)
     }
+
+    /**
+     * **The import summary, as text a sighted maker can read** (D-081 ruling #3, WCAG 3.3.1).
+     *
+     * The failure half of an import used to exist only as an [announce] line, i.e. only in the a11y live
+     * region — so a maker watching 3 of 5 shared photos appear was told nothing at all about the other two.
+     * A live region makes text *reach* a screen reader; it is not a substitute for the text existing.
+     * The host collects this and raises a `Toast` (a system surface no HTML freezes, unlike `BenchSnack`).
+     *
+     * `replay = 0` with a small buffer, same policy as [saved]: a summary emitted into a subscriber gap is
+     * dropped rather than replayed onto the next screen — a stale "2 photos added" is worse than silence,
+     * and the photos themselves are already durable through the store.
+     */
+    private val _importSummaries = MutableSharedFlow<String>(extraBufferCapacity = 4)
+    val importSummaries: SharedFlow<String> = _importSummaries.asSharedFlow()
 
     /**
      * Autosave-confirmation channel (ADR-034): the effect runner emits one `Unit` per `Effect.Autosave`,
@@ -219,7 +319,15 @@ internal class EditorViewModel @Inject constructor(
             // Back on Main: the store's dispatch is main-thread-only by contract, so it is built here.
             _bootState.value = when (result) {
                 is DataResult.Success -> try {
-                    ready(EditorModel(result.value))
+                    // Row 9.3: land on the page the maker left, not on page 1. Clamped against the document
+                    // actually loaded — a stale index cannot outlive the pages it referred to, and a
+                    // clamp is the whole guard because the format's page count is fixed (OD-2 re-seated
+                    // variable page counts, so this can only ever shrink through a corrupt/older document).
+                    val restored = restoredPageIndex(
+                        saved = savedPageIndex.get<Int>(KEY_PAGE_INDEX),
+                        pageCount = result.value.pages.size,
+                    )
+                    ready(EditorModel(result.value, currentPageIndex = restored))
                 } catch (ce: CancellationException) {
                     throw ce
                 } catch (t: Throwable) {
@@ -273,12 +381,32 @@ internal class EditorViewModel @Inject constructor(
             ),
         )
 
+        // Row 9.3, the write half: the store stays the single owner and this only mirrors it. Started here
+        // rather than in `init` so it cannot observe a store that does not exist, and `distinctUntilChanged`
+        // keeps a drag or a text edit from writing an unchanged index on every emission.
+        viewModelScope.launch(mainDispatcher) {
+            store.uiState
+                .map { it.currentPageIndex }
+                .distinctUntilChanged()
+                .collect { savedPageIndex[KEY_PAGE_INDEX] = it }
+        }
+
         // Step 3: the autosave binder pulls the latest document from the live store at save time.
         val snapshotProvider = DocumentSnapshotProvider { store.uiState.value.document }
 
         // Step 4: create the binder last — this eagerly registers projectId with the single-writer
         // factory (ADR-026), so it happens exactly once per open project, here.
         binder = binderFactory.create(projectId, snapshotProvider)
+
+        // Share-in (ADR-105 / SUPPLIES-SPEC §6): drain photos another app handed us into THIS zine.
+        //
+        // ⚠ **Started after step 4, and that ordering is load-bearing.** `binderFactory.create` can throw
+        // (a still-releasing single-writer slot — see the boot `catch` above), and this collector would
+        // outlive the throw: `viewModelScope` is still alive, so it would go on importing the maker's
+        // photos into an orphan store that is never rendered and, with no binder, never autosaved. The
+        // photos would be consumed and lost. Launching last means a failed boot leaves the inbox full,
+        // and the next zine opened gets them.
+        viewModelScope.launch(mainDispatcher) { importSharedPhotos(store, imagePipeline, pageSizePt) }
 
         return EditorBootState.Ready(
             store = store,
@@ -289,6 +417,94 @@ internal class EditorViewModel @Inject constructor(
             // resolves any future-referenced master and renders a placeholder for a missing one.
             imageBytes = FileAssetBytesSource(assetsDir),
         )
+    }
+
+    /**
+     * **The share-in drain** ([ShareInbox]) — photos another app handed Zinely become elements of the zine
+     * this ViewModel owns, and this is the only place that decides *which* zine that is: the one that is
+     * open. Collection lives for as long as the VM does, so a share arriving mid-session lands immediately;
+     * `subscriptionCount` on the inbox's flow is what lets the receiving Activity know a zine is open and
+     * skip a toast the maker does not need.
+     *
+     * **The loop is sequential, and that is the point.** Each import decodes a full-resolution master into
+     * memory (`ImportMasterDecoder` caps the transient decode at ~24 MP), so a twenty-photo share dispatched
+     * as twenty concurrent coroutines on the IO dispatcher is an out-of-memory report, not a feature. One
+     * at a time costs latency nobody is watching and removes the failure mode entirely — no cap, no
+     * semaphore, no silently dropped photos.
+     *
+     * Everything downstream is the shipped ADR-031 §5 path
+     * ([AndroidImagePickDecodePipeline.decodeAndStore] → [Intent.CommitAddImage]) — same master, same
+     * content-addressed dedup, same placement, same undo. A photo that cannot be read (revoked grant,
+     * corrupt, or a type the manifest filter let through) is counted, never crashed on, and reported.
+     *
+     * Shared photos are cascaded rather than stacked ([cascadedPlacement], D-081 ruling #2) — the picker's
+     * one-at-a-time centred default is untouched.
+     */
+    private suspend fun importSharedPhotos(
+        store: EditorStore,
+        pipeline: AndroidImagePickDecodePipeline,
+        pageSizePt: PtSize,
+    ) {
+        shareInbox.pending.collect {
+            // ⚠ **The inner loop is not defensive tidiness — without it photos are silently stranded.**
+            // A `StateFlow` re-emits only when the value differs from the one THIS collector last saw, and
+            // the body below suspends for the whole decode. So: `[a]` is collected, `takeAll()` leaves `[]`,
+            // a second share of the same photo arrives mid-decode and restores the value to `[a]` — and
+            // when the body returns, the current value equals the last observed one, so nothing is emitted
+            // and those URIs sit in the inbox forever with nothing said about them. Draining until the
+            // inbox is actually empty closes the window that conflation opens.
+            while (true) {
+                val batch = shareInbox.takeAll()
+                if (batch.isEmpty()) break
+                importBatch(batch, store, pipeline, pageSizePt)
+            }
+        }
+    }
+
+    /** One share's worth of photos, imported in order and reported once. See [importSharedPhotos]. */
+    private suspend fun importBatch(
+        batch: List<Uri>,
+        store: EditorStore,
+        pipeline: AndroidImagePickDecodePipeline,
+        pageSizePt: PtSize,
+    ) {
+        var added = 0
+        var failed = 0
+        for ((index, uri) in batch.withIndex()) {
+            when (val result = pipeline.decodeAndStore(uri)) {
+                is ImagePickResult.Success -> {
+                    val placed = result.element.copy(
+                        transform = cascadedPlacement(result.element.transform, index, batch.size, pageSizePt),
+                    )
+                    store.dispatch(EditorIntent.CommitAddImage(placed))
+                    added++
+                }
+                is ImagePickResult.Failure -> failed++
+                ImagePickResult.Cancelled -> Unit // unreachable: share-in never launches a picker
+            }
+        }
+        if (added > 0 || failed > 0) {
+            val summary = Copy.ShareIn.importSummary(added, failed)
+            // Both paths, deliberately (D-081 ruling #3). The toast is the *visible* half WCAG 3.3.1 asks
+            // for, and it is the half that was missing: an assistive-technology-only error report inverts
+            // the standard, which requires the error be described in text and treats live regions as the
+            // way that text REACHES a screen reader, never as a substitute for it.
+            //
+            // `announce` is kept only provisionally, and the reason first written here was WRONG. It said
+            // TalkBack's handling of toast text "could not be verified from official documentation" —
+            // false, because AOSP *is* the documentation once the guides run out. `ToastPresenter.show()`
+            // builds a TYPE_NOTIFICATION_STATE_CHANGED event, populates it from the toast's own view and
+            // sends it ("treat toasts as notifications since they are used to announce a transient piece
+            // of information to the user"); API 30 moved rendering to SystemUI and kept that path intact.
+            // Nothing deduplicates that against `announceForAccessibility`'s TYPE_ANNOUNCEMENT, so this
+            // very likely speaks the sentence TWICE — and `announceForAccessibility` is deprecated in 36.
+            //
+            // ⚠ So the evidence points at deleting the `announce`. It stays until a device listen pass,
+            // because "the event is emitted carrying the text" and "TalkBack speaks it" are two claims and
+            // only the first is proven. Pre-registered question for that pass: **is it spoken twice?**
+            _importSummaries.tryEmit(summary)
+            announce(summary)
+        }
     }
 
     /** Flush-then-cancel the autosave for this project when the host leaves for good (ADR-030 §6). */

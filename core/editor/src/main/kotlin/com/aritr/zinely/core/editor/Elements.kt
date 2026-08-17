@@ -1,5 +1,6 @@
 package com.aritr.zinely.core.editor
 
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
@@ -16,11 +17,16 @@ import com.aritr.zinely.core.model.ZineDocument
 internal fun Element.withTransform(t: Transform): Element = when (this) {
     is TextElement -> copy(transform = t)
     is ImageElement -> copy(transform = t)
+    // A supply is moved, resized and rotated exactly like the other two — everything geometric it has
+    // lives in `Transform` (SUPPLIES-SPEC §2). These two arms are what make every reducer verb that
+    // routes through here (Nudge, ScaleBy, RotateBy, Transform commit, Reorder) work on decor for free.
+    is DecorElement -> copy(transform = t)
 }
 
 internal fun Element.withZIndex(z: Int): Element = when (this) {
     is TextElement -> copy(zIndex = z)
     is ImageElement -> copy(zIndex = z)
+    is DecorElement -> copy(zIndex = z)
 }
 
 /** Replace page `pageIndex` by mapping it; out-of-range index returns the document unchanged. */

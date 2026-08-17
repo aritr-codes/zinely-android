@@ -62,6 +62,10 @@ public sealed interface Intent {
      *  command; no-op if already at the default. */
     public data class ResetFraming(val id: String) : Intent
 
+    /** Turn the photocopier filter (X3b, ADR-106) on or off for one photo. One undoable command, and
+     *  its own inverse; no-op if [id] names nothing or names a text element. */
+    public data class ToggleCopier(val id: String) : Intent
+
     /** Commit the session's draft. [token] rejects a late commit after nav/cancel/new session (D5). */
     public data class CommitText(val id: String, val after: TextElement, val token: Long) : Intent
 

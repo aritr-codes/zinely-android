@@ -13,6 +13,7 @@ import com.aritr.zinely.data.android.DocumentRepositoryImpl
 import com.aritr.zinely.data.android.InMemorySaveFailureSink
 import com.aritr.zinely.data.android.RoomProjectRepository
 import com.aritr.zinely.data.android.SaveFailureSink
+import com.aritr.zinely.data.android.room.MIGRATION_1_2
 import com.aritr.zinely.data.android.room.ZinelyDatabase
 import dagger.Module
 import dagger.Provides
@@ -62,7 +63,11 @@ internal object DataModule {
     @Provides
     @Singleton
     fun provideZinelyDatabase(@ApplicationContext context: Context): ZinelyDatabase =
-        Room.databaseBuilder(context, ZinelyDatabase::class.java, "zinely.db").build()
+        Room.databaseBuilder(context, ZinelyDatabase::class.java, "zinely.db")
+            // Additive only, never destructive: an installed device keeps its index across the B5
+            // cover columns. No fallbackToDestructiveMigration — see MIGRATION_1_2's KDoc.
+            .addMigrations(MIGRATION_1_2)
+            .build()
 
     /**
      * S6.1 (ADR-042): the Room-backed [ProjectRepository] over the same app-private `rootDir` as

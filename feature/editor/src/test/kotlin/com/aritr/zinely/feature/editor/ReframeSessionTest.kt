@@ -108,8 +108,9 @@ class ReframeSessionTest {
 
         assertTrue("Reframe session open", s.uiState.value.interaction is Interaction.Reframing)
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertIsDisplayed()
-        // Reframe chrome replaces the supply tray + hides the context bar.
-        composeRule.onNodeWithTag(EditorSupplyTrayTestTag).assertDoesNotExist()
+        // Reframe chrome replaces the bottom bar + hides the context bar. (Before C4 this named the
+        // retired supply tray; the surface changed, the invariant did not.)
+        composeRule.onNodeWithTag(BenchBottomBarTestTag).assertDoesNotExist()
     }
 
     /**
@@ -169,7 +170,7 @@ class ReframeSessionTest {
         // resolving true, so a refused session composes neither — the editor keeps its ordinary chrome.
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(ReframeOverlayTestTag).assertDoesNotExist()
-        composeRule.onNodeWithTag(EditorSupplyTrayTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchBottomBarTestTag).assertIsDisplayed()
     }
 
     /**
@@ -279,9 +280,10 @@ class ReframeSessionTest {
         composeRule.onNodeWithContentDescription("Zoom in").performClick()
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertIsDisplayed()
 
-        // Tap the page-2 card: the host commits the open framing before navigating (bench: never strand a
-        // session on an off-screen photo). Exercises the real onSelectPage wrapper, not a raw GoToPage.
-        composeRule.onNodeWithContentDescription("Page 2").performClick()
+        // Tap the page-2 sheet on C5's filmstrip: the host commits the open framing before navigating
+        // (bench: never strand a session on an off-screen photo). Exercises the real onSelectPage wrapper,
+        // not a raw GoToPage.
+        composeRule.onNodeWithTag(benchThumbTag(2)).performClick()
         composeRule.waitForIdle()
 
         assertTrue("session cleaned up on page switch", s.uiState.value.interaction is Interaction.Idle)

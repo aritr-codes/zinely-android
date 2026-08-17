@@ -6,6 +6,13 @@
      │  Not allowed: visual/interaction redesign · feature additions.            │
      │  Implementation-time gates (P3): AA contrast per ink · title truncation · │
      │  screen-reader path for long-press · 8pt rhythm · both device passes.     │
+     ├─────────────────────────────────────────────────────────────────────────┤
+     │  AMENDED 2026-07-31 by owner ruling (D-024).  ADDS the two product        │
+     │  states this prototype never had, because it has six hard-coded zines     │
+     │  and so never reads a store: LOADING (.ph) and ERROR (.fail/.retry).      │
+     │  Loading and Error are product states and belong in the canonical         │
+     │  design — they are not implementation behaviour.  Everything frozen on    │
+     │  2026-07-27 is unchanged; this amendment only adds.                       │
      └─────────────────────────────────────────────────────────────────────────┘ -->
 <style>
   :root{
@@ -84,7 +91,10 @@
   .paper-s{background-color:#F1EBDA;color:#2A251E}    .paper-s .band{background:#E27F89}
 
   /* Tall, full-width solid "landing zone": content fades into the desk well ABOVE the button, so no
-     cover title or ... can ever sit against it. Solid to 80% of the taller dock, gentle fade above. */
+     cover title or ... can ever sit against it. Solid to 80% of the taller dock, gentle fade above.
+     THE DOCK STANDS IN ALL FOUR STATES (owner ruling, D-024, 2026-07-31): it sits outside .empty and
+     no state rule targets it. The dock is part of the WORKSPACE, not of the loaded content — so it does
+     not wait for a read to succeed, and it does not appear late. There is one workspace grammar. */
   .dock{position:absolute;left:0;right:0;bottom:0;padding:52px 20px calc(22px + env(safe-area-inset-bottom));
     display:flex;justify-content:center;pointer-events:none;
     background:linear-gradient(to top,var(--desk) 80%,transparent)}
@@ -116,6 +126,29 @@
   .empty .pv{font-size:.76rem;color:var(--matcha-text);font-weight:600;margin-top:2px}
   body.is-empty .shelf{display:none} body.is-empty .empty{display:flex}
 
+  /* loading — the desk with covers not yet printed.  A placeholder is a sheet before the press: the
+     cover's own aspect ratio and radius, and nothing else — no grain, no shadow, no stamp, no title.
+     The heading stays up, so the screen does not restructure when the data lands.
+     THE POINT: loading must never be mistaken for the empty state.  A slow read that rendered "Make
+     your first little zine" would tell a user with twelve zines that they have none. */
+  .ph{display:none;aspect-ratio:3/4;border-radius:6px 9px 9px 6px;background:var(--desk-edge)}
+  body.is-loading .zine{display:none} body.is-loading .ph{display:block} body.is-loading .empty{display:none}
+
+  /* error — the empty state's own column, its message inverted.  Same grammar deliberately: this is the
+     same KIND of moment (the shelf has nothing to show), and a second layout would be a second design.
+     Reassurance precedes explanation: a failed read is not a loss, and that is the first thing said.
+     --consequence is deliberately NOT used — it is reserved for delete, and nothing here was destroyed. */
+  .fail{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:36px 40px 140px;gap:16px}
+  .fail h2{font-size:1.72rem;margin:8px 0 0;font-weight:600;letter-spacing:-.01em}
+  .fail p{margin:0;color:var(--ink-soft);max-width:28ch;line-height:1.55;font-size:.95rem}
+  /* a quiet control, not a second primary: .start is the screen's one primary action and stands in
+     every state, so retry takes the paper + hairline grammar the sheet's rows already use. */
+  .retry{margin-top:6px;background:var(--paper);color:var(--ink);border:1px solid var(--hair);border-radius:12px;
+    font-family:inherit;font-size:.95rem;font-weight:600;padding:13px 22px;cursor:pointer}
+  .retry:focus-visible{outline:2px solid var(--matcha-text);outline-offset:3px}
+  body.is-error .shelf{display:none} body.is-error .empty{display:none} body.is-error .fail{display:flex}
+
   .scrim{position:absolute;inset:0;background:rgba(30,25,18,.36);opacity:0;visibility:hidden;transition:opacity .2s;z-index:5}
   .sheet{position:absolute;left:10px;right:10px;bottom:10px;background:var(--paper);border-radius:20px;
     box-shadow:0 30px 60px -20px var(--shadow),0 0 0 1px var(--hair);transform:translateY(115%);
@@ -141,11 +174,14 @@
 <p class="cap lead serif"><b>Library — “which zine is mine?”</b> · frozen spec</p>
 <p class="cap">Covers only — no metadata line. Each cover is a <b>printed paper object</b> (riso grain, a
 grounded shadow, a fold and a fore-edge) sitting on the surface. Details live in the <b>⋯</b> / long-press
-sheet. Format &amp; date are disclosed there, not stamped on every card. Try day / night and the empty state.</p>
+sheet. Format &amp; date are disclosed there, not stamped on every card. Try day / night and all four states —
+<b>content · empty · loading · error</b>. The dock stands in every one of them: it belongs to the workspace,
+not to the loaded content.</p>
 
 <div class="phone">
   <div class="shelf" id="shelf">
     <div class="shelf-head"><h1 class="serif">Your shelf</h1></div>
+    <div class="ph"></div><div class="ph"></div><div class="ph"></div><div class="ph"></div>
     <div class="zine" data-name="Sunday market" data-sub="A4 · 2 days ago"><div class="cover ink-matcha"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4.2"/><g stroke-linecap="round"><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></g></svg></span><div class="band"></div><div class="ct serif">Sunday market</div><button class="more" aria-label="Actions for Sunday market">⋯</button></div></div>
     <div class="zine" data-name="Letters home" data-sub="Letter · today"><div class="cover paper-s"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 6.5h17v11h-17z"/><path d="M3.5 7l8.5 6 8.5-6"/></svg></span><div class="band"></div><div class="ct serif">Letters home</div><button class="more" aria-label="Actions for Letters home">⋯</button></div></div>
     <div class="zine" data-name="Riso tests" data-sub="A4 · 5 days ago"><div class="cover ink-teal"><span class="stamp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2.5 15c3-4 5.5-4 8.5 0s5.5 4 8.5 0"/><path d="M2.5 9.5c3-4 5.5-4 8.5 0s5.5 4 8.5 0"/></svg></span><div class="band"></div><div class="ct serif">Riso tests</div><button class="more" aria-label="Actions for Riso tests">⋯</button></div></div>
@@ -165,6 +201,12 @@ sheet. Format &amp; date are disclosed there, not stamped on every card. Try day
     <p class="pv">Everything you make stays on your phone — no account, nothing uploaded.</p>
   </div>
 
+  <div class="fail">
+    <h2 class="serif">Your shelf didn’t open.</h2>
+    <p>Your zines are still on your phone — something went wrong reading the shelf.</p>
+    <button class="retry">Try again</button>
+  </div>
+
   <div class="dock"><button class="start"><span class="plus">＋</span> Make a zine</button></div>
 
   <div class="scrim" id="scrim"></div>
@@ -181,6 +223,8 @@ sheet. Format &amp; date are disclosed there, not stamped on every card. Try day
 <div class="controls">
   <button class="ctl" id="tg">◑ Toggle day / night</button>
   <button class="ctl" id="em">Show empty state</button>
+  <button class="ctl" id="ld">Show loading</button>
+  <button class="ctl" id="er">Show error</button>
 </div>
 
 <script>
@@ -189,8 +233,20 @@ sheet. Format &amp; date are disclosed there, not stamped on every card. Try day
     var cur=r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
     r.setAttribute('data-theme',cur==='dark'?'light':'dark');
   });
-  var em=document.getElementById('em');
-  em.addEventListener('click',function(){var on=body.classList.toggle('is-empty');em.textContent=on?'Show my shelf':'Show empty state';});
+  // The four states are mutually exclusive: content · empty · loading · error. The dock stands in all
+  // four (D-024) — no toggle here touches it, which is the point.
+  var em=document.getElementById('em'), ld=document.getElementById('ld'), er=document.getElementById('er');
+  function state(cls,btn,on,off){
+    return function(){
+      var want=!body.classList.contains(cls);
+      body.classList.remove('is-empty','is-loading','is-error');
+      em.textContent='Show empty state'; ld.textContent='Show loading'; er.textContent='Show error';
+      if(want){body.classList.add(cls);btn.textContent=on;} else {btn.textContent=off;}
+    };
+  }
+  em.addEventListener('click',state('is-empty',em,'Show my shelf','Show empty state'));
+  ld.addEventListener('click',state('is-loading',ld,'Show my shelf','Show loading'));
+  er.addEventListener('click',state('is-error',er,'Show my shelf','Show error'));
 
   function open(name,sub){document.getElementById('shTtl').textContent=name;document.getElementById('shSub').textContent=sub;body.classList.add('sheet-open');}
   function close(){body.classList.remove('sheet-open');}

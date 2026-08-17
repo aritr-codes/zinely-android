@@ -58,9 +58,13 @@ public val ZinelyV2Standard: Easing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)
  *
  * | File | Rule |
  * |---|---|
- * | `v2-library.html:138` | `*{transition:none!important}` |
- * | `v2-bench.html:260` | `*{transition-duration:.01ms!important; animation:none!important}` |
- * | `v2-proof.html:246` | `*{transition-duration:.01ms!important; animation-duration:.01ms!important}` |
+ * | `v2-library.html:171` | `*{transition:none!important}` |
+ * | `v2-bench.html:460` | `*{transition-duration:.01ms!important; animation:none!important}` |
+ * | `v2-proof.html:259` | `*{transition-duration:.01ms!important; animation-duration:.01ms!important}` |
+ *
+ * (All three addresses above were wrong until C9 — `138`, `260`, `246`. Two of those files have never been
+ * amended, so the table was captured from a different revision of the corpus rather than drifting under it;
+ * **ADR-097 §3.1** records the finding and this line is its repair.)
  *
  * For the animations that exist today the three land in the same place, which is why the divergence
  * survived the freeze. But they are not interchangeable, and this class adopts the **Bench's** rule:
@@ -75,6 +79,21 @@ public val ZinelyV2Standard: Easing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)
  * **D-012**, where that ordering is disclosed and a ruling requested. What justifies choosing here
  * rather than stopping is that one option is a safety floor rather than a preference, and that the
  * choice is free to reverse while this API has no callers.
+ *
+ * **That last clause expired, and the ruling has since landed.** By C9 the API had roughly twenty call sites
+ * and C3 had shipped the caret's hold-still behaviour on top of it, so reversal was no longer free — a *cost
+ * input* to D-012 rather than a second decision. C9 put the ruling to the owner with that cost disclosed
+ * (**ADR-097 §3.2**), and on **2026-08-06 OD-25 ratified the Bench's rule, option (a)**: the frozen Bench is
+ * canonical, Phase A adopted it, C3 built on it, and C9's device evidence confirms it on hardware — a
+ * threshold-free raster probe on `SM-A176B` found **0 differing bytes across all 15 caret frame pairs** under
+ * a reduced-motion preference, so the caret does not run at all rather than collapsing an infinite animation
+ * into a strobe.
+ *
+ * **So what this class encodes is now ratified policy, not an implementer's provisional choice — and not one
+ * line of it changed when the ruling arrived.** That is worth stating precisely, because it is easy to
+ * misread as vindication: three of the four candidate outcomes would have required an edit here, and this
+ * value shipped for two phases before anyone was asked. The ordering above is what made that survivable; the
+ * outcome is what made it cheap.
  *
  * This class therefore encodes the distinction the CSS only implies: one-shot motion **collapses to
  * zero** ("arrive instantly, still arrive"), and continuous motion **does not run at all**.

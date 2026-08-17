@@ -156,6 +156,25 @@ public object ZinelyV2Icons {
         Path("M4 9h11a5 5 0 0 1 0 10h-3"),
     )
 
+    /**
+     * `bench:466` — **added by [OD-21](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling)**,
+     * the amendment that gave the frozen `.bar` its fourth control. It is [Undo]'s geometry mirrored, which
+     * is what the amended markup draws; it is transcribed here rather than produced by flipping [Undo] at the
+     * call site, because this set's contract is that it *is* the frozen trilogy's marks — a mirror applied in
+     * Compose would leave the catalogue one mark short of the spec it claims to transcribe, and
+     * `ZinelyV2IconsTest` scrapes the frozen bodies precisely so that cannot happen quietly.
+     *
+     * The neighbouring `bench:NNN` references in this file are **stale** after the same amendment
+     * (`+23`/`+24`); they belong to [D-046](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-046) and
+     * are left for the package that owns this file, per
+     * [OD-18](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-046-ruling).
+     */
+    public val Redo: ZinelyV2Icon = icon(
+        "Redo",
+        Path("M15 14 20 9l-5-5"),
+        Path("M20 9H9a5 5 0 0 0 0 10h3"),
+    )
+
     /** `bench:345` */
     public val Add: ZinelyV2Icon = icon(
         "Add",
@@ -365,6 +384,7 @@ public object ZinelyV2Icons {
         Shelf,
         Grid,
         Undo,
+        Redo,
         Add,
         Done,
         Edit,

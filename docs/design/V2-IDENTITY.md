@@ -175,9 +175,13 @@ free, APK stays lean; heavier future assets move on-demand.
 
 Confirms and consolidates the Bench's governed asset architecture (H3), now with RA-2's licensing refresh:
 
-- **Three layers:** (1) **Product Identity** — always bundled (the app's own marks/fonts); (2) **Starter
-  Creative Pack** — bundled (§6); (3) **optional online asset library** — future, opt-in, **sends a keyword
-  only, never user content**. Fully usable offline; user content never leaves the device.
+- **Two layers** *(amended 2026-08-15 — [ADR-104](../DECISIONS.md#adr-104) / [Constitution Amendment 3](V2-CONSTITUTION.md#amendment-log))*:
+  (1) **Product Identity** — always bundled (the app's own marks/fonts); (2) **Starter Creative Pack** — bundled (§6).
+  Growth happens through further **curated packs** — *source → verify licence → curate → package → ship* — and through
+  **the user's own materials** (camera, photo picker, share sheet, clipboard).
+  > ~~(3) *optional online asset library* — future, opt-in, sends a keyword only, never user content.~~ **Withdrawn.**
+  > Keyword-only protected the user's *privacy*; it did nothing about **provenance**, and Zinely's output is printed,
+  > distributed and potentially sold. There is no third layer and no network path for assets at any stage.
 - **CC0 / PD-first, merchandising-safe (RA-2 §2 — RA-2-confirmed; legal sign-off pending).** CC0 is the gold
   standard (zero conditions, zero notice in the export) and the **preferred licence for embedded art**. OFL and
   MIT are acceptable but **not attribution-free the way CC0 is** — both require their licence text to travel with

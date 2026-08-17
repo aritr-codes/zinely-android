@@ -15,10 +15,11 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * The first-run empty state (docs/design/DESIGN-LANGUAGE.md §8/§9 · [ADR-033](../DECISIONS.md#adr-033)):
  * a **pure invitation** — warm copy + stickers + the privacy line — that points to the supply tray below.
- * It owns NO add actions: the always-visible [EditorSupplyTray] is the single, thumb-zone home for
+ * It owns NO add actions: the always-visible the bottom bar (the retired `EditorSupplyTray`) is the single, thumb-zone home for
  * "Add a photo" / "Add words", so the two actions never appear twice at once (DESIGN-RULES 3, 7). This
  * suite proves the overlay is invitation-only; the host assembly (overlay + tray) is proven in
- * [EditorScreenTest]. Robolectric NATIVE, same tier as [EditorPageStripTest].
+ * [EditorScreenTest]. Robolectric NATIVE, same tier as [BenchC5Test] (which replaced the retired
+ * `EditorPageStripTest` when C5 landed the filmstrip).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -81,5 +82,22 @@ class EditorEmptyStateTest {
         // Decorative-with-a-job (DESIGN-RULES 10): the glyph must be cleared from the a11y tree, so it
         // is never announced — proves silence, not just that the tag is queryable (Codex review).
         composeRule.onNodeWithText("⌄", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun the_supply_cluster_is_silent() {
+        // The chevron above has been proven silent since the day it landed. The three craft marks beside
+        // it were only *claimed* silent — the KDoc said the cluster "adds nothing to the a11y tree", no
+        // test ever asked, and it was false: each glyph is a `Text`, so each published a `TextView` and
+        // TalkBack read "✿", "❀", "★" before the headline. Found by dumping the platform tree on a
+        // device (`uiautomator dump`, RZCYA1VBQ2H); invisible to the merged semantics tree these tests
+        // read, which is why this assertion is written against the *text*, exactly as the chevron's is.
+        composeRule.setContent {
+            ZinelyTheme { EditorEmptyState() }
+        }
+        for (glyph in listOf("✿", "❀", "★")) {
+            composeRule.onNodeWithText(glyph, substring = true)
+                .assertDoesNotExist()
+        }
     }
 }

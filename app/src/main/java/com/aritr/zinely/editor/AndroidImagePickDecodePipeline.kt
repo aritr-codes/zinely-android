@@ -33,6 +33,17 @@ public class AndroidImagePickDecodePipeline(
 
     override suspend fun pickAndDecode(): ImagePickResult {
         val uri = withContext(main) { picker.await() } ?: return ImagePickResult.Cancelled
+        return decodeAndStore(uri)
+    }
+
+    /**
+     * The half of the pipeline that is **not** the picker: decode → normalise → content-addressed store →
+     * placed [ImageElement]. Split out for share-in ([ShareInbox]), where another app has already chosen
+     * the [uri] and only the pick is redundant. Nothing else about an imported photo differs by entry
+     * point — same master, same dedup, same placement, same reducer intent — which is exactly why this is
+     * a split rather than a second pipeline.
+     */
+    public suspend fun decodeAndStore(uri: Uri): ImagePickResult {
         val master = withContext(io) { decoder.decodeToMaster(uri) }
             ?: return ImagePickResult.Failure("That image couldn’t be added.")
         return when (val stored = withContext(io) { assetStore.store(master.bytes) }) {

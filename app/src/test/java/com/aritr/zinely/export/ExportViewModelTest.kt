@@ -25,7 +25,9 @@ import org.robolectric.RobolectricTestRunner
 /**
  * Unit tests for the ADR-054 delivery flow in [ExportViewModel]. A hand [FakeExporter] stands in for the
  * [SheetExporter] seam (no render, no Android IO), so the destination→[ExportOutcome] subtype forwarding,
- * single-flight guard, and retry-reuses-last-destination are verified in pure logic. Robolectric only for
+ * single-flight guard, and retry-reuses-the-FAILED-destination are verified in pure logic. (It said
+ * "retry-reuses-last-destination" until ADR-102 §12.14 deleted the `lastDestination` field it named:
+ * retry now reads the destination off the `Error` state it is offered against.) Robolectric only for
  * `android.net.Uri` in the [ExportReady] case. Given-When-Then.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,10 +42,19 @@ class ExportViewModelTest {
 
     @After fun tearDown() = Dispatchers.resetMain()
 
-    /** Returns [outcome], records the destination of every call, and can [gate] to simulate an in-flight render. */
-    private class FakeExporter(private val outcome: ExportOutcome) : SheetExporter {
+    /**
+     * Returns [outcome], records the destination of every call, and can [gate] to simulate an in-flight
+     * render. [failFirst] makes the first N calls throw, which is the only way to reach the `Error` state
+     * — and therefore the only way to reach `retry` at all, since ADR-102 stopped retry reading a
+     * remembered field and made it read the error it is offered against.
+     */
+    private class FakeExporter(
+        private val outcome: ExportOutcome,
+        private val failFirst: Int = 0,
+    ) : SheetExporter {
         val destinations = mutableListOf<ExportDestination>()
         var gate: CompletableDeferred<Unit>? = null
+        private var calls = 0
         override suspend fun export(
             document: ZineDocument,
             pageSizePt: PtSize,
@@ -53,6 +64,7 @@ class ExportViewModelTest {
         ): ExportOutcome {
             destinations += destination
             gate?.await()
+            if (calls++ < failFirst) throw java.io.IOException("render failed")
             return outcome
         }
     }
@@ -95,13 +107,23 @@ class ExportViewModelTest {
         advanceUntilIdle()
     }
 
+    /**
+     * Retry reproduces the failed attempt — and reads which attempt that was **off the error being
+     * shown**, not off a remembered field.
+     *
+     * These two cases used to retry after a *success*, which no UI can do: "Try again" exists only on the
+     * error overlay. That made them pass against `lastDestination`, a field that could outlive the error it
+     * described. Both now go through the real path: a failure, an error carrying its destination, a retry.
+     */
     @Test
-    fun retryReusesLastDestination() = runTest {
-        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads"))
+    fun retryReusesTheFailedSaveDestination() = runTest {
+        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads"), failFirst = 1)
         val vm = ExportViewModel(fake)
 
         vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
         advanceUntilIdle()
+        assertEquals(ExportDestination.DOWNLOADS, (vm.state.value as ExportUiState.Error).destination)
+
         vm.retry(doc, size, bytes, ExportFormat.PDF)
         advanceUntilIdle()
 
@@ -109,9 +131,9 @@ class ExportViewModelTest {
     }
 
     @Test
-    fun retryReusesTransportDestination() = runTest {
-        // Pin that retry reuses the ACTUAL last destination, not a hardcoded one: a Share retries a Share.
-        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads"))
+    fun retryReusesTheFailedShareDestination() = runTest {
+        // A Share retries a Share — the destination is the ACTUAL failed one, never a hardcoded default.
+        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads"), failFirst = 1)
         val vm = ExportViewModel(fake)
 
         vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.TRANSPORT)
@@ -120,5 +142,32 @@ class ExportViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf(ExportDestination.TRANSPORT, ExportDestination.TRANSPORT), fake.destinations)
+    }
+
+    /** With nothing failed, there is nothing to try again — and no stale field to try it with. */
+    @Test
+    fun retryWithoutAFailureDoesNothing() = runTest {
+        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads"))
+        val vm = ExportViewModel(fake)
+
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.DOWNLOADS)
+        advanceUntilIdle()
+        vm.retry(doc, size, bytes, ExportFormat.PDF)
+        advanceUntilIdle()
+
+        assertEquals(listOf(ExportDestination.DOWNLOADS), fake.destinations)
+    }
+
+    /** The state names the running action, which is what lets the two commit buttons stop sharing one. */
+    @Test
+    fun workingStateNamesItsDestination() = runTest {
+        val fake = FakeExporter(ExportSaved("zine.pdf", "Downloads")).apply { gate = CompletableDeferred() }
+        val vm = ExportViewModel(fake)
+
+        vm.export(doc, size, bytes, ExportFormat.PDF, ExportDestination.TRANSPORT)
+
+        assertEquals(ExportDestination.TRANSPORT, (vm.state.value as ExportUiState.Working).destination)
+        fake.gate!!.complete(Unit)
+        advanceUntilIdle()
     }
 }

@@ -9,8 +9,12 @@ import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.core.model.ZineCoverRecipe
+import com.aritr.zinely.core.model.ZineCoverStamp
+import com.aritr.zinely.core.model.ZineCoverSurface
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.core.model.newZineCoverRecipe
 import com.aritr.zinely.data.android.room.ProjectDao
 import com.aritr.zinely.data.android.room.ProjectEntity
 import java.io.IOException
@@ -19,6 +23,7 @@ import java.nio.file.Path
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
+import kotlin.random.Random
 import kotlin.streams.toList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -62,6 +67,13 @@ internal class RoomProjectRepository(
     private val io: CoroutineDispatcher,
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    /**
+     * Entropy for the cover assigner ([D-017](docs/design/V2-SPEC-DEFECTS.md#d-017-ruling)). Injected
+     * for the same reason [clock] and [newId] are — so a test can pin the draw — and, unlike them,
+     * because it is the *only* input the assignment has. Nothing derived from a title, an id or a
+     * neighbour reaches it, which is the ruling stated as a signature.
+     */
+    private val random: Random = Random.Default,
 ) : ProjectRepository {
 
     private val paths = ProjectPaths(rootDir)
@@ -104,7 +116,15 @@ internal class RoomProjectRepository(
             }
             val now = clock()
             try {
-                writeMeta(id, ProjectMeta(title = title, createdAtEpochMs = now))
+                // D-017: the cover is assigned ONCE, here, at creation — and persisted in the same
+                // atomic write as the title, so a zine can never exist without its visual identity.
+                // `title` is in scope but is deliberately not passed to the assigner; the draw takes
+                // entropy and nothing else, which is the property `two zines with the same title get
+                // independently drawn covers` asserts.
+                writeMeta(
+                    id,
+                    ProjectMeta(title = title, createdAtEpochMs = now).withCover(newZineCoverRecipe(random)),
+                )
             } catch (e: IOException) {
                 // A returned failure must leave no adoptable orphan (ADR-042 / Codex RF2).
                 cleanupProjectFiles(id)
@@ -121,10 +141,25 @@ internal class RoomProjectRepository(
             val docFile = paths.documentFile(id)
                 ?: return@withLock failure(DataError.NotFound(id))
             if (!Files.isRegularFile(docFile)) return@withLock failure(DataError.NotFound(id))
-            val createdAt = readMetaOrNull(id)?.createdAtEpochMs ?: fileMtimeOrNull(docFile) ?: clock()
+            val existing = readMetaOrNull(id)
+            val createdAt = existing?.createdAtEpochMs ?: fileMtimeOrNull(docFile) ?: clock()
             try {
                 // The atomic meta rewrite is the commit; the row below is derived.
-                writeMeta(id, ProjectMeta(title = title, createdAtEpochMs = createdAt))
+                //
+                // The rewrite is WHOLESALE, so every field not carried across is destroyed. D-017 is
+                // explicit that "a physical object should retain its identity across renames", which
+                // makes dropping the cover here a silent identity change — the exact defect the ruling
+                // was written against, disguised as an unrelated edit. `createdAt` was already carried
+                // for the same reason; the cover joins it.
+                writeMeta(
+                    id,
+                    ProjectMeta(
+                        title = title,
+                        createdAtEpochMs = createdAt,
+                        coverSurface = existing?.coverSurface,
+                        coverStamp = existing?.coverStamp,
+                    ),
+                )
             } catch (e: IOException) {
                 return@withLock failure(DataError.Io("failed to write project metadata for '$id'", e))
             }
@@ -154,7 +189,15 @@ internal class RoomProjectRepository(
             }
             val now = clock()
             try {
-                writeMeta(copyId, ProjectMeta(title = "$sourceTitle copy", createdAtEpochMs = now))
+                // D-026: "duplicate content, not visual identity" — the copy DRAWS ITS OWN cover
+                // rather than inheriting the source's. Two identical covers would be indistinguishable
+                // on a covers-only shelf whose one question is "which zine is mine?", and ADR-083 moved
+                // every distinguishing detail into the action sheet, so the cover is all there is.
+                writeMeta(
+                    copyId,
+                    ProjectMeta(title = "$sourceTitle copy", createdAtEpochMs = now)
+                        .withCover(newZineCoverRecipe(random)),
+                )
             } catch (e: IOException) {
                 cleanupProjectFiles(copyId)
                 return@withLock failure(DataError.Io("failed to write project metadata for '$copyId'", e))
@@ -222,6 +265,12 @@ internal class RoomProjectRepository(
             createdAtEpochMs = meta.createdAtEpochMs,
             updatedAtEpochMs = updatedAtEpochMs,
             documentSchemaVersion = document.schemaVersion,
+            // The index mirrors the sidecar, which is the authority (ADR-042). Because this is the
+            // SINGLE files→row derivation — every mutation and the reconcile scan both land here — the
+            // legacy backfill inside readMetaOrBackfill reaches the index for free, and a project can
+            // never end up with a cover in one and not the other.
+            coverSurface = meta.coverSurface,
+            coverStamp = meta.coverStamp,
         )
         try {
             dao.upsert(entity)
@@ -231,17 +280,14 @@ internal class RoomProjectRepository(
             reconciled = false // file truth is committed; re-derive the index on next use
             return failure(DataError.Io("failed to index project '$id'", e))
         }
-        return DataResult.Success(
-            ProjectSummary(
-                id = id,
-                title = meta.title,
-                format = document.format,
-                paperSize = document.paperSize,
-                createdAtEpochMs = meta.createdAtEpochMs,
-                updatedAtEpochMs = max(updatedAtEpochMs, fileMtimeOrNull(docFile) ?: 0L),
-                documentSchemaVersion = document.schemaVersion,
-            ),
-        )
+        // Derived from the row that was just written, NOT assembled a second time by hand. This used to
+        // be a parallel ProjectSummary(...) construction and it silently dropped the cover the moment
+        // the field was added — a create returned a coverless zine while the index and the sidecar both
+        // held one. Two construction sites for one projection is the defect; one site is the fix.
+        return toSummary(entity)?.let { DataResult.Success(it) }
+            // Unreachable by construction: format/paperSize were written from the document's own enums
+            // a few lines above, so they always parse back. Kept total rather than asserted.
+            ?: failure(DataError.Io("failed to project indexed row for '$id'"))
     }
 
     /**
@@ -314,22 +360,61 @@ internal class RoomProjectRepository(
      * Read the sidecar; a **missing** one is backfilled with fallbacks (title, createdAt = document
      * mtime — not scan time, so adoption never rewrites history). A **present-but-unreadable** one
      * is never overwritten: the row gets the fallback title while the bytes stay for repair.
+     *
+     * **The cover follows the same rule as [backfillCoverIfLegacy], and for the same reason.** An
+     * adopted project is only given one when the sidecar that would hold it is actually written; an
+     * unwritable *or* unreadable sidecar yields a **coverless** meta rather than a cover that lives
+     * only in this process. The index is rebuildable ([ADR-042](docs/DECISIONS.md#adr-042)), so a
+     * cover kept in the row and nowhere else is repainted the next time the index is rebuilt — the
+     * identity flicker D-017 forbids, arriving one function away from where it was closed.
      */
     private fun readMetaOrBackfill(id: String, docFile: Path): ProjectMeta {
-        readMetaOrNull(id)?.let { return it }
+        readMetaOrNull(id)?.let { return backfillCoverIfLegacy(id, it) }
         val fallback = ProjectMeta(
             title = DEFAULT_TITLE,
             createdAtEpochMs = fileMtimeOrNull(docFile) ?: clock(),
         )
         val metaFile = paths.metaFile(id) ?: return fallback
-        if (!Files.exists(metaFile)) {
-            try {
-                writeMeta(id, fallback)
-            } catch (_: IOException) {
-                // The row is still built from the fallback; the backfill retries on a later scan.
-            }
+        // Present-but-unreadable: the bytes stay for repair, so nothing is written — and therefore no
+        // cover is assigned either, because assigning one here would redraw it on every single read.
+        if (Files.exists(metaFile)) return fallback
+        val assigned = fallback.withCover(newZineCoverRecipe(random))
+        return try {
+            writeMeta(id, assigned)
+            assigned
+        } catch (_: IOException) {
+            // The row is still built from the fallback; the backfill retries on a later scan.
+            fallback
         }
-        return fallback
+    }
+
+    /**
+     * The **legacy cover backfill** ([D-026](docs/design/V2-SPEC-DEFECTS.md#d-026-ruling)):
+     *
+     * > *"Legacy zines receive a cover on first presentation. The assigned cover is then persisted."*
+     *
+     * A readable sidecar with no cover belongs to a zine created before the field existed. It is given
+     * one **here**, once, and the assignment is written straight back — so the very next read finds it
+     * stored and this function returns early. That "once" is the whole contract: assign-on-every-read
+     * and assign-on-first-read are indistinguishable in a single render and differ in every subsequent
+     * one, which is why the test that matters reads twice.
+     *
+     * **A failed write must not fabricate an identity.** If persistence fails the meta is returned
+     * *unchanged* — still coverless — rather than carrying a cover that exists only in memory. The zine
+     * then draws no persisted cover this session and is offered the backfill again next time, which is
+     * the honest degradation: a cover that would silently differ on every launch is worse than one that
+     * is visibly not yet assigned, and it would break D-017's identity guarantee while appearing to
+     * satisfy it.
+     */
+    private fun backfillCoverIfLegacy(id: String, meta: ProjectMeta): ProjectMeta {
+        if (meta.coverRecipe() != null) return meta
+        val assigned = meta.withCover(newZineCoverRecipe(random))
+        return try {
+            writeMeta(id, assigned)
+            assigned
+        } catch (_: IOException) {
+            meta
+        }
     }
 
     private fun writeMeta(id: String, meta: ProjectMeta) {
@@ -354,8 +439,34 @@ internal class RoomProjectRepository(
             createdAtEpochMs = entity.createdAtEpochMs,
             updatedAtEpochMs = max(entity.updatedAtEpochMs, docMtime),
             documentSchemaVersion = entity.documentSchemaVersion,
+            cover = entity.coverRecipe(),
         )
     }
+
+    /**
+     * The indexed cover, or `null` when this project is **legacy** — created before the field existed,
+     * so it has never been assigned one ([D-026](docs/design/V2-SPEC-DEFECTS.md#d-026-ruling)).
+     *
+     * An **unrecognised** name is treated exactly like a missing one. That matters: it means renaming an
+     * enum constant in a future release degrades to a re-draw rather than to a crash on a user's shelf,
+     * and it keeps this function total.
+     */
+    private fun ProjectEntity.coverRecipe(): ZineCoverRecipe? {
+        val surface = ZineCoverSurface.entries.firstOrNull { it.name == coverSurface } ?: return null
+        val stamp = ZineCoverStamp.entries.firstOrNull { it.name == coverStamp } ?: return null
+        return ZineCoverRecipe(surface, stamp)
+    }
+
+    /** The sidecar's cover, by the same total mapping the index uses. */
+    private fun ProjectMeta.coverRecipe(): ZineCoverRecipe? {
+        val surface = ZineCoverSurface.entries.firstOrNull { it.name == coverSurface } ?: return null
+        val stamp = ZineCoverStamp.entries.firstOrNull { it.name == coverStamp } ?: return null
+        return ZineCoverRecipe(surface, stamp)
+    }
+
+    /** Stamp a recipe onto a sidecar record. The one place meta learns a cover. */
+    private fun ProjectMeta.withCover(recipe: ZineCoverRecipe): ProjectMeta =
+        copy(coverSurface = recipe.surface.name, coverStamp = recipe.stamp.name)
 
     private fun blankDocument(format: ZineFormat, paperSize: PaperSize): ZineDocument = ZineDocument(
         format = format,

@@ -25,10 +25,26 @@ public object SelectionChromeGeometry {
      * `[TL, TR, BR, BL]`. Local corners `(±w/2, ±h/2)` are rotated clockwise about the box centre by
      * `rotationDegrees` (matching `SceneRenderer.localToPage`), translated to the page-space centre,
      * then mapped to device px by [ExportScale.previewPageToDevice].
+     *
+     * @param inflateDevicePx grows the box outward by this many **device** px on every side before
+     *   rotation — the frozen `.sel` inset (ADR-091 row 2.3). `0.0` (the default) returns the box itself,
+     *   which is what the punch-out and the handles read.
      */
-    public fun outlineDevicePx(t: Transform, screenPxPerPt: Double, pageOffset: PtPoint): List<PtPoint> {
-        val hw = t.widthPt / 2.0
-        val hh = t.heightPt / 2.0
+    public fun outlineDevicePx(
+        t: Transform,
+        screenPxPerPt: Double,
+        pageOffset: PtPoint,
+        inflateDevicePx: Double = 0.0,
+    ): List<PtPoint> {
+        // ADR-091 row 2.3: the frozen `.sel` sits at `inset:-7px` — 7 **device** px outside the box, in
+        // screen space, so it does not fatten under zoom. It is applied here by growing the half-extents
+        // in the element's own LOCAL frame (device px ÷ scale ⇒ pt) and letting the existing mapper rotate
+        // the result. Inflating after the rotation would need the rotated axes and a sign convention to
+        // get wrong; inflating before it is correct by construction at every angle, which is what keeps a
+        // turned photo's outline parallel to the photo instead of parallel to the screen.
+        val inflatePt = if (screenPxPerPt > 0.0) inflateDevicePx / screenPxPerPt else 0.0
+        val hw = t.widthPt / 2.0 + inflatePt
+        val hh = t.heightPt / 2.0 + inflatePt
         // Clockwise from top-left in element-local axes (+x right, +y down).
         val localCorners = listOf(
             PtPoint(-hw, -hh), // TL

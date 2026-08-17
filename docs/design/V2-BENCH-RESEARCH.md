@@ -1,5 +1,20 @@
 # V2-BENCH-RESEARCH.md — the Bench (Editor): UX research
 
+> ### ⚠ HISTORICAL RECORD on one topic — the online asset search (amended 2026-08-15)
+>
+> This document's **Layer 3 / online asset search** material — the Openverse and Wikimedia evaluation, the
+> keyword-out data-flow diagram, the opt-in sequencing, and the licence-filter design — describes a capability that
+> **was never built and will never be built**. [ADR-104](../DECISIONS.md#adr-104) and
+> [Constitution Amendment 3](V2-CONSTITUTION.md#amendment-log) withdrew it on 2026-08-15.
+>
+> **It is deliberately left intact.** The research was correct on its own terms and it is *why* the decision could be
+> made well: this document is where the finding originated that Openverse **disclaims licence accuracy** — the single
+> fact that later closed the question, because keyword-only protects the user's *privacy* but not an asset's
+> **provenance**, and Zinely's output is printed, distributed and potentially sold.
+>
+> **What survives:** the CC0/PD-first licence instinct, now the *bundling* rule. **What does not:** live search as a
+> delivery mechanism. Read the online sections as history, never as a specification.
+
 > **Status:** Phase 1 deliverable of the **Bench** initiative — the second major V2 surface after the
 > [Library freeze](V2-LIBRARY-CRITIQUE-2.md). This is evidence-gathering only; it does **not** decide the
 > design. It feeds Phase 2 (critique) → 3 (principles) → 4 (IA) → 5 (editing philosophy) → 6 (journeys) →

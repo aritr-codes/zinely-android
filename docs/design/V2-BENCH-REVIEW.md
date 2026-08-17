@@ -369,4 +369,16 @@ The owner reviewed the republished prototype and approved the freeze.
   layer ADR (H3 online-search licensing, CC0/MIT-first) and the colour-namespace ADR (H4 `content.*` maker
   inks). These land behind their ADRs; the rest of the Bench does not wait on them.
 
+  > ### ✅ Both conditions are now DISCHARGED (2026-08-15)
+  >
+  > - **Colour-namespace ADR** → [ADR-072](../DECISIONS.md#adr-072), `Accepted`. The ten in-page maker inks are modelled.
+  > - **Asset-layer ADR** → [ADR-104](../DECISIONS.md#adr-104), `Accepted`, which *is* the review and the legal pass this
+  >   clause demanded. **Its ruling is that the online half does not ship at all**, and the Constitution's permitted future
+  >   network touch is withdrawn by [Amendment 3](V2-CONSTITUTION.md#amendment-log), the owner's explicit act.
+  >
+  > This clause was load-bearing and worked exactly as intended: it is the reason the online search was never built during
+  > the eight months the question sat open. Nothing downstream of it was thrown away. The `CC0/MIT-first` instinct recorded
+  > here also survives — ADR-104 keeps it as the **bundling** rule (MIT/ISC/Apache-2.0 and CC0 only, nothing whose licence
+  > obligation can follow the user's exported zine), and drops only the live-search delivery mechanism.
+
 *Bench initiative Phases 1–10.5 complete. **The Bench is design-frozen.***

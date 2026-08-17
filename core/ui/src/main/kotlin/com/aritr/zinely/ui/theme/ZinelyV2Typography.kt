@@ -13,8 +13,15 @@ import com.aritr.zinely.ui.R
  * The **V2 type foundation** — the two permanent families, their weights, and the base style
  * everything else departs from.
  *
- * [V2-CONSTITUTION.md](docs/design/V2-CONSTITUTION.md) §III fixes the pairing for the life of the
- * product: **Fraunces (voice/display) + Inter (work/body). Permanent. No third UI typeface.**
+ * [V2-CONSTITUTION.md](docs/design/V2-CONSTITUTION.md) §III fixed the pairing when this file was
+ * written: **Fraunces (voice/display) + Inter (work/body). Permanent. No third UI typeface.**
+ *
+ * That clause was amended on 2026-08-10
+ * ([Amendment 1](docs/design/V2-CONSTITUTION.md#amendment-log)): V2.1 admits **Averia Sans Libre** as a
+ * third *voice* face and re-roles Fraunces to *editorial*, with "no third" becoming "no **fourth**".
+ * **Nothing here changes.** This foundation stays the pairing for every surface not yet re-skinned;
+ * V2.1's three roles live in [ZinelyV21Fonts]. The clause is quoted above as it stood, so a reader who
+ * arrives via this file learns the ceiling moved rather than trusting a stale absolute.
  *
  * ### Why this is a foundation and not a "type scale"
  *

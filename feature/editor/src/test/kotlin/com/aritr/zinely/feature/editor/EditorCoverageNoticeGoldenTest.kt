@@ -17,6 +17,7 @@ import com.aritr.zinely.core.model.TextCoverage
 import com.aritr.zinely.ui.golden.cropToBounds
 import com.aritr.zinely.ui.golden.pixelCountOf
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
+import com.aritr.zinely.ui.golden.topRowRiseOf
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -52,15 +53,21 @@ class EditorCoverageNoticeGoldenTest {
     }
 
     private var deskArgb = 0
+    private var inkArgb = 0
 
     private fun host(darkTheme: Boolean, content: @Composable () -> Unit) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
-                deskArgb = ZinelyTheme.colors.desk.toArgb()
+                // ⚠ The host desk is **V2.1's**. See the same block in [EditorSaveFailureGoldenTest]: the
+                // notice went V2.1 in ADR-102 P6a and this frame did not, so the raster depicted neither
+                // corpus — and the only assertion in the file, a desk-pixel count, was satisfied by the
+                // wrong desk exactly as well as by the right one.
+                deskArgb = ZinelyTheme.v21Colors.desk.toArgb()
+                inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
-                        .background(ZinelyTheme.colors.desk)
+                        .background(ZinelyTheme.v21Colors.desk)
                         .padding(16.dp),
                 ) { content() }
             }
@@ -84,6 +91,21 @@ class EditorCoverageNoticeGoldenTest {
         assertTrue(
             "the host desk did not paint ($name)",
             bmp.pixelCountOf(deskArgb) > 100,
+        )
+        // ⚠ The raster alone asserts nothing. Same two properties as the save-failure banner, which is
+        // the point — these two surfaces share `Notice*`, so they must be provably the same object:
+        // an `--ink` ground (V2's notice was a paper card) and the settled `-.6deg` lean, read as the rise
+        // of the ink ground across the notice's own width (see [topRowRiseOf] for why the corner-pixel
+        // form of this probe was written, measured, and thrown away).
+        val inkPixels = bmp.pixelCountOf(inkArgb)
+        assertTrue(
+            "the notice's ground is `--ink` — $inkPixels px found ($name)",
+            inkPixels > 500,
+        )
+        val rise = bmp.topRowRiseOf(inkArgb)
+        assertTrue(
+            "the notice leans — ink top rises ${rise}px across its width ($name)",
+            rise >= 4,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }

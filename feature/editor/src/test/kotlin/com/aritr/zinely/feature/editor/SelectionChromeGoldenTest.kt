@@ -29,6 +29,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.core.render.SceneRenderer
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import kotlin.math.ceil
@@ -71,6 +72,22 @@ class SelectionChromeGoldenTest {
     private companion object {
         const val GOLDEN_DIR = "src/test/roborazzi"
         const val SCREEN_PX_PER_PT = 2.5f
+
+        /**
+         * Matcha-signature pixels the C2a outline leaves around a 32pt box at 2.5 px/pt.
+         *
+         * **The threshold moved because the probe had to.** The old assertion counted pixels *exactly*
+         * equal to the token, which worked for a 2dp stroke. C2a's outline is **1.5dp** and lands on
+         * fractional coordinates, so almost every pixel it paints is an AA blend: the axis-aligned capture
+         * keeps just **12** pure ones, and a threshold low enough to admit 12 would no longer discriminate
+         * a drawn outline from a stray artefact. This is the identical failure [countMatchaGuide] was
+         * introduced for at 1dp, so the outline now uses the same hue signature — which the same capture
+         * puts in the hundreds, while a blank page leaves none.
+         */
+        const val CHROME_MATCHA_PIXELS = 100
+
+        /** The dashed ink ring's flat core, measured off the real capture. See [countInkRing]. */
+        const val CHROME_RING_PIXELS = 40
 
         // AA stroke edges (rotated outline, guide lines) jitter a fraction of pixels run-to-run; the same
         // committed tolerance RasterGoldenTest.aa() uses absorbs that without masking a placement bug.
@@ -146,30 +163,95 @@ class SelectionChromeGoldenTest {
     }
 
     /**
-     * Count of pixels carrying the teal guide's **hue signature** — green the dominant channel (`G>R` and
-     * `G≥B`). The `--teal` token (#2A9D8F) is dark and saturated, so a 1dp AA line straddling two device
-     * columns blends ~50% with the light paper and never lands within a tight per-channel tolerance of the
-     * pure token (unlike the near-paper `--yellow` it replaced). Its hue survives the blend, and neither the
-     * warm paper (`G<R`) nor the `--coral-strong` chrome (`R≫G`) satisfies it — so a green-dominant count
-     * isolates the guide without false positives.
+     * Count of pixels carrying the snap guide's **hue signature**.
+     *
+     * **Retuned for V2 (C1, ADR-089 row 1.10), and the retune is the interesting part.** The guide was
+     * `--teal` (#2A9D8F); it is now the frozen Bench's `--matcha` (#7C8A3F) at `.6` — see [SnapGuides].
+     * The old predicate required `G−R ≥ 16`, which teal clears easily. Matcha is an *olive*: green and red
+     * sit almost level, and once a 1dp AA line splits across two device columns the painted pixels measure
+     * `rgb(202,206,188)` against a `rgb(250,250,250)` page — **G−R of 4**. The threshold was therefore
+     * unreachable by the new token, and the test failed for the one reason a colour assertion should:
+     * the colour changed.
+     *
+     * So the discriminator moves to **G−B**, which the same measurement puts at **18** against the page's
+     * own **0**, with `G > R` retained as the clause that still excludes the `--coral-strong` chrome
+     * (`R ≫ G`) and every neutral grey in the capture (`G−R = 0`). Numbers from a probe over the real
+     * capture rather than from the token arithmetic, because what survives an AA blend is the question.
      */
-    private fun Bitmap.countTealGuide(): Int {
+    private fun Bitmap.countMatchaGuide(): Int {
         var n = 0
         for (y in 0 until height) for (x in 0 until width) {
             val p = getPixel(x, y)
             val r = (p shr 16) and 0xFF
             val g = (p shr 8) and 0xFF
             val b = p and 0xFF
-            if (g - r >= 16 && g - b >= 4) n++
+            if (g > r && g - b >= 10) n++
         }
+        return n
+    }
+
+    /**
+     * Count of pixels carrying the V2.1 guide's **butter** signature (P2, ADR-102 §12.9).
+     *
+     * **A third token, a third discriminator, and the reason is worth keeping.** V1's guide was `--teal`
+     * and was found by `G−R`; V2's `--matcha` is an olive whose `G−R` is 4 after AA, so
+     * [countMatchaGuide] moved to `G−B`. V2.1's `--butter` (`#F6B22C`) inverts that again: it is a warm
+     * amber, `R > G > B` with a large `R−B`, and it scores **`G > r`: false** — the matcha probe cannot
+     * see it at all, which is exactly how this recolour was caught rather than silently re-recorded.
+     *
+     * So the discriminator here is `R−B`, the one thing butter has in quantity that neither the paper
+     * (`R−B` ≈ 8 on `#FFF6E8`) nor the ink ring (near-neutral, dark) nor matcha (`R−B` ≈ 14 and `G ≥ R`)
+     * has. `r > g` excludes matcha's remaining olive blends outright.
+     *
+     * ⚠ **Butter composites to 1.60:1 on paper**, so this probe is looking for a genuinely faint mark —
+     * the count is real but the threshold is necessarily lower than matcha's was at a stronger hue. That
+     * faintness is the ruled acceptance, not a bug; see [SnapGuides].
+     */
+    private fun Bitmap.countButterGuide(): Int {
+        var n = 0
+        for (y in 0 until height) for (x in 0 until width) {
+            val p = getPixel(x, y)
+            val r = (p shr 16) and 0xFF
+            val g = (p shr 8) and 0xFF
+            val b = p and 0xFF
+            if (r > g && r - b >= 40) n++
+        }
+        return n
+    }
+
+    /**
+     * Count of pixels carrying the V2.1 selection ring's exact ink.
+     *
+     * **The discriminator changes kind, not just value.** V2's `--matcha` was an *olive* and had to be
+     * proved by a hue signature, because AA blending moved it far enough that no exact match survived.
+     * V2.1's ring is `--ink` (`#33261C`) — the darkest thing the palette has, and the same colour the
+     * page's own body text is set in. A hue predicate would therefore count the **content** as well as
+     * the chrome and pass with the ring deleted.
+     *
+     * So this counts pixels **near** the ring's own ink, which the content cannot supply: the sheet's
+     * text is rendered by the export tape at the model's own colour (black), and `#33261C` is more than
+     * the tolerance away from it on every channel. The island guarantees the token is the light value
+     * here in both themes, which is what makes comparing against a fixed hex legitimate at all.
+     *
+     * **Near, not exact, and the axis-aligned case is why.** An exact-colour probe saw **10** pixels on
+     * the unrotated ring and comfortably more on the rotated one — because a 1.6dp stroke landing on
+     * fractional coordinates splits across two pixel rows and antialiases *both*, so a straight segment
+     * may have no fully-covered pixel anywhere along it while a diagonal one does. Reading that as "the
+     * ring is missing" would have been exactly backwards. The tolerance is the same ±24 the caret probe
+     * uses, for the same reason and against a wider margin.
+     */
+    private fun Bitmap.countInkRing(): Int {
+        val ink = zinelyV21LightColors().ink.toArgb()
+        fun near(p: Int): Boolean =
+            listOf(16, 8, 0).all { sh -> kotlin.math.abs(((p shr sh) and 0xFF) - ((ink shr sh) and 0xFF)) <= 24 }
+        var n = 0
+        for (y in 0 until height) for (x in 0 until width) if (near(getPixel(x, y))) n++
         return n
     }
 
     @Test
     fun axis_aligned_selection_outline() {
-        var chromeArgb = 0
         val bmp = pageBitmap { m ->
-            chromeArgb = ZinelyTheme.colors.coralStrong.toArgb()
             EditorPagePreview(
                 uiState = selectedModel(rotationDegrees = 0.0).toUiState(),
                 defaults = DocumentDefaults(),
@@ -178,20 +260,21 @@ class SelectionChromeGoldenTest {
                 modifier = m,
             )
         }
-        // The coral-strong outline must actually be on the page (not a vacuous blank capture); a 2dp
-        // stroke around a 32pt box at 2.5 px/pt leaves well over 50 flat-colour core pixels.
+        // ADR-102 P1 re-skinned this stroke again: 1.5dp solid `--matcha` 7px outside the box became
+        // 1.6dp **dashed** `--ink` 6px outside it — the freeze's own rule that selection is a hand-drawn
+        // dashed ring, never a system box. The token is what this assertion pins; the threshold is lower
+        // than the solid stroke's because a dash paints roughly half the perimeter, and the number is
+        // measured off the real capture rather than derived from the width.
         assertTrue(
-            "selection outline did not paint the coral-strong token on the page",
-            bmp.countColour(chromeArgb) > 50,
+            "selection outline did not paint the ink token on the page (saw ${bmp.countInkRing()})",
+            bmp.countInkRing() > CHROME_RING_PIXELS,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_axis_aligned.png", aa())
     }
 
     @Test
     fun rotated_selection_outline() {
-        var chromeArgb = 0
         val bmp = pageBitmap { m ->
-            chromeArgb = ZinelyTheme.colors.coralStrong.toArgb()
             EditorPagePreview(
                 uiState = selectedModel(rotationDegrees = 30.0).toUiState(),
                 defaults = DocumentDefaults(),
@@ -201,8 +284,8 @@ class SelectionChromeGoldenTest {
             )
         }
         assertTrue(
-            "rotated selection outline did not paint the coral-strong token on the page",
-            bmp.countColour(chromeArgb) > 50,
+            "rotated selection outline did not paint the ink token on the page (saw ${bmp.countInkRing()})",
+            bmp.countInkRing() > CHROME_RING_PIXELS,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_rotated.png", aa())
     }
@@ -214,7 +297,9 @@ class SelectionChromeGoldenTest {
         // gesture's exact snap maths. A vertical + horizontal guide crossing the box centre (36,36).
         //
         // CRITICAL (Codex review): replicate EditorPagePreview's PRODUCTION layer order exactly —
-        // PagePreview -> SnapGuides -> SelectionChrome (guides BENEATH the chrome). Overlaying an extra
+        // PagePreview -> BenchFocusScrim -> SnapGuides -> SelectionChrome (guides BENEATH the chrome).
+        // C2a inserted the scrim into that stack; omitting it here would pin a layer order the product
+        // does not have, which is precisely what this comment exists to prevent. Overlaying an extra
         // SnapGuides on top of a full EditorPagePreview would pin a non-production order where guides cover
         // the selection outline. We rebuild the same stack manually only because EditorPagePreview computes
         // its guides internally (no inject seam) and we need a deterministic guide frame here.
@@ -234,7 +319,19 @@ class SelectionChromeGoldenTest {
                     modifier = Modifier.fillMaxSize(),
                     imageBytes = EmptyAssetBytes,
                 )
+                BenchFocusScrim(
+                    paper = ZinelyTheme.v2Colors.paper,
+                    pageRect = benchPageRect(SCREEN_PX_PER_PT, offset, sheet),
+                    dimAlpha = BenchFocusDimAlpha,
+                    holes = selectedTransforms.map {
+                        com.aritr.zinely.render.android.SelectionChromeGeometry
+                            .outlineDevicePx(it, SCREEN_PX_PER_PT.toDouble(), offset)
+                    },
+                    covers = emptyList(),
+                    modifier = Modifier.fillMaxSize(),
+                )
                 SnapGuides(
+                    pageSizePt = sheet,
                     guides = listOf(
                         SnapGuide(SnapAxis.VERTICAL, 36.0),
                         SnapGuide(SnapAxis.HORIZONTAL, 36.0),
@@ -251,13 +348,31 @@ class SelectionChromeGoldenTest {
                 )
             }
         }
-        // 1dp AA guides blend with the page, so prove them by the teal hue signature, not exact colour. A
-        // vertical + horizontal full-span line at 2.5 px/pt leaves well over 50 green-dominant pixels; a
-        // blank/undrawn guide layer (warm paper only) leaves none.
+        // AA guides blend with the page, so prove them by hue signature, not exact colour. P2 recoloured
+        // this line matcha -> butter and dashed it, so the probe moved with it — see [countButterGuide].
+        // The dash halves the painted length, and butter is a much fainter mark than matcha was, so the
+        // threshold is lower than the old 50: what it still discriminates is a drawn guide from none.
         assertTrue(
-            "snap guides did not paint the teal token on the page",
-            bmp.countTealGuide() > 50,
+            "snap guides did not paint the frozen --butter token on the page",
+            bmp.countButterGuide() > 20,
         )
+        // …and that it is DASHED, which no colour probe can see. A solid line down the page's height
+        // would leave one unbroken run; the frozen `dashed` leaves many. Counted on the vertical guide's
+        // own column, so a horizontal guide crossing it cannot fill the gaps in for it.
+        val guideX = (0 until bmp.width).maxBy { x ->
+            (0 until bmp.height).count { y -> bmp.getPixel(x, y).let { p ->
+                ((p shr 16) and 0xFF) > ((p shr 8) and 0xFF) && (((p shr 16) and 0xFF) - (p and 0xFF)) >= 40
+            } }
+        }
+        var runs = 0
+        var inRun = false
+        for (y in 0 until bmp.height) {
+            val p = bmp.getPixel(guideX, y)
+            val painted = ((p shr 16) and 0xFF) > ((p shr 8) and 0xFF) && (((p shr 16) and 0xFF) - (p and 0xFF)) >= 40
+            if (painted && !inRun) runs++
+            inRun = painted
+        }
+        assertTrue("the frozen guide is dashed, not solid — found $runs run(s) down its column", runs >= 3)
         bmp.captureRoboImage("$GOLDEN_DIR/selection_chrome_snap_guides.png", aa())
     }
 }

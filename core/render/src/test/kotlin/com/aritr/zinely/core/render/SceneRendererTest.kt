@@ -116,6 +116,19 @@ class SceneRendererTest {
         assertEquals(Fit.FILL, cmd.fit)
         assertEquals(80.0, cmd.box.width); assertEquals(40.0, cmd.box.height)
         assertEquals(cmd.box, cmd.localClip) // FILL/cover overflow clipped to the box
+        assertEquals(false, cmd.copier) // the model default reaches the tape, unfiltered
+    }
+
+    @Test
+    fun `the photocopier flag reaches the tape, so all four surfaces see the same intent`() {
+        // ADR-106: the filter is a per-photo flag carried on the tape, not a rewritten asset — if it
+        // stopped here, the editor would filter and the exported PDF would not.
+        val el = ImageElement(
+            id = "img", transform = Transform(0.0, 0.0, 80.0, 40.0), zIndex = 0,
+            assetId = "sha256:abc", copier = true,
+        )
+        val cmd = SceneRenderer.render(page(elements = listOf(el)), pageSize, noDefaults).single() as DrawImage
+        assertEquals(true, cmd.copier)
     }
 
     @Test

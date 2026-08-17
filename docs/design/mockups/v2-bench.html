@@ -7,7 +7,192 @@
   Type: Fraunces (voice) + Inter (work); Georgia / system-sans stand in here pending real faces at parity.
   Studio iteration: H1 holding tray · H2 morphing 1->32 page-nav · H3 one 'Art' drawer · H4 maker ink palette.
   Centrepiece preserved verbatim: in-place edit + rigid-body page-pan returning pixel-identical.
-  NOT frozen. For owner critique.
+
+  AMENDED 2026-08-01 by owner ruling (D-010, OD-3 of ADR-089).  The page's shadow was the LIGHT-theme
+  value of --frame-shadow spelled out as a literal, so .page kept a warm-brown shadow on a dark desk
+  while every neighbouring surface switched to black.  Substituting --frame-shadow would have fixed the
+  dark and CHANGED THE LIGHT (one token at .28 cannot carry a two-layer .4 cast + .14 contact), so the
+  fix is a dedicated pair — --page-shadow (cast) + --page-contact (contact) — mirroring the two tokens
+  the Library already publishes for the same kind of object.  Light rendering is preserved byte-for-byte
+  (.4 / .14, unchanged); dark is re-derived, not inverted, from the Library's own dark pair.  Nothing
+  else about the freeze of 2026-07-28 is changed.  Spec first, per D-024's precedent: Compose is
+  deferred to Phase C / C1.
+
+  AMENDED 2026-08-01 by owner ruling (D-033).  The page drawn here was a stylised approximation:
+  212x326 is ratio 0.6503, while the document's real printable panel -- A4 landscape tiled 4x2 by
+  SingleSheet8Imposer, 210.4725 x 297.638 pt -- is 0.7071.  Eight percent apart.  The keep-clear was
+  a uniform 16px, which depicted no real boundary: the engine's safe area is safeAreaInsetPt = 17.0
+  (~6 mm), enforced by LayoutValidator.  A uniform inset stays uniform only on a box that shares the
+  aspect of the geometry it depicts, so the old page could not carry a truthful inset at all -- 17pt
+  on a 212x326 box needs ~17.1px sideways and ~18.6px top and bottom.  BP-4 makes this cue the whole
+  of the product's print-correctness story, so a decorative one was not acceptable.
+    .page   212x326 -> 229x324.  Ratio 0.70679, which is 0.11px off the ideal width for this height;
+            324 is 2px SHORTER than before, so the canvas budget is unchanged, and the content box
+            grows 168x282 -> 185x280, which the frozen content stack (~270px) still clears.
+    .keepclear  inset 16px -> 18.5px, uniform and truthful: 229/210.4725 = 1.08803 px/pt horizontally
+            and 324/297.638 = 1.08857 vertically, so 17pt lands at 18.496px and 18.506px -- the two
+            axes agree to 0.01px, which is what makes ONE number honest.
+  This page box is now the canonical geometry for .page, .keepclear, .guide, .pagenum, D-032's
+  intersection test, and the Compose PagePreview / SnapGuides / SelectionChrome viewport.  Content
+  insets (.content 22px) are unchanged and still sit inside the keep-clear.  Colours, shadows, type,
+  motion and script are untouched.  The Proof's .pageStage (206x300, ratio 0.6867) is a different
+  surface and is NOT amended here -- recorded as an observation on D-033 for the phase that meets it.
+
+  AMENDED 2026-08-02 by owner ruling (D-035).  The dark theme dimmed the SHEET, and the sheet is the
+  artifact.  The document's content inks are print colours and are theme-independent by design -- a
+  PDF that changed with the phone's night setting would be the worse defect -- so a dimmed sheet left
+  the user's own black text at 1.60:1 on device, while the Read/Proof screen showed the same page at
+  16.92:1.  Ruling: the artifact does not dim; the room around it may.
+    .page   becomes a LIGHT-THEME ISLAND.  The on-paper tokens are re-declared on .page itself with
+            their light values, so everything drawn on the sheet -- .keepclear, .guide, .pagenum,
+            .el/.sel/.handle, .t-title/.t-body, and the empty-state invitation Compose draws there --
+            inherits paper-coloured surroundings in BOTH themes.  No new colour is introduced: every
+            value below already exists in :root as the light theme's.  The five ADR-055 content inks
+            are untouched, and the document is not recoloured.
+    .phone  is NOT amended and still dims.  That is the ruling's other half: the studio chrome, the
+            canvas ground, the bar, the shelf and the sheet's own shadow stay dark at night.
+  Light renders byte-for-byte as before, because in light these declarations restate :root.  The
+  Proof's .page dims by the same mechanism and is NOT amended here -- it is a different frozen
+  surface, its shipped screen already keeps the sheet lit, and it is recorded on D-035 for Phase D.
+
+  AMENDED 2026-08-03 by owner ruling (D-043, OD-16).  The pan's -96px was an UNCONDITIONAL literal,
+  and it is only affordable because of a fact about this prototype rather than about the design: a
+  229x324 .page inside a 344x744 .phone leaves a band of empty canvas above the sheet for the lift to
+  spend.  The shipped Bench CONTAINS the page -- scale = min(w/pageW, h/pageH), and a portrait page is
+  height-bound -- so its slack above the sheet is not substantial, it is ~0.  Measured on SM-A176B
+  (411x891dp): page top 227px against a canvas top of 216px, i.e. 11px = 4.2dp of slack (pre-amendment round; ADR-093 s8 reconciles) against a
+  96dp demand.  The lift therefore came out of the PAGE, and on device out of the window: the sheet
+  painted over the top bar in every editing session, leaving "Preview" invisible and still clickable,
+  and an element in the top 96dp of screen was lifted out of the canvas by the gesture meant to reveal
+  it.  Ruling: -96 is a MAXIMUM, not an unconditional literal.
+    edit()  lifts by  min(96, slackAboveThePage + clearanceTheEditedContentNeeds)  instead of a flat
+            96.  Slack is the empty canvas band above the sheet; clearance is how far the edited
+            element's bottom sits below the docked .kbstack.  The number is unchanged; what changed is
+            that it is now a ceiling.
+    THE PROTOTYPE'S OWN MOTION CHANGES, and pretending otherwise would be the exact dishonesty this
+            register exists to prevent.  Derived from this file's CSS (computed, not measured in a
+            browser): .phone 744 - 20 border = 724 content; minus .status 26 (:190), .tray ~90 (:236),
+            .navrow 56 (:252) and .bar 66 (:267) leaves .canvasArea ~486.  A 324px .page centred in 486
+            has slack (486-324)/2 ~= 81.  .kbstack is .styletb (34 + 16 padding + 1 border = 51) over .kb
+            (4 rows x 34 + 3 gaps x 7 + 20 padding + 1 border = 178) ~= 229, docked at the CANVAS bottom,
+            so its top sits ~257 below the canvas top -- inside the page, which runs 81..405.
+              the TITLE, which the masthead tells the reader to double-tap: bottom well above 257, so
+                need = 0 and the lift is min(96, 81) = ~81px.  Fifteen pixels less than before.
+              the BODY text, lower down: its bottom falls past 257, so need > 15 and the lift returns to
+                the full 96px ceiling.
+            An earlier draft of this block asserted the prototype rendered "EXACTLY as before" and showed
+            no arithmetic.  It was wrong twice over -- the slack is 81 and not >=96, and editPanPx() was
+            reading the occluder off .phone when .kbstack is a child of .canvasArea.  D-033 and D-035 both
+            SHOWED their arithmetic for precisely this reason; an amendment that claims visual identity
+            without numbers is a claim nobody can check.
+    endEdit() is NOT amended.  translateY(0) still settles back pixel-identical.
+  This is the frozen geometry applied where the frozen geometry differs, not a redesign: the motion,
+  its .34s var(--settle) transition, the rigid-body property (.pageWrap moves, nothing inside it does)
+  and the settle back are all untouched.  Two consequences are recorded rather than fixed, because the
+  ruling sets 96 as the maximum: an element deep at the page bottom can still need more lift than 96
+  and keeps part of its box behind the .kbstack (the typed line clears it), and the page's top can
+  still leave the canvas when clearance is genuinely required -- which is why D-045 clips the canvas
+  to its own bounds in the same change, so what leaves the canvas is CUT rather than painted over the
+  chrome.  The two land together: either alone makes the other defect worse.
+
+  AMENDED 2026-08-04 by owner ruling (D-053, OD-22).  The .pthumb drew THREE 1px --ink-faint rules at
+  3px pitch on every interior page (the old .pthumb i, deleted below, and the <i> the filmstrip built
+  for it).  They were a DRAWING OF TEXT, appropriate while this file had no document to draw -- and
+  untrue of the product, where the shipped strip renders a LIVE MINIATURE of the real page through the
+  same SceneRenderer tape the canvas uses.  On the shipped eight-page document most pages are empty and
+  one may hold a full-bleed photo, so transcribing the rules would have drawn a claim that is false on
+  most thumbs AND removed the only place in the editor where you can see what is on another page
+  without going there.  That is D-044's class, which OD-17 settled the same way: when literal parity
+  would reduce truthful communication, amend the specification first.
+    .pthumb i  DELETED.  buildFilm() no longer creates an <i>; the thumb's interior is the page itself.
+    THE FROZEN VISUAL LANGUAGE IS PRESERVED IN FULL and is what C5 transcribes: 26x34, the asymmetric
+            1.5/3/3/1.5 radius, --paper on a --paper-edge hairline, the 2px spine (--matcha on cover and
+            back), the 0 2px 5px -2px contact shadow, the .2s var(--settle) transition, .cur's
+            scale(1.16) translateY(-2px) lift with its --matcha border and 0 9px 16px -6px shadow, the
+            4px --strawberry dot, and the .navrow / .filmstrip layout around them.  Only the INTERIOR
+            changes.
+    THE PAGE GRID IS NOT AMENDED.  .pgcell is net-new -- nothing ships that it replaces -- so it keeps
+            the frozen design exactly, numbers and Cover/Back labels included.  The ruling says so in
+            terms, and C5 does not infer the grid's interior from the strip's.
+    V2-BENCH-REVIEW.md SE.2's phrase "faint text lines" describes the treatment this amendment removes;
+            it is the historical record of the 2026-07-28 freeze and is left intact, superseded here
+            rather than rewritten.
+
+  AMENDED 2026-08-05 by owner ruling (D-059, OD-23).  This is the second half of OD-22 and was missed by it.
+  OD-22 changed what is INSIDE the sheet -- the interior became the real page -- and nobody revisited what is
+  UNDER it.  .pthumb's background stayed var(--paper), which resolves against the ROOM, and the room's dark
+  --paper is #2F2A22.  So in dark theme the miniature drew the page's content with no paper beneath it: on a
+  real document, the user's own words measured 1.21:1 against their own sheet, against 8.02:1 for the same
+  words in light.  That is exactly D-035's failure -- the one OD-12 ruled on for the canvas -- one surface
+  along, and it reached the device because the freeze's light island was scoped to .page, which a thumb is
+  not.  The ruling is OD-12's own principle applied where OD-22 moved the artifact to: THE ARTIFACT DOES NOT
+  DIM, wherever it is drawn.
+    .pthumb GAINS THE LIGHT ISLAND, restated below exactly as .page carries it at :222.  Light rendering is
+            unchanged byte-for-byte; dark stops dimming the miniature.
+    THE ROOM'S MARKS STAY THE ROOM'S.  --matcha and --strawberry are deliberately NOT restated: the spine,
+            the .cur border and the dot are marks the ROW puts ON the sheet, not ink the page carries, and
+            they must keep reading against the chrome around them.  This is the same line C1 drew when it
+            left .page's shadow to the room rather than lightening it inside the island (D-010's lesson).
+    NOTHING ELSE CHANGES.  26x34, the asymmetric radius, the spine's 2px, the contact shadow, the .2s
+            settle, .cur's lift, the dot, the .navrow / .filmstrip layout: all as OD-22 left them.
+    THE PAGE GRID IS STILL NOT AMENDED.  .pgcell draws no page content, so it has no artifact to dim.
+
+  AMENDED 2026-08-04 by owner ruling (D-047, OD-21).  The .bar drew THREE controls -- Undo, Add, Done --
+  and three accepted rulings each require something those three slots do not hold.  OD-9 keeps REDO
+  ("redo is kept"), which this file omits entirely.  OD-11 and OD-14 keep BOTH shipped add verbs, which
+  are two controls today.  And .add's own handler, openSupply() (:718), opens a chooser whose region --
+  .sheet / .supply / .opt -- belongs to C8, which OD-2 re-seated beyond Phase C.
+    THE AMENDMENT IS ONE CONTROL.  .bar becomes  Undo . Redo . Add . Done.  #redoBtn is a second
+            .icon-btn, drawn immediately after #undoBtn and, like it, `disabled` at rest -- this
+            prototype has no redo stack to drive it, and OD-9's own formula is that a control the freeze
+            draws INVENTS NOTHING.  No CSS changes: .icon-btn (:268) already sizes it, .add (:271) still
+            takes the residual width, and .bar (:267) is a flex row whose height and gap are unaffected.
+            Geometry checked rather than assumed: 44*3 + 10*3 + 32 padding = 194px fixed, leaving .add
+            ~217dp of the 411dp device this programme measures on.
+    WHAT IS NOT AMENDED, and the distinction the ruling names: releasing the chooser's Text and Photo
+            rows into C4 is a FENCE reassignment, not a capability reassignment.  The three .opt rows at
+            :720-722 stay exactly as frozen, Art included; what changes is only which package may BUILD
+            which row.  Art stays fenced behind C8 and behind V2-BENCH-REVIEW.md §E.6's legal pass.
+    doneBtn IS NOT AMENDED (D-048).  Its two frozen states at :653 stand.  While an editing session is
+            open the C3 style row's #doneEdit owns "finish" and the bar's Done is withheld using the
+            frozen .icon-btn:disabled presentation (:269) -- OD-14's own method, as C2b applied it, and
+            a state this file already draws.  With no session open the bar's Done owns "clear
+            selection", which is deselect's FIRST drawn control: OD-13 gave it a gesture, and a gesture
+            has no visible presentation for OD-14 to count.  Preview does not move.
+
+  AMENDED 2026-08-05 by owner ruling (D-028, OD-24).  The popover binds applyInk to EVERY .sw2 in all
+  three bands (:693, post-amendment addresses throughout) and applyInk sets t.style.color (:701) -- so a
+  text element could be given Cream #F1E9D6, which measures 1.21:1 on the paper this product actually
+  prints (Background.None).  Ten of the eighteen distinct swatches fall below the 3.0:1 floor D-002 ruled
+  for this product's cover titles.  THIS FILE'S OWN LABELS SAY WHY: the band is called "Paper tints"
+  (:688) and the caption calls the whole control "the maker palette -- riso spot-inks, named, in bands"
+  (:698).  And the presets
+  decode it completely -- Warm zine ends in #F1E9D6 (Cream) and Cool zine in #DDE9EE (Sky), BOTH paper
+  tints -- so a preset is [ink, accent, paper], and the uniform .sw2 binding was one handler over one
+  node list, not a design statement.  Same class as the preset's own [1] below.
+    THE INK TARGET SELECTS THE BANDS.  openInk() takes the target kind.  A TEXT target is offered
+            Inks + Neutrals (13 distinct swatches); PAPER TINTS ARE NOT DRAWN for it, because they are
+            paper, by their own label and by the presets' third slot.  Any other target keeps all
+            three.  This is OD-21's shape exactly -- A FENCE REASSIGNMENT, NOT A CAPABILITY
+            REASSIGNMENT: TINTS, bandHTML and the band's whole visual language stay frozen and intact,
+            and the band returns the moment a paper target exists.  Nothing in Phase C has one
+            (OD-2 re-seated .decor and the tray), so C6 draws two bands and no more.
+    PRESETS APPLY [0], THE PRIMARY INK.  PRESETS[i][1][1]||[0] -> PRESETS[i][1][0].  Measured on
+            paper-white, [1] is the LEAST legible colour available in all three recipes -- Strawberry
+            2.75:1, Sunflower 1.90:1, Aqua 2.56:1 -- while every [0] clears AA at 15.20, 5.17 and 7.32.
+            [1] is the accent and [2] the paper; applying the accent as the element's one ink was
+            prototype convenience of the same kind as the uniform binding above.
+    NO CONTRAST FLOOR IS IMPOSED ON IN-PAGE TEXT INK, and that is a decision, not an omission.  A riso
+            palette that clears AA is not a riso palette -- Strawberry and Sunflower ARE the medium --
+            and contrast is a property of the PAIRING, not of the swatch, on a page whose paper the
+            maker may later change.  With the tints fenced the darkest remaining risk is Fog #B7AD93
+            at 2.23:1, which is a light mark rather than an invisible one.  D-002's 3.0:1 stays where
+            it was ruled, on cover titles.  The AA gate asserts nothing on this control, on purpose.
+    NOTHING ELSE CHANGES.  .inkpop and its enter transition, h4 and its Done, .band / .bl, .swrow,
+            .sw2 with its ring, halo, :active and .sel, .presets / .preset and their overlapping dots,
+            .inkuse and its shield glyph, the selection exclusivity at :694, inkClose's restore of
+            .ctx (:697), and applyInk's writes to #editSw, flashSaved() and the buttonless 1600ms
+            snack (:702-704): all exactly as frozen.
 -->
 <style>
   :root{
@@ -18,6 +203,7 @@
     --consequence:#A6382A; --on-matcha:#fff; --accent-on-ink:#B7C47C;
     --ink-teal:#47857B; --ink-ochre:#D19A3C; --ink-straw:#E27F89; --ink-matcha:#7C8A3F;
     --phone:#F7F2E7; --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --page-shadow:rgba(58,48,32,.4); --page-contact:rgba(58,48,32,.14);
     --chrome:#FBF7EE; --chrome-line:#E4DAC6; --sheet:#FBF7EE; --scrim:rgba(42,37,30,.34);
     --serif:'Fraunces',Georgia,'Times New Roman',serif;
     --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -32,6 +218,7 @@
       --strawberry:#D98289; --strawberry-text:#E8A6AB; --strawberry-tint:#3C2C2A;
       --consequence:#E0857A; --on-matcha:#20240E; --accent-on-ink:#4C5826;
       --phone:#2F2A22; --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5);
+      --page-shadow:rgba(0,0,0,.6); --page-contact:rgba(0,0,0,.5);
       --chrome:#252017; --chrome-line:#3A332A; --sheet:#252017; --scrim:rgba(0,0,0,.5);
     }
   }
@@ -42,6 +229,7 @@
     --strawberry:#D98289; --strawberry-text:#E8A6AB; --strawberry-tint:#3C2C2A;
     --consequence:#E0857A; --on-matcha:#20240E; --accent-on-ink:#4C5826;
     --phone:#2F2A22; --phone-frame:#4A4234; --frame-shadow:rgba(0,0,0,.5);
+    --page-shadow:rgba(0,0,0,.6); --page-contact:rgba(0,0,0,.5);
     --chrome:#252017; --chrome-line:#3A332A; --sheet:#252017; --scrim:rgba(0,0,0,.5);
   }
   :root[data-theme="light"]{
@@ -51,6 +239,7 @@
     --strawberry:#E98F97; --strawberry-text:#A6474F; --strawberry-tint:#F6DAD3;
     --consequence:#A6382A; --on-matcha:#fff; --accent-on-ink:#B7C47C;
     --phone:#F7F2E7; --phone-frame:#C8BC9F; --frame-shadow:rgba(58,48,32,.28);
+    --page-shadow:rgba(58,48,32,.4); --page-contact:rgba(58,48,32,.14);
     --chrome:#FBF7EE; --chrome-line:#E4DAC6; --sheet:#FBF7EE; --scrim:rgba(42,37,30,.34);
   }
 
@@ -81,11 +270,15 @@
   .canvasArea{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
   .pageWrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     transition:transform .34s var(--settle);will-change:transform;}
-  .page{position:relative;width:212px;height:326px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:5px;
-    box-shadow:0 14px 30px -14px rgba(58,48,32,.4),0 2px 5px rgba(58,48,32,.14);}
+  /* D-035 amendment: the sheet is a light-theme island. These restate :root's LIGHT values, so light
+     is unchanged and dark stops dimming the artifact. Everything inside .page inherits them. */
+  .page{--paper:#F7F2E7;--paper-edge:#EEE6D4;--ink:#2A251E;--ink-soft:#5B5347;--ink-faint:#8C8269;
+    --matcha:#5E6B2F;--matcha-text:#4C5826;--strawberry-text:#A6474F;}
+  .page{position:relative;width:229px;height:324px;background:var(--paper);border:1px solid var(--paper-edge);border-radius:5px;
+    box-shadow:0 14px 30px -14px var(--page-shadow),0 2px 5px var(--page-contact);}
   .page::after{content:"";position:absolute;inset:0;border-radius:5px;background-image:var(--grain);
     background-size:120px 120px;mix-blend-mode:soft-light;opacity:.45;pointer-events:none;}
-  .keepclear{position:absolute;inset:16px;border:1px dashed var(--ink-faint);border-radius:3px;opacity:.32;pointer-events:none;
+  .keepclear{position:absolute;inset:18.5px;border:1px dashed var(--ink-faint);border-radius:3px;opacity:.32;pointer-events:none;
     transition:opacity .3s,border-color .3s;}
   .keepclear.warn{opacity:.9;border-color:var(--strawberry-text);}
   .guide{position:absolute;background:var(--matcha);opacity:0;transition:opacity .12s;pointer-events:none;}
@@ -139,11 +332,18 @@
   .filmstrip{flex:1;display:flex;gap:7px;overflow-x:auto;overflow-y:visible;scrollbar-width:none;padding:9px 4px;align-items:center;}
   .filmstrip::-webkit-scrollbar{display:none;}
   /* page-nav as little paper sheets — tiny printed pages resting in a row, not slider pips */
+  /* D-059 amendment (OD-23): the sheet is a light-theme island, exactly as .page is at :222 (OD-12).
+     OD-22 made the interior the real page; the ground under it was still the room's --paper, so in dark
+     theme the page's own words measured 1.21:1 against their own sheet. These restate :root's LIGHT values,
+     so light is unchanged and dark stops dimming the miniature. --matcha and --strawberry are NOT restated:
+     the spine, the .cur border and the dot are the ROW's marks on the sheet, not the page's ink. */
+  .pthumb{--paper:#F7F2E7;--paper-edge:#EEE6D4;--ink:#2A251E;--ink-soft:#5B5347;--ink-faint:#8C8269;}
   .pthumb{flex:none;width:26px;height:34px;border-radius:1.5px 3px 3px 1.5px;background:var(--paper);border:1px solid var(--paper-edge);
     cursor:pointer;position:relative;box-shadow:0 2px 5px -2px var(--frame-shadow);transition:transform .2s var(--settle),box-shadow .2s;}
   .pthumb::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--desk-edge);border-radius:1.5px 0 0 1.5px;} /* the sheet's spine edge */
   .pthumb[data-cover]::before{background:var(--matcha);}
-  .pthumb i{position:absolute;left:6px;right:4px;top:6px;height:1px;background:var(--ink-faint);opacity:.4;box-shadow:0 3px 0 var(--ink-faint),0 6px 0 var(--ink-faint),0 9px 0 var(--ink-faint);}
+  /* the thumb's interior is the page itself -- a live miniature, not a drawing of text (D-053, OD-22).
+     The prototype has no document to render, so it draws an empty sheet; the product draws the page. */
   .pthumb.cur{transform:scale(1.16) translateY(-2px);box-shadow:0 9px 16px -6px var(--frame-shadow);border-color:var(--matcha);z-index:2;} /* the one in your hand */
   .pthumb.cur::after{content:"";position:absolute;left:50%;top:-7px;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--strawberry);}
 
@@ -307,7 +507,11 @@
 
         <div class="kbstack" id="kbstack">
           <div class="styletb">
-            <button class="chip">Fraunces</button><button class="chip">A 23</button>
+            <!-- D-044 (C3): labelled by VERB, not by value. These three chips are wired to nothing, and a
+                 value display that cannot change the value must still be true — hard-coded "Fraunces"/"A 23"
+                 would misreport every element that is neither. The swatch stays a value because it is a true
+                 report, seeded from the element's own computed colour at :553. -->
+            <button class="chip">Font</button><button class="chip">Size</button>
             <button class="chip" id="editColour"><span class="sw" id="editSw" style="background:var(--ink)"></span> Ink</button>
             <span class="grow"></span><button class="done" id="doneEdit">Done</button>
           </div>
@@ -342,6 +546,7 @@
 
       <div class="bar">
         <button class="icon-btn" id="undoBtn" aria-label="Undo" disabled><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+        <button class="icon-btn" id="redoBtn" aria-label="Redo" disabled><svg viewBox="0 0 24 24"><path d="M15 14 20 9l-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
         <button class="add" id="addBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add</button>
         <button class="icon-btn" id="doneBtn" aria-label="Done"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></button>
       </div>
@@ -364,7 +569,7 @@
 
   <p class="foot">Canonical design source for the Bench (Editor). Chrome palette from <code>V2-TOKENS.md</code>; the maker
     ink palette is a separate <code>content.*</code> system. Behaviour from <code>V2-BENCH-PRINCIPLES / IA-INTERACTION / REVIEW</code>.
-    Fraunces + Inter stand in as Georgia / system-sans, pending real faces at Compose parity. Not frozen — for critique.</p>
+    Fraunces + Inter stand in as Georgia / system-sans, pending real faces at Compose parity.</p>
 </div>
 
 <script>
@@ -424,11 +629,33 @@
     cap('Rest','The page fills the screen. Gather on the shelf, tap the page to make it yours.');
   }
 
+  var EDIT_PAN_MAX=96;                                   // the freeze's number, now a ceiling (OD-16)
+  function editPanPx(){
+    var wrap=$('pageWrap'), pg=wrap.querySelector('.page'), stack=$('kbstack');
+    if(!wrap||!pg||!stack||!selNode)return EDIT_PAN_MAX;
+    // Measured at rest, before the transform is applied, so the two terms cannot chase each other.
+    var slack=Math.max(0, pg.getBoundingClientRect().top - wrap.getBoundingClientRect().top);
+    // .kbstack is offscreen until .editing lands, so derive its docked top rather than reading it.
+    // Derived from the CANVAS, not the phone: .kbstack (:402) is a child of .canvasArea (:369), whose rule
+    // is position:relative (:171), so its bottom:0 (:259) docks it at the canvas's bottom edge — about 220px
+    // above the phone's. The first cut of this function measured from the phone and put the occluder below
+    // every element on the page, which silently made `need` zero for all of them.
+    var stackTop=canvas.getBoundingClientRect().bottom - stack.offsetHeight;
+    var need=Math.max(0, selNode.getBoundingClientRect().bottom - stackTop);
+    return Math.min(EDIT_PAN_MAX, slack+need);
+  }
   function edit(){
     if(!selNode||kindOf(selNode)!=='text')return;
     ctx.classList.remove('show'); inkpop.classList.remove('show'); selNode.classList.add('editing');
     phone.classList.add('editing');
-    $('pageWrap').style.transform='translateY(-96px)';   // whole page pans up as ONE rigid body
+    // D-043 / OD-16 amendment: -96 is the MAXIMUM lift, not an unconditional one. Spend the empty
+    // band above the sheet, plus only what the edited element needs to clear the docked .kbstack.
+    // On this prototype's geometry the sum is NOT always >= 96, so the prototype's own motion
+    // changes: the title lifts ~81px (slack-limited), lower elements still reach the 96 ceiling.
+    // See the amendment note at the top of this file for the derivation. On a canvas that contains
+    // the page this is what stops the lift taking the page out of the window. Whole page still
+    // pans as ONE rigid body.
+    $('pageWrap').style.transform='translateY(-'+editPanPx()+'px)';
     var t=selNode.querySelector('.t-title,.t-body');
     $('editSw').style.background=t?getComputedStyle(t).color:'var(--ink)';
     cap('Editing · in place','You’re typing in the real text. The page leaned up as one rigid body — it never reflowed. “Done” settles it back.');
@@ -456,13 +683,17 @@
     PRESETS.forEach(function(p){var d='';p[1].forEach(function(c){d+='<span style="background:'+c+'"></span>';});
       pres+='<button class="preset"><span class="dots">'+d+'</span>'+p[0]+'</button>';});
     pres+='</div></div>';
+    // D-028 / OD-24 amendment: the ink TARGET selects the bands.  Paper tints are paper -- by their own
+    // label, and by the presets' third slot -- so they are not offered as a text element's one ink.
+    var tints=kindOf(selNode)==='text'?'':bandHTML('Paper tints',TINTS);
     inkpop.innerHTML='<h4>Ink <button id="inkClose">Done</button></h4>'+
-      bandHTML('Inks',INKS)+bandHTML('Paper tints',TINTS)+bandHTML('Neutrals',NEUT)+pres+
+      bandHTML('Inks',INKS)+tints+bandHTML('Neutrals',NEUT)+pres+
       '<div class="inkuse"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/></svg> Zines look best — and print cheapest — with 1–3 inks. This one uses 2.</div>';
     ctx.classList.remove('show'); inkpop.classList.add('show');
     inkpop.querySelectorAll('.sw2').forEach(function(sw){sw.onclick=function(){applyInk(sw.getAttribute('data-ink'),sw.getAttribute('data-name'));
       inkpop.querySelectorAll('.sw2').forEach(function(x){x.classList.remove('sel');});sw.classList.add('sel');};});
-    inkpop.querySelectorAll('.preset').forEach(function(p,i){p.onclick=function(){var c=PRESETS[i][1][1]||PRESETS[i][1][0];applyInk(c,PRESETS[i][0]);};});
+    // D-028 / OD-24 amendment: a preset is [ink, accent, paper]; the element takes [0], the PRIMARY ink.
+    inkpop.querySelectorAll('.preset').forEach(function(p,i){p.onclick=function(){applyInk(PRESETS[i][1][0],PRESETS[i][0]);};});
     $('inkClose').onclick=function(e){e.stopPropagation();inkpop.classList.remove('show');if(selNode)ctx.classList.add('show');};
     cap('Selected · Ink','The maker palette — riso spot-inks, named, in bands. Separate from the app’s own colours; the chrome stays quiet so your ink reads true.');
   }
@@ -551,7 +782,7 @@
     for(var i=1;i<=NP;i++){(function(i){
       var p=document.createElement('div'); p.className='pthumb'+(i===cur?' cur':''); if(i===1||i===NP)p.setAttribute('data-cover','');
       p.setAttribute('role','button'); p.setAttribute('aria-label','Page '+i+' of '+NP+(i===1?' (front cover)':i===NP?' (back)':''));
-      if(i!==1&&i!==NP)p.innerHTML='<i></i>';
+      /* interior: the real page, rendered (D-053, OD-22).  Nothing to draw in the prototype. */
       p.onclick=function(e){e.stopPropagation();setPage(i);}; film.appendChild(p);
     })(i);}
   }
