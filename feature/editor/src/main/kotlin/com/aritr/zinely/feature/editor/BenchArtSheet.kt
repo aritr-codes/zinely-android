@@ -3,6 +3,8 @@ package com.aritr.zinely.feature.editor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +31,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -529,7 +532,23 @@ private fun BenchArtTile(
                 if (authored) {
                     Modifier.clickable(interactionSource = interaction, indication = null, onClick = pick)
                 } else {
-                    Modifier
+                    // ⚠ Inert must still be *hittable*. Found by the S7 wiring test the moment the sheet
+                    // gained a production call site: a tile with no pointer-input node at all is not in the
+                    // hit path, so the touch fell through to [ZSheet]'s full-screen scrim **sibling**,
+                    // whose `clickable` is `onDismiss` — tapping any of the twelve closed the cabinet. From
+                    // the maker's chair that is *"Not yet"* answered by the app leaving the room, which is
+                    // a worse sentence than the one the tile is trying to say.
+                    //
+                    // It observes the gesture and **consumes nothing**: consuming the down would win the
+                    // drag away from any ancestor scroll, and twelve of sixteen tiles that cannot be
+                    // scrolled past would be the next defect. Being in the hit path is the whole fix.
+                    //
+                    // This is not a click: no `clickable`, no `onClick` semantics, nothing an accessibility
+                    // service can activate. The platform-tree assertion in `BenchArtSheetPlatformA11yTest`
+                    // is what holds that line.
+                    Modifier.pointerInput(Unit) {
+                        awaitEachGesture { awaitFirstDown(requireUnconsumed = false) }
+                    }
                 },
             )
             .testTag(testTag)

@@ -463,9 +463,10 @@ public object Copy {
     }
 
     /**
-     * The bar's Add chooser (`BenchAddChooser.kt`, `v2-bench.html:719-721`; ADR-094). Two rows only — Art
-     * stays fenced per OD-2 and ADR-105's sequencing (C8, named here in an earlier draft, does not exist) — and each row's spoken label is [optionLabel], one target rather
-     * than three fragments.
+     * The bar's Add chooser (`BenchAddChooser.kt`, `v21-bench.html:826-829`; ADR-094). **All three rows**
+     * as of ADR-105 step S7 — the freeze's own narration is *"Add stays three verbs — Text · Photo ·
+     * Art"*, and the fence that held `Art` back was that nothing could be taken out of the cabinet. Each
+     * row's spoken label is [optionLabel], one target rather than three fragments.
      */
     public object AddChooser {
         public const val TITLE: String = "Add to your page"
@@ -473,6 +474,11 @@ public object Copy {
         public const val TEXT_SUBTITLE: String = "Type words onto the page"
         public const val PHOTO_TITLE: String = "Photo"
         public const val PHOTO_SUBTITLE: String = "From your phone — it never leaves the device"
+
+        /** The frozen `Art` row (`v21-bench.html:829`), title and subtitle verbatim. */
+        public const val ART_TITLE: String = "Art"
+        public const val ART_SUBTITLE: String = "Tape, stamps and cut paper"
+
         public fun optionLabel(title: String, subtitle: String): String = "$title. $subtitle"
     }
 
@@ -494,6 +500,15 @@ public object Copy {
      */
     public object Snack {
         public fun deleted(label: String): String = "$label deleted."
+
+        /**
+         * The frozen `toast('Placed on the page',true)` an Art tile raises (`v21-bench.html:862`).
+         *
+         * No full stop, unlike [deleted]: the freeze writes neither, and this one is a label on a thing
+         * that just happened rather than a sentence about it. `undoable=true` is why the snack carries
+         * the `Undo` action — the placement is one command, so one press takes it back.
+         */
+        public const val PLACED: String = "Placed on the page"
     }
 
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */

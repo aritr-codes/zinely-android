@@ -616,6 +616,37 @@ dropped at page centre — and Pass 2 is where "restrained" and "unfinished" get
 wide. This is the app supplying *craft knowledge about the material*, not making a compositional decision,
 which is exactly the line §5.1 draws. It costs one constant per family.
 
+#### ✓ RULING — 2026-08-16: four family constants **plus exactly one named override**, and the numbers {#s-5-2-ruling}
+
+*Ruled by the implementer under the standing owner delegation, on the [D-082](V2-SPEC-DEFECTS.md#d-082-rulings) precedent.*
+
+**This section contradicted itself and S7 found it by trying to obey it.** The ruling sentence says *one
+constant per **family***; its own three examples end with *"a rule lands wide"* — and `shape.rule` is a
+**member** of *Cut shapes*, not a family. You cannot implement both sentences.
+
+S7's first pass implemented the ruling and dropped the example, leaving the rule square. That was the wrong
+half to drop, for a reason worth keeping: **Cut shapes is the only family production can currently reach**,
+so the spec's single reachable example was the one thing the implementation got visibly wrong. A rule that
+lands as a square is not a rule.
+
+**So: per-family defaults, plus one named override, pinned by a test to exactly one entry** — the test is
+the load-bearing half, because an override map with no cap is just per-supply sizing with extra steps, and
+per-supply sizing is what §5.2 exists to refuse.
+
+| Family | Width (fraction of page) | Aspect | Reading |
+|---|---|---|---|
+| **Tape & fixings** | 0.55 | 4.5 | lands long |
+| **Stamps & marks** | 0.16 | 1.0 | lands small |
+| **Cut paper** | 0.45 | 1.0 | lands as a piece of paper |
+| **Cut shapes** | 0.30 | 1.0 | lands as a shape |
+| *override* `shape.rule` | 0.70 | 5.0 | lands wide — §5.2's own example |
+
+Plus a clamp at 0.6 of page height, so a landing can never exceed the page it lands on.
+
+⚠ **The numbers are an implementation reading, not a measurement.** §5.2 gave three adjectives and no
+figures. These are defensible and they are unverified: nobody has yet seen a supply land on a real screen.
+**Pass 2 is what settles them**, and the day it does, this table is the thing to edit.
+
 ---
 
 ## 6. The maker's own materials
@@ -764,7 +795,7 @@ page, diffing PDF operators, settles it.
 | **S4** | ⏳ **Stubbed, not done.** `CanvasReplayer` matches `DrawShape` and draws nothing, deliberately and visibly. This is P3 and it is the next thing. |
 | **S5** | ⏳ **4 of 16.** The *Cut shapes* quarter shipped early — that family is derivable geometry (rect, circle, triangle, rule) needing no house style, so it could be engineer-authored without pre-empting a designer. The **twelve remain gated on O-B/O-C** and are the hand-drawn ones; `outlineOf()` returns `null` for each. |
 | **S6** | ✅ Shipped. Sixteen names in `core:copy`, five documented departures from §4's prose. |
-| **S7 / S7′** | 🟡 **Partly landed (P-G).** The **Art sheet** exists — sixteen tiles, four headings, twelve inert ([ADR-105 amendment](../DECISIONS.md#adr-105), [D-086](V2-SPEC-DEFECTS.md#d-086)) — and the `INK` **routing** defect is fixed: `EditorScreen` now derives `inkPopoverVisible = inkPopoverOpen && inkTarget != null`, with all five consumers reading the derived value, so the stranded empty-popover state is **unconstructible** rather than guarded at one entry. The verb stays disabled. ⚠ The *trigger* is still unexercisable for decor precisely because that verb is disabled — the fix is pinned by construction and by the live text path, not by a decor tap. **Still owed:** the placement `Intent`, per-family default scale (§5.2), the Add chooser's Art row, and S7′'s silent seams. |
+| **S7 / S7′** | 🟡 **Partly landed (P-G).** The **Art sheet** exists — sixteen tiles, four headings, twelve inert ([ADR-105 amendment](../DECISIONS.md#adr-105), [D-086](V2-SPEC-DEFECTS.md#d-086)) — and the `INK` **routing** defect is fixed: `EditorScreen` now derives `inkPopoverVisible = inkPopoverOpen && inkTarget != null`, with all five consumers reading the derived value, so the stranded empty-popover state is **unconstructible** rather than guarded at one entry. The verb stays disabled. ⚠ The *trigger* is still unexercisable for decor precisely because that verb is disabled — the fix is pinned by construction and by the live text path, not by a decor tap. **S7-placement then closed the loop:** `Intent.PlaceSupply`, the [§5.2 scale ruling](#s-5-2-ruling), the Add chooser's **Art row released**, and the sheet wired so an authored tile places and an inert tile stays a no-op. **Still owed:** S7′'s silent seams — two of which S7-placement found by mutation and fixed (`benchDeleteLabel` said *"Photo deleted."* for a supply; `benchInkCount` under-counted the print cost). |
 | **S8** | ✅ Shipped with S2. |
 | **S9** | ⏳ Not started, and it cannot start until S4 puts ink on the page. |
 

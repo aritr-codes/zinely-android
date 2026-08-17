@@ -52,6 +52,21 @@ class CopyNoProseLiteralTest {
             // from the cause; this fails at the point the mistake is made. Never rendered, never
             // announced, unreachable from any user action. Not copy.
             "a preset with no colours cannot be applied",
+            // `BenchArtTile`'s two `requireNotNull{ … }` messages (ADR-105 S6) — construction invariants
+            // on the *developer's* side of the Art sheet: a supply id the copy layer does not name, or one
+            // the freeze draws no glyph for, is a programming error in this repository, not a runtime
+            // condition. Both fail before anything is drawn, so no user can reach either. Not copy.
+            //
+            // ⚠ These two are **pre-existing** — they arrived with S6/P3 and this guard was already red on
+            // `feat/supplies-p3-art-sheet` before S7-placement touched it. Allowlisted, not repaired: they
+            // are correct where they are, and the red was a missing allowlist entry rather than a defect.
+            "\$supplyId has no name in Copy.Supplies — the Art sheet must never speak a supplyId",
+            "\$supplyId has no frozen glyph — the Art sheet draws the freeze's sixteen and invents none",
+            // `benchSupplyPlacement`'s `requireNotNull{ … }` (SUPPLIES-SPEC §5.2, S7) — the same class: an
+            // id in no family has no default size, and the only caller iterates the very map this reads.
+            // A silent fallback size would be the app inventing craft knowledge it does not have, so it
+            // throws; the message is for whoever wrote the bad id, never for a maker. Not copy.
+            "\$supplyId is in no family in Copy.Supplies.BY_FAMILY — a supply has no default size without one",
         )
 
         /** Enrolled roots/files, relative to the repo root — the §C9 "Editor, Shelf and Proof sources; nav host". */

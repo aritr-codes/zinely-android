@@ -29,6 +29,7 @@ import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -335,6 +336,34 @@ class BenchC6Test {
         )
         assertEquals(2, benchInkCount(pages))
         assertEquals(0, benchInkCount(listOf(Page(index = 0, role = PageRole.INTERIOR))))
+    }
+
+    /**
+     * A placed supply is a **spot ink** and is counted (ADR-105 S7; independent review). SUPPLIES-SPEC §2
+     * makes a supply an outline laid down in one colour precisely so this is true, and `SceneRenderer`
+     * draws it as one — so black text plus three berry stars is a two-ink job, not a one-ink job.
+     *
+     * The fixture uses `shape.circle`, an **authored** supply: a decor assertion whose fixture names one of
+     * the twelve unauthored ids can pass while proving nothing, because such a supply reaches no ink on any
+     * surface. Mutation: drop the `DecorElement` arm from `benchInkCount` and this reads 1.
+     */
+    @Test
+    fun the_ink_note_counts_a_placed_supplys_ink_as_a_spot_ink() {
+        val ink = ColorRgba(0x2A, 0x25, 0x1E)
+        val berry = ColorRgba(0xE2, 0x7F, 0x89)
+        val star = DecorElement(
+            id = "d1",
+            transform = Transform(0.0, 0.0, 10.0, 10.0),
+            supplyId = "shape.circle",
+            ink = berry,
+        )
+        val pages = listOf(
+            Page(index = 0, role = PageRole.INTERIOR, elements = listOf(text("1", ink))),
+            Page(index = 1, role = PageRole.INTERIOR, elements = listOf(star)),
+        )
+        assertEquals(2, benchInkCount(pages))
+        // …and a supply sharing the text's ink is still one ink, so this counts colours and not elements.
+        assertEquals(1, benchInkCount(listOf(pages[0], Page(1, PageRole.INTERIOR, elements = listOf(star.copy(ink = ink))))))
     }
 
     private fun text(id: String, color: ColorRgba) = TextElement(

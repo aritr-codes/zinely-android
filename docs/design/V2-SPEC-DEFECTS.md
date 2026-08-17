@@ -5426,3 +5426,57 @@ screen wants me to do?* The answer requires a person who does not know why the t
 disabling it — *absent, not disabled*. P-G does the opposite for the tiles. The distinguishing principle
 offered is that the freeze **specifies these sixteen tiles** while it specifies no Art-row obligation. That
 is defensible and it is not yet ruled.
+
+---
+
+### D-087 — any non-interactive part of a `ZSheet` dismisses it, because the scrim is a sibling {#d-087}
+
+| | |
+|---|---|
+| **Artifacts** | `core/ui`'s `ZSheetSurface` / `ZSheet` scrim · `feature/editor/.../BenchArtSheet.kt` (patched locally) |
+| **Found** | 2026-08-16, package **S7-placement** — and only because the Art sheet finally got a production call site |
+| **Severity** | **Live interaction defect**, pre-existing and general. Symptom fixed on the Art sheet's inert tiles; the cause is untouched |
+| **Status** | ⏳ **OPEN** — needs a root-cause fix in `ZSheetSurface` |
+
+**The defect.** A composable with no pointer-input node is not in the hit path, so a touch on it falls
+through to the sheet's full-screen scrim **sibling**, whose `clickable` is `onDismiss`. On the Art sheet
+that meant **twelve of the sixteen tiles closed the whole cabinet when tapped** — the app answering *"not
+yet"* by leaving the room. It generalises: a sheet title, the padding between chooser rows, any inert
+region of any `ZSheet` currently dismisses it.
+
+**The local fix, and why it is only local.** `BenchArtTile` gained an **observing, non-consuming**
+`pointerInput` — non-consuming deliberately, since consuming the down event would steal the drag from any
+ancestor scroll. That stops the fall-through on twelve tiles. **Every other inert region of every other
+sheet still has it.**
+
+**Why no test caught it, which is the transferable part.** `BenchArtSheetTest` passes `onDismiss = {}`. The
+dismissal fired, invoked a no-op, and the assertions all passed — the defect was *invisible while the sheet
+had no call site*, and became visible the hour it got one. **A component tested only in isolation cannot
+fail the way it will fail in the app**, and a stub for the one collaborator that matters is where that
+blindness hides.
+
+**Deferred rather than fixed here** because the root cause interacts with a decision nobody has made: how a
+scrim should behave under a future **scrolling** sheet body. Fixing it blind would prejudge that.
+
+---
+
+### D-088 — the Art row ships Photo's glyph, verbatim and on purpose {#d-088}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchAddChooser.kt` · `docs/design/mockups/v21-bench.html:828-829` · [D-080](#d-080) · D-051 / OD-26 |
+| **Found** | 2026-08-16, package **S7-placement**, while adding the Add chooser's Art row |
+| **Severity** | Cosmetic, inherited from the frozen file. Two chooser rows now carry the same icon |
+| **Status** | ✅ **Ruled — carried forward, no implementation change** (consistent with D-051 / OD-26) |
+
+The frozen mockup gives the **Art** row at `:829` the **byte-identical** SVG it gives **Photo** at `:828`.
+S7 first drew a star instead, reasoning that the duplicate was obviously an authoring slip.
+
+**That was reverted, and the reason is the interesting part.** [D-080](#d-080) says an implementer cannot
+invent a missing glyph, and D-051 / OD-26 already ruled *this exact defect* on *this exact chooser* —
+carried forward, no implementation change — which the **Photo row above it already honours**. Drawing a
+star would have obeyed the ruling on one row and overruled it on the row directly beneath. *Consistency
+with a known-imperfect spec beats a local improvement that makes the spec's own record incoherent.*
+
+⚠ **[D-080](#d-080) should be read with this entry**: a reader of D-080 could reasonably assume Compose had
+diverged. It has not. The duplicate ships.

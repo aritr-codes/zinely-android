@@ -34,8 +34,10 @@ import com.aritr.zinely.core.model.Transform
  *   the existing "absent ⇒ no-op" branch runs. These are left as casts on purpose: adding a decor arm
  *   would mean inventing a behaviour the spec does not give them.
  *
- * Decor's own verbs — Replace supply and Change ink (SUPPLIES-SPEC §8) — are **not** in this reducer
- * yet; they arrive with the Art sheet (S7). Nothing here pretends otherwise.
+ * **Placement landed with S7** ([Intent.PlaceSupply]) — a supply now enters the document the same way a
+ * text box does. Decor's two *editing* verbs — Replace supply and Change ink (SUPPLIES-SPEC §8) — are
+ * still **not** in this reducer, and `benchContextVerbs` ships both disabled. Nothing here pretends
+ * otherwise.
  */
 public object EditorReducer {
 
@@ -68,6 +70,20 @@ public object EditorReducer {
             val placed = intent.element.copy(id = id, zIndex = nextZ(model), fit = Fit.FILL)
             committing(model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
                 PlaceCommand(model.currentPageIndex, placed))
+        }
+        is Intent.PlaceSupply -> {
+            val id = "el-${model.nextToken}"
+            val el = DecorElement(
+                id = id,
+                transform = intent.transform,
+                zIndex = nextZ(model),
+                supplyId = intent.supplyId,
+                ink = intent.ink,
+            )
+            committing(
+                model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
+                PlaceCommand(model.currentPageIndex, el),
+            )
         }
         is Intent.BeginEditText -> openTextSession(model, intent.id)
         is Intent.BeginEditTextAt -> openTextSession(model, HitTest.topmostAt(currentPage(model), intent.pagePoint))

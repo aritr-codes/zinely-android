@@ -48,6 +48,7 @@ public const val BenchAddChooserTestTag: String = "bench-add-chooser"
 /** Per-row test tags. */
 public const val BenchAddChooserTextTag: String = "bench-add-chooser-text"
 public const val BenchAddChooserPhotoTag: String = "bench-add-chooser-photo"
+public const val BenchAddChooserArtTag: String = "bench-add-chooser-art"
 
 /** The frozen sheet title (`v21-bench.html:772`). */
 public const val BenchAddChooserTitle: String = Copy.AddChooser.TITLE
@@ -59,6 +60,10 @@ public const val BenchAddTextSubtitle: String = Copy.AddChooser.TEXT_SUBTITLE
 /** The frozen `Photo` row (`v21-bench.html:774`), title and subtitle verbatim. */
 public const val BenchAddPhotoTitle: String = Copy.AddChooser.PHOTO_TITLE
 public const val BenchAddPhotoSubtitle: String = Copy.AddChooser.PHOTO_SUBTITLE
+
+/** The frozen `Art` row (`v21-bench.html:829`), title and subtitle verbatim. */
+public const val BenchAddArtTitle: String = Copy.AddChooser.ART_TITLE
+public const val BenchAddArtSubtitle: String = Copy.AddChooser.ART_SUBTITLE
 
 /** Frozen `.supply{gap:var(--gap-sm)}` (`v21-bench.html:370`) — 8, unchanged from V2. */
 internal val BenchOptGap = ZinelyV21Dimens.gapSm
@@ -116,27 +121,54 @@ internal val BenchOptSubtitleSize = 11.68.sp
  * of its three rows; [ADR-094](../../../../../../../../docs/DECISIONS.md#adr-094) rows 4.4a–4.4d, re-skinned
  * to V2.1 by [ADR-102](../../../../../../../../docs/DECISIONS.md#adr-102) package P4.
  *
- * ### Why two rows and not three
+ * ### Why three rows now, when two was right before
  *
  * The freeze narrates its own intent at `v21-bench.html:834` — *"Add stays three verbs — Text · Photo ·
  * Art."* [OD-21](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling) released **only Text
- * and Photo** into C4 and left `Art` where OD-2 put it.
+ * and Photo** into C4, and this file held `Art` back on a reason that was never "the freeze doesn't ask for
+ * it": *a control that reports truthfully and then does nothing when tapped invites the press harder than a
+ * blank one does* (C3's Pass 2). A row that led nowhere would have been that control, so **absent, not
+ * disabled** was the honest state while `DecorElement` did not exist.
  *
- * ⚠ **Both fences named in the first draft of this KDoc have since moved, and neither moved in Compose's
- * favour.** *"Behind C8"* is stale — there is no C8 (`COMPOSE-V2-ROADMAP.md`), and the live fence is OD-2's
- * re-seating plus [ADR-105](../../../../../../../../docs/DECISIONS.md#adr-105) D-4, which puts the
- * photocopier filter **ahead** of the supplies. [V2-BENCH-REVIEW §E.6](../../../../../../../../docs/design/V2-BENCH-REVIEW.md)'s
- * legal pass is **discharged** (ADR-104 is `Accepted`), so the licensing reason for the fence is gone while
- * the model reason is not: `DecorElement`, `DrawShape` and `AffineTransform2D.scale` do not exist, and the
- * sixteen supplies are named in prose and drawn nowhere. The ruling's
- * own words for this are *"a fence reassignment, not a capability reassignment"*: the frozen markup still
- * has three rows, and what changed is which package may build which one.
+ * **That reason has expired, and it expired on the merits rather than on a schedule.** `DecorElement` is in
+ * the model, `DrawShape` is emitted by `SceneRenderer` and painted by `CanvasReplayer`, `Intent.PlaceSupply`
+ * places one, and [BenchArtSheet] is the frozen cabinet. Tapping `Art` now opens a drawer a maker can take
+ * something out of — the row is live, not truthful-and-inert, so the sentence that kept it out no longer
+ * describes it.
  *
- * The `Art` row is therefore **absent, not disabled**. Drawing it inert would have precedent —
- * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling)'s *drawn and invents nothing* —
- * but C3's own Pass 2 produced this programme's sharpest sentence against exactly that pattern: a control
- * that reports truthfully and then does nothing when tapped invites the press harder than a blank one does.
- * A row that does not exist yet promises nothing; the phase that lands `DecorElement` adds it.
+ * ### The four-of-sixteen question, argued rather than assumed
+ *
+ * Only the *Cut shapes* family has authored outlines; the other twelve tiles are drawn inert inside the
+ * sheet ([BenchArtSheet], OD-9). It is fair to ask whether the row should wait for the twelve. It should
+ * not, for three reasons and one that decides it:
+ *
+ *  - The inertness is **one level down**. This row's promise is *"tape, stamps and cut paper live here"*,
+ *    and that is true: the sheet shows all sixteen under §4's four headings, names each one, and says
+ *    *"Not yet"* on the twelve it cannot lay down. Nothing here over-promises.
+ *  - Withholding it makes the four that *do* work unreachable — the placement path would ship with no
+ *    production call site at all, which is the state this package exists to end.
+ *  - The alternative failure is worse and less recoverable: a maker who never learns the drawer exists
+ *    cannot ask for the twelve.
+ *
+ * ⚠ What is **not** settled here is whether twelve dim tiles out of sixteen is an acceptable first
+ * impression. [BenchArtSheet] already flags that for Pass 2, and adding this row is what finally puts a
+ * first-time maker in front of it. If Pass 2 rejects the sheet, this row is the fence to re-raise.
+ *
+ * ⚠ **The row wears `Photo`'s glyph, because the freeze does — and that is a known defect, not a design.**
+ * `v21-bench.html:829` draws `Art` with the *identical* `<rect>`-plus-horizon picture mark it gives `Photo`
+ * one line above (`:828`) — byte-for-byte the same SVG children. Two adjacent rows wearing one icon is a
+ * transcription of a copy-paste.
+ *
+ * An earlier draft of this package drew the frozen file's own `DECOR.star` (`:641`) instead and called it
+ * an accessibility-class defect fix. **Independent review rejected that, correctly.** `D-080` files this
+ * defect and says in terms that *an implementer cannot invent the missing glyph: it is drawn material in a
+ * frozen file*; `D-051` is the identical defect one row up and was ruled **OD-26** — *carried forward, no
+ * implementation change, no frozen-spec amendment* — which is exactly what the `Photo` row above honours.
+ * Drawing a star here would have made one `Column` obey the ruling on one row and overrule it on the next.
+ * CLAUDE.md settles the general case anyway: a UX change after freeze updates the HTML **first**.
+ *
+ * So the duplicate ships, visibly, until the amendment lands. The star is the better design answer and it
+ * is the owner's to grant.
  *
  * ### Why the sheet is [ZSheet] and not a new surface
  *
@@ -151,9 +183,13 @@ internal val BenchOptSubtitleSize = 11.68.sp
  * freeze says the same thing in its own narration (*"a new text block drops in ready to edit"*),
  * so the frozen design and the shipped flow already agreed before this package existed. OD-21 requires that
  * reuse **by name**, precisely so C3's in-place editing model survives C4 untouched. `Photo` dispatches
- * `Intent.RequestAddImage`, the same intent the retired shelf sent to the same picker.
+ * `Intent.RequestAddImage`, the same intent the retired shelf sent to the same picker. `Art` hands off to
+ * [BenchArtSheet], which is the frozen `openArt()`.
  *
  * @param visible whether the sheet is open.
+ * @param onAddArt open the Art sheet. Like the other two it is called **after** [onDismiss], so exactly one
+ *   sheet is on screen at a time — the freeze swaps `#sheet`'s own `innerHTML` and so cannot make the
+ *   mistake two Compose `Dialog`s can.
  */
 @Composable
 internal fun BenchAddChooser(
@@ -161,6 +197,7 @@ internal fun BenchAddChooser(
     onDismiss: () -> Unit,
     onAddText: () -> Unit,
     onAddPhoto: () -> Unit,
+    onAddArt: () -> Unit,
 ) {
     ZSheet(visible = visible, onDismiss = onDismiss, title = BenchAddChooserTitle) {
         Column(
@@ -192,6 +229,20 @@ internal fun BenchAddChooser(
                 subtitle = BenchAddPhotoSubtitle,
                 testTag = BenchAddChooserPhotoTag,
                 onClick = { onDismiss(); onAddPhoto() },
+            )
+            // ⚠ The SAME picture mark the `Photo` row wears, transcribed from `v21-bench.html:829`
+            // verbatim. See the KDoc: this is a known freeze defect (D-080), and D-051/OD-26 ruled the
+            // identical defect one row up as *carried forward, no implementation change*. The star this
+            // row wants is an amendment's to grant, not an implementer's to draw.
+            BenchAddOption(
+                icon = ZinelyV2Icons.Art.toImageVector(
+                    BenchOptGlyphSize,
+                    ZinelyV2IconPaint.Stroke(BenchOptStroke),
+                ),
+                title = BenchAddArtTitle,
+                subtitle = BenchAddArtSubtitle,
+                testTag = BenchAddChooserArtTag,
+                onClick = { onDismiss(); onAddArt() },
             )
         }
     }

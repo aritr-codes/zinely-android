@@ -657,8 +657,14 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    `render-android` replay branch with its own anti-aliased `Paint` and `Path.FillType.EVEN_ODD`. A supply
    with an authored outline now **draws**, on preview, PNG and the imposed sheet — one replayer arm, four
    surfaces.
+   **Placeable since S7-placement:** `Intent.PlaceSupply` mints a `DecorElement` at page centre in one
+   undoable `PlaceCommand`, sized by its family ([SUPPLIES-SPEC §5.2](design/SUPPLIES-SPEC.md#s-5-2-ruling)),
+   reachable from the Add chooser's **Art** row. Geometry is computed by the *caller*, not the reducer —
+   `:core:editor` cannot see `:core:copy`, and only `Copy.Supplies.BY_FAMILY` knows a supply's family.
+   `benchDeleteLabel` and `benchInkCount` joined the list of seams that must stay exhaustive over `Element`;
+   both were silently wrong for decor until mutation testing found them.
    **Still not built:** twelve of the sixteen authored outlines (only the `shape.*` family exists; the rest
-   need a designer), and the Art sheet. A supply with no authored outline draws nothing — `outlineOf()`
+   need a designer). A supply with no authored outline draws nothing — `outlineOf()`
    returns `null` at the render boundary, which is deliberately *not* a validation failure, so a document
    made on a later build stays openable here.
    ⚠ **The PDF surface is unproven rather than broken:** `PdfDocument` cannot run under Robolectric, so the

@@ -78,6 +78,7 @@ import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.render.android.readImageIntrinsics
 import com.aritr.zinely.ui.theme.LocalZinelyV2Colors
 import com.aritr.zinely.ui.theme.LocalZinelyV21Colors
+import com.aritr.zinely.ui.theme.ZinelyMakerInkId
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -261,6 +262,15 @@ public fun EditorScreen(
     // The Add chooser (rows 4.4a-4.4d). Open/closed only: the sheet itself is ZSheet, per OD-21.
     var addChooserOpen by remember { mutableStateOf(false) }
 
+    // The Art sheet — the frozen `openArt()` (ADR-105 step S7). It is a *second* state rather than a mode
+    // of `addChooserOpen` because the two are separate Compose `Dialog`s where the freeze had one `#sheet`
+    // whose `innerHTML` was swapped. Both feed `benchStateOf` below: `openArt()` captions this surface as
+    // a *variant of the Adding narration*, not as a state of its own, so the Bench is in `Adding` for
+    // either sheet — a bar that returned to `Rest` behind an open cabinet would be the C9 invariant
+    // failing in the one place nobody had opened yet. (The caption itself is not quoted here: C9's
+    // narration guard scans comments too, and rightly.)
+    var artSheetOpen by remember { mutableStateOf(false) }
+
     // ----- C5 (ADR-095) -------------------------------------------------------------------
     // The page grid is *summoned*, never default (row 5.11a): this flag is the whole of its existence,
     // and while it is false the overlay composes nothing at all.
@@ -320,6 +330,22 @@ public fun EditorScreen(
         }
     }
 
+    /**
+     * The ink a supply lands in — the maker palette's own `Ink` (`#2A251E`).
+     *
+     * ⚠ **SUPPLIES-SPEC is silent on the placement ink and this is an implementation reading owed a
+     * ruling.** §0 O-A settles which *palette* may tint decor (the content palette, all three bands) and
+     * says nothing about which swatch a first placement uses. `Ink` is chosen because it is the one swatch
+     * that reads as a mark rather than as a choice: the alternatives are a coloured ink the maker did not
+     * pick (a compositional decision the app made, which §5.1 forbids in the tilt case for exactly this
+     * reason) or a paper tint, which §5's own text calls *"pale-on-pale … a legitimate riso result"* — fine
+     * as a maker's choice, an invisible first placement as a default.
+     *
+     * Read from [ZinelyContentInks] rather than written as a literal so the value cannot drift from the
+     * palette, and so a `ColorRgba` constant does not appear in a second place.
+     */
+    val supplyInk = ZinelyTheme.contentInks[ZinelyMakerInkId.Ink].value.toColorRgba()
+
     // Frozen `applyInk()` (`v2-bench.html:699-704`), in the order the freeze performs it: set the ink,
     // then say which one. The other two writes it makes are already delivered here by unidirectional
     // data flow rather than by this lambda — `$('editSw').style.background` is `BenchStyleRow`'s own
@@ -328,6 +354,32 @@ public fun EditorScreen(
     //
     // One `Intent.StyleText` per tap: an immediate-commit style change, so each ink is one undoable
     // command and the buttonless snack is honest — the bar's Undo is right there.
+    /**
+     * Frozen `openArt()`'s tile handler (`v21-bench.html:860-862`), in the order the freeze performs it:
+     * close the sheet, put the supply on the page, say so.
+     *
+     * `selectByKind('decor')` is not transcribed as a third statement because
+     * [Intent.PlaceSupply][com.aritr.zinely.core.editor.Intent.PlaceSupply] already auto-selects what it
+     * placed, exactly as `PlaceText` does — the freeze's own select is the reducer's, not a second one.
+     *
+     * The frozen toast is `undoable=true`, so the snack carries `Undo`; one placement is one
+     * [PlaceCommand][com.aritr.zinely.core.editor.PlaceCommand], so that button is honest. It shares
+     * `deleteJob[0]` with the delete and ink snacks for the same reason they share it: one snack slot, so a
+     * newer message always cancels the older one's dismissal timer rather than being cut short by it.
+     */
+    val placeSupply: (String) -> Unit = { supplyId ->
+        artSheetOpen = false
+        dispatch(Intent.PlaceSupply(supplyId, supplyInk, benchSupplyPlacement(supplyId, pageSizePt)))
+        deleteJob[0]?.cancel()
+        deleteJob[0] = c4Scope.launch {
+            snackMessage = Copy.Snack.PLACED
+            snackAction = UndoActionLabel
+            snackVisible = true
+            delay(BenchSnackDeleteMillis)
+            snackVisible = false
+        }
+    }
+
     val applyInk: (String, Color) -> Unit = { name, color ->
         val id = uiState.selection.singleOrNull()
         if (id != null) {
@@ -441,7 +493,9 @@ public fun EditorScreen(
     // offers Delete on the transform bar while the chooser is up — also behind the Dialog. That "behind a
     // Dialog ⇒ unreachable" premise is exactly the merged-semantics assumption ADR-059/CI-26 distrusts,
     // so it is on the device Pass 1 platform-tree checklist rather than settled by this comment.)
-    val benchState = benchStateOf(uiState.selection, uiState.interaction, addChooserOpen)
+    // `addChooserOpen || artSheetOpen`: the Art sheet's frozen caption is a variant of the Adding one, so
+    // both sheets are the same Bench state. See `artSheetOpen`'s declaration.
+    val benchState = benchStateOf(uiState.selection, uiState.interaction, addChooserOpen || artSheetOpen)
     val ctxVisible = benchState == BenchState.Selected &&
         ctxKind != null &&
         reframing == null &&
@@ -1602,13 +1656,23 @@ public fun EditorScreen(
             )
         }
 
-        // C4 rows 4.4a-4.4d: the frozen Add chooser, Text and Photo only (OD-21). A Dialog, so where it
-        // is declared does not affect layout.
+        // C4 rows 4.4a-4.4d: the frozen Add chooser, all three rows as of ADR-105 S7. A Dialog, so where
+        // it is declared does not affect layout.
         BenchAddChooser(
             visible = addChooserOpen,
             onDismiss = { addChooserOpen = false },
             onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
             onAddPhoto = { dispatch(Intent.RequestAddImage) },
+            onAddArt = { artSheetOpen = true },
+        )
+
+        // The frozen `openArt()` cabinet (ADR-105 S7). `onPick` is only ever called for one of the four
+        // authored supplies — an unauthored tile carries no click at all, so `BenchArtSheet` is where
+        // "inert stays inert" is enforced, and `placeSupply` is not asked to re-check it.
+        BenchArtSheet(
+            visible = artSheetOpen,
+            onDismiss = { artSheetOpen = false },
+            onPick = placeSupply,
         )
 
         // The transform context bar is hidden during a Reframe session — the Reframe controls take over.

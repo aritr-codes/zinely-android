@@ -11082,6 +11082,52 @@ defect. It took driving a real Gallery share on hardware. The regression guard t
 (`ShareInboxTest`) asserts the *declaration*, not the behaviour, and says so: Robolectric does not simulate
 the task stack and never will reproduce this.
 
+#### Amendment (2026-08-16) — S7 placement: a maker can take a supply out of the drawer
+
+**The seam.** `Intent.PlaceSupply(supplyId, ink, transform)` — one user act, one `PlaceCommand`, one undo
+step, auto-selected on landing, exactly like image placement. **The geometry is supplied by the caller**
+rather than computed in the reducer, because `:core:editor` cannot see `:core:copy` and the family (which
+sets the size) is only knowable there. That constraint is load-bearing: the id prefix is *not* the family.
+
+**Per-family default scale, and the contradiction inside §5.2.** The spec rules *one constant per family*
+and then illustrates it with *"a rule lands wide"* — naming `shape.rule`, a **member** of Cut shapes. Both
+sentences cannot be implemented. Ruled at [SUPPLIES-SPEC §5.2](design/SUPPLIES-SPEC.md#s-5-2-ruling): four
+family constants **plus exactly one named override**, capped at one entry *by a test*, since an unbounded
+override map is per-supply sizing wearing a disguise. The numbers are an implementation reading and are
+flagged as owed a Pass 2 ruling — nobody has yet watched a supply land on a real screen.
+
+**Placement ink**: the maker palette's `Ink`, from the content namespace rather than chrome. Spec was
+silent; recorded so the silence is not mistaken for a decision.
+
+**The Add chooser's Art row is released, and C3's "absent, not disabled" reasoning is retired on the
+merits, not overridden.** That omission was never *"the freeze doesn't ask for it"* — it was C3's Pass 2
+sentence about a control that reports truthfully and then does nothing when tapped. The row now opens a
+drawer with four working supplies, so the sentence no longer describes it. The inertness moved one level
+down, where it is honest: all sixteen named, twelve saying *"Not yet"*. Withholding the row would have left
+the placement path with no call site — the exact gap this package exists to close — and the unrecoverable
+failure is a maker who never learns the drawer exists.
+
+**Two defects that existed only because the sheet finally got a call site:**
+
+- **Twelve of sixteen tiles dismissed the entire cabinet when tapped.** A composable with no pointer-input
+  node is not in the hit path, so the touch fell through to the scrim **sibling**, whose `clickable` is
+  `onDismiss` — the app answering *"not yet"* by leaving the room. Patched with an observing,
+  **non-consuming** `pointerInput` (consuming the down would steal the drag from an ancestor scroll). The
+  general cause is [D-087](design/V2-SPEC-DEFECTS.md#d-087) and is deliberately still open. **No test could
+  have caught it**: `BenchArtSheetTest` passes `onDismiss = {}`, so the dismissal fired into a no-op and
+  every assertion passed. *A component tested only in isolation cannot fail the way it will fail in the app.*
+- **A supply was deleted as "Photo deleted."** — aloud, through the TalkBack Delete action. `benchDeleteLabel`
+  was `if (text) … else PHOTO` over a **three-way** sealed hierarchy: the classic silent seam this ADR
+  already warns about, found by mutation rather than by the compiler. Now exhaustive, with `else` forbidden.
+
+**Also corrected:** `benchInkCount` counted only text, so black text plus berry stars reported *"1 ink"* —
+a supply's `ink` **is** a spot ink and `SceneRenderer` draws it as one. That number is the one telling a
+maker what their zine will cost to print.
+
+⚠ **Both device-verification passes remain outstanding**, and Pass 2 now has two specific things to judge:
+whether twelve dim tiles of sixteen is an acceptable first impression ([D-086](design/V2-SPEC-DEFECTS.md#d-086)),
+and the duplicated Art/Photo glyph carried forward from the freeze ([D-088](design/V2-SPEC-DEFECTS.md#d-088)).
+
 #### Amendment (2026-08-16) — the Art sheet, and the ruling that a supply with no outline is *drawn, disabled, and explains itself*
 
 **The decision.** All sixteen supply tiles are drawn. The twelve with no authored outline are rendered

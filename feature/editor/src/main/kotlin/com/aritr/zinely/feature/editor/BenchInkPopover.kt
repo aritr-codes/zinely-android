@@ -808,8 +808,29 @@ internal fun ColorRgba.toComposeColor(): Color = Color(r, g, b, a)
  * because it has no document to count.
  *
  * Counted across every page rather than the open one: *"print cheapest"* is a per-**zine** cost, because
- * a riso or a copy shop charges by the inks on the job, not by the inks on one panel. A text element's
- * ink is its `TextStyle.color`; photos are not spot inks and are not counted.
+ * a riso or a copy shop charges by the inks on the job, not by the inks on one panel.
+ *
+ * **What counts as a spot ink**, exhaustively over [com.aritr.zinely.core.model.Element]:
+ *  - a [TextElement]'s `style.color` — the maker chose it from the ink popover;
+ *  - a [com.aritr.zinely.core.model.DecorElement]'s `ink` — SUPPLIES-SPEC §2 makes a supply an outline
+ *    laid down in **one** colour *precisely so* it is a spot ink, and `SceneRenderer` draws it as one;
+ *  - an `ImageElement` — **not** counted. A photo is continuous tone, not a spot colour; that is the
+ *    original exclusion and it stands.
+ *
+ * ⚠ The decor arm arrived with ADR-105 S7 (independent review). Before it, black text plus three berry
+ * stars reported *"1 ink"* while the print shop charged for two — an under-report that shipped harmless
+ * only because no supply could be placed. Written as a `when` rather than a filter so the fourth element
+ * kind has to answer the question instead of inheriting `false`.
  */
 internal fun benchInkCount(pages: List<Page>): Int =
-    pages.flatMap { it.elements }.filterIsInstance<TextElement>().map { it.style.color }.distinct().size
+    pages.asSequence()
+        .flatMap { it.elements.asSequence() }
+        .mapNotNull { element ->
+            when (element) {
+                is TextElement -> element.style.color
+                is com.aritr.zinely.core.model.DecorElement -> element.ink
+                is com.aritr.zinely.core.model.ImageElement -> null
+            }
+        }
+        .distinct()
+        .count()

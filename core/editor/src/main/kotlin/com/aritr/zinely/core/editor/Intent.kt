@@ -22,6 +22,30 @@ public sealed interface Intent {
     public data object RequestAddImage : Intent
     public data class CommitAddImage(val element: com.aritr.zinely.core.model.ImageElement) : Intent
 
+    /**
+     * Place one supply from the cabinet on the current page as a
+     * [com.aritr.zinely.core.model.DecorElement] (SUPPLIES-SPEC §5, ADR-105 step S7).
+     *
+     * Shaped exactly like [PlaceText] and for the same reason: one user act ⇒ one [PlaceCommand] ⇒ one
+     * undo step, the id minted reducer-side from `nextToken`, and the new element auto-selected (which is
+     * also what the freeze's own `openArt()` tile handler does — `selectByKind('decor')`).
+     *
+     * **Geometry arrives in the intent, it is not computed here.** SUPPLIES-SPEC §5.2's per-family default
+     * scale needs the family, and the family lives in `Copy.Supplies.BY_FAMILY` (`:core:copy`) which this
+     * Android-free module deliberately does not depend on. So the caller supplies the [transform], as
+     * `PlaceText`'s caller already does via `centeredTextBox` — see `benchSupplyPlacement` in
+     * `:feature:editor`, which is where the craft constants live and are tested.
+     *
+     * An unauthored or unknown [supplyId] is **not** rejected here: catalogue membership is checked at the
+     * render boundary (SUPPLIES-SPEC §2.2), and the picker never offers one. `mirrored` is deliberately
+     * absent — §5.1 lands a supply flat, at 0°, unmirrored; mirroring is a maker verb that arrives later.
+     */
+    public data class PlaceSupply(
+        val supplyId: String,
+        val ink: ColorRgba,
+        val transform: Transform,
+    ) : Intent
+
     // — text-edit session (§5.6, D5): begin/commit/cancel, like a drag — one session = one EditTextCommand.
     /** Open a text-edit session on a [TextElement] by id (the a11y "Edit text" action). */
     public data class BeginEditText(val id: String) : Intent
