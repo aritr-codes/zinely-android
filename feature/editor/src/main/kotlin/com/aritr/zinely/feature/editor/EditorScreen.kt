@@ -419,6 +419,18 @@ public fun EditorScreen(
         uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
     }
     val ctxKind = ctxElement?.let { benchVerbKindOf(it) }
+    // The element `.inkpop` can actually recolour, resolved ONCE for the three sites that need it —
+    // the `Ink` verb's routing, the popover's own visibility, and the F-5 clearance term. See
+    // [benchInkTargetOf] for why the routing has to consult it rather than opening unconditionally.
+    val inkTarget = benchInkTargetOf(ctxElement)
+    // ⚠ **The popover is open only if it is also on screen.** Four other controls read this state — the
+    // frozen bar stands down for it, `Done` disables, the bar's caption changes, and the edit pan clears
+    // it — and every one of them used the raw flag, which is what let one bad `open` produce a screen with
+    // no bar, no popover and a disabled `Done`. Deriving it once means a flag that cannot be honoured
+    // simply is not honoured anywhere: the stranded state stops being guarded and becomes unconstructible.
+    // The guard in `onVerb` below stays as well — belt and braces on a defect the spec has already had to
+    // write down once (SUPPLIES-SPEC §10.1, S7).
+    val inkPopoverVisible = inkPopoverOpen && inkTarget != null
     // C9 row 9.1: the Bench's four states, derived in one place. The `!EditingText` term spelled out here
     // is subsumed by `benchState == Selected`; `ctxKind != null` stays, because it asks a different
     // question (a single element, of a kind the freeze gives verbs to). So the one behavioural change is
@@ -437,7 +449,7 @@ public fun EditorScreen(
         // The freeze's own swap: `openInk` runs `ctx.classList.remove('show')` and `inkClose` restores
         // it (`v2-bench.html:692`, `:697`). Two floating cards share this 12dp inset, so one of them is
         // always the one that is up.
-        !inkPopoverOpen
+        !inkPopoverVisible
 
     // The popover belongs to the element that summoned it. Any change of that element — a reselect, a
     // deselect, a page change, a delete — stands it down, which is the freeze doing the same at four
@@ -959,10 +971,11 @@ public fun EditorScreen(
                 // (C6 could produce it too), and flagged for a device look rather than ruled on here.
                 val occludingPanelTopPx = if (editing) styleRowDockedTopPx else inkPopoverDockedTopPx
                 // The element the panel is about: the one under the session, or — with the popover up —
-                // the selected text it is recolouring. `inkTarget` at the popover's call site is this same
-                // expression; both read `ctxElement`, so they cannot name different elements.
+                // the selected text it is recolouring. This is the SAME `inkTarget` the popover's own call
+                // site reads, hoisted beside `ctxElement`; one binding, so they cannot name different
+                // elements and the clearance cannot be computed for an element the popover is not about.
                 val occludedElement = editingElement
-                    ?: (ctxElement as? TextElement).takeIf { inkPopoverOpen }
+                    ?: inkTarget.takeIf { inkPopoverVisible }
                 val panTargetDp: Dp = if (occludedElement == null) {
                     0.dp
                 } else {
@@ -1350,7 +1363,11 @@ public fun EditorScreen(
                     verbs = ctxKind?.let {
                         benchContextVerbs(
                             it,
-                            styleable = (ctxElement as? TextElement)?.text?.isNotBlank() ?: true,
+                            // Through the SAME binding, not a fourth `as?`. It reaches the same answer for
+                            // text; what it buys is that a non-text selection can no longer be defaulted
+                            // `styleable = true` by a cast nobody re-reads. (Harmless today — the DECOR verb
+                            // set does not consult it — which is exactly the shape S7′ calls *silent*.)
+                            styleable = inkTarget?.text?.isNotBlank() ?: true,
                             // The toggle reads its state from the document, never from local UI state —
                             // so Undo, a page change and a reload all move the announced state with it.
                             copierOn = (ctxElement as? ImageElement)?.copier ?: false,
@@ -1368,7 +1385,14 @@ public fun EditorScreen(
                             // then as a temporary route, closed now. The Type bar keeps its own ink row:
                             // OD-11 makes the frozen surface additive, and its five inks are the only
                             // place `Coral`, `Teal` and `Blue` remain reachable.
-                            Copy.BenchVerbs.INK -> inkPopoverOpen = true
+                            // ⚠ Guarded, not unconditional — SUPPLIES-SPEC §10.1's S7 row. `true` here
+                            // opened the popover for ANY selected kind, and `.inkpop` is text-only, so a
+                            // decor selection produced a state with no bar (`ctxVisible` carries
+                            // `!inkPopoverOpen`), no popover, `Done` disabled and the bar's caption already
+                            // switched to DONE_AFTER_INK: the verb row vanished with nothing in its place.
+                            // The spec calls this out by name and says the fix is the **routing**, not the
+                            // verb — so the verb stays disabled and this stops depending on that.
+                            Copy.BenchVerbs.INK -> inkPopoverOpen = inkTarget != null
                             Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
                             // X3b (ADR-106): a toggle, so tapping it again is the undo the user reaches
                             // for first — and Undo is the one they reach for second. Both work.
@@ -1394,9 +1418,8 @@ public fun EditorScreen(
                 // Text-only by construction: `.inkpop` is reachable from the `Ink` verb, and the freeze
                 // gives that verb to a text element only (`toolsFor`, `:601-603`). The `Ink`-bearing third
                 // branch is the DECOR fallback OD-2 re-seated beyond Phase C.
-                val inkTarget = ctxElement as? TextElement
                 BenchInkPopover(
-                    visible = inkPopoverOpen && inkTarget != null,
+                    visible = inkPopoverVisible,
                     bands = benchInkBands(ZinelyTheme.contentInks, BenchVerbKind.TEXT),
                     presets = benchInkPresets(ZinelyTheme.contentInks),
                     // The element's OWN ink, not the last tap: the ring survives undo, a page change and
@@ -1550,14 +1573,14 @@ public fun EditorScreen(
                 // The condition already existed and the popover simply sat outside it — so the fix is the
                 // missing term, not a new mechanism. Whatever owns "finish" right now is the only control
                 // allowed to say so.
-                doneEnabled = editingElement == null && !inkPopoverOpen,
+                doneEnabled = editingElement == null && !inkPopoverVisible,
                 // F-1's rule reaching the control F-6 just gave a second reason to be dim. Derived from the
                 // same two terms above and in the same order, so the reason cannot name a state the button
                 // is not in — the text session is checked first because it is the one that also hides the
                 // popover's route in.
                 doneUnavailableBecause = when {
                     editingElement != null -> Copy.BenchBar.DONE_AFTER_TEXT
-                    inkPopoverOpen -> Copy.BenchBar.DONE_AFTER_INK
+                    inkPopoverVisible -> Copy.BenchBar.DONE_AFTER_INK
                     else -> null
                 },
                 // Undoing from the bar during the delete window takes the snack down with it. Without

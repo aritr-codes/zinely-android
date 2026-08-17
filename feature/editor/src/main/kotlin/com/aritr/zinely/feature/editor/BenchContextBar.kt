@@ -200,6 +200,31 @@ internal fun benchContextVerbs(
  * D-029's ruling names it specifically. **Do not reintroduce an `else` here** — the exhaustive `when`
  * is the mechanism by which a fourth element kind is forced to declare its verbs.
  */
+/**
+ * The element the frozen `.inkpop` can actually recolour — a [TextElement], or `null`.
+ *
+ * ### Why this is a function and not an `as?` at each call site
+ *
+ * It was three `as?` casts, and one of them was in the wrong place. `EditorScreen`'s `Ink` verb opened the
+ * popover **unconditionally** while the popover itself resolved its target with `ctxElement as? TextElement`
+ * — so for a [com.aritr.zinely.core.model.DecorElement] the two disagreed and the screen entered a state
+ * with no context bar (`ctxVisible` carries `!inkPopoverOpen`), no popover, a disabled `Done` and a bottom
+ * bar already captioned for an ink session. Nothing on screen could act, and only Back recovered it.
+ *
+ * That was harmless only because [benchContextVerbs] ships decor's `Ink` disabled — which is the S7′ shape
+ * [SUPPLIES-SPEC §10](../../../../../../../../docs/design/SUPPLIES-SPEC.md) warns about in general: *"the
+ * **silent** seams — 13 `as?` casts … These fail no test."* A latent defect whose only guard is a control
+ * being off is not guarded; it is armed. §10.1 names this exact line and rules that **S7 fixes the routing,
+ * not the verb**, so the verb stays disabled and the route stops depending on it.
+ *
+ * One binding, read by the router, the popover and the F-5 clearance term, makes the three incapable of
+ * disagreeing — the fix that survives someone enabling the verb later.
+ *
+ * Deliberately takes `Element?` and not `Element`: nothing is selected far more often than something is,
+ * and pushing the null onto every caller is how the three casts drifted apart in the first place.
+ */
+internal fun benchInkTargetOf(element: Element?): TextElement? = element as? TextElement
+
 internal fun benchVerbKindOf(element: Element): BenchVerbKind = when (element) {
     is TextElement -> BenchVerbKind.TEXT
     is ImageElement -> BenchVerbKind.PHOTO

@@ -7,12 +7,17 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.aritr.zinely.core.model.AffineTransform2D
 import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.PtPoint
 import com.aritr.zinely.core.model.PtRect
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.render.DrawCommand
+import com.aritr.zinely.core.render.DrawShape
 import com.aritr.zinely.core.render.DrawTextBox
 import com.aritr.zinely.core.render.FillRect
+import com.aritr.zinely.core.render.Segment
+import com.aritr.zinely.core.render.Subpath
+import com.aritr.zinely.core.render.SupplyOutline
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -181,6 +186,70 @@ class PdfSurfaceParityInstrumentedTest {
     }
 
     private fun bg() = FillRect(PtRect(0.0, 0.0, sheet.width, sheet.height), WHITE)
+
+    /**
+     * **The hole test on the print surface** (SUPPLIES-SPEC §3.2, §3.5) — the PDF twin of
+     * `ShapeReplayTest.holeTest_sameWoundRing_leavesItsCentreUnfilled`, which can only prove the raster
+     * surface because `PdfDocument` does not run under Robolectric (see this file's header).
+     *
+     * A ring whose inner and outer contours wind the **same** direction is the only geometry whose
+     * rendering differs between even-odd and non-zero, so this case fails on a dropped `Path.fillType`
+     * — **and**, uniquely here, on a silent raster fallback: if SkPDF gave up on vectors and rasterised
+     * the shape, the rasterised-back PDF would not agree with the raster surface to this tolerance.
+     *
+     * ⚠ It does **not** catch a missing scale fold or a wrong composition order, though an earlier draft
+     * of this comment claimed both. Like its raster twin it builds `localToPage` by hand and never routes
+     * through `SceneRenderer`, so the fold is not on its path; mutation testing on the twin proved the
+     * claim false. Those two live in `SceneRendererDecorTest`.
+     *
+     * Note what the parity *fraction* cannot do for this case, per this file's own warning: both
+     * surfaces replay through the same `CanvasReplayer`, so a dropped fill rule closes the hole on both
+     * and the fraction stays near zero. The **absolute** centre probe is the assertion that matters.
+     */
+    @Test
+    fun supplyRing_holeSurvivesOnBothSurfaces() {
+        fun square(x: Double, y: Double, size: Double) = Subpath(
+            start = PtPoint(x, y),
+            segments = listOf(
+                Segment.LineTo(PtPoint(x + size, y)),
+                Segment.LineTo(PtPoint(x + size, y + size)),
+                Segment.LineTo(PtPoint(x, y + size)),
+            ),
+        )
+        // Same-wound: both contours clockwise. Opposite winding has a hole under BOTH rules — it would
+        // pass whichever rule the backend used and prove nothing.
+        val ring = SupplyOutline(listOf(square(0.0, 0.0, 1.0), square(0.25, 0.25, 0.5)))
+        val tape = listOf(
+            bg(),
+            DrawShape(
+                outline = ring,
+                ink = RED,
+                // The §3.4.1 fold, by hand: without the scale term this is a 1pt x 1pt speck.
+                localToPage = AffineTransform2D.translate(12.0, 12.0)
+                    .times(AffineTransform2D.scale(48.0, 48.0)),
+            ),
+        )
+        val (r, p) = bothSurfaces(tape)
+
+        // Page point -> pixel, both surfaces rasterise at identical dimensions (asserted in bothSurfaces).
+        fun px(v: Double) = (v / sheet.width * r.width).toInt()
+
+        assertEquals("raster hole is paper", Color.WHITE, r.getPixel(px(36.0), px(36.0)))
+        assertEquals("PDF hole is paper", Color.WHITE, p.getPixel(px(36.0), px(36.0)))
+        assertEquals("raster wall is inked", Color.RED, r.getPixel(px(36.0), px(15.0)))
+        assertEquals("PDF wall is inked", Color.RED, p.getPixel(px(36.0), px(15.0)))
+        assertEquals("raster outside is paper", Color.WHITE, r.getPixel(px(4.0), px(4.0)))
+        assertEquals("PDF outside is paper", Color.WHITE, p.getPixel(px(4.0), px(4.0)))
+
+        val fraction = differingFraction(r, p)
+        Log.i("F4MEASURED", "supply ring: fraction=${"%.5f".format(fraction)} (bar $EDGE_TOLERANCE)")
+        assertTrue(
+            "PDF and raster supply rings differ over ${"%.4f".format(fraction)} of the page " +
+                "(> $EDGE_TOLERANCE) — more than an antialiasing difference, and a raster fallback " +
+                "in the PDF device would look exactly like this",
+            fraction <= EDGE_TOLERANCE,
+        )
+    }
 
     @Test
     fun fillQuadrants_matchAcrossSurfaces() {

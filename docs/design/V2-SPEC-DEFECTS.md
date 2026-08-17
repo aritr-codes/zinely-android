@@ -5386,3 +5386,43 @@ an expiry condition written in prose has no expiry mechanism.** There was no tes
 - **The surviving assertion is equality against `Copy.Supplies.NAMES` for all sixteen**, which needs no
   reasoning at all: there is one authored source, and either the label came from it or it did not. *A test
   that has to compute the expected value is a second implementation, and it can be wrong in the same way.*
+
+---
+
+### D-086 — twelve of the sixteen supply tiles are dim with no words, so TalkBack is better informed than a sighted user {#d-086}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchArtSheet.kt` · [SUPPLIES-SPEC §9](SUPPLIES-SPEC.md) · [D-084](#d-084) (the A5 Art-sheet ruling) |
+| **Found** | 2026-08-16, by the Review Agent on package **P-G**, as a **Pass 2 risk raised before any Pass 2 ran** |
+| **Severity** | Open design question on an unreleased surface. Not a blocker — the sheet has no production call site yet |
+| **Status** | ⏳ **OPEN** — owed a Pass 2 reading, and a ruling if that reading confirms it |
+
+**The situation.** Only four of the sixteen supplies have authored outlines (the `shape.*` family); twelve
+are owed to a designer. P-G draws **all sixteen** — the freeze specifies sixteen under four headings, and
+drawing four would be the visual redesign the freeze forbids — and renders the twelve **disabled**: dim
+ground, dim outline, shadow shed, not `clickable` at all, and `stateDescription = "Not yet"`.
+
+**The defect.** `stateDescription` is spoken. Dimness is not. **A TalkBack user is told these twelve are
+not ready; a sighted user is shown a dimmer tile and left to infer it** — and the most available inference
+for a dim tile you just tapped and nothing happened is *the app is broken*, not *this one isn't built yet*.
+The accessible path carries information the visual path does not, which is the same asymmetry
+[ADR-094](../DECISIONS.md#adr-094)'s reversible-delete finding named from the other direction.
+
+**Why it was not simply fixed.** Adding words to the tiles is drawing something the freeze does not
+specify, on a surface whose whole ruling six hours earlier was that the frozen file is authoritative and
+amendments are owner acts. The honest move is to book the question rather than answer it with an
+unreviewed pixel. The three candidate answers, none chosen: a caption under the family heading; the
+`Copy.BenchVerbs.NOT_YET` word drawn on the tile; or shipping the sheet only when the twelve exist, which
+costs nothing today because **there is no production call site**.
+
+**The counter-argument, which is real.** The dim treatment is the corpus's existing disabled vocabulary —
+P-G added no new token — and a maker who never taps a dim tile never forms the wrong belief. This is
+exactly the kind of question Pass 2 exists to settle and Pass 1 cannot: *would I understand what this
+screen wants me to do?* The answer requires a person who does not know why the twelve are dim.
+
+⚠ **A deliberate divergence from precedent is embedded here and needs its own ruling** (see the
+[ADR-105 amendment](../DECISIONS.md#adr-105)): `BenchAddChooser` omits its Art row entirely rather than
+disabling it — *absent, not disabled*. P-G does the opposite for the tiles. The distinguishing principle
+offered is that the freeze **specifies these sixteen tiles** while it specifies no Art-row obligation. That
+is defensible and it is not yet ruled.

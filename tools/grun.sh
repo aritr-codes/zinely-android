@@ -18,6 +18,13 @@ case "$cmd" in
   cm)  m="$1"; shift; "$RUNNER" ":core:${m}:check" "$@" ;;         # check one core module
   call) "$RUNNER" ":core:model:test" ":core:imposition:test" "$@" ;; # both core modules
   task) "$RUNNER" tasks "$@" ;;
+  # THE GOLDEN GATE. `testDebugUnitTest` does NOT compare goldens — it runs the unit tests and skips
+  # straight past the pixels, so a fully green suite says nothing whatsoever about visual drift. Only
+  # verifyRoborazziDebug compares. --rerun-tasks is not optional: the source-tree PNGs are not a tracked
+  # task input, so a cached verify can "pass" without comparing anything at all.
+  # 2026-08-16: 36 stale golden assertions rode a green 1,801-test local suite all the way to CI.
+  gold) "$RUNNER" ":render-android:verifyRoborazziDebug" ":feature:editor:verifyRoborazziDebug" \
+          ":core:ui:verifyRoborazziDebug" --rerun-tasks "$@" ;;
   conn) "$RUNNER" ":render-android:connectedDebugAndroidTest" "$@" ;; # instrumented androidTest on a connected device
   ra)  "$RUNNER" ":render-android:testDebugUnitTest" "$@" ;;        # :render-android headless unit suite (ExportScale, replayer conformance)
   ed)  "$RUNNER" ":feature:editor:testDebugUnitTest" "$@" ;;        # S4 :feature:editor headless unit suite (preview-host parity)

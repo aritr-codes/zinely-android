@@ -292,9 +292,11 @@ The load-bearing engineering finding of this pass, and it corrects a published c
 
 > **This section is kept as written and marked, not rewritten.** It states the constraint that motivated
 > the whole design, and P2 removed it: `core:render` now emits **four** commands, and the fourth is
-> `DrawShape`. `SupplyOutline` and `SupplyCatalog`'s first four supplies ship with it. What remains open
-> is the *replayer arm* (P3) — `CanvasReplayer` matches `DrawShape` and deliberately draws nothing, so
-> the tape exists and the ink does not yet reach paper.
+> `DrawShape`. `SupplyOutline` and `SupplyCatalog`'s first four supplies ship with it. **P3 then armed the
+> replayer** (2026-08-16): `SceneRenderer` emits `DrawShape` for a `DecorElement` with an authored
+> outline, and `CanvasReplayer` paints it with its own anti-aliased `Paint` and `Path.FillType.EVEN_ODD`.
+> **The ink reaches paper on the raster surfaces.** What remains open is the *print* surface — see §3.5:
+> the PDF half of the hole test cannot run under Robolectric and has never executed.
 
 `core:render` emits exactly three commands — `FillRect`, `DrawImage`, `DrawTextBox`
 (`DrawCommand.kt:26,40,55`). **There is no path-drawing command.**
@@ -464,7 +466,26 @@ dropped fill rule fills the holes **identically on every surface**, so cross-sur
 it by construction, and a tolerance wide enough to absorb AA is wide enough to absorb a small solid region.
 
 P2 has already pinned the half that lives in pure Kotlin — `SupplyOutlineRingTest` proves the
-representation *can* express a same-direction-wound ring, which is the precondition. The pixels are P3's.
+representation *can* express a same-direction-wound ring, which is the precondition.
+
+**✅ P3 ran the pixels — on one surface of two, and the distinction is the finding.**
+
+- **Raster: proved, and proved to be capable of failing.** `holeTest_sameWoundRing_leavesItsCentreUnfilled`
+  passes, and flipping `EVEN_ODD → WINDING` turns it and its discriminator twin **red**. A hole test that
+  has never been seen to fail is a hole test nobody has checked.
+- **Print: not proved, and it is now the second thing only hardware can close.** `PdfDocument` does not run
+  under Robolectric, so `PdfSurfaceParityInstrumentedTest.supplyRing_holeSurvivesOnBothSurfaces` is
+  compile-checked and **has never executed**. *"`f*` reaches the file"* and *"AA is ignored by the PDF
+  backend"* remain sourced-but-unmeasured, exactly as §3.2 recorded them.
+- ⚠ **The hole test catches less than its first comment claimed.** It was documented as failing on a missing
+  scale fold and a wrong composition order too. **Mutation proved otherwise** — deleting the scale term and
+  reversing the composition order each left it *green*, because it builds `localToPage` by hand and never
+  routes through `SceneRenderer`. Those two are caught by `SceneRendererDecorTest` and
+  `sceneRendererFold_putsAnAuthoredSupplyOnItsOwnBox`. No coverage was missing; the **attribution** was
+  wrong, and a test whose comment overstates its reach is worse than one with no comment at all.
+- **The four tolerance goldens (below) are consciously DEFERRED, not forgotten.** Only one of the four
+  families is authored, so three of them would be goldens of nothing; and a record-mode run is precisely the
+  act that can bless drift. They land with the twelve outlines.
 
 ---
 
@@ -476,7 +497,10 @@ verbatim**; the first draft's redraft is withdrawn (§0 O-C).
 > **This table is the vocabulary, not the labels.** Two of the sixteen are written here as slash-pairs and
 > a screen reader cannot say a slash, so the *spoken and drawn* name of each supply lives in one place —
 > `Copy.Supplies.BY_FAMILY` — which departs from this prose in five places and documents why at each one
-> ([D-083](V2-SPEC-DEFECTS.md#d-083-ruling)). Where the two disagree, **the copy wins**; the
+> ([D-083](V2-SPEC-DEFECTS.md#d-083-ruling)). ⚠ Two strings escaped that rule and are owed a move into
+> `Copy.Supplies`: the Art sheet's own **"Art"** title and **"Recent · ⭐ favourites"** heading, which P-G
+> had to define inside `feature:editor`. A copy object that holds fifteen of a surface's seventeen strings
+> is not yet the single source of truth it claims to be. Where the two disagree, **the copy wins**; the
 > Art sheet's `aria-label`s were reconciled to it on 2026-08-16 (amendment **A5**).
 
 | Family | The four | The distinction it holds |
@@ -711,7 +735,7 @@ Sits behind X3b (the photocopier filter, §0 O-D).
 | **S5** | Author the 16 outlines + attestations (§4.1) | `SupplyCatalog`, colophon | Design work. Gated on O-B and O-C. |
 | **S6** | 16 supply names | `core:copy` | Ink names already ship. |
 | **S7** | Art sheet, Decor context bar (Replace/Ink/Delete), per-family default scale, uniform-scale constraint | `feature:editor` | See S7′. |
-| **S7′** | The **silent** seams — 13 `as?` casts (6 in `EditorScreen.kt`) and 4 `is`-guards (`LivePreview.kt:78`, `EditorA11y.kt:51,57`, `EditorGestures.kt:52`) | `feature:editor` | **The expensive half.** These fail no test: a decor element that cannot be gestured or previewed, silently. |
+| **S7′** | The **silent** seams — `as?` casts and `is`-guards across `feature:editor` (`LivePreview.kt:78`, `EditorA11y.kt`, `EditorGestures.kt:52`, and 8 in `EditorScreen.kt`) | `feature:editor` | **The expensive half.** These fail no test: a decor element that cannot be gestured or previewed, silently. ⚠ The counts here were **stale on arrival** — "6 in `EditorScreen.kt`" was 8 when P-G counted. Re-count before costing; a survey number written once and cited twice is not a measurement. |
 | **S8** | Test fixtures — `DocumentSchemaPropertiesTest.kt:19-32` (jqwik arbitraries), `DocumentSchemaTest.kt:15` (wire contract) | `core:model` tests | Unlisted in the first draft. |
 | **S9** | Both device-verification passes | — | Pass 2 asks whether the drawer reads as a drawer. |
 
@@ -740,7 +764,7 @@ page, diffing PDF operators, settles it.
 | **S4** | ⏳ **Stubbed, not done.** `CanvasReplayer` matches `DrawShape` and draws nothing, deliberately and visibly. This is P3 and it is the next thing. |
 | **S5** | ⏳ **4 of 16.** The *Cut shapes* quarter shipped early — that family is derivable geometry (rect, circle, triangle, rule) needing no house style, so it could be engineer-authored without pre-empting a designer. The **twelve remain gated on O-B/O-C** and are the hand-drawn ones; `outlineOf()` returns `null` for each. |
 | **S6** | ✅ Shipped. Sixteen names in `core:copy`, five documented departures from §4's prose. |
-| **S7 / S7′** | ⏳ Not started. `EditorScreen`'s `INK` routing (`ctxElement as? TextElement`) would open an **empty** popover for a decor element — safe only because the verb ships disabled, so S7 must fix the routing, not just enable the verb. |
+| **S7 / S7′** | 🟡 **Partly landed (P-G).** The **Art sheet** exists — sixteen tiles, four headings, twelve inert ([ADR-105 amendment](../DECISIONS.md#adr-105), [D-086](V2-SPEC-DEFECTS.md#d-086)) — and the `INK` **routing** defect is fixed: `EditorScreen` now derives `inkPopoverVisible = inkPopoverOpen && inkTarget != null`, with all five consumers reading the derived value, so the stranded empty-popover state is **unconstructible** rather than guarded at one entry. The verb stays disabled. ⚠ The *trigger* is still unexercisable for decor precisely because that verb is disabled — the fix is pinned by construction and by the live text path, not by a decor tap. **Still owed:** the placement `Intent`, per-family default scale (§5.2), the Add chooser's Art row, and S7′'s silent seams. |
 | **S8** | ✅ Shipped with S2. |
 | **S9** | ⏳ Not started, and it cannot start until S4 puts ink on the page. |
 
