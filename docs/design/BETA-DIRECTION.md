@@ -219,7 +219,7 @@ Also genuinely working: the Shelf's tilted taped cover with the `US LETTER` stam
 
 | # | Break | Where | Category |
 |---|---|---|---|
-| 1 | **Two current-page colours.** `BenchPageNav` and `ProofFold` use `berry`; `BenchPageGrid` uses `leaf` — one inch apart, same concept | frozen `v21-bench.html:444` | B → needs amendment |
+| 1 | **Two current-page colours.** `BenchPageNav` and `ProofFold` use `berry`; `BenchPageGrid` uses `leaf` — one inch apart, same concept | frozen `v21-bench.html` §`.pgc.on` (`:494`) | B → needs amendment |
 | 2 | **Two icon grammars.** World objects (tape, stamps, the fold legend) coexist with Material's rounded-square icon tile in `ZineActionSheet` and `BenchAddChooser` | Compose | **C — mine** |
 | 3 | **Two dead controls.** `Font` and `Replace` are drawn and permanently inert | ruled by OD-9 | **C — mine, §3.4** |
 | 4 | **The page grid draws no page content** — eight blank cards with numbers, above a strip showing real thumbnails | ruled `.pgcell` | B → re-examine |
@@ -344,7 +344,7 @@ A third sealed `Element` subtype is the only document-model change in the plan, 
 
 ⚠ **I had the compile-safety argument backwards.** I wrote that `EditorA11y.label()` *"has no `else`, so a third type ships unlabelled."* The opposite is true: an expression `when` over a sealed type **with no `else` is a compile error** on a new subtype. Absence of `else` is the safe case. The real silent surface is the ~17 cast-and-guard sites, roughly double what I first stated.
 
-**Prior art I missed:** a `DecorElement` concept already exists under **OD-2**, `BenchInkPopover.kt:140` already handles `DECOR`, and [`v21-bench.html:625`](mockups/v21-bench.html) **already draws a decor verb set** (`Replace, Ink, Delete`). The freeze anticipated this primitive. That materially de-risks X7 and partly answers the freeze question — though the Supplies **tray** is still a new surface needing an amendment.
+**Prior art I missed:** a `DecorElement` concept already exists under **OD-2**, `BenchInkPopover.kt:140` already handles `DECOR`, and [`v21-bench.html` §`toolsFor()` (`:679`)](mockups/v21-bench.html) **already draws a decor verb set** (`Replace, Ink, Delete`). The freeze anticipated this primitive. That materially de-risks X7 and partly answers the freeze question — though the Supplies **tray** is still a new surface needing an amendment.
 
 **Transformations that ship:** free rotation · uniform scale at 4 named sizes · mirror (per-primitive capability flag) · ink tint from the named set · layering · bleeding off the trim edge.
 

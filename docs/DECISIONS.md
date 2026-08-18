@@ -9036,7 +9036,7 @@ reason is that everything else stands on the ground.
 | **P2** | **The three freeze changes that are not paint** ([§6](#adr-102-structural)) — page-lift deletion, keep-clear trigger and warn state, `.guideV` trigger — **plus those two composables entire**, colour and trigger together ([§12.3](#adr-102-p1-recut)). The unselected dim is **not** here: it ships already, and V2.1 only moves its alpha `.4 → .5` — that lands in P1 | each reverses or deletes a ruled behaviour; **each needs a ruling before it is built** — including the `butter` guide's 1.73:1 ([§12.6](#adr-102-p1-corrections) row 4) |
 | **P3** | **Bottom chrome** — `BenchBottomBar`, `BenchPageNav` + thumbs, `BenchStyleRow` (incl. `.kbstack`, and the `.sw` swatch seeded from the element's own ink) | filmstrip auto-centre is arithmetic; `benchThumbIsland` stays under OD-23 |
 | **P4** | **Popovers** — `BenchContextBar`, `BenchInkPopover`, `BenchSnack`, `BenchAddChooser` **including `.supply`/`.opt` content**, not just the sheet shell | the verb bar must stay flat and quiet; the `roomColors` opt-outs must keep opting out |
-| **P5** | **Page grid** — `BenchPageGrid` | `BackHandler` is an Android addition the freeze cannot specify. ⚠️ **and the grid renders the same pages in a different material from the filmstrip beside it** — [OD-47 closed / §12.5](#adr-102-od47): not a dimming defect (the grid draws no artifact), a consistency one. P5 re-skins the card to the amended `.pgc` (`v21-bench.html:428`). The page-number contrast fix already landed and converges here |
+| **P5** | **Page grid** — `BenchPageGrid` | `BackHandler` is an Android addition the freeze cannot specify. ⚠️ **and the grid renders the same pages in a different material from the filmstrip beside it** — [OD-47 closed / §12.5](#adr-102-od47): not a dimming defect (the grid draws no artifact), a consistency one. P5 re-skins the card to the amended `.pgc` (`v21-bench.html` §`.pgc`, `:485-493`). The page-number contrast fix already landed and converges here |
 | **P6** | **The V1 remnants** — `ReframeControls` (25), `TypeBar` (16), `ReframeOverlay`, `EditorEmptyState`'s blobs, `EditorScreen`'s Preview action, and the **five** adjacent editor files enumerated in [§4](#adr-102-remnants). The fifth is **`EditTextSession`** — the inline text-edit surface (`.tx`, `.caret`, `.doneEdit`, `.el.editing`), which the previous draft named in P7's golden list while converting it in no package at all | `TypeBar` **must not** move into the canvas Column — infinite recomposition. `EditTextSession.kt:103`'s `cursorColor` is a live V1 binding on the one surface where an invisible caret is unrecoverable |
 | **P7** | **Citations, tests, rasters** — re-point the citations at the scope [§2](#adr-102-audit) states, re-baseline the colour-pinning tests, record the goldens **once** | **not 16.** That is a filename-prefix count; the affected families include `selection_chrome_*`, `resize_handles`, `preview_*`, `editor_*`, `type_bar`, `reframe_controls`, `edit_text_session` |
 | **P8** | **The shared shell** — retire `zinelyShadow`/`ZinelyShadowLayer` to `zinelyV21HardShadow`, convert `ZSheet` | cross-surface: Library **and** Proof re-skin with it ([§10.2](#adr-102-open)). ⚠️ P1 **calls `zinelyV21HardShadow` directly** and does not wait for this package — [§12.4](#adr-102-p1-shadow) |
@@ -9204,7 +9204,7 @@ page paints with a different set, and four of §3's rows have no V2.1 use at all
 | `strawberryText → none` | ✅ stands — deleted, as recorded |
 
 **The V2.1 island is these eight** — seven since [OD-48](#adr-102-p2b) — and they are *derived*, not transcribed: the colour tokens referenced
-inside the frozen file's own `the canvas` section (`v21-bench.html:174–219`, bounded by its section
+inside the frozen file's own `the canvas` section (`v21-bench.html` §*the canvas*, `:239–284`, bounded by its section
 banners), less the shadow.
 
 | Token | Where it lands on the page |
@@ -9237,7 +9237,7 @@ excluded on the same principle and are now simply unused by this surface.
 #### 12.2 — The acceptance test is derived, not declared {#adr-102-p1-test}
 
 `BenchStudioSurfaceTest`'s both-directions test compares the Compose island against the tokens
-`v2-bench.html`'s `.page` **declares**. `v21-bench.html:177-182` declares none — the V2.1 file was drawn
+`v2-bench.html`'s `.page` **declares**. `v21-bench.html` §`.page` (`:242-244`) declares none — the V2.1 file was drawn
 without a light-island block, because the freeze was drawn before OD-31 closed. Pointed at V2.1 as written,
 that test derives an empty expected set and **passes only if the island changes nothing**.
 
@@ -9253,7 +9253,7 @@ added to the page region tomorrow fails the build without anyone editing a list.
 
 #### 12.3 — P1 and P2 are re-cut, because as drawn they block each other {#adr-102-p1-recut}
 
-`v21-bench.html:186-189`, **as frozen when this section was written**: `.keepclear` and `.guideV` both rest
+`v21-bench.html` §`.keepclear`/`.guideV` (`:251-255`), **as frozen when this section was written**: both rest
 at `opacity:0` and are revealed *only* by `.content.focusing~…` at `.85`, with **one colour each and no warn
 state**. The shipped composables have a resting state, and the keep-clear has a `strawberryText` warn.
 ⚠ [OD-48](#adr-102-p2b) has since amended that rule — the cue is `jam`, raised by `.keepclear.warn`, and
@@ -9328,7 +9328,7 @@ it is named here so the sweep is not lost.
 > `(253,243,231)` thumbnails means **one screen renders the same eight pages in two materials, forty pixels
 > apart** — which is a *consistency* defect, not a dimming one, and it is the same defect as §12.6 row 9
 > seen from the other end. It is answered by making the card look like paper, which is what the owner ruled
-> and what `v21-bench.html:36` now specifies (`.pgc` gets its own light on-paper set). **The fix is P5's**,
+> and what `v21-bench.html` §`.pgc` (`:489`) now specifies (it gets its own light on-paper set). **The fix is P5's**,
 > where the grid is re-skinned, and it lands as one re-skin rather than as a provider swap now plus a
 > re-skin later. The grid's `EditorScreen.kt:1385` room provider is **correct** and stays: chrome around
 > the cards is chrome.
@@ -9349,7 +9349,7 @@ it is named here so the sweep is not lost.
 
 Neither review found these decisive, and all of them would have cost time on a device:
 
-1. **The Bench's ground is `bench`, not `paper`.** `v21-bench.html:158` — `.phone{background:var(--bench)}`.
+1. **The Bench's ground is `bench`, not `paper`.** `v21-bench.html` §`.phone` (`:223`) — `.phone{background:var(--bench)}`.
    `BenchStudioSurface.kt:313`'s KDoc insists at length that the Bench's ground is paper *"and reading one
    for the other is the mistake this comment exists to prevent"*. True of V2; false of V2.1. This is the
    change that makes the island **visible for the first time** — today ground and sheet are the same
@@ -9369,7 +9369,7 @@ Neither review found these decisive, and all of them would have cost time on a d
    never clears 1.4.11. A lone dashed butter guide on paper carries a state — *this snap fired* — at
    1.73:1. **This is a freeze-versus-spec conflict, not an implementation choice**, and it goes to P2 with
    §12.3 rather than being resolved by whoever paints the line first.
-5. **The handle loses its halo, and changes shape.** `v21-bench.html:198` is a **9px rounded square**,
+5. **The handle loses its halo, and changes shape.** `v21-bench.html` §`.hnd` (`:263-264`) is a **9px rounded square**,
    `paper` filled, `1.6px ink` bordered, with no `box-shadow` halo. The shipped 13dp circle carries a
    `rgba(255,255,255,.7)` ring whose KDoc cites
    [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) — *"handles use a dual-tone/halo stroke to hold **3:1** over
@@ -9702,7 +9702,7 @@ picture moves" teach), and the dim is four square rects, so a sliver of undimmed
 Recorded rather than closed.
 
 **Also corrected, and worth its own line:** the review re-read every frozen address these files cite and
-found two committed ones stale — `SelectionChrome.kt` pointed `.el .ring` at `v21-bench.html:188`
+found two committed ones stale — `SelectionChrome.kt` pointed `.el .ring` at `v21-bench.html:188` — *quoted as the stale citation read; **not** a pointer, do not re-aim* —
 (actually `.guideV`; the rule is `:195-196`) and `BenchPageGrid.kt` pointed `.scrim` at `:376-378`
 (actually `.opt .ico`). The quoted declarations were right in both cases and only the addresses had
 rotted, which is the failure mode that makes a stale citation dangerous: it reads as verified. There is
@@ -9970,7 +9970,7 @@ states and the live Library sheets. Nothing here is a redesign; every value is t
 
 `BenchKbStackMillis` 340 → **260**, `BenchKbStackRestFraction` 1.10 → **1.02**, from
 `.kbstack{transform:translateY(102%);transition:transform .26s cubic-bezier(.05,.7,.1,1)}`
-(`v21-bench.html:264-265`). The curve is byte-identical to V2's `--settle`; only the duration and the
+(`v21-bench.html` §`.kbstack`, `:329-330`). The curve is byte-identical to V2's `--settle`; only the duration and the
 rest offset move. Recorded because a shortened animation is the kind of change that reads as a
 regression later if nobody wrote down that the spec asked for it.
 
@@ -9998,7 +9998,7 @@ The re-home broke four assertions that had encoded the old ancestry (`BenchC5Tes
    found `.pgc` and `.dclose` in the same state. The false half is left in the HTML rather than tidied
    away, because it is the interesting half: a claim of uniqueness made from the six selectors that
    happened to be on screen.
-2. **The Photo row's glyph** (`v21-bench.html:794`) — `Photo` wore `ICON.replace`, two arrows chasing
+2. **The Photo row's glyph** (`v21-bench.html:794` *as it stood before this amendment — a record, not a pointer*) — `Photo` wore `ICON.replace`, two arrows chasing
    each other round a circle. On a selection bar that correctly means *swap this one*; on a chooser
    whose only question is *"what would you like to add?"* it reads as **refresh, or sync** — and sync is
    the one thing this app promises never to do. A first-time device pass stopped on it before knowing
@@ -10320,7 +10320,7 @@ evidence alone. This test is the pattern that closes them; extending it to those
 
 ⚠ **A colour probe nearly filed a false defect**, and the correction is worth keeping: the first scan of the
 text-session frame reported a boundary at α `.985` in the one state that must be silent. It was the **caret**,
-which is also `jam` (`v21-bench.html:215`), plus Samsung's red cursor handle. The editor now has two `jam`
+which is also `jam` (`v21-bench.html` §`.caret`, `:280`), plus Samsung's red cursor handle. The editor now has two `jam`
 marks on one page, so *"is this hue present"* has stopped being a safe proxy for *"is this mark drawn"*.
 Looking at the screenshot is what caught it.
 
@@ -10616,11 +10616,11 @@ the warning at **.445** — because `BenchKeepClear` was nested inside the sheet
 `EditorPagePreview`, and that composable draws `BenchFocusScrim`. So the marks were read through a 0.5 paper
 wash: the cue measured **1.42:1** and the warning **1.82:1**, against the 3.66:1 this whole ruling rests on.
 
-The freeze does not do that. `.content.focusing .el:not(.selected){opacity:.5}` (`v21-bench.html:207`) dims
+The freeze does not do that. `.content.focusing .el:not(.selected){opacity:.5}` (`v21-bench.html` §`.content.focusing`, `:272`) dims
 **elements**; `.keepclear` is a *sibling* of `.content` and is dimmed by nothing. **And the review found the
 stronger form of this argument, which is not a reading at all:** the freeze **as it stood on 2026-08-13,
 before [OD-48](#adr-102-p2b) amended that very line** revealed the cue with
-`.content.focusing~.keepclear{opacity:.85}` (`v21-bench.html:190`), and the general-sibling combinator `~`
+`.content.focusing~.keepclear{opacity:.85}` (`v21-bench.html:190` *in that pre-OD-48 file — a record of what the freeze said then, not a pointer into it today*), and the general-sibling combinator `~`
 matches only what *follows* `.content`. The pre-fix Compose order was not a defensible-but-different reading
 of the freeze — it was structurally un-implementable as the freeze writes it. (The amended rule still reads
 `.content.focusing~.guideV`, so the argument survives the amendment word for word; it simply now rests on

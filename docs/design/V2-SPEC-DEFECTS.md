@@ -4351,7 +4351,7 @@ four handles:
 .handle.bl{left:-10px;bottom:-10px}.handle.br{right:-10px;bottom:-10px}
 ```
 
-> **2026-08-12 — closed forward in V2.1, count only.** `v21-bench.html:201-206` now positions **eight**:
+> **2026-08-12 — closed forward in V2.1, count only.** `v21-bench.html` §`.hnd` (`:266-267`, `:270-271`) now positions **eight**:
 > the same four corners plus `.hnd.t/.b/.l/.r` at the edge midpoints. The count question D-036 raises is
 > settled in the shipped direction (eight, per [OD-11](DECISIONS.md#adr-098-od11)); the *position* question
 > it did not ask — that ∓10px never centred the mark on the corner — is [ADR-102 §12.8](../DECISIONS.md#adr-102-p1-handles)'s.
@@ -4781,14 +4781,14 @@ and the split matters because the two halves need different remedies.
 | # | String | Screen | Frozen source | Class |
 |---|---|---|---|---|
 | 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html:306-307` | **parity failure** |
-| 2 | `From your phone — it never leaves the device` | Add sheet, Photo row | `v21-bench.html:824` | spec |
+| 2 | `From your phone — it never leaves the device` | Add sheet, Photo row | `v21-bench.html` §`openSupply()`, `:828` | spec |
 | 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html:466` | spec |
 | 4 | `… · A4 · stays on your phone` | Proof, ready row | `v21-proof.html:593`, `:1019` | spec |
 | 5 | `Saved on this device` | Editor status chip | **none** — the freeze says only `Saved` | implementation addition, **spoken only** |
 
 Instance 5 is the sharp one: it exists in the accessibility tree and nowhere else, so a screen-reader user
 hears the promise **one more time** than a sighted user sees it. The freeze also specifies a **sixth**
-instance Compose has not built — `v21-bench.html:873`'s `toast('Saved — everything stays on your phone')`.
+instance Compose has not built — `v21-bench.html` §`doneBtn` (`:877`)'s `toast('Saved — everything stays on your phone')`.
 
 **Only #1 is repairable without an amendment**, because it is the only one with no frozen source on its own
 surface. Striking any of 2–4 edits a frozen file and is therefore an owner act, not a parity fix.
@@ -4825,7 +4825,7 @@ precisely because it will otherwise be discovered by whichever phase finally bui
 most expensive.
 
 **1 · The `Art` row wears the `Photo` row's glyph — the same defect as [D-051](#d-051), one line down.**
-`v21-bench.html:824` and `:825` carry byte-identical inline SVG:
+`v21-bench.html` §`openSupply()`, `:828` and `:829`, carry byte-identical inline SVG:
 
 ```
 svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')
@@ -5801,7 +5801,7 @@ predicts the page's mark, and they should be ruled together.
 
 | | |
 |---|---|
-| **Artifacts** | [`v21-bench.html:827-828`](mockups/v21-bench.html) · `feature/editor/.../BenchAddChooser.kt` |
+| **Artifacts** | [`v21-bench.html` §`openSupply()`, `:828-829`](mockups/v21-bench.html) · `feature/editor/.../BenchAddChooser.kt` |
 | **Found** | 2026-08-18, **Pass 2 on SM-A176B** — the first thing seen on opening the chooser, before anything was placed |
 | **Severity** | Open design question. Two of the three ways into the page are visually indistinguishable |
 | **Status** | ⏳ **OPEN — owner act.** The duplication is in the frozen file, so the fix is an amendment, not a code change |
@@ -5868,6 +5868,39 @@ punches paper exactly where it is densest. That is *why* the authored arms stop 
 ⚠ **A bare centre is also the correct registration target**, which makes the tile wrong twice: printers'
 registration marks are read by aligning through an *open* centre. The constraint and the reference
 agree, which is unusual and worth saying — the fill rule did not compromise this mark, it corrected it.
+
+#### ⚠ The audit's own scope claim was wrong — ten documents, not four
+
+*"~50 citations across four documents"* was measured by grepping the four documents I already had open.
+A mechanical sweep of **all** of `docs/` finds **72** strict `v21-bench.html:N` citations across **ten**:
+the four audited, plus `ZINE-DIRECTION.md` (**18**), `V2-SPEC-DEFECTS.md` (9, this file), `ZINE-WORLD.md`,
+`docs/proposals/` (4) and `docs/reviews/` (5). 🟨 **A defect about unchecked numbers stated its own number
+without checking it** — the same mistake one level up, and worth more than the citations it found.
+
+**Swept, and the un-audited documents were worse than the audited ones:**
+
+| Document | Live-and-wrong found | Notable |
+|---|---|---|
+| `ZINE-DIRECTION.md` | **11 of 18** | `:625` cited **five times** for the decor verb set — it is `<script>`; the sets are §`toolsFor()` (`:673-681`). Also `:766`×2 → `:820`, `:775` → `:825-829`, `:514` → `:564` |
+| `V2-SPEC-DEFECTS.md` | **5 of 9** | including `:201-206` for the eight handles (they are `:266-267`, `:270-271`) and `:873` for the privacy toast (`:877`) |
+| `ZINE-WORLD.md` | **2 of 2** | both cite `:444` for `.pgc.on`; it is `:494` |
+| `SUPPLIES-SPEC.md` | **1 of 8** | `:22-23` for the no-tilt rule starts one line early (`:23-24`); the other seven were clean, as pass 1 said |
+| `BETA-UX-REVIEW.md` | **0 of 4** | clean |
+| `BETA-DIRECTION.md` | **1 more** | ⚠ pass 1 fixed `:623-625` → §`toolsFor()` but **missed a second `:625`** for the same claim 28 lines earlier. Fixing citations one grep-hit at a time misses the other hits of the same wrong number |
+
+All of the above are re-aimed **by name**. ⚠ **And seven of pass 2's own re-aims were themselves off by
+one** — two handle spans, and `§`toolsFor()`` cited **five times** at `:680`, which is the closing brace;
+the decor set is the `return` at `:679`. They were caught by a mechanical check that prints the cited
+line beside the claim, and only by that. **A citation written by hand is wrong at a steady rate no
+amount of care changes** — including in the pass whose entire subject is citations being wrong. That is
+reading 1's argument stated as a measurement rather than an opinion: the name `§`toolsFor()`` was right
+all seven times; only the number moved.
+
+**`docs/proposals/` and `docs/reviews/` are records by construction and are left alone.** A file named
+`2026-08-13-adr-102-p2-device-verification.md` states what a reader saw in the file **on that date**;
+renumbering it would make it claim something it never claimed. Nine of those citations no longer resolve,
+and that is correct. 🟦 The dated-filename convention is the one place this project already solved the
+pointer-vs-record problem — by putting the date in the *document*, not in the citation.
 
 #### The readings
 
@@ -5951,19 +5984,43 @@ then" — and a bare line number cannot distinguish them.** A sweep that renumbe
 second kind; a sweep that renumbers nothing leaves the first kind broken. That is why this keeps
 recurring: A5 booked it, A6 inherited it, and this is the third pass.
 
-#### Unresolved, listed rather than guessed
+#### Resolved in a second pass — ✅ all fourteen, split by the judgement they needed
 
-`DECISIONS.md` `:36` (`.pgc`) · `:174-219` (*"the canvas"* section — the header is at **`:239`**) ·
-`:177-182` (`.page`, at **`:242`**) · `:186-189` (`.keepclear`/`.guideV`, at **`:251-255`**) · `:188`
-(`.el .ring`, at **`:260`**) · `:190` · `:198` (`.hnd`, at **`:263`**) · `:207` (`.content.focusing`, at
-**`:272`**) · `:215` (`jam`) · `:264-265` · `:428` · `:794`; `BETA-DIRECTION.md` `:444`.
-Each needs a judgement about whether it is a pointer or a record, and that judgement belongs to whoever
-wrote the sentence. 🟨 **Guessing would re-commit the original error**, which was writing a number without
-checking it.
+The thirteen `DECISIONS.md` citations and `BETA-DIRECTION.md:444` were left unresolved above because each
+needed a **pointer-or-record** judgement, and that judgement belongs to whoever wrote the sentence. For
+these fourteen that is this author, so they are now judged rather than guessed. ⚠ **They were re-aimed
+by name** (reading 1's form: `` §`.pgc` (`:489`) ``) — which does **not** pre-empt the owner's ruling on
+D-096, because a name-plus-number citation is strictly better under all three readings, and these
+documents are wrong *today* either way.
 
-⚠ **One of these is self-referential and worth reading:** `DECISIONS.md` cites `:188` in a passage whose
-*subject* is finding stale citations — *"found two committed ones stale — `SelectionChrome.kt` pointed
-`.el .ring` at `v21-bench.html:188`"*. The citation in the sentence about stale citations is itself stale.
+**Eleven were pointers, and are re-aimed:**
+
+| Cited | Was | Is | Names |
+|---|---|---|---|
+| DECISIONS §P5 | `:428` | **§`.pgc`, `:485-493`** | the amended, lit page card |
+| DECISIONS §12.1 | `:174–219` | **§*the canvas*, `:239–284`** | the section, by its own section comment |
+| DECISIONS §12.2 | `:177-182` | **§`.page`, `:242-244`** | the page, which declares no light-island block |
+| DECISIONS §OD-48 | `:186-189` | **§`.keepclear`/`.guideV`, `:251-255`** | both marks rest at `opacity:0` |
+| DECISIONS §OD-47 | `:36` | **§`.pgc`, `:489`** | the card's own light on-paper set |
+| DECISIONS §ground | `:158` | **§`.phone`, `:223`** | `.phone{background:var(--bench)}` |
+| DECISIONS §handle | `:198` | **§`.hnd`, `:263-264`** | the 9px rounded square |
+| DECISIONS §kbstack | `:264-265` | **§`.kbstack`, `:329-330`** | the `.26s cubic-bezier(.05,.7,.1,1)` transcription |
+| DECISIONS §colour probe | `:215` | **§`.caret`, `:280`** | the caret, the editor's *second* `jam` mark |
+| DECISIONS §OD-48 dim | `:207` | **§`.content.focusing`, `:272`** | the rule that dims elements and not marks |
+| BETA-DIRECTION §2.2 #1 | `:444` | **§`.pgc.on`, `:494`** | the page grid's `leaf` current-page colour |
+
+**Three were records, and are left wrong — now marked so no later sweep "fixes" them:** the `:188` inside
+the sentence *about* stale citations (it quotes what the stale citation said); the amendment log's `:794`
+Photo-row glyph; and `:190`, which cites the **pre-OD-48** freeze and is explicitly dated in its own
+sentence. Each now carries an inline *record, not a pointer* marker, because that was the one thing a bare
+number could not say.
+
+⚠ **One correction to the audit above.** This document previously implied `:190`'s quoted rule
+(`.content.focusing~.keepclear{opacity:.85}`) was itself wrong, since today's `:255` reads
+`.content.focusing~.guideV`. It is not wrong — it is a correct quotation of the file **before** OD-48
+amended that line, which the passage says in so many words. **Reading the sentence, not just the number,
+is what separates the two kinds** — and it is the step a mechanical sweep cannot perform, which is the
+strongest argument for reading 1.
 
 #### The readings
 

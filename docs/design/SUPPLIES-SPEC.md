@@ -726,7 +726,7 @@ repetition (Bethesda's *art fatigue*), which is what a shuffle over templates ma
 `ZINE-DIRECTION.md:423` (§9.3) specifies *"a small rotation derived deterministically from the element id."*
 
 **Ruling: supplies land at 0°, and §9.3's tilt clause is withdrawn.** The frozen bench states the rule
-itself (`v21-bench.html:22-23`): *"the page never tilts. You are working on it; it sits square to you.
+itself (`v21-bench.html` §*the banner*, `:23-24`): *"the page never tilts. You are working on it; it sits square to you.
 (Tilt is for objects at rest…)"* A supply is placed *on* the page, in the act of working — so the tilt law
 (`V21-SPEC.md:494`) does not reach it. It governs the studio, not the page.
 
