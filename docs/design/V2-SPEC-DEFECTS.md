@@ -4817,7 +4817,8 @@ is a different thing — a dead `.privacyline` CSS rule in `v2-proof.html`.
 
 ### D-080 · The frozen `Art` sheet gives its own entry no glyph, filters nothing, and specifies no empty state {#d-080}
 
-**Status: 🟦 OPEN — owner amendment required.** Raised 2026-08-16 while scoping
+**Status: 🟦 OPEN — owner amendment required. ⚠ SCOPE EXTENDED 2026-08-18 — see §4 below.**
+Raised 2026-08-16 while scoping
 [F-3](../BETA-UX-REVIEW.md) of the beta UX review. Nothing here blocks today's work: the sheet itself is
 fenced by [OD-2](#d-029) and sequenced behind [ADR-105](../DECISIONS.md#adr-105) D-4. It is filed **now**
 precisely because it will otherwise be discovered by whichever phase finally builds it, at the moment it is
@@ -4834,6 +4835,12 @@ That is a picture frame with a mountain in it — the photo icon — and the fre
 and cut paper"* as well. A chooser whose three verbs are `Text · Photo · Art` and whose last two look
 identical is a chooser with two verbs and a duplicate. An implementer cannot invent the missing glyph: it is
 drawn material in a frozen file, and D-051 established that the fix is an amendment.
+
+⚠ **Item 2 below is now stale, and the staleness matters to the ruling.** It says the chips *are drawn*.
+Amendment **A5** (2026-08-16) **deleted the chip markup** on the reasoning that filtering was ruled out by
+SUPPLIES-SPEC §9 and that the four families already head their own `.lbl` sections. So the chips are not
+drawn-and-inert awaiting behaviour — they are **absent, and would have to be re-added**. Read §4 before
+ruling on item 2.
 
 **2 · The four family chips are drawn and filter nothing.** `:847` renders `Tape & fixings · Stamps &
 marks · Cut paper · Cut shapes` with `.on` on the first, and `:849-850` moves `.on` and stops — the
@@ -4854,6 +4861,36 @@ rediscover separately.
 
 **Not in scope here:** whether the sheet is built at all (that is [D-029](#d-029) and ADR-105's sequencing),
 and the empty state's *cue wording*, which is [D-050](#d-050) and already owner-owned.
+
+#### 4 · Scope extension, 2026-08-18 — a **search text field**, which nothing above mentions {#d-080-extended}
+
+[ADR-107 R5](../DECISIONS.md#adr-107) proposes growing the catalogue from sixteen to ~51 and, with it,
+**both** a family-chip filter **and a text field over names and tags**. This entry is the vehicle the ADR
+routes that ruling through, and as originally written it cannot carry it:
+
+- **A text field appears nowhere in D-080.** Item 2 is about chips that filter nothing. Ratifying a control
+  this entry never names would be the owner approving something they were not shown — raised by independent
+  review, and correct.
+- **Item 2's premise is inverted by A5** (see the ⚠ above): the chips must be *re-added*, not re-tasked.
+
+**What is actually being asked of the owner, stated once:**
+
+| # | Control | State today | ADR-107 R5 asks |
+|---|---|---|---|
+| a | `Art` row glyph | Byte-identical to the `Photo` row's | Amend — unchanged from item 1 |
+| b | Family chips | **Deleted by A5** | **Re-add**, filtering ~51 |
+| c | **Search text field** | Never existed; removed by ADR-104 | **Add**, matching drawn names **and tags** |
+| d | Empty state | Unspecified | Specify — and R5 requires it never dead-ends: an empty result offers the full set back |
+
+⚠ **(b) and (c) reverse two published positions and are recorded as reversals**, in the manner
+[SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) models: §9's *search field* bullet (premise was *the sixteen*, which
+R1 spends) and its *"no tags, no filters, no sort"* bullet (which states no premise, so it is a straight
+reversal, not an expiry). Per [V2-CONSTITUTION §VI](V2-CONSTITUTION.md) `v21-bench.html` is amended in the
+same act.
+
+⚠ **This entry now gates R1 as well as R5.** ADR-107's sequencing gate says the ~51 marks may be authored
+and tested but may not enter the shipped sheet before this ruling — because a sixty-mark drawer with no
+filter is the failure ADR-104 names as *"a large library without excellent search is worse than none"*.
 
 ---
 
@@ -5389,7 +5426,9 @@ an expiry condition written in prose has no expiry mechanism.** There was no tes
 
 ---
 
-### D-086 — twelve of the sixteen supply tiles are dim with no words, so TalkBack is better informed than a sighted user {#d-086}
+### D-086 — dim supply tiles carry no words, so TalkBack is better informed than a sighted user {#d-086}
+
+> Booked when twelve of sixteen were dim; **four** are dim as of 2026-08-18 — see the [update](#d-086-update). The count changed, the asymmetry did not.
 
 | | |
 |---|---|
@@ -5426,6 +5465,25 @@ screen wants me to do?* The answer requires a person who does not know why the t
 disabling it — *absent, not disabled*. P-G does the opposite for the tiles. The distinguishing principle
 offered is that the freeze **specifies these sixteen tiles** while it specifies no Art-row obligation. That
 is defensible and it is not yet ruled.
+
+#### Update — the twelve are now four {#d-086-update}
+
+**2026-08-18, package P3-art.** Eight of the twelve were authored (`mark.registration` · `mark.halftone` ·
+`mark.asterisk` · `mark.arrow` · `paper.window` · `paper.tag` · `fix.staple` · `fix.corner`), taking
+`SupplyCatalog` from 4/16 to **12/16**. The sheet needed no edit: `BenchArtSheet` derives a tile's live
+state from `SupplyCatalog.outlineOf(supplyId) != null`, so the count of dim tiles is a *consequence* of the
+catalogue rather than a constant anyone has to remember to change.
+
+**This shrinks the defect; it does not close it.** Four tiles are still dim and still wordless, and the
+asymmetry the defect names — TalkBack is told *"Not yet"*, a sighted maker is left to infer it — holds
+identically at four as at twelve. If anything it sharpens: a lone dim tile among twelve live ones reads
+*more* like a malfunction than a wholly dim family did, because the surrounding tiles prove the feature
+works. **Status stays OPEN**, and the three candidate answers are unchanged.
+
+⚠ **One of the defect's own candidate answers has quietly become cheap.** *"Ship the sheet only when the
+twelve exist"* was costed at twelve outlines; it now costs four, three of which need the same thing (an
+authored tear). That is a materially different offer than the one the defect was booked against, and the
+Pass 2 reading should be given it.
 
 ---
 
@@ -5542,6 +5600,20 @@ The fence assertion is deliberately the **inverse** of [`BenchC6GoldenTest`]'s
 13dp preset dot, here each must paint at least *half a 30dp pot*. A fence asserted in one direction only is
 satisfied by a function that draws nothing for anybody.
 
+**The fixture was checked against the device, 2026-08-18, and it holds where it matters.** On `SM-A176B` /
+Android 16, build `126d84e`, a selected supply's popover carries `INKS · PAPER TINTS · NEUTRALS ·
+READY-MADE PALETTES` — the band set the goldens capture — and picking *Kraft* rings that swatch with the
+dashed ink ring, which is the fifth capture's exact state reached by hand.
+
+⚠ **One divergence, and it is pre-existing rather than introduced here.** These goldens use
+`@Config(qualifiers = "w430dp-h932dp-xhdpi")`, inherited from `BenchC6GoldenTest` so the two files agree.
+The device is **411dp** wide (1080 ÷ 2.625), and at that width the ten-swatch `INKS` band **wraps 9 + 1**
+where the golden draws it as one row. Every bench golden in the tree shares the config, so this bounds what
+*all* of them prove, not just these five: they observe a viewport the product does not have. The fenced
+`PAPER TINTS` row is five swatches and does not wrap at either width, so neither the fence assertion nor the
+ring assertion is affected — which is why this is recorded as an observation and not fixed. Changing the
+qualifier would re-record every bench golden, and a re-record is a reviewed act, never a drive-by.
+
 ⚠ **Still owed: a re-record on the pinned image.** These five PNGs were recorded on the Windows dev host.
 [`record-goldens.yml`](../../.github/workflows/record-goldens.yml) is explicit that local recording is
 *viable* — during A9 every CI-recorded golden in the tree verified green on this machine, so the comparison
@@ -5609,3 +5681,304 @@ requires deciding *what should happen* when both want the band — suppress the 
 exists, stack the snack above the bar, or suppress the context bar until the snack retires — and that
 decision belongs in `v21-bench.html` **first**. An implementer picking one silently would be redesigning a
 frozen surface. Evidence: `scratchpad/dev/09-placed.png`.
+
+---
+
+### D-092 — a photo corner lands as a 4.5:1 sliver, because its family's one constant is tape's {#d-092}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../SupplyPlacement.kt:76` · [SUPPLIES-SPEC §5.2 ruling](SUPPLIES-SPEC.md#s-5-2-ruling) · `SupplyCatalog` |
+| **Found** | 2026-08-18, **Pass 1 on SM-A176B**, first placement of a newly authored supply. Predicted from the source before the device confirmed it |
+| **Severity** | **Pass 1 defect on a shipped surface.** `fix.corner` and `fix.staple` are pickable today |
+| **Status** | ⏳ **OPEN — owner ruling required.** §5.2 caps overrides at exactly one, pinned by a test |
+
+**What happens.** `fix.corner` lands at `widthFraction = 0.55, aspect = 4.5` — over half the page wide and
+four and a half times wider than tall. The photo corner is authored 1:1; stretched to 4.5:1 it lands as a
+long flat sliver with its pocket reduced to a slit. It is not recognisable as a photo corner, and a maker
+who taps a tile showing a neat square corner gets something that looks like a mistake.
+
+**The cause is a category error in the family, not a wrong number.** §5.2 rules *one constant per family*,
+and the ruling's own examples are all tape-like: *"tape lands long."* That is right for `tape.torn`. But the
+family is **Tape & fixings**, and a fixing is not a tape — a staple, a photo corner, a paper clip and a push
+pin are compact objects, roughly as tall as they are wide. **One aspect cannot serve both halves of a family
+whose name contains the word "and".** The other three families are physically homogeneous, which is why the
+rule has held until now.
+
+⚠ **This was unfindable until 2026-08-18 and is a direct consequence of authoring the outlines.** All four
+fixings were unauthored and inert, so the only member of *Tape & fixings* anyone could place was
+`tape.torn` — for which 4.5:1 is correct. The family default was never wrong before; it was never
+*exercised*. A rule validated against one quarter of its own domain is the kind of defect only a device
+pass finds, and it is the second time in this package that authoring the artwork falsified an assumption
+the tests had blessed (the first: [`paper.tag`'s tail](#d-092-note)).
+
+**Why it is not simply fixed.** [§5.2's ruling](SUPPLIES-SPEC.md#s-5-2-ruling) is explicit that the override
+map is capped at **exactly one entry** (`shape.rule`), *"pinned by a test — because an override map with no
+cap is just per-supply sizing with extra steps, and per-supply sizing is what §5.2 exists to refuse."*
+Adding three more overrides silently would defeat the mechanism the ruling was built to protect. The
+candidate answers, none chosen here:
+
+1. **Raise the cap to four** and add `fix.corner` · `fix.staple` · `fix.clip` · (later) `fix.pushpin`. Honest,
+   but it concedes that per-supply sizing was right and the cap is theatre.
+2. **Split the family's constant by prefix** — `tape.*` at 4.5:1, `fix.*` at 1:1. Cheap and principled, and
+   ⚠ it collides head-on with the catalogue's own standing rule that **the id prefix is not the family**
+   (`SupplyCatalog` KDoc). It would make the prefix load-bearing for the first time.
+3. **Split the family in two** — *Tape* and *Fixings*. The cleanest model and the most expensive: the four
+   families are **frozen** (`v21-bench.html:844`), so this is an owner act and changes the Art sheet's
+   headings.
+4. **Give the outline an intrinsic aspect** and let the family supply only the width. Most correct in the
+   long run — a supply *does* know its own proportion, which is exactly the argument
+   `benchSupplyReplacement`'s KDoc already makes for Replace (*"a photo has no intrinsic proportion the app
+   knows about while a supply does"*). It is also the largest change, and it partially unwinds §5.2.
+
+**Reading 4 is the implementer's recommendation** — it is the one that makes the existing `Replace`
+reasoning consistent with placement instead of contradicting it — but §5.2 was ruled, so this is escalated
+rather than decided.
+
+**Evidence:** `scratchpad/s5.png` (the sliver, selected, on page 4/8).
+
+#### Note — the sibling finding this shares a cause with {#d-092-note}
+
+`paper.tag`'s first authored tail passed every structural assertion — correct span, correct area, one
+polygon with nothing to overlap — and read as a torn corner rather than as speech. Both defects are the
+same species: **a property nothing was looking at.** The response to that one was
+`SupplyOutlineFillTest`, which probes ink-vs-paper at named points. The response to this one cannot be a
+test, because the landing size is not wrong in any way a machine can score — it is wrong *for a photo
+corner*, and only a person holding the phone knows that.
+
+---
+
+### D-093 — every tile in the drawer is drawn hollow and every supply lands solid {#d-093}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtGlyphs`) · `core/render/.../SupplyCatalog.kt` · `v21-bench.html:1051-1055` (amendment A5) |
+| **Found** | 2026-08-18, **Pass 2 on SM-A176B**, Android 16 — the first Pass 2 the drawer has ever had |
+| **Severity** | Open design question on a shipped surface. Not a crash, not an a11y defect — a **prediction** defect |
+| **Status** | ⏳ **OPEN** — three readings below, none chosen. Bundled with [D-086](#d-086) as one Pass 2 ruling |
+
+**The observation, before the explanation.** Opening `Art` shows sixteen tiles and **every one of them is a
+stroked outline** — a hollow star, a hollow circle, a hollow rectangle, a hollow triangle, a hollow window,
+a hollow speech bubble. Tapping any of them puts a **solid** mark on the page. Nothing on the tile
+suggested that would happen.
+
+**The cause is structural, not a slip.** `BenchArtGlyphs` holds 24-unit `ZinelyV2IconShape` icons drawn at
+the corpus's icon stroke weight; `SupplyCatalog` holds outlines that [`DrawShape`](../ARCHITECTURE.md)
+fills, and §4.1 rule 2 makes fill the *only* thing it can do. The two were never going to agree, and the
+freeze's own amendment **A5** says so in terms: the glyphs *"DEPICT the supplies; they are not the authored
+outlines."*
+
+⚠ **A5 is the counter-argument and it is not sufficient.** A5 licenses the glyphs not to be the outlines'
+**source**. That is a rule about *authoring provenance* — it stops a mockup becoming reviewed Kotlin. It is
+not a licence for the tile to mispredict what a tap produces, which is a different property and one A5
+never addresses. An icon rendered lighter than the thing it names is an ordinary convention; an icon
+rendered *hollow* where the product only draws *solid* is a convention that has no solid case to contrast
+against, because **the catalogue contains no hollow mark at all**.
+
+**Three readings, none chosen:**
+
+1. **Make the tiles solid.** They then predict exactly what lands. Costs nothing in the catalogue, and it is
+   the *smallest* change — but it amends drawn material on a frozen surface, so it is an owner act.
+2. **Ship hollow variants**, so the drawer's promise becomes true rather than the tile's picture becoming
+   smaller. ⚠ This is a genuinely stronger argument for hollow marks than the ones raised when the question
+   was first asked (ink economy, variety), and it was invisible until someone opened the drawer on a phone.
+3. **Accept it** on A5's authority and the ordinary-iconography argument. Defensible, and it is the
+   incumbent position — which is precisely why it should be *tested* rather than inherited.
+
+**Why this is filed rather than fixed.** All three readings change drawn material on `v21-bench.html`, and
+the second one also changes what ships in the catalogue. ⚠ It also cannot be settled by whoever found it:
+the finding is *"the picture did not predict the mark"*, and knowing why the picture and the mark differ is
+exactly the disqualification [Pass 2](../../CLAUDE.md#pass-2--first-time-user-verification) names —
+*"knowing why a screen behaves as it does disqualifies you from judging whether it explains itself."*
+
+**Related.** [D-092](#d-092) is the same question in silhouette rather than fill weight: `fix.corner`'s tile
+shows a neat square corner and the placement is a 4.5:1 sliver. Both ask whether the drawer's picture
+predicts the page's mark, and they should be ruled together.
+
+---
+
+### D-094 — `Photo` and `Art` carry byte-identical glyphs, in the frozen file {#d-094}
+
+| | |
+|---|---|
+| **Artifacts** | [`v21-bench.html:827-828`](mockups/v21-bench.html) · `feature/editor/.../BenchAddChooser.kt` |
+| **Found** | 2026-08-18, **Pass 2 on SM-A176B** — the first thing seen on opening the chooser, before anything was placed |
+| **Severity** | Open design question. Two of the three ways into the page are visually indistinguishable |
+| **Status** | ⏳ **OPEN — owner act.** The duplication is in the frozen file, so the fix is an amendment, not a code change |
+
+**The observation.** The `Add to your page` sheet offers three rows — `Text`, `Photo`, `Art`. `Photo` and
+`Art` are drawn with **the same icon**: a framed picture with a mountain-and-sun path. Not similar —
+identical:
+
+```
+photo → <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>
+art   → <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>
+```
+
+⚠ **This is not an implementation slip, which is why it is filed here rather than fixed.** `BenchAddChooser`
+is a faithful transcription; the duplication is in `v21-bench.html` itself. When the `Art` row was released
+(ADR-105 S7) it inherited the placeholder glyph the frozen file gave it, and the freeze is authoritative —
+`OD-9` keeps a control drawn as the freeze draws it. Substituting a different mark would be inventing drawn
+material on a frozen surface.
+
+**Why it matters more than a cosmetic duplicate.** The icon is the only part of these rows a maker parses
+before reading. Two of the three doors into a page therefore look like the same door, and the one that is
+*newest* — the one nobody has a habit for yet — is the one wearing the other's clothes. The subtitles do
+distinguish them (*"From your phone"* vs *"Tape, stamps and cut paper"*), so this is a scanning cost rather
+than a wrong-action trap; but the product's own rule is that a screen answers the question the maker is
+holding, and *"which of these two identical things do I want?"* is a question the screen creates.
+
+**Candidate fixes, none chosen** — all amend the frozen file:
+
+1. **Give `Art` its own glyph.** The obvious one, and `BenchArtGlyphs` already contains sixteen marks the
+   freeze drew for exactly this vocabulary — a piece of tape or a stamp would name the drawer's contents.
+2. **Give `Photo` a photo-specific mark** and leave `Art` the generic frame. Inverts the problem.
+3. **Accept it.** The subtitles carry the distinction and the rows are always read together.
+
+**Related.** [D-093](#d-093) is the same species one level down — there, the tile's picture mispredicts the
+mark; here, the row's picture fails to distinguish the *category*. Both are the drawer's iconography
+promising something other than what it delivers, and both are owner acts because both live in the freeze.
+
+---
+
+### D-095 — the Registration tile draws the exact mark the fill rule forbids {#d-095} — ✅ **RULED & FIXED**
+
+**Found:** 2026-08-18, reading the three Art-sheet golden `*_compare.png` diffs after the eight new
+outlines landed — not on a device, and not by any assertion. **Severity:** the drawer tells a lie about
+one specific supply. **Owner act:** yes, the glyph is drawn in the frozen `v21-bench.html`.
+
+#### What the two pictures say
+
+| | Drawn where | What it shows |
+|---|---|---|
+| **The tile** | `v21-bench.html` §`openArt()`, `SUP` entry `mark.registration`: `<circle cx="12" cy="12" r="6"/><path d="M12 2v20M2 12h20"/>` | A full-width plus **crossing** a circle, with the two strokes **meeting at the centre** |
+| **The mark** | `SupplyCatalog.kt:133-171` (`REGISTRATION`) | Four arms that stop **on** the ring (`REG_RING_OUTER = 0.25`), an annulus (`0.25` / `0.19`), and a **bare centre** |
+
+They differ in the two details that are the whole of what a registration target is.
+
+#### Why this is not the same complaint as [D-093](#d-093)
+
+D-093 is a *style* mismatch — hollow tile, solid mark — and it is arguable in either direction.
+This is not arguable. ⚠ **The tile draws the drawing the even-odd fill rule makes impossible.** Under
+`SupplyOutline`'s rule 3 an arm laid **across** the ring cancels the crossing to a hole, so the mark
+punches paper exactly where it is densest. That is *why* the authored arms stop short
+(`SupplyCatalog.kt:146`), and it is why no amount of redrawing the outline can be made to match the tile.
+**One of the two pictures has to move, and it cannot be the mark.**
+
+⚠ **A bare centre is also the correct registration target**, which makes the tile wrong twice: printers'
+registration marks are read by aligning through an *open* centre. The constraint and the reference
+agree, which is unusual and worth saying — the fill rule did not compromise this mark, it corrected it.
+
+#### The readings
+
+1. 🟦 **RECOMMENDED — redraw the tile to depict the authored mark**: four arms stopping at a ring, ring
+   open. It is a four-token SVG change in the frozen file and it costs nothing but your ruling.
+2. Accept the divergence on the standing rule that *"the glyphs DEPICT the supplies; they are not the
+   authored outlines"* (`v21-bench.html` A5 note). ⚠ That rule was written to excuse *fidelity*, not
+   *contradiction*, and this is the first case where the tile depicts something the renderer cannot draw.
+
+**Rule this with [D-086](#d-086) · [D-092](#d-092) · [D-093](#d-093) · [D-094](#d-094)** — all five ask the
+same question, which is whether the drawer's picture predicts the page's mark. This one is the cheapest
+of the five to close and the only one with a forced answer.
+
+**Related.** [D-093](#d-093) is the general case; this is the instance where the general case has a proof.
+Found the same way `paper.tag`'s tail was found — by rendering it and looking — which is now twice that a
+fully green suite saw nothing. `SupplyOutlineFillTest` probes the *mark*; nothing anywhere probes the
+*tile*, and nothing can, because the tile is HTML.
+
+#### Ruling, 2026-08-18 — **reading 1**, same day it was filed {#d-095-ruling}
+
+The owner ruled **redraw the tile**. Landed in both places the picture lives, one line each:
+
+| | Change |
+|---|---|
+| `docs/design/mockups/v21-bench.html:849` | `r="6"` + `M12 2v20M2 12h20` → `r="5"` + `M12 2v5M12 17v5M2 12h5M17 12h5`. **Amendment log A6**; the file's line count outside the log is unchanged, so no citation to this file moves |
+| `feature/editor/.../BenchArtSheet.kt` (`mark.registration`) | the same geometry as `ZinelyV2IconShape`, with the reason in a comment beside it |
+
+Ring `r=5` and arms `2→7` / `17→22` are `0.25` and `0.0→0.25` / `0.75→1.0` of the tile's 2–22 span — the
+authored outline's proportions exactly (`SupplyCatalog.kt:166-171`). The annulus stays one stroked circle:
+these glyphs are `fill:none`, and at 24px a stroked circle is the honest picture of a filled band.
+
+⚠ **The other four in the cluster are untouched.** [D-086](#d-086) · [D-092](#d-092) · [D-093](#d-093) ·
+[D-094](#d-094) still need one ruling between them. This one closed early only because its answer was
+forced — the outline could not move — and that is not true of any of the others; three of them are
+genuinely open design questions, and closing this one is **not** a precedent for closing those.
+
+🟨 **Consequence: the three Art-sheet goldens now differ for two reasons, not one** — the eight newly
+authored tiles *and* this glyph. Both are intended, both were read as diffs before being accepted, and the
+re-record is still owed on the pinned CI image (`record-goldens.yml`).
+
+---
+
+### D-096 — line-number citations into `v21-bench.html` rot on every amendment, and roughly half are now wrong {#d-096}
+
+**Found:** 2026-08-18, by auditing **every** `v21-bench.html:N` citation in `docs/` against the current
+file rather than fixing the one pass [A5](mockups/v21-bench.html) booked. **Severity:** process. Nothing
+renders wrong; the evidence trail behind several rulings does not resolve.
+
+#### What the audit found
+
+`v21-bench.html` is cited by line **~50 times** across four documents. Checking each against the line it
+actually names: **`SUPPLIES-SPEC.md` is clean in all five** — A5's booked reconciliation pass was in fact
+done — but `BETA-DIRECTION.md`, `DECISIONS.md` and `BETA-UX-REVIEW.md` are not.
+
+⚠ **The failures are not near-misses.** `:773` for the add chooser resolves to `bin={node:sel,…}`;
+`:623-625` for the context-bar verb sets resolves to `</div>` and `<script>`; `:158` for
+`.phone{background:var(--bench)}` resolves to the middle of a base64 font blob. A reader checking the
+citation does not find *approximately* the right thing, they find something unrelated — which is worse
+than no citation, because a wrong one still reads as evidence.
+
+#### Fixed in this pass (live claims, target still exists)
+
+| Document | Was | Is | Names |
+|---|---|---|---|
+| BETA-DIRECTION §3.3 | `:773` | **`:825-829`** | the add chooser — **and the claim was also wrong**: it said Text / Photo, and `Art` has since landed (ADR-105 S7), so it has three rows |
+| BETA-DIRECTION §X1 | `:514` | **`:564`** | `<button class="chip">Aa Font</button>` |
+| BETA-DIRECTION §verb sets | `:623-625` | **`:674-679`** | the `kind===` verb-set returns |
+| BETA-DIRECTION ×2 | `:766` | **`:820`** | the page grid's *"drag to reorder"* caption |
+| OWNER-CHECKLIST ([D-094](#d-094)) | `:827-828` | **`:828-829`** | off by one — `:827` is `Text`; the identical glyphs are `Photo` and `Art` |
+| BETA-UX-REVIEW | `:824` | **`:825-829`** | `:824` is a section comment |
+
+#### NOT fixed, deliberately — and this is the finding that matters
+
+⚠ **Some stale citations are stale on purpose, and renumbering them would falsify the record.** An
+amendment-log entry that says *"A3 corrected the Photo row's glyph at `:794`"* is a claim about the file
+**as it was on 2026-08-14**. `:794` is wrong today and *must stay wrong*, because the sentence is history,
+not a pointer. The same applies to several `DECISIONS.md` passages inside ADR-102's P5 narrative.
+
+**So a citation into a living file has two incompatible jobs — "look here" and "this is what it said
+then" — and a bare line number cannot distinguish them.** A sweep that renumbers everything destroys the
+second kind; a sweep that renumbers nothing leaves the first kind broken. That is why this keeps
+recurring: A5 booked it, A6 inherited it, and this is the third pass.
+
+#### Unresolved, listed rather than guessed
+
+`DECISIONS.md` `:36` (`.pgc`) · `:174-219` (*"the canvas"* section — the header is at **`:239`**) ·
+`:177-182` (`.page`, at **`:242`**) · `:186-189` (`.keepclear`/`.guideV`, at **`:251-255`**) · `:188`
+(`.el .ring`, at **`:260`**) · `:190` · `:198` (`.hnd`, at **`:263`**) · `:207` (`.content.focusing`, at
+**`:272`**) · `:215` (`jam`) · `:264-265` · `:428` · `:794`; `BETA-DIRECTION.md` `:444`.
+Each needs a judgement about whether it is a pointer or a record, and that judgement belongs to whoever
+wrote the sentence. 🟨 **Guessing would re-commit the original error**, which was writing a number without
+checking it.
+
+⚠ **One of these is self-referential and worth reading:** `DECISIONS.md` cites `:188` in a passage whose
+*subject* is finding stale citations — *"found two committed ones stale — `SelectionChrome.kt` pointed
+`.el .ring` at `v21-bench.html:188`"*. The citation in the sentence about stale citations is itself stale.
+
+#### The readings
+
+1. 🟦 **RECOMMENDED — cite by name, not by number.** `v21-bench.html §openSupply()`,
+   `` `.keepclear` ``, `` `AMENDMENT LOG A5` ``. Names survive amendments; line numbers cannot, because
+   every amendment is an insertion. The mockups already carry stable named anchors (function names, CSS
+   selectors, amendment-log ids) — nothing new has to be built.
+2. Keep line numbers and add a checked sweep to the definition of done for every amendment. ⚠ This has
+   been tried implicitly three times (A5 booked it, A6 inherited it, this pass ran it) and the rot
+   returned each time, because the sweep is manual and the amendment is not.
+3. Accept the rot. ⚠ Not viable: the citations are the evidence for owner rulings, and
+   [CLAUDE.md](../../CLAUDE.md#documentation-rule-mandatory) makes *"link, don't restate"* the mechanism
+   that keeps one source of truth. A link that resolves to the wrong line is a restatement with extra steps.
+
+**Related.** The line-for-line invariant the amendment log asserts (A5, A6) is real and was honoured —
+A6 moved no line at all. **The invariant is not the problem.** The problem is that citations were written
+against revisions the invariant did not yet cover, and no amendment can retroactively fix a number that
+was wrong when it was typed.

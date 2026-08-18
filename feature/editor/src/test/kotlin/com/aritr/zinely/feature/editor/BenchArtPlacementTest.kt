@@ -248,18 +248,21 @@ class BenchArtPlacementTest {
     }
 
     @Test
-    fun `Given the sixteen, When each tile is asked, Then the pickable ones are exactly the authored ones`() {
+    fun `Given the sixteen, When the cabinet opens on the real screen, Then every tile is there`() {
         // The chooser's promise — "tape, stamps and cut paper live here" — is true of the *cabinet*, not of
-        // every tile in it. Pinned against the catalogue rather than a literal four, so the day another
-        // family is authored this test follows instead of failing.
+        // every tile in it, so the cabinet must hold all sixteen however few are authored.
+        //
+        // ⚠ This test also used to re-assert a hard-coded set of four authored ids, under a comment saying
+        // it was pinned against the catalogue so it would "follow instead of failing". It did neither: it
+        // duplicated `SupplyCatalogTest`'s membership assertion and then failed the day the catalogue grew.
+        // The pickable-iff-authored correspondence now lives once, in `BenchArtSheetTest`, exercised
+        // through the sheet rather than read out of the catalogue. What is unique *here* is the wiring
+        // through `EditorScreen`, which is all this keeps.
         setScreen(store())
         openArt()
         for (id in Copy.Supplies.NAMES.keys) {
             composeRule.onNodeWithTag(benchArtTileTestTag(id)).assertExists()
         }
-        assertEquals(
-            setOf("shape.rect", "shape.circle", "shape.triangle", "shape.rule"),
-            Copy.Supplies.NAMES.keys.filter { SupplyCatalog.outlineOf(it) != null }.toSet(),
-        )
+        assertEquals("the freeze specifies sixteen", 16, Copy.Supplies.NAMES.size)
     }
 }

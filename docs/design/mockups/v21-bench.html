@@ -846,7 +846,7 @@ const tile=([id,name,d])=>`<button class="tile" data-supply="${id}" aria-label="
   +'<span class="fav" role="button" aria-label="Favourite">☆</span></button>';
 function openArt(){
   const SUP=[['tape.torn','Torn tape','<path d="M4 8h16v8H4z"/><path d="M4 8l-1.6 2 1.6 2-1.6 2 1.6 2"/><path d="M20 8l1.6 2-1.6 2 1.6 2-1.6 2"/>'],['fix.corner','Photo corner','<path d="M5 5h14v14H5z"/><path d="M5 13V5h8z"/>'],['fix.staple','Staple','<path d="M4 15V9h16v6"/><path d="M4 15h5M15 15h5"/>'],['fix.clip','Paper clip','<path d="M15 7v8a4 4 0 01-8 0V7a2.6 2.6 0 015.2 0v8a1.2 1.2 0 01-2.4 0V8"/>'],
-   ['mark.asterisk','Star',DECOR.star],['mark.arrow','Arrow','<path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>'],['mark.halftone','Halftone dots','<circle cx="7" cy="8" r="1.5"/><circle cx="13" cy="7" r="2.2"/><circle cx="18" cy="10" r="1.3"/><circle cx="9" cy="14" r="2.2"/><circle cx="15" cy="13" r="1.5"/><circle cx="18" cy="17" r="1"/><circle cx="11" cy="19" r="1.3"/>'],['mark.registration','Registration cross','<circle cx="12" cy="12" r="6"/><path d="M12 2v20M2 12h20"/>'],
+   ['mark.asterisk','Star',DECOR.star],['mark.arrow','Arrow','<path d="M4 12h15"/><path d="M13 6l6 6-6 6"/>'],['mark.halftone','Halftone dots','<circle cx="7" cy="8" r="1.5"/><circle cx="13" cy="7" r="2.2"/><circle cx="18" cy="10" r="1.3"/><circle cx="9" cy="14" r="2.2"/><circle cx="15" cy="13" r="1.5"/><circle cx="18" cy="17" r="1"/><circle cx="11" cy="19" r="1.3"/>'],['mark.registration','Registration cross','<circle cx="12" cy="12" r="5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/>'],
    ['paper.strip','Torn strip','<path d="M8 5h8v14H8z"/><path d="M8 5l2-1.6 2 1.6 2-1.6 2 1.6"/><path d="M8 19l2 1.6 2-1.6 2 1.6 2-1.6"/>'],['paper.window','Window frame','<path d="M3 4h18v16H3z"/><path d="M8 9h8v6H8z"/>'],['paper.tag','Speech tag','<path d="M4 5h16v10H9l-4 4v-4H4z"/>'],['paper.underline','Marker underline','<path d="M4 14c4 2 12 2 16-1"/><path d="M4 18c4 2 12 2 16-1"/>'],
    ['shape.rect','Rectangle','<rect x="4" y="6" width="16" height="12"/>'],['shape.circle','Circle','<circle cx="12" cy="12" r="8"/>'],['shape.triangle','Triangle','<path d="M12 4l8 15H4z"/>'],['shape.rule','Straight rule','<path d="M3 12h18"/><path d="M3 9.5v5M21 9.5v5"/>']];
   $('sheet').innerHTML='<div class="grip"></div><h3>Art</h3>'
@@ -1106,6 +1106,38 @@ addEventListener('keydown',e=>{
      reconciliation pass owed to SUPPLIES-SPEC, not to this file** — this is now the second amendment to
      assert the line-for-line invariant while the citing document is out of step with it, and the third
      will be harder to unwind.
+
+     ---------------------------------------------------------------------------
+
+     A6 · 2026-08-18 (owner ruling, D-095 reading 1) — `mark.registration`'s glyph.  It drew a
+     full-width plus CROSSING a ring, the two strokes meeting at the centre.  The authored mark does
+     neither: its four arms stop ON the ring (`SupplyCatalog.kt:166-169`, `REG_RING_OUTER = 0.25`) and its
+     centre is bare.
+
+     ⚠ **This is not the DEPICT-not-trace latitude A5 claimed above, and the distinction is the ruling.**
+     A5's rule permits a tile to be a simplified picture of its mark.  It does not permit a tile to be a
+     picture of a mark the renderer CANNOT DRAW.  `SupplyOutline` fills **even-odd**, so an arm laid across
+     a ring cancels the crossing to a HOLE — the old glyph depicted precisely the drawing that punches
+     paper where the mark is densest, which is why the outline was authored with the gap in the first
+     place.  No redrawing of the outline can be made to match the old tile, so the tile is the half that
+     moves.  (A bare centre is also what a real registration target has: it is read by aligning THROUGH the
+     opening.  The fill rule did not compromise this mark — it corrected it.)
+
+     **Line-for-line, and stricter than A5's:** ONE line changed, `:849`, and it changed within itself —
+     the glyph string only.  The file's line count is unchanged outside this log, so **no citation to any
+     line in this file moves**, including the four SUPPLIES-SPEC cites that A5 booked as already stale.
+
+     Geometry, in the tile's own 2–22 span (a 20-unit box, matching the outline's unit square):
+     ring `r=5` = `0.25 × 20` ✓ · arms `2→7` and `17→22` = `0.0→0.25` and `0.75→1.0` ✓.  The arms
+     terminate exactly on the ring's outer edge, as the outline's do.  The annulus (`0.25`/`0.19`) stays
+     ONE stroked circle: these glyphs are `fill:none` strokes, so two concentric circles would depict a
+     band the maker never sees as a band at this size — a stroked circle IS the honest picture of a filled
+     annulus 24px wide.
+
+     🟨 **Found by reading golden `*_compare.png` diffs, not by any assertion, and not on a device.**
+     `SupplyOutlineFillTest` probes the authored MARK; nothing probes the TILE and nothing can, because
+     the tile is HTML.  That gap is now twice-demonstrated (`paper.tag`'s tail was the first) and it is
+     the standing argument for looking at the pixels before blessing them.
      =========================================================================== -->
 <style>
 /* A1 — see the AMENDMENT LOG above.  Here rather than beside `.doneEdit` because a new selector cannot

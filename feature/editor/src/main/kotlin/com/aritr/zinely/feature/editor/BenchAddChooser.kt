@@ -136,21 +136,22 @@ internal val BenchOptSubtitleSize = 11.68.sp
  * something out of — the row is live, not truthful-and-inert, so the sentence that kept it out no longer
  * describes it.
  *
- * ### The four-of-sixteen question, argued rather than assumed
+ * ### The part-authored-catalogue question, argued rather than assumed
  *
- * Only the *Cut shapes* family has authored outlines; the other twelve tiles are drawn inert inside the
- * sheet ([BenchArtSheet], OD-9). It is fair to ask whether the row should wait for the twelve. It should
- * not, for three reasons and one that decides it:
+ * Some supplies have no authored outline and are drawn inert inside the sheet ([BenchArtSheet], OD-9) —
+ * twelve of sixteen when this was written, four as of 2026-08-18. It is fair to ask whether the row should
+ * wait for them. It should not, for three reasons and one that decides it, **none of which turn on the
+ * count** — which is why shrinking twelve to four changed nothing here:
  *
  *  - The inertness is **one level down**. This row's promise is *"tape, stamps and cut paper live here"*,
  *    and that is true: the sheet shows all sixteen under §4's four headings, names each one, and says
- *    *"Not yet"* on the twelve it cannot lay down. Nothing here over-promises.
- *  - Withholding it makes the four that *do* work unreachable — the placement path would ship with no
+ *    *"Not yet"* on the ones it cannot lay down. Nothing here over-promises.
+ *  - Withholding it makes the ones that *do* work unreachable — the placement path would ship with no
  *    production call site at all, which is the state this package exists to end.
  *  - The alternative failure is worse and less recoverable: a maker who never learns the drawer exists
- *    cannot ask for the twelve.
+ *    cannot ask for the ones that are still missing.
  *
- * ⚠ What is **not** settled here is whether twelve dim tiles out of sixteen is an acceptable first
+ * ⚠ What is **not** settled here is whether a dim tile among live ones is an acceptable first
  * impression. [BenchArtSheet] already flags that for Pass 2, and adding this row is what finally puts a
  * first-time maker in front of it. If Pass 2 rejects the sheet, this row is the fence to re-raise.
  *

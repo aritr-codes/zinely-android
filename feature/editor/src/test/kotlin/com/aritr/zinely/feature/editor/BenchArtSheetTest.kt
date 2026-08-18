@@ -118,13 +118,36 @@ class BenchArtSheetTest {
     }
 
     @Test
-    fun exactly_the_authored_four_are_pickable_and_the_catalogue_is_what_decides() {
-        // Not a hard-coded list of four: the sheet asks `SupplyCatalog`, so this test asks it too and the
-        // two move together the day S5 authors the next family. A hard-coded list would fail *then*, which
-        // is the one moment it should not.
-        assertEquals(
-            setOf("shape.rect", "shape.circle", "shape.triangle", "shape.rule"),
-            Copy.Supplies.NAMES.keys.filter { SupplyCatalog.outlineOf(it) != null }.toSet(),
+    fun exactly_the_authored_tiles_are_pickable_and_the_catalogue_is_what_decides() {
+        // ⚠ This test used to say in its comment that it was *"not a hard-coded list of four"* and then
+        // assert a hard-coded list of four — against `SupplyCatalog` directly, never touching the sheet.
+        // It therefore tested the catalogue's contents (which `SupplyCatalogTest` already owns) while
+        // claiming to test the sheet's wiring, and it failed the moment it predicted it should not: the
+        // day the catalogue grew. Rewritten to do what its name says.
+        //
+        // Every tile is clicked, and the assertion is the *correspondence* — pickable exactly when
+        // authored — so it holds at 4 of 16, at 12 of 16, and at 16 of 16 without an edit.
+        render()
+        for (id in Copy.Supplies.NAMES.keys) {
+            picked.clear()
+            composeRule.onNodeWithTag(benchArtTileTestTag(id)).performClick()
+            val authored = SupplyCatalog.outlineOf(id) != null
+            assertEquals(
+                if (authored) {
+                    "$id has an authored outline and its tile must report the pick"
+                } else {
+                    "$id paints nothing, so its tile must not reach onPick — a placed element with no " +
+                        "pixels reads as the app losing the maker's action"
+                },
+                if (authored) listOf(id) else emptyList(),
+                picked.toList(),
+            )
+        }
+        // Non-vacuity: the loop above proves nothing unless it saw both branches.
+        assertTrue(
+            "the sheet must contain both an authored and an unauthored tile for this to assert anything",
+            Copy.Supplies.NAMES.keys.any { SupplyCatalog.outlineOf(it) != null } &&
+                Copy.Supplies.NAMES.keys.any { SupplyCatalog.outlineOf(it) == null },
         )
     }
 }

@@ -8,7 +8,12 @@ and why you are the only one who can close it.
 **Maintained by the Implementer Agent.** Items are added as they are discovered and struck as you close
 them. If anything here could be closed by an implementer, that is a bug in this list — say so and I'll take it.
 
-**Last swept:** 2026-08-18 · **69 open items**
+**Last swept:** 2026-08-18 · **86 open items**
+
+> ⚠ **The count read 70 and the file held 80.** Corrected 2026-08-18 by counting the rows rather than
+> trusting the header — which is how it drifted: each new row incremented a number nobody re-derived.
+> This is an index of work owed to the owner, so an undercount is the failure mode that matters. The
+> per-section tally is 17 · 10 · 7 · 14 · 7 (§1) · 6 · 4 · 3 (§2) · 8 (Play Store) · 4 (§4).
 
 ---
 
@@ -47,7 +52,15 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 | ☐ | Rule | Question | Blocks |
 |---|---|---|---|
 | ☐ | [D-089](design/V2-SPEC-DEFECTS.md#d-089) | What happens when the placement snack and the context bar want the same band? Three options named | **Visible defect**, S7 merge |
-| ☐ | [D-086](design/V2-SPEC-DEFECTS.md#d-086) | What should the twelve unauthored, disabled supply tiles show? | Art sheet's production call site |
+| ☐ | [D-092](design/V2-SPEC-DEFECTS.md#d-092) | **A photo corner lands as a 4.5:1 sliver.** *Tape & fixings* has one landing aspect and it is tape's; a fixing is a compact object. Four readings are set out, none chosen — [§5.2](design/SUPPLIES-SPEC.md#s-5-2-ruling) caps overrides at exactly one **by test**, so this cannot be fixed quietly. Implementer recommends reading 4 (the outline carries its own aspect) | **Pass 1 defect on a shipped surface** — `fix.corner` and `fix.staple` are pickable today |
+| ☐ | [D-093](design/V2-SPEC-DEFECTS.md#d-093) | **Every tile in the drawer is hollow; every supply lands solid.** Make the tiles solid · ship hollow variants · or accept it on A5's authority. ⚠ Rule this **together with D-086 and D-092** — all three ask whether the tile's picture predicts the page's mark | Pass 2, SM-A176B, 2026-08-18. All three readings change drawn material on the frozen `v21-bench.html` |
+| ☐ | [D-094](design/V2-SPEC-DEFECTS.md#d-094) | **`Photo` and `Art` use byte-identical glyphs** in the Add chooser — the duplication is in `v21-bench.html:828-829`, not in the code. Give `Art` its own mark, give `Photo` one, or accept it | Pass 2, 2026-08-18. Rule with D-086 / D-092 / D-093 — all four are the drawer's pictures promising something else |
+| ☐ | [D-096](design/V2-SPEC-DEFECTS.md#d-096) | **Cite the frozen mockups by name, not by line number?** ~50 line citations into `v21-bench.html` were audited; **six were live-and-wrong and fixed**, thirteen are unresolved because each needs a call on whether it is a *pointer* or a *historical record* — and renumbering a record falsifies it | ⚠ Third pass at this (A5 booked it, A6 inherited it). A bare line number cannot distinguish "look here" from "this is what it said then", so the sweep cannot hold. Recommended: cite `§openSupply()` / `.keepclear` / `A5`, which amendments do not move |
+| ☑ | ~~[D-095](design/V2-SPEC-DEFECTS.md#d-095)~~ | **CLOSED 2026-08-18, reading 1** — the `Registration` tile drew a plus crossing a ring; the authored mark stops its arms on the ring and leaves the centre bare. Tile redrawn in `v21-bench.html` (**amendment log A6**) and in `BenchArtSheet.kt` | Closed the day it was filed because the answer was **forced** — even-odd means the outline cannot move. ⚠ **No precedent for D-086 / D-092 / D-093 / D-094**, which are open design questions |
+| ☐ | [D-086](design/V2-SPEC-DEFECTS.md#d-086) | What should the **four** remaining unauthored, disabled supply tiles show? (was twelve — eight were authored 2026-08-18; the count shrank, the question did not) | Art sheet's production call site |
+| ☐ | [**ADR-107**](DECISIONS.md#adr-107) | **Accept or reject** the larger material library (~51 marks inside the frozen four). The *outlines* are Kotlin and need nothing from you; **set membership, names, order and the search controls are drawn in `v21-bench.html` and are yours** — see [D-080 §4](design/V2-SPEC-DEFECTS.md#d-080-extended), extended to name the text field it previously omitted | **Gates R1 too**, not just R5: the **~35 proposed new** marks may be authored but may not enter the shipped sheet before you rule. ⚠ This does **not** cover the eight authored on 2026-08-18 — those are ids already inside the frozen sixteen, so they change no set membership and are S5, not R1 |
+| ☐ | [**ADR-109**](DECISIONS.md#adr-109) | **Accept or reject** one photo spanning two facing pages. The engineering is cheap and needs nothing from you — two ordinary images, no schema bump, no imposition change. **What is yours is the control:** `v21-bench.html` must gain a spread action (recommended home: the selected-photo context bar, not the Add chooser) before any Compose work | Design freeze. The ADR's own skeptical pass rates this the feature's weakest point, not its schema |
+| ☐ | [ADR-109](DECISIONS.md#adr-109) §skeptical pass | **Where does the maker first see the join?** Every screen in the product shows **one page at a time**, deliberately — Bench edits one page, Read refuses a spread view on the record (ADR-101 P5), Fold draws topology, Print draws nothing. So the first sight of the continuous image is the **printed sheet**. Rule on the copy and the moment | ⚠ This is the feature's acceptance criterion. It **cannot** be answered by adding a spread preview — that is the redesign ADR-101 P5 already refused |
 | ☐ | [D-080](design/V2-SPEC-DEFECTS.md#d-080) | Amend the frozen Art sheet: own glyph, filtering family chips, an empty state | Whichever phase builds it out |
 | ☐ | [D-083](design/V2-SPEC-DEFECTS.md#d-083) | Relabel the ink popover so `Ink` (verb) / `Ink` (maker) / `Ink` (neutral) are distinguishable | Shipped a11y defect |
 | ☐ | [D-052 / D-081 Q10](design/V2-SPEC-DEFECTS.md#d-081) | Per-page (not per-batch) placement cascade | The "it lost my photo" misread on consecutive shares |
@@ -60,6 +73,7 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 | ☐ | [D-027](design/V2-SPEC-DEFECTS.md#d-027) | Does the shelf sheet's metadata line say "Edited …", with week granularity? | — |
 | ☐ | [D-023](design/V2-SPEC-DEFECTS.md#d-023) | Does the Library's `--paper` primary-button label become `--on-matcha`? | Library's primary action stays off-corpus |
 | ☐ | [D-090](design/V2-SPEC-DEFECTS.md#d-090) | **Re-record the five decor goldens on the pinned CI image** (`record-goldens.yml` is `workflow_dispatch` on a pushed branch, so only you can run it) | The decor verb row and the decor ink palette are now observed — but on the Windows dev host, **not the host that gates them** |
+| ☐ | **Re-record the three Art-sheet goldens on the pinned CI image** — `bench_art_sheet_light` · `bench_art_sheet_dark` · `bench_art_sheet_with_recents_light` | Eight tiles went from the disabled treatment to the live one when `SupplyCatalog` reached 12 of 16 (2026-08-18). ⚠ **This is an intended visual change, and the diff was read before it was reported**: `*_compare.png` shows exactly the eight tiles, no layout shift and no glyph change. Batch it with the D-090 re-record above — same workflow, one run |
 
 ### 1.2 Phase D decisions — [`DECISIONS.md` ADR-098 §5](DECISIONS.md#adr-098-gate)
 
@@ -112,7 +126,7 @@ The whole milestone is **Not started** ([ROADMAP.md](ROADMAP.md)) and is the dec
 
 | ☐ | Item | Where | Note |
 |---|---|---|---|
-| ☐ | **Author or commission the twelve hand-drawn supply outlines** | [SUPPLIES-SPEC.md](design/SUPPLIES-SPEC.md) | Needs a house style. `outlineOf()` returns `null` for each. Blocks S5 and S9 |
+| ☐ | **Author or commission the four remaining hand-drawn supply outlines** | [SUPPLIES-SPEC.md](design/SUPPLIES-SPEC.md) | ⚠ Was twelve; eight were authored 2026-08-18 and needed no house style at all. **Only three need a hand** — `tape.torn` · `paper.strip` · `paper.underline` all need the same authored *tear*, so they are one commission, not three. `fix.clip` is not a style problem: a paper clip is a **wire** object and the renderer is fill-only, so it must be drawn as the closed ribbon around the wire. `outlineOf()` returns `null` for each. Blocks S5 and S9 |
 | ☐ | Choose the bundled font set (which OFL families) — Q3 | [PRD.md §13](PRD.md) | Blocks typography |
 | ☐ | Settle brand / visual identity direction — Q4 | [PRD.md §13](PRD.md) | Blocks UI theme |
 | ☐ | Decide V2.1 prototypes for Read · Fold · first-run | [V21-SPEC.md](design/V21-SPEC.md) | Three surfaces, no frozen artifact |
@@ -129,7 +143,7 @@ The whole milestone is **Not started** ([ROADMAP.md](ROADMAP.md)) and is the dec
 Three questions are pre-registered. Write down *why it felt wrong before you knew the reason* — that
 sentence is the finding, and it's usually worth more than the fix.
 
-1. **[D-086](design/V2-SPEC-DEFECTS.md#d-086)** — twelve of sixteen tiles are dim and inert. "Coming soon", or "broken"?
+1. **[D-086](design/V2-SPEC-DEFECTS.md#d-086)** — **four** of sixteen tiles are dim and inert (was twelve; eight were authored 2026-08-18). "Coming soon", or "broken"? ⚠ The shrinkage changes the offer, not the question: "ship the sheet only when all sixteen exist" now costs four outlines, three of which need the same authored tear.
 2. **[D-088](design/V2-SPEC-DEFECTS.md#d-088)** — Art and Photo ship the same glyph, deliberately.
 3. **New** — `shape.rect` fills with `ink`, landing as a near-black square centred on whatever is already there. Correct by spec. Does it read as *art*, or as a redaction?
 

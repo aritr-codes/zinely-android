@@ -149,7 +149,7 @@ internal val BenchArtTilt = floatArrayOf(0f, -1.6f, 1.4f)
  *
  * ### ⚠ These are not the authored outlines, and must never become them
  *
- * Amendment **A5** states it directly (`v21-bench.html:1063-1066`): *"The sixteen glyphs in `SUP` DEPICT the
+ * Amendment **A5** states it directly (`v21-bench.html:1051-1055`): *"The sixteen glyphs in `SUP` DEPICT the
  * supplies; they are not the authored outlines … a mockup must not become their source."* The outlines are
  * reviewed Kotlin in [SupplyCatalog] with a per-supply attestation (SUPPLIES-SPEC §4.1). These are 24-unit
  * chooser **icons**, in exactly the sense every other mark in `ZinelyV2Icons` is one, and they exist for all
@@ -199,9 +199,14 @@ internal val BenchArtGlyphs: Map<String, List<ZinelyV2IconShape>> = linkedMapOf(
         ZinelyV2IconShape.Circle(18f, 17f, 1f),
         ZinelyV2IconShape.Circle(11f, 19f, 1.3f),
     ),
+    // A6 / D-095: the arms stop ON the ring and the centre is bare, because the authored mark's do
+    // (`SupplyCatalog.REGISTRATION`, `REG_RING_OUTER = 0.25`). This tile previously drew a plus crossing
+    // a ring — the one drawing `SupplyOutline`'s even-odd fill cannot produce, since a crossing cancels
+    // to a hole exactly where the mark is densest. `r=5` and arms `2→7` / `17→22` are `0.25` and
+    // `0.0→0.25` / `0.75→1.0` of the tile's own 2–22 span, so this is the outline's geometry, to scale.
     "mark.registration" to listOf(
-        ZinelyV2IconShape.Circle(12f, 12f, 6f),
-        ZinelyV2IconShape.Path("M12 2v20M2 12h20"),
+        ZinelyV2IconShape.Circle(12f, 12f, 5f),
+        ZinelyV2IconShape.Path("M12 2v5M12 17v5M2 12h5M17 12h5"),
     ),
     "paper.strip" to listOf(
         ZinelyV2IconShape.Path("M8 5h8v14H8z"),
@@ -268,19 +273,21 @@ internal val BenchArtGlyphs: Map<String, List<ZinelyV2IconShape>> = linkedMapOf(
  * today the sheet neither invents which two supplies a first-time maker has recently used nor deletes the
  * shelf they will go on. Nothing about the star is decided here; it is left to the change that earns it.
  *
- * ### The twelve supplies with no authored outline — the deliberate part
+ * ### The supplies with no authored outline — the deliberate part
  *
- * [SupplyCatalog] is **4 of 16** (SUPPLIES-SPEC §10.1, S5): only the *Cut shapes* family is authored, and
- * `outlineOf()` returns `null` for the other twelve. Three readings were available and two are wrong:
+ * [SupplyCatalog] is **12 of 16** (SUPPLIES-SPEC §10.1, S5) and `outlineOf()` returns `null` for the rest.
+ * It was 4 of 16 when this sheet was written, which is why the reasoning below counts twelve; **the count
+ * is not wired into anything here** — a tile's live state is derived per tile from `outlineOf`, so the
+ * catalogue growing needed no edit to this file. Three readings were available and two are wrong:
  *
- * 1. **Draw four tiles.** Rejected — the freeze specifies sixteen under four headings, and dropping three
- *    families is the visual redesign the freeze forbids. It would also make *Tape & fixings* look like a
- *    thing the product does not have, when it is a thing the product has not drawn yet.
+ * 1. **Draw only the authored tiles.** Rejected — the freeze specifies sixteen under four headings, and
+ *    dropping families is the visual redesign the freeze forbids. It would also make *Tape & fixings* look
+ *    like a thing the product does not have, when it is a thing the product has not drawn yet.
  * 2. **Draw sixteen live tiles.** Rejected — `SceneRenderer` emits nothing for an unauthored `supplyId`, so
  *    picking one places a real, selectable, movable element that paints **no pixels**. That is not a missing
  *    feature; from the maker's chair it is the app losing their action, which is the `0.9.0-beta.1` Preview
  *    failure in miniature.
- * 3. **Draw sixteen, and let the twelve say what they are.** Taken. Each of the twelve is drawn with its own
+ * 3. **Draw sixteen, and let the unauthored ones say what they are.** Taken. Each is drawn with its own
  *    frozen glyph, reports `disabled` to the *platform* tree, carries no `clickable` at all, and says why in
  *    `stateDescription` — [Copy.BenchVerbs.NOT_YET], the string this corpus already uses for exactly this.
  *
@@ -296,8 +303,10 @@ internal val BenchArtGlyphs: Map<String, List<ZinelyV2IconShape>> = linkedMapOf(
  * press harder than a blank one does"*), and the difference is which document is binding: the freeze draws
  * no `Art` row obligation the chooser must meet, and draws sixteen tiles here in terms. Where the freeze
  * specifies the control, OD-9 keeps it drawn; where it does not, absence is cheaper. **Flagged for Pass 2**
- * — twelve dim tiles out of sixteen is a first-open impression no test can score, and it is the reading most
- * likely to be wrong.
+ * — a dim tile among live ones is a first-open impression no test can score, and it is the reading most
+ * likely to be wrong. ⚠ Shrinking twelve to four did **not** close that question and may have sharpened
+ * it: a lone dim tile surrounded by working ones reads more like a malfunction than a wholly dim family
+ * did, because its neighbours prove the feature works ([D-086](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-086-update)).
  *
  * ### Not wired to the Add chooser yet — deliberately
  *
@@ -491,9 +500,9 @@ private fun BenchArtTile(
         else -> colors.leafText
     }
     // The tile can be picked only if picking it would put something on the page. `SupplyCatalog` is the one
-    // place that knows, and it is asked here rather than assumed from the `shape.` prefix — that all four
-    // authored ids share that prefix is a coincidence of which family was cheapest to author first, stated
-    // in the catalogue's own KDoc.
+    // place that knows, and it is asked here rather than assumed from the `shape.` prefix — the authored ids
+    // now span four prefixes across three families, which is the plainest demonstration that the prefix was
+    // never the family. Stated in the catalogue's own KDoc.
     val authored = SupplyCatalog.outlineOf(supplyId) != null
     // Named from the copy, never derived. A missing entry is a programming error, not a fallback: an id the
     // copy layer does not name is an id the user would hear read as its own key.
