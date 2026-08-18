@@ -250,8 +250,9 @@
 ## ADR-017 {#adr-017}
 **Bleed, clip, and safe-area semantics.**
 - **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
-- **Context / rationale:** `LayoutValidator` currently hard-enforces `clipLocalBounds == panelLocalBounds` because this engine renders the full panel with no bleed ([ADR-012](#adr-012) keeps content inside a safe inset; full-bleed is explicitly 🔭 FUTURE). The `clipLocalBounds` field exists to *future-proof* for bleed, but its meaning under bleed is undefined: bleed content extends **past** the trim/panel edge, so `clip` would become larger than `panelLocalBounds`, inverting today's invariant.
-- **Options under consideration:** define the invariant chain under bleed as `safe ⊆ panel ⊆ clip` (clip grows outward by the bleed amount) and relax the validator accordingly; specify how trim/crop marks interact with the safe inset and the cut line.
+- **Context / rationale:** `clipLocalBounds == panelLocalBounds` holds today because this engine renders the full panel with no bleed ([ADR-012](#adr-012) keeps content inside a safe inset; full-bleed is explicitly 🔭 FUTURE). The `clipLocalBounds` field exists to *future-proof* for bleed, but its meaning under bleed is undefined: bleed content extends **past** the trim/panel edge, so `clip` would become larger than `panelLocalBounds`, inverting today's invariant.
+- **Options under consideration:** define the invariant chain under bleed as `safe ⊆ panel ⊆ clip` (clip grows outward by the bleed amount) and relax the checker accordingly; specify how trim/crop marks interact with the safe inset and the cut line.
+- ⚠ **Corrected 2026-08-18 — [D-098](design/V2-SPEC-DEFECTS.md#d-098).** The rationale above said `LayoutValidator` *"currently hard-enforces"* the equality. **It enforces nothing at runtime:** `validate()` appends a `CLIP_NOT_IN_PANEL` issue to a returned `List<ValidationIssue>` — no throw, no `require` — and it has **no production caller**; every construction site is a test. At runtime the equality is *established* by `SingleSheet8Imposer.kt:72` (`clipLocalBounds = panelLocal`) and *obeyed* by `ZineExporter.kt:170`, which clips each panel by the field. ✅ **But *"relax the checker"* is still necessary, and the Risks bullet below already says why:** three tests run the real imposer and assert the issue list is **empty** (`ImpositionPropertiesTest`'s `engine output always validates clean`, `ImpositionEdgeCaseTest` ×2), so a bleed layout turns CI red. The checker is a **test-only gate**, not a runtime guard. So this option list is **incomplete, not misdirected** — it names the checker and omits the two components that actually change behaviour: the imposer's assignment and the exporter's clip. *(An earlier wording of this note claimed the remedy was aimed at the wrong lever. That over-read "no production caller" as "gates nothing", and contradicted this ADR's own Risks bullet two lines down, which was right all along.)* The rationale is corrected in place because it was never true; `validator` → `checker` in the option above is the same correction, one word wide.
 - **Risks:** Introducing bleed is a **deliberate contract change**, not an additive field — the `clip == panel` validation must be loosened in lockstep or it will reject every bleed layout. Getting the trim-vs-bleed-vs-safe relationship wrong reintroduces the #1 print-correctness risk the engine was built to retire.
 - **Future considerations:** Resolve when V2 print-shop export groundwork (bleed, trim/crop marks) is scheduled ([ROADMAP V2](ROADMAP.md#v2--more-formats--expression)). No change to the MVP engine.
 
@@ -12205,12 +12206,14 @@ the cue as a consumer and missed the validator. The conclusion is unchanged and 
 `safeAreaInsetPt` appears nowhere outside `core:imposition`.)*
 **The safe area is advisory. It cannot open a white stripe in an exported sheet.**
 
-⚠ **Two tracked documents state the opposite, and this ADR corrects them rather than linking them.**
-[BETA-DIRECTION.md:451](design/BETA-DIRECTION.md) and [ADR-017](#adr-017) (`DECISIONS.md:252`) both say
-`LayoutValidator` *"hard-enforces"* `clip == panel`. It does not — it reports, and no production code
-asks. The correction is flagged here rather than made silently, and 🟦 **RECOMMENDATION: amend both
-sentences when this ADR is accepted**, since a wrong belief about which invariants are *enforced* is
-exactly the kind of thing a future bleed feature would build on.
+⚠ **Two tracked documents state the opposite** — [BETA-DIRECTION.md](design/BETA-DIRECTION.md) §X11 and
+[ADR-017](#adr-017)'s rationale both said `LayoutValidator` *"hard-enforces"* `clip == panel`.
+✅ **EXECUTED 2026-08-18 — both amended, and the finding is now owned by [D-098](design/V2-SPEC-DEFECTS.md#d-098),
+which supersedes this paragraph.** It was amended ahead of this ADR's acceptance because the claim is wrong
+*today*, independently of spreads. ⚠ **D-098 also sharpened it:** "reports, nobody asks" is right about
+runtime and wrong about CI — three `core:imposition` tests assert the issue list is empty against the real
+imposer, so the checker is a **test-only gate**. A third site, the frozen `v2-bench.html`, is named there
+and left for an owner amendment.
 
 > This is the same conclusion [BETA-DIRECTION §3.10](design/BETA-DIRECTION.md) already carries in its
 > own corrected paragraph — that there is no imposition-side work, and that the fix is the cue in

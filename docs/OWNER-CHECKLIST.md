@@ -13,7 +13,13 @@ them. If anything here could be closed by an implementer, that is a bug in this 
 > ⚠ **The count read 70 and the file held 80.** Corrected 2026-08-18 by counting the rows rather than
 > trusting the header — which is how it drifted: each new row incremented a number nobody re-derived.
 > This is an index of work owed to the owner, so an undercount is the failure mode that matters. The
-> per-section tally is 17 · 10 · 7 · 14 · 7 (§1) · 6 · 4 · 3 (§2) · 8 (Play Store) · 4 (§4).
+> per-section tally is 24 · 10 · 7 · 14 · 7 (§1) · 6 · 4 · 3 (§2) · 8 (Play Store) · 4 (§4) = **87**.
+>
+> ⚠ **And it drifted again the same day, the same way.** The header read 87 while the file held 86; adding
+> D-098 incremented it to 88 instead of re-deriving, so it was wrong before and after. Re-derived: **87**
+> `☐` rows. 🟦 A number maintained by hand next to a list maintained by hand will keep doing this — the
+> same shape as [D-096](design/V2-SPEC-DEFECTS.md#d-096), where the durable fix was to stop writing the
+> fragile part by hand at all.
 
 ---
 
@@ -62,6 +68,7 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 | ☐ | [**ADR-107**](DECISIONS.md#adr-107) | **Accept or reject** the larger material library (~51 marks inside the frozen four). The *outlines* are Kotlin and need nothing from you; **set membership, names, order and the search controls are drawn in `v21-bench.html` and are yours** — see [D-080 §4](design/V2-SPEC-DEFECTS.md#d-080-extended), extended to name the text field it previously omitted | **Gates R1 too**, not just R5: the **~35 proposed new** marks may be authored but may not enter the shipped sheet before you rule. ⚠ This does **not** cover the eight authored on 2026-08-18 — those are ids already inside the frozen sixteen, so they change no set membership and are S5, not R1 |
 | ☐ | [**ADR-109**](DECISIONS.md#adr-109) | **Accept or reject** one photo spanning two facing pages. The engineering is cheap and needs nothing from you — two ordinary images, no schema bump, no imposition change. **What is yours is the control:** `v21-bench.html` must gain a spread action (recommended home: the selected-photo context bar, not the Add chooser) before any Compose work | Design freeze. The ADR's own skeptical pass rates this the feature's weakest point, not its schema |
 | ☐ | [ADR-109](DECISIONS.md#adr-109) §skeptical pass | **Where does the maker first see the join?** Every screen in the product shows **one page at a time**, deliberately — Bench edits one page, Read refuses a spread view on the record (ADR-101 P5), Fold draws topology, Print draws nothing. So the first sight of the continuous image is the **printed sheet**. Rule on the copy and the moment | ⚠ This is the feature's acceptance criterion. It **cannot** be answered by adding a spread preview — that is the redesign ADR-101 P5 already refused |
+| ☐ | [D-098](design/V2-SPEC-DEFECTS.md#d-098) | **Should the imposition engine check its own output at runtime?** `LayoutValidator` is a complete structural checker — panel/page bijections, tiling, transform consistency, fold topology — with **no production caller**: it runs only in `core:imposition` tests. Options: leave it test-only · call it in debug builds · call it in the export path and surface issues as an export error | **Decision.** ⚠ Not the defect — D-098 fixed the two docs that *claimed* it already runs. This is the question those docs made it look like we had already answered |
 | ☐ | [D-080](design/V2-SPEC-DEFECTS.md#d-080) | Amend the frozen Art sheet: own glyph, filtering family chips, an empty state | Whichever phase builds it out |
 | ☐ | [D-083](design/V2-SPEC-DEFECTS.md#d-083) | Relabel the ink popover so `Ink` (verb) / `Ink` (maker) / `Ink` (neutral) are distinguishable | Shipped a11y defect |
 | ☐ | [D-052 / D-081 Q10](design/V2-SPEC-DEFECTS.md#d-081) | Per-page (not per-batch) placement cascade | The "it lost my photo" misread on consecutive shares |

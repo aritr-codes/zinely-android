@@ -6224,3 +6224,76 @@ commit was likewise inert.
   maker expects — e.g. whether an untouched Reframe should say anything at all.
 - The [`Copy.Editor.FRAMING_UNCHANGED`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt)
   wording is untouched — it was always correct, it was simply almost never reached.
+
+---
+
+### D-098 — three tracked docs say `LayoutValidator` *hard-enforces* `clip == panel`; it has no production caller, and is a test-only gate {#d-098}
+
+**Found:** 2026-08-18, chasing an [ADR-109](../DECISIONS.md#adr-109) review thread into the imposition
+engine. **Severity:** documentation defect with a live consequence — one of the two sites is an ADR whose
+proposed remedy is aimed at the wrong lever.
+
+#### What the code does
+
+| Claim | Repository state |
+|---|---|
+| *"`LayoutValidator` hard-enforces `clip == panel`"* | [`LayoutValidator.kt:82-84`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/LayoutValidator.kt) **appends a `CLIP_NOT_IN_PANEL` issue to a returned list.** `validate()` returns `List<ValidationIssue>`; it has no throw, no `require`, no `check` |
+| implied: it runs in production | **No production caller exists.** `LayoutValidator` appears in `src/main` exactly once — inside a KDoc aside in [`BenchStudioSurface.kt:365`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/BenchStudioSurface.kt). Every construction site is a test |
+| ✅ **but it is not inert** | ⚠ **It is a test-only gate, and the gate is real.** Three tests run the *real* imposer and assert the issue list is **empty**: `ImpositionPropertiesTest`'s property `engine output always validates clean` (`:30-37`, across paper sizes × inset 0–95pt) and `ImpositionEdgeCaseTest` (`:24`, `:104`). A change that broke `clip == panel` would turn CI red — it just would not stop a shipped export |
+
+**What actually makes the invariant true is one assignment:**
+[`SingleSheet8Imposer.kt:72`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/SingleSheet8Imposer.kt)
+sets `clipLocalBounds = panelLocal`. The only *runtime* consumer of the field is
+[`ZineExporter.kt:170`](../../app/src/main/java/com/aritr/zinely/export/ZineExporter.kt), which clips each
+panel by it. So the chain is **producer sets it · exporter obeys it · a test-only checker observes it** —
+three different things, and none of them is enforcement.
+
+#### The two sites
+
+1. [`DECISIONS.md` ADR-017](../DECISIONS.md#adr-017) (`Proposed`, 2026-06-19) — *"`LayoutValidator`
+   **currently hard-enforces** `clipLocalBounds == panelLocalBounds`"*. Corrected in place: it enforces
+   nothing **at runtime**.
+
+   ⚠ **This defect's first draft went further and was wrong.** It claimed ADR-017's proposed remedy
+   (*"relax the validator accordingly"*) was *"aimed at the wrong lever"* — reasoning that a checker nobody
+   calls cannot gate anything. **It gates CI.** `ImpositionPropertiesTest:30-37` asserts the real imposer's
+   output validates clean, so relaxing the checker is **necessary** when bleed arrives. The option list is
+   **incomplete**, not misdirected: it names the checker and omits the imposer's assignment and the
+   exporter's clip, which are the two things that change what a maker's paper looks like. 🟨 And ADR-017's
+   own **Risks** bullet, two lines below the one that was wrong, already said the accurate thing — *"the
+   `clip == panel` validation must be loosened in lockstep or it will reject every bleed layout"*. **The
+   correct statement was already in the document being corrected**, which is the part worth keeping: I read
+   one bullet, found it false, and did not read the next one.
+2. [`BETA-DIRECTION.md`](BETA-DIRECTION.md) §X11 — same phrase, inside a passage that is otherwise correct
+   and is itself a *correction* of an earlier error. 🟨 The sentence's actual argument (*"nothing insets by
+   the safe area at render or export time"*) **survives intact** — it never needed the validator.
+
+3. ⚠ **A third site, found by review, not by me:** the frozen mockup
+   [`v2-bench.html:24-25`](mockups/v2-bench.html) — *"the engine's safe area is `safeAreaInsetPt = 17.0`
+   (~6 mm), **enforced by LayoutValidator**"*. It is tracked, and it is **frozen**, so it is **not edited
+   here**: a mockup amendment is an owner act with an amendment-log entry, and this is a stale factual note
+   in a file whose live surface V2.1 has superseded. Named so the next sweep does not re-discover it.
+   🟨 The defect's own title said *"two tracked docs"*, having grepped `docs/*.md` and not `docs/**`. The
+   same scope error as [D-096](#d-096), one week apart and in the same hand.
+
+#### Why it survived
+
+The phrase reads as verified because it names a real class, a real field pair and a real check. Everything
+in it is true except the verb. 🟨 **A weaker version of the "the code said so all along" argument is true, and the strong version is not.**
+`BenchStudioSurface.kt:365` does say *"nothing **enforces** this boundary"*, but it is talking about
+`SAFE_NOT_IN_PANEL` and user content — adjacent evidence about the same class's character, **not** a plain-words
+contradiction of the `clip == panel` claim. The honest reading is that nothing contradicted the phrase outright;
+it simply named real things and got the verb wrong, and a citation that resolves does not get re-read — which is
+[D-096](#d-096)'s finding in a different file.
+
+#### Fixed here
+
+Both sites now say what is true: the equality is **established by the imposer and asserted by a test-only
+checker**. ADR-017's rationale is corrected in place because it was never true; its option
+list keeps its wording (one word wide: `validator` → `checker`) and carries the correction as a dated ⚠ note,
+because what a `Proposed` ADR proposed is evidence about what was believed when it was written.
+
+🟦 **Not fixed, and deliberately: `LayoutValidator` still has no production caller.** Whether the engine
+should validate its own output at runtime — or in a debug build, or in a golden test that today does not
+call it — is a design question, not a documentation one. It belongs in [ROADMAP.md](../ROADMAP.md) or an
+ADR, not in this pass. What this defect fixes is the claim that it already does.

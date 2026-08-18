@@ -449,7 +449,8 @@ The cut separates only `4|7` and `3|8` — **neither is a reading spread**, and 
 > It claimed that suppressing the inner keep-clear edge "needs a per-edge safe-area concept `ImpositionLayout`
 > does not have today" and called it "the only imposition-side work in X11." **There is no imposition-side work
 > in X11 at all.** The safe area is *advisory*: `SingleSheet8Imposer` sets `clipLocalBounds = panelLocal`, never
-> `safeLocal`; `LayoutValidator` hard-enforces `clip == panel`; and `ZineExporter` clips each panel by
+> `safeLocal` (and `LayoutValidator` only *asserts* that equality, in tests — [D-098](V2-SPEC-DEFECTS.md#d-098));
+> and `ZineExporter` clips each panel by
 > `clipLocalBounds`. Nothing insets by the safe area at render or export time — which this section already said
 > in its own words (*"so content may already reach the panel edge"*) before contradicting it here.
 >
