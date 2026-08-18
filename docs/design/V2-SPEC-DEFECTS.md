@@ -5480,3 +5480,132 @@ with a known-imperfect spec beats a local improvement that makes the spec's own 
 
 ⚠ **[D-080](#d-080) should be read with this entry**: a reader of D-080 could reasonably assume Compose had
 diverged. It has not. The duplicate ships.
+
+### D-090 — the decor verb row has never had a golden, so its pixels are unobserved {#d-090}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/src/test/roborazzi/` · `BenchContextBar.kt` (`BenchVerbKind.DECOR`) |
+| **Found** | 2026-08-17, decor-ink package, **by a green golden run that should not have been green** |
+| **Severity** | Test-coverage gap, no user impact today |
+| **Status** | ✅ **Closed 2026-08-18.** Five goldens recorded — `bench_context_bar_decor_{light,dark}.png` and `bench_ink_popover_decor_{light,dark,selected_light}.png` — with pixel counts beside them in `BenchDecorGoldenTest`. ⚠ Recorded **locally**, not on the pinned image; see the closing note |
+
+The decor-ink package changed a control on the decor context bar from **dim-and-inert to live** — a visible
+change in fill, text colour and ripple. `verifyRoborazziDebug --rerun-tasks` then passed **without a single
+diff**, and the reason is not that the change was neutral: `feature/editor/src/test/roborazzi/` holds only
+`editor_context_bar_{light,dark}.png`, which are the **V1** `EditorContextBar`. Nothing covers
+`benchContextVerbs(BenchVerbKind.DECOR)`.
+
+**The finding is about the inference, not the missing file.** A green golden run was about to be reported as
+evidence that the change was visually safe. It is not evidence of that — it is the absence of an
+observation, and the two are indistinguishable from the build output alone. This is the same class as
+[CLAUDE.md](../../CLAUDE.md)'s *"a golden that is never verified is a screenshot, not a test"*, one step
+earlier: **a golden that was never recorded cannot even be a screenshot.**
+
+The fix was a `BenchVerbKind.DECOR` golden in both palettes. **Recorded 2026-08-18** — on the local host,
+not the pinned one that gates them, which is the residue this entry closes with rather than the whole of it.
+Until it existed, no claim that a decor-row change was visually neutral could come from Roborazzi at all.
+
+⚠ **A second, higher-value capture was missing, and it is the one that landed.** Independent review found
+that the set of files calling `captureRoboImage` and the set constructing a `DecorElement` were **disjoint**. Routing the ink popover's
+bands from `ctxKind` means `benchInkBands`' `PHOTO, DECOR ->` arm now renders **for the first time ever** —
+a palette that had never appeared in any golden, on any host. `bench_ink_popover_*.png` are the text bands.
+That capture was worth more than the context-bar one, and the closure below took it first.
+
+
+#### Closed 2026-08-18 — what was recorded, and the one thing that is still owed {#d-090-closed}
+
+[`BenchDecorGoldenTest`](../../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/BenchDecorGoldenTest.kt)
+captures both surfaces in both palettes, and the higher-value one landed: the `PHOTO, DECOR ->` band set has
+now rendered. `PAPER TINTS` is visible in the raster — five swatches a text element's popover has never shown.
+
+**The counts are the assertions; the rasters are the net.** Both regressions this entry is about are under
+Roborazzi's `changeThreshold = 0.02f`, so each is counted instead, and each count was **proved by mutation**
+rather than assumed:
+
+| Mutation | Result |
+|---|---|
+| `benchInkBands`' `PHOTO, DECOR ->` arm reverted to the two text bands | both popover tests **FAILED** |
+| decor's `Replace` and `Ink` set back to `enabled = false` (D-090's own regression, exactly) | both bar tests **FAILED** |
+
+**Independent review then narrowed two of the claims, and both narrowings are in the file.** The bar test was
+named for three verbs while counting over the whole card, so a decor set that had *lost* `Replace` would have
+passed — and only the raster, not the counts, would have caught a **single** verb regressing to
+`disabledAlpha`. Each verb is now cropped to its own node and measured there. Separately, both popover
+captures passed `selected = null`, which is a state a supply is **never** in: `benchInkColorOf` is non-null
+for every placed supply, so the ring is always drawn. `bench_ink_popover_decor_selected_light.png` adds it,
+and asserts the thing that only matters once it exists — that a ringed paper tint *still clears the fence it
+is measured by*, since the ring is drawn at `inset:-5px` around the pot it marks.
+
+The fence assertion is deliberately the **inverse** of [`BenchC6GoldenTest`]'s
+`no_paper_tint_is_painted_anywhere_in_a_text_elements_popover`: there each tint must paint *less* than one
+13dp preset dot, here each must paint at least *half a 30dp pot*. A fence asserted in one direction only is
+satisfied by a function that draws nothing for anybody.
+
+⚠ **Still owed: a re-record on the pinned image.** These five PNGs were recorded on the Windows dev host.
+[`record-goldens.yml`](../../.github/workflows/record-goldens.yml) is explicit that local recording is
+*viable* — during A9 every CI-recorded golden in the tree verified green on this machine, so the comparison
+is symmetric across the two hosts for this stack — but that the pinned image remains **preferred, because it
+is the host that gates**. A locally recorded golden is to be re-recorded there at the next opportunity and the
+diff reviewed. Running that workflow is a `workflow_dispatch` on a pushed branch, so it is an owner act;
+it is listed in [OWNER-CHECKLIST](../OWNER-CHECKLIST.md). Until then these five are honest observations of a
+host that is not the gate — which is strictly more than the nothing that stood here, and strictly less than
+a gated golden.
+
+### D-091 — the `Change ink` accessibility action opened nothing, because it selected first {#d-091}
+
+| | |
+|---|---|
+| **Artifacts** | `EditorScreen.kt` (`inkPopoverFor`) · `EditorA11y.kt` · `BenchDecorInkRoutingTest.kt` |
+| **Found** | 2026-08-17 by **independent review, with a probe** — not by the suite, which was green |
+| **Severity** | **Blocker, fixed before merge.** The verb worked for a sighted maker and did nothing for a TalkBack maker |
+| **Status** | ✅ **Fixed** — popover state is the summoning element's id, and the `LaunchedEffect` is deleted |
+
+`Change ink` selected the supply and then set `inkPopoverOpen = true`. A `LaunchedEffect(ctxElement?.id)`
+enforced *"the popover belongs to the element that summoned it"* by clearing that flag whenever the
+selection changed — so the action's own `Intent.Select` relaunched the effect, which cleared the flag one
+composition later. **The popover never appeared.**
+
+**Why every test passed.** The fixture always rendered with the supply *already selected* — the single
+state in which the effect's key does not change and the race cannot occur. TalkBack's accessibility focus
+is **not** the app's selection, so the untested branch was the primary one for the only users the action
+exists for.
+
+The fix is structural rather than a guard: the popover's state is the **id of the element that summoned
+it**, compared against the live selection each composition, so a stale popover cannot be visible for one
+frame and there is no effect left to race. Re-adding the effect turns exactly one test red — the
+unselected-fixture one — which was verified by mutation.
+
+*Three lessons, and the middle one is the expensive one.* A dead accessibility action is the precise failure
+[EditorA11y](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorA11y.kt) argues
+against when it withholds `Replace supply` — the change shipped the thing its own reasoning forbade. **A
+fixture that only ever tests the convenient state hides the defect and reads as coverage.** And a KDoc
+asserting the guard ("`selectThen` has already made the supply the selection … which is what the popover's
+visibility resolves against") stated the *cause* of the bug as its justification.
+
+### D-089 — the placement snack and the context bar are drawn in the same band, and the pill eats the message {#d-089}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchSnack.kt:60` · `feature/editor/.../BenchContextBar.kt:469` · `EditorScreen.kt:1408,1552` |
+| **Found** | 2026-08-17, package **S7-placement**, **Pass 1 device verification** on SM-A176B / Android 16 |
+| **Severity** | **Visible defect on the happy path.** The message reads `Placed on the pa` — the sentence is cut mid-word by the Replace/Ink/Delete pill |
+| **Status** | 🔶 **Open — needs an owner ruling, not an implementer fix** (see below) |
+
+`BenchSnackInsetBottom` and `BenchContextBarInsetDp` are **both `12.dp`**, and both surfaces are placed with
+`Modifier.align(Alignment.BottomCenter)` in the same `Box` ([EditorScreen.kt:1408](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt#L1408) and
+[:1552](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt#L1552)). They therefore occupy the **identical vertical band**, and whenever
+both are visible one covers the other. Nothing offsets, stacks, or mutually excludes them.
+
+**No test could have caught this, and the reason is the useful part.** Every existing state raises *one*
+of the two: delete raises the snack but clears the selection, so no context bar; the ink snack appears
+with a selection but the frozen bench (`v21-bench.html`) never asserts the pair. **Placement is the first
+state in the app's history that raises both at once** — a new element is added *and* left selected, so the
+context bar appears in the same frame as `Placed on the page`. The collision is not a port error; it is a
+state combination the frozen spec has never had to rule on.
+
+⚠ **This is why it is an owner ruling.** Per the [DESIGN FREEZE rule](../../CLAUDE.md#design-freeze), the fix
+requires deciding *what should happen* when both want the band — suppress the snack when a selection
+exists, stack the snack above the bar, or suppress the context bar until the snack retires — and that
+decision belongs in `v21-bench.html` **first**. An implementer picking one silently would be redesigning a
+frozen surface. Evidence: `scratchpad/dev/09-placed.png`.

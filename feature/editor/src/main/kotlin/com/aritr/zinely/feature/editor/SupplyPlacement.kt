@@ -123,6 +123,69 @@ internal fun benchSupplyFamily(supplyId: String): String? =
  *   and a silent fallback size would be the app inventing craft knowledge it does not have.
  */
 internal fun benchSupplyPlacement(supplyId: String, pageSizePt: PtSize): Transform {
+    val (width, height) = benchSupplySizePt(supplyId, pageSizePt)
+    return Transform(
+        xPt = (pageSizePt.width - width) / 2.0,
+        yPt = (pageSizePt.height - height) / 2.0,
+        widthPt = width,
+        heightPt = height,
+        // §5.1, stated rather than defaulted: a supply lands flat. Do not reintroduce a tilt here.
+        rotationDegrees = 0.0,
+    )
+}
+
+/**
+ * A [Transform] for a supply **replacing** one already on the page: the incoming supply's own §5.2 family
+ * size, kept where the outgoing one was.
+ *
+ * ### The ruling this implements, and the two it rejected
+ *
+ * The frozen spec does not say what happens to a supply's size when it is swapped, and the three readings
+ * are materially different. **Owner ruling, 2026-08-17: re-apply the incoming family's default scale.**
+ *
+ * Rejected — *preserve the transform exactly*, which is what the photo `Replace` precedent does
+ * (`EditImageCommand`: "Replace differs in `assetId`; geometry is preserved by the reducer"). It does not
+ * carry over, and the reason is that a photo has no intrinsic proportion the app knows about while a supply
+ * does: swapping a 4.5:1 torn tape for a 1:1 star inside the tape's box yields a star stretched four and a
+ * half times, and the maker did not ask for a stretched star. Also rejected — *keep the area, adopt the
+ * aspect*, which is kinder but has no precedent here and hides §5.2 behind arithmetic nobody can predict.
+ *
+ * **Two things are deliberately preserved, and neither is the size.**
+ *  - **The centre**, so a replaced supply does not teleport to page centre. §5's "lands at page centre"
+ *    governs a *landing*; a replacement is not a landing, and moving a mark the maker had positioned would
+ *    read as the app losing their work.
+ *  - **The rotation**, for the same reason. §5.1 fixes the angle a supply *arrives* at, not the angle it
+ *    must stay at — the maker may have turned it, and that is their composition, not the placement's.
+ *
+ * [current] is the outgoing supply's transform; only its centre and rotation are read.
+ */
+internal fun benchSupplyReplacement(
+    supplyId: String,
+    pageSizePt: PtSize,
+    current: Transform,
+): Transform {
+    val (width, height) = benchSupplySizePt(supplyId, pageSizePt)
+    // Centre-anchored rather than origin-anchored: growing a stamp into a tape from a shared top-left
+    // would walk the mark down and right across the page on every swap.
+    return Transform(
+        xPt = current.xPt + (current.widthPt - width) / 2.0,
+        yPt = current.yPt + (current.heightPt - height) / 2.0,
+        widthPt = width,
+        heightPt = height,
+        rotationDegrees = current.rotationDegrees,
+    )
+}
+
+/**
+ * §5.2's size for one supply on one page, shared by [benchSupplyPlacement] and [benchSupplyReplacement] so
+ * the two cannot disagree about what a family's default is — the whole point of the replace ruling is that
+ * a replaced supply gets *the same* size a freshly-placed one would.
+ *
+ * @throws IllegalArgumentException if [supplyId] is not one of the sixteen. That is a programming error,
+ *   not a runtime condition — the callers iterate the same map this reads — and a silent fallback size
+ *   would be the app inventing craft knowledge it does not have.
+ */
+private fun benchSupplySizePt(supplyId: String, pageSizePt: PtSize): Pair<Double, Double> {
     val family = requireNotNull(benchSupplyFamily(supplyId)) {
         "$supplyId is in no family in Copy.Supplies.BY_FAMILY — a supply has no default size without one"
     }
@@ -134,12 +197,5 @@ internal fun benchSupplyPlacement(supplyId: String, pageSizePt: PtSize): Transfo
         height = maxHeight
         width = height * default.aspect
     }
-    return Transform(
-        xPt = (pageSizePt.width - width) / 2.0,
-        yPt = (pageSizePt.height - height) / 2.0,
-        widthPt = width,
-        heightPt = height,
-        // §5.1, stated rather than defaulted: a supply lands flat. Do not reintroduce a tilt here.
-        rotationDegrees = 0.0,
-    )
+    return width to height
 }

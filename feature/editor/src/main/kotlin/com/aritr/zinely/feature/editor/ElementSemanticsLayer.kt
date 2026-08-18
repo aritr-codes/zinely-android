@@ -54,6 +54,11 @@ public const val ElementNodeTagPrefix: String = "element-node-"
  * @param onDelete the host's delete verb. Defaults to a bare `Intent.Delete`, which is what every caller
  *   outside the editor screen wants; the screen passes its **soft** delete so the accessibility path is
  *   reversible on exactly the same terms as the visible one.
+ * @param onChangeInk the host's ink verb, for a supply's §8 `Change ink` action. `null` (the default) means
+ *   the action is **not advertised at all** — a host with no popover to open must not offer to open one.
+ *   The editor screen passes the same behaviour its visible `Ink` verb performs, so the two cannot diverge.
+ * @param onReplaceSupply the host's replace verb, for a supply's §8 `Replace supply` action. `null`
+ *   (the default) withholds it, on the same terms as [onChangeInk].
  * @param pageSizePt the page's size in points. Supplied, an element whose drawn extent leaves the printer's
  *   reach carries [Copy.A11y.OUTSIDE_PRINT_REACH] as its spoken **state** — the non-visual twin of
  *   `BenchKeepClear`, added by [OD-49](../DECISIONS.md#adr-102-p2c) after a device pass found that the
@@ -66,6 +71,8 @@ public fun ElementSemanticsLayer(
     dispatch: (Intent) -> Unit,
     modifier: Modifier = Modifier,
     onDelete: (String) -> Unit = { dispatch(Intent.Delete(setOf(it))) },
+    onChangeInk: ((String) -> Unit)? = null,
+    onReplaceSupply: ((String) -> Unit)? = null,
     pageSizePt: PtSize? = null,
 ) {
     val page = uiState.document.pages[uiState.currentPageIndex]
@@ -90,7 +97,7 @@ public fun ElementSemanticsLayer(
             val hDp = with(density) { hPx.toDp() }
 
             val selected = element.id in uiState.selection
-            val actions = EditorA11y.elementCustomActions(element, dispatch, onDelete)
+            val actions = EditorA11y.elementCustomActions(element, dispatch, onDelete, onChangeInk, onReplaceSupply)
             val description = EditorA11y.label(element)
             // The same geometry the visible warning uses — one helper, so the spoken answer and the drawn
             // one cannot disagree about a rotated photo's corner. Stated for **every** element, not only

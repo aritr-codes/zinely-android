@@ -140,4 +140,91 @@ class SupplyPlacementTest {
             benchSupplyPlacement("shape.pentagon", page)
         }
     }
+
+    // ── benchSupplyReplacement — the owner's 2026-08-17 swap ruling ────────────────────────────────
+    //
+    // ⚠ These exist because the function shipped with **none**, and independent review proved it by
+    // mutation: replacing the body with an origin-anchored, rotation-dropping version left the entire
+    // suite BUILD SUCCESSFUL. The ruling this package was built to implement was asserted only in a KDoc.
+    // Each test below is written against a specific mutation that previously passed.
+
+    @Test
+    fun `Given a swap between families, When replaced, Then the centre is preserved and the size is the new family's`() {
+        // Mutation this kills: `xPt = current.xPt` (origin-anchored). With an aspect change the origin and
+        // the centre disagree, so anchoring the wrong one walks the mark across the page on every swap.
+        //
+        // ⚠ The incoming id is `mark.asterisk`, NOT `mark.star` — the supply *named* "Star" carries the id
+        // `asterisk` (Copy.kt's second naming departure). The first draft of this test wrote `mark.star`,
+        // derived from the name, and the `require` in `benchSupplySizePt` threw. That loud failure is the
+        // design working: a silent fallback size would have sized an unknown supply and passed.
+        val outgoing = benchSupplyPlacement("tape.torn", page)
+        val outgoingCentreX = outgoing.xPt + outgoing.widthPt / 2.0
+        val outgoingCentreY = outgoing.yPt + outgoing.heightPt / 2.0
+
+        val swapped = benchSupplyReplacement("mark.asterisk", page, outgoing)
+
+        assertEquals(outgoingCentreX, swapped.xPt + swapped.widthPt / 2.0, 1e-9)
+        assertEquals(outgoingCentreY, swapped.yPt + swapped.heightPt / 2.0, 1e-9)
+        // …and the size is genuinely the INCOMING family's, not the outgoing one's.
+        val freshStar = benchSupplyPlacement("mark.asterisk", page)
+        assertEquals(freshStar.widthPt, swapped.widthPt, 1e-9)
+        assertEquals(freshStar.heightPt, swapped.heightPt, 1e-9)
+        // Guard the guard: this pair of supplies must actually differ in size, or the test proves nothing.
+        assertNotEquals(outgoing.widthPt, swapped.widthPt, 1e-9)
+    }
+
+    @Test
+    fun `Given a rotated supply, When replaced, Then the maker's rotation survives`() {
+        // Mutation this kills: `rotationDegrees = 0.0`. §5.1 fixes the angle a supply ARRIVES at; it does
+        // not entitle a swap to straighten one the maker turned.
+        val rotated = benchSupplyPlacement("shape.rect", page).copy(rotationDegrees = 37.5)
+
+        val swapped = benchSupplyReplacement("tape.torn", page, rotated)
+
+        assertEquals(37.5, swapped.rotationDegrees, 1e-9)
+    }
+
+    @Test
+    fun `Given any supply, When replaced, Then its size equals a fresh placement of the same supply`() {
+        // Mutation this kills: preserving the outgoing transform wholesale. This is the ruling stated as an
+        // invariant over the WHOLE cabinet rather than one example — "a replacement takes the incoming
+        // family's scale" means exactly "the size a fresh placement would have given it".
+        val outgoing = benchSupplyPlacement("tape.torn", page).copy(rotationDegrees = 12.0)
+        Copy.Supplies.NAMES.keys.forEach { supplyId ->
+            val swapped = benchSupplyReplacement(supplyId, page, outgoing)
+            val fresh = benchSupplyPlacement(supplyId, page)
+            assertEquals("$supplyId width", fresh.widthPt, swapped.widthPt, 1e-9)
+            assertEquals("$supplyId height", fresh.heightPt, swapped.heightPt, 1e-9)
+        }
+    }
+
+    @Test
+    fun `Given a page that forces the clamp, When replaced, Then the clamp still applies`() {
+        // The clamp lives in the extracted size helper, so both callers must get it. A replacement that
+        // skipped it could hand a maker a supply taller than the page it sits on.
+        val wide = PtSize(400.0, 40.0)
+        val outgoing = benchSupplyPlacement("shape.rect", wide)
+
+        val swapped = benchSupplyReplacement("tape.torn", wide, outgoing)
+
+        assertTrue("the clamp must bound a replacement too", swapped.heightPt <= wide.height * 0.6 + 1e-9)
+        assertTrue("and preserve the family's proportion", swapped.widthPt > swapped.heightPt * 2.0)
+    }
+
+    @Test
+    fun `Given the same supply at the same size, When replaced by itself, Then the transform is unchanged`() {
+        // The reducer's no-op short-circuit compares elements, so this is what makes "replace a rect with a
+        // rect" push no undo entry. If this ever returns a different transform, that guard stops working
+        // and the undo stack fills with entries that undo to the same picture.
+        val current = benchSupplyPlacement("shape.rect", page)
+
+        assertEquals(current, benchSupplyReplacement("shape.rect", page, current))
+    }
+
+    @Test
+    fun `Given an id the cabinet does not hold, When it replaces one, Then it fails loudly too`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            benchSupplyReplacement("shape.pentagon", page, benchSupplyPlacement("shape.rect", page))
+        }
+    }
 }

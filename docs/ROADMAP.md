@@ -166,7 +166,14 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
   static token-discipline gate, CI wiring for two never-run suites, and WCAG-AA contrast assertions.
   **Test infrastructure only — zero `src/main` change.** See the change-log row below,
   [the C1 milestone record](reviews/C1-conformance-guardrails.md), and [ADR-059](DECISIONS.md#adr-059).
-- **C2 — the `:core:ui` extraction** (a pure move, no visual change) is **in progress**.
+- **C2 — the `:core:ui` extraction** (a pure move, no visual change) reads **"in progress"** here but the
+  repository says otherwise: `:core:ui` is wired in `settings.gradle.kts`, holds 35 files across
+  `theme/` + `components/` + `a11y/` and 10 re-homed goldens, and **no `ui/` package remains in
+  `:feature:editor`**. The move has landed; what is unconfirmed is C2's *acceptance* criterion — that the
+  diff was renames and imports only. **Status verified 2026-08-17, but the milestone is not formally
+  closed.** ⚠ This is the third stale status found in one day, after S4 and S7′ in
+  [SUPPLIES-SPEC §10.1](design/SUPPLIES-SPEC.md) — a status table is a claim, and these are being read as
+  a work list.
 
 ---
 

@@ -53,6 +53,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
@@ -174,19 +175,19 @@ internal fun benchContextVerbs(
     // The frozen verb set is Replace / Ink / Delete (`v21-bench.html:71`), and it is transcribed whole.
     // Two of the three are drawn-and-inert under exactly the OD-9 class Font and Replace-photo already
     // sit in — "a control the freeze draws is kept drawn and invents nothing":
-    //  - `Replace` needs the Art sheet to pick a replacement supply from (S7), which is a flow.
-    //  - `Ink` needs the decor branch of `.inkpop` plus an `Intent` that recolours a DecorElement (S7);
-    //    `BenchInkPopover` is text-only today and its own call site says so.
+    //  - `Replace` is **live as of the replace-supply package**: it re-summons the Art sheet carrying the
+    //    selected supply's id, and the tapped tile becomes that element's new outline
+    //    ([Intent.ReplaceSupply]). The incoming family's §5.2 scale is applied at the outgoing element's
+    //    centre and rotation — an owner ruling, because the freeze does not say what a swap does to size.
+    //  - `Ink` is **live as of the decor-ink package**: [Intent.InkSupply] recolours a `DecorElement` and
+    //    `benchInkBands` already had the DECOR arm, so the popover's decor branch was a routing change,
+    //    not new material. Its enablement is unconditional because — unlike text, where a blank box cannot
+    //    be styled — *every* placed supply has an ink and can always be recoloured. There is no decor
+    //    counterpart to `styleable`.
     // Delete is live because it is a shared verb that already works on any element id.
     BenchVerbKind.DECOR -> listOf(
-        BenchVerb(
-            Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz, enabled = false,
-            unavailableBecause = Copy.BenchVerbs.NOT_YET,
-        ),
-        BenchVerb(
-            Copy.BenchVerbs.INK, Icons.Filled.Palette, enabled = false,
-            unavailableBecause = Copy.BenchVerbs.NOT_YET,
-        ),
+        BenchVerb(Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz),
+        BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
 }
@@ -201,7 +202,15 @@ internal fun benchContextVerbs(
  * is the mechanism by which a fourth element kind is forced to declare its verbs.
  */
 /**
- * The element the frozen `.inkpop` can actually recolour — a [TextElement], or `null`.
+ * The element the frozen `.inkpop` can actually recolour — a [TextElement] **or a [DecorElement]**, or `null`.
+ *
+ * ✅ **The prediction at the foot of this note came true, and the binding held.** It was written while
+ * decor's `Ink` verb was disabled, and it ended *"the fix that survives someone enabling the verb later."*
+ * The decor-ink package is that later. Enabling the verb widened **this one function** and its colour
+ * counterpart [benchInkColorOf]; the router, the popover's visibility and the F-5 clearance term each
+ * followed for free, because they read the binding rather than casting for themselves. Had the three `as?`
+ * casts still been in place, enabling the verb would have re-opened the dead-end screen described below —
+ * with no compile error.
  *
  * ### Why this is a function and not an `as?` at each call site
  *
@@ -223,7 +232,30 @@ internal fun benchContextVerbs(
  * Deliberately takes `Element?` and not `Element`: nothing is selected far more often than something is,
  * and pushing the null onto every caller is how the three casts drifted apart in the first place.
  */
-internal fun benchInkTargetOf(element: Element?): TextElement? = element as? TextElement
+internal fun benchInkTargetOf(element: Element?): Element? = when (element) {
+    is TextElement -> element
+    is DecorElement -> element
+    // A photo's colour is the photocopier's job, not an ink — the frozen PHOTO verb set has no `Ink`.
+    is ImageElement, null -> null
+}
+
+/**
+ * The ink [element] is currently laid down in, for the popover's selection ring — or `null` when nothing
+ * inkable is selected.
+ *
+ * Kept beside [benchInkTargetOf] and switched on the same three arms, because the pair has to agree: a
+ * target the popover can open on but whose colour reads `null` rings nothing, and the maker sees a popover
+ * that has forgotten which ink their supply is already wearing.
+ *
+ * The two cannot be folded into one function returning a pair — the call sites want them at different
+ * times (visibility is computed with `ctxElement`, the ring at the popover's own call site), and threading
+ * a pair through both is what pushed these apart into casts the first time.
+ */
+internal fun benchInkColorOf(element: Element?): ColorRgba? = when (element) {
+    is TextElement -> element.style.color
+    is DecorElement -> element.ink
+    is ImageElement, null -> null
+}
 
 internal fun benchVerbKindOf(element: Element): BenchVerbKind = when (element) {
     is TextElement -> BenchVerbKind.TEXT

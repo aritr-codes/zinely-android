@@ -612,3 +612,26 @@ private fun rememberBenchArtGlyph(supplyId: String): ImageVector = remember(supp
 
 /** `svg(d)` writes `viewBox="0 0 24 24"` for every mark in the file (`v21-bench.html:627`). */
 private const val BenchArtGlyphViewport: Float = 24f
+
+/**
+ * Why the Art sheet is open — SUPPLIES-SPEC §8.
+ *
+ * The frozen `openArt()` had one caller and needed no such distinction. Two verbs now summon the same
+ * cabinet, and they do opposite things with the tile the maker taps: one adds a supply to the page, the
+ * other swaps the outline of a supply already on it. Modelling that as *purpose* rather than as a flag plus
+ * a target id means the sheet cannot be open in "replace" mode with no element to replace, and cannot be
+ * open in "place" mode while still holding a stale id from the last swap.
+ */
+internal sealed interface BenchArtPurpose {
+
+    /** Add ▸ Art: the tapped tile becomes a new element (`Intent.PlaceSupply`). */
+    data object Place : BenchArtPurpose
+
+    /**
+     * A selected supply's `Replace` verb: the tapped tile becomes [id]'s new outline
+     * (`Intent.ReplaceSupply`). The id is captured when the sheet opens rather than read from the live
+     * selection when a tile is tapped — the sheet is a `Dialog` over the bench, and reading the selection
+     * later would let a selection change underneath it retarget the swap.
+     */
+    data class Replace(val id: String) : BenchArtPurpose
+}

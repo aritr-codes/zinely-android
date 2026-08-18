@@ -46,6 +46,50 @@ public sealed interface Intent {
         val transform: Transform,
     ) : Intent
 
+    /**
+     * Recolour a placed supply — SUPPLIES-SPEC §8's *Change ink*, the second of decor's two type-specific
+     * verbs and the first to land.
+     *
+     * **Why this is not [StyleText] with a decor arm.** `StyleText` resolves its target with
+     * `as? TextElement` and carries four other style fields a supply has no concept of (size, align, bold,
+     * italic). Widening it would mean four fields that are meaningless for half its callers; a separate
+     * intent keeps *"one verb, one intent"* and lets the reducer's decor arm stay a total function.
+     *
+     * **One tap = one undo step**, matching the ink behaviour text already ships: an immediate commit, not
+     * a session. A supply has no blank-equivalent, so there is no counterpart to `styleText`'s
+     * refuse-to-style-a-blank-box guard — every ink change on a real supply is a real change.
+     *
+     * An [id] naming a text box, an image, a missing element, or an element on another page is a **no-op**,
+     * exactly as the other type-specific verbs are for the types they do not own.
+     */
+    public data class InkSupply(val id: String, val ink: ColorRgba) : Intent
+
+    /**
+     * Swap the supply at [id] for a different one — SUPPLIES-SPEC §8's *Replace supply*, decor's second
+     * type-specific verb.
+     *
+     * **What survives the swap, and why each is a decision rather than an oversight.** The element keeps
+     * its **id** (so selection, z-order and the undo stack all still name it), its **ink** (the maker chose
+     * that colour for this spot, not for that outline) and its **mirror** flag. What changes is the
+     * [supplyId] and the [transform].
+     *
+     * **Geometry arrives in the intent for the same reason [PlaceSupply]'s does**: the incoming supply's
+     * §5.2 family size needs `Copy.Supplies.BY_FAMILY` from `:core:copy`, which this Android-free module
+     * deliberately does not depend on. The caller is `benchSupplyReplacement` in `:feature:editor`, where
+     * the craft constants live and are tested — and which owns the owner's 2026-08-17 ruling that a
+     * replacement takes the **new family's scale** while keeping the old centre and rotation.
+     *
+     * Replacing a supply with **itself** is not rejected here; it reduces to a no-op through the same
+     * `after == el` short-circuit [InkSupply] uses, so it pushes no empty undo entry.
+     *
+     * An [id] naming a text box, an image or nothing at all is a no-op, like every other typed verb.
+     */
+    public data class ReplaceSupply(
+        val id: String,
+        val supplyId: String,
+        val transform: Transform,
+    ) : Intent
+
     // — text-edit session (§5.6, D5): begin/commit/cancel, like a drag — one session = one EditTextCommand.
     /** Open a text-edit session on a [TextElement] by id (the a11y "Edit text" action). */
     public data class BeginEditText(val id: String) : Intent

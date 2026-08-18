@@ -76,6 +76,29 @@ public object EditorA11y {
         element: Element,
         dispatch: (Intent) -> Unit,
         onDelete: (String) -> Unit = { dispatch(Intent.Delete(setOf(it))) },
+        /**
+         * Opens the ink popover on a supply — SUPPLIES-SPEC §8's `Change ink`. A callback rather than an
+         * [Intent] because the popover is **screen state, not document state**: there is no intent to open
+         * it, exactly as there is none for the visible `Ink` verb, which flips the same flag.
+         *
+         * **`null`, not a no-op lambda.** It was `= {}`, documented as making the action "simply absent for
+         * any host with no popover to open" — which it did not do: the action was added unconditionally for
+         * decor and the default merely made it *inert*, so a default host advertised a dead action. That is
+         * the exact failure this function's decor branch spent all of P1 refusing to commit, reintroduced by
+         * a default value. Independent review caught the gap between the sentence and the code.
+         *
+         * Nullable makes the sentence true: no callback, no action. Two test hosts
+         * (`KeepClearPlatformStateTest`, `ElementSemanticsLayerTest`) take the default and correctly see
+         * nothing.
+         */
+        onChangeInk: ((String) -> Unit)? = null,
+        /**
+         * Opens the Art cabinet on a supply — SUPPLIES-SPEC §8's `Replace supply`. A callback for the same
+         * reason [onChangeInk] is one: the sheet is screen state, and the visible verb flips exactly this.
+         *
+         * `null` (the default) withholds the action entirely.
+         */
+        onReplaceSupply: ((String) -> Unit)? = null,
     ): List<CustomAccessibilityAction> {
         val id = element.id
         fun selectThen(action: () -> Unit): Boolean { dispatch(Intent.Select(id)); action(); return true }
@@ -91,14 +114,27 @@ public object EditorA11y {
                 add(CustomAccessibilityAction(Copy.A11y.REFRAME_PHOTO) { dispatch(Intent.BeginReframe(id)); true })
                 add(CustomAccessibilityAction(Copy.A11y.RESET_FRAMING) { dispatch(Intent.ResetFraming(id)); true })
             }
-            // A DecorElement gets **no type-specific action here in P1**, and that is a stated gap, not
-            // an omission: SUPPLIES-SPEC §8 gives decor two — `Replace supply` and `Change ink` — but
-            // each demands a `Copy.A11y` string (`:core:copy`, S6, another package's file this cycle)
-            // *and* a reducer intent that does not exist yet (S7). Adding an action that dispatches
-            // nothing would be worse than not advertising it: the Constitution's Interaction clause asks
-            // that every gesture-driven action have a named a11y twin, and in P1 decor has no
-            // gesture-driven action to twin. It inherits all 11 shared actions below, so a supply can
-            // already be moved, resized, rotated, restacked and deleted entirely by TalkBack.
+            // ✅ **Both of decor's §8 actions now exist, and §8's table of 13 is met.** P1's note here said
+            // decor got none, because each wanted a `Copy.A11y` string and a reducer intent that did not
+            // exist. Both now have both — and, the condition P1 actually set, both now *do* something:
+            // `Change ink` opens the ink popover ([Intent.InkSupply]); `Replace supply` opens the Art
+            // cabinet on this element ([Intent.ReplaceSupply]).
+            //
+            // ⚠ Each is gated on its own callback being non-null, not merely on the element being decor.
+            // A host with no popover and no cabinet must advertise **neither** — an action that dispatches
+            // nothing costs a blind maker a gesture to discover the same emptiness a sighted maker sees
+            // greyed out at a glance, and that argument is why both were withheld for a whole phase.
+            //
+            // With these two, decor's 11 shared actions become 13: a supply can be moved, resized, rotated,
+            // restacked, deleted, recoloured and swapped entirely by TalkBack.
+            if (element is DecorElement) {
+                if (onChangeInk != null) {
+                    add(CustomAccessibilityAction(Copy.A11y.CHANGE_INK) { selectThen { onChangeInk(id) } })
+                }
+                if (onReplaceSupply != null) {
+                    add(CustomAccessibilityAction(Copy.A11y.REPLACE_SUPPLY) { selectThen { onReplaceSupply(id) } })
+                }
+            }
             add(CustomAccessibilityAction(Copy.A11y.MOVE_LEFT) { selectThen { dispatch(Intent.Nudge(PtPoint(-NUDGE_STEP_PT, 0.0))) } })
             add(CustomAccessibilityAction(Copy.A11y.MOVE_RIGHT) { selectThen { dispatch(Intent.Nudge(PtPoint(NUDGE_STEP_PT, 0.0))) } })
             add(CustomAccessibilityAction(Copy.A11y.MOVE_UP) { selectThen { dispatch(Intent.Nudge(PtPoint(0.0, -NUDGE_STEP_PT))) } })
