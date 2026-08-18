@@ -90,6 +90,42 @@ class ImageFramingSessionTest {
     // — commit —
 
     @Test
+    fun `committing a crop that differs only by float drift records no command and no autosave`() {
+        // D-097, at the layer where it did the damage. Opening Reframe reconstructs a zoom from the
+        // persisted crop and re-resolves the crop from that zoom; dividing by a quotient does not return
+        // the numerator, so an UNTOUCHED session commits a crop 1-2 ULP from the one on disk. Under the
+        // old `committed == rx.before` that pushed an undo step and an autosave for an action nobody took
+        // — for 56% of aspect/zoom/pan combinations, 3:2 and 16:9 among them.
+        val persisted = Crop(0.29435957696827264, 0.06521739130434778, 0.7056404230317274, 0.9347826086956522)
+        val drifted = Crop(0.29435957696827264, 0.0652173913043479, 0.7056404230317274, 0.9347826086956521)
+        assertTrue(drifted != persisted, "the fixture must actually differ, or this test proves nothing")
+
+        val start = model(img("i", crop = persisted, fit = Fit.FIT))
+        val (begun, token) = begin(start, "i")
+        val r = EditorReducer.reduce(begun, Intent.CommitReframe("i", img("i", crop = drifted, fit = Fit.FIT), token))
+
+        assertEquals(Interaction.Idle, r.model.interaction, "the session still closes")
+        assertTrue(r.model.history.undo.isEmpty(), "an untouched reframe is not an undoable action")
+        assertTrue(r.effects.none { it is Effect.Autosave }, "an untouched reframe does not rewrite the document")
+        assertEquals(persisted, image(r.model, "i").crop, "the crop on disk is left exactly as it was")
+    }
+
+    @Test
+    fun `committing a crop a maker could actually have made still records a command`() {
+        // The ceiling, so the fix above cannot be passing by swallowing everything: one screen pixel of
+        // drag across a 390dp overlay is ~2.6e-3 of the image, six orders above the tolerance.
+        val persisted = Crop(0.25, 0.10, 0.75, 0.90)
+        val nudged = Crop(0.25 + 1.0 / 390.0, 0.10, 0.75 + 1.0 / 390.0, 0.90)
+        val start = model(img("i", crop = persisted, fit = Fit.FIT))
+        val (begun, token) = begin(start, "i")
+        val r = EditorReducer.reduce(begun, Intent.CommitReframe("i", img("i", crop = nudged, fit = Fit.FIT), token))
+
+        assertEquals(1, r.model.history.undo.size, "a real adjustment is one undoable command")
+        assertTrue(r.effects.any { it is Effect.Autosave })
+        assertEquals(nudged, image(r.model, "i").crop)
+    }
+
+    @Test
     fun `a full session commits exactly one EditImageCommand and one undo restores`() {
         val start = model(img("i", crop = Crop.FULL, fit = Fit.FILL))
         val (begun, token) = begin(start, "i")

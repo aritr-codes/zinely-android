@@ -136,8 +136,16 @@ public object EditorReducer {
                 // malformed draft can neither swap the photo nor move the element (mirrors EditTextCommand).
                 val committed = rx.before.copy(crop = FramingMath.clampCrop(intent.after.crop), fit = intent.after.fit)
                 val idle = model.copy(interaction = Interaction.Idle)
-                if (committed == rx.before) Reduction(idle) // no change ⇒ close, no command/autosave
-                else committing(idle, EditImageCommand(rx.pageIndex, rx.id, rx.before, committed))
+                // No change ⇒ close, no command/autosave. Compared through `sameFraming` and NOT with `==`:
+                // the crop arriving here has been round-tripped through a zoom (`seedDraft`→`resolveCrop`)
+                // and lands 1–2 ULP from the one on disk, so `==` recorded an undo step and an autosave for
+                // 56 % of sessions in which the maker touched nothing (D-097). `committed` differs from
+                // `rx.before` only in crop/fit by construction, so comparing those two is the whole test.
+                if (FramingMath.sameFraming(committed.crop, committed.fit, rx.before.crop, rx.before.fit)) {
+                    Reduction(idle)
+                } else {
+                    committing(idle, EditImageCommand(rx.pageIndex, rx.id, rx.before, committed))
+                }
             }
         }
         is Intent.CancelReframe -> {

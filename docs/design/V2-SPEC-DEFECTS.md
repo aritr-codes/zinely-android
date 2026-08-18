@@ -5985,7 +5985,7 @@ was wrong when it was typed.
 
 ---
 
-### D-097 — opening Reframe and changing nothing says *"Framing saved."* and writes an undo step, 56 % of the time {#d-097}
+### D-097 — opening Reframe and changing nothing says *"Framing saved."* and writes an undo step, 56 % of the time {#d-097} — ✅ **FIXED**
 
 **Found:** 2026-08-18, chasing a claim [ADR-109](../DECISIONS.md#adr-109)'s review made about spread
 halves and asking whether it was true of *ordinary* photos too. It is, and worse.
@@ -6056,3 +6056,82 @@ on the aspect of the photo you happened to test with.
 - ⚠ **`ReframeParityTest` and `ReframeSessionTest` are green.** Neither exercises open-then-commit-untouched
   on a *non-baseline* crop, which is the one path that fails. The baseline case (`isBaseline` → `Crop.FULL`)
   is exact and is the one that is tested.
+
+#### Fix, 2026-08-18 — **reading 1** {#d-097-fix}
+
+One predicate, in the one module both callers can see.
+
+```kotlin
+// core/editor/.../FramingMath.kt
+public const val FRAMING_EPS: Double = 1e-9
+public fun sameFraming(a: Crop, aFit: Fit, b: Crop, bFit: Fit): Boolean
+```
+
+| Call site | Was | Is |
+|---|---|---|
+| `EditorReducer` §`CommitReframe` | `committed == rx.before` | `FramingMath.sameFraming(committed.crop, committed.fit, rx.before.crop, rx.before.fit)` |
+| `EditorScreen.commitReframe` | `after.crop != rf.before.crop \|\| after.fit != rf.before.fit` | the same call |
+
+`FramingMath` lives in `core:editor`, which `feature:editor` already depends on — so the two callers now
+share **the predicate**, not a convention about writing the same expression twice. The old comment at
+`EditorScreen` claimed they used *"the same crop/fit comparison"*; they used two hand-written copies of it,
+and agreed only by being wrong identically.
+
+⚠ **`Fit` is still compared exactly, deliberately.** It is an enum, it carries no rounding, and `FILL`→`FIT`
+at an equal crop changes what is drawn — loosening it would make *"Whole photo"* on an already-full crop go
+silent.
+
+#### Sizing `FRAMING_EPS`, from both ends — **both bounds measured, and the first draft got one wrong**
+
+D-097 was caused by leaving this number unstated (at `0`), so it is stated — and an earlier draft of this
+section derived the ceiling **from the wrong quantity and was wrong by two orders**, which is the same
+species of mistake as the defect. Corrected, with the derivation named:
+
+| | Magnitude | How it is obtained | Margin at `1e-9` |
+|---|---|---|---|
+| **Floor** — drift absorbed | **`1.55e-15`** (~7 ULP) | worst case measured over **405** aspect × zoom × pan combinations against the real `Framing`; zero escapes | **~5.8 orders above** |
+| **Ceiling** — finest *deliberate* change | **~`1.6e-5`** | `ReframeOverlay`'s `fx = -pan.x * (cw0 / zoom) / frameWpx`, at its worst realistic case: a 10:1 panorama at `MAX_ZOOM` on a large, dense frame | **~4 orders below** |
+
+⚠ **The ceiling is not "one pixel across the 390dp overlay" (`2.6e-3`), which is what the first draft
+claimed.** A drag is converted through the **element frame in device px**, scaled by the crop extent — so
+zoom (÷`4`), photo aspect (`cw0 = bratio/pratio`, ÷`14` on a 10:1 panorama) and screen density all shrink
+it. The real figure is ~100× smaller than the claim. It is still four orders clear, and reaching `1e-9`
+would need a photo of roughly **175,000:1** — but "six orders" was not true and this document does not get
+to overclaim a safety margin.
+
+The a11y nudge (`0.05`) and the zoom stepper (`×1.15`) are coarser than the drag by orders and were never
+the binding constraint.
+
+#### Tests — thirteen new, in the module that can actually reach the code
+
+| Where | What |
+|---|---|
+| `ReframeRoundTripTest` (**`feature:editor`**, 6) | The table [ADR-109](../DECISIONS.md#adr-109) Consequence 5 mandates — **9 aspects × 8 zooms × 4 pans**, 3:2 and 16:9 among them — walked through the **real** `Framing.seedDraft` → `toImage`. Plus the three that pin the spoken outcome |
+| `FramingSameFramingTest` (`core:editor`, 5) | The predicate alone: its tolerance from both ends, every edge, and `Fit` |
+| `ImageFramingSessionTest` (`core:editor`, +2) | The reducer: a drifted commit records **no command and no autosave** and leaves the stored crop byte-identical; a one-pixel change still records exactly one |
+
+⚠ **The round-trip table lives in `feature:editor` for a reason worth keeping.** Its first version sat in
+`core:editor` and **re-implemented** `seedDraft`/`resolveCrop`/`coverExtent` locally, because `Framing` is
+not visible from there. That made it a test of a copy — an edit to `Framing` could have re-opened D-097
+with the table still green, which is precisely the failure mode D-097 *is*. It was moved rather than
+duplicated.
+
+⚠ **Two guards exist to stop this suite passing for the wrong reason.** One asserts the drift **still
+exists** under `==` (if the round trip ever becomes exact, the suite says so instead of quietly passing);
+the other asserts the two spoken lines are still different sentences.
+
+#### The spoken outcome was the untested half, and is now a function
+
+The predicate is shared with the reducer and tested; what nothing could reach was the **polarity** — which
+branch produces which sentence. Inline in `EditorScreen.commitReframe` it was a boolean no test could
+observe, and it is the half that lied to a blind user. It is now
+`EditorA11y.reframeOutcomeLine(after, before)`, pure and asserted in both directions. ⚠ A sighted maker
+never sees this string, so **nothing else in the product would ever have noticed a flipped `if`**.
+
+#### Not done here
+
+- 🟨 **Not device-verified.** The behaviour is asserted as pure reducer arithmetic. A device pass should
+  confirm that opening Reframe, touching nothing and tapping Done leaves the undo button dark and TalkBack
+  saying *"Framing unchanged."*
+- The [`Copy.Editor.FRAMING_UNCHANGED`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt)
+  wording is untouched — it was always correct, it was simply almost never reached.

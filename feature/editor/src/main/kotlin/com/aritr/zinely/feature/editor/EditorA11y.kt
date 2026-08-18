@@ -2,6 +2,7 @@ package com.aritr.zinely.feature.editor
 
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.editor.FramingMath
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.ReorderOp
 import com.aritr.zinely.core.model.DecorElement
@@ -155,3 +156,21 @@ public object EditorA11y {
         }
     }
 }
+
+/**
+ * What the live region says when a Reframe session ends: *"Framing saved."* or *"Framing unchanged."*
+ *
+ * **Pure, and extracted for exactly one reason** — this is the half of
+ * [D-097](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-097) that lied to a blind user, and
+ * inline in `EditorScreen.commitReframe` it was a boolean nothing could reach. The *predicate* is shared
+ * with the reducer ([FramingMath.sameFraming]) and tested; what was left untested was the **polarity** —
+ * which branch maps to which sentence — and a flipped `if` here tells a TalkBack user their framing was
+ * saved when it was discarded, or discarded when it was saved. A sighted maker never sees this string, so
+ * nothing else in the product would notice.
+ */
+internal fun reframeOutcomeLine(after: ImageElement, before: ImageElement): String =
+    if (FramingMath.sameFraming(after.crop, after.fit, before.crop, before.fit)) {
+        Copy.Editor.FRAMING_UNCHANGED
+    } else {
+        Copy.Editor.FRAMING_SAVED
+    }

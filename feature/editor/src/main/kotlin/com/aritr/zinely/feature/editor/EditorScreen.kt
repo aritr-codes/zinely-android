@@ -63,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aritr.zinely.ui.theme.rememberReduceMotion
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.EditorUiState
+import com.aritr.zinely.core.editor.FramingMath
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
@@ -698,11 +699,12 @@ public fun EditorScreen(
             // same token-gated intent, and makes it impossible for a blind session to rewrite framing —
             // the divergence INV-01 found was exactly a crop baked against a photo nobody could see.
             val after = if (pr != null) Framing.toImage(rf.before, d, pr, br) else rf.before
-            // Speak the outcome (bench: "Framing saved." vs "Framing unchanged.") — the same crop/fit
-            // comparison the reducer uses to decide whether a command is recorded.
-            sayReframe(
-                if (after.crop != rf.before.crop || after.fit != rf.before.fit) Copy.Editor.FRAMING_SAVED else Copy.Editor.FRAMING_UNCHANGED,
-            )
+            // Speak the outcome (bench: "Framing saved." vs "Framing unchanged.") — literally the same
+            // predicate the reducer uses to decide whether a command is recorded, not a second copy of it.
+            // This comment used to claim they were "the same comparison" while they were two hand-written
+            // `==` tests; they agreed only by being wrong identically, and told a TalkBack user their
+            // framing was saved when nothing had been touched (D-097).
+            sayReframe(reframeOutcomeLine(after, rf.before))
             dispatch(Intent.CommitReframe(rf.id, after, rf.token))
         }
     }

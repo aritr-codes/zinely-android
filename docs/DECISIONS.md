@@ -12452,9 +12452,16 @@ command.** Contrast ADR-105, where the new primitive did need one — this one d
    table of photo aspects that includes **3:2 and 16:9**. `Crop` is a `Double` data class, so `==` is bit
    equality and would go red on both of those (see the framing section) — a mandated test that fails on
    the commonest landscape photo is worse than no test, because someone will "fix" it by deleting it.
-   🟦 Reuse `core:imposition`'s existing `approx` helper rather than inventing a second tolerance.
    The test earns its place because the round trip is exactly what breaks if anyone ever "fixes"
    `seedDraft` to normalise the crops it reads.
+   ✅ **Done, and ahead of this ADR.** `ReframeRoundTripTest` (`feature:editor`, so it walks the **real**
+   `Framing` rather than a re-implementation) covers that table at **288 cases**. Writing it turned up [D-097](design/V2-SPEC-DEFECTS.md#d-097): the same drift was
+   already breaking **shipped** Reframe, which compared crops with `==` and so announced *"Framing
+   saved."*, pushed an undo step and autosaved for **56 %** of sessions in which the maker touched
+   nothing. Both deciders now share one `FramingMath.sameFraming` on a stated `FRAMING_EPS = 1e-9`
+   — not `core:imposition`'s `approx`, which this ADR had recommended before the defect showed the
+   predicate belonged next to the reducer that uses it, in a module `feature:editor` can also see.
+   **The spread feature inherits a fixed round trip rather than owing one.**
 6. **The four pairs are a table, never a predicate.** `3|4` and `7|8` are adjacent and are not
    spreads.
 7. ⚠ **`v21-bench.html` needs an owner amendment.** The frozen `openSupply()` chooser offers
