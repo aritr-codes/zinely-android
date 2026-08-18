@@ -8,7 +8,7 @@ and why you are the only one who can close it.
 **Maintained by the Implementer Agent.** Items are added as they are discovered and struck as you close
 them. If anything here could be closed by an implementer, that is a bug in this list — say so and I'll take it.
 
-**Last swept:** 2026-08-18 · **86 open items**
+**Last swept:** 2026-08-18 · **87 open items**
 
 > ⚠ **The count read 70 and the file held 80.** Corrected 2026-08-18 by counting the rows rather than
 > trusting the header — which is how it drifted: each new row incremented a number nobody re-derived.
@@ -51,6 +51,7 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 
 | ☐ | Rule | Question | Blocks |
 |---|---|---|---|
+| ☐ | [**D-097**](design/V2-SPEC-DEFECTS.md#d-097) | **Shipped defect — approve the fix.** Opening Reframe on a panned/zoomed photo and tapping Done **untouched** announces *"Framing saved."*, pushes an undo step and autosaves — **56 % of the time**, measured. Both deciders compare reconstructed `Double` crops with `==`. Recommended: one shared `Framing.sameFraming(a, b)` with the existing `EPS` | ⚠ **a11y**: a TalkBack user is *told* something was saved that was not. Bounded fix, one pure function, two call sites — but it changes shipped undo semantics, so it is your call |
 | ☐ | [D-089](design/V2-SPEC-DEFECTS.md#d-089) | What happens when the placement snack and the context bar want the same band? Three options named | **Visible defect**, S7 merge |
 | ☐ | [D-092](design/V2-SPEC-DEFECTS.md#d-092) | **A photo corner lands as a 4.5:1 sliver.** *Tape & fixings* has one landing aspect and it is tape's; a fixing is a compact object. Four readings are set out, none chosen — [§5.2](design/SUPPLIES-SPEC.md#s-5-2-ruling) caps overrides at exactly one **by test**, so this cannot be fixed quietly. Implementer recommends reading 4 (the outline carries its own aspect) | **Pass 1 defect on a shipped surface** — `fix.corner` and `fix.staple` are pickable today |
 | ☐ | [D-093](design/V2-SPEC-DEFECTS.md#d-093) | **Every tile in the drawer is hollow; every supply lands solid.** Make the tiles solid · ship hollow variants · or accept it on A5's authority. ⚠ Rule this **together with D-086 and D-092** — all three ask whether the tile's picture predicts the page's mark | Pass 2, SM-A176B, 2026-08-18. All three readings change drawn material on the frozen `v21-bench.html` |

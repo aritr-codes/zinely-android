@@ -5982,3 +5982,77 @@ checking it.
 A6 moved no line at all. **The invariant is not the problem.** The problem is that citations were written
 against revisions the invariant did not yet cover, and no amendment can retroactively fix a number that
 was wrong when it was typed.
+
+---
+
+### D-097 — opening Reframe and changing nothing says *"Framing saved."* and writes an undo step, 56 % of the time {#d-097}
+
+**Found:** 2026-08-18, chasing a claim [ADR-109](../DECISIONS.md#adr-109)'s review made about spread
+halves and asking whether it was true of *ordinary* photos too. It is, and worse.
+**Severity:** shipped behaviour · **a11y: the app makes a false statement to a blind user.**
+**Not** a spread bug — it needs no new feature to reproduce.
+
+#### Reproduce
+
+Place a photo, pan or zoom it, commit. Re-open **Reframe** on that photo. **Touch nothing.** Tap Done.
+
+#### What happens
+
+1. TalkBack says **"Framing saved."** (`Copy.Editor.FRAMING_SAVED`, `Copy.kt:549`). Nothing was saved,
+   because nothing was changed.
+2. An `EditImageCommand` is pushed — an **undo step for an action the maker did not take**.
+3. An `Effect.Autosave` fires, rewriting the document.
+
+#### Why
+
+Both deciders compare `Crop` **exactly**, and `Crop` is a `data class` of `Double`
+(`core/model/.../Document.kt:163-173`):
+
+| Site | Test |
+|---|---|
+| `EditorReducer` §`Intent.CommitReframe` (`:139`) | `if (committed == rx.before) … // no change ⇒ no command/autosave` |
+| `EditorScreen.commitReframe` (`:703`) | `if (after.crop != rf.before.crop \|\| after.fit != rf.before.fit) FRAMING_SAVED else FRAMING_UNCHANGED` |
+
+And the round trip is not exact. `Framing.seedDraft` recovers a *zoom* from a persisted crop
+(`zoom = cw0 / (right − left)`, `FramingDraft.kt:139`) and `toImage` → `resolveCrop` recovers the *width*
+back from that zoom (`cw = cw0 / zoom`, `:99`). **Dividing by a quotient does not return the numerator**,
+and `ch0 / zoom` re-rounds a second time through a reciprocal, so the recovered crop lands 1–2 ULP away.
+
+⚠ **Nothing is wrong with the arithmetic.** This is what inverting a division costs. What is wrong is that
+two decisions with *user-visible consequences* are taken on bit equality of a reconstructed float.
+
+#### Measured, not reasoned
+
+A probe over 9 photo aspects × 8 zooms × 4 pan positions on a 105×148 page, run **as a JVM test against
+the real `Framing`** (and independently re-derived in a second implementation, which agreed to the case):
+
+> **155 of 279 untouched round trips change the crop — 55.6 %.**
+
+⚠ **It is not confined to odd inputs.** `3:2` — the commonest camera aspect there is — fails at almost
+every zoom, **including `f = 0.0`**, i.e. a photo that was only *zoomed* and never panned. `4:3`, `1:1`
+and `5:4` are largely exact, which is why this has never been noticed by hand: whether you see it depends
+on the aspect of the photo you happened to test with.
+
+#### The readings
+
+1. 🟦 **RECOMMENDED — one shared "is this the same framing?" predicate, with a tolerance, used by both
+   deciders.** They are already supposed to agree (`EditorScreen:701-704` says so in a comment: *"the same
+   crop/fit comparison the reducer uses"*), and today they agree only by both being wrong the same way.
+   A single pure `Framing.sameFraming(a, b)` in `FramingDraft.kt` makes the agreement structural and gives
+   the tolerance one home. `EPS = 1e-6` already exists there and is ~10 orders of magnitude above the drift.
+2. Make the round trip exact by persisting the draft instead of re-deriving it. ⚠ **Rejected** — that is a
+   schema change ([ADR-053](../DECISIONS.md#adr-053) deliberately persists the *result*, not the control
+   values), to fix a rounding artifact.
+3. Accept it. ⚠ Not viable on the a11y ground alone: a sighted maker sees nothing happen and shrugs; a
+   TalkBack user is *told* their framing was saved, and has no way to discover it was not.
+
+#### Notes
+
+- 🟨 **Not device-verified.** Measured as pure JVM arithmetic. The undo step and the autosave are read from
+  the reducer, not observed on hardware; a device pass should confirm the undo button lights up.
+- The fix also settles [ADR-109](../DECISIONS.md#adr-109) Consequence 5, which mandates an epsilon
+  round-trip test over an aspect table including 3:2 and 16:9 — written before this defect was found, and
+  for the same reason.
+- ⚠ **`ReframeParityTest` and `ReframeSessionTest` are green.** Neither exercises open-then-commit-untouched
+  on a *non-baseline* crop, which is the one path that fails. The baseline case (`isBaseline` → `Crop.FULL`)
+  is exact and is the one that is tested.
