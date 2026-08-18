@@ -6128,10 +6128,42 @@ observe, and it is the half that lied to a blind user. It is now
 `EditorA11y.reframeOutcomeLine(after, before)`, pure and asserted in both directions. ⚠ A sighted maker
 never sees this string, so **nothing else in the product would ever have noticed a flipped `if`**.
 
-#### Not done here
+#### Device verification — Pass 1, ✅ 2026-08-18
 
-- 🟨 **Not device-verified.** The behaviour is asserted as pure reducer arithmetic. A device pass should
-  confirm that opening Reframe, touching nothing and tapping Done leaves the undo button dark and TalkBack
-  saying *"Framing unchanged."*
+**SM-A176B · Android 16 · debug build of `59ef25d`.** Photo: `20260818_161003.jpg`, **4080×2296 (≈16:9)** —
+chosen because it is one of the aspects that drifts; a 4:3 photo would have passed even unfixed.
+
+Placed the photo, reframed it for real (zoom → 115 %, panned right), committed. Persisted crop, read from
+the app's own document:
+
+```
+{"left":0.13043478260869557,"top":0.06521739130434778,"right":1.0,"bottom":0.9347826086956522}
+document.json   mtime 1787055906   size 1229
+```
+
+Re-opened Reframe — the overlay **seeded at "Zoom 115 percent"**, so `seedDraft` reconstructed the zoom
+from the persisted crop as designed — **touched nothing**, tapped *Done reframing*:
+
+```
+{"left":0.13043478260869557,"top":0.06521739130434778,"right":1.0,"bottom":0.9347826086956522}
+document.json   mtime 1787055906   size 1229     ← unchanged, to the second and the byte
+```
+
+**No autosave fired and the crop is byte-identical.** Then one *Undo*: `Redo` became enabled, the crop
+returned to `full` / `fit=fill`, and the file was rewritten (`mtime 1787055981`, `size 1183`) — i.e. **the
+single undo step reverted the real reframe, not a phantom one.** Under the defect it would have consumed
+itself on the no-op commit and left the photo still cropped. Redo restored it exactly; a second untouched
+commit was likewise inert.
+
+#### Still not verified
+
+- ⚠ **The spoken line was not heard.** A live-region announcement is transient: it is not a node in the
+  platform tree, so `uiautomator dump` cannot capture it after the fact, and this device's TalkBack logs no
+  utterances ([DEVICE-VERIFICATION.md](../DEVICE-VERIFICATION.md)). *"Framing unchanged."* is asserted by
+  `ReframeRoundTripTest` at the `reframeOutcomeLine` seam and **inferred** on hardware from the reducer
+  agreeing with it — it has not been listened to. 🟦 Fold into the next TalkBack listen pass rather than
+  treating this defect as fully closed on the a11y axis.
+- 🟨 **Pass 2 not run.** This is a correctness pass. Nothing here asks whether the *behaviour* is what a
+  maker expects — e.g. whether an untouched Reframe should say anything at all.
 - The [`Copy.Editor.FRAMING_UNCHANGED`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt)
   wording is untouched — it was always correct, it was simply almost never reached.
