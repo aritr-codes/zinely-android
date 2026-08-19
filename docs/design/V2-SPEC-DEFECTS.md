@@ -4351,7 +4351,7 @@ four handles:
 .handle.bl{left:-10px;bottom:-10px}.handle.br{right:-10px;bottom:-10px}
 ```
 
-> **2026-08-12 — closed forward in V2.1, count only.** `v21-bench.html:201-206` now positions **eight**:
+> **2026-08-12 — closed forward in V2.1, count only.** `v21-bench.html` §`.hnd` (`:266-267`, `:270-271`) now positions **eight**:
 > the same four corners plus `.hnd.t/.b/.l/.r` at the edge midpoints. The count question D-036 raises is
 > settled in the shipped direction (eight, per [OD-11](DECISIONS.md#adr-098-od11)); the *position* question
 > it did not ask — that ∓10px never centred the mark on the corner — is [ADR-102 §12.8](../DECISIONS.md#adr-102-p1-handles)'s.
@@ -4781,14 +4781,14 @@ and the split matters because the two halves need different remedies.
 | # | String | Screen | Frozen source | Class |
 |---|---|---|---|---|
 | 1 | `works offline · stays on your phone` | Editor, empty page | **none** — `v21-bench.html` draws no empty state; the CSS was transcribed from `v21-library.html:306-307` | **parity failure** |
-| 2 | `From your phone — it never leaves the device` | Add sheet, Photo row | `v21-bench.html:824` | spec |
+| 2 | `From your phone — it never leaves the device` | Add sheet, Photo row | `v21-bench.html` §`openSupply()`, `:828` | spec |
 | 3 | `Everything stays on your phone — no account, nothing uploaded.` | Library, empty shelf | `v21-library.html:466` | spec |
 | 4 | `… · A4 · stays on your phone` | Proof, ready row | `v21-proof.html:593`, `:1019` | spec |
 | 5 | `Saved on this device` | Editor status chip | **none** — the freeze says only `Saved` | implementation addition, **spoken only** |
 
 Instance 5 is the sharp one: it exists in the accessibility tree and nowhere else, so a screen-reader user
 hears the promise **one more time** than a sighted user sees it. The freeze also specifies a **sixth**
-instance Compose has not built — `v21-bench.html:873`'s `toast('Saved — everything stays on your phone')`.
+instance Compose has not built — `v21-bench.html` §`doneBtn` (`:877`)'s `toast('Saved — everything stays on your phone')`.
 
 **Only #1 is repairable without an amendment**, because it is the only one with no frozen source on its own
 surface. Striking any of 2–4 edits a frozen file and is therefore an owner act, not a parity fix.
@@ -4817,14 +4817,15 @@ is a different thing — a dead `.privacyline` CSS rule in `v2-proof.html`.
 
 ### D-080 · The frozen `Art` sheet gives its own entry no glyph, filters nothing, and specifies no empty state {#d-080}
 
-**Status: 🟦 OPEN — owner amendment required.** Raised 2026-08-16 while scoping
+**Status: 🟦 OPEN — owner amendment required. ⚠ SCOPE EXTENDED 2026-08-18 — see §4 below.**
+Raised 2026-08-16 while scoping
 [F-3](../BETA-UX-REVIEW.md) of the beta UX review. Nothing here blocks today's work: the sheet itself is
 fenced by [OD-2](#d-029) and sequenced behind [ADR-105](../DECISIONS.md#adr-105) D-4. It is filed **now**
 precisely because it will otherwise be discovered by whichever phase finally builds it, at the moment it is
 most expensive.
 
 **1 · The `Art` row wears the `Photo` row's glyph — the same defect as [D-051](#d-051), one line down.**
-`v21-bench.html:824` and `:825` carry byte-identical inline SVG:
+`v21-bench.html` §`openSupply()`, `:828` and `:829`, carry byte-identical inline SVG:
 
 ```
 svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')
@@ -4834,6 +4835,12 @@ That is a picture frame with a mountain in it — the photo icon — and the fre
 and cut paper"* as well. A chooser whose three verbs are `Text · Photo · Art` and whose last two look
 identical is a chooser with two verbs and a duplicate. An implementer cannot invent the missing glyph: it is
 drawn material in a frozen file, and D-051 established that the fix is an amendment.
+
+⚠ **Item 2 below is now stale, and the staleness matters to the ruling.** It says the chips *are drawn*.
+Amendment **A5** (2026-08-16) **deleted the chip markup** on the reasoning that filtering was ruled out by
+SUPPLIES-SPEC §9 and that the four families already head their own `.lbl` sections. So the chips are not
+drawn-and-inert awaiting behaviour — they are **absent, and would have to be re-added**. Read §4 before
+ruling on item 2.
 
 **2 · The four family chips are drawn and filter nothing.** `:847` renders `Tape & fixings · Stamps &
 marks · Cut paper · Cut shapes` with `.on` on the first, and `:849-850` moves `.on` and stops — the
@@ -4854,6 +4861,36 @@ rediscover separately.
 
 **Not in scope here:** whether the sheet is built at all (that is [D-029](#d-029) and ADR-105's sequencing),
 and the empty state's *cue wording*, which is [D-050](#d-050) and already owner-owned.
+
+#### 4 · Scope extension, 2026-08-18 — a **search text field**, which nothing above mentions {#d-080-extended}
+
+[ADR-107 R5](../DECISIONS.md#adr-107) proposes growing the catalogue from sixteen to ~51 and, with it,
+**both** a family-chip filter **and a text field over names and tags**. This entry is the vehicle the ADR
+routes that ruling through, and as originally written it cannot carry it:
+
+- **A text field appears nowhere in D-080.** Item 2 is about chips that filter nothing. Ratifying a control
+  this entry never names would be the owner approving something they were not shown — raised by independent
+  review, and correct.
+- **Item 2's premise is inverted by A5** (see the ⚠ above): the chips must be *re-added*, not re-tasked.
+
+**What is actually being asked of the owner, stated once:**
+
+| # | Control | State today | ADR-107 R5 asks |
+|---|---|---|---|
+| a | `Art` row glyph | Byte-identical to the `Photo` row's | Amend — unchanged from item 1 |
+| b | Family chips | **Deleted by A5** | **Re-add**, filtering ~51 |
+| c | **Search text field** | Never existed; removed by ADR-104 | **Add**, matching drawn names **and tags** |
+| d | Empty state | Unspecified | Specify — and R5 requires it never dead-ends: an empty result offers the full set back |
+
+⚠ **(b) and (c) reverse two published positions and are recorded as reversals**, in the manner
+[SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) models: §9's *search field* bullet (premise was *the sixteen*, which
+R1 spends) and its *"no tags, no filters, no sort"* bullet (which states no premise, so it is a straight
+reversal, not an expiry). Per [V2-CONSTITUTION §VI](V2-CONSTITUTION.md) `v21-bench.html` is amended in the
+same act.
+
+⚠ **This entry now gates R1 as well as R5.** ADR-107's sequencing gate says the ~51 marks may be authored
+and tested but may not enter the shipped sheet before this ruling — because a sixty-mark drawer with no
+filter is the failure ADR-104 names as *"a large library without excellent search is worse than none"*.
 
 ---
 
@@ -5389,7 +5426,9 @@ an expiry condition written in prose has no expiry mechanism.** There was no tes
 
 ---
 
-### D-086 — twelve of the sixteen supply tiles are dim with no words, so TalkBack is better informed than a sighted user {#d-086}
+### D-086 — dim supply tiles carry no words, so TalkBack is better informed than a sighted user {#d-086}
+
+> Booked when twelve of sixteen were dim; **four** are dim as of 2026-08-18 — see the [update](#d-086-update). The count changed, the asymmetry did not.
 
 | | |
 |---|---|
@@ -5426,3 +5465,1105 @@ screen wants me to do?* The answer requires a person who does not know why the t
 disabling it — *absent, not disabled*. P-G does the opposite for the tiles. The distinguishing principle
 offered is that the freeze **specifies these sixteen tiles** while it specifies no Art-row obligation. That
 is defensible and it is not yet ruled.
+
+#### Update — the twelve are now four {#d-086-update}
+
+**2026-08-18, package P3-art.** Eight of the twelve were authored (`mark.registration` · `mark.halftone` ·
+`mark.asterisk` · `mark.arrow` · `paper.window` · `paper.tag` · `fix.staple` · `fix.corner`), taking
+`SupplyCatalog` from 4/16 to **12/16**. The sheet needed no edit: `BenchArtSheet` derives a tile's live
+state from `SupplyCatalog.outlineOf(supplyId) != null`, so the count of dim tiles is a *consequence* of the
+catalogue rather than a constant anyone has to remember to change.
+
+**This shrinks the defect; it does not close it.** Four tiles are still dim and still wordless, and the
+asymmetry the defect names — TalkBack is told *"Not yet"*, a sighted maker is left to infer it — holds
+identically at four as at twelve. If anything it sharpens: a lone dim tile among twelve live ones reads
+*more* like a malfunction than a wholly dim family did, because the surrounding tiles prove the feature
+works. **Status stays OPEN**, and the three candidate answers are unchanged.
+
+⚠ **One of the defect's own candidate answers has quietly become cheap.** *"Ship the sheet only when the
+twelve exist"* was costed at twelve outlines; it now costs four, three of which need the same thing (an
+authored tear). That is a materially different offer than the one the defect was booked against, and the
+Pass 2 reading should be given it.
+
+---
+
+### D-087 — any non-interactive part of a `ZSheet` dismisses it, because the scrim is a sibling {#d-087}
+
+| | |
+|---|---|
+| **Artifacts** | `core/ui`'s `ZSheetSurface` / `ZSheet` scrim · `feature/editor/.../BenchArtSheet.kt` (patched locally) |
+| **Found** | 2026-08-16, package **S7-placement** — and only because the Art sheet finally got a production call site |
+| **Severity** | **Live interaction defect**, pre-existing and general. Symptom fixed on the Art sheet's inert tiles; the cause is untouched |
+| **Status** | ⏳ **OPEN** — needs a root-cause fix in `ZSheetSurface` |
+
+**The defect.** A composable with no pointer-input node is not in the hit path, so a touch on it falls
+through to the sheet's full-screen scrim **sibling**, whose `clickable` is `onDismiss`. On the Art sheet
+that meant **twelve of the sixteen tiles closed the whole cabinet when tapped** — the app answering *"not
+yet"* by leaving the room. It generalises: a sheet title, the padding between chooser rows, any inert
+region of any `ZSheet` currently dismisses it.
+
+**The local fix, and why it is only local.** `BenchArtTile` gained an **observing, non-consuming**
+`pointerInput` — non-consuming deliberately, since consuming the down event would steal the drag from any
+ancestor scroll. That stops the fall-through on twelve tiles. **Every other inert region of every other
+sheet still has it.**
+
+**Why no test caught it, which is the transferable part.** `BenchArtSheetTest` passes `onDismiss = {}`. The
+dismissal fired, invoked a no-op, and the assertions all passed — the defect was *invisible while the sheet
+had no call site*, and became visible the hour it got one. **A component tested only in isolation cannot
+fail the way it will fail in the app**, and a stub for the one collaborator that matters is where that
+blindness hides.
+
+**Deferred rather than fixed here** because the root cause interacts with a decision nobody has made: how a
+scrim should behave under a future **scrolling** sheet body. Fixing it blind would prejudge that.
+
+---
+
+### D-088 — the Art row ships Photo's glyph, verbatim and on purpose {#d-088}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchAddChooser.kt` · `docs/design/mockups/v21-bench.html:828-829` · [D-080](#d-080) · D-051 / OD-26 |
+| **Found** | 2026-08-16, package **S7-placement**, while adding the Add chooser's Art row |
+| **Severity** | Cosmetic, inherited from the frozen file. Two chooser rows now carry the same icon |
+| **Status** | ✅ **Ruled — carried forward, no implementation change** (consistent with D-051 / OD-26) |
+
+The frozen mockup gives the **Art** row at `:829` the **byte-identical** SVG it gives **Photo** at `:828`.
+S7 first drew a star instead, reasoning that the duplicate was obviously an authoring slip.
+
+**That was reverted, and the reason is the interesting part.** [D-080](#d-080) says an implementer cannot
+invent a missing glyph, and D-051 / OD-26 already ruled *this exact defect* on *this exact chooser* —
+carried forward, no implementation change — which the **Photo row above it already honours**. Drawing a
+star would have obeyed the ruling on one row and overruled it on the row directly beneath. *Consistency
+with a known-imperfect spec beats a local improvement that makes the spec's own record incoherent.*
+
+⚠ **[D-080](#d-080) should be read with this entry**: a reader of D-080 could reasonably assume Compose had
+diverged. It has not. The duplicate ships.
+
+### D-090 — the decor verb row has never had a golden, so its pixels are unobserved {#d-090}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/src/test/roborazzi/` · `BenchContextBar.kt` (`BenchVerbKind.DECOR`) |
+| **Found** | 2026-08-17, decor-ink package, **by a green golden run that should not have been green** |
+| **Severity** | Test-coverage gap, no user impact today |
+| **Status** | ✅ **Closed 2026-08-18.** Five goldens recorded — `bench_context_bar_decor_{light,dark}.png` and `bench_ink_popover_decor_{light,dark,selected_light}.png` — with pixel counts beside them in `BenchDecorGoldenTest`. ⚠ Recorded **locally**, not on the pinned image; see the closing note |
+
+The decor-ink package changed a control on the decor context bar from **dim-and-inert to live** — a visible
+change in fill, text colour and ripple. `verifyRoborazziDebug --rerun-tasks` then passed **without a single
+diff**, and the reason is not that the change was neutral: `feature/editor/src/test/roborazzi/` holds only
+`editor_context_bar_{light,dark}.png`, which are the **V1** `EditorContextBar`. Nothing covers
+`benchContextVerbs(BenchVerbKind.DECOR)`.
+
+**The finding is about the inference, not the missing file.** A green golden run was about to be reported as
+evidence that the change was visually safe. It is not evidence of that — it is the absence of an
+observation, and the two are indistinguishable from the build output alone. This is the same class as
+[CLAUDE.md](../../CLAUDE.md)'s *"a golden that is never verified is a screenshot, not a test"*, one step
+earlier: **a golden that was never recorded cannot even be a screenshot.**
+
+The fix was a `BenchVerbKind.DECOR` golden in both palettes. **Recorded 2026-08-18** — on the local host,
+not the pinned one that gates them, which is the residue this entry closes with rather than the whole of it.
+Until it existed, no claim that a decor-row change was visually neutral could come from Roborazzi at all.
+
+⚠ **A second, higher-value capture was missing, and it is the one that landed.** Independent review found
+that the set of files calling `captureRoboImage` and the set constructing a `DecorElement` were **disjoint**. Routing the ink popover's
+bands from `ctxKind` means `benchInkBands`' `PHOTO, DECOR ->` arm now renders **for the first time ever** —
+a palette that had never appeared in any golden, on any host. `bench_ink_popover_*.png` are the text bands.
+That capture was worth more than the context-bar one, and the closure below took it first.
+
+
+#### Closed 2026-08-18 — what was recorded, and the one thing that is still owed {#d-090-closed}
+
+[`BenchDecorGoldenTest`](../../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/BenchDecorGoldenTest.kt)
+captures both surfaces in both palettes, and the higher-value one landed: the `PHOTO, DECOR ->` band set has
+now rendered. `PAPER TINTS` is visible in the raster — five swatches a text element's popover has never shown.
+
+**The counts are the assertions; the rasters are the net.** Both regressions this entry is about are under
+Roborazzi's `changeThreshold = 0.02f`, so each is counted instead, and each count was **proved by mutation**
+rather than assumed:
+
+| Mutation | Result |
+|---|---|
+| `benchInkBands`' `PHOTO, DECOR ->` arm reverted to the two text bands | both popover tests **FAILED** |
+| decor's `Replace` and `Ink` set back to `enabled = false` (D-090's own regression, exactly) | both bar tests **FAILED** |
+
+**Independent review then narrowed two of the claims, and both narrowings are in the file.** The bar test was
+named for three verbs while counting over the whole card, so a decor set that had *lost* `Replace` would have
+passed — and only the raster, not the counts, would have caught a **single** verb regressing to
+`disabledAlpha`. Each verb is now cropped to its own node and measured there. Separately, both popover
+captures passed `selected = null`, which is a state a supply is **never** in: `benchInkColorOf` is non-null
+for every placed supply, so the ring is always drawn. `bench_ink_popover_decor_selected_light.png` adds it,
+and asserts the thing that only matters once it exists — that a ringed paper tint *still clears the fence it
+is measured by*, since the ring is drawn at `inset:-5px` around the pot it marks.
+
+The fence assertion is deliberately the **inverse** of [`BenchC6GoldenTest`]'s
+`no_paper_tint_is_painted_anywhere_in_a_text_elements_popover`: there each tint must paint *less* than one
+13dp preset dot, here each must paint at least *half a 30dp pot*. A fence asserted in one direction only is
+satisfied by a function that draws nothing for anybody.
+
+**The fixture was checked against the device, 2026-08-18, and it holds where it matters.** On `SM-A176B` /
+Android 16, build `126d84e`, a selected supply's popover carries `INKS · PAPER TINTS · NEUTRALS ·
+READY-MADE PALETTES` — the band set the goldens capture — and picking *Kraft* rings that swatch with the
+dashed ink ring, which is the fifth capture's exact state reached by hand.
+
+⚠ **One divergence, and it is pre-existing rather than introduced here.** These goldens use
+`@Config(qualifiers = "w430dp-h932dp-xhdpi")`, inherited from `BenchC6GoldenTest` so the two files agree.
+The device is **411dp** wide (1080 ÷ 2.625), and at that width the ten-swatch `INKS` band **wraps 9 + 1**
+where the golden draws it as one row. Every bench golden in the tree shares the config, so this bounds what
+*all* of them prove, not just these five: they observe a viewport the product does not have. The fenced
+`PAPER TINTS` row is five swatches and does not wrap at either width, so neither the fence assertion nor the
+ring assertion is affected — which is why this is recorded as an observation and not fixed. Changing the
+qualifier would re-record every bench golden, and a re-record is a reviewed act, never a drive-by.
+
+⚠ **Still owed: a re-record on the pinned image.** These five PNGs were recorded on the Windows dev host.
+[`record-goldens.yml`](../../.github/workflows/record-goldens.yml) is explicit that local recording is
+*viable* — during A9 every CI-recorded golden in the tree verified green on this machine, so the comparison
+is symmetric across the two hosts for this stack — but that the pinned image remains **preferred, because it
+is the host that gates**. A locally recorded golden is to be re-recorded there at the next opportunity and the
+diff reviewed. Running that workflow is a `workflow_dispatch` on a pushed branch, so it is an owner act;
+it is listed in [OWNER-CHECKLIST](../OWNER-CHECKLIST.md). Until then these five are honest observations of a
+host that is not the gate — which is strictly more than the nothing that stood here, and strictly less than
+a gated golden.
+
+### D-091 — the `Change ink` accessibility action opened nothing, because it selected first {#d-091}
+
+| | |
+|---|---|
+| **Artifacts** | `EditorScreen.kt` (`inkPopoverFor`) · `EditorA11y.kt` · `BenchDecorInkRoutingTest.kt` |
+| **Found** | 2026-08-17 by **independent review, with a probe** — not by the suite, which was green |
+| **Severity** | **Blocker, fixed before merge.** The verb worked for a sighted maker and did nothing for a TalkBack maker |
+| **Status** | ✅ **Fixed** — popover state is the summoning element's id, and the `LaunchedEffect` is deleted |
+
+`Change ink` selected the supply and then set `inkPopoverOpen = true`. A `LaunchedEffect(ctxElement?.id)`
+enforced *"the popover belongs to the element that summoned it"* by clearing that flag whenever the
+selection changed — so the action's own `Intent.Select` relaunched the effect, which cleared the flag one
+composition later. **The popover never appeared.**
+
+**Why every test passed.** The fixture always rendered with the supply *already selected* — the single
+state in which the effect's key does not change and the race cannot occur. TalkBack's accessibility focus
+is **not** the app's selection, so the untested branch was the primary one for the only users the action
+exists for.
+
+The fix is structural rather than a guard: the popover's state is the **id of the element that summoned
+it**, compared against the live selection each composition, so a stale popover cannot be visible for one
+frame and there is no effect left to race. Re-adding the effect turns exactly one test red — the
+unselected-fixture one — which was verified by mutation.
+
+*Three lessons, and the middle one is the expensive one.* A dead accessibility action is the precise failure
+[EditorA11y](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorA11y.kt) argues
+against when it withholds `Replace supply` — the change shipped the thing its own reasoning forbade. **A
+fixture that only ever tests the convenient state hides the defect and reads as coverage.** And a KDoc
+asserting the guard ("`selectThen` has already made the supply the selection … which is what the popover's
+visibility resolves against") stated the *cause* of the bug as its justification.
+
+### D-089 — the placement snack and the context bar are drawn in the same band, and the pill eats the message {#d-089}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchSnack.kt:60` · `feature/editor/.../BenchContextBar.kt:469` · `EditorScreen.kt:1408,1552` |
+| **Found** | 2026-08-17, package **S7-placement**, **Pass 1 device verification** on SM-A176B / Android 16 |
+| **Severity** | **Visible defect on the happy path.** The message reads `Placed on the pa` — the sentence is cut mid-word by the Replace/Ink/Delete pill |
+| **Status** | 🔶 **Open — needs an owner ruling, not an implementer fix** (see below) |
+
+`BenchSnackInsetBottom` and `BenchContextBarInsetDp` are **both `12.dp`**, and both surfaces are placed with
+`Modifier.align(Alignment.BottomCenter)` in the same `Box` ([EditorScreen.kt:1408](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt#L1408) and
+[:1552](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt#L1552)). They therefore occupy the **identical vertical band**, and whenever
+both are visible one covers the other. Nothing offsets, stacks, or mutually excludes them.
+
+**No test could have caught this, and the reason is the useful part.** Every existing state raises *one*
+of the two: delete raises the snack but clears the selection, so no context bar; the ink snack appears
+with a selection but the frozen bench (`v21-bench.html`) never asserts the pair. **Placement is the first
+state in the app's history that raises both at once** — a new element is added *and* left selected, so the
+context bar appears in the same frame as `Placed on the page`. The collision is not a port error; it is a
+state combination the frozen spec has never had to rule on.
+
+⚠ **This is why it is an owner ruling.** Per the [DESIGN FREEZE rule](../../CLAUDE.md#design-freeze), the fix
+requires deciding *what should happen* when both want the band — suppress the snack when a selection
+exists, stack the snack above the bar, or suppress the context bar until the snack retires — and that
+decision belongs in `v21-bench.html` **first**. An implementer picking one silently would be redesigning a
+frozen surface. Evidence: `scratchpad/dev/09-placed.png`.
+
+---
+
+### D-092 — a photo corner lands as a 4.5:1 sliver, because its family's one constant is tape's {#d-092}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../SupplyPlacement.kt:76` · [SUPPLIES-SPEC §5.2 ruling](SUPPLIES-SPEC.md#s-5-2-ruling) · `SupplyCatalog` |
+| **Found** | 2026-08-18, **Pass 1 on SM-A176B**, first placement of a newly authored supply. Predicted from the source before the device confirmed it |
+| **Severity** | **Pass 1 defect on a shipped surface.** `fix.corner` and `fix.staple` are pickable today |
+| **Status** | ⏳ **OPEN — owner ruling required.** §5.2 caps overrides at exactly one, pinned by a test |
+
+**What happens.** `fix.corner` lands at `widthFraction = 0.55, aspect = 4.5` — over half the page wide and
+four and a half times wider than tall. The photo corner is authored 1:1; stretched to 4.5:1 it lands as a
+long flat sliver with its pocket reduced to a slit. It is not recognisable as a photo corner, and a maker
+who taps a tile showing a neat square corner gets something that looks like a mistake.
+
+**The cause is a category error in the family, not a wrong number.** §5.2 rules *one constant per family*,
+and the ruling's own examples are all tape-like: *"tape lands long."* That is right for `tape.torn`. But the
+family is **Tape & fixings**, and a fixing is not a tape — a staple, a photo corner, a paper clip and a push
+pin are compact objects, roughly as tall as they are wide. **One aspect cannot serve both halves of a family
+whose name contains the word "and".** The other three families are physically homogeneous, which is why the
+rule has held until now.
+
+⚠ **This was unfindable until 2026-08-18 and is a direct consequence of authoring the outlines.** All four
+fixings were unauthored and inert, so the only member of *Tape & fixings* anyone could place was
+`tape.torn` — for which 4.5:1 is correct. The family default was never wrong before; it was never
+*exercised*. A rule validated against one quarter of its own domain is the kind of defect only a device
+pass finds, and it is the second time in this package that authoring the artwork falsified an assumption
+the tests had blessed (the first: [`paper.tag`'s tail](#d-092-note)).
+
+**Why it is not simply fixed.** [§5.2's ruling](SUPPLIES-SPEC.md#s-5-2-ruling) is explicit that the override
+map is capped at **exactly one entry** (`shape.rule`), *"pinned by a test — because an override map with no
+cap is just per-supply sizing with extra steps, and per-supply sizing is what §5.2 exists to refuse."*
+Adding three more overrides silently would defeat the mechanism the ruling was built to protect. The
+candidate answers, none chosen here:
+
+1. **Raise the cap to four** and add `fix.corner` · `fix.staple` · `fix.clip` · (later) `fix.pushpin`. Honest,
+   but it concedes that per-supply sizing was right and the cap is theatre.
+2. **Split the family's constant by prefix** — `tape.*` at 4.5:1, `fix.*` at 1:1. Cheap and principled, and
+   ⚠ it collides head-on with the catalogue's own standing rule that **the id prefix is not the family**
+   (`SupplyCatalog` KDoc). It would make the prefix load-bearing for the first time.
+3. **Split the family in two** — *Tape* and *Fixings*. The cleanest model and the most expensive: the four
+   families are **frozen** (`v21-bench.html:844`), so this is an owner act and changes the Art sheet's
+   headings.
+4. **Give the outline an intrinsic aspect** and let the family supply only the width. Most correct in the
+   long run — a supply *does* know its own proportion, which is exactly the argument
+   `benchSupplyReplacement`'s KDoc already makes for Replace (*"a photo has no intrinsic proportion the app
+   knows about while a supply does"*). It is also the largest change, and it partially unwinds §5.2.
+
+**Reading 4 is the implementer's recommendation** — it is the one that makes the existing `Replace`
+reasoning consistent with placement instead of contradicting it — but §5.2 was ruled, so this is escalated
+rather than decided.
+
+**Evidence:** `scratchpad/s5.png` (the sliver, selected, on page 4/8).
+
+#### Note — the sibling finding this shares a cause with {#d-092-note}
+
+`paper.tag`'s first authored tail passed every structural assertion — correct span, correct area, one
+polygon with nothing to overlap — and read as a torn corner rather than as speech. Both defects are the
+same species: **a property nothing was looking at.** The response to that one was
+`SupplyOutlineFillTest`, which probes ink-vs-paper at named points. The response to this one cannot be a
+test, because the landing size is not wrong in any way a machine can score — it is wrong *for a photo
+corner*, and only a person holding the phone knows that.
+
+---
+
+### D-093 — every tile in the drawer is drawn hollow and every supply lands solid {#d-093}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtGlyphs`) · `core/render/.../SupplyCatalog.kt` · `v21-bench.html:1051-1055` (amendment A5) |
+| **Found** | 2026-08-18, **Pass 2 on SM-A176B**, Android 16 — the first Pass 2 the drawer has ever had |
+| **Severity** | Open design question on a shipped surface. Not a crash, not an a11y defect — a **prediction** defect |
+| **Status** | ⏳ **OPEN** — three readings below, none chosen. Bundled with [D-086](#d-086) as one Pass 2 ruling |
+
+**The observation, before the explanation.** Opening `Art` shows sixteen tiles and **every one of them is a
+stroked outline** — a hollow star, a hollow circle, a hollow rectangle, a hollow triangle, a hollow window,
+a hollow speech bubble. Tapping any of them puts a **solid** mark on the page. Nothing on the tile
+suggested that would happen.
+
+**The cause is structural, not a slip.** `BenchArtGlyphs` holds 24-unit `ZinelyV2IconShape` icons drawn at
+the corpus's icon stroke weight; `SupplyCatalog` holds outlines that [`DrawShape`](../ARCHITECTURE.md)
+fills, and §4.1 rule 2 makes fill the *only* thing it can do. The two were never going to agree, and the
+freeze's own amendment **A5** says so in terms: the glyphs *"DEPICT the supplies; they are not the authored
+outlines."*
+
+⚠ **A5 is the counter-argument and it is not sufficient.** A5 licenses the glyphs not to be the outlines'
+**source**. That is a rule about *authoring provenance* — it stops a mockup becoming reviewed Kotlin. It is
+not a licence for the tile to mispredict what a tap produces, which is a different property and one A5
+never addresses. An icon rendered lighter than the thing it names is an ordinary convention; an icon
+rendered *hollow* where the product only draws *solid* is a convention that has no solid case to contrast
+against, because **the catalogue contains no hollow mark at all**.
+
+**Three readings, none chosen:**
+
+1. **Make the tiles solid.** They then predict exactly what lands. Costs nothing in the catalogue, and it is
+   the *smallest* change — but it amends drawn material on a frozen surface, so it is an owner act.
+2. **Ship hollow variants**, so the drawer's promise becomes true rather than the tile's picture becoming
+   smaller. ⚠ This is a genuinely stronger argument for hollow marks than the ones raised when the question
+   was first asked (ink economy, variety), and it was invisible until someone opened the drawer on a phone.
+3. **Accept it** on A5's authority and the ordinary-iconography argument. Defensible, and it is the
+   incumbent position — which is precisely why it should be *tested* rather than inherited.
+
+**Why this is filed rather than fixed.** All three readings change drawn material on `v21-bench.html`, and
+the second one also changes what ships in the catalogue. ⚠ It also cannot be settled by whoever found it:
+the finding is *"the picture did not predict the mark"*, and knowing why the picture and the mark differ is
+exactly the disqualification [Pass 2](../../CLAUDE.md#pass-2--first-time-user-verification) names —
+*"knowing why a screen behaves as it does disqualifies you from judging whether it explains itself."*
+
+**Related.** [D-092](#d-092) is the same question in silhouette rather than fill weight: `fix.corner`'s tile
+shows a neat square corner and the placement is a 4.5:1 sliver. Both ask whether the drawer's picture
+predicts the page's mark, and they should be ruled together.
+
+---
+
+### D-094 — `Photo` and `Art` carry byte-identical glyphs, in the frozen file {#d-094}
+
+| | |
+|---|---|
+| **Artifacts** | [`v21-bench.html` §`openSupply()`, `:828-829`](mockups/v21-bench.html) · `feature/editor/.../BenchAddChooser.kt` |
+| **Found** | 2026-08-18, **Pass 2 on SM-A176B** — the first thing seen on opening the chooser, before anything was placed |
+| **Severity** | Open design question. Two of the three ways into the page are visually indistinguishable |
+| **Status** | ⏳ **OPEN — owner act.** The duplication is in the frozen file, so the fix is an amendment, not a code change |
+
+**The observation.** The `Add to your page` sheet offers three rows — `Text`, `Photo`, `Art`. `Photo` and
+`Art` are drawn with **the same icon**: a framed picture with a mountain-and-sun path. Not similar —
+identical:
+
+```
+photo → <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>
+art   → <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>
+```
+
+⚠ **This is not an implementation slip, which is why it is filed here rather than fixed.** `BenchAddChooser`
+is a faithful transcription; the duplication is in `v21-bench.html` itself. When the `Art` row was released
+(ADR-105 S7) it inherited the placeholder glyph the frozen file gave it, and the freeze is authoritative —
+`OD-9` keeps a control drawn as the freeze draws it. Substituting a different mark would be inventing drawn
+material on a frozen surface.
+
+**Why it matters more than a cosmetic duplicate.** The icon is the only part of these rows a maker parses
+before reading. Two of the three doors into a page therefore look like the same door, and the one that is
+*newest* — the one nobody has a habit for yet — is the one wearing the other's clothes. The subtitles do
+distinguish them (*"From your phone"* vs *"Tape, stamps and cut paper"*), so this is a scanning cost rather
+than a wrong-action trap; but the product's own rule is that a screen answers the question the maker is
+holding, and *"which of these two identical things do I want?"* is a question the screen creates.
+
+**Candidate fixes, none chosen** — all amend the frozen file:
+
+1. **Give `Art` its own glyph.** The obvious one, and `BenchArtGlyphs` already contains sixteen marks the
+   freeze drew for exactly this vocabulary — a piece of tape or a stamp would name the drawer's contents.
+2. **Give `Photo` a photo-specific mark** and leave `Art` the generic frame. Inverts the problem.
+3. **Accept it.** The subtitles carry the distinction and the rows are always read together.
+
+**Related.** [D-093](#d-093) is the same species one level down — there, the tile's picture mispredicts the
+mark; here, the row's picture fails to distinguish the *category*. Both are the drawer's iconography
+promising something other than what it delivers, and both are owner acts because both live in the freeze.
+
+---
+
+### D-095 — the Registration tile draws the exact mark the fill rule forbids {#d-095} — ✅ **RULED & FIXED**
+
+**Found:** 2026-08-18, reading the three Art-sheet golden `*_compare.png` diffs after the eight new
+outlines landed — not on a device, and not by any assertion. **Severity:** the drawer tells a lie about
+one specific supply. **Owner act:** yes, the glyph is drawn in the frozen `v21-bench.html`.
+
+#### What the two pictures say
+
+| | Drawn where | What it shows |
+|---|---|---|
+| **The tile** | `v21-bench.html` §`openArt()`, `SUP` entry `mark.registration`: `<circle cx="12" cy="12" r="6"/><path d="M12 2v20M2 12h20"/>` | A full-width plus **crossing** a circle, with the two strokes **meeting at the centre** |
+| **The mark** | `SupplyCatalog.kt:133-171` (`REGISTRATION`) | Four arms that stop **on** the ring (`REG_RING_OUTER = 0.25`), an annulus (`0.25` / `0.19`), and a **bare centre** |
+
+They differ in the two details that are the whole of what a registration target is.
+
+#### Why this is not the same complaint as [D-093](#d-093)
+
+D-093 is a *style* mismatch — hollow tile, solid mark — and it is arguable in either direction.
+This is not arguable. ⚠ **The tile draws the drawing the even-odd fill rule makes impossible.** Under
+`SupplyOutline`'s rule 3 an arm laid **across** the ring cancels the crossing to a hole, so the mark
+punches paper exactly where it is densest. That is *why* the authored arms stop short
+(`SupplyCatalog.kt:146`), and it is why no amount of redrawing the outline can be made to match the tile.
+**One of the two pictures has to move, and it cannot be the mark.**
+
+⚠ **A bare centre is also the correct registration target**, which makes the tile wrong twice: printers'
+registration marks are read by aligning through an *open* centre. The constraint and the reference
+agree, which is unusual and worth saying — the fill rule did not compromise this mark, it corrected it.
+
+#### ⚠ The audit's own scope claim was wrong — ten documents, not four
+
+*"~50 citations across four documents"* was measured by grepping the four documents I already had open.
+A mechanical sweep of **all** of `docs/` finds **72** strict `v21-bench.html:N` citations across **ten**:
+the four audited, plus `ZINE-DIRECTION.md` (**18**), `V2-SPEC-DEFECTS.md` (9, this file), `ZINE-WORLD.md`,
+`docs/proposals/` (4) and `docs/reviews/` (5). 🟨 **A defect about unchecked numbers stated its own number
+without checking it** — the same mistake one level up, and worth more than the citations it found.
+
+**Swept, and the un-audited documents were worse than the audited ones:**
+
+| Document | Live-and-wrong found | Notable |
+|---|---|---|
+| `ZINE-DIRECTION.md` | **11 of 18** | `:625` cited **five times** for the decor verb set — it is `<script>`; the sets are §`toolsFor()` (`:673-681`). Also `:766`×2 → `:820`, `:775` → `:825-829`, `:514` → `:564` |
+| `V2-SPEC-DEFECTS.md` | **5 of 9** | including `:201-206` for the eight handles (they are `:266-267`, `:270-271`) and `:873` for the privacy toast (`:877`) |
+| `ZINE-WORLD.md` | **2 of 2** | both cite `:444` for `.pgc.on`; it is `:494` |
+| `SUPPLIES-SPEC.md` | **1 of 8** | `:22-23` for the no-tilt rule starts one line early (`:23-24`); the other seven were clean, as pass 1 said |
+| `BETA-UX-REVIEW.md` | **0 of 4** | clean |
+| `BETA-DIRECTION.md` | **1 more** | ⚠ pass 1 fixed `:623-625` → §`toolsFor()` but **missed a second `:625`** for the same claim 28 lines earlier. Fixing citations one grep-hit at a time misses the other hits of the same wrong number |
+
+All of the above are re-aimed **by name**. ⚠ **And seven of pass 2's own re-aims were themselves off by
+one** — two handle spans, and `§`toolsFor()`` cited **five times** at `:680`, which is the closing brace;
+the decor set is the `return` at `:679`. They were caught by a mechanical check that prints the cited
+line beside the claim, and only by that. **A citation written by hand is wrong at a steady rate no
+amount of care changes** — including in the pass whose entire subject is citations being wrong. That is
+reading 1's argument stated as a measurement rather than an opinion: the name `§`toolsFor()`` was right
+all seven times; only the number moved.
+
+**`docs/proposals/` and `docs/reviews/` are records by construction and are left alone.** A file named
+`2026-08-13-adr-102-p2-device-verification.md` states what a reader saw in the file **on that date**;
+renumbering it would make it claim something it never claimed. Nine of those citations no longer resolve,
+and that is correct. 🟦 The dated-filename convention is the one place this project already solved the
+pointer-vs-record problem — by putting the date in the *document*, not in the citation.
+
+#### The readings
+
+1. 🟦 **RECOMMENDED — redraw the tile to depict the authored mark**: four arms stopping at a ring, ring
+   open. It is a four-token SVG change in the frozen file and it costs nothing but your ruling.
+2. Accept the divergence on the standing rule that *"the glyphs DEPICT the supplies; they are not the
+   authored outlines"* (`v21-bench.html` A5 note). ⚠ That rule was written to excuse *fidelity*, not
+   *contradiction*, and this is the first case where the tile depicts something the renderer cannot draw.
+
+**Rule this with [D-086](#d-086) · [D-092](#d-092) · [D-093](#d-093) · [D-094](#d-094)** — all five ask the
+same question, which is whether the drawer's picture predicts the page's mark. This one is the cheapest
+of the five to close and the only one with a forced answer.
+
+**Related.** [D-093](#d-093) is the general case; this is the instance where the general case has a proof.
+Found the same way `paper.tag`'s tail was found — by rendering it and looking — which is now twice that a
+fully green suite saw nothing. `SupplyOutlineFillTest` probes the *mark*; nothing anywhere probes the
+*tile*, and nothing can, because the tile is HTML.
+
+#### Ruling, 2026-08-18 — **reading 1**, same day it was filed {#d-095-ruling}
+
+The owner ruled **redraw the tile**. Landed in both places the picture lives, one line each:
+
+| | Change |
+|---|---|
+| `docs/design/mockups/v21-bench.html:849` | `r="6"` + `M12 2v20M2 12h20` → `r="5"` + `M12 2v5M12 17v5M2 12h5M17 12h5`. **Amendment log A6**; the file's line count outside the log is unchanged, so no citation to this file moves |
+| `feature/editor/.../BenchArtSheet.kt` (`mark.registration`) | the same geometry as `ZinelyV2IconShape`, with the reason in a comment beside it |
+
+Ring `r=5` and arms `2→7` / `17→22` are `0.25` and `0.0→0.25` / `0.75→1.0` of the tile's 2–22 span — the
+authored outline's proportions exactly (`SupplyCatalog.kt:166-171`). The annulus stays one stroked circle:
+these glyphs are `fill:none`, and at 24px a stroked circle is the honest picture of a filled band.
+
+⚠ **The other four in the cluster are untouched.** [D-086](#d-086) · [D-092](#d-092) · [D-093](#d-093) ·
+[D-094](#d-094) still need one ruling between them. This one closed early only because its answer was
+forced — the outline could not move — and that is not true of any of the others; three of them are
+genuinely open design questions, and closing this one is **not** a precedent for closing those.
+
+🟨 **Consequence: the three Art-sheet goldens now differ for two reasons, not one** — the eight newly
+authored tiles *and* this glyph. Both are intended, both were read as diffs before being accepted, and the
+re-record is still owed on the pinned CI image (`record-goldens.yml`).
+
+---
+
+### D-096 — line-number citations into `v21-bench.html` rot on every amendment, and roughly half are now wrong {#d-096}
+
+**Found:** 2026-08-18, by auditing **every** `v21-bench.html:N` citation in `docs/` against the current
+file rather than fixing the one pass [A5](mockups/v21-bench.html) booked. **Severity:** process. Nothing
+renders wrong; the evidence trail behind several rulings does not resolve.
+
+#### What the audit found
+
+`v21-bench.html` is cited by line **~50 times** across four documents. Checking each against the line it
+actually names: **`SUPPLIES-SPEC.md` is clean in all five** — A5's booked reconciliation pass was in fact
+done — but `BETA-DIRECTION.md`, `DECISIONS.md` and `BETA-UX-REVIEW.md` are not.
+
+⚠ **The failures are not near-misses.** `:773` for the add chooser resolves to `bin={node:sel,…}`;
+`:623-625` for the context-bar verb sets resolves to `</div>` and `<script>`; `:158` for
+`.phone{background:var(--bench)}` resolves to the middle of a base64 font blob. A reader checking the
+citation does not find *approximately* the right thing, they find something unrelated — which is worse
+than no citation, because a wrong one still reads as evidence.
+
+#### Fixed in this pass (live claims, target still exists)
+
+| Document | Was | Is | Names |
+|---|---|---|---|
+| BETA-DIRECTION §3.3 | `:773` | **`:825-829`** | the add chooser — **and the claim was also wrong**: it said Text / Photo, and `Art` has since landed (ADR-105 S7), so it has three rows |
+| BETA-DIRECTION §X1 | `:514` | **`:564`** | `<button class="chip">Aa Font</button>` |
+| BETA-DIRECTION §verb sets | `:623-625` | **`:674-679`** | the `kind===` verb-set returns |
+| BETA-DIRECTION ×2 | `:766` | **`:820`** | the page grid's *"drag to reorder"* caption |
+| OWNER-CHECKLIST ([D-094](#d-094)) | `:827-828` | **`:828-829`** | off by one — `:827` is `Text`; the identical glyphs are `Photo` and `Art` |
+| BETA-UX-REVIEW | `:824` | **`:825-829`** | `:824` is a section comment |
+
+#### NOT fixed, deliberately — and this is the finding that matters
+
+⚠ **Some stale citations are stale on purpose, and renumbering them would falsify the record.** An
+amendment-log entry that says *"A3 corrected the Photo row's glyph at `:794`"* is a claim about the file
+**as it was on 2026-08-14**. `:794` is wrong today and *must stay wrong*, because the sentence is history,
+not a pointer. The same applies to several `DECISIONS.md` passages inside ADR-102's P5 narrative.
+
+**So a citation into a living file has two incompatible jobs — "look here" and "this is what it said
+then" — and a bare line number cannot distinguish them.** A sweep that renumbers everything destroys the
+second kind; a sweep that renumbers nothing leaves the first kind broken. That is why this keeps
+recurring: A5 booked it, A6 inherited it, and this is the third pass.
+
+#### Resolved in a second pass — ✅ all fourteen, split by the judgement they needed
+
+The thirteen `DECISIONS.md` citations and `BETA-DIRECTION.md:444` were left unresolved above because each
+needed a **pointer-or-record** judgement, and that judgement belongs to whoever wrote the sentence. For
+these fourteen that is this author, so they are now judged rather than guessed. ⚠ **They were re-aimed
+by name** (reading 1's form: `` §`.pgc` (`:489`) ``) — which does **not** pre-empt the owner's ruling on
+D-096, because a name-plus-number citation is strictly better under all three readings, and these
+documents are wrong *today* either way.
+
+**Eleven were pointers, and are re-aimed:**
+
+| Cited | Was | Is | Names |
+|---|---|---|---|
+| DECISIONS §P5 | `:428` | **§`.pgc`, `:485-493`** | the amended, lit page card |
+| DECISIONS §12.1 | `:174–219` | **§*the canvas*, `:239–284`** | the section, by its own section comment |
+| DECISIONS §12.2 | `:177-182` | **§`.page`, `:242-244`** | the page, which declares no light-island block |
+| DECISIONS §OD-48 | `:186-189` | **§`.keepclear`/`.guideV`, `:251-255`** | both marks rest at `opacity:0` |
+| DECISIONS §OD-47 | `:36` | **§`.pgc`, `:489`** | the card's own light on-paper set |
+| DECISIONS §ground | `:158` | **§`.phone`, `:223`** | `.phone{background:var(--bench)}` |
+| DECISIONS §handle | `:198` | **§`.hnd`, `:263-264`** | the 9px rounded square |
+| DECISIONS §kbstack | `:264-265` | **§`.kbstack`, `:329-330`** | the `.26s cubic-bezier(.05,.7,.1,1)` transcription |
+| DECISIONS §colour probe | `:215` | **§`.caret`, `:280`** | the caret, the editor's *second* `jam` mark |
+| DECISIONS §OD-48 dim | `:207` | **§`.content.focusing`, `:272`** | the rule that dims elements and not marks |
+| BETA-DIRECTION §2.2 #1 | `:444` | **§`.pgc.on`, `:494`** | the page grid's `leaf` current-page colour |
+
+**Three were records, and are left wrong — now marked so no later sweep "fixes" them:** the `:188` inside
+the sentence *about* stale citations (it quotes what the stale citation said); the amendment log's `:794`
+Photo-row glyph; and `:190`, which cites the **pre-OD-48** freeze and is explicitly dated in its own
+sentence. Each now carries an inline *record, not a pointer* marker, because that was the one thing a bare
+number could not say.
+
+⚠ **One correction to the audit above.** This document previously implied `:190`'s quoted rule
+(`.content.focusing~.keepclear{opacity:.85}`) was itself wrong, since today's `:255` reads
+`.content.focusing~.guideV`. It is not wrong — it is a correct quotation of the file **before** OD-48
+amended that line, which the passage says in so many words. **Reading the sentence, not just the number,
+is what separates the two kinds** — and it is the step a mechanical sweep cannot perform, which is the
+strongest argument for reading 1.
+
+#### The readings
+
+1. 🟦 **RECOMMENDED — cite by name, not by number.** `v21-bench.html §openSupply()`,
+   `` `.keepclear` ``, `` `AMENDMENT LOG A5` ``. Names survive amendments; line numbers cannot, because
+   every amendment is an insertion. The mockups already carry stable named anchors (function names, CSS
+   selectors, amendment-log ids) — nothing new has to be built.
+2. Keep line numbers and add a checked sweep to the definition of done for every amendment. ⚠ This has
+   been tried implicitly three times (A5 booked it, A6 inherited it, this pass ran it) and the rot
+   returned each time, because the sweep is manual and the amendment is not.
+3. Accept the rot. ⚠ Not viable: the citations are the evidence for owner rulings, and
+   [CLAUDE.md](../../CLAUDE.md#documentation-rule-mandatory) makes *"link, don't restate"* the mechanism
+   that keeps one source of truth. A link that resolves to the wrong line is a restatement with extra steps.
+
+**Related.** The line-for-line invariant the amendment log asserts (A5, A6) is real and was honoured —
+A6 moved no line at all. **The invariant is not the problem.** The problem is that citations were written
+against revisions the invariant did not yet cover, and no amendment can retroactively fix a number that
+was wrong when it was typed.
+
+---
+
+### D-097 — opening Reframe and changing nothing says *"Framing saved."* and writes an undo step, 56 % of the time {#d-097} — ✅ **FIXED**
+
+**Found:** 2026-08-18, chasing a claim [ADR-109](../DECISIONS.md#adr-109)'s review made about spread
+halves and asking whether it was true of *ordinary* photos too. It is, and worse.
+**Severity:** shipped behaviour · **a11y: the app makes a false statement to a blind user.**
+**Not** a spread bug — it needs no new feature to reproduce.
+
+#### Reproduce
+
+Place a photo, pan or zoom it, commit. Re-open **Reframe** on that photo. **Touch nothing.** Tap Done.
+
+#### What happens
+
+1. TalkBack says **"Framing saved."** (`Copy.Editor.FRAMING_SAVED`, `Copy.kt:549`). Nothing was saved,
+   because nothing was changed.
+2. An `EditImageCommand` is pushed — an **undo step for an action the maker did not take**.
+3. An `Effect.Autosave` fires, rewriting the document.
+
+#### Why
+
+Both deciders compare `Crop` **exactly**, and `Crop` is a `data class` of `Double`
+(`core/model/.../Document.kt:163-173`):
+
+| Site | Test |
+|---|---|
+| `EditorReducer` §`Intent.CommitReframe` (`:139`) | `if (committed == rx.before) … // no change ⇒ no command/autosave` |
+| `EditorScreen.commitReframe` (`:703`) | `if (after.crop != rf.before.crop \|\| after.fit != rf.before.fit) FRAMING_SAVED else FRAMING_UNCHANGED` |
+
+And the round trip is not exact. `Framing.seedDraft` recovers a *zoom* from a persisted crop
+(`zoom = cw0 / (right − left)`, `FramingDraft.kt:139`) and `toImage` → `resolveCrop` recovers the *width*
+back from that zoom (`cw = cw0 / zoom`, `:99`). **Dividing by a quotient does not return the numerator**,
+and `ch0 / zoom` re-rounds a second time through a reciprocal, so the recovered crop lands 1–2 ULP away.
+
+⚠ **Nothing is wrong with the arithmetic.** This is what inverting a division costs. What is wrong is that
+two decisions with *user-visible consequences* are taken on bit equality of a reconstructed float.
+
+#### Measured, not reasoned
+
+A probe over 9 photo aspects × 8 zooms × 4 pan positions on a 105×148 page, run **as a JVM test against
+the real `Framing`** (and independently re-derived in a second implementation, which agreed to the case):
+
+> **155 of 279 untouched round trips change the crop — 55.6 %.**
+
+⚠ **It is not confined to odd inputs.** `3:2` — the commonest camera aspect there is — fails at almost
+every zoom, **including `f = 0.0`**, i.e. a photo that was only *zoomed* and never panned. `4:3`, `1:1`
+and `5:4` are largely exact, which is why this has never been noticed by hand: whether you see it depends
+on the aspect of the photo you happened to test with.
+
+#### The readings
+
+1. 🟦 **RECOMMENDED — one shared "is this the same framing?" predicate, with a tolerance, used by both
+   deciders.** They are already supposed to agree (`EditorScreen:701-704` says so in a comment: *"the same
+   crop/fit comparison the reducer uses"*), and today they agree only by both being wrong the same way.
+   A single pure `Framing.sameFraming(a, b)` in `FramingDraft.kt` makes the agreement structural and gives
+   the tolerance one home. `EPS = 1e-6` already exists there and is ~10 orders of magnitude above the drift.
+2. Make the round trip exact by persisting the draft instead of re-deriving it. ⚠ **Rejected** — that is a
+   schema change ([ADR-053](../DECISIONS.md#adr-053) deliberately persists the *result*, not the control
+   values), to fix a rounding artifact.
+3. Accept it. ⚠ Not viable on the a11y ground alone: a sighted maker sees nothing happen and shrugs; a
+   TalkBack user is *told* their framing was saved, and has no way to discover it was not.
+
+#### Notes
+
+- 🟨 **Not device-verified.** Measured as pure JVM arithmetic. The undo step and the autosave are read from
+  the reducer, not observed on hardware; a device pass should confirm the undo button lights up.
+- The fix also settles [ADR-109](../DECISIONS.md#adr-109) Consequence 5, which mandates an epsilon
+  round-trip test over an aspect table including 3:2 and 16:9 — written before this defect was found, and
+  for the same reason.
+- ⚠ **`ReframeParityTest` and `ReframeSessionTest` are green.** Neither exercises open-then-commit-untouched
+  on a *non-baseline* crop, which is the one path that fails. The baseline case (`isBaseline` → `Crop.FULL`)
+  is exact and is the one that is tested.
+
+#### Fix, 2026-08-18 — **reading 1** {#d-097-fix}
+
+One predicate, in the one module both callers can see.
+
+```kotlin
+// core/editor/.../FramingMath.kt
+public const val FRAMING_EPS: Double = 1e-9
+public fun sameFraming(a: Crop, aFit: Fit, b: Crop, bFit: Fit): Boolean
+```
+
+| Call site | Was | Is |
+|---|---|---|
+| `EditorReducer` §`CommitReframe` | `committed == rx.before` | `FramingMath.sameFraming(committed.crop, committed.fit, rx.before.crop, rx.before.fit)` |
+| `EditorScreen.commitReframe` | `after.crop != rf.before.crop \|\| after.fit != rf.before.fit` | the same call |
+
+`FramingMath` lives in `core:editor`, which `feature:editor` already depends on — so the two callers now
+share **the predicate**, not a convention about writing the same expression twice. The old comment at
+`EditorScreen` claimed they used *"the same crop/fit comparison"*; they used two hand-written copies of it,
+and agreed only by being wrong identically.
+
+⚠ **`Fit` is still compared exactly, deliberately.** It is an enum, it carries no rounding, and `FILL`→`FIT`
+at an equal crop changes what is drawn — loosening it would make *"Whole photo"* on an already-full crop go
+silent.
+
+#### Sizing `FRAMING_EPS`, from both ends — **both bounds measured, and the first draft got one wrong**
+
+D-097 was caused by leaving this number unstated (at `0`), so it is stated — and an earlier draft of this
+section derived the ceiling **from the wrong quantity and was wrong by two orders**, which is the same
+species of mistake as the defect. Corrected, with the derivation named:
+
+| | Magnitude | How it is obtained | Margin at `1e-9` |
+|---|---|---|---|
+| **Floor** — drift absorbed | **`1.55e-15`** (~7 ULP) | worst case measured over **405** aspect × zoom × pan combinations against the real `Framing`; zero escapes | **~5.8 orders above** |
+| **Ceiling** — finest *deliberate* change | **~`1.6e-5`** | `ReframeOverlay`'s `fx = -pan.x * (cw0 / zoom) / frameWpx`, at its worst realistic case: a 10:1 panorama at `MAX_ZOOM` on a large, dense frame | **~4 orders below** |
+
+⚠ **The ceiling is not "one pixel across the 390dp overlay" (`2.6e-3`), which is what the first draft
+claimed.** A drag is converted through the **element frame in device px**, scaled by the crop extent — so
+zoom (÷`4`), photo aspect (`cw0 = bratio/pratio`, ÷`14` on a 10:1 panorama) and screen density all shrink
+it. The real figure is ~100× smaller than the claim. It is still four orders clear, and reaching `1e-9`
+would need a photo of roughly **175,000:1** — but "six orders" was not true and this document does not get
+to overclaim a safety margin.
+
+The a11y nudge (`0.05`) and the zoom stepper (`×1.15`) are coarser than the drag by orders and were never
+the binding constraint.
+
+#### Tests — thirteen new, in the module that can actually reach the code
+
+| Where | What |
+|---|---|
+| `ReframeRoundTripTest` (**`feature:editor`**, 6) | The table [ADR-109](../DECISIONS.md#adr-109) Consequence 5 mandates — **9 aspects × 8 zooms × 4 pans**, 3:2 and 16:9 among them — walked through the **real** `Framing.seedDraft` → `toImage`. Plus the three that pin the spoken outcome |
+| `FramingSameFramingTest` (`core:editor`, 5) | The predicate alone: its tolerance from both ends, every edge, and `Fit` |
+| `ImageFramingSessionTest` (`core:editor`, +2) | The reducer: a drifted commit records **no command and no autosave** and leaves the stored crop byte-identical; a one-pixel change still records exactly one |
+
+⚠ **The round-trip table lives in `feature:editor` for a reason worth keeping.** Its first version sat in
+`core:editor` and **re-implemented** `seedDraft`/`resolveCrop`/`coverExtent` locally, because `Framing` is
+not visible from there. That made it a test of a copy — an edit to `Framing` could have re-opened D-097
+with the table still green, which is precisely the failure mode D-097 *is*. It was moved rather than
+duplicated.
+
+⚠ **Two guards exist to stop this suite passing for the wrong reason.** One asserts the drift **still
+exists** under `==` (if the round trip ever becomes exact, the suite says so instead of quietly passing);
+the other asserts the two spoken lines are still different sentences.
+
+#### The spoken outcome was the untested half, and is now a function
+
+The predicate is shared with the reducer and tested; what nothing could reach was the **polarity** — which
+branch produces which sentence. Inline in `EditorScreen.commitReframe` it was a boolean no test could
+observe, and it is the half that lied to a blind user. It is now
+`EditorA11y.reframeOutcomeLine(after, before)`, pure and asserted in both directions. ⚠ A sighted maker
+never sees this string, so **nothing else in the product would ever have noticed a flipped `if`**.
+
+#### Device verification — Pass 1, ✅ 2026-08-18
+
+**SM-A176B · Android 16 · debug build of `59ef25d`.** Photo: `20260818_161003.jpg`, **4080×2296 (≈16:9)** —
+chosen because it is one of the aspects that drifts; a 4:3 photo would have passed even unfixed.
+
+Placed the photo, reframed it for real (zoom → 115 %, panned right), committed. Persisted crop, read from
+the app's own document:
+
+```
+{"left":0.13043478260869557,"top":0.06521739130434778,"right":1.0,"bottom":0.9347826086956522}
+document.json   mtime 1787055906   size 1229
+```
+
+Re-opened Reframe — the overlay **seeded at "Zoom 115 percent"**, so `seedDraft` reconstructed the zoom
+from the persisted crop as designed — **touched nothing**, tapped *Done reframing*:
+
+```
+{"left":0.13043478260869557,"top":0.06521739130434778,"right":1.0,"bottom":0.9347826086956522}
+document.json   mtime 1787055906   size 1229     ← unchanged, to the second and the byte
+```
+
+**No autosave fired and the crop is byte-identical.** Then one *Undo*: `Redo` became enabled, the crop
+returned to `full` / `fit=fill`, and the file was rewritten (`mtime 1787055981`, `size 1183`) — i.e. **the
+single undo step reverted the real reframe, not a phantom one.** Under the defect it would have consumed
+itself on the no-op commit and left the photo still cropped. Redo restored it exactly; a second untouched
+commit was likewise inert.
+
+#### Still not verified
+
+- ⚠ **The spoken line was not heard.** A live-region announcement is transient: it is not a node in the
+  platform tree, so `uiautomator dump` cannot capture it after the fact, and this device's TalkBack logs no
+  utterances ([DEVICE-VERIFICATION.md](../DEVICE-VERIFICATION.md)). *"Framing unchanged."* is asserted by
+  `ReframeRoundTripTest` at the `reframeOutcomeLine` seam and **inferred** on hardware from the reducer
+  agreeing with it — it has not been listened to. 🟦 Fold into the next TalkBack listen pass rather than
+  treating this defect as fully closed on the a11y axis.
+- 🟨 **Pass 2 not run.** This is a correctness pass. Nothing here asks whether the *behaviour* is what a
+  maker expects — e.g. whether an untouched Reframe should say anything at all.
+- The [`Copy.Editor.FRAMING_UNCHANGED`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt)
+  wording is untouched — it was always correct, it was simply almost never reached.
+
+---
+
+### D-098 — three tracked docs say `LayoutValidator` *hard-enforces* `clip == panel`; it has no production caller, and is a test-only gate {#d-098}
+
+**Found:** 2026-08-18, chasing an [ADR-109](../DECISIONS.md#adr-109) review thread into the imposition
+engine. **Severity:** documentation defect with a live consequence — one of the two sites is an ADR whose
+proposed remedy is aimed at the wrong lever.
+
+#### What the code does
+
+| Claim | Repository state |
+|---|---|
+| *"`LayoutValidator` hard-enforces `clip == panel`"* | [`LayoutValidator.kt:82-84`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/LayoutValidator.kt) **appends a `CLIP_NOT_IN_PANEL` issue to a returned list.** `validate()` returns `List<ValidationIssue>`; it has no throw, no `require`, no `check` |
+| implied: it runs in production | **No production caller exists.** `LayoutValidator` appears in `src/main` exactly once — inside a KDoc aside in [`BenchStudioSurface.kt:365`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/BenchStudioSurface.kt). Every construction site is a test |
+| ✅ **but it is not inert** | ⚠ **It is a test-only gate, and the gate is real.** Three tests run the *real* imposer and assert the issue list is **empty**: `ImpositionPropertiesTest`'s property `engine output always validates clean` (`:30-37`, across paper sizes × inset 0–95pt) and `ImpositionEdgeCaseTest` (`:24`, `:104`). A change that broke `clip == panel` would turn CI red — it just would not stop a shipped export |
+
+**What actually makes the invariant true is one assignment:**
+[`SingleSheet8Imposer.kt:72`](../../core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/SingleSheet8Imposer.kt)
+sets `clipLocalBounds = panelLocal`. The only *runtime* consumer of the field is
+[`ZineExporter.kt:170`](../../app/src/main/java/com/aritr/zinely/export/ZineExporter.kt), which clips each
+panel by it. So the chain is **producer sets it · exporter obeys it · a test-only checker observes it** —
+three different things, and none of them is enforcement.
+
+#### The two sites
+
+1. [`DECISIONS.md` ADR-017](../DECISIONS.md#adr-017) (`Proposed`, 2026-06-19) — *"`LayoutValidator`
+   **currently hard-enforces** `clipLocalBounds == panelLocalBounds`"*. Corrected in place: it enforces
+   nothing **at runtime**.
+
+   ⚠ **This defect's first draft went further and was wrong.** It claimed ADR-017's proposed remedy
+   (*"relax the validator accordingly"*) was *"aimed at the wrong lever"* — reasoning that a checker nobody
+   calls cannot gate anything. **It gates CI.** `ImpositionPropertiesTest:30-37` asserts the real imposer's
+   output validates clean, so relaxing the checker is **necessary** when bleed arrives. The option list is
+   **incomplete**, not misdirected: it names the checker and omits the imposer's assignment and the
+   exporter's clip, which are the two things that change what a maker's paper looks like. 🟨 And ADR-017's
+   own **Risks** bullet, two lines below the one that was wrong, already said the accurate thing — *"the
+   `clip == panel` validation must be loosened in lockstep or it will reject every bleed layout"*. **The
+   correct statement was already in the document being corrected**, which is the part worth keeping: I read
+   one bullet, found it false, and did not read the next one.
+2. [`BETA-DIRECTION.md`](BETA-DIRECTION.md) — same phrase, inside a passage that is otherwise correct and is
+   itself a *correction* of an earlier error. 🟨 The sentence's actual argument (*"nothing insets by the safe
+   area at render or export time"*) **survives intact** — it never needed the validator.
+   ⚠ **Annotated, not rewritten** — this document is **superseded** ([D-099](#d-099)), so it is a record and
+   its words stand; the correction is appended beneath the paragraph. A first edit did replace them, and
+   was reverted. *(The section is `§X11` in this document's own superseded numbering; the live id for
+   spreads is `X9` — see D-099.)*
+
+3. ⚠ **A third site, found by review, not by me:** the frozen mockup
+   [`v2-bench.html:24-25`](mockups/v2-bench.html) — *"the engine's safe area is `safeAreaInsetPt = 17.0`
+   (~6 mm), **enforced by LayoutValidator**"*. It is tracked, and it is **frozen**, so it is **not edited
+   here**: a mockup amendment is an owner act with an amendment-log entry, and this is a stale factual note
+   in a file whose live surface V2.1 has superseded. Named so the next sweep does not re-discover it.
+   🟨 The defect's own title said *"two tracked docs"*, having grepped `docs/*.md` and not `docs/**`. The
+   same scope error as [D-096](#d-096), one week apart and in the same hand.
+
+#### Why it survived
+
+The phrase reads as verified because it names a real class, a real field pair and a real check. Everything
+in it is true except the verb. 🟨 **A weaker version of the "the code said so all along" argument is true, and the strong version is not.**
+`BenchStudioSurface.kt:365` does say *"nothing **enforces** this boundary"*, but it is talking about
+`SAFE_NOT_IN_PANEL` and user content — adjacent evidence about the same class's character, **not** a plain-words
+contradiction of the `clip == panel` claim. The honest reading is that nothing contradicted the phrase outright;
+it simply named real things and got the verb wrong, and a citation that resolves does not get re-read — which is
+[D-096](#d-096)'s finding in a different file.
+
+#### Fixed here
+
+Both sites now say what is true: the equality is **established by the imposer and asserted by a test-only
+checker**. ADR-017's rationale is corrected in place because it was never true; its option
+list keeps its wording (one word wide: `validator` → `checker`) and carries the correction as a dated ⚠ note,
+because what a `Proposed` ADR proposed is evidence about what was believed when it was written.
+
+🟦 **Not fixed, and deliberately: `LayoutValidator` still has no production caller.** Whether the engine
+should validate its own output at runtime — or in a debug build, or in a golden test that today does not
+call it — is a design question, not a documentation one. It belongs in [ROADMAP.md](../ROADMAP.md) or an
+ADR, not in this pass. What this defect fixes is the claim that it already does.
+
+---
+
+### D-099 — two rival `X`-id schemes name the same work items, and ADR-109 already followed the wrong one {#d-099}
+
+**Found:** 2026-08-18, while landing [ADR-109](../DECISIONS.md#adr-109)'s roadmap item. **Severity:** planning
+integrity — every cross-document reference of the form *"X7"* or *"§X11"* is ambiguous, and one ADR has
+already acted on the ambiguity.
+
+#### The two tables
+
+[`ZINE-DIRECTION.md:723-739`](ZINE-DIRECTION.md) and [`BETA-DIRECTION.md:577-590`](BETA-DIRECTION.md) both
+carry a numbered `X`-series work table. **They agree on exactly two ids out of fourteen.**
+
+| id | `ZINE-DIRECTION.md` (authoritative) | `BETA-DIRECTION.md` (superseded) |
+|---|---|---|
+| X1 | Decor primitive + sixteen supplies | Font as three named voices |
+| X2 | Supplies tray | Replace image |
+| X3 | Take a photo | Take a photo ✅ |
+| X4 | Duplicate element | Duplicate element ✅ |
+| X5 | Replace image | Page grid draws content |
+| X6 | Font as three named voices | Page reorder + duplicate |
+| X7 | Page grid draws content | GRAPHIC primitive + the 16 supplies |
+| X8 | Page reorder + duplicate | Share-sheet receive |
+| **X9** | **Spreads — all four** | Photocopier filter |
+| X10 | Page images, reading order | Actual-size preview |
+| **X11** | **Colophon** | **Spreads — all four reading pairs** |
+| X12 | Share-sheet receive | Save pages as images |
+| X13 | ~~Photocopier~~ (promoted to X3b) | Retire the Material icon tile |
+| X14 | Actual-size preview | Collapse the Bench's chrome rows |
+| X15 / X16 | Retire icon tile · Collapse chrome rows | *(absent)* |
+
+⚠ **This branch's own subject is `X1` in one document and `X7` in the other.** *Spreads* is `X9` and `X11`.
+*Photocopier* is `X3b` and `X9`.
+
+#### It is already resolved, and the resolution was already written down
+
+[`BETA-DIRECTION.md:1-5`](BETA-DIRECTION.md) opens with **`⚠ SUPERSEDED by ZINE-DIRECTION.md (2026-08-15)`**
+— *"Folded in whole… it is no longer authoritative. Decisions, the capability map and the implementation
+sequence live in `ZINE-DIRECTION.md`."* So **`ZINE-DIRECTION.md`'s numbering wins**, and no owner ruling is
+needed: spreads is **X9**, supplies is **X1**.
+
+#### What it already cost
+
+⚠ **[ADR-109](../DECISIONS.md#adr-109) recommended landing spreads *"under a fresh id — not `X11`, which
+collides with Colophon in `ZINE-DIRECTION.md:734`"*.** That reads the id out of the **superseded**
+document, notices the resulting collision, and prescribes a *third* scheme as the cure. The id was never
+free to invent: `X9` was allocated to spreads in the authoritative table the whole time. Corrected in
+ADR-109.
+
+🟨 **And the same trap caught this very defect log an hour earlier.** [D-098](#d-098) cited
+*"`BETA-DIRECTION.md` §X11"* and — worse — **edited the superseded document** to correct a false claim
+inside it. That is the error [D-096](#d-096) spent a whole pass arguing against, in the opposite
+direction: a superseded document is a **record**, kept *"for its working — the reasoning trail, the
+falsified claims and the corrections"*, and silently repairing a claim inside it destroys the thing it is
+kept for. Reverted; the correction is now **appended as a dated annotation** and the original wording
+stands.
+
+#### Fixed here
+
+- ADR-109's roadmap recommendation corrected to **X9**.
+- `BETA-DIRECTION.md`'s D-098 edit reverted to an annotation.
+- No renumbering of either table. 🟦 **`ZINE-DIRECTION.md` is authoritative by its own banner** — the fix
+  for the ambiguity is to cite the authoritative table, not to reconcile a superseded one.
+
+✅ **Also done, after catching myself deferring it on a reason I had just refuted.** The rival table now
+carries a `⚠ superseded numbering` annotation **immediately above it**, not only in the file banner 570
+lines up, naming `ZINE-DIRECTION.md` as the live table and `X9`/`X1` as the ids that matter. 🟨 A first
+draft of this section deferred it *"because it edits a superseded document, which is exactly what this
+defect is about"* — but the principle established two paragraphs earlier is that **annotating a record is
+fine and replacing its words is not**. An annotation was never the thing being warned against. The
+deferral was a reflex dressed as caution, which is the failure mode this defect keeps finding.
+
+---
+
+### D-100 — `SUPPLIES-SPEC §3.4.1`'s uniform-scale rule was never implemented, and two KDoc blocks said it was {#d-100}
+
+**Found:** 2026-08-18, by an independent review of the supplies/render slice during the merge-readiness
+pass. **Severity:** shipped behaviour diverges from the spec, and two source comments asserted the
+opposite in the present tense.
+
+#### What the spec says and what ships
+
+[`SUPPLIES-SPEC §3.4.1`](SUPPLIES-SPEC.md) divides the sixteen supplies by how they may be resized:
+`mark.*` and `shape.circle` hold a **uniform** scale (a stamp is a stamp; a circle is a circle), while
+tape and cut paper stretch freely, *because stretching tape is what tape does*.
+
+⚠ **No aspect lock exists.** A grep of `core/editor/src/main` and of `ResizeHandles.kt` /
+`EditorGestures.kt` for `aspect`, `lockRatio`, `keepSquare`, `uniformScale` returns nothing relevant. A
+maker can stretch `shape.circle` into an **ellipse** and `mark.registration` into an **oval** today, with
+both handles behaving exactly as tape's do.
+
+#### The comments that hid it
+
+| File | Said |
+|---|---|
+| [`AffineTransform2D.kt:56-57`](../../core/model/src/main/kotlin/com/aritr/zinely/core/model/AffineTransform2D.kt) | *"`mark.*` and `shape.circle` **are constrained to uniform scale by the editor**"* |
+| [`SceneRenderer.kt:118-120`](../../core/render/src/main/kotlin/com/aritr/zinely/core/render/SceneRenderer.kt) | *"Keeping a stamp square is an editor **constraint**"* |
+
+Both sentences exist to justify a *render* decision that is correct and unaffected — the fold takes two
+scale factors and the tape stays dumb. 🟨 **The reasoning is sound; only the aside is false.** And it is
+the most believable kind of false: it names the right files, the right rule and the right spec clause,
+and states as shipped a thing that was only ever specified. The render argument never depended on it,
+which is exactly why nobody checked it.
+
+#### Fixed here — the comments only
+
+Both now say the rule is **specified and owed**, and point at this defect. ⚠ **The behaviour is
+unchanged**: a stamp can still be stretched.
+
+#### The ruling this needs
+
+🟦 **RECOMMENDATION: implement the lock**, because the alternative is worse than it sounds. The supplies
+are **fill-only even-odd outlines** with no stroke, so a stretched `mark.registration` does not merely
+look wrong — its arms and ring scale anisotropically and the tangent that keeps the centre bare
+([D-095](#d-095)) is not preserved under non-uniform scale. The mark that D-095 was filed to make correct
+can be made incorrect again with a drag.
+
+⚠ **Owner call, because it changes a shipped interaction**: the handles currently behave identically for
+all sixteen supplies, and making four of them behave differently is a design change to a frozen surface,
+not a bug fix. Options: lock `mark.*` + `shape.circle` to uniform · lock nothing and strike §3.4.1 ·
+lock nothing and accept the ellipse as expressive. **This defect does not choose.**
+
+🔭 Related but distinct: [D-092](#d-092) asks what aspect a supply should *land* at. This one asks what a
+maker may do to it afterwards. Ruling them together would be reasonable.
+
+---
+
+### D-101 — the merge gate is not deterministically green, and the reason is a known flake nobody counted {#d-101}
+
+**Found:** 2026-08-18, during the merge-readiness pass, by running the gate rather than reasoning about it.
+**Severity:** process — no product defect. ⚠ But it changes what a red CI run *means* on this branch.
+
+#### What happened
+
+The CI golden command is, verbatim from [`ci.yml:140-142`](../../.github/workflows/ci.yml):
+
+```
+./gradlew :render-android:verifyRoborazziDebug :feature:editor:verifyRoborazziDebug \
+  :core:ui:verifyRoborazziDebug --rerun-tasks --no-daemon
+```
+
+Run locally it produced **four** failures: the three expected stale Art-sheet goldens ([B1](../OWNER-CHECKLIST.md)),
+plus `ReframeA11yTest > the_reset_framing_custom_action_reverts_to_the_placement_default`, alongside
+*"Failed to create image decoder with message 'unimplemented'"*. The same test **passes in isolation**.
+
+⚠ **Corrected after more runs — my first hypothesis was wrong.** I wrote that this was cross-module
+contention, on one 3-module red and one single-module green. A fourth run says otherwise:
+
+| Run | Shape | Result |
+|---|---|---|
+| A | 3-module `verifyRoborazziDebug --rerun-tasks` (the CI command) | `ReframeA11yTest` **FAILED** |
+| B | single-module, `--tests '*ReframeA11yTest*'` | passed |
+| C | single-module, full `--rerun-tasks` | passed |
+| D | single-module, full `--rerun-tasks` | `ReframeA11yTest` **FAILED** |
+
+**Two of three full-module runs failed, one of them with no other module running.** Contention is not the
+variable; run D had the machine to itself. This is diagnosis 3 from
+[`ReframeTestPhoto.kt`](../../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/ReframeTestPhoto.kt)
+— a decoder that dies for a bounded window — landing inside the gap between the probe and the composition,
+exactly as that file predicts. 🟨 **And it is not "occasional":** at ~2-in-3 on this host it is closer to
+a coin flip than the KDoc's *"locally and on device the decoder always works and this never fires"*
+suggests. That sentence is true of a developer machine running one test; it is not true of a full-module
+`--rerun-tasks` here.
+
+#### It is the documented residue of a known flake, not a new one
+
+[`ReframeTestPhoto.kt`](../../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/ReframeTestPhoto.kt)
+already carries three diagnoses of this, two of them recorded as **wrong**, and lands on: *the Robolectric
+NATIVE decoder fails for a bounded window and then recovers.* The mitigations are real —
+`maxParallelForks = 1`, `forkEvery = 50`, and a **per-call** probe (`assumeFullImageDecodeAvailable`,
+deliberately not cached, so each test asks about its own moment). `reframeTestPhoto()` calls it, so
+`ReframeA11yTest` *is* guarded.
+
+⚠ **And the file names exactly the hole I fell into:** *"a decoder that dies between this probe and the
+composition still fails the test. That residue is #57's neighbourhood."* The probe narrows the window; it
+does not close it. So this failure is a **skip that missed its window by milliseconds**, dressed as an
+assertion failure — which is what that KDoc predicted in writing.
+
+#### Why it matters anyway
+
+🟨 **Nothing was wrong, and the gate still went red.** For a branch whose merge decision rests on *"is the
+gate green?"*, a stochastic red that looks identical to a real one is a decision hazard. Three separate
+things now produce a red `feature:editor` run: a genuine regression, a golden owed a re-record, and this.
+Only the first should block, and they are not distinguishable from the exit code.
+
+#### Not fixed here, deliberately
+
+The fix is the one the file already names — establish the fixture's precondition through a **seam** rather
+than by probing a runtime that can change its mind — and it is
+[#57](https://github.com/aritr-codes/zinely-android/issues/57)'s test-architecture change, out of scope
+for a merge-readiness pass. 🟦 What this defect adds is the **count**: check the `skipped` figure on any
+green Reframe run before trusting it, and treat a lone `ReframeA11yTest` red as environmental until a
+second run says otherwise. `ReframeTestPhoto.kt` asks for exactly that watch and nobody had been keeping it.
+
+⚠ **This also corrects a claim of mine.** Commit `59ef25d` says *"the same three Art-sheet failures as
+before this change and no others."* Given a rotating window, that sentence was only ever true of the run
+that produced it, and I wrote it as though it were a property of the change. It is not evidence that
+`ReframeA11yTest` was green then — only that it did not fail *that time*.
+
+---
+
+### D-102 — `main` and `origin/main` have diverged: 45 commits sit unpushed on a line `origin` has never seen {#d-102}
+
+**Filed 2026-08-19 claiming the branch could not merge. ⚠ That claim was wrong and is corrected below**
+— the correction is kept in place rather than deleted, because the mistake is the useful part.
+
+#### What I first reported, and why it was wrong
+
+> *"`main` is 46 commits ahead; a real `git merge main` gives **104 conflicted files / 708 Kotlin hunks**."*
+
+Every one of those numbers is real. **They are measured against the wrong branch.** `main` here is a
+*local* branch, and:
+
+```
+main   352d3fd   [origin/main: ahead 46, behind 2]
+```
+
+**Local `main` has never been pushed.** The integration target is `origin/main`, and against it the branch
+is **1 behind, 12 ahead**, merging with **12 conflicted files / 36 hunks** — all add/add, all explained by
+`origin` having *squash-merged this branch's own commits*: `3c3d152` landed as PR #58, and `409dc5c` is a
+squash of the branch's `e8f2145` (same title, same day). Ordinary squash-workflow history rewriting, not
+divergence.
+
+| Target | behind | conflicts | hunks |
+|---|---|---|---|
+| local `main` | 46 | 104 | 708 |
+| **`origin/main`** — the real target | **1** | **12** | **36** |
+
+🟨 **So the branch is merge-ready in the ordinary sense, and D-102's blocker is withdrawn.**
+
+#### The finding that survives, and it is a real one
+
+Local `main` carries **45 commits `origin` does not have**, dated **2026-07-30 to 2026-08-09** — the V2
+Library Phase B work (`4231175`, `1e097ab`, `946d6a9`, `97744e6`, `03223da`) and Phase D token discipline.
+Meanwhile `origin/main` advanced along the **supplies** line, which local `main` lacks entirely
+(`SupplyCatalog.kt`, `SupplyOutline.kt`, `BenchArtSheet.kt` are all absent there).
+
+⚠ **Two lines of real work, neither containing the other, and one of them exists only on this machine.**
+That is the actual risk: a disk failure loses 45 commits of accepted, reviewed Phase B/D work. The 104
+conflicts I measured are what it will genuinely cost to reunite them — the number was never wrong, only
+its label.
+
+🟦 **Owner decision, and it is not mine to make:** push local `main` to a branch and reconcile it with
+`origin/main` deliberately, as its own reviewed act. **Do not** fold it into a feature merge.
+
+#### Why I got it wrong, twice, in one pass
+
+1. I quoted `git diff main...HEAD` — three-dot, measured from a merge-base — and wrote it into all three
+   reviewer briefs, so three independent reviews inherited one framing error. *An independent review is
+   independent of the implementer's conclusions, never of the implementer's framing.*
+2. Correcting that, I switched to two-dot and still compared against **`main`** without once running
+   `git branch -vv` to ask what `main` was. The first error was about the diff operator; the second was
+   about the noun. Both are the same mistake: **I checked how I was comparing before I checked what I was
+   comparing to.**
+3. Following up, I built a "which branches are unpushed?" table with
+   `git rev-list --count "@{upstream}..$b"` inside a `for b in $(git branch ...)` loop. `@{upstream}`
+   resolves against **HEAD**, not against `$b`, so every row measured the *current* branch's upstream and
+   re-reported it under a different branch's name. I told the owner **~165 commits** were unbacked. The
+   true figure, from `git rev-list <branch> --not --remotes`, was **5** — and `main`'s tip was already
+   contained in `origin/feat/v21-freeze-and-tokens`. Third instance of the same shape in one pass: the
+   loop variable was the *what*, `@{upstream}` was the *how*, and again I trusted the how.
+
+🟨 A conflict count is not evidence until the branch it names has been identified. Neither is a
+commit count: `--not --remotes` asks the question directly; `@{upstream}` answers a question about
+whatever HEAD happens to be.

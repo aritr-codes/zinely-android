@@ -251,13 +251,30 @@ internal fun BenchSnack(
 }
 
 /**
- * The frozen `labelOf(n)` (`v2-bench.html`) reduced to what this product actually has on a page: a
- * text box or a photo. The freeze names its stand-in shapes; the product names the real thing.
+ * The frozen `labelOf(n)` (`v2-bench.html`) reduced to what this product actually has on a page. The
+ * freeze names its stand-in shapes; the product names the real thing.
+ *
+ * ⚠ **Exhaustive over [com.aritr.zinely.core.model.Element], deliberately.** This was
+ * `if (element is TextElement) … else PHOTO` — a two-way test over a three-way sealed hierarchy, so a
+ * [com.aritr.zinely.core.model.DecorElement] was deleted as *"Photo deleted."* It shipped harmless only
+ * because decor was unreachable; ADR-105 S7 made it reachable, and the same string is read aloud by the
+ * TalkBack `Delete` action (`EditorA11y`), so the wrong word was also the spoken one. Found by
+ * independent review of that package.
+ *
+ * **Do not reintroduce an `else` here** — the same instruction `benchVerbKindOf` carries, for the same
+ * reason: the exhaustive `when` is the mechanism by which a fourth element kind is forced to declare its
+ * name instead of silently inheriting someone else's.
  */
-internal fun benchDeleteLabel(pages: List<com.aritr.zinely.core.model.Page>, id: String): String {
-    val element = pages.firstNotNullOfOrNull { page -> page.elements.firstOrNull { it.id == id } }
-    return if (element is com.aritr.zinely.core.model.TextElement) BenchAddTextTitle else BenchAddPhotoTitle
-}
+internal fun benchDeleteLabel(pages: List<com.aritr.zinely.core.model.Page>, id: String): String =
+    when (pages.firstNotNullOfOrNull { page -> page.elements.firstOrNull { it.id == id } }) {
+        is com.aritr.zinely.core.model.TextElement -> BenchAddTextTitle
+        is com.aritr.zinely.core.model.ImageElement -> BenchAddPhotoTitle
+        is com.aritr.zinely.core.model.DecorElement -> BenchAddArtTitle
+        // The id names nothing — a deleted element's own snack is raised after the delete in one call
+        // site, so the lookup can miss. The old `else` answered `Photo`; `Art` would be no better a
+        // guess, so this keeps the historical answer for the one case that is genuinely unknown.
+        null -> BenchAddPhotoTitle
+    }
 
 /**
  * Frozen `snackText.textContent = labelOf(n) + ' deleted.'` (`v2-bench.html:626`) — the full stop is the

@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
  * The catalogue and the authoring invariant (SUPPLIES-SPEC §4.1).
  *
  * Two of the four §4.1 rules are mechanically checkable and are checked here for **every** entry, so
- * they hold for the twelve outlines still owed to a designer as well as for the four authored now:
+ * they hold for the four outlines still owed to a designer as well as for the twelve authored now:
  * the unit square, and the closed-ring/fill-only structure. Even-odd correctness and the absence of
  * winding-dependent self-intersection are authoring rules no assertion can see — which is the reason
  * §4.1 requires reviewed Kotlin source rather than a data file.
@@ -44,7 +44,7 @@ class SupplyCatalogTest {
 
     @Test
     fun `given a point outside the unit square, when a subpath is built, then construction fails`() {
-        // Rule 1 is a constructor guard, so it covers the twelve outlines nobody has drawn yet. This
+        // Rule 1 is a constructor guard, so it covers the outlines nobody has drawn yet. This
         // test is what stops someone "fixing" a future overshoot by loosening the guard silently.
         assertThrows(IllegalArgumentException::class.java) {
             Subpath(PtPoint(0.0, 0.0), listOf(Segment.LineTo(PtPoint(1.5, 0.5)), Segment.LineTo(PtPoint(1.0, 1.0))))
@@ -121,18 +121,82 @@ class SupplyCatalogTest {
     }
 
     @Test
-    fun `given the catalogue, when the four families are consulted, then only Cut shapes is authored`() {
+    fun `given the catalogue, when the four families are consulted, then every family is part-authored`() {
         // Read the family from BY_FAMILY, never from the id prefix: five prefixes carry four families.
-        val cutShapes = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_SHAPES).keys
-        assertEquals(cutShapes, SupplyCatalog.OUTLINES.keys, "P2 authors the Cut shapes family, exactly")
+        //
+        // This assertion is the inverse of the one it replaces. P2 authored exactly Cut shapes and
+        // the test pinned that equality — which quietly encoded the wrong theory, that derivability
+        // ran along family lines. It does not: the derivable eight came from three families, and
+        // Cut shapes is simply the one that happens to be finished. What is worth pinning now is
+        // that no family is wholly absent from the drawer, because a family with nothing in it is a
+        // heading over an empty shelf on a shipped surface (D-086).
+        for (family in Copy.Supplies.BY_FAMILY.keys) {
+            val ids = Copy.Supplies.BY_FAMILY.getValue(family).keys
+            assertTrue(
+                ids.any { it in SupplyCatalog.OUTLINES },
+                "the $family family has no authored outline at all — its heading would sit over nothing",
+            )
+        }
     }
 
     @Test
-    fun `given the twelve unauthored supplies, when an outline is asked for, then it is null`() {
+    fun `given the four unauthored supplies, when an outline is asked for, then it is null`() {
         // The incompleteness is explicit: an unauthored supply draws nothing and never guesses.
         val unauthored = Copy.Supplies.NAMES.keys - SupplyCatalog.OUTLINES.keys
-        assertEquals(12, unauthored.size, "16 supplies ship; 4 are authored")
+        assertEquals(
+            setOf("tape.torn", "paper.strip", "paper.underline", "fix.clip"),
+            unauthored,
+            "16 supplies ship; 12 are authored. The four named here each need a designer's hand, and " +
+                "SupplyCatalog records why each resists derivation — three need an authored tear, and " +
+                "a paper clip is a wire object in a fill-only renderer",
+        )
         for (id in unauthored) assertNull(SupplyCatalog.outlineOf(id), "$id must not resolve to a guess")
+    }
+
+    @Test
+    fun `given the multi-subpath outlines, when their subpaths are compared, then none overlaps another`() {
+        // §4.1 rule 4 — "free of winding-dependent self-intersection" — is called an authoring rule
+        // no assertion can see, and in general that is true. But the specific way it breaks here IS
+        // visible: under an even-odd fill two overlapping subpaths cancel to a HOLE rather than
+        // uniting, so a registration mark drawn as a full plus laid across a ring would punch a gap
+        // exactly where the mark is densest, and two kissing halftone dots would notch each other.
+        //
+        // Bounding boxes, not exact geometry: a box test can only be conservative for convex parts
+        // like these (every subpath here is a rectangle, a triangle or a circle), so a pass is a real
+        // pass. It cannot see a concave near-miss, which is why rule 4 still needs a reviewer.
+        for ((id, outline) in SupplyCatalog.OUTLINES) {
+            if (outline.subpaths.size < 2) continue
+            val boxes = outline.subpaths.map { sub ->
+                val pts = listOf(sub.start) + sub.segments.flatMap { it.points() }
+                listOf(pts.minOf { it.x }, pts.minOf { it.y }, pts.maxOf { it.x }, pts.maxOf { it.y })
+            }
+            for (i in boxes.indices) {
+                for (j in i + 1 until boxes.size) {
+                    val (aMinX, aMinY, aMaxX, aMaxY) = boxes[i]
+                    val b = boxes[j]
+                    // Nesting is the one legitimate overlap: a ring, a window and a photo corner are
+                    // *defined* by an inner subpath sitting wholly inside an outer one. That is the
+                    // hole even-odd is for. What must never happen is a partial crossing.
+                    //
+                    // ⚠ **The two branches are not equally strong, and the weaker one is named here
+                    // rather than papered over.** Disjoint bounding boxes really do imply disjoint
+                    // shapes, so that branch is conservative and a pass is a real pass. *Nested*
+                    // bounding boxes do **not** imply a nested shape — `fix.corner` is two triangles,
+                    // and an inner triangle poking through the outer hypotenuse would still have a
+                    // contained bbox and would still pass here. Rule 4 keeps its reviewer; what this
+                    // test buys is that the mistake anyone actually makes — a crossbar laid across a
+                    // ring — cannot reach the drawer.
+                    val nested = (aMinX <= b[0] && aMinY <= b[1] && aMaxX >= b[2] && aMaxY >= b[3]) ||
+                        (b[0] <= aMinX && b[1] <= aMinY && b[2] >= aMaxX && b[3] >= aMaxY)
+                    val disjoint = aMaxX <= b[0] || b[2] <= aMinX || aMaxY <= b[1] || b[3] <= aMinY
+                    assertTrue(
+                        nested || disjoint,
+                        "$id: subpaths $i and $j partially overlap — even-odd will cancel them to a " +
+                            "hole where the mark should be solid",
+                    )
+                }
+            }
+        }
     }
 
     @Test

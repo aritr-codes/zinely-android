@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,14 +43,18 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -219,12 +224,23 @@ internal fun ZineShelf(
         //
         // `alpha(0f)` and not `alpha(0.01f)` or a transparent colour: `visibility:hidden` is also
         // removed from the accessibility tree, which is what `clearAndSetSemantics {}` transcribes.
+        //
+        // While hidden this cell is not silent — it SAYS SO. `clearAndSetSemantics` drops the count
+        // (which would announce "0 zines" to someone who has twelve) and puts one spoken node in its
+        // place. Without it the whole loading shelf contributes no accessibility node at all: the
+        // heading is cleared here and every placeholder clears itself, so a TalkBack user met a screen
+        // containing only "Make a zine" — **indistinguishable from the empty state**, which is the exact
+        // confusion the placeholders were added to prevent. A sighted user gets the sweep; this is its
+        // spoken equal. `visibility:hidden` removes a thing that is *decorative*, and a load is not.
         item(span = { GridItemSpan(maxLineSpan) }) {
             val hidden = placeholders > 0
             ShelfHeading(
                 count = zines.size,
                 modifier = if (hidden) {
-                    Modifier.alpha(0f).clearAndSetSemantics {}
+                    Modifier.alpha(0f).clearAndSetSemantics {
+                        contentDescription = Copy.Shelf.LOADING_YOUR_ZINES
+                        liveRegion = LiveRegionMode.Polite
+                    }
                 } else {
                     Modifier
                 },
@@ -307,6 +323,7 @@ private fun ShelfHeading(count: Int, modifier: Modifier = Modifier) {
                 ),
                 modifier = Modifier.semantics { heading() },
             )
+            val swipe = rememberShelfSwipePath()
             Canvas(
                 Modifier
                     .padding(top = ZinelyV21Dimens.gapHair)
@@ -315,7 +332,7 @@ private fun ShelfHeading(count: Int, modifier: Modifier = Modifier) {
                 // `viewBox="0 0 132 9"` drawn at 132x9, so the viewport units are dp one for one and
                 // the path needs no scale — the one case where transcribing an SVG costs no arithmetic.
                 drawPath(
-                    path = ShelfSwipePath(),
+                    path = swipe,
                     color = colors.butter,
                     style = Stroke(
                         width = SwipeStroke.toPx(),
@@ -527,7 +544,27 @@ private val SwipeStroke = 3.4.dp
 private const val SwipePathData =
     "M2 6.2c22-3.4 46-4.6 74-3.2 18 .9 33 2.4 54 1.1"
 
-private fun ShelfSwipePath(): Path = PathParser().parsePathString(SwipePathData).toPath()
+/**
+ * Parse the swipe once, into the composition — **not per draw, and not into a file-level `val`**.
+ *
+ * It used to be `private fun ShelfSwipePath(): Path` called from *inside* the `Canvas` draw lambda, so a
+ * [PathParser] was allocated and an SVG string re-parsed every frame, on the UI thread, for a
+ * compile-time constant — in a cell of a scrolling `LazyVerticalGrid`, the worst place in the app for it.
+ *
+ * ⚠ **The obvious fix — a file-level `private val` — is wrong here, and the test suite caught it.**
+ * [Path] and [PathParser] are Android types, so constructing one in a top-level property runs it in
+ * `ZineShelfKt`'s **static initialiser**. `pluralZineCount` and the two label helpers also live in this
+ * file and are covered by `ZineShelfLabelsTest`, which is deliberately **pure JVM — no Robolectric**
+ * (*"`String` in, `String` out"*). Loading the class to reach a pure string function then dragged in the
+ * Android graphics stack and threw `ExceptionInInitializerError`. A pure function's test should not need
+ * an Android runtime because something unrelated in the same file draws.
+ *
+ * `remember` gives the same once-per-composition parse with none of that: the initialiser runs during
+ * composition, where Android already exists.
+ */
+@Composable
+private fun rememberShelfSwipePath(): Path =
+    remember { PathParser().parsePathString(SwipePathData).toPath() }
 
 /** `.count{font-size:.78rem}` against a 16px root — 12.48px, carried unrounded. */
 private val CountSize = 12.48.sp

@@ -19,6 +19,7 @@ Documentation is a **first-class artifact**. The canonical documents and their *
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Every significant decision (ADR log) |
 | [docs/RESEARCH.md](docs/RESEARCH.md) | Cited evidence base behind decisions |
 | [docs/spikes/](docs/spikes/) | Pre-implementation spike designs |
+| [docs/OWNER-CHECKLIST.md](docs/OWNER-CHECKLIST.md) | **Index of work blocked on the owner** — rulings, device passes, credentials, measurements. Owns nothing; points at the doc that does |
 
 ### Documentation Rule (mandatory)
 

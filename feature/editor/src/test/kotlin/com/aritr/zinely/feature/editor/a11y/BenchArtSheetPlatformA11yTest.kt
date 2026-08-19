@@ -81,11 +81,14 @@ class BenchArtSheetPlatformA11yTest {
     }
 
     @Test
-    fun the_twelve_unauthored_tiles_report_disabled_unclickable_and_say_why() {
+    fun the_unauthored_tiles_report_disabled_unclickable_and_say_why() {
         render()
         val unauthored = Copy.Supplies.NAMES.keys.filter { SupplyCatalog.outlineOf(it) == null }
-        // Non-vacuity: if S5 ever authors all sixteen this loop empties, and an empty loop passes silently.
-        assertEquals("SUPPLIES-SPEC §10.1 records S5 at 4 of 16", 12, unauthored.size)
+        // Non-vacuity: if S5 ever authors all sixteen this loop empties, and an empty loop passes
+        // silently. Asserted as a *number* rather than as a set, deliberately — this test is about the
+        // platform contract of a dim tile, not about which supplies are dim, and `SupplyCatalogTest`
+        // already owns the membership. Twelve became four on 2026-08-18 and only this line needed a hand.
+        assertEquals("SUPPLIES-SPEC §10.1 records S5 at 12 of 16", 4, unauthored.size)
         for (id in unauthored) {
             val node = tile(id)
             assertFalse("$id has no authored outline and must report DISABLED to the platform", node.isEnabled)

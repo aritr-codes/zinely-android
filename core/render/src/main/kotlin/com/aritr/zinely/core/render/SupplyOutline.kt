@@ -32,7 +32,7 @@ import com.aritr.zinely.core.model.PtPoint
  *     and non-zero is not authored; it is a bug that would render differently the day any backend
  *     disagreed about the rule.
  *
- * Rule 1 is enforced **by construction** below, so it is total: it holds for the twelve outlines still
+ * Rule 1 is enforced **by construction** below, so it is total: it holds for the outlines still
  * owed to a designer, and for any outline built outside the catalogue, without anyone remembering to
  * add a test. Rule 2 is checked structurally by `SupplyCatalogTest`. Rules 3 and 4 are **authoring
  * rules no assertion can see** — which is exactly why §4.1 requires these to ship as reviewed Kotlin

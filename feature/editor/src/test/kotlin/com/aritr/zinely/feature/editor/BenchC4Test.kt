@@ -249,9 +249,10 @@ class BenchC4Test {
     // --- Rows 4.4a-4.4d: the chooser ----------------------------------------------------------------
 
     @Test
-    fun add_opens_the_frozen_chooser_with_exactly_two_rows() {
-        // Rows 4.4a and 4.4b together: the frozen title, Text and Photo — and **no Art row**, which is
-        // fenced behind C8 by OD-21 rather than deleted. Mutation: drop a row, or add the third.
+    fun add_opens_the_frozen_chooser_with_exactly_three_rows() {
+        // Rows 4.4a and 4.4b together: the frozen title and all three verbs the freeze narrates — *"Add
+        // stays three verbs — Text · Photo · Art"*. `Art` was withheld while nothing could be taken out of
+        // the cabinet; ADR-105 S7 released it. Mutation: drop a row.
         setScreen(store())
         composeRule.onNodeWithTag(BenchAddChooserTestTag).assertDoesNotExist()
 
@@ -261,11 +262,14 @@ class BenchC4Test {
         composeRule.onNodeWithText(BenchAddChooserTitle).assertIsDisplayed()
         composeRule.onNodeWithTag(BenchAddChooserTextTag).assertIsDisplayed()
         composeRule.onNodeWithTag(BenchAddChooserPhotoTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchAddChooserArtTag).assertIsDisplayed()
+        // Counted off the container's own children, not off the three tags above — a fourth row would
+        // satisfy a per-tag check and fail this one, which is the difference between "the rows I expected
+        // are there" and "these are the rows".
         assertEquals(
-            "C4 releases Text and Photo only — Art is C8's",
-            0,
-            composeRule.onAllNodesWithText("Art", substring = true, useUnmergedTree = true)
-                .fetchSemanticsNodes().size,
+            "the chooser is exactly three rows",
+            3,
+            composeRule.onNodeWithTag(BenchAddChooserTestTag).fetchSemanticsNode().children.size,
         )
     }
 

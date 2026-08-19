@@ -1,5 +1,6 @@
 package com.aritr.zinely.core.editor
 
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
@@ -96,6 +97,31 @@ public data class EditImageCommand(
     override fun applyTo(doc: ZineDocument): ZineDocument = replace(doc, after)
     override fun invertOn(doc: ZineDocument): ZineDocument = replace(doc, before)
     private fun replace(doc: ZineDocument, value: ImageElement): ZineDocument =
+        doc.mapPage(pageIndex) { page ->
+            page.copy(elements = page.elements.map { if (it.id == id) value else it })
+        }
+}
+
+/**
+ * Recolour a single [DecorElement] (SUPPLIES-SPEC §8's *Change ink*): field memento = the before/after
+ * element, so undo restores the previous ink exactly.
+ *
+ * ⚠ **This is the third copy of one shape** — [EditTextCommand] and [EditImageCommand] differ from it only
+ * in the element type they carry. It is written out rather than generalised to `Element` on purpose: the
+ * generic version would widen two working, tested, `public` commands to accept any [Element], which trades
+ * a real compile-time guarantee (an `EditTextCommand` can only ever hold text) for the removal of ~10 lines.
+ * **Generalise when a fourth arrives**, and take the type-parameter route (`EditElementCommand<T : Element>`)
+ * so the guarantee survives the merge.
+ */
+public data class EditDecorCommand(
+    val pageIndex: Int,
+    val id: String,
+    val before: DecorElement,
+    val after: DecorElement,
+) : Command {
+    override fun applyTo(doc: ZineDocument): ZineDocument = replace(doc, after)
+    override fun invertOn(doc: ZineDocument): ZineDocument = replace(doc, before)
+    private fun replace(doc: ZineDocument, value: DecorElement): ZineDocument =
         doc.mapPage(pageIndex) { page ->
             page.copy(elements = page.elements.map { if (it.id == id) value else it })
         }

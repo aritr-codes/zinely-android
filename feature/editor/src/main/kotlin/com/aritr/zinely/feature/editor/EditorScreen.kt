@@ -63,9 +63,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aritr.zinely.ui.theme.rememberReduceMotion
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.EditorUiState
+import com.aritr.zinely.core.editor.FramingMath
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.TextCoverage
@@ -78,6 +80,7 @@ import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.render.android.readImageIntrinsics
 import com.aritr.zinely.ui.theme.LocalZinelyV2Colors
 import com.aritr.zinely.ui.theme.LocalZinelyV21Colors
+import com.aritr.zinely.ui.theme.ZinelyMakerInkId
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -261,6 +264,22 @@ public fun EditorScreen(
     // The Add chooser (rows 4.4a-4.4d). Open/closed only: the sheet itself is ZSheet, per OD-21.
     var addChooserOpen by remember { mutableStateOf(false) }
 
+    // The Art sheet — the frozen `openArt()` (ADR-105 step S7). It is a *second* state rather than a mode
+    // of `addChooserOpen` because the two are separate Compose `Dialog`s where the freeze had one `#sheet`
+    // whose `innerHTML` was swapped. Both feed `benchStateOf` below: `openArt()` captions this surface as
+    // a *variant of the Adding narration*, not as a state of its own, so the Bench is in `Adding` for
+    // either sheet — a bar that returned to `Rest` behind an open cabinet would be the C9 invariant
+    // failing in the one place nobody had opened yet. (The caption itself is not quoted here: C9's
+    // narration guard scans comments too, and rightly.)
+    //
+    // **It carries its purpose rather than a second flag.** The same sheet now serves two verbs — Add ▸ Art
+    // places a new supply, and a selected supply's `Replace` swaps that one — and the tile handler has to
+    // know which. A `Boolean` plus an `artReplaceTarget: String?` beside it would be two states that can
+    // disagree, which is exactly the shape [D-091](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-091)
+    // cost this package a review cycle over. One nullable value, and the purpose is unconstructibly wrong.
+    var artSheetFor by remember { mutableStateOf<BenchArtPurpose?>(null) }
+    val artSheetOpen = artSheetFor != null
+
     // ----- C5 (ADR-095) -------------------------------------------------------------------
     // The page grid is *summoned*, never default (row 5.11a): this flag is the whole of its existence,
     // and while it is false the overlay composes nothing at all.
@@ -320,6 +339,22 @@ public fun EditorScreen(
         }
     }
 
+    /**
+     * The ink a supply lands in — the maker palette's own `Ink` (`#2A251E`).
+     *
+     * ⚠ **SUPPLIES-SPEC is silent on the placement ink and this is an implementation reading owed a
+     * ruling.** §0 O-A settles which *palette* may tint decor (the content palette, all three bands) and
+     * says nothing about which swatch a first placement uses. `Ink` is chosen because it is the one swatch
+     * that reads as a mark rather than as a choice: the alternatives are a coloured ink the maker did not
+     * pick (a compositional decision the app made, which §5.1 forbids in the tilt case for exactly this
+     * reason) or a paper tint, which §5's own text calls *"pale-on-pale … a legitimate riso result"* — fine
+     * as a maker's choice, an invisible first placement as a default.
+     *
+     * Read from [ZinelyContentInks] rather than written as a literal so the value cannot drift from the
+     * palette, and so a `ColorRgba` constant does not appear in a second place.
+     */
+    val supplyInk = ZinelyTheme.contentInks[ZinelyMakerInkId.Ink].value.toColorRgba()
+
     // Frozen `applyInk()` (`v2-bench.html:699-704`), in the order the freeze performs it: set the ink,
     // then say which one. The other two writes it makes are already delivered here by unidirectional
     // data flow rather than by this lambda — `$('editSw').style.background` is `BenchStyleRow`'s own
@@ -328,10 +363,95 @@ public fun EditorScreen(
     //
     // One `Intent.StyleText` per tap: an immediate-commit style change, so each ink is one undoable
     // command and the buttonless snack is honest — the bar's Undo is right there.
+    /**
+     * Frozen `openArt()`'s tile handler (`v21-bench.html:860-862`), in the order the freeze performs it:
+     * close the sheet, put the supply on the page, say so.
+     *
+     * `selectByKind('decor')` is not transcribed as a third statement because
+     * [Intent.PlaceSupply][com.aritr.zinely.core.editor.Intent.PlaceSupply] already auto-selects what it
+     * placed, exactly as `PlaceText` does — the freeze's own select is the reducer's, not a second one.
+     *
+     * The frozen toast is `undoable=true`, so the snack carries `Undo`; one placement is one
+     * [PlaceCommand][com.aritr.zinely.core.editor.PlaceCommand], so that button is honest. It shares
+     * `deleteJob[0]` with the delete and ink snacks for the same reason they share it: one snack slot, so a
+     * newer message always cancels the older one's dismissal timer rather than being cut short by it.
+     */
+    val placeSupply: (String) -> Unit = { supplyId ->
+        // Read the purpose BEFORE closing the sheet — closing is what clears it.
+        val purpose = artSheetFor
+        artSheetFor = null
+        when (purpose) {
+            // ⚠ `null -> Unit`, deliberately NOT folded in with `Place`. The Replace arm below argues that a
+            // missing target must drop the verb "rather than placing a stray supply, which is what a
+            // `?: place` fallback would quietly do" — and `null, Place ->` was exactly that fallback one
+            // level up, in the same `when`. Independent review caught the code disagreeing with its own
+            // comment. Unreachable today (the sheet only fires `onPick` while visible, which needs a
+            // non-null purpose), and it costs one line to keep it unreachable *and* harmless.
+            null -> Unit
+            // Add ▸ Art: a new element at page centre, at its family's size (§5, §5.1, §5.2).
+            BenchArtPurpose.Place -> {
+                dispatch(Intent.PlaceSupply(supplyId, supplyInk, benchSupplyPlacement(supplyId, pageSizePt)))
+                deleteJob[0]?.cancel()
+                deleteJob[0] = c4Scope.launch {
+                    snackMessage = Copy.Snack.PLACED
+                    snackAction = UndoActionLabel
+                    snackVisible = true
+                    delay(BenchSnackDeleteMillis)
+                    snackVisible = false
+                }
+            }
+            // §8 `Replace supply`. The transform is computed from the OUTGOING element, so the swap needs
+            // it in hand — a target that has since been deleted resolves to null and the verb is dropped
+            // rather than placing a stray supply, which is what a `?: place` fallback would quietly do.
+            is BenchArtPurpose.Replace -> {
+                val current = uiState.document.pages.getOrNull(uiState.currentPageIndex)
+                    ?.elements?.firstOrNull { it.id == purpose.id } as? DecorElement
+                if (current != null) {
+                    dispatch(
+                        Intent.ReplaceSupply(
+                            id = purpose.id,
+                            supplyId = supplyId,
+                            // The owner's ruling: the incoming family's scale, the outgoing one's place.
+                            transform = benchSupplyReplacement(supplyId, pageSizePt, current.transform),
+                        ),
+                    )
+                }
+                // No snack. The other three decor verbs narrate because their result is easy to miss —
+                // a placement lands at page centre, a delete removes the thing you were looking at, an ink
+                // is one property of many. A replacement redraws the selected mark in place, under the
+                // maker's own eyes, with the selection chrome still around it. A snack here would be the
+                // app announcing what the maker just watched happen.
+            }
+        }
+    }
+
+    /**
+     * One popover, two verbs — the ink swatch has to reach whichever kind of element is selected.
+     *
+     * ⚠ **This lambda used to dispatch [Intent.StyleText] for whatever was selected.** That was correct only
+     * while decor's `Ink` verb was inert: `StyleText` resolves its target with `as? TextElement`, so the
+     * moment a supply could open this popover, every tap would have been a **silent** no-op — the swatch
+     * highlights, the snack says the ink was applied, and the mark on the page does not change. Nothing
+     * would have thrown and no test that checks the dispatch alone would have gone red.
+     *
+     * The `when` is exhaustive on purpose. A fourth element kind must come here and declare whether it has
+     * an ink, rather than inheriting text's verb by falling through.
+     */
     val applyInk: (String, Color) -> Unit = { name, color ->
         val id = uiState.selection.singleOrNull()
-        if (id != null) {
-            dispatch(Intent.StyleText(id, color = color.toColorRgba()))
+        val element = id?.let { selected ->
+            uiState.document.pages.getOrNull(uiState.currentPageIndex)
+                ?.elements?.firstOrNull { it.id == selected }
+        }
+        if (element != null) {
+            when (element) {
+                is TextElement -> dispatch(Intent.StyleText(element.id, color = color.toColorRgba()))
+                is DecorElement -> dispatch(Intent.InkSupply(element.id, color.toColorRgba()))
+                // A photo's colour is the photocopier's job (`ToggleCopier`), not an ink. The frozen PHOTO
+                // verb set carries no `Ink`, so this arm is unreachable today — written out rather than
+                // left to an `else` so it stays unreachable *visibly*.
+                is ImageElement -> Unit
+            }
             deleteJob[0]?.cancel()
             deleteJob[0] = c4Scope.launch {
                 snackMessage = Copy.BenchInk.applied(name)
@@ -391,11 +511,22 @@ public fun EditorScreen(
     // The frozen ink popover is summoned by the `Ink` verb and by nothing else — `.inkpop` has no rest
     // state in the freeze either (`openInk` is its only `add('show')`). Surface-only state, like
     // `typeBarOpen`: the reducer neither knows nor needs to know a popover is open.
-    var inkPopoverOpen by remember { mutableStateOf(false) }
-    // Back stands it down rather than leaving the editor, exactly as it does for the page grid, and for
-    // the same reason: a prototype has no Back, so the freeze cannot specify this, and an overlay you
-    // summoned is one Android expects Back to dismiss.
-    BackHandler(enabled = inkPopoverOpen) { inkPopoverOpen = false }
+    // ⚠ **The id of the element that summoned it, not a boolean.** It was `Boolean`, and a `LaunchedEffect`
+    // keyed on the selected id enforced "the popover belongs to the element that summoned it" by clearing
+    // the flag whenever the selection changed. That effect and any *caller* that opens the popover while
+    // also changing the selection are in a race the caller always loses — the flag is set, the selection
+    // change relaunches the effect, and the effect clears it on the next composition.
+    //
+    // Independent review demonstrated it with a probe: §8's `Change ink` accessibility action selects the
+    // supply and then opens the popover, so **on its primary path — TalkBack focus, which is not selection —
+    // it opened nothing at all.** The visible `Ink` verb was unaffected only because the element it opens on
+    // is already the selection, which is exactly the case where the effect's key does not change.
+    //
+    // Holding the id makes the rule structural rather than reactive: the popover is visible **iff** the
+    // element that summoned it is still the one selected. There is no window in which the two disagree,
+    // and no effect to race. This is the same move the package made for the stranded-popover defect —
+    // derive the state instead of guarding the flag.
+    var inkPopoverFor by remember { mutableStateOf<String?>(null) }
 
     // ── D-039: who is presenting a capability right now ────────────────────────────────────────────
     //
@@ -430,7 +561,12 @@ public fun EditorScreen(
     // simply is not honoured anywhere: the stranded state stops being guarded and becomes unconstructible.
     // The guard in `onVerb` below stays as well — belt and braces on a defect the spec has already had to
     // write down once (SUPPLIES-SPEC §10.1, S7).
-    val inkPopoverVisible = inkPopoverOpen && inkTarget != null
+    val inkPopoverVisible = inkPopoverFor != null && inkPopoverFor == ctxElement?.id && inkTarget != null
+    // Back stands it down rather than leaving the editor, exactly as it does for the page grid, and for
+    // the same reason: a prototype has no Back, so the freeze cannot specify this, and an overlay you
+    // summoned is one Android expects Back to dismiss. Enabled on the *derived* visibility, so Back can
+    // never be captured by a popover that is not on screen.
+    BackHandler(enabled = inkPopoverVisible) { inkPopoverFor = null }
     // C9 row 9.1: the Bench's four states, derived in one place. The `!EditingText` term spelled out here
     // is subsumed by `benchState == Selected`; `ctxKind != null` stays, because it asks a different
     // question (a single element, of a kind the freeze gives verbs to). So the one behavioural change is
@@ -441,7 +577,9 @@ public fun EditorScreen(
     // offers Delete on the transform bar while the chooser is up — also behind the Dialog. That "behind a
     // Dialog ⇒ unreachable" premise is exactly the merged-semantics assumption ADR-059/CI-26 distrusts,
     // so it is on the device Pass 1 platform-tree checklist rather than settled by this comment.)
-    val benchState = benchStateOf(uiState.selection, uiState.interaction, addChooserOpen)
+    // `addChooserOpen || artSheetOpen`: the Art sheet's frozen caption is a variant of the Adding one, so
+    // both sheets are the same Bench state. See `artSheetOpen`'s declaration.
+    val benchState = benchStateOf(uiState.selection, uiState.interaction, addChooserOpen || artSheetOpen)
     val ctxVisible = benchState == BenchState.Selected &&
         ctxKind != null &&
         reframing == null &&
@@ -453,9 +591,19 @@ public fun EditorScreen(
 
     // The popover belongs to the element that summoned it. Any change of that element — a reselect, a
     // deselect, a page change, a delete — stands it down, which is the freeze doing the same at four
-    // separate sites (`:621`, `:628`, `:649`, `:712`). Keyed on the id rather than the element, so
-    // applying an ink (which changes the element and not its id) leaves it open, as the prototype does.
-    LaunchedEffect(ctxElement?.id) { inkPopoverOpen = false }
+    // separate sites (`:621`, `:628`, `:649`, `:712`).
+    //
+    // ✅ **The `LaunchedEffect` that used to enforce this is deleted.** `inkPopoverVisible` above compares
+    // the summoning id against the live selection every composition, so the rule now holds by construction:
+    // a stale popover cannot be visible for even one frame, and — unlike the effect — the rule cannot be
+    // lost in a race with a caller that opens the popover and changes the selection in the same act.
+    // Applying an ink still leaves it open, because that changes the element and not its id.
+    //
+    // ⚠ Re-adding that effect is the one-line way to reintroduce the defect, and it was verified as such:
+    // with `LaunchedEffect(ctxElement?.id) { inkPopoverFor = null }` restored, exactly one test goes red —
+    // `the_change_ink_a11y_action_opens_the_popover_when_the_supply_was_NOT_already_selected` — while the
+    // already-selected twin stays green, reproducing the original pass/fail split precisely. **Do not
+    // reintroduce it.** The comparison in `inkPopoverVisible` is what enforces this rule now.
 
     // Any change of the styleable element closes the bar (ADR-055 §3: "a selection change to a non-text
     // or empty element closes the Type bar"). Keyed on the id, so committing a style through the bar —
@@ -551,11 +699,12 @@ public fun EditorScreen(
             // same token-gated intent, and makes it impossible for a blind session to rewrite framing —
             // the divergence INV-01 found was exactly a crop baked against a photo nobody could see.
             val after = if (pr != null) Framing.toImage(rf.before, d, pr, br) else rf.before
-            // Speak the outcome (bench: "Framing saved." vs "Framing unchanged.") — the same crop/fit
-            // comparison the reducer uses to decide whether a command is recorded.
-            sayReframe(
-                if (after.crop != rf.before.crop || after.fit != rf.before.fit) Copy.Editor.FRAMING_SAVED else Copy.Editor.FRAMING_UNCHANGED,
-            )
+            // Speak the outcome (bench: "Framing saved." vs "Framing unchanged.") — literally the same
+            // predicate the reducer uses to decide whether a command is recorded, not a second copy of it.
+            // This comment used to claim they were "the same comparison" while they were two hand-written
+            // `==` tests; they agreed only by being wrong identically, and told a TalkBack user their
+            // framing was saved when nothing had been touched (D-097).
+            sayReframe(reframeOutcomeLine(after, rf.before))
             dispatch(Intent.CommitReframe(rf.id, after, rf.token))
         }
     }
@@ -1212,6 +1361,15 @@ public fun EditorScreen(
                             // verb does — the fade, the snack, and its Undo. Without this the element
                             // simply vanished for a screen-reader user while a sighted user got an undo.
                             onDelete = { softDelete(setOf(it)) },
+                            // §8's `Change ink`, taking the SAME path the visible `Ink` verb takes below:
+                            // name the element the popover is for. The id comes from the action rather than
+                            // from the selection precisely because `EditorA11y` selects the supply in the
+                            // same act — under the old boolean, that selection change was what silently
+                            // closed the popover this callback had just opened.
+                            onChangeInk = { id -> inkPopoverFor = id },
+                            // §8's `Replace supply`, taking the same path the visible verb takes: name the
+                            // element the cabinet is being opened for.
+                            onReplaceSupply = { id -> artSheetFor = BenchArtPurpose.Replace(id) },
                             // OD-49's non-visual half. The drawn warning needs a gesture or a selection;
                             // this needs neither, because a maker reading the page by touch should be able
                             // to discover that a box is off the edge without first selecting it.
@@ -1363,11 +1521,20 @@ public fun EditorScreen(
                     verbs = ctxKind?.let {
                         benchContextVerbs(
                             it,
-                            // Through the SAME binding, not a fourth `as?`. It reaches the same answer for
-                            // text; what it buys is that a non-text selection can no longer be defaulted
-                            // `styleable = true` by a cast nobody re-reads. (Harmless today — the DECOR verb
-                            // set does not consult it — which is exactly the shape S7′ calls *silent*.)
-                            styleable = inkTarget?.text?.isNotBlank() ?: true,
+                            // ⚠ The note that stood here said this was *"harmless today — the DECOR verb set
+                            // does not consult it — which is exactly the shape S7′ calls silent."* Widening
+                            // `inkTarget` to include decor turned that latent shape into a **compile error**,
+                            // which is the outcome the S7′ survey predicted for every correct-by-accident
+                            // site once decor's Ink was enabled. It is now written out per kind.
+                            //
+                            // `false`, not `true`, for the kinds that do not consult it: if some future verb
+                            // set ever does read `styleable`, the failure should be a control that is *off*
+                            // — visible and recoverable — rather than one that is on and lies about what it
+                            // can do. Only TEXT reads it today.
+                            styleable = when (val selected = ctxElement) {
+                                is TextElement -> selected.text.isNotBlank()
+                                is DecorElement, is ImageElement, null -> false
+                            },
                             // The toggle reads its state from the document, never from local UI state —
                             // so Undo, a page change and a reload all move the announced state with it.
                             copierOn = (ctxElement as? ImageElement)?.copier ?: false,
@@ -1392,13 +1559,22 @@ public fun EditorScreen(
                             // switched to DONE_AFTER_INK: the verb row vanished with nothing in its place.
                             // The spec calls this out by name and says the fix is the **routing**, not the
                             // verb — so the verb stays disabled and this stops depending on that.
-                            Copy.BenchVerbs.INK -> inkPopoverOpen = inkTarget != null
+                            // `takeIf` keeps the old guard's meaning — never summon a popover with nothing to
+                        // recolour — while naming which element it is for.
+                        Copy.BenchVerbs.INK -> inkPopoverFor = ctxElement?.id?.takeIf { inkTarget != null }
                             Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
                             // X3b (ADR-106): a toggle, so tapping it again is the undo the user reaches
                             // for first — and Undo is the one they reach for second. Both work.
                             Copy.BenchVerbs.COPIER -> if (id != null) dispatch(Intent.ToggleCopier(id))
                             Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
-                            // Font and Replace ship disabled and never arrive here (ADR-092 §1(c), D-038).
+                            // §8 `Replace supply` — the Art sheet, re-summoned with a target instead of a
+                            // blank page. Guarded on the element actually being decor: the frozen PHOTO row
+                            // carries a `Replace` of its own that stays disabled ([D-038], an owner
+                            // question), and if that one is ever enabled it must not fall into this arm and
+                            // offer a maker paper stamps as replacements for their photograph.
+                            Copy.BenchVerbs.REPLACE ->
+                                if (ctxElement is DecorElement) artSheetFor = BenchArtPurpose.Replace(ctxElement.id)
+                            // Font ships disabled and never arrives here (ADR-092 §1(c)).
                             else -> Unit
                         }
                     },
@@ -1415,23 +1591,31 @@ public fun EditorScreen(
                 // not the artifact (D-035). Drawn under the sheet island it would take the island's light
                 // `ink` onto the room's `sheet` — the exact 1.05:1 defect C2b measured on a device.
                 //
-                // Text-only by construction: `.inkpop` is reachable from the `Ink` verb, and the freeze
-                // gives that verb to a text element only (`toolsFor`, `:601-603`). The `Ink`-bearing third
-                // branch is the DECOR fallback OD-2 re-seated beyond Phase C.
+                // ⚠ **No longer text-only.** This read `BenchVerbKind.TEXT` as a literal while decor's `Ink`
+                // verb was inert, and `benchInkBands` has carried a working `PHOTO, DECOR ->` arm the whole
+                // time — live code on an unreachable path. Passing `ctxKind` is what connects the two; the
+                // literal would have silently served a supply the *text* bands, which is a different palette
+                // and not the one the frozen decor branch specifies.
+                //
+                // `?: BenchVerbKind.TEXT` is unreachable rather than a default: `inkPopoverVisible` already
+                // requires a non-null `inkTarget`, and an ink target implies a `ctxKind`. It exists because
+                // `ctxKind` is nullable at the type level and this is the arm that must not invent a palette.
                 BenchInkPopover(
                     visible = inkPopoverVisible,
-                    bands = benchInkBands(ZinelyTheme.contentInks, BenchVerbKind.TEXT),
+                    bands = benchInkBands(ZinelyTheme.contentInks, ctxKind ?: BenchVerbKind.TEXT),
                     presets = benchInkPresets(ZinelyTheme.contentInks),
                     // The element's OWN ink, not the last tap: the ring survives undo, a page change and
                     // a reselect, and an ink applied from the Type bar (Coral, Teal, Blue — in no frozen
-                    // band) correctly rings nothing rather than ringing something stale.
-                    selected = inkTarget?.style?.color?.toComposeColor(),
+                    // band) correctly rings nothing rather than ringing something stale. Via
+                    // [benchInkColorOf] so a supply's `ink` and a text box's `style.color` reach it through
+                    // one binding — the same reason the target itself does.
+                    selected = benchInkColorOf(inkTarget)?.toComposeColor(),
                     inkCount = benchInkCount(uiState.document.pages),
                     onPick = { swatch -> applyInk(swatch.name, swatch.value) },
                     // OD-24: the recipe's PRIMARY ink, and the snack says the recipe's name — which is
                     // what the frozen `applyInk(c, PRESETS[i][0])` passes.
                     onPreset = { preset -> applyInk(preset.name, preset.applied.value) },
-                    onDone = { inkPopoverOpen = false },
+                    onDone = { inkPopoverFor = null },
                     // F-5: the same clearance term the editing row feeds, from the panel that replaces it.
                     onDockedTopChanged = { inkPopoverDockedTopPx = it },
                     // The frozen stacking order is explicit and this is the only place it can be
@@ -1602,13 +1786,23 @@ public fun EditorScreen(
             )
         }
 
-        // C4 rows 4.4a-4.4d: the frozen Add chooser, Text and Photo only (OD-21). A Dialog, so where it
-        // is declared does not affect layout.
+        // C4 rows 4.4a-4.4d: the frozen Add chooser, all three rows as of ADR-105 S7. A Dialog, so where
+        // it is declared does not affect layout.
         BenchAddChooser(
             visible = addChooserOpen,
             onDismiss = { addChooserOpen = false },
             onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
             onAddPhoto = { dispatch(Intent.RequestAddImage) },
+            onAddArt = { artSheetFor = BenchArtPurpose.Place },
+        )
+
+        // The frozen `openArt()` cabinet (ADR-105 S7). `onPick` is only ever called for one of the four
+        // authored supplies — an unauthored tile carries no click at all, so `BenchArtSheet` is where
+        // "inert stays inert" is enforced, and `placeSupply` is not asked to re-check it.
+        BenchArtSheet(
+            visible = artSheetOpen,
+            onDismiss = { artSheetFor = null },
+            onPick = placeSupply,
         )
 
         // The transform context bar is hidden during a Reframe session — the Reframe controls take over.

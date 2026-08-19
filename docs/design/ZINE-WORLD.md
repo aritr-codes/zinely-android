@@ -483,7 +483,7 @@ would be the most on-brand feature in the backlog.
 
 ### FROZEN BUT QUESTIONABLE — transcribed faithfully; changing it needs an owner amendment
 
-- **`BenchPageGrid`'s leaf current-page.** ⚠️ *Corrected: this is not accidental.* It transcribes `v21-bench.html:444` — `.pgc.on{background:var(--leaf-tint)}` — inside a recorded amendment. The role conflict with `BenchPageNav` (`berry`) and `ProofFold` (`berry`) is real, but the fix amends a frozen file and breaks `BenchC5Test.kt:858` plus a golden. **Not trivial.**
+- **`BenchPageGrid`'s leaf current-page.** ⚠️ *Corrected: this is not accidental.* It transcribes `v21-bench.html` §`.pgc.on` (`:494`) — `.pgc.on{background:var(--leaf-tint)}` — inside a recorded amendment. The role conflict with `BenchPageNav` (`berry`) and `ProofFold` (`berry`) is real, but the fix amends a frozen file and breaks `BenchC5Test.kt:858` plus a golden. **Not trivial.**
 - **`BenchPageGrid` drawing no page content.** Follows the `.pgcell` ruling; reads to a user as *"my pages are gone."*
 - **The rounded-square icon tile** in `ZineActionSheet` / `BenchAddChooser` — Material's list-item grammar wearing our colours.
 - **The `⋮` kebab** on the shelf card — a foreign object in a room with no other Android furniture.
@@ -779,7 +779,7 @@ because I trusted my summary of a file instead of opening it.
 | J7 | Voice pass on the **8** confirmed violations (§E.9), including `"the supplies below"` *(count corrected from 14)* |
 | J8 | `BenchPageGrid` draws actual page content |
 | J9 | Fix `Bring forward`: 10px wide, and `enabled=true` while `clickable=false`. **⚠️ Corrected from my first draft — this does NOT touch the rest of the nudge row.** OD-11 ruled the row is a WCAG 2.5.7 single-pointer conformance path, and *"a parity phase does not remove or weaken a conformance path."* Deleting it was never an option and I should not have offered it |
-| J10 | Owner call, then amendment: `BenchPageGrid` current-page `leaf` → `berry`. **Not trivial** — amends frozen `v21-bench.html:444`, breaks `BenchC5Test.kt:858`, needs a golden re-record |
+| J10 | Owner call, then amendment: `BenchPageGrid` current-page `leaf` → `berry`. **Not trivial** — amends frozen `v21-bench.html` §`.pgc.on` (`:494`), breaks `BenchC5Test.kt:858`, needs a golden re-record |
 | J11 | `ProofFoldAct`'s sheet diagram becomes light paper — **already scheduled**: OD-12 assigns `v2-proof.html` to Phase D (`V2-SPEC-DEFECTS.md:4389`), so this is sequencing, not a new finding |
 
 ### Later — needs its own design cycle, do not start on a hunch

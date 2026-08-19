@@ -112,6 +112,13 @@
 | [ADR-100](#adr-100) | **Six implementation rulings the V2.1 Library re-skin forced, taken under delegated owner authority.** The overflow affordance becomes a **drawn three-dot mark** rather than the `⋯` character (emoji2 and the bundled Inter both defeat the glyph); the **two paper cover stocks stop theming** because a themed cream at 1.18:1 on the dark desk turned a maker's object into a hole cut in the desk; long titles **cap at two lines** so one zine cannot push its neighbour's cover down; the count chip moves to `butter`/`onButter` and the dock's decorative ring to `butter`, both invisible in light theme at `butterTint`'s **1.01:1**; the prototype's `:nth-child` tilt/tape phase is confirmed a **prototype artifact** and corrected to `:nth-of-type` in the frozen file; and the dead V2 `ZineCover` is **deleted**, which exposed that the only recipe test in the tree still guarded the function the shelf had stopped calling. Adds the `onButter` token. **Amends the freeze** ([V21-SPEC §4.1](design/V21-SPEC.md#41-colour), [§4.3](design/V21-SPEC.md#43-depth-geometry-motion)) and restructures `v21-library.html`'s tile from a `<button>` into an `<article>` holding two sibling buttons, because a control may not contain a control and the prototype could not otherwise carry the affordance ruling 1 ships. Reviewed twice — **GO WITH FIXES** and **NO-GO** — with all fourteen Required Fixes reconciled ([§11](#adr-100-review)); both reviews independently found the same dead CSS selector first. **Both device passes accepted 2026-08-11** on `SM-A176B` / Android 16 ([record](reviews/2026-08-11-adr-100-device-verification.md)); the two paper stocks measure the same hex in both themes on glass. | Accepted |
 | [ADR-101](#adr-101) | **The Proof's climb becomes a band and two drawers.** Step 5 planning, opened before any code per [ADR-089 §2.2](#adr-089). Rules on **reconciliation, not design** — the structure was already owner-accepted with the prototype under [ADR-099](#adr-099). Audit finds the Proof is **V1 → V2.1 plus a navigation change** (24 `ZinelyTheme.colors`, **zero V2 tokens** across 2360 lines), a harder jump than the Library's re-skin. Two [ADR-100](#adr-100) ruling-4 defects found **by measurement before any code**: `.btn-save`'s `butterTint` frame ring at **1.10 / 1.13** on the band's paper ground, and `.pcount` at **1.01** light on the desk — the Library's count chip again. `.seal`'s red is kept: sealing wax is material, not signal. Names five invariants the prototype could not know about — chiefly that the frozen band has **a `.done` state and no failure state**, so [D-024](design/V2-SPEC-DEFECTS.md#d-024)'s shape is inherited — **withdrawn on reading the code**, which already replaces the whole surface on failure, a better answer than a third band state; **D-066/OD-32 are answered** on both halves (Error, and Loading via `exportBusy`). **Modifies [ADR-051](#adr-051) Decision A** — P1 retires the acts it created. Six packages, **structure before paint**: ADR-098's rule is *order by golden blast radius*, and with the structure changing that same rule yields the opposite of its usual chrome-first consequence. **Reviewed twice before any code** — evidence lens and plan lens, both GO WITH FIXES, fourteen Required Fixes reconciled ([§6](#adr-101-review)); the reviews caught §3 omitting the **print recipe**, which the frozen drawer does not contain at all, and P4 scoped at five fold steps against the frozen eight. **All six packages complete 2026-08-12**, each device-verified on both passes; P6's device Pass 1 found the surface's sharpest defect — the reader's leaf and the print drawer's imposed sheet both rendered the user's *printed output* in the room's dark palette, at 1.2:1, which no reviewer could see because it takes three separately-correct facts to produce ([§6.11](#adr-101-p6-device)). | Accepted |
 | [ADR-102](#adr-102) | **The Bench re-skin, and the ruling its first draft would have reversed.** Step 6 planning, opened before any code on ADR-101's precedent — and **rewritten the same day after a NO-GO**, which is the whole value of planning in a document. Establishes first that **the freeze banners were wrong on all three prototypes**: `v21-bench.html` still called itself a *"DIRECTION PROPOSAL, NOT FROZEN"* naming the superseded `v2-bench.html` as canonical, as did `v21-proof.html` through all six ADR-101 packages built against it ([§1](#adr-102-banners)). Audit finds the Bench wearing **three palettes** — V2 (**41** references), a V2 island, and V1 remnants led by `ReframeControls` (**25**) — and a citation debt of **106 lines** in the Bench sources, **211 repo-wide**, all pointing at a superseded spec ([§2](#adr-102-audit)). **The rejected first draft ruled that `BenchSheetIsland` be retired** on the stated ground that V2 lacked a worktop token; the file it cited records the real cause — **[D-035](design/V2-SPEC-DEFECTS.md#d-035)**, an owner ruling taken after the user's own black text measured **1.60:1** on device against a dimmed sheet. Retiring it would have reinstated that defect on the surface users spend the most time on, and `EditorPageLegibilityProbeTest` exists to fail when it does. **The island stays; only its mechanism changes** ([§3](#adr-102-island)) — re-expressed as an explicit **eight-token** V2.1 island, deliberately *not* as the wholesale light palette `ProofLitPaper` provides, because wholesale is the move that reinstated D-010 the first time. **A third review then killed this draft too**, and for the better reason: the claim that ADR-101 P6’s rule *is* D-035 is circular — D-035 explicitly declined to amend the Proof, the question was open on the owner’s desk as **[OD-31](#adr-098-od31)**, and P6 shipped an answer to it three days early. **Escalated, and the owner ruled the same day: yes, and universally — *the artifact does not dim, on any surface*.** OD-31 and D-071 close, ADR-101 P6 is retroactively authorised, Phase D package D2 unblocks, and the Bench rule now rests on an owner ruling instead of on shipped code cited back to itself. The mechanism warning survives the ruling: one invariant, two correct implementations, and the Bench may not copy the Proof’s ([§10.1](#adr-102-open)). Also names **three freeze changes that are not paint** (the fourth, unselected dimming, already ships under ADR-091) ([§6](#adr-102-structural)), and puts the shelf and the network-bearing Art surface **explicitly out of scope** under OD-2 and an unresolved legal fence ([§7](#adr-102-oos)). Eight packages, dependency-ordered. Nine Required Fixes from the third review: **eight accepted, one rejected with evidence** — the 211/47 citation figure is exact under `git grep`, and the review’s smaller count came from sweeping an in-repo `.claude/` scratch tree ([§11](#adr-102-review)). | Accepted |
+| [ADR-103](#adr-103) | **The world is a small press — the spatial metaphor, named.** Owner-adopted as Constitution Amendment 2; supersedes `DESIGN-LANGUAGE.md` in full | Accepted |
+| [ADR-104](#adr-104) | **The asset layer — curated, generative, personal; no network, permanently.** Owner-adopted as Constitution Amendment 3; online sources closed on *provenance*, not privacy | Accepted |
+| [ADR-105](#adr-105) | **The third primitive — `DecorElement`, and the draw command that does not exist yet.** Implements ADR-104's curated-supply half | Accepted |
+| [ADR-106](#adr-106) | **The photocopier filter — a flag on the tape, not a filtered asset.** Adopted by the implementer under explicit owner delegation of D-082's five questions | Accepted |
+| [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** Grows the catalogue to ~51 inside the frozen families; upholds the randomiser ban; withdraws app-authored composites; ships search. | Proposed |
+| [ADR-108](#adr-108) | **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed |
+| [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The open question is not rendering but *when the maker first sees the join* — no screen shows it | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -243,8 +250,9 @@
 ## ADR-017 {#adr-017}
 **Bleed, clip, and safe-area semantics.**
 - **Status:** Proposed (2026-06-19) — raised by the [ADR-007 RC audit](#adr-007).
-- **Context / rationale:** `LayoutValidator` currently hard-enforces `clipLocalBounds == panelLocalBounds` because this engine renders the full panel with no bleed ([ADR-012](#adr-012) keeps content inside a safe inset; full-bleed is explicitly 🔭 FUTURE). The `clipLocalBounds` field exists to *future-proof* for bleed, but its meaning under bleed is undefined: bleed content extends **past** the trim/panel edge, so `clip` would become larger than `panelLocalBounds`, inverting today's invariant.
-- **Options under consideration:** define the invariant chain under bleed as `safe ⊆ panel ⊆ clip` (clip grows outward by the bleed amount) and relax the validator accordingly; specify how trim/crop marks interact with the safe inset and the cut line.
+- **Context / rationale:** `clipLocalBounds == panelLocalBounds` holds today because this engine renders the full panel with no bleed ([ADR-012](#adr-012) keeps content inside a safe inset; full-bleed is explicitly 🔭 FUTURE). The `clipLocalBounds` field exists to *future-proof* for bleed, but its meaning under bleed is undefined: bleed content extends **past** the trim/panel edge, so `clip` would become larger than `panelLocalBounds`, inverting today's invariant.
+- **Options under consideration:** define the invariant chain under bleed as `safe ⊆ panel ⊆ clip` (clip grows outward by the bleed amount) and relax the checker accordingly; specify how trim/crop marks interact with the safe inset and the cut line.
+- ⚠ **Corrected 2026-08-18 — [D-098](design/V2-SPEC-DEFECTS.md#d-098).** The rationale above said `LayoutValidator` *"currently hard-enforces"* the equality. **It enforces nothing at runtime:** `validate()` appends a `CLIP_NOT_IN_PANEL` issue to a returned `List<ValidationIssue>` — no throw, no `require` — and it has **no production caller**; every construction site is a test. At runtime the equality is *established* by `SingleSheet8Imposer.kt:72` (`clipLocalBounds = panelLocal`) and *obeyed* by `ZineExporter.kt:170`, which clips each panel by the field. ✅ **But *"relax the checker"* is still necessary, and the Risks bullet below already says why:** three tests run the real imposer and assert the issue list is **empty** (`ImpositionPropertiesTest`'s `engine output always validates clean`, `ImpositionEdgeCaseTest` ×2), so a bleed layout turns CI red. The checker is a **test-only gate**, not a runtime guard. So this option list is **incomplete, not misdirected** — it names the checker and omits the two components that actually change behaviour: the imposer's assignment and the exporter's clip. *(An earlier wording of this note claimed the remedy was aimed at the wrong lever. That over-read "no production caller" as "gates nothing", and contradicted this ADR's own Risks bullet two lines down, which was right all along.)* The rationale is corrected in place because it was never true; `validator` → `checker` in the option above is the same correction, one word wide.
 - **Risks:** Introducing bleed is a **deliberate contract change**, not an additive field — the `clip == panel` validation must be loosened in lockstep or it will reject every bleed layout. Getting the trim-vs-bleed-vs-safe relationship wrong reintroduces the #1 print-correctness risk the engine was built to retire.
 - **Future considerations:** Resolve when V2 print-shop export groundwork (bleed, trim/crop marks) is scheduled ([ROADMAP V2](ROADMAP.md#v2--more-formats--expression)). No change to the MVP engine.
 
@@ -9029,7 +9037,7 @@ reason is that everything else stands on the ground.
 | **P2** | **The three freeze changes that are not paint** ([§6](#adr-102-structural)) — page-lift deletion, keep-clear trigger and warn state, `.guideV` trigger — **plus those two composables entire**, colour and trigger together ([§12.3](#adr-102-p1-recut)). The unselected dim is **not** here: it ships already, and V2.1 only moves its alpha `.4 → .5` — that lands in P1 | each reverses or deletes a ruled behaviour; **each needs a ruling before it is built** — including the `butter` guide's 1.73:1 ([§12.6](#adr-102-p1-corrections) row 4) |
 | **P3** | **Bottom chrome** — `BenchBottomBar`, `BenchPageNav` + thumbs, `BenchStyleRow` (incl. `.kbstack`, and the `.sw` swatch seeded from the element's own ink) | filmstrip auto-centre is arithmetic; `benchThumbIsland` stays under OD-23 |
 | **P4** | **Popovers** — `BenchContextBar`, `BenchInkPopover`, `BenchSnack`, `BenchAddChooser` **including `.supply`/`.opt` content**, not just the sheet shell | the verb bar must stay flat and quiet; the `roomColors` opt-outs must keep opting out |
-| **P5** | **Page grid** — `BenchPageGrid` | `BackHandler` is an Android addition the freeze cannot specify. ⚠️ **and the grid renders the same pages in a different material from the filmstrip beside it** — [OD-47 closed / §12.5](#adr-102-od47): not a dimming defect (the grid draws no artifact), a consistency one. P5 re-skins the card to the amended `.pgc` (`v21-bench.html:428`). The page-number contrast fix already landed and converges here |
+| **P5** | **Page grid** — `BenchPageGrid` | `BackHandler` is an Android addition the freeze cannot specify. ⚠️ **and the grid renders the same pages in a different material from the filmstrip beside it** — [OD-47 closed / §12.5](#adr-102-od47): not a dimming defect (the grid draws no artifact), a consistency one. P5 re-skins the card to the amended `.pgc` (`v21-bench.html` §`.pgc`, `:485-493`). The page-number contrast fix already landed and converges here |
 | **P6** | **The V1 remnants** — `ReframeControls` (25), `TypeBar` (16), `ReframeOverlay`, `EditorEmptyState`'s blobs, `EditorScreen`'s Preview action, and the **five** adjacent editor files enumerated in [§4](#adr-102-remnants). The fifth is **`EditTextSession`** — the inline text-edit surface (`.tx`, `.caret`, `.doneEdit`, `.el.editing`), which the previous draft named in P7's golden list while converting it in no package at all | `TypeBar` **must not** move into the canvas Column — infinite recomposition. `EditTextSession.kt:103`'s `cursorColor` is a live V1 binding on the one surface where an invisible caret is unrecoverable |
 | **P7** | **Citations, tests, rasters** — re-point the citations at the scope [§2](#adr-102-audit) states, re-baseline the colour-pinning tests, record the goldens **once** | **not 16.** That is a filename-prefix count; the affected families include `selection_chrome_*`, `resize_handles`, `preview_*`, `editor_*`, `type_bar`, `reframe_controls`, `edit_text_session` |
 | **P8** | **The shared shell** — retire `zinelyShadow`/`ZinelyShadowLayer` to `zinelyV21HardShadow`, convert `ZSheet` | cross-surface: Library **and** Proof re-skin with it ([§10.2](#adr-102-open)). ⚠️ P1 **calls `zinelyV21HardShadow` directly** and does not wait for this package — [§12.4](#adr-102-p1-shadow) |
@@ -9197,7 +9205,7 @@ page paints with a different set, and four of §3's rows have no V2.1 use at all
 | `strawberryText → none` | ✅ stands — deleted, as recorded |
 
 **The V2.1 island is these eight** — seven since [OD-48](#adr-102-p2b) — and they are *derived*, not transcribed: the colour tokens referenced
-inside the frozen file's own `the canvas` section (`v21-bench.html:174–219`, bounded by its section
+inside the frozen file's own `the canvas` section (`v21-bench.html` §*the canvas*, `:239–284`, bounded by its section
 banners), less the shadow.
 
 | Token | Where it lands on the page |
@@ -9230,7 +9238,7 @@ excluded on the same principle and are now simply unused by this surface.
 #### 12.2 — The acceptance test is derived, not declared {#adr-102-p1-test}
 
 `BenchStudioSurfaceTest`'s both-directions test compares the Compose island against the tokens
-`v2-bench.html`'s `.page` **declares**. `v21-bench.html:177-182` declares none — the V2.1 file was drawn
+`v2-bench.html`'s `.page` **declares**. `v21-bench.html` §`.page` (`:242-244`) declares none — the V2.1 file was drawn
 without a light-island block, because the freeze was drawn before OD-31 closed. Pointed at V2.1 as written,
 that test derives an empty expected set and **passes only if the island changes nothing**.
 
@@ -9246,7 +9254,7 @@ added to the page region tomorrow fails the build without anyone editing a list.
 
 #### 12.3 — P1 and P2 are re-cut, because as drawn they block each other {#adr-102-p1-recut}
 
-`v21-bench.html:186-189`, **as frozen when this section was written**: `.keepclear` and `.guideV` both rest
+`v21-bench.html` §`.keepclear`/`.guideV` (`:251-255`), **as frozen when this section was written**: both rest
 at `opacity:0` and are revealed *only* by `.content.focusing~…` at `.85`, with **one colour each and no warn
 state**. The shipped composables have a resting state, and the keep-clear has a `strawberryText` warn.
 ⚠ [OD-48](#adr-102-p2b) has since amended that rule — the cue is `jam`, raised by `.keepclear.warn`, and
@@ -9321,7 +9329,7 @@ it is named here so the sweep is not lost.
 > `(253,243,231)` thumbnails means **one screen renders the same eight pages in two materials, forty pixels
 > apart** — which is a *consistency* defect, not a dimming one, and it is the same defect as §12.6 row 9
 > seen from the other end. It is answered by making the card look like paper, which is what the owner ruled
-> and what `v21-bench.html:36` now specifies (`.pgc` gets its own light on-paper set). **The fix is P5's**,
+> and what `v21-bench.html` §`.pgc` (`:489`) now specifies (it gets its own light on-paper set). **The fix is P5's**,
 > where the grid is re-skinned, and it lands as one re-skin rather than as a provider swap now plus a
 > re-skin later. The grid's `EditorScreen.kt:1385` room provider is **correct** and stays: chrome around
 > the cards is chrome.
@@ -9342,7 +9350,7 @@ it is named here so the sweep is not lost.
 
 Neither review found these decisive, and all of them would have cost time on a device:
 
-1. **The Bench's ground is `bench`, not `paper`.** `v21-bench.html:158` — `.phone{background:var(--bench)}`.
+1. **The Bench's ground is `bench`, not `paper`.** `v21-bench.html` §`.phone` (`:223`) — `.phone{background:var(--bench)}`.
    `BenchStudioSurface.kt:313`'s KDoc insists at length that the Bench's ground is paper *"and reading one
    for the other is the mistake this comment exists to prevent"*. True of V2; false of V2.1. This is the
    change that makes the island **visible for the first time** — today ground and sheet are the same
@@ -9362,7 +9370,7 @@ Neither review found these decisive, and all of them would have cost time on a d
    never clears 1.4.11. A lone dashed butter guide on paper carries a state — *this snap fired* — at
    1.73:1. **This is a freeze-versus-spec conflict, not an implementation choice**, and it goes to P2 with
    §12.3 rather than being resolved by whoever paints the line first.
-5. **The handle loses its halo, and changes shape.** `v21-bench.html:198` is a **9px rounded square**,
+5. **The handle loses its halo, and changes shape.** `v21-bench.html` §`.hnd` (`:263-264`) is a **9px rounded square**,
    `paper` filled, `1.6px ink` bordered, with no `box-shadow` halo. The shipped 13dp circle carries a
    `rgba(255,255,255,.7)` ring whose KDoc cites
    [IA §C.4](design/V2-BENCH-IA-INTERACTION.md) — *"handles use a dual-tone/halo stroke to hold **3:1** over
@@ -9695,7 +9703,7 @@ picture moves" teach), and the dim is four square rects, so a sliver of undimmed
 Recorded rather than closed.
 
 **Also corrected, and worth its own line:** the review re-read every frozen address these files cite and
-found two committed ones stale — `SelectionChrome.kt` pointed `.el .ring` at `v21-bench.html:188`
+found two committed ones stale — `SelectionChrome.kt` pointed `.el .ring` at `v21-bench.html:188` — *quoted as the stale citation read; **not** a pointer, do not re-aim* —
 (actually `.guideV`; the rule is `:195-196`) and `BenchPageGrid.kt` pointed `.scrim` at `:376-378`
 (actually `.opt .ico`). The quoted declarations were right in both cases and only the addresses had
 rotted, which is the failure mode that makes a stale citation dangerous: it reads as verified. There is
@@ -9963,7 +9971,7 @@ states and the live Library sheets. Nothing here is a redesign; every value is t
 
 `BenchKbStackMillis` 340 → **260**, `BenchKbStackRestFraction` 1.10 → **1.02**, from
 `.kbstack{transform:translateY(102%);transition:transform .26s cubic-bezier(.05,.7,.1,1)}`
-(`v21-bench.html:264-265`). The curve is byte-identical to V2's `--settle`; only the duration and the
+(`v21-bench.html` §`.kbstack`, `:329-330`). The curve is byte-identical to V2's `--settle`; only the duration and the
 rest offset move. Recorded because a shortened animation is the kind of change that reads as a
 regression later if nobody wrote down that the spec asked for it.
 
@@ -9991,7 +9999,7 @@ The re-home broke four assertions that had encoded the old ancestry (`BenchC5Tes
    found `.pgc` and `.dclose` in the same state. The false half is left in the HTML rather than tidied
    away, because it is the interesting half: a claim of uniqueness made from the six selectors that
    happened to be on screen.
-2. **The Photo row's glyph** (`v21-bench.html:794`) — `Photo` wore `ICON.replace`, two arrows chasing
+2. **The Photo row's glyph** (`v21-bench.html:794` *as it stood before this amendment — a record, not a pointer*) — `Photo` wore `ICON.replace`, two arrows chasing
    each other round a circle. On a selection bar that correctly means *swap this one*; on a chooser
    whose only question is *"what would you like to add?"* it reads as **refresh, or sync** — and sync is
    the one thing this app promises never to do. A first-time device pass stopped on it before knowing
@@ -10313,7 +10321,7 @@ evidence alone. This test is the pattern that closes them; extending it to those
 
 ⚠ **A colour probe nearly filed a false defect**, and the correction is worth keeping: the first scan of the
 text-session frame reported a boundary at α `.985` in the one state that must be silent. It was the **caret**,
-which is also `jam` (`v21-bench.html:215`), plus Samsung's red cursor handle. The editor now has two `jam`
+which is also `jam` (`v21-bench.html` §`.caret`, `:280`), plus Samsung's red cursor handle. The editor now has two `jam`
 marks on one page, so *"is this hue present"* has stopped being a safe proxy for *"is this mark drawn"*.
 Looking at the screenshot is what caught it.
 
@@ -10609,11 +10617,11 @@ the warning at **.445** — because `BenchKeepClear` was nested inside the sheet
 `EditorPagePreview`, and that composable draws `BenchFocusScrim`. So the marks were read through a 0.5 paper
 wash: the cue measured **1.42:1** and the warning **1.82:1**, against the 3.66:1 this whole ruling rests on.
 
-The freeze does not do that. `.content.focusing .el:not(.selected){opacity:.5}` (`v21-bench.html:207`) dims
+The freeze does not do that. `.content.focusing .el:not(.selected){opacity:.5}` (`v21-bench.html` §`.content.focusing`, `:272`) dims
 **elements**; `.keepclear` is a *sibling* of `.content` and is dimmed by nothing. **And the review found the
 stronger form of this argument, which is not a reading at all:** the freeze **as it stood on 2026-08-13,
 before [OD-48](#adr-102-p2b) amended that very line** revealed the cue with
-`.content.focusing~.keepclear{opacity:.85}` (`v21-bench.html:190`), and the general-sibling combinator `~`
+`.content.focusing~.keepclear{opacity:.85}` (`v21-bench.html:190` *in that pre-OD-48 file — a record of what the freeze said then, not a pointer into it today*), and the general-sibling combinator `~`
 matches only what *follows* `.content`. The pre-fix Compose order was not a defensible-but-different reading
 of the freeze — it was structurally un-implementable as the freeze writes it. (The amended rule still reads
 `.content.focusing~.guideV`, so the argument survives the amendment word for word; it simply now rests on
@@ -11082,6 +11090,52 @@ defect. It took driving a real Gallery share on hardware. The regression guard t
 (`ShareInboxTest`) asserts the *declaration*, not the behaviour, and says so: Robolectric does not simulate
 the task stack and never will reproduce this.
 
+#### Amendment (2026-08-16) — S7 placement: a maker can take a supply out of the drawer
+
+**The seam.** `Intent.PlaceSupply(supplyId, ink, transform)` — one user act, one `PlaceCommand`, one undo
+step, auto-selected on landing, exactly like image placement. **The geometry is supplied by the caller**
+rather than computed in the reducer, because `:core:editor` cannot see `:core:copy` and the family (which
+sets the size) is only knowable there. That constraint is load-bearing: the id prefix is *not* the family.
+
+**Per-family default scale, and the contradiction inside §5.2.** The spec rules *one constant per family*
+and then illustrates it with *"a rule lands wide"* — naming `shape.rule`, a **member** of Cut shapes. Both
+sentences cannot be implemented. Ruled at [SUPPLIES-SPEC §5.2](design/SUPPLIES-SPEC.md#s-5-2-ruling): four
+family constants **plus exactly one named override**, capped at one entry *by a test*, since an unbounded
+override map is per-supply sizing wearing a disguise. The numbers are an implementation reading and are
+flagged as owed a Pass 2 ruling — nobody has yet watched a supply land on a real screen.
+
+**Placement ink**: the maker palette's `Ink`, from the content namespace rather than chrome. Spec was
+silent; recorded so the silence is not mistaken for a decision.
+
+**The Add chooser's Art row is released, and C3's "absent, not disabled" reasoning is retired on the
+merits, not overridden.** That omission was never *"the freeze doesn't ask for it"* — it was C3's Pass 2
+sentence about a control that reports truthfully and then does nothing when tapped. The row now opens a
+drawer with four working supplies, so the sentence no longer describes it. The inertness moved one level
+down, where it is honest: all sixteen named, twelve saying *"Not yet"*. Withholding the row would have left
+the placement path with no call site — the exact gap this package exists to close — and the unrecoverable
+failure is a maker who never learns the drawer exists.
+
+**Two defects that existed only because the sheet finally got a call site:**
+
+- **Twelve of sixteen tiles dismissed the entire cabinet when tapped.** A composable with no pointer-input
+  node is not in the hit path, so the touch fell through to the scrim **sibling**, whose `clickable` is
+  `onDismiss` — the app answering *"not yet"* by leaving the room. Patched with an observing,
+  **non-consuming** `pointerInput` (consuming the down would steal the drag from an ancestor scroll). The
+  general cause is [D-087](design/V2-SPEC-DEFECTS.md#d-087) and is deliberately still open. **No test could
+  have caught it**: `BenchArtSheetTest` passes `onDismiss = {}`, so the dismissal fired into a no-op and
+  every assertion passed. *A component tested only in isolation cannot fail the way it will fail in the app.*
+- **A supply was deleted as "Photo deleted."** — aloud, through the TalkBack Delete action. `benchDeleteLabel`
+  was `if (text) … else PHOTO` over a **three-way** sealed hierarchy: the classic silent seam this ADR
+  already warns about, found by mutation rather than by the compiler. Now exhaustive, with `else` forbidden.
+
+**Also corrected:** `benchInkCount` counted only text, so black text plus berry stars reported *"1 ink"* —
+a supply's `ink` **is** a spot ink and `SceneRenderer` draws it as one. That number is the one telling a
+maker what their zine will cost to print.
+
+⚠ **Both device-verification passes remain outstanding**, and Pass 2 now has two specific things to judge:
+whether twelve dim tiles of sixteen is an acceptable first impression ([D-086](design/V2-SPEC-DEFECTS.md#d-086)),
+and the duplicated Art/Photo glyph carried forward from the freeze ([D-088](design/V2-SPEC-DEFECTS.md#d-088)).
+
 #### Amendment (2026-08-16) — the Art sheet, and the ruling that a supply with no outline is *drawn, disabled, and explains itself*
 
 **The decision.** All sixteen supply tiles are drawn. The twelve with no authored outline are rendered
@@ -11301,3 +11355,1210 @@ rule; but amending a freeze is an owner act and this one carries no ruling, whic
   nearest-neighbour is moiré and nothing else; the hard-dot paint is used only when the destination has at
   least a device pixel per dot. Right for magnification, wrong for minification — and the freeze has nothing
   to say about how a halftone should look at thumbnail size.
+
+
+---
+
+## ADR-107 {#adr-107}
+
+### A larger material library — grown inside the frozen four, searchable, composed by hand
+
+**Status:** `Proposed` · 2026-08-18 · **v2**, superseding a v1 draft that independent review returned **NO-GO**
+**Owner ruling required on:** R5 (amends the frozen Art sheet — [D-080](design/V2-SPEC-DEFECTS.md#d-080))
+**Extends:** [ADR-104](#adr-104) (asset layer, Constitution Amendment 3) — the *curated* leg of Model D
+**Amends:** [SUPPLIES-SPEC §9](design/SUPPLIES-SPEC.md) — **two** bullets: the *search field* one (premise
+expired) and the *"No categories beyond the four. No tags, no filters, no sort"* one (a straight reversal; it
+states no premise to expire). · **Does not amend** §5 (randomiser ban) or §9's *no emoji* bullet
+**Review record:** [§ Review and reconciliation](#adr-107-review) — read it before trusting any claim here
+
+#### Context
+
+The owner asked for a larger library of creative assets — "art, graphics, emoticons, frames, decorative
+elements" — with search, and for **pseudo-randomisation to combine sub-pieces** so a modest set of parts
+yields many results. Online search was withdrawn from the ask first; that half is settled by ADR-104 and is
+not revisited.
+
+Three of the four remaining asks meet an existing ban, and **the bans are not equally solid**. Separating
+them is this ADR's whole job — a blanket "the spec says no" would be as wrong as a blanket amendment.
+
+> ⚠ **This ADR's v1 was falsified on its central technical claim, and two of its arguments were built on
+> quotations nobody had checked.** What survived, what was withdrawn, and what reversed is recorded at
+> [§ Review and reconciliation](#adr-107-review). That section is not an appendix; it is the reason the
+> rulings below are narrower than the ones they replace.
+
+#### R1 — Grow the base catalogue **inside the four frozen families**
+
+The four families are frozen (`v21-bench.html:844`), so this is growth *within* the freeze, not past it.
+That constraint turns out to be the entire curation brief, and it is worth more than any tagging scheme:
+
+> **Does it attach, point, tear, or cut?** Anything that answers none of the four is out by construction.
+
+*Tape & fixings* holds things that attach; *Stamps & marks* things that point plus the two that name the
+**process**; *Cut paper* hand-torn edges and things cut *out*; *Cut shapes* scissor-clean geometry. A
+shopping-cart glyph answers nothing and is excluded without anyone exercising taste. **This is the mechanism
+that stops a zine tool becoming a clip-art tool** — the crystallisation ADR-104's market reading calls the
+wrong one, and the default failure of any sixty-item icon dump.
+
+**The target is ~60 total. The per-family count is an *output* of curation, not an input, and this ADR
+deliberately refuses to assert one.** A v1 draft said "~15 each"; that number was asserted and never worked.
+The risk it hides is **R2's own art-fatigue mechanism operating inside a single family**: fifteen near-
+duplicate fasteners are as legible a repetition as any shuffle. *Cut shapes* is the likeliest to strain —
+scissor-clean geometry runs out faster than the physical world runs out of fasteners or torn edges — and a
+family that can only reach fifteen by splitting hairs should stop short. **A worked per-family list is the
+first deliverable, and it may return a total under sixty. That is an acceptable answer.**
+
+✅ **Delivered 2026-08-18 — [SUPPLIES-SPEC §4.3](design/SUPPLIES-SPEC.md).** It returns **~51**, and the
+family that stops short is *Cut shapes*, for the reason predicted here: its obvious candidates — square,
+oval, diamond, rounded rectangle — are all things **the maker can already make** with rotate and scale, so
+shipping them would add duplicates with names. The second filter did more work than R1's own question: *can
+the maker already make this with a verb they have?*
+
+**On packs, conceding the point:** [V2-CONSTITUTION](design/V2-CONSTITUTION.md) names curated packs as *the*
+growth mechanism, and this grows the base catalogue instead. The honest description is that **this is the
+first curated pack, shipped merged into the base rather than as a separately managed unit.** It runs the
+same process — source → verify licence → curate → package → ship — with "ship" meaning *in the APK*. §9's
+bar is on packs **UI** before any pack exists (*"dead UI"*), not on additions being packs; the shelf stays
+deferred.
+
+#### R1a — the freeze-scope question R1 raises, answered rather than assumed
+
+Growing 16 → ~51 changes **what the frozen Art sheet displays**. [D-051](design/V2-SPEC-DEFECTS.md#d-051) and
+[D-080](design/V2-SPEC-DEFECTS.md#d-080) establish that *drawn material in a frozen file cannot be invented by
+an implementer*, so "R1 needs nothing from the owner" cannot simply be asserted.
+
+**The answer is a split, and it is one §4.1 already draws.** The *outlines* are reviewed Kotlin and sit behind
+the surface — an implementer may author them. But **set membership, drawn names, order and the resulting
+scroll depth are drawn in `v21-bench.html`**, and those are the owner's.
+
+> **R1 may be built. R1 may not be *shipped into the sheet* until R5 is ruled** — the same amendment that adds
+> chips and a field is the one that admits the new marks to the drawer.
+
+⚠ **This package is the lower-ranked half and must not displace the higher one.** ADR-104: *"This is why the
+photocopier filter outranks the supply set."* X3b keeps its priority.
+
+#### R2 — The randomiser ban **stands**. §5 is not amended
+
+Three independent grounds, and the second is the one that settles it:
+
+1. **§5 bans "composition presets" alongside "shuffle" and "randomiser".** A preset is not random. So the
+   clause is not about randomness — it is about *the app proposing arrangements at all*, which is a deeper
+   position than a first reading suggests. [ZINE-DIRECTION §9.6](design/ZINE-DIRECTION.md) puts
+   **auto-composition** on its Never list, and [PRODUCT-DIRECTION](design/PRODUCT-DIRECTION.md) gives the
+   ground in a table cell: *"The machine authors — Article 7 violation."*
+2. **The product is already consistent on this, and the shipped counter-example proves the rule.** The ink
+   popover ships **READY-MADE PALETTES** — `Two-colour`, `Warm zine`, `Cool zine`. The app proposes a
+   combination there, and it is frozen, correct, and on screen today. The line that permits one and refuses
+   the other is [§5.2](design/SUPPLIES-SPEC.md)'s: a palette is **craft knowledge about the material**
+   (which inks print together, what a fourth ink costs); an arrangement of marks is a **compositional
+   decision**. Ink recipes stay. Shape recipes do not. *(§5.2's own scope is default **size** — app-supplied
+   magnitude for one mark. Applying its principle to sort palettes from arrangements is an extension of a
+   stated rule, not a new one, but it is an extension and is flagged as such.)*
+3. **Trade practice and design writing reach the same conclusion §5 reached from taste — corroboration, not
+   proof.** ⚠ The two sources below are a games-journalism feature and a design essay on interiors; neither is
+   empirical literature and this ground does not pretend otherwise. Modular systems
+   fail through *legible* repetition. Bethesda's term for it is **art fatigue**; the mechanism — units
+   recurring at regular intervals, seams visible, patterns restarting cleanly, the system becoming
+   predictable precisely because it is clear — is described in the modularity literature and is exactly
+   ours. A shuffle over templates manufactures it: every output legible as *a Zinely generated badge*. §5's
+   *"the output should feel authored, not procedurally generic"* is that finding written as a product rule.
+
+⚠ **Recorded because it was nearly reversed.** The implementer recommended a maker-triggered shuffle, and
+the owner accepted that recommendation, **before §5 had been read**. It was withdrawn on reading it. Logged
+so the next reader knows this clause was tested rather than merely inherited.
+
+#### R3 — **WITHDRAWN.** App-authored composites are not built
+
+v1 proposed slot-based composites — a frame as corner + edge, the maker picking each slot — justified as
+making a compound mark manageable as one object. **It is withdrawn on three grounds, any one of which is
+sufficient.**
+
+1. **Its load-bearing technical claim was false.** v1 said a composite is "the union of its parts' subpaths
+   … no new `DrawCommand`, no replayer branch" and called that *"the finding that makes it worth doing"*.
+   `SupplyOutline`'s rule 3 is **even-odd** — *"a hole is a second subpath"* — so concatenating two
+   overlapping parts renders the overlap as a **hole**, not a union. A real union needs a boolean path
+   operation that does not exist in `:core:render`. Worse, rule 4 (*"free of winding-dependent
+   self-intersection"*) is explicitly **an authoring rule no assertion can see**, so this would have shipped
+   silently. v1's own anti-art-fatigue clause — *"parts that bleed across slot boundaries"* — mandated
+   precisely the overlap that breaks it. The design's cheapness argument and its quality argument cancelled.
+2. **It contradicted R2 under R2's own reading.** An app-authored slot template *proposes an arrangement*,
+   which is the exact thing R2 refuses randomisation for. R2 and v1's R3 could not both be true.
+3. **It inverted the direction docs' ordering.** `ZINE-DIRECTION` puts *maker*-authored **user-saved
+   combinations** on the **Waits** list. v1 shipped the app-authored version while the maker-authored one
+   stayed deferred.
+
+> **Owner ruling, 2026-08-18: maker-saved combinations stay on the Waits list.** So no composite mechanism
+> of either kind ships in this package.
+
+**Consequences of the withdrawal, all of them simplifications.** No `DecorElement` field, therefore **no
+schema change and no migrator** — and the v1 claim that a bump was *mandatory* was wrong anyway on this
+repo's own [ADR-106](#adr-106) precedent, which ruled an additive defaulted field needs neither — though that
+precedent is **conditional**, not blanket: ADR-106 also records the forward compatibility as
+*lossy-and-silent*, and that an owner ruling to ship it to real users **should** bump the version. No affine
+mapper for `Subpath`/`Segment` (none exists; `AffineTransform2D` maps `PtPoint` only). No collision with
+§5.2's override map, which `SupplyPlacementTest` pins to exactly `{shape.rule}`. No new entry on §3.4.1's
+uniform-scale list. **This package is now catalogue and search, and touches no render or model code.**
+
+The manageability problem R3 named is real and remains unsolved; it is parked with the Waits-list feature
+that owns it.
+
+#### R4 — Source for a **single coherent voice**; filled artwork is a hard requirement
+
+`DrawShape` carries `outline` and `ink` — **fill only. No stroke, no width**, and `SupplyOutline`'s **rule 2** says *"none is
+coming"*. ⚠ Cite the KDoc, not a section number: SUPPLIES-SPEC §4.1 numbers the same invariant **3**, so the
+document and the source already disagree — a mismatch that led a first draft of this line to cite a section
+carrying no numbered rules at all. Stroke-only sets are therefore ineligible *as-is*: **Lucide** (ISC) and **Feather** (MIT) ship
+strokes and nothing else. Conversion to filled paths is geometrically exact and routine, but it yields
+hairline rings rather than solid masses and ships no weight axis — a different design, not the same set.
+
+⚠ **v1 claimed this "disqualifies most of ADR-104's green list". That was wrong and is corrected here.**
+**Tabler ships a first-class Filled style**; **Heroicons** ships `solid`; **Bootstrap Icons** are largely
+filled; **Material Symbols** carries a variable `FILL` axis. All four remain eligible on both licence and
+fill grounds.
+
+| | |
+|---|---|
+| **Preferred** | **Phosphor — MIT, 1,512 marks × 6 weights including `fill`.** MIT verified at `phosphor-icons/core/LICENSE`, covering the SVG assets themselves with no icons/code split, so attribution is satisfied in the APK and never in the user's PDF |
+| **Also eligible** | Tabler · Heroicons · Bootstrap Icons · Material Symbols — each filled and permissively licensed |
+| **Secondary** | **Openclipart / Open Doodles (CC0)** where a geometric set has no equivalent — the organic, hand-torn forms |
+| **Authored** | The **process** marks — halftone densities, torn edges, registration, rules, corners — are **derivable geometry**, not house style |
+
+**Phosphor is a preference, not a forced consequence** — the distinction v1 blurred. The preference is for
+**depth in one set over breadth across five**: sixty marks drawn from five sets is five idioms in one zine.
+ADR-104 cites PICO-8, whose sixteen colours give cartridges *"their own particular look and feel"*; the
+identity risk here is the same species as art fatigue, one level up.
+
+**The last row also unblocks part of [S5](design/SUPPLIES-SPEC.md).** Its twelve remaining outlines are
+gated as hand-drawn house style, but *Cut shapes* shipped early **because that quarter turned out not to be
+design work at all**. Halftone density and registration are the same kind of thing. S5's own lesson: *"a
+step that mixes 'needs a house style' with 'is a rectangle' will always look blocked by its hardest
+quarter."*
+
+#### R5 — Search **ships**, chips and text field together. v1's deferral is reversed
+
+v1 gave the owner filter chips and deferred the text field they had asked for twice. **That is reversed, and
+ADR-104's own evidence is why.**
+
+> *"A large library without excellent search is worse than none"* — **ADR-104's own row header: its own
+> judgement, not a cited finding.** Its conclusion followed from the small curated set: *"Search is exactly
+> what a curated set gives us no reason to build."*
+
+⚠ **Attribution matters here, and a first draft got it wrong.** That sentence is ADR-104 speaking. The
+Baymard cell beside it holds the 67–90 % abandonment figure, which this ADR **withdrew** as e-commerce data
+transplanted to a 60-item picker. R5 rests on **ADR-104's ruling**, not on that number — resting it on the
+number while discarding the number as evidence would have been incoherent.
+
+R1 raises the catalogue roughly fourfold. **The escape clause was the smallness, and R1 spends it.** A
+sixty-mark library that defers search enters the quadrant ADR-104 named as the bad one, citing ADR-104's own
+row to do it. **R1 and R5-as-deferred could not both hold.** Since R1 is what the owner asked for, R5 gives
+way: search ships with the library it serves, or the library does not grow.
+
+| Ships | Where |
+|---|---|
+| Four family **chips**, filtering ~60 | `feature:editor` — **frozen surface, owner act** |
+| A **text field** over names and tags | `feature:editor` — **frozen surface, owner act** |
+| A **tag vocabulary** | `core:copy`, beside `Copy.Supplies.NAMES` |
+| The **pure search function** — `search(query, catalogue)`, platform-free, unit-tested | `core:copy` or a pure sibling |
+
+**The quality bar is the point, not the feature.** ADR-104's warning is against a *mediocre* search, so this
+one is specified rather than merely permitted: no dead-end zero state (an empty result offers the full set
+back), filtering is instant and local, active filters are visible and clearable, and matching covers **both
+the drawn name and its tags** — necessary because names and ids already diverge in this codebase, where the
+supply named *Star* has id `mark.asterisk`. A maker searching a visual catalogue is performing recognition,
+not recall ([NN/g, *Icon Usability*](https://www.nngroup.com/articles/icon-usability/)), so tags carry the
+synonyms the drawn name cannot.
+
+⚠ **Two corrections to how v1 argued this, both material.**
+
+- **A5's grounds were misstated.** v1 said amendment A5 removed the family chips *"for the identical
+  sixteen-item reason."* A5's own comment (`v21-bench.html:451-456`) gives different grounds: filtering was
+  ruled out by §9, and the four families now head their own `.lbl` sections *"so nothing is left for a chip
+  to do."* The first is the very bullet this ADR amends, so it is not independent evidence. The second is
+  the real one, and it expires **on scroll depth, not on the sixteen**: at sixteen the headed sections are
+  one screen and a chip saves nothing; at sixty a chip collapses four screens to one. Chips are defended —
+  on the correct ground.
+- **§9's *"No categories beyond the four. No tags, no filters, no sort"* states no premise at all**, so
+  nothing in it can have "expired". Amending it is a straightforward reversal and is recorded as one, in the
+  manner [§5.1](design/SUPPLIES-SPEC.md) models. It is not licensed by the search bullet's expiry.
+
+⚠ **Emoticons, precisely.** §9's *"no emoji"* is grounded in **provenance**, which does **not** expire with
+library size — OpenMoji was rejected for CC BY-SA 4.0, whose ShareAlike would follow into a stranger's
+printed zine. Emoticon-*style* marks authored from a permitted filled set are ordinary material. The ban
+attaches to the licence travelling with the artifact, never to the shape on the page.
+
+#### Consequences
+
+- ⚠ **Sequencing gate, because two clauses of v2 disagreed without it.** R5 says *"search ships with the
+  library it serves, or the library does not grow"*; a bare *"R1 needs no owner amendment"* would license a
+  ~51-mark catalogue behind a sheet with no chips and no field — **exactly the bad quadrant R5 invokes to
+  justify itself**. The gate: **R1's marks may be authored and tested, and enter the shipped sheet only in
+  the same change as R5** (see R1a).
+- **R4's sourcing needs no owner amendment.** R1's *outlines* need none either; its *set membership* does.
+- **R5 is entirely an owner act.** Chips *and* text field amend the frozen Art sheet:
+  [D-080](design/V2-SPEC-DEFECTS.md#d-080), already open in [OWNER-CHECKLIST](OWNER-CHECKLIST.md). Per
+  [V2-CONSTITUTION §VI](design/V2-CONSTITUTION.md) the HTML spec is amended in the same act, so
+  `v21-bench.html` changes first. The implementer drafts it; the owner rules.
+- **R2 changes nothing** and R3 builds nothing. The buildable-today surface is: a worked per-family curation
+  list, the licence-verified marks themselves, the tag vocabulary, and the pure search function.
+- **Every bundled mark carries the ADR-104 record**: source · licence · attribution · modification ·
+  redistribution. Curation is a process, not a feature.
+- ⚠ **Evidence placement is in tension with this log's own rule.** `DECISIONS.md`'s header requires evidence
+  to live in [RESEARCH.md](RESEARCH.md) and be cited by `R#`. RESEARCH.md is under a **standing owner instruction to this
+  implementer not to edit it** — a session constraint rather than a property of the repo, and other
+  workstreams are evidently still writing to it — so sources are inlined below instead. Flagged rather than silently broken, as the
+  README gap in [OWNER-CHECKLIST](OWNER-CHECKLIST.md) was.
+
+---
+
+### Review and reconciliation {#adr-107-review}
+
+v1 of this ADR was reviewed by an independent agent on 2026-08-18 and returned **NO-GO**. The verdict is
+recorded rather than absorbed, because two of its findings changed the decision and one of them changed it
+in the owner's favour.
+
+| Finding | Disposition |
+|---|---|
+| R3's union-of-subpaths claim is false under even-odd fill; the unit-square `require` and the missing affine mapper make it new code, not free reuse | **ACCEPTED** — R3 withdrawn |
+| R3 contradicts R2, and `ZINE-DIRECTION §9.6`'s *auto-composition* Never entry, uncited by v1 | **ACCEPTED** — R3 withdrawn; the Never entries now cited in R2 |
+| R1 and R5 cannot both hold on ADR-104's *"large library without excellent search is worse than none"* | **ACCEPTED** — R5's deferral reversed; search ships |
+| A5's grounds were misstated as the sixteen-item reason | **ACCEPTED** — corrected in R5; chips re-argued on scroll depth |
+| §9's tags/filters/sort bullet states no premise, so none expired | **ACCEPTED** — recorded as a straight reversal |
+| Fill-vs-stroke does not disqualify *most* of ADR-104's list; Tabler ships Filled | **ACCEPTED** — R4 corrected; Phosphor demoted to preference |
+| Phosphor is 1,512 marks, not 1,248 | **ACCEPTED** |
+| The modularity quotation was attributed to the wrong source and was not verbatim | **ACCEPTED** — quote marks dropped, attribution corrected in R2 |
+| "~15 per family" asserted, never worked; art fatigue can operate inside one family | **ACCEPTED** — R1 now refuses to assert a per-family number |
+| The Constitution names packs as the growth mechanism | **ACCEPTED** — R1 concedes this is the first pack, shipped merged |
+| Schema bump called "mandatory" against ADR-106's additive-field precedent | **ACCEPTED** — moot with R3 withdrawn, and recorded as wrong anyway |
+| Icon-search study is n=5 and vendor-authored; Baymard's figures are e-commerce purchase abandonment | **ACCEPTED** — both dropped from the argument; NN/g cited for the recognition point and Baymard for its *guideline*, never its transplanted number |
+| The ~120 deferral trigger was undefended | **ACCEPTED** — moot; search now ships |
+| §5.2 may be post-hoc rationalisation for keeping ink recipes | **REJECTED**, and the reviewer agreed on inspection: §5.2 states the material-vs-composition line in its own words. Recorded here because R2's ground 2 rests on it and a future reader deserves the challenge as well as the answer |
+| SUPPLIES-SPEC asserted the amendment as accomplished while this ADR was `Proposed` | **ACCEPTED — fixed immediately**, ahead of the rest |
+| Evidence belongs in RESEARCH.md by `R#` | **PARTIALLY ACCEPTED** — cannot comply; RESEARCH.md is owner-protected. Flagged in Consequences |
+| ADR-107 absent from the `### Index`; ADR-103–106 also missing | **ACCEPTED as pre-existing drift** — noted for a separate docs pass, not fixed inside a decision record |
+
+#### Second review round, 2026-08-18 — **GO WITH FIXES**, all applied
+
+v2 was re-reviewed by a second independent agent that had not seen v1. It confirmed the v1 repairs landed in
+the prose rather than only in the table above, and that R3's withdrawal leaves no downstream dependency. It
+raised nine Required Fixes, **all editorial — none reopened R1–R5** — and every one is applied:
+
+| Finding | Applied |
+|---|---|
+| The Medium source was given **a title it does not have**, and is about interiors, not art kits | Title corrected, subject stated |
+| *"The empirical literature says the ban is right"* overclaims two blog posts | Reworded: trade practice + a design essay, corroboration not proof |
+| `DrawShape`'s fill-only rule cited to §3.2, which carries no numbered rules | Cited to `SupplyOutline` rule 2; the doc/KDoc numbering mismatch flagged |
+| R5 attributed **ADR-104's own row header** to Baymard — whose figure this ADR had just withdrawn | Restated as ADR-104's ruling; the incoherence named |
+| Consequences licensed R1 to ship without R5 — ADR-104's bad quadrant | **Sequencing gate** added: R1 enters the sheet only with R5 |
+| The `Amends:` header named one §9 bullet; R5 reverses two | Both named |
+| **D-080 never mentions a text field**, and its item 2 is stale — A5 *deleted* the chips | [D-080 §4](design/V2-SPEC-DEFECTS.md#d-080-extended) written: four controls tabulated, staleness flagged |
+| R1's *"needs nothing from you"* asserted against D-051's precedent | R1a added — outlines are the implementer's, set membership is the owner's |
+| ADR-107 absent from this log's own `### Index` | Row added |
+
+Plus: ADR-106's precedent restated as **conditional** rather than blanket; the miscounted *"four words"*
+corrected; `§9.6` qualified as ZINE-DIRECTION's rather than this document's; and the RESEARCH.md exception
+reworded as a **session instruction** rather than a repo fact — the reviewer correctly noted other
+workstreams still write to that file.
+
+⚠ **The pattern worth keeping.** v1 was returned NO-GO partly for a misattributed quotation; v2 repeated the
+same defect class at smaller scale with a fabricated article title. Two rounds, two citation failures, each
+caught only by someone re-opening the sources. **In this ADR the citations were the least reliable part, not
+the reasoning** — the opposite of where the effort went.
+
+#### Sources
+
+- [Bethesda's modular toolsets and kitbashing](https://www.pcgamesn.com/fallout-4/bethesda-open-world-design) — the term **art fatigue**
+- ["Modularity is often misunderstood as a purely technical strategy"](https://kxuu.medium.com/modularity-is-often-misunderstood-as-a-purely-technical-strategy-960cb33c49c8) — a design essay on **interiors**, not art kits; R2 paraphrases its legibility mechanism and never quotes it. ⚠ A first draft gave this article a title it does not have
+- [NN/g — Icon Usability](https://www.nngroup.com/articles/icon-usability/) — recognition over recall; icons need labels
+- [Phosphor Icons](https://github.com/phosphor-icons/core) — MIT, 1,512 marks, six weights including `fill`
+- [Tabler Icons](https://tabler.io/icons) — MIT, Outline **and Filled** styles
+
+---
+
+## ADR-108 {#adr-108}
+
+### Hollow supplies — refused as an axis, admitted one mark at a time, and the drawer's promise fixed first
+
+**Status:** `Proposed` · 2026-08-18
+**Owner ruling required on:** the [D-093](design/V2-SPEC-DEFECTS.md#d-093) reading this ADR recommends (**reading 1**, tiles become solid) — an amendment to the frozen Art sheet, therefore an owner act
+**Extends:** [ADR-107](#adr-107) (R1's curation filter, R1a's freeze-scope split) · [ADR-104](#adr-104) (Constitution Amendment 3)
+**Amends:** nothing. The fill-only rule (*`SupplyOutline` KDoc rule 2*) and §5 (*no procedural variation of the outline*) both stand, and this ADR is the second occasion on which the first of them decided a feature
+**Depends on:** [D-093](design/V2-SPEC-DEFECTS.md#d-093) and [D-092](design/V2-SPEC-DEFECTS.md#d-092) being ruled together, as D-093 itself asks
+
+---
+
+#### Context
+
+The owner asked whether Zinely should ship **hollow (outline) versions of every creative asset** — an
+outlined star alongside the solid one, and so on across the catalogue.
+
+Mid-drafting, a Pass 2 run on **SM-A176B / Android 16** changed the question. Every one of the sixteen tiles
+in the `Art` drawer is drawn as a **stroked outline**; every placed supply lands as a **solid fill**. That
+finding is filed as [D-093](design/V2-SPEC-DEFECTS.md#d-093) and it is not a footnote to this ADR — it is
+the strongest argument *for* hollow that anyone has produced, and it arrives attached to a cheaper fix that
+points the other way.
+
+> ⚠ **This ADR was drafted against a framing that the device falsified in one of its four claims and
+> sharpened in another.** What survived, what was refuted, and what reversed is recorded at
+> [§ Claims tested](#adr-109-claims). The recommendation below is narrower and less confident in its own
+> strategic argument than the framing that produced it.
+
+---
+
+#### The three options, argued
+
+##### Option A — hollow as **more tiles**: 16 becomes 32, ~51 becomes ~102
+
+The catalogue grows by one hollow twin per solid supply. No model change, no new control, no schema
+question. Every cost lands in authoring and in browsing.
+
+**For it.** It is the only option that needs nothing from the document model, and it is the shape the
+product already uses for the one hollow mark it ships: `paper.window` **is** `shape.rect` with the middle
+removed, and it is a supply in its own right, with its own name and its own tile.
+
+**Against it, and this is decisive at the axis level.** [SUPPLIES-SPEC §4.3.1](design/SUPPLIES-SPEC.md#curation-list)
+asks every candidate a second question that excluded more than R1's own did:
+
+> **Can the maker already make this with a verb they have?**
+
+Hollow **passes** that filter — the maker cannot outline a supply with rotate, scale or mirror — so the
+clean analogy to *"halftone at further densities"* does **not** hold, and [§ Claims tested](#adr-109-claims)
+records that as a refutation rather than a quibble. But §4.3's *other* exclusions catch it anyway, and one
+of them by name: `shape.ring` is on §4.3.5's proposed list as *"derivable — hole as a second subpath"* while
+**Square, Oval, Diamond and Rounded rectangle are excluded as duplicates with names.** ADR-107's curation
+therefore already ruled on hollow — and ruled that it enters **one mark at a time, on its merits**, not as a
+sweep. A mechanical hollow axis would ship `shape.ring` *and* a hollow circle, which are the same mark
+arrived at by two routes; it would ship a hollow `paper.window`, which is a rectangle with two holes in it
+and reads as a picture frame nobody asked for; and it would ship a hollow `fix.corner`, which is a photo
+corner whose pocket has grown a second pocket.
+
+**Three of the sixteen are already annuli, so the axis is not even total over its own domain.** ✅ VERIFIED —
+`WINDOW` is two subpaths (`SupplyCatalog.kt:246-262`), `PHOTO_CORNER` is two (`SupplyCatalog.kt:285-288`),
+and `REGISTRATION` carries a proper ring built from `circle(…, REG_RING_OUTER) + circle(…, REG_RING_INNER)`
+(`SupplyCatalog.kt:168-176`). An axis with three undefined cells out of sixteen is a list, not an axis.
+
+**And the browsing cost is R2's own mechanism.** [ADR-107 R2](#adr-107) refuses shuffle partly because
+modular systems fail through *legible* repetition. A drawer in which every mark appears twice, in the same
+order, differing only in weight, is the most legible repetition available. R1 already refused to assert
+"~15 per family" for exactly this reason.
+
+##### Option B — hollow as a **per-element property**: a toggle beside `Ink`
+
+`DecorElement` gains `hollow: Boolean = false`; the context bar gains a verb next to `Ink`; the catalogue
+stays at sixteen.
+
+**For it.** It is the shape the codebase already uses for a per-element property of a placed supply.
+`Ink` is exactly that — ✅ VERIFIED `DecorElement.ink: ColorRgba` (`Document.kt:150`), routed through
+`benchInkColorOf`'s `is DecorElement -> element.ink` arm (`BenchContextBar.kt:256`) and offered by
+`BenchInkPopover`. `mirrored: Boolean = false` (`Document.kt:157`) is *precisely* the shape proposed here:
+an additive, defaulted boolean that changes how one outline is drawn. The precedent is real and it is not
+one I can wave away.
+
+**Against it — the property does not buy what it appears to buy.** This is the load-bearing objection and it
+survives the device evidence unchanged.
+
+✅ VERIFIED — **`DrawShape` is fill-only. There is no stroke, no width, no cap, no join, and no field for
+one** (`DrawCommand.kt:86-100`; `SupplyOutline` KDoc rule 2, `SupplyOutline.kt:24-25`, which says *"none is
+coming"*). The replayer's `DrawShape` arm is `shapePaint.color = …; canvas.drawPath(outline.toPath(), …)`
+with `style = Paint.Style.FILL` (`CanvasReplayer.kt:57-70, 132-135`). So a `hollow` flag cannot be
+*implemented* as a stroke. It can only select **a second, hand-authored outline**. The property is a
+selector over authored art, and the art is the cost. **Option B is Option A's authoring bill with a
+different UI attached** — twelve inner contours today, thirty-five more if ADR-107 R1 lands.
+
+**And it forces two things Option A does not:**
+
+- **A schema question that is not free.** 🟨 ASSUMPTION on the ruling, ✅ VERIFIED on the mechanics.
+  [ADR-106](#adr-106)'s precedent says an additive defaulted field needs neither a bump nor a migrator, and
+  ADR-107 R3 restates that precedent as **conditional** — ADR-106 also records forward compatibility as
+  *lossy-and-silent*. Here the silence is worse than `copier`'s. A build predating `copier` drops it and the
+  zine opens *plainer*; a build predating `hollow` drops it and the zine opens with **a solid star where the
+  maker drew a ring** — not a degraded rendering but a different mark, in the maker's own composition, with
+  nothing on screen to say so. That is the asymmetry `Document.kt:11-21` already reasons about when it
+  explains why the `DecorElement` discriminator *did* bump to v2. If the flag ships to real users it should
+  bump `CURRENT_SCHEMA_VERSION` to 3 — and a bump is not free: ✅ VERIFIED `DocumentMigrations` validates
+  chain integrity **at construction**, requiring `toVersion == fromVersion + 1` with no shared `fromVersion`
+  and throwing `MissingMigratorException` on a gap, so v3 needs a registered v2→v3 **identity** migrator
+  exactly as v1→v2 has one.
+- **A control on a frozen surface, which is an owner act.** The context bar and the Art sheet are both drawn
+  in `v21-bench.html`. Per [V2-CONSTITUTION §VI](design/V2-CONSTITUTION.md) the HTML spec is amended in the
+  same act, so `v21-bench.html` changes **first**; the implementer drafts, the owner rules. This is the same
+  gate [D-080](design/V2-SPEC-DEFECTS.md#d-080) already holds ADR-107 R5's chips and search field behind.
+  ⚠ It is also the gate that catches this option coming and going: a `hollow` toggle would be a *fifth* verb
+  in a row that `BenchContextBar` documents as already re-measured because *"`Delete` is wider than `Ink`
+  where the two used to measure the same"* (`BenchContextBar.kt:284`).
+
+##### Option C — **not at all**
+
+No hollow twins, no property, no toggle. The catalogue stays as authored, and hollow marks enter only the
+way `paper.window` and `fix.corner` entered: as individual supplies whose hollow form **is** the mark.
+
+This is the recommendation, in the qualified form given below.
+
+---
+
+#### The geometry, worked — why "hollow" is authoring and not a switch
+
+The framing this ADR was given claimed the inner contour "cannot be computed" because inward offsetting
+"self-intersects on concave shapes". **That claim is wrong as stated and the correct version is stronger.**
+
+✅ VERIFIED — a correct inward offset does **not** self-intersect; the self-intersection is what a correct
+algorithm exists to resolve. Continuous inward offsetting moves each vertex along its angular bisector, and
+*events* occur when two moving vertices collide or a vertex meets an offset edge; the segments traced are
+the **straight skeleton**, and the offset contour is read off it
+([CGAL, *2D Straight Skeleton and Polygon Offsetting*](https://doc.cgal.org/latest/Straight_skeleton_2/index.html);
+[Straight skeleton](https://en.wikipedia.org/wiki/Straight_skeleton)). The naive method — offset each edge,
+intersect adjacent bisectors — is what self-intersects, and the industrial answer is the same: Clipper2
+warns that offsetting must not be performed on intersecting closed paths and requires a `Union` pre-pass,
+([Clipper2, *ClipperOffset*](http://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/ClipperOffset/_Body.htm), which requires a **Union** pre-pass because *"offsetting should not be
+performed on intersecting closed paths"* — it does not claim to repair a self-intersected result afterwards).
+
+🟦 **So the honest answer to "is there a robust, small, dependency-free approach for these specific shapes?"
+is: yes for the trivial half, no for the half that matters, and the boundary is where the art is.**
+
+- **Trivially exact, no algorithm needed.** `shape.rect`, `shape.rule` — an inner rectangle.
+  `shape.circle` — the offset of a circle is a circle, so `circle(0.5, 0.5, 0.5 - δ)` is exact and the
+  existing `circle()` helper already emits it. `shape.triangle` — convex, no events possible.
+- **Already hollow.** `paper.window`, `fix.corner`, `mark.registration` — see above.
+- **Where it breaks, with numbers.** The remaining marks are concave with acute vertices, and the failure is
+  not self-intersection in general but **a miter length of `δ / sin(θ/2)` that grows without bound as θ
+  shrinks**, followed by a topology event when it exceeds the feature it is inside.
+
+  | Mark | Sharpest vertex | Inner miter retreat at δ = 0.06 | The feature it must fit inside | Fails at |
+  |---|---|---|---|---|
+  | `mark.asterisk` (Star) | **38.3°** | 0.183 — 37 % of the point's length | point tip at r 0.4755, inner ring at r 0.1722 (the **normalised**, shipped radii) | δ ≈ 0.10, where the point tip crosses its own inner ring |
+  | `paper.tag` (Speech tag) | **27.1°** (the tail apex) | **0.256 — 67 % of the tail** | tail length 0.38 | δ ≈ 0.09 |
+  | `mark.arrow` | **43.7°** (both barbs) | 0.161 | shaft thickness 0.32 | δ ≈ 0.16 |
+  | `fix.staple` | 90° throughout | 0.085 | wire thickness **0.18** | δ ≈ 0.09 — the whole wire closes |
+  | `mark.halftone` | — | — | smallest dot radius **0.038** | δ ≈ 0.038 — the smallest dot vanishes and the ramp loses its quiet end |
+
+  *(Angles computed from the authored coordinates in `SupplyCatalog.kt`; thicknesses read from the same
+  constants. `HALFTONE_R_MAX = 0.11`, `HALFTONE_R_STEP = 0.012`, so the diagonal-6 dot is r = 0.038.)*
+
+  ⚠ **Corrected in review — this row was wrong by 4×.** The first draft said *"four of the sixteen dots
+  vanish"* at δ ≈ 0.038. The sixteen radii are `0.038×1 · 0.050×2 · 0.062×3 · 0.074×4 · 0.086×3 · 0.098×2 ·
+  0.110×1`, so the count of vanished dots steps **1 → 3 → 6 → 10** and there is no δ at which exactly four
+  go. The `r = 0.038` measurement was right; the consequence drawn from it was inflated. ⚠ It was inflated
+  **in the direction of this ADR's own recommendation**, which is the reason it is corrected in place and
+  named rather than quietly amended — see [the bias note](#adr-108-bias).
+
+  **There is no single δ that serves this catalogue.** A weight fine for the star closes the staple; a
+  weight fine for the staple is invisible on the rectangle; any weight at all destroys the halftone, whose
+  entire content is a size ramp that a constant-width outline flattens.
+
+⚠ **And nothing in the test suite would catch a bad one.** `SupplyCatalog` already records the trap in its
+own words: the shoelace area test *"takes an absolute value, so an inside-out dot measures the same as a
+right-way-out one"* (`SupplyCatalog.kt`, `halftoneRadius` KDoc) — which is why `HALFTONE_PITCH` is derived
+and the ramp is `require`-guarded. §4.1's rules 3 and 4 are **unassertable by design**. An inner contour that
+crossed its outer one would render as an even-odd cancellation — a *hole where the mark is densest*, the
+exact failure `REGISTRATION`'s arms are shaped to avoid — and ship green.
+
+⚠ **One more defect no stroke would have, which the annulus does.** ✅ VERIFIED — `DrawShape.localToPage`
+carries the element's size through a `scale(w, h)` term that *"is non-uniform in general"*
+(`DrawCommand.kt:76-79`), and keeping a stamp square is *"an editor constraint, not a render one"*. An
+authored annulus has **constant thickness in unit space**, so at a non-square landing its line weight is
+anisotropic: thick on one axis, thin on the other. This is not hypothetical —
+[D-092](design/V2-SPEC-DEFECTS.md#d-092) establishes that `fix.corner` lands at **4.5:1** today. A hollow
+supply at that aspect has its x-axis stretched 4.5×, so the ribs running **vertically** measure 4.5× thicker
+than the horizontal ones. A constant unit-space wall cannot survive that; it reads as a mistake.
+
+**Conclusion of the geometry section:** each hollow twin is a hand-authored inner contour, reviewed under
+§4.1 like every other outline, and owed its own §4.1 attestation. **Five hard authoring jobs today; forty-seven
+if ADR-107 R1 lands.** 🟦
+
+---
+
+#### The strategic argument, and the part of it that was wrong
+
+The framing offered was: hollow-vs-solid is a **variation axis**, not a new supply — the same second filter
+§4.3.3 used to exclude *"halftone at further densities … density is a variation axis, not four supplies."*
+
+⚠ **The analogy does not hold, and pretending it does would be the kind of borrowed authority ADR-107 was
+returned NO-GO for twice.** Density is excluded because the marks are *indistinguishable at supply scale*
+and because scale is a verb the maker already has. Neither is true of hollow: a ring and a disc are
+maximally distinguishable, and no maker verb converts one into the other. Outline-vs-solid is the difference
+between a shape and a **frame** — a different compositional object — and this catalogue proves it, because
+`paper.window` is exactly `shape.rect` hollowed and ships as its own supply under a different family.
+
+**What survives, and is sufficient on its own:** hollow is not a *variation axis* to be refused wholesale,
+it is a **generator of individually curatable supplies**, and ADR-107 already decided how those enter —
+one at a time, through §4.3.1, with the near-duplicate exclusions applied. Applied mechanically it produces
+the near-duplicates §4.3 spends four sections excluding. That is a narrower argument than the one this ADR
+was handed, and it reaches a slightly different place: **not "no", but "not as an axis".**
+
+---
+
+#### The ink-economy argument — 🟦, and it points somewhere else
+
+*Is "a hollow mark uses less toner" documented anywhere in `docs/` as a product value?*
+
+**No. 🟦 RECOMMENDATION-grade at best, and the two nearest things in the corpus both point elsewhere.**
+
+- 🟨 **ASSUMPTION, not ✅ — and the downgrade is deliberate.** [RESEARCH.md R12.6](RESEARCH.md) records the
+  home-print traps — *"heavy blacks dominate per-page cost"* — and cites Printivity and Toner Buzz for it.
+  ⚠ **Review re-opened both and neither supports the claim**: the Printivity page is about page-order and
+  imposition and contains no ink-coverage or per-page-cost content, and the Toner Buzz page is a
+  run-out-of-black troubleshooting guide whose nearest sentence is *"the color black is by far the most used
+  in printers"* — usage frequency, not cost. RESEARCH.md's sentence may well be true; **it is not sourced**,
+  so this ADR marks it 🟨 and does **not** re-list those URLs in its own Sources. Inheriting a citation is
+  not the same as having one, and this repo has already shipped that mistake twice. R12.6 also adds
+  *"cost-saving and the zine aesthetic point the same way: converting heavy blacks to a coarse halftone is
+  both cheaper to print and more true to the form."* **The corpus's one documented toner-saving move is the
+  halftone — and `mark.halftone` already ships.** The evidence for ink economy, where it exists, argues for
+  a supply we have, not for an axis we do not.
+- ✅ VERIFIED, but not a product value: `ZINELY-DESIGN-SYSTEM.md:1437` — *"if you can't say why it's there,
+  it's wasting toner"* — is the design system's fourth convergence, an aphorism about **removing arbitrary
+  ornament**. Read as an ink-economy claim it argues against *shipping a second copy of every mark*, which is
+  the reverse of the use it was offered for.
+
+🟨 ASSUMPTION worth stating plainly: makers do not choose supplies by toner cost. A supply is a
+compositional decision; the cost per page is dominated by photos and heavy blacks, not by whether a 40 pt
+star is a disc or a ring. The ink argument is real physics and weak product reasoning, and this ADR does not
+rest on it.
+
+---
+
+#### The device evidence, and why it changes the recommendation's *first* step
+
+[D-093](design/V2-SPEC-DEFECTS.md#d-093) is the finding that matters. ✅ VERIFIED in source, not only on the
+device: `rememberBenchArtGlyph` builds every tile with `fill = null, stroke = SolidColor(Color.Black),
+strokeLineWidth = BenchArtGlyphStroke` (`BenchArtSheet.kt:604-611`), unconditionally, for all sixteen —
+against `CanvasReplayer`'s `Paint.Style.FILL` for every placement.
+
+Three readings, and the incumbent must be tested rather than inherited:
+
+**Reading 3 — accept it, on A5's authority — is not sufficient, and D-093's own analysis is right about
+why.** ✅ VERIFIED, A5 says *"the sixteen glyphs in `SUP` DEPICT the supplies; they are not the authored
+outlines … a mockup must not become their source"* (`v21-bench.html:1051-1055`). That is a rule about
+**authoring provenance**: it stops reviewed Kotlin being traced off a mockup. It says nothing about whether
+the tile may **mispredict** what a tap produces, which is a different property. A5's own positive
+specification is that *"sixteen DISTINGUISHABLE marks appear"* — distinguishable **from each other**, which
+is silent on the question.
+
+⚠ **The repository already contains the counter-precedent, in the file A5 supposedly licenses to diverge.**
+`SupplyCatalog`'s `REGISTRATION` KDoc records that the ring was widened *after comparing the rendered
+outline against the Art sheet's tile glyph in a golden diff*, and states the principle: the glyph was used
+as *"a check that the mark reads as the thing it names"*. The team has already treated tile-vs-placement
+agreement as a quality signal on one supply. And `HALFTONE`'s KDoc books precisely this defect class as an
+open Pass 2 reading in advance: *"the tile glyph draws a scatter, this draws a lattice … a maker taps a
+loose cluster and gets a regular grid, and only a first-time reader can say whether that reads as a broken
+promise."*
+
+**So there are now three independent instances of one defect**, and that is what makes it a defect rather
+than three quirks: fill weight (D-093, all sixteen), silhouette/aspect (D-092, `fix.corner` at 4.5:1), and
+lattice-vs-scatter (`mark.halftone`, booked by the implementer before the device found the other two). The
+question underneath all three is one question — **does the picture on the tile predict the mark on the
+page?** — and it should be ruled once.
+
+**Reading 2 — ship hollow, so the drawer's promise becomes true — is the strongest pro-hollow argument
+anyone has made**, and it is stronger than both arguments in the original framing. It deserves the concession
+in full: a maker's expectation is not formed by an ADR, it is formed by the picture they tapped, and they
+tapped a hollow star.
+
+**But an expectation created by a picture can be corrected at either end, and the two ends are not
+comparable.**
+
+| End | What it costs |
+|---|---|
+| **The tile** (reading 1) | one `fill =` in `rememberBenchArtGlyph`, one `.tile svg{fill:none}` in `v21-bench.html:466`. **Zero catalogue cost, zero model cost, zero schema cost.** An owner act, because it is drawn material on a frozen surface |
+| **The catalogue** (reading 2) | 12 hand-authored inner contours now (47 under ADR-107 R1), a model field, a probable schema bump plus identity migrator, a fifth context-bar verb, a doubled drawer, and the anisotropic-weight defect at every non-square landing |
+
+🟦 **Take the cheap end** — unless the owner independently wants hollow marks *as a look*, which is a
+different question with a different answer, given below.
+
+---
+
+#### Interaction with ADR-107 and the four unauthored outlines
+
+- ✅ VERIFIED — **[ADR-107 R1a](#adr-107)'s sequencing gate reaches this whether hollow ships as tiles or as
+  a property.** R1a splits authoring from admission: outlines are the implementer's, but *"set membership,
+  drawn names, order and the resulting scroll depth are drawn in `v21-bench.html`, and those are the
+  owner's"*; **R1 may not be shipped into the sheet until R5 is ruled.** Hollow twins are set membership.
+  Option B's toggle is a control on the same frozen surface. Both queue behind the same D-080 owner act that
+  R5 already waits on — and ADR-104's priority ruling stands above both: *"the photocopier filter outranks
+  the supply set."* **X3b first, R5 second, this third at the earliest.**
+- ✅ VERIFIED — **four of the sixteen are still unauthored**: `tape.torn`, `paper.strip`, `paper.underline`,
+  `fix.clip` (`SupplyCatalog.kt`, closing comment). Three need one authored tear — *"ONE commission rather
+  than three"* — and `fix.clip` is *"a wire object in a fill-only renderer"*, the one row of §4.3's
+  derivability claim that did not survive contact with the renderer.
+
+  ⚠ **This is the sequencing argument that settles it independently of everything above.** Hollow proposes
+  **twelve** new authoring jobs to duplicate marks the maker already has, while **four** authoring jobs stand
+  between the drawer and being honest — because a maker who taps one of those four gets a tile that dims and
+  says *not yet*. Doubling an incomplete catalogue before completing it inverts the order of the questions,
+  which is the failure [CLAUDE.md's product principle](../CLAUDE.md#product-principle-every-screen-answers-the-users-current-question)
+  names and `0.9.0-beta.1`'s Preview screen is the standing example of.
+
+  ⚠ And `fix.clip` is the direct precedent for the geometry section above: a paper clip must be authored as
+  *"the closed ribbon around the wire — a long, doubled, self-parallel outline whose two ends nest"*. **That
+  is exactly one hollow supply, hand-authored**, and `SupplyCatalog` classifies it as *"genuine
+  draughtsmanship, not elementary geometry."* One of them is a commission. Five is a project.
+
+---
+
+#### Decision
+
+**Hollow does not ship as an axis — not as thirty-two tiles, and not as a per-element property. It ships,
+where it ships at all, one curated mark at a time, exactly as `paper.window` did.** Three rulings:
+
+**R1 — Option B (per-element property) is refused.** It buys no authoring relief (the flag can only select a
+second authored outline, because `DrawShape` is fill-only and *"none is coming"*), and it costs a model
+field, a probable `CURRENT_SCHEMA_VERSION` bump to 3 with a registered v2→v3 identity migrator, and a fifth
+verb on a frozen context bar. Every cost, none of the benefit.
+
+**R2 — Option A (a mechanical hollow twin per supply) is refused.** Three of the sixteen are already annuli
+so the axis is undefined over 19 % of its own domain; no single stroke weight serves the catalogue (the
+star closes at δ ≈ 0.10, the tag's tail at δ ≈ 0.09, the staple's wire at δ ≈ 0.09, and the halftone loses
+its smallest dot at δ ≈ 0.038); a constant-unit-space annulus renders anisotropically at the non-square landings
+D-092 proves exist; and doubling the drawer manufactures the legible repetition ADR-107 R2 refuses shuffle
+to avoid.
+
+**R3 — hollow marks are *admissible* individually, through §4.3.1, and ADR-107 already proposed two.**
+`shape.ring` and `fix.grommet` are on §4.3's list, each described as *"a hole as a second subpath, which the
+even-odd rule already supports"*. That is the sanctioned route and it needs no amendment from this ADR. 🟦
+**A hollow form earns a row when it is its own mark — a ring, an eyelet, a frame — and not when it is merely
+the same mark drawn lighter.** The test is §4.3.1's, unchanged.
+
+**R4 — and first, before any of it: rule [D-093](design/V2-SPEC-DEFECTS.md#d-093), together with
+[D-092](design/V2-SPEC-DEFECTS.md#d-092), and this ADR recommends D-093 reading 1 — the tiles become
+solid.** It is the smallest change that makes the drawer's picture predict the page's mark; it costs nothing
+in the catalogue; and it removes the only argument for hollow that was strong enough to be worth this ADR.
+⚠ It is drawn material on a frozen surface, so `v21-bench.html:466` is amended first and the **owner rules**
+— the implementer may draft it and may not ship it. 🟨 The `.tile` glyphs are 24-unit icons at 1.7 stroke
+weight in a set styled by its container (`BenchArtSheet.kt:120-121`); whether a solid 24-unit glyph reads
+correctly at tile scale is a design question this ADR cannot settle from source and should not pretend to —
+it is drafted, rendered, and looked at.
+
+**On the owner's question, answered plainly:** *no, we should not ship hollow versions of every asset.* The
+observation that prompted it is real and is a defect, but it is a defect in the **picture**, not a gap in the
+catalogue — and the catalogue's own next four marks are worth more than twelve duplicates of the twelve it
+already has.
+
+---
+
+#### Consequences
+
+- **Nothing is built by this ADR.** No catalogue change, no `DecorElement` field, no schema bump, no
+  migrator, no control. `CURRENT_SCHEMA_VERSION` stays at 2 and `DocumentMigrations` keeps its single v1→v2
+  identity step.
+- **The fill-only rule is untouched and has now decided two
+  features** — it withdrew [ADR-107 R3](#adr-107)'s composites and it refuses hollow-as-a-property here.
+  🟦 That is worth noting as a pattern rather than a coincidence: **the renderer's narrowest constraint has
+  been this system's most productive one**, and the two proposals it killed were both proposals to get
+  variety without authoring it.
+- **The unblocked work is unchanged and is the four unauthored outlines** — one tear commission serving
+  `tape.torn` · `paper.strip` · `paper.underline`, plus `fix.clip`'s ribbon. 🟦 `fix.clip` is a hollow supply
+  and should be authored as the worked example: if its closed-ribbon outline proves cheap, R3's individual
+  route is cheap too, and this ADR's cost estimates should be revisited against that evidence.
+- **Owner queue position:** behind ADR-104's X3b photocopier priority and behind ADR-107 R5's D-080
+  amendment. D-093's ruling is the exception and should be taken **early**, because it is on a shipped
+  surface today and costs nothing to implement once ruled.
+- ⚠ **No independent Review Agent has validated this ADR.** Its geometric numbers are computed from the
+  authored coordinates in `SupplyCatalog.kt` and are reproducible; its citations to CGAL, Clipper2 and the
+  straight-skeleton literature were opened, not recalled. Given ADR-107's record — **two review rounds, two
+  citation failures, each caught only by someone re-opening the sources** — the citations here are the part
+  a reviewer should attack first, and the miter table is the part most likely to contain an arithmetic slip
+  that changes a threshold without changing the conclusion.
+
+---
+
+#### Claims tested {#adr-109-claims}
+
+The four claims this ADR was asked to verify or refute, plus the device evidence that arrived mid-draft.
+
+| Claim | Verdict |
+|---|---|
+| **1.** `DrawShape` is fill-only, so hollow must be an authored annulus under even-odd | ✅ **VERIFIED.** `DrawCommand.kt:86-100` carries `outline` and `ink` and nothing else; `SupplyOutline.kt:26-27` rule 2 says *"none is coming"*; `CanvasReplayer.kt:57-70, 132-135` uses `Paint.Style.FILL` with even-odd on `Path.fillType` |
+| **2.** `paper.window`, `fix.corner` and `mark.registration` are already exactly that shape | ✅ **VERIFIED**, `SupplyCatalog.kt:168-176, 246-262, 285-288`. Hollow therefore needs **no renderer change** — and the same fact undermines the axis, since three cells of sixteen are already occupied |
+| **3.** The inner contour "cannot be computed" because inward offsetting self-intersects on concave shapes | ⚠ **REFUTED AS STATED, and replaced by a stronger claim.** A correct offset does not self-intersect — the straight skeleton resolves the events (CGAL; Clipper2 requires a `Union` pre-pass and repairs the result). The real obstruction is that no single δ serves this catalogue: the miter `δ/sin(θ/2)` blows up at the star's 38.3° and the speech tag's 27.1° apex, while the halftone's smallest dot (r = 0.038) and the staple's wire (0.18) annihilate first. Half the catalogue is trivially exact; the other half is authoring. **The conclusion — twelve hand-authored jobs — survives; the reason given for it did not** |
+| **4.** Hollow is a *variation axis* like "halftone at further densities", so it belongs as a property | ⚠ **PARTLY REFUTED.** §4.3.1's filter asks whether the maker can already make it with a verb they have; hollow **passes**, unlike density (which is scale) and unlike Square/Oval/Diamond. A ring and a disc are maximally distinguishable, and `paper.window` is `shape.rect` hollowed shipping as its own supply. The property conclusion survives on **different grounds** — the flag cannot implement hollow, only select it — and the axis conclusion narrows from *"refuse hollow"* to *"refuse hollow as a sweep; admit it per mark"* |
+| **Device evidence (D-093).** All sixteen tiles hollow, all placements solid | ✅ **VERIFIED in source**, `BenchArtSheet.kt:604-611` (`fill = null, stroke = …`). It is the **strongest pro-hollow argument raised**, and the framing this ADR was given missed it entirely. It is answered not by refusing it but by observing the promise can be corrected at the cheap end. **Reading 3 (accept, on A5) is tested and found insufficient**: A5 governs authoring provenance, not prediction — and `SupplyCatalog`'s own `REGISTRATION` and `HALFTONE` KDocs show the team already treating tile-vs-placement agreement as a quality signal |
+
+#### Sources
+
+- [CGAL — *2D Straight Skeleton and Polygon Offsetting*](https://doc.cgal.org/latest/Straight_skeleton_2/index.html) — inward offsetting as a continuous process; vertices on angular bisectors; *events* when moving vertices collide
+- [Straight skeleton](https://en.wikipedia.org/wiki/Straight_skeleton) — the shrinking process and its topology changes
+- [Clipper2 — *ClipperOffset*](http://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/ClipperOffset/_Body.htm) — offsetting must not be run on intersecting closed paths; `Union` pre-pass required
+- [Parallel curve](https://en.wikipedia.org/wiki/Parallel_curve) — why an offset of a general curve is not the same class of curve as its progenitor
+
+⚠ **Deliberately not listed:** the two home-print cost URLs carried by RESEARCH.md R12.6. Review fetched
+both and found neither supports the per-page-cost claim attributed to them. The claim is marked 🟨 above
+rather than repeated with a source it does not have. **RESEARCH.md's own R12.6 citation should be
+re-examined**, which is filed as owner-owed rather than fixed here — this ADR does not own that document.
+
+#### Review record {#adr-108-bias}
+
+Reviewed once by an independent agent; verdict **GO WITH FIXES**, seven Required Fixes, all applied above.
+
+⚠ **The finding worth keeping, which is not any single fix.** Two arithmetic errors were found, and **both
+ran in the direction of this ADR's own recommendation**: the halftone was said to lose four dots where it
+loses one (4×), and the authoring bill was stated as twelve jobs where five are hard (the other seven being
+four trivially-exact shapes and three marks that are *already* annuli). Neither is load-bearing — R2 stands
+independently on the three-already-annuli argument, the no-single-δ argument, D-092's anisotropy, and
+ADR-107 R2's legible-repetition argument. But an unnoticed 4× and an unnoticed 2.4× that both happen to
+favour the conclusion is exactly the pattern that turns an argued recommendation into a settled cost nobody
+re-checks. Recorded here so the next reader knows the numbers were audited **and** which way they leaned
+before they were.
+
+The reviewer was also asked directly whether the conclusion was predetermined and concluded it was not,
+citing that the draft refuted two of the four claims it was handed — including conceding that hollow
+**passes** §4.3.1's filter, which strengthens the case *against* its own thesis.
+- [Printivity — *Booklet Layout*](https://www.printivity.com/insights/booklet-layout) · [Toner Buzz](https://www.tonerbuzz.com/blog/how-to-print-without-black/) — the home-print cost evidence already cited by [RESEARCH.md R12.6](RESEARCH.md)
+
+---
+
+## ADR-109 {#adr-109}
+
+### One photo across two pages — spreads as two ordinary images, and the cue that must stop lying
+
+**Status:** Proposed · **Date:** 2026-08-18 · **Supersedes:** nothing · **Amends the freeze:** yes (`v21-bench.html`, owner act)
+
+---
+
+#### Context
+
+The owner asks for one landscape photo spanning two facing pages as a continuous, full-bleed
+image — pages 2–3, the picture carrying across the seam.
+
+⚠ **Most of the analysis already exists, in a document that cannot own it.**
+[BETA-DIRECTION.md §3.10](design/BETA-DIRECTION.md) (tracked, `docs/design/BETA-DIRECTION.md:417-450`)
+already argues that all four spreads ship, already derives the cell/rotation table, already rejects a
+`Spread(pageA, pageB)` record, and already fixes the copy. **But BETA-DIRECTION.md is a design brief, and
+it appears nowhere in [CLAUDE.md's canonical table](../CLAUDE.md#documentation-system)** — which names
+[DECISIONS.md](DECISIONS.md) as the single source of truth for *"every significant decision"*.
+
+So the ownership runs the other way from an earlier draft of this ADR, which tried to cede authority to
+§3.10 and restate it in the same breath — the exact failure the
+[Documentation Rule](../CLAUDE.md#documentation-rule-mandatory) exists to prevent.
+🟦 **This ADR owns the decision. §3.10 is cited as the prior analysis it is, and should be amended to
+link here when this is accepted.** What follows is therefore the decision in full, plus the three
+engineering questions §3.10 left open — the schema, the seam, and the safe-area cue — and *not* a
+paraphrase of §3.10's reasoning, which is linked at each point instead.
+
+✅ **VERIFIED — ADR-109.** ADR-108 was taken by the hollow-supplies decision, which landed first;
+this draft was renumbered rather than racing it.
+
+---
+
+#### The geometry, re-derived independently
+
+The claim under test: facing pages are contiguous on the flat sheet and share a rotation, so no
+new imposition machinery is needed.
+
+✅ **VERIFIED — all four pairs, against the tables themselves**
+(`core/imposition/src/main/kotlin/com/aritr/zinely/core/imposition/Convention.kt:35-54`).
+`GridCell(row, col)`; `bounds = (col·pw, row·ph, pw, ph)`
+(`SingleSheet8Imposer.kt:53`); `pw = w/4`, `ph = h/2` (`:38-39`).
+
+**The cell/rotation table is [§3.10's](design/BETA-DIRECTION.md), independently re-derived here from
+`Convention.kt:35-54` and `SingleSheet8Imposer.kt:38,53,77-85` and found correct in every cell — so it is
+**linked, not reproduced**. What follows is only what §3.10 does not already say.**
+
+The cut
+(`SingleSheet8Imposer.kt:85`, `y = h/2` restricted to `x ∈ [w/4, 3w/4]`) separates only `4|7` and
+`3|8`, neither of which is a reading pair.
+
+Three refinements the brief did not state, each of which is a bug waiting to be written:
+
+1. ✅ **VERIFIED — sheet adjacency is not the same as facing.** `3|4` (cols 2,1) and `7|8`
+   (cols 1,2) are *also* column-adjacent, and are **not** spreads — they are the two faces of one
+   leaf. A "adjacent cells ⇒ spread" implementation ships a photo split across the back of a page.
+   The spread set is a fixed four-entry table, not a derived predicate.
+2. ✅ **VERIFIED — on the `HALF` rows the halves swap sides on the sheet.** The booklet-left page
+   of `2|3` is page 2, which sits at the **right-hand** column (col 3). Under
+   `halfTurnAbout(pw/2, ph/2).then(translate)` (`SingleSheet8Imposer.kt:60`) this is exactly
+   right, but any code that reasons in sheet columns instead of booklet order will mirror the
+   photograph.
+3. 🟦 **RECOMMENDATION — state the inner edge in page-local terms, where it is rotation-free.**
+   For an ordered pair `(n, n+1)` the shared boundary is always page `n`'s **local right** edge
+   and page `n+1`'s **local left** edge, on both rows. Checked: page 2 is `HALF` at col 3, local
+   `x = pw` maps to sheet `x = 3w/4`; page 3 is `HALF` at col 2, local `x = 0` maps to sheet
+   `x = 3w/4`. Same point. The 180° turn cancels because **both halves share it** — which is the
+   whole reason this feature is cheap.
+
+⚠ **`8|1` is a spread but not a *facing* one, and the two words should not be used interchangeably.**
+§3.10 ships "all four spreads" and that is right; what `8|1` is not is a pair the reader ever sees lying
+open. It is the outside wrap:
+continuous **around the spine**, seen only with the booklet closed and turned over. Real, and the
+one that most changes how the object feels — but it is the *least* seamless of the four in the
+hand, because the continuity crosses a folded edge rather than lying open.
+
+---
+
+#### Is the seam actually seamless? (the question that decides the feature)
+
+✅ **VERIFIED — panels tile edge-to-edge; the imposer introduces no gap.**
+`bounds = PtRect(cell.col * pw, cell.row * ph, pw, ph)` with `pw = w/cols`
+(`SingleSheet8Imposer.kt:38, 53`). Adjacent cells share a boundary coordinate exactly.
+
+✅ **VERIFIED — `safeAreaInsetPt` does not clip anything at render time.**
+`clipLocalBounds = panelLocal`, **not** `safeLocal` (`SingleSheet8Imposer.kt:72`), and
+`LayoutValidator.kt:82-84` checks `clipLocalBounds == panelLocalBounds` — and **appends a
+`CLIP_NOT_IN_PANEL` issue to the `List<ValidationIssue>` it returns (`:26`) rather than throwing.** It is
+a report, not a guard, and **nothing in production calls it at all**: `LayoutValidator` is referenced only
+by `core:imposition`'s own tests and by one KDoc aside (`BenchStudioSurface.kt:365`, which says so).
+The export path takes the clip from `clipLocalBounds` directly, with no validation pass
+(`app/src/main/java/com/aritr/zinely/export/ZineExporter.kt:170`,
+`SheetPanel(contentToSheet, clip = panel.clipLocalBounds, tape)`).
+
+`safeLocalBounds` has exactly three readers — the proof SVG (`SvgProofSheetRenderer.kt:49-50`) and
+`LayoutValidator` itself (`:86`, `:164`, `safeMarginsOk`). **It is not one of them: the editor cue does
+not read `safeLocalBounds`** and never did; it derives from `Imposer.DEFAULT_SAFE_AREA_INSET_PT`
+(`Imposer.kt:26` = `17.0`), which is what the cue section below says correctly. *(An earlier draft named
+the cue as a consumer and missed the validator. The conclusion is unchanged and in fact stronger:
+`safeAreaInsetPt` appears nowhere outside `core:imposition`.)*
+**The safe area is advisory. It cannot open a white stripe in an exported sheet.**
+
+⚠ **Two tracked documents state the opposite** — [BETA-DIRECTION.md](design/BETA-DIRECTION.md) §X11 and
+[ADR-017](#adr-017)'s rationale both said `LayoutValidator` *"hard-enforces"* `clip == panel`.
+✅ **EXECUTED 2026-08-18 — both amended, and the finding is now owned by [D-098](design/V2-SPEC-DEFECTS.md#d-098),
+which supersedes this paragraph.** It was amended ahead of this ADR's acceptance because the claim is wrong
+*today*, independently of spreads. ⚠ **D-098 also sharpened it:** "reports, nobody asks" is right about
+runtime and wrong about CI — three `core:imposition` tests assert the issue list is empty against the real
+imposer, so the checker is a **test-only gate**. A third site, the frozen `v2-bench.html`, is named there
+and left for an owner amendment.
+
+> This is the same conclusion [BETA-DIRECTION §3.10](design/BETA-DIRECTION.md) already carries in its
+> own corrected paragraph — that there is no imposition-side work, and that the fix is the cue in
+> `feature:editor`. **§3.10 owns that ruling; this ADR links it and adds only the evidence trail
+> above.** (An earlier draft of this section restated the correction as if it were new. It was not,
+> and two authoritative copies of one ruling is precisely what the Documentation Rule forbids.)
+
+So: seamless is achievable. The two residual risks are honest and small:
+
+- 🟨 **ASSUMPTION — a hairline at the shared edge.** `(col+1)·pw` and `col·pw + pw` can differ by
+  one ULP in IEEE doubles, and the two panels are rasterised under separate clips, so an
+  anti-aliased backend may leave a sub-pixel seam. Untested.
+  ⚠ **A Roborazzi golden is the wrong instrument, and an earlier draft of this ADR reached for it.**
+  Roborazzi captures the *Compose* surface, and the Compose surface renders **one page at a time** —
+  it never draws the two panels adjacent, so it cannot photograph the seam however green it goes. The
+  seam exists only in the imposed sheet, which is the **export** path. The check therefore splits in
+  two, by what each half can actually answer:
+  1. **The arithmetic — pure JVM, in `core:imposition`.** Assert bit-exact adjacency:
+     `bounds(col).x + bounds(col).width == bounds(col + 1).x` for every column pair, as `Double`
+     equality with no tolerance. That is the whole of the ULP question, and it needs no raster.
+  2. **The raster — an exported PNG, inspected by pixel.** Export a sheet whose two facing panels are
+     a solid fill and assert no lighter column at `x = w/4` and `x = 3w/4`. This is an export-level
+     check against the real backend, not a UI golden; nothing in the goldens suite can stand in for
+     it, and no re-record can bless it away.
+- ✅ **VERIFIED-by-physics — the fold is not flat.** The seam is a hand-folded crease in 80 gsm
+  paper. "Seamless" means *no white gap and no discontinuity in the image*; it does not mean the
+  crease is invisible. §3.10's warning copy — *"the middle of this photo lands on the fold"* —
+  is the honest surface for this, and it should not be softened.
+
+---
+
+#### Decision
+
+> **A spread is two ordinary `ImageElement`s sharing one `assetId`, with complementary crops,
+> produced by a one-shot action. No new element type. No schema bump. No imposition change.**
+>
+> The action reads the current page, looks up its partner in a fixed four-entry table, computes
+> the two halves of a cover crop at the *double-width* aspect, and writes two elements — one per
+> page — each full-page, `Fit.FIT`, with its half of the crop. After it runs there is no spread
+> object anywhere: there are two photos that happen to line up.
+
+---
+
+#### Why this model, and what the alternative costs
+
+**(a) A spread-scoped element type** — a new `@SerialName("spread")` `Element`, or a
+`Spread(pageA, pageB)` record on `ZineDocument`.
+
+- ⚠ **It forces a schema bump, and the bump is not free.** `Document.kt:11-22` records exactly this
+  reasoning from the `DecorElement` precedent: *"a new sealed discriminator is not survivable —
+  `0.9.0-beta.1` fails to parse the whole document, and `ignoreUnknownKeys` does not rescue an
+  unknown polymorphic type."* ✅ VERIFIED. `CURRENT_SCHEMA_VERSION` is `2` (`Document.kt:22`), so
+  this is v3.
+- ⚠ **And the bump drags a mandatory identity migrator.** `DocumentMigrations` validates the chain
+  **at construction** — every migrator must satisfy `toVersion == fromVersion + 1`, no two may
+  share a `fromVersion`, and a gap throws `MissingMigratorException`
+  (`core/data/src/main/kotlin/com/aritr/zinely/core/data/serialization/DocumentMigrations.kt:31-50`).
+  A v3 with no `v2→v3` migrator is a runtime failure on every existing document, not a compile
+  error. The cost is small but it is a permanent, un-deletable link in a chain.
+- ⚠ **It also breaks on page identity.** §3.10 already caught this: the only page identity in the
+  schema is `Page.index` (`Document.kt:53`), which is rewritten whenever pages are added, deleted
+  or reordered. A `Spread(2,3)` record silently re-points at unrelated pages. ✅ This objection
+  stands on the code.
+
+**(b) The same `assetId` on both pages with complementary crops** — 🟦 **RECOMMENDED.**
+
+- ✅ **Zero schema change.** `ImageElement` already carries `assetId`, `crop: Crop`, `fit: Fit`
+  (`Document.kt:86-93`). `Crop` is a normalised `(left, top, right, bottom)` in image fractions
+  (`Document.kt:163-173`). Two elements with `Crop(l, t, 0.5c, b)` and `Crop(0.5c, t, r, b)` are
+  ordinary v2 documents. An old build opens them and sees two cropped photos — which is what they
+  are.
+- ✅ **It degrades correctly.** Delete one half and the survivor is a normal cropped photo, with no
+  dangling reference and no repair pass.
+- ✅ **The asset store is untouched.** Both elements resolve the same content-addressed master
+  (ADR-022/023), so a spread costs one copy of the bytes, not two.
+
+---
+
+#### Does the existing framing machinery do the hard half? Yes — the maths, not the UI.
+
+✅ **VERIFIED — the crop representation is exactly right already.**
+`feature/editor/.../FramingDraft.kt:65-70` documents the load-bearing idea verbatim: *"A Fill that has
+been panned/zoomed is therefore persisted as **`Fit.FIT` over a box-aspect crop rectangle** (FIT with a
+matching-aspect crop fills the box with no letterbox, at exactly the panned position)."* A crop whose
+aspect equals the box aspect **never letterboxes under `Fit.FIT`** — which is precisely the property a
+spread half needs, and it is load-bearing for ADR-053 already rather than invented here.
+
+✅ **VERIFIED — the cover computation is already a pure, reusable function.**
+`Framing.coverExtent(pratio, bratio)` (`FramingDraft.kt:90`) returns the normalised extent of the
+largest box-aspect rectangle inside the image; `Framing.resolveCrop` (`:98-104`) turns an extent
+plus a centre into a `Crop`. The spread action is:
+
+```
+(cw, ch) = Framing.coverExtent(photoAspect, 2 × pageAspect)     // the double-width box
+left  half → Crop(0.5 − cw/2, 0.5 − ch/2, 0.5,          0.5 + ch/2)
+right half → Crop(0.5,        0.5 − ch/2, 0.5 + cw/2,   0.5 + ch/2)
+```
+
+Each result has aspect `pageAspect`; each is placed `Fit.FIT` over a full-page `Transform`.
+
+🟦 **RECOMMENDATION — the action computes the two `Crop`s directly, not by driving `FramingDraft`.**
+`resolveCrop` is parameterised by *zoom and pan about the centre* (`FramingDraft.kt:96-105`), so
+"the left half of this photo" is reachable only by solving for a pan; writing the two rectangles is
+shorter and says what it means.
+
+✅ **VERIFIED — but Reframe does *not* destroy a spread half, and an earlier draft of this ADR said it
+did.** The claim was that `Framing.seedDraft` re-centres any crop it reads back. It does not.
+`seedDraft` (`FramingDraft.kt:130-145`) takes its `else` branch for any non-full crop and reconstructs
+the draft **from the crop's own centre** — `cx = (c.left + c.right) / 2`, `cy = (c.top + c.bottom) / 2`,
+`zoom = cw0 / (right − left)` — and `toImage` inverts that exactly through `resolveCrop`. A spread
+half's rectangle already has the page aspect, and the zoom it implies is `cw0 / (cw/2)` — exactly `1.0`
+when `p ≥ 2b`, and at most `2.0` otherwise, so `MAX_ZOOM = 4.0` (`:74`) is never in play.
+**Opening Reframe on a spread half and committing it untouched returns the same crop.**
+The error is recorded rather than quietly deleted because it was relayed to the owner as fact.
+
+⚠ **"The same crop" is not "the identical crop", and the difference is a test that would fail.** `Crop`
+is a `data class` of `Double` (`Document.kt:163-173`), so `==` is bit equality — and the round trip is
+**1–2 ULP off for exactly the aspects a landscape spread targets**. Independently re-implemented and run
+over fourteen photo aspects on a 105×148 page: 4:3, 5:4, 1:1, 4:5 and 2:3 are exact; **3:2, 16:9, 2:1 and
+3:1 are not** (3:2 left half: `0.02702702702702703` → `0.027027027027027`). The cause is in `seedDraft`'s
+inverse: `cw = right − left` is not exact once `cw/2 < 0.25` (Sterbenz's condition fails), and `ch0/zoom`
+re-rounds through a reciprocal. Nothing is wrong with the code — this is what inverting a division costs —
+but **any assertion written as `==` is a test that fails on the most common landscape photo there is.**
+
+🟨 **`clampPan` has zero margin in the narrow case, and that is worth writing down.** For `p < 2b` the
+required `panX` is `−0.25` and `clampPan`'s bound is `(1 − cw0/zoom)/2 = 0.25` — *equal*, not comfortably
+inside. It holds today only because `zoom = cw0/0.5` is an exact binary doubling. A future change to
+`panRange` (`:160-165`) or to how the halves are computed could start clamping the crop without any test
+noticing, because the clamp would move it by one ULP.
+
+The residual risk is real but smaller, and it is **not silent** — both paths are explicit maker acts
+inside a surface whose whole purpose is to re-frame the photo:
+
+- Choosing **"Whole photo"** (`FrameFit.WHOLE`) resets `crop = Crop.FULL` (`FramingDraft.kt:119-120`),
+  which drops that half back to the entire image.
+- Panning or zooming moves the half off its edge, exactly as it would move any other photo.
+
+🟦 **RECOMMENDATION: leave Reframe alone and let it break the spread.** Two photos that no longer line
+up is a *visible, undoable* outcome of a deliberate act — which is the same failure mode Consequence 2
+already accepts for page reordering, and cheaper than either alternative (re-running the spread behind
+the maker's back, or refusing Reframe on a photo that looks reframeable).
+
+ADR-053 (photo Reframe) is therefore **reused, not extended**: its persistence contract is the
+mechanism; its editing surface is out of scope.
+
+---
+
+#### Full bleed on a home printer — what the word can and cannot mean
+
+✅ **VERIFIED — the product has already ruled that it cannot mean edge-to-edge paper.**
+[ADR-012](#adr-012) (`DECISIONS.md:210-211`): *"consumer printers can't print to the edge… keep all
+content, fold lines, and cut marks inside a ~6 mm safe inset… Full-bleed is a 🔭 FUTURE advanced
+option."* [ADR-017](#adr-017) *(Proposed)* holds bleed/clip semantics open and notes that bleed
+would invert today's `clip == panel` invariant (`DECISIONS.md:249-256`, the sentence at `:252`).
+[BETA-DIRECTION.md:487](design/BETA-DIRECTION.md) rules page background colour **DO NOT IMPLEMENT**
+on exactly this ground — *"a 'full-bleed' page background prints as a colour panel inside a 5–6 mm
+white margin — visibly wrong, on every page."*
+
+The asymmetry in the brief is **correct, and it is the reason this feature survives that ruling**:
+
+| Edge of a spread | Where it lands on the sheet | Verdict |
+|---|---|---|
+| The **inner** (gutter) edge | `x = w/4` or `x = 3w/4` — **interior** to the sheet | ✅ genuinely edge-to-edge. No hardware margin exists there. Bleeding across it is free and already permitted by `clip == panel`. |
+| The three **outer** edges | on or near the sheet's own trim | ⚠ hits the printer's non-printable margin. Unavoidable, not fixable in software. |
+
+> **The honest sentence for the release notes and the UI: the photo runs *continuously across the
+> fold*. It does not run *to the edge of the paper*.** Anywhere the product says "full bleed" it is
+> overpromising against ADR-012 and will be read as a bug by the first person who prints one.
+> 🟦 **RECOMMENDATION: the word "bleed" appears nowhere in user-facing copy** — consistent with
+> §3.10's own instruction, *"No gutter, no spread, no bleed."*
+
+**The cue, which is the only thing that must actually change.**
+✅ VERIFIED — the keep-clear cue is a `feature:editor` concern derived from the document safe area:
+`BenchStudioSurface.kt:307-313` (`keepClearInsetPx`; the derivation
+`Imposer.DEFAULT_SAFE_AREA_INSET_PT * pageWidthPx / panelWidthPt` is at `:313`, and the KDoc at `:80-85`
+records that the D-033 owner amendment made the page box canonical for `.keepclear` — so the frozen
+`18.5px` is the *check* (`17 × 229/210.4725 = 18.496`), not the source). A page that is half of a
+spread must **not** draw the cue on its inner edge, or the cue instructs the maker to leave the
+stripe by hand. 🟦 **RECOMMENDATION: one nullable "suppressed edge" parameter on the cue, in
+`BenchStudioSurface` — not a per-edge field on `ImpositionLayout`.** The engine has no opinion
+about this and should not acquire one.
+
+---
+
+#### Data flow — one photo to two printed panels
+
+```mermaid
+flowchart TD
+    P["One landscape photo<br/>(picker · camera · share sheet)"] --> A["Import master → assets/&lt;sha256&gt;<br/>ADR-022/023 · bytes stored once"]
+    A --> ACT["Spread action<br/>partner = spreadTable[currentPage]<br/>coverExtent(photoAspect, 2 × pageAspect)"]
+    ACT --> E2["ImageElement on page n<br/>assetId · Crop(left half) · Fit.FIT<br/>full-page Transform"]
+    ACT --> E3["ImageElement on page n+1<br/>assetId · Crop(right half) · Fit.FIT<br/>full-page Transform"]
+    E2 --> S2["SceneRenderer.render(page n)<br/>→ DrawImage tape"]
+    E3 --> S3["SceneRenderer.render(page n+1)<br/>→ DrawImage tape"]
+    S2 --> I["SingleSheet8Imposer.layout()<br/>panel.contentToSheet · clip = panelLocal"]
+    S3 --> I
+    I --> SH["One imposed sheet<br/>panels tile edge-to-edge; shared edge is a fold"]
+    SH --> PDF["PDF / PNG export<br/>ZineExporter"]
+    PDF --> PAPER["Printed sheet → folded booklet<br/>image continuous across the crease"]
+
+    S2 -.same tape.-> BENCH["Bench (PagePreview)"]
+    S2 -.same tape.-> READ["Read (ProofRead · BookLeaf)"]
+```
+
+✅ **VERIFIED — one tape serves every surface.** `SceneRenderer` is *"a pure function of
+`(Page, defaults)`… Both the editor preview and PDF/image export consume the identical tape"*
+(`core/render/.../SceneRenderer.kt:24-31`), and `ImageElement` already emits
+`DrawImage(assetId, crop, fit, box, localToPage, localClip, copier)` (`:78-86`). **No new draw
+command.** Contrast ADR-105, where the new primitive did need one — this one does not.
+
+---
+
+#### Which surfaces must change
+
+| Surface | Where it renders | What it needs |
+|---|---|---|
+| **Bench (editor)** | `PagePreview` / `EditorPagePreview` over `SceneRenderer.render(page, …)` | ✅ renders correctly with **no change** — it is two ordinary photos. Needs: the new action + its entry point, and the inner-edge cue suppression (`BenchStudioSurface.kt:307-313`). ⚠ It shows **one half at a time**; the maker cannot see the join on this surface. That is a Pass 2 risk, not a Pass 1 one. |
+| **Read** | `ProofRead.kt:578` — `SceneRenderer.render(page, …)` per leaf, through `PagePreview` (`:633`); `Gutter()` (`:640` call, `:674` definition) is drawn only when `!leaf.solo` | **No change — but not for the reason two earlier drafts gave.** Read shows **one leaf at a time** (`:147`, ADR-101 P5) and carries *"no spread view, deliberately"* on the record (`:152-154`), so it never places the two halves next to each other and cannot split a join it does not draw. ⚠ **`Gutter` is not the stack edge** (that is `StackEdge`, `:615`/`:642`) — it is drawn **inside the leaf, over `PagePreview`, `fillMaxSize()`**: a shade gradient plus a hairline at the leaf's *bound* edge. For a spread half that bound edge **is** the join edge. So Read does put a soft shadow and a hairline exactly where the picture is supposed to run continuously. 🟨 That is judged acceptable rather than fixed: it is the same shadow a real folded booklet casts into its own gutter, and the printed sheet has no such line. But it is a **Pass 2 item to look at on a device**, not a verified non-issue. |
+| **Print** | `ProofPrint.kt` is a **details panel** — instructions, paper choice, export row. It renders no page content (✅ verified: no `SceneRenderer` reference in the file) | **No change.** |
+| **Fold** | `ProofFold.kt` draws a schematic folded sheet with drawn cell numbers (`cellNumber(panel.pageNumber…)` at `ProofFold.kt:904`, and the cover's `"1"` at `:1041`) | **No change** — it depicts topology, not artwork. 🟨 ASSUMPTION: a maker will not expect their photo in the fold diagram. |
+| **Export** | `ZineExporter.kt:170` | **No change.** |
+| **`core:imposition`** | — | **No change.** See the correction to §3.10 above. |
+
+---
+
+#### Consequences
+
+1. **`CURRENT_SCHEMA_VERSION` stays at `2`.** A spread is a v2 document. No migrator, no
+   `NewerSchemaVersionException` for anyone.
+2. **There is no spread object to maintain.** Reorder, delete and duplicate keep working with no
+   spread-awareness anywhere; the worst outcome of a page move is two photos that no longer line
+   up, which is visible, undoable, and not corruption.
+3. **`core:imposition` is not touched, and `LayoutValidator`'s `clip == panel` invariant survives
+   intact** — so this feature does **not** open [ADR-017](#adr-017). Bleed stays 🔭 FUTURE.
+4. **The word "bleed" is not used with makers.** The promise is "across the fold," never "to the
+   edge." ADR-012 is unamended.
+5. **Reframe is left alone, and the round-trip is pinned — to an epsilon, never to `==`.** The mandatory
+   test asserts `toImage(seedDraft(half, pratio, bratio), …) ≈ half` **within a stated tolerance**, over a
+   table of photo aspects that includes **3:2 and 16:9**. `Crop` is a `Double` data class, so `==` is bit
+   equality and would go red on both of those (see the framing section) — a mandated test that fails on
+   the commonest landscape photo is worse than no test, because someone will "fix" it by deleting it.
+   The test earns its place because the round trip is exactly what breaks if anyone ever "fixes"
+   `seedDraft` to normalise the crops it reads.
+   ✅ **Done, and ahead of this ADR.** `ReframeRoundTripTest` (`feature:editor`, so it walks the **real**
+   `Framing` rather than a re-implementation) covers that table at **288 cases**. Writing it turned up [D-097](design/V2-SPEC-DEFECTS.md#d-097): the same drift was
+   already breaking **shipped** Reframe, which compared crops with `==` and so announced *"Framing
+   saved."*, pushed an undo step and autosaved for **56 %** of sessions in which the maker touched
+   nothing. Both deciders now share one `FramingMath.sameFraming` on a stated `FRAMING_EPS = 1e-9`
+   — not `core:imposition`'s `approx`, which this ADR had recommended before the defect showed the
+   predicate belonged next to the reducer that uses it, in a module `feature:editor` can also see.
+   **The spread feature inherits a fixed round trip rather than owing one.**
+6. **The four pairs are a table, never a predicate.** `3|4` and `7|8` are adjacent and are not
+   spreads.
+7. ⚠ **`v21-bench.html` needs an owner amendment.** The frozen `openSupply()` chooser offers
+   **three** rows — Text, Photo, **Art** (`docs/design/mockups/v21-bench.html:827-829`) — and none of
+   them is a spread. *(An earlier draft of this ADR said "Text + Photo only". That was simply wrong,
+   and it was wrong in the direction that made the amendment sound smaller than it is.)*
+   🟨 ASSUMPTION on the exact home: the natural place is the **selected-photo context bar**, not the
+   add chooser — the action operates on a photo that already exists, and all three chooser rows are
+   *"add a new thing"*. Either way it is a **feature addition to a frozen surface**, which per the
+   [HTML-first workflow](../CLAUDE.md#design-freeze) means: HTML spec amended **first**, by the
+   owner, then Compose. **Owner-owed, and it blocks implementation.**
+   *(Note: [BETA-DIRECTION §3.3](design/BETA-DIRECTION.md) cites the chooser at
+   `v21-bench.html:773`; it is at `:827-829` in the current file. Line citations in that document
+   have drifted and should be re-checked before being used as evidence.)*
+8. ⚠ **The spreads work item is `X9`, not `X11`, and it is absent from [ROADMAP.md](ROADMAP.md).**
+   🟨 **Corrected 2026-08-18 — [D-099](design/V2-SPEC-DEFECTS.md#d-099); this item previously got it
+   wrong.** It read the id from [`BETA-DIRECTION.md:587`](design/BETA-DIRECTION.md), noticed that `X11`
+   means *Colophon* in [`ZINE-DIRECTION.md:734`](design/ZINE-DIRECTION.md), and recommended inventing **a
+   fresh identifier** to escape the clash. That was the wrong cure for a correctly-spotted symptom: the
+   two documents run **entirely different `X`-schemes** — they agree on 2 ids out of 14 — and
+   `BETA-DIRECTION.md` is **superseded by its own banner** (`:1-5`, 2026-08-15). `ZINE-DIRECTION.md:732`
+   allocates **`X9` — *Spreads — all four*** and always did. A fresh identifier would have become a
+   *third* scheme in the document that owns phasing, which is the one place a collision becomes permanent.
+   🟦 **RECOMMENDATION, restated: carry `X9` into [ROADMAP.md](ROADMAP.md) when this ADR is accepted**
+   — today V2 lists *"Multi-page spreads"* as an unnumbered bullet, so the id has never reached the
+   document that owns phasing. Cite the **`ZINE-DIRECTION.md`** table when doing it.
+   ⚠ `ZINE-DIRECTION.md:732` also annotates X9 with *"per-edge safe-area is the one engine change"* —
+   **this ADR refutes that**: the safe area is advisory, and there is no imposition-side work. The
+   annotation should be struck in the same edit.
+
+**Owner-owed, blocking (for [OWNER-CHECKLIST.md](OWNER-CHECKLIST.md)):**
+| # | Item | Why it blocks |
+|---|---|---|
+| 1 | Amend `v21-bench.html` with the spread control — placement, label, and the fold warning | Design freeze; no Compose work may precede it |
+| 2 | Rule on **where the maker first sees the join**, given that no on-screen surface shows it | It is the feature's acceptance criterion, not a polish item — see the skeptical pass |
+
+*(A third item in an earlier draft asked the owner to confirm the cue change did not contradict
+BETA-DIRECTION §3.10. It never did — §3.10's own corrected paragraph says the same thing. The item is
+deleted rather than downgraded, because a checklist row that asks the owner to rule on a
+non-contradiction costs them exactly as much attention as a real one.)*
+
+---
+
+#### The skeptical pass — is this a good idea, and is there a simpler one?
+
+Three challenges, honestly:
+
+1. **"Is a spread even legible in an 8-page mini-zine?"** Each page is A4/4 ≈ 105 × 148 mm, so a
+   spread is 210 × 148 mm — one full A4 landscape half-sheet. That is a *large* image by this
+   product's standards, and it is the single most visually striking thing an 8-page zine can do.
+   🟦 The feature earns its place. It is not a scale-model of a print-industry feature; it is the
+   biggest picture the format can hold.
+2. **"Is there a materially simpler design?"** Yes, and it is the one recommended: **do not build
+   a spread at all — build an action that writes two photos.** The simplest honest version ships
+   with no new type, no migrator, no imposition change, no draw command, and one cue parameter.
+   Everything beyond that (a spread record, per-edge safe areas, a bleed model, a side-by-side
+   editing view) is machinery the printed object does not ask for. 🟦 **If the estimate for this
+   feature ever exceeds "an action, a lookup table, and a cue flag," something has been added that
+   the sheet geometry did not require.**
+3. **The genuinely weak point is not the schema — it is that *no surface shows the join*, and this is
+   sharper than the first draft of this ADR assumed.** The Bench edits one page at a time. Read shows
+   one leaf at a time and refuses a spread view **on the record** (`ProofRead.kt:152-154`, ADR-101 P5:
+   *"two mini-zine pages side by side on a phone are two pages you cannot read"*). Fold draws topology.
+   Print draws nothing. So this is not "one surface draws an unhelpful gutter" — it is that **every
+   screen in the product deliberately shows one page at a time**, and the maker's first sight of the
+   continuous image is **the printed sheet**.
+   ⚠ That is the `0.9.0-beta.1` "Preview" failure named in
+   [CLAUDE.md](../CLAUDE.md#product-principle-every-screen-answers-the-users-current-question)
+   — inverted. There, a correct answer arrived *before* the maker had a question. Here a correct answer
+   arrives *after* the paper, when nothing can be undone about it.
+   🟦 **The acceptance criterion is therefore copy and timing, not rendering:** at the moment the maker
+   taps the action, the app must say what it is about to do and where they will see it — because
+   nothing afterwards will show them. ⚠ **This cannot be answered by adding a spread preview.** That is
+   the redesign ADR-101 P5 already refused for a reason that has not changed, and refusing it again here
+   is both cheaper and more consistent than reopening it.
+
+---
+
+#### Verification this ADR does not claim to have done
+
+- 🟨 No build was run; no test was executed. Every claim above is read from source, cited by
+  `file:line`, and nothing here is evidence that the feature works.
+- 🟨 The hairline-seam risk at the shared panel edge is **untested** and is the one place this
+  design could still fail on the physical artifact.
+- ⚠ Greps in this repo hit `.claude/worktrees/…` copies of `docs/` and `feature/`. Every citation
+  above was re-taken against the tracked tree via `git ls-files`; anyone verifying this ADR should
+  do the same or they will cite a file that is not in the commit.
+- ✅ **This ADR was independently reviewed and returned NO-GO on its first draft.** The review is the
+  reason for most of what is written above: it refuted the `seedDraft` re-centring claim, found the
+  Roborazzi seam probe pointed at a surface that cannot show a seam, found the Read-mode gutter is
+  never drawn between facing pages, corrected four `file:line` citations, and deleted an owner-blocking
+  item that asked the owner to rule on a contradiction that did not exist. **Three of those findings
+  ran in the direction of the draft's own recommendations**, which is the pattern worth naming: the
+  errors were not random, they flattered the conclusion. The four-pair table survived independent
+  re-derivation in every cell, and the `safeAreaInsetPt` claim survived an attempt to falsify it.
+- 🟨 **Not re-reviewed after these edits.** The corrections above are the implementer's, not the
+  reviewer's, and the strengthened skeptical pass (§challenge 3) is new material rather than a fix.

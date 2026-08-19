@@ -118,6 +118,14 @@ internal data class BenchInkPreset(val name: String, val dots: List<BenchInkSwat
  * That is [OD-21](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling)'s own distinction:
  * a fence reassignment, not a capability one.
  *
+ * **A decor element is offered all three bands, and that is a ruling, not an oversight.**
+ * [SUPPLIES-SPEC §0 O-A](../../../../../../../../docs/design/SUPPLIES-SPEC.md#o-a--decor-tints-from-the-content-palette--all-three-bands)
+ * states and rejects the objection that fences text: *"a paper tint laid as a mark reads as nothing — is
+ * true and is the maker's call."* The two targets differ in what is at stake, not in the palette's honesty:
+ * a title nobody can read is a failure of the page, a supply nobody can see is a pale-on-pale riso result
+ * undone in one tap. The reason text is fenced is legibility (§II.9 is satisfied for decor by the
+ * single-coverage rule instead), so the fence does not generalise from one to the other.
+ *
  * Pure, so the *sets* are asserted directly rather than through a composition — and asserted as
  * band-label order plus per-band swatch order, because a permutation satisfies "every colour is present"
  * and is still the wrong palette.
@@ -137,8 +145,14 @@ internal fun benchInkBands(inks: ZinelyContentInks, kind: BenchVerbKind): List<B
     )
     return when (kind) {
         BenchVerbKind.TEXT -> listOf(band1, band3)
-        // Not `else`: the day a target that takes paper arrives, this must be a decision someone makes
-        // rather than a default someone inherits.
+        // Not `else`, and the reason held: a target that takes paper arrived (decor, once `Ink` went live)
+        // and the grant was made deliberately, by §0 O-A, rather than inherited from this line.
+        //
+        // ⚠ `PHOTO` is the unreachable half now, not `DECOR`. `BenchContextBar.kt:151` ships no photo
+        // `Ink` verb at all — Reframe / Copier / Replace / Delete — so decor is the sole consumer of
+        // `tints`. Against the only paper a page can carry (nothing constructs `Background.Solid`), those
+        // five run 1.03:1–1.28:1. O-A accepted exactly that; it is recorded here so the next reader meets
+        // the number beside the ruling rather than discovering it as a surprise.
         BenchVerbKind.PHOTO, BenchVerbKind.DECOR -> listOf(band1, tints, band3)
     }
 }
@@ -808,8 +822,29 @@ internal fun ColorRgba.toComposeColor(): Color = Color(r, g, b, a)
  * because it has no document to count.
  *
  * Counted across every page rather than the open one: *"print cheapest"* is a per-**zine** cost, because
- * a riso or a copy shop charges by the inks on the job, not by the inks on one panel. A text element's
- * ink is its `TextStyle.color`; photos are not spot inks and are not counted.
+ * a riso or a copy shop charges by the inks on the job, not by the inks on one panel.
+ *
+ * **What counts as a spot ink**, exhaustively over [com.aritr.zinely.core.model.Element]:
+ *  - a [TextElement]'s `style.color` — the maker chose it from the ink popover;
+ *  - a [com.aritr.zinely.core.model.DecorElement]'s `ink` — SUPPLIES-SPEC §2 makes a supply an outline
+ *    laid down in **one** colour *precisely so* it is a spot ink, and `SceneRenderer` draws it as one;
+ *  - an `ImageElement` — **not** counted. A photo is continuous tone, not a spot colour; that is the
+ *    original exclusion and it stands.
+ *
+ * ⚠ The decor arm arrived with ADR-105 S7 (independent review). Before it, black text plus three berry
+ * stars reported *"1 ink"* while the print shop charged for two — an under-report that shipped harmless
+ * only because no supply could be placed. Written as a `when` rather than a filter so the fourth element
+ * kind has to answer the question instead of inheriting `false`.
  */
 internal fun benchInkCount(pages: List<Page>): Int =
-    pages.flatMap { it.elements }.filterIsInstance<TextElement>().map { it.style.color }.distinct().size
+    pages.asSequence()
+        .flatMap { it.elements.asSequence() }
+        .mapNotNull { element ->
+            when (element) {
+                is TextElement -> element.style.color
+                is com.aritr.zinely.core.model.DecorElement -> element.ink
+                is com.aritr.zinely.core.model.ImageElement -> null
+            }
+        }
+        .distinct()
+        .count()

@@ -96,7 +96,7 @@ class PhotocopierTest {
     // — luma —
 
     @Test
-    fun `luma is Rec 601 over the packed channels and ignores alpha`() {
+    fun `luma is Rec 601 over the packed channels`() {
         assertEquals(0, lumaOf(0xFF000000.toInt()))
         assertEquals(255, lumaOf(0xFFFFFFFF.toInt()))
         assertEquals(255, lumaOf(0x00FFFFFF)) // alpha 0, still white
@@ -106,6 +106,53 @@ class PhotocopierTest {
         assertEquals(149, lumaOf(0xFF00FF00.toInt()))
         // pure blue: 114*255/1000 = 29
         assertEquals(29, lumaOf(0xFF0000FF.toInt()))
+    }
+
+    @Test
+    fun `a fully transparent pixel is paper, whatever colour is hiding under it`() {
+        // The defect. A decoder hands back 0x00000000 for an untouched PNG background — alpha zero over
+        // BLACK channels — and the old ignore-alpha reading scored it 0, i.e. ink. A shared-in PNG with a
+        // transparent background became a solid black rectangle the moment `Copier` was tapped.
+        //
+        // The old test asserted `lumaOf(0x00FFFFFF) == 255` and passed: transparent WHITE is the single
+        // transparent value that came out right, and it is the one almost no decoder produces.
+        assertEquals(255, lumaOf(0x00000000))
+        assertEquals(255, lumaOf(0x00FF0000)) // transparent red
+        assertEquals(255, lumaOf(0x00123456)) // transparent anything
+    }
+
+    @Test
+    fun `partial alpha lands between the colour and the paper`() {
+        // Not just the a==0 case: half-transparent black must read mid-grey, not ink. Guards a fix that
+        // special-cased zero and left every other alpha wrong.
+        assertEquals(127, lumaOf(0x80000000.toInt())) // 0*128 + 255*127, over 255
+        assertEquals(255, lumaOf(0x80FFFFFF.toInt())) // white over white is white at any alpha
+    }
+
+    @Test
+    fun `every opaque pixel is byte-identical to the pre-fix expression`() {
+        // The whole safety argument for landing this without re-recording a single golden: at a == 255 the
+        // composite reduces to the original expression exactly. Asserted, not asserted-in-a-comment.
+        for (r in 0..255 step 17) {
+            for (g in 0..255 step 17) {
+                for (b in 0..255 step 17) {
+                    val argb = (0xFF shl 24) or (r shl 16) or (g shl 8) or b
+                    // JUnit5: (expected, actual, message) — NOT JUnit4's (message, expected, actual).
+                    assertEquals(
+                        (299 * r + 587 * g + 114 * b) / 1000,
+                        lumaOf(argb),
+                        "opaque r=$r g=$g b=$b must not move",
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `a transparent field photocopies to paper, not to a black rectangle`() {
+        // The end-to-end shape of the defect, through the function the backend actually calls.
+        val out = photocopy(IntArray(16 * 16) { 0x00000000 }, 16, 16)
+        assertTrue(out.all { it == 0xFFFFFFFF.toInt() }, "a transparent field must copy to paper")
     }
 
     @Test

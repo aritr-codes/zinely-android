@@ -243,15 +243,21 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `decor Delete is live while Replace and Ink ship drawn-and-inert`() {
-        // P1 is the seam, not the Art sheet: Replace needs a supply chooser and Ink needs the decor
-        // branch of `.inkpop`, both S7. Delete is a shared verb that already works on any element id.
-        // OD-9's class — "a control the freeze draws is kept drawn and invents nothing".
+    fun `every decor verb is live, and the row no longer carries an inert control`() {
+        // ⚠ **The whole row has now flipped, one package at a time.** Ink went live with `Intent.InkSupply`;
+        // Replace went live with `Intent.ReplaceSupply` plus the Art sheet re-summoned as a picker. Decor is
+        // the first element kind whose frozen verb set is fully implemented — OD-9's "drawn and inert"
+        // class, which this row wore for two packages, no longer applies to any of its three controls.
         val byLabel = benchContextVerbs(BenchVerbKind.DECOR).associateBy { it.label }
-        assertFalse(byLabel.getValue(Copy.BenchVerbs.REPLACE).enabled)
-        assertFalse(byLabel.getValue(Copy.BenchVerbs.INK).enabled)
+        assertTrue(byLabel.getValue(Copy.BenchVerbs.REPLACE).enabled)
+        assertTrue(byLabel.getValue(Copy.BenchVerbs.INK).enabled)
         assertTrue(byLabel.getValue(Copy.BenchVerbs.DELETE).enabled)
+        // No enabled verb may still be claiming a reason for being unavailable — that text is spoken.
+        assertTrue(byLabel.values.all { it.unavailableBecause == null })
+        // Delete stays the only red control on the row.
         assertTrue(byLabel.getValue(Copy.BenchVerbs.DELETE).danger)
+        assertFalse(byLabel.getValue(Copy.BenchVerbs.INK).danger)
+        assertFalse(byLabel.getValue(Copy.BenchVerbs.REPLACE).danger)
     }
 
     /**
