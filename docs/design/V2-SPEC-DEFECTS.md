@@ -6556,5 +6556,14 @@ its label.
    `git branch -vv` to ask what `main` was. The first error was about the diff operator; the second was
    about the noun. Both are the same mistake: **I checked how I was comparing before I checked what I was
    comparing to.**
+3. Following up, I built a "which branches are unpushed?" table with
+   `git rev-list --count "@{upstream}..$b"` inside a `for b in $(git branch ...)` loop. `@{upstream}`
+   resolves against **HEAD**, not against `$b`, so every row measured the *current* branch's upstream and
+   re-reported it under a different branch's name. I told the owner **~165 commits** were unbacked. The
+   true figure, from `git rev-list <branch> --not --remotes`, was **5** — and `main`'s tip was already
+   contained in `origin/feat/v21-freeze-and-tokens`. Third instance of the same shape in one pass: the
+   loop variable was the *what*, `@{upstream}` was the *how*, and again I trusted the how.
 
-🟨 A conflict count is not evidence until the branch it names has been identified.
+🟨 A conflict count is not evidence until the branch it names has been identified. Neither is a
+commit count: `--not --remotes` asks the question directly; `@{upstream}` answers a question about
+whatever HEAD happens to be.

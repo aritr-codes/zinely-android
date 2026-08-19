@@ -118,6 +118,14 @@ internal data class BenchInkPreset(val name: String, val dots: List<BenchInkSwat
  * That is [OD-21](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling)'s own distinction:
  * a fence reassignment, not a capability one.
  *
+ * **A decor element is offered all three bands, and that is a ruling, not an oversight.**
+ * [SUPPLIES-SPEC §0 O-A](../../../../../../../../docs/design/SUPPLIES-SPEC.md#o-a--decor-tints-from-the-content-palette--all-three-bands)
+ * states and rejects the objection that fences text: *"a paper tint laid as a mark reads as nothing — is
+ * true and is the maker's call."* The two targets differ in what is at stake, not in the palette's honesty:
+ * a title nobody can read is a failure of the page, a supply nobody can see is a pale-on-pale riso result
+ * undone in one tap. The reason text is fenced is legibility (§II.9 is satisfied for decor by the
+ * single-coverage rule instead), so the fence does not generalise from one to the other.
+ *
  * Pure, so the *sets* are asserted directly rather than through a composition — and asserted as
  * band-label order plus per-band swatch order, because a permutation satisfies "every colour is present"
  * and is still the wrong palette.
@@ -137,8 +145,14 @@ internal fun benchInkBands(inks: ZinelyContentInks, kind: BenchVerbKind): List<B
     )
     return when (kind) {
         BenchVerbKind.TEXT -> listOf(band1, band3)
-        // Not `else`: the day a target that takes paper arrives, this must be a decision someone makes
-        // rather than a default someone inherits.
+        // Not `else`, and the reason held: a target that takes paper arrived (decor, once `Ink` went live)
+        // and the grant was made deliberately, by §0 O-A, rather than inherited from this line.
+        //
+        // ⚠ `PHOTO` is the unreachable half now, not `DECOR`. `BenchContextBar.kt:151` ships no photo
+        // `Ink` verb at all — Reframe / Copier / Replace / Delete — so decor is the sole consumer of
+        // `tints`. Against the only paper a page can carry (nothing constructs `Background.Solid`), those
+        // five run 1.03:1–1.28:1. O-A accepted exactly that; it is recorded here so the next reader meets
+        // the number beside the ruling rather than discovering it as a surprise.
         BenchVerbKind.PHOTO, BenchVerbKind.DECOR -> listOf(band1, tints, band3)
     }
 }
