@@ -51,11 +51,16 @@ Proof, Bench and supplies P1/P2 into one 390-file commit. **Merge it whole — b
 | **B4** | **Device Pass 2 on the supplies drawer has never been run.** Pass 1 ✅ 2026-08-17. [Definition of done](../CLAUDE.md#definition-of-done-for-a-change) item 4 requires **both** | **Release Blocker** | **Yours** (already #3 below) |
 | **B5** | ⚠ **Production code ships under a `Proposed` ADR.** `SupplyCatalog.kt:110` reads *"the derivable eight — ADR-107 R4"*; [ADR-107](DECISIONS.md#adr-107) is `Proposed` with *"owner ruling required on R5"*. The code and its unaccepted ADR landed in the **same commit**, `471734c` | **Release Blocker** | **Yours** — accept, reject, or scope ADR-107 to R4 only |
 
-⛔ **MERGE BLOCKED — [D-102](design/V2-SPEC-DEFECTS.md#d-102).** `feat/supplies-p3-art-sheet` is **46
-commits behind `main`** and a real `git merge main` produces **104 conflicted files / 708 Kotlin hunks**,
-including `HomeScreen.kt` *deleted here, modified on `main`*. The eight V2.1 Library composables exist on
-**both** lines with different content — parallel development, not a stale copy. **Rebase first, as its own
-reviewed act**, then re-run the reviews: their verdicts describe a tree that will not survive it.
+⚠ **[D-102](design/V2-SPEC-DEFECTS.md#d-102) — the merge blocker I filed is WITHDRAWN; a different,
+real problem replaces it.** The branch merges into **`origin/main`** (its actual target) with 12 conflicted
+files / 36 hunks, all ordinary squash-workflow rewriting. My *"46 commits behind, 104 conflicts"* was
+measured against a **local `main` that has never been pushed**.
+
+⛔ **What is real: local `main` holds 45 commits `origin` has never seen** — V2 Library Phase B and Phase D,
+2026-07-30 to 2026-08-09 — while `origin/main` advanced along the supplies line, which local `main` lacks
+entirely. **Two lines of real work, neither containing the other, one of them existing only on this
+machine.** A disk failure loses 45 reviewed commits. 🟦 **Push local `main` and reconcile it deliberately,
+as its own act** — not folded into a feature merge. **Decision + Credential** (it needs a push).
 
 ⚠ **A red `feature:editor` run has *three* possible causes and the exit code does not separate them** —
 a genuine regression · a golden owed a re-record (B1) · or [D-101](design/V2-SPEC-DEFECTS.md#d-101)'s

@@ -6503,66 +6503,58 @@ that produced it, and I wrote it as though it were a property of the change. It 
 
 ---
 
-### D-102 — `feat/supplies-p3-art-sheet` cannot merge: 46 commits stale, 104 conflicted files, 708 hunks {#d-102}
+### D-102 — `main` and `origin/main` have diverged: 45 commits sit unpushed on a line `origin` has never seen {#d-102}
 
-**Found:** 2026-08-19, in the merge-readiness pass, by **attempting the merge** instead of reading a diff.
-**Severity:** release blocker for this branch. No product defect — the code is fine; the *branch* is not.
+**Filed 2026-08-19 claiming the branch could not merge. ⚠ That claim was wrong and is corrected below**
+— the correction is kept in place rather than deleted, because the mistake is the useful part.
 
-#### The measurement
+#### What I first reported, and why it was wrong
 
-| | |
-|---|---|
-| Commits on `main` not in the branch | **46** |
-| Commits on the branch not in `main` | 12 |
-| Files that conflict on a real `git merge` | **104** — 71 `.kt`, 27 binary goldens, 3 `.md` |
-| Conflict **hunks** in Kotlin alone | **708** |
-| Structural conflicts | `HomeScreen.kt` *deleted in HEAD, modified in `main`* |
+> *"`main` is 46 commits ahead; a real `git merge main` gives **104 conflicted files / 708 Kotlin hunks**."*
 
-Verified in a throwaway worktree (`git merge --no-commit --no-ff main` → exit 1, then aborted), not inferred.
-
-#### Why it was invisible
-
-⚠ **Every number quoted about this branch \u2014 including mine \u2014 came from a three-dot diff.**
-`git diff main...HEAD` diffs from the **merge-base**, so it describes a `main` that stopped existing 46
-commits ago. Two-dot tells the truth about merging:
+Every one of those numbers is real. **They are measured against the wrong branch.** `main` here is a
+*local* branch, and:
 
 ```
-git diff --shortstat main...HEAD   421 files, 81,878 insertions   <- what everyone reported
-git diff --shortstat main HEAD     377 files, 51,554 insertions, 10,281 deletions
+main   352d3fd   [origin/main: ahead 46, behind 2]
 ```
 
-🟨 **And I propagated the error into three independent reviews**, because I wrote `git diff main...HEAD`
-into all three reviewer briefs. All three returned verdicts on a branch-vs-merge-base picture; none could
-have seen the staleness, because I had told each of them where to look. *An independent review is only
-independent of the implementer's conclusions — never of the implementer's framing.*
+**Local `main` has never been pushed.** The integration target is `origin/main`, and against it the branch
+is **1 behind, 12 ahead**, merging with **12 conflicted files / 36 hunks** — all add/add, all explained by
+`origin` having *squash-merged this branch's own commits*: `3c3d152` landed as PR #58, and `409dc5c` is a
+squash of the branch's `e8f2145` (same title, same day). Ordinary squash-workflow history rewriting, not
+divergence.
 
-#### What actually diverged
+| Target | behind | conflicts | hunks |
+|---|---|---|---|
+| local `main` | 46 | 104 | 708 |
+| **`origin/main`** — the real target | **1** | **12** | **36** |
 
-The eight V2.1 Library composables exist on **both** `main` and the branch, with different content:
+🟨 **So the branch is merge-ready in the ordinary sense, and D-102's blocker is withdrawn.**
 
-| File | branch vs `main` |
-|---|---|
-| `ZineShelf.kt` | +346 / −76 |
-| `ZineActionSheet.kt` | +302 / −182 |
-| `ZineShelfEmpty.kt` | +302 / −327 |
-| `ZineOnShelf.kt` | +290 / −150 |
-| `ZineDock.kt` | +196 / −181 |
-| `ZineShelfFail.kt` | +163 / −95 |
-| `ZineCoverRecipe.kt` | +93 / −52 |
-| `ZineLibraryScreen.kt` | +52 / −8 |
+#### The finding that survives, and it is a real one
 
-`ZineV21Cover.kt` and `ZineV21CoverMarks.kt` are branch-only. **This is parallel development of the same
-screens on two lines, not a stale copy of one** — `git cherry -v main HEAD` marks all 12 branch commits
-`+`, so nothing has been absorbed by patch-id.
+Local `main` carries **45 commits `origin` does not have**, dated **2026-07-30 to 2026-08-09** — the V2
+Library Phase B work (`4231175`, `1e097ab`, `946d6a9`, `97744e6`, `03223da`) and Phase D token discipline.
+Meanwhile `origin/main` advanced along the **supplies** line, which local `main` lacks entirely
+(`SupplyCatalog.kt`, `SupplyOutline.kt`, `BenchArtSheet.kt` are all absent there).
 
-#### The recommendation
+⚠ **Two lines of real work, neither containing the other, and one of them exists only on this machine.**
+That is the actual risk: a disk failure loses 45 commits of accepted, reviewed Phase B/D work. The 104
+conflicts I measured are what it will genuinely cost to reunite them — the number was never wrong, only
+its label.
 
-🟦 **Do not merge. Rebase or merge `main` in first, on its own, as a reviewed act** — 708 hunks is a task
-with its own defect risk, and folding it into a feature merge would hide which side won each one.
-⚠ **Then re-run all three slice reviews**, because their verdicts describe a tree that will not exist
-afterwards. The Photocopier fix ([D-099](#d-099) territory) and the `remember{}` fix are small and
-self-contained; they are the parts most likely to survive the rebase unchanged.
+🟦 **Owner decision, and it is not mine to make:** push local `main` to a branch and reconcile it with
+`origin/main` deliberately, as its own reviewed act. **Do not** fold it into a feature merge.
 
-🟨 **The real lesson is upstream of the numbers.** A branch named for one feature had been accumulating a
-second one for 46 commits of `main` drift, and nothing in the process noticed, because every check anyone
-ran — mine and three reviewers' — was scoped to the branch rather than to the merge.
+#### Why I got it wrong, twice, in one pass
+
+1. I quoted `git diff main...HEAD` — three-dot, measured from a merge-base — and wrote it into all three
+   reviewer briefs, so three independent reviews inherited one framing error. *An independent review is
+   independent of the implementer's conclusions, never of the implementer's framing.*
+2. Correcting that, I switched to two-dot and still compared against **`main`** without once running
+   `git branch -vv` to ask what `main` was. The first error was about the diff operator; the second was
+   about the noun. Both are the same mistake: **I checked how I was comparing before I checked what I was
+   comparing to.**
+
+🟨 A conflict count is not evidence until the branch it names has been identified.
