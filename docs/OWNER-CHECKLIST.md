@@ -8,18 +8,20 @@ and why you are the only one who can close it.
 **Maintained by the Implementer Agent.** Items are added as they are discovered and struck as you close
 them. If anything here could be closed by an implementer, that is a bug in this list — say so and I'll take it.
 
-**Last swept:** 2026-08-18 · **87 open items**
+**Last swept:** 2026-08-18 · **89 open items** · ⛔ **5 of them are merge blockers** (§below)
 
 > ⚠ **The count read 70 and the file held 80.** Corrected 2026-08-18 by counting the rows rather than
 > trusting the header — which is how it drifted: each new row incremented a number nobody re-derived.
 > This is an index of work owed to the owner, so an undercount is the failure mode that matters. The
-> per-section tally is 24 · 10 · 7 · 14 · 7 (§1) · 6 · 4 · 3 (§2) · 8 (Play Store) · 4 (§4) = **87**.
+> per-section tally, **counted from the rows, not carried forward**:
+> `26 · 10 · 7 · 14 · 7` (§1) · `6 · 4 · 3` (§2) · `8` (Play Store) · `4` (§4) = **89**.
 >
-> ⚠ **And it drifted again the same day, the same way.** The header read 87 while the file held 86; adding
-> D-098 incremented it to 88 instead of re-deriving, so it was wrong before and after. Re-derived: **87**
-> `☐` rows. 🟦 A number maintained by hand next to a list maintained by hand will keep doing this — the
-> same shape as [D-096](design/V2-SPEC-DEFECTS.md#d-096), where the durable fix was to stop writing the
-> fragile part by hand at all.
+> ⚠ **It drifted twice more on 2026-08-18 alone, both times the same way.** The header read 87 while the
+> file held 86; adding a row incremented it to 88, so it was wrong before *and* after. Re-derived to 87,
+> then a further row made it 88 — this figure is the count of `☐` rows, taken after the last edit.
+> 🟦 A number kept by hand beside a list kept by hand will keep doing this. Same shape as
+> [D-096](design/V2-SPEC-DEFECTS.md#d-096), where the durable fix was to stop writing the fragile part by
+> hand — here that means **deriving the header from the rows**, not remembering to bump it.
 
 ---
 
@@ -31,6 +33,45 @@ them. If anything here could be closed by an implementer, that is a bug in this 
 | **Judgement** | A first-time-user reading — knowing the implementation *disqualifies* me ([Pass 2](../CLAUDE.md#pass-2--first-time-user-verification)) |
 | **Physical** | A real device, a real printer, a real pair of ears |
 | **Credential** | A key, an account, a push, a person to send it to |
+
+---
+
+## ⛔ Merge blockers — `feat/supplies-p3-art-sheet` is **NO-GO** today
+
+Independent merge-readiness review, 2026-08-18. The branch is **12 commits / 421 files / +81,878** — it
+carries the whole **V2.1 re-skin (Library, Bench, Proof) plus supplies P1–P3**, not the Art sheet its name
+describes. ⚠ It cannot be split: `3c3d152` is a single-parent squash of PR #58 that already fused Library,
+Proof, Bench and supplies P1/P2 into one 390-file commit. **Merge it whole — but rename it.**
+
+| # | Blocker | Category | Yours or mine |
+|---|---|---|---|
+| **B1** | **The golden gate is red.** `bench_art_sheet_{light,dark}` and `bench_art_sheet_with_recents_light` were last written in `e8f2145`; `BenchArtSheet.kt`/`SupplyCatalog.kt` changed **three times since**, and `471734c` took the catalogue 4/16 → 12/16 without committing a PNG. **The committed pixels do not depict the committed code** | **Release Blocker** | **Yours** — one `record-goldens.yml` run on the pinned image. It clears **D-090**'s five Windows-recorded decor goldens in the same run: **8 PNGs, one workflow** |
+| **B2** | [D-089](design/V2-SPEC-DEFECTS.md#d-089) — the placement snack and the context bar share a band; the message truncates to `Placed on the pa` | **Release Blocker** | **Yours** (already #2 in the six below) |
+| **B3** | [D-092](design/V2-SPEC-DEFECTS.md#d-092) — `fix.corner` lands as a 4.5:1 sliver, and it is pickable today | **Release Blocker** | **Yours** — rule with D-086/D-093/D-094 |
+| **B4** | **Device Pass 2 on the supplies drawer has never been run.** Pass 1 ✅ 2026-08-17. [Definition of done](../CLAUDE.md#definition-of-done-for-a-change) item 4 requires **both** | **Release Blocker** | **Yours** (already #3 below) |
+| **B5** | ⚠ **Production code ships under a `Proposed` ADR.** `SupplyCatalog.kt:110` reads *"the derivable eight — ADR-107 R4"*; [ADR-107](DECISIONS.md#adr-107) is `Proposed` with *"owner ruling required on R5"*. The code and its unaccepted ADR landed in the **same commit**, `471734c` | **Release Blocker** | **Yours** — accept, reject, or scope ADR-107 to R4 only |
+
+⛔ **MERGE BLOCKED — [D-102](design/V2-SPEC-DEFECTS.md#d-102).** `feat/supplies-p3-art-sheet` is **46
+commits behind `main`** and a real `git merge main` produces **104 conflicted files / 708 Kotlin hunks**,
+including `HomeScreen.kt` *deleted here, modified on `main`*. The eight V2.1 Library composables exist on
+**both** lines with different content — parallel development, not a stale copy. **Rebase first, as its own
+reviewed act**, then re-run the reviews: their verdicts describe a tree that will not survive it.
+
+⚠ **A red `feature:editor` run has *three* possible causes and the exit code does not separate them** —
+a genuine regression · a golden owed a re-record (B1) · or [D-101](design/V2-SPEC-DEFECTS.md#d-101)'s
+Robolectric decoder window, which is stochastic and already tracked as **#57**. I hit all three in one
+run. **Before treating a red gate as a blocker, re-run it**; and before trusting a *green* Reframe suite,
+read the `skipped` count, because that guard turns absent coverage into a green tick by design.
+
+**Known limitations to carry into release notes** (do **not** block the merge): `PdfSurfaceParityInstrumentedTest`
+is compile-checked and **has never executed** (`PdfDocument` will not run under Robolectric) — it is the only
+evidence supply outlines reach paper as vectors, and it ships unproven · four of sixteen tiles remain inert
+([D-086](design/V2-SPEC-DEFECTS.md#d-086)) · [D-083](design/V2-SPEC-DEFECTS.md#d-083)'s three-way `Ink`
+ambiguity is a **shipped** a11y defect, older than this branch · the TalkBack listen pass is unperformed.
+
+⚠ **Also true and not about this branch:** local `main` is **46 commits ahead of `origin/main` and
+diverged** — `git pull --ff-only` fails. *"Merge to main"* currently means merging into a `main` nobody
+else has seen.
 
 ---
 
@@ -68,6 +109,8 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 | ☐ | [**ADR-107**](DECISIONS.md#adr-107) | **Accept or reject** the larger material library (~51 marks inside the frozen four). The *outlines* are Kotlin and need nothing from you; **set membership, names, order and the search controls are drawn in `v21-bench.html` and are yours** — see [D-080 §4](design/V2-SPEC-DEFECTS.md#d-080-extended), extended to name the text field it previously omitted | **Gates R1 too**, not just R5: the **~35 proposed new** marks may be authored but may not enter the shipped sheet before you rule. ⚠ This does **not** cover the eight authored on 2026-08-18 — those are ids already inside the frozen sixteen, so they change no set membership and are S5, not R1 |
 | ☐ | [**ADR-109**](DECISIONS.md#adr-109) | **Accept or reject** one photo spanning two facing pages. The engineering is cheap and needs nothing from you — two ordinary images, no schema bump, no imposition change. **What is yours is the control:** `v21-bench.html` must gain a spread action (recommended home: the selected-photo context bar, not the Add chooser) before any Compose work | Design freeze. The ADR's own skeptical pass rates this the feature's weakest point, not its schema |
 | ☐ | [ADR-109](DECISIONS.md#adr-109) §skeptical pass | **Where does the maker first see the join?** Every screen in the product shows **one page at a time**, deliberately — Bench edits one page, Read refuses a spread view on the record (ADR-101 P5), Fold draws topology, Print draws nothing. So the first sight of the continuous image is the **printed sheet**. Rule on the copy and the moment | ⚠ This is the feature's acceptance criterion. It **cannot** be answered by adding a spread preview — that is the redesign ADR-101 P5 already refused |
+| ☐ | [D-100](design/V2-SPEC-DEFECTS.md#d-100) | **`SUPPLIES-SPEC §3.4.1`'s uniform-scale rule was never built**, and two KDoc blocks said it was. A maker can stretch `shape.circle` into an ellipse and `mark.registration` into an oval today. ⚠ Because supplies are **fill-only even-odd outlines**, a stretched registration mark breaks the exact tangent [D-095](design/V2-SPEC-DEFECTS.md#d-095) was filed to fix — *the mark D-095 made correct can be made incorrect again with a drag*. Lock `mark.*`+`shape.circle` · strike §3.4.1 · or accept the ellipse | **Decision** — all sixteen handles behave identically today, so making four differ is a change to a frozen interaction, not a bug fix. 🟦 Rule with [D-092](design/V2-SPEC-DEFECTS.md#d-092): that one asks what a supply *lands* at, this one what a maker may do to it after |
+| ☐ | [README.md](../README.md) · [CLAUDE.md](../CLAUDE.md#documentation-system) | ⚠ **The doc index is eight documents behind, and I am not allowed to fix it.** `README.md` owns *"index of all docs"*. This branch adds `SUPPLIES-SPEC.md`, `ZINE-DIRECTION.md`, `ZINE-WORLD.md`, `BETA-DIRECTION.md`, `PRODUCT-DIRECTION.md`, `V21-SPEC.md`, `V21-RESEARCH.md` and **this file** — and indexes none. `e3141f0` even edited `CLAUDE.md` to make `OWNER-CHECKLIST.md` canonical while the index it names does not know it exists | **Structural.** `README.md` is on my [never-touch list](#standing-constraints-i-observe), so this Documentation-Rule breach is the one item on this page **no implementer can close by working harder**. Either lift the constraint for the index rows, or add them yourself. 🟦 I can draft the exact rows on request |
 | ☐ | [D-098](design/V2-SPEC-DEFECTS.md#d-098) | **Should the imposition engine check its own output at runtime?** `LayoutValidator` is a complete structural checker — panel/page bijections, tiling, transform consistency, fold topology — with **no production caller**: it runs only in `core:imposition` tests. Options: leave it test-only · call it in debug builds · call it in the export path and surface issues as an export error | **Decision.** ⚠ Not the defect — D-098 fixed the two docs that *claimed* it already runs. This is the question those docs made it look like we had already answered |
 | ☐ | [D-080](design/V2-SPEC-DEFECTS.md#d-080) | Amend the frozen Art sheet: own glyph, filtering family chips, an empty state | Whichever phase builds it out |
 | ☐ | [D-083](design/V2-SPEC-DEFECTS.md#d-083) | Relabel the ink popover so `Ink` (verb) / `Ink` (maker) / `Ink` (neutral) are distinguishable | Shipped a11y defect |

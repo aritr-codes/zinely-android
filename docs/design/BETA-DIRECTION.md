@@ -449,10 +449,17 @@ The cut separates only `4|7` and `3|8` — **neither is a reading spread**, and 
 > It claimed that suppressing the inner keep-clear edge "needs a per-edge safe-area concept `ImpositionLayout`
 > does not have today" and called it "the only imposition-side work in X11." **There is no imposition-side work
 > in X11 at all.** The safe area is *advisory*: `SingleSheet8Imposer` sets `clipLocalBounds = panelLocal`, never
-> `safeLocal` (and `LayoutValidator` only *asserts* that equality, in tests — [D-098](V2-SPEC-DEFECTS.md#d-098));
-> and `ZineExporter` clips each panel by
+> `safeLocal`; `LayoutValidator` hard-enforces `clip == panel`; and `ZineExporter` clips each panel by
 > `clipLocalBounds`. Nothing insets by the safe area at render or export time — which this section already said
 > in its own words (*"so content may already reach the panel edge"*) before contradicting it here.
+>
+> ⚠ **Annotated 2026-08-18, not rewritten — [D-098](V2-SPEC-DEFECTS.md#d-098).** *"`LayoutValidator`
+> hard-enforces"* above is **false** — it appends to a returned list, has no production caller, and is a
+> test-only gate. The correction is appended rather than applied because **this document is superseded**
+> (see the banner at the top) and is kept *for its working*: a superseded document is a record, and
+> silently fixing a claim inside it destroys the trail it exists to preserve. An earlier edit did replace
+> the words; it was reverted here. 🟨 The paragraph's actual argument — *nothing insets by the safe area
+> at render or export time* — never depended on the false clause and still stands.
 >
 > The keep-clear inset is a **drawn cue** — `BenchStudioSurface.keepClearInsetPx` turns the panel-space inset into
 > a page-space guide for the maker's eye. So the feared "12mm white stripe through the middle" is not something
@@ -574,6 +581,13 @@ Raising the bar means re-testing the refusals too, not only the deferrals. These
 
 | # | Work | Depends on |
 |---|---|---|
+⚠ **Annotation added 2026-08-18 — [D-099](V2-SPEC-DEFECTS.md#d-099): this table's numbering is
+superseded and disagrees with the authoritative one.** [`ZINE-DIRECTION.md:723-739`](ZINE-DIRECTION.md)
+carries the live `X`-series and the two agree on **2 ids out of 14**. Notably *Spreads* is **`X9`** there
+and `X11` here; *supplies* is **`X1`** there and `X7` here. **Cite the `ZINE-DIRECTION.md` ids.** The rows
+below are left exactly as written — this document is kept for its working, not maintained — and this is
+an annotation, not a renumbering.
+
 | X1 | **Font as three named voices** | N6, N8 |
 | X2 | **Replace image** (closes D-038) | — |
 | X3 | **Take a photo** — `TakePicture` + `FileProvider`, no `CAMERA` permission ↑ | — |

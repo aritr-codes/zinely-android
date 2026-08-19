@@ -111,6 +111,28 @@ flowchart TB
 - **Share:** via system share sheet (FileProvider).
 - **Fold instructions:** in-app guide.
 
+### 7.1a Beyond MVP, and already built — the **third element type** {#7-1a-supplies}
+
+⚠ **Recorded 2026-08-18, late.** MVP has exactly two element types, photo and text, and §7.1 says so.
+A **third — `DecorElement`, "supplies"** — is implemented on `feat/supplies-p3-art-sheet` and this
+document had never mentioned it. [CLAUDE.md](../CLAUDE.md#documentation-rule-mandatory) gives scope to this
+section, so its absence here was the defect, not the work.
+
+- **What it is.** Sixteen frozen decorative marks — tape, stamps, cut paper, cut shapes — taken from a
+  drawer, placed on the page, recoloured from the maker inks, and rendered as **fill-only even-odd
+  outlines** so they print as vectors rather than images. [ADR-105](DECISIONS.md#adr-105) admits the
+  primitive; [ADR-104](DECISIONS.md#adr-104) closes the asset question **on provenance, not on privacy** —
+  everything is bundled, and no supply is ever fetched.
+- **Why it is not a networking change.** It adds no code path that reaches a network, so
+  [§5's non-negotiables](#5-product-principles-non-negotiable) and §7.2's first clause are untouched.
+- **Where the phasing lives.** [ROADMAP.md](ROADMAP.md) (V1), P1–P3; the per-phase detail is
+  [SUPPLIES-SPEC §10.1](design/SUPPLIES-SPEC.md).
+- ⚠ **Not settled by this row.** The set **beyond** the frozen sixteen — roughly 35 further marks, their
+  names, order and the search control — is [ADR-107](DECISIONS.md#adr-107), still `Proposed`. This section
+  records the primitive that ships; it does not widen the catalogue.
+
+*This row is a **record of scope that changed**, not a decision. The decisions are the ADRs it links.*
+
 ### 7.2 Explicitly OUT of MVP scope
 Networking of any kind · accounts/auth · cloud/sync · commercial prepress (CMYK/ICC/PDF-X, bleed, crop marks) · multi-format impositions (16/32-page saddle-stitch) · drawing/stickers layer · custom font import · on-device filters/adjustments beyond crop · templates marketplace · analytics SDKs.
 > These are deferred, not rejected — see [ROADMAP.md](ROADMAP.md). Any change here is a scope change and must update this section + an ADR.

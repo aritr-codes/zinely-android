@@ -128,13 +128,33 @@ flowchart LR
 - Android **PrintManager** in-app print path ([R2.3](RESEARCH.md#r23-system-print-framework--recommendation)).
 - Calibration test sheet; thumbnails everywhere.
 - Full accessibility pass; dark theme; Baseline Profile.
+- **Supplies — the decorative third primitive** (`DecorElement`; [ADR-105](DECISIONS.md#adr-105),
+  [ADR-104](DECISIONS.md#adr-104), [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md)). Phased **P1 ink reaches
+  paper · P2 the drawer · P3 the Art sheet**; §10.1 of the spec owns the per-phase detail, this row owns
+  the phasing's place in the plan. ⚠ **The set beyond the frozen sixteen is gated on
+  [ADR-107](DECISIONS.md#adr-107), which is `Proposed`.**
+- **The V2.1 re-skin** — Library, Bench and Proof re-drawn against `V21-SPEC.md`
+  ([ADR-100](DECISIONS.md#adr-100) · [ADR-101](DECISIONS.md#adr-101) · [ADR-102](DECISIONS.md#adr-102), all
+  Accepted). ⚠ **Partly landed.** The eight Library composables are on `main`; `ZineV21Cover` and
+  `ZineV21CoverMarks` are not, and `feat/supplies-p3-art-sheet` carries a **divergent** version of all
+  eight — see [D-102](design/V2-SPEC-DEFECTS.md#d-102).
+  ⚠ **Corrected 2026-08-19:** this row said *"Landed as one squash, PR #58."* **PR #58 is the supplies
+  PR** — *"feat(supplies): share-in, the photocopier, and the tape for sixteen supplies"*, merged
+  2026-08-17 (`gh pr view 58`). The Library work reached `main` through the Phase B commits
+  (`4231175`, `1e097ab`, `946d6a9`, `97744e6`, `03223da`), not through #58.
 
 ## V2 — "more formats & expression"
 - Additional impositions: 4-page, **16-page saddle-stitch** (double-sided + binding guidance) — a distinct imposition family ([R1.7](RESEARCH.md#r17-variants--pitfalls--disputed--assumption)).
 - Drawing / stickers / freehand layer.
 - **Custom font import** (`.ttf`).
 - **Print-shop export groundwork**: bleed, trim/crop marks, margins — still RGB ([ADR-002](DECISIONS.md#adr-002)).
-- Multi-page spreads; batch export; grid/layers panel.
+- **`X9` — multi-page spreads** (one photo across two facing pages). ⚠ `Proposed`, gated on
+  [ADR-109](DECISIONS.md#adr-109). Two ordinary images, no schema bump and **no imposition change** — the
+  ADR refutes the *"per-edge safe area is the one engine change"* note that
+  [`ZINE-DIRECTION.md:732`](design/ZINE-DIRECTION.md) still carries. The owner-owed part is the **control**,
+  not the engineering. The id is `X9` from `ZINE-DIRECTION.md`'s table, which is the authoritative one
+  ([D-099](design/V2-SPEC-DEFECTS.md#d-099) — `BETA-DIRECTION.md` numbers the same item `X11`).
+- Batch export; grid/layers panel.
 - Optional, explicit, user-initiated community sharing (network strictly opt-in).
 
 ## Future vision
@@ -180,6 +200,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-08-18 | ⚠ **Phasing that had shipped without a roadmap row is recorded**: the V2.1 re-skin (V1) and the supplies programme P1–P3 (V1), plus spreads as **`X9`** under V2. A merge-readiness review found this document silent on ~74k lines already on `feat/supplies-p3-art-sheet` — `SUPPLIES-SPEC §10.1` had been carrying the phasing, and [CLAUDE.md](../CLAUDE.md#documentation-rule-mandatory) gives phasing to this file. 🟨 Recording it here does **not** accept [ADR-107](DECISIONS.md#adr-107) or [ADR-109](DECISIONS.md#adr-109), both still `Proposed` | [ADR-105](DECISIONS.md#adr-105), [ADR-107](DECISIONS.md#adr-107), [ADR-109](DECISIONS.md#adr-109), [D-099](design/V2-SPEC-DEFECTS.md#d-099) |
 | 2026-06-19 | Initial roadmap established | [PRD §7](PRD.md#7-scope--mvp) |
 | 2026-06-19 | S1 imposition engine spike implemented (pure Kotlin, 95 tests, Codex-reviewed) | [ADR-007](DECISIONS.md#adr-007) |
 | 2026-06-19 | S2 decision gate **cleared** — ADR-019…023 all Accepted (autosave, asset ownership/GC, fidelity); S2 implementation unblocked | [ADR-021](DECISIONS.md#adr-021), [ADR-022](DECISIONS.md#adr-022), [ADR-023](DECISIONS.md#adr-023) |

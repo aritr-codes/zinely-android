@@ -12479,14 +12479,21 @@ command.** Contrast ADR-105, where the new primitive did need one — this one d
    *(Note: [BETA-DIRECTION §3.3](design/BETA-DIRECTION.md) cites the chooser at
    `v21-bench.html:773`; it is at `:827-829` in the current file. Line citations in that document
    have drifted and should be re-checked before being used as evidence.)*
-8. ⚠ **`X11` exists in [BETA-DIRECTION.md:586](design/BETA-DIRECTION.md) and nowhere in
-   [ROADMAP.md](ROADMAP.md).** This ADR calls it a roadmap item because §3.10 does; it has never been
-   carried into the document that [owns phasing](../CLAUDE.md#documentation-system).
-   🟦 **RECOMMENDATION: land it in ROADMAP.md when this ADR is accepted — under a fresh identifier,
-   not "X11".** ⚠ The label is already ambiguous across the design docs: `X11` is *Spreads* in
-   `BETA-DIRECTION.md:586` and *Colophon* in `ZINE-DIRECTION.md:734` (and `SUPPLIES-SPEC.md:517,523` uses
-   the colophon sense). Carrying the collision into the document that owns phasing would make it
-   permanent.
+8. ⚠ **The spreads work item is `X9`, not `X11`, and it is absent from [ROADMAP.md](ROADMAP.md).**
+   🟨 **Corrected 2026-08-18 — [D-099](design/V2-SPEC-DEFECTS.md#d-099); this item previously got it
+   wrong.** It read the id from [`BETA-DIRECTION.md:587`](design/BETA-DIRECTION.md), noticed that `X11`
+   means *Colophon* in [`ZINE-DIRECTION.md:734`](design/ZINE-DIRECTION.md), and recommended inventing **a
+   fresh identifier** to escape the clash. That was the wrong cure for a correctly-spotted symptom: the
+   two documents run **entirely different `X`-schemes** — they agree on 2 ids out of 14 — and
+   `BETA-DIRECTION.md` is **superseded by its own banner** (`:1-5`, 2026-08-15). `ZINE-DIRECTION.md:732`
+   allocates **`X9` — *Spreads — all four*** and always did. A fresh identifier would have become a
+   *third* scheme in the document that owns phasing, which is the one place a collision becomes permanent.
+   🟦 **RECOMMENDATION, restated: carry `X9` into [ROADMAP.md](ROADMAP.md) when this ADR is accepted**
+   — today V2 lists *"Multi-page spreads"* as an unnumbered bullet, so the id has never reached the
+   document that owns phasing. Cite the **`ZINE-DIRECTION.md`** table when doing it.
+   ⚠ `ZINE-DIRECTION.md:732` also annotates X9 with *"per-edge safe-area is the one engine change"* —
+   **this ADR refutes that**: the safe area is advisory, and there is no imposition-side work. The
+   annotation should be struck in the same edit.
 
 **Owner-owed, blocking (for [OWNER-CHECKLIST.md](OWNER-CHECKLIST.md)):**
 | # | Item | Why it blocks |

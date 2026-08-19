@@ -6264,9 +6264,13 @@ three different things, and none of them is enforcement.
    `clip == panel` validation must be loosened in lockstep or it will reject every bleed layout"*. **The
    correct statement was already in the document being corrected**, which is the part worth keeping: I read
    one bullet, found it false, and did not read the next one.
-2. [`BETA-DIRECTION.md`](BETA-DIRECTION.md) §X11 — same phrase, inside a passage that is otherwise correct
-   and is itself a *correction* of an earlier error. 🟨 The sentence's actual argument (*"nothing insets by
-   the safe area at render or export time"*) **survives intact** — it never needed the validator.
+2. [`BETA-DIRECTION.md`](BETA-DIRECTION.md) — same phrase, inside a passage that is otherwise correct and is
+   itself a *correction* of an earlier error. 🟨 The sentence's actual argument (*"nothing insets by the safe
+   area at render or export time"*) **survives intact** — it never needed the validator.
+   ⚠ **Annotated, not rewritten** — this document is **superseded** ([D-099](#d-099)), so it is a record and
+   its words stand; the correction is appended beneath the paragraph. A first edit did replace them, and
+   was reverted. *(The section is `§X11` in this document's own superseded numbering; the live id for
+   spreads is `X9` — see D-099.)*
 
 3. ⚠ **A third site, found by review, not by me:** the frozen mockup
    [`v2-bench.html:24-25`](mockups/v2-bench.html) — *"the engine's safe area is `safeAreaInsetPt = 17.0`
@@ -6297,3 +6301,268 @@ because what a `Proposed` ADR proposed is evidence about what was believed when 
 should validate its own output at runtime — or in a debug build, or in a golden test that today does not
 call it — is a design question, not a documentation one. It belongs in [ROADMAP.md](../ROADMAP.md) or an
 ADR, not in this pass. What this defect fixes is the claim that it already does.
+
+---
+
+### D-099 — two rival `X`-id schemes name the same work items, and ADR-109 already followed the wrong one {#d-099}
+
+**Found:** 2026-08-18, while landing [ADR-109](../DECISIONS.md#adr-109)'s roadmap item. **Severity:** planning
+integrity — every cross-document reference of the form *"X7"* or *"§X11"* is ambiguous, and one ADR has
+already acted on the ambiguity.
+
+#### The two tables
+
+[`ZINE-DIRECTION.md:723-739`](ZINE-DIRECTION.md) and [`BETA-DIRECTION.md:577-590`](BETA-DIRECTION.md) both
+carry a numbered `X`-series work table. **They agree on exactly two ids out of fourteen.**
+
+| id | `ZINE-DIRECTION.md` (authoritative) | `BETA-DIRECTION.md` (superseded) |
+|---|---|---|
+| X1 | Decor primitive + sixteen supplies | Font as three named voices |
+| X2 | Supplies tray | Replace image |
+| X3 | Take a photo | Take a photo ✅ |
+| X4 | Duplicate element | Duplicate element ✅ |
+| X5 | Replace image | Page grid draws content |
+| X6 | Font as three named voices | Page reorder + duplicate |
+| X7 | Page grid draws content | GRAPHIC primitive + the 16 supplies |
+| X8 | Page reorder + duplicate | Share-sheet receive |
+| **X9** | **Spreads — all four** | Photocopier filter |
+| X10 | Page images, reading order | Actual-size preview |
+| **X11** | **Colophon** | **Spreads — all four reading pairs** |
+| X12 | Share-sheet receive | Save pages as images |
+| X13 | ~~Photocopier~~ (promoted to X3b) | Retire the Material icon tile |
+| X14 | Actual-size preview | Collapse the Bench's chrome rows |
+| X15 / X16 | Retire icon tile · Collapse chrome rows | *(absent)* |
+
+⚠ **This branch's own subject is `X1` in one document and `X7` in the other.** *Spreads* is `X9` and `X11`.
+*Photocopier* is `X3b` and `X9`.
+
+#### It is already resolved, and the resolution was already written down
+
+[`BETA-DIRECTION.md:1-5`](BETA-DIRECTION.md) opens with **`⚠ SUPERSEDED by ZINE-DIRECTION.md (2026-08-15)`**
+— *"Folded in whole… it is no longer authoritative. Decisions, the capability map and the implementation
+sequence live in `ZINE-DIRECTION.md`."* So **`ZINE-DIRECTION.md`'s numbering wins**, and no owner ruling is
+needed: spreads is **X9**, supplies is **X1**.
+
+#### What it already cost
+
+⚠ **[ADR-109](../DECISIONS.md#adr-109) recommended landing spreads *"under a fresh id — not `X11`, which
+collides with Colophon in `ZINE-DIRECTION.md:734`"*.** That reads the id out of the **superseded**
+document, notices the resulting collision, and prescribes a *third* scheme as the cure. The id was never
+free to invent: `X9` was allocated to spreads in the authoritative table the whole time. Corrected in
+ADR-109.
+
+🟨 **And the same trap caught this very defect log an hour earlier.** [D-098](#d-098) cited
+*"`BETA-DIRECTION.md` §X11"* and — worse — **edited the superseded document** to correct a false claim
+inside it. That is the error [D-096](#d-096) spent a whole pass arguing against, in the opposite
+direction: a superseded document is a **record**, kept *"for its working — the reasoning trail, the
+falsified claims and the corrections"*, and silently repairing a claim inside it destroys the thing it is
+kept for. Reverted; the correction is now **appended as a dated annotation** and the original wording
+stands.
+
+#### Fixed here
+
+- ADR-109's roadmap recommendation corrected to **X9**.
+- `BETA-DIRECTION.md`'s D-098 edit reverted to an annotation.
+- No renumbering of either table. 🟦 **`ZINE-DIRECTION.md` is authoritative by its own banner** — the fix
+  for the ambiguity is to cite the authoritative table, not to reconcile a superseded one.
+
+✅ **Also done, after catching myself deferring it on a reason I had just refuted.** The rival table now
+carries a `⚠ superseded numbering` annotation **immediately above it**, not only in the file banner 570
+lines up, naming `ZINE-DIRECTION.md` as the live table and `X9`/`X1` as the ids that matter. 🟨 A first
+draft of this section deferred it *"because it edits a superseded document, which is exactly what this
+defect is about"* — but the principle established two paragraphs earlier is that **annotating a record is
+fine and replacing its words is not**. An annotation was never the thing being warned against. The
+deferral was a reflex dressed as caution, which is the failure mode this defect keeps finding.
+
+---
+
+### D-100 — `SUPPLIES-SPEC §3.4.1`'s uniform-scale rule was never implemented, and two KDoc blocks said it was {#d-100}
+
+**Found:** 2026-08-18, by an independent review of the supplies/render slice during the merge-readiness
+pass. **Severity:** shipped behaviour diverges from the spec, and two source comments asserted the
+opposite in the present tense.
+
+#### What the spec says and what ships
+
+[`SUPPLIES-SPEC §3.4.1`](SUPPLIES-SPEC.md) divides the sixteen supplies by how they may be resized:
+`mark.*` and `shape.circle` hold a **uniform** scale (a stamp is a stamp; a circle is a circle), while
+tape and cut paper stretch freely, *because stretching tape is what tape does*.
+
+⚠ **No aspect lock exists.** A grep of `core/editor/src/main` and of `ResizeHandles.kt` /
+`EditorGestures.kt` for `aspect`, `lockRatio`, `keepSquare`, `uniformScale` returns nothing relevant. A
+maker can stretch `shape.circle` into an **ellipse** and `mark.registration` into an **oval** today, with
+both handles behaving exactly as tape's do.
+
+#### The comments that hid it
+
+| File | Said |
+|---|---|
+| [`AffineTransform2D.kt:56-57`](../../core/model/src/main/kotlin/com/aritr/zinely/core/model/AffineTransform2D.kt) | *"`mark.*` and `shape.circle` **are constrained to uniform scale by the editor**"* |
+| [`SceneRenderer.kt:118-120`](../../core/render/src/main/kotlin/com/aritr/zinely/core/render/SceneRenderer.kt) | *"Keeping a stamp square is an editor **constraint**"* |
+
+Both sentences exist to justify a *render* decision that is correct and unaffected — the fold takes two
+scale factors and the tape stays dumb. 🟨 **The reasoning is sound; only the aside is false.** And it is
+the most believable kind of false: it names the right files, the right rule and the right spec clause,
+and states as shipped a thing that was only ever specified. The render argument never depended on it,
+which is exactly why nobody checked it.
+
+#### Fixed here — the comments only
+
+Both now say the rule is **specified and owed**, and point at this defect. ⚠ **The behaviour is
+unchanged**: a stamp can still be stretched.
+
+#### The ruling this needs
+
+🟦 **RECOMMENDATION: implement the lock**, because the alternative is worse than it sounds. The supplies
+are **fill-only even-odd outlines** with no stroke, so a stretched `mark.registration` does not merely
+look wrong — its arms and ring scale anisotropically and the tangent that keeps the centre bare
+([D-095](#d-095)) is not preserved under non-uniform scale. The mark that D-095 was filed to make correct
+can be made incorrect again with a drag.
+
+⚠ **Owner call, because it changes a shipped interaction**: the handles currently behave identically for
+all sixteen supplies, and making four of them behave differently is a design change to a frozen surface,
+not a bug fix. Options: lock `mark.*` + `shape.circle` to uniform · lock nothing and strike §3.4.1 ·
+lock nothing and accept the ellipse as expressive. **This defect does not choose.**
+
+🔭 Related but distinct: [D-092](#d-092) asks what aspect a supply should *land* at. This one asks what a
+maker may do to it afterwards. Ruling them together would be reasonable.
+
+---
+
+### D-101 — the merge gate is not deterministically green, and the reason is a known flake nobody counted {#d-101}
+
+**Found:** 2026-08-18, during the merge-readiness pass, by running the gate rather than reasoning about it.
+**Severity:** process — no product defect. ⚠ But it changes what a red CI run *means* on this branch.
+
+#### What happened
+
+The CI golden command is, verbatim from [`ci.yml:140-142`](../../.github/workflows/ci.yml):
+
+```
+./gradlew :render-android:verifyRoborazziDebug :feature:editor:verifyRoborazziDebug \
+  :core:ui:verifyRoborazziDebug --rerun-tasks --no-daemon
+```
+
+Run locally it produced **four** failures: the three expected stale Art-sheet goldens ([B1](../OWNER-CHECKLIST.md)),
+plus `ReframeA11yTest > the_reset_framing_custom_action_reverts_to_the_placement_default`, alongside
+*"Failed to create image decoder with message 'unimplemented'"*. The same test **passes in isolation**.
+
+⚠ **Corrected after more runs — my first hypothesis was wrong.** I wrote that this was cross-module
+contention, on one 3-module red and one single-module green. A fourth run says otherwise:
+
+| Run | Shape | Result |
+|---|---|---|
+| A | 3-module `verifyRoborazziDebug --rerun-tasks` (the CI command) | `ReframeA11yTest` **FAILED** |
+| B | single-module, `--tests '*ReframeA11yTest*'` | passed |
+| C | single-module, full `--rerun-tasks` | passed |
+| D | single-module, full `--rerun-tasks` | `ReframeA11yTest` **FAILED** |
+
+**Two of three full-module runs failed, one of them with no other module running.** Contention is not the
+variable; run D had the machine to itself. This is diagnosis 3 from
+[`ReframeTestPhoto.kt`](../../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/ReframeTestPhoto.kt)
+— a decoder that dies for a bounded window — landing inside the gap between the probe and the composition,
+exactly as that file predicts. 🟨 **And it is not "occasional":** at ~2-in-3 on this host it is closer to
+a coin flip than the KDoc's *"locally and on device the decoder always works and this never fires"*
+suggests. That sentence is true of a developer machine running one test; it is not true of a full-module
+`--rerun-tasks` here.
+
+#### It is the documented residue of a known flake, not a new one
+
+[`ReframeTestPhoto.kt`](../../feature/editor/src/test/kotlin/com/aritr/zinely/feature/editor/ReframeTestPhoto.kt)
+already carries three diagnoses of this, two of them recorded as **wrong**, and lands on: *the Robolectric
+NATIVE decoder fails for a bounded window and then recovers.* The mitigations are real —
+`maxParallelForks = 1`, `forkEvery = 50`, and a **per-call** probe (`assumeFullImageDecodeAvailable`,
+deliberately not cached, so each test asks about its own moment). `reframeTestPhoto()` calls it, so
+`ReframeA11yTest` *is* guarded.
+
+⚠ **And the file names exactly the hole I fell into:** *"a decoder that dies between this probe and the
+composition still fails the test. That residue is #57's neighbourhood."* The probe narrows the window; it
+does not close it. So this failure is a **skip that missed its window by milliseconds**, dressed as an
+assertion failure — which is what that KDoc predicted in writing.
+
+#### Why it matters anyway
+
+🟨 **Nothing was wrong, and the gate still went red.** For a branch whose merge decision rests on *"is the
+gate green?"*, a stochastic red that looks identical to a real one is a decision hazard. Three separate
+things now produce a red `feature:editor` run: a genuine regression, a golden owed a re-record, and this.
+Only the first should block, and they are not distinguishable from the exit code.
+
+#### Not fixed here, deliberately
+
+The fix is the one the file already names — establish the fixture's precondition through a **seam** rather
+than by probing a runtime that can change its mind — and it is
+[#57](https://github.com/aritr-codes/zinely-android/issues/57)'s test-architecture change, out of scope
+for a merge-readiness pass. 🟦 What this defect adds is the **count**: check the `skipped` figure on any
+green Reframe run before trusting it, and treat a lone `ReframeA11yTest` red as environmental until a
+second run says otherwise. `ReframeTestPhoto.kt` asks for exactly that watch and nobody had been keeping it.
+
+⚠ **This also corrects a claim of mine.** Commit `59ef25d` says *"the same three Art-sheet failures as
+before this change and no others."* Given a rotating window, that sentence was only ever true of the run
+that produced it, and I wrote it as though it were a property of the change. It is not evidence that
+`ReframeA11yTest` was green then — only that it did not fail *that time*.
+
+---
+
+### D-102 — `feat/supplies-p3-art-sheet` cannot merge: 46 commits stale, 104 conflicted files, 708 hunks {#d-102}
+
+**Found:** 2026-08-19, in the merge-readiness pass, by **attempting the merge** instead of reading a diff.
+**Severity:** release blocker for this branch. No product defect — the code is fine; the *branch* is not.
+
+#### The measurement
+
+| | |
+|---|---|
+| Commits on `main` not in the branch | **46** |
+| Commits on the branch not in `main` | 12 |
+| Files that conflict on a real `git merge` | **104** — 71 `.kt`, 27 binary goldens, 3 `.md` |
+| Conflict **hunks** in Kotlin alone | **708** |
+| Structural conflicts | `HomeScreen.kt` *deleted in HEAD, modified in `main`* |
+
+Verified in a throwaway worktree (`git merge --no-commit --no-ff main` → exit 1, then aborted), not inferred.
+
+#### Why it was invisible
+
+⚠ **Every number quoted about this branch \u2014 including mine \u2014 came from a three-dot diff.**
+`git diff main...HEAD` diffs from the **merge-base**, so it describes a `main` that stopped existing 46
+commits ago. Two-dot tells the truth about merging:
+
+```
+git diff --shortstat main...HEAD   421 files, 81,878 insertions   <- what everyone reported
+git diff --shortstat main HEAD     377 files, 51,554 insertions, 10,281 deletions
+```
+
+🟨 **And I propagated the error into three independent reviews**, because I wrote `git diff main...HEAD`
+into all three reviewer briefs. All three returned verdicts on a branch-vs-merge-base picture; none could
+have seen the staleness, because I had told each of them where to look. *An independent review is only
+independent of the implementer's conclusions — never of the implementer's framing.*
+
+#### What actually diverged
+
+The eight V2.1 Library composables exist on **both** `main` and the branch, with different content:
+
+| File | branch vs `main` |
+|---|---|
+| `ZineShelf.kt` | +346 / −76 |
+| `ZineActionSheet.kt` | +302 / −182 |
+| `ZineShelfEmpty.kt` | +302 / −327 |
+| `ZineOnShelf.kt` | +290 / −150 |
+| `ZineDock.kt` | +196 / −181 |
+| `ZineShelfFail.kt` | +163 / −95 |
+| `ZineCoverRecipe.kt` | +93 / −52 |
+| `ZineLibraryScreen.kt` | +52 / −8 |
+
+`ZineV21Cover.kt` and `ZineV21CoverMarks.kt` are branch-only. **This is parallel development of the same
+screens on two lines, not a stale copy of one** — `git cherry -v main HEAD` marks all 12 branch commits
+`+`, so nothing has been absorbed by patch-id.
+
+#### The recommendation
+
+🟦 **Do not merge. Rebase or merge `main` in first, on its own, as a reviewed act** — 708 hunks is a task
+with its own defect risk, and folding it into a feature merge would hide which side won each one.
+⚠ **Then re-run all three slice reviews**, because their verdicts describe a tree that will not exist
+afterwards. The Photocopier fix ([D-099](#d-099) territory) and the `remember{}` fix are small and
+self-contained; they are the parts most likely to survive the rebase unchanged.
+
+🟨 **The real lesson is upstream of the numbers.** A branch named for one feature had been accumulating a
+second one for 46 commits of `main` drift, and nothing in the process noticed, because every check anyone
+ran — mine and three reviewers' — was scoped to the branch rather than to the merge.
