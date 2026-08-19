@@ -249,7 +249,7 @@ The complete creative loop, audited stage by stage. Verdicts are decisions, not 
 | Text: **font choice** | ✅ drawn, permanently disabled (`BenchContextBar.kt:99`) | **Needs completing → BUILD** as three named voices |
 | Image: import, reframe, resize, rotate, position, delete | ✅ ships | **Already complete** |
 | Image: **replace** | ✅ drawn, disabled; `Intent.ReplaceImage` exists and is dispatched from nowhere | **Needs completing → BUILD.** Closes D-038 |
-| **Decor / graphics** | ✅ half-built: `DecorElement` prior art (OD-2), decor verb set in the freeze at `v21-bench.html:625`, `BenchInkPopover.kt:140` handles `DECOR`, and `BenchContextBar.kt:125` **throws** | **Missing but structurally required → BUILD.** §9 |
+| **Decor / graphics** | ✅ half-built: `DecorElement` prior art (OD-2), decor verb set in the freeze at `v21-bench.html` §`toolsFor()` (`:679`), `BenchInkPopover.kt:140` handles `DECOR`, and `BenchContextBar.kt:125` **throws** | **Missing but structurally required → BUILD.** §9 |
 | **Duplicate element** | ✅ verified absent from `Intent` | **Missing but important → BUILD.** Repeated marks are the medium |
 | Layering | ✅ implemented 3× (`ZOrder.kt:37`, `EditorContextBar.kt:177`, `EditorA11y.kt:70`) but **both buttons clipped** | **Needs fixing.** Layout defect, not missing capability |
 | Snap guides, nudge, scale, rotate | ✅ ships | **Already complete** |
@@ -261,7 +261,7 @@ The complete creative loop, audited stage by stage. Verdicts are decisions, not 
 | Capability | State | Verdict |
 |---|---|---|
 | Page add / delete / navigate | ✅ ships | **Already complete** |
-| **Page reorder** | ✅ absent in code — **but specified in the freeze** (`v21-bench.html:766`: *"tap to jump, drag to reorder"*) | **Needs completing → BUILD.** This is parity, not a new feature |
+| **Page reorder** | ✅ absent in code — **but specified in the freeze** (`v21-bench.html` §`openGrid()`, `:820`: *"tap to jump, drag to reorder"*) | **Needs completing → BUILD.** This is parity, not a new feature |
 | **Page duplicate** | absent | **Missing but important → BUILD.** With a fixed fold you repeat layouts rather than add pages |
 | Page grid shows page **content** | ✅ draws eight blank numbered cards | **Needs fixing.** Reads as *"my pages are gone"* |
 | Shelf: rename, duplicate, delete + undo | ✅ ships | **Already complete** |
@@ -415,17 +415,17 @@ Sixteen is argued from shipped systems, not a study: this repo's own cover gramm
 
 ## 9.3 How it is added, edited, and behaves
 
-**Added** — ✅ **the third add verb is already frozen as `Art`** (`v21-bench.html:14`, `:775`), so building it is parity. It opens a tray of the sixteen grouped by family. Tap places at the page centre at a default size; drag places where the finger goes.
+**Added** — ✅ **the third add verb is already frozen as `Art`** (`v21-bench.html:14`, and §`openSupply()` at `:825-829`), so building it is parity. It opens a tray of the sixteen grouped by family. Tap places at the page centre at a default size; drag places where the finger goes.
 
 ⚠ Two things the freeze draws here do **not** ship: the online search and the four generic chips (Illustrations/Icons/Frames/Patterns). See §14 A0 — the chips become the four authored families, and the search goes because sixteen curated primitives are browsed, not searched.
 
 **Naming:** **Art** is the verb (what you are adding, parallel with Text and Photo). **Supplies** is the drawer the material lives in — `Copy.kt:320` already says *"from the supplies below"* and `SCREEN-INVENTORY.md:112` specifies the tray. A verb and a container, not two names for one thing.
 
-**Edited** — ✅ **the frozen spec already defines this.** `v21-bench.html:625` specifies the decor verb set as `Replace, Ink, Delete`, and `BenchInkPopover.kt:140` already handles `BenchVerbKind.DECOR`. **Decor editing is parity work, not new design.** Adding the shared `Duplicate` verb is the only amendment.
+**Edited** — ✅ **the frozen spec already defines this.** `v21-bench.html` §`toolsFor()` (`:679`) specifies the decor verb set as `Replace, Ink, Delete`, and `BenchInkPopover.kt:140` already handles `BenchVerbKind.DECOR`. **Decor editing is parity work, not new design.** Adding the shared `Duplicate` verb is the only amendment.
 
 **Behaves** — identically to every other element: two-finger transform, snap guides, nudge, layering, undo. **Decor is not special**, which is the point: one selection model, three primitives.
 
-**Tilt** — ⚠ **WITHDRAWN.** Supplies land at **0°**. The frozen bench states the rule itself (`v21-bench.html:22-23`): *"the page never tilts. You are working on it; it sits square to you. (Tilt is for objects at rest…)"* — and a supply is placed *on* the page, in the act of working. A pre-tilted supply is a compositional decision the app made and the maker didn't. [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md); the app's craft knowledge is expressed as **per-family default size** instead (§5.2). The ban on shuffle, re-roll and random position stands and is reinforced.
+**Tilt** — ⚠ **WITHDRAWN.** Supplies land at **0°**. The frozen bench states the rule itself (`v21-bench.html` §*the banner*, `:23-24`): *"the page never tilts. You are working on it; it sits square to you. (Tilt is for objects at rest…)"* — and a supply is placed *on* the page, in the act of working. A pre-tilted supply is a compositional decision the app made and the maker didn't. [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md); the app's craft knowledge is expressed as **per-family default size** instead (§5.2). The ban on shuffle, re-roll and random position stands and is reinforced.
 
 ## 9.4 Accessibility of Decor — part of its definition
 
@@ -620,10 +620,10 @@ The rule: **frozen means implement parity; changing it means amending the refere
 
 | Item | Freeze says |
 |---|---|
-| **Page reorder** | ✅ `v21-bench.html:766` — *"tap to jump, **drag to reorder**"* |
-| **Decor context bar** | ✅ `v21-bench.html:625` — decor verb set `Replace, Ink, Delete` |
-| **Font chip works** | ✅ `v21-bench.html:514` — `Aa Font` chip is drawn |
-| **Replace works** | ✅ `v21-bench.html:623-624` — in the photo verb set |
+| **Page reorder** | ✅ `v21-bench.html` §`openGrid()` (`:820`) — *"tap to jump, **drag to reorder**"* |
+| **Decor context bar** | ✅ `v21-bench.html` §`toolsFor()` (`:679`) — decor verb set `Replace, Ink, Delete` |
+| **Font chip works** | ✅ `v21-bench.html` §`.styletb` (`:564`) — `Aa Font` chip is drawn |
+| **Replace works** | ✅ `v21-bench.html` §`toolsFor()` (`:678`) — in the photo verb set |
 | Island membership on TypeBar / BenchSnack / Proof fold diagram | ADR-102 §12.1 — *"the island is a property of the subtree"* |
 | Remove the rule-of-thirds grid | ✅ absent from `v21-reframe.html` (zero hits over 362 lines) — Compose-only invention |
 
@@ -631,7 +631,7 @@ The rule: **frozen means implement parity; changing it means amending the refere
 
 ## ⚠ A0 — the amendment I initially missed, and the largest one
 
-I claimed `v21-bench.html:773` *"fixes the add chooser at Text / Photo"*, making a third entry an amendment. ✅ **Falsified — it is the opposite, and the correction cuts both ways.**
+I claimed `v21-bench.html:773` *"fixes the add chooser at Text / Photo"* (*the number as I wrote it then — a record, not a pointer*), making a third entry an amendment. ✅ **Falsified — it is the opposite, and the correction cuts both ways.**
 
 The frozen header states it as law:
 
@@ -674,7 +674,7 @@ v21-bench.html:15   · Art is one surface: bundled offline, online search strict
 |---|---|---|
 | A1 | ~~Add-chooser third entry~~ | ✅ **withdrawn — it is parity.** See A0 |
 | A2 | **Add-chooser gains a fourth entry (Take a photo)** | `v21-bench.html:14` — *"Add stays three verbs"* |
-| A3 | **`Duplicate` joins every context-bar verb set** | `v21-bench.html:623-625` fixes all three sets |
+| A3 | **`Duplicate` joins every context-bar verb set** | `v21-bench.html` §`toolsFor()` (`:673-681`) fixes all three sets |
 | A4 | **A font-voice selection surface** | `:514` draws the chip; what it opens is unspecified |
 | A5 | **Page grid: current page `leaf` → `berry`; cells draw content** | ✅ `:763` renders bare numerals (`<button class="pgc">${i+1}</button>`), so drawing content is genuinely an amendment — not parity. ⚠ breaks two named tests — budgeted |
 | A6 | **Page duplicate in the grid's long-press menu** | Reorder is specified (`:766`); duplicate is not |
@@ -898,7 +898,7 @@ So subsetting Averia for PDF embedding would have required rewriting its `name` 
 
 ## 16.7 What does NOT change, and what must not ship
 
-**Unchanged and still valid:** the sixteen primitives and four families (§9.2) · the `DecorElement` model (§9.1) · deterministic per-element tilt, never re-rolled · the decor verb set as parity (`v21-bench.html:625`) · every §8 decision outside the asset layer · the Art/Supplies naming split.
+**Unchanged and still valid:** the sixteen primitives and four families (§9.2) · the `DecorElement` model (§9.1) · deterministic per-element tilt, never re-rolled · the decor verb set as parity (`v21-bench.html` §`toolsFor()`, `:679`) · every §8 decision outside the asset layer · the Art/Supplies naming split.
 
 **Must not ship, per the brief's §6 and I agree entirely:**
 

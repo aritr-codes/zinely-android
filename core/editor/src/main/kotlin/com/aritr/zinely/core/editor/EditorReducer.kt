@@ -34,8 +34,15 @@ import com.aritr.zinely.core.model.Transform
  *   the existing "absent ⇒ no-op" branch runs. These are left as casts on purpose: adding a decor arm
  *   would mean inventing a behaviour the spec does not give them.
  *
- * Decor's own verbs — Replace supply and Change ink (SUPPLIES-SPEC §8) — are **not** in this reducer
- * yet; they arrive with the Art sheet (S7). Nothing here pretends otherwise.
+ * **Placement landed with S7** ([Intent.PlaceSupply]) — a supply now enters the document the same way a
+ * text box does, and **both of decor's *editing* verbs (SUPPLIES-SPEC §8) have now landed** —
+ * [Intent.InkSupply] and [Intent.ReplaceSupply], each reducing to exactly one [EditDecorCommand]. Decor is
+ * no longer a second-class element in this file: it has placement, both type-specific verbs, and every
+ * shared verb.
+ *
+ * ⚠ Note the asymmetry with the paragraph above: `StyleText` keeps its `as? TextElement` cast *without* a
+ * decor arm, because a supply has no size/align/bold/italic. Change ink is a **separate intent**, not a
+ * widening of that one — see [Intent.InkSupply] for why that is the cheaper of the two shapes.
  */
 public object EditorReducer {
 
@@ -69,6 +76,20 @@ public object EditorReducer {
             committing(model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
                 PlaceCommand(model.currentPageIndex, placed))
         }
+        is Intent.PlaceSupply -> {
+            val id = "el-${model.nextToken}"
+            val el = DecorElement(
+                id = id,
+                transform = intent.transform,
+                zIndex = nextZ(model),
+                supplyId = intent.supplyId,
+                ink = intent.ink,
+            )
+            committing(
+                model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
+                PlaceCommand(model.currentPageIndex, el),
+            )
+        }
         is Intent.BeginEditText -> openTextSession(model, intent.id)
         is Intent.BeginEditTextAt -> openTextSession(model, HitTest.topmostAt(currentPage(model), intent.pagePoint))
         is Intent.CommitText -> {
@@ -83,6 +104,8 @@ public object EditorReducer {
             else endTextSession(model, intent.id, after = null)
         }
         is Intent.StyleText -> styleText(model, intent)
+        is Intent.InkSupply -> inkSupply(model, intent)
+        is Intent.ReplaceSupply -> replaceSupply(model, intent)
 
         // — double-tap seam: retarget by topmost element type (ADR-053 §4) —
         is Intent.DoubleTapAt -> when (val hit = HitTest.topmostAt(currentPage(model), intent.pagePoint)
@@ -113,8 +136,16 @@ public object EditorReducer {
                 // malformed draft can neither swap the photo nor move the element (mirrors EditTextCommand).
                 val committed = rx.before.copy(crop = FramingMath.clampCrop(intent.after.crop), fit = intent.after.fit)
                 val idle = model.copy(interaction = Interaction.Idle)
-                if (committed == rx.before) Reduction(idle) // no change ⇒ close, no command/autosave
-                else committing(idle, EditImageCommand(rx.pageIndex, rx.id, rx.before, committed))
+                // No change ⇒ close, no command/autosave. Compared through `sameFraming` and NOT with `==`:
+                // the crop arriving here has been round-tripped through a zoom (`seedDraft`→`resolveCrop`)
+                // and lands 1–2 ULP from the one on disk, so `==` recorded an undo step and an autosave for
+                // 56 % of sessions in which the maker touched nothing (D-097). `committed` differs from
+                // `rx.before` only in crop/fit by construction, so comparing those two is the whole test.
+                if (FramingMath.sameFraming(committed.crop, committed.fit, rx.before.crop, rx.before.fit)) {
+                    Reduction(idle)
+                } else {
+                    committing(idle, EditImageCommand(rx.pageIndex, rx.id, rx.before, committed))
+                }
             }
         }
         is Intent.CancelReframe -> {
@@ -265,6 +296,38 @@ public object EditorReducer {
      * `fontFamily`, which has no patch — plus the element's text/geometry/id/zIndex are preserved. One
      * committed change ⇒ one undoable [EditTextCommand]. Absent / non-text id or an unchanged style ⇒ no-op.
      */
+    /**
+     * SUPPLIES-SPEC §8 *Change ink*. Total by construction: anything that is not a [DecorElement] on the
+     * **current** page resolves to `null` and reduces to a no-op, which is the same shape every other
+     * type-specific verb here already has.
+     *
+     * The `after == el` short-circuit is not an optimisation — it is what stops re-picking the ink a supply
+     * already carries from pushing an empty entry onto the undo stack. [styleText] guards the same way.
+     */
+    private fun inkSupply(model: EditorModel, intent: Intent.InkSupply): Reduction {
+        val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? DecorElement
+            ?: return Reduction(model)
+        val after = el.copy(ink = intent.ink)
+        return if (after == el) Reduction(model)
+        else committing(model, EditDecorCommand(model.currentPageIndex, el.id, el, after))
+    }
+
+    /**
+     * SUPPLIES-SPEC §8 *Replace supply*. Same shape as [inkSupply]: not a `DecorElement` on the current
+     * page ⇒ no-op; no observable change ⇒ no undo entry.
+     *
+     * The `copy` names **only** `supplyId` and `transform`, which is the enforcement of the rule stated in
+     * [Intent.ReplaceSupply]: id, ink, mirror and zIndex survive a swap because they are not mentioned here.
+     * Adding a field to this `copy` is changing what a replacement means.
+     */
+    private fun replaceSupply(model: EditorModel, intent: Intent.ReplaceSupply): Reduction {
+        val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? DecorElement
+            ?: return Reduction(model)
+        val after = el.copy(supplyId = intent.supplyId, transform = intent.transform)
+        return if (after == el) Reduction(model)
+        else committing(model, EditDecorCommand(model.currentPageIndex, el.id, el, after))
+    }
+
     private fun styleText(model: EditorModel, intent: Intent.StyleText): Reduction {
         val el = currentPage(model).elements.firstOrNull { it.id == intent.id } as? TextElement
             ?: return Reduction(model)
@@ -398,6 +461,7 @@ public object EditorReducer {
         is PlaceCommand -> pageIndex
         is EditTextCommand -> pageIndex
         is EditImageCommand -> pageIndex
+        is EditDecorCommand -> pageIndex
         is AddPageCommand, is DeletePageCommand -> null
     }
 }

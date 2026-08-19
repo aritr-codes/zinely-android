@@ -116,8 +116,13 @@ public object SceneRenderer {
      * defect §3.4.1 was written about.
      *
      * The scale is **non-uniform** whenever `w != h`, and that is legal here: stretching tape is what
-     * tape does. Keeping a stamp square is an *editor* constraint (§3.4.1), never a render one — the
-     * tape stays dumb, so nothing below inspects the `supplyId` to decide.
+     * tape does. Keeping a stamp square is an *editor* concern (§3.4.1), never a render one — the tape
+     * stays dumb, so nothing below inspects the `supplyId` to decide.
+     *
+     * ⚠ This said *"editor **constraint**"*, which read as a description of shipped behaviour. It is not:
+     * no aspect lock exists, so a stamp can be stretched into an oval today
+     * ([D-100](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-100)). The render-side reasoning
+     * is unaffected — this fold is correct either way — but the claim about the editor was not true.
      */
     private fun unitSquareFold(
         localToPage: AffineTransform2D,

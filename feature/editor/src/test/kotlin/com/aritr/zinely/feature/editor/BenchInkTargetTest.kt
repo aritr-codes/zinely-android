@@ -10,6 +10,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -21,9 +22,16 @@ import org.junit.Test
  * appeared in its place, `Done` went disabled and the bottom bar was already captioned for an ink session.
  * Nothing on screen could act.
  *
- * It was reachable only through a verb that ships disabled — which is why §10.1 rules that **S7 fixes the
- * routing, not the verb**. Both halves are asserted here: the routing decision is a pure function with one
- * definition, and the verb is still off.
+ * It was reachable only through a verb that shipped disabled — which is why §10.1 ruled that **S7 fixes the
+ * routing, not the verb**.
+ *
+ * ✅ **The verb is now on**, and this file is the record of what that cost: one function widened, one colour
+ * accessor added beside it, and *nothing else changed at any call site* — because the router, the popover's
+ * visibility and the F-5 clearance term all read the binding rather than casting for themselves. That was
+ * the explicit promise of the original fix, and enabling the verb is the experiment that tested it.
+ *
+ * The assertions below therefore come in pairs: what a supply gained, and what a **photo** did not. The
+ * widening's real risk is not that decor was missed — it is that something else was swept in with it.
  */
 class BenchInkTargetTest {
 
@@ -36,22 +44,20 @@ class BenchInkTargetTest {
     }
 
     @Test
-    fun a_decor_element_has_no_ink_target_so_the_verb_cannot_open_an_empty_popover() {
+    fun a_decor_element_is_its_own_ink_target_now_that_the_verb_is_live() {
         val decor = DecorElement(
             id = "d1",
             transform = transform,
             supplyId = "shape.rect",
             ink = ColorRgba(0x2A, 0x25, 0x1E),
         )
-        // `.inkpop` is text-only by construction (`BenchInkPopover`'s own call site says so), and decor's
-        // ink needs a band set and an `Intent` that recolours a DecorElement — neither exists yet.
-        assertNull(benchInkTargetOf(decor))
-    }
-
-    @Test
-    fun a_photo_has_no_ink_target_either() {
-        val image = ImageElement(id = "i1", transform = transform, assetId = "a1")
-        assertNull(benchInkTargetOf(image))
+        // ⚠ **This assertion is inverted from the one it replaces**, which read `assertNull` because
+        // `.inkpop` was text-only and no `Intent` recoloured a supply. Both of those are now false, so a
+        // supply IS an ink target. The test kept its place in the file rather than being deleted because
+        // the *shape* of the guard is unchanged — one function decides, and every call site obeys it.
+        assertSame(decor, benchInkTargetOf(decor))
+        // The colour half has to agree with the target half, or the popover opens ringing nothing.
+        assertEquals(ColorRgba(0x2A, 0x25, 0x1E), benchInkColorOf(decor))
     }
 
     @Test
@@ -62,9 +68,29 @@ class BenchInkTargetTest {
     }
 
     @Test
-    fun the_decor_ink_verb_is_still_disabled_and_the_fix_did_not_enable_it() {
-        val ink = benchContextVerbs(BenchVerbKind.DECOR).single { it.label == Copy.BenchVerbs.INK }
-        assertFalse("S7 fixes the routing, not the verb — decor's Ink stays drawn and inert", ink.enabled)
-        assertEquals(Copy.BenchVerbs.NOT_YET, ink.unavailableBecause)
+    fun the_decor_ink_verb_is_live_and_so_is_replace_now_that_it_has_a_flow() {
+        val verbs = benchContextVerbs(BenchVerbKind.DECOR)
+
+        val ink = verbs.single { it.label == Copy.BenchVerbs.INK }
+        assertTrue("decor's Ink is live: Intent.InkSupply recolours a supply", ink.enabled)
+        assertNull("a live verb must not claim a reason for being unavailable", ink.unavailableBecause)
+
+        // ⚠ This half was `assertFalse` one package ago, and the flip was earned rather than assumed:
+        // Replace is live **because** `Intent.ReplaceSupply` and the Art sheet's picker purpose now exist.
+        // The `unavailableBecause` assertion is the one that matters — a verb enabled while still carrying
+        // "not yet" would speak that reason to TalkBack over a control that works.
+        val replace = verbs.single { it.label == Copy.BenchVerbs.REPLACE }
+        assertTrue("Replace is live: the Art sheet re-opens as a picker", replace.enabled)
+        assertNull("a live verb must not claim a reason for being unavailable", replace.unavailableBecause)
+    }
+
+    @Test
+    fun a_photo_is_not_an_ink_target_and_has_no_ink_colour() {
+        // The boundary that matters most after the widening: exactly ONE new kind became inkable. A change
+        // that widened `benchInkTargetOf` to "anything non-null" would pass every decor assertion above.
+        val image = ImageElement(id = "i1", transform = transform, assetId = "a1")
+        assertNull(benchInkTargetOf(image))
+        assertNull(benchInkColorOf(image))
+        assertNull(benchInkColorOf(null))
     }
 }

@@ -124,6 +124,26 @@ public object Copy {
         public const val EDIT_TEXT: String = "Edit text"
         public const val REFRAME_PHOTO: String = "Reframe photo"
         public const val RESET_FRAMING: String = "Reset framing"
+
+        /**
+         * A supply's own verb (SUPPLIES-SPEC §8), which names this string. Not invented here: the spec
+         * fixes decor's type-specific actions as `Replace supply` and `Change ink`, and the wording follows
+         * the verb-then-noun shape the three above already use.
+         *
+         * ⚠ **Asymmetric with text on purpose, and worth re-reading before "fixing".** A text box can also
+         * be recoloured, and gets *no* `Change ink` action — its ink is reached through the context bar's
+         * `Ink` button, which TalkBack focuses like any other button. Decor gets the custom action because
+         * §8's table says it does. If that asymmetry is ever ruled wrong, the fix is to give text one too,
+         * **not** to take this one away: a supply that cannot be recoloured without sight is the worse end.
+         */
+        public const val CHANGE_INK: String = "Change ink"
+
+        /**
+         * The other half of SUPPLIES-SPEC §8's decor pair, which names this string too. It opens the Art
+         * cabinet on the selected supply rather than performing the swap itself — so the wording is the
+         * verb, not its outcome, exactly as `Reframe photo` names the session and not the crop.
+         */
+        public const val REPLACE_SUPPLY: String = "Replace supply"
         public const val MOVE_LEFT: String = "Move left"
         public const val MOVE_RIGHT: String = "Move right"
         public const val MOVE_UP: String = "Move up"
@@ -463,9 +483,10 @@ public object Copy {
     }
 
     /**
-     * The bar's Add chooser (`BenchAddChooser.kt`, `v2-bench.html:719-721`; ADR-094). Two rows only — Art
-     * stays fenced per OD-2 and ADR-105's sequencing (C8, named here in an earlier draft, does not exist) — and each row's spoken label is [optionLabel], one target rather
-     * than three fragments.
+     * The bar's Add chooser (`BenchAddChooser.kt`, `v21-bench.html:826-829`; ADR-094). **All three rows**
+     * as of ADR-105 step S7 — the freeze's own narration is *"Add stays three verbs — Text · Photo ·
+     * Art"*, and the fence that held `Art` back was that nothing could be taken out of the cabinet. Each
+     * row's spoken label is [optionLabel], one target rather than three fragments.
      */
     public object AddChooser {
         public const val TITLE: String = "Add to your page"
@@ -473,6 +494,11 @@ public object Copy {
         public const val TEXT_SUBTITLE: String = "Type words onto the page"
         public const val PHOTO_TITLE: String = "Photo"
         public const val PHOTO_SUBTITLE: String = "From your phone — it never leaves the device"
+
+        /** The frozen `Art` row (`v21-bench.html:829`), title and subtitle verbatim. */
+        public const val ART_TITLE: String = "Art"
+        public const val ART_SUBTITLE: String = "Tape, stamps and cut paper"
+
         public fun optionLabel(title: String, subtitle: String): String = "$title. $subtitle"
     }
 
@@ -494,6 +520,15 @@ public object Copy {
      */
     public object Snack {
         public fun deleted(label: String): String = "$label deleted."
+
+        /**
+         * The frozen `toast('Placed on the page',true)` an Art tile raises (`v21-bench.html:862`).
+         *
+         * No full stop, unlike [deleted]: the freeze writes neither, and this one is a label on a thing
+         * that just happened rather than a sentence about it. `undoable=true` is why the snack carries
+         * the `Undo` action — the placement is one command, so one press takes it back.
+         */
+        public const val PLACED: String = "Placed on the page"
     }
 
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */

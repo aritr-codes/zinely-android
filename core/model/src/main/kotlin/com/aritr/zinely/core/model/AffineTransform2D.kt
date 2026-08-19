@@ -53,9 +53,16 @@ public data class AffineTransform2D(
          * fold is `translate(x,y) · [T(c)·R(deg)·T(-c)] · scale(w,h) · mirror?`, and `w != h` in
          * general — which is why this takes two factors and not one.
          *
-         * Uniformity is an **editor** constraint, not a render one: `mark.*` and `shape.circle` are
-         * constrained to uniform scale by the editor, while tape and cut paper stretch freely, because
+         * Uniformity is an **editor** concern, not a render one: `SUPPLIES-SPEC §3.4.1` says `mark.*` and
+         * `shape.circle` should hold a uniform scale while tape and cut paper stretch freely, because
          * stretching tape is what tape does. Nothing here enforces that — the tape stays dumb.
+         *
+         * ⚠ **And nothing there enforces it either.** This sentence read *"are constrained to uniform
+         * scale **by the editor**"*, which is false: there is no aspect lock, ratio keep or square
+         * constraint anywhere in `core:editor` or in `ResizeHandles`/`EditorGestures`. A maker can stretch
+         * `shape.circle` into an ellipse and `mark.registration` into an oval today. The spec clause is
+         * real; the implementation of it is **owed**, not shipped —
+         * [D-100](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-100).
          */
         public fun scale(sx: Double, sy: Double): AffineTransform2D =
             AffineTransform2D(sx, 0.0, 0.0, sy, 0.0, 0.0)

@@ -45,12 +45,39 @@ public fun copierGridSize(extentPt: Double, sourcePx: Int): Int {
     return (extentPt * COPIER_DOTS_PER_POINT).roundToInt().coerceIn(1, sourcePx)
 }
 
-/** Rec.601 luma of a packed ARGB pixel, 0..255. Alpha is ignored — a zine page has no transparency. */
+/**
+ * Rec.601 luma of a packed ARGB pixel, 0..255, **composited over paper first**.
+ *
+ * ### Alpha is not ignored, and the sentence that said it was shipped a black rectangle
+ *
+ * This read `r`/`g`/`b` only, under the KDoc *"Alpha is ignored — a zine page has no transparency."*
+ * The page has none; **the imported photo does**. A decoder hands back `0x00000000` for a transparent
+ * pixel — alpha zero over *black* channels, which is what a PNG's untouched background actually is — so
+ * the ignored-alpha reading gave luma `0`, below [COPIER_THRESHOLD], and [photocopy] painted it
+ * `BLACK_ARGB`. **A shared-in PNG with a transparent background turned into a solid black rectangle the
+ * moment the maker tapped `Copier`.**
+ *
+ * ⚠ **Surface-parity testing was blind to it by construction.** One replayer serves bench, proof, PNG
+ * and PDF, so all four agreed — on the wrong picture. The same reason the even-odd hole test had to be
+ * written as an independent oracle rather than a cross-surface diff.
+ *
+ * ⚠ **And the test pinned the one transparent value that came out right.** `lumaOf(0x00FFFFFF) == 255`
+ * — transparent *white*. True, and reachable from almost no decoder. Transparent **black**, which every
+ * decoder produces, was untested.
+ *
+ * The composite is a straight source-over onto paper white, correct because `Bitmap.getPixels` returns
+ * **non-premultiplied** ARGB. 🟨 **At `a = 255` it reduces to the old expression exactly**, so every
+ * opaque pixel — which is every pixel any existing golden contains — is byte-identical. This fix cannot
+ * move a recorded raster.
+ */
 public fun lumaOf(argb: Int): Int {
+    val a = (argb ushr 24) and 0xFF
     val r = (argb ushr 16) and 0xFF
     val g = (argb ushr 8) and 0xFF
     val b = argb and 0xFF
-    return (299 * r + 587 * g + 114 * b) / 1000
+    val luma = (299 * r + 587 * g + 114 * b) / 1000
+    // Source-over onto paper: `luma*a + 255*(255-a)`, over 255. `a == 255` ⇒ `luma`, exactly.
+    return (luma * a + 255 * (255 - a)) / 255
 }
 
 /**

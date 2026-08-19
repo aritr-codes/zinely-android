@@ -4,7 +4,9 @@
 **Authority:** implements [ADR-104](../DECISIONS.md#adr-104) (asset layer) under [Amendment 3](V2-CONSTITUTION.md#amendment-log).
 **Supersedes:** [`ZINE-DIRECTION.md`](ZINE-DIRECTION.md) **§9.1–§9.5**, which reduce to a pointer here. §9.6
 (ships-now / waits / never) stays where it is — it is direction, not specification.
-**Scope:** documentation only. No code has been written.
+**Scope:** the design record. ⚠ **It is no longer documentation-only** — S2, S3, S4, S6 and S7 ship, and
+12 of the 16 outlines are authored in `SupplyCatalog`. Where this document and the code disagree, [§10.1](#101-status)
+records which is which; the code is authoritative for what exists, this document for what was decided.
 
 > **Documentation Rule check, corrected.** The first draft claimed §9 was "five paragraphs of strategy"
 > that this document would not duplicate. That was false: §9 is a six-subsection sub-spec that already
@@ -71,33 +73,11 @@ here — it predates this spec and touching it is a separate change.
 `v21-bench.html:74` is corrected as a **bug fix to an amendment note** — a factually wrong colour-source
 reference — which the freeze permits.
 
-### O-B · §IV governs chrome; §V already permits these supplies
-
-`v21-bench.html:74` — text I wrote under the ADR-104 amendment — says decor is *"tint[ed] from the five
-named inks"*, and `ZINE-DIRECTION.md:393` repeats it. **Five is the count of V2.1 _chrome_ roles**
-(`leaf`/`berry`/`jam`/`butter`/`inkFaint`), and [ADR-090](../DECISIONS.md#adr-090) separates chrome from
-the artifact precisely so chrome values never land on the sheet. Decor is content. Tinting it from chrome
-roles would also break the colour-role law twice over — `butter` is *"material only, never an action,
-never text"* and `berry` is punctuation, not a fill.
-
-The content palette is three bands — `makerInks` (10) · `paperTints` (5) · `neutrals` (4) — and the frozen
-`applyInk` applies **any of the nineteen swatches** (`ZinelyContentInks.kt:34-45`, quoting the owner's
-D-003 ruling).
-
-> 🟦 **Recommend: decor tints from the content palette, all three bands.** It is what the shipping picker
-> already does, it makes `CHANGE_INK` nearly free (`BenchInkPopover` exists, with names for all three
-> bands at `:176`, `:190`, `:199`), and a decor-only restriction means building a *second* picker to
-> enforce a rule the maker never asked for. A reviewer argued for `makerInks` only, reasoning that a paper
-> tint laid as a mark reads as nothing — true, and it is the maker's call to make, the same way pale-on-pale
-> is a legitimate riso result rather than a mistake to be prevented.
->
-> **Binding either way:** never write *"nineteen inks."* `ZinelyContentInks.kt:34` heads that section *"three
-> categories — not nineteen inks"*, and `:49`: *"A neutral is not an ink and a paper tint is not an ink."*
-> This document says **swatches** throughout.
-
-Correcting `v21-bench.html:74` is a **bug fix to an amendment note** — a factually wrong colour-source
-reference — which the freeze permits. It is listed here because I introduced the error, not because the
-edit needs new authority.
+> ⚠ **A duplicate section stood here and was removed on 2026-08-18.** It repeated [O-A](#o-a--decor-tints-from-the-content-palette--all-three-bands)'s
+> subject — the decor palette — under an `O-B` heading, and it was the *earlier* draft: it ended in a 🟦 **Recommend**
+> where O-A above ends in a **Ruling**. Two sources of truth for one closed call, the second of them stale, inside the
+> section whose own opening promises *"Nothing here is left open."* The Documentation Rule names this exactly. The real
+> **O-B** — the skeuomorphism question §0's table lists — is immediately below and was never in doubt.
 
 ### O-B · §IV names two of these supplies as banned skeuomorphs
 
@@ -217,7 +197,7 @@ width/height, so negative-scale is doubly unavailable.
 
 | Rejected | Reason |
 |---|---|
-| `opacity` | Riso and photocopy lay ink down or they don't. The one-layer blend lesson (D-020) already cost us once. Also on §9.6's **Never** list. |
+| `opacity` | Riso and photocopy lay ink down or they don't. The one-layer blend lesson (D-020) already cost us once. Also on [ZINE-DIRECTION §9.6](ZINE-DIRECTION.md)'s **Never** list. |
 | `strokeWidth` / `strokeColor` | A mark is ink laid down, not a stroked outline. A supply that reads outlined is *authored* as a closed ring (§3.3). |
 | `path` / geometry | Puts an authoring tool in the document. Breaks "curated, not infinite" at the type level. |
 | `secondaryInk` | A pack feature, not a beta feature. Additive later. |
@@ -410,8 +390,8 @@ because the code is now the thing that runs:
 2. **`Segment.to` is hoisted onto the interface**, so a traversal can walk the outline without a `when`
    over the segment kinds — which the unit-square check and the shoelace area check both need.
 3. **Unit-square containment is enforced in `Subpath.init`, control points included** (§4.1 rule 1). This
-   is why it matters that it is enforced by *construction* rather than by a test: it binds the twelve
-   outlines nobody has drawn yet, and the twelve are the ones a house-style designer will hand over.
+   is why it matters that it is enforced by *construction* rather than by a test: it binds the outlines
+   nobody has drawn yet, which are the ones a house-style designer will hand over.
 
 ### 3.4 Purity is preserved — and the seam differs from `DrawImage` on purpose
 
@@ -485,7 +465,7 @@ representation *can* express a same-direction-wound ring, which is the precondit
   wrong, and a test whose comment overstates its reach is worse than one with no comment at all.
 - **The four tolerance goldens (below) are consciously DEFERRED, not forgotten.** Only one of the four
   families is authored, so three of them would be goldens of nothing; and a record-mode run is precisely the
-  act that can bless drift. They land with the twelve outlines.
+  act that can bless drift. They land with the outlines still owed.
 
 ---
 
@@ -571,6 +551,145 @@ never be anything else.
 
 ---
 
+### 4.3 The worked curation list — [ADR-107 R1](../DECISIONS.md#adr-107)'s first deliverable {#curation-list}
+
+R1 sets a target of ~60 and **refuses to assert a per-family number**, because a count asserted up front
+hides the risk that matters: [R2's art-fatigue mechanism operating *inside* a family](../DECISIONS.md#adr-107).
+Fifteen near-duplicate fasteners are as legible a repetition as any shuffle. This section is the count
+worked rather than asserted.
+
+**The answer is ~51, not 60, and one family is why.**
+
+| Family | Ships | Proposed | Total | Ceiling reached? |
+|---|---|---|---|---|
+| **Tape & fixings** — things that *attach* | 4 | 10 | **14** | No — the physical world has many fasteners |
+| **Stamps & marks** — things that *point*, plus the *process* | 4 | 11 | **15** | No — process marks are a deep seam |
+| **Cut paper** — hand-torn edges, things cut *out* | 4 | 9 | **13** | No |
+| **Cut shapes** — scissor-clean geometry | 4 | 5 | **9** | ⚠ **Yes** — see §4.3.5 |
+| | **16** | **35** | **51** | |
+
+#### 4.3.1 The filter that did the work
+
+Every candidate was asked R1's question — *does it attach, point, tear, or cut?* — and then a second one
+that turned out to exclude more than the first:
+
+> **Can the maker already make this with a verb they have?**
+
+Rotation, scale and mirror are existing maker verbs ([§5](#5-how-sixteen-becomes-large--combinatorics-without-proceduralism)).
+A supply the maker can already produce from another supply is not a new supply; it is a duplicate with a
+name, and shipping it is the art-fatigue mechanism dressed as generosity. This is what makes *Cut shapes*
+the family that runs out, and it runs out for a principled reason rather than a lack of imagination.
+
+#### 4.3.2 Tape & fixings — 4 shipping, 10 proposed
+
+| id | Name | Source | Why it is not a duplicate |
+|---|---|---|---|
+| `tape.masking` | Masking tape | derivable | Clean-cut ends against `tape.torn`'s ragged ones — the two read as different acts |
+| `fix.pushpin` | Push pin | Phosphor `fill` | |
+| `fix.bulldog` | Bulldog clip | Phosphor `fill` | Clamps a top edge; `fix.clip` slides over a corner |
+| `fix.safety` | Safety pin | Openclipart CC0 | |
+| `fix.stitch` | Saddle stitch | derivable | The binding a zine actually uses. Arguably the most on-theme mark in the list |
+| `fix.grommet` | Eyelet | derivable | A ring with a hole — a second subpath, which the even-odd rule already supports |
+| `fix.band` | Rubber band | derivable | |
+| `fix.thread` | Thread tie | Openclipart CC0 | |
+| `fix.seal` | Wax seal | Openclipart CC0 | |
+| `fix.punch` | Punch hole | derivable | Binding, not fastening — but it answers *attach* |
+
+**Excluded, with the reason recorded so nobody re-proposes them:** binder clip (near-duplicate of
+`fix.bulldog` — one silhouette, pick one) · bent staple (near-duplicate of `fix.staple`) · album mounting
+tab (near-duplicate of `fix.corner`) · straight pin (near-duplicate of `fix.pushpin`).
+**Marginal, held back:** washi strip — its patterned edge is authoring work whose only distinction from
+`tape.masking` is a repeat, and a repeat is the thing §5 is most suspicious of.
+
+#### 4.3.3 Stamps & marks — 4 shipping, 11 proposed
+
+The family holds two seams. *Pointing* is the obvious one; the *process* seam is the one that makes this a
+zine tool rather than a sticker book, and ADR-104 ranks it highest.
+
+| id | Name | Seam | Source |
+|---|---|---|---|
+| `mark.hand` | Pointing hand | point | Phosphor `fill` — the printer's manicule, historically exact for the medium |
+| `mark.chevron` | Chevron | point | derivable |
+| `mark.bang` | Exclamation | point | Phosphor `fill` |
+| `mark.query` | Question mark | point | Phosphor `fill` |
+| `mark.tick` | Check | point | Phosphor `fill` |
+| `mark.burst` | Starburst | point | derivable |
+| `mark.spiral` | Spiral | point | derivable |
+| `mark.crop` | Crop marks | **process** | derivable |
+| `mark.bar` | Colour bar | **process** | derivable |
+| `mark.scan` | Copier streak | **process** | derivable |
+| `mark.perf` | Perforation | **process** | derivable |
+
+**Excluded:** moiré (near-duplicate of `mark.halftone` — a different artifact in theory, indistinguishable
+at supply scale) · **halftone at further densities** — this is the near-duplicate trap in its purest form,
+and density is a *variation* axis, not four supplies · bullet dot (`shape.circle` at small scale; the maker
+has scale) · an `X` glyph, which collides with `mark.registration` at a glance.
+**Marginal, held back:** toner smudge and ink bleed — both are organic blots whose distinction from each
+other is a judgement nobody has made yet.
+
+#### 4.3.4 Cut paper — 4 shipping, 9 proposed
+
+| id | Name | Source |
+|---|---|---|
+| `paper.deckle` | Deckle edge | Openclipart CC0 |
+| `paper.stub` | Ticket stub | derivable — the perforation is a dashed edge |
+| `paper.banner` | Banner | derivable |
+| `paper.label` | Luggage tag | derivable |
+| `paper.envelope` | Envelope | Phosphor `fill` |
+| `paper.dogear` | Folded corner | derivable |
+| `paper.hole` | Torn hole | Openclipart CC0 |
+| `paper.bubble` | Speech bubble | derivable |
+| `paper.stamp` | Postage stamp | derivable |
+
+**Excluded:** index card (near-duplicate of `paper.label` once both are rectangles with a treated edge) ·
+a second torn strip at another tear width (`paper.strip` with scale) · thought bubble — genuinely distinct
+in comics, but it is `paper.bubble` plus a trail of circles the maker can place, which makes it a
+composition rather than a supply.
+
+⚠ `paper.bubble` sits close to the shipping `paper.tag` (*Speech tag*). They are kept apart because one is
+a **cut label** — a rectangle with a notch — and the other a **drawn balloon**; if curation finds they read
+the same on a page, `paper.bubble` is the one to drop.
+
+#### 4.3.5 Cut shapes — 4 shipping, 5 proposed, and the family is done
+
+| id | Name | Source |
+|---|---|---|
+| `shape.hex` | Hexagon | derivable |
+| `shape.arc` | Arc | derivable |
+| `shape.quarter` | Quarter round | derivable |
+| `shape.plus` | Cross | derivable |
+| `shape.ring` | Ring | derivable — hole as a second subpath |
+
+**This family cannot honestly reach fifteen, and the reason is a feature.** Its most obvious candidates are
+all things the maker can already make:
+
+| Not shipped | Because |
+|---|---|
+| Square | `shape.rect` scaled to 1:1 |
+| Oval | `shape.circle` scaled non-uniformly |
+| Diamond | a square **rotated** 45° |
+| Rounded rectangle | `shape.rect` — the radius is not a supply |
+| Pentagon · octagon | near-duplicates of `shape.hex` at supply scale |
+| Star polygon | collides with `mark.asterisk`, which is already named *Star* |
+
+Adding any of them would ship a supply the maker can already produce — a duplicate with a name. **A family
+that can only reach its quota by splitting hairs should stop short**, which is exactly what R1 authorises.
+
+#### 4.3.6 What this list is not
+
+- **Not authored yet.** Every `derivable` row is a claim that the mark is geometry rather than house style,
+  on the precedent that *Cut shapes* shipped early for exactly that reason. Each is owed the same
+  attestation the sixteen carry (§4.1), and any row that turns out to need a designer's hand joins
+  [S5](#10-cost-and-sequence)'s remaining four rather than blocking the rest.
+- **Not licence-cleared yet.** Every `Phosphor` and `Openclipart` row is owed its ADR-104 record — source ·
+  licence · attribution · modification · redistribution — before it enters the binary. Sourcing is a
+  process, not a lookup.
+- **Not a ruling on names.** The drawn and spoken name of every supply lives in `Copy.Supplies`, which
+  already departs from this document in five places and documents why at each. Where the two disagree,
+  **the copy wins**.
+
+---
+
 ## 5. How sixteen becomes large — combinatorics without proceduralism
 
 The hard constraint: *"the output should feel authored, not procedurally generic."*
@@ -587,8 +706,18 @@ generator:
 
 - ✅ Rotation, scale, position, colour, mirror, z-order — all maker-controlled, all existing verbs.
 - ✅ Repetition is *manual*. Placing four asterisks in a row is a compositional act and looks like one.
+✅ **This clause was challenged on 2026-08-18 and upheld** — [ADR-107 R2](../DECISIONS.md#adr-107).
+The owner asked for pseudo-randomised combination; the implementer recommended a maker-triggered shuffle
+**before reading this section**, and withdrew it on reading it. Three grounds carried the ban, and the
+second is not in this section's original argument: the clause also bans *composition presets*, which are
+not random — so it is about **the app proposing arrangements at all**. The shipped `READY-MADE PALETTES`
+are the apparent counter-example and turn out to prove the rule, on [§5.2](#s-5-2-ruling)'s own line: a
+palette is craft knowledge about the *material*, an arrangement of marks is a *compositional decision*.
+The literature agrees where this section argued from taste — modular systems fail through **legible**
+repetition (Bethesda's *art fatigue*), which is what a shuffle over templates manufactures.
+
 - ❌ **No "surprise me", no shuffle, no randomiser, no auto-arrange, no composition presets.** These are the
-  mechanisms that make output read as generated. Banned — and already on §9.6's **Never** list.
+  mechanisms that make output read as generated. Banned — and already on [ZINE-DIRECTION §9.6](ZINE-DIRECTION.md)'s **Never** list.
 - ❌ **No procedural variation of the outline** (no "randomise the tear"). Four authored tears beat infinite
   generated ones: a generated tear has no hand in it, and every maker gets a different one.
 
@@ -597,7 +726,7 @@ generator:
 `ZINE-DIRECTION.md:423` (§9.3) specifies *"a small rotation derived deterministically from the element id."*
 
 **Ruling: supplies land at 0°, and §9.3's tilt clause is withdrawn.** The frozen bench states the rule
-itself (`v21-bench.html:22-23`): *"the page never tilts. You are working on it; it sits square to you.
+itself (`v21-bench.html` §*the banner*, `:23-24`): *"the page never tilts. You are working on it; it sits square to you.
 (Tilt is for objects at rest…)"* A supply is placed *on* the page, in the act of working — so the tilt law
 (`V21-SPEC.md:494`) does not reach it. It governs the studio, not the page.
 
@@ -615,6 +744,37 @@ dropped at page centre — and Pass 2 is where "restrained" and "unfinished" get
 **Ruling: each family lands at its own default size** — tape lands long, a stamp lands small, a rule lands
 wide. This is the app supplying *craft knowledge about the material*, not making a compositional decision,
 which is exactly the line §5.1 draws. It costs one constant per family.
+
+#### ✓ RULING — 2026-08-16: four family constants **plus exactly one named override**, and the numbers {#s-5-2-ruling}
+
+*Ruled by the implementer under the standing owner delegation, on the [D-082](V2-SPEC-DEFECTS.md#d-082-rulings) precedent.*
+
+**This section contradicted itself and S7 found it by trying to obey it.** The ruling sentence says *one
+constant per **family***; its own three examples end with *"a rule lands wide"* — and `shape.rule` is a
+**member** of *Cut shapes*, not a family. You cannot implement both sentences.
+
+S7's first pass implemented the ruling and dropped the example, leaving the rule square. That was the wrong
+half to drop, for a reason worth keeping: **Cut shapes is the only family production can currently reach**,
+so the spec's single reachable example was the one thing the implementation got visibly wrong. A rule that
+lands as a square is not a rule.
+
+**So: per-family defaults, plus one named override, pinned by a test to exactly one entry** — the test is
+the load-bearing half, because an override map with no cap is just per-supply sizing with extra steps, and
+per-supply sizing is what §5.2 exists to refuse.
+
+| Family | Width (fraction of page) | Aspect | Reading |
+|---|---|---|---|
+| **Tape & fixings** | 0.55 | 4.5 | lands long |
+| **Stamps & marks** | 0.16 | 1.0 | lands small |
+| **Cut paper** | 0.45 | 1.0 | lands as a piece of paper |
+| **Cut shapes** | 0.30 | 1.0 | lands as a shape |
+| *override* `shape.rule` | 0.70 | 5.0 | lands wide — §5.2's own example |
+
+Plus a clamp at 0.6 of page height, so a landing can never exceed the page it lands on.
+
+⚠ **The numbers are an implementation reading, not a measurement.** §5.2 gave three adjectives and no
+figures. These are defensible and they are unverified: nobody has yet seen a supply land on a real screen.
+**Pass 2 is what settles them**, and the day it does, this table is the thing to edit.
 
 ---
 
@@ -676,6 +836,20 @@ page number) tested first against whether it is really a supply.
 | Type-specific | `EDIT_TEXT` | `REFRAME_PHOTO`, `RESET_FRAMING` | `REPLACE_SUPPLY`, `CHANGE_INK` |
 | **Total** | **12** | **13** | **13** |
 
+> **As shipped, 2026-08-17: decor has all 13.** Both `Change ink` (`Copy.A11y.CHANGE_INK` →
+> `Intent.InkSupply`) and `Replace supply` (`Copy.A11y.REPLACE_SUPPLY` → `Intent.ReplaceSupply`) are
+> advertised, and each is gated on its callback being present so no host can advertise a dead one. Decor is
+> the **first element kind whose frozen verb set is fully implemented** — text still owes `Font`, photo
+> still owes `Replace` ([D-038](V2-SPEC-DEFECTS.md#d-038)).
+>
+> <details><summary>Superseded note, 2026-08-17 morning</summary>
+>
+> **As shipped: decor has 12, not 13.** `Change ink` is live (`Copy.A11y.CHANGE_INK` →
+> `Intent.InkSupply`); **`Replace supply` is not advertised at all**, because the flow behind it does not
+> exist and an action that dispatches nothing costs a blind maker a gesture to discover the same emptiness a
+> sighted maker sees greyed out. The table below states the target, and the gap is one action wide.
+> </details>
+
 ⚠ **This reverses `ZINE-DIRECTION.md:429`**, which states decor needs *"no type-specific action, and none
 is needed."* That is wrong, and the frozen spec is why: `v21-bench.html:71` fixes the decor verb set at
 **Replace / Ink / Delete**. The Constitution's Interaction clause requires that *"every gesture-driven
@@ -701,6 +875,16 @@ There is no `EDIT` action for decor because there is nothing inside a supply to 
 
 ## 9. What Supplies is not
 
+- ⚠ **Amendment PROPOSED 2026-08-18 by [ADR-107 R5](../DECISIONS.md#adr-107) — `Proposed`, pending
+  [D-080](V2-SPEC-DEFECTS.md#d-080). Nothing below is amended yet; read the ADR before acting.** In short:
+  the **search-field** bullet's own premise is *the sixteen*, and ADR-107 R1 spends it — so at ~60 both the
+  family **chips** and a **text field** are proposed to ship, on ADR-104's own finding that *"a large
+  library without excellent search is worse than none"*. The **tags/filters/sort** bullet states no premise
+  and is therefore a straight reversal, recorded as one. ⚠ A first draft of R5 deferred the text field and
+  claimed amendment **A5** had removed the chips *"for the identical sixteen-item reason"*; independent
+  review showed A5's own comment (`v21-bench.html:451-456`) gives different grounds — filtering ruled out,
+  and families already heading their own sections. The second is the real one, and it expires on **scroll
+  depth**, not on the sixteen.
 - **No search field.** Sixteen items fit on one screen; a search box over sixteen advertises an absence.
   This is the frozen file's own reasoning (`v21-bench.html:447-450`) and what ADR-104 physically removed.
   Amendment **A5** applied the same reasoning to the four family *chips*, which filtered the same sixteen:
@@ -717,7 +901,10 @@ There is no `EDIT` action for decor because there is nothing inside a supply to 
 - **No packs UI in beta.** Curated packs are post-beta (ADR-104). Shipping the shelf before any pack exists
   is dead UI, which Amendment 3 exists to prevent.
 - **No emoji, no imported SVG, no custom shape drawing.** Each re-opens provenance — the question
-  Amendment 3 closed.
+  Amendment 3 closed. ⚠ **This one does *not* expire with library size** ([ADR-107 R5](../DECISIONS.md#adr-107)):
+  OpenMoji was rejected for CC BY-SA, whose ShareAlike would follow into a stranger's printed zine.
+  Emoticon-*style* marks authored from a permitted set are ordinary material — the ban is on the licence
+  attached to the artifact, never on the shape.
 
 ---
 
@@ -732,7 +919,7 @@ Sits behind X3b (the photocopier filter, §0 O-D).
 | **S2′** | The type-switch sites that break with it | `core:editor` (`Elements.kt:17,22`), `core:render` (`SceneRenderer.kt:56`), `feature:editor` (`EditorA11y.kt:31`), `core:data` | **S2 and S2′ land as one commit.** Four else-less `when`s, not one. |
 | **S3** | `DrawShape` + `SupplyOutline` + `SupplyCatalog` + the unit-square fold (§3.4.1) | `core:render` | Pure JVM, no device. |
 | **S4** | Replay branch + AA `Paint` | `render-android` | One `when` arm, four surfaces (§3.2). |
-| **S5** | Author the 16 outlines + attestations (§4.1) | `SupplyCatalog`, colophon | Design work. Gated on O-B and O-C. |
+| **S5** | Author the 16 outlines + attestations (§4.1) | `SupplyCatalog`, colophon | Design work for the last four. **Not** gated on O-B/O-C — both closed in §0. |
 | **S6** | 16 supply names | `core:copy` | Ink names already ship. |
 | **S7** | Art sheet, Decor context bar (Replace/Ink/Delete), per-family default scale, uniform-scale constraint | `feature:editor` | See S7′. |
 | **S7′** | The **silent** seams — `as?` casts and `is`-guards across `feature:editor` (`LivePreview.kt:78`, `EditorA11y.kt`, `EditorGestures.kt:52`, and 8 in `EditorScreen.kt`) | `feature:editor` | **The expensive half.** These fail no test: a decor element that cannot be gestured or previewed, silently. ⚠ The counts here were **stale on arrival** — "6 in `EditorScreen.kt`" was 8 when P-G counted. Re-count before costing; a survey number written once and cited twice is not a measurement. |
@@ -761,12 +948,37 @@ page, diffing PDF operators, settles it.
 | **S1** | ✅ Shipped. Also found the `singleTop` second-task defect on device, which no test could see. |
 | **S2 / S2′** | ✅ Shipped as one change (P1). Schema **v1 → v2 with an identity migrator** — the migrator is required because `DocumentMigrations` enforces a contiguous chain and throws on a gap. |
 | **S3** | ✅ Shipped (P2). `DrawShape` · `SupplyOutline` · `SupplyCatalog`. |
-| **S4** | ⏳ **Stubbed, not done.** `CanvasReplayer` matches `DrawShape` and draws nothing, deliberately and visibly. This is P3 and it is the next thing. |
-| **S5** | ⏳ **4 of 16.** The *Cut shapes* quarter shipped early — that family is derivable geometry (rect, circle, triangle, rule) needing no house style, so it could be engineer-authored without pre-empting a designer. The **twelve remain gated on O-B/O-C** and are the hand-drawn ones; `outlineOf()` returns `null` for each. |
+| **S4** | ✅ **Shipped (P3).** `CanvasReplayer:132` sets `shapePaint.color` and calls `canvas.drawPath(command.outline.toPath(), shapePaint)` — its **own** paint, AA on, deliberately not the pinned `fillPaint` (§3.5). ⚠ This row read *"stubbed, not done"* until 2026-08-17, when **the device contradicted the document**: a placed `shape.rect` drew as a filled square on SM-A176B. The row was stale from the commit that closed it. *A status table is a claim like any other.* |
+| **S5** | ⏳ **12 of 16.** *Cut shapes* shipped first as derivable geometry — and then the same reading was applied to the rest, which is where the earlier status was wrong twice over. ⚠ **The twelve were recorded as "gated on O-B/O-C", and they never were**: [§0](#0-the-four-escalated-calls--decided) closes all four escalated calls in as many words (*"Nothing here is left open"*). What actually held them was a designer's hand, which is a resource, not a ruling — and the second package proved eight of them did not need one. ⚠ **Derivability does not run along family lines.** The eight added (`mark.registration` · `mark.halftone` · `mark.asterisk` · `mark.arrow` · `paper.window` · `paper.tag` · `fix.staple` · `fix.corner`) come from three families; *Cut shapes* was simply the family authored first. **Four remain**, each for a reason recorded in `SupplyCatalog`: `tape.torn` · `paper.strip` · `paper.underline` need an authored *tear* (§5 bans generating one), and `fix.clip` is a **wire object in a fill-only renderer** — the one row of [§4.3](#curation-list)'s "derivable" column that did not survive contact with `DrawShape`. `outlineOf()` returns `null` for each. |
 | **S6** | ✅ Shipped. Sixteen names in `core:copy`, five documented departures from §4's prose. |
-| **S7 / S7′** | 🟡 **Partly landed (P-G).** The **Art sheet** exists — sixteen tiles, four headings, twelve inert ([ADR-105 amendment](../DECISIONS.md#adr-105), [D-086](V2-SPEC-DEFECTS.md#d-086)) — and the `INK` **routing** defect is fixed: `EditorScreen` now derives `inkPopoverVisible = inkPopoverOpen && inkTarget != null`, with all five consumers reading the derived value, so the stranded empty-popover state is **unconstructible** rather than guarded at one entry. The verb stays disabled. ⚠ The *trigger* is still unexercisable for decor precisely because that verb is disabled — the fix is pinned by construction and by the live text path, not by a decor tap. **Still owed:** the placement `Intent`, per-family default scale (§5.2), the Add chooser's Art row, and S7′'s silent seams. |
+| **S7 / S7′** | 🟡 **Partly landed (P-G).** The **Art sheet** exists — sixteen tiles, four headings, four inert (twelve when it landed) ([ADR-105 amendment](../DECISIONS.md#adr-105), [D-086](V2-SPEC-DEFECTS.md#d-086)) — and the `INK` **routing** defect is fixed: `EditorScreen` now derives `inkPopoverVisible = inkPopoverOpen && inkTarget != null`, with all five consumers reading the derived value, so the stranded empty-popover state is **unconstructible** rather than guarded at one entry. The verb stays disabled. ⚠ The *trigger* is still unexercisable for decor precisely because that verb is disabled — the fix is pinned by construction and by the live text path, not by a decor tap. **S7-placement then closed the loop:** `Intent.PlaceSupply`, the [§5.2 scale ruling](#s-5-2-ruling), the Add chooser's **Art row released**, and the sheet wired so an authored tile places and an inert tile stays a no-op. **Still owed:** S7′'s silent seams — two of which S7-placement found by mutation and fixed (`benchDeleteLabel` said *"Photo deleted."* for a supply; `benchInkCount` under-counted the print cost).
+
+✅ **S7′ surveyed 2026-08-17 and it is CLOSED: zero broken silent seams.** 24 type-branching sites in `feature:editor` were read — **20 SAFE, 4 correct-by-accident, 0 broken**. **This step's premise was stale in three separate ways**, and the pattern is worth keeping: `benchVerbKindOf`'s dangerous `else -> null` no longer exists (it is an exhaustive three-arm `when`); `LivePreview.kt:78` is in `core:editor`, not `feature:editor`, and its `if (element !is TextElement) return@map element` is correct; and the row's "expensive half" framing was wrong — P1–P3 landing exhaustive `when`s over the sealed type had *already* closed the seams as a side effect. Hit-test, drag, resize and z-order turn out to be type-blind by construction (`HitTest` reads transform and z only), so a supply inherited them for free.
+
+⚠ The four **correct-by-accident** sites were not defects and were left alone: `EditorScreen.kt:1424` (`styleable … ?: true`) and `:1427` (`copier ?: false`) fed a verb set that ignores both for `DECOR`, and `BenchInkPopover.kt:125-142`'s `DECOR` arm was *live code on an unreachable path*. Each was right only because a second thing was true elsewhere. **They become defects the moment decor Ink is enabled** — which is exactly the next package.
+
+✅ **Followed up 2026-08-19, after `S7 · Change ink` shipped. The landmine did not go off, and for two different reasons — neither of them luck.**
+
+- The two `EditorScreen` sites were **rewritten**, not survived: `:1534-1537` is now an exhaustive `when` over the element type (`is DecorElement, is ImageElement, null -> false`), and `:1540` reads `copier` off `ImageElement` specifically. The elvis defaults that made them accidental are gone.
+- `BenchInkPopover.kt:138-143` is unchanged and is now **correct by ruling, not by reachability** — [§0 O-A](#o-a--decor-tints-from-the-content-palette--all-three-bands): *decor tints from the content palette, all three bands.* O-A states and rejects the exact objection this note was worried about: *"a paper tint laid as a mark reads as nothing — is true and is the maker's call."*
+
+⚠ **What did change is which arm is load-bearing.** `BenchContextBar.kt:151-168`'s `PHOTO` verb set is Reframe / Copier / Replace / Delete — **there is no photo `Ink` verb at all**, so the arm's `PHOTO` half is the unreachable one and `DECOR` is now the *sole* consumer of the `Paper tints` band. Measured against the only paper a page can carry (no `Background.Solid` is constructed anywhere in `feature/`, so every supply is drawn on `#F4EFE6`/`#EDE6D9`): Cream 1.06:1 · Blush 1.13:1 · Sky 1.08:1 · Sage 1.09:1 · Kraft 1.28:1. That is O-A's accepted outcome quantified, not a new finding — but it means the TEXT fence and the DECOR grant now rest on one ruling each rather than on one ruling and one accident.
+
+*The lesson for costing: a step described as "the expensive half" was measured, not re-estimated, and the measurement retired it. The `⚠` on this table warning that its own counts were stale was right, and understated.* |
 | **S8** | ✅ Shipped with S2. |
-| **S9** | ⏳ Not started, and it cannot start until S4 puts ink on the page. |
+| **S9** | 🟡 **Pass 1 run 2026-08-18 (SM-A176B, Android 16); Pass 2 begun.** The blocker in this row's own text is gone — S4 ships, and twelve supplies now draw. **Pass 1: five of six questions passed** — all eight new marks render; `mark.halftone` stays a legible lattice at its 0.16 landing (the prediction most expected to fail); `mark.registration`'s arm/ring join reads joined; `paper.tag` reads as speech; and the **platform** `AccessibilityNodeInfo` tree agrees with the semantics tree on all sixteen tiles — exactly the four unauthored report `enabled=false clickable=false`. **One Pass 1 defect: [D-092](V2-SPEC-DEFECTS.md#d-092)** — a photo corner lands as a 4.5:1 sliver because *Tape & fixings* carries tape's aspect. ⚠ **Pass 2 raised [D-093](V2-SPEC-DEFECTS.md#d-093)**: every tile is drawn hollow and every supply lands solid. **Acceptance requires both passes**, so S9 stays open until D-086, D-092 and D-093 are ruled. |
+| **S7 · Replace supply** | ✅ **Shipped**, closing decor's verb set. `Intent.ReplaceSupply` → the same `EditDecorCommand` (id, ink, mirror and z survive a swap; only `supplyId` and `transform` change, enforced by the `copy` naming exactly those two). The Art sheet is re-summoned as a **picker**: `artSheetFor: BenchArtPurpose?` replaces the old `Boolean`, so the sheet cannot be open in replace mode with nothing to replace, nor in place mode holding a stale id — the [D-091](V2-SPEC-DEFECTS.md#d-091) lesson applied *before* the defect rather than after it. **Owner ruling, 2026-08-17: a replacement takes the incoming family's §5.2 scale, at the outgoing element's centre and rotation.** The two rejected readings and why are recorded at `benchSupplyReplacement`. No snack: unlike a placement, a delete or an ink, a swap redraws the selected mark in place under the maker's own eyes.
+
+**Pass 1 device verification — PASS**, SM-A176B / Android 16, 2026-08-17, and **re-run 2026-08-18 against the committed build `126d84e`** — the first time this evidence is attached to a named commit rather than to a working tree. Both runs agree. On the platform `AccessibilityNodeInfo` tree **all three decor verbs read `clickable=true enabled=true`** — `Replace` flipped from `false` where TalkBack reads it. Tapping it re-opened the cabinet as a picker; tapping *Circle* swapped the outline **in place**, node bounds byte-identical (`[430,736][650,956]` before and after) because both are *Cut shapes* and share a family default.
+
+**The ruling itself was proved by swapping to *Straight rule***, the one supply carrying a §5.2 override (0.70 width, 5:1). Result `[283,797][797,910]`: centre held at x=540 (846→847, one pixel of rounding) and width grew 220px→514px — which is 0.70 of the ~733px page against the circle's 0.30, i.e. **exactly a fresh placement's size for the incoming supply**. The node's height reads 126px rather than the drawn ~103px because `ElementSemanticsLayer` inflates every node to a 48dp minimum touch target (48 × 2.625 = 126); that is the a11y floor, not the geometry. Three undos restored the page. — **Reproduced exactly on `126d84e`:** rectangle `[430,736][650,956]` (w=220, centre 540) → straight rule `[283,784][797,910]` (w=514, centre 540). The centre held to the pixel this time, where the 2026-08-17 run rounded by one, and the width ratio is the same 0.70-against-0.30. Undo then went `enabled=false` with Redo live, which is the page back at its original state rather than merely looking like it.
+
+⚠ Same two gaps as *Change ink*: the decor row is now observed — [D-090](V2-SPEC-DEFECTS.md#d-090) closed 2026-08-18, on the local host only, and the **custom action** was exercised only in Robolectric — `uiautomator dump` cannot show custom actions, so hearing it belongs to the owner's TalkBack pass. |
+| **S7 · Change ink** | ✅ **Shipped.** [`Intent.InkSupply`] → `EditDecorCommand` (one tap, one undo step, no entry when the ink is unchanged); the decor `Ink` verb enabled; `benchInkTargetOf` widened to text-or-decor with `benchInkColorOf` beside it; the popover's bands routed from `ctxKind` instead of a `TEXT` literal, which connected the `PHOTO, DECOR ->` arm that had been live code on an unreachable path; and §8's `Change ink` custom action added, so a supply can be recoloured by TalkBack. **`Replace supply` shipped in the row above**, closing the pair. *(This sentence read "remains inert" for half a day while the row above it said ✅ Shipped — caught by independent review. Two rows of one table disagreeing is the same failure as two documents disagreeing, at smaller scale.)* Independent review returned **NO-GO** on the first cut and was right: the a11y action opened nothing on its primary path ([D-091](V2-SPEC-DEFECTS.md#d-091), fixed, regression test verified by mutation).
+
+**Pass 1 device verification — PASS**, SM-A176B / Android 16, 2026-08-17. Read from the platform `AccessibilityNodeInfo` tree, not merged semantics: `Ink` is `clickable=true enabled=true` and `Replace` is still `clickable=false enabled=false`, so the enablement is real where TalkBack reads it. The popover opens on a supply carrying the **decor** band set — `INKS · PAPER TINTS · NEUTRALS · READY-MADE PALETTES` — which is the first time `benchInkBands`' `PHOTO, DECOR ->` arm has rendered anywhere. Picking *Strawberry* recoloured the mark; the ring followed the element's own ink; the popover's cost note read *"This one uses 4"*, so `benchInkCount` counts a supply's ink. Undo restored the previous ink exactly, and a second Undo removed the placement.
+
+⚠ Two things Pass 1 does **not** cover: the palette is now observed — [D-090](V2-SPEC-DEFECTS.md#d-090) closed 2026-08-18, on the local host only, and `Change ink` was exercised through the visible verb — the **custom action itself** is covered only by the Robolectric regression test, because `uiautomator dump` cannot show custom actions. Hearing it is part of the owner's TalkBack listen pass. |
 
 **The sequencing lesson S5 taught:** it was written as one indivisible block of design work, and a quarter
 of it was not design work at all. A step that mixes "needs a house style" with "is a rectangle" will always

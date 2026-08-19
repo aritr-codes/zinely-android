@@ -759,7 +759,7 @@ are wrong, and the last one changes what the fix may legally be.
 3. **The count is five, across four screens, and only one of them is a parity failure.** The `works offline
    · stays on your phone` pill has *no frozen source on its own surface at all* — `v21-bench.html` draws no
    empty state, and the CSS behind it was transcribed from `v21-library.html:306-307`, another screen's
-   spec. The other four are drawn by the freeze itself (`v21-bench.html:824`, `v21-library.html:466`,
+   spec. The other four are drawn by the freeze itself (`v21-bench.html:825-829`, `v21-library.html:466`,
    `v21-proof.html:593`), plus one that exists **only in the accessibility tree** (`Saved on this device`,
    which the freeze renders as `Saved` alone) — so a screen-reader user hears the promise once more than a
    sighted user sees it. The freeze also specifies a sixth instance Compose never built.
