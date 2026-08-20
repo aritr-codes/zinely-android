@@ -5435,7 +5435,7 @@ an expiry condition written in prose has no expiry mechanism.** There was no tes
 | **Artifacts** | `feature/editor/.../BenchArtSheet.kt` · [SUPPLIES-SPEC §9](SUPPLIES-SPEC.md) · [D-084](#d-084) (the A5 Art-sheet ruling) |
 | **Found** | 2026-08-16, by the Review Agent on package **P-G**, as a **Pass 2 risk raised before any Pass 2 ran** |
 | **Severity** | Open design question on an unreleased surface. Not a blocker — the sheet has no production call site yet |
-| **Status** | ⏳ **OPEN** — owed a Pass 2 reading, and a ruling if that reading confirms it |
+| **Status** | ✅ **CLOSED 2026-08-20** — ruled with [D-093](#d-093-ruling), as they were bundled. See [the ruling](#d-086-ruling) |
 
 **The situation.** Only four of the sixteen supplies have authored outlines (the `shape.*` family); twelve
 are owed to a designer. P-G draws **all sixteen** — the freeze specifies sixteen under four headings, and
@@ -5484,6 +5484,26 @@ works. **Status stays OPEN**, and the three candidate answers are unchanged.
 twelve exist"* was costed at twelve outlines; it now costs four, three of which need the same thing (an
 authored tear). That is a materially different offer than the one the defect was booked against, and the
 Pass 2 reading should be given it.
+
+
+#### Ruling — 2026-08-20 (owner), closed in the same amendment as [D-093](#d-093-ruling) {#d-086-ruling}
+
+**A fourth reading, which none of the three candidates was: the unauthored tiles draw no mark at all and
+carry the word.**
+
+The three candidates on file were a caption under the family heading, the word drawn on the tile, and
+shipping the sheet only when the twelve exist. The second is what landed — `Copy.BenchVerbs.NOT_YET`, the
+string `stateDescription` has always spoken — but the reason it could land cleanly is that the *picture*
+went with it, and that was not on the list.
+
+**Why the picture had to go, and why that is not a loss.** `BenchArtSheet`'s own KDoc defended drawing all
+sixteen glyphs on the grounds that *"nothing is invented: `BenchArtGlyphs` is the freeze's own depiction of
+that supply"*. For twelve supplies that was true. For the four **nobody has authored**, there is no supply
+to depict — the glyph was a picture of a thing that does not exist, which is precisely what A5's latitude
+cannot license. The tile stopped needing a picture the moment the picture became the mark.
+
+So the asymmetry this defect named is closed from both ends: the sighted maker is now told what the screen
+reader was always told, and the tile no longer shows them a mark they cannot have.
 
 ---
 
@@ -5691,7 +5711,7 @@ frozen surface. Evidence: `scratchpad/dev/09-placed.png`.
 | **Artifacts** | `feature/editor/.../SupplyPlacement.kt:76` · [SUPPLIES-SPEC §5.2 ruling](SUPPLIES-SPEC.md#s-5-2-ruling) · `SupplyCatalog` |
 | **Found** | 2026-08-18, **Pass 1 on SM-A176B**, first placement of a newly authored supply. Predicted from the source before the device confirmed it |
 | **Severity** | **Pass 1 defect on a shipped surface.** `fix.corner` and `fix.staple` are pickable today |
-| **Status** | ⏳ **OPEN — owner ruling required.** §5.2 caps overrides at exactly one, pinned by a test |
+| **Status** | ✅ **CLOSED 2026-08-20** — ruled and implemented; `SupplyPlacementTest` corrected. See [the ruling](#d-092-ruling) |
 
 **What happens.** `fix.corner` lands at `widthFraction = 0.55, aspect = 4.5` — over half the page wide and
 four and a half times wider than tall. The photo corner is authored 1:1; stretched to 4.5:1 it lands as a
@@ -5746,6 +5766,33 @@ same species: **a property nothing was looking at.** The response to that one wa
 test, because the landing size is not wrong in any way a machine can score — it is wrong *for a photo
 corner*, and only a person holding the phone knows that.
 
+
+#### Ruling — 2026-08-20 (owner) {#d-092-ruling}
+
+**The sizing key is not the family. *Tape & fixings* splits into tape and fixings; the other three families
+do not split.**
+
+`BenchSupplyDefaults` gains one entry under `BenchFixingsSizingKey` — `widthFraction = 0.20, aspect = 1.0`
+— and `fix.corner` · `fix.staple` · `fix.clip` are enumerated in `BenchFixings`. A photo corner authored
+1:1 now lands 1:1 at a fifth of the page's width, instead of a 4.5:1 sliver over half the page wide.
+
+**Three things this ruling deliberately does *not* do:**
+
+- **It does not raise §5.2's override cap.** `BenchSupplyOverrides` still holds exactly one entry
+  (`shape.rule`). Three new per-supply overrides would have been per-supply sizing arriving by instalment,
+  which is what the cap exists to refuse.
+- **It does not create a fifth family.** The key is a sizing group one level below the family, and it says
+  so in its own value (`"fixings (sizing only — not a family)"`). A fifth family would put a fifth heading
+  on the Art sheet that no maker asked for.
+- **It does not prefix-match.** `startsWith("fix.")` was shorter and is the same mistake this file's
+  `benchSupplyFamilyOf` already warns about from the other side. The three are enumerated, so adding a
+  fourth fixing is a sizing decision someone makes rather than a naming habit deciding for them.
+
+⚠ **A test was pinning the defect.** `SupplyPlacementTest` asserted that `fix.corner` and `tape.torn` land
+at *the same size* — green, and wrong, because it was written from the implementation and inherited its
+conflation of "same family" with "same size". The membership half of that test is what it was for and it
+stays; the sizing half is replaced by the two properties the device pass actually named.
+
 ---
 
 ### D-093 — every tile in the drawer is drawn hollow and every supply lands solid {#d-093}
@@ -5755,7 +5802,7 @@ corner*, and only a person holding the phone knows that.
 | **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtGlyphs`) · `core/render/.../SupplyCatalog.kt` · `v21-bench.html:1051-1055` (amendment A5) |
 | **Found** | 2026-08-18, **Pass 2 on SM-A176B**, Android 16 — the first Pass 2 the drawer has ever had |
 | **Severity** | Open design question on a shipped surface. Not a crash, not an a11y defect — a **prediction** defect |
-| **Status** | ⏳ **OPEN** — three readings below, none chosen. Bundled with [D-086](#d-086) as one Pass 2 ruling |
+| **Status** | ✅ **CLOSED 2026-08-20** — ruled, implemented, and the golden diff read. See [the ruling](#d-093-ruling) |
 
 **The observation, before the explanation.** Opening `Art` shows sixteen tiles and **every one of them is a
 stroked outline** — a hollow star, a hollow circle, a hollow rectangle, a hollow triangle, a hollow window,
@@ -5794,6 +5841,35 @@ exactly the disqualification [Pass 2](../../CLAUDE.md#pass-2--first-time-user-ve
 **Related.** [D-092](#d-092) is the same question in silhouette rather than fill weight: `fix.corner`'s tile
 shows a neat square corner and the placement is a 4.5:1 sliver. Both ask whether the drawer's picture
 predicts the page's mark, and they should be ruled together.
+
+
+#### Ruling — 2026-08-20 (owner) {#d-093-ruling}
+
+**Reading 1, with its mechanism replaced: the tile predicts the mark by *being* it.**
+
+The tile now renders the supply's **authored outline**, filled, through the same `toPath()` and the same
+`FILL` + `EVEN_ODD` paint the page uses (`SupplyPainter` → `CanvasReplayer`'s shared `newShapePaint()`).
+`BenchArtGlyphs` is deleted; `v21-bench.html`'s `SUP` table is **generated** from `SupplyCatalog`
+(amendment **A7**) and pinned by `BenchArtSheetParityTest.every_frozen_tile_is_its_catalogue_outline`.
+
+⚠ **Reading 1 as recommended — "make the sixteen glyphs solid" — would have been wrong three times over,
+and implementing it is how that was found.**
+
+1. **It is wrong for three of the sixteen.** `paper.window`, `fix.corner` and `mark.registration` have real
+   holes. Drawing them solid replaces one lie with another.
+2. **`mark.halftone`'s glyph drew SEVEN dots for a mark that has SIXTEEN** — found only when the two were
+   put side by side. The parity test that was supposed to catch this compared the hand-drawn Kotlin glyph
+   with the hand-drawn HTML glyph, so it could prove only that the two *copies* agreed. It was green.
+3. **Two glyphs had already needed correcting for the same reason** (A3's swapped `Photo` icon, A6's
+   registration cross). The third instance is what makes it a mechanism rather than three accidents.
+
+**A5's DEPICT latitude is kept as a provenance rule and retired as a depiction one, for these sixteen
+only** — a mockup still must not become reviewed Kotlin, and A6's *"a stroked circle IS the honest picture
+of a filled annulus"* is retired outright: it is true of a circle and false of a rectangle, and the sheet
+draws both.
+
+**Cost, stated plainly:** the three Art-sheet goldens move again — twelve tiles change from stroke to fill
+and four lose their glyph. The `*_compare.png` was read before the re-record, and it shows exactly that.
 
 ---
 

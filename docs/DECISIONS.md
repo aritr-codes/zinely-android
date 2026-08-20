@@ -117,7 +117,7 @@
 | [ADR-105](#adr-105) | **The third primitive — `DecorElement`, and the draw command that does not exist yet.** Implements ADR-104's curated-supply half | Accepted |
 | [ADR-106](#adr-106) | **The photocopier filter — a flag on the tape, not a filtered asset.** Adopted by the implementer under explicit owner delegation of D-082's five questions | Accepted |
 | [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** Grows the catalogue to ~51 inside the frozen families; upholds the randomiser ban; withdraws app-authored composites; ships search. | Proposed |
-| [ADR-108](#adr-108) | **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed |
+| [ADR-108](#adr-108) | ✅ **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed | **Accepted 2026-08-20**; R4 shipped as *generation* — the tile renders the authored outline, `BenchArtGlyphs` deleted.
 | [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The open question is not rendering but *when the maker first sees the join* — no screen shows it | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
@@ -11677,8 +11677,8 @@ the reasoning** — the opposite of where the effort went.
 
 ### Hollow supplies — refused as an axis, admitted one mark at a time, and the drawer's promise fixed first
 
-**Status:** `Proposed` · 2026-08-18
-**Owner ruling required on:** the [D-093](design/V2-SPEC-DEFECTS.md#d-093) reading this ADR recommends (**reading 1**, tiles become solid) — an amendment to the frozen Art sheet, therefore an owner act
+**Status:** ✅ **Accepted 2026-08-20** (owner ruling) · drafted 2026-08-18
+**Ruled:** R1–R3 as written. **R4 accepted with its mechanism changed** — the tiles predict the mark by *being* it, not by being redrawn solid. See [the amendment](#adr-108-shipped)
 **Extends:** [ADR-107](#adr-107) (R1's curation filter, R1a's freeze-scope split) · [ADR-104](#adr-104) (Constitution Amendment 3)
 **Amends:** nothing. The fill-only rule (*`SupplyOutline` KDoc rule 2*) and §5 (*no procedural variation of the outline*) both stand, and this ADR is the second occasion on which the first of them decided a feature
 **Depends on:** [D-093](design/V2-SPEC-DEFECTS.md#d-093) and [D-092](design/V2-SPEC-DEFECTS.md#d-092) being ruled together, as D-093 itself asks
@@ -12030,6 +12030,52 @@ it is drafted, rendered, and looked at.
 observation that prompted it is real and is a defect, but it is a defect in the **picture**, not a gap in the
 catalogue — and the catalogue's own next four marks are worth more than twelve duplicates of the twelve it
 already has.
+
+---
+
+#### What shipped, 2026-08-20 {#adr-108-shipped}
+
+**R1, R2 and R3 shipped as written.** No `hollow` field, no thirty-two tiles, and no new marks; hollow
+remains admissible one mark at a time through §4.3.1, and `shape.ring` / `fix.grommet` keep their proposed
+rows.
+
+**R4 shipped with its mechanism changed, and the change is the part worth reading.** R4 recommended making
+the sixteen tile glyphs solid. What landed instead: **the tile renders the authored outline itself**
+(`BenchArtMark` → `SupplyPainter` → the same `toPath()` and the same `FILL` + `EVEN_ODD` paint
+`CanvasReplayer` uses). `BenchArtGlyphs` — the hand-authored 24-unit icon set — is **deleted**, and
+`v21-bench.html`'s `SUP` table is now **generated** from `SupplyCatalog` (amendment **A7**), pinned by
+`BenchArtSheetParityTest.every_frozen_tile_is_its_catalogue_outline`, which is the generator run again and
+checked.
+
+⚠ **R4's own recommendation would have fixed the instance and kept the mechanism.** Three facts found while
+implementing it say the mechanism was the defect:
+
+1. **`mark.halftone`'s glyph drew SEVEN dots for a mark that has SIXTEEN.** Nothing was watching. The
+   parity test compared the hand-drawn Kotlin glyph against the hand-drawn HTML glyph, so it could only ever
+   prove the two *copies* agreed — never that either depicted the mark. It was green throughout.
+2. **Two glyphs had already needed correcting for exactly this reason** (`v21-bench.html` A3's swapped
+   `Photo` icon, A6's registration cross). A third instance is a pattern, not an accident.
+3. **Drawing the three annuli solid would have been a *new* lie.** `paper.window`, `fix.corner` and
+   `mark.registration` have real holes. "Make the tiles solid" is right for thirteen of sixteen — and this
+   ADR's own R2 already named that as the shape of the problem: an axis with three undefined cells is a
+   list, not a rule.
+
+**R4's 🟨 open question is answered, by not asking it.** R4 flagged that *"whether a solid 24-unit glyph
+reads correctly at tile scale is a design question this ADR cannot settle from source"*. There is no
+24-unit glyph any more, so the question dissolves: what reads at tile scale is the mark itself, and the
+golden `*_compare.png` was read before it was blessed.
+
+**The four unauthored supplies lost their picture and gained the word.** They now carry
+`Copy.BenchVerbs.NOT_YET` and draw no mark — [D-086](design/V2-SPEC-DEFECTS.md#d-086), closed in the same
+amendment. It is the same defect from the other side: `stateDescription` already spoke that sentence to a
+screen reader while a sighted maker got a dimmer tile and was left to infer it. And a picture of an
+unauthored supply was never a depiction — it was an invention, which is the one thing A5's DEPICT latitude
+cannot license.
+
+⚠ **What did NOT ship, deliberately, and is still open.** Authoring a hollow form for `paper.tag` was
+considered and deferred: changing an authored outline changes marks **already placed in makers' documents**,
+which is a different act from changing a picture of one, and it is owed its own ruling under R3's §4.3.1
+test rather than folded into a defect fix.
 
 ---
 

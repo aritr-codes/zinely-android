@@ -1,5 +1,6 @@
 package com.aritr.zinely.feature.editor
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,12 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -42,19 +40,21 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.render.SupplyCatalog
+import com.aritr.zinely.core.render.SupplyOutline
+import com.aritr.zinely.render.android.SupplyPainter
 import com.aritr.zinely.ui.components.ZSheet
 import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Press
-import com.aritr.zinely.ui.theme.ZinelyV2IconShape
 
 /** Test tag on the Art sheet's scrolling body. */
 public const val BenchArtSheetTestTag: String = "bench-art-sheet"
@@ -116,11 +116,22 @@ internal val BenchArtTileShape: RoundedCornerShape = RoundedCornerShape(ZinelyV2
 /** Frozen `.tile{border:1.5px solid var(--ink)}` (`v21-bench.html:460`) — the language's pen. */
 internal val BenchArtTileBorder = 1.5.dp
 
-/** Frozen `.tile svg{width:60%;height:60%}` (`v21-bench.html:466`) — a fraction, not a dp. */
+/** Frozen `.tile svg{width:60%;height:60%}` (`v21-bench.html:472`) — a fraction, not a dp. */
 internal const val BenchArtGlyphFraction: Float = 0.6f
 
-/** Frozen `.tile svg{stroke-width:1.7}` (`v21-bench.html:466`). */
-internal const val BenchArtGlyphStroke: Float = 1.7f
+// ⚠ `BenchArtGlyphStroke = 1.7f` stood here, transcribing `.tile svg{stroke-width:1.7}`. **A tile has no
+// stroke any more** (A7): it is the mark, filled, with the renderer's own even-odd rule. The frozen line it
+// quoted no longer says that, so keeping the constant would have pinned a measurement the freeze had stopped
+// making — the quietest kind of stale transcription, because it still compiles and still looks cited.
+
+/** The word an unauthored tile carries instead of a picture of a mark nobody has drawn (A7 / D-086). */
+internal val BenchArtNotYetSize = 8.96.sp
+
+/** `.tile.na .naw{letter-spacing:.08em}`. */
+internal val BenchArtNotYetTracking = 0.08.em
+
+/** `.tile.na .naw{opacity:.55}` — on top of the tile's own dim, exactly as the frozen CSS stacks them. */
+internal const val BenchArtNotYetAlpha: Float = 0.55f
 
 /**
  * Frozen `.tile:nth-child(3n){--tt:-1.6deg}` / `.tile:nth-child(4n){--tt:1.4deg}` (`v21-bench.html:463-464`).
@@ -145,99 +156,18 @@ internal fun benchArtTintIndex(oneBasedPosition: Int): Int = when {
 internal val BenchArtTilt = floatArrayOf(0f, -1.6f, 1.4f)
 
 /**
- * The sixteen tile glyphs, `supplyId` → the frozen `SUP` entry's SVG children (`v21-bench.html:848-854`).
+ * ⚠ **`BenchArtGlyphs` stood here and was deleted on 2026-08-20** — sixteen hand-authored 24-unit icons,
+ * stroked, maintained beside `SupplyCatalog` and drawn instead of it. Every tile was therefore hollow while
+ * every placement is filled, which is [D-093]
+ * (../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-093); `mark.halftone` drew **seven** dots for a
+ * mark that has **sixteen**; and two glyphs had already needed correcting for the same reason
+ * (`v21-bench.html` A3, A6).
  *
- * ### ⚠ These are not the authored outlines, and must never become them
- *
- * Amendment **A5** states it directly (`v21-bench.html:1051-1055`): *"The sixteen glyphs in `SUP` DEPICT the
- * supplies; they are not the authored outlines … a mockup must not become their source."* The outlines are
- * reviewed Kotlin in [SupplyCatalog] with a per-supply attestation (SUPPLIES-SPEC §4.1). These are 24-unit
- * chooser **icons**, in exactly the sense every other mark in `ZinelyV2Icons` is one, and they exist for all
- * sixteen supplies whether or not an outline does. What the freeze specifies here is that sixteen
- * *distinguishable* marks appear, in §4's order, under §4's four headings.
- *
- * `mark.asterisk` reuses the frozen file's own `DECOR.star` rather than a seventeenth glyph — the freeze
- * does the same, and for the same reason.
- *
- * Modelled as [ZinelyV2IconShape] rather than as raw path strings so `<circle>` and `<rect>` keep their own
- * parameters: SVG's shape-equivalence conversion is the part a human gets wrong, and `:core:ui` already has
- * it written down, tested, and shared with the V2 set. They are **not** [com.aritr.zinely.ui.theme.ZinelyV2Icon]s
- * — that set is pinned by a bidirectional set-equality test against the three `v2-*.html` files, and adding a
- * V2.1 Bench mark to it would break the very invariant that makes it trustworthy.
+ * It is deleted rather than corrected because correcting it fixes the instance and keeps the mechanism. The
+ * tile now renders the authored outline itself ([BenchArtMark]), so the set has no second copy to drift from
+ * — and a supply authored tomorrow needs no glyph work at all. `v21-bench.html`'s own `SUP` table is now
+ * **generated** from the catalogue for the same reason (amendment **A7**).
  */
-internal val BenchArtGlyphs: Map<String, List<ZinelyV2IconShape>> = linkedMapOf(
-    "tape.torn" to listOf(
-        ZinelyV2IconShape.Path("M4 8h16v8H4z"),
-        ZinelyV2IconShape.Path("M4 8l-1.6 2 1.6 2-1.6 2 1.6 2"),
-        ZinelyV2IconShape.Path("M20 8l1.6 2-1.6 2 1.6 2-1.6 2"),
-    ),
-    "fix.corner" to listOf(
-        ZinelyV2IconShape.Path("M5 5h14v14H5z"),
-        ZinelyV2IconShape.Path("M5 13V5h8z"),
-    ),
-    "fix.staple" to listOf(
-        ZinelyV2IconShape.Path("M4 15V9h16v6"),
-        ZinelyV2IconShape.Path("M4 15h5M15 15h5"),
-    ),
-    "fix.clip" to listOf(
-        ZinelyV2IconShape.Path("M15 7v8a4 4 0 01-8 0V7a2.6 2.6 0 015.2 0v8a1.2 1.2 0 01-2.4 0V8"),
-    ),
-    // `DECOR.star` (`v21-bench.html:641`), reused by the freeze itself.
-    "mark.asterisk" to listOf(
-        ZinelyV2IconShape.Path("M12 3l2.6 6.2 6.4.6-4.9 4.2 1.5 6.3L12 17l-5.6 3.3 1.5-6.3L3 9.8l6.4-.6z"),
-    ),
-    "mark.arrow" to listOf(
-        ZinelyV2IconShape.Path("M4 12h15"),
-        ZinelyV2IconShape.Path("M13 6l6 6-6 6"),
-    ),
-    "mark.halftone" to listOf(
-        ZinelyV2IconShape.Circle(7f, 8f, 1.5f),
-        ZinelyV2IconShape.Circle(13f, 7f, 2.2f),
-        ZinelyV2IconShape.Circle(18f, 10f, 1.3f),
-        ZinelyV2IconShape.Circle(9f, 14f, 2.2f),
-        ZinelyV2IconShape.Circle(15f, 13f, 1.5f),
-        ZinelyV2IconShape.Circle(18f, 17f, 1f),
-        ZinelyV2IconShape.Circle(11f, 19f, 1.3f),
-    ),
-    // A6 / D-095: the arms stop ON the ring and the centre is bare, because the authored mark's do
-    // (`SupplyCatalog.REGISTRATION`, `REG_RING_OUTER = 0.25`). This tile previously drew a plus crossing
-    // a ring — the one drawing `SupplyOutline`'s even-odd fill cannot produce, since a crossing cancels
-    // to a hole exactly where the mark is densest. `r=5` and arms `2→7` / `17→22` are `0.25` and
-    // `0.0→0.25` / `0.75→1.0` of the tile's own 2–22 span, so this is the outline's geometry, to scale.
-    "mark.registration" to listOf(
-        ZinelyV2IconShape.Circle(12f, 12f, 5f),
-        ZinelyV2IconShape.Path("M12 2v5M12 17v5M2 12h5M17 12h5"),
-    ),
-    "paper.strip" to listOf(
-        ZinelyV2IconShape.Path("M8 5h8v14H8z"),
-        ZinelyV2IconShape.Path("M8 5l2-1.6 2 1.6 2-1.6 2 1.6"),
-        ZinelyV2IconShape.Path("M8 19l2 1.6 2-1.6 2 1.6 2-1.6"),
-    ),
-    "paper.window" to listOf(
-        ZinelyV2IconShape.Path("M3 4h18v16H3z"),
-        ZinelyV2IconShape.Path("M8 9h8v6H8z"),
-    ),
-    "paper.tag" to listOf(
-        ZinelyV2IconShape.Path("M4 5h16v10H9l-4 4v-4H4z"),
-    ),
-    "paper.underline" to listOf(
-        ZinelyV2IconShape.Path("M4 14c4 2 12 2 16-1"),
-        ZinelyV2IconShape.Path("M4 18c4 2 12 2 16-1"),
-    ),
-    "shape.rect" to listOf(
-        ZinelyV2IconShape.Rect(4f, 6f, 16f, 12f),
-    ),
-    "shape.circle" to listOf(
-        ZinelyV2IconShape.Circle(12f, 12f, 8f),
-    ),
-    "shape.triangle" to listOf(
-        ZinelyV2IconShape.Path("M12 4l8 15H4z"),
-    ),
-    "shape.rule" to listOf(
-        ZinelyV2IconShape.Path("M3 12h18"),
-        ZinelyV2IconShape.Path("M3 9.5v5M21 9.5v5"),
-    ),
-)
 
 /**
  * The frozen **Art sheet** — `openArt()` (`v21-bench.html:847-865`, CSS `:457-468`), as amended by
@@ -287,14 +217,19 @@ internal val BenchArtGlyphs: Map<String, List<ZinelyV2IconShape>> = linkedMapOf(
  *    picking one places a real, selectable, movable element that paints **no pixels**. That is not a missing
  *    feature; from the maker's chair it is the app losing their action, which is the `0.9.0-beta.1` Preview
  *    failure in miniature.
- * 3. **Draw sixteen, and let the unauthored ones say what they are.** Taken. Each is drawn with its own
- *    frozen glyph, reports `disabled` to the *platform* tree, carries no `clickable` at all, and says why in
- *    `stateDescription` — [Copy.BenchVerbs.NOT_YET], the string this corpus already uses for exactly this.
+ * 3. **Draw sixteen, and let the unauthored ones say what they are.** Taken. Each reports `disabled` to the
+ *    *platform* tree, carries no `clickable` at all, and says why in `stateDescription` —
+ *    [Copy.BenchVerbs.NOT_YET], the string this corpus already uses for exactly this.
  *
- * The glyph is **not** a placeholder and nothing is invented: [BenchArtGlyphs] is the freeze's own depiction
- * of that supply, which exists independently of the outline (see its KDoc). What the missing outline governs
- * is whether the tile can be *picked*, not what it looks like — so a null never reaches the screen as a
- * blank tile with no explanation.
+ * ⚠ **Amended 2026-08-20 (A7 / [D-086]).** This paragraph used to end *"a null never reaches the screen as a
+ * blank tile with no explanation"* — and the explanation it meant was a **picture**: each unauthored tile drew
+ * its own frozen glyph. That was the one part of this reading that could not survive its own premise. There is
+ * no authored outline for those four, so the glyph was not a depiction of the supply; it was an invention of
+ * one, and A5's *"the glyphs DEPICT the supplies"* cannot license depicting something that does not exist.
+ * The four now carry the **word** `Not yet` and no mark. Which is also the answer to D-086's real complaint:
+ * `stateDescription` was speaking that word to a screen reader while a sighted maker got only a dimmer tile
+ * and was left to infer it — and the most available inference for a dim tile you just tapped is *the app is
+ * broken*, not *this one isn't built yet*.
  *
  * This follows [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) — *a control the
  * freeze draws is kept drawn and invents nothing* — the same ruling that governs [BenchStyleRow]'s three
@@ -503,13 +438,16 @@ private fun BenchArtTile(
     // place that knows, and it is asked here rather than assumed from the `shape.` prefix — the authored ids
     // now span four prefixes across three families, which is the plainest demonstration that the prefix was
     // never the family. Stated in the catalogue's own KDoc.
-    val authored = SupplyCatalog.outlineOf(supplyId) != null
+    // ⚠ The outline is now READ, not merely counted. It was `outlineOf(supplyId) != null`, which asked the
+    // catalogue the one question the tile no longer needs answered on its own: the mark itself is what the
+    // tile draws, so `null` is both "cannot be picked" and "there is nothing to show" — one fact, one read.
+    val outline = SupplyCatalog.outlineOf(supplyId)
+    val authored = outline != null
     // Named from the copy, never derived. A missing entry is a programming error, not a fallback: an id the
     // copy layer does not name is an id the user would hear read as its own key.
     val name = requireNotNull(Copy.Supplies.NAMES[supplyId]) {
         "$supplyId has no name in Copy.Supplies — the Art sheet must never speak a supplyId"
     }
-    val glyph = rememberBenchArtGlyph(supplyId)
     val pick = benchTap { onPick(supplyId) }
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -574,53 +512,57 @@ private fun BenchArtTile(
             },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = glyph,
-            contentDescription = null,
-            tint = if (authored) mark else mark.copy(alpha = dim),
-            modifier = Modifier.fillMaxSize(BenchArtGlyphFraction),
-        )
+        if (outline != null) {
+            BenchArtMark(outline = outline, color = mark)
+        } else {
+            // ⚠ **No glyph.** Drawing a picture of a mark nobody has authored is depicting an invention,
+            // which is the one part of the sixteen-tiles reading that could not survive its own premise
+            // (`v21-bench.html` A7). The word is what `stateDescription` has always spoken; the only thing
+            // that changes is that a sighted maker is now told it too — [D-086].
+            Text(
+                text = Copy.BenchVerbs.NOT_YET,
+                style = TextStyle(
+                    fontSize = BenchArtNotYetSize,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = BenchArtNotYetTracking,
+                    color = colors.inkSoft.copy(alpha = BenchArtNotYetAlpha),
+                ),
+            )
+        }
     }
 }
 
 /**
- * The tile's mark as an [ImageVector], built once per supply.
+ * The tile's mark — **the authored outline itself**, filled, through the same seam every page surface uses.
  *
- * Built here rather than declared as a constant for the reason `ZinelyV2Icons` gives at length: an
- * `ImageVector` bakes `strokeLineWidth` in, and in this design **an icon does not own its stroke weight —
- * the container does**. `.tile svg{stroke-width:1.7}` is the container's, so it is applied here, at the one
- * call site that has it.
+ * This is the whole of [D-093](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-093)'s ruling
+ * expressed as code. The sheet used to draw [BenchArtGlyphs], a hand-authored 24-unit icon set maintained
+ * *beside* `SupplyCatalog`, stroked at the container's weight. Every tile was therefore a **hollow outline**
+ * and every placement a **fill**, and the catalogue contains no hollow mark at all — so the tile was not a
+ * simplification of the mark, it was a contradiction of it. Two glyphs had already needed correcting for the
+ * same reason (`v21-bench.html` A3, A6), and this pass found a third: `mark.halftone`'s glyph drew **seven**
+ * dots for a mark that has **sixteen**.
+ *
+ * Hand-correcting the glyphs would have fixed the instance and kept the mechanism. Rendering the outline
+ * retires the mechanism: **a tile cannot mispredict a mark it is.** The corollary is that a supply authored
+ * tomorrow needs no glyph work at all, which is what makes [ADR-107](../../../../../../../../docs/DECISIONS.md#adr-107)'s
+ * expansion affordable.
+ *
+ * The box is square ([Modifier.aspectRatio] on the tile), so the unit square is not distorted here even
+ * though [SupplyPainter] permits it — a placement may stretch tape; a *picture of* tape must not, or the
+ * tile stops predicting again in the other direction.
  */
 @Composable
-private fun rememberBenchArtGlyph(supplyId: String): ImageVector = remember(supplyId) {
-    val shapes = requireNotNull(BenchArtGlyphs[supplyId]) {
-        "$supplyId has no frozen glyph — the Art sheet draws the freeze's sixteen and invents none"
+private fun BenchArtMark(outline: SupplyOutline, color: Color) {
+    val painter = remember { SupplyPainter() }
+    val argb = color.toArgb()
+    Canvas(modifier = Modifier.fillMaxSize(BenchArtGlyphFraction)) {
+        drawIntoCanvas { canvas ->
+            painter.drawUnitSquare(canvas.nativeCanvas, outline, argb, size.width, size.height)
+        }
     }
-    val builder = ImageVector.Builder(
-        name = supplyId,
-        defaultWidth = BenchArtGlyphViewport.dp,
-        defaultHeight = BenchArtGlyphViewport.dp,
-        viewportWidth = BenchArtGlyphViewport,
-        viewportHeight = BenchArtGlyphViewport,
-    )
-    shapes.forEach { shape ->
-        builder.addPath(
-            pathData = PathParser().parsePathString(shape.pathData()).toNodes(),
-            // `fill:none;stroke:currentColor` — opaque black is the placeholder `Icon`'s tint replaces,
-            // which is how `currentColor` behaves and how Material's own icons are built.
-            fill = null,
-            stroke = SolidColor(Color.Black),
-            strokeLineWidth = BenchArtGlyphStroke,
-            // `.tile svg{stroke-linecap:round;stroke-linejoin:round}` (`v21-bench.html:467`).
-            strokeLineCap = StrokeCap.Round,
-            strokeLineJoin = StrokeJoin.Round,
-        )
-    }
-    builder.build()
 }
 
-/** `svg(d)` writes `viewBox="0 0 24 24"` for every mark in the file (`v21-bench.html:627`). */
-private const val BenchArtGlyphViewport: Float = 24f
 
 /**
  * Why the Art sheet is open — SUPPLIES-SPEC §8.

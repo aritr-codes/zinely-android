@@ -63,11 +63,7 @@ public class CanvasReplayer(
      * paints are the whole reason that trade-off costs nothing. Print is unaffected either way: the
      * PDF backend ignores the AA flag entirely (§3.2).
      */
-    private val shapePaint = Paint().apply {
-        style = Paint.Style.FILL
-        isAntiAlias = true
-        isDither = false
-    }
+    private val shapePaint = newShapePaint()
 
     public fun replay(
         canvas: Canvas,
