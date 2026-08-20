@@ -5542,7 +5542,7 @@ scrim should behave under a future **scrolling** sheet body. Fixing it blind wou
 
 | | |
 |---|---|
-| **Artifacts** | `feature/editor/.../BenchAddChooser.kt` · `docs/design/mockups/v21-bench.html:828-829` · [D-080](#d-080) · D-051 / OD-26 |
+| **Artifacts** | `feature/editor/.../BenchAddChooser.kt` · `docs/design/mockups/v21-bench.html:840-841` · [D-080](#d-080) · D-051 / OD-26 |
 | **Found** | 2026-08-16, package **S7-placement**, while adding the Add chooser's Art row |
 | **Severity** | Cosmetic, inherited from the frozen file. Two chooser rows now carry the same icon |
 | **Status** | ✅ **Ruled — carried forward, no implementation change** (consistent with D-051 / OD-26) |
@@ -5744,7 +5744,7 @@ candidate answers, none chosen here:
    ⚠ it collides head-on with the catalogue's own standing rule that **the id prefix is not the family**
    (`SupplyCatalog` KDoc). It would make the prefix load-bearing for the first time.
 3. **Split the family in two** — *Tape* and *Fixings*. The cleanest model and the most expensive: the four
-   families are **frozen** (`v21-bench.html:844`), so this is an owner act and changes the Art sheet's
+   families are **frozen** (`v21-bench.html:856`), so this is an owner act and changes the Art sheet's
    headings.
 4. **Give the outline an intrinsic aspect** and let the family supply only the width. Most correct in the
    long run — a supply *does* know its own proportion, which is exactly the argument
@@ -5785,7 +5785,7 @@ do not split.**
   so in its own value (`"fixings (sizing only — not a family)"`). A fifth family would put a fifth heading
   on the Art sheet that no maker asked for.
 - **It does not prefix-match.** `startsWith("fix.")` was shorter and is the same mistake this file's
-  `benchSupplyFamilyOf` already warns about from the other side. The three are enumerated, so adding a
+  `benchSupplyFamily` already warns about from the other side. The three are enumerated, so adding a
   fourth fixing is a sizing decision someone makes rather than a naming habit deciding for them.
 
 ⚠ **A test was pinning the defect.** `SupplyPlacementTest` asserted that `fix.corner` and `tape.torn` land
@@ -5799,7 +5799,7 @@ stays; the sizing half is replaced by the two properties the device pass actuall
 
 | | |
 |---|---|
-| **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtGlyphs`) · `core/render/.../SupplyCatalog.kt` · `v21-bench.html:1051-1055` (amendment A5) |
+| **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtGlyphs`, deleted by this defect’s ruling) · `core/render/.../SupplyCatalog.kt` · `v21-bench.html:1078-1082` (amendment A5) |
 | **Found** | 2026-08-18, **Pass 2 on SM-A176B**, Android 16 — the first Pass 2 the drawer has ever had |
 | **Severity** | Open design question on a shipped surface. Not a crash, not an a11y defect — a **prediction** defect |
 | **Status** | ✅ **CLOSED 2026-08-20** — ruled, implemented, and the golden diff read. See [the ruling](#d-093-ruling) |
@@ -5809,7 +5809,7 @@ stroked outline** — a hollow star, a hollow circle, a hollow rectangle, a holl
 a hollow speech bubble. Tapping any of them puts a **solid** mark on the page. Nothing on the tile
 suggested that would happen.
 
-**The cause is structural, not a slip.** `BenchArtGlyphs` holds 24-unit `ZinelyV2IconShape` icons drawn at
+**The cause is structural, not a slip.** `BenchArtGlyphs` held 24-unit `ZinelyV2IconShape` icons drawn at
 the corpus's icon stroke weight; `SupplyCatalog` holds outlines that [`DrawShape`](../ARCHITECTURE.md)
 fills, and §4.1 rule 2 makes fill the *only* thing it can do. The two were never going to agree, and the
 freeze's own amendment **A5** says so in terms: the glyphs *"DEPICT the supplies; they are not the authored
@@ -5906,8 +5906,12 @@ holding, and *"which of these two identical things do I want?"* is a question th
 
 **Candidate fixes, none chosen** — all amend the frozen file:
 
-1. **Give `Art` its own glyph.** The obvious one, and `BenchArtGlyphs` already contains sixteen marks the
-   freeze drew for exactly this vocabulary — a piece of tape or a stamp would name the drawer's contents.
+1. **Give `Art` its own glyph.** The obvious one. ⚠ **Its stated source is gone as of 2026-08-20**: this
+   read *"`BenchArtGlyphs` already contains sixteen marks the freeze drew for exactly this vocabulary"*, and
+   that set was deleted by [D-093](#d-093-ruling)'s ruling — the Art tiles render `SupplyCatalog`'s outlines
+   now. The candidate survives and gets *cheaper*: the chooser row can draw an authored supply outline
+   through `SupplyPainter`, the same way a tile does, so `Art` would be named by a mark the drawer actually
+   contains rather than by a picture of one.
 2. **Give `Photo` a photo-specific mark** and leave `Art` the generic frame. Inverts the problem.
 3. **Accept it.** The subtitles carry the distinction and the rows are always read together.
 
@@ -6001,7 +6005,7 @@ The owner ruled **redraw the tile**. Landed in both places the picture lives, on
 
 | | Change |
 |---|---|
-| `docs/design/mockups/v21-bench.html:849` | `r="6"` + `M12 2v20M2 12h20` → `r="5"` + `M12 2v5M12 17v5M2 12h5M17 12h5`. **Amendment log A6**; the file's line count outside the log is unchanged, so no citation to this file moves |
+| `docs/design/mockups/v21-bench.html:849 (pre-A7; the glyphs are generated now)` | `r="6"` + `M12 2v20M2 12h20` → `r="5"` + `M12 2v5M12 17v5M2 12h5M17 12h5`. **Amendment log A6**; the file's line count outside the log is unchanged, so no citation to this file moves |
 | `feature/editor/.../BenchArtSheet.kt` (`mark.registration`) | the same geometry as `ZinelyV2IconShape`, with the reason in a comment beside it |
 
 Ring `r=5` and arms `2→7` / `17→22` are `0.25` and `0.0→0.25` / `0.75→1.0` of the tile's 2–22 span — the

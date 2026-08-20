@@ -413,7 +413,7 @@ class BenchC4Test {
 
     @Test
     fun the_saved_chip_speaks_the_line_the_paint_no_longer_carries() {
-        // **Inverted from V2.** The frozen `.saved` markup (`v21-bench.html:514`) is a check glyph and the
+        // **Inverted from V2.** The frozen `.saved` markup (`v21-bench.html:526`) is a check glyph and the
         // single word `Saved`; V2's `✿` and ` · on this device` are gone from the paint, so the constants
         // that named them are gone with them and this asserts their *absence* rather than deleting the
         // claim. D-021 keeps the literal characters a frozen file draws — and this frozen file draws none.
@@ -488,7 +488,7 @@ class BenchC4Test {
 
     @Test
     fun the_snack_enters_from_eight_dp_below_where_it_comes_to_rest() {
-        // Row 4.11's `translateY(8px) → 0` (`v21-bench.html:481`); V2 rose 16. `graphicsLayer`'s
+        // Row 4.11's `translateY(8px) → 0` (`v21-bench.html:493`); V2 rose 16. `graphicsLayer`'s
         // translation moves the node's bounds in the root, so the rise is readable rather than merely
         // declared — the mutation 16 → 0 survived the whole suite before this existed, because nothing
         // else in C4 looks at where the snack starts. The frozen `rotate(-.6deg)` is in BOTH the rest and
@@ -529,7 +529,7 @@ class BenchC4Test {
 
     @Test
     fun the_snack_sits_at_the_frozen_insets() {
-        // Row 4.11: `left/right:14px` (`v21-bench.html:472`). Mutation: any inset change.
+        // Row 4.11: `left/right:14px` (`v21-bench.html:484`). Mutation: any inset change.
         val store = store()
         setScreen(store)
         placedText(store)

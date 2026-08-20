@@ -130,7 +130,16 @@ class SupplyPlacementTest {
         // which is what §5.2 exists to refuse.
         val sizes = BenchFixings.map { benchSupplyPlacement(it, page) }.map { it.widthPt to it.heightPt }
         assertEquals("the fixings must share one constant", 1, sizes.toSet().size)
-        assertEquals("the enumerated fixings are the three the family holds", 3, BenchFixings.size)
+        // ⚠ Tied to the COPY LAYER, not to a count. `assertEquals(3, BenchFixings.size)` was the first
+        // version and it is exactly the hole D-092 came through: a fifth member added to the family in
+        // `Copy.Supplies` would silently inherit tape's 4.5:1 and reproduce the defect, with the suite
+        // green. The set must be the family minus its tape.
+        val family = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.TAPE_AND_FIXINGS).keys
+        assertEquals(
+            "every member of Tape & fixings must be either tape or an enumerated fixing",
+            family,
+            BenchFixings + "tape.torn",
+        )
     }
 
     @Test

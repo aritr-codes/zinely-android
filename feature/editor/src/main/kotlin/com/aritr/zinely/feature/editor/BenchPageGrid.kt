@@ -270,7 +270,7 @@ internal fun benchGridCardIsland(room: ZinelyV21Colors): ZinelyV21Colors {
  * exit beside the cross and system Back.
  *
  * ⚠ **The host was re-homed to match, and this is the third answer to "where does this panel live".** The
- * frozen `.pgrid` is a child of `.phone` at `z-index:54` (markup `v21-bench.html:573`; `.canvasArea` closes
+ * frozen `.pgrid` is a child of `.phone` at `z-index:54` (markup `v21-bench.html:585`; `.canvasArea` closes
  * at `:530`), so it rises from the *screen's* bottom edge and covers the filmstrip and the bar, and the
  * scrim covers everything. `EditorScreen` mounted it inside `.canvasArea` until P5 — correctly, for V2,
  * whose rule was `position:absolute; inset:0` *inside* that element. V2.1 moved the element, not just its

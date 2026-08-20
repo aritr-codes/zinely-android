@@ -471,7 +471,7 @@ representation *can* express a same-direction-wound ring, which is the precondit
 
 ## 4. The vocabulary — §9.2's sixteen, restored
 
-The four families are frozen (`v21-bench.html:844`). The sixteen below are **`ZINE-DIRECTION.md §9.2`
+The four families are frozen (`v21-bench.html:856`). The sixteen below are **`ZINE-DIRECTION.md §9.2`
 verbatim**; the first draft's redraft is withdrawn (§0 O-C).
 
 > **This table is the vocabulary, not the labels.** Two of the sixteen are written here as slash-pairs and

@@ -44,7 +44,7 @@ private val HintMaxWidth = 320.dp
  * ### ⚠ Unfrozen surface — the analogy is `.snack`, and it replaces V2's invented sticky
  *
  * The frozen prototype has no coach mark: it teaches through its own caption strip (`.hint`,
- * `v21-bench.html:490`), which is **prototype narration** — it lives outside the phone frame, explaining
+ * `v21-bench.html:502`), which is **prototype narration** — it lives outside the phone frame, explaining
  * the demo to someone reading a design file. Transcribing it would put the caption *inside* the product,
  * which is exactly the class of mistake `cap()` and `"the bench"` are excluded for. So the caption's
  * selector name is a false friend and is deliberately not the source here.

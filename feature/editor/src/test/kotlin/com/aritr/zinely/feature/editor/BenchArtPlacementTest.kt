@@ -208,7 +208,7 @@ class BenchArtPlacementTest {
 
     @Test
     fun `Given a placement, When it lands, Then the frozen toast says so and offers Undo`() {
-        // The freeze's `toast('Placed on the page', true)` (`v21-bench.html:862`) — the message AND the
+        // The freeze's `toast('Placed on the page', true)` (`v21-bench.html:889`) — the message AND the
         // `undoable=true` half, which is the affordance that makes an unwanted supply a one-tap mistake.
         // Mutation: delete the snack block in `placeSupply`, or pass `snackAction = null`.
         val store = store()

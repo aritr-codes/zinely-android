@@ -440,7 +440,7 @@ class BenchC4GoldenTest {
         )
 
         // Row 4.12, **inverted by ADR-102 P4.** `--accent-on-ink` existed in the palette solely for this
-        // pairing and V2.1 retires it (`v21-bench.html:485-490`): the action is the snack's own `paper`,
+        // pairing and V2.1 retires it (`v21-bench.html:497-502`): the action is the snack's own `paper`,
         // underlined, because the butter it was tried at measured 1.59:1 in dark. So the assertion is now
         // that the action carries paper — and that no re-tinted accent has crept back in its place.
         val action = cropToBounds(full, boundsOf(BenchSnackActionTestTag))

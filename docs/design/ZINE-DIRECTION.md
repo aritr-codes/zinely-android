@@ -631,7 +631,7 @@ The rule: **frozen means implement parity; changing it means amending the refere
 
 ## ⚠ A0 — the amendment I initially missed, and the largest one
 
-I claimed `v21-bench.html:773` *"fixes the add chooser at Text / Photo"* (*the number as I wrote it then — a record, not a pointer*), making a third entry an amendment. ✅ **Falsified — it is the opposite, and the correction cuts both ways.**
+I claimed `v21-bench.html:785` *"fixes the add chooser at Text / Photo"* (*the number as I wrote it then — a record, not a pointer*), making a third entry an amendment. ✅ **Falsified — it is the opposite, and the correction cuts both ways.**
 
 The frozen header states it as law:
 

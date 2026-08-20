@@ -208,7 +208,7 @@ public object Copy {
         public const val INK: String = "Ink"
         public const val REFRAME: String = "Reframe"
 
-        /** The photocopier filter's toggle (`v21-bench.html:678`, ADR-106). It names the machine, not
+        /** The photocopier filter's toggle (`v21-bench.html:690`, ADR-106). It names the machine, not
          *  the algorithm: nobody asks a copier for Floyd–Steinberg. */
         public const val COPIER: String = "Copier"
 
@@ -483,7 +483,7 @@ public object Copy {
     }
 
     /**
-     * The bar's Add chooser (`BenchAddChooser.kt`, `v21-bench.html:826-829`; ADR-094). **All three rows**
+     * The bar's Add chooser (`BenchAddChooser.kt`, `v21-bench.html:838-841`; ADR-094). **All three rows**
      * as of ADR-105 step S7 — the freeze's own narration is *"Add stays three verbs — Text · Photo ·
      * Art"*, and the fence that held `Art` back was that nothing could be taken out of the cabinet. Each
      * row's spoken label is [optionLabel], one target rather than three fragments.
@@ -495,7 +495,7 @@ public object Copy {
         public const val PHOTO_TITLE: String = "Photo"
         public const val PHOTO_SUBTITLE: String = "From your phone — it never leaves the device"
 
-        /** The frozen `Art` row (`v21-bench.html:829`), title and subtitle verbatim. */
+        /** The frozen `Art` row (`v21-bench.html:841`), title and subtitle verbatim. */
         public const val ART_TITLE: String = "Art"
         public const val ART_SUBTITLE: String = "Tape, stamps and cut paper"
 
@@ -522,7 +522,7 @@ public object Copy {
         public fun deleted(label: String): String = "$label deleted."
 
         /**
-         * The frozen `toast('Placed on the page',true)` an Art tile raises (`v21-bench.html:862`).
+         * The frozen `toast('Placed on the page',true)` an Art tile raises (`v21-bench.html:889`).
          *
          * No full stop, unlike [deleted]: the freeze writes neither, and this one is a label on a thing
          * that just happened rather than a sentence about it. `undoable=true` is why the snack carries

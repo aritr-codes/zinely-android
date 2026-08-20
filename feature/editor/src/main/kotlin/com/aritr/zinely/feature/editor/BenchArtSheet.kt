@@ -40,8 +40,8 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -75,7 +75,7 @@ public fun benchArtRecentTileTestTag(supplyId: String): String = "bench-art-rece
 public fun benchArtLabelTestTag(family: String): String = "bench-art-label-$family"
 
 /**
- * The frozen `<h3>Art</h3>` (`v21-bench.html:855`).
+ * The frozen `<h3>Art</h3>` (`v21-bench.html:882`).
  *
  * ⚠ **Owed to `core:copy`.** Every other user-facing string this module renders comes from [Copy]; this one
  * and [BenchArtRecentHeading] have no home there yet because S6's scope was the sixteen supply *names*
@@ -86,7 +86,7 @@ public fun benchArtLabelTestTag(family: String): String = "bench-art-label-$fami
 public const val BenchArtSheetTitle: String = "Art"
 
 /**
- * The frozen `Recent · ⭐ favourites` heading (`v21-bench.html:856`). Drawn **only** when a caller supplies
+ * The frozen `Recent · ⭐ favourites` heading (`v21-bench.html:883`). Drawn **only** when a caller supplies
  * a non-empty recents list — see [BenchArtSheet]'s note on the deferral.
  */
 public const val BenchArtRecentHeading: String = "Recent · ⭐ favourites"
@@ -116,7 +116,7 @@ internal val BenchArtTileShape: RoundedCornerShape = RoundedCornerShape(ZinelyV2
 /** Frozen `.tile{border:1.5px solid var(--ink)}` (`v21-bench.html:460`) — the language's pen. */
 internal val BenchArtTileBorder = 1.5.dp
 
-/** Frozen `.tile svg{width:60%;height:60%}` (`v21-bench.html:472`) — a fraction, not a dp. */
+/** Frozen `.tile svg{width:60%;height:60%}` (`v21-bench.html:484`) — a fraction, not a dp. */
 internal const val BenchArtGlyphFraction: Float = 0.6f
 
 // ⚠ `BenchArtGlyphStroke = 1.7f` stood here, transcribing `.tile svg{stroke-width:1.7}`. **A tile has no
@@ -138,7 +138,7 @@ internal const val BenchArtNotYetAlpha: Float = 0.55f
  *
  * ⚠ **Positional, and `.grid` restarts the count per section** — so every family row carries the identical
  * leaf · leaf · berry · butter pattern. That is not a transcription error; it is the *accepted price*
- * amendment **A5** books as an open observation for the owner (`v21-bench.html:1074-1077`): the old
+ * amendment **A5** books as an open observation for the owner (`v21-bench.html:1101-1104`): the old
  * eight-tile grid varied, the sixteen-tile one cannot, and fixing it needs a new selector, which A4's bar
  * says needs a ruling. Transcribed as frozen rather than quietly improved.
  *
@@ -170,7 +170,7 @@ internal val BenchArtTilt = floatArrayOf(0f, -1.6f, 1.4f)
  */
 
 /**
- * The frozen **Art sheet** — `openArt()` (`v21-bench.html:847-865`, CSS `:457-468`), as amended by
+ * The frozen **Art sheet** — `openArt()` (`v21-bench.html:863-892`, CSS `:457-468`), as amended by
  * **A5** on 2026-08-16; SUPPLIES-SPEC §4, §5 and §9; ADR-104 / Constitution Amendment 3.
  *
  * **One grid. Sixteen tiles, shelved under the four family headings, and nothing else.**
@@ -226,7 +226,7 @@ internal val BenchArtTilt = floatArrayOf(0f, -1.6f, 1.4f)
  * its own frozen glyph. That was the one part of this reading that could not survive its own premise. There is
  * no authored outline for those four, so the glyph was not a depiction of the supply; it was an invention of
  * one, and A5's *"the glyphs DEPICT the supplies"* cannot license depicting something that does not exist.
- * The four now carry the **word** `Not yet` and no mark. Which is also the answer to D-086's real complaint:
+ * The four now carry the **word** [Copy.BenchVerbs.NOT_YET] and no mark. Which is also the answer to D-086's real complaint:
  * `stateDescription` was speaking that word to a screen reader while a sighted maker got only a dimmer tile
  * and was left to infer it — and the most available inference for a dim tile you just tapped is *the app is
  * broken*, not *this one isn't built yet*.
@@ -385,7 +385,7 @@ private fun BenchArtGrid(supplyIds: List<String>, onPick: (String) -> Unit, tag:
 
 /**
  * Frozen `.tile` — a square of tinted paper, outlined in ink, standing on [ZinelyV21Press.Flat]'s 2dp
- * printed shadow and tilted by its position in the grid (`v21-bench.html:460-466`).
+ * printed shadow and tilted by its position in the grid (`v21-bench.html:460-471`).
  *
  * The tint is **material, not state** (V21-SPEC §3.2): leaf, berry and butter here are the colour of the
  * paper the mark is printed on, and they cycle by grid position, so nothing about a berry tile means
@@ -520,13 +520,26 @@ private fun BenchArtTile(
             // (`v21-bench.html` A7). The word is what `stateDescription` has always spoken; the only thing
             // that changes is that a sighted maker is now told it too — [D-086].
             Text(
-                text = Copy.BenchVerbs.NOT_YET,
-                style = TextStyle(
-                    fontSize = BenchArtNotYetSize,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = BenchArtNotYetTracking,
-                    color = colors.inkSoft.copy(alpha = BenchArtNotYetAlpha),
-                ),
+                // `.tile.na .naw{text-transform:uppercase}`. **Compose has to be told** — the same trap
+                // [BenchArtLabel] documents for `.lbl` and solves the same way. The first draft of this
+                // control dropped it and the freeze read NOT AVAILABLE YET while the app read
+                // `Not available yet`; a review caught it, no assertion did, and the measurement test
+                // below now exists so the next one is caught by the suite instead.
+                text = Copy.BenchVerbs.NOT_YET.uppercase(),
+                color = colors.inkSoft.copy(alpha = BenchArtNotYetAlpha),
+                fontSize = BenchArtNotYetSize,
+                fontWeight = FontWeight.Bold,
+                // The sheet's sans, never its voice face — `.naw` inherits the body font exactly as `.lbl`
+                // does, and `LocalTextStyle` on this surface is not guaranteed to be it.
+                fontFamily = ZinelyV21Fonts.Work,
+                letterSpacing = BenchArtNotYetTracking,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                // Two short words on a square tile: centred, and allowed to wrap rather than clip. ⚠ At a
+                // large system font scale the word can still outgrow the tile — the tile is `clip`ped, and
+                // `contentDescription` carries the supply's name regardless, so nothing becomes unreachable.
+                // Flagged for Pass 2 rather than solved by shrinking text that is already the smallest on
+                // the surface.
+                textAlign = TextAlign.Center,
             )
         }
     }

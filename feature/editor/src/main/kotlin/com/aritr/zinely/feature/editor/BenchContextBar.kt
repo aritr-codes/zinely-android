@@ -115,7 +115,7 @@ internal data class BenchVerb(
 )
 
 /**
- * The frozen verb sets, one per kind (`v21-bench.html:644-648`). Pure, so the *sets* are asserted
+ * The frozen verb sets, one per kind (`v21-bench.html:656-660`). Pure, so the *sets* are asserted
  * directly rather than through a composition — and asserted as **set-equality plus order**, because a
  * permutation would satisfy "each verb exists" and still be the wrong bar.
  */
@@ -151,7 +151,7 @@ internal fun benchContextVerbs(
     BenchVerbKind.PHOTO -> listOf(
         BenchVerb(Copy.BenchVerbs.REFRAME, Icons.Filled.Crop),
         // The one verb this bar gained after its freeze, and the freeze was amended first
-        // (`v21-bench.html:678`) exactly as CLAUDE.md's HTML-first rule requires — never the reverse.
+        // (`v21-bench.html:690`) exactly as CLAUDE.md's HTML-first rule requires — never the reverse.
         // (Was cited as :674, which is the *text* list; corrected by review after counting the lines.)
         // It is live, not drawn-and-inert like Font and Replace: the whole feature is one boolean on
         // the selected photo, so there is nothing left to invent ([ADR-106]).

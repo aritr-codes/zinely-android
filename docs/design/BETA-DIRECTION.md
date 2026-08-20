@@ -254,7 +254,7 @@ add ✓ · remove ✓ · navigate ✓ · duplicate ✗ · **reorder ✗**
 
 `Intent.Reorder` is element z-order, not pages ([`Intent.kt:99`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/Intent.kt)) — `ReorderOp` operates on `Page.elements`. Page-level intents are only `GoToPage` / `AddPage` / `DeletePage`. There is no way to move page 5 before page 3.
 
-> **DECISION: page reorder ships — and it implements the freeze rather than adding to it.** [`v21-bench.html:820`](mockups/v21-bench.html) already specifies the page grid as *"The whole zine at once — tap to jump, **drag to reorder**"*. The frozen spec has been promising this the whole time; only the code is missing.
+> **DECISION: page reorder ships — and it implements the freeze rather than adding to it.** [`v21-bench.html:832`](mockups/v21-bench.html) already specifies the page grid as *"The whole zine at once — tap to jump, **drag to reorder**"*. The frozen spec has been promising this the whole time; only the code is missing.
 >
 > **DECISION: page duplicate ships. ↑ RAISED** — the earlier "marginal in a fixed 8-page fold" reading was wrong, and the fixed fold is exactly what makes it useful: with a *fixed* page count you are not adding pages, you are **repeating a layout you already made** — the same frame, the same caption position, the same tape. That is how zine spreads are actually built. It rides the reorder long-press menu at one extra item, and reuses `PlaceCommand`, which [`Command.kt:48-49`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/Command.kt) already notes *"generalises to Duplicate"*.
 >
@@ -278,7 +278,7 @@ import ✓ · reframe ✓ · resize ✓ · position ✓ · rotate ✓ · delete 
 >
 > It pairs directly with the photocopier filter (§3.11): *shoot it, dither it, print it* is the loop that makes Zinely feel like a zine tool rather than a photo-layout tool.
 >
-> ⚠ **Freeze impact:** [`v21-bench.html:825-829`](mockups/v21-bench.html) draws the add chooser. ⚠ **Corrected 2026-08-18:** this said `:773` (which is `bin={node:sel…}`, not the chooser) and said the chooser was fixed at **Text / Photo**. It now has **three** rows — `Art` landed under [ADR-105](DECISIONS.md#adr-105) S7 — so the sentence was right when written and is not right now. A **fourth** entry is a feature addition and needs an amendment — shared with the Supplies tray (§3.5), which amends the same chooser.
+> ⚠ **Freeze impact:** [`v21-bench.html:837-841`](mockups/v21-bench.html) draws the add chooser. ⚠ **Corrected 2026-08-18:** this said `:773` (which is `bin={node:sel…}`, not the chooser) and said the chooser was fixed at **Text / Photo**. It now has **three** rows — `Art` landed under [ADR-105](DECISIONS.md#adr-105) S7 — so the sentence was right when written and is not right now. A **fourth** entry is a feature addition and needs an amendment — shared with the Supplies tray (§3.5), which amends the same chooser.
 
 ## 3.4 Text — one gap, and it is the more interesting one
 
@@ -310,7 +310,7 @@ Two ways out: delete the control, or make it work. **Make it work** — but not 
 >
 > Three named voices, exactly as five named inks. **Never a font picker.** The typography law's binding rule — *"the imperfect face never sets running text"* — is preserved by a size cap on Handwritten, not by removing the option.
 >
-> ⚠ **Freeze impact:** [`v21-bench.html:564`](mockups/v21-bench.html) draws the `Aa Font` chip *(was `:514`, corrected 2026-08-18)*, so *making the drawn chip work* is a permitted parity fix. The three-voice selection surface it opens is **not** in the freeze and needs an amendment.
+> ⚠ **Freeze impact:** [`v21-bench.html:576`](mockups/v21-bench.html) draws the `Aa Font` chip *(was `:514`, corrected 2026-08-18)*, so *making the drawn chip work* is a permitted parity fix. The three-voice selection surface it opens is **not** in the freeze and needs an amendment.
 
 ## 3.5 Graphics — the missing third primitive. **Ships.**
 
@@ -372,7 +372,7 @@ layering ✗ **broken** · selection ✓ · move ✓ · resize ✓ · rotate ✓
 >
 > It is also nearly free: [`Command.kt:48-49`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/Command.kt) already records that **`PlaceCommand`** *"generalises to Duplicate"*. New id, small offset, same page, undoable by the existing inverse. **A `Duplicate` verb on the context bar** for every element kind — no clipboard, no cross-document paste, no system-clipboard integration.
 >
-> ⚠ **Freeze impact:** [`v21-bench.html:674-679`](mockups/v21-bench.html) fixes the context-bar verb sets exactly *(was `:623-625`, which is `</div>` / `<script>`; corrected 2026-08-18)* (`text → Edit, Font, Size, Ink, Delete`; `photo → Reframe, Replace, Delete`; `decor → Replace, Ink, Delete`). Adding a Duplicate verb is a feature addition to a frozen surface and needs an amendment. Note the freeze **already draws a third, decor kind** — see §3.5.
+> ⚠ **Freeze impact:** [`v21-bench.html:686-691`](mockups/v21-bench.html) fixes the context-bar verb sets exactly *(was `:623-625`, which is `</div>` / `<script>`; corrected 2026-08-18)* (`text → Edit, Font, Size, Ink, Delete`; `photo → Reframe, Replace, Delete`; `decor → Replace, Ink, Delete`). Adding a Duplicate verb is a feature addition to a frozen surface and needs an amendment. Note the freeze **already draws a third, decor kind** — see §3.5.
 
 > **DECISION: alignment/distribute palettes — DO NOT IMPLEMENT. Reason: unnecessary.** That is layout-tool thinking imported from a different product. Snap guides already exist and are the phone-native answer; a distribute button on a 5.5" screen solves a problem the snapping does not leave behind.
 
@@ -656,6 +656,6 @@ Three calls I made on judgment rather than proof, stated so they can be checked 
 1. **The metaphor demotes a ratified constitutional image to a register.** I believe it reconciles rather than overrules, and §1.2 gives the five tests. If you read "quiet café" as spatial law rather than emotional promise, Amendment 2 is wrong — but Ruling A and the whole parity queue stand without it.
 2. **Font choice expands text capability at beta**, against my own instinct to subtract. I judged a permanently dead control worse than a small, bounded feature, and bounded it to three named voices rather than a picker.
 3. **Sixteen supplies is argued from shipped systems, not from a study.** No published threshold for asset-picker browsability exists. If the first device pass shows it feels thin, the fix is a second pack, not a bigger first one.
-4. **NEXT is now fourteen items, six of them raised on the corrected bar** — a real scope increase, and the review corrected my cost estimates in both directions. Cheaper than I said: **X12** (a `writePng` path already ships, just unreachable), **X3** (the `FileProvider` is already declared), **N4** (both z-order buttons exist; the defect is clipping), **page reorder** (already in the frozen spec at `v21-bench.html:820`), and **X7** (the freeze already draws a decor verb set, and `DecorElement`/OD-2 is prior art). More expensive than I said: **X1**, which needs 8 static TTFs sourced and subset rather than "the asset cost is already paid," and **X7**'s hidden `error(...)` crash site.
+4. **NEXT is now fourteen items, six of them raised on the corrected bar** — a real scope increase, and the review corrected my cost estimates in both directions. Cheaper than I said: **X12** (a `writePng` path already ships, just unreachable), **X3** (the `FileProvider` is already declared), **N4** (both z-order buttons exist; the defect is clipping), **page reorder** (already in the frozen spec at `v21-bench.html:832`), and **X7** (the freeze already draws a decor verb set, and `DecorElement`/OD-2 is prior art). More expensive than I said: **X1**, which needs 8 static TTFs sourced and subset rather than "the asset cost is already paid," and **X7**'s hidden `error(...)` crash site.
    The honest net: the plan got bigger, and my confidence in *individual* estimates should be lower than the document's tone implied — every "nearly free" claim in the first draft that I had not personally verified turned out to cite machinery that did not do what I said. **If something has to give, the cut order is X12, X11, X6 — never X7**, which is the one that makes this a composition tool.
 5. **Three raised items amend frozen HTML specs** (the Duplicate verb, the add-chooser entries for camera and Supplies, the font-voice surface). Each is flagged inline now, but they were silently amending frozen files in the first draft, which is exactly the failure the freeze rule exists to prevent. They land as one amendment with row 40, or not at all.

@@ -126,7 +126,7 @@ class BenchContextBarTest {
 
     @Test
     fun `the photo verbs are the frozen four, in the frozen order`() {
-        // `Copier` is the amendment ADR-106 made to this freeze, in `v21-bench.html:678` before it was
+        // `Copier` is the amendment ADR-106 made to this freeze, in `v21-bench.html:690` before it was
         // made here. Order is asserted, not just membership: a permutation is the wrong bar.
         assertEquals(
             listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.COPIER, Copy.BenchVerbs.REPLACE, Copy.BenchVerbs.DELETE),

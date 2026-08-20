@@ -499,7 +499,7 @@ class BenchC5Test {
         )
         // ⚠ **Inverted.** This line used to require the panel to stop above the navigation row, because
         // the host mounted the overlay inside the canvas. The frozen markup does not: `.pgrid` is a
-        // direct child of `.phone` (`v21-bench.html:573`; `.canvasArea` closes at `:530`), so it rises
+        // direct child of `.phone` (`v21-bench.html:585`; `.canvasArea` closes at `:530`), so it rises
         // from the *screen's* bottom edge and covers the filmstrip and the bar. The host was re-homed to
         // match, and the assertion now says the opposite of what it said this morning — deliberately,
         // because a panel that stopped short of the bottom would be a sheet that failed to open.
@@ -751,7 +751,7 @@ class BenchC5Test {
      * **Row 5.14's badge half is deleted, so this asserts its absence.**
      *
      * V2's `.pgcell b` drew `COVER` and `BACK` on the first and last cards. V2.1's frozen `openGrid()`
-     * writes `${i+1}` and nothing else (`v21-bench.html:782`), and `.pgc` declares no rule for a badge.
+     * writes `${i+1}` and nothing else (`v21-bench.html:794`), and `.pgc` declares no rule for a badge.
      * The cover distinction survives where it is *spoken* — [benchPageLabel], asserted below — and is no
      * longer drawn.
      *

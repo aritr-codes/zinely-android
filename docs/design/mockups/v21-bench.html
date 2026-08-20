@@ -862,7 +862,8 @@ const tile=([id,name,d])=>`<button class="tile${d?'':' na'}" data-supply="${id}"
   +'<span class="fav" role="button" aria-label="Favourite">☆</span></button>';
 function openArt(){
   // AMENDED 2026-08-20 (A7).  Every `d` below is GENERATED from SupplyCatalog's authored outline
-  // (`SupplyOutlineSvgPrinter`, unit square scaled to the 24 viewBox), never hand-drawn beside it.
+  // (`BenchArtSheetParityTest.catalogueGeometry`, unit square scaled to the 24 viewBox), never hand-drawn
+  // beside it -- and that same function re-generates them in the test, so a drift here goes red.
   // That is the mechanism half of the D-093 ruling: the tile cannot disagree with the mark if the
   // tile IS the mark.  A5's DEPICT latitude is retired for these sixteen and kept everywhere else.
   // The four nulls are the four supplies §5 still owes a designer -- three need an authored TEAR,
@@ -877,7 +878,7 @@ function openArt(){
    ['shape.rect','Rectangle','<path d="M0 0 L24 0 L24 24 L0 24 Z"/>'],['shape.circle','Circle','<path d="M12 0 C18.63 0 24 5.37 24 12 C24 18.63 18.63 24 12 24 C5.37 24 0 18.63 0 12 C0 5.37 5.37 0 12 0 Z"/>'],
    ['shape.triangle','Triangle','<path d="M12 0 L24 24 L0 24 Z"/>'],['shape.rule','Straight rule','<path d="M0 9.6 L24 9.6 L24 14.4 L0 14.4 Z"/>']];
   $('sheet').innerHTML='<div class="grip"></div><h3>Art</h3>'
-   +`<div class="lbl">Recent · ⭐ favourites</div><div class="grid">${[SUP[8],SUP[6]].map(tile).join('')}</div>`
+   +`<div class="lbl">Recent · ⭐ favourites</div><div class="grid">${[SUP[13],SUP[6]].map(tile).join('')}</div>`
    +FAMILIES.map((f,i)=>`<div class="lbl">${f}</div><div class="grid">${SUP.slice(i*4,i*4+4).map(tile).join('')}</div>`).join('');
   $('sheet').querySelectorAll('.fav').forEach(f=>f.onclick=e=>{ e.stopPropagation();
     f.classList.toggle('on'); f.textContent=f.classList.contains('on')?'★':'☆'; });
@@ -1198,7 +1199,9 @@ and the sheet draws both.  A rule that holds for one mark in sixteen is not a co
 coincidence.  A7 keeps A5's provenance rule and retires its depiction latitude FOR THESE SIXTEEN
 ONLY; every other glyph in this file is untouched.
 
-THE FOUR UNAUTHORED SUPPLIES NOW SAY SO IN WORDS (`Not yet`), and draw no mark.  This is
+THE FOUR UNAUTHORED SUPPLIES NOW SAY SO IN WORDS (`Not available yet` -- `Copy.BenchVerbs.NOT_YET`
+verbatim; this log first wrote `Not yet`, and the mockup and the app speaking different sentences is
+exactly the drift A7 exists to end), and draw no mark.  This is
 [D-086](../V2-SPEC-DEFECTS.md#d-086) closed in the same amendment, because it is the same defect
 seen from the other side: `stateDescription` already spoke "Not available yet" to a screen reader while a
 sighted maker got only a dimmer tile and was left to infer it -- and the most available inference
@@ -1206,6 +1209,15 @@ for a dim tile you just tapped is THE APP IS BROKEN, not THIS ONE ISN'T BUILT YE
 picture of a mark nobody has authored was the part of A5's reading that could not survive its own
 premise: there is no outline to depict, so the tile was depicting an invention.  The dim treatment
 is unchanged; only the invented picture is gone and the word is added.
+
+⚠ CITATIONS MOVED, AND THIS IS THE ENTRY THAT SAYS SO.  The file grew 1149 -> 1223 lines, so roughly
+eighty `v21-bench.html:NNN` references across the repo shifted.  A6's log entry could truthfully write
+"no citation to this file moves"; A7 cannot, and an amendment that silently invalidates eighty citations
+is the [D-096](../V2-SPEC-DEFECTS.md#d-096) failure repeating itself with a new cause.  They were re-aimed
+by computing the old->new line mapping rather than by eye.  Eight could not be mapped because the cited
+line was itself edited -- and TWO OF THOSE EIGHT TURNED OUT TO HAVE BEEN WRONG ALL ALONG (`BenchSnack.kt`
+and `EditorSaveFailure.kt` both cited `.tile svg` while claiming `.snack`).  The sweep found them only
+because it could not map them, which is an argument for D-096's own proposal: cite by NAME.
 
 ⚠ WHAT THIS COSTS.  The three Art-sheet goldens move, and they move a lot -- twelve tiles change
 from stroke to fill and four lose their glyph.  That is an intended visual change and it needs the

@@ -62,7 +62,7 @@ internal data class BenchSupplyDefault(val widthFraction: Double, val aspect: Do
  * The three **fixings** — the half of *Tape & fixings* that is not tape.
  *
  * ⚠ **Enumerated, never prefix-matched.** `supplyId.startsWith("fix.")` would have been shorter and is the
- * same mistake this file's [benchSupplyFamilyOf] already warns about from the other direction: a prefix is
+ * same mistake this file's [benchSupplyFamily] already warns about from the other direction: a prefix is
  * not a fact about a supply, it is a naming habit, and the day a `tape.*` id names something compact — or a
  * `fix.*` id names something long, which washi tape on a fixing id would be — the habit decides the size
  * and nobody is asked. Adding a member here is a sizing decision someone makes, which is the point.
@@ -77,10 +77,19 @@ internal val BenchFixings: Set<String> = setOf("fix.corner", "fix.staple", "fix.
  * for. What splits here is *sizing*, one level below the family, and this key says so by not pretending
  * otherwise. See [D-092](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-092).
  */
-internal const val BenchFixingsSizingKey: String = "fixings (sizing only — not a family)"
+internal const val BenchFixingsSizingKey: String = "__sizing:fixings"
+// ⚠ The value was `"fixings (sizing only — not a family)"` — self-documenting, and `CopyNoProseLiteralTest`
+// rejected it as a user-facing prose literal outside `Copy` (ADR-060 / CI-81). The gate was right for the
+// wrong reason: it cannot tell a map key from a sentence, and the fix is to stop writing a key that reads
+// like one. `__sizing:` cannot collide with a family name, which is the property that actually matters.
 
 /**
- * §5.2's one constant per family. **Every number here is owed a ruling** (see this file's header).
+ * §5.2's one constant per **sizing group**. **Every number here is owed a ruling** (see this file's header).
+ *
+ * ⚠ This said *"one constant per family"* and the map now holds five entries keyed on four families plus
+ * one non-family. [D-092](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-092-ruling) added the
+ * fifth and this sentence was not updated with it — a framing line left describing the shape the data had
+ * before the change is how the *next* reader concludes the fixings entry is a mistake.
  *
  *  - **Tape — long.** §5.2's own word for it. Over half the page's width at a 4.5:1 aspect, which is a
  *    strip you can see is a strip.

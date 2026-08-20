@@ -82,7 +82,7 @@ internal const val BenchInkDoneTestTag: String = "bench-ink-done"
  */
 internal data class BenchInkSwatch(val name: String, val value: Color)
 
-/** One labelled band of the popover — an `.inklbl` over a `.pots` row (`v21-bench.html:693-701`). */
+/** One labelled band of the popover — an `.inklbl` over a `.pots` row (`v21-bench.html:705-713`). */
 internal data class BenchInkBand(val label: String, val swatches: List<BenchInkSwatch>)
 
 /**
@@ -158,7 +158,7 @@ internal fun benchInkBands(inks: ZinelyContentInks, kind: BenchVerbKind): List<B
 }
 
 /**
- * The three frozen recipes (`PRESETS`, `v21-bench.html:702-703`), resolved against the typed palette rather
+ * The three frozen recipes (`PRESETS`, `v21-bench.html:714-715`), resolved against the typed palette rather
  * than re-typed as hexes — so a recipe cannot drift from the band it is made of.
  */
 internal fun benchInkPresets(inks: ZinelyContentInks): List<BenchInkPreset> = listOf(
@@ -241,7 +241,7 @@ internal fun benchInkName(id: ZinelyNeutralId): String = when (id) {
  *
  * ### Deviation: the ink-economy note is kept, and V2.1 does not draw it
  *
- * `openInk()` emits four bands and stops (`v21-bench.html:697-704`); the `.inkuse` shield-and-count line V2
+ * `openInk()` emits four bands and stops (`v21-bench.html:709-716`); the `.inkuse` shield-and-count line V2
  * closed the card with is **absent from the freeze**. It is retained here rather than deleted, because it
  * is the only place the product tells a maker what a second ink costs to print and removing it is a
  * *product* decision rather than a re-skin. Its geometry is therefore no longer frozen anywhere — the
@@ -371,7 +371,7 @@ internal fun BenchInkPopover(
             // the freeze repeats it verbatim in both `INKS` and `NEUT`), and for a text target both bands
             // are drawn. Ringing by `selected == swatch.value` therefore ringed the element's ink TWICE
             // and published `Selected` on two RadioButton nodes in one group. The freeze rings exactly
-            // one (`v21-bench.html:710` clears every `.on` before setting one), and the OD-24
+            // one (`v21-bench.html:722` clears every `.on` before setting one), and the OD-24
             // amendment log lists that exclusivity under NOTHING ELSE CHANGES.
             //
             // Resolved to the FIRST occurrence in band order, which is the Inks band: `Ink` is a riso

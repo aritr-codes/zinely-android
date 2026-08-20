@@ -9978,7 +9978,7 @@ regression later if nobody wrote down that the spec asked for it.
 ##### The re-home: `BenchPageGrid` is not inside the canvas
 
 The panel was emitted inside the canvas `Box` and clipped by it. In the freeze it is a **direct child of
-`.phone`** — markup nesting at `v21-bench.html:573`, alongside `.scrim` (`:571`) and `.sheet` (`:572`) —
+`.phone`** — markup nesting at `v21-bench.html:585`, alongside `.scrim` (`:571`) and `.sheet` (`:572`) —
 so it was cut and re-emitted in the outer `Box` after `BenchStyleRow`.
 
 ⚠ **This was the third reading of where the panel lives, and the first two were wrong the same way:**
@@ -9999,7 +9999,7 @@ The re-home broke four assertions that had encoded the old ancestry (`BenchC5Tes
    found `.pgc` and `.dclose` in the same state. The false half is left in the HTML rather than tidied
    away, because it is the interesting half: a claim of uniqueness made from the six selectors that
    happened to be on screen.
-2. **The Photo row's glyph** (`v21-bench.html:794` *as it stood before this amendment — a record, not a pointer*) — `Photo` wore `ICON.replace`, two arrows chasing
+2. **The Photo row's glyph** (`v21-bench.html:806` *as it stood before this amendment — a record, not a pointer*) — `Photo` wore `ICON.replace`, two arrows chasing
    each other round a circle. On a selection bar that correctly means *swap this one*; on a chooser
    whose only question is *"what would you like to add?"* it reads as **refresh, or sync** — and sync is
    the one thing this app promises never to do. A first-time device pass stopped on it before knowing
@@ -11256,7 +11256,7 @@ The freeze amendment is **ratified**; Q4 (*"what does a toggled-on verb look lik
 question but a **defect**, falsified on a device — the button was pixel-identical before and after the tap —
 and the freeze gains a checked appearance for a context-bar verb. Reversible by any owner ruling that says so
 **Implements:** [ADR-105 §D-4](#adr-105) (*"the photocopier filter (X3b) ships before the sixteen"*), [ZINE-DIRECTION.md X3b](design/ZINE-DIRECTION.md)
-**Amends:** the frozen Bench's photo verb set — `v21-bench.html:678` gains a fourth verb, `Copier`, and
+**Amends:** the frozen Bench's photo verb set — `v21-bench.html:690` gains a fourth verb, `Copier`, and
 `.ctx button.on` gains the checked appearance D-082 Q4's device failure forced (amendment log A4). See D-082 Q2/Q4
 
 #### Context
@@ -11388,7 +11388,7 @@ them is this ADR's whole job — a blanket "the spec says no" would be as wrong 
 
 #### R1 — Grow the base catalogue **inside the four frozen families**
 
-The four families are frozen (`v21-bench.html:844`), so this is growth *within* the freeze, not past it.
+The four families are frozen (`v21-bench.html:856`), so this is growth *within* the freeze, not past it.
 That constraint turns out to be the entire curation brief, and it is worth more than any tagging scheme:
 
 > **Does it attach, point, tear, or cut?** Anything that answers none of the four is out by construction.
@@ -11926,7 +11926,7 @@ Three readings, and the incumbent must be tested rather than inherited:
 
 **Reading 3 — accept it, on A5's authority — is not sufficient, and D-093's own analysis is right about
 why.** ✅ VERIFIED, A5 says *"the sixteen glyphs in `SUP` DEPICT the supplies; they are not the authored
-outlines … a mockup must not become their source"* (`v21-bench.html:1051-1055`). That is a rule about
+outlines … a mockup must not become their source"* (`v21-bench.html:1078-1082`). That is a rule about
 **authoring provenance**: it stops reviewed Kotlin being traced off a mockup. It says nothing about whether
 the tile may **mispredict** what a tap produces, which is a different property. A5's own positive
 specification is that *"sixteen DISTINGUISHABLE marks appear"* — distinguishable **from each other**, which
@@ -11957,7 +11957,7 @@ comparable.**
 
 | End | What it costs |
 |---|---|
-| **The tile** (reading 1) | one `fill =` in `rememberBenchArtGlyph`, one `.tile svg{fill:none}` in `v21-bench.html:466`. **Zero catalogue cost, zero model cost, zero schema cost.** An owner act, because it is drawn material on a frozen surface |
+| **The tile** (reading 1) | one `fill =` in `rememberBenchArtGlyph`, one `.tile svg{fill:none}` in `v21-bench.html:466 (pre-A7; the rule is `:472` now)`. **Zero catalogue cost, zero model cost, zero schema cost.** An owner act, because it is drawn material on a frozen surface |
 | **The catalogue** (reading 2) | 12 hand-authored inner contours now (47 under ADR-107 R1), a model field, a probable schema bump plus identity migrator, a fifth context-bar verb, a doubled drawer, and the anisotropic-weight defect at every non-square landing |
 
 🟦 **Take the cheap end** — unless the owner independently wants hollow marks *as a look*, which is a
@@ -12020,7 +12020,7 @@ the same mark drawn lighter.** The test is §4.3.1's, unchanged.
 [D-092](design/V2-SPEC-DEFECTS.md#d-092), and this ADR recommends D-093 reading 1 — the tiles become
 solid.** It is the smallest change that makes the drawer's picture predict the page's mark; it costs nothing
 in the catalogue; and it removes the only argument for hollow that was strong enough to be worth this ADR.
-⚠ It is drawn material on a frozen surface, so `v21-bench.html:466` is amended first and the **owner rules**
+⚠ It is drawn material on a frozen surface, so `v21-bench.html:466 (pre-A7; the rule is `:472` now)` is amended first and the **owner rules**
 — the implementer may draft it and may not ship it. 🟨 The `.tile` glyphs are 24-unit icons at 1.7 stroke
 weight in a set styled by its container (`BenchArtSheet.kt:120-121`); whether a solid 24-unit glyph reads
 correctly at tile scale is a design question this ADR cannot settle from source and should not pretend to —
@@ -12514,7 +12514,7 @@ command.** Contrast ADR-105, where the new primitive did need one — this one d
 6. **The four pairs are a table, never a predicate.** `3|4` and `7|8` are adjacent and are not
    spreads.
 7. ⚠ **`v21-bench.html` needs an owner amendment.** The frozen `openSupply()` chooser offers
-   **three** rows — Text, Photo, **Art** (`docs/design/mockups/v21-bench.html:827-829`) — and none of
+   **three** rows — Text, Photo, **Art** (`docs/design/mockups/v21-bench.html:839-841`) — and none of
    them is a spread. *(An earlier draft of this ADR said "Text + Photo only". That was simply wrong,
    and it was wrong in the direction that made the amendment sound smaller than it is.)*
    🟨 ASSUMPTION on the exact home: the natural place is the **selected-photo context bar**, not the
@@ -12523,7 +12523,7 @@ command.** Contrast ADR-105, where the new primitive did need one — this one d
    [HTML-first workflow](../CLAUDE.md#design-freeze) means: HTML spec amended **first**, by the
    owner, then Compose. **Owner-owed, and it blocks implementation.**
    *(Note: [BETA-DIRECTION §3.3](design/BETA-DIRECTION.md) cites the chooser at
-   `v21-bench.html:773`; it is at `:827-829` in the current file. Line citations in that document
+   `v21-bench.html:785`; it is at `:827-829` in the current file. Line citations in that document
    have drifted and should be re-checked before being used as evidence.)*
 8. ⚠ **The spreads work item is `X9`, not `X11`, and it is absent from [ROADMAP.md](ROADMAP.md).**
    🟨 **Corrected 2026-08-18 — [D-099](design/V2-SPEC-DEFECTS.md#d-099); this item previously got it

@@ -594,7 +594,7 @@ redo, Add and a checkmark. The `Add` chooser offers exactly two rows — `Text` 
 is three sticker tiles, promising material the app does not have.
 
 **Corrected root cause.** The first draft of this finding called it *"copy shipped ahead of its surface"*.
-That is wrong. The **frozen** Bench specifies the surface: `v21-bench.html:848-860` builds an `Adding · Art`
+That is wrong. The **frozen** Bench specifies the surface: `v21-bench.html:863-887` builds an `Adding · Art`
 sheet with four families of authored supplies, `Recent · ⭐ favourites`, and a `Supplies` grid. The copy is
 faithful to the freeze; **Compose does not implement the sheet.** This is therefore a *pixel-parity failure
 against a frozen artifact*, not premature copy — which makes it an allowed post-freeze fix
@@ -744,7 +744,7 @@ goes through the system photo picker and **raises no permission prompt at all**.
 convincing than any of the three sentences.
 
 **This is not a new opinion and does not re-decide anything.** The frozen Bench already ruled it, in the
-spec's own words at `v21-bench.html:857-859`:
+spec's own words at `v21-bench.html:884-886`:
 
 > *The label reads "Supplies", not "Bundled with Zinely · always offline". Offline is an invisible strength,
 > not a slogan (ADR-104): naming it here would advertise the absence of the thing we just removed, which is
@@ -759,7 +759,7 @@ are wrong, and the last one changes what the fix may legally be.
 3. **The count is five, across four screens, and only one of them is a parity failure.** The `works offline
    · stays on your phone` pill has *no frozen source on its own surface at all* — `v21-bench.html` draws no
    empty state, and the CSS behind it was transcribed from `v21-library.html:306-307`, another screen's
-   spec. The other four are drawn by the freeze itself (`v21-bench.html:825-829`, `v21-library.html:466`,
+   spec. The other four are drawn by the freeze itself (`v21-bench.html:837-841`, `v21-library.html:466`,
    `v21-proof.html:593`), plus one that exists **only in the accessibility tree** (`Saved on this device`,
    which the freeze renders as `Saved` alone) — so a screen-reader user hears the promise once more than a
    sighted user sees it. The freeze also specifies a sixth instance Compose never built.
@@ -1458,7 +1458,7 @@ the freeze there is nothing to verify either layout against.
 ### F-3 — re-scoped, not implemented: this is a postponed decision, not missing parity
 
 The finding says Compose failed to implement a frozen surface. That is wrong in its operative half, and
-building it now would be a false promise. The frozen `Art` sheet (`v21-bench.html:840-861` — F-3's own
+building it now would be a false promise. The frozen `Art` sheet (`v21-bench.html:852-888` — F-3's own
 citation `:848-860` is short at both ends) needs, before a single composable:
 
 | requirement | repo state |

@@ -12,7 +12,8 @@ import org.junit.Test
 
 /**
  * Pins the Art sheet against the frozen file it was transcribed from — `openArt()`'s `SUP` array
- * (`v21-bench.html:848-854`), as amended by **A5**.
+ * (`v21-bench.html:870-880`), as amended by **A5** and **A7** — A7 is what made those lines generated
+ * rather than drawn, so this test compares them with the generator instead of with a second drawing.
  *
  * This is the same instrument `ZinelyV2IconsTest` uses on the V2 icon set and for the same reason: a
  * transcription that is only *checked* once drifts the first time either side is edited. It re-extracts the
@@ -147,6 +148,44 @@ class BenchArtSheetParityTest {
     }
 
     @Test
+    fun the_generator_agrees_with_two_hand_checked_outlines() {
+        // ⚠ **The generator is its own oracle everywhere else in this file**, and a test that regenerates
+        // what it is checking agrees with itself by construction. These two are read off `SupplyCatalog`'s
+        // constants **by hand** and pinned as literals: `RECT` is the full unit square, and `WINDOW` is the
+        // square with a `0.14`-inset square removed (0.14 × 24 = 3.36; 24 − 3.36 = 20.64). If the scaling,
+        // the rounding or the subpath order ever drifts, these fail while everything else stays green.
+        assertEquals("shape.rect", "M0 0 L24 0 L24 24 L0 24 Z", catalogueGeometry("shape.rect"))
+        assertEquals(
+            "paper.window",
+            "M0 0 L24 0 L24 24 L0 24 Z M3.36 3.36 L20.64 3.36 L20.64 20.64 L3.36 20.64 Z",
+            catalogueGeometry("paper.window"),
+        )
+        // …and a mark with curves, so the cubic branch is not left unexercised: the inscribed circle's
+        // control offset is KAPPA = 0.5522847… × 0.5 × 24 = 6.63.
+        assertTrue(
+            "the cubic branch must emit C with three points",
+            catalogueGeometry("shape.circle")!!.startsWith("M12 0 C18.63 0 24 5.37 24 12 "),
+        )
+    }
+
+    @Test
+    fun the_word_is_drawn_at_the_frozen_size_and_case() {
+        // These four are the only measurements this amendment added, and they were the only transcriptions
+        // in the file with nothing comparing them to the freeze. ⚠ `text-transform` is what that gap cost:
+        // the Compose control shipped without it, so the freeze said NOT AVAILABLE YET and the app said
+        // `Not available yet`. A review caught it; this assertion is what catches the next one.
+        assertEquals("uppercase", decl(".tile.na .naw", "text-transform"))
+        assertEquals(".56rem", decl(".tile.na .naw", "font-size"))
+        assertEquals(".08em", decl(".tile.na .naw", "letter-spacing"))
+        assertEquals("700", decl(".tile.na .naw", "font-weight"))
+        assertEquals(".55", decl(".tile.na .naw", "opacity"))
+        assertEquals(0.55f, BenchArtNotYetAlpha, 0f)
+        // `.56rem` at the 16px root this file's other rem transcriptions assume.
+        assertEquals(8.96f, BenchArtNotYetSize.value, 0.001f)
+        assertEquals(0.08f, BenchArtNotYetTracking.value, 0.001f)
+    }
+
+    @Test
     fun the_frozen_sheet_fills_its_tiles_with_the_renderers_own_rule() {
         // The one CSS line D-093 is about. It read `fill:none;stroke:currentColor` — sixteen hollow tiles
         // for a catalogue with no hollow mark in it. Asserted as text because that is the form the freeze
@@ -169,9 +208,18 @@ class BenchArtSheetParityTest {
         // The word is the COPY LAYER's, not a phrase this file invents: the mockup and the app must speak
         // the same sentence, and the app speaks `Copy.BenchVerbs.NOT_YET`. Caught by reading the golden —
         // the freeze said "Not yet" and the screen said "Not available yet".
+        // ⚠ `frozen.contains(word)` was the first version of this and it is half-vacuous: one occurrence
+        // anywhere in 1200 lines passes it — including inside this amendment's own log entry, and including
+        // a build that put the word on all sixteen tiles. What must hold is that the word appears **only**
+        // through the template's `d ? mark : word` ternary, so it is the ternary that is asserted.
+        val template = frozen.substringAfter("const tile=").substringBefore("function openArt")
         assertTrue(
             "the frozen tile template must carry ${Copy.BenchVerbs.NOT_YET} for an unauthored supply",
-            frozen.contains("${Copy.BenchVerbs.NOT_YET}</span>"),
+            template.contains("${Copy.BenchVerbs.NOT_YET}</span>"),
+        )
+        assertTrue(
+            "the word must be the ALTERNATIVE to a mark, never drawn beside one",
+            template.contains("\${d?svg(d):'"),
         )
     }
 
@@ -229,9 +277,9 @@ class BenchArtSheetParityTest {
         assertEquals("60%", decl(".tile svg", "width"))
         assertEquals("60%", decl(".tile svg", "height"))
         assertEquals(0.6f, BenchArtGlyphFraction, 0f)
-        // ⚠ The stroke assertions that stood here — , , and the two round
-        // joins — are GONE rather than updated, because the freeze no longer makes those declarations (A7).
-        // Asserting the absence is what keeps a future re-stroke from passing quietly.
+        // ⚠ The stroke assertions that stood here — `stroke-width: 1.7`, `fill: none`, and the two round
+        // line joins — are GONE rather than updated, because the freeze no longer makes those declarations
+        // (A7). Asserting their absence is what keeps a future re-stroke from passing quietly.
         assertEquals("currentColor", decl(".tile svg", "fill"))
         assertEquals("evenodd", decl(".tile svg", "fill-rule"))
         assertEquals("none", decl(".tile svg", "stroke"))
