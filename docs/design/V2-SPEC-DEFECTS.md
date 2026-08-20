@@ -5702,6 +5702,23 @@ exists, stack the snack above the bar, or suppress the context bar until the sna
 decision belongs in `v21-bench.html` **first**. An implementer picking one silently would be redesigning a
 frozen surface. Evidence: `scratchpad/dev/09-placed.png`.
 
+#### Re-observed 2026-08-20, package **P4**, same device — and **which surface loses is not stable**
+
+Seen again on SM-A176B / Android 16 while device-verifying P4 (placing `fix.corner`). ⚠ **The symptom
+this entry is titled after did not reproduce, and the opposite one did.** The snack read
+`Placed on the page` **in full**, and it was the **context bar** that lost — `Replace` was drawn under the
+snack's own surface, legible only as `…eplace`, with all three actions dimmed behind it.
+
+That matters for the ruling rather than for the fix. The entry's title — *"the pill eats the message"* —
+records one of **two** outcomes of the same overlap, and a ruling written to protect the message would
+still leave a half-drawn `Replace` on the other draw order. Both surfaces are `BottomCenter` in one `Box`
+with no z-order stated between them, so which one covers the other is **whatever the composition order
+happens to be that frame**, not a property either surface declares. The three options above are unchanged
+and still the owner's; this note only widens what any of them has to be true of.
+
+Not caused by P4 — P4 touches neither `BenchSnack` nor `BenchContextBar`, and this entry predates it by
+three days. Recorded here rather than filed as a new defect because it is the same overlap.
+
 ---
 
 ### D-092 — a photo corner lands as a 4.5:1 sliver, because its family's one constant is tape's {#d-092}
@@ -6647,3 +6664,73 @@ its label.
 🟨 A conflict count is not evidence until the branch it names has been identified. Neither is a
 commit count: `--not --remotes` asks the question directly; `@{upstream}` answers a question about
 whatever HEAD happens to be.
+
+---
+
+### D-103 — the word wraps mid-word at large font scale, and the failure I predicted is not the one that happens {#d-103}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtNotYetSize`, the `Copy.BenchVerbs.NOT_YET` branch) |
+| **Found** | 2026-08-20, package **P4**, **Pass 2 device verification** on SM-A176B / Android 16, `font_scale 1.8` |
+| **Severity** | **Cosmetic, on a surface a first-time maker meets.** Legible throughout; nothing clips and nothing is lost |
+| **Status** | 🔶 **Open — an owner ruling, because every fix is a change to a frozen surface** |
+
+At the system font scale of `1.8`, `NOT AVAILABLE YET` wraps to three lines inside its tile and breaks
+**mid-word**: `NOT` / `AVAILABL` / `E YET`. `AVAILABLE` is wider than the tile at that scale, so Compose
+breaks the word rather than overflowing it.
+
+⚠ **This entry exists as much to correct a prediction as to record a defect.** Closing P4's Pass 2 I wrote
+that at large font scale the label *"can clip"*, and carried it forward as an open note. **It does not
+clip.** Measured on the device at `1.8`, every glyph is drawn, inside the tile, at full opacity — the tile
+grows with the text and the sheet scrolls. The real behaviour is uglier in a completely different way and
+strictly less harmful than the one I guessed at. I had not run the scale when I wrote the note, and the
+note read as though I had.
+
+**Why no implementer fix is proposed.** The three candidates each change a frozen surface, and
+[DESIGN FREEZE](../../CLAUDE.md#design-freeze) puts that in `v21-bench.html` first:
+
+- **Shorten the string** — `Copy.BenchVerbs.NOT_YET` is also what `stateDescription` speaks to TalkBack, so
+  this is a copy change on two surfaces at once, not a layout tweak.
+- **Shrink the text at large scales** — capping the scale factor of an accessibility setting to make a
+  label fit is the kind of fix that trades a real need for a cosmetic one, and it should be ruled on
+  deliberately rather than chosen by an implementer.
+- **Accept it.** Defensible: the word is fully legible, and a maker at `1.8` is reading it, not admiring it.
+
+Recorded here so the next reader gets the measurement rather than my guess.
+
+---
+
+### D-104 — with the unauthored supplies now silent, two family headings name things the family no longer shows {#d-104}
+
+| | |
+|---|---|
+| **Artifacts** | `core/copy/.../Copy.kt` (`Supplies.TAPE_AND_FIXINGS`, `Supplies.CUT_PAPER`) · the Art sheet's family headings |
+| **Found** | 2026-08-20, package **P4**, **Pass 2 device verification** on SM-A176B / Android 16 |
+| **Severity** | **A promise the screen makes and does not keep.** No incorrect behaviour |
+| **Status** | 🔶 **Open — an owner ruling; it is a wording/scope question, not a bug** |
+
+P4 replaced the four unauthored tiles' invented glyphs with the words `NOT AVAILABLE YET`
+([D-086 ruling](#d-086-ruling)). That was the right trade and it is not in question here. But it moved the
+over-promise **up one level**, from the tile to the heading above it, and that is visible on the device in
+a way it was not in review:
+
+- **`TAPE & FIXINGS` contains no tape.** The family's four are `tape.torn` · `fix.corner` · `fix.staple` ·
+  `fix.clip`, and `tape.torn` is one of the unauthored four. The heading's **first and most prominent
+  noun** is precisely the one thing under it a maker cannot have. Previously a tape-shaped glyph was drawn
+  there, so the heading was corroborated by a picture — falsely, which is why it went, but corroborated.
+- **`CUT PAPER` shows a window frame and a speech tag.** Its unauthored two are `paper.strip` and
+  `paper.underline`; what survives reads more like *frames and labels* than *cut paper*.
+
+The other two families are unaffected — `STAMPS & MARKS` and `CUT SHAPES` are fully authored.
+
+**Not a regression, and worth being precise about why.** Nothing got worse: before P4 the maker was shown
+a picture of a tape they could not have, which is a stronger false promise than a heading that mentions
+tape. This entry records that closing the tile-level lie did not close the family-level one, so it is not
+mistaken for closed when [D-086](#d-086) is read as done.
+
+**Three shapes of answer, none chosen here.** Author the missing marks so the headings become true again
+([ADR-107](../DECISIONS.md#adr-107), still `Proposed`, is where that lives); or reword the two headings to
+what they currently hold; or accept it as a temporary state that ADR-107 retires. The first is the only
+one that does not spend a copy change on a condition meant to be temporary — which is an argument, not a
+ruling, and the ruling is the owner's.
