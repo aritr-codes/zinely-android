@@ -364,7 +364,7 @@ public fun EditorScreen(
     // One `Intent.StyleText` per tap: an immediate-commit style change, so each ink is one undoable
     // command and the buttonless snack is honest — the bar's Undo is right there.
     /**
-     * Frozen `openArt()`'s tile handler (`v21-bench.html:860-862`), in the order the freeze performs it:
+     * Frozen `openArt()`'s tile handler (`v21-bench.html:887-889`), in the order the freeze performs it:
      * close the sheet, put the supply on the page, say so.
      *
      * `selectByKind('decor')` is not transcribed as a third statement because
@@ -1872,7 +1872,7 @@ public fun EditorScreen(
         // same way: they answered from the CSS rule and not from the markup. V2's `.pgrid` was
         // `position:absolute; inset:0` *inside* `.canvasArea`, so C5 correctly covered the canvas only
         // after an earlier cut had made it a full-screen Dialog on the false claim that the freeze said
-        // `fixed`. **V2.1 moved the element.** `v21-bench.html:573` declares `.pgrid` as a direct child of
+        // `fixed`. **V2.1 moved the element.** `v21-bench.html:585` declares `.pgrid` as a direct child of
         // `.phone` — `.canvasArea` closes at `:530` — alongside `.scrim` (`:571`), `.sheet` (`:572`) and
         // `.snack` (`:570`), and its rule is now `left:0;right:0;bottom:0` with `translateY(103%)`. It is
         // a bottom sheet, so its bottom edge is the SCREEN's bottom edge; anchored to the canvas it would

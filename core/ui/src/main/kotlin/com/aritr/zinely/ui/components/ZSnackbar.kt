@@ -43,7 +43,7 @@ import kotlinx.coroutines.delay
  * The undo window. **5000ms is V2's value, and the claim that it was "identical in all three frozen
  * files" was false even of V2's corpus — a P8 review caught it.**
  *
- * `v21-bench.html:751` is the only snackbar timer in the V2.1 trilogy and it writes **3200**:
+ * `v21-bench.html:763` is the only snackbar timer in the V2.1 trilogy and it writes **3200**:
  * `tt=setTimeout(()=>$('snack').classList.remove('show'),3200)`. This constant is deliberately **not**
  * changed here. P8 converts what these components paint, and an undo window is not paint: shortening
  * the time a user has to recover a destructive action by 36% is a product decision with an

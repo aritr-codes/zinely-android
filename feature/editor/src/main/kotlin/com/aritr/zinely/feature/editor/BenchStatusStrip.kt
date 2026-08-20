@@ -106,7 +106,7 @@ internal const val BenchSavedFadeMillis: Int = 400
 public const val SavedConfirmationVisibleMs: Long = 1600L
 
 /**
- * The frozen autosave word (`v21-bench.html:514`), verbatim: `<span class="saved"><svg …/>Saved</span>`.
+ * The frozen autosave word (`v21-bench.html:526`), verbatim: `<span class="saved"><svg …/>Saved</span>`.
  *
  * ⚠ **V2's flower and qualifier are gone from the paint.** V2's chip read `✿ **Saved** · on this device`;
  * V2.1's markup carries a drawn **check** and the single word `Saved`, uppercased by

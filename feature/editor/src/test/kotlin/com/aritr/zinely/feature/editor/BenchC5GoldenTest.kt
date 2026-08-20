@@ -607,7 +607,7 @@ class BenchC5GoldenTest {
         val grid = composeRule.onNodeWithTag(BenchPageGridTestTag).fetchSemanticsNode().boundsInRoot
         val nav = composeRule.onNodeWithTag(BenchNavRowTestTag).fetchSemanticsNode().boundsInRoot
         val scrim = composeRule.onNodeWithTag(BenchPageGridScrimTestTag).fetchSemanticsNode().boundsInRoot
-        // ⚠ **Inverted with the re-home.** The frozen `.pgrid` is a child of `.phone` (`v21-bench.html:573`;
+        // ⚠ **Inverted with the re-home.** The frozen `.pgrid` is a child of `.phone` (`v21-bench.html:585`;
         // `.canvasArea` closes at `:530`), so the sheet rises from the screen's bottom edge and the
         // filmstrip and bar go under it. This line used to demand the opposite, because the host mounted
         // the overlay inside the canvas — where V2's `inset:0` correctly put it and V2.1's rule does not.

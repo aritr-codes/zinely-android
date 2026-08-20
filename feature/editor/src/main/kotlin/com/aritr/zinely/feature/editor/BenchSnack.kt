@@ -49,7 +49,7 @@ internal val BenchSnackInsetH = 14.dp
  *
  * ⚠ **Deviation, and it is a re-parenting rather than a re-measurement.** V2 put `.snack` inside
  * `.canvasArea` at `bottom:12px`; V2.1 makes it a direct child of `.phone` at `bottom:88px`
- * (`v21-bench.html:472`, markup `:570`). The 88 is measured from the *phone's* foot and therefore spans the
+ * (`v21-bench.html:484`, markup `:570`). The 88 is measured from the *phone's* foot and therefore spans the
  * bottom bar and the page-navigation row — both of which sit **below** the canvas `EditorScreen` anchors
  * this composable to, so transcribing 88 literally would push the snack 88dp up from a floor that is
  * already above the bar. The equivalent in canvas coordinates is the 12 that is here.
@@ -60,13 +60,13 @@ internal val BenchSnackInsetH = 14.dp
 internal val BenchSnackInsetBottom = 12.dp
 
 /**
- * Frozen `.snack{border-radius:var(--br-pill)}` (`v21-bench.html:480`), where V2 drew a 12dp radius.
+ * Frozen `.snack{border-radius:var(--br-pill)}` (`v21-bench.html:492`), where V2 drew a 12dp radius.
  * A percent shape rather than [ZinelyV21Dimens.radiusPill]'s 999dp, for the reason `BenchBarShape` records.
  */
 internal val BenchSnackShape: RoundedCornerShape = RoundedCornerShape(percent = 50)
 
 /**
- * Frozen `.snack{padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg)}` (`v21-bench.html:480`) —
+ * Frozen `.snack{padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg)}` (`v21-bench.html:492`) —
  * top 12, right 8, bottom 12, left 16. Asymmetric on purpose: the line needs the room, the button already
  * carries its own 12dp of padding on the right.
  */
@@ -77,27 +77,36 @@ internal val BenchSnackPadding = PaddingValues(
     bottom = ZinelyV21Dimens.gapMd,
 )
 
-/** Frozen `.snack{gap:var(--gap-md)}` (`v21-bench.html:479`) — 12, where V2 gapped 10. */
+/** Frozen `.snack{gap:var(--gap-md)}` (`v21-bench.html:491`) — 12, where V2 gapped 10. */
 internal val BenchSnackGap = ZinelyV21Dimens.gapMd
 
-/** Frozen `.snack{border:1.5px solid var(--ink-line)}` (`v21-bench.html:479`) — **new in V2.1**; see [BenchSnack]. */
+/** Frozen `.snack{border:1.5px solid var(--ink-line)}` (`v21-bench.html:491`) — **new in V2.1**; see [BenchSnack]. */
 internal val BenchSnackBorder = 1.5.dp
 
-/** Frozen `.snack{font-size:.79rem}` (`v21-bench.html:480`) — 12.64sp at the prototype's 16px root. */
+/** Frozen `.snack{font-size:.79rem}` (`v21-bench.html:492`) — 12.64sp at the prototype's 16px root. */
 internal val BenchSnackTextSize = 12.64.sp
 
-/** Frozen `.snack button{font-size:.78rem}` (`v21-bench.html:466`) — the action reads a hair smaller than the line. */
+/**
+ * Frozen `.snack button{font-size:.78rem}` (`v21-bench.html:528`) — the action reads a hair smaller than
+ * the line.
+ *
+ * ⚠ **This cited `:466`, and `:466` was never `.snack`** — it was `.tile svg`, in the Art sheet, before
+ * amendment A7 moved it to `:472`. The citation was wrong when it was written, not broken by A7, and the
+ * A7 citation sweep found it precisely because the sweep could not map it. Re-aimed at the real rule; this
+ * is a [D-096](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-096) instance, and the second one
+ * that sweep has surfaced.
+ */
 internal val BenchSnackActionTextSize = 12.48.sp
 
-/** Frozen `.snack button{padding:var(--gap-xs) var(--gap-md)}` (`v21-bench.html:490`). */
+/** Frozen `.snack button{padding:var(--gap-xs) var(--gap-md)}` (`v21-bench.html:502`). */
 internal val BenchSnackActionPaddingH = ZinelyV21Dimens.gapMd
 internal val BenchSnackActionPaddingV = ZinelyV21Dimens.gapXs
 
-/** Frozen `.snack{transform:translateY(8px) …}` at rest (`v21-bench.html:481`). V2 rose 16. */
+/** Frozen `.snack{transform:translateY(8px) …}` at rest (`v21-bench.html:493`). V2 rose 16. */
 internal val BenchSnackEnterOffset = 8.dp
 
 /**
- * Frozen `.snack{transform:… rotate(-.6deg)}` (`v21-bench.html:481`, `:483`) — **new in V2.1**, and it is
+ * Frozen `.snack{transform:… rotate(-.6deg)}` (`v21-bench.html:493`, `:483`) — **new in V2.1**, and it is
  * carried in *both* states, so it is a resting property rather than part of the entrance.
  *
  * The toast is a scrap of paper dropped on the desk, not a system surface: the tilt is what says so. It is
@@ -105,10 +114,10 @@ internal val BenchSnackEnterOffset = 8.dp
  */
 internal const val BenchSnackRotationDeg: Float = -0.6f
 
-/** Frozen `.snack{transition:opacity .18s,transform .18s}` (`v21-bench.html:482`). V2 asked for 220ms. */
+/** Frozen `.snack{transition:opacity .18s,transform .18s}` (`v21-bench.html:494`). V2 asked for 220ms. */
 internal const val BenchSnackMillis: Int = 180
 
-/** Frozen `toast()` — the snack stands for **3200ms** (`v21-bench.html:751`). Unchanged from V2. */
+/** Frozen `toast()` — the snack stands for **3200ms** (`v21-bench.html:763`). Unchanged from V2. */
 public const val BenchSnackDeleteMillis: Long = 3200L
 
 /**
@@ -119,7 +128,7 @@ public const val BenchSnackDeleteMillis: Long = 3200L
  * re-measurement.
  *
  * ⚠ **No longer frozen.** V2's `applyInk()` gave the buttonless toast its own shorter life; V2.1 has a
- * single `toast(msg, undoable)` with one 3200ms timer for both variants (`v21-bench.html:747-751`). The
+ * single `toast(msg, undoable)` with one 3200ms timer for both variants (`v21-bench.html:759-763`). The
  * value is kept because shortening the dwell of a toast nobody can act on is a behaviour the product
  * already ships and P4 is a re-skin — but it is now a product decision with no frozen backing, and it is
  * `EditorScreen` that reads it. Owner call.
@@ -127,7 +136,7 @@ public const val BenchSnackDeleteMillis: Long = 3200L
 public const val BenchSnackInkMillis: Long = 1600L
 
 /**
- * The frozen snackbar — `.snack` (`v21-bench.html:450-468`, markup `:570`);
+ * The frozen snackbar — `.snack` (`v21-bench.html:450-480`, markup `:570`);
  * [ADR-094](../../../../../../../../docs/DECISIONS.md#adr-094) rows 4.11, 4.12 and 4.15, re-skinned to V2.1
  * by [ADR-102](../../../../../../../../docs/DECISIONS.md#adr-102) package P4.
  *
@@ -135,7 +144,7 @@ public const val BenchSnackInkMillis: Long = 1600L
  *
  * `ink` ground under `paper` text is the only place in the Bench where the artifact's ink becomes a
  * *surface*, and V2.1 gives it a **border** V2 did not have — `1.5px solid var(--ink-line)`. The freeze
- * annotates its own exception at `v21-bench.html:473-478`: everything else in the language is outlined in
+ * annotates its own exception at `v21-bench.html:485-490`: everything else in the language is outlined in
  * `ink`, and an ink outline on an ink ground is invisible, so this one control is outlined in the *shadow*
  * ink instead. The rule being kept is *"a border contrasts with what it sits on"*, not *"a border is
  * always ink"*.
@@ -143,7 +152,7 @@ public const val BenchSnackInkMillis: Long = 1600L
  * ### The action label lost `--accent-on-ink`, and that token is retired here
  *
  * V2 drew `Undo` in a matcha re-tuned for a dark ground. V2.1 draws it in the snack's own `paper` and
- * **underlines** it (`v21-bench.html:485-490`): the freeze's own note records that the butter it tried
+ * **underlines** it (`v21-bench.html:497-502`): the freeze's own note records that the butter it tried
  * first measured 7.89:1 in light and 1.59:1 in dark, where the ink ground turns cream. Colour was doing
  * the work of saying *"this is the action"*; the underline does it at any theme. Substituting `butter`
  * back is exactly the mutation row 4.12 forbids, one token over.

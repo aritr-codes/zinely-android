@@ -49,7 +49,9 @@ public const val SaveFailureRetryTag: String = "editor-save-failure-retry"
 public const val SaveFailureRetryLabel: String = Copy.SaveFailure.RETRY_LABEL
 
 // =================================================================================================
-// The frozen `.snack` transcription — `v21-bench.html:467-485`.
+// The frozen `.snack` transcription — `v21-bench.html:512-530`.
+    // ⚠ This cited `:467-485`, which was the tail of `.tile svg` and the `.fav` star — never `.snack`.
+    // Wrong when written, surfaced by A7's citation sweep because it could not be mapped. D-096 again.
 //
 // Shared by the three **unfrozen** canvas messages in this package ([EditorSaveFailure],
 // [EditorCoverageNotice], [EditorMoveResizeHint]), each of which says in its own KDoc why `.snack` is its

@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PtSize
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -93,17 +94,61 @@ class SupplyPlacementTest {
     }
 
     @Test
-    fun `Given a fixing, When it is placed, Then its family came from the copy and not from its id prefix`() {
+    fun `Given a fixing, When its family is read, Then it came from the copy and not from its id prefix`() {
         // THE trap this file exists to keep shut. Five prefixes carry four families: `fix.corner` is in
-        // *Tape & fixings*, so its default must equal `tape.torn`'s and must NOT be some `fix` family's.
-        // A `substringBefore('.')` implementation throws on `fix.corner` instead — this test goes red.
+        // *Tape & fixings*, and a `substringBefore('.')` implementation throws on it instead.
+        //
+        // ⚠ This test used to go further and assert that a fixing lands at the SAME size as tape. It was
+        // green, and it was pinning [D-092]: `fix.corner` is authored 1:1 and inherited tape's 4.5:1, so it
+        // landed as a sliver over half the page wide with its pocket reduced to a slit. Family membership
+        // and sizing were conflated here exactly as they were in the implementation — the test agreed with
+        // the code because it was written from it. The membership half is what this test was for; it stays.
         assertEquals(Copy.Supplies.TAPE_AND_FIXINGS, benchSupplyFamily("fix.corner"))
         assertEquals(Copy.Supplies.TAPE_AND_FIXINGS, benchSupplyFamily("tape.torn"))
+        assertEquals(Copy.Supplies.TAPE_AND_FIXINGS, benchSupplyFamily("fix.staple"))
+    }
+
+    @Test
+    fun `Given a photo corner, When it is placed, Then it lands compact and square, not as tape`() {
+        // [D-092], the defect this package closes, asserted as the two properties the device pass named:
+        // the corner is not a sliver, and it is not half the page wide.
+        val corner = benchSupplyPlacement("fix.corner", page)
+        val tape = benchSupplyPlacement("tape.torn", page)
+
+        assertEquals("a fixing is authored 1:1 and must land 1:1", corner.widthPt, corner.heightPt, 0.001)
+        assertTrue("a photo corner must not land as tape does", corner.widthPt < tape.widthPt)
+        assertTrue("a photo corner must not be half the page wide", corner.widthPt < page.width / 3.0)
+        // Not vacuous in the other direction: tape must still land long, so the split moved the fixings
+        // rather than flattening the family.
+        assertTrue("tape must still land long", tape.widthPt > tape.heightPt * 2.0)
+    }
+
+    @Test
+    fun `Given the three fixings, When they are placed, Then all three share one sizing constant`() {
+        // The split is per *sizing group*, not per supply — a staple, a corner and a clip are the same kind
+        // of compact object, and giving each its own number would be per-supply sizing with extra steps,
+        // which is what §5.2 exists to refuse.
+        val sizes = BenchFixings.map { benchSupplyPlacement(it, page) }.map { it.widthPt to it.heightPt }
+        assertEquals("the fixings must share one constant", 1, sizes.toSet().size)
+        // ⚠ Tied to the COPY LAYER, not to a count. `assertEquals(3, BenchFixings.size)` was the first
+        // version and it is exactly the hole D-092 came through: a fifth member added to the family in
+        // `Copy.Supplies` would silently inherit tape's 4.5:1 and reproduce the defect, with the suite
+        // green. The set must be the family minus its tape.
+        val family = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.TAPE_AND_FIXINGS).keys
         assertEquals(
-            benchSupplyPlacement("tape.torn", page),
-            benchSupplyPlacement("fix.corner", page),
+            "every member of Tape & fixings must be either tape or an enumerated fixing",
+            family,
+            BenchFixings + "tape.torn",
         )
-        // …and a different family really is different, so the assertion above is not vacuous.
+    }
+
+    @Test
+    fun `Given the fixings key, When the families are read, Then it is not one of them`() {
+        // It is a sizing key, not a fifth family: a fifth family would put a fifth heading on the Art sheet.
+        assertFalse(
+            "the fixings sizing key must never be mistaken for a family",
+            BenchFixingsSizingKey in Copy.Supplies.BY_FAMILY.keys,
+        )
         assertNotEquals(
             benchSupplyPlacement("tape.torn", page),
             benchSupplyPlacement("shape.rect", page),

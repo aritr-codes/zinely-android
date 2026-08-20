@@ -100,7 +100,7 @@ class SuppliesCopyTest {
                 Copy.Supplies.CUT_SHAPES,
             ),
             Copy.Supplies.BY_FAMILY.keys.toList(),
-            "SUPPLIES-SPEC §4 freezes four families (v21-bench.html:819)",
+            "SUPPLIES-SPEC §4 freezes four families (v21-bench.html:831)",
         )
         Copy.Supplies.BY_FAMILY.forEach { (family, supplies) ->
             assertEquals(4, supplies.size, "§4's table gives $family exactly four supplies")

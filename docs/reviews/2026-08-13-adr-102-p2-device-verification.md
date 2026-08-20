@@ -27,7 +27,7 @@ mark that clears the floor. Both readings are arithmetic over a stated alpha. On
 `BenchKeepClear` was nested inside the sheet box, which composes **before** `EditorPagePreview` — and that
 composable draws `BenchFocusScrim`, one composite bounded to the page rect. The freeze dims
 `.el:not(.selected)` (`v21-bench.html:207`): it dims **elements**. `.keepclear` is a *sibling* of `.content`
-(`v21-bench.html:503-505`) and is dimmed by nothing. So the Compose composite washed a mark the frozen design
+(`v21-bench.html:515-517`) and is dimmed by nothing. So the Compose composite washed a mark the frozen design
 never washes.
 
 **The review improved this argument, and the improvement is worth more than the finding.** I justified the

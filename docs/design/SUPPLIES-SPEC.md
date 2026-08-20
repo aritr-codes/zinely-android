@@ -471,7 +471,7 @@ representation *can* express a same-direction-wound ring, which is the precondit
 
 ## 4. The vocabulary — §9.2's sixteen, restored
 
-The four families are frozen (`v21-bench.html:844`). The sixteen below are **`ZINE-DIRECTION.md §9.2`
+The four families are frozen (`v21-bench.html:856`). The sixteen below are **`ZINE-DIRECTION.md §9.2`
 verbatim**; the first draft's redraft is withdrawn (§0 O-C).
 
 > **This table is the vocabulary, not the labels.** Two of the sixteen are written here as slash-pairs and
@@ -762,9 +762,10 @@ lands as a square is not a rule.
 the load-bearing half, because an override map with no cap is just per-supply sizing with extra steps, and
 per-supply sizing is what §5.2 exists to refuse.
 
-| Family | Width (fraction of page) | Aspect | Reading |
+| Sizing group | Width (fraction of page) | Aspect | Reading |
 |---|---|---|---|
-| **Tape & fixings** | 0.55 | 4.5 | lands long |
+| **Tape** (`tape.*`) | 0.55 | 4.5 | lands long |
+| **Fixings** (`fix.*`, enumerated) | 0.20 | 1.0 | lands compact — added 2026-08-20, [D-092](V2-SPEC-DEFECTS.md#d-092-ruling) |
 | **Stamps & marks** | 0.16 | 1.0 | lands small |
 | **Cut paper** | 0.45 | 1.0 | lands as a piece of paper |
 | **Cut shapes** | 0.30 | 1.0 | lands as a shape |
@@ -772,9 +773,19 @@ per-supply sizing is what §5.2 exists to refuse.
 
 Plus a clamp at 0.6 of page height, so a landing can never exceed the page it lands on.
 
+⚠ **AMENDED 2026-08-20 — the key is a *sizing group*, not a family, and the first column says so.**
+[D-092](V2-SPEC-DEFECTS.md#d-092-ruling): `fix.corner` is authored 1:1 and inherited tape's 4.5:1, so it
+landed as a long flat sliver over half the page wide with its pocket reduced to a slit. **One aspect cannot
+serve both halves of a family whose name contains the word "and"** — and *Tape & fixings* is the only one of
+the four that is not physically homogeneous, which is why the rule held until the fixings were authored.
+The override cap is untouched at one entry: three per-supply overrides would have been per-supply sizing
+arriving by instalment. The four families are unchanged — a sizing group is one level below a family, and
+inventing a fifth family would put a fifth heading on the Art sheet.
+
 ⚠ **The numbers are an implementation reading, not a measurement.** §5.2 gave three adjectives and no
-figures. These are defensible and they are unverified: nobody has yet seen a supply land on a real screen.
-**Pass 2 is what settles them**, and the day it does, this table is the thing to edit.
+figures. These are defensible and they are unverified. **Pass 2 is what settles them**, and the day it does,
+this table is the thing to edit — which is exactly how the `fixings` row arrived: a Pass 1 device run, not a
+re-reading of the spec.
 
 ---
 
@@ -966,7 +977,24 @@ page, diffing PDF operators, settles it.
 
 *The lesson for costing: a step described as "the expensive half" was measured, not re-estimated, and the measurement retired it. The `⚠` on this table warning that its own counts were stale was right, and understated.* |
 | **S8** | ✅ Shipped with S2. |
-| **S9** | 🟡 **Pass 1 run 2026-08-18 (SM-A176B, Android 16); Pass 2 begun.** The blocker in this row's own text is gone — S4 ships, and twelve supplies now draw. **Pass 1: five of six questions passed** — all eight new marks render; `mark.halftone` stays a legible lattice at its 0.16 landing (the prediction most expected to fail); `mark.registration`'s arm/ring join reads joined; `paper.tag` reads as speech; and the **platform** `AccessibilityNodeInfo` tree agrees with the semantics tree on all sixteen tiles — exactly the four unauthored report `enabled=false clickable=false`. **One Pass 1 defect: [D-092](V2-SPEC-DEFECTS.md#d-092)** — a photo corner lands as a 4.5:1 sliver because *Tape & fixings* carries tape's aspect. ⚠ **Pass 2 raised [D-093](V2-SPEC-DEFECTS.md#d-093)**: every tile is drawn hollow and every supply lands solid. **Acceptance requires both passes**, so S9 stays open until D-086, D-092 and D-093 are ruled. |
+| **S9** | 🟡 **Pass 1 run 2026-08-18 (SM-A176B, Android 16); Pass 2 begun.** The blocker in this row's own text is gone — S4 ships, and twelve supplies now draw. **Pass 1: five of six questions passed** — all eight new marks render; `mark.halftone` stays a legible lattice at its 0.16 landing (the prediction most expected to fail); `mark.registration`'s arm/ring join reads joined; `paper.tag` reads as speech; and the **platform** `AccessibilityNodeInfo` tree agrees with the semantics tree on all sixteen tiles — exactly the four unauthored report `enabled=false clickable=false`. **One Pass 1 defect: [D-092](V2-SPEC-DEFECTS.md#d-092)** — a photo corner lands as a 4.5:1 sliver because *Tape & fixings* carries tape's aspect. ⚠ **Pass 2 raised [D-093](V2-SPEC-DEFECTS.md#d-093)**: every tile is drawn hollow and every supply lands solid. **Acceptance requires both passes**, so S9 stays open until D-086, D-092 and D-093 are ruled.
+
+✅ **All three ruled and implemented 2026-08-20** ([ADR-108 accepted](../DECISIONS.md#adr-108-shipped)): the tile now renders the authored outline itself, `BenchArtGlyphs` is deleted, `v21-bench.html`'s glyphs are generated from `SupplyCatalog` (amendment **A7**), the four unauthored tiles carry `Not available yet` and draw no mark, and the fixings get their own sizing constant. ⚠ **S9 still stays open**, and for the reason it was always going to: the three rulings were *implemented* on the strength of a golden diff and a spec reading, and **neither pass has been re-run on a device against the built result**. A Pass 2 finding closed by an implementer who then declares his own fix understood is the disqualification [Pass 2](../../CLAUDE.md#pass-2--first-time-user-verification) names, word for word.
+
+✅ **Both passes re-run on the device 2026-08-20** against the installed `zinely-0.9.0-beta.2-debug.apk` built from this branch (SM-A176B / Android 16 / 1080×2340).
+
+**Pass 1 — PASS, on all four questions it was opened to ask.**
+
+1. **The marks are the marks.** All twelve authored tiles draw their `SupplyCatalog` outline filled. The three with real holes read as holes at tile size — `paper.window` a square ring, `mark.registration` a ring with four arms, `fix.corner` an open triangle. **`mark.halftone` draws sixteen dots in a 4×4 lattice**, which is the specific disagreement [ADR-108's R4](../DECISIONS.md#adr-108-shipped) was recommended to paper over and this ruling made unrepresentable instead.
+2. **The platform tree agrees with the screen.** `uiautomator dump` reports the twelve authored as `clickable=true enabled=true focusable=true` and exactly `Torn tape` · `Paper clip` · `Torn strip` · `Marker underline` as `clickable=false enabled=false focusable=false`. This is the `AccessibilityNodeInfo` tree, not the merged semantics tree — the distinction [CLAUDE.md](../../CLAUDE.md#pass-1--developer-verification) draws, and the one that caught `ReframeControls.ZoomButton`.
+3. **[D-092](V2-SPEC-DEFECTS.md#d-092) is fixed where it was found.** A placed `fix.corner` selects at **165×165 px — 1:1** — roughly a fifth of the page's width, against the 4.5:1 half-page sliver Pass 1 found on 2026-08-18.
+4. **Even-odd survives to the page, not just the tile.** The placed corner is drawn hollow on the page: the photo beneath shows through its interior. The tile and the page are one replayer, and the device says so.
+
+**Undo restored the page byte-identically** (the pre-placement and post-undo crops compare equal pixel-for-pixel — loaded and sampled, not lazily opened; that is [D-102](V2-SPEC-DEFECTS.md#d-102)'s lesson applied), so the maker's document was left as found.
+
+**Pass 2 — run, two findings, and ⚠ my reading of the central question does not count.** [D-103](V2-SPEC-DEFECTS.md#d-103) (the word breaks mid-word at font scale 1.8 — and **does not clip**, correcting my own carried-forward note) and [D-104](V2-SPEC-DEFECTS.md#d-104) (`TAPE & FIXINGS` now contains no tape: closing the tile-level over-promise moved it up to the heading). Both are cosmetic and neither is a regression.
+
+⚠ **The question S9 exists to ask — "does the drawer read honestly?" — is still owed, and by the owner.** I wrote the fix; knowing why a screen behaves as it does disqualifies me from judging whether it explains itself. What I can report is that the two findings above are what I noticed *while* being unable to un-know the implementation, which is the weaker half of the evidence Pass 2 wants. **S9 is accepted on Pass 1 and held open on Pass 2 for the owner's own reading.** |
 | **S7 · Replace supply** | ✅ **Shipped**, closing decor's verb set. `Intent.ReplaceSupply` → the same `EditDecorCommand` (id, ink, mirror and z survive a swap; only `supplyId` and `transform` change, enforced by the `copy` naming exactly those two). The Art sheet is re-summoned as a **picker**: `artSheetFor: BenchArtPurpose?` replaces the old `Boolean`, so the sheet cannot be open in replace mode with nothing to replace, nor in place mode holding a stale id — the [D-091](V2-SPEC-DEFECTS.md#d-091) lesson applied *before* the defect rather than after it. **Owner ruling, 2026-08-17: a replacement takes the incoming family's §5.2 scale, at the outgoing element's centre and rotation.** The two rejected readings and why are recorded at `benchSupplyReplacement`. No snack: unlike a placement, a delete or an ink, a swap redraws the selected mark in place under the maker's own eyes.
 
 **Pass 1 device verification — PASS**, SM-A176B / Android 16, 2026-08-17, and **re-run 2026-08-18 against the committed build `126d84e`** — the first time this evidence is attached to a named commit rather than to a working tree. Both runs agree. On the platform `AccessibilityNodeInfo` tree **all three decor verbs read `clickable=true enabled=true`** — `Replace` flipped from `false` where TalkBack reads it. Tapping it re-opened the cabinet as a picker; tapping *Circle* swapped the outline **in place**, node bounds byte-identical (`[430,736][650,956]` before and after) because both are *Cut shapes* and share a family default.

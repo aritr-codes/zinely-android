@@ -154,10 +154,14 @@ public object SupplyCatalog {
      * mark reads as the thing it names**, never as the source of a coordinate — which is the line A5 draws.
      * A reader who thinks that line was crossed has, in this sentence, everything needed to say so.
      *
-     * ⚠ **This is deliberately not a copy of the tile glyph, and the divergence is required.** A5 rules
-     * that `BenchArtGlyphs` *depicts* the supplies and "must not become their source"; that glyph is a
-     * 24-unit **stroked** icon whose crosshair runs straight through its circle — a drawing this renderer
-     * cannot make, because [DrawShape] is fill-only and a crossing cancels under even-odd. The first draft
+     * ⚠ **This was deliberately not a copy of the tile glyph, and the divergence was required — until the
+     * glyph stopped existing.** A5 ruled that `BenchArtGlyphs` *depicted* the supplies and "must not become
+     * their source"; that glyph was a 24-unit **stroked** icon whose crosshair ran straight through its
+     * circle — a drawing this renderer cannot make, because [DrawShape] is fill-only and a crossing cancels
+     * under even-odd. **The glyph set was deleted on 2026-08-20 (amendment A7, [D-093]) and the tile now
+     * renders this outline**, so the divergence this paragraph defends is gone: there is no second drawing
+     * left to diverge from. The reasoning is kept because it is *why* the mark is authored as it is — the
+     * arms stop at the ring because even-odd would cancel a crossing, not because a glyph once disagreed. The first draft
      * here answered that by shrinking the ring to a 0.085 dot, which was even-odd-safe and read as a
      * crosshair with a speck rather than as a registration target. The ring is the *subject* of the mark,
      * so it takes a quarter of the box and the arms yield to it.
@@ -218,7 +222,9 @@ public object SupplyCatalog {
      * two dots touch, which even-odd requires — a kissing pair would cancel to a notch).
      *
      * ⚠ **Open, and deliberately not settled here: the tile glyph draws a scatter, this draws a lattice.**
-     * `BenchArtGlyphs["mark.halftone"]` is seven circles at irregular centres and varying radii. A5 permits
+     * ⚠ The Art sheet's glyph for this mark was **seven** circles at irregular centres while the mark itself
+     * is **sixteen** on a lattice. That was `BenchArtGlyphs`, deleted 2026-08-20: the tile renders this
+     * outline now, so the disagreement is not fixed but *unrepresentable*. The reasoning it rested on — A5 permits
      * the divergence — the glyph *depicts* the supply and "must not become their source" — but a maker taps
      * a loose cluster and gets a regular grid, and only a first-time reader can say whether that reads as a
      * broken promise. The lattice is kept because **a halftone screen is a lattice**: that regularity is

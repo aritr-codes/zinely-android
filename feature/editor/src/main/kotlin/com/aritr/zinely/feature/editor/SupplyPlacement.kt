@@ -59,12 +59,47 @@ import com.aritr.zinely.core.model.Transform
 internal data class BenchSupplyDefault(val widthFraction: Double, val aspect: Double)
 
 /**
- * §5.2's one constant per family. **Every number here is owed a ruling** (see this file's header).
+ * The three **fixings** — the half of *Tape & fixings* that is not tape.
  *
- *  - **Tape & fixings — long.** §5.2's own word for tape. Over half the page's width at a 4.5:1 aspect,
- *    which is a strip you can see is a strip; the family's other three (corner, staple, clip) are small
- *    fixings, and they are the strongest argument that §5.2's mechanism is under-specified — but a
- *    family's default is its namesake's, which is the reading the spec's own "tape lands long" supports.
+ * ⚠ **Enumerated, never prefix-matched.** `supplyId.startsWith("fix.")` would have been shorter and is the
+ * same mistake this file's [benchSupplyFamily] already warns about from the other direction: a prefix is
+ * not a fact about a supply, it is a naming habit, and the day a `tape.*` id names something compact — or a
+ * `fix.*` id names something long, which washi tape on a fixing id would be — the habit decides the size
+ * and nobody is asked. Adding a member here is a sizing decision someone makes, which is the point.
+ */
+internal val BenchFixings: Set<String> = setOf("fix.corner", "fix.staple", "fix.clip")
+
+/**
+ * The key [BenchSupplyDefaults] files the fixings' constant under.
+ *
+ * Not a [Copy.Supplies] family name because **it is not a family** — the four families are the freeze's and
+ * the copy layer's, and inventing a fifth would put a heading on the Art sheet that the maker never asked
+ * for. What splits here is *sizing*, one level below the family, and this key says so by not pretending
+ * otherwise. See [D-092](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-092).
+ */
+internal const val BenchFixingsSizingKey: String = "__sizing:fixings"
+// ⚠ The value was `"fixings (sizing only — not a family)"` — self-documenting, and `CopyNoProseLiteralTest`
+// rejected it as a user-facing prose literal outside `Copy` (ADR-060 / CI-81). The gate was right for the
+// wrong reason: it cannot tell a map key from a sentence, and the fix is to stop writing a key that reads
+// like one. `__sizing:` cannot collide with a family name, which is the property that actually matters.
+
+/**
+ * §5.2's one constant per **sizing group**. **Every number here is owed a ruling** (see this file's header).
+ *
+ * ⚠ This said *"one constant per family"* and the map now holds five entries keyed on four families plus
+ * one non-family. [D-092](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-092-ruling) added the
+ * fifth and this sentence was not updated with it — a framing line left describing the shape the data had
+ * before the change is how the *next* reader concludes the fixings entry is a mistake.
+ *
+ *  - **Tape — long.** §5.2's own word for it. Over half the page's width at a 4.5:1 aspect, which is a
+ *    strip you can see is a strip.
+ *  - **Fixings — compact.** ⚠ **Added 2026-08-20, [D-092](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-092).**
+ *    This entry did not exist, and the family's other three inherited tape's 4.5:1: a photo corner authored
+ *    1:1 landed as a **long flat sliver with its pocket reduced to a slit**, over half the page wide. Not
+ *    recognisable as a photo corner, and a maker who taps a tile showing a neat square corner gets something
+ *    that looks like a mistake. Found on a device the day the fixings were first authored — before that
+ *    `tape.torn` was the only member anyone could place, so the family default was never *wrong*, it was
+ *    never *exercised*.
  *  - **Stamps & marks — small.** §5.2's word again. A stamp is punctuation on a page, not an element of
  *    it: 16 % of the page's width, square, which on a typical eighth-sheet page is roughly a thumbprint.
  *  - **Cut paper — a piece of paper.** The largest of the four, because a torn strip, a window frame and
@@ -74,6 +109,7 @@ internal data class BenchSupplyDefault(val widthFraction: Double, val aspect: Do
  */
 internal val BenchSupplyDefaults: Map<String, BenchSupplyDefault> = mapOf(
     Copy.Supplies.TAPE_AND_FIXINGS to BenchSupplyDefault(widthFraction = 0.55, aspect = 4.5),
+    BenchFixingsSizingKey to BenchSupplyDefault(widthFraction = 0.20, aspect = 1.0),
     Copy.Supplies.STAMPS_AND_MARKS to BenchSupplyDefault(widthFraction = 0.16, aspect = 1.0),
     Copy.Supplies.CUT_PAPER to BenchSupplyDefault(widthFraction = 0.45, aspect = 1.0),
     Copy.Supplies.CUT_SHAPES to BenchSupplyDefault(widthFraction = 0.30, aspect = 1.0),
@@ -189,7 +225,11 @@ private fun benchSupplySizePt(supplyId: String, pageSizePt: PtSize): Pair<Double
     val family = requireNotNull(benchSupplyFamily(supplyId)) {
         "$supplyId is in no family in Copy.Supplies.BY_FAMILY — a supply has no default size without one"
     }
-    val default = BenchSupplyOverrides[supplyId] ?: BenchSupplyDefaults.getValue(family)
+    // The sizing key is the family, EXCEPT for the three fixings — one aspect cannot serve both halves of a
+    // family whose name contains the word "and", and *Tape & fixings* is the only one of the four that is
+    // not physically homogeneous ([D-092]). Read before the per-supply override so `shape.rule` still wins.
+    val sizingKey = if (supplyId in BenchFixings) BenchFixingsSizingKey else family
+    val default = BenchSupplyOverrides[supplyId] ?: BenchSupplyDefaults.getValue(sizingKey)
     var width = pageSizePt.width * default.widthFraction
     var height = width / default.aspect
     val maxHeight = pageSizePt.height * BenchSupplyMaxHeightFraction

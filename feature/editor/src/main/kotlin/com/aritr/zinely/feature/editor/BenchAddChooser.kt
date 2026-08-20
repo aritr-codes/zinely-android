@@ -50,18 +50,18 @@ public const val BenchAddChooserTextTag: String = "bench-add-chooser-text"
 public const val BenchAddChooserPhotoTag: String = "bench-add-chooser-photo"
 public const val BenchAddChooserArtTag: String = "bench-add-chooser-art"
 
-/** The frozen sheet title (`v21-bench.html:772`). */
+/** The frozen sheet title (`v21-bench.html:784`). */
 public const val BenchAddChooserTitle: String = Copy.AddChooser.TITLE
 
-/** The frozen `Text` row (`v21-bench.html:773`), title and subtitle verbatim. */
+/** The frozen `Text` row (`v21-bench.html:785`), title and subtitle verbatim. */
 public const val BenchAddTextTitle: String = Copy.AddChooser.TEXT_TITLE
 public const val BenchAddTextSubtitle: String = Copy.AddChooser.TEXT_SUBTITLE
 
-/** The frozen `Photo` row (`v21-bench.html:774`), title and subtitle verbatim. */
+/** The frozen `Photo` row (`v21-bench.html:786`), title and subtitle verbatim. */
 public const val BenchAddPhotoTitle: String = Copy.AddChooser.PHOTO_TITLE
 public const val BenchAddPhotoSubtitle: String = Copy.AddChooser.PHOTO_SUBTITLE
 
-/** The frozen `Art` row (`v21-bench.html:829`), title and subtitle verbatim. */
+/** The frozen `Art` row (`v21-bench.html:841`), title and subtitle verbatim. */
 public const val BenchAddArtTitle: String = Copy.AddChooser.ART_TITLE
 public const val BenchAddArtSubtitle: String = Copy.AddChooser.ART_SUBTITLE
 
@@ -115,7 +115,7 @@ internal val BenchOptTitleSize = 16.sp
 internal val BenchOptSubtitleSize = 11.68.sp
 
 /**
- * The frozen **Add chooser** — `openSupply()`'s sheet (`v21-bench.html:821-835`, CSS `:435-446` — ⚠ these
+ * The frozen **Add chooser** — `openSupply()`'s sheet (`v21-bench.html:833-847`, CSS `:435-446` — ⚠ these
  * addresses were re-verified 2026-08-16 after ADR-104's amendment shifted the file by ~+49 lines; the
  * previous citations pointed at `toast()`), with two
  * of its three rows; [ADR-094](../../../../../../../../docs/DECISIONS.md#adr-094) rows 4.4a–4.4d, re-skinned
@@ -123,7 +123,7 @@ internal val BenchOptSubtitleSize = 11.68.sp
  *
  * ### Why three rows now, when two was right before
  *
- * The freeze narrates its own intent at `v21-bench.html:834` — *"Add stays three verbs — Text · Photo ·
+ * The freeze narrates its own intent at `v21-bench.html:846` — *"Add stays three verbs — Text · Photo ·
  * Art."* [OD-21](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-047-ruling) released **only Text
  * and Photo** into C4, and this file held `Art` back on a reason that was never "the freeze doesn't ask for
  * it": *a control that reports truthfully and then does nothing when tapped invites the press harder than a
@@ -156,7 +156,7 @@ internal val BenchOptSubtitleSize = 11.68.sp
  * first-time maker in front of it. If Pass 2 rejects the sheet, this row is the fence to re-raise.
  *
  * ⚠ **The row wears `Photo`'s glyph, because the freeze does — and that is a known defect, not a design.**
- * `v21-bench.html:829` draws `Art` with the *identical* `<rect>`-plus-horizon picture mark it gives `Photo`
+ * `v21-bench.html:841` draws `Art` with the *identical* `<rect>`-plus-horizon picture mark it gives `Photo`
  * one line above (`:828`) — byte-for-byte the same SVG children. Two adjacent rows wearing one icon is a
  * transcription of a copy-paste.
  *
@@ -218,7 +218,7 @@ internal fun BenchAddChooser(
                 onClick = { onDismiss(); onAddText() },
             )
             // `ICON_PICTURE` — the frame-plus-horizon mark, per the 2026-08-14 amendment at
-            // `v21-bench.html:786`. It was `Replace` (two arrows round a circle) until a device pass read
+            // `v21-bench.html:798`. It was `Replace` (two arrows round a circle) until a device pass read
             // that as *refresh/sync* on a chooser that only ever adds; `ZinelyV2Icons.Art` **is** that
             // picture glyph under its older name (`Rect` + horizon path), so nothing new is drawn here.
             BenchAddOption(
@@ -231,7 +231,7 @@ internal fun BenchAddChooser(
                 testTag = BenchAddChooserPhotoTag,
                 onClick = { onDismiss(); onAddPhoto() },
             )
-            // ⚠ The SAME picture mark the `Photo` row wears, transcribed from `v21-bench.html:829`
+            // ⚠ The SAME picture mark the `Photo` row wears, transcribed from `v21-bench.html:841`
             // verbatim. See the KDoc: this is a known freeze defect (D-080), and D-051/OD-26 ruled the
             // identical defect one row up as *carried forward, no implementation change*. The star this
             // row wants is an amendment's to grant, not an implementer's to draw.
