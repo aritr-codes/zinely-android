@@ -534,11 +534,18 @@ private fun BenchArtTile(
                 fontFamily = ZinelyV21Fonts.Work,
                 letterSpacing = BenchArtNotYetTracking,
                 lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                // Two short words on a square tile: centred, and allowed to wrap rather than clip. ⚠ At a
-                // large system font scale the word can still outgrow the tile — the tile is `clip`ped, and
-                // `contentDescription` carries the supply's name regardless, so nothing becomes unreachable.
-                // Flagged for Pass 2 rather than solved by shrinking text that is already the smallest on
-                // the surface.
+                // Two short words on a square tile: centred, and allowed to wrap rather than clip.
+                // ⚠ **Measured on device at font scale 1.8 (2026-08-20): it does NOT clip.** The prediction
+                // that stood here — that the word "can still outgrow the tile" — was written without running
+                // the scale. What happens instead is a mid-word break: `NOT` / `AVAILABL` / `E YET`, every
+                // glyph drawn, inside the tile. Recorded as [D-103], which also corrects the explanation:
+                // the tile does NOT grow with the text (it is `weight(1f)` + `aspectRatio(1f)`, so its size
+                // comes from the column, not the font), and the label is drawn at 55% alpha, not full.
+                // Still not solved by shrinking text that is already the smallest on the surface — and the
+                // freeze cannot settle it either, because `AVAILABLE` fits the mockup's own tile, so
+                // `v21-bench.html` never exercises overflow and its silence on `word-break` is silence
+                // rather than specification. `contentDescription` carries the supply's name regardless, so
+                // nothing is unreachable at any scale.
                 textAlign = TextAlign.Center,
             )
         }

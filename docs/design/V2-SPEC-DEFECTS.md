@@ -5435,7 +5435,7 @@ an expiry condition written in prose has no expiry mechanism.** There was no tes
 | **Artifacts** | `feature/editor/.../BenchArtSheet.kt` · [SUPPLIES-SPEC §9](SUPPLIES-SPEC.md) · [D-084](#d-084) (the A5 Art-sheet ruling) |
 | **Found** | 2026-08-16, by the Review Agent on package **P-G**, as a **Pass 2 risk raised before any Pass 2 ran** |
 | **Severity** | Open design question on an unreleased surface. Not a blocker — the sheet has no production call site yet |
-| **Status** | ✅ **CLOSED 2026-08-20** — ruled with [D-093](#d-093-ruling), as they were bundled. See [the ruling](#d-086-ruling) |
+| **Status** | ✅ **CLOSED 2026-08-20** — ruled with [D-093](#d-093-ruling), as they were bundled. See [the ruling](#d-086-ruling). ⚠ **Read with [D-104](#d-104)**: this entry closed the over-promise at the *tile*, and D-104 records that doing so moved it up to the *family heading*. D-086 stays closed — the question it asked was answered — but a reader taking it as "the drawer no longer over-promises" would be taking it too far |
 
 **The situation.** Only four of the sixteen supplies have authored outlines (the `shape.*` family); twelve
 are owed to a designer. P-G draws **all sixteen** — the freeze specifies sixteen under four headings, and
@@ -5681,7 +5681,7 @@ visibility resolves against") stated the *cause* of the bug as its justification
 |---|---|
 | **Artifacts** | `feature/editor/.../BenchSnack.kt:60` · `feature/editor/.../BenchContextBar.kt:469` · `EditorScreen.kt:1408,1552` |
 | **Found** | 2026-08-17, package **S7-placement**, **Pass 1 device verification** on SM-A176B / Android 16 |
-| **Severity** | **Visible defect on the happy path.** The message reads `Placed on the pa` — the sentence is cut mid-word by the Replace/Ink/Delete pill |
+| **Severity** | **Visible defect on the happy path.** As first found, the message read `Placed on the pa` — cut mid-word by the Replace/Ink/Delete pill. ⚠ **The 2026-08-20 re-observation saw the reverse** (the snack whole, `Replace` drawn under it), and the frozen z-order says the reverse is what *should* happen — see [the re-observation](#d-089) before treating either symptom as the settled one |
 | **Status** | 🔶 **Open — needs an owner ruling, not an implementer fix** (see below) |
 
 `BenchSnackInsetBottom` and `BenchContextBarInsetDp` are **both `12.dp`**, and both surfaces are placed with
@@ -5702,19 +5702,36 @@ exists, stack the snack above the bar, or suppress the context bar until the sna
 decision belongs in `v21-bench.html` **first**. An implementer picking one silently would be redesigning a
 frozen surface. Evidence: `scratchpad/dev/09-placed.png`.
 
-#### Re-observed 2026-08-20, package **P4**, same device — and **which surface loses is not stable**
+#### Re-observed 2026-08-20, package **P4**, same device — and the entry's **titular symptom is the anomaly**
 
 Seen again on SM-A176B / Android 16 while device-verifying P4 (placing `fix.corner`). ⚠ **The symptom
 this entry is titled after did not reproduce, and the opposite one did.** The snack read
-`Placed on the page` **in full**, and it was the **context bar** that lost — `Replace` was drawn under the
+`Placed on the page` **in full**, and it was the **context bar** that lost — `Replace` drawn under the
 snack's own surface, legible only as `…eplace`, with all three actions dimmed behind it.
 
-That matters for the ruling rather than for the fix. The entry's title — *"the pill eats the message"* —
-records one of **two** outcomes of the same overlap, and a ruling written to protect the message would
-still leave a half-drawn `Replace` on the other draw order. Both surfaces are `BottomCenter` in one `Box`
-with no z-order stated between them, so which one covers the other is **whatever the composition order
-happens to be that frame**, not a property either surface declares. The three options above are unchanged
-and still the owner's; this note only widens what any of them has to be true of.
+⚠⚠ **My first write-up of this explained it as non-determinism, and that was wrong. The stacking order
+is specified, deliberate, and stable — independent review caught it and the code says so out loud.** What
+I wrote was that both surfaces are `BottomCenter` in one `Box` *"with no z-order stated between them, so
+which one covers the other is whatever the composition order happens to be that frame."* Every clause of
+that is false:
+
+- **The freeze states the order.** [EditorScreen.kt:1622-1627](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt#L1622) records it from the frozen bench:
+  *"`.ctx` is `z-index:30` (`:357`), `.snack` is `38` (`:444`) … Raising the popover rather than
+  reordering the composition **keeps the snack above the verb bar, which is the other half of the frozen
+  order**."*
+- **The composition realises it deterministically.** `BenchContextBar` is composed before `BenchSnack`,
+  both unconditionally (visibility is a *parameter*, not a conditional call — `BenchSnack.kt:174-175`), so
+  at equal `zIndex` the later child draws on top. **The snack always wins.** Not sometimes.
+
+**So the 2026-08-20 observation is the *expected* behaviour, and this entry's original symptom — the snack
+truncated to `Placed on the pa` by the pill — is the one that now has no explanation.** That inverts what
+is owed: it is no longer only *"decide which surface should win"* (the freeze already decided: the snack),
+but also **"why did the losing surface ever win on 2026-08-17?"** A ruling that picks a winner without
+answering that would be built on the same misreading this note was.
+
+The three options above are unchanged and still the owner's. What this note actually contributes is
+narrower and more useful than the scope-widening it originally claimed: **the frozen z-order is evidence
+for option (b), stacking**, since the freeze has already ruled that the snack sits above the verb bar.
 
 Not caused by P4 — P4 touches neither `BenchSnack` nor `BenchContextBar`, and this entry predates it by
 three days. Recorded here rather than filed as a new defect because it is the same overlap.
@@ -6673,31 +6690,76 @@ whatever HEAD happens to be.
 |---|---|
 | **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtNotYetSize`, the `Copy.BenchVerbs.NOT_YET` branch) |
 | **Found** | 2026-08-20, package **P4**, **Pass 2 device verification** on SM-A176B / Android 16, `font_scale 1.8` |
-| **Severity** | **Cosmetic, on a surface a first-time maker meets.** Legible throughout; nothing clips and nothing is lost |
-| **Status** | 🔶 **Open — an owner ruling, because every fix is a change to a frozen surface** |
+| **Severity** | **Cosmetic, on a surface a first-time maker meets.** Legible at the scale measured; nothing was lost |
+| **Status** | 🔶 **Open.** ⚠ **Re-categorised after review** — first filed as "an owner ruling, because every fix changes a frozen surface", which was wrong on both halves. See *What kind of defect this is* below |
 
 At the system font scale of `1.8`, `NOT AVAILABLE YET` wraps to three lines inside its tile and breaks
 **mid-word**: `NOT` / `AVAILABL` / `E YET`. `AVAILABLE` is wider than the tile at that scale, so Compose
 breaks the word rather than overflowing it.
 
-⚠ **This entry exists as much to correct a prediction as to record a defect.** Closing P4's Pass 2 I wrote
-that at large font scale the label *"can clip"*, and carried it forward as an open note. **It does not
-clip.** Measured on the device at `1.8`, every glyph is drawn, inside the tile, at full opacity — the tile
-grows with the text and the sheet scrolls. The real behaviour is uglier in a completely different way and
-strictly less harmful than the one I guessed at. I had not run the scale when I wrote the note, and the
-note read as though I had.
+⚠ **This entry exists as much to correct a prediction as to record a defect.** The prediction is in the
+code, at [BenchArtSheet.kt](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/BenchArtSheet.kt), in the comment above the label's `textAlign`: *"At a
+large system font scale the word **can still outgrow the tile** — the tile is `clip`ped … Flagged for Pass 2
+rather than solved."* Closing P4 I restated that as *"the label can clip"* and carried it forward.
 
-**Why no implementer fix is proposed.** The three candidates each change a frozen surface, and
-[DESIGN FREEZE](../../CLAUDE.md#design-freeze) puts that in `v21-bench.html` first:
+**Measured at `1.8`, it does not clip:** every glyph is drawn, inside the tile. The real behaviour is
+uglier in a different way and strictly less harmful than the one predicted. I had not run the scale when I
+wrote the note, and the note read as though I had.
+
+⚠ **Two corrections to my own correction, both from independent review, and both worth keeping because
+they are the same species of error as the original:**
+
+1. *"The tile grows with the text and the sheet scrolls"* — **false, and it was the explanation, not the
+   observation.** The tiles are `Row` children at `Modifier.weight(1f)` across `BenchArtGridColumns = 4`
+   with `.aspectRatio(1f)`: tile size derives from column width and is **independent of font scale**. The
+   tile does not grow. The word fits because three lines of it fit, not because anything expanded.
+2. *"At full opacity"* — **false.** `BenchArtNotYetAlpha = 0.55f`, by design and by the freeze
+   (`.tile.na .naw{opacity:.55}`). The label is drawn at 55%.
+3. **"It does not clip" is measured at one scale.** `1.8` is what was run; the comment being corrected said
+   the word *"can"* outgrow the tile, and a single measurement does not refute a possibility claim across
+   the whole range. The honest statement is *at 1.8 it does not clip*, not *it cannot*.
+
+*Three explanations offered around one observation, and all three were wrong while the observation held.
+That is the pattern this entry is really about.*
+
+#### What kind of defect this is — corrected
+
+The first filing said every fix changes a frozen surface, so it must be an owner ruling. **Review found a
+fourth candidate I had not listed, and it needs no owner:**
+
+- **Constrain Compose's line-breaking to word boundaries.** The frozen rule is
+  `.tile.na .naw{font-size:.56rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;…}`
+  (`v21-bench.html:478`) — **no `word-break`, no `overflow-wrap`, no `hyphens`**, so CSS default
+  `overflow-wrap: normal` applies and the frozen surface **does not break inside a word**. Compose doing so
+  is a **divergence from the freeze**, and [DESIGN FREEZE](../../CLAUDE.md#design-freeze) expressly permits
+  *"implementation parity fixes"* after freeze. That makes this an implementer's defect, not the owner's.
+
+⚠ **But the parity fix has a consequence review did not state, and it is the reason this entry stays open
+rather than being closed by a one-line change.** CSS `overflow-wrap: normal` does not make a too-wide word
+*fit* — it makes it **overflow**, and the tile is `clip`ped. So exact parity converts a mid-word break into
+the clipped word the original code comment feared. **Choosing parity here means choosing clipping**, and
+between "breaks mid-word, fully legible" and "matches the freeze, clipped" the second is worse for the
+maker at `1.8` — which is an accessibility judgement, and those do not get made by appeal to parity alone.
+
+**A further reading, which is why the freeze cannot settle it either.** `AVAILABLE` fits the mockup's tile
+at the mockup's own size, so the frozen file **never exercises overflow at all**. Absence of a `word-break`
+declaration in a surface that never overflows is not a specification of overflow behaviour — it is silence.
+Reading it as a spec would be inferring a decision the designer never made.
+
+**Where that leaves it.** Not "every fix needs the owner" (wrong — a parity fix exists), and not "an
+implementer should just apply parity" (wrong — that ships a clipped accessibility label). Per the
+[release-category table](../../CLAUDE.md#release-categories--never-conflate) this is **Technical Debt with
+an accessibility question attached**: the mechanical fix is an implementer's, the choice of *whether legibility
+or parity wins at large scale* is one line from the owner. The other two candidates are unchanged:
 
 - **Shorten the string** — `Copy.BenchVerbs.NOT_YET` is also what `stateDescription` speaks to TalkBack, so
   this is a copy change on two surfaces at once, not a layout tweak.
-- **Shrink the text at large scales** — capping the scale factor of an accessibility setting to make a
-  label fit is the kind of fix that trades a real need for a cosmetic one, and it should be ruled on
-  deliberately rather than chosen by an implementer.
-- **Accept it.** Defensible: the word is fully legible, and a maker at `1.8` is reading it, not admiring it.
+- **Shrink the text at large scales** — **correctly rejected**: capping the scale factor of an accessibility
+  setting to make a label fit is an accessibility *regression*, not the "accessibility improvement" the
+  freeze permits.
 
-Recorded here so the next reader gets the measurement rather than my guess.
+Recorded here so the next reader gets the measurement rather than my guess — and gets the three wrong
+mechanisms too, since they are the part that needed a reviewer to catch.
 
 ---
 
@@ -6715,10 +6777,13 @@ P4 replaced the four unauthored tiles' invented glyphs with the words `NOT AVAIL
 over-promise **up one level**, from the tile to the heading above it, and that is visible on the device in
 a way it was not in review:
 
-- **`TAPE & FIXINGS` contains no tape.** The family's four are `tape.torn` · `fix.corner` · `fix.staple` ·
-  `fix.clip`, and `tape.torn` is one of the unauthored four. The heading's **first and most prominent
-  noun** is precisely the one thing under it a maker cannot have. Previously a tape-shaped glyph was drawn
-  there, so the heading was corroborated by a picture — falsely, which is why it went, but corroborated.
+- **`TAPE & FIXINGS` contains no tape — and is missing half its family.** The four are `tape.torn` ·
+  `fix.corner` · `fix.staple` · `fix.clip`, and **two of them are unauthored**: `tape.torn` and `fix.clip`.
+  So the heading's **first and most prominent noun** is precisely the one thing under it a maker cannot
+  have, and only half the row answers at all. Previously a tape-shaped glyph was drawn there, so the
+  heading was corroborated by a picture — falsely, which is why it went, but corroborated.
+  *(⚠ This entry originally named only `tape.torn`; independent review found it was under-claiming its own
+  case. Worth recording as the rarer direction of error in this file.)*
 - **`CUT PAPER` shows a window frame and a speech tag.** Its unauthored two are `paper.strip` and
   `paper.underline`; what survives reads more like *frames and labels* than *cut paper*.
 
@@ -6734,3 +6799,43 @@ mistaken for closed when [D-086](#d-086) is read as done.
 what they currently hold; or accept it as a temporary state that ADR-107 retires. The first is the only
 one that does not spend a copy change on a condition meant to be temporary — which is an argument, not a
 ruling, and the ruling is the owner's.
+
+---
+
+### D-105 — `git reset --hard` destroyed three files the session was explicitly told never to touch {#d-105}
+
+| | |
+|---|---|
+| **Artifacts** | `README.md` · `docs/RESEARCH.md` · `gradle.properties` — uncommitted working-tree changes, unrecoverable |
+| **Found** | 2026-08-20, immediately, by the agent that caused it |
+| **Severity** | **Data loss.** Owner's uncommitted work, gone; no defect in the product |
+| **Status** | ⛔ **Not fixable — recorded so the cause does not recur.** No ruling owed |
+
+A standing constraint on this session named five items to **never touch**: `README.md`,
+`docs/RESEARCH.md`, `gradle.properties`, `37596.jpg`, `acdec/`. All five carried changes the agent did not
+make. For the whole session they were correctly excluded from every commit — every `git add` named its
+paths explicitly, and `git show --stat` on each commit confirms none of the five appears.
+
+Then, to move the working tree onto the freshly-merged `origin/main` before applying review fixes, the
+agent ran `git checkout main && git reset --hard origin/main`. **`reset --hard` discards uncommitted
+working-tree changes**, and the three tracked files among the five were discarded with it.
+
+**Unrecoverable, and why each avenue failed:** the changes were never staged, so no blob object exists and
+`git fsck --dangling` has nothing to offer; VS Code local history holds one `README.md` snapshot from
+2026-06-20, an old pre-implementation revision, not the lost edit; `Win32_ShadowCopy` returned no usable
+snapshots. The three files now hold their committed `origin/main` content. **The contents of the lost
+diffs are unknown** — the constraint meant they were never read, so they cannot be reconstructed or even
+described.
+
+⚠ **The failure is not "used a dangerous command". It is that the command served the agent's convenience
+and nothing else.** Nothing about applying review fixes to three documents required moving the branch at
+all; the edits were textual and would have applied identically. The reset was tidiness. **A destructive
+operation run for tidiness has no upside to weigh against its downside** — which is the whole of the
+lesson, and is why this is filed rather than apologised for.
+
+🟨 **The rule this yields, stated so it is checkable:** *a "never touch" list is a list of files that must
+survive every command, not merely a list of files to keep out of commits.* The session honoured the
+narrow reading for hours and then broke the broad one in a single command. Before any command that can
+discard working-tree state — `reset --hard`, `checkout -- .`, `clean -fd`, `stash` without `-u` — check
+`git status --porcelain` for entries that must survive, and if any exist, either don't run it or copy
+them aside first. **`git stash push -- <those paths>` would have preserved them at zero cost.**
