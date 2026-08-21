@@ -146,7 +146,7 @@ internal fun ZinelyNavHost(
             // triad into one 3-act screen. Same shared-VM seam the triad used — fetch the editor's live
             // back-stack entry (it stays on the stack under the Proof) and resolve the SAME
             // EditorViewModel against it, never a second instance (ADR-026 single-writer).
-            val editorEntry = remember(route.projectId) {
+            val editorEntry = remember(entry) {
                 navController.getBackStackEntry(EditorRoute(route.projectId))
             }
             ProofDestination(
