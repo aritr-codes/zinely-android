@@ -10,24 +10,24 @@ This is the gate required by the V1 execution plan. A row is green only at the l
 |---|---|---|---|
 | Canonical multi-project v2 manifest round-trip | Identity, cover recipe, document metadata, and deduplicated asset table survive | `:core:data` unit | ✅ Green |
 | v1 package presented to v2 validator | Refused by v2 without changing the v1 contract | `:core:data` unit | ✅ Green |
-| Unknown/newer package kind or version | Honest refusal; no live writes | `:core:data` unit + later integration | 🟨 Pure half green |
-| Newer document schema | Honest refusal; no downgrade/save | `:core:data` unit + codec decode | 🟨 Structural half green |
+| Unknown/newer package kind or version | Honest refusal; no live writes | `:core:data` unit + later integration | ✅ Pure refusal green; repository integration pending |
+| Newer document schema | Honest refusal; no downgrade/save | `:core:data` unit + codec decode | ✅ Green |
 | Duplicate project id or document path | Refused | `:core:data` unit | ✅ Green |
 | Unknown or partial cover metadata | Warning; work remains restorable and shelf degrades coverlessly | `:core:data` unit | ✅ Green |
 | Missing, duplicate, unreferenced, or unexpected asset/entry | Refused | `:core:data` unit | ✅ Green |
-| Absolute, drive-qualified, backslash, empty-segment, `.` or `..` path | Refused before extraction escapes staging | `:core:data` unit + codec integration | 🟨 Structural half green |
-| Declared byte count differs from streamed bytes | Refused | `:core:data` unit + codec integration | 🟨 Structural half green |
-| Manifest/document/asset/total expansion limit exceeded | Refused without OOM or partial import | unit + JVM codec stress | 🟨 Pure caps green |
-| Document SHA-256 mismatch | Refused; no live writes | JVM codec integration | ⬜ Pending |
-| Asset SHA-256 mismatch or same name/different bytes | Refused; no dedupe poisoning | JVM codec integration | ⬜ Pending |
-| Decoded document image references differ from its manifest asset list | Refused; no missing image or undeclared payload can commit | JVM codec integration | ⬜ Pending |
-| Extreme compression ratio / ZIP bomb | Streaming abort at configured expanded-byte/count boundary | JVM codec stress | ⬜ Pending |
-| Truncated/corrupt ZIP or malformed manifest JSON | Actionable failure; existing library unchanged | JVM/Android integration | ⬜ Pending |
+| Absolute, drive-qualified, backslash, empty-segment, `.` or `..` path | Refused before extraction escapes staging | `:core:data` unit + codec integration | ✅ Green |
+| Declared byte count differs from streamed bytes | Refused | `:core:data` unit + codec integration | ✅ Green |
+| Manifest/document/asset/total expansion limit exceeded | Refused without OOM or partial import | unit + JVM codec stress | ✅ Pure limits green |
+| Document SHA-256 mismatch | Refused; no live writes | JVM codec integration | ✅ Green |
+| Asset SHA-256 mismatch or same name/different bytes | Refused; no dedupe poisoning | JVM codec integration | ✅ Green |
+| Decoded document image references differ from its manifest asset list | Refused; no missing image or undeclared payload can commit | JVM codec integration | ✅ Green |
+| Extreme compression ratio / ZIP bomb | Streaming abort at configured expanded-byte/count boundary | JVM codec stress | ✅ Green at configured ratio/count/expanded limits |
+| Truncated/corrupt ZIP or malformed manifest JSON | Actionable failure; existing library unchanged | JVM/Android integration | ✅ JVM green; Android error mapping pending |
 | Disk full during staging | Failure with an exit; existing library unchanged; staging cleaned | Android/device | ⬜ Pending |
-| Cancellation/process death during staging | Existing library unchanged; stale staging recoverable/cleanable | Android/device | ⬜ Pending |
-| Failure during commit | All-or-nothing project visibility; Room rebuilds from files | JVM/Android integration | ⬜ Pending |
-| Existing project id collision | Restore mints a new local id; never overwrites | repository integration | ⬜ Pending |
-| Repeated restore of same backup | Safe additive duplicates; assets deduplicate by verified hash | repository integration | ⬜ Pending |
+| Cancellation/process death during staging | Existing library unchanged; stale staging recoverable/cleanable | Android/device | 🟨 JVM cancellation cleanup green; process/device pending |
+| Failure during commit | All-or-nothing project visibility; Room rebuilds from files | JVM/Android integration | 🟨 Journal/rollback primitive green; repository lock, recovery wiring, and Room integration pending |
+| Existing project id collision | Restore mints a new local id; never overwrites | repository integration | 🟨 Pure allocator green; repository integration pending |
+| Repeated restore of same backup | Safe additive duplicates; assets deduplicate by verified hash | repository integration | 🟨 Pure id/allocation and verified-asset dedupe green; repository integration pending |
 | Backup → uninstall/wipe → restore | All zines, text, photos, covers, timestamps, and print output survive | physical device | ⬜ Pending |
 | Restore onto a second device/API level | Same library and rendered/printed result | three-device gate incl. API 24 | ⬜ Pending |
 | SAF provider revokes/returns null/throws mid-stream | Calm retry/alternate exit; no partial restore | Android/device | ⬜ Pending |
