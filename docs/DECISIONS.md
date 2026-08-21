@@ -119,6 +119,7 @@
 | [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** Grows the catalogue to ~51 inside the frozen families; upholds the randomiser ban; withdraws app-authored composites; ships search. | Proposed |
 | [ADR-108](#adr-108) | ✅ **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed | **Accepted 2026-08-20**; R4 shipped as *generation* — the tile renders the authored outline, `BenchArtGlyphs` deleted.
 | [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The open question is not rendering but *when the maker first sees the join* — no screen shows it | Proposed |
+| [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12608,3 +12609,31 @@ Three challenges, honestly:
   re-derivation in every cell, and the `safeAreaInsetPt` claim survived an attempt to falsify it.
 - 🟨 **Not re-reviewed after these edits.** The corrections above are the implementer's, not the
   reviewer's, and the strengthened skeptical pass (§challenge 3) is new material rather than a fix.
+
+---
+
+## ADR-110 {#adr-110}
+
+### One file owns the library — additive v2 `.zine` backup beside readable v1
+
+**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025)
+
+#### Context and decision
+
+Zinely's local-only promise makes a user-held backup a durability requirement. The original `ZinePackageManifest` is version 1 and contains one project; V1 product law now requires **all zines in one user-owned file**. Relabelling the old payload as v2 would be a compatibility defect.
+
+1. **Version 1 remains the legacy single-project contract.** A future reader routes `packageVersion == 1` there. It accepts v2 only when `packageVersion == 2` and `kind == "library"`; unknown versions and kinds are refused before live writes.
+2. **Version 2 is one whole-library archive.** `manifest.json` contains project metadata and one global asset table. Documents live at canonical `projects/<safe-id>/document.json` paths and import masters once at `assets/<sha256>`. Thumbnails and Room rows are derived and excluded.
+3. **The public manifest preserves product identity, not private sidecars.** It records ids, titles, format/paper, timestamps, document schema/path/hash/size, asset references, and the optional persisted cover pair. Unknown or partial cover metadata warns and degrades to a coverless shelf item rather than blocking otherwise healthy work, matching the existing repository contract; its raw value may remain preserved for a newer reader.
+4. **Exact closure is required.** References, manifest records, and staged entries must agree exactly. The codec layer must verify streamed sizes and every SHA-256, decode each document, then prove that its image references exactly match that project's manifest asset list.
+5. **Restore is staged, fail-closed, and additive.** Nothing touches live paths until the complete archive validates. Existing projects are never overwritten; id collisions mint a new consistent local id. Verified assets may deduplicate by hash. Room reconciles from committed files afterward.
+6. **Initial refusal caps** are 4 MiB manifest, 16 MiB per document, 128 MiB per asset, 8 GiB expanded total, 10,000 projects, 100,000 assets, and 4096 px per image dimension. Readers enforce counts and expanded bytes while streaming rather than trusting metadata.
+7. **This package is intentionally pure.** `:core:data` owns the serializable contract and structural validator. ZIP staging belongs in the pure-JVM durability layer; SAF and storage-space checks belong in Android adapters; the user surface still requires design freeze. No network, account, telemetry, encryption claim, or cloud path is introduced.
+
+#### Consequences and verification boundary
+
+The whole library can eventually move through one user-chosen file without making Room authoritative or duplicating assets. Integrity checks detect corruption but do not authenticate or encrypt. Repeated restores may create safe project duplicates; any future merge semantics need a new decision. Staging also needs temporary space and an actionable no-space exit.
+
+The executable and device evidence is [the backup torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md). This package closes only its pure manifest/structure rows; it does not claim a working user journey before byte verification, transactional commit, SAF, frozen UI, and physical-device passes are green.
+
+**Independent review (2026-08-21):** `GO-WITH-FIXES` first found that unknown or partial cover metadata was being treated more harshly than the existing repository contract. The validator now emits a non-blocking warning and the test/matrix pin that degradation. Re-review verdict: **GO**, with no remaining fix in this package's scope.

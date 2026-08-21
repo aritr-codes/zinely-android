@@ -5,9 +5,10 @@ import com.aritr.zinely.core.model.ZineFormat
 import kotlinx.serialization.Serializable
 
 /**
- * The `.zine` package version this build writes. The package is a self-contained zip
+ * The legacy single-project `.zine` package version. The package is a self-contained zip
  * (`manifest.json` + `document.json` + `assets/` + `thumbnail.png`) designed now for forward
- * compatibility; SAF wiring lands in V1 (S2 spike §6, [ADR-009]).
+ * compatibility. It remains readable beside the v2 whole-library contract; do not relabel this
+ * payload as v2 (S2 spike §6, [ADR-009]).
  */
 public const val CURRENT_PACKAGE_VERSION: Int = 1
 
@@ -40,9 +41,9 @@ public data class ZineProjectMetadata(
 )
 
 /**
- * The manifest at the root of a `.zine` backup package. Carries the **package** version and the
- * embedded **document** schema version (two independent axes, S2 spike §6) so restore can gate on
- * compatibility, plus the project metadata and the asset table to verify on import.
+ * The manifest at the root of a legacy v1 single-project `.zine` package. Carries the **package**
+ * version and the embedded **document** schema version (two independent axes, S2 spike §6) so
+ * restore can gate on compatibility, plus the project metadata and asset table to verify on import.
  */
 @Serializable
 public data class ZinePackageManifest(
