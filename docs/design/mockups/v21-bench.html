@@ -657,9 +657,9 @@ const DECOR={
 /* ===== ink model — the frozen riso spot-ink palette, unchanged ============ */
 const INKS=[['Matcha','#7C8A3F'],['Forest','#3E5E3A'],['Strawberry','#E27F89'],['Brick','#B0503F'],
             ['Sunflower','#E7B53C'],['Ochre','#D19A3C'],['Aqua','#57B0A9'],['Cornflower','#6E86C9'],
-            ['Plum','#8A5A9B'],['Ink','#2A251E']];
+            ['Plum','#8A5A9B'],['Ink','#2A251E','Spot ink']];
 const TINTS=[['Cream','#F1E9D6'],['Blush','#F0DED9'],['Sky','#DDE9EE'],['Sage','#E1E9D2'],['Kraft','#E4D3B4']];
-const NEUT=[['Ink','#2A251E'],['Slate','#5B5347'],['Stone','#8C8269'],['Fog','#B7AD93']];
+const NEUT=[['Ink','#2A251E','Neutral ink'],['Slate','#5B5347'],['Stone','#8C8269'],['Fog','#B7AD93']];
 const PRESETS=[['Two-colour',['#2A251E','#E27F89']],['Warm zine',['#B0503F','#E7B53C','#F1E9D6']],
                ['Cool zine',['#3E5E3A','#57B0A9','#DDE9EE']]];
 
@@ -734,8 +734,8 @@ $('canvasArea').onclick=e=>{ if(e.target.closest('.el')||e.target.closest('.ctx'
   e.stopPropagation(); deselect(); };
 
 /* ===== ink popover ======================================================== */
-const pots=list=>`<div class="pots">${list.map(([n,c])=>
-  `<button class="pot" style="background:${c}" title="${n}" aria-label="${n}" data-ink="${c}" data-name="${n}"></button>`).join('')}</div>`;
+const pots=list=>`<div class="pots">${list.map(([n,c,spoken])=>
+  `<button class="pot" style="background:${c}" title="${n}" aria-label="${spoken||n}" data-ink="${c}" data-name="${n}"></button>`).join('')}</div>`;
 function openInk(){
   if(!sel) selectByKind('text');
   $('inkpop').innerHTML =
@@ -859,7 +859,7 @@ const FAMILIES=['Tape & fixings','Stamps & marks','Cut paper','Cut shapes'];
 // is not authored -- in which case the tile carries the word rather than a picture of a mark that does
 // not exist.  `aria-disabled` mirrors what the Compose tile reports to the platform tree.
 const tile=([id,name,d])=>`<button class="tile${d?'':' na'}" data-supply="${id}" aria-label="${name}"
-  title="${name}"${d?'':' aria-disabled="true"'}>${d?svg(d):'<span class="naw">Not available yet</span>'}`
+  title="${name}"${d?'':' aria-disabled="true"'}>${d?svg(d):'<span class="naw">Not<br>yet</span>'}`
   +'<span class="fav" role="button" aria-label="Favourite">☆</span></button>';
 function openArt(){
   // AMENDED 2026-08-20 (A7).  Every `d` below is GENERATED from SupplyCatalog's authored outline
@@ -1256,3 +1256,34 @@ move.
 <style>
 .snack.with-context{bottom:var(--stacked-bottom)}
 </style>
+
+<!-- ===========================================================================
+A9 · 2026-08-22 (owner accessibility ruling, D-083 / D-103) — print can stay short;
+speech must stay unambiguous.
+
+D-083: the two dark swatches still DRAW `Ink`; changing the printed pigment name would make the
+palette solve a screen-reader collision by changing everybody's vocabulary. Their accessible names
+now carry the band distinction instead: `Spot ink` in Inks and `Neutral ink` in Neutrals. The context
+verb remains `Ink`. `title` and `data-name` remain the visible pigment name, while `aria-label` owns
+the spoken distinction. Every other swatch continues to use one name for both channels.
+
+D-103: an unauthored Art tile now DRAWS `Not yet` on two intentional lines, which stays on word
+boundaries at the verified large-text scale. Its disabled state continues to SPEAK `Not available yet`; that fuller sentence is
+useful when there is no visual context and must not be shortened merely to fit a tile. This deliberately
+overturns A7's requirement that the visible and spoken strings be verbatim. A7's actual invariant —
+unauthored supplies draw no invented mark and explain their disabled state — remains unchanged.
+
+No colour, geometry, action, availability, or archive/rendering semantics change in this amendment.
+=========================================================================== -->
+
+<!-- ===========================================================================
+A10 · 2026-08-22 (accessibility parity ruling) — 50px is a resting minimum, not a ceiling.
+
+The frozen `.ctx button` declares `min-width:50px` and vertical padding, but no fixed height. Compose
+had turned its default-scale intrinsic height into a fixed 50dp box, which clipped Replace / Ink /
+Delete captions at font scale 1.8. Context verbs now grow vertically when their text metrics require
+it. The bar keeps its bottom inset, copy, order and horizontal geometry.
+
+A8 continues to govern coexistence: the placement snack measures the grown bar's live height and
+keeps 12px clear between painted bounds. No text is shrunk, capped, hidden or ellipsized.
+=========================================================================== -->

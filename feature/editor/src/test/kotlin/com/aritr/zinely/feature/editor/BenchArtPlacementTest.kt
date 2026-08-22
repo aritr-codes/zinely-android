@@ -2,12 +2,15 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Effect
@@ -69,10 +72,13 @@ class BenchArtPlacementTest {
         )
     }
 
-    private fun setScreen(store: EditorStore) {
+    private fun setScreen(store: EditorStore, fontScale: Float = 1f) {
         composeRule.setContent {
-            ZinelyTheme {
-                EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(360.dp, 720.dp))
+            val base = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
+                ZinelyTheme {
+                    EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(360.dp, 720.dp))
+                }
             }
         }
         composeRule.waitForIdle()
@@ -233,6 +239,23 @@ class BenchArtPlacementTest {
         composeRule.onNodeWithTag(BenchSnackActionTestTag).performClick()
         composeRule.waitForIdle()
         assertTrue("the snack's Undo must reverse the placement", decor(store).isEmpty())
+    }
+
+    @Test
+    fun `Given a placement at large text, Then its feedback still clears the grown context bar`() {
+        val store = store()
+        setScreen(store, fontScale = 1.8f)
+        openArt()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.waitForIdle()
+
+        val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
+        val context = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInRoot
+        val frozenGapPx = with(composeRule.density) { 12.dp.toPx() }
+        assertTrue(
+            "D-089/A10: large-text placement feedback must clear the grown tools by 12dp; snack=$snack context=$context",
+            snack.bottom <= context.top - frozenGapPx + 1.5f,
+        )
     }
 
     @Test

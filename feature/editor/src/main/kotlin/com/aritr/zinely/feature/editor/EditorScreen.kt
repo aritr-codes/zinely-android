@@ -588,6 +588,7 @@ public fun EditorScreen(
         // it (`v2-bench.html:692`, `:697`). Two floating cards share this 12dp inset, so one of them is
         // always the one that is up.
         !inkPopoverVisible
+    var contextBarHeight by remember { mutableStateOf(BenchContextBarReservedHeightDp) }
 
     // The popover belongs to the element that summoned it. Any change of that element — a reselect, a
     // deselect, a page change, a delete — stands it down, which is the freeze doing the same at four
@@ -1587,6 +1588,9 @@ public fun EditorScreen(
                             else -> Unit
                         }
                     },
+                    onHeightChanged = { measured ->
+                        contextBarHeight = maxOf(BenchContextBarReservedHeightDp, measured)
+                    },
                     modifier = ctxModifier,
                 )
 
@@ -1693,7 +1697,7 @@ public fun EditorScreen(
                     // selected element's verbs reachable by stacking the snack one complete bar footprint
                     // above the shared floor; its own 12dp inset becomes the required clear gap.
                     bottomClearance = if (ctxVisible) {
-                        BenchContextBarReservedHeightDp + BenchSnackStackRotationAllowance
+                        contextBarHeight + BenchSnackStackRotationAllowance
                     } else {
                         0.dp
                     },

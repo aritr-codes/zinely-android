@@ -68,6 +68,8 @@ public const val BenchArtSheetTestTag: String = "bench-art-sheet"
  */
 public fun benchArtTileTestTag(supplyId: String): String = "bench-art-tile-$supplyId"
 
+internal fun benchArtNotYetTestTag(supplyId: String): String = "bench-art-not-yet-$supplyId"
+
 /** Per-tile test tag on the Recent shelf. See [benchArtTileTestTag] for why it is a separate namespace. */
 public fun benchArtRecentTileTestTag(supplyId: String): String = "bench-art-recent-tile-$supplyId"
 
@@ -226,8 +228,9 @@ internal val BenchArtTilt = floatArrayOf(0f, -1.6f, 1.4f)
  * its own frozen glyph. That was the one part of this reading that could not survive its own premise. There is
  * no authored outline for those four, so the glyph was not a depiction of the supply; it was an invention of
  * one, and A5's *"the glyphs DEPICT the supplies"* cannot license depicting something that does not exist.
- * The four now carry the **word** [Copy.BenchVerbs.NOT_YET] and no mark. Which is also the answer to D-086's real complaint:
- * `stateDescription` was speaking that word to a screen reader while a sighted maker got only a dimmer tile
+ * The four now carry a compact visible word from [Copy.BenchArt.NOT_YET] and no mark. Which is also the
+ * answer to D-086's real complaint: `stateDescription` was speaking [Copy.BenchVerbs.NOT_YET] to a screen
+ * reader while a sighted maker got only a dimmer tile
  * and was left to infer it — and the most available inference for a dim tile you just tapped is *the app is
  * broken*, not *this one isn't built yet*.
  *
@@ -517,15 +520,15 @@ private fun BenchArtTile(
         } else {
             // ⚠ **No glyph.** Drawing a picture of a mark nobody has authored is depicting an invention,
             // which is the one part of the sixteen-tiles reading that could not survive its own premise
-            // (`v21-bench.html` A7). The word is what `stateDescription` has always spoken; the only thing
-            // that changes is that a sighted maker is now told it too — [D-086].
+            // (`v21-bench.html` A7). A9 shortens only the drawn label; the fuller disabled reason remains
+            // in `stateDescription` for a screen reader.
             Text(
                 // `.tile.na .naw{text-transform:uppercase}`. **Compose has to be told** — the same trap
                 // [BenchArtLabel] documents for `.lbl` and solves the same way. The first draft of this
                 // control dropped it and the freeze read NOT AVAILABLE YET while the app read
-                // `Not available yet`; a review caught it, no assertion did, and the measurement test
+                // `Not available yet`; a review caught it, no assertion did, and the parity test
                 // below now exists so the next one is caught by the suite instead.
-                text = Copy.BenchVerbs.NOT_YET.uppercase(),
+                text = Copy.BenchArt.NOT_YET.uppercase().replace(' ', '\n'),
                 color = colors.inkSoft.copy(alpha = BenchArtNotYetAlpha),
                 fontSize = BenchArtNotYetSize,
                 fontWeight = FontWeight.Bold,
@@ -534,19 +537,11 @@ private fun BenchArtTile(
                 fontFamily = ZinelyV21Fonts.Work,
                 letterSpacing = BenchArtNotYetTracking,
                 lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                // Two short words on a square tile: centred, and allowed to wrap rather than clip.
-                // ⚠ **Measured on device at font scale 1.8 (2026-08-20): it does NOT clip.** The prediction
-                // that stood here — that the word "can still outgrow the tile" — was written without running
-                // the scale. What happens instead is a mid-word break: `NOT` / `AVAILABL` / `E YET`, every
-                // glyph drawn, inside the tile. Recorded as [D-103], which also corrects the explanation:
-                // the tile does NOT grow with the text (it is `weight(1f)` + `aspectRatio(1f)`, so its size
-                // comes from the column, not the font), and the label is drawn at 55% alpha, not full.
-                // Still not solved by shrinking text that is already the smallest on the surface — and the
-                // freeze cannot settle it either, because `AVAILABLE` fits the mockup's own tile, so
-                // `v21-bench.html` never exercises overflow and its silence on `word-break` is silence
-                // rather than specification. `contentDescription` carries the supply's name regardless, so
-                // nothing is unreachable at any scale.
+                // A9 / D-103: the visible copy is intentionally shorter than the spoken disabled reason
+                // and breaks only at its authored word boundary. Large text therefore keeps both words
+                // without capping font scale or clipping an explanation.
                 textAlign = TextAlign.Center,
+                modifier = Modifier.testTag(benchArtNotYetTestTag(supplyId)),
             )
         }
     }

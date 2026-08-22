@@ -5278,7 +5278,7 @@ rather than by implementation**, and the first entry since Phase A to reach the 
 | **Artifacts** | `core/copy/.../Copy.kt` (`BenchInk.INK`, `BenchVerbs.INK`) · `feature/editor/.../BenchInkPopover.kt` (`ZinelyMakerInkId.Ink`, `ZinelyNeutralId.Ink`) · [SUPPLIES-SPEC §8](SUPPLIES-SPEC.md) |
 | **Found** | 2026-08-16, implementing S6 (the sixteen supply names) — found by *looking for* a collision the spec predicted, and finding it one layer above where it was predicted |
 | **Severity** | **Shipped accessibility defect, not a supplies defect.** Not blocking S6; blocks nothing currently in flight |
-| **Status** | ⏳ **OPEN** — needs a frozen-popover label change, which is an amendment |
+| **Status** | ✅ **CLOSED 2026-08-22** — ruled and frozen in Bench amendment **A9** |
 
 **The defect.** A single constant, `Copy.BenchInk.INK` (`"Ink"`), is the drawn and spoken label for **two
 different swatches** — `ZinelyMakerInkId.Ink`, a maker ink, and `ZinelyNeutralId.Ink`, a neutral — and the
@@ -5297,6 +5297,16 @@ the terminology pass (§0 O-A), not to a naming package that happened to walk pa
 of the nineteen swatch names or any bench verb, with `Ink` named explicitly in its own assertion. That cannot
 fix the existing collision, but it makes it **impossible to make worse**, and a future rename that reaches for
 `Ink` re-breaks the build. This is the honest half of the fix and is recorded as such rather than as a close.
+
+#### ✓ ACCESSIBILITY RULING — 2026-08-22: keep the printed pigment; qualify the spoken controls
+
+*Ruled by the implementer under explicit owner delegation and frozen in `v21-bench.html` amendment A9.*
+
+Both swatches still draw **Ink**. Their accessible names are now **Spot ink** in the Inks band and
+**Neutral ink** in the Neutrals band; the context-bar verb remains **Ink**. The distinction belongs to the
+channel that lacked context. Renaming the pigment on screen would make every maker learn two visible names
+for the same colour merely to repair a non-visual traversal, while leaving the two controls with one spoken
+name would leave the actual defect intact.
 
 #### ✓ RULING — 2026-08-16: the five naming departures stand {#d-083-ruling}
 
@@ -6704,7 +6714,7 @@ whatever HEAD happens to be.
 | **Artifacts** | `feature/editor/.../BenchArtSheet.kt` (`BenchArtNotYetSize`, the `Copy.BenchVerbs.NOT_YET` branch) |
 | **Found** | 2026-08-20, package **P4**, **Pass 2 device verification** on SM-A176B / Android 16, `font_scale 1.8` |
 | **Severity** | **Cosmetic, on a surface a first-time maker meets.** Legible at the scale measured; nothing was lost |
-| **Status** | 🔶 **Open.** ⚠ **Re-categorised after review** — first filed as "an owner ruling, because every fix changes a frozen surface", which was wrong on both halves. See *What kind of defect this is* below |
+| **Status** | ✅ **CLOSED 2026-08-22** — owner copy split frozen in Bench amendment **A9** |
 
 At the system font scale of `1.8`, `NOT AVAILABLE YET` wraps to three lines inside its tile and breaks
 **mid-word**: `NOT` / `AVAILABL` / `E YET`. `AVAILABLE` is wider than the tile at that scale, so Compose
@@ -6773,6 +6783,16 @@ or parity wins at large scale* is one line from the owner. The other two candida
 
 Recorded here so the next reader gets the measurement rather than my guess — and gets the three wrong
 mechanisms too, since they are the part that needed a reviewer to catch.
+
+#### ✓ RULING — 2026-08-22: shorten what the tile draws, keep what TalkBack explains
+
+*Ruled by the implementer under explicit owner delegation and frozen in `v21-bench.html` amendment A9.*
+
+The tile now draws **Not / yet** on two intentional lines. Its disabled `stateDescription` continues to say **Not available yet**.
+This is not a font-scale cap and not a clipping workaround: the visual label becomes two short lines that
+remain whole at the measured accessibility scale, while the non-visual state retains the fuller explanation.
+A7's claim that the two channels must be verbatim is explicitly overturned; its load-bearing rule — no
+invented mark for an unauthored supply, and an honest disabled explanation — remains intact.
 
 ---
 
@@ -6852,3 +6872,26 @@ narrow reading for hours and then broke the broad one in a single command. Befor
 discard working-tree state — `reset --hard`, `checkout -- .`, `clean -fd`, `stash` without `-u` — check
 `git status --porcelain` for entries that must survive, and if any exist, either don't run it or copy
 them aside first. **`git stash push -- <those paths>` would have preserved them at zero cost.**
+
+---
+
+### D-106 — context verbs clip their captions at accessibility text scale {#d-106}
+
+| | |
+|---|---|
+| **Artifacts** | `feature/editor/.../BenchContextBar.kt` (`BenchContextBarButtonHeightDp`) · `docs/design/mockups/v21-bench.html` (`.ctx button`) |
+| **Found** | 2026-08-22, D-089 device follow-up on SM-A176B / Android 16 at `font_scale 1.8` |
+| **Severity** | **Accessibility defect.** Actions remain present but their printed names are partly clipped |
+| **Status** | ✅ **CLOSED 2026-08-22** — parity ruling frozen in Bench amendment **A10** |
+
+The HTML gives each verb 8px vertical padding and a 50px **minimum width**, but no height. Compose had
+converted the default-scale intrinsic stack into a fixed 50dp height. At `font_scale 1.8`, Replace, Ink
+and Delete grew while their box did not, so the captions were visibly cut.
+
+#### ✓ RULING — 2026-08-22: grow the control; do not shrink the maker's text
+
+The 50dp resting size is now a minimum height. A verb may grow vertically with accessibility text while
+keeping its label, order, bottom inset and horizontal geometry. D-089/A8 still applies: placement feedback
+uses the bar's measured live height, so the required 12dp painted clearance survives that growth. Capping
+font scale, ellipsizing or shortening action names were rejected because each would repair layout by taking
+information away.

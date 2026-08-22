@@ -80,7 +80,11 @@ internal const val BenchInkDoneTestTag: String = "bench-ink-done"
  * The pair is modelled here rather than passed as a bare [Color] because a swatch with no name is a
  * control a screen reader cannot announce, and the frozen arrays carry both (`['Matcha','#7C8A3F']`).
  */
-internal data class BenchInkSwatch(val name: String, val value: Color)
+internal data class BenchInkSwatch(
+    val name: String,
+    val value: Color,
+    val spokenName: String = name,
+)
 
 /** One labelled band of the popover — an `.inklbl` over a `.pots` row (`v21-bench.html:705-713`). */
 internal data class BenchInkBand(val label: String, val swatches: List<BenchInkSwatch>)
@@ -133,7 +137,14 @@ internal data class BenchInkPreset(val name: String, val dots: List<BenchInkSwat
 internal fun benchInkBands(inks: ZinelyContentInks, kind: BenchVerbKind): List<BenchInkBand> {
     val band1 = BenchInkBand(
         Copy.BenchInk.INKS,
-        inks.makerInks.map { BenchInkSwatch(benchInkName(it.id), it.value) },
+        inks.makerInks.map {
+            val name = benchInkName(it.id)
+            BenchInkSwatch(
+                name = name,
+                value = it.value,
+                spokenName = if (it.id == ZinelyMakerInkId.Ink) Copy.BenchInk.SPOT_INK_SPOKEN else name,
+            )
+        },
     )
     val tints = BenchInkBand(
         Copy.BenchInk.PAPER_TINTS,
@@ -141,7 +152,14 @@ internal fun benchInkBands(inks: ZinelyContentInks, kind: BenchVerbKind): List<B
     )
     val band3 = BenchInkBand(
         Copy.BenchInk.NEUTRALS,
-        inks.neutrals.map { BenchInkSwatch(benchInkName(it.id), it.value) },
+        inks.neutrals.map {
+            val name = benchInkName(it.id)
+            BenchInkSwatch(
+                name = name,
+                value = it.value,
+                spokenName = if (it.id == ZinelyNeutralId.Ink) Copy.BenchInk.NEUTRAL_INK_SPOKEN else name,
+            )
+        },
     )
     return when (kind) {
         BenchVerbKind.TEXT -> listOf(band1, band3)
@@ -554,7 +572,7 @@ private fun BenchInkSwatchDot(swatch: BenchInkSwatch, selected: Boolean, onClick
                 onClick = pick,
             )
             .testTag(BenchInkSwatchTestTag)
-            .semantics { contentDescription = Copy.BenchInk.swatchLabel(swatch.name) },
+            .semantics { contentDescription = Copy.BenchInk.swatchLabel(swatch.spokenName) },
     )
 }
 

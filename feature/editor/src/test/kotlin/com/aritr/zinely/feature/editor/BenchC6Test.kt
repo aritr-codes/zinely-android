@@ -799,19 +799,19 @@ class BenchC6Test {
         composeRule.onNodeWithContentDescription(Copy.BenchInk.FOREST)
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Selected, true))
 
-        // …and the colour that appears TWICE rings once. `Ink #2A251E` is a member of both the Inks band
-        // and the Neutrals band (`ZinelyContentInks.kt:219`, `:231`; `INKS` `:596` and `NEUT` `:598` in
-        // the freeze), and both bands are drawn for a text target. Ringing by colour equality ringed it
-        // twice and published `Selected` on two RadioButton nodes in one group — invisible to the check
-        // above, which uses a unique colour, and invisible to M15. Independent review found it; this is
-        // the fixture that would have.
-        val inkSwatches = composeRule.onAllNodesWithContentDescription(Copy.BenchInk.INK)
-            .fetchSemanticsNodes()
-        assertEquals("`Ink` is drawn in two bands, by the freeze's own repetition", 2, inkSwatches.size)
-        composeRule.onAllNodesWithContentDescription(Copy.BenchInk.INK)[0].performClick()
+        // The same pigment appears in two bands, but D-083/A9 gives each radio a distinct spoken name.
+        // The printed `Ink` label remains shared; a non-visual traversal can now tell which band it is in.
+        composeRule.onNodeWithContentDescription(Copy.BenchInk.SPOT_INK_SPOKEN).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(Copy.BenchInk.NEUTRAL_INK_SPOKEN).assertIsDisplayed()
+        assertEquals(
+            "the ambiguous bare Ink name must not survive on either swatch",
+            0,
+            composeRule.onAllNodesWithContentDescription(Copy.BenchInk.INK).fetchSemanticsNodes().size,
+        )
+        composeRule.onNodeWithContentDescription(Copy.BenchInk.SPOT_INK_SPOKEN).performClick()
         composeRule.waitForIdle()
         assertEquals(
-            "the duplicated ink rings exactly one swatch",
+            "the shared pigment rings exactly one swatch",
             1,
             composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
                 .fetchSemanticsNodes()
@@ -994,7 +994,7 @@ class BenchC6Test {
         val store = store()
         setScreen(store)
         openInk(store)
-        val expected = benchInkBands(inks, BenchVerbKind.TEXT).flatMap { it.swatches }.map { it.name }
+        val expected = benchInkBands(inks, BenchVerbKind.TEXT).flatMap { it.swatches }.map { it.spokenName }
         val announced = composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
             .fetchSemanticsNodes()
             .mapNotNull { it.config.getOrNull(SemanticsProperties.ContentDescription)?.firstOrNull() }

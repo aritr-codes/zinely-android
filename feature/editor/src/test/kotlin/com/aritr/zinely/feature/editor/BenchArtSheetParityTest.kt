@@ -205,17 +205,16 @@ class BenchArtSheetParityTest {
             listOf("tape.torn", "fix.clip", "paper.strip", "paper.underline"),
             unauthored,
         )
-        // The word is the COPY LAYER's, not a phrase this file invents: the mockup and the app must speak
-        // the same sentence, and the app speaks `Copy.BenchVerbs.NOT_YET`. Caught by reading the golden —
-        // the freeze said "Not yet" and the screen said "Not available yet".
+        // The word is the COPY LAYER's, not a phrase this file invents. A9 deliberately keeps the fuller
+        // reason in the spoken state while the tile draws the compact label.
         // ⚠ `frozen.contains(word)` was the first version of this and it is half-vacuous: one occurrence
         // anywhere in 1200 lines passes it — including inside this amendment's own log entry, and including
         // a build that put the word on all sixteen tiles. What must hold is that the word appears **only**
         // through the template's `d ? mark : word` ternary, so it is the ternary that is asserted.
         val template = frozen.substringAfter("const tile=").substringBefore("function openArt")
         assertTrue(
-            "the frozen tile template must carry ${Copy.BenchVerbs.NOT_YET} for an unauthored supply",
-            template.contains("${Copy.BenchVerbs.NOT_YET}</span>"),
+            "the frozen tile template must carry ${Copy.BenchArt.NOT_YET} for an unauthored supply",
+            template.contains("${Copy.BenchArt.NOT_YET.replace(" ", "<br>")}</span>"),
         )
         assertTrue(
             "the word must be the ALTERNATIVE to a mark, never drawn beside one",

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -13,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -24,6 +26,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.ColorRgba
@@ -77,24 +80,27 @@ class BenchContextBarTest {
     private var inkSoftArgb: Int = 0
     private var leafArgb: Int = 0
 
-    private fun host(verbs: List<BenchVerb>, visible: Boolean = true) {
+    private fun host(verbs: List<BenchVerb>, visible: Boolean = true, fontScale: Float = 1f) {
         composeRule.setContent {
             ZinelyTheme {
-                paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
-                inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
-                jamTextArgb = ZinelyTheme.v21Colors.jamText.toArgb()
-                inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
-                leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
-                Box(
-                    Modifier.size(360.dp, 200.dp).testTag(HOST).background(BACKDROP),
-                    contentAlignment = Alignment.BottomCenter,
-                ) {
-                    BenchContextBar(
-                        visible = visible,
-                        verbs = verbs,
-                        onVerb = {},
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                val base = LocalDensity.current
+                CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
+                    paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                    inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
+                    jamTextArgb = ZinelyTheme.v21Colors.jamText.toArgb()
+                    inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
+                    leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
+                    Box(
+                        Modifier.size(360.dp, 200.dp).testTag(HOST).background(BACKDROP),
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        BenchContextBar(
+                            visible = visible,
+                            verbs = verbs,
+                            onVerb = {},
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
             }
         }
@@ -383,6 +389,26 @@ class BenchContextBarTest {
         val drawn = with(composeRule.density) { BenchContextBarButtonHeightDp.toPx() }
         assertEquals(drawn.toDouble(), h.toDouble(), 1.0)
         assertTrue("the drawn height clears the target floor by itself", drawn >= floor)
+    }
+
+    @Test
+    fun `the decor labels can grow at font scale 1_8 without spilling outside their buttons or bar`() {
+        host(benchContextVerbs(BenchVerbKind.DECOR), fontScale = 1.8f)
+
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        val minButtonHeight = with(composeRule.density) { BenchContextBarButtonHeightDp.toPx() }
+        listOf(Copy.BenchVerbs.REPLACE, Copy.BenchVerbs.INK, Copy.BenchVerbs.DELETE).forEach { label ->
+            val button = composeRule.onNodeWithTag("$BenchContextBarTestTag-$label")
+                .fetchSemanticsNode().boundsInWindow
+            assertTrue(
+                "$label should grow beyond the 50dp resting minimum at fontScale 1.8; got $button",
+                button.height > minButtonHeight + 1.5f,
+            )
+            assertTrue(
+                "$label must stay inside the bar at fontScale 1.8; button=$button bar=$bar",
+                button.top >= bar.top - 1f && button.bottom <= bar.bottom + 1f,
+            )
+        }
     }
 
     // ── Row 2.10 — the bar's own geometry ───────────────────────────────────────────────────────────

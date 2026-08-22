@@ -333,6 +333,10 @@ public object Copy {
         public const val PLUM: String = "Plum"
         public const val INK: String = "Ink"
 
+        /** D-083: the two drawn `Ink` swatches need different names in a non-visual traversal. */
+        public const val SPOT_INK_SPOKEN: String = "Spot ink"
+        public const val NEUTRAL_INK_SPOKEN: String = "Neutral ink"
+
         // — band 2, the paper tints (fenced for a text target, see above) —
         public const val CREAM: String = "Cream"
         public const val BLUSH: String = "Blush"
@@ -374,6 +378,11 @@ public object Copy {
          * the tap actually applies (OD-24).
          */
         public fun presetLabel(name: String, primary: String): String = "$name. Primary ink $primary"
+    }
+
+    public object BenchArt {
+        /** Compact visible state for a tile; the fuller spoken reason remains [BenchVerbs.NOT_YET]. */
+        public const val NOT_YET: String = "Not yet"
     }
 
     /**

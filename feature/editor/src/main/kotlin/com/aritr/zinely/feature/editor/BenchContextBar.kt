@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -50,6 +52,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
@@ -319,6 +322,7 @@ internal fun BenchContextBar(
     verbs: List<BenchVerb>,
     onVerb: (BenchVerb) -> Unit,
     modifier: Modifier = Modifier,
+    onHeightChanged: (Dp) -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
     val motion = if (ZinelyTheme.motion.reduceMotion) 0 else BenchContextBarEnterMillis
@@ -326,9 +330,12 @@ internal fun BenchContextBar(
     // The freeze rises the bar by a FIXED 8px, not by its own height, so the slide offset is a
     // converted Dp rather than a fraction of `fullHeight`.
     val enterPx = with(LocalDensity.current) { BenchContextBarEnterOffsetDp.roundToPx() }
+    val density = LocalDensity.current
     AnimatedVisibility(
         visible = visible,
-        modifier = modifier,
+        modifier = modifier.onSizeChanged { size ->
+            if (visible && size.height > 0) onHeightChanged(with(density) { size.height.toDp() })
+        },
         enter = slideInVertically(tween(motion, easing = BenchContextBarEnterEasing)) { enterPx } + fadeIn(spec),
         exit = slideOutVertically(tween(motion, easing = BenchContextBarEnterEasing)) { enterPx } + fadeOut(spec),
     ) {
@@ -394,6 +401,7 @@ internal fun BenchContextBar(
 @Composable
 private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = ZinelyTheme.v21Colors
+    val fontScale = LocalDensity.current.fontScale
     // `.ctx button.on{background:var(--leaf);color:var(--on-leaf)}` — the freeze's A4 amendment, made in
     // the HTML first. A toggle with no on appearance was measured on device (SM-A176B / Android 16) as
     // pixel-identical before and after its tap; the halftone on the canvas is not feedback when the photo
@@ -414,7 +422,10 @@ private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modi
     val fire = benchTap(if (verb.danger) ZinelyHaptic.Boundary else ZinelyHaptic.Tick, onClick)
     Column(
         modifier = modifier
-            .height(BenchContextBarButtonHeightDp)
+            .then(
+                if (fontScale <= 1f) Modifier.height(BenchContextBarButtonHeightDp)
+                else Modifier.heightIn(min = BenchContextBarButtonHeightDp),
+            )
             .defaultMinSize(minWidth = BenchContextBarButtonMinWidthDp)
             // `.icon-btn:disabled{opacity:.35}` (`v21-bench.html:345`). `.ctx button` has no disabled rule
             // of its own — the freeze never disables one — so this borrows the corpus's single existing
@@ -519,13 +530,11 @@ internal val BenchContextBarGapDp = ZinelyV21Dimens.gapHair
  * intrinsic stack is `8 + 17 + 2 + ~15.4 + 8`, which lands within half a dp of **50** — the same number the
  * freeze independently gives it as `min-width`, so the verb is a 50dp square at rest.
  *
- * ### Why this is pinned where [BenchBottomBar]'s `.bar` was left intrinsic
+ * ### Why this is a minimum where [BenchBottomBar]'s `.bar` was left intrinsic
  *
- * Because [BenchContextBarReservedHeightDp] is a **compile-time band** that `EditorScreen` subtracts from
- * the canvas *before* the bar is measured, and an intrinsic height cannot be reserved ahead of layout.
- * Left intrinsic, the reserve would be a number that merely happens to be close, which is exactly what
- * `EditorScreenGoldenTest."the sheet is fitted above the context bar"` exists to fail. Recorded as a
- * deviation from the freeze's silence rather than presented as a frozen value.
+ * [BenchContextBarReservedHeightDp] is the **resting band** that `EditorScreen` subtracts before the bar
+ * is measured. A10 / D-106 keeps 50dp as that default-scale floor but permits the intrinsic stack to grow
+ * at accessibility text scales. The live measured height then keeps transient feedback above the grown bar.
  */
 internal val BenchContextBarButtonHeightDp = 50.dp
 
@@ -595,7 +604,7 @@ internal val BenchContextBarEnterOffsetDp = 8.dp
  * interactive floor rather than V2's frozen 40. That correction would have over-reserved by 8dp instead —
  * `minimumInteractiveComponentSize` extends the *target* past the layout box without growing it. V2.1
  * retires the question by drawing a 50dp control, but the history is kept because it is why
- * [BenchContextBarButtonHeightDp] is pinned rather than left intrinsic.
+ * [BenchContextBarButtonHeightDp] remains the resting minimum rather than a fixed ceiling.
  *
  * Neither was settled by argument. `EditorScreenGoldenTest` composes the bar and measures
  * `canvas.bottom - bar.top` and asserts this constant against that measurement — so the next person to
