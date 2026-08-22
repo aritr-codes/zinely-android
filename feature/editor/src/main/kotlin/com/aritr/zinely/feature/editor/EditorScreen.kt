@@ -1689,6 +1689,14 @@ public fun EditorScreen(
                         dispatch(Intent.Undo)
                     },
                     modifier = Modifier.align(Alignment.BottomCenter),
+                    // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
+                    // selected element's verbs reachable by stacking the snack one complete bar footprint
+                    // above the shared floor; its own 12dp inset becomes the required clear gap.
+                    bottomClearance = if (ctxVisible) {
+                        BenchContextBarReservedHeightDp + BenchSnackStackRotationAllowance
+                    } else {
+                        0.dp
+                    },
                 )
 
             }

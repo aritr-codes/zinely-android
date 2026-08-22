@@ -791,7 +791,8 @@ let tt;
 function toast(msg,undoable){
   $('snackText').textContent=msg;
   $('undoSnack').style.display=undoable?'':'none';
-  $('snack').classList.add('show');
+  const c=$('ctx'),s=$('snack'),p=$('phone'),stack=c.classList.contains('show'); s.classList.toggle('with-context',stack); if(stack) s.style.setProperty('--stacked-bottom',(p.getBoundingClientRect().bottom-c.getBoundingClientRect().top+14)+'px');
+  s.classList.add('show');
   clearTimeout(tt); tt=setTimeout(()=>$('snack').classList.remove('show'),3200);
 }
 $('undoSnack').onclick=e=>{ e.stopPropagation();
@@ -1229,4 +1230,29 @@ from stroke to fill and four lose their glyph.  That is an intended visual chang
 .doneEdit:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 /* A4 — the checked appearance for a toggling verb.  Same reason for living here as A1. */
 .ctx button.on{background:var(--leaf);color:var(--on-leaf)}
+</style>
+
+<!-- ===========================================================================
+A8 · 2026-08-22 (owner ruling, D-089) — confirmation and control both remain reachable.
+
+Placing Art is the first frozen state that raises the transient confirmation and a selected
+element's context bar together. Neither surface yields: the snack's Undo is the fast escape from an
+unwanted placement, while the context bar is the immediate invitation to Replace, Ink or Delete the
+thing that just landed. Hiding either one makes a successful placement less recoverable or less
+editable.
+
+THE RULING: while both are visible, the snack stacks ABOVE the context bar with exactly 12px of clear
+space between their painted bounds. The snack keeps its existing higher z-order. In every state where
+the context bar is absent, the snack keeps its frozen 88px phone-bottom anchor. The prototype measures
+the context bar's live top edge rather than copying its height, so large text cannot turn the ruling
+back into an overlap. Its 14px layout offset includes 2px for the snack's -0.6 degree rotation, leaving
+at least 12px between the transformed, painted bounds rather than only between unrotated layout boxes.
+
+This amendment changes no copy, dwell time, action, selection, or ordinary one-surface position. It
+only specifies the previously missing coexistence state. The two changed `toast()` lines replace two
+lines in place; this log and the trailing selector are appended, so existing numbered citations do not
+move.
+=========================================================================== -->
+<style>
+.snack.with-context{bottom:var(--stacked-bottom)}
 </style>

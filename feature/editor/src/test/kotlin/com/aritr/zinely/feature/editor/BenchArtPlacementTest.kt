@@ -218,6 +218,13 @@ class BenchArtPlacementTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
+        val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
+        val context = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInRoot
+        val frozenGapPx = with(composeRule.density) { 12.dp.toPx() }
+        assertTrue(
+            "D-089: placement confirmation must clear the selected element's tools by 12dp; snack=$snack context=$context",
+            snack.bottom <= context.top - frozenGapPx + 1.5f,
+        )
         // By content description, not by text: the message node is `clearAndSetSemantics` with a polite
         // live region, so the string a screen reader hears is the one asserted here — which is the copy
         // that matters most on a surface that disappears on a timer.

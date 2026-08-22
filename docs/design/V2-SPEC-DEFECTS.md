@@ -5682,7 +5682,7 @@ visibility resolves against") stated the *cause* of the bug as its justification
 | **Artifacts** | `feature/editor/.../BenchSnack.kt:60` · `feature/editor/.../BenchContextBar.kt:469` · `EditorScreen.kt:1408,1552` |
 | **Found** | 2026-08-17, package **S7-placement**, **Pass 1 device verification** on SM-A176B / Android 16 |
 | **Severity** | **Visible defect on the happy path.** As first found, the message read `Placed on the pa` — cut mid-word by the Replace/Ink/Delete pill. ⚠ **The 2026-08-20 re-observation saw the reverse** (the snack whole, `Replace` drawn under it), and the frozen z-order says the reverse is what *should* happen — see [the re-observation](#d-089) before treating either symptom as the settled one |
-| **Status** | 🔶 **Open — needs an owner ruling, not an implementer fix** (see below) |
+| **Status** | ✅ **Closed 2026-08-22 — owner ruling frozen as Bench amendment A8; stacked and regression-tested** |
 
 `BenchSnackInsetBottom` and `BenchContextBarInsetDp` are **both `12.dp`**, and both surfaces are placed with
 `Modifier.align(Alignment.BottomCenter)` in the same `Box` ([EditorScreen.kt:1408](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorScreen.kt#L1408) and
@@ -5735,6 +5735,19 @@ for option (b), stacking**, since the freeze has already ruled that the snack si
 
 Not caused by P4 — P4 touches neither `BenchSnack` nor `BenchContextBar`, and this entry predates it by
 three days. Recorded here rather than filed as a new defect because it is the same overlap.
+
+#### Ruling — 2026-08-22 (owner) {#d-089-ruling}
+
+**Keep both surfaces and stack the snack above the context bar with 12dp clear between their painted
+bounds.** Placement is both an undoable act and the beginning of refinement: suppressing the snack hides
+the fastest escape from a mistake, while suppressing the context bar makes the newly selected Art less
+immediately editable. The existing z-order already says the snack is the upper surface, so stacking
+extends rather than reverses that rule.
+
+Bench amendment A8 measures the context bar's live top edge, including large-text growth. Compose reserves
+the bar's complete measured contract (`BenchContextBarReservedHeightDp`) plus 2dp for the snack's -0.6°
+rotation; the snack's own 12dp inset is therefore the clear gap. `BenchArtPlacementTest` now exercises the
+previously missing coexistence state and compares the two transformed bounds before invoking Undo.
 
 ---
 

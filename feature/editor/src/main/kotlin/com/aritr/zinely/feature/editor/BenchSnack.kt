@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
@@ -114,6 +115,12 @@ internal val BenchSnackEnterOffset = 8.dp
  */
 internal const val BenchSnackRotationDeg: Float = -0.6f
 
+/**
+ * A8's 2dp allowance for the rotated pill's painted corner. Without it, a nominal 12dp layout gap is
+ * only about 10.5dp between transformed bounds on a phone-width canvas (the D-089 regression fixture).
+ */
+internal val BenchSnackStackRotationAllowance = 2.dp
+
 /** Frozen `.snack{transition:opacity .18s,transform .18s}` (`v21-bench.html:494`). V2 asked for 220ms. */
 internal const val BenchSnackMillis: Int = 180
 
@@ -169,6 +176,9 @@ public const val BenchSnackInkMillis: Long = 1600L
  * @param message the line. `Text deleted.` in the delete case; `Ink · <name>` in C6's.
  * @param actionLabel `null` gives the **buttonless** variant (row 4.15). The freeze hides the button by
  *   setting `display:none` on it and restores it on timeout; a null label is the same thing said once.
+ * @param bottomClearance extra space reserved below the snack when another bottom-anchored surface is
+ *   present. D-089 uses the context bar's complete footprint, leaving this component's own 12dp inset as
+ *   the frozen gap between their painted bounds.
  */
 @Composable
 internal fun BenchSnack(
@@ -177,6 +187,7 @@ internal fun BenchSnack(
     actionLabel: String?,
     onAction: () -> Unit,
     modifier: Modifier = Modifier,
+    bottomClearance: Dp = 0.dp,
 ) {
     val colors = ZinelyTheme.v21Colors
     val progress by animateFloatAsState(
@@ -193,7 +204,7 @@ internal fun BenchSnack(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = BenchSnackInsetH)
-            .padding(bottom = BenchSnackInsetBottom)
+            .padding(bottom = BenchSnackInsetBottom + bottomClearance)
             .graphicsLayer {
                 alpha = progress
                 translationY = rise
@@ -290,4 +301,3 @@ internal fun benchDeleteLabel(pages: List<com.aritr.zinely.core.model.Page>, id:
  * freeze's, and it is kept: the line is a sentence about something that happened, not a label.
  */
 internal fun benchDeletedMessage(label: String): String = Copy.Snack.deleted(label)
-
