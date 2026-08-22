@@ -62,6 +62,21 @@ public object EditorReducer {
             committing(model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
                 PlaceCommand(model.currentPageIndex, el))
         }
+        is Intent.PlaceTextAndEdit -> {
+            val id = "el-${model.nextToken}"
+            val element = TextElement(
+                id = id,
+                transform = intent.transform,
+                zIndex = nextZ(model),
+                text = "",
+            )
+            val placed = committing(
+                model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
+                PlaceCommand(model.currentPageIndex, element),
+            )
+            val editing = openTextSession(placed.model, id)
+            Reduction(editing.model, placed.effects + editing.effects)
+        }
         Intent.RequestAddImage -> Reduction(model, listOf(Effect.PickAndDecodeImage))
         is Intent.CommitAddImage -> {
             // Mint the id reducer-side (single source of id allocation) so it can never collide with an

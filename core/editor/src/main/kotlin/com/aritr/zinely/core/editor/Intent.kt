@@ -19,6 +19,9 @@ public sealed interface Intent {
 
     // — placement / content —
     public data class PlaceText(val transform: Transform, val text: String) : Intent
+    /** Place a new blank text box and open its edit session atomically. The reducer owns the minted id,
+     *  so this cannot accidentally begin editing a previously selected element between two dispatches. */
+    public data class PlaceTextAndEdit(val transform: Transform) : Intent
     public data object RequestAddImage : Intent
     public data class CommitAddImage(val element: com.aritr.zinely.core.model.ImageElement) : Intent
 

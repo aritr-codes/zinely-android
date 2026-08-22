@@ -837,9 +837,18 @@ public fun EditorScreen(
     // in-place field on it) and outside it (to seed the style row's ink swatch, and to raise the row at
     // all). Null while a delete races the session closed; every consumer then draws nothing, and the
     // session's own token guard no-ops the trailing commit.
-    val editingElement = (uiState.interaction as? Interaction.EditingText)?.let { session ->
+    val editingTextSession = uiState.interaction as? Interaction.EditingText
+    val editingElement = editingTextSession?.let { session ->
         uiState.document.pages[uiState.currentPageIndex].elements
             .firstOrNull { it.id == session.id } as? TextElement
+    }
+    // Text editing is a surface inside the editor, not a navigation destination. Own Back at the screen
+    // boundary where it can outrank the NavHost: a handler inside BasicTextField loses that race on real
+    // Samsung firmware once the IME has consumed its own Back. The first press may hide the keyboard; the
+    // next discards the draft and returns to the selected page instead of leaving for the shelf.
+    // CancelText also coalesces a freshly placed blank box away, so opening Text and backing out is clean.
+    BackHandler(enabled = editingElement != null) {
+        editingTextSession?.let { dispatch(Intent.CancelText(it.id, it.token)) }
     }
     // The frozen editing row's Done ends the session by clearing focus — see its call site for why that,
     // and not a dispatch, is the correct end (the draft is feature-ephemeral).
@@ -1791,7 +1800,7 @@ public fun EditorScreen(
         BenchAddChooser(
             visible = addChooserOpen,
             onDismiss = { addChooserOpen = false },
-            onAddText = { addTextAndEdit(pageSizePt, currentState, dispatch) },
+            onAddText = { addTextAndEdit(pageSizePt, dispatch) },
             onAddPhoto = { dispatch(Intent.RequestAddImage) },
             onAddArt = { artSheetFor = BenchArtPurpose.Place },
         )
@@ -1945,20 +1954,15 @@ private fun applyFit(draft: FramingDraft, fit: FrameFit): FramingDraft = when (f
  * "Add words" from the empty state: place an **empty** text box centered on the page and **open its
  * edit session immediately**, so the beginner goes straight to typing — no committed placeholder
  * sentence, and no reliance on the hidden double-tap-to-edit affordance (Codex UX finding). Composed
- * from existing intents: [Intent.PlaceText] reduces synchronously and selects the new element, so its
- * id is readable from [currentState] the instant `dispatch` returns (see `EditorStore` threading note),
- * and we hand it to [Intent.BeginEditText].
- *
- * Follow-up (tracked, not this slice): make this a single reducer-owned intent so a cancelled brand-new
- * empty text is removed and place+edit collapse into one undo step.
+ * The reducer owns the whole act through [Intent.PlaceTextAndEdit]: it mints the id, places the box and
+ * opens the matching session in one reduction. Keeping those steps atomic matters when another element
+ * is already selected — no UI-side state read can accidentally reopen that older selection.
  */
 internal fun addTextAndEdit(
     pageSizePt: PtSize,
-    currentState: () -> EditorUiState,
     dispatch: (Intent) -> Unit,
 ) {
-    dispatch(Intent.PlaceText(centeredTextBox(pageSizePt), ""))
-    currentState().selection.singleOrNull()?.let { dispatch(Intent.BeginEditText(it)) }
+    dispatch(Intent.PlaceTextAndEdit(centeredTextBox(pageSizePt)))
 }
 
 /** A text box centered on the page (points) for a newly added text element. */

@@ -336,6 +336,26 @@ class EditorScreenTest {
     }
 
     @Test
+    fun back_from_add_words_cancels_the_blank_session_without_leaving_the_editor() {
+        val store = store()
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BenchBarAddTag).performClick()
+        composeRule.onNodeWithTag(BenchAddChooserTextTag).performClick()
+        composeRule.waitForIdle()
+        assertTrue(store.uiState.value.interaction is Interaction.EditingText)
+
+        composeRule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+
+        assertTrue("Back closes only the in-editor text surface", store.uiState.value.interaction is Interaction.Idle)
+        assertTrue("a cancelled fresh blank leaves no element", store.uiState.value.document.pages[0].elements.isEmpty())
+        assertTrue("a cancelled fresh blank leaves no undo step", !store.uiState.value.canUndo)
+        composeRule.onNodeWithTag(BenchBarAddTag).assertIsDisplayed()
+    }
+
+    @Test
     fun on_a_blank_page_the_add_actions_are_not_duplicated_the_bar_owns_them() {
         // ADR-033's de-dup, restated for C4's bar (ADR-094 row 4.7). A blank page raises the invitation
         // overlay AND the persistent bar. The overlay is invitation-only, so the add affordance exists

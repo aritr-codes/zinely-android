@@ -139,6 +139,27 @@ class TextEditSessionTest {
     }
 
     @Test
+    fun `PlaceTextAndEdit targets its newly minted box even when another text was selected`() {
+        val start = model(txt("old", text = "keep me"), selection = setOf("old"))
+
+        val placed = EditorReducer.reduce(
+            start,
+            Intent.PlaceTextAndEdit(Transform(20.0, 30.0, 40.0, 20.0)),
+        )
+
+        val session = placed.model.interaction as Interaction.EditingText
+        val added = els(placed.model).filterIsInstance<TextElement>().single { it.id != "old" }
+        assertEquals(added.id, session.id)
+        assertEquals(setOf(added.id), placed.model.selection)
+        assertEquals("keep me", (els(placed.model).single { it.id == "old" } as TextElement).text)
+        assertTrue(placed.effects.any { it is Effect.Autosave })
+
+        val cancelled = EditorReducer.reduce(placed.model, Intent.CancelText(added.id, session.token))
+        assertEquals(listOf(txt("old", text = "keep me")), els(cancelled.model))
+        assertTrue(cancelled.model.history.undo.isEmpty())
+    }
+
+    @Test
     fun `committing non-blank keeps before's geometry, ignoring UI-supplied transform`() {
         val start = model(txt("a", text = "old"), selection = setOf("a"))
         val (begun, token) = begin(start, "a")
