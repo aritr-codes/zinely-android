@@ -1,5 +1,10 @@
 package com.aritr.zinely.data.android
 
+import com.aritr.zinely.core.data.asset.AssetEntry
+import com.aritr.zinely.core.data.asset.CURRENT_LIBRARY_BACKUP_VERSION
+import com.aritr.zinely.core.data.asset.LIBRARY_BACKUP_KIND
+import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
+import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
@@ -16,6 +21,9 @@ import com.aritr.zinely.core.data.storage.RestoreProjectIdAllocator
 import com.aritr.zinely.core.data.storage.StagedZineLibraryBackup
 import com.aritr.zinely.core.data.storage.ZineBackupStagingException
 import com.aritr.zinely.core.data.storage.ZineLibraryBackupStager
+import com.aritr.zinely.core.data.storage.ZineLibraryBackupWriter
+import com.aritr.zinely.core.data.storage.ZineBackupWritingException
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -28,9 +36,11 @@ import com.aritr.zinely.core.model.newZineCoverRecipe
 import com.aritr.zinely.data.android.room.ProjectDao
 import com.aritr.zinely.data.android.room.ProjectEntity
 import java.io.IOException
+import java.io.BufferedInputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
+import java.security.MessageDigest
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
@@ -48,6 +58,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * The Room-backed [ProjectRepository] (ADR-042). The **files are the source of truth and the
@@ -83,6 +96,8 @@ internal class RoomProjectRepository(
     private val io: CoroutineDispatcher,
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    private val appVersion: String = "unknown",
+    private val assetMetadataReader: LibraryAssetMetadataReader = AndroidLibraryAssetMetadataReader,
     /**
      * Entropy for the cover assigner ([D-017](docs/design/V2-SPEC-DEFECTS.md#d-017-ruling)). Injected
      * for the same reason [clock] and [newId] are — so a test can pin the draw — and, unlike them,
@@ -90,7 +105,7 @@ internal class RoomProjectRepository(
      * neighbour reaches it, which is the ruling stated as a signature.
      */
     private val random: Random = Random.Default,
-) : ProjectRepository, LibraryRestoreRepository {
+) : ProjectRepository, LibraryRestoreRepository, LibraryBackupRepository {
 
     private val libraryRoot = rootDir.toAbsolutePath().normalize()
     private val paths = ProjectPaths(libraryRoot)
@@ -102,6 +117,7 @@ internal class RoomProjectRepository(
         fs = fs,
     )
     private val restoreStager = ZineLibraryBackupStager()
+    private val backupWriter = ZineLibraryBackupWriter()
     private val mutex = Mutex()
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -353,6 +369,136 @@ internal class RoomProjectRepository(
                         DataResult.Success(LibraryRestoreReceipt(restored))
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Freeze files-as-truth under the same library-wide lease used by restore, then stream one
+     * self-validating archive to a unique private destination. Room is reconciled first but is not
+     * used as backup authority.
+     */
+    override suspend fun createLibraryBackup(destination: Path): DataResult<LibraryBackupReceipt> = withContext(io) {
+        val lease = libraryWriterGate.tryAcquire()
+            ?: return@withContext failure(DataError.Busy("the library has an active editor or backup"))
+        lease.use {
+            mutex.withLock {
+                when (val recovered = recoverInterruptedRestoreLocked()) {
+                    is DataResult.Failure -> return@withLock recovered
+                    is DataResult.Success -> Unit
+                }
+                reconciled = false
+                when (val indexed = reconcileLocked(requiredProjectIds = emptySet(), strictIo = true)) {
+                    is DataResult.Failure -> return@withLock indexed
+                    is DataResult.Success -> Unit
+                }
+
+                val projectIds = listProjectIds().sorted()
+                if (projectIds.isEmpty()) return@withLock failure(DataError.NotFound("library"))
+
+                val documentSources = linkedMapOf<String, Path>()
+                val projectEntries = ArrayList<ZineBackupProjectEntry>(projectIds.size)
+                val referencedAssets = linkedSetOf<String>()
+                for (id in projectIds) {
+                    currentCoroutineContext().ensureActive()
+                    val documentFile = paths.documentFile(id)
+                        ?: return@withLock failure(DataError.Corrupt("project '$id' has an unsafe path"))
+                    val meta = readMetaOrNull(id)
+                        ?: return@withLock failure(DataError.Corrupt("project '$id' metadata is unreadable"))
+                    val document = when (val loaded = documents.load(id)) {
+                        is DataResult.Failure -> return@withLock loaded
+                        is DataResult.Success -> loaded.value
+                    }
+                    val assetHashes = document.pages.asSequence()
+                        .flatMap { it.elements.asSequence() }
+                        .filterIsInstance<ImageElement>()
+                        .mapTo(linkedSetOf()) { it.assetId }
+                    referencedAssets += assetHashes
+                    val documentByteCount = try {
+                        Files.size(documentFile)
+                    } catch (failure: IOException) {
+                        return@withLock failure(DataError.Io("couldn't read project '$id' for backup", failure))
+                    }
+                    val rawSchemaVersion = try {
+                        json.parseToJsonElement(Files.readString(documentFile)).jsonObject["schemaVersion"]
+                            ?.jsonPrimitive?.intOrNull
+                    } catch (failure: Exception) {
+                        return@withLock failure(DataError.Corrupt("project '$id' document is malformed", failure))
+                    } ?: return@withLock failure(DataError.Corrupt("project '$id' has no document schema version"))
+                    val documentHash = try {
+                        sha256(documentFile)
+                    } catch (failure: IOException) {
+                        return@withLock failure(DataError.Io("couldn't hash project '$id' for backup", failure))
+                    }
+                    projectEntries += ZineBackupProjectEntry(
+                        sourceProjectId = id,
+                        title = meta.title,
+                        format = document.format,
+                        paperSize = document.paperSize,
+                        createdAtEpochMs = meta.createdAtEpochMs,
+                        updatedAtEpochMs = fileMtimeOrNull(documentFile) ?: clock(),
+                        documentSchemaVersion = rawSchemaVersion,
+                        documentPath = "projects/$id/document.json",
+                        documentSha256 = documentHash,
+                        documentByteCount = documentByteCount,
+                        assetHashes = assetHashes.toList(),
+                        coverSurface = meta.coverSurface,
+                        coverStamp = meta.coverStamp,
+                    )
+                    documentSources[id] = documentFile
+                }
+
+                val assetSources = linkedMapOf<String, Path>()
+                val assetEntries = ArrayList<AssetEntry>(referencedAssets.size)
+                for (hash in referencedAssets.sorted()) {
+                    currentCoroutineContext().ensureActive()
+                    val path = libraryRoot.resolve(ASSETS_DIRECTORY).resolve(hash)
+                    if (!Files.isRegularFile(path)) {
+                        return@withLock failure(DataError.Corrupt("project asset '$hash' is missing"))
+                    }
+                    val metadata = try {
+                        assetMetadataReader.read(path)
+                    } catch (failure: Exception) {
+                        return@withLock failure(DataError.Corrupt("project asset '$hash' is not a readable image", failure))
+                    }
+                    val byteCount = try {
+                        Files.size(path)
+                    } catch (failure: IOException) {
+                        return@withLock failure(DataError.Io("couldn't read project asset '$hash'", failure))
+                    }
+                    assetEntries += AssetEntry(hash, metadata.mimeType, metadata.widthPx, metadata.heightPx, byteCount)
+                    assetSources[hash] = path
+                }
+
+                val manifest = ZineLibraryBackupManifest(
+                    packageVersion = CURRENT_LIBRARY_BACKUP_VERSION,
+                    kind = LIBRARY_BACKUP_KIND,
+                    appVersion = appVersion.ifBlank { "unknown" },
+                    createdAtEpochMs = clock(),
+                    projects = projectEntries,
+                    assets = assetEntries,
+                )
+                val archiveByteCount = try {
+                    backupWriter.write(manifest, documentSources, assetSources, destination)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (invalid: ZineBackupWritingException) {
+                    val error = when (invalid.reason) {
+                        ZineBackupWritingException.Reason.IO_FAILURE,
+                        ZineBackupWritingException.Reason.DESTINATION_EXISTS,
+                        ZineBackupWritingException.Reason.SOURCE_UNAVAILABLE,
+                        -> DataError.Io("couldn't create the private library backup", invalid)
+                        else -> DataError.Corrupt("the local library could not be backed up safely", invalid)
+                    }
+                    return@withLock failure(error)
+                }
+                DataResult.Success(
+                    LibraryBackupReceipt(
+                        projectCount = projectEntries.size,
+                        assetCount = assetEntries.size,
+                        archiveByteCount = archiveByteCount,
+                    ),
+                )
             }
         }
     }
@@ -726,5 +872,19 @@ internal class RoomProjectRepository(
         const val ASSETS_DIRECTORY = "assets"
         const val RESTORE_WORK_DIRECTORY = ".library-restore"
         const val PREPARED_PROJECTS_DIRECTORY = "prepared-projects"
+    }
+
+    private suspend fun sha256(path: Path): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val buffer = ByteArray(64 * 1024)
+        BufferedInputStream(Files.newInputStream(path), buffer.size).use { input ->
+            while (true) {
+                currentCoroutineContext().ensureActive()
+                val read = input.read(buffer)
+                if (read < 0) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 }

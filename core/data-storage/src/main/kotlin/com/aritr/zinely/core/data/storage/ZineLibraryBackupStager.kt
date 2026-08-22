@@ -6,6 +6,7 @@ import com.aritr.zinely.core.data.asset.MAX_BACKUP_DOCUMENT_BYTES
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_MANIFEST_BYTES
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_ASSETS
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_PROJECTS
+import com.aritr.zinely.core.data.asset.MAX_BACKUP_ARCHIVE_BYTES
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_TOTAL_BYTES
 import com.aritr.zinely.core.data.asset.ZineArchiveEntry
 import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
@@ -36,7 +37,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /** Additional codec limits which complement the v2 package-contract limits. */
 public data class ZineArchiveLimits(
-    val maximumArchiveBytes: Long = MAX_BACKUP_TOTAL_BYTES,
+    val maximumArchiveBytes: Long = MAX_BACKUP_ARCHIVE_BYTES,
     val maximumExpansionRatio: Long = 200L,
     val maximumEntries: Int = MAX_BACKUP_PROJECTS + MAX_BACKUP_ASSETS + 1,
     val copyBufferBytes: Int = 64 * 1024,

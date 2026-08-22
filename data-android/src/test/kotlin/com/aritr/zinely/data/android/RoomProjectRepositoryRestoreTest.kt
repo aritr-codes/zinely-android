@@ -14,6 +14,7 @@ import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.data.storage.FileSystemOps
 import com.aritr.zinely.core.data.storage.NioFileSystemOps
+import com.aritr.zinely.core.data.storage.ZineLibraryBackupStager
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
@@ -82,6 +83,9 @@ class RoomProjectRepositoryRestoreTest {
         dao: ProjectDao = db.projectDao(),
         libraryWriterGate: LibraryWriterGate = LibraryWriterGate { LibraryWriterLease {} },
         fs: FileSystemOps = NioFileSystemOps,
+        assetMetadataReader: LibraryAssetMetadataReader = LibraryAssetMetadataReader {
+            LibraryAssetMetadata("image/jpeg", 32, 32)
+        },
     ): RoomProjectRepository = RoomProjectRepository(
         rootDir = root,
         dao = dao,
@@ -92,7 +96,61 @@ class RoomProjectRepositoryRestoreTest {
         fs = fs,
         io = Dispatchers.Unconfined,
         newId = { "p${nextId++}" },
+        appVersion = "test-version",
+        assetMetadataReader = assetMetadataReader,
     )
+
+    @Test
+    fun `backup snapshots real files and one shared asset into a restorable archive`() = runTest {
+        val repository = repo()
+        val first = repository.createProject("First", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!
+        val second = repository.createProject("Second", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!
+        val assetBytes = "one shared import master".encodeToByteArray()
+        val assetHash = sha256(assetBytes)
+        Files.createDirectories(root.resolve("assets"))
+        Files.write(root.resolve("assets").resolve(assetHash), assetBytes)
+        assertTrue(documents.save(first.id, document(assetHash)).getOrNull() != null)
+        assertTrue(documents.save(second.id, document(assetHash)).getOrNull() != null)
+        val archive = root.resolve("library.zine")
+
+        val receipt = repository.createLibraryBackup(archive).getOrNull()!!
+
+        assertEquals(2, receipt.projectCount)
+        assertEquals(1, receipt.assetCount)
+        assertEquals(Files.size(archive), receipt.archiveByteCount)
+        ZineLibraryBackupStager().stage(archive, root.resolve("verify-stage")).use { staged ->
+            assertEquals(listOf(first.id, second.id), staged.projects.map { it.manifestEntry.sourceProjectId })
+            assertEquals(setOf(assetHash), staged.assets.keys)
+            assertEquals("test-version", staged.manifest.appVersion)
+        }
+    }
+
+    @Test
+    fun `backup refuses an active writer without creating an archive`() = runTest {
+        val repository = repo(libraryWriterGate = LibraryWriterGate { null })
+        val archive = root.resolve("busy.zine")
+
+        val result = repository.createLibraryBackup(archive)
+
+        assertTrue(result.errorOrNull() is DataError.Busy)
+        assertFalse(Files.exists(archive))
+    }
+
+    @Test
+    fun `backup rejects poisoned local asset bytes and removes incomplete archive`() = runTest {
+        val repository = repo()
+        val project = repository.createProject("Poisoned", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!
+        val declaredHash = sha256("expected".encodeToByteArray())
+        Files.createDirectories(root.resolve("assets"))
+        Files.write(root.resolve("assets").resolve(declaredHash), "different".encodeToByteArray())
+        assertTrue(documents.save(project.id, document(declaredHash)).getOrNull() != null)
+        val archive = root.resolve("poisoned.zine")
+
+        val result = repository.createLibraryBackup(archive)
+
+        assertTrue(result.errorOrNull() is DataError.Corrupt)
+        assertFalse(Files.exists(archive))
+    }
 
     @Test
     fun `successful restore remaps a colliding id, preserves timestamps, and deduplicates a shared asset`() = runTest {

@@ -12,7 +12,10 @@ import com.aritr.zinely.data.android.AutosaveSessionGate
 import com.aritr.zinely.data.android.DocumentRepositoryImpl
 import com.aritr.zinely.data.android.InMemorySaveFailureSink
 import com.aritr.zinely.data.android.AutosaveLibraryWriterGate
+import com.aritr.zinely.data.android.ContentResolverLibrarySafTransport
+import com.aritr.zinely.data.android.LibraryBackupRepository
 import com.aritr.zinely.data.android.LibraryRestoreRepository
+import com.aritr.zinely.data.android.LibrarySafTransport
 import com.aritr.zinely.data.android.RoomProjectRepository
 import com.aritr.zinely.data.android.SaveFailureSink
 import com.aritr.zinely.data.android.room.MIGRATION_1_2
@@ -96,6 +99,7 @@ internal object DataModule {
         libraryWriterGate = AutosaveLibraryWriterGate(autosaveFactory),
         fs = fs,
         io = io,
+        appVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "unknown",
     )
 
     @Provides
@@ -103,6 +107,23 @@ internal object DataModule {
 
     @Provides
     fun provideLibraryRestoreRepository(repository: RoomProjectRepository): LibraryRestoreRepository = repository
+
+    @Provides
+    fun provideLibraryBackupRepository(repository: RoomProjectRepository): LibraryBackupRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideLibrarySafTransport(
+        @ApplicationContext context: Context,
+        restoreRepository: LibraryRestoreRepository,
+        backupRepository: LibraryBackupRepository,
+        @IoDispatcher io: CoroutineDispatcher,
+    ): LibrarySafTransport = ContentResolverLibrarySafTransport(
+        context = context,
+        restoreRepository = restoreRepository,
+        backupRepository = backupRepository,
+        io = io,
+    )
 
     @Provides
     @Singleton

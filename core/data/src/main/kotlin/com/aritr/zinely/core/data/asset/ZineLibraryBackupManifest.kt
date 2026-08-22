@@ -18,6 +18,12 @@ public const val MAX_BACKUP_MANIFEST_BYTES: Long = 4L * 1024L * 1024L
 public const val MAX_BACKUP_DOCUMENT_BYTES: Long = 16L * 1024L * 1024L
 public const val MAX_BACKUP_ASSET_BYTES: Long = 128L * 1024L * 1024L
 public const val MAX_BACKUP_TOTAL_BYTES: Long = 8L * 1024L * 1024L * 1024L
+/**
+ * Maximum encoded ZIP size. The 64 MiB envelope is larger than the worst-case ZIP64 framing and
+ * no-compression DEFLATE overhead for the bounded project/asset counts and canonical path lengths,
+ * so every payload accepted at [MAX_BACKUP_TOTAL_BYTES] remains transportable and restorable.
+ */
+public const val MAX_BACKUP_ARCHIVE_BYTES: Long = MAX_BACKUP_TOTAL_BYTES + 64L * 1024L * 1024L
 public const val MAX_BACKUP_PROJECTS: Int = 10_000
 public const val MAX_BACKUP_ASSETS: Int = 100_000
 

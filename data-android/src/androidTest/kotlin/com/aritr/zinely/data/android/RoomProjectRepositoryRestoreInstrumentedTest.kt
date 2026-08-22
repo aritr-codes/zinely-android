@@ -1,6 +1,10 @@
 package com.aritr.zinely.data.android
 
+import android.content.ContentValues
 import android.content.Context
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -29,6 +33,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.junit.After
+import org.junit.Assume.assumeTrue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -45,14 +50,64 @@ class RoomProjectRepositoryRestoreInstrumentedTest {
 
     private lateinit var root: Path
     private lateinit var database: ZinelyDatabase
+    private lateinit var context: Context
 
     @Before
     fun setUp() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+        context = ApplicationProvider.getApplicationContext()
         root = Files.createTempDirectory(context.filesDir.toPath(), "restore-it")
         database = Room.inMemoryDatabaseBuilder(context, ZinelyDatabase::class.java)
             .allowMainThreadQueries()
             .build()
+    }
+
+    @Test
+    fun safTransportBacksUpAndRestoresThroughRealContentResolverStreams() = runBlocking {
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+        val fileSystem = AndroidFileSystemOps()
+        val store = AtomicFileStore(fileSystem)
+        val documents = DocumentRepositoryImpl(rootDir = root, store = store)
+        var nextId = 0
+        val repository = RoomProjectRepository(
+            rootDir = root,
+            dao = database.projectDao(),
+            documents = documents,
+            store = store,
+            sessionGate = ProjectSessionGate { true },
+            libraryWriterGate = LibraryWriterGate { LibraryWriterLease {} },
+            fs = fileSystem,
+            io = Dispatchers.IO,
+            newId = { "p${++nextId}" },
+            appVersion = "device-test",
+        )
+        val original = repository.createProject(
+            title = "Portable zine",
+            format = ZineFormat.SINGLE_SHEET_8,
+            paperSize = PaperSize.A4,
+        ).getOrNull()!!
+        val transport = ContentResolverLibrarySafTransport(
+            transferRoot = context.cacheDir.toPath().resolve("zine-transfer-it"),
+            streams = ContentResolverSafStreams(context.contentResolver),
+            restoreRepository = repository,
+            backupRepository = repository,
+            io = Dispatchers.IO,
+        )
+        val destination = createDownloadsDocument("zinely-transport-${System.nanoTime()}.zine")
+
+        try {
+            val backup = transport.backupTo(destination).getOrNull()!!
+            val restore = transport.restoreFrom(destination).getOrNull()!!
+
+            assertEquals(1, backup.projectCount)
+            assertTrue(readBytes(destination).isNotEmpty())
+            assertEquals(listOf(original.id), restore.projects.map { it.sourceProjectId })
+            assertEquals(listOf("p2"), restore.projects.map { it.project.id })
+            assertEquals("Portable zine", restore.projects.single().project.title)
+            assertTrue(Files.isRegularFile(root.resolve("projects/p2/document.json")))
+            assertTrue(Files.isRegularFile(root.resolve("projects/p2/meta.json")))
+        } finally {
+            context.contentResolver.delete(destination, null, null)
+        }
     }
 
     @After
@@ -195,6 +250,17 @@ class RoomProjectRepositoryRestoreInstrumentedTest {
     private fun sha256(bytes: ByteArray): String =
         java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
             .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
+
+    private fun createDownloadsDocument(displayName: String): Uri {
+        val values = ContentValues().apply {
+            put(MediaStore.Downloads.DISPLAY_NAME, displayName)
+            put(MediaStore.Downloads.MIME_TYPE, "application/octet-stream")
+        }
+        return requireNotNull(context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values))
+    }
+
+    private fun readBytes(uri: Uri): ByteArray =
+        requireNotNull(context.contentResolver.openInputStream(uri)).use { input -> input.readBytes() }
 
     private data class ProjectFixture(
         val id: String,
