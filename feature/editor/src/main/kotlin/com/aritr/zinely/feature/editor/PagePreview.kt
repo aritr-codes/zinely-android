@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import android.content.res.AssetManager
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -65,6 +66,8 @@ public const val PagePreviewTestTag: String = "page-preview"
  *   caller-sizing contract above).
  * @param imageBytes source of canonical import-master bytes for [com.aritr.zinely.core.render.DrawImage]
  *   commands; the default `null`-source renders the missing-asset placeholder (see the image seam above).
+ * @param imageCacheBytes optional decoded-region LRU budget. Zero keeps one-draw ownership for proof,
+ *   thumbnails, goldens, and export parity callers; the interactive editor opts in explicitly.
  */
 @Composable
 public fun PagePreview(
@@ -74,6 +77,7 @@ public fun PagePreview(
     pageOffset: PtPoint = PtPoint(0.0, 0.0),
     modifier: Modifier = Modifier,
     imageBytes: AssetBytesSource = EmptyAssetBytes,
+    imageCacheBytes: Long = 0L,
 ) {
     val assets = LocalContext.current.assets
     // One replayer per (asset source, image source), rebuilt only if either identity changes — so the
@@ -82,10 +86,14 @@ public fun PagePreview(
     // and rebuild the replayer + reload the bundled fonts every frame). The resolver is the §4.2-obligated
     // BundledFontResolver (via the shared previewFontResolver seam); the blitter is wired so a DrawImage
     // tape paints the placeholder instead of throwing.
-    val replayer = remember(assets, imageBytes) {
+    val imageBlitter = remember(imageBytes, imageCacheBytes) { ImageBlitter(imageBytes, imageCacheBytes) }
+    DisposableEffect(imageBlitter) {
+        onDispose { imageBlitter.close() }
+    }
+    val replayer = remember(assets, imageBlitter) {
         CanvasReplayer(
             fontResolver = previewFontResolver(assets),
-            imageBlitter = ImageBlitter(imageBytes),
+            imageBlitter = imageBlitter,
         )
     }
 
