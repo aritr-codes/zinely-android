@@ -385,13 +385,10 @@ private fun FoldGuide(
 /**
  * `.legend` — the marks, drawn in the diagram's own shapes so the mapping is legible at a glance.
  *
- * **A swatch and the mark it names must be the same colour, and after the re-skin they can be.** While
- * this surface still painted in V1, they could not: the legend sat on the drawer (`menu`) and the diagram
- * on the sheet (`paper`), V1's `ink` deliberately does not flip with the theme, and drawing the `move`
- * swatch in it to match the arrow put the swatch at 1.13:1 on the dark drawer — §6.7 item 6's own defect,
- * inverted. The re-skin removed the split: this function reads [ZinelyTheme.v21Colors], where `ink` flips
- * (`#33261C` / `#F6EAD6`) and the drawer ground *is* `paper`, exactly as the CSS assumes. So every swatch
- * below is the token its mark is drawn in, with no second palette to reconcile.
+ * **A swatch and the mark it names must be the same colour, and the swatch belongs to the same lit paper
+ * world as the diagram.** The labels themselves still sit in the drawer and therefore read in the room's
+ * `inkSoft`, but the marks are the user's future sheet, not the chrome around it. In dark theme that keeps
+ * the legend from teaching one paper colour and the diagram from drawing another.
  *
  * **It gained a fourth mark, because three made it a lie.** The frozen legend says *crease · fold now ·
  * cut*, and the first build drew every arrow in the same red as the cut — so red meant *cut here* on one
@@ -403,7 +400,8 @@ private fun FoldGuide(
  */
 @Composable
 private fun FoldLegend() {
-    val colors = ZinelyTheme.v21Colors
+    val roomColors = ZinelyTheme.v21Colors
+    val paperColors = rememberLitSheetPalette()
     // **Wrapping, and that is a fix in its own right.** Four chips plus swatches measure ~295dp against
     // the 284dp a 360dp phone leaves inside the drawer, so the row was already clipping before the fifth
     // mark — invisibly, because the suite runs at `w430dp`, the one width where it fits. Same blindness
@@ -413,13 +411,13 @@ private fun FoldLegend() {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        LegendMark(Copy.ProofFold.LEGEND_CREASE, colors.inkFaint, dashed = true, thickness = 2.4f)
-        LegendMark(Copy.ProofFold.LEGEND_FOLD_NOW, colors.leaf, dashed = false, thickness = 3f)
-        LegendMark(Copy.ProofFold.LEGEND_CUT, colors.jam, dashed = true, thickness = 2.4f)
-        LegendMark(Copy.ProofFold.LEGEND_MOVE, colors.ink, dashed = false, thickness = 2.4f)
+        LegendMark(Copy.ProofFold.LEGEND_CREASE, paperColors.inkFaint, roomColors.inkSoft, dashed = true, thickness = 2.4f)
+        LegendMark(Copy.ProofFold.LEGEND_FOLD_NOW, paperColors.leaf, roomColors.inkSoft, dashed = false, thickness = 3f)
+        LegendMark(Copy.ProofFold.LEGEND_CUT, paperColors.jam, roomColors.inkSoft, dashed = true, thickness = 2.4f)
+        LegendMark(Copy.ProofFold.LEGEND_MOVE, paperColors.ink, roomColors.inkSoft, dashed = false, thickness = 2.4f)
         // The action mark. Hollow, so the swatch *is* the mark rather than a coloured stand-in for it —
         // the two arrows differ by fill, not by colour, so a filled swatch would name the wrong one.
-        LegendMark(Copy.ProofFold.LEGEND_ACT, colors.ink, dashed = false, thickness = 2f, hollow = true)
+        LegendMark(Copy.ProofFold.LEGEND_ACT, paperColors.ink, roomColors.inkSoft, dashed = false, thickness = 2f, hollow = true)
     }
 }
 
@@ -430,11 +428,11 @@ private val HOLLOW_GAP = 3.dp
 private fun LegendMark(
     text: String,
     color: Color,
+    labelColor: Color,
     dashed: Boolean,
     thickness: Float,
     hollow: Boolean = false,
 ) {
-    val colors = ZinelyTheme.v21Colors
     Row(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -465,7 +463,7 @@ private fun LegendMark(
         BasicText(
             text = text,
             style = TextStyle(
-                color = colors.inkSoft,
+                color = labelColor,
                 fontFamily = ZinelyTheme.typography.shell,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -603,6 +601,7 @@ private fun StepDots(step: Int, onGoToStep: (Int) -> Unit, modifier: Modifier = 
 @Composable
 private fun FoldDiagram(step: Int, reduceMotion: Boolean) {
     val colors = ZinelyTheme.v21Colors
+    val paperColors = rememberLitSheetPalette()
     val shell = ZinelyTheme.typography.shell
     val measurer = rememberTextMeasurer()
     val caption = Copy.ProofFold.STEP_CAPTIONS[step]
@@ -621,7 +620,7 @@ private fun FoldDiagram(step: Int, reduceMotion: Boolean) {
     // `.foldstage` — the diagram sits ON something, which is what stops eight line drawings reading as
     // eight unrelated sketches.
     //
-    // **Painted in the V2.1 palette, hard shadow and all** — `background:var(--butter-tint);
+    // **The stage is painted in the V2.1 room palette, hard shadow and all** — `background:var(--butter-tint);
     // border:1.5px solid var(--ink); box-shadow:var(--hard) var(--hard) 0 var(--ink-line)`. The first
     // build used V1 `field` on the grounds that the token sweep belongs to P6, and the device pass is
     // what settled it: the guide is the one screen a user sits with for minutes, holding paper, and it
@@ -663,7 +662,9 @@ private fun FoldDiagram(step: Int, reduceMotion: Boolean) {
                     contentDescription = caption
                 },
         ) {
-            val d = FoldDiagramScope(this, measurer, colors, shell)
+            // The card around the diagram belongs to the drawer; the sheet inside it belongs to the user's
+            // hands and therefore stays on the lit paper palette in both themes.
+            val d = FoldDiagramScope(this, measurer, paperColors, shell)
             when (step) {
                 0 -> d.step1()
                 1 -> d.step2()

@@ -432,7 +432,12 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    added to it — invisibly, because every test runs at w430dp, the one width where it fits.  It is
    the same blindness `drawerBodyMaxHeight` records on the other axis. */
 .legend{display:flex;flex-wrap:wrap;gap:var(--gap-xs) var(--gap-md);font-size:.62rem;font-weight:600;color:var(--ink-soft)}
-.legend i{display:inline-flex;align-items:center;gap:var(--gap-xs);font-style:normal}
+/* ✱ DARK-PAPER RULING (2026-08-22).  The words remain room text, but the swatches name marks on
+   the physical sheet and therefore use the lit sheet palette in both themes.  The same local scope
+   is applied to `.folddiag` below; `.foldstage` deliberately remains themed room/card chrome. */
+.legend i{display:inline-flex;align-items:center;gap:var(--gap-xs);font-style:normal;
+  --paper:#FFF6E8;--ink:#33261C;--ink-soft:#6E5947;--ink-faint:#A08B74;
+  --leaf:#4E7A3C;--leaf-tint:#DCE8CE;--jam:#CF4A28}
 .legend i::before{content:"";width:13px;height:0;border-top:2.4px dashed var(--ink-faint)}
 .legend i.now::before{border-top:3px solid var(--leaf);border-style:solid}
 .legend i.cut::before{border-top:2.4px dashed var(--jam)}
@@ -457,7 +462,9 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .foldstage{display:grid;place-items:center;padding:var(--gap-xs) 0 0;
   background:var(--butter-tint);border:1.5px solid var(--ink);border-radius:var(--br-md);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line)}
-.folddiag{width:100%;max-width:290px;display:block}
+.folddiag{width:100%;max-width:290px;display:block;
+  --paper:#FFF6E8;--paper-edge:#EFDFC6;--ink:#33261C;--ink-soft:#6E5947;--ink-faint:#A08B74;
+  --leaf:#4E7A3C;--leaf-tint:#DCE8CE;--jam:#CF4A28}
 /* ✱ was stroke:var(--ink-line) — the HARD-SHADOW token, #120E0A in dark, which put the
    fold sheet's own outline at 1.38:1 against its fill.  --ink is byte-identical in light
    (#33261C), so this is a no-op there and 11.70:1 in dark.  A drawn line follows ink;

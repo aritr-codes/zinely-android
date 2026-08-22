@@ -184,20 +184,35 @@ class ProofActPaintTest {
         return crop()
     }
 
-    // The fold drawer is painted in the **V2.1** palette (`--paper` #FFF6E8 / #332B22), pulled forward
-    // from P6 because the guide is the one screen a user sits with while holding paper and it was the
-    // only part of the surface that did not look handmade. Unlike V1's `paper`, V2.1's flips with theme.
+    // The fold drawer itself is themed, but the physical sheet it depicts stays lit in both themes for
+    // the same reason the imposed sheet does: it is claiming to be the paper in the user's hands.
     @Test fun `the fold guide paints its step diagram - light phone`() =
         fold(darkTheme = false, PHONE).assertPaints("fold diagram sheet", Color(0xFFFFF6E8), 500)
 
     @Test fun `the fold guide paints its step diagram - dark phone`() =
-        fold(darkTheme = true, PHONE).assertPaints("fold diagram sheet", Color(0xFF332B22), 500)
+        fold(darkTheme = true, PHONE).assertPaints("fold diagram sheet", Color(0xFFFFF6E8), 500)
 
     @Test fun `the fold guide paints its step diagram - light tablet`() =
         fold(darkTheme = false, TABLET).assertPaints("fold diagram sheet", Color(0xFFFFF6E8), 500)
 
     @Test fun `the fold guide paints its step diagram - dark tablet`() =
-        fold(darkTheme = true, TABLET).assertPaints("fold diagram sheet", Color(0xFF332B22), 500)
+        fold(darkTheme = true, TABLET).assertPaints("fold diagram sheet", Color(0xFFFFF6E8), 500)
+
+    @Test fun `dark legend keeps room labels while its marks match the lit sheet`() {
+        mount(darkTheme = true, PHONE) {
+            ProofFoldAct(
+                step = 0, reduceMotion = true,
+                onNext = {}, onPrev = {}, onGoToStep = {},
+            )
+        }
+        crop(ProofFoldLegendTestTag).run {
+            assertPaints("room-coloured legend labels", Color(0xFFBFAC93), 20)
+            assertPaints("lit crease swatch", Color(0xFFA08B74), 5)
+            assertPaints("lit fold-now swatch", Color(0xFF4E7A3C), 5)
+            assertPaints("lit cut swatch", Color(0xFFCF4A28), 5)
+            assertPaints("lit move/action swatches", Color(0xFF33261C), 5)
+        }
+    }
 
     /**
      * **A drawn line follows ink; only a shadow follows ink-line.**
@@ -231,7 +246,7 @@ class ProofActPaintTest {
             )
         }
         val diagram = crop(ProofFoldDiagramTestTag)
-        diagram.assertPaints("fold sheet outline", Color(0xFFF6EAD6), 300)
+        diagram.assertPaints("fold sheet outline", Color(0xFF33261C), 300)
         assertEquals(
             "the diagram painted the hard-shadow token; a drawn line follows ink",
             0,
@@ -250,5 +265,5 @@ class ProofActPaintTest {
 
     @Test fun `the last step paints its finished-cover diagram - dark phone`() =
         fold(darkTheme = true, PHONE, step = FOLD_LAST_STEP)
-            .assertPaints("step 8 cover outline", Color(0xFF8FAE6B), 200)
+            .assertPaints("step 8 cover outline", Color(0xFF4E7A3C), 200)
 }
