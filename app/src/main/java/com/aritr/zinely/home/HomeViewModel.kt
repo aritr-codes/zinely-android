@@ -1,5 +1,6 @@
 package com.aritr.zinely.home
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aritr.zinely.core.data.repository.DataError
@@ -11,12 +12,17 @@ import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.core.model.newZineCoverRecipe
+import com.aritr.zinely.data.android.LibrarySafTransport
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.HomeZineCard
+import com.aritr.zinely.feature.library.LibraryBackupRestoreFailureKind
+import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
+import com.aritr.zinely.feature.library.LibraryBackupRestoreUiState
 import com.aritr.zinely.feature.library.LibraryZine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +37,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
@@ -81,6 +88,7 @@ internal sealed interface HomeUiState {
 @HiltViewModel
 internal class HomeViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
+    private val librarySafTransport: LibrarySafTransport,
 ) : ViewModel() {
 
     /** Ids hidden from the shelf while their undo window is open (ADR-044 §3). */
@@ -115,6 +123,9 @@ internal class HomeViewModel @Inject constructor(
 
     /** The in-flight create (ADR-046 §5 single-flight): taps during it are no-ops. */
     private var createJob: Job? = null
+    private var backupRestoreJob: Job? = null
+    private var backupRestorePickerPending: Boolean = false
+    private var backupRestoreCancellationRequested: Boolean = false
 
     /**
      * Bumped by [retry]. `flatMapLatest` below turns each bump into a **fresh** subscription to
@@ -122,6 +133,12 @@ internal class HomeViewModel @Inject constructor(
      * honest retry is a new collection of a new flow.
      */
     private val retries = MutableStateFlow(0)
+
+    private val pickerRequests = Channel<LibraryBackupRestorePickerRequest>(Channel.BUFFERED)
+    val backupRestorePickerRequests: Flow<LibraryBackupRestorePickerRequest> = pickerRequests.receiveAsFlow()
+
+    private val _backupRestoreState = MutableStateFlow<LibraryBackupRestoreUiState?>(null)
+    val backupRestoreState: StateFlow<LibraryBackupRestoreUiState?> = _backupRestoreState
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<HomeUiState> = retries.flatMapLatest { shelfStateFlow() }
@@ -179,6 +196,76 @@ internal class HomeViewModel @Inject constructor(
      */
     fun retry() {
         retries.update { it + 1 }
+    }
+
+    fun startBackup() {
+        val hasVisibleZines = (state.value as? HomeUiState.Content)?.cards?.isNotEmpty() == true
+        if (!hasVisibleZines) return
+        requestBackupRestorePicker(LibraryBackupRestorePickerRequest.Backup(suggestedBackupName()))
+    }
+
+    fun startRestore() {
+        requestBackupRestorePicker(LibraryBackupRestorePickerRequest.Restore)
+    }
+
+    fun backupPicked(uri: Uri?) {
+        backupRestorePickerPending = false
+        if (uri == null) return
+        launchBackupRestore(LibraryBackupRestoreMode.Backup) {
+            when (val result = librarySafTransport.backupTo(uri)) {
+                is DataResult.Success -> LibraryBackupRestoreUiState.BackupSaved(
+                    projectCount = result.value.projectCount,
+                    assetCount = result.value.assetCount,
+                )
+                is DataResult.Failure -> LibraryBackupRestoreUiState.Failed(
+                    mode = LibraryBackupRestoreMode.Backup,
+                    kind = classifyBackupRestoreFailure(LibraryBackupRestoreMode.Backup, result.error),
+                )
+            }
+        }
+    }
+
+    fun restorePicked(uri: Uri?) {
+        backupRestorePickerPending = false
+        if (uri == null) return
+        launchBackupRestore(LibraryBackupRestoreMode.Restore) {
+            when (val result = librarySafTransport.restoreFrom(uri)) {
+                is DataResult.Success -> LibraryBackupRestoreUiState.RestoreAdded(
+                    restoredProjectCount = result.value.projects.size,
+                )
+                is DataResult.Failure -> LibraryBackupRestoreUiState.Failed(
+                    mode = LibraryBackupRestoreMode.Restore,
+                    kind = classifyBackupRestoreFailure(LibraryBackupRestoreMode.Restore, result.error),
+                )
+            }
+        }
+    }
+
+    fun backupRestorePickerFailed(mode: LibraryBackupRestoreMode) {
+        backupRestorePickerPending = false
+        _backupRestoreState.value = LibraryBackupRestoreUiState.Failed(
+            mode = mode,
+            kind = mode.ioFailureKind(),
+        )
+    }
+
+    fun cancelBackupRestore() {
+        if (backupRestoreJob?.isActive == true) {
+            backupRestoreCancellationRequested = true
+            backupRestoreJob?.cancel()
+        }
+    }
+
+    fun dismissBackupRestoreSurface() {
+        _backupRestoreState.value = null
+    }
+
+    fun retryBackupRestore() {
+        when ((backupRestoreState.value as? LibraryBackupRestoreUiState.Failed)?.mode) {
+            LibraryBackupRestoreMode.Backup -> startBackup()
+            LibraryBackupRestoreMode.Restore -> startRestore()
+            null -> Unit
+        }
     }
 
     /**
@@ -252,15 +339,15 @@ internal class HomeViewModel @Inject constructor(
     }
 
     /** The one commit path [commitDelete] and [commitPendingDeletesNow] share. */
-    private suspend fun performCommit(id: String) {
+    private suspend fun performCommit(id: String): Boolean =
         when (val result = projectRepository.deleteProject(id)) {
-            is DataResult.Success -> Unit // stay hidden; the store flow removes the card
+            is DataResult.Success -> true // stay hidden; the store flow removes the card
             is DataResult.Failure -> {
                 pendingDeletes.update { it - id } // the card is still real — show it again
                 eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
+                false
             }
         }
-    }
 
     /**
      * Commit every pending delete before leaving the shelf (ADR-046 §4): navigating away cancels the
@@ -268,13 +355,81 @@ internal class HomeViewModel @Inject constructor(
      * dismissal would have made. A failed commit rolls back visibly through [performCommit] (unhide +
      * warm message, seen on return) and **never blocks** the requested open/create.
      */
-    private suspend fun commitPendingDeletesNow() {
-        pendingDeletes.value.forEach { performCommit(it) }
+    private suspend fun commitPendingDeletesNow(): Boolean =
+        pendingDeletes.value.map { performCommit(it) }.all { it }
+
+    private fun requestBackupRestorePicker(request: LibraryBackupRestorePickerRequest) {
+        if (backupRestoreJob?.isActive == true || backupRestorePickerPending) return
+        dismissBackupRestoreSurface()
+        backupRestorePickerPending = true
+        viewModelScope.launch {
+            if (!commitPendingDeletesNow()) {
+                backupRestorePickerPending = false
+                return@launch
+            }
+            pickerRequests.send(request)
+        }
     }
+
+    private fun launchBackupRestore(
+        mode: LibraryBackupRestoreMode,
+        run: suspend () -> LibraryBackupRestoreUiState,
+    ) {
+        if (backupRestoreJob?.isActive == true) return
+        backupRestoreJob = viewModelScope.launch {
+            _backupRestoreState.value = LibraryBackupRestoreUiState.Running(mode)
+            try {
+                _backupRestoreState.value = run()
+            } catch (cancelled: CancellationException) {
+                _backupRestoreState.value = null
+                if (backupRestoreCancellationRequested) {
+                    eventQueue.trySend(
+                        HomeShelfEvent.Message(
+                            if (mode == LibraryBackupRestoreMode.Backup) {
+                                Copy.LibraryBackup.BACKUP_CANCELLED
+                            } else {
+                                Copy.LibraryBackup.RESTORE_CANCELLED
+                            },
+                        ),
+                    )
+                }
+                throw cancelled
+            } finally {
+                backupRestoreCancellationRequested = false
+                backupRestoreJob = null
+            }
+        }
+    }
+
+    private fun classifyBackupRestoreFailure(
+        mode: LibraryBackupRestoreMode,
+        error: DataError,
+    ): LibraryBackupRestoreFailureKind = when (error) {
+        is DataError.Corrupt, is DataError.Invalid -> LibraryBackupRestoreFailureKind.Damaged
+        is DataError.SchemaTooNew -> LibraryBackupRestoreFailureKind.NewerAppNeeded
+        is DataError.OutOfSpace -> LibraryBackupRestoreFailureKind.NotEnoughSpace
+        is DataError.Busy -> LibraryBackupRestoreFailureKind.Busy
+        is DataError.Io, is DataError.NotFound -> mode.ioFailureKind()
+        is DataError.Unknown -> LibraryBackupRestoreFailureKind.Generic
+    }
+
+    private fun LibraryBackupRestoreMode.ioFailureKind(): LibraryBackupRestoreFailureKind =
+        if (this == LibraryBackupRestoreMode.Backup) {
+            LibraryBackupRestoreFailureKind.SaveFailed
+        } else {
+            LibraryBackupRestoreFailureKind.ReadFailed
+        }
+
+    private fun suggestedBackupName(): String = "${Copy.LibraryBackup.PICKER_BACKUP_NAME_PREFIX}-${LocalDate.now()}.zine"
 
     private suspend fun DataResult<*>.sendMessageOnFailure() {
         if (this is DataResult.Failure) eventQueue.send(HomeShelfEvent.Message(error.warmMessage()))
     }
+}
+
+internal sealed interface LibraryBackupRestorePickerRequest {
+    data class Backup(val suggestedName: String) : LibraryBackupRestorePickerRequest
+    data object Restore : LibraryBackupRestorePickerRequest
 }
 
 /**

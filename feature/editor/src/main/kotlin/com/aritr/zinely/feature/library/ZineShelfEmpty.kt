@@ -461,10 +461,10 @@ private fun measureCharacters(count: Int, style: TextStyle): Dp {
 // illustrations' own geometry is not, because it is a drawing rather than a layout.
 // ---------------------------------------------------------------------------------------------
 
-/** `.empty{padding:var(--gap-2xl) var(--gap-2xl) 150px;gap:var(--gap-md)}` — the 150 clears the dock. */
+/** The original 150dp dock clearance plus the frozen 56dp `Restore a backup` action row. */
 private val EmptyPaddingTop = ZinelyV21Dimens.gap2Xl
 private val EmptyPaddingHorizontal = ZinelyV21Dimens.gap2Xl
-private val EmptyPaddingBottom = 150.dp
+private val EmptyPaddingBottom = 206.dp
 private val EmptyGap = ZinelyV21Dimens.gapMd
 
 /** `.tf{gap:var(--gap-lg);margin-bottom:var(--gap-xs)}`. */

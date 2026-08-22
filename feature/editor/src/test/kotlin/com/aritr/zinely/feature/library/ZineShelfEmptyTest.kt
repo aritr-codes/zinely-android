@@ -118,7 +118,8 @@ class ZineShelfEmptyTest {
 
         /**
           * `.tf{gap:var(--gap-lg)}`, `.tf .col{gap:var(--gap-sm)}`,
-          * `.empty{gap:var(--gap-md);padding:var(--gap-2xl) var(--gap-2xl) 150px}` — 16 / 8 / 12 / 36,
+          * `.empty{gap:var(--gap-md);padding:var(--gap-2xl) var(--gap-2xl) 206px}` — the frozen
+          * 150dp dock clearance plus the quiet backup companion.
           * where V2 wrote 14 / 9 / 16 / 40. The caption's own margin is now the **column's** gap rather
           * than a margin on the label, which is why that name changed with its value.
           */
@@ -187,8 +188,8 @@ class ZineShelfEmptyTest {
         /** The square the arrow is drawn into, since Pass 1 made it a `Canvas` rather than a glyph. */
         const val ARROW_BOX = 24
 
-        /** `.empty{padding:… 150px}` — clearance for the dock, not padding. */
-        const val EMPTY_PADDING_BOTTOM = 150
+        /** Dock clearance including the quiet backup companion, not content padding. */
+        const val EMPTY_PADDING_BOTTOM = 206
 
         /** 29ch at `.pv`'s own type, which is a different number from 29ch at the paragraph's. */
         const val REF_MEASURE_PV = "ref-29ch-pv"
@@ -678,14 +679,14 @@ class ZineShelfEmptyTest {
         val bottom = bounds(PRIVACY)
         val contentCentre = (top.top + bottom.bottom) / 2f
 
-        // `padding:var(--gap-2xl) var(--gap-2xl) 150px` against `justify-content:center` centres the
-        // content in the space *above* the dock. Trim the 150 and the copy sits under the button; the
+        // The asymmetric bottom clearance against `justify-content:center` centres the content in the
+        // space *above* the dock. Trim it and the copy sits under the buttons; the
         // frozen number is four times the others precisely because it is not padding, it is clearance.
         assertTrue(
             "the content must sit above the host's own centre ($contentCentre against ${host.center.y})",
             contentCentre < host.center.y,
         )
-        // Specifically, by half the difference between the top and bottom paddings: (150 − 36) / 2 = 57.
+        // Specifically, by half the difference between the top and bottom clearances.
         assertEquals(
             "the content must be lifted by half the padding difference",
             (EMPTY_PADDING_BOTTOM - EMPTY_PADDING_SIDE) / 2f,
@@ -740,7 +741,7 @@ class ZineShelfEmptyTest {
 
     @Test
     fun `the side padding binds the paragraph when the screen is narrower than its measure`() {
-        // `.empty{padding:var(--gap-2xl) var(--gap-2xl) 150px}` — the sides are unobservable at any width the
+        // The side padding is unobservable at any width the
         // 29ch measure fits
         // in, and the vertical pair is unobservable *at all* under `justify-content:center`, which centres
         // in the box the two of them leave: only their difference reaches the layout, and the existing

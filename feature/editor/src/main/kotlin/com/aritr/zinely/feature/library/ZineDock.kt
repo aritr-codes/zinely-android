@@ -38,6 +38,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +60,12 @@ internal const val ZineDockTestTag = "zine-dock"
 
 /** The test handle on the "Make a zine" button. */
 internal const val ZineStartTestTag = "zine-start"
+internal const val ZineDockSecondaryActionTestTag = "zine-dock-secondary-action"
+
+internal data class ZineDockSecondaryAction(
+    val label: String,
+    val onClick: () -> Unit,
+)
 
 /**
  * The frozen Library's **dock** — `docs/design/mockups/v21-library.html`.
@@ -100,7 +108,12 @@ internal const val ZineStartTestTag = "zine-start"
  *   window — so this composable does not place itself.
  */
 @Composable
-internal fun ZineDock(onStart: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ZineDock(
+    onStart: () -> Unit,
+    modifier: Modifier = Modifier,
+    secondaryAction: ZineDockSecondaryAction? = null,
+    secondaryActionFocusRequester: FocusRequester? = null,
+) {
     val desk = ZinelyTheme.v21Colors.desk
 
     Box(
@@ -117,11 +130,44 @@ internal fun ZineDock(onStart: () -> Unit, modifier: Modifier = Modifier) {
                 top = DockPaddingTop,
                 bottom = DockPaddingBottom,
             ),
-        // `display:flex;justify-content:center` on a single child.
         contentAlignment = Alignment.Center,
     ) {
-        StartButton(onStart)
+        androidx.compose.foundation.layout.Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        ) {
+            StartButton(onStart)
+            secondaryAction?.let { QuietAction(it, secondaryActionFocusRequester) }
+        }
     }
+}
+
+@Composable
+private fun QuietAction(action: ZineDockSecondaryAction, focusRequester: FocusRequester?) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    Text(
+        text = action.label,
+        modifier = Modifier
+            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+            .testTag(ZineDockSecondaryActionTestTag)
+            .clip(RoundedCornerShape(ZinelyV21Dimens.radiusPill))
+            .background(if (pressed) colors.paper.copy(alpha = 0.72f) else Color.Transparent)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .zinelyV2Control(
+                label = action.label,
+                interactionSource = interaction,
+                onClick = action.onClick,
+            ),
+        style = TextStyle(
+            color = if (pressed) colors.ink else colors.inkSoft,
+            fontFamily = ZinelyV21Fonts.Work,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+        ),
+    )
 }
 
 /**

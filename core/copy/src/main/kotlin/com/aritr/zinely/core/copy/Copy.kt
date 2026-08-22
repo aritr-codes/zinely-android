@@ -1307,6 +1307,79 @@ public object Copy {
         )
     }
 
+    /** Whole-library `.zine` backup / restore on the shelf. */
+    public object LibraryBackup {
+        public const val BACKUPS: String = "Backups"
+        public const val BRING_BACK: String = "Restore a backup"
+        public const val TITLE: String = "Your zines, kept safe"
+        public const val SHEET_BODY: String =
+            "Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced."
+        public const val EMPTY_TITLE: String = "Bring your zines back"
+        public const val EMPTY_BODY: String = "Choose a Zinely backup and its zines will be added to this shelf."
+        public const val PRIVACY_NOTE: String =
+            "You choose where it goes. Zinely doesn’t send it anywhere on its own."
+        public const val EMPTY_PRIVACY_NOTE: String = "Zinely doesn’t send anything anywhere on its own."
+        public const val SAVE_ACTION: String = "Back up this shelf"
+        public const val SAVE_BODY: String = "Choose where to keep a copy of this whole shelf."
+        public const val RESTORE_ACTION: String = "Restore a backup"
+        public const val RESTORE_BODY: String =
+            "Add zines from a Zinely backup. What’s here stays here; a matching zine returns as a separate copy."
+        public const val EMPTY_RESTORE_BODY: String = "Choose a Zinely backup to add its zines to this shelf."
+
+        public const val BACKUP_RUNNING_TITLE: String = "Saving your backup"
+        public const val BACKUP_RUNNING_BODY: String = "Keeping every zine together in one file."
+        public const val BACKUP_RUNNING_HINT: String = "Keep Zinely open for a moment."
+        public const val RESTORE_RUNNING_TITLE: String = "Bringing your zines back"
+        public const val RESTORE_RUNNING_BODY: String = "Checking the backup before anything changes."
+        public const val RESTORE_RUNNING_HINT: String =
+            "Nothing on this shelf changes until the backup passes its checks."
+        public const val RUNNING_STATE_DESCRIPTION: String = "Working"
+
+        public const val RESTORE_SUCCESS_BODY: String = "What was already on this shelf stayed put."
+        public const val ERROR_DAMAGED_TITLE: String = "This backup looks damaged"
+        public const val ERROR_DAMAGED_BODY: String = "Zinely couldn’t safely bring anything back from that file."
+        public const val ERROR_NEWER_TITLE: String = "This backup needs a newer Zinely"
+        public const val ERROR_NEWER_BODY: String =
+            "It was made with a version of Zinely that knows more than this one does."
+        public const val ERROR_READ_TITLE: String = "Couldn’t read that file"
+        public const val ERROR_READ_BODY: String = "Zinely couldn’t safely read that backup."
+        public const val ERROR_SAVE_TITLE: String = "Couldn’t save the backup there"
+        public const val ERROR_SAVE_BODY: String = "Pick another location and try again."
+        public const val ERROR_SPACE_TITLE: String = "Not enough space"
+        public const val ERROR_SPACE_BODY: String = "Free up some space, then try again."
+        public const val ERROR_BUSY_TITLE: String = "Give Zinely a moment"
+        public const val ERROR_BUSY_BODY: String = "A zine is still being put away. Try again shortly."
+        public const val CANCEL: String = "Cancel"
+        public const val DONE: String = Common.GOT_IT
+        public const val GOT_IT: String = Common.GOT_IT
+        public const val TRY_AGAIN: String = Common.TRY_AGAIN
+        public const val TRY_ANOTHER_BACKUP: String = "Try another backup"
+        public const val PICKER_BACKUP_NAME_PREFIX: String = "zinely-backup"
+        public const val BACKUP_CANCELLED: String = "Backup cancelled."
+        public const val RESTORE_CANCELLED: String = "Restore cancelled."
+
+        public fun backupSavedTitle(): String = "Backup saved"
+        public fun backupSavedBody(projectCount: Int): String =
+            "All ${projectCount} ${if (projectCount == 1) "zine is" else "zines are"} together in one backup file."
+
+        public fun restoreAddedTitle(projectCount: Int): String =
+            "$projectCount ${if (projectCount == 1) "zine" else "zines"} added to your shelf"
+
+        public fun errorGenericTitle(isBackup: Boolean): String =
+            if (isBackup) {
+                "Couldn’t finish that backup"
+            } else {
+                "Couldn’t finish that restore"
+            }
+
+        public fun errorGenericBody(isBackup: Boolean): String =
+            if (isBackup) {
+                "Nothing about the zines on this shelf was changed."
+            } else {
+                "Nothing on this shelf was changed."
+            }
+    }
+
     /** The Read act — the finished zine, one leaf at a time (`ProofRead.kt`). */
     public object ProofRead {
         // `CONTENT_DESCRIPTION` was **deleted** by ADR-101 P5, and not because it went out of date. It

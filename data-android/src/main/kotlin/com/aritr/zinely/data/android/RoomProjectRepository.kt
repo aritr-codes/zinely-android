@@ -321,6 +321,14 @@ internal class RoomProjectRepository(
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (invalid: ZineBackupStagingException) {
+                    if (invalid.reason == ZineBackupStagingException.Reason.FUTURE_VERSION) {
+                        return@withLock failure(
+                            DataError.SchemaTooNew(
+                                documentVersion = invalid.encounteredVersion ?: Int.MAX_VALUE,
+                                supportedVersion = invalid.supportedVersion ?: 0,
+                            ),
+                        )
+                    }
                     return@withLock failure(DataError.Corrupt(invalid.message ?: "invalid backup", invalid))
                 } catch (failure: Exception) {
                     return@withLock failure(DataError.Io("failed to stage library backup", failure))

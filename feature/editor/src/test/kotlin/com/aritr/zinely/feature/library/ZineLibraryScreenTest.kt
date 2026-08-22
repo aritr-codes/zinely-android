@@ -10,10 +10,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
@@ -36,6 +41,7 @@ import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.homeDeletedMessage
 import com.aritr.zinely.feature.editor.homePaperChoiceTestTag
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
+import com.aritr.zinely.ui.components.ZSheetScrimTestTag
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -80,11 +86,14 @@ class ZineLibraryScreenTest {
     private val undone = mutableListOf<String>()
     private val committed = mutableListOf<String>()
     private var retries = 0
+    private var backups = 0
+    private var restores = 0
 
     private val events = Channel<HomeShelfEvent>(Channel.BUFFERED)
 
     private var deskColor: Color = Color.Unspecified
     private var leafColor: Color = Color.Unspecified
+    private lateinit var inputMode: InputModeManager
 
     // ---------------------------------------------------------------------------------------------
     // Row 1 — the ground
@@ -138,6 +147,61 @@ class ZineLibraryScreenTest {
             composeRule.onNodeWithTag(ZineDockTestTag).assertIsDisplayed()
             composeRule.onNodeWithTag(ZineStartTestTag).assertIsDisplayed()
         }
+    }
+
+    @Test
+    fun `backup actions appear only after the shelf has loaded`() {
+        render(LibraryShelfState.Loading)
+        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).assertDoesNotExist()
+
+        render(LibraryShelfState.Error)
+        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).assertDoesNotExist()
+
+        render(LibraryShelfState.Content(zines(1)))
+        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag)
+            .assertContentDescriptionEquals(Copy.LibraryBackup.BACKUPS)
+
+        render(LibraryShelfState.Empty)
+        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag)
+            .assertContentDescriptionEquals(Copy.LibraryBackup.BRING_BACK)
+    }
+
+    @Test
+    fun `a shelf with zines offers backup and additive restore`() {
+        content(zines(2))
+        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).performClick()
+
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertIsDisplayed().performClick()
+        assertEquals("backup was not handed to the host", 1, backups)
+    }
+
+    @Test
+    fun `an empty shelf offers restore without an impossible empty backup`() {
+        render(LibraryShelfState.Empty)
+        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).performClick()
+
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag).assertIsDisplayed().performClick()
+        assertEquals("restore was not handed to the host", 1, restores)
+    }
+
+    @Test
+    fun `the chooser focuses its first action then returns focus after its full exit`() {
+        content(zines(2))
+        composeRule.runOnUiThread {
+            assertTrue(inputMode.requestInputMode(InputMode.Keyboard))
+        }
+        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertIsFocused()
+
+        composeRule.onNodeWithTag(ZSheetScrimTestTag).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).assertIsFocused()
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -450,11 +514,13 @@ class ZineLibraryScreenTest {
     @Composable
     private fun Host() {
         ZinelyTheme(darkTheme = darkTheme) {
+            inputMode = LocalInputModeManager.current
             deskColor = ZinelyTheme.v21Colors.desk
             leafColor = ZinelyTheme.v21Colors.leaf
             ZineLibraryScreen(
                 state = shelfState,
                 events = events.receiveAsFlow(),
+                backupRestoreState = null,
                 onOpenZine = { opened += it },
                 onShareExport = { shared += it },
                 onStartZine = { started += it },
@@ -464,6 +530,11 @@ class ZineLibraryScreenTest {
                 onDeleteUndo = { undone += it },
                 onDeleteCommit = { committed += it },
                 onRetry = { retries++ },
+                onStartBackup = { backups++ },
+                onStartRestore = { restores++ },
+                onDismissBackupRestore = {},
+                onCancelBackupRestore = {},
+                onRetryBackupRestore = {},
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -510,7 +581,6 @@ class ZineLibraryScreenTest {
         const val NEW_TITLE = "Coffee log"
         const val PLACEHOLDERS = 4
         const val HALF_PIXEL = 0.5f
-
         /** Inside `.shelf{padding:30px 22px}` on both axes: bare ground, above and left of every cell. */
         const val GROUND_PROBE = 8
 

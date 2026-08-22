@@ -86,7 +86,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import com.aritr.zinely.export.ExportViewModel
 import com.aritr.zinely.home.HomeUiState
 import com.aritr.zinely.home.HomeViewModel
+import com.aritr.zinely.home.LibraryBackupRestorePickerRequest
 import com.aritr.zinely.feature.library.LibraryShelfState
+import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.ZineLibraryScreen
 import androidx.compose.runtime.DisposableEffect
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -172,14 +174,35 @@ private fun HomeDestination(
 ) {
     val viewModel: HomeViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
+
+    val backupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        viewModel.backupPicked(uri)
+    }
+    val restoreLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        viewModel.restorePicked(uri)
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.openEvents.collect { id -> onOpenZine(id) }
+    }
+    LaunchedEffect(viewModel, backupLauncher, restoreLauncher) {
+        viewModel.backupRestorePickerRequests.collect { request ->
+            launchBackupRestorePicker(
+                request = request,
+                launchBackup = backupLauncher::launch,
+                launchRestore = restoreLauncher::launch,
+                onFailure = viewModel::backupRestorePickerFailed,
+            )
+        }
     }
 
     ZineLibraryScreen(
         state = state.toLibraryShelfState(),
         events = viewModel.events,
+        backupRestoreState = backupRestoreState,
         onOpenZine = viewModel::openZine,
         onShareExport = onShareExport,
         onStartZine = viewModel::startZine,
@@ -189,8 +212,35 @@ private fun HomeDestination(
         onDeleteUndo = viewModel::undoDelete,
         onDeleteCommit = viewModel::commitDelete,
         onRetry = viewModel::retry,
+        onStartBackup = viewModel::startBackup,
+        onStartRestore = viewModel::startRestore,
+        onDismissBackupRestore = viewModel::dismissBackupRestoreSurface,
+        onCancelBackupRestore = viewModel::cancelBackupRestore,
+        onRetryBackupRestore = viewModel::retryBackupRestore,
         modifier = Modifier.fillMaxSize(),
     )
+}
+
+internal fun launchBackupRestorePicker(
+    request: LibraryBackupRestorePickerRequest,
+    launchBackup: (String) -> Unit,
+    launchRestore: (Array<String>) -> Unit,
+    onFailure: (LibraryBackupRestoreMode) -> Unit,
+) {
+    try {
+        when (request) {
+            is LibraryBackupRestorePickerRequest.Backup -> launchBackup(request.suggestedName)
+            LibraryBackupRestorePickerRequest.Restore -> launchRestore(arrayOf("*/*"))
+        }
+    } catch (_: RuntimeException) {
+        onFailure(
+            if (request is LibraryBackupRestorePickerRequest.Backup) {
+                LibraryBackupRestoreMode.Backup
+            } else {
+                LibraryBackupRestoreMode.Restore
+            },
+        )
+    }
 }
 
 /**

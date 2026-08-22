@@ -215,6 +215,25 @@ class RoomProjectRepositoryRestoreTest {
     }
 
     @Test
+    fun `future backup version is reported distinctly and leaves the library untouched`() = runTest {
+        val repository = repo()
+        val existing = repository.createProject("Keep", ZineFormat.SINGLE_SHEET_8, PaperSize.LETTER).getOrNull()!!.id
+        val archive = writeArchive(
+            projects = listOf(BackupProjectFixture("future", "From the future", 1L, 2L, document())),
+            packageVersion = CURRENT_LIBRARY_BACKUP_VERSION + 1,
+        )
+
+        val result = repository.restoreLibrary(archive)
+
+        val error = result.errorOrNull()
+        assertTrue("expected SchemaTooNew, got $error", error is DataError.SchemaTooNew)
+        assertEquals(CURRENT_LIBRARY_BACKUP_VERSION + 1, (error as DataError.SchemaTooNew).documentVersion)
+        assertEquals(CURRENT_LIBRARY_BACKUP_VERSION, error.supportedVersion)
+        assertEquals(listOf(existing), repository.observeProjects().first().map { it.id })
+        assertFalse(Files.exists(root.resolve("projects").resolve("future")))
+    }
+
+    @Test
     fun `recovered stale rows are dropped before restore id allocation so reused ids get fresh metadata`() = runTest {
         documents.save("reuse", document())
         db.projectDao().upsert(
@@ -362,11 +381,12 @@ class RoomProjectRepositoryRestoreTest {
         projects: List<BackupProjectFixture>,
         assets: Map<String, ByteArray> = emptyMap(),
         omittedEntries: Set<String> = emptySet(),
+        packageVersion: Int = CURRENT_LIBRARY_BACKUP_VERSION,
     ): Path {
         val serializer = JsonDocumentSerializer()
         val documentsById = projects.associate { it.sourceProjectId to serializer.serialize(it.document).encodeToByteArray() }
         val manifest = ZineLibraryBackupManifest(
-            packageVersion = CURRENT_LIBRARY_BACKUP_VERSION,
+            packageVersion = packageVersion,
             kind = LIBRARY_BACKUP_KIND,
             appVersion = "test",
             createdAtEpochMs = 99L,

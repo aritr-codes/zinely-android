@@ -509,8 +509,11 @@ private fun ShelfPlaceholder() {
 /** `grid-template-columns:1fr 1fr` — still no breakpoint anywhere in the corpus. See D-020. */
 private const val ShelfColumns = 2
 
-/** `.shelf{padding-bottom:132px}` — the dock's height, grown by its safe area; see [zineDockClearance]. */
-private val ShelfDockClearance = 132.dp
+/**
+ * The original 132dp dock clearance plus the frozen Backup companion's 56dp quiet action row.
+ * Loading temporarily keeps the same clearance so the grid does not jump when content arrives.
+ */
+private val ShelfDockClearance = 188.dp
 
 /**
  * `.shelf{gap:var(--gap-xl) var(--gap-lg)}` — CSS `gap` is **row-gap first**, then column-gap.

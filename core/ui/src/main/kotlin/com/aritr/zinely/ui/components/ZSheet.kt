@@ -32,9 +32,12 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,6 +113,10 @@ public data class ZSheetClose(val label: String, val onClose: () -> Unit)
  * .drawer` — and where they disagree the value taken is recorded at the constant.
  *
  * @param close draws the frozen `.dhead` close button. Null (default) draws none.
+ * @param onShown runs after the enter animation has attached and settled the dialog content. Use it
+ * for deterministic initial focus.
+ * @param onHidden runs after the exit animation releases the dialog window. Use it for focus return,
+ * never as the user's dismiss action.
  */
 @Composable
 public fun ZSheet(
@@ -119,10 +126,26 @@ public fun ZSheet(
     modifier: Modifier = Modifier,
     sub: String? = null,
     close: ZSheetClose? = null,
+    onShown: (() -> Unit)? = null,
+    onHidden: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val visibleState = remember { MutableTransitionState(false) }
+    var wasShown by remember { mutableStateOf(false) }
+    var shownNotified by remember { mutableStateOf(false) }
+    SideEffect { if (visible) wasShown = true }
     visibleState.targetState = visible
+    LaunchedEffect(visibleState.isIdle, visibleState.currentState, visibleState.targetState) {
+        if (!shownNotified && visibleState.isIdle && visibleState.currentState && visibleState.targetState) {
+            shownNotified = true
+            onShown?.invoke()
+        }
+        if (wasShown && visibleState.isIdle && !visibleState.currentState && !visibleState.targetState) {
+            wasShown = false
+            shownNotified = false
+            onHidden?.invoke()
+        }
+    }
     if (!visibleState.currentState && !visibleState.targetState) return
 
     Dialog(

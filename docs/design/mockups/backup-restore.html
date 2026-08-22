@@ -1,0 +1,992 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zinely — Backup &amp; Restore (DESIGN FREEZE)</title>
+
+<!--
+  DESIGN FREEZE — 2026-08-22
+
+  This file is the canonical interactive specification for the first production Backup/Restore
+  surface. It was frozen after repository critique, physical-device inspection on the Samsung
+  SM_A176B, accessibility review, and comparison with the current V2.1 shelf.
+
+  Entry point:
+  - Content shelf: a quiet, named dock secondary action, "Backups"
+  - Empty shelf: the same dock slot changes copy to "Restore a backup"
+  - Loading / error: no backup entry; the screen first answers the loading / recovery question
+
+  Scope:
+  - whole-library backup only
+  - additive restore only
+  - no replacement / wipe flow
+  - no settings destination
+  - system pickers remain Android-owned and are not mocked here beyond a handoff caption
+
+  Frozen states:
+  - dock with secondary trust action
+  - keep-safe sheet
+  - backup running
+  - restore running
+  - backup success
+  - restore success
+  - damaged / newer / generic error
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Averia+Sans+Libre:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#FFF6E8;
+  --paper-2:#F7F2E7;
+  --desk:#FBE9CE;
+  --ink:#33261C;
+  --ink-soft:#6E5947;
+  --ink-faint:#A08B74;
+  --ink-line:#33261C;
+  --leaf:#4E7A3C;
+  --leaf-dark:#3E6330;
+  --leaf-tint:#DCE8CE;
+  --leaf-text:#3E6330;
+  --on-leaf:#FFF6E8;
+  --butter:#F6B22C;
+  --butter-tint:#FDEBC4;
+  --berry:#E4879F;
+  --berry-tint:#F8DCE2;
+  --jam:#CF4A28;
+  --jam-text:#A63B20;
+  --soft-shadow:rgba(58,39,22,.18);
+  --hair:rgba(51,38,28,.16);
+  --scrim:rgba(38,26,16,.42);
+  --stage:#F2DEBC;
+  --sans:"Inter",system-ui,sans-serif;
+  --voice:"Averia Sans Libre",system-ui,sans-serif;
+  --br-xs:4px;
+  --br-sm:8px;
+  --br-md:14px;
+  --br-lg:22px;
+  --br-xl:36px;
+  --br-pill:999px;
+  --gap-hair:2px;
+  --gap-xs:4px;
+  --gap-sm:8px;
+  --gap-md:12px;
+  --gap-lg:16px;
+  --gap-xl:24px;
+  --gap-2xl:36px;
+  --hard:3px;
+}
+
+@media (prefers-color-scheme:dark){ :root{
+  --paper:#332B22; --paper-2:#3E3529; --desk:#241E18;
+  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
+  --leaf:#8FAE6B; --leaf-dark:#AFC98C; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
+  --butter:#E8B458; --butter-tint:#3E3320;
+  --berry:#D3899B; --berry-tint:#3A2A2D;
+  --jam:#E0755A; --jam-text:#E4856D;
+  --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
+  --soft-shadow:rgba(0,0,0,.62); --scrim:rgba(0,0,0,.58);
+  --stage:#1C1712;
+}}
+
+:root[data-theme="dark"]{
+  --paper:#332B22; --paper-2:#3E3529; --desk:#241E18;
+  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
+  --leaf:#8FAE6B; --leaf-dark:#AFC98C; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
+  --butter:#E8B458; --butter-tint:#3E3320;
+  --berry:#D3899B; --berry-tint:#3A2A2D;
+  --jam:#E0755A; --jam-text:#E4856D;
+  --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
+  --soft-shadow:rgba(0,0,0,.62); --scrim:rgba(0,0,0,.58); --stage:#1C1712;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  background:var(--stage);
+  color:var(--ink);
+  font-family:var(--sans);
+}
+
+.stage{
+  width:min(100vw,430px);
+  padding:24px 14px 28px;
+}
+
+.cap{
+  margin:0 0 12px;
+  color:var(--ink-soft);
+  font-size:12px;
+  line-height:1.45;
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:var(--br-pill);
+  background:var(--butter-tint);
+  color:var(--ink);
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-size:10px;
+}
+
+.phone{
+  position:relative;
+  width:100%;
+  max-width:390px;
+  height:800px;
+  overflow:hidden;
+  border-radius:32px;
+  background:var(--desk);
+  box-shadow:0 18px 50px rgba(44,31,20,.22);
+}
+
+.grain::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,.16) 0 1px, transparent 1px),
+    radial-gradient(circle at 70% 60%, rgba(0,0,0,.05) 0 1px, transparent 1px);
+  background-size:140px 140px, 180px 180px;
+  opacity:.5;
+  pointer-events:none;
+}
+
+.shelf{
+  position:absolute;
+  inset:0;
+  padding:30px 22px 154px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px 16px;
+  align-content:start;
+}
+
+.head{
+  grid-column:1/-1;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  padding:2px 2px 0;
+}
+
+.head h1{
+  margin:0;
+  font-family:var(--voice);
+  font-weight:700;
+  font-size:32px;
+  line-height:1.05;
+}
+
+.head svg{
+  display:block;
+  width:132px;
+  height:9px;
+  margin-top:4px;
+  color:var(--butter);
+}
+
+.count{
+  background:var(--butter);
+  color:var(--ink);
+  border-radius:var(--br-pill);
+  padding:8px 16px;
+  font-size:12.5px;
+  font-weight:600;
+  transform:rotate(1.5deg);
+}
+
+.zine{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.cover{
+  aspect-ratio:3/4;
+  position:relative;
+  overflow:hidden;
+  border-radius:8px 16px 16px 8px;
+  border:1.5px solid var(--ink);
+  box-shadow:3px 3px 0 var(--ink-line);
+  background:var(--paper);
+}
+
+.fill{position:absolute; inset:0}
+.spine{
+  position:absolute;
+  left:12px; top:10px; bottom:10px; width:2px;
+  background:rgba(255,255,255,.35);
+}
+.ink-leaf .fill{background:var(--leaf)}
+.ink-butter .fill{background:var(--butter)}
+.ink-berry .fill{background:var(--berry)}
+.paper-a .fill{background:linear-gradient(180deg,#FBF5EA 0%,#F0E2CA 100%)}
+
+.tape{
+  position:absolute;
+  left:50%;
+  top:-10px;
+  width:56px;
+  height:19px;
+  transform:translateX(-50%) rotate(-4deg);
+  background:rgba(246,178,44,.55);
+  border-left:1px dashed rgba(255,255,255,.45);
+  border-right:1px dashed rgba(255,255,255,.45);
+  box-shadow:0 1px 2px rgba(0,0,0,.12);
+}
+
+.stamp{
+  position:absolute;
+  right:-7px;
+  bottom:-9px;
+  padding:4px 10px;
+  border-radius:var(--br-pill);
+  border:1.5px solid var(--ink);
+  background:var(--paper);
+  box-shadow:2px 2px 0 var(--ink-line);
+  color:var(--ink-soft);
+  font-size:9.5px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  transform:rotate(-3deg);
+}
+
+.meta{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.name{
+  margin:0;
+  font-family:var(--voice);
+  font-size:16px;
+  font-weight:700;
+  line-height:1.2;
+}
+
+.sub{
+  margin:0;
+  color:var(--ink-soft);
+  font-size:11.8px;
+  font-weight:500;
+}
+
+.dock{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  z-index:20;
+  padding:24px 24px 32px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  background:linear-gradient(to top,var(--desk) 58%,transparent);
+}
+
+.start{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  border:none;
+  cursor:pointer;
+  background:var(--leaf);
+  color:var(--on-leaf);
+  border-radius:var(--br-pill);
+  border:1.5px solid var(--ink);
+  padding:16px 24px;
+  box-shadow:3px 3px 0 var(--ink-line), 0 0 0 5px var(--butter);
+  font:700 16px/1.2 var(--sans);
+}
+
+.plus{
+  font-family:var(--voice);
+  font-size:18px;
+  font-weight:700;
+}
+
+.trust-link{
+  border:none;
+  background:none;
+  color:var(--ink-soft);
+  font:600 13px/1.3 var(--sans);
+  cursor:pointer;
+  min-height:48px;
+  padding:10px 14px;
+  border-radius:var(--br-pill);
+}
+
+.trust-link.active{
+  background:var(--paper);
+  color:var(--ink);
+  box-shadow:2px 2px 0 rgba(91,70,52,.22);
+}
+
+.empty{
+  position:absolute;
+  inset:0;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  text-align:center;
+  padding:36px 36px 154px;
+}
+
+.tf{
+  display:flex;
+  align-items:center;
+  gap:24px;
+  margin-bottom:8px;
+}
+
+.col{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+}
+
+.lbl{
+  font-size:10px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  font-weight:700;
+}
+
+.sheet-ill{
+  width:94px; height:68px; position:relative;
+  border-radius:8px;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+  box-shadow:3px 3px 0 var(--ink-line);
+  transform:rotate(-2deg);
+}
+
+.sheet-ill i{position:absolute; background:var(--hair)}
+.sheet-ill .v{top:7px; bottom:7px; width:1px}
+.sheet-ill .v1{left:33%}
+.sheet-ill .v2{left:50%; background:repeating-linear-gradient(var(--ink-faint) 0 3px, transparent 3px 6px); opacity:.55}
+.sheet-ill .v3{left:67%}
+.sheet-ill .h{left:7px; right:7px; height:1px; top:50%}
+
+.book-ill{
+  width:54px; height:70px; position:relative;
+  border-radius:8px 6px 6px 8px;
+  background:var(--leaf);
+  border:1.5px solid var(--ink);
+  box-shadow:3px 3px 0 var(--ink-line);
+  transform:rotate(2deg);
+}
+
+.book-ill::before{
+  content:"";
+  position:absolute;
+  left:6px; top:6px; bottom:6px;
+  width:1px;
+  background:rgba(255,255,255,.3);
+}
+
+.arrow{
+  color:var(--jam);
+  font:700 24px/1 var(--voice);
+  margin-bottom:24px;
+}
+
+.empty h2{
+  margin:8px 0 0;
+  font:700 28px/1.12 var(--voice);
+}
+
+.empty p{
+  margin:0;
+  color:var(--ink-soft);
+  max-width:29ch;
+  font-size:15px;
+  line-height:1.55;
+}
+
+.pv{
+  font-size:12px;
+  color:var(--leaf-text);
+  font-weight:600;
+  margin-top:8px;
+  background:var(--leaf-tint);
+  border-radius:var(--br-pill);
+  padding:8px 16px;
+}
+
+.overlay{
+  position:absolute;
+  inset:0;
+  display:none;
+  z-index:44;
+}
+
+.overlay.show{display:block}
+
+.scrim{
+  position:absolute;
+  inset:0;
+  background:var(--scrim);
+}
+
+.sheet{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  background:var(--paper);
+  border-radius:var(--br-lg) var(--br-lg) 0 0;
+  border-top:2px solid var(--ink);
+  box-shadow:0 -16px 40px -18px var(--soft-shadow);
+  padding:14px 0 32px;
+}
+
+.grab{
+  width:44px;
+  height:5px;
+  border-radius:var(--br-pill);
+  background:var(--ink-faint);
+  margin:0 auto 8px;
+  opacity:.5;
+}
+
+.sheet-body{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  padding:0 24px;
+}
+
+.sheet-copy h3{
+  margin:0;
+  font:700 25px/1.12 var(--voice);
+}
+
+.sheet-copy p{
+  margin:0;
+  color:var(--ink-soft);
+  font-size:14.5px;
+  line-height:1.55;
+}
+
+.sheet-note{
+  display:inline-block;
+  align-self:flex-start;
+  padding:8px 12px;
+  border-radius:var(--br-pill);
+  background:var(--leaf-tint);
+  color:var(--leaf-text);
+  font-size:12px;
+  font-weight:600;
+}
+
+.option{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  width:100%;
+  border:none;
+  background:none;
+  cursor:pointer;
+  text-align:left;
+  padding:16px 0;
+}
+
+.option + .option{
+  border-top:1.5px dashed var(--hair);
+}
+
+.option[disabled]{
+  cursor:default;
+}
+
+.option[disabled] .option-title{
+  color:var(--ink-faint);
+}
+
+.option[disabled] .option-body{
+  color:var(--ink-faint);
+}
+
+.option.hidden{display:none}
+
+.chip{
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  flex:none;
+  border-radius:12px;
+  background:var(--butter-tint);
+  color:var(--ink-soft);
+  font-size:15px;
+}
+
+.option.restore .chip{
+  background:var(--leaf-tint);
+  color:var(--leaf-dark);
+}
+
+.option-title{
+  margin:0;
+  font-size:16px;
+  font-weight:600;
+  color:var(--ink);
+}
+
+.option-body{
+  margin:4px 0 0;
+  color:var(--ink-soft);
+  font-size:13px;
+  line-height:1.45;
+}
+
+.work{
+  align-items:center;
+  text-align:center;
+}
+
+.paper{
+  width:86px;
+  height:114px;
+  border-radius:8px 14px 14px 8px;
+  border:1.5px dashed var(--hair);
+  box-shadow:3px 3px 0 var(--hair);
+  background:var(--paper);
+  position:relative;
+  overflow:hidden;
+}
+
+.paper::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.5) 50%,transparent 80%);
+  animation:sweep 1.5s cubic-bezier(.2,0,0,1) infinite;
+}
+
+@keyframes sweep{
+  from{transform:translateX(-100%)}
+  to{transform:translateX(100%)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .paper::after{animation:none;opacity:.35}
+}
+
+.work .sheet-copy{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-items:center;
+}
+
+.actions{
+  display:flex;
+  gap:12px;
+}
+
+.btn{
+  border:none;
+  cursor:pointer;
+  border-radius:var(--br-pill);
+  font:600 15px/1.2 var(--sans);
+  padding:14px 20px;
+}
+
+.btn.primary{
+  background:var(--leaf);
+  color:var(--paper);
+  border:1.5px solid var(--ink);
+  box-shadow:3px 3px 0 var(--ink-line);
+}
+
+.btn.secondary{
+  background:var(--paper);
+  color:var(--ink);
+  border:1.5px solid var(--ink);
+  box-shadow:3px 3px 0 var(--ink-line);
+}
+
+.mark{
+  width:60px;
+  height:60px;
+  display:grid;
+  place-items:center;
+  border-radius:var(--br-pill);
+  background:var(--paper);
+  border:2px solid var(--leaf);
+  color:var(--leaf-dark);
+  box-shadow:3px 3px 0 rgba(91,70,52,.18);
+  font:700 28px/1 var(--voice);
+  transform:rotate(-4deg);
+}
+
+.mark.warn{
+  border-color:var(--jam);
+  color:var(--jam);
+  box-shadow:3px 3px 0 rgba(166,72,79,.2);
+}
+
+.picker-note{
+  margin-top:2px;
+  color:var(--ink-faint);
+  font-size:12px;
+}
+
+.controls{
+  margin-top:14px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.ctl{
+  border:none;
+  border-radius:var(--br-pill);
+  background:var(--paper);
+  color:var(--ink);
+  border:1.5px solid var(--ink);
+  box-shadow:2px 2px 0 var(--ink-line);
+  padding:8px 12px;
+  font:600 12px/1.2 var(--sans);
+  cursor:pointer;
+}
+
+.ctl.on{
+  background:var(--leaf);
+  color:var(--on-leaf);
+}
+
+.ctl.group{
+  background:transparent;
+  border:none;
+  box-shadow:none;
+  color:var(--ink-soft);
+  cursor:default;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  font-size:10px;
+  padding-left:0;
+}
+</style>
+
+<div class="stage">
+  <p class="cap"><span class="badge">design freeze · 2026-08-22</span><br>Production backup / restore surface. Whole-library only, additive restore only, no settings branch.</p>
+
+  <div class="phone grain" id="phone">
+    <div class="shelf" id="shelf">
+      <div class="head">
+        <div>
+          <h1>Your shelf</h1>
+          <svg viewBox="0 0 132 9" fill="none" aria-hidden="true"><path d="M2 6.2c22-3.4 46-4.6 74-3.2 18 .9 33 2.4 54 1.1" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>
+        </div>
+        <span class="count">6 zines</span>
+      </div>
+
+      <article class="zine">
+        <div class="cover ink-leaf"><span class="tape"></span><div class="fill"></div><div class="spine"></div><span class="stamp">A4</span></div>
+        <div class="meta"><p class="name">Sunday market</p><p class="sub">2 days ago</p></div>
+      </article>
+      <article class="zine">
+        <div class="cover paper-a"><span class="tape"></span><div class="fill"></div><div class="spine"></div><span class="stamp">Letter</span></div>
+        <div class="meta"><p class="name">Letters home</p><p class="sub">today</p></div>
+      </article>
+      <article class="zine">
+        <div class="cover ink-butter"><span class="tape"></span><div class="fill"></div><div class="spine"></div><span class="stamp">A4</span></div>
+        <div class="meta"><p class="name">Riso tests</p><p class="sub">5 days ago</p></div>
+      </article>
+      <article class="zine">
+        <div class="cover ink-berry"><span class="tape"></span><div class="fill"></div><div class="spine"></div><span class="stamp">A4</span></div>
+        <div class="meta"><p class="name">Mum’s garden</p><p class="sub">1 week ago</p></div>
+      </article>
+    </div>
+
+    <div class="empty" id="empty">
+      <div class="tf">
+        <div class="col"><div class="sheet-ill"><i class="v v1"></i><i class="v v2"></i><i class="v v3"></i><i class="h"></i></div><span class="lbl">one sheet</span></div>
+        <div class="col"><span class="arrow">→</span></div>
+        <div class="col"><div class="book-ill"></div><span class="lbl">a little book</span></div>
+      </div>
+      <h2>Make your first little zine.</h2>
+      <p>One sheet of paper becomes a little eight-page book you print and fold yourself — we’ll show you each step.</p>
+      <p class="pv">Everything stays on your phone — no account, nothing uploaded.</p>
+    </div>
+
+    <div class="dock">
+      <button class="start"><span class="plus">＋</span> Make a zine</button>
+      <button class="trust-link active" id="trustLink">Backups</button>
+    </div>
+
+    <div class="overlay show" id="trustSheet">
+      <div class="scrim"></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="trustTitle">
+        <div class="grab"></div>
+        <div class="sheet-body">
+          <div class="sheet-copy">
+            <h3 id="trustTitle">Your zines, kept safe</h3>
+            <p id="trustBody">Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced.</p>
+          </div>
+          <span class="sheet-note" id="trustNote">You choose where it goes. Zinely doesn’t send it anywhere on its own.</span>
+          <button class="option" id="saveOption">
+            <span class="chip">⤓</span>
+            <span>
+              <p class="option-title">Back up this shelf</p>
+              <p class="option-body">Choose where to keep a copy of all 6 zines.</p>
+            </span>
+          </button>
+          <button class="option restore" id="restoreOption">
+            <span class="chip">↺</span>
+            <span>
+              <p class="option-title">Restore a backup</p>
+              <p class="option-body" id="restoreOptionBody">Add zines from a Zinely backup. What’s here stays here; a matching zine returns as a separate copy.</p>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="workSheet">
+      <div class="scrim"></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="workTitle">
+        <div class="grab"></div>
+        <div class="sheet-body work">
+          <div class="paper" id="workProgress" role="progressbar" aria-label="Backup in progress"></div>
+          <div class="sheet-copy">
+            <h3 id="workTitle">Saving your backup</h3>
+            <p id="workBody">Keeping every zine together in one file.</p>
+            <p class="picker-note" id="workHint">Keep Zinely open for a moment.</p>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" id="workCancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="successSheet">
+      <div class="scrim"></div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+        <div class="grab"></div>
+        <div class="sheet-body work">
+          <div class="mark" id="successMark">✓</div>
+          <div class="sheet-copy">
+            <h3 id="successTitle">Your backup is saved</h3>
+            <p id="successBody">All 6 zines are together in one backup file.</p>
+          </div>
+          <div class="actions">
+            <button class="btn primary" id="successDone">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="errorSheet">
+      <div class="scrim"></div>
+      <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="errorTitle" aria-describedby="errorBody">
+        <div class="grab"></div>
+        <div class="sheet-body work">
+          <div class="mark warn">!</div>
+          <div class="sheet-copy">
+            <h3 id="errorTitle">This backup looks damaged</h3>
+            <p id="errorBody">Zinely couldn’t safely bring anything back from that file.</p>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" id="errorRetry">Try another backup</button>
+            <button class="btn primary" id="errorDone">Got it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctl" id="themeToggle">day / night</button>
+    <button class="ctl group">shelf</button>
+    <button class="ctl on" data-view="content">content</button>
+    <button class="ctl" data-view="empty">empty</button>
+    <button class="ctl group">sheet</button>
+    <button class="ctl on" data-sheet="trust">sheet</button>
+    <button class="ctl" data-sheet="backup">backup</button>
+    <button class="ctl" data-sheet="restore">restore</button>
+    <button class="ctl" data-sheet="saved">saved</button>
+    <button class="ctl" data-sheet="restored">restored</button>
+    <button class="ctl" data-sheet="damaged">damaged</button>
+    <button class="ctl" data-sheet="newer">newer</button>
+    <button class="ctl" data-sheet="read">read error</button>
+    <button class="ctl" data-sheet="save-error">save error</button>
+    <button class="ctl" data-sheet="space">no space</button>
+    <button class="ctl" data-sheet="busy">busy</button>
+    <button class="ctl" data-sheet="generic">generic</button>
+  </div>
+</div>
+
+<script>
+const shelf = document.getElementById("shelf");
+const empty = document.getElementById("empty");
+const trustLink = document.getElementById("trustLink");
+let shelfKind = "content";
+
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const root = document.documentElement;
+  const current = root.getAttribute("data-theme") ||
+    (matchMedia("(prefers-color-scheme:dark)").matches ? "dark" : "light");
+  root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+});
+
+const overlays = {
+  trust: document.getElementById("trustSheet"),
+  work: document.getElementById("workSheet"),
+  success: document.getElementById("successSheet"),
+  error: document.getElementById("errorSheet"),
+};
+
+function showShelf(kind){
+  const isEmpty = kind === "empty";
+  shelfKind = kind;
+  shelf.style.display = isEmpty ? "none" : "grid";
+  empty.style.display = isEmpty ? "flex" : "none";
+  trustLink.textContent = isEmpty ? "Restore a backup" : "Backups";
+}
+
+function hideSheets(){
+  Object.values(overlays).forEach(node => node.classList.remove("show"));
+}
+
+function showSheet(kind){
+  hideSheets();
+  trustLink.classList.toggle("active", kind === "trust");
+
+  if (kind === "trust") {
+    const isEmpty = shelfKind === "empty";
+    document.getElementById("trustTitle").textContent =
+      isEmpty ? "Bring your zines back" : "Your zines, kept safe";
+    document.getElementById("trustBody").textContent = isEmpty
+      ? "Choose a Zinely backup and its zines will be added to this shelf."
+      : "Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced.";
+    document.getElementById("trustNote").textContent = isEmpty
+      ? "Zinely doesn’t send anything anywhere on its own."
+      : "You choose where it goes. Zinely doesn’t send it anywhere on its own.";
+    document.getElementById("saveOption").classList.toggle("hidden", isEmpty);
+    document.getElementById("restoreOptionBody").textContent = isEmpty
+      ? "Choose a Zinely backup to add its zines to this shelf."
+      : "Add zines from a Zinely backup. What’s here stays here; a matching zine returns as a separate copy.";
+    overlays.trust.classList.add("show");
+    return;
+  }
+  if (kind === "backup" || kind === "restore") {
+    document.getElementById("workTitle").textContent =
+      kind === "backup" ? "Saving your backup" : "Bringing your zines back";
+    document.getElementById("workBody").textContent =
+      kind === "backup"
+        ? "Keeping every zine together in one file."
+        : "Checking the backup before anything changes.";
+    document.getElementById("workHint").textContent =
+      kind === "backup"
+        ? "Keep Zinely open for a moment."
+        : "Nothing on this shelf changes until the backup passes its checks.";
+    document.getElementById("workProgress").setAttribute(
+      "aria-label",
+      kind === "backup" ? "Backup in progress" : "Restore in progress",
+    );
+    overlays.work.classList.add("show");
+    return;
+  }
+  if (kind === "saved" || kind === "restored") {
+    document.getElementById("successTitle").textContent =
+      kind === "saved" ? "Your backup is saved" : "3 zines added to your shelf";
+    document.getElementById("successBody").textContent =
+      kind === "saved"
+        ? "All 6 zines are together in one backup file."
+        : "What was already on this shelf stayed put.";
+    overlays.success.classList.add("show");
+    return;
+  }
+
+  const title = document.getElementById("errorTitle");
+  const body = document.getElementById("errorBody");
+  const retry = document.getElementById("errorRetry");
+  if (kind === "newer") {
+    title.textContent = "This backup needs a newer Zinely";
+    body.textContent = "It was made with a newer version. Your shelf wasn’t changed.";
+    retry.textContent = "Try another backup";
+  } else if (kind === "read") {
+    title.textContent = "Couldn’t read that file";
+    body.textContent = "Nothing was added. Choose the backup again, or try another one.";
+    retry.textContent = "Choose a backup";
+  } else if (kind === "save-error") {
+    title.textContent = "Couldn’t save there";
+    body.textContent = "Your zines are still safe here. Choose another place for the backup.";
+    retry.textContent = "Choose another place";
+  } else if (kind === "space") {
+    title.textContent = "Not enough space on this phone";
+    body.textContent = "Free up some space, then try again. Nothing on your shelf was changed.";
+    retry.textContent = "Got it";
+  } else if (kind === "busy") {
+    title.textContent = "Give Zinely a moment";
+    body.textContent = "A zine is still being put away. Try again shortly.";
+    retry.textContent = "Try again";
+  } else if (kind === "generic") {
+    title.textContent = "Couldn’t finish that restore";
+    body.textContent = "Nothing on this shelf was changed.";
+    retry.textContent = "Try again";
+  } else {
+    title.textContent = "This backup looks damaged";
+    body.textContent = "Zinely couldn’t safely bring anything back from that file.";
+    retry.textContent = "Try another backup";
+  }
+  overlays.error.classList.add("show");
+}
+
+showShelf("content");
+showSheet("trust");
+
+document.querySelectorAll("[data-view]").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("[data-view]").forEach(node => node.classList.remove("on"));
+    button.classList.add("on");
+    showShelf(button.dataset.view);
+  });
+});
+
+document.querySelectorAll("[data-sheet]").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("[data-sheet]").forEach(node => node.classList.remove("on"));
+    button.classList.add("on");
+    showSheet(button.dataset.sheet);
+  });
+});
+
+trustLink.addEventListener("click", () => showSheet("trust"));
+document.getElementById("saveOption").addEventListener("click", () => showSheet("backup"));
+document.getElementById("restoreOption").addEventListener("click", () => showSheet("restore"));
+document.getElementById("workCancel").addEventListener("click", hideSheets);
+document.getElementById("successDone").addEventListener("click", hideSheets);
+document.getElementById("errorDone").addEventListener("click", hideSheets);
+document.getElementById("errorRetry").addEventListener("click", () => showSheet("trust"));
+
+document.querySelectorAll(".overlay:not(#workSheet) .scrim").forEach(scrim => {
+  scrim.addEventListener("click", hideSheets);
+});
+
+addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  if (overlays.work.classList.contains("show")) {
+    hideSheets(); // system Back is the explicit cancel twin while work is running
+  } else {
+    hideSheets();
+  }
+});
+</script>

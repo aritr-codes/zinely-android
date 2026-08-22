@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -95,6 +96,9 @@ public sealed interface LibraryShelfState {
 private sealed interface LibrarySheet {
     /** The paper chooser — the existing creation flow ([ADR-047](docs/DECISIONS.md#adr-047)). */
     data object Create : LibrarySheet
+
+    /** The whole-library backup / restore chooser. */
+    data object KeepSafe : LibrarySheet
 
     /** B3's action sheet, for one zine. */
     data class Actions(val zineId: String) : LibrarySheet
@@ -180,6 +184,7 @@ private class UndoRequest(val id: String, val message: String, val outcome: Comp
 public fun ZineLibraryScreen(
     state: LibraryShelfState,
     events: Flow<HomeShelfEvent>,
+    backupRestoreState: LibraryBackupRestoreUiState?,
     onOpenZine: (String) -> Unit,
     onShareExport: (String) -> Unit,
     onStartZine: (PaperSize) -> Unit,
@@ -189,6 +194,11 @@ public fun ZineLibraryScreen(
     onDeleteUndo: (String) -> Unit,
     onDeleteCommit: (String) -> Unit,
     onRetry: () -> Unit,
+    onStartBackup: () -> Unit,
+    onStartRestore: () -> Unit,
+    onDismissBackupRestore: () -> Unit,
+    onCancelBackupRestore: () -> Unit,
+    onRetryBackupRestore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -197,10 +207,30 @@ public fun ZineLibraryScreen(
     var openSheet by remember { mutableStateOf<LibrarySheet?>(null) }
     var undo by remember { mutableStateOf<UndoRequest?>(null) }
     var toast by remember { mutableStateOf<Pair<String, CompletableDeferred<Unit>>?>(null) }
+    val backupActionFocusRequester = remember { FocusRequester() }
+    var restoreBackupActionFocus by remember { mutableStateOf(false) }
 
     // The collector outlives recompositions; always call the latest handlers.
     val currentUndo by rememberUpdatedState(onDeleteUndo)
     val currentCommit by rememberUpdatedState(onDeleteCommit)
+
+    LaunchedEffect(backupRestoreState) {
+        if (backupRestoreState != null) openSheet = null
+    }
+
+    LaunchedEffect(backupRestoreState, state) {
+        if (backupRestoreState != null) {
+            restoreBackupActionFocus = true
+        } else if (
+            restoreBackupActionFocus &&
+            (state is LibraryShelfState.Content || state is LibraryShelfState.Empty)
+        ) {
+            // Dialogs contain focus while visible. Ask for it back only after Compose has removed the
+            // modal surface, so keyboard and accessibility users return to the action that opened it.
+            backupActionFocusRequester.requestFocus()
+            restoreBackupActionFocus = false
+        }
+    }
 
     // V1's collector, reused whole rather than re-derived — including the two things about it that are
     // not obvious and were paid for once already: it *suspends* per event, so two quick deletes queue
@@ -302,11 +332,28 @@ public fun ZineLibraryScreen(
         )
 
         // `.dock{position:absolute;left:0;right:0;bottom:0}` — over the shelf, which scrolls under it and
-        // clears it with a bottom padding of its own (132px on `.shelf`, 150px on `.empty` and `.fail`,
+        // clears it with bottom padding of its own (188dp on `.shelf`, 206dp on `.empty`; the failure
+        // surface keeps its established 150dp because it has no secondary action),
         // each grown by the safe area — see [zineDockClearance]). In a `Column` after the shelf it would
         // look identical at rest and steal that space at every other moment.
         ZineDock(
             onStart = { haptics.perform(ZinelyHaptic.Tick); openSheet = LibrarySheet.Create },
+            secondaryAction = when (state) {
+                is LibraryShelfState.Content -> ZineDockSecondaryAction(
+                    if (zines.isEmpty()) Copy.LibraryBackup.BRING_BACK else Copy.LibraryBackup.BACKUPS,
+                ) {
+                    haptics.perform(ZinelyHaptic.Tick)
+                    restoreBackupActionFocus = true
+                    openSheet = LibrarySheet.KeepSafe
+                }
+                is LibraryShelfState.Empty -> ZineDockSecondaryAction(Copy.LibraryBackup.BRING_BACK) {
+                    haptics.perform(ZinelyHaptic.Tick)
+                    restoreBackupActionFocus = true
+                    openSheet = LibrarySheet.KeepSafe
+                }
+                else -> null
+            },
+            secondaryActionFocusRequester = backupActionFocusRequester,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
@@ -336,6 +383,26 @@ public fun ZineLibraryScreen(
         onChoosePaper = { paper ->
             openSheet = null
             onStartZine(paper)
+        },
+    )
+
+    KeepSafeSheet(
+        visible = openSheet is LibrarySheet.KeepSafe,
+        canBackup = zines.isNotEmpty(),
+        onDismiss = { openSheet = null },
+        onHidden = {
+            if (backupRestoreState == null && restoreBackupActionFocus) {
+                backupActionFocusRequester.requestFocus()
+                restoreBackupActionFocus = false
+            }
+        },
+        onSaveBackup = {
+            openSheet = null
+            onStartBackup()
+        },
+        onRestoreBackup = {
+            openSheet = null
+            onStartRestore()
         },
     )
 
@@ -387,6 +454,13 @@ public fun ZineLibraryScreen(
         title = renaming?.title.orEmpty(),
         onDismiss = { openSheet = null },
         onRename = { newTitle -> renaming?.let { onRenameZine(it.zineId, newTitle) } },
+    )
+
+    LibraryBackupRestoreStateSheet(
+        state = backupRestoreState,
+        onDismiss = onDismissBackupRestore,
+        onCancel = onCancelBackupRestore,
+        onRetry = onRetryBackupRestore,
     )
 }
 

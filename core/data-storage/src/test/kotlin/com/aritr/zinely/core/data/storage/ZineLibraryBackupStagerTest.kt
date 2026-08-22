@@ -119,7 +119,9 @@ class ZineLibraryBackupStagerTest {
             runBlocking { ZineLibraryBackupStager().stage(writeArchive(fixture), temp.resolve("stage")) }
         }
 
-        assertEquals(ZineBackupStagingException.Reason.INVALID_STRUCTURE, failure.reason)
+        assertEquals(ZineBackupStagingException.Reason.FUTURE_VERSION, failure.reason)
+        assertEquals(CURRENT_LIBRARY_BACKUP_VERSION + 1, failure.encounteredVersion)
+        assertEquals(CURRENT_LIBRARY_BACKUP_VERSION, failure.supportedVersion)
         assertNoStagingChildren()
     }
 
@@ -350,7 +352,9 @@ class ZineLibraryBackupStagerTest {
             runBlocking { ZineLibraryBackupStager().stage(writeArchive(fixture), temp.resolve("stage")) }
         }
 
-        assertEquals(ZineBackupStagingException.Reason.INVALID_STRUCTURE, failure.reason)
+        assertEquals(ZineBackupStagingException.Reason.FUTURE_VERSION, failure.reason)
+        assertEquals(CURRENT_SCHEMA_VERSION + 1, failure.encounteredVersion)
+        assertEquals(CURRENT_SCHEMA_VERSION, failure.supportedVersion)
         assertNoStagingChildren()
     }
 

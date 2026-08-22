@@ -1,6 +1,7 @@
 package com.aritr.zinely.core.data.storage
 
 import com.aritr.zinely.core.data.asset.MANIFEST_PATH
+import com.aritr.zinely.core.data.asset.CURRENT_LIBRARY_BACKUP_VERSION
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_ASSET_BYTES
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_DOCUMENT_BYTES
 import com.aritr.zinely.core.data.asset.MAX_BACKUP_MANIFEST_BYTES
@@ -15,6 +16,7 @@ import com.aritr.zinely.core.data.asset.ZineLibraryBackupValidator
 import com.aritr.zinely.core.data.serialization.JsonDocumentSerializer
 import com.aritr.zinely.core.data.validation.DefaultDocumentValidator
 import com.aritr.zinely.core.model.ImageElement
+import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
 import com.aritr.zinely.core.model.ZineDocument
 import java.io.BufferedInputStream
 import java.io.IOException
@@ -55,6 +57,8 @@ public class ZineBackupStagingException(
     public val reason: Reason,
     message: String,
     cause: Throwable? = null,
+    public val encounteredVersion: Int? = null,
+    public val supportedVersion: Int? = null,
 ) : Exception(message, cause) {
     public enum class Reason {
         MALFORMED_ARCHIVE,
@@ -65,6 +69,7 @@ public class ZineBackupStagingException(
         INVALID_STRUCTURE,
         INTEGRITY_MISMATCH,
         INVALID_DOCUMENT,
+        FUTURE_VERSION,
     }
 }
 
@@ -351,6 +356,24 @@ public class ZineLibraryBackupStager(
     }
 
     private fun validateStructure(manifest: ZineLibraryBackupManifest, entries: List<ZineArchiveEntry>) {
+        if (manifest.packageVersion > CURRENT_LIBRARY_BACKUP_VERSION) {
+            throw ZineBackupStagingException(
+                reason = ZineBackupStagingException.Reason.FUTURE_VERSION,
+                message = "Backup package version ${manifest.packageVersion} is newer than $CURRENT_LIBRARY_BACKUP_VERSION",
+                encounteredVersion = manifest.packageVersion,
+                supportedVersion = CURRENT_LIBRARY_BACKUP_VERSION,
+            )
+        }
+        manifest.projects.maxOfOrNull { it.documentSchemaVersion }
+            ?.takeIf { it > CURRENT_SCHEMA_VERSION }
+            ?.let { futureVersion ->
+                throw ZineBackupStagingException(
+                    reason = ZineBackupStagingException.Reason.FUTURE_VERSION,
+                    message = "Backup document schema $futureVersion is newer than $CURRENT_SCHEMA_VERSION",
+                    encounteredVersion = futureVersion,
+                    supportedVersion = CURRENT_SCHEMA_VERSION,
+                )
+            }
         val validation = ZineLibraryBackupValidator().validate(manifest, entries)
         if (!validation.isValid) {
             fail(
