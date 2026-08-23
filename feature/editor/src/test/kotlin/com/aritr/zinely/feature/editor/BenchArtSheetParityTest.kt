@@ -41,8 +41,8 @@ class BenchArtSheetParityTest {
         return Regex("""\['([a-z]+\.[a-z]+)','([^']*)',(?:'([^']*)'|(DECOR\.star)|(null))]""")
             .findAll(body)
             .map { m ->
-                // A7: the third slot is now the supply's own outline as SVG path data, or the literal
-                // `null` for a supply §5 still owes a designer. `DECOR.star` no longer appears — the star
+                // A7: the third slot is now the supply's own outline as SVG path data. The parser keeps
+                // accepting the historical literal `null` so a regression fails as data, not as parsing.
                 // is generated with the rest — but the alternative is kept so this extractor keeps reading
                 // the file it is pointed at rather than the file it expects.
                 val markup = if (m.groupValues[5] == "null") "" else m.groupValues[3].ifEmpty { star }
@@ -198,28 +198,10 @@ class BenchArtSheetParityTest {
     }
 
     @Test
-    fun the_four_unauthored_supplies_carry_the_word_and_no_mark() {
+    fun all_sixteen_frozen_supplies_carry_an_authored_mark() {
         val unauthored = frozenSupplies().filter { catalogueGeometry(it.first) == null }.map { it.first }
-        assertEquals(
-            "the freeze and the catalogue disagree about which supplies are still owed a designer",
-            listOf("tape.torn", "fix.clip", "paper.strip", "paper.underline"),
-            unauthored,
-        )
-        // The word is the COPY LAYER's, not a phrase this file invents. A9 deliberately keeps the fuller
-        // reason in the spoken state while the tile draws the compact label.
-        // ⚠ `frozen.contains(word)` was the first version of this and it is half-vacuous: one occurrence
-        // anywhere in 1200 lines passes it — including inside this amendment's own log entry, and including
-        // a build that put the word on all sixteen tiles. What must hold is that the word appears **only**
-        // through the template's `d ? mark : word` ternary, so it is the ternary that is asserted.
-        val template = frozen.substringAfter("const tile=").substringBefore("function openArt")
-        assertTrue(
-            "the frozen tile template must carry ${Copy.BenchArt.NOT_YET} for an unauthored supply",
-            template.contains("${Copy.BenchArt.NOT_YET.replace(" ", "<br>")}</span>"),
-        )
-        assertTrue(
-            "the word must be the ALTERNATIVE to a mark, never drawn beside one",
-            template.contains("\${d?svg(d):'"),
-        )
+        assertEquals("A11 completes the frozen cabinet", emptyList<String>(), unauthored)
+        assertTrue(frozenSupplies().all { frozenGeometry(it.third).isNotEmpty() })
     }
 
     // ── the transcribed MEASUREMENTS, read out of the frozen CSS ──────────────────────────────────────

@@ -6803,7 +6803,7 @@ invented mark for an unauthored supply, and an honest disabled explanation — r
 | **Artifacts** | `core/copy/.../Copy.kt` (`Supplies.TAPE_AND_FIXINGS`, `Supplies.CUT_PAPER`) · the Art sheet's family headings |
 | **Found** | 2026-08-20, package **P4**, **Pass 2 device verification** on SM-A176B / Android 16 |
 | **Severity** | **A promise the screen makes and does not keep.** No incorrect behaviour |
-| **Status** | 🔶 **Open — an owner ruling; it is a wording/scope question, not a bug** |
+| **Status** | ✅ **CLOSED 2026-08-22** — A11 completed the frozen sixteen without changing their names, order or families. `TAPE & FIXINGS` now shows Torn tape and Paper clip; `CUT PAPER` now shows Torn strip and Marker underline. The headings keep the promise they already made, so no copy change is required. This does not accept ADR-107's proposed larger library. |
 
 P4 replaced the four unauthored tiles' invented glyphs with the words `NOT AVAILABLE YET`
 ([D-086 ruling](#d-086-ruling)). That was the right trade and it is not in question here. But it moved the

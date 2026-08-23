@@ -101,34 +101,11 @@ class BenchArtSheetGoldenTest {
         // grounds must be on screen: a transcription that drops the cycle and paints sixteen leaf tiles
         // moves well under 2 % of the frame and passes the raster gate untouched.
         //
-        // ⚠ The margin here is thinner than the tile count suggests, and the first draft of this comment
-        // got it wrong. Each family row is leaf·leaf·berry·butter, so the grid holds 8 leaf / 4 berry / 4
-        // butter — but twelve of the sixteen are DIMMED, and a dimmed ground is no longer the token. Only
-        // the authored *Cut shapes* row paints these colours at full strength: **2 leaf, 1 berry, 1 butter**
-        // tiles at ~83dp, which is still several thousand pixels each at xhdpi. 500 clears that with room
-        // and is far above any incidental match, but it is one tile of headroom, not four.
+        // Every family row is leaf·leaf·berry·butter. The low floor rejects a missing token family without
+        // pinning density or the exact amount of ink each authored mark covers.
         assertTrue("no --leaf-tint tile ground ($name)", bmp.pixelCountOf(leafTintArgb) > 500)
         assertTrue("no --berry-tint tile ground ($name)", bmp.pixelCountOf(berryTintArgb) > 500)
         assertTrue("no --butter-tint tile ground ($name)", bmp.pixelCountOf(butterTintArgb) > 500)
-
-        // The twelve unauthored tiles are dimmed, and the dim reaches the GROUND — so a full-strength tint
-        // must cover far less of the sheet than a sixteen-live grid would. Expressed as a ratio between the
-        // authored quarter and the whole rather than as an absolute count, which would pin the raster's
-        // density rather than the design's rule.
-        val authored = cropToBounds(
-            full,
-            composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).fetchSemanticsNode().boundsInRoot,
-        )
-        val unauthored = cropToBounds(
-            full,
-            composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).fetchSemanticsNode().boundsInRoot,
-        )
-        // Same grid position (1st in its row) ⇒ same token ground, so the ONLY difference between these two
-        // crops is the dim. If the disabled state were dropped, both would count the same.
-        assertTrue(
-            "the unauthored tile is not dimmed ($name): it paints the full-strength ground",
-            authored.pixelCountOf(leafTintArgb) > unauthored.pixelCountOf(leafTintArgb) * 2,
-        )
 
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }

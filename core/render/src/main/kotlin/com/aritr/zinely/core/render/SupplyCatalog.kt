@@ -11,16 +11,12 @@ import com.aritr.zinely.core.model.PtPoint
  * resolver. The whole supply system is therefore unit-testable in pure JVM, with no device and no
  * fixture files.
  *
- * ### ⚠ This catalogue is incomplete, on purpose — 12 of 16
+ * ### The frozen cabinet is complete — 16 of 16
  *
- * | Authored (12) | Owed to a designer (4) |
- * |---|---|
- * | `shape.rect` · `shape.circle` · `shape.triangle` · `shape.rule` · `mark.registration` · `mark.halftone` · `mark.asterisk` · `mark.arrow` · `paper.window` · `paper.tag` · `fix.staple` · `fix.corner` | `tape.torn` · `paper.strip` · `paper.underline` · `fix.clip` |
- *
- * The twelve here are **derivable** — geometry an engineer can write without inventing a house style.
- * The four still owed are not, and the reason each resists is recorded next to the helpers below
- * rather than left as a gap: three need an authored *tear*, and a paper clip is a wire object in a
- * fill-only renderer.
+ * Twelve outlines are derivable elementary geometry. The remaining four deliberately carry Zinely's
+ * authored hand: one irregular tear voice serves `tape.torn`, `paper.strip` and `paper.underline`, while
+ * `fix.clip` is drawn as the closed ribbon around a wire that a fill-only renderer requires. Their
+ * silhouettes were ruled in `v21-bench.html` A11 before being transcribed here.
  *
  * ⚠ **The split was originally drawn at 4/12 along family lines, and that was wrong.** *Cut shapes*
  * looked like the derivable family because it was authored first; in fact derivability cuts across
@@ -28,9 +24,8 @@ import com.aritr.zinely.core.model.PtPoint
  * mixes "needs a house style" with "is a rectangle" always looks blocked by its hardest quarter
  * (SUPPLIES-SPEC §10).
  *
- * The incompleteness is **explicit** rather than implicit: [outlineOf] returns `null` for a supply
- * that has no outline yet, so an unauthored (or misspelled, or newer-schema) `supplyId` draws nothing
- * and is reported by the layer that knows the catalogue — never a crash, and never a guessed shape.
+ * Unknown ids remain **explicit** rather than guessed: [outlineOf] returns `null` for a misspelled or
+ * newer-schema `supplyId`, so it draws nothing at the render boundary — never a crash or invented shape.
  * §2.2 rules that catalogue membership is checked here at the render boundary, not in the document
  * validator, precisely so an unknown id cannot make a zine refuse to open.
  *
@@ -45,14 +40,13 @@ import com.aritr.zinely.core.model.PtPoint
  *
  * ### Attestation (§4.1, the definition of done)
  *
- * **All twelve outlines below were authored from scratch, in this file, by writing coordinates. No
+ * **All sixteen outlines below were authored from scratch, in this file, by writing coordinates. No
  * reference art was traced, opened or consulted; they are elementary geometry — squares, inscribed
  * circles, polygons written vertex by vertex, and one star polygon evaluated at two radii — and they
  * carry no third-party licence. They are covered by the repository licence.** §4.1 requires one attestation per supply and there is
  * no colophon surface yet (X11 is unbuilt), so it lives here, next to the coordinates it is about; it
- * moves to the colophon when there is one. The four still owed each need their own, written by
- * whoever draws them — which is the point of the rule, since the derivable ones are precisely those
- * nobody *could* have traced. The second package's attestation sits with its own coordinates below.
+ * moves to the colophon when there is one. The final four's specific attestation sits with their
+ * coordinates below.
  */
 public object SupplyCatalog {
 
@@ -352,14 +346,66 @@ public object SupplyCatalog {
         PtPoint(0.58, 0.94), PtPoint(0.58, 0.66), PtPoint(0.0, 0.66),
     )
 
+    // =============================================================================================
+    // The authored hand — v21-bench.html A11
+    //
+    // These four silhouettes were authored from scratch as coordinates for Zinely. No reference art
+    // was traced, opened or consulted. They are deterministic, carry no third-party licence, and use
+    // only the existing unit-square, fill-only, even-odd outline contract.
+
+    /** Torn tape: clean long edges with two irregular ends, made long by its existing placement box. */
+    private val TORN_TAPE: SupplyOutline = closed(
+        PtPoint(0.00, 0.18), PtPoint(0.06, 0.08), PtPoint(0.02, 0.00),
+        PtPoint(0.97, 0.00), PtPoint(0.93, 0.10), PtPoint(1.00, 0.20),
+        PtPoint(0.95, 0.31), PtPoint(1.00, 0.43), PtPoint(0.94, 0.56),
+        PtPoint(0.99, 0.70), PtPoint(0.93, 0.84), PtPoint(0.98, 1.00),
+        PtPoint(0.02, 1.00), PtPoint(0.07, 0.88), PtPoint(0.00, 0.76),
+        PtPoint(0.05, 0.63), PtPoint(0.01, 0.49), PtPoint(0.06, 0.34),
+    )
+
+    /** Torn paper: the same irregular edge voice opened into a broad strip of material. */
+    private val TORN_STRIP: SupplyOutline = closed(
+        PtPoint(0.00, 0.23), PtPoint(0.08, 0.18), PtPoint(0.18, 0.24),
+        PtPoint(0.31, 0.16), PtPoint(0.43, 0.22), PtPoint(0.56, 0.17),
+        PtPoint(0.70, 0.25), PtPoint(0.84, 0.18), PtPoint(1.00, 0.23),
+        PtPoint(1.00, 0.76), PtPoint(0.88, 0.82), PtPoint(0.76, 0.75),
+        PtPoint(0.63, 0.84), PtPoint(0.49, 0.78), PtPoint(0.34, 0.83),
+        PtPoint(0.20, 0.75), PtPoint(0.08, 0.82), PtPoint(0.00, 0.77),
+    )
+
+    /** Marker underline: the tear rhythm reduced to a quick, uneven swipe across the middle. */
+    private val MARKER_UNDERLINE: SupplyOutline = closed(
+        PtPoint(0.00, 0.46), PtPoint(0.13, 0.42), PtPoint(0.28, 0.48),
+        PtPoint(0.46, 0.43), PtPoint(0.64, 0.47), PtPoint(0.81, 0.41),
+        PtPoint(1.00, 0.45), PtPoint(1.00, 0.62), PtPoint(0.87, 0.67),
+        PtPoint(0.73, 0.61), PtPoint(0.58, 0.67), PtPoint(0.41, 0.63),
+        PtPoint(0.26, 0.68), PtPoint(0.12, 0.62), PtPoint(0.00, 0.67),
+    )
+
+    /**
+     * A paper clip as one closed ribbon around its doubled wire path. The contour never crosses itself,
+     * so even-odd fill produces a solid wire without asking any backend to grow a stroke feature.
+     */
+    private val PAPER_CLIP: SupplyOutline = closed(
+        PtPoint(0.45, 0.18), PtPoint(0.45, 0.62), PtPoint(0.40, 0.68),
+        PtPoint(0.34, 0.68), PtPoint(0.30, 0.62), PtPoint(0.30, 0.22),
+        PtPoint(0.36, 0.10), PtPoint(0.50, 0.00), PtPoint(0.70, 0.10),
+        PtPoint(0.84, 0.22), PtPoint(0.88, 0.76), PtPoint(0.76, 0.90),
+        PtPoint(0.60, 1.00), PtPoint(0.22, 1.00), PtPoint(0.10, 0.88),
+        PtPoint(0.06, 0.76), PtPoint(0.06, 0.34), PtPoint(0.16, 0.34),
+        PtPoint(0.16, 0.72), PtPoint(0.20, 0.80), PtPoint(0.28, 0.84),
+        PtPoint(0.58, 0.84), PtPoint(0.68, 0.78), PtPoint(0.72, 0.70),
+        PtPoint(0.72, 0.26), PtPoint(0.66, 0.18), PtPoint(0.58, 0.14),
+        PtPoint(0.50, 0.14),
+    )
+
     /** Every authored outline, keyed by the `supplyId` written into saved documents. */
     public val OUTLINES: Map<String, SupplyOutline> = linkedMapOf(
         "shape.rect" to RECT,
         "shape.circle" to CIRCLE,
         "shape.triangle" to TRIANGLE,
         "shape.rule" to RULE,
-        // The derivable eight (SUPPLIES-SPEC §4.3). Four of the sixteen remain unauthored and are
-        // listed with their reason at this file's foot — they are not forgotten, they need a hand.
+        // The derivable eight (SUPPLIES-SPEC §4.3).
         "mark.registration" to REGISTRATION,
         "mark.halftone" to HALFTONE,
         "mark.asterisk" to STAR,
@@ -368,6 +414,11 @@ public object SupplyCatalog {
         "paper.tag" to SPEECH_TAG,
         "fix.staple" to STAPLE,
         "fix.corner" to PHOTO_CORNER,
+        // The authored hand (v21-bench.html A11).
+        "tape.torn" to TORN_TAPE,
+        "paper.strip" to TORN_STRIP,
+        "paper.underline" to MARKER_UNDERLINE,
+        "fix.clip" to PAPER_CLIP,
     )
 
     /** The outline for [supplyId], or `null` when it is not authored yet (or not a supply at all). */
@@ -399,23 +450,6 @@ public object SupplyCatalog {
             ),
         )
     }
-
-    // ### The four still unauthored, and why each needs a hand rather than a constant
-    //
-    // `tape.torn` · `paper.strip` · `paper.underline` — **a torn or drawn edge is the house style**.
-    // §5 bans procedural variation of an outline outright ("no randomise the tear"), so a tear cannot be
-    // generated; it has to be drawn once, by someone, and drawn well. These are the real S5 work, and
-    // they are ONE commission rather than three: the same authored tear serves all three supplies.
-    //
-    // `fix.clip` — **a paper clip is a wire object, and wire is a stroke.** §4.1 rule 2 is fill-only, so
-    // a clip must be authored as the closed ribbon *around* the wire: a long, doubled, self-parallel
-    // outline whose two ends nest. That is genuine draughtsmanship, not elementary geometry, and it is
-    // the one row of SUPPLIES-SPEC §4.3's "derivable" claim that did not survive contact with the
-    // renderer. Recorded here rather than quietly dropped, because the same trap waits for the safety
-    // pin and the rubber band in §4.3's proposed set.
-    //
-    // (A `//` block, not KDoc: it documents an ABSENCE, so there is no declaration for it to attach to.
-    // As `/** */` it bound silently to whatever happened to be declared next and appeared in no output.)
 
     /** One closed subpath of straight segments through [points], in order. */
     private fun closed(vararg points: PtPoint): SupplyOutline =

@@ -207,10 +207,9 @@ internal val BenchArtTilt = floatArrayOf(0f, -1.6f, 1.4f)
  *
  * ### The supplies with no authored outline — the deliberate part
  *
- * [SupplyCatalog] is **12 of 16** (SUPPLIES-SPEC §10.1, S5) and `outlineOf()` returns `null` for the rest.
- * It was 4 of 16 when this sheet was written, which is why the reasoning below counts twelve; **the count
- * is not wired into anything here** — a tile's live state is derived per tile from `outlineOf`, so the
- * catalogue growing needed no edit to this file. Three readings were available and two are wrong:
+ * [SupplyCatalog] is now **16 of 16** (v21-bench.html A11). The fallback below is retained for a future
+ * temporarily unauthored catalogue entry, but the frozen cabinet currently has no disabled tile. Three
+ * readings were available while the catalogue was incomplete and two were wrong:
  *
  * 1. **Draw only the authored tiles.** Rejected — the freeze specifies sixteen under four headings, and
  *    dropping families is the visual redesign the freeze forbids. It would also make *Tape & fixings* look
@@ -228,7 +227,7 @@ internal val BenchArtTilt = floatArrayOf(0f, -1.6f, 1.4f)
  * its own frozen glyph. That was the one part of this reading that could not survive its own premise. There is
  * no authored outline for those four, so the glyph was not a depiction of the supply; it was an invention of
  * one, and A5's *"the glyphs DEPICT the supplies"* cannot license depicting something that does not exist.
- * The four now carry a compact visible word from [Copy.BenchArt.NOT_YET] and no mark. Which is also the
+ * Until A11, the four carried a compact visible word from [Copy.BenchArt.NOT_YET] and no mark. Which was also the
  * answer to D-086's real complaint: `stateDescription` was speaking [Copy.BenchVerbs.NOT_YET] to a screen
  * reader while a sighted maker got only a dimmer tile
  * and was left to infer it — and the most available inference for a dim tile you just tapped is *the app is
@@ -256,8 +255,8 @@ internal val BenchArtTilt = floatArrayOf(0f, -1.6f, 1.4f)
  *
  * @param recent supplies to shelve under the frozen `Recent · ⭐ favourites` heading. Empty (the default)
  *   draws no heading and no row — the §9 deferral, expressed as data rather than as deleted markup.
- * @param onPick the tile's own handler. Called with the `supplyId`; never called for a supply whose outline
- *   is unauthored, because those tiles carry no click at all.
+ * @param onPick the tile's own handler. Called with the `supplyId`; a future catalogue entry without an
+ *   outline remains disabled and carries no click at all.
  */
 @Composable
 internal fun BenchArtSheet(
@@ -401,10 +400,11 @@ private fun BenchArtGrid(supplyIds: List<String>, onPick: (String) -> Unit, tag:
  * permits, because the frozen tile was a `<button>` wrapping a bare `<svg>` and announced nothing at all.
  * The glyph is `contentDescription = null` beneath it: one control, one name, no fragments to reassemble.
  *
- * ### Unauthored supplies are drawn, disabled, and say so
+ * ### Future unauthored supplies remain disabled and say so
  *
- * See [BenchArtSheet]'s note. Two consequences of being inert, both taken from [BenchStyleRow]'s inert chip
- * so the two surfaces cannot disagree about what disabled looks like:
+ * A11 completed the frozen sixteen, so no shipped tile takes this branch today. It remains the safe
+ * degradation for a future catalogue entry whose outline has not arrived. Two consequences of being inert,
+ * both taken from [BenchStyleRow]'s inert chip so the two surfaces cannot disagree about what disabled looks like:
  *
  * - **It sheds its printed shadow entirely** — the corpus rule is `.icon-btn:disabled{box-shadow:none}`
  *   (`v21-bench.html:345`), and it is not an alpha: pressed means *you are pushing this*, disabled means

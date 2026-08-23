@@ -137,22 +137,16 @@ class BenchArtPlacementTest {
     }
 
     @Test
-    fun `Given the cabinet, When an unauthored tile is tapped, Then nothing is placed`() {
+    fun `Given the cabinet, When torn tape is tapped, Then the newly authored supply is placed`() {
         val store = store()
         setScreen(store)
         openArt()
 
-        // `tape.torn` has no authored outline, so its tile carries no click at all. `performClick` on a
-        // node with no click action is a no-op — the assertion is that the document did not move.
         composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).performClick()
         composeRule.waitForIdle()
 
-        assertTrue("an unauthored supply must not reach the page", decor(store).isEmpty())
-        // …and the cabinet stays open. This half is a **regression test for a defect this package found**:
-        // an inert tile had no pointer-input node, so the touch fell through to ZSheet's scrim sibling and
-        // dismissed the sheet. Twelve of sixteen tiles closed the cabinet when tapped. Mutation: delete the
-        // `pointerInput` from `BenchArtTile`'s inert branch and this line goes red.
-        composeRule.onNodeWithTag(BenchArtSheetTestTag).assertIsDisplayed()
+        assertEquals("tape.torn", decor(store).single().supplyId)
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).assertDoesNotExist()
     }
 
     @Test

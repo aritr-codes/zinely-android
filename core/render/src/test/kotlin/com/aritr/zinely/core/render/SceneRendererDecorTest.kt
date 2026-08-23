@@ -109,10 +109,10 @@ class SceneRendererDecorTest {
     }
 
     @Test
-    fun `given an unauthored supplyId, when rendered, then nothing is emitted and nothing throws`() {
-        // Twelve of the sixteen are still owed to a designer, and §2.2 puts this check here rather than
-        // in the document validator precisely so an unknown id cannot make a zine refuse to open.
-        assertTrue(tape(decor(supplyId = "tape.torn")).isEmpty())
+    fun `given an unknown supplyId, when rendered, then nothing is emitted and nothing throws`() {
+        // §2.2 puts this check here rather than in the document validator precisely so an unknown id
+        // from a newer build cannot make a zine refuse to open.
+        assertTrue(tape(decor(supplyId = "future.ribbon")).isEmpty())
         assertTrue(tape(decor(supplyId = "shape.rectangle")).isEmpty())
     }
 }
