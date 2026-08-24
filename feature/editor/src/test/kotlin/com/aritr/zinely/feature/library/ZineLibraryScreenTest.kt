@@ -88,6 +88,7 @@ class ZineLibraryScreenTest {
     private var retries = 0
     private var backups = 0
     private var restores = 0
+    private val preferredPaperChanges = mutableListOf<PaperSize>()
 
     private val events = Channel<HomeShelfEvent>(Channel.BUFFERED)
 
@@ -150,26 +151,47 @@ class ZineLibraryScreenTest {
     }
 
     @Test
-    fun `backup actions appear only after the shelf has loaded`() {
+    fun `dock secondary actions appear only after the shelf has loaded`() {
         render(LibraryShelfState.Loading)
-        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).assertDoesNotExist()
 
         render(LibraryShelfState.Error)
-        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).assertDoesNotExist()
 
         render(LibraryShelfState.Content(zines(1)))
-        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS))
+            .assertIsDisplayed()
             .assertContentDescriptionEquals(Copy.LibraryBackup.BACKUPS)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION))
+            .assertIsDisplayed()
+            .assertContentDescriptionEquals(Copy.Colophon.ACTION)
+        assertTrue(
+            "backup action should keep the 48dp touch target floor",
+            bounds(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).height >= 48f,
+        )
+        assertTrue(
+            "colophon action should keep the 48dp touch target floor",
+            bounds(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).height >= 48f,
+        )
 
         render(LibraryShelfState.Empty)
-        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK))
+            .assertIsDisplayed()
             .assertContentDescriptionEquals(Copy.LibraryBackup.BRING_BACK)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION))
+            .assertIsDisplayed()
+            .assertContentDescriptionEquals(Copy.Colophon.ACTION)
     }
 
     @Test
     fun `a shelf with zines offers backup and additive restore`() {
         content(zines(2))
-        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).performClick()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).performClick()
 
         composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertIsDisplayed().performClick()
@@ -179,7 +201,7 @@ class ZineLibraryScreenTest {
     @Test
     fun `an empty shelf offers restore without an impossible empty backup`() {
         render(LibraryShelfState.Empty)
-        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).performClick()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).performClick()
 
         composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertDoesNotExist()
@@ -193,7 +215,7 @@ class ZineLibraryScreenTest {
         composeRule.runOnUiThread {
             assertTrue(inputMode.requestInputMode(InputMode.Keyboard))
         }
-        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).performClick()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertIsFocused()
 
@@ -201,7 +223,34 @@ class ZineLibraryScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertDoesNotExist()
-        composeRule.onNodeWithTag(ZineDockSecondaryActionTestTag).assertIsFocused()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertIsFocused()
+    }
+
+    @Test
+    fun `the colophon action opens and closes without changing the shelf`() {
+        content(zines(2))
+        val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
+
+        composeRule.onNodeWithTag(colophonActionTag).performClick()
+        composeRule.onNodeWithTag(ColophonScreenTestTag).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
+        composeRule.onNodeWithTag(ColophonScreenTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(colophonActionTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `Colophon can set preferred paper and returns to the shelf action`() {
+        content(zines(2))
+        val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
+
+        composeRule.onNodeWithTag(colophonActionTag).performClick()
+        composeRule.onNodeWithTag(ColophonPaperGroupTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(colophonPaperTestTag(PaperSize.LETTER)).performClick()
+        assertEquals("the preferred-paper callback was not wired from Colophon", PaperSize.LETTER, preferredPaperChanges.lastOrNull())
+
+        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
+        composeRule.onNodeWithTag(colophonActionTag).assertIsDisplayed()
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -535,6 +584,7 @@ class ZineLibraryScreenTest {
                 onDismissBackupRestore = {},
                 onCancelBackupRestore = {},
                 onRetryBackupRestore = {},
+                onPreferredPaperChange = { preferredPaperChanges += it },
                 modifier = Modifier.fillMaxSize(),
             )
         }

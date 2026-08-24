@@ -81,7 +81,11 @@ internal fun KeepSafeSheet(
             .verticalScroll(rememberScrollState()),
     ) {
         Text(
-            text = if (canBackup) Copy.LibraryBackup.PRIVACY_NOTE else Copy.LibraryBackup.EMPTY_PRIVACY_NOTE,
+            text = if (canBackup) {
+                Copy.LibraryBackup.DESTINATION_NOTE
+            } else {
+                Copy.LibraryBackup.EMPTY_DESTINATION_NOTE
+            },
             modifier = Modifier
                 .padding(start = ZinelyV21Dimens.gapHair, top = ZinelyV21Dimens.gapXs)
                 .clip(RoundedCornerShape(ZinelyV21Dimens.radiusPill))

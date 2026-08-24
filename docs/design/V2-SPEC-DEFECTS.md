@@ -4798,7 +4798,7 @@ behavior ahead of its governing artifact.
 | **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) `:824`, `:873` · [`v21-library.html`](mockups/v21-library.html) `:306-307`, `:466` · [`v21-proof.html`](mockups/v21-proof.html) `:593`, `:1019` · [`EditorEmptyState.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorEmptyState.kt) `:170-186` · [`Copy.kt`](../../core/copy/src/main/kotlin/com/aritr/zinely/core/copy/Copy.kt) `:364` |
 | **Found** | 2026-08-16, reconciling [BETA-UX-REVIEW.md F-11](../BETA-UX-REVIEW.md) against the frozen files |
 | **Severity** | No function is lost. It is a **voice** defect, and the rule it breaks is one the owner adopted six days ago |
-| **Status** | 🟨 **OPEN — awaiting owner ruling** |
+| **Status** | ✅ **CLOSED + IMPLEMENTED 2026-08-24 — owner chose option (b); Colophon DESIGN FROZEN** |
 
 **The rule is not in dispute and must not be re-litigated.** [R12](DESIGN-RULES.md) — *"Privacy is
 reassurance, never a wall. Surface it as a gift, **once**, warmly"* — is restated in
@@ -4844,6 +4844,35 @@ outlived it.
 
 Related: [D-050](#d-050) owns the same composable's *supply cue* wording and is also open. [D-072](#d-072)
 is a different thing — a dead `.privacyline` CSS rule in `v2-proof.html`.
+
+#### Ruling — option (b), the promise survives once in the Shelf-owned Colophon
+
+The owner directed the thorough resolution on 2026-08-24. [ZINE-DIRECTION §2.3](ZINE-DIRECTION.md) already
+settled the product object; this ruling supplies the missing interaction and copy:
+
+- **Home:** a second quiet Shelf-dock action, `Colophon`, beside `Backups`. It is not reachable from the
+  Bench or Proof and is not renamed Settings/About/Privacy.
+- **Contents:** default paper (`A4` / `US Letter`, future-creation preselection only); the bundled typefaces
+  (`Averia Sans Libre`, `Fraunces`, `Inter`) with locally readable OFL notices; one honest offline/privacy
+  sentence; and the real app version.
+- **The survivor:** `Zinely works offline, and your zines stay on this device unless you choose to share or
+  back them up.` It appears once, in the Colophon. This wording names the user-controlled exits rather than
+  making the false absolute claim that content can never leave the device.
+- **Struck:** the Library empty-state slogan; the Bench Photo/add-sheet/caption/Done repetitions; the Proof
+  ready-row suffix; and the Backup sheet's no-send slogan. Operational error/recovery messages remain where
+  they explain the current failure rather than advertise privacy.
+- **Accessibility and navigation:** the Colophon scrolls at maximum font scale, paper is one radio group,
+  each typeface row drills into a locally readable licence, Back unwinds licence → Colophon → Shelf, and
+  focus returns to the invoking control.
+
+The canonical interactive spec is [`v21-colophon.html`](mockups/v21-colophon.html); the complete state, copy,
+large-text, theme and semantic contract is [COLOPHON-FREEZE.md](COLOPHON-FREEZE.md). Compose, local licence
+reading, preferred-paper persistence, process-restart behavior, and the Shelf integration are implemented.
+Four inspected Roborazzi baselines cover light/dark at normal/maximum font scale; both physical Samsung passes
+completed with the device returned to its original display settings.
+
+⚠ The owner's separate direction that the app palette closely derive from `37596.jpg` is governed by
+[`THEME-37596-FREEZE.md`](THEME-37596-FREEZE.md). No palette token is changed as part of D-079.
 
 
 ---

@@ -10787,7 +10787,9 @@ Plus one statement of craft, the **colophon**.
 3. **Settings becomes the colophon** — the printer's note stating how the thing was made. It carries the paper
    default, the typefaces *with their licences*, one offline sentence, and the version. This discharges a real
    OFL obligation (three notices ship today reachable from no UI) in the one place self-description reads as
-   craft rather than defensiveness.
+   craft rather than defensiveness. **D-079 owner ruling, 2026-08-24:** it is Shelf-owned and reached as the
+   second quiet dock action beside `Backups`; its canonical interaction/copy contract is
+   [COLOPHON-FREEZE.md](design/COLOPHON-FREEZE.md).
 4. **`DESIGN-LANGUAGE.md` is superseded in full.** Its craft-table metaphor (`:64-65`), coral-on-charcoal palette
    (`:71-73`), tilt-and-tape licence (`:74-75`), marker-face typography (`:78-80`) and overshoot motion
    (`:208-213`) had each been overruled elsewhere without the document ever saying so.
@@ -10896,7 +10898,9 @@ modification permission · redistribution permission. Curation and provenance is
    second authored pack**, never a search field returning the same sixteen things.
 2. **Art becomes more important, not less.** `Text + Photo + Art` is the add triad; **Supplies** is the drawer.
 3. **Offline is an invisible strength, not a slogan.** The removed online UI is **not** replaced by *"works
-   offline"* messaging. Reassurance is stated once, in the colophon.
+   offline"* messaging. Reassurance is stated once, in the colophon. [D-079](design/V2-SPEC-DEFECTS.md#d-079)
+   fixes the one honest sentence and strikes the frozen Library/Bench/Proof/Backup repetitions; operational
+   failure/recovery copy remains because it explains a state rather than markets the invariant.
 4. **`v21-bench.html` is amended** under this ADR — the `art · online` control, the search field, the online
    disclosure panel and the *"bundled + online"* subtitle are struck; the four generic chips become the four
    authored families. Recorded as a frozen-spec amendment, not housekeeping.

@@ -173,8 +173,14 @@ private fun HomeDestination(
     onShareExport: (String) -> Unit,
 ) {
     val viewModel: HomeViewModel = hiltViewModel()
+    val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
     val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
+    val preferredPaper by viewModel.preferredPaper.collectAsStateWithLifecycle()
+    val appVersion = remember(context) {
+        @Suppress("DEPRECATION")
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
+    }
 
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/octet-stream"),
@@ -217,6 +223,9 @@ private fun HomeDestination(
         onDismissBackupRestore = viewModel::dismissBackupRestoreSurface,
         onCancelBackupRestore = viewModel::cancelBackupRestore,
         onRetryBackupRestore = viewModel::retryBackupRestore,
+        preferredPaper = preferredPaper,
+        appVersion = appVersion,
+        onPreferredPaperChange = viewModel::setPreferredPaper,
         modifier = Modifier.fillMaxSize(),
     )
 }

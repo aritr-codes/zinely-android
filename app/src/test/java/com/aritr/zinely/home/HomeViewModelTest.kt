@@ -10,6 +10,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.data.android.LibraryBackupReceipt
 import com.aritr.zinely.data.android.LibraryRestoreReceipt
 import com.aritr.zinely.data.android.LibrarySafTransport
+import com.aritr.zinely.data.android.prefs.PreferredPaperStore
 import com.aritr.zinely.data.android.RestoredProject
 import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.library.LibraryBackupRestoreFailureKind
@@ -20,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
@@ -138,18 +140,28 @@ class HomeViewModelTest {
         }
     }
 
+    private class FakePreferredPaperStore : PreferredPaperStore {
+        private val paper = MutableStateFlow(PaperSize.A4)
+        override val preferredPaperSize: Flow<PaperSize> = paper
+        override suspend fun setPreferredPaperSize(paperSize: PaperSize) {
+            paper.value = paperSize
+        }
+    }
+
     private val dispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: FakeProjectRepository
     private lateinit var transport: FakeLibrarySafTransport
+    private lateinit var preferredPaperStore: FakePreferredPaperStore
 
     @Before
     fun setUp() {
         Dispatchers.setMain(dispatcher)
         repository = FakeProjectRepository()
         transport = FakeLibrarySafTransport()
+        preferredPaperStore = FakePreferredPaperStore()
     }
 
-    private fun viewModel() = HomeViewModel(repository, transport)
+    private fun viewModel() = HomeViewModel(repository, transport, preferredPaperStore)
 
     @After
     fun tearDown() {
@@ -170,6 +182,17 @@ class HomeViewModelTest {
         updatedAtEpochMs = updatedAtEpochMs,
         documentSchemaVersion = 1,
     )
+
+    @Test
+    fun `preferred paper is exposed and persisted without creating a zine`() = runTest {
+        val viewModel = viewModel()
+
+        assertEquals(PaperSize.A4, viewModel.preferredPaper.value)
+        viewModel.setPreferredPaper(PaperSize.LETTER)
+
+        assertEquals(PaperSize.LETTER, viewModel.preferredPaper.value)
+        assertTrue(repository.created.isEmpty())
+    }
 
     @Test
     fun `the shelf is Loading until the store first answers`() = runTest {

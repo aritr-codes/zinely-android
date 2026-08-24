@@ -207,12 +207,12 @@ class ZineShelfEmptyTest {
     fun `the empty state teaches the transformation rather than the app`() {
         empty()
         // The frozen file's own comment: *"empty state — teaches the concept by showing the
-        // transformation"*. There is no carousel, no sample zine and no tour, and the three lines are the
+        // transformation"*. There is no carousel, no sample zine and no tour, and the two lines are the
         // whole of the copy. Asserted by text so a re-worded line is a failure rather than a silent
         // product change.
         composeRule.onNodeWithText(HEADLINE).assertIsDisplayed()
         composeRule.onNodeWithText(BODY).assertIsDisplayed()
-        composeRule.onNodeWithText(PRIVACY).assertIsDisplayed()
+        composeRule.onNodeWithText(PRIVACY).assertDoesNotExist()
         composeRule.onNodeWithTag(ZineArrowTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ZineSheetIllustrationTestTag).assertIsDisplayed()
         composeRule.onNodeWithTag(ZineBookIllustrationTestTag).assertIsDisplayed()
@@ -319,70 +319,6 @@ class ZineShelfEmptyTest {
         assertTrue(
             "the paragraph must be wide enough for the measure to bind (${paragraph.width})",
             paragraph.width > zeros * 0.8f,
-        )
-    }
-
-    @Test
-    fun `the privacy line is measured in its own characters, not the paragraph's`() {
-        emptyWithMeasure()
-        val privacy = productionPrivacyBounds()
-        val ownMeasure = bounds(REF_MEASURE_PV, byTag = true).width
-        val paragraphMeasure = bounds(REF_MEASURE, byTag = true).width
-
-        // `.pv` is a `<p>` inside `.empty`, so `max-width:28ch` applies to it too — and `ch` is relative to
-        // the element's **own** font size, so 28 advances at 12.16sp SemiBold is far narrower than 28 at
-        // 15.2sp Regular. Both halves of that were missed on the first pass, and neither was visible in a
-        // bound: the line simply ran to the column's edge and looked deliberate. The raster is what showed
-        // it, which is the one thing a raster is better at than a number.
-        //
-        // Measured against **its own** yardstick, not against the paragraph's. A first draft compared the
-        // two paragraphs' rendered widths and expected the ratio of their font sizes; it failed at 0.889
-        // against 0.8, for two reasons that are both real — a rendered width is where the lines happened to
-        // break rather than the constraint, and SemiBold's zero is wider than Regular's, so `ch` does not
-        // scale with size alone. The rendered width was never the right instrument.
-        assertTrue(
-            "the privacy line must not exceed its own ${MEASURE_CHARACTERS}ch ($privacy.width against $ownMeasure)",
-            privacy.width <= ownMeasure + HALF_PIXEL,
-        )
-        assertTrue(
-            "and the measure must actually bind it (${privacy.width} against $ownMeasure)",
-            privacy.width > ownMeasure * 0.8f,
-        )
-        // The discrimination this rests on: the two measures are genuinely different numbers. If they were
-        // not, applying the paragraph's measure to this line would pass the assertions above.
-        assertTrue(
-            "${MEASURE_CHARACTERS}ch at $PRIVACY_SIZE SemiBold ($ownMeasure) must differ from " +
-                "${MEASURE_CHARACTERS}ch at $BODY_SIZE ($paragraphMeasure), " +
-                "or this test cannot see the line being measured in the wrong type",
-            ownMeasure < paragraphMeasure * 0.95f,
-        )
-    }
-
-    @Test
-    fun `the privacy line is leaded at 1_55, which it inherits rather than declares`() {
-        emptyWithMeasure()
-        val privacy = productionPrivacyBounds()
-        val leaded = bounds(REF_PV_LEADED, byTag = true)
-        val unleaded = bounds(REF_PV_UNLEADED, byTag = true)
-
-        // `.empty p{line-height:1.55}` reaches `.pv` too — `.pv` overrides size, colour, weight and margin
-        // and nothing else. Found by mutation: dropping the leading survived the entire suite, because
-        // every other assertion about this line is about its *width*. That is the "which frozen properties
-        // have no test at all" question answering itself.
-        //
-        // The discrimination is asserted first: if this host renders the two references at the same height,
-        // nothing below can see the defect.
-        assertNotEquals(
-            "leaded and unleaded must differ on this host, or this test guards nothing " +
-                "(${leaded.height} vs ${unleaded.height})",
-            leaded.height,
-            unleaded.height,
-        )
-        assertEquals(
-            "the privacy line must carry the inherited 1.55 leading",
-            leaded.height,
-            privacy.height,
-            HALF_PIXEL,
         )
     }
 
@@ -676,7 +612,7 @@ class ZineShelfEmptyTest {
         empty()
         val host = bounds(ZineShelfEmptyTestTag, byTag = true)
         val top = bounds(ZineSheetIllustrationTestTag, byTag = true)
-        val bottom = bounds(PRIVACY)
+        val bottom = bounds(BODY)
         val contentCentre = (top.top + bottom.bottom) / 2f
 
         // The asymmetric bottom clearance against `justify-content:center` centres the content in the

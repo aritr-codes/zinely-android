@@ -9,6 +9,7 @@ import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
+import com.aritr.zinely.data.android.prefs.PreferredPaperStore
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.core.model.ZineCoverRecipe
 import com.aritr.zinely.core.model.newZineCoverRecipe
@@ -89,6 +90,7 @@ internal sealed interface HomeUiState {
 internal class HomeViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val librarySafTransport: LibrarySafTransport,
+    private val preferredPaperStore: PreferredPaperStore,
 ) : ViewModel() {
 
     /** Ids hidden from the shelf while their undo window is open (ADR-044 §3). */
@@ -139,6 +141,21 @@ internal class HomeViewModel @Inject constructor(
 
     private val _backupRestoreState = MutableStateFlow<LibraryBackupRestoreUiState?>(null)
     val backupRestoreState: StateFlow<LibraryBackupRestoreUiState?> = _backupRestoreState
+
+    val preferredPaper: StateFlow<PaperSize> = preferredPaperStore.preferredPaperSize
+        .stateIn(viewModelScope, SharingStarted.Eagerly, PaperSize.A4)
+
+    fun setPreferredPaper(paperSize: PaperSize) {
+        viewModelScope.launch {
+            try {
+                preferredPaperStore.setPreferredPaperSize(paperSize)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                eventQueue.send(HomeShelfEvent.Message(Copy.Colophon.PAPER_SAVE_FAILED))
+            }
+        }
+    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val state: StateFlow<HomeUiState> = retries.flatMapLatest { shelfStateFlow() }

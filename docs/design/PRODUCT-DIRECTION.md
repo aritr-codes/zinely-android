@@ -40,17 +40,24 @@ The brief and the code disagree, and **VOICE.md is already on the brief's side.*
 
 ## 1.2 The privacy repetition — 10 live, 4 dead, 1 should survive
 
+> **Superseded by the D-079 owner ruling (2026-08-24).** This section is preserved as the research input
+> that identified the repetition, but its proposed survivor was not adopted. The single product-level
+> sentence now lives in the Shelf-owned [Colophon](COLOPHON-FREEZE.md); operational failure/recovery
+> reassurance remains state-specific. The table's old recommendations below are historical, not current.
+
 | Where | Literal | Verdict |
 |---|---|---|
-| `ZineShelfEmpty.kt:526` | "Everything stays on your phone — no account, nothing uploaded." | **KEEP — the one survivor.** Lands once, on an empty shelf, before any work exists |
+| `ZineShelfEmpty.kt:526` | "Everything stays on your phone — no account, nothing uploaded." | ~~**KEEP — the one survivor.**~~ **SUPERSEDED — remove; D-079 moves the sole statement to the Colophon** |
 | `Copy.kt:321` → `EditorEmptyState.kt:176` | "works offline · stays on your phone" | **REMOVE** — every blank page, of every zine, forever |
 | `Copy.kt:242` → `BenchAddChooser.kt:273` | "From your phone — it never leaves the device" | **REMOVE** — mid-task, third statement |
 | `Copy.kt:632` → `ProofScreen.kt:1040` | "… · $paper · stays on your phone" | **REMOVE** (trailing clause only) |
-| `Copy.kt:255` → `BenchStatusStrip.kt:127` | "Saved on this device" | **KEEP — load-bearing** (a11y live region; the drawn chip only says "SAVED") |
+| `Copy.kt:255` → `BenchStatusStrip.kt:127` | "Saved on this device" | ~~**KEEP — load-bearing**~~ **SUPERSEDED — the live region says `Saved`; save state does not carry privacy copy** |
 | `ZineShelfFail.kt:316,325-326` · `Copy.kt:572` · `Copy.kt:418` | recovery reassurance in errors | **KEEP** — reassurance during failure is not marketing |
 | `Copy.kt:252,254,499,506` | `SAVED_MARK "✿"`, `SAVED_QUALIFIER`, `ON_THIS_DEVICE`, `KEPT_ON_DEVICE` | **DELETE** — dead constants, zero references |
 
-**Four drawn repetitions → one.** None of these is legally required; the Play data-safety declaration is a console artifact, not UI.
+**Historical recommendation:** four drawn repetitions → one on the empty Shelf. **Current ruling:** the one
+survivor is in the Colophon. None is legally required; the Play data-safety declaration is a console artifact,
+not UI.
 
 ## 1.3 The ten highest-confidence removals
 

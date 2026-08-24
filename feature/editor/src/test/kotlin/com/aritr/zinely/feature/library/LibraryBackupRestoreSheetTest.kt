@@ -51,7 +51,7 @@ class LibraryBackupRestoreSheetTest {
             )
         }
 
-        composeRule.onNodeWithText(Copy.LibraryBackup.PRIVACY_NOTE).assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.LibraryBackup.DESTINATION_NOTE).assertIsDisplayed()
         composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).performClick()
         composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag).performClick()
 

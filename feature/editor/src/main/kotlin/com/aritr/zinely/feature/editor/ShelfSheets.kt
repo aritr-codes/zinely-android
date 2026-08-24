@@ -106,6 +106,7 @@ internal fun ShelfCreateSheet(
     visible: Boolean,
     onDismiss: () -> Unit,
     onChoosePaper: (PaperSize) -> Unit,
+    preferredPaper: PaperSize = PaperSize.A4,
 ) {
     val haptics = ZinelyTheme.haptics
     ZSheet(
@@ -117,7 +118,7 @@ internal fun ShelfCreateSheet(
     ) {
         // `.paperseg{display:flex;gap:var(--gap-sm)}` — 8dp, where V2's chooser wrote 12.
         Row(horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm)) {
-            ShelfPaperChoices.forEach { paper ->
+            shelfPaperChoices(preferredPaper).forEach { paper ->
                 PaperChoice(
                     paper = paper,
                     onClick = { haptics.perform(ZinelyHaptic.Snap); onChoosePaper(paper) },
@@ -142,6 +143,12 @@ internal fun ShelfCreateSheet(
         )
     }
 }
+
+internal fun shelfPaperChoices(preferredPaper: PaperSize): List<PaperSize> =
+    buildList {
+        add(preferredPaper)
+        addAll(PaperSize.entries.filterNot { it == preferredPaper })
+    }
 
 /**
  * One stock, drawn as `.paperseg button` (`v21-proof.html:347-351`) — the corpus's own paper chooser.

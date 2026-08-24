@@ -502,7 +502,7 @@ public object Copy {
         public const val TEXT_TITLE: String = "Text"
         public const val TEXT_SUBTITLE: String = "Type words onto the page"
         public const val PHOTO_TITLE: String = "Photo"
-        public const val PHOTO_SUBTITLE: String = "From your phone — it never leaves the device"
+        public const val PHOTO_SUBTITLE: String = "Choose one from your photos"
 
         /** The frozen `Art` row (`v21-bench.html:841`), title and subtitle verbatim. */
         public const val ART_TITLE: String = "Art"
@@ -519,8 +519,7 @@ public object Copy {
     public object Status {
         public const val SAVED_MARK: String = "✿"
         public const val SAVED_WORD: String = "Saved"
-        public const val SAVED_QUALIFIER: String = " · on this device"
-        public const val SAVED_SPOKEN: String = "Saved on this device"
+        public const val SAVED_SPOKEN: String = "Saved"
     }
 
     /**
@@ -595,7 +594,6 @@ public object Copy {
         public const val FIRST_PAGE_HEADLINE: String = "Let's make something cute."
         public const val LATER_PAGE_HEADLINE: String = "A fresh page. What goes here?"
         public const val SUPPLY_CUE: String = "Grab a photo or a few words from the supplies below."
-        public const val OFFLINE_NOTE: String = "works offline · stays on your phone"
     }
 
     /** The move/resize coach hint (`EditorMoveResizeHint.kt`). Dismiss label is [Common.GOT_IT]. */
@@ -806,7 +804,6 @@ public object Copy {
         public const val EMPTY_BODY: String =
             "One sheet of paper, printed at home and folded by hand into a small book. " +
                 "Start one and the bench will teach you the rest."
-        public const val KEPT_ON_DEVICE: String = "Kept on this device — no account, nothing uploaded"
         public const val COULDNT_OPEN_SHELF: String = "Couldn't open your shelf"
         public const val ERROR_BODY: String =
             "Your zines are safe on this device — we just couldn't read them this time."
@@ -861,6 +858,31 @@ public object Copy {
         // `A4_DIMENSIONS_LONG` / `LETTER_DIMENSIONS_LONG` were deleted by ADR-101 P3: the paper chooser
         // sheet's sub-line was their only consumer, and the segmented control that replaced it names the
         // size and nothing else.
+    }
+
+    /** The Shelf-owned printer's note: paper preference, bundled type, privacy, and build identity. */
+    public object Colophon {
+        public const val ACTION: String = "Colophon"
+        public const val TITLE: String = "Colophon"
+        public const val INTRO: String = "A little note about the paper, type, and care behind Zinely."
+        public const val DEFAULT_PAPER: String = "Default paper"
+        public const val PAPER_EXPLANATION: String =
+            "Used first when you start a zine. You can still choose another."
+        public const val TYPEFACES: String = "Typefaces"
+        public const val AVERIA_ROLE: String = "Our handmade voice"
+        public const val FRAUNCES_ROLE: String = "Our editorial face"
+        public const val INTER_ROLE: String = "Our working face"
+        public const val LICENCE: String = "SIL Open Font License"
+        public const val HOW_IT_WORKS: String = "How Zinely works"
+        public const val OFFLINE_PROMISE: String =
+            "Zinely works offline, and your zines stay on this device unless you choose to share or back them up."
+        public const val VERSION: String = "Version"
+        public const val BACK_TO_SHELF: String = "Back to your shelf"
+        public const val BACK_TO_COLOPHON: String = "Back to Colophon"
+        public const val LICENCE_UNAVAILABLE: String = "This licence notice couldn’t be opened."
+        public const val PAPER_SAVE_FAILED: String = "Couldn’t save that paper choice."
+        public fun licenceButton(family: String): String = "$family, $LICENCE"
+        public fun paperSelected(paper: String): String = "$paper is now your default paper"
     }
 
     /** The Proof surface top bar + band (`ProofScreen.kt`). "Try again" is [Common.TRY_AGAIN]. */
@@ -930,9 +952,9 @@ public object Copy {
          */
         public const val BEFORE_YOU_PRINT: String = "Before you print"
 
-        /** `.ready`'s sub-line — what will be printed, on what, and where it stays. */
+        /** `.ready`'s sub-line — what will be printed and on what paper. */
         public fun readySummary(pages: Int, paper: String): String =
-            "${pagesWord(pages)} · one sheet, one cut · $paper · stays on your phone"
+            "${pagesWord(pages)} · one sheet, one cut · $paper"
 
         /**
          * The whole `.ready` row is **one** control, so it is announced as one string.
@@ -1325,9 +1347,10 @@ public object Copy {
             "Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced."
         public const val EMPTY_TITLE: String = "Bring your zines back"
         public const val EMPTY_BODY: String = "Choose a Zinely backup and its zines will be added to this shelf."
-        public const val PRIVACY_NOTE: String =
-            "You choose where it goes. Zinely doesn’t send it anywhere on its own."
-        public const val EMPTY_PRIVACY_NOTE: String = "Zinely doesn’t send anything anywhere on its own."
+        public const val DESTINATION_NOTE: String =
+            "Backups save as a file you choose. Restores add separate zines."
+        public const val EMPTY_DESTINATION_NOTE: String =
+            "Restoring adds zines to this shelf; it does not replace anything."
         public const val SAVE_ACTION: String = "Back up this shelf"
         public const val SAVE_BODY: String = "Choose where to keep a copy of this whole shelf."
         public const val RESTORE_ACTION: String = "Restore a backup"

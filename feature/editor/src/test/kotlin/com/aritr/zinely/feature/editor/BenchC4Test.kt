@@ -418,13 +418,11 @@ class BenchC4Test {
         // that named them are gone with them and this asserts their *absence* rather than deleting the
         // claim. D-021 keeps the literal characters a frozen file draws — and this frozen file draws none.
         //
-        // The reassurance is not lost, only relocated: the live region still speaks the whole sentence.
-        assertEquals("Saved on this device", BenchSavedSpokenLabel)
+        // D-079 gives the product-level privacy promise one stable home in the Colophon. The status
+        // chip now reports only the operation it can truthfully confirm.
+        assertEquals("Saved", BenchSavedSpokenLabel)
         assertEquals("Saved", BenchSavedWord)
-        assertTrue(
-            "the spoken line must still carry the privacy qualifier the chip stopped drawing",
-            BenchSavedSpokenLabel.contains("on this device"),
-        )
+        assertFalse("the status must not repeat the Colophon's privacy promise", BenchSavedSpokenLabel.contains("device"))
         assertFalse("the flower must not come back to the chip", BenchSavedWord.contains("✿"))
     }
 

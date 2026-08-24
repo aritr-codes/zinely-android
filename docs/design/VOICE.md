@@ -80,7 +80,8 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 - Welcome headline: **"Make a little zine."**
 - Welcome sub: **"Photos, words, and whatever you feel like. It folds into a tiny book."**
 - Welcome primary button: **"Start making"**
-- Privacy reassurance line (everywhere it appears): **"Works offline · stays on your phone"**
+- Colophon privacy reassurance (the **one** product-level instance): **"Zinely works offline, and your
+  zines stay on this device unless you choose to share or back them up."**
 
 ### Empty states
 
@@ -91,6 +92,19 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 - A later empty page: **"A fresh page. What goes here?"** (same invitation-only rule; the tray owns
   the add actions).
 - No projects yet (future home): **"Nothing here yet — let's change that."** / **[ Start a zine ]**
+
+### Colophon
+
+The [D-079](V2-SPEC-DEFECTS.md#d-079) owner ruling makes this the only surface where Zinely describes its
+privacy/offline model as product copy. Error and recovery copy may still say work is safe when that fact is
+the answer to the current failure.
+
+- Title: **"Colophon"**
+- Intro: **"A little note about the paper, type, and care behind Zinely."**
+- Default-paper explanation: **"Used first when you start a zine. You can still choose another."**
+- Typeface licence label: **"SIL Open Font License"**
+- Privacy sentence: **"Zinely works offline, and your zines stay on this device unless you choose to share
+  or back them up."**
 
 ### Hints (contextual, one-time, dismissible)
 

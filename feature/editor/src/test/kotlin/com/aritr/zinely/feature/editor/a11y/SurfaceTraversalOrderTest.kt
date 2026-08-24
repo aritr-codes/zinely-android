@@ -464,7 +464,6 @@ class SurfaceTraversalOrderTest {
                 // KDoc. The invitation now opens on its headline, as it always claimed to.
                 FirstPageInvitationHeadline,
                 Copy.EmptyState.SUPPLY_CUE,
-                Copy.EmptyState.OFFLINE_NOTE,
                 // C5 (ADR-095 rows 5.1, 5.2, 5.9): the navigation row comes BEFORE the bar, because the
                 // freeze puts it there — `v2-bench.html:481` opens `.navrow` and `:488` opens `.bar`, both
                 // in `.phone`'s normal flow, so the sheets sit above Undo/Redo/Add/Done. This ordering is

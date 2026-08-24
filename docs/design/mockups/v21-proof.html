@@ -3,6 +3,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Zinely V2.1 — Proof (handmade direction, PROPOSAL)</title>
 
+<!-- D-079 AMENDMENT · 2026-08-24: the ready-row privacy suffix is removed. Product-level
+     offline/privacy reassurance appears once in the Shelf-owned Colophon. "Saved to your phone"
+     remains because it identifies the completed save destination, not the product's privacy model. -->
+
 <!-- ┌─────────────────────────────────────────────────────────────────────────────┐
      │  V2.1 PROOF — DESIGN-FROZEN (ADR-099, owner, 2026-08-10).                    │
      │                                                                             │
@@ -597,7 +601,7 @@ single actions drawn on your own printed sheet.</p>
     <span class="tape"></span>
     <button class="ready" aria-label="Print details" onclick="openDrawer('details')">
       <span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
-      <span class="rl"><b id="readyHead">Ready when you are</b><span id="readySub">8 pages · one sheet, one cut · A4 · stays on your phone</span></span>
+      <span class="rl"><b id="readyHead">Ready when you are</b><span id="readySub">8 pages · one sheet, one cut · A4</span></span>
       <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
     </button>
 
@@ -1023,7 +1027,7 @@ function setPaper(p){
   paperName = p==='A4' ? 'A4' : 'US Letter';
   document.getElementById('pA4').setAttribute('aria-pressed', p==='A4');
   document.getElementById('pLetter').setAttribute('aria-pressed', p!=='A4');
-  document.getElementById('readySub').textContent = `8 pages · one sheet, one cut · ${paperName} · stays on your phone`;
+  document.getElementById('readySub').textContent = `8 pages · one sheet, one cut · ${paperName}`;
   document.getElementById('saveSub').textContent = `8 pages · ${paperName}`;
   document.getElementById('recipePaper').textContent = paperName;
   // Dropping `.done` on a paper change is correct and must be SAID — see the note's comment in the band.

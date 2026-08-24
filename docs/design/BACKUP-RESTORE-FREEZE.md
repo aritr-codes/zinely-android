@@ -4,6 +4,10 @@ Status: DESIGN FREEZE
 Date: 2026-08-22  
 Canonical visual source: [mockups/backup-restore.html](mockups/backup-restore.html)
 
+**D-079 amendment · 2026-08-24:** the Shelf now has two equal quiet dock actions: this flow's
+`Backups` / `Restore a backup`, and `Colophon`. The Colophon owns the sole product-level offline/privacy
+sentence; this flow retains only operational destination, additive-restore, and recovery copy.
+
 This document freezes the first production `.zine` backup/restore user flow. The repository and
 current V2.1 shelf were reviewed, the interactive HTML was critiqued on the Samsung SM_A176B, and
 accessibility and large-text constraints were reviewed before this freeze. Compose must implement
@@ -11,11 +15,14 @@ this contract without inventing a second interaction model.
 
 ## Entry point
 
-- The shelf does not gain a settings destination.
-- Backup / restore enters from the dock's quiet secondary action.
+- The shelf does not gain a generic settings destination; its separate statement of craft is the
+  [Colophon](COLOPHON-FREEZE.md).
+- Backup / restore enters from the first of the dock's two quiet secondary actions.
 - Content shelf label: `Backups`.
 - Empty shelf label: `Restore a backup`.
 - Loading and shelf-error states do not expose the trust action.
+- `Colophon` is the second quiet action beside it in content and empty states; loading and shelf-error
+  states continue to answer their current question before exposing either utility.
 
 Rationale:
 
@@ -36,8 +43,9 @@ Rationale:
 - On an empty shelf it offers only `Restore a backup`.
 - The sheet says restore is additive before the picker is opened.
 - The sheet says that an ID collision returns as a separate copy rather than replacing a zine.
-- The sheet repeats the privacy promise truthfully: Zinely does not send a backup anywhere on its
-  own, while the user may deliberately choose a local or cloud-backed document provider.
+- The sheet explains the operation rather than repeating the product privacy promise: backups save as a
+  file the user chooses, and restores add separate zines. The Android picker remains truthful about the
+  selected provider.
 
 ### Backup
 
@@ -95,7 +103,7 @@ The retry action relaunches the appropriate picker rather than retrying hidden s
 
 ## Accessibility
 
-- The dock secondary action remains a full control, not decorative text.
+- Both quiet dock actions remain full controls, not decorative text.
 - Running state exposes indeterminate progress semantics.
 - Cancellation and retry are reachable without gestures.
 - Success and error sheets remain understandable at large font sizes.
@@ -129,7 +137,7 @@ The retry action relaunches the appropriate picker rather than retrying hidden s
 
 - The implementation reuses the trusted backup repositories and SAF transport.
 - The UI does not duplicate archive validation logic.
-- No new settings branch is introduced in this package.
+- No settings/Colophon logic is introduced in the backup package; the actions are sibling Shelf routes.
 - The dock remains the only primary-action host on the shelf.
 
 ## Implementation status

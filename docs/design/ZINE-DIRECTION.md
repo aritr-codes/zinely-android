@@ -94,7 +94,10 @@ A **colophon** is the note at the back of a printed book stating how it was made
 | **How Zinely works** — the offline statement, **stated once, here** | §13's subtraction moves four scattered privacy reassurances into one confident sentence in the one place it is not defensive |
 | **Version, and nothing else** | No account, no sync, no analytics toggle, no notification settings. There is nothing to configure because there is nothing running |
 
-**Reached from the Shelf**, not the Bench — you read a colophon when you are not working. **BUILD.**
+**Reached from the Shelf**, not the Bench — you read a colophon when you are not working. **D-079 owner
+ruling, 2026-08-24:** it is the second quiet dock action beside `Backups`; its complete navigation, copy,
+large-text, licence and semantic contract is DESIGN FROZEN in
+[`COLOPHON-FREEZE.md`](COLOPHON-FREEZE.md). **BUILD.**
 
 ## 2.4 Constitution: an amendment is required
 

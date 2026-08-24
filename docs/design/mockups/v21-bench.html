@@ -15,6 +15,8 @@
      │    · Art is one surface: BUNDLED ONLY.  See the ADR-104 amendment below.     │
      │    · the shelf gathers material; the filmstrip moves between pages           │
      │    · undo is a snack, not a dialogue                                         │
+     │    · D-079: privacy reassurance lives once in the Shelf-owned Colophon;      │
+     │      Photo, Shelf captions and the Done toast stay operational               │
      │                                                                             │
      │  THE ONE DESIGN RULE THIS SCREEN ADDS.  An editor must not be charming at    │
      │  the cost of being precise, so the handmade voice is spent where it is       │
@@ -809,7 +811,7 @@ $('trayrow').innerHTML =
     : `<button class="thumb" aria-label="Kept ${k}">${svg(DECOR[k])}</button>`).join('');
 $('trayrow').querySelectorAll('.thumb').forEach(t=>t.onclick=e=>{ e.stopPropagation();
   toast(t.classList.contains('keep')?'Pick a photo to keep on your shelf':'Dropped onto the page',false);
-  cap('Shelf','Things you gathered, kept between sessions. Nothing here has left your phone.'); });
+  cap('Shelf','Things you gathered, kept between sessions.'); });
 $('trayFold').onclick=e=>{ e.stopPropagation(); $('tray').classList.toggle('closed'); };
 
 /* ===== pages ============================================================== */
@@ -838,7 +840,7 @@ $('gridBtn').onclick=e=>{ e.stopPropagation(); openGrid(); };
 function openSupply(){
   $('sheet').innerHTML='<div class="grip"></div><h3>Add to your page</h3><div class="supply">'
    +`<button class="opt" data-a="text"><span class="ico">${ICON.font}</span><span class="tx"><b>Text</b><span>Type words onto the page</span></span></button>`
-   +`<button class="opt" data-a="photo"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Photo</b><span>From your phone — it never leaves the device</span></span></button>`
+   +`<button class="opt" data-a="photo"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Photo</b><span>Choose one from your photos</span></span></button>`
    +`<button class="opt" data-a="art"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Art</b><span>Tape, stamps and cut paper</span></span></button>`
    +'</div>';
   $('sheet').querySelectorAll('.opt').forEach(o=>o.onclick=e=>{ e.stopPropagation();
@@ -846,9 +848,9 @@ function openSupply(){
     if(a==='art') return openArt();
     closeOverlays();
     if(a==='text'){ placeTextAndEdit(); }
-    else { selectByKind('photo'); cap('Selected · Photo','Your photo drops in at centre — and stays on your phone.'); }
+    else { selectByKind('photo'); cap('Selected · Photo','Your photo drops in at centre.'); }
   });
-  showSheet('Adding','Add stays three verbs — Text · Photo · Art. Your photos and your work never leave the device.');
+  showSheet('Adding','Add stays three verbs — Text · Photo · Art.');
 }
 // AMENDED 2026-08-15 (ADR-104 / Constitution Amendment 3).  The four generic chips became the four
 // AUTHORED FAMILIES; the search field, the online panel and its disclosure are gone.  A cabinet is
@@ -903,7 +905,7 @@ function closeOverlays(){
 }
 $('scrim').onclick=e=>{ e.stopPropagation(); closeOverlays(); deselect(); };
 $('addBtn').onclick=e=>{ e.stopPropagation(); openSupply(); };
-$('doneBtn').onclick=e=>{ e.stopPropagation(); deselect(); toast('Saved — everything stays on your phone',false); };
+$('doneBtn').onclick=e=>{ e.stopPropagation(); deselect(); toast('Saved',false); };
 
 /* ===== dev controls ======================================================= */
 $('tg').onclick=()=>{

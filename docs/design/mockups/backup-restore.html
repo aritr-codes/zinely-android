@@ -13,6 +13,8 @@
   Entry point:
   - Content shelf: a quiet, named dock secondary action, "Backups"
   - Empty shelf: the same dock slot changes copy to "Restore a backup"
+  - D-079: Colophon is the second quiet dock action beside it and owns the sole product-level
+    offline/privacy sentence; this flow keeps only operational destination/restore copy
   - Loading / error: no backup entry; the screen first answers the loading / recovery question
 
   Scope:
@@ -331,6 +333,7 @@ body{
   color:var(--ink);
   box-shadow:2px 2px 0 rgba(91,70,52,.22);
 }
+.quiet-actions{display:flex;align-items:center;justify-content:center;gap:10px}
 
 .empty{
   position:absolute;
@@ -416,16 +419,6 @@ body{
   max-width:29ch;
   font-size:15px;
   line-height:1.55;
-}
-
-.pv{
-  font-size:12px;
-  color:var(--leaf-text);
-  font-weight:600;
-  margin-top:8px;
-  background:var(--leaf-tint);
-  border-radius:var(--br-pill);
-  padding:8px 16px;
 }
 
 .overlay{
@@ -722,12 +715,14 @@ body{
       </div>
       <h2>Make your first little zine.</h2>
       <p>One sheet of paper becomes a little eight-page book you print and fold yourself — we’ll show you each step.</p>
-      <p class="pv">Everything stays on your phone — no account, nothing uploaded.</p>
     </div>
 
     <div class="dock">
       <button class="start"><span class="plus">＋</span> Make a zine</button>
-      <button class="trust-link active" id="trustLink">Backups</button>
+      <div class="quiet-actions" aria-label="Shelf actions">
+        <button class="trust-link active" id="trustLink">Backups</button>
+        <button class="trust-link" id="colophonLink">Colophon</button>
+      </div>
     </div>
 
     <div class="overlay show" id="trustSheet">
@@ -739,7 +734,7 @@ body{
             <h3 id="trustTitle">Your zines, kept safe</h3>
             <p id="trustBody">Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced.</p>
           </div>
-          <span class="sheet-note" id="trustNote">You choose where it goes. Zinely doesn’t send it anywhere on its own.</span>
+          <span class="sheet-note" id="trustNote">Backups save as a file you choose. Restores add separate zines.</span>
           <button class="option" id="saveOption">
             <span class="chip">⤓</span>
             <span>
@@ -877,8 +872,8 @@ function showSheet(kind){
       ? "Choose a Zinely backup and its zines will be added to this shelf."
       : "Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced.";
     document.getElementById("trustNote").textContent = isEmpty
-      ? "Zinely doesn’t send anything anywhere on its own."
-      : "You choose where it goes. Zinely doesn’t send it anywhere on its own.";
+      ? "Restoring adds zines to this shelf; it does not replace anything."
+      : "Backups save as a file you choose. Restores add separate zines.";
     document.getElementById("saveOption").classList.toggle("hidden", isEmpty);
     document.getElementById("restoreOptionBody").textContent = isEmpty
       ? "Choose a Zinely backup to add its zines to this shelf."
@@ -970,6 +965,9 @@ document.querySelectorAll("[data-sheet]").forEach(button => {
 });
 
 trustLink.addEventListener("click", () => showSheet("trust"));
+document.getElementById("colophonLink").addEventListener("click", () => {
+  location.href = "v21-colophon.html";
+});
 document.getElementById("saveOption").addEventListener("click", () => showSheet("backup"));
 document.getElementById("restoreOption").addEventListener("click", () => showSheet("restore"));
 document.getElementById("workCancel").addEventListener("click", hideSheets);
