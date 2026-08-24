@@ -308,3 +308,54 @@ outlives that review; [ADR-058](DECISIONS.md#adr-058) cites it.
 - 🟦 **A verb about the *frame* ("Reframe") reads as safer than one about the *image* ("Crop")** — the
   reassurance Figma has to write is the cost of the other choice. Zinely's *Fill / Whole photo* labels are
   a good plain-English rendering of the same distinction; keep them.
+
+## R12. Public-beta baseline — focused creative tools, not feature breadth — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+### R12.1 Comparable-product baseline — ✅ VERIFIED
+
+- Canva groups its editor around layouts, elements, images, text, page settings, guides, layers, and navigation;
+  these establish the manipulation and discoverability expectations of a general-purpose creator. Adobe Express
+  similarly allows mobile creation from scratch or personal media and exposes page/canvas sizing. Desygner treats
+  camera import, mobile editing, download/share, PDFs, and print as one continuous making flow. Book Creator makes
+  simple creation and PDF output central rather than requiring professional layout knowledge.
+  **Sources:** [Canva editor help](https://www.canva.com/help/editing-designing/) ·
+  [Adobe Express mobile FAQ](https://helpx.adobe.com/express/mobile/get-started/faq.html) ·
+  [Adobe Express mobile page sizing](https://helpx.adobe.com/uk/express/mobile/arrange-pages-and-elements/crop-pages.html) ·
+  [Desygner mobile app](https://desygner.com/design-app) ·
+  [Book Creator](https://bookcreator.com/)
+- Print trust is baseline behavior for print-oriented products. Canva's print guidance calls out bleed/safety zones,
+  proofing, crop marks, color shifts, and resolution; Desygner describes high-resolution PDF output; Book Creator
+  treats PDF print/export as a core publishing path.
+  **Sources:** [Canva print troubleshooting](https://www.canva.com/help/fix-canva-print-order/) ·
+  [Desygner print](https://desygner.com/print/) ·
+  [Book Creator publishing](https://bookcreator.com/features/publishing/)
+- Accessibility is also a public product expectation. Book Creator documents WCAG 2.2 AA alignment, assistive-
+  technology testing, keyboard operability, clear labels, visible focus, and logical reading order.
+  **Source:** [Book Creator accessibility](https://bookcreator.com/accessibility/)
+
+### R12.2 Zinely's public-beta bar — 🟦 RECOMMENDATION
+
+Zinely should not chase Canva's breadth. Its credible public-beta baseline is the smaller promise that a person can
+open the app, make a zine, trust the printed result, and safely keep their work:
+
+1. **Trustworthy project lifecycle:** create, open, edit, autosave, close, reopen, recover, back up, and restore
+   without corruption or unexplained loss.
+2. **Reliable creative loop:** text, local photos, and curated art; predictable select/move/resize/rotate; dependable
+   undo/redo; inviting shelf and page entry points.
+3. **Print/output confidence:** honest proof/PDF parity, correct imposition and fold order, readable margins, and
+   image-quality handling appropriate to the physical output.
+4. **Accessible device behavior:** usable large-font layouts, meaningful TalkBack labels and state announcements,
+   predictable Back behavior, and understandable error/cancellation states.
+5. **Interaction responsiveness:** no obvious lag in dragging, transforming, page switching, opening Art, proofing,
+   or export; optimize image decoding only where measurement confirms a real cost.
+
+Cloud accounts, social publishing, collaboration, AI generation, template marketplaces, large online asset feeds,
+and desktop-publishing controls are **not** prerequisites. They conflict with the current focused, private,
+offline-first product promise or add breadth before the core is sufficiently trustworthy.
+
+### R12.3 Launch-readiness decision rule — 🟦 RECOMMENDATION
+
+Audit each baseline area as **green** (credible for public beta), **yellow** (functional but insufficiently reliable or
+clear), or **red** (blocker). Public beta requires no unresolved red item in persistence, editor ownership,
+rendering/export, backup/restore, navigation, or accessibility, and no obvious interaction-critical performance
+failure on a representative physical device.
