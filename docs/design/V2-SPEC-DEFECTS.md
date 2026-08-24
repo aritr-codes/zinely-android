@@ -4736,7 +4736,7 @@ rather than by implementation**, and the first entry since Phase A to reach the 
 | **Artifacts** | [`v21-bench.html`](mockups/v21-bench.html) (DESIGN-FROZEN, ADR-099) · [`EditorContextBar.kt`](../../feature/editor/src/main/kotlin/com/aritr/zinely/feature/editor/EditorContextBar.kt) `:160-195` · the [**D-034** ruling (OD-11)](#d-034) |
 | **Found** | 2026-08-15, during **device Pass 2** on SM-A176B (Android 16, density 420) — [BETA-UX-REVIEW.md F-2](../BETA-UX-REVIEW.md) |
 | **Severity** | **One control is unreachable to sight and one is an 8dp touch target.** Does not block: the row is scrollable, so no function is lost to a screen reader |
-| **Status** | 🟨 **OPEN — awaiting owner ruling** |
+| **Status** | ✅ **RESOLVED — A14 ratifies the shipped wrapping transform bar** (2026-08-24) |
 
 **This is a consequence of OD-11, not a new disagreement.** [D-034](#d-034) established that the frozen
 `.ctx` is a **verb** bar (`Edit · Font · Size · Ink · Delete`) while the shipped `EditorContextBar` is a
@@ -4775,6 +4775,19 @@ specification, not repair, and this register is the queue that feeds that choice
 
 Option (a) is recommended because it is the only one that changes no control's availability — the defect is
 that the row *lies about its own extent*, not that it holds too much.
+
+**Ruling — A14 (2026-08-24, delegated owner authority): choose (c), informed by the real-device result.**
+The transform bar keeps the complete OD-11 control set at full 48dp targets and flows onto the minimum
+number of centred rows required by the available width. It remains one row wherever the set fits. It does
+not scroll, clip, move reorder into overflow, or reduce the action set. The platform tree must expose every
+rendered control as named, clickable and enabled.
+
+The earlier recommendation for (a) was tested before this ruling and rejected on the affected Samsung:
+the visible 8dp fragment contained no glyph, so an edge fade annotated an empty sliver rather than making
+the hidden action discoverable. `EditorContextBar` already implements the accepted `FlowRow` layout and
+restores the `OnClick` action after `clearAndSetSemantics`; narrow-host and platform-tree tests fence the
+original failure. A14 records that evidence-led choice in the frozen Bench rather than leaving shipped
+behavior ahead of its governing artifact.
 
 ---
 

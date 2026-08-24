@@ -1351,6 +1351,24 @@ the repeated-photo data-loss misreading rather than defining general occupied-sp
 Photo picker remains centred, and no route, copy, undo grouping, persistence rule or document format
 changes. A share that lands after a page switch reads the page current at the successful import commit.
 =========================================================================== -->
+
+<!-- ===========================================================================
+A14 · 2026-08-24 (delegated owner ruling, D-078) — the transform bar wraps when it cannot fit.
+
+The frozen Bench keeps both control families from OD-11: the element verbs drawn by `.ctx`, and the
+single-pointer transform alternatives required for moving, scaling, rotating and reordering. On a narrow
+phone the transform set must never trade away a verb, hide one behind an undiscoverable scroll gesture,
+or shrink any target below 48dp.
+
+THE RULING: transform controls keep their order and full target size, remain centred, and flow onto the
+minimum number of additional rows required by the available width. Where every control fits, the bar
+remains one row. There is no horizontal scrolling, overflow menu, clipped-button hint or reduced control
+set. The bar grows vertically toward the page; it does not cover the bottom navigation or page content.
+
+This amendment freezes layout only. Labels, actions, reducer intents, availability rules, haptics and
+platform accessibility semantics do not change. Every rendered control remains named, clickable and
+enabled in the platform accessibility tree.
+=========================================================================== -->
 <script>
 function placeTextAndEdit(){
   const source=[...document.querySelectorAll('.el')].find(e=>e.dataset.kind==='text');
