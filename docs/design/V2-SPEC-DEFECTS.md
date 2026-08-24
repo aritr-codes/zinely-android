@@ -3812,8 +3812,8 @@ This is an **offset rule**, not collision search. It reuses the already-shipped 
 physical language and does not invent rotated-rectangle intersection, random jitter or a placement
 dialogue. `PlaceTextAndEdit` remains the one reducer-owned act and therefore still mints, selects, opens,
 undoes and autosaves the new text atomically. Ordinary Photo and Art placements remain centred. The pure
-geometry is shared with the existing share-in batch path, but [D-081 Q10](#d-081) remains open: this ruling
-does not silently change that path from its existing per-batch seed to a per-page image seed.
+geometry is shared with the existing share-in batch path. [D-081 Q10](#d-081) was subsequently closed by
+A13, which changes that path from its per-batch seed to a per-page image seed without widening this text rule.
 
 **Device verification — 2026-08-24.** Two passes on Samsung SM-A176B confirmed the cascade at normal and
 1.8x font scale, including repeated text additions, a page already containing a photo, undo/redo, process
@@ -5108,13 +5108,15 @@ comment, which is where they were first written.*
   durable**. This is silence, not loss. The a11y half is a pre-existing condition already on this record, so
   the change does not regress it — it fails to fix it in one state. Hoisting both collectors to the nav
   host's root closes both halves in about four lines.
-- **Q10 — the cascade is per-batch, not per-page.** ⏳ **OPEN.** Two consecutive single-photo shares each
-  start from the centred default, so the second lands exactly on the first — Q2's *"it lost my photo"*
+- **Q10 — the cascade is per-batch, not per-page.** ✅ **CLOSED 2026-08-24 — A13 continues the photo
+  cascade from the actual current page.** Before A13, two consecutive single-photo shares each
+  started from the centred default, so the second landed exactly on the first — Q2's *"it lost my photo"*
   misreading, one level up. Still a strict improvement on the status quo, which stacked within a batch too,
-  and reaching it needs two separate shares rather than one ordinary five-photo one. The fix (seed the index
-  from the images already on the page) is small, but it is a **placement policy**, which
-  [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) reserves to design — so deferring it is consistent with how Q2 was
-  ruled rather than an exception to it.
+  and reaching it needs two separate shares rather than one ordinary five-photo one. A13 now freezes the
+  small fix: seed from `ImageElement`s already on the actual current page, continue the existing 12pt bounded
+  cascade through the incoming batch, and ignore text/decor for this photo-specific rule. The ordinary picker
+  remains centred. This is the narrow placement policy [SUPPLIES-SPEC §5.1](SUPPLIES-SPEC.md) required design
+  to settle; it adds no surface, collision search, persistence change or new undo grouping.
 
 **Deferred.**
 

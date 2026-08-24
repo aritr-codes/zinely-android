@@ -14,6 +14,7 @@ import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Intent as EditorIntent
 import com.aritr.zinely.core.editor.cascadedPlacement
 import com.aritr.zinely.core.imposition.Imposer
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.data.android.EditorAutosaveBinder
 import com.aritr.zinely.data.android.SaveFailureSink
@@ -436,11 +437,27 @@ internal class EditorViewModel @Inject constructor(
     ) {
         var added = 0
         var failed = 0
-        for ((index, uri) in batch.withIndex()) {
+        for ((batchIndex, uri) in batch.withIndex()) {
             when (val result = pipeline.decodeAndStore(uri)) {
                 is ImagePickResult.Success -> {
+                    // A13 / D-081 Q10: continue the share-in cascade from photos already on the page
+                    // that will receive this commit. Read after the suspending decode so a page switch
+                    // during import is honoured; there is no suspension between this snapshot and dispatch.
+                    // Text and decor deliberately do not count — this closes the repeated-photo stack,
+                    // not general occupied-space placement. `remainingInBatch` keeps one multi-photo share
+                    // on the same bounded sequence while allowing failed decodes to leave no fake ordinal.
+                    val state = store.uiState.value
+                    val existingImageCount = state.document.pages[state.currentPageIndex].elements
+                        .filterIsInstance<ImageElement>()
+                        .size
+                    val remainingInBatch = batch.size - batchIndex
                     val placed = result.element.copy(
-                        transform = cascadedPlacement(result.element.transform, index, batch.size, pageSizePt),
+                        transform = cascadedPlacement(
+                            base = result.element.transform,
+                            index = existingImageCount,
+                            count = existingImageCount + remainingInBatch,
+                            pageSizePt = pageSizePt,
+                        ),
                     )
                     store.dispatch(EditorIntent.CommitAddImage(placed))
                     added++

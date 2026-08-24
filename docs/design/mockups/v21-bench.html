@@ -1334,6 +1334,23 @@ reducer-owned act, so selection, undo, autosave and cancellation semantics do no
 below makes the prototype create a second text node and visibly offsets it, rather than pretending that
 selecting the old demo node demonstrates addition.
 =========================================================================== -->
+
+<!-- ===========================================================================
+A13 · 2026-08-24 (delegated owner ruling, D-081 Q10) — separate shares continue one photo cascade.
+
+Share-in has no visible route in this prototype, but its placement still changes what the Bench shows.
+The former rule restarted its ordinal for each incoming share. Two separate one-photo shares therefore
+placed both photos at the centred default and made the second look lost beneath the first.
+
+THE RULING: a shared photo's cascade ordinal starts from the number of Image elements already on the
+actual current page. Later photos in the same share continue from that seed. The existing 12pt bounded
+down-right geometry remains the whole placement language; this is still an offset, not collision search.
+
+Only Image elements seed this path. Text and Art do not move a shared photo, because this ruling closes
+the repeated-photo data-loss misreading rather than defining general occupied-space layout. The ordinary
+Photo picker remains centred, and no route, copy, undo grouping, persistence rule or document format
+changes. A share that lands after a page switch reads the page current at the successful import commit.
+=========================================================================== -->
 <script>
 function placeTextAndEdit(){
   const source=[...document.querySelectorAll('.el')].find(e=>e.dataset.kind==='text');
