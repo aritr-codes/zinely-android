@@ -845,7 +845,7 @@ function openSupply(){
     const a=o.dataset.a;
     if(a==='art') return openArt();
     closeOverlays();
-    if(a==='text'){ selectByKind('text'); edit(); }
+    if(a==='text'){ placeTextAndEdit(); }
     else { selectByKind('photo'); cap('Selected · Photo','Your photo drops in at centre — and stays on your phone.'); }
   });
   showSheet('Adding','Add stays three verbs — Text · Photo · Art. Your photos and your work never leave the device.');
@@ -1308,3 +1308,43 @@ licence. Their tile availability changes from disabled `Not yet` to the same act
 the other twelve. Membership, copy, order, colour, placement defaults and interaction rules do not
 change.
 =========================================================================== -->
+
+<!-- ===========================================================================
+A12 · 2026-08-24 (delegated owner ruling, D-052) — a new text box must look new.
+
+The prototype used to answer Add > Text by selecting its first existing text node and opening that
+node's edit state. It therefore specified the editing transition but specified no creation placement
+at all. Compose filled that silence with one centred transform for every addition. On an occupied page,
+the new outline and cursor could sit directly over existing words and read as editing the old block.
+
+THE RULING: the first addition to an empty page keeps the existing centred 70% x 16% text box. Every
+later Add > Text uses the number of elements already on the current page as its zero-based cascade
+ordinal and moves that same base box 12pt down and right per ordinal. Each axis is capped against the
+remaining page room, so the entire unrotated box stays on the page; when the room is exhausted the edge
+is the deterministic fallback. There is no random jitter, rotation, search, refusal or document change.
+
+All element kinds count as occupied for Text: words should not arrive at the exact default origin merely
+because the thing already there is a photo or a supply. This ruling does NOT move the ordinary Photo
+picker or Art defaults, which remain centred. It also does not settle D-081 Q10's consecutive-share
+seed; that path may reuse the pure geometry but keeps its existing per-batch ordinal until separately
+ruled.
+
+Text still enters the newly minted element's edit session immediately. PlaceTextAndEdit remains one
+reducer-owned act, so selection, undo, autosave and cancellation semantics do not move. The function
+below makes the prototype create a second text node and visibly offsets it, rather than pretending that
+selecting the old demo node demonstrates addition.
+=========================================================================== -->
+<script>
+function placeTextAndEdit(){
+  const source=[...document.querySelectorAll('.el')].find(e=>e.dataset.kind==='text');
+  const ordinal=document.querySelectorAll('.el').length;
+  const entry={kind:'text',label:'Text: New words',html:'<div class="t-title">New words<span class="caret"></span></div>'};
+  const i=ELS.push(entry)-1, node=source.cloneNode(true), offset=Math.min(12*ordinal,48);
+  node.dataset.i=i; node.dataset.kind='text'; node.setAttribute('aria-label',entry.label+'. Tap to select.');
+  node.querySelector('.t-title,.t-body').innerHTML='New words<span class="caret"></span>';
+  node.style.transform=`translate(${offset}px,${offset}px)`;
+  node.onclick=e=>{e.stopPropagation();select(node)};
+  node.ondblclick=e=>{e.stopPropagation();select(node);edit()};
+  source.insertAdjacentElement('afterend',node); select(node); edit();
+}
+</script>

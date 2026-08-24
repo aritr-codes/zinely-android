@@ -67,6 +67,7 @@ import com.aritr.zinely.core.editor.FramingMath
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
+import com.aritr.zinely.core.editor.cascadedPlacement
 import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.PageRole
@@ -1812,7 +1813,13 @@ public fun EditorScreen(
         BenchAddChooser(
             visible = addChooserOpen,
             onDismiss = { addChooserOpen = false },
-            onAddText = { addTextAndEdit(pageSizePt, dispatch) },
+            onAddText = {
+                addTextAndEdit(
+                    pageSizePt = pageSizePt,
+                    existingElementCount = uiState.document.pages[uiState.currentPageIndex].elements.size,
+                    dispatch = dispatch,
+                )
+            },
             onAddPhoto = { dispatch(Intent.RequestAddImage) },
             onAddArt = { artSheetFor = BenchArtPurpose.Place },
         )
@@ -1963,8 +1970,8 @@ private fun applyFit(draft: FramingDraft, fit: FrameFit): FramingDraft = when (f
 }
 
 /**
- * "Add words" from the empty state: place an **empty** text box centered on the page and **open its
- * edit session immediately**, so the beginner goes straight to typing — no committed placeholder
+ * "Add words" from the empty state: place an **empty** text box at the page's bounded cascade position
+ * and **open its edit session immediately**, so the beginner goes straight to typing — no committed placeholder
  * sentence, and no reliance on the hidden double-tap-to-edit affordance (Codex UX finding). Composed
  * The reducer owns the whole act through [Intent.PlaceTextAndEdit]: it mints the id, places the box and
  * opens the matching session in one reduction. Keeping those steps atomic matters when another element
@@ -1972,9 +1979,16 @@ private fun applyFit(draft: FramingDraft, fit: FrameFit): FramingDraft = when (f
  */
 internal fun addTextAndEdit(
     pageSizePt: PtSize,
+    existingElementCount: Int,
     dispatch: (Intent) -> Unit,
 ) {
-    dispatch(Intent.PlaceTextAndEdit(centeredTextBox(pageSizePt)))
+    val placement = cascadedPlacement(
+        base = centeredTextBox(pageSizePt),
+        index = existingElementCount,
+        count = existingElementCount + 1,
+        pageSizePt = pageSizePt,
+    )
+    dispatch(Intent.PlaceTextAndEdit(placement))
 }
 
 /** A text box centered on the page (points) for a newly added text element. */

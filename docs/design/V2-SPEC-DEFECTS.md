@@ -3779,8 +3779,9 @@ separate question, and C5 will not answer it by inference.
 ### D-052 — `Add › Text` drops the new box on top of what is already on the page {#d-052}
 
 **Raised 2026-08-04 by C4's Device Verification Pass 2** (Samsung SM-A176B, Android 16, debug build).
-🟦 Open. **Not a merge blocker** — it is the shipped placement rule meeting a new one-tap route to it, not a
-regression C4 introduced.
+✅ **CLOSED 2026-08-24** — ruled in frozen Bench amendment A12 and implemented as a pure, bounded
+per-page cascade. It was not a C4 regression; it was the shipped placement rule meeting a new one-tap
+route to it.
 
 **What happened, before I knew why.** The page held one text box reading *"Hello"*. I tapped `Add`, then
 `Text`. A new box arrived already in its editing session — correct, and pleasant — but its outline was drawn
@@ -3798,6 +3799,25 @@ collision is now met on a page that already has content, which the empty-state r
 
 **What a fix would decide, if ruled:** whether a placement offsets from, or avoids, the occupied region —
 a placement-policy decision that belongs to whoever owns adding, not to the package that rebuilt the bar.
+
+#### Ruling — 2026-08-24: preserve the centre, then show that this is another object
+
+The first text addition to an empty page keeps the established centred `70% x 16%` box. Later additions
+use the current page's total element count as a cascade ordinal: the same base box moves **12pt down and
+right per ordinal**, capped independently on each axis so the whole unrotated box remains inside the page.
+Every element kind counts; a photo or supply already at the default origin is still occupied space from
+the new words' point of view. At the page edge, the bounded edge position is the deterministic fallback.
+
+This is an **offset rule**, not collision search. It reuses the already-shipped multi-photo cascade's
+physical language and does not invent rotated-rectangle intersection, random jitter or a placement
+dialogue. `PlaceTextAndEdit` remains the one reducer-owned act and therefore still mints, selects, opens,
+undoes and autosaves the new text atomically. Ordinary Photo and Art placements remain centred. The pure
+geometry is shared with the existing share-in batch path, but [D-081 Q10](#d-081) remains open: this ruling
+does not silently change that path from its existing per-batch seed to a per-page image seed.
+
+**Device verification — 2026-08-24.** Two passes on Samsung SM-A176B confirmed the cascade at normal and
+1.8x font scale, including repeated text additions, a page already containing a photo, undo/redo, process
+restart persistence, Proof rendering, and Android Back returning from text editing to the Bench.
 
 ---
 

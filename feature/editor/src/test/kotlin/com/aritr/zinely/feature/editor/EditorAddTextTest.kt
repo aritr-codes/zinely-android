@@ -49,11 +49,13 @@ class EditorAddTextTest {
     fun addWords_places_empty_text_and_opens_its_edit_session() {
         val store = store()
 
-        addTextAndEdit(PtSize(612.0, 792.0), store::dispatch)
+        addTextAndEdit(PtSize(612.0, 792.0), existingElementCount = 0, store::dispatch)
 
         val state = store.uiState.value
         val text = state.document.pages[0].elements.filterIsInstance<TextElement>().single()
         assertEquals("", text.text) // empty — not a "Your words here" placeholder
+        assertEquals(91.8, text.transform.xPt, 1e-9)
+        assertEquals(332.64, text.transform.yPt, 1e-9)
         val interaction = state.interaction
         assertTrue(
             "expected an open EditingText session on the new element",
@@ -67,7 +69,7 @@ class EditorAddTextTest {
         store.dispatch(Intent.PlaceText(Transform(10.0, 10.0, 80.0, 30.0), "old"))
         val oldId = store.uiState.value.selection.single()
 
-        addTextAndEdit(PtSize(612.0, 792.0), store::dispatch)
+        addTextAndEdit(PtSize(612.0, 792.0), existingElementCount = 1, store::dispatch)
 
         val state = store.uiState.value
         val interaction = state.interaction as Interaction.EditingText
@@ -75,5 +77,23 @@ class EditorAddTextTest {
         assertEquals(newText.id, interaction.id)
         assertEquals(setOf(newText.id), state.selection)
         assertEquals("old", state.document.pages[0].elements.filterIsInstance<TextElement>().single { it.id == oldId }.text)
+        assertEquals(103.8, newText.transform.xPt, 1e-9)
+        assertEquals(344.64, newText.transform.yPt, 1e-9)
+    }
+
+    @Test
+    fun addWords_high_ordinal_stays_wholly_on_the_page() {
+        val store = store()
+        val page = PtSize(612.0, 792.0)
+
+        addTextAndEdit(page, existingElementCount = 10_000, store::dispatch)
+
+        val text = store.uiState.value.document.pages[0].elements.filterIsInstance<TextElement>().single()
+        assertTrue(text.transform.xPt >= 0.0)
+        assertTrue(text.transform.yPt >= 0.0)
+        assertTrue(text.transform.xPt + text.transform.widthPt <= page.width)
+        assertTrue(text.transform.yPt + text.transform.heightPt <= page.height)
+        assertEquals(page.width, text.transform.xPt + text.transform.widthPt, 1e-9)
+        assertEquals(page.height, text.transform.yPt + text.transform.heightPt, 1e-9)
     }
 }
