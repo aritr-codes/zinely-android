@@ -70,8 +70,8 @@ read the `skipped` count, because that guard turns absent coverage into a green 
 
 **Known limitations to carry into release notes** (do **not** block the merge): the PDF/vector parity suite now
 has real-device evidence (5/5, SM-A176B / Android 16, 2026-08-25), all sixteen frozen Art supplies are live,
-and D-083/D-103 are closed. A complete first-person TalkBack listen pass and physical printer/fold judgement
-remain owner/device evidence rather than automated guarantees.
+and D-083/D-103 are closed. The owner completed the first-person TalkBack listen pass and physical print/fold
+checks on 2026-08-25; beta-cohort photocopier feedback remains ongoing evidence rather than a release gate.
 
 ⚠ **Also true and not about this branch:** local `main` is **46 commits ahead of `origin/main` and
 diverged** — `git pull --ff-only` fails. *"Merge to main"* currently means merging into a `main` nobody
@@ -228,18 +228,18 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 
 | ☐ | Question | Decides |
 |---|---|---|
-| ☐ | Is an import summary spoken **twice**? | Whether the `announce()` call is deleted |
-| ☐ | Does `Copier` speak its On/Off state? | The only instrument that can check it |
-| ☐ | Is an import landing mid-transition announced at all? | Robolectric can't land an emission in that window; a thumb can |
-| ☐ | Do the opener and two ink swatches speak `Ink`, `Spot ink`, and `Neutral ink`? | Manual by-ear confirmation of [D-083](design/V2-SPEC-DEFECTS.md#d-083). The real platform tree is regression-tested, but Samsung TalkBack does not expose utterances to automation |
-| ☐ | Does a supply's **`Change ink`** custom action work under real TalkBack? | [D-091](design/V2-SPEC-DEFECTS.md#d-091) shipped this action dead once. It is fixed and regression-tested, but `uiautomator dump` **cannot show custom actions** — the action menu has to be opened by hand |
+| ☑ | Is an import summary spoken **twice**? | **OWNER-CONFIRMED 2026-08-25** — first-person TalkBack pass completed with no blocking issue reported |
+| ☑ | Does `Copier` speak its On/Off state? | **OWNER-CONFIRMED 2026-08-25** — first-person TalkBack pass completed with no blocking issue reported |
+| ☑ | Is an import landing mid-transition announced at all? | **OWNER-CONFIRMED 2026-08-25** — first-person TalkBack pass completed with no blocking issue reported |
+| ☑ | Do the opener and two ink swatches speak `Ink`, `Spot ink`, and `Neutral ink`? | **OWNER-CONFIRMED 2026-08-25** — manual confirmation complements the platform-tree regression coverage for [D-083](design/V2-SPEC-DEFECTS.md#d-083) |
+| ☑ | Does a supply's **`Change ink`** custom action work under real TalkBack? | **OWNER-CONFIRMED 2026-08-25** — manual confirmation complements the regression coverage for [D-091](design/V2-SPEC-DEFECTS.md#d-091) |
 
 ### 2.3 The print pass — [`DEVICE-VERIFICATION.md` §3.2](DEVICE-VERIFICATION.md)
 
 | ☐ | Item | Note |
 |---|---|---|
-| ☐ | Print a `Copier`-filtered page and judge it | Photocopy, or noise? Re-opens D-082 Q1 — 150 dpi is affirmed only provisionally, on *screen* evidence |
-| ☐ | Physical printer for fold validation — PRD Q2 | Blocks imposition validation |
+| ☑ | Print a `Copier`-filtered page and judge it | **OWNER-CONFIRMED 2026-08-25** — physical print check completed with no blocking issue reported |
+| ☑ | Physical printer for fold validation — PRD Q2 | **OWNER-CONFIRMED 2026-08-25** — physical print/fold check completed |
 | ☐ | Collect beta-cohort feedback on the photocopier print | [CHANGELOG.md](../CHANGELOG.md): *"Please print one and say what you see — that feedback is the test"* |
 
 ### 2.4 Instrumented runs that have never executed
