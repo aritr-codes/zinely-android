@@ -476,7 +476,7 @@ looks exactly like a defect.
 |---|---|---|---|
 | **Page images** (raster) | `RasterGoldenTest`, `TextGoldenTest` — committed goldens | Headless (Robolectric NATIVE) | CI `verifyRoborazziDebug` |
 | **Editor preview** | `PagePreviewGoldenTest` — committed goldens · `PagePreviewParityTest` — host≡replay pixel equality | Headless | CI `verifyRoborazziDebug` |
-| **Print PDF** | `PdfSurfaceParityInstrumentedTest` — whole-raster parity against the page-image surface · `PdfExportInstrumentedTest` — write + rasterise-back | **On device** | **No CI execution** — compile-checked only; run on device before release |
+| **Print PDF** | `PdfSurfaceParityInstrumentedTest` — whole-raster parity against the page-image surface · `PdfExportInstrumentedTest` — write + rasterise-back | **On device** | **Hardware gate** — 5/5 passed on SM-A176B / Android 16 on 2026-08-25; still not executed by CI |
 | **Read mode** | — | — | Deferred until the surface exists |
 
 **Why PDF is not headless.** `PdfDocument` throws `IllegalStateException: document is closed!` under Robolectric `graphicsMode=NATIVE` — measured directly, not inherited. A golden needs pixels and that path cannot produce any headlessly, so the print surface is verified instrumented on a real device. Its tests are compile-checked by `:render-android:compileDebugAndroidTestKotlin` in CI so they cannot bitrot.

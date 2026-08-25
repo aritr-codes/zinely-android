@@ -42,6 +42,7 @@ internal fun newShapePaint(): Paint = Paint().apply {
 public class SupplyPainter {
 
     private val paint = newShapePaint()
+    private val pathCache = SupplyPathCache()
 
     /**
      * Fills [outline] into [canvas], stretched from its authored unit square to [widthPx] × [heightPx],
@@ -61,7 +62,7 @@ public class SupplyPainter {
         paint.color = colorArgb
         val saved = canvas.save()
         canvas.scale(widthPx, heightPx)
-        canvas.drawPath(outline.toPath(), paint)
+        canvas.drawPath(pathCache.pathFor(outline), paint)
         canvas.restoreToCount(saved)
     }
 }

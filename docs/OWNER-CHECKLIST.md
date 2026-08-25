@@ -68,12 +68,10 @@ Robolectric decoder window, which is stochastic and already tracked as **#57**. 
 run. **Before treating a red gate as a blocker, re-run it**; and before trusting a *green* Reframe suite,
 read the `skipped` count, because that guard turns absent coverage into a green tick by design.
 
-**Known limitations to carry into release notes** (do **not** block the merge): `PdfSurfaceParityInstrumentedTest`
-is compile-checked and **has never executed** (`PdfDocument` will not run under Robolectric) — it is the only
-evidence supply outlines reach paper as vectors, and it ships unproven · four of sixteen tiles remain inert
-([D-104](design/V2-SPEC-DEFECTS.md#d-104) — repointed from the now-closed [D-086](design/V2-SPEC-DEFECTS.md#d-086); the tiles say so in words, and two of *Tape & fixings*' four are among them)
-([D-086](design/V2-SPEC-DEFECTS.md#d-086)) · [D-083](design/V2-SPEC-DEFECTS.md#d-083)'s three-way `Ink`
-ambiguity is a **shipped** a11y defect, older than this branch · the TalkBack listen pass is unperformed.
+**Known limitations to carry into release notes** (do **not** block the merge): the PDF/vector parity suite now
+has real-device evidence (5/5, SM-A176B / Android 16, 2026-08-25), all sixteen frozen Art supplies are live,
+and D-083/D-103 are closed. A complete first-person TalkBack listen pass and physical printer/fold judgement
+remain owner/device evidence rather than automated guarantees.
 
 ⚠ **Also true and not about this branch:** local `main` is **46 commits ahead of `origin/main` and
 diverged** — `git pull --ff-only` fails. *"Merge to main"* currently means merging into a `main` nobody
@@ -248,7 +246,7 @@ expose `stateDescription`** — so no dump I take substitutes for an ear.
 
 | ☐ | Item | Why it matters |
 |---|---|---|
-| ☐ | **Run the PDF-surface hole test on hardware** | `PdfDocument` does not run under Robolectric. `PdfSurfaceParityInstrumentedTest` is **compile-checked and has never executed.** It is the only thing standing behind the claim that supply outlines reach paper as vectors |
+| ☑ | **Run the PDF-surface hole test on hardware** | **CLOSED 2026-08-25.** `PdfSurfaceParityInstrumentedTest` passed 5/5 on SM-A176B / Android 16, including the shared supply-outline replay path. It remains a hardware gate because `PdfDocument` does not run under Robolectric |
 | ☐ | Two-pass device verification for every V2.1 surface as it lands | Reference device SM-A176B |
 
 ---
