@@ -116,7 +116,7 @@
 | [ADR-104](#adr-104) | **The asset layer — curated, generative, personal; no network, permanently.** Owner-adopted as Constitution Amendment 3; online sources closed on *provenance*, not privacy | Accepted |
 | [ADR-105](#adr-105) | **The third primitive — `DecorElement`, and the draw command that does not exist yet.** Implements ADR-104's curated-supply half | Accepted |
 | [ADR-106](#adr-106) | **The photocopier filter — a flag on the tape, not a filtered asset.** Adopted by the implementer under explicit owner delegation of D-082's five questions | Accepted |
-| [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** Grows the catalogue to ~51 inside the frozen families; upholds the randomiser ban; withdraws app-authored composites; ships search. | Proposed |
+| [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** First admits a 16-supply expansion to 32, keeps the remaining ~19 candidates as a curated backlog, upholds the randomiser ban, withdraws app-authored composites, and ships search with growth. | Accepted |
 | [ADR-108](#adr-108) | ✅ **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed | **Accepted 2026-08-20**; R4 shipped as *generation* — the tile renders the authored outline, `BenchArtGlyphs` deleted.
 | [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The open question is not rendering but *when the maker first sees the join* — no screen shows it | Proposed |
 | [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
@@ -11369,8 +11369,10 @@ rule; but amending a freeze is an owner act and this one carries no ruling, whic
 
 ### A larger material library — grown inside the frozen four, searchable, composed by hand
 
-**Status:** `Proposed` · 2026-08-18 · **v2**, superseding a v1 draft that independent review returned **NO-GO**
-**Owner ruling required on:** R5 (amends the frozen Art sheet — [D-080](design/V2-SPEC-DEFECTS.md#d-080))
+**Status:** `Accepted` · 2026-08-18 · owner-ratified with a staged catalogue amendment 2026-08-25 · **v2**, superseding a v1 draft that independent review returned **NO-GO**
+**Owner ruling:** R2's randomiser ban stands; R5's local name/tag search and four family filters are accepted;
+R1 admits the researched first wave of sixteen additions (32 total) while the remaining ~19 stay backlog.
+The visual treatment and preliminary outlines remain pending D-080's rendered HTML freeze.
 **Extends:** [ADR-104](#adr-104) (asset layer, Constitution Amendment 3) — the *curated* leg of Model D
 **Amends:** [SUPPLIES-SPEC §9](design/SUPPLIES-SPEC.md) — **two** bullets: the *search field* one (premise
 expired) and the *"No categories beyond the four. No tags, no filters, no sort"* one (a straight reversal; it
@@ -11592,6 +11594,16 @@ printed zine. Emoticon-*style* marks authored from a permitted filled set are or
 attaches to the licence travelling with the artifact, never to the shape on the page.
 
 #### Consequences
+
+**Owner amendment, 2026-08-25.** The owner accepted the research recommendation in
+[`reviews/2026-08-25-art-panel-research.md`](reviews/2026-08-25-art-panel-research.md): grow first to **32**,
+not directly to 51; keep the four physical families; ship local name/tag search, visible reversible filters,
+Recent and Favourites as retrieval shortcuts; and do not randomise catalogue order, page composition,
+placement, or outline geometry. The first wave is Masking tape · Saddle stitch · Eyelet · Push pin ·
+Pointing hand · Crop marks · Colour bar · Copier streak · Perforation · Starburst · Ticket stub · Postage
+stamp · Deckle edge · Torn hole · Folded corner · Ring. The worked ~51 list remains the curation backlog,
+not a promise that all rows enter one release. A15 iteration 2 draws the ruled density in HTML; D-080 stays
+open until that artifact is rendered and its visual treatment is frozen.
 
 - ⚠ **Sequencing gate, because two clauses of v2 disagreed without it.** R5 says *"search ships with the
   library it serves, or the library does not grow"*; a bare *"R1 needs no owner amendment"* would license a

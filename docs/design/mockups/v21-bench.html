@@ -1382,8 +1382,8 @@ function placeTextAndEdit(){
 }
 </script>
 <!-- ===========================================================================
-A15 DRAFT · 2026-08-25 (D-080 / ADR-107 R5) — find a material without turning
-the Art box into a stock browser. OWNER RULING REQUIRED; THIS IS NOT FROZEN.
+A15 ITERATION 2 · 2026-08-25 (D-080 / ADR-107 R5) — find a material without
+turning the Art box into a stock browser. OWNER-RULED SCOPE; VISUAL FREEZE PENDING.
 
 WHY THIS DRAFT EXISTS. A5 correctly removed search and filters from a cabinet of
 sixteen things that fit at once. ADR-107 proposes a materially different cabinet:
@@ -1391,7 +1391,7 @@ roughly fifty-one authored supplies, where showing every family in full makes
 recognition slower and pushes a known material several screens away. D-080 also
 records the duplicate Photo/Art glyph and the missing no-results state.
 
-PROPOSED RULING. Art receives its own collage glyph: two overlapping paper scraps
+OWNER RULING, 2026-08-25. Art receives its own collage glyph: two overlapping paper scraps
 and one printed dot, not the Photo frame. The Art sheet keeps one surface and one
 local, offline catalogue. A search field matches the user-facing name and curated
 tags. Four family buttons filter that same catalogue; there is deliberately no
@@ -1405,10 +1405,17 @@ announced politely; the search field has a visible label; family buttons expose
 pressed state; every target remains at least 48px. Filtering is immediate and
 local. No query, tag, project data or usage signal leaves the device.
 
-This draft demonstrates the interaction over the frozen sixteen only. Acceptance
-freezes the controls and states, not ADR-107 R1's proposed membership, names,
-order, outlines or scroll depth; those remain a separate owner act. Production
-copy and tag vocabulary belong in :core:copy, and filtering remains pure Kotlin.
+Because Favourites now ships with growth, A15 also pays the accessibility debt
+booked by A7: the 48px star is a sibling of the placement button, never an
+interactive control nested inside it.
+
+The owner also ruled the first expansion is sixteen named additions, for a 32-piece
+cabinet, and upheld the no-randomisation boundary: no shuffled catalogue, generated
+outline, auto-arrangement or surprise placement. The remaining ~19 candidates stay
+in the curated backlog. The preliminary silhouettes below exist to judge the panel's
+real near-term density; production geometry still needs provenance, outline review,
+render parity and its own freeze. Production copy and tag vocabulary belong in
+:core:copy, and filtering remains pure Kotlin.
 =========================================================================== -->
 <style>
 .art-tools{display:flex;flex-direction:column;gap:var(--gap-sm);margin:0 0 var(--gap-md)}
@@ -1434,6 +1441,15 @@ copy and tag vocabulary belong in :core:copy, and filtering remains pure Kotlin.
   border-radius:var(--br-md)}
 .art-empty.show{display:block}
 .art-empty b{display:block;margin-bottom:var(--gap-xs);font:700 1rem var(--voice);color:var(--ink)}
+.art-favourite-empty{margin:-4px 0 var(--gap-md);color:var(--ink-soft);font-size:.72rem}
+.art-tile-wrap{position:relative;min-width:0;aspect-ratio:1}
+.art-tile-wrap>.tile{width:100%;height:100%}
+.art-tile-wrap:nth-child(3n)>.tile{--tt:-1.6deg;background:var(--berry-tint);color:var(--on-leaf)}
+.art-tile-wrap:nth-child(4n)>.tile{--tt:1.4deg;background:var(--butter-tint);color:var(--ink)}
+.art-favourite-action{position:absolute;z-index:1;top:0;right:0;width:48px;height:48px;padding:0;
+  color:var(--ink-soft);background:transparent;border:0;font-size:.9rem;cursor:pointer}
+.art-favourite-action.on{color:var(--butter);-webkit-text-stroke:.7px var(--ink);paint-order:stroke fill}
+.art-favourite-action:focus-visible{outline:3px solid var(--berry);outline-offset:-5px;border-radius:var(--br-md)}
 .art-reset{min-height:48px;margin-top:var(--gap-md);padding:var(--gap-sm) var(--gap-lg);
   font:700 .78rem var(--sans);color:var(--on-leaf);background:var(--leaf);
   border:1.5px solid var(--ink);border-radius:var(--br-pill);box-shadow:2px 2px 0 var(--ink-line);
@@ -1448,6 +1464,24 @@ openSupply=function(){
 };
 
 const openArtBeforeA15=openArt;
+const ART_FIRST_WAVE=[
+  ['Tape & fixings','tape.masking','Masking tape','<path d="M0 3 L24 3 L24 21 L0 21 Z"/>'],
+  ['Tape & fixings','fix.stitch','Saddle stitch','<path d="M5 0 L8 0 L8 24 L5 24 Z M16 0 L19 0 L19 24 L16 24 Z"/>'],
+  ['Tape & fixings','fix.grommet','Eyelet','<path d="M12 0 C18.63 0 24 5.37 24 12 C24 18.63 18.63 24 12 24 C5.37 24 0 18.63 0 12 C0 5.37 5.37 0 12 0 Z M12 5 C8.13 5 5 8.13 5 12 C5 15.87 8.13 19 12 19 C15.87 19 19 15.87 19 12 C19 8.13 15.87 5 12 5 Z"/>'],
+  ['Tape & fixings','fix.pushpin','Push pin','<path d="M5 2 L19 2 L17 8 L14 10 L14 17 L12 24 L10 17 L10 10 L7 8 Z"/>'],
+  ['Stamps & marks','mark.hand','Pointing hand','<path d="M0 9 L10 9 L10 5 L13 5 L13 8 L16 6 L18 8 L21 8 L24 11 L21 14 L18 14 L16 16 L13 14 L13 18 L10 18 L10 14 L0 14 Z"/>'],
+  ['Stamps & marks','mark.crop','Crop marks','<path d="M0 0 H9 V2 H2 V9 H0 Z M15 0 H24 V9 H22 V2 H15 Z M0 15 H2 V22 H9 V24 H0 Z M22 15 H24 V24 H15 V22 H22 Z"/>'],
+  ['Stamps & marks','mark.bar','Colour bar','<path d="M0 4 H5 V20 H0 Z M6.5 4 H11.5 V20 H6.5 Z M13 4 H18 V20 H13 Z M19.5 4 H24 V20 H19.5 Z"/>'],
+  ['Stamps & marks','mark.scan','Copier streak','<path d="M2 0 H5 L4 24 H0 Z M9 0 H11 L13 24 H8 Z M17 0 H22 L24 24 H19 Z"/>'],
+  ['Stamps & marks','mark.perf','Perforation','<path d="M0 10 H3 V14 H0 Z M5 10 H8 V14 H5 Z M10 10 H13 V14 H10 Z M15 10 H18 V14 H15 Z M20 10 H24 V14 H20 Z"/>'],
+  ['Stamps & marks','mark.burst','Starburst','<path d="M12 0 L14 7 L19 2 L18 9 L24 8 L19 12 L24 16 L18 15 L19 22 L14 17 L12 24 L10 17 L5 22 L6 15 L0 16 L5 12 L0 8 L6 9 L5 2 L10 7 Z"/>'],
+  ['Cut paper','paper.stub','Ticket stub','<path d="M0 3 H24 V9 C20 9 20 15 24 15 V21 H0 V15 C4 15 4 9 0 9 Z"/>'],
+  ['Cut paper','paper.stamp','Postage stamp','<path d="M2 0 L4 2 L6 0 L8 2 L10 0 L12 2 L14 0 L16 2 L18 0 L20 2 L22 0 L24 2 L22 4 L24 6 L22 8 L24 10 L22 12 L24 14 L22 16 L24 18 L22 20 L24 22 L22 24 L20 22 L18 24 L16 22 L14 24 L12 22 L10 24 L8 22 L6 24 L4 22 L2 24 L0 22 L2 20 L0 18 L2 16 L0 14 L2 12 L0 10 L2 8 L0 6 L2 4 L0 2 Z"/>'],
+  ['Cut paper','paper.deckle','Deckle edge','<path d="M1 1 L5 0 L8 2 L12 0 L16 1 L20 0 L24 2 L23 6 L24 10 L22 14 L24 18 L23 23 L19 24 L15 22 L11 24 L7 23 L3 24 L0 21 L2 17 L0 13 L1 9 L0 5 Z"/>'],
+  ['Cut paper','paper.hole','Torn hole','<path d="M2 4 L7 0 L12 2 L17 0 L23 5 L22 10 L24 15 L20 22 L14 21 L9 24 L3 20 L1 14 L0 9 Z M7 8 L6 13 L9 18 L14 17 L18 14 L17 9 L13 6 Z"/>'],
+  ['Cut paper','paper.dogear','Folded corner','<path d="M2 2 H17 L22 7 V22 H2 Z"/>'],
+  ['Cut shapes','shape.ring','Ring','<path d="M12 0 C18.63 0 24 5.37 24 12 C24 18.63 18.63 24 12 24 C5.37 24 0 18.63 0 12 C0 5.37 5.37 0 12 0 Z M12 5 C8.13 5 5 8.13 5 12 C5 15.87 8.13 19 12 19 C15.87 19 19 15.87 19 12 C19 8.13 15.87 5 12 5 Z"/>']
+];
 const ART_TAGS={
   'tape.torn':'tape torn strip sticky collage','fix.corner':'corner mount photo fixing',
   'fix.staple':'staple fixing metal','fix.clip':'clip paper wire fixing',
@@ -1456,8 +1490,17 @@ const ART_TAGS={
   'paper.strip':'torn strip paper collage','paper.window':'window frame paper cutout',
   'paper.tag':'speech tag label bubble paper','paper.underline':'marker underline highlight paper',
   'shape.rect':'rectangle square block shape','shape.circle':'circle dot round shape',
-  'shape.triangle':'triangle shape','shape.rule':'straight rule line shape'
+  'shape.triangle':'triangle shape','shape.rule':'straight rule line shape',
+  'tape.masking':'masking tape clean sticky collage','fix.stitch':'saddle stitch binding thread',
+  'fix.grommet':'eyelet grommet hole binding','fix.pushpin':'push pin tack fixing',
+  'mark.hand':'pointing hand manicule pointer','mark.crop':'crop trim printer marks',
+  'mark.bar':'colour color bar print register','mark.scan':'copier scan streak photocopy',
+  'mark.perf':'perforation tear line print','mark.burst':'starburst burst stamp',
+  'paper.stub':'ticket stub perforated paper','paper.stamp':'postage stamp serrated paper',
+  'paper.deckle':'deckle rough paper edge','paper.hole':'torn hole ripped paper',
+  'paper.dogear':'folded corner dog ear paper','shape.ring':'ring circle hole shape'
 };
+const ART_FAVOURITES=new Set();
 
 openArt=function(){
   openArtBeforeA15();
@@ -1481,15 +1524,68 @@ openArt=function(){
 
   const recentLabel=[...sheet.querySelectorAll('.lbl')].find(x=>x.textContent.startsWith('Recent'));
   const recentGrid=recentLabel.nextElementSibling;
+  recentLabel.textContent='Recent';
+  const favouriteLabel=document.createElement('div');
+  favouriteLabel.className='lbl'; favouriteLabel.textContent='Favourites';
+  const favouriteGrid=document.createElement('div');
+  favouriteGrid.className='grid art-favourite-grid';
+  const favouriteEmpty=document.createElement('div');
+  favouriteEmpty.className='art-favourite-empty';
+  favouriteEmpty.textContent='Star pieces to keep them close.';
+  recentGrid.insertAdjacentElement('afterend',favouriteEmpty);
+  recentGrid.insertAdjacentElement('afterend',favouriteGrid);
+  recentGrid.insertAdjacentElement('afterend',favouriteLabel);
   const familySections=FAMILIES.map(name=>{
     const label=[...sheet.querySelectorAll('.lbl')].find(x=>x.textContent===name);
     const grid=label.nextElementSibling;
     [...grid.querySelectorAll('.tile')].forEach(tile=>tile.dataset.family=name);
     return {name,label,grid};
   });
+  ART_FIRST_WAVE.forEach(([family,id,name,d])=>{
+    const section=familySections.find(x=>x.name===family);
+    section.grid.insertAdjacentHTML('beforeend',tile([id,name,d]));
+    const added=section.grid.lastElementChild;
+    added.dataset.family=family;
+    added.onclick=e=>{if(e.target.classList.contains('fav'))return;e.stopPropagation();closeOverlays();selectByKind('decor');toast('Placed on the page',true);};
+  });
   let activeFamily='';
   const search=$('artSearch'), status=sheet.querySelector('.art-results');
   const families=[...sheet.querySelectorAll('.art-family')];
+  const sourceTiles=[...recentGrid.querySelectorAll('.tile'),...familySections.flatMap(x=>[...x.grid.querySelectorAll('.tile')])];
+  sourceTiles.forEach(source=>{
+    const oldStar=source.querySelector('.fav');
+    if(oldStar)oldStar.remove();
+    const wrapper=document.createElement('div'), star=document.createElement('button');
+    wrapper.className='art-tile-wrap';
+    star.className='art-favourite-action'; star.type='button';
+    source.insertAdjacentElement('beforebegin',wrapper);
+    wrapper.append(source,star);
+  });
+
+  function placeArt(e){e.stopPropagation();closeOverlays();selectByKind('decor');toast('Placed on the page',true);}
+  function renderFavourites(){
+    favouriteGrid.replaceChildren();
+    ART_FAVOURITES.forEach(id=>{
+      const source=sourceTiles.find(x=>x.dataset.supply===id);
+      if(!source)return;
+      const copy=source.cloneNode(true), star=copy.querySelector('.fav');
+      if(star)star.remove();
+      copy.onclick=placeArt;
+      favouriteGrid.appendChild(copy);
+    });
+    const hasFavourites=favouriteGrid.childElementCount>0;
+    favouriteGrid.hidden=!hasFavourites; favouriteEmpty.hidden=hasFavourites;
+  }
+  function syncFavourites(){
+    sourceTiles.forEach(source=>{
+      const star=source.parentElement.querySelector('.art-favourite-action'), on=ART_FAVOURITES.has(source.dataset.supply);
+      if(!star)return;
+      star.classList.toggle('on',on); star.textContent=on?'★':'☆';
+      star.setAttribute('aria-label',(on?'Remove ':'Add ')+source.getAttribute('aria-label')+(on?' from favourites':' to favourites'));
+      star.onclick=e=>{e.stopPropagation();on?ART_FAVOURITES.delete(source.dataset.supply):ART_FAVOURITES.add(source.dataset.supply);syncFavourites();renderFavourites();};
+    });
+  }
+  syncFavourites(); renderFavourites();
 
   function applyArtFilter(){
     const query=search.value.trim().toLocaleLowerCase();
@@ -1499,7 +1595,7 @@ openArt=function(){
       [...section.grid.querySelectorAll('.tile')].forEach(tile=>{
         const terms=(tile.getAttribute('aria-label')+' '+(ART_TAGS[tile.dataset.supply]||'')).toLocaleLowerCase();
         const show=(!activeFamily||section.name===activeFamily)&&(!query||terms.includes(query));
-        tile.hidden=!show;
+        tile.closest('.art-tile-wrap').hidden=!show;
         if(show){ visible++; sectionVisible++; }
       });
       section.label.hidden=sectionVisible===0;
@@ -1507,6 +1603,8 @@ openArt=function(){
     });
     const narrowed=Boolean(activeFamily||query);
     recentLabel.hidden=narrowed; recentGrid.hidden=narrowed;
+    favouriteLabel.hidden=narrowed; favouriteGrid.hidden=narrowed||ART_FAVOURITES.size===0;
+    favouriteEmpty.hidden=narrowed||ART_FAVOURITES.size>0;
     empty.classList.toggle('show',visible===0);
     status.textContent=visible+' '+(visible===1?'piece':'pieces');
   }

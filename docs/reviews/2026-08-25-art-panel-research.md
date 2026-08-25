@@ -1,6 +1,7 @@
 # Art panel research — 2026-08-25
 
-Status: research input for D-080 / ADR-107. This is not a design freeze and does not admit new supplies.
+Status: owner-accepted scope input for D-080 / ADR-107 on 2026-08-25. This is not the visual design freeze;
+production outlines and Compose admission remain gated on the rendered A15 review.
 
 ## Question
 
