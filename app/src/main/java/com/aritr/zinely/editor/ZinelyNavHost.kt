@@ -589,7 +589,7 @@ internal fun BootLoading() {
  * .fail{inset:0;flex-direction:column;align-items:center;justify-content:center;text-align:center;
  *       padding:var(--gap-2xl);gap:var(--gap-md)}
  * .fail h2{font-family:var(--voice);font-size:1.6rem;font-weight:700;margin:var(--gap-sm) 0 0}
- * .retry{background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);
+ * .retry{background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);
  *        border-radius:var(--br-pill);padding:var(--gap-md) var(--gap-xl);
  *        box-shadow:3px 3px 0 var(--ink-line)}
  * ```
@@ -664,7 +664,7 @@ internal fun BootFailure(message: String, actionLabel: String, onAction: () -> U
  * `.fail .mk` — a 60dp rotated disc with a `!` in it, `jam` outline and `jam` shadow on `paper`.
  *
  * ```css
- * .fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--paper);
+ * .fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--surface);
  *   border:2px solid var(--jam);color:var(--jam);font-family:var(--voice);font-size:1.8rem;
  *   font-weight:700;transform:rotate(-4deg);box-shadow:3px 3px 0 var(--jam)}
  * ```
@@ -692,7 +692,7 @@ private fun BootFailureMark() {
             .graphicsLayer { rotationZ = FailMarkRotation }
             .zinelyV21HardShadow(FailMarkShadow, colors.jam, FailMarkShape)
             .clip(FailMarkShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(FailMarkBorder, colors.jam, FailMarkShape)
             .clearAndSetSemantics {},
         contentAlignment = Alignment.Center,
@@ -747,7 +747,7 @@ private fun BootFailureAction(label: String, onAction: () -> Unit) {
             .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, RetryShape)
             .zinelyFocusRing(focused, ZinelyV21Dimens.radiusPill, ZinelyV21FocusOffsetLibrary)
             .clip(RetryShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(RetryBorderWidth, colors.ink, RetryShape)
             .zinelyV2Control(
                 label = label,

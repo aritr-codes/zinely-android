@@ -86,9 +86,9 @@ public fun EditorMoveResizeHint(
             .widthIn(max = HintMaxWidth)
             .graphicsLayer { rotationZ = NoticeRotation }
             .clip(NoticeShape)
-            .background(colors.ink)
-            // `inkLine`, not `ink` — this box's own ground is `ink`; see [NoticeBorder].
-            .border(NoticeBorder, colors.inkLine, NoticeShape)
+            .background(colors.surfaceSoft)
+            // A warm support scrap uses the room's ordinary ink for its visible outline.
+            .border(NoticeBorder, colors.ink, NoticeShape)
             .padding(
                 start = NoticePaddingStart,
                 end = NoticePaddingEnd,
@@ -107,11 +107,11 @@ public fun EditorMoveResizeHint(
                 fontFamily = ZinelyV21Fonts.Work,
                 fontSize = NoticeTextSize,
                 lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                color = colors.paper,
+                color = colors.ink,
             ),
             // `.snack span{flex:1}`.
             modifier = Modifier.weight(1f, fill = false),
         )
-        NoticeAction(MoveResizeHintDismissLabel, MoveResizeHintDismissTag, onDismiss)
+        NoticeAction(MoveResizeHintDismissLabel, MoveResizeHintDismissTag, colors.ink, onDismiss)
     }
 }

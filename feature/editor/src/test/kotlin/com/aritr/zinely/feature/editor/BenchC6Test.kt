@@ -567,7 +567,7 @@ class BenchC6Test {
         val note = composeRule.onNodeWithTag(BenchInkUseNoteTestTag, useUnmergedTree = true)
             .fetchSemanticsNode().boundsInWindow
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
-        val paper = zinelyV21LightColors().paper.toArgb()
+        val paper = zinelyV21LightColors().surface.toArgb()
         val ink = zinelyV21LightColors().ink.toArgb()
         // Counted across the whole note rather than sampled at one pixel: the note carries a shield
         // glyph and a sentence, both in `--ink-soft`, and a single probe lands on whichever it hits.
@@ -892,12 +892,12 @@ class BenchC6Test {
         // shadow falls down-RIGHT and outside the node, so unlike V2's soft throw it cannot tint this.
         val fill = bmp.getPixel(card.left.toInt() + 4, card.center.y.toInt())
         // Asserted as "which palette did this come from", not as byte-equality. Under V2.1 the card's
-        // ground is `paper`, which `BenchStudio.sheetIslandV21` DOES override — so this half now catches
+        // ground is `surface`, which the paper island must not override — so this half catches
         // the island break as well as the coarser one (a wholesale light palette under a dark room).
-        val toRoom = channelDistance(fill, zinelyV21DarkColors().paper.toArgb())
-        val toIsland = channelDistance(fill, zinelyV21LightColors().paper.toArgb())
+        val toRoom = channelDistance(fill, zinelyV21DarkColors().surface.toArgb())
+        val toIsland = channelDistance(fill, zinelyV21LightColors().surface.toArgb())
         assertTrue(
-            "the popover's ground is #%06X — %d from the room's --paper and %d from the island's; chrome "
+            "the popover's ground is #%06X — %d from the room's --surface and %d from the island's; chrome "
                 .format(fill and 0xFFFFFF, toRoom, toIsland) + "over the artifact takes the room's",
             toRoom < toIsland,
         )

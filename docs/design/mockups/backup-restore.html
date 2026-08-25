@@ -40,27 +40,14 @@
 
 <style>
 :root{
-  --paper:#FFF6E8;
-  --paper-2:#F7F2E7;
-  --desk:#FBE9CE;
-  --ink:#33261C;
-  --ink-soft:#6E5947;
-  --ink-faint:#A08B74;
-  --ink-line:#33261C;
-  --leaf:#4E7A3C;
-  --leaf-dark:#3E6330;
-  --leaf-tint:#DCE8CE;
-  --leaf-text:#3E6330;
-  --on-leaf:#FFF6E8;
-  --butter:#F6B22C;
-  --butter-tint:#FDEBC4;
-  --berry:#E4879F;
-  --berry-tint:#F8DCE2;
-  --jam:#CF4A28;
-  --jam-text:#A63B20;
-  --soft-shadow:rgba(58,39,22,.18);
-  --hair:rgba(51,38,28,.16);
-  --scrim:rgba(38,26,16,.42);
+  --paper:#FFF6E8; --paper-2:#EFDFC6; --desk:#E9E29B;
+  --surface:#F2CFBB; --surface-soft:#F1B4AF;
+  --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546; --ink-line:#27270F;
+  --leaf:#8E9546; --leaf-dark:#555A1B; --leaf-tint:#BBCA6F; --leaf-text:#555A1B; --on-leaf:#27270F;
+  --butter:#E9E29B; --butter-tint:#F2CFBB; --on-butter:#27270F;
+  --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#A9303D; --jam-text:#A9303D;
+  --soft-shadow:rgba(39,39,15,.30); --hair:rgba(39,39,15,.16); --scrim:rgba(39,39,15,.44);
   --stage:#F2DEBC;
   --sans:"Inter",system-ui,sans-serif;
   --voice:"Averia Sans Libre",system-ui,sans-serif;
@@ -81,26 +68,24 @@
 }
 
 @media (prefers-color-scheme:dark){ :root{
-  --paper:#332B22; --paper-2:#3E3529; --desk:#241E18;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-dark:#AFC98C; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320;
-  --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D;
-  --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --soft-shadow:rgba(0,0,0,.62); --scrim:rgba(0,0,0,.58);
+  --paper:#FFF6E8; --paper-2:#EFDFC6; --desk:#242312; --surface:#3D3920; --surface-soft:#46352E;
+  --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-dark:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --on-butter:#242312;
+  --berry:#F28892; --berry-tint:#F1B4AF; --jam:#FF9CA4; --jam-text:#FF9CA4;
+  --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --soft-shadow:rgba(18,14,10,.62); --scrim:rgba(39,39,15,.44);
   --stage:#1C1712;
 }}
 
 :root[data-theme="dark"]{
-  --paper:#332B22; --paper-2:#3E3529; --desk:#241E18;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-dark:#AFC98C; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320;
-  --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D;
-  --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --soft-shadow:rgba(0,0,0,.62); --scrim:rgba(0,0,0,.58); --stage:#1C1712;
+  --paper:#FFF6E8; --paper-2:#EFDFC6; --desk:#242312; --surface:#3D3920; --surface-soft:#46352E;
+  --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-dark:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --on-butter:#242312;
+  --berry:#F28892; --berry-tint:#F1B4AF; --jam:#FF9CA4; --jam-text:#FF9CA4;
+  --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --soft-shadow:rgba(18,14,10,.62); --scrim:rgba(39,39,15,.44); --stage:#1C1712;
 }
 
 *{box-sizing:border-box}
@@ -197,7 +182,7 @@ body{
 
 .count{
   background:var(--butter);
-  color:var(--ink);
+  color:var(--on-butter);
   border-radius:var(--br-pill);
   padding:8px 16px;
   font-size:12.5px;
@@ -213,6 +198,7 @@ body{
 }
 
 .cover{
+  --ink:#27270F; --ink-soft:#6A452F; --ink-line:#27270F;
   aspect-ratio:3/4;
   position:relative;
   overflow:hidden;
@@ -228,9 +214,9 @@ body{
   left:12px; top:10px; bottom:10px; width:2px;
   background:rgba(255,255,255,.35);
 }
-.ink-leaf .fill{background:var(--leaf)}
-.ink-butter .fill{background:var(--butter)}
-.ink-berry .fill{background:var(--berry)}
+.ink-leaf .fill{background:#4E7A3C}
+.ink-butter .fill{background:#F6B22C}
+.ink-berry .fill{background:#E4879F}
 .paper-a .fill{background:linear-gradient(180deg,#FBF5EA 0%,#F0E2CA 100%)}
 
 .tape{
@@ -329,9 +315,9 @@ body{
 }
 
 .trust-link.active{
-  background:var(--paper);
+  background:var(--surface);
   color:var(--ink);
-  box-shadow:2px 2px 0 rgba(91,70,52,.22);
+  box-shadow:2px 2px 0 var(--soft-shadow);
 }
 .quiet-actions{display:flex;align-items:center;justify-content:center;gap:10px}
 
@@ -370,6 +356,7 @@ body{
 }
 
 .sheet-ill{
+  --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546; --ink-line:#27270F;
   width:94px; height:68px; position:relative;
   border-radius:8px;
   background:var(--paper);
@@ -439,7 +426,7 @@ body{
 .sheet{
   position:absolute;
   left:0; right:0; bottom:0;
-  background:var(--paper);
+  background:var(--surface);
   border-radius:var(--br-lg) var(--br-lg) 0 0;
   border-top:2px solid var(--ink);
   box-shadow:0 -16px 40px -18px var(--soft-shadow);
@@ -557,7 +544,7 @@ body{
   border-radius:8px 14px 14px 8px;
   border:1.5px dashed var(--hair);
   box-shadow:3px 3px 0 var(--hair);
-  background:var(--paper);
+  background:var(--surface-soft);
   position:relative;
   overflow:hidden;
 }
@@ -607,7 +594,7 @@ body{
 }
 
 .btn.secondary{
-  background:var(--paper);
+  background:var(--surface);
   color:var(--ink);
   border:1.5px solid var(--ink);
   box-shadow:3px 3px 0 var(--ink-line);
@@ -619,7 +606,7 @@ body{
   display:grid;
   place-items:center;
   border-radius:var(--br-pill);
-  background:var(--paper);
+  background:var(--surface);
   border:2px solid var(--leaf);
   color:var(--leaf-dark);
   box-shadow:3px 3px 0 rgba(91,70,52,.18);
@@ -649,7 +636,7 @@ body{
 .ctl{
   border:none;
   border-radius:var(--br-pill);
-  background:var(--paper);
+  background:var(--surface);
   color:var(--ink);
   border:1.5px solid var(--ink);
   box-shadow:2px 2px 0 var(--ink-line);

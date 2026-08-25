@@ -78,9 +78,8 @@ class BenchC4GoldenTest {
     private var v21LeafArgb = 0
     private var v21ButterTintArgb = 0
     private var v21InkArgb = 0
-    private var v21InkLineArgb = 0
-    private var v21PaperArgb = 0
-    private var v21LeafTextArgb = 0
+    private var v21SurfaceSoftArgb = 0
+    private var v21OnLeafArgb = 0
     private var v21LeafTintArgb = 0
     private var inkSoftArgb = 0
 
@@ -105,12 +104,11 @@ class BenchC4GoldenTest {
                 // shadow-ink border, because an ink border on an ink ground is invisible); and its action
                 // lost `--accent-on-ink` entirely — it is the snack's own `paper`, underlined.
                 v21InkArgb = ZinelyTheme.v21Colors.ink.toArgb()
-                v21InkLineArgb = ZinelyTheme.v21Colors.inkLine.toArgb()
-                v21PaperArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                v21SurfaceSoftArgb = ZinelyTheme.v21Colors.surfaceSoft.toArgb()
                 // P6a: the status strip's chip is now `.saved` — `leafText` on a `leafTint` pill, where V2
                 // set it as bare `--matcha-text`. The old field is gone rather than left pointing at a
                 // token this file no longer draws.
-                v21LeafTextArgb = ZinelyTheme.v21Colors.leafText.toArgb()
+                v21OnLeafArgb = ZinelyTheme.v21Colors.onLeaf.toArgb()
                 v21LeafTintArgb = ZinelyTheme.v21Colors.leafTint.toArgb()
                 inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
                 Box(
@@ -399,10 +397,10 @@ class BenchC4GoldenTest {
 
         val full = hostBitmap()
         val chip = cropToBounds(full, boundsOf(BenchSavedChipTestTag))
-        // `.saved{color:var(--leaf-text)}` — which now paints the check glyph as well as the word, so the
+        // `.saved{color:var(--on-leaf)}` — which paints the check glyph as well as the word, so the
         // real count is higher than V2's, not lower. 40 still clears antialiasing while staying far under
         // it, and a chip drawn in `--ink` (or in the retired `--matcha-text`) fails it.
-        assertTrue("the saved chip is not painted in --leaf-text ($name)", chip.pixelCountOf(v21LeafTextArgb) > 40)
+        assertTrue("the saved chip is not painted in --on-leaf ($name)", chip.pixelCountOf(v21OnLeafArgb) > 40)
         // …and it now has a *ground*, which V2's bare coloured text did not. This is the half that would
         // silently survive a revert to plain text on the strip, so it is asserted separately.
         assertTrue(
@@ -431,36 +429,18 @@ class BenchC4GoldenTest {
 
         val full = hostBitmap()
         val snack = cropToBounds(full, boundsOf(BenchSnackTestTag))
-        // Row 4.11 — the ground **inverts**: `--ink` under `--paper` text. This is the property that makes
-        // the surface read as a system message rather than as more chrome, and it is the one a re-skin of
-        // the wrong snackbar (there are three in-tree) would silently lose.
+        // The 37596 amendment makes transient confirmation a warm support surface under ordinary ink.
         assertTrue(
-            "the snack did not paint its inverted --ink ground ($name)",
-            snack.pixelCountOf(v21InkArgb) > 2000,
+            "the snack did not paint its --surface-soft ground ($name)",
+            snack.pixelCountOf(v21SurfaceSoftArgb) > 2000,
         )
 
-        // Row 4.12, **inverted by ADR-102 P4.** `--accent-on-ink` existed in the palette solely for this
-        // pairing and V2.1 retires it (`v21-bench.html:497-502`): the action is the snack's own `paper`,
-        // underlined, because the butter it was tried at measured 1.59:1 in dark. So the assertion is now
-        // that the action carries paper — and that no re-tinted accent has crept back in its place.
+        // The action stays underlined and uses the same ink as the message.
         val action = cropToBounds(full, boundsOf(BenchSnackActionTestTag))
         assertTrue(
-            "the snack's Undo is not painted in the snack's own --paper ($name)",
-            action.pixelCountOf(v21PaperArgb) > 20,
+            "the snack's Undo is not painted in --ink ($name)",
+            action.pixelCountOf(v21InkArgb) > 20,
         )
-
-        // …and the surface gained a border V2 did not have, drawn in `--ink-line` rather than `--ink`.
-        //
-        // **Only assertable in dark**, and that is the point rather than a limitation: `ink` and `inkLine`
-        // are the *same* value in light (`#33261C`) and diverge only in dark (`#F6EAD6` against `#120E0A`).
-        // A light-theme count would pass whichever token the border used, which is exactly the vacuity
-        // this suite keeps finding. Asserted where the two can disagree.
-        if (darkTheme) {
-            assertTrue(
-                "the snack has no --ink-line border ($name); an --ink one would vanish into its own ground",
-                snack.pixelCountOf(v21InkLineArgb) > 100,
-            )
-        }
 
         cropToBounds(full, boundsOf(HOST_TAG)).captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }

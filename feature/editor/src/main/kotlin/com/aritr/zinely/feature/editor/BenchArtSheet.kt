@@ -432,11 +432,9 @@ private fun BenchArtTile(
         2 -> colors.butterTint
         else -> colors.leafTint
     }
-    val mark = when (tint) {
-        1 -> colors.jamText
-        2 -> colors.inkSoft
-        else -> colors.leafText
-    }
+    // ButterTint becomes a dark chrome surface at night; the two other grounds remain exact bright
+    // swatches. Route the mark by its ground rather than assuming every tint has the same luminance.
+    val mark = if (tint == 2) colors.ink else colors.onLeaf
     // The tile can be picked only if picking it would put something on the page. `SupplyCatalog` is the one
     // place that knows, and it is asked here rather than assumed from the `shape.` prefix — the authored ids
     // now span four prefixes across three families, which is the plainest demonstration that the prefix was

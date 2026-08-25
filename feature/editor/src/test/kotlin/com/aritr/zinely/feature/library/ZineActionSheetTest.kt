@@ -539,9 +539,8 @@ class ZineActionSheetTest {
         // **This assertion is the inverse of the one it replaces, for the second time, and that is the
         // finding rather than an embarrassment.** B3 first pinned the two themes as *equal*; the D-022
         // ruling made the corpus's theme-aware `--scrim` authoritative and the test was rewritten to
-        // assert they *differ*. V2.1 writes `.scrim{background:rgba(38,26,16,.42)}` in the shared block
-        // with no dark override anywhere in the file, so the re-freeze answers the same question a third
-        // time — back to one wash, at a new value.
+        // assert they *differ*. The 37596 amendment writes one shared ink wash with no dark override, so
+        // the current freeze answers the same question a third time — back to one wash, at a new value.
         //
         // Re-baselining the two expected colours would have kept the `assertNotEquals` and gone on
         // requiring a difference the frozen file does not state. See [FROZEN_SCRIM] for why this is
@@ -550,7 +549,7 @@ class ZineActionSheetTest {
         val expected = FROZEN_SCRIM.compositeOverWhite()
 
         assertTrue(
-            "light must be the frozen rgba(38,26,16,.42) over white — expected $expected, found $light",
+            "light must be the frozen rgba(39,39,15,.44) over white — expected $expected, found $light",
             light.closeTo(expected),
         )
         assertTrue(
@@ -616,7 +615,7 @@ class ZineActionSheetTest {
                 Column(
                     Modifier
                         .align(Alignment.TopStart)
-                        .background(ZinelyTheme.v2Colors.paper),
+                        .background(ZinelyTheme.v21Colors.surface),
                 ) {
                     Reference(REF_FROZEN, FontWeight.Bold, TITLE_SIZE, TITLE)
                     Reference(REF_LIGHTER, FontWeight.Medium, TITLE_SIZE, TITLE)
@@ -625,7 +624,7 @@ class ZineActionSheetTest {
                 Column(
                     Modifier
                         .align(Alignment.TopEnd)
-                        .background(ZinelyTheme.v2Colors.paper),
+                        .background(ZinelyTheme.v21Colors.surface),
                 ) {
                     (ZineAction.entries.map { it.glyph } + listOf("⋯", TOFU_A, TOFU_B)).forEach { glyph ->
                         GlyphCell(glyph)
@@ -679,8 +678,8 @@ class ZineActionSheetTest {
             capturedInkSoft = ZinelyTheme.v21Colors.inkSoft
             capturedConsequence = ZinelyTheme.v21Colors.jamText
             capturedDesk = ZinelyTheme.v21Colors.desk
-            capturedPaper = ZinelyTheme.v21Colors.paper
-            capturedChip = ZinelyTheme.v21Colors.butterTint
+            capturedPaper = ZinelyTheme.v21Colors.surface
+            capturedChip = ZinelyTheme.v21Colors.butter
             Box(Modifier.fillMaxSize().background(PROBE_GROUND)) { content() }
         }
     }
@@ -805,7 +804,7 @@ class ZineActionSheetTest {
 }
 
 /**
- * The V2.1 scrim — `.scrim{background:rgba(38,26,16,.42)}`, **one value for both themes**.
+ * The V2.1 scrim — `.scrim{background:rgba(39,39,15,.44)}`, **one value for both themes**.
  *
  * **This is where D-022 landed, and it did not land on the ruling.** That defect was raised because V2's
  * Library wrote its scrim as a hard literal outside `:root`, so the frozen dark block could never reach it
@@ -818,7 +817,7 @@ class ZineActionSheetTest {
  * Written out here rather than read from `ZinelyV21Colors` on purpose: a test that took the token would
  * agree with whatever the token said, including a wrong value. These are the bytes the frozen file names.
  */
-private val FROZEN_SCRIM = Color(0xFF261A10).copy(alpha = 0.42f)
+private val FROZEN_SCRIM = Color(0xFF27270F).copy(alpha = 0.44f)
 
 /** What the ruling rejected — pinned so a revert to it is a failure rather than a silence. */
 private val STALE_LIBRARY_SCRIM = Color(0xFF1E1912).copy(alpha = 0.36f)

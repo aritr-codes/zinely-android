@@ -140,7 +140,7 @@ public fun ZPrimaryButton(
     val colors = ZinelyTheme.v21Colors
     val background = when (fill) {
         ZPrimaryFill.Coral -> colors.leaf
-        ZPrimaryFill.Stamp -> colors.paper
+        ZPrimaryFill.Stamp -> colors.surface
     }
     val contentColor = when (fill) {
         ZPrimaryFill.Coral -> colors.onLeaf
@@ -208,7 +208,7 @@ public fun ZStampButton(
             .zinelyFocusRing(interactionSource, ZinelyV21Dimens.radiusPill)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Hero, colors.inkLine, shape)
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BorderWidth, colors.ink, shape)
             .clickable(
                 interactionSource = interactionSource,
@@ -291,7 +291,7 @@ public fun ZIconButton(
                 .alpha(if (enabled) 1f else IconDisabledAlpha)
                 .size(IconButtonSize)
                 .clip(shape)
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(BorderWidth, colors.ink, shape),
             contentAlignment = Alignment.Center,
         ) {
@@ -407,7 +407,7 @@ public fun ZToolButton(
             // `opacity:.3` on the whole control, so the border dims with the label.
             .alpha(if (enabled) 1f else ToolDisabledAlpha)
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BorderWidth, colors.ink, shape)
             .clickable(
                 interactionSource = interactionSource,

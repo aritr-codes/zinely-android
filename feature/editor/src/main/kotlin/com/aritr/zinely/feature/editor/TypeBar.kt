@@ -287,7 +287,7 @@ internal fun TypeBar(
 
     // `v21-typebar.html` `.typebar` — **`.inkpop`'s card**, and deliberately not a card of its own. Same
     // app, same canvas, same job: a floating tray of controls belonging to the element that summoned it,
-    // standing where `.inkpop` and `.ctx` stand. `--paper` ground, 1.5dp ink edge, `--br-lg`, and the 4dp
+    // standing where `.inkpop` and `.ctx` stand. `--surface` ground, 1.5dp ink edge, `--br-lg`, and the 4dp
     // `--hard` offset shadow the corpus gives anything that has left the surface.
     //
     // V1 asked for a `--menu` ground, a `--fieldEdge` hairline and `shadowElevation = 6.dp`: one ground
@@ -301,9 +301,9 @@ internal fun TypeBar(
             // Nothing that clips may sit left of the shadow — it paints outside the node.
             .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, cardColors.inkLine, cardShape)
             .clip(cardShape)
-            .background(cardColors.paper)
+            .background(cardColors.surface)
             .border(BenchChromeBorder, cardColors.ink, cardShape)
-            // ⚠ **The card must swallow the taps that land on its own paper**, and this empty
+            // ⚠ **The card must swallow the taps that land on its own surface**, and this empty
             // `pointerInput` is the whole of that. It is not decoration: `Surface` installs exactly this
             // (`Modifier.pointerInput(Unit) {}`) and dropping `Surface` for a `Box` dropped it silently.
             //
@@ -599,7 +599,7 @@ private fun StepButton(icon: ImageVector, description: String, enabled: Boolean,
                 },
             )
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(
                 interactionSource = interaction,
@@ -672,7 +672,7 @@ private fun AlignOption(label: String, value: TextAlign, current: TextAlign, onA
             .defaultMinSize(minWidth = 46.dp, minHeight = 46.dp)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(if (isSel) colors.leaf else colors.paper)
+            .background(if (isSel) colors.leaf else colors.surface)
             // The edge stays `--ink` in both states, as every V2.1 control's does. V1 swapped the border to
             // coral when on and so drew the "on" state twice.
             .border(BenchChromeBorder, colors.ink, shape)
@@ -748,7 +748,7 @@ private fun StyleToggle(
             .defaultMinSize(minWidth = 46.dp, minHeight = 46.dp)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(if (on) colors.leaf else colors.paper)
+            .background(if (on) colors.leaf else colors.surface)
             // `--ink` in both states. V1 swapped the border to coral when on, drawing the "on" state twice.
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(interactionSource = interaction, indication = null, onClick = { onToggle(!on) })
@@ -804,14 +804,12 @@ private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
  * it must not resolve through a themed token, or a zine styled at night would print differently from one
  * styled at noon. V1 painted the Coral swatch through `ZinelyTheme.colors.coralText`, a themed lookup on
  * the one control whose whole contract is that it is not themed; that is what changed here. The 1.5dp
- * `--ink` ring is what separates any fill from the card's `--paper` ground whatever the fill becomes,
+ * `--ink` ring is what separates any fill from the card's `--surface` ground whatever the fill becomes,
  * which is the reasoning `v21-bench.html:274-278` already records for `.chip .sw`.
  *
  * **What the ring does not do:** it guarantees every pot is *found*, not that two pots are told *apart*.
- * On a dark card `--pen-ink` (#23201C) measures 1.17:1 against `--paper` (#332B22) and `--pen-blue` 1.38:1
- * — so the two darkest read as very nearly the card itself, and as very nearly each other. The values
- * cannot move (ADR-055 D6), so the answer if it reads as a defect is a *treatment*, and that is an owner's
- * design decision. Recorded in `v21-typebar.html`'s closing caption with all five measurements.
+ * The physical ink values cannot move with theme (ADR-055 D6); the label and selection ring carry the
+ * state while the themed surface keeps the surrounding controls readable.
  *
  * **No `minimumInteractiveComponentSize` — the target survives without it, at the spec's pitch.** The
  * modifier does not create the target; it only reserves *layout* space for one ("This modifier is not

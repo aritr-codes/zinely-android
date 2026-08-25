@@ -165,7 +165,7 @@ private fun QuietAction(action: ZineDockSecondaryAction) {
             )
             .testTag(zineDockSecondaryActionTestTag(action.label))
             .clip(RoundedCornerShape(ZinelyV21Dimens.radiusPill))
-            .background(if (pressed) colors.paper.copy(alpha = 0.72f) else Color.Transparent)
+            .background(if (pressed) colors.surface.copy(alpha = 0.72f) else Color.Transparent)
             .zinelyV2Control(
                 label = action.label,
                 interactionSource = interaction,

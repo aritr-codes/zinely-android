@@ -411,8 +411,8 @@ private fun FoldLegend() {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        LegendMark(Copy.ProofFold.LEGEND_CREASE, paperColors.inkFaint, roomColors.inkSoft, dashed = true, thickness = 2.4f)
-        LegendMark(Copy.ProofFold.LEGEND_FOLD_NOW, paperColors.leaf, roomColors.inkSoft, dashed = false, thickness = 3f)
+        LegendMark(Copy.ProofFold.LEGEND_CREASE, paperColors.inkSoft, roomColors.inkSoft, dashed = true, thickness = 2.4f)
+        LegendMark(Copy.ProofFold.LEGEND_FOLD_NOW, paperColors.leafText, roomColors.inkSoft, dashed = false, thickness = 3f)
         LegendMark(Copy.ProofFold.LEGEND_CUT, paperColors.jam, roomColors.inkSoft, dashed = true, thickness = 2.4f)
         LegendMark(Copy.ProofFold.LEGEND_MOVE, paperColors.ink, roomColors.inkSoft, dashed = false, thickness = 2.4f)
         // The action mark. Hollow, so the swatch *is* the mark rather than a coloured stand-in for it —
@@ -748,21 +748,17 @@ private class FoldDiagramScope(
     /**
      * `.crease` — dashed: a fold you already made.
      *
-     * Known limitation, recorded rather than implied away: `inkFaint` on `paper` is 2.65:1 light /
-     * 2.44:1 dark, under WCAG 1.4.11's 3:1 for a meaningful graphic — and in **light** theme the
-     * `onDeskFaint` it replaced was 4.66:1, so this is a regression on that axis. It is the frozen
-     * `--ink-faint` and it belongs to the paper's family, which is the right call for a mark drawn on
-     * paper; the contrast is a token problem for the V2.1 sweep (P6), not something to fix by putting
-     * the room's ink back on the sheet.
+     * The mark is meaning-bearing, so it uses the lit paper palette's secondary ink rather than the
+     * decorative Matcha `inkFaint` token.
      */
     private fun crease(ax: Float, ay: Float, bx: Float, by: Float) = ds.drawLine(
-        colors.inkFaint, o(ax, ay), o(bx, by), w(1.5f),
+        colors.inkSoft, o(ax, ay), o(bx, by), w(1.5f),
         pathEffect = PathEffect.dashPathEffect(floatArrayOf(w(5f), w(4f))),
     )
 
     /** `.now` — green solid: the fold you are making **now**. */
     private fun now(ax: Float, ay: Float, bx: Float, by: Float) =
-        ds.drawLine(colors.leaf, o(ax, ay), o(bx, by), w(3.4f), cap = StrokeCap.Round)
+        ds.drawLine(colors.leafText, o(ax, ay), o(bx, by), w(3.4f), cap = StrokeCap.Round)
 
     /** `.cutmark` — red **dashed**: cut here. Drawn on exactly one step, the one that cuts. */
     private fun cutMark(ax: Float, ay: Float, bx: Float, by: Float) = ds.drawLine(

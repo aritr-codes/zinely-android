@@ -308,7 +308,7 @@ private fun ReframePad(
             // Nothing that clips may sit left of the shadow — it paints outside the node.
             .zinelyV21Pressable(false, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             .padding(horizontal = PadPaddingH, vertical = PadPaddingV)
             // The spec's `role="group" aria-label="Framing controls"` is deliberately NOT transcribed as a
@@ -425,7 +425,7 @@ private fun NudgeCell(
                 },
             )
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             // `semantics`, NOT `clearAndSetSemantics`: the latter wipes the `disabled` flag that
             // `clickable(enabled = false)` sets, so an unavailable control would still announce itself as
@@ -525,7 +525,7 @@ private fun ZoomButton(icon: ImageVector, description: String, enabled: Boolean,
                 },
             )
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             // `role` on the clickable itself, and the glyph explicitly stripped of semantics.
             //
@@ -593,7 +593,7 @@ private fun FitChip(
             .testTag("reframe-fit-$label")
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(if (isSel) colors.leaf else colors.paper)
+            .background(if (isSel) colors.leaf else colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(interactionSource = interaction, indication = null, onClick = choose)
             .clearAndSetSemantics {
@@ -658,7 +658,7 @@ private fun ReframeTextButton(word: String, spokenLabel: String, onClick: () -> 
             .height(BenchIconBtnSize)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(interactionSource = interaction, indication = null, onClick = act)
             .clearAndSetSemantics {
@@ -760,7 +760,7 @@ public fun ReframeAffordanceChip(onClick: () -> Unit, modifier: Modifier = Modif
             .graphicsLayer { scaleX = pulse.value; scaleY = pulse.value }
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             .testTag(ReframeChipTestTag)
             // Click via Modifier.clickable (OUTSIDE clearAndSetSemantics), not Surface(onClick) — the

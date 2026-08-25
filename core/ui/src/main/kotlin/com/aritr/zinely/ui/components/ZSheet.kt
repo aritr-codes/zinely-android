@@ -238,7 +238,7 @@ public fun ZSheetSurface(
                 SheetShape,
             )
             .clip(SheetShape)
-            .background(colors.paper)
+            .background(colors.surface)
             // `border-top:2px solid var(--ink)` — the top edge only, and it follows the two corners.
             // A straight `drawLine` is cut by the `clip` at each arc, leaving `radiusXl` of curve with
             // no rule on it exactly where the sheet meets the scrim. So the path IS the top edge — arc,
@@ -374,7 +374,7 @@ private fun ZSheetCloseButton(close: ZSheetClose) {
                 .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, pill)
                 .size(CloseSize)
                 .clip(pill)
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(CloseBorder, colors.ink, pill),
             contentAlignment = Alignment.Center,
         ) {
@@ -399,13 +399,8 @@ private fun ZSheetCloseGlyph(tint: Color) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * `.scrim{background:rgba(38,26,16,.44)}` — the Bench's and the Proof's value; the Library writes
- * `.42`.
- *
- * ⚠️ A literal, and deliberately so: the rule sits outside `:root` in all three files, so the
- * `prefers-color-scheme` block cannot reach it and **V2.1 publishes no scrim token** to prefer over it
- * — it was not among the 25 the contrast gate measured. Recorded as the same defect recurring rather
- * than as a value that was chosen. `ZineActionSheet` records it identically for the Library's `.42`.
+ * `.scrim{background:rgba(39,39,15,.44)}` — the shared 37596-derived ink wash. It is intentionally one
+ * value in both themes and is published as [ZinelyV21Scrim] for every modal surface.
  */
 private val ScrimFill = ZinelyV21Scrim
 

@@ -492,19 +492,17 @@ private val DRAG_TURN_THRESHOLD = 40.dp
  *   [SceneRenderer] fills **nothing** — so this composable's own `.background(…)` *is* the paper the user
  *   sees, not a backdrop behind a rendered sheet;
  * - the default text colour is `ColorRgba.BLACK`;
- * - V2.1 `paper` flips to `#332B22` in dark.
+ * - before the 37596 palette amendment, V2.1 `paper` flipped to `#332B22` in dark.
  *
- * Black ink on `#332B22` is **1.2:1**. The user's writing disappears, on the one screen whose whole job is
+ * Black ink on that old `#332B22` paper was **1.2:1**. The user's writing disappeared, on the one screen whose whole job is
  * to show them what they made — and the sheet it disappears on is a picture of something that will be
  * printed on **white paper** either way. The reader is not chrome; it is the artefact.
  *
  * So the leaf, its cut edge, its gutter and its stack all take [zinelyV21LightColors] regardless of theme.
  * **This is not a departure from V2.1; it is the rule V1 already encoded** — that palette pins `paper` and
  * `ink` to their light values in dark theme, with a comment saying the sheet stays lit so the ink on it
- * stays dark. The V2.1 palette expresses the room, and the room does get dark; the sheet does not, because
- * a lamp does not change what a printer will do. The frozen `.leaf{background:var(--paper)}` flips, and it
- * can afford to: the prototype draws its own fake content in `--ink`, so it is self-consistent with nothing
- * real on it.
+ * stays dark. The amended V2.1 palette now expresses this directly: the room gets dark, while paper remains
+ * lit because a lamp does not change what a printer will do.
  *
  * The rest of the frozen recipe is transcribed as written: a `1.5dp ink` cut edge and the printed `--hard`
  * shadow in `inkLine` in place of the elevation blur.
@@ -674,11 +672,10 @@ private val STAGE_MAX_WIDTH = 480.dp
 private fun Gutter(spineOnLeft: Boolean) {
     // `--shade` is its own token in both themes, and P6 replaces a derivation with it. P5 mixed the wash
     // by hand from `ink` at 7% — correct in V1 light, and the reason the comment here used to be an
-    // argument about which token stays dark. V2.1 settles it by declaring the answer: `--shade` is
-    // `rgba(51,38,28,.07)` light and **`rgba(0,0,0,.22)` dark**, i.e. not a tint of anything, because a
-    // shadow in a dark room is not 7% of a light-room shadow.
+    // argument about which token stays dark. The 37596 amendment makes the answer physical and
+    // theme-invariant: `--shade` is the lit ink at 7%, `rgba(39,39,15,.07)`.
     // The lit palette, for the reason [BookLeaf] gives: this shades the user's page, so it belongs to the
-    // sheet and not to the room. Dark's `shade` is a 22% black that would be a smear on lit paper.
+    // sheet and not to the room.
     val colors = rememberLitSheetPalette()
     val shade = colors.shade
     val hair = colors.hair

@@ -69,14 +69,14 @@ class BenchC6GoldenTest {
 
     private val inks = zinelyContentInks()
 
-    private var paperArgb = 0
+    private var surfaceArgb = 0
     private var inkArgb = 0
     private var inkSoftArgb = 0
 
     private fun host(darkTheme: Boolean, selected: Color?, inkCount: Int = 2) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
-                paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                surfaceArgb = ZinelyTheme.v21Colors.surface.toArgb()
                 inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
                 inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
                 Box(
@@ -129,18 +129,18 @@ class BenchC6GoldenTest {
     /**
      * Rows 6.1b/6.1c — the card's ground and its border, plus the recorded light frame.
      *
-     * V2.1 moved the ground from `--sheet` to `--paper` and the outline from a 1dp `--chrome-line` to a
+     * The 37596 amendment moves the chrome ground to `--surface`; the outline remains a
      * 1.5dp real `--ink` (`v21-bench.html:237-238`). The border is counted as a **run length** rather than
      * as a pixel total: a count cannot tell 1.5px from 3px without knowing the density.
      */
     @Test
-    fun the_popover_stands_on_the_frozen_paper_behind_an_ink_border() {
+    fun the_popover_stands_on_the_frozen_surface_behind_an_ink_border() {
         host(darkTheme = false, selected = null)
         composeRule.onNodeWithTag(BenchInkPopoverTestTag, useUnmergedTree = true).assertExists()
         val card = crop(BenchInkPopoverTestTag, full())
         assertTrue(
-            "the popover did not paint its --paper ground",
-            card.pixelCountOf(paperArgb) > 5_000,
+            "the popover did not paint its --surface ground",
+            card.pixelCountOf(surfaceArgb) > 5_000,
         )
         assertEquals(
             // In PIXELS, so the expectation is the frozen 1.5dp scaled by this raster's density — at xhdpi
@@ -154,11 +154,11 @@ class BenchC6GoldenTest {
         // square card and OUTSIDE a 22dp-rounded one.
         assertTrue(
             "the top-left corner is filled, so the card is drawing no 22dp radius",
-            card.getPixel(3, 3) != paperArgb,
+            card.getPixel(3, 3) != surfaceArgb,
         )
         assertEquals(
             "…and the same card IS paper well inside the radius",
-            paperArgb,
+            surfaceArgb,
             card.getPixel(px(20f).toInt(), px(20f).toInt()),
         )
 
@@ -177,8 +177,8 @@ class BenchC6GoldenTest {
         host(darkTheme = true, selected = null)
         val card = crop(BenchInkPopoverTestTag, full())
         assertTrue(
-            "the dark popover did not paint the ROOM's --paper",
-            card.pixelCountOf(paperArgb) > 5_000,
+            "the dark popover did not paint the ROOM's --surface",
+            card.pixelCountOf(surfaceArgb) > 5_000,
         )
         composeRule.onNodeWithTag(HOST_TAG)
             .captureRoboImage("$GOLDEN_DIR/bench_ink_popover_dark.png", roborazziOptions = aa())
@@ -204,7 +204,7 @@ class BenchC6GoldenTest {
         val outside = bmp.getPixel((r.left - 2f).toInt(), y)
         assertEquals(
             "a ring is being drawn outside the pot; V2.1 gives it a border and nothing else",
-            paperArgb,
+            surfaceArgb,
             outside,
         )
     }

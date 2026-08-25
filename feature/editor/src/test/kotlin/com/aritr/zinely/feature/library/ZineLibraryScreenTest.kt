@@ -421,13 +421,13 @@ class ZineLibraryScreenTest {
 
     @Test
     fun `no pixel of the retry control is leaf`() {
-        // `.retry{background:var(--paper);border:1.5px solid var(--ink)}` — the paper + hairline grammar,
+        // `.retry{background:var(--surface);border:1.5px solid var(--ink)}` — the surface + hairline grammar,
         // because `.start` is the screen's one primary and **stands in this state too**; two leaf buttons
         // would make the recovery compete with the invitation. "It looks quiet" is not checkable, and the
         // mutation — style `.retry` as `.start` — is a one-line change that a screenshot ratifies, so the
         // claim is made against the pixels.
         //
-        // Both themes: `--leaf` is a different colour in each (#4E7A3C / #8FAE6B), so a light-only probe
+        // Both themes: `--leaf` is a different colour in each (#8E9546 / #BBCA6F), so a light-only probe
         // would miss a dark-mode-only regression entirely — and dark is where the two inks are closest.
         for (dark in listOf(false, true)) {
             render(LibraryShelfState.Error, dark = dark)

@@ -479,10 +479,9 @@ class BenchC5GoldenTest {
             "the panel did not paint its --paper ground ($name)",
             grid.pixelCountOf(v21PaperArgb) > 5000,
         )
-        assertTrue(
-            "the panel is painting a --desk ground ($name) — V2's overlay, not V2.1's sheet",
-            grid.pixelCountOf(v21DeskArgb) == 0,
-        )
+        // `onLeaf` intentionally equals the dark desk ink, so a whole-panel zero-count assertion became
+        // invalid once the current page number moved to accessible dark-on-bright ink. The positive
+        // surface count above and the bounded lit-card checks below pin the actual grounds.
 
         // **OD-47, in pixels, and this is the assertion the whole amendment comes down to.** The card
         // paints the LIGHT `--paper` in *both* themes (`.pgc`'s six restatements, `:456-457`). The
@@ -500,7 +499,7 @@ class BenchC5GoldenTest {
 
         // Row 5.13, **inverted by P5** — the current card is a `--leaf-tint` FILL, not a bordered one.
         // V2 marked it with a 2px `--matcha` border against every other cell's 1px; `.pgc.on` (`:461`)
-        // declares `background:var(--leaf-tint); color:var(--leaf-text)` and no border rule at all, so
+        // declares `background:var(--leaf-tint); color:var(--on-leaf)` and no border rule at all, so
         // every card wears the same uniform ink edge. Kept rather than deleted because a conversion that
         // added the tint *and* left the border would say the same thing twice and pass a fill-only check.
         val currentCell = crop(benchPageCellTag(3), full)

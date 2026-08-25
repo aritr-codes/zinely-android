@@ -132,14 +132,14 @@ class ZineShelfEmptyTest {
         const val NARROW_HOST = 200
 
         /**
-         * `--leaf` — `#4E7A3C` light, `#8FAE6B` dark.
+         * `--leaf` — `#8E9546` light, `#BBCA6F` dark.
          *
          * V2's book was a **content** ink (`ZinelyMakerInkId.Matcha`, `#7C8A3F`) and did not flip; V2.1's
          * is a chrome token and does. Both values are pinned so the change is visible in the diff and so
          * a token that moves fails here rather than turning the fill assertions quietly inert.
          */
-        val LIGHT_LEAF = Color(0xFF4E7A3C)
-        val DARK_LEAF = Color(0xFF8FAE6B)
+        val LIGHT_LEAF = Color(0xFF8E9546)
+        val DARK_LEAF = Color(0xFFBBCA6F)
 
         /**
          * `--paper` in light, which is the stock the sheet's rules are read against.
@@ -479,7 +479,7 @@ class ZineShelfEmptyTest {
         empty(dark = false)
         val fill = bookFillPixel()
         assertTrue("the book must print in --leaf ($capturedLeaf, found $fill)", fill.closeTo(capturedLeaf))
-        assertEquals("and --leaf in light is the frozen #4E7A3C", LIGHT_LEAF, capturedLeaf)
+        assertEquals("and --leaf in light is the frozen #8E9546", LIGHT_LEAF, capturedLeaf)
     }
 
     @Test
@@ -488,7 +488,7 @@ class ZineShelfEmptyTest {
         // `ZinelyMakerInkId.Matcha` — a **content** ink, theme-invariant on the argument that a printed
         // object does not re-tint at night — and this test existed to hold that. V2.1 writes
         // `.book-ill{background:var(--leaf)}`, a chrome token with a dark value, so the illustration
-        // *does* flip: #4E7A3C by day, #8FAE6B by night.
+        // *does* flip: #8E9546 by day, #BBCA6F by night.
         //
         // That is a real change of reading and worth saying rather than swapping a constant over: the
         // book in the empty state is not a zine the user made, it is a diagram of what one becomes, so
@@ -497,7 +497,7 @@ class ZineShelfEmptyTest {
         empty(dark = true)
         val fill = bookFillPixel()
         assertTrue("the book must print in dark --leaf ($capturedLeaf, found $fill)", fill.closeTo(capturedLeaf))
-        assertEquals("and --leaf in dark is the frozen #8FAE6B", DARK_LEAF, capturedLeaf)
+        assertEquals("and --leaf in dark is the frozen #BBCA6F", DARK_LEAF, capturedLeaf)
         assertNotEquals("which is not the light value, or nothing here flipped", LIGHT_LEAF, capturedLeaf)
     }
 
@@ -580,11 +580,9 @@ class ZineShelfEmptyTest {
     }
 
     @Test
-    fun `the sheet is paper, and paper inverts with the theme`() {
-        // `.sheet-ill{background:var(--paper)}` — a chrome token, unlike the book's content ink beside it,
-        // and the pair is the point: the same illustration row holds one thing that must follow the theme
-        // and one that must not. Nothing rendered the sheet in dark at all, so a hard-coded `#F7F2E7` in
-        // `SheetIllustration` passed the whole suite while the book's theme-invariance was pinned twice.
+    fun `the sheet keeps its physical paper stock across themes`() {
+        // `.sheet-ill{background:var(--paper)}` is a physical stock. The 37596 palette amendment keeps
+        // maker-facing paper lit and theme-invariant while the surrounding room changes with the theme.
         empty(dark = true)
         val sheet = bounds(ZineSheetIllustrationTestTag, byTag = true)
         val raster = decorRaster()
@@ -594,11 +592,11 @@ class ZineShelfEmptyTest {
         )
 
         assertTrue(
-            "the sheet must be --paper in dark ($capturedPaper), not the light stock (found $stock)",
+            "the sheet must be --paper in dark ($capturedPaper), found $stock",
             stock.closeTo(capturedPaper),
         )
-        assertFalse(
-            "and the two must differ, or this asserts nothing",
+        assertTrue(
+            "physical paper must remain the light stock in dark theme",
             capturedPaper.closeTo(LIGHT_PAPER),
         )
     }

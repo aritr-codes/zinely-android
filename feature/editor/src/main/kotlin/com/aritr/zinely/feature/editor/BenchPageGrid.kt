@@ -113,7 +113,7 @@ internal const val BenchGridEnterPercent: Float = 1.03f
 internal const val BenchGridEnterMillis: Int = 300
 
 /**
- * Frozen `.scrim{background:rgba(38,26,16,.44)}` (`v21-bench.html:359`), with `transition:opacity .22s`
+ * Frozen `.scrim{background:rgba(39,39,15,.44)}` (`v21-bench.html:359`), with `transition:opacity .22s`
  * at `:360`. Hoisted to [ZinelyV21Scrim], which is where the value and its reasoning now live; this alias
  * stays because the grid's own tests and call sites read it by this name.
  *
@@ -160,7 +160,7 @@ internal val BenchGridTitleSize = 19.2.sp
 
 /**
  * Frozen `.dclose{34×34; border-radius:var(--br-pill); border:1.5px solid var(--ink);
- * background:var(--paper); color:var(--ink-soft); box-shadow:2px 2px 0 var(--ink-line)}` and its
+ * background:var(--surface); color:var(--ink-soft); box-shadow:2px 2px 0 var(--ink-line)}` and its
  * `svg{15px; stroke-width:2.2; stroke-linecap:round}` (`v21-bench.html:462-465`).
  *
  * Drawn at 34dp inside a 48dp target — [D-009](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-009)'s
@@ -217,7 +217,7 @@ internal val BenchCellNumberSize = 11.52.sp
  * `.pthumb` restates five; this restates six, and the extra one is **`--ink-line`**. The amendment says
  * why in terms: the card's hard shadow falls on *the card's own plane*, unlike `.page`'s, which falls on
  * the bench and must follow the room. So the shadow is lit with everything else — and note that in the
- * light palette `inkLine` and `ink` are the same byte (`#33261C`), which does **not** collapse the two:
+ * light palette `inkLine` and `ink` are the same byte (`#27270F`), which does **not** collapse the two:
  * a drawn line is [ZinelyV21Colors.ink] and a shadow is [ZinelyV21Colors.inkLine] by name here, exactly
  * as they are everywhere else, because they diverge in dark and the island is read from `room`.
  *
@@ -393,7 +393,7 @@ internal fun BenchPageGridSurface(
         modifier = modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             // `border-top:2px solid var(--ink)` — the TOP only. `Modifier.border` would ink all four
             // sides, and three of them are not in the frozen rule: the panel's flanks and floor meet the
             // edges of the box it slides into. So the outline is stroked at twice the rule width (the
@@ -539,7 +539,7 @@ private fun BenchPageGridClose(onDismiss: () -> Unit) {
                 // Nothing that clips may precede the press — the shadow paints outside the node.
                 .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
                 .clip(shape)
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(BenchChromeBorder, colors.ink, shape),
             contentAlignment = Alignment.Center,
         ) {
@@ -631,7 +631,7 @@ private fun BenchPageCell(
             // 6.78:1 on the lit card, in both themes, at 11.52sp bold — the AA failure ADR-102 §12.5
             // booked against this cell, closed by the size the freeze gives it and the ground OD-47
             // gives the card. `card.inkSoft`, never the room's: the number sits on the card's paper.
-            color = if (current) card.leafText else card.inkSoft,
+            color = if (current) card.onLeaf else card.inkSoft,
             fontSize = BenchCellNumberSize,
             fontWeight = FontWeight.Bold,
             fontFamily = ZinelyV21Fonts.Work,

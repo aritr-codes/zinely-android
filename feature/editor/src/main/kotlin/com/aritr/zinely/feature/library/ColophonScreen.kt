@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
@@ -53,6 +55,7 @@ import com.aritr.zinely.ui.a11y.zinelyV2Control
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
@@ -160,6 +163,7 @@ private fun ColophonMain(
     modifier: Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
+    val printed = remember { zinelyV21LightColors() }
     LazyColumn(
         modifier
             .fillMaxSize()
@@ -191,7 +195,7 @@ private fun ColophonMain(
                 Modifier
                     .testTag(ColophonPaperGroupTestTag)
                     .fillMaxWidth()
-                    .background(colors.paper, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
+                    .background(printed.surface, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
                     .padding(ZinelyV21Dimens.gapMd)
                     .semantics { }
                     .selectableGroup(),
@@ -212,10 +216,17 @@ private fun ColophonMain(
                             .padding(horizontal = ZinelyV21Dimens.gapSm),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(selected = selected, onClick = null)
+                        RadioButton(
+                            selected = selected,
+                            onClick = null,
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = printed.ink,
+                                unselectedColor = printed.inkSoft,
+                            ),
+                        )
                         Text(
                             if (paper == PaperSize.A4) Copy.Paper.A4 else Copy.Paper.LETTER,
-                            color = colors.ink,
+                            color = printed.ink,
                             fontFamily = ZinelyV21Fonts.Work,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(start = ZinelyV21Dimens.gapSm),
@@ -233,7 +244,7 @@ private fun ColophonMain(
                     .testTag(colophonTypefaceTestTag(typeface))
                     .focusRequester(typefaceFocusRequesters.getValue(typeface))
                     .fillMaxWidth()
-                    .background(colors.paper, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
+                    .background(printed.surface, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
                     .zinelyV2Control(
                         label = Copy.Colophon.licenceButton(typeface.family),
                         interactionSource = interaction,
@@ -243,11 +254,11 @@ private fun ColophonMain(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(typeface.family, color = colors.ink, fontWeight = FontWeight.Bold)
-                    Text(typeface.role, color = colors.inkSoft, fontSize = 13.sp)
-                    Text(Copy.Colophon.LICENCE, color = colors.leafText, fontSize = 12.sp)
+                    Text(typeface.family, color = printed.ink, fontWeight = FontWeight.Bold)
+                    Text(typeface.role, color = printed.inkSoft, fontSize = 13.sp)
+                    Text(Copy.Colophon.LICENCE, color = printed.leafText, fontSize = 12.sp)
                 }
-                Text("›", color = colors.inkSoft, fontSize = 24.sp)
+                Text("›", color = printed.inkSoft, fontSize = 24.sp)
             }
         }
         item { SectionHeading(Copy.Colophon.HOW_IT_WORKS) }
@@ -258,6 +269,7 @@ private fun ColophonMain(
                     .fillMaxWidth()
                     .background(colors.leafTint, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
                     .padding(ZinelyV21Dimens.gapLg),
+                color = colors.onLeaf,
             )
         }
         item { SectionHeading(Copy.Colophon.VERSION) }
@@ -274,6 +286,7 @@ private fun LicenceScreen(
     modifier: Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
+    val printed = remember { zinelyV21LightColors() }
     val result by produceState<Result<String>?>(null, typeface, loadLicence) {
         value = runCatching { loadLicence(typeface) }
     }
@@ -295,23 +308,23 @@ private fun LicenceScreen(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(colors.paper, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
+                .background(printed.surface, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
                 .padding(ZinelyV21Dimens.gapLg),
             contentAlignment = Alignment.Center,
         ) {
             when {
-                result == null -> CircularProgressIndicator(color = colors.leaf)
+                result == null -> CircularProgressIndicator(color = printed.ink)
                 result?.isSuccess == true -> SelectionContainer {
                     Text(
                         result!!.getOrThrow(),
-                        color = colors.ink,
+                        color = printed.ink,
                         fontFamily = ZinelyV21Fonts.Work,
                         fontSize = 13.sp,
                         lineHeight = 19.sp,
                         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                     )
                 }
-                else -> BodyText(Copy.Colophon.LICENCE_UNAVAILABLE)
+                else -> BodyText(Copy.Colophon.LICENCE_UNAVAILABLE, color = printed.inkSoft)
             }
         }
         Spacer(Modifier.height(ZinelyV21Dimens.gapXl))
@@ -347,12 +360,15 @@ private fun SectionHeading(text: String) {
 }
 
 @Composable
-private fun BodyText(text: String, modifier: Modifier = Modifier) {
-    val colors = ZinelyTheme.v21Colors
+private fun BodyText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = ZinelyTheme.v21Colors.inkSoft,
+) {
     Text(
         text,
         modifier,
-        color = colors.inkSoft,
+        color = color,
         fontFamily = ZinelyV21Fonts.Work,
         fontSize = 15.sp,
         lineHeight = 22.sp,

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +46,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Press
 import com.aritr.zinely.ui.theme.ZinelyV2Settle
 import com.aritr.zinely.ui.theme.rememberZinelyV21GrainBrush
 import com.aritr.zinely.ui.theme.zinelyV21Grain
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 
 /**
  * The **V2.1 zine cover** — `.cover` in `docs/design/mockups/v21-library.html`.
@@ -71,8 +73,8 @@ import com.aritr.zinely.ui.theme.zinelyV21Grain
  * are hardcoded in the frozen file and do **not** flip with the theme. That is the same ruling
  * [V21-SPEC §4.1](docs/design/V21-SPEC.md) already recorded for `.cover .mark`: a printed cover is the
  * maker's palette, not the app's chrome, and it does not restyle itself when the room goes dark. Do not
- * "fix" them onto tokens — the tape colour happens to equal light-theme `butter`, which is exactly the
- * coincidence that would make the mistake look like a cleanup.
+ * "fix" them onto tokens — the tape is an authored cover material and deliberately no longer equals
+ * the current light-theme `butter` token.
  *
  * ### Tape and stamp overflow the cover, and the fill does not
  *
@@ -108,6 +110,7 @@ internal fun ZineV21Cover(
     mark: @Composable BoxScope.(Modifier) -> Unit = {},
 ) {
     val colors = ZinelyTheme.v21Colors
+    val printed = remember { zinelyV21LightColors() }
     val grain = rememberZinelyV21GrainBrush(CoverGrainTileV21)
     val press = ZinelyV21Press.Hero
     val motion = ZinelyTheme.v2Motion
@@ -267,15 +270,15 @@ internal fun ZineV21Cover(
                 // `text-transform:uppercase`. Locale.ROOT rather than the default: this is a
                 // paper-size code, not prose, and a Turkish locale would give "LETTER" a dotted I.
                 text = stampLabel.uppercase(Locale.ROOT),
-                style = stampStyle(colors.inkSoft),
+                style = stampStyle(printed.inkSoft),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(x = StampOffsetXV21, y = StampOffsetYV21)
                     .graphicsLayer { rotationZ = StampRotationV21 }
-                    .zinelyV21HardShadow(StampShadowV21, colors.inkLine, StampShapeV21)
-                    .background(colors.paper, StampShapeV21)
-                    .border(CoverBorderV21, colors.ink, StampShapeV21)
+                    .zinelyV21HardShadow(StampShadowV21, printed.inkLine, StampShapeV21)
+                    .background(printed.paper, StampShapeV21)
+                    .border(CoverBorderV21, printed.ink, StampShapeV21)
                     .padding(horizontal = ZinelyV21Dimens.gapSm, vertical = ZinelyV21Dimens.gapHair),
             )
         }
@@ -345,8 +348,8 @@ private val TapeHeight: Dp = 19.dp
 private val TapeOffsetY: Dp = (-11).dp
 
 /**
- * `rgba(246,178,44,.55)` — hardcoded in the frozen file and **theme-invariant on purpose**. It equals
- * light-theme `butter`, which is the coincidence that makes tokenising it look like a tidy-up.
+ * `rgba(246,178,44,.55)` — hardcoded in the frozen file and **theme-invariant on purpose**. It is an
+ * authored cover material, not the current light-theme `butter` token.
  */
 private val TapeFilm = Color(0x8CF6B22C)
 

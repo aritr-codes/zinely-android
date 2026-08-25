@@ -116,7 +116,7 @@ class ProofActPaintTest {
     private fun Bitmap.assertSheetPaints() {
         assertPaints("paper sheet", Color(0xFFFFF6E8), 1000)
         // The one `jam` cut + "ONE CUT" label must actually paint.
-        assertPaints("the cut", Color(0xFFCF4A28), 50)
+        assertPaints("the cut", Color(0xFFA9303D), 50)
     }
 
     @Test fun `the imposed sheet paints its paper and its one cut - light phone`() =
@@ -152,16 +152,16 @@ class ProofActPaintTest {
     }
 
     @Test fun `the print recipe paints its field cards and its warn emphasis - light phone`() =
-        print(darkTheme = false, PHONE).assertRecipePaints(Color(0xFFFFF6E8), Color(0xFFA63B20))
+        print(darkTheme = false, PHONE).assertRecipePaints(Color(0xFFF2CFBB), Color(0xFFA9303D))
 
     @Test fun `the print recipe paints its field cards and its warn emphasis - dark phone`() =
-        print(darkTheme = true, PHONE).assertRecipePaints(Color(0xFF332B22), Color(0xFFE4856D))
+        print(darkTheme = true, PHONE).assertRecipePaints(Color(0xFF3D3920), Color(0xFFFF9CA4))
 
     @Test fun `the print recipe paints its field cards and its warn emphasis - light tablet`() =
-        print(darkTheme = false, TABLET).assertRecipePaints(Color(0xFFFFF6E8), Color(0xFFA63B20))
+        print(darkTheme = false, TABLET).assertRecipePaints(Color(0xFFF2CFBB), Color(0xFFA9303D))
 
     @Test fun `the print recipe paints its field cards and its warn emphasis - dark tablet`() =
-        print(darkTheme = true, TABLET).assertRecipePaints(Color(0xFF332B22), Color(0xFFE4856D))
+        print(darkTheme = true, TABLET).assertRecipePaints(Color(0xFF3D3920), Color(0xFFFF9CA4))
 
     // ---- The fold guide --------------------------------------------------------------------------
 
@@ -206,11 +206,11 @@ class ProofActPaintTest {
             )
         }
         crop(ProofFoldLegendTestTag).run {
-            assertPaints("room-coloured legend labels", Color(0xFFBFAC93), 20)
-            assertPaints("lit crease swatch", Color(0xFFA08B74), 5)
-            assertPaints("lit fold-now swatch", Color(0xFF4E7A3C), 5)
-            assertPaints("lit cut swatch", Color(0xFFCF4A28), 5)
-            assertPaints("lit move/action swatches", Color(0xFF33261C), 5)
+            assertPaints("room-coloured legend labels", Color(0xFFDAD7A0), 20)
+            assertPaints("lit crease swatch", Color(0xFF6A452F), 5)
+            assertPaints("lit fold-now swatch", Color(0xFF555A1B), 5)
+            assertPaints("lit cut swatch", Color(0xFFA9303D), 5)
+            assertPaints("lit move/action swatches", Color(0xFF27270F), 5)
         }
     }
 
@@ -221,7 +221,7 @@ class ProofActPaintTest {
      * *room's* token on a *paper* surface, shipping a 1.03:1 dark-theme outline while every count above
      * stayed green, because a stroke colour does not move a paper-pixel count. The V2.1 re-skin retires
      * `onDesk` from this file entirely (V2.1 has one `ink`, and it flips with theme), but it introduces the
-     * exact same defect one token over: `inkLine` is byte-identical to `ink` in **light** (`#33261C`) and
+     * exact same defect one token over: `inkLine` is byte-identical to `ink` in **light** (`#27270F`) and
      * `#120E0A` in **dark**, so stroking the sheet in the hard-shadow token is invisible in light and puts
      * the outline at 1.38:1 against its own fill in dark. The prototype carries the same ✱ note over
      * `.sheetline`.
@@ -246,7 +246,7 @@ class ProofActPaintTest {
             )
         }
         val diagram = crop(ProofFoldDiagramTestTag)
-        diagram.assertPaints("fold sheet outline", Color(0xFF33261C), 300)
+        diagram.assertPaints("fold sheet outline", Color(0xFF27270F), 300)
         assertEquals(
             "the diagram painted the hard-shadow token; a drawn line follows ink",
             0,
@@ -261,9 +261,9 @@ class ProofActPaintTest {
      */
     @Test fun `the last step paints its finished-cover diagram - light phone`() =
         fold(darkTheme = false, PHONE, step = FOLD_LAST_STEP)
-            .assertPaints("step 8 cover outline", Color(0xFF4E7A3C), 200)
+            .assertPaints("step 8 cover outline", Color(0xFF8E9546), 200)
 
     @Test fun `the last step paints its finished-cover diagram - dark phone`() =
         fold(darkTheme = true, PHONE, step = FOLD_LAST_STEP)
-            .assertPaints("step 8 cover outline", Color(0xFF4E7A3C), 200)
+            .assertPaints("step 8 cover outline", Color(0xFF8E9546), 200)
 }

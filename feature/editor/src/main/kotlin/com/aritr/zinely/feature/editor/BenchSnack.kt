@@ -214,17 +214,16 @@ internal fun BenchSnack(
             }
             .testTag(BenchSnackTestTag)
             .clip(BenchSnackShape)
-            .background(colors.ink)
-            // ⚠ `inkLine`, not `ink` — the one border in the corpus drawn in the shadow ink, because its
-            // own ground IS ink. See the class note; do not "correct" this to `colors.ink`.
-            .border(BenchSnackBorder, colors.inkLine, BenchSnackShape)
+            .background(colors.surfaceSoft)
+            // A transient confirmation is a warm support scrap: ordinary ink and border on surfaceSoft.
+            .border(BenchSnackBorder, colors.ink, BenchSnackShape)
             .padding(BenchSnackPadding),
         horizontalArrangement = Arrangement.spacedBy(BenchSnackGap, Alignment.Start),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = message,
-            color = colors.paper,
+            color = colors.ink,
             fontSize = BenchSnackTextSize,
             fontFamily = ZinelyV21Fonts.Work,
             lineHeight = ZinelyV21Fonts.InheritedLineHeight,
@@ -244,7 +243,7 @@ internal fun BenchSnack(
             Text(
                 text = actionLabel,
                 // `paper`, underlined — see the class note. `butter` here is the retired exception.
-                color = colors.paper,
+                color = colors.ink,
                 fontSize = BenchSnackActionTextSize,
                 fontWeight = FontWeight.Bold,
                 fontFamily = ZinelyV21Fonts.Work,

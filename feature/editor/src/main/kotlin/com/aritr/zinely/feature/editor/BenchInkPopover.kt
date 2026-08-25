@@ -352,7 +352,7 @@ internal fun BenchInkPopover(
                 // ⚠ nothing that clips may sit to its LEFT: it paints 4dp outside the card's own bounds.
                 // No press tier: `.inkpop` declares no `:active` because a surface is not a control.
                 .zinelyV21HardShadow(BenchInkPopoverShadowDp, colors.inkLine, shape)
-                .background(colors.paper, shape)
+                .background(colors.surface, shape)
                 .border(BenchInkPopoverBorderDp, colors.ink, shape)
                 .padding(BenchInkPopoverPadding),
         ) {
@@ -595,7 +595,7 @@ private fun BenchInkPresetPill(preset: BenchInkPreset, onClick: () -> Unit) {
             // ⚠ Resting shadow, 2dp outside the node — nothing that clips may sit to its left.
             .zinelyV21HardShadow(BenchInkPresetShadowDp, colors.inkLine, BenchInkPresetShape)
             .clip(BenchInkPresetShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchInkPopoverBorderDp, colors.ink, BenchInkPresetShape)
             .clickable(role = Role.Button, onClick = pick)
             .padding(BenchInkPresetPadding)

@@ -297,8 +297,8 @@ class BenchArtSheetParityTest {
         assertEquals("1.4deg", decl(".tile:nth-child(4n)", "--tt"))
         assertEquals("var(--berry-tint)", decl(".tile:nth-child(3n)", "background"))
         assertEquals("var(--butter-tint)", decl(".tile:nth-child(4n)", "background"))
-        assertEquals("var(--jam-text)", decl(".tile:nth-child(3n)", "color"))
-        assertEquals("var(--ink-soft)", decl(".tile:nth-child(4n)", "color"))
+        assertEquals("var(--on-leaf)", decl(".tile:nth-child(3n)", "color"))
+        assertEquals("var(--ink)", decl(".tile:nth-child(4n)", "color"))
         // The Kotlin side of the same cycle: index 0 = leaf/0deg, 1 = berry/-1.6, 2 = butter/+1.4, and
         // the branch order is what puts position 12 on the butter arm.
         assertEquals(0f, BenchArtTilt[0], 0f)
@@ -311,7 +311,7 @@ class BenchArtSheetParityTest {
         assertEquals("position 12 matches both, and 4n is declared later so it wins", 2, benchArtTintIndex(12))
         // …and the base, which is what positions 1 and 2 of every row wear.
         assertEquals("var(--leaf-tint)", decl(".tile", "background"))
-        assertEquals("var(--leaf-text)", decl(".tile", "color"))
+        assertEquals("var(--on-leaf)", decl(".tile", "color"))
     }
 
     @Test

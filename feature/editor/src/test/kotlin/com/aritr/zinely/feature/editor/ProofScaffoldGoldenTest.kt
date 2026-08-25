@@ -81,16 +81,16 @@ class ProofScaffoldGoldenTest {
     @Test
     fun proof_scaffold_light() {
         val bmp = scaffoldBitmap(darkTheme = false)
-        // The V2.1 desk (#FBE9CE) is the frame's ground.
+        // The 37596 Wild Primrose room is the frame's ground.
         assertTrue(
             "light desk did not paint in the proof scaffold",
-            bmp.countColour(Color(0xFFFBE9CE).toArgb()) > 1000,
+            bmp.countColour(Color(0xFFE9E29B).toArgb()) > 1000,
         )
         // The band's commit action ("Save PDF") and the `.ready` tick are `leaf` now — the IOU this
         // file's own header wrote against P6.
         assertTrue(
             "leaf commit action did not paint in the light scaffold",
-            bmp.countColour(Color(0xFF4E7A3C).toArgb()) > 200,
+            bmp.countColour(Color(0xFF8E9546).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/proof_scaffold_light.png", aa())
     }
@@ -98,16 +98,15 @@ class ProofScaffoldGoldenTest {
     @Test
     fun proof_scaffold_dark() {
         val bmp = scaffoldBitmap(darkTheme = true)
-        // The V2.1 dark desk (#241E18). Unlike V1's `stamp`, `leaf` is **not** identical across themes —
-        // it lightens to #8FAE6B so a fill stays legible on a dark desk — so this pair asserts two
+        // The night room is #242312. `leaf` lightens to #BBCA6F so a fill stays legible — this pair asserts two
         // different greens on purpose.
         assertTrue(
             "dark desk did not paint in the proof scaffold",
-            bmp.countColour(Color(0xFF241E18).toArgb()) > 1000,
+            bmp.countColour(Color(0xFF242312).toArgb()) > 1000,
         )
         assertTrue(
             "leaf commit action did not paint in the dark scaffold",
-            bmp.countColour(Color(0xFF8FAE6B).toArgb()) > 200,
+            bmp.countColour(Color(0xFFBBCA6F).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/proof_scaffold_dark.png", aa())
     }

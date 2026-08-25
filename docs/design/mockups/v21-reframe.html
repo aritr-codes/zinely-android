@@ -87,17 +87,14 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
    ✱ marks a departure from the frozen V2 token contract.
    ========================================================================= */
 :root{
-  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#FBE9CE; --desk-edge:#E9D2AE;
-  --ink:#33261C; --ink-soft:#6E5947; --ink-faint:#A08B74;
-  --leaf:#4E7A3C; --leaf-text:#3E6330; --leaf-tint:#DCE8CE; --on-leaf:#FFF6E8;
-  --butter:#F6B22C; --butter-tint:#FDEBC4;
-  --berry:#E4879F; --berry-tint:#F8DCE2;
-  --jam:#CF4A28;            /* fills, the cut line, the delete affordance              */
-  --jam-text:#A63B20;       /* ✱ jam AS TEXT — AA-measured 2026-08-09, see V21-SPEC §4.1 */
-  --on-jam:#FFF6E8;         /* ✱ label on a jam-text ground (mirrors --on-leaf)          */
-  --hair:rgba(51,38,28,.16); --ink-line:#33261C;
-  --stage:#F2DEBC; --soft-shadow:rgba(74,54,34,.30); --contact:rgba(74,54,34,.20);
-  --bench:#EBD6B4;                    /* ✱ the worktop the page lies on */
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#E9E29B; --desk-edge:#BBCA6F; --bench:#E9E29B;
+  --surface:#F2CFBB; --surface-soft:#F1B4AF;
+  --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546;
+  --leaf:#8E9546; --leaf-text:#555A1B; --leaf-tint:#BBCA6F; --on-leaf:#27270F;
+  --butter:#E9E29B; --butter-tint:#F2CFBB; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#A9303D; --jam-text:#A9303D; --on-jam:#FFF9DB;
+  --hair:rgba(39,39,15,.16); --ink-line:#27270F;
+  --stage:#F2DEBC; --soft-shadow:rgba(39,39,15,.30); --contact:rgba(39,39,15,.20);
   --br-xs:4px; --br-sm:8px; --br-md:14px; --br-lg:22px; --br-xl:36px; --br-pill:999px;
   /* ✱ the spacing ladder — measured into the corpus 2026-08-09, see V21-SPEC.md §3.3 */
   --gap-hair:2px; --gap-xs:4px; --gap-sm:8px; --gap-md:12px;
@@ -109,22 +106,20 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --bench:#211B15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
 }}
 :root[data-theme="dark"]{
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --bench:#211B15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
 }
 :root[data-hard="off"]{--hard:0px}
 :root[data-tilt="off"] .thumb,:root[data-tilt="off"] .tile{--tt:0deg!important}
@@ -222,11 +217,11 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    would drop under the arrow grid.  Keeping the control row at `nowrap` inside a column
    preserves the original geometry exactly. */
 .pad{position:absolute;left:50%;bottom:calc(var(--gap-sm) + 124px);transform:translateX(-50%);z-index:30;
-  display:flex;flex-direction:column;align-items:center;gap:var(--gap-sm);background:var(--paper);
+  display:flex;flex-direction:column;align-items:center;gap:var(--gap-sm);background:var(--surface);
   border:1.5px solid var(--ink);border-radius:var(--br-md);padding:var(--gap-sm) var(--gap-md);
   box-shadow:2px 2px 0 var(--ink-line)}
 .nudge{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:var(--gap-hair)}
-.nudge button{border:1.5px solid var(--ink);border-radius:var(--br-sm);background:var(--paper);
+.nudge button{border:1.5px solid var(--ink);border-radius:var(--br-sm);background:var(--surface);
   color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;padding:0;
   box-shadow:2px 2px 0 var(--ink-line)}
 .nudge button:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -236,7 +231,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   stroke-linecap:round;stroke-linejoin:round}
 .zoom{display:flex;align-items:center;gap:var(--gap-sm)}
 .zoom button{width:40px;height:40px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .zoom button:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 .zoom button:disabled{opacity:.35;box-shadow:none;cursor:default}
@@ -265,7 +260,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    they share a token block with byte-for-byte. Deleting it here would fork the shared style
    set to make one file tidier. If the corpus ever centralises it, delete it here first. */
 .icon-btn{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .icon-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 .icon-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;
@@ -280,7 +275,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    rule this comment states is now applied consistently rather than to one of the two.
    Same clothes as `.icon-btn`, sized to its text. */
 .text-btn{height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:.82rem;font-weight:700;
+  background:var(--surface);color:var(--ink);font-family:var(--sans);font-size:.82rem;font-weight:700;
   cursor:pointer;padding:0 var(--gap-md);box-shadow:2px 2px 0 var(--ink-line)}
 .text-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 
@@ -303,7 +298,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    Coral does not exist in V2.1 and a white-on-coral segment was the V1 tell. */
 .fitrow{flex:none;display:flex;gap:var(--gap-sm);padding:0 var(--gap-lg) var(--gap-sm);background:var(--desk)}
 .fit{flex:1;font-family:var(--sans);cursor:pointer;text-align:left;
-  background:var(--paper);color:var(--ink-soft);border:1.5px solid var(--ink);
+  background:var(--surface);color:var(--ink-soft);border:1.5px solid var(--ink);
   border-radius:var(--br-md);padding:var(--gap-sm) var(--gap-md);
   box-shadow:2px 2px 0 var(--ink-line);display:flex;flex-direction:column;gap:1px}
 .fit:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -316,7 +311,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .aff{position:absolute;right:var(--gap-sm);bottom:var(--gap-sm);z-index:20;
   font-family:var(--sans);font-size:.7rem;font-weight:700;cursor:pointer;
   display:flex;align-items:center;gap:var(--gap-xs);
-  background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);
+  background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-sm);
   box-shadow:2px 2px 0 var(--ink-line)}
 .aff:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}

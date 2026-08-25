@@ -34,7 +34,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Fonts
  * ### V2.1 — ADR-102 P8, and the corpus has exactly one field
  *
  * ```css
- * .search{display:flex;align-items:center;gap:var(--gap-sm);background:var(--paper);
+ * .search{display:flex;align-items:center;gap:var(--gap-sm);background:var(--surface);
  *   border:1.5px solid var(--ink);border-radius:var(--br-pill);padding:var(--gap-sm) var(--gap-md);
  *   box-shadow:2px 2px 0 var(--ink-line)}
  * .search input{border:0;background:none;font-family:var(--sans);font-size:.86rem;color:var(--ink);outline:0}
@@ -42,7 +42,8 @@ import com.aritr.zinely.ui.theme.ZinelyV21Fonts
  *
  * V2 gave this a `--field` fill, a 1px `--field-edge` border that turned coral on focus, and radius 12.
  * **V2.1 publishes no `--field`, no `--field-edge` and no coral**, and the one text input the three
- * prototypes contain is `v21-bench.html .search`. So the box is that box: paper under a 1.5px ink
+ * prototypes contained was `v21-bench.html .search`. The 37596 freeze retires that selector but keeps
+ * its box grammar here: themed surface under a 1.5px ink
  * border at pill radius, over a `2px 2px 0 var(--ink-line)` printed shadow. There is no `.field` class
  * to grep for, and inventing one is what D-008 forbids.
  *
@@ -106,7 +107,7 @@ public fun ZTextField(
                     .zinelyFocusRing(interactionSource, ZinelyV21Dimens.radiusPill)
                     .zinelyV21HardShadow(FieldShadow, colors.inkLine, shape)
                     .clip(shape)
-                    .background(colors.paper)
+                    .background(colors.surface)
                     .border(FieldBorder, colors.ink, shape)
                     .defaultMinSize(minHeight = FieldMinHeight)
                     // `.search{padding:var(--gap-sm) var(--gap-md)}` — the vertical half is subsumed

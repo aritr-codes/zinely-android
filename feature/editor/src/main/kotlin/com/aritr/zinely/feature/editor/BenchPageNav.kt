@@ -97,7 +97,7 @@ internal val BenchNavRowPaddingH = ZinelyV21Dimens.gapMd
 internal val BenchNavRowPaddingBottom = ZinelyV21Dimens.gapXs
 
 /**
- * Frozen `.gridbtn{38×38; border-radius:var(--br-sm); border:1.5px solid var(--ink); background:var(--paper);
+ * Frozen `.gridbtn{38×38; border-radius:var(--br-sm); border:1.5px solid var(--ink); background:var(--surface);
  * color:var(--ink-soft); box-shadow:2px 2px 0 var(--ink-line)}` and `svg{17px; stroke-width:1.8}`
  * (`v21-bench.html:329-332`).
  *
@@ -339,7 +339,7 @@ private fun BenchGridButton(onOpenGrid: () -> Unit) {
             // Nothing that clips may precede the press — the shadow paints outside the node.
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(interactionSource = interaction, indication = null, onClick = openGrid)
             .testTag(BenchGridButtonTestTag)

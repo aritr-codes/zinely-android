@@ -81,7 +81,7 @@ class BenchStyleRowGoldenTest {
     /** `.doneEdit{background:var(--leaf)}` (`v21-bench.html:282`). V2 filled this chip with `--matcha`. */
     private var leafArgb = 0
 
-    /** `.styletb{background:var(--paper)}` (`v21-bench.html:267`). V2's ground was `--sheet`. */
+    /** `.styletb{background:var(--surface)}` after the 37596 palette amendment. */
     private var paperTokenArgb = 0
 
     /** The V2.1 caret ink — `--jam`. See the caret probe below. */
@@ -90,14 +90,14 @@ class BenchStyleRowGoldenTest {
     private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
-                deskArgb = ZinelyTheme.colors.desk.toArgb()
+                deskArgb = ZinelyTheme.v21Colors.desk.toArgb()
                 leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
-                paperTokenArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                paperTokenArgb = ZinelyTheme.v21Colors.surface.toArgb()
                 Box(
                     Modifier
                         .testTag(HOST_TAG)
                         .fillMaxWidth()
-                        .background(ZinelyTheme.colors.desk)
+                        .background(ZinelyTheme.v21Colors.desk)
                         .padding(16.dp),
                 ) { content() }
             }
@@ -218,14 +218,14 @@ class BenchStyleRowGoldenTest {
 
         composeRule.setContent {
             ZinelyTheme(darkTheme = false) {
-                deskArgb = ZinelyTheme.colors.desk.toArgb()
+                deskArgb = ZinelyTheme.v21Colors.desk.toArgb()
                 leafArgb = ZinelyTheme.v21Colors.leaf.toArgb()
-                paperTokenArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                paperTokenArgb = ZinelyTheme.v21Colors.surface.toArgb()
                 // Read OUTSIDE the sheet island, so this is the room's `jam` — which the island lights to
                 // the same light value inside the page. Reading it here rather than transcribing the hex
                 // keeps the probe bound to the palette.
                 caretArgb = ZinelyTheme.v21Colors.jam.toArgb()
-                Box(Modifier.testTag(HOST_TAG).background(ZinelyTheme.colors.desk)) {
+                Box(Modifier.testTag(HOST_TAG).background(ZinelyTheme.v21Colors.desk)) {
                     EditorScreen(store = store, pageSizePt = PtSize(100.0, 100.0), modifier = Modifier.size(360.dp, 720.dp))
                 }
             }
@@ -281,7 +281,7 @@ class BenchStyleRowGoldenTest {
         // (paper and ink are both much further away).
         fun near(p: Int, q: Int): Boolean {
             fun c(v: Int, sh: Int) = (v shr sh) and 0xFF
-            return listOf(16, 8, 0).all { sh -> kotlin.math.abs(c(p, sh) - c(q, sh)) <= 24 }
+            return listOf(16, 8, 0).all { sh -> kotlin.math.abs(c(p, sh) - c(q, sh)) <= 8 }
         }
         val matchaCols = (0 until fieldCrop.width).filter { x ->
             (0 until fieldCrop.height).any { y -> near(fieldCrop.getPixel(x, y), caretArgb) }

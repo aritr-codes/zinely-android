@@ -13,37 +13,37 @@
   - Default paper changes only the preselection for a future zine; it never rewrites an existing zine.
   - Each bundled typeface opens its locally bundled SIL OFL notice.
   - The offline/privacy promise appears exactly once, here.
-  - The palette in this freeze is the current V2.1 corpus. The owner-requested 37596.jpg-derived
-    palette is a separate pending theme amendment; it must not be smuggled into D-079.
+  - Palette amended 2026-08-24 by THEME-37596-FREEZE; the interaction ruling is unchanged.
 -->
 
 <style>
 :root{
-  --paper:#FFF6E8;--paper-2:#F7F2E7;--desk:#FBE9CE;--ink:#33261C;
-  --ink-soft:#6E5947;--ink-faint:#A08B74;--leaf:#4E7A3C;--leaf-dark:#3E6330;
-  --leaf-tint:#DCE8CE;--butter:#F6B22C;--butter-tint:#FDEBC4;
-  --berry:#E4879F;--hair:rgba(51,38,28,.18);--shadow:rgba(58,39,22,.18);
+  --paper:#FFF6E8;--paper-2:#EFDFC6;--desk:#E9E29B;--surface:#F2CFBB;--surface-soft:#F1B4AF;
+  --ink:#27270F;--ink-soft:#6A452F;--ink-faint:#8E9546;--leaf:#8E9546;--leaf-dark:#555A1B;
+  --leaf-tint:#BBCA6F;--on-leaf:#27270F;--butter:#E9E29B;--butter-tint:#F2CFBB;
+  --berry:#F28892;--hair:rgba(39,39,15,.16);--shadow:rgba(39,39,15,.30);--stage:#F2DEBC;
   --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
   --voice:"Averia Sans Libre","Fraunces",Georgia,serif;
 }
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#332B22;--paper-2:#3E3529;--desk:#241E18;--ink:#FFF6E8;
-  --ink-soft:#D7C4AE;--ink-faint:#A69079;--leaf:#9BC77C;--leaf-dark:#B8DC9E;
-  --leaf-tint:#33482B;--butter:#E6A82B;--butter-tint:#4C3D20;
-  --berry:#DC8498;--hair:rgba(255,246,232,.17);--shadow:rgba(0,0,0,.42)
+  --paper:#FFF6E8;--paper-2:#EFDFC6;--desk:#242312;--surface:#3D3920;--surface-soft:#46352E;
+  --ink:#FFF9DB;--ink-soft:#DAD7A0;--ink-faint:#8E9546;--leaf:#BBCA6F;--leaf-dark:#BBCA6F;
+  --leaf-tint:#8E9546;--on-leaf:#242312;--butter:#E9E29B;--butter-tint:#3D3920;
+  --berry:#F28892;--hair:rgba(255,249,219,.15);--shadow:rgba(18,14,10,.62);--stage:#1C1712
 }}
-:root[data-theme="dark"]{--paper:#332B22;--paper-2:#3E3529;--desk:#241E18;--ink:#FFF6E8;
-  --ink-soft:#D7C4AE;--ink-faint:#A69079;--leaf:#9BC77C;--leaf-dark:#B8DC9E;
-  --leaf-tint:#33482B;--butter:#E6A82B;--butter-tint:#4C3D20;
-  --berry:#DC8498;--hair:rgba(255,246,232,.17);--shadow:rgba(0,0,0,.42)}
+:root[data-theme="dark"]{--paper:#FFF6E8;--paper-2:#EFDFC6;--desk:#242312;
+  --surface:#3D3920;--surface-soft:#46352E;--ink:#FFF9DB;--ink-soft:#DAD7A0;
+  --ink-faint:#8E9546;--leaf:#BBCA6F;--leaf-dark:#BBCA6F;--leaf-tint:#8E9546;
+  --on-leaf:#242312;--butter:#E9E29B;--butter-tint:#3D3920;--berry:#F28892;
+  --hair:rgba(255,249,219,.15);--shadow:rgba(18,14,10,.62);--stage:#1C1712}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;display:grid;place-items:center;gap:18px;padding:28px;
-  color:var(--ink);background:#d8cdbd;font-family:var(--sans)}
-.cap{max-width:560px;margin:0;color:#44372b;font-size:13px;line-height:1.5;text-align:center}
+  color:var(--ink);background:var(--stage);font-family:var(--sans)}
+.cap{max-width:560px;margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5;text-align:center}
 .badge{display:inline-block;padding:4px 9px;border:1px solid currentColor;border-radius:99px;
   font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
 .phone{position:relative;width:390px;height:812px;overflow:hidden;border:2px solid var(--ink);
-  border-radius:34px;background:var(--desk);box-shadow:9px 10px 0 rgba(51,38,28,.25)}
+  border-radius:34px;background:var(--desk);box-shadow:9px 10px 0 var(--shadow)}
 .screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--desk)}
 .top{height:76px;flex:none;display:grid;grid-template-columns:56px 1fr 56px;align-items:end;
   padding:16px 12px 10px;border-bottom:1px solid var(--hair);background:var(--desk)}
@@ -57,12 +57,14 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;gap:18px;padding:
 .section{margin-top:24px}.section:first-of-type{margin-top:0}
 .eyebrow{margin:0 0 10px;color:var(--ink-soft);font-size:11px;font-weight:700;
   letter-spacing:.1em;text-transform:uppercase}
-.card{background:var(--paper);border:1.5px solid var(--ink);border-radius:16px;
+.card{--surface:#F2CFBB;--ink:#27270F;--ink-soft:#6A452F;--leaf:#8E9546;
+  --leaf-tint:#BBCA6F;--on-leaf:#27270F;--hair:rgba(39,39,15,.16);
+  background:var(--surface);border:1.5px solid var(--ink);border-radius:16px;
   box-shadow:3px 3px 0 var(--ink);overflow:hidden}
 .paper-choices{display:grid;grid-template-columns:1fr 1fr;padding:5px;gap:5px}
 .choice{min-height:50px;border:0;border-radius:11px;background:transparent;color:var(--ink);
   font:700 14px/1.2 var(--sans);cursor:pointer}
-.choice[aria-checked="true"]{background:var(--leaf);color:var(--paper)}
+.choice[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
 .note{margin:9px 2px 0;color:var(--ink-soft);font-size:12px;line-height:1.45}
 .font-row{width:100%;min-height:64px;display:grid;grid-template-columns:1fr auto;gap:12px;
   align-items:center;padding:12px 14px;border:0;border-bottom:1px dashed var(--hair);
@@ -74,12 +76,12 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;gap:18px;padding:
 .version{display:flex;justify-content:space-between;gap:18px;padding:15px 16px;font-size:14px}
 .version span:last-child{color:var(--ink-soft)}
 .licence-page{display:none}.licence-page.show{display:flex}.main.hide{display:none}
-.licence-page .scroll{background:var(--paper-2)}
+.licence-page .scroll{background:var(--surface-soft)}
 .licence-lead{margin:0 0 15px;color:var(--ink-soft);font-size:13px;line-height:1.5}
 .licence-frame{width:100%;height:570px;border:1.5px solid var(--ink);border-radius:10px;
   background:#fff;color:#111}
 .theme{position:absolute;right:16px;bottom:16px;z-index:4;min-width:48px;min-height:48px;
-  border:1.5px solid var(--ink);border-radius:99px;background:var(--paper);color:var(--ink);
+  border:1.5px solid var(--ink);border-radius:99px;background:var(--surface);color:var(--ink);
   box-shadow:2px 2px 0 var(--ink);font:700 13px var(--sans);cursor:pointer}
 @media(max-width:480px){body{padding:0;background:var(--desk)}.cap{display:none}.phone{width:100vw;
   height:100vh;border:0;border-radius:0;box-shadow:none}}

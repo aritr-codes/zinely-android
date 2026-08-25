@@ -333,7 +333,7 @@ private fun BenchIconButton(
                 },
             )
             .clip(BenchBarShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, BenchBarShape)
             .then(
                 if (enabled) {

@@ -79,9 +79,9 @@ public fun ReframeOverlay(
     //    it means the same thing: this is the edge you are working to."* So it is literally the ring's
     //    hand: [SelectionOutlineStrokeDp] and [SelectionOutlineDashDp], the same `1.6px dashed var(--ink)`
     //    declaration, read from the same constants rather than re-transcribed into a second pair.
-    //  * the **scrim** was `ZinelyTheme.colors.scrim` (V1). V2.1 declares no `--scrim` in its token block;
-    //    the prototypes declare one in their own sheets (`v21-bench.html:359`, `rgba(38,26,16,.44)`), now
-    //    hoisted to [ZinelyV21Scrim]. ⚠ Read it from *there* and not from `BenchGridScrimColor`, which is
+    //  * the **scrim** was `ZinelyTheme.colors.scrim` (V1). The 37596 palette derives one invariant wash
+    //    (`v21-bench.html:359`, `rgba(39,39,15,.44)`), hoisted to [ZinelyV21Scrim]. Read it from *there*
+    //    and not from `BenchGridScrimColor`, which is
     //    what this first did: that constant is documented as a **modal backdrop**, and this dim is a
     //    permanent crop dimmer that never animates to full. Same value, different job — so darkening the
     //    modal scrim must not silently change how much of the user's cropped-away photo stays visible.
@@ -94,11 +94,9 @@ public fun ReframeOverlay(
     val frameGround = colors.deskEdge
     // ⚠ The thirds lie **over the user's photograph**, and stay a hardcoded white on purpose.
     //
-    // This was briefly changed to follow `--paper`, on the reasoning that a token-derived guide keeps the
-    // room's voice in both themes. A review killed it and was right: the photograph does not change with
-    // the app's theme, so theming the guide adds a failure mode instead of removing one — in dark, `--paper`
-    // is #332B22 and the guide becomes a near-black line over an arbitrary image, invisible on anything but
-    // a bright photo, for no gain in light where it is indistinguishable from white anyway.
+    // This was briefly changed to follow a theme token, on the reasoning that a token-derived guide keeps
+    // the room's voice. A review killed it and was right: the photograph does not change with the app's
+    // theme, and no palette token can guarantee contrast over an arbitrary photograph.
     //
     // No token can promise a ratio over a photograph — the constraint [SelectionChrome] records for the
     // ring — and the repo already has one answer to that problem: [HandleHaloColor], a hardcoded

@@ -718,7 +718,7 @@ private fun ProofIconButton(
                 // top bar sits flatter than a control you press.
                 .zinelyV21HardShadow(2.dp, colors.inkLine, pill)
                 .clip(pill)
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(1.5.dp, colors.ink, pill),
             contentAlignment = Alignment.Center,
         ) {
@@ -881,7 +881,7 @@ private fun ProofBand(
                     }
                 }
                 .clip(card)
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(1.5.dp, colors.ink, card)
                 .padding(
                     start = ZinelyV21Dimens.gapMd,
@@ -1205,7 +1205,7 @@ private fun ProofBandButton(
             .zinelyV21HardShadow(if (pressed) press.pressed else press.rest, colors.inkLine, pill)
             .zinelyFocusRing(interactionSource, ZinelyV21Dimens.radiusPill)
             .clip(pill)
-            .background(if (hero) colors.leaf else colors.paper)
+            .background(if (hero) colors.leaf else colors.surface)
             .border(1.5.dp, colors.ink, pill)
             .clickable(
                 interactionSource = interactionSource,

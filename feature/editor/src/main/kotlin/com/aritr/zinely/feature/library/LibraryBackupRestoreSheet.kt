@@ -92,7 +92,7 @@ internal fun KeepSafeSheet(
                 .background(colors.leafTint)
                 .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),
             style = TextStyle(
-                color = colors.leafText,
+                color = colors.onLeaf,
                 fontFamily = ZinelyV21Fonts.Work,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 12.sp,
@@ -107,7 +107,7 @@ internal fun KeepSafeSheet(
                 body = Copy.LibraryBackup.SAVE_BODY,
                 glyph = "⤓",
                 tint = colors.butterTint,
-                glyphTint = colors.inkSoft,
+                glyphTint = colors.ink,
                 onClick = onSaveBackup,
                 focusRequester = firstActionFocus,
             )
@@ -118,7 +118,7 @@ internal fun KeepSafeSheet(
             body = if (canBackup) Copy.LibraryBackup.RESTORE_BODY else Copy.LibraryBackup.EMPTY_RESTORE_BODY,
             glyph = "↺",
             tint = colors.leafTint,
-            glyphTint = colors.leafText,
+            glyphTint = colors.onLeaf,
             onClick = onRestoreBackup,
             focusRequester = if (canBackup) null else firstActionFocus,
         )
@@ -197,7 +197,7 @@ private fun KeepSafeOption(
             Text(
                 text = label,
                 style = TextStyle(
-                    color = colors.ink,
+                    color = if (pressed) colors.onLeaf else colors.ink,
                     fontFamily = ZinelyV21Fonts.Work,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 16.sp,
@@ -207,7 +207,7 @@ private fun KeepSafeOption(
             Text(
                 text = body,
                 style = TextStyle(
-                    color = colors.inkSoft,
+                    color = if (pressed) colors.onLeaf else colors.inkSoft,
                     fontFamily = ZinelyV21Fonts.Work,
                     fontSize = 13.sp,
                     lineHeight = 18.sp,
@@ -249,7 +249,7 @@ private fun RunningSheet(mode: LibraryBackupRestoreMode, onCancel: () -> Unit) {
                 .align(Alignment.CenterHorizontally)
                 .size(width = 86.dp, height = 114.dp)
                 .clip(RoundedCornerShape(14.dp))
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(1.5.dp, colors.hair, RoundedCornerShape(14.dp))
                 .zinelySweep(),
         )
@@ -264,7 +264,7 @@ private fun RunningSheet(mode: LibraryBackupRestoreMode, onCancel: () -> Unit) {
                 .padding(top = ZinelyV21Dimens.gapSm),
             textAlign = TextAlign.Center,
             style = TextStyle(
-                color = colors.inkFaint,
+                color = colors.inkSoft,
                 fontFamily = ZinelyV21Fonts.Work,
                 fontSize = 12.sp,
                 lineHeight = ZinelyV21Fonts.InheritedLineHeight,
@@ -299,7 +299,7 @@ private fun SuccessSheet(
         sub = body,
         modifier = Modifier.testTag(testTag).verticalScroll(rememberScrollState()),
     ) {
-        Mark("✓", colors.paper, colors.leaf, colors.leafText)
+        Mark("✓", colors.paper, colors.leaf, colors.onLeaf)
         ZPrimaryButton(
             text = Copy.LibraryBackup.DONE,
             onClick = onDismiss,
@@ -358,7 +358,7 @@ private fun ErrorSheet(
             .verticalScroll(rememberScrollState()),
     ) {
         val colors = ZinelyTheme.v21Colors
-        Mark("!", colors.paper, colors.jam, colors.jam)
+        Mark("!", colors.paper, colors.jam, colors.onLeaf)
         val actionsModifier = Modifier
             .align(Alignment.CenterHorizontally)
             .padding(top = ZinelyV21Dimens.gapLg)

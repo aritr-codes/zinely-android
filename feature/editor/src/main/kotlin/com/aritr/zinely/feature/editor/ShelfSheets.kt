@@ -156,7 +156,7 @@ internal fun shelfPaperChoices(preferredPaper: PaperSize): List<PaperSize> =
  * ```css
  * .paperseg button{flex:1;font-family:var(--sans);font-size:.9rem;font-weight:600;
  *   padding:var(--gap-md) var(--gap-sm);border-radius:var(--br-md);border:1.5px solid var(--ink);
- *   background:var(--paper);color:var(--ink-soft);box-shadow:3px 3px 0 var(--ink-line)}
+ *   background:var(--surface);color:var(--ink-soft);box-shadow:3px 3px 0 var(--ink-line)}
  * .paperseg button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
  * ```
  *
@@ -201,7 +201,7 @@ private fun PaperChoice(paper: PaperSize, onClick: () -> Unit, modifier: Modifie
             .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, TileShape)
             .zinelyFocusRing(focused, ZinelyV21Dimens.radiusMd, ZinelyV21FocusOffsetLibrary)
             .clip(TileShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(TileBorder, colors.ink, TileShape)
             .clickable(
                 interactionSource = interaction,
@@ -222,7 +222,7 @@ private fun PaperChoice(paper: PaperSize, onClick: () -> Unit, modifier: Modifie
                     .testTag(homePaperStockTestTag(paper))
                     .zinelyV21HardShadow(StockShadow, colors.inkLine, StockShape)
                     .clip(StockShape)
-                    .background(colors.paper)
+                    .background(colors.surface)
                     .border(StockBorder, colors.ink, StockShape)
                     .size(width = paper.stockWidth, height = paper.stockHeight),
             )
@@ -437,11 +437,11 @@ private fun RenameField(
 /**
  * The field itself, in V2.1.
  *
- * **The corpus freezes exactly one text input**, the bench supply sheet's `.search`
- * (`v21-bench.html`), so that is the box:
+ * The bench supply sheet originally froze the corpus's text-input box as `.search`. The 37596 freeze
+ * removes that search surface, while this naming field keeps its established box grammar on themed chrome:
  *
  * ```css
- * .search{display:flex;align-items:center;gap:var(--gap-sm);background:var(--paper);
+ * .search{display:flex;align-items:center;gap:var(--gap-sm);background:var(--surface);
  *   border:1.5px solid var(--ink);border-radius:var(--br-pill);
  *   padding:var(--gap-sm) var(--gap-md);box-shadow:2px 2px 0 var(--ink-line)}
  * .search input{border:0;background:none;font-family:var(--sans);color:var(--ink)}
@@ -512,7 +512,7 @@ private fun RenameInput(
                     // this one would fight the language's single ink.
                     .zinelyFocusRing(focused, ZinelyV21Dimens.radiusPill, ZinelyV21FocusOffsetLibrary)
                     .clip(FieldShape)
-                    .background(colors.paper)
+                    .background(colors.surface)
                     .border(FieldBorder, colors.ink, FieldShape)
                     .defaultMinSize(minHeight = FieldMinHeight)
                     .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),

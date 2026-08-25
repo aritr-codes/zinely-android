@@ -165,17 +165,15 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
    ✱ marks a departure from the frozen V2 token contract.
    ========================================================================= */
 :root{
-  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#FBE9CE; --desk-edge:#E9D2AE;
-  --ink:#33261C; --ink-soft:#6E5947; --ink-faint:#A08B74;
-  --leaf:#4E7A3C; --leaf-text:#3E6330; --leaf-tint:#DCE8CE; --on-leaf:#FFF6E8;
-  --butter:#F6B22C; --butter-tint:#FDEBC4;
-  --berry:#E4879F; --berry-tint:#F8DCE2;
-  --jam:#CF4A28;            /* fills, the cut line, the delete affordance              */
-  --jam-text:#A63B20;       /* ✱ jam AS TEXT — AA-measured 2026-08-09, see V21-SPEC §4.1 */
-  --on-jam:#FFF6E8;         /* ✱ label on a jam-text ground (mirrors --on-leaf)          */
-  --hair:rgba(51,38,28,.16); --ink-line:#33261C;
-  --stage:#F2DEBC; --soft-shadow:rgba(74,54,34,.30); --contact:rgba(74,54,34,.20);
-  --bench:#EBD6B4;                    /* ✱ the worktop the page lies on */
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#E9E29B; --desk-edge:#BBCA6F; --bench:#E9E29B;
+  --surface:#F2CFBB; --surface-soft:#F1B4AF;
+  --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546;
+  --leaf:#8E9546; --leaf-text:#555A1B; --leaf-tint:#BBCA6F; --on-leaf:#27270F;
+  --butter:#E9E29B; --butter-tint:#F2CFBB;
+  --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#A9303D; --jam-text:#A9303D; --on-jam:#FFF9DB;
+  --hair:rgba(39,39,15,.16); --ink-line:#27270F;
+  --stage:#F2DEBC; --soft-shadow:rgba(39,39,15,.30); --contact:rgba(39,39,15,.20);
   --br-xs:4px; --br-sm:8px; --br-md:14px; --br-lg:22px; --br-xl:36px; --br-pill:999px;
   /* ✱ the spacing ladder — measured into the corpus 2026-08-09, see V21-SPEC.md §3.3 */
   --gap-hair:2px; --gap-xs:4px; --gap-sm:8px; --gap-md:12px;
@@ -187,22 +185,22 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --bench:#211B15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
+  --bench:#242312;
 }}
 :root[data-theme="dark"]{
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --bench:#211B15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
+  --bench:#242312;
 }
 :root[data-hard="off"]{--hard:0px}
 :root[data-tilt="off"] .thumb,:root[data-tilt="off"] .tile{--tt:0deg!important}
@@ -232,7 +230,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .status{flex:none;display:flex;align-items:center;justify-content:space-between;
   padding:var(--gap-lg) var(--gap-lg) var(--gap-xs);font-size:.7rem;font-weight:600;color:var(--ink-soft)}
 .saved{display:inline-flex;align-items:center;gap:var(--gap-xs);font-size:.68rem;font-weight:700;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--leaf-text);
+  letter-spacing:.09em;text-transform:uppercase;color:var(--on-leaf);
   background:var(--leaf-tint);border:1.5px solid var(--hair);border-radius:var(--br-pill);
   padding:var(--gap-xs) var(--gap-sm);transform:rotate(-1deg)}
 .saved svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:3;
@@ -288,7 +286,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    Appears BELOW the selection, never over it.  No offset shadow, no tilt, no
    tape: it is a tool, and tools do not perform. */
 .ctx{position:absolute;left:50%;bottom:12px;transform:translateX(-50%) translateY(8px);z-index:30;
-  display:flex;gap:var(--gap-hair);background:var(--paper);border:1.5px solid var(--ink);
+  display:flex;gap:var(--gap-hair);background:var(--surface);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);padding:var(--gap-xs);opacity:0;pointer-events:none;
   transition:opacity .16s,transform .16s cubic-bezier(.2,.7,.2,1)}
 .ctx.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
@@ -301,7 +299,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   stroke-linecap:round;stroke-linejoin:round}
 
 /* ===== ink: a tray of spot-ink pots ====================================== */
-.inkpop{position:absolute;left:12px;right:12px;bottom:12px;z-index:34;background:var(--paper);
+.inkpop{position:absolute;left:12px;right:12px;bottom:12px;z-index:34;background:var(--surface);
   border:1.5px solid var(--ink);border-radius:var(--br-lg);padding:var(--gap-md) var(--gap-md) var(--gap-lg);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line);
   opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .18s,transform .18s}
@@ -319,7 +317,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .pot.on::after{content:"";position:absolute;inset:-5px;border:1.6px dashed var(--ink);
   border-radius:var(--br-pill)}
 .presets{display:flex;gap:var(--gap-sm);flex-wrap:wrap}
-.preset{display:flex;align-items:center;gap:var(--gap-sm);background:var(--paper);border:1.5px solid var(--ink);
+.preset{display:flex;align-items:center;gap:var(--gap-sm);background:var(--surface);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md) var(--gap-xs) var(--gap-xs);cursor:pointer;font-size:.72rem;
   font-weight:600;color:var(--ink-soft);box-shadow:2px 2px 0 var(--ink-line)}
 .preset i{display:flex}
@@ -331,10 +329,10 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .kbstack{position:absolute;left:0;right:0;bottom:0;z-index:40;transform:translateY(102%);
   transition:transform .26s cubic-bezier(.05,.7,.1,1)}
 .kbstack.show{transform:none}
-.styletb{display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-md);background:var(--paper);
+.styletb{display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-md);background:var(--surface);
   border-top:1.5px solid var(--ink);border-bottom:1.5px dashed var(--hair)}
 .chip{font-family:var(--sans);font-size:.78rem;font-weight:600;color:var(--ink-soft);
-  background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-pill);
+  background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--br-pill);
   padding:var(--gap-sm) var(--gap-md);cursor:pointer;display:flex;align-items:center;gap:var(--gap-sm);
   box-shadow:2px 2px 0 var(--ink-line)}
 .chip:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -351,7 +349,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   padding:var(--gap-sm) var(--gap-lg);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
 .kb{background:var(--desk-edge);padding:var(--gap-sm) var(--gap-xs) var(--gap-lg);display:flex;flex-direction:column;gap:var(--gap-sm)}
 .kb .row{display:flex;gap:var(--gap-xs);justify-content:center}
-.kb .key{flex:1;max-width:34px;height:38px;background:var(--paper);border:1px solid var(--hair);
+.kb .key{flex:1;max-width:34px;height:38px;background:var(--surface);border:1px solid var(--hair);
   border-radius:var(--br-sm);display:grid;place-items:center;font-size:.8rem;font-weight:500;
   color:var(--ink-soft)}
 .kb .key.wide{max-width:none;flex:2.4}
@@ -366,7 +364,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .th b{font-family:var(--voice);font-weight:700;font-size:.9rem}
 .th span{font-size:.68rem;color:var(--ink-soft);font-weight:500}
 .fold{width:30px;height:30px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .fold svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
@@ -394,7 +392,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 /* ============================ pages + toolbar ============================= */
 .navrow{flex:none;display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-md) var(--gap-xs);background:var(--desk)}
 .gridbtn{flex:none;width:38px;height:38px;border-radius:var(--br-sm);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .gridbtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
 .filmstrip{flex:1;display:flex;gap:var(--gap-sm);overflow-x:auto;padding:var(--gap-hair) 0 var(--gap-xs);scrollbar-width:none}
@@ -407,7 +405,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .fpage.on{box-shadow:0 0 0 3px var(--berry)}
 .bar{flex:none;display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-lg) var(--gap-lg);background:var(--desk)}
 .icon-btn{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .icon-btn:disabled{opacity:.35;box-shadow:none;cursor:default}
 .icon-btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -423,10 +421,10 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
 /* ============================ overlays ==================================== */
-.scrim{position:absolute;inset:0;z-index:50;background:rgba(38,26,16,.44);opacity:0;
+.scrim{position:absolute;inset:0;z-index:50;background:rgba(39,39,15,.44);opacity:0;
   pointer-events:none;transition:opacity .22s}
 .scrim.show{opacity:1;pointer-events:auto}
-.sheet{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--paper);
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--surface);
   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
   transform:translateY(103%);transition:transform .3s cubic-bezier(.05,.7,.1,1);
   max-height:86%;overflow:auto;padding:0 var(--gap-lg) var(--gap-xl)}
@@ -435,7 +433,7 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
   margin:var(--gap-md) auto var(--gap-xs);opacity:.5}
 .sheet h3{font-family:var(--voice);font-weight:700;font-size:1.2rem;margin:var(--gap-xs) var(--gap-hair) var(--gap-md)}
 .supply{display:flex;flex-direction:column;gap:var(--gap-sm)}
-.opt{display:flex;align-items:center;gap:var(--gap-md);text-align:left;width:100%;background:var(--paper);
+.opt{display:flex;align-items:center;gap:var(--gap-md);text-align:left;width:100%;background:var(--surface);
   border:1.5px solid var(--ink);border-radius:var(--br-md);padding:var(--gap-md);cursor:pointer;
   box-shadow:3px 3px 0 var(--ink-line);font-family:var(--sans)}
 .opt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
@@ -460,10 +458,10 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
   color:var(--ink-soft);margin:var(--gap-md) 0 var(--gap-sm)}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap-sm)}
 .tile{position:relative;aspect-ratio:1;border-radius:var(--br-sm);border:1.5px solid var(--ink);
-  background:var(--leaf-tint);color:var(--leaf-text);cursor:pointer;display:grid;place-items:center;
+  background:var(--leaf-tint);color:var(--on-leaf);cursor:pointer;display:grid;place-items:center;
   transform:rotate(var(--tt,0deg));box-shadow:2px 2px 0 var(--ink-line);padding:0}
-.tile:nth-child(3n){--tt:-1.6deg;background:var(--berry-tint);color:var(--jam-text)}
-.tile:nth-child(4n){--tt:1.4deg;background:var(--butter-tint);color:var(--ink-soft)}
+.tile:nth-child(3n){--tt:-1.6deg;background:var(--berry-tint);color:var(--on-leaf)}
+.tile:nth-child(4n){--tt:1.4deg;background:var(--butter-tint);color:var(--ink)}
 .tile:active{transform:translate(2px,2px) rotate(var(--tt,0deg));box-shadow:0 0 0 var(--ink-line)}
 /* AMENDED 2026-08-20 (AMENDMENT LOG A7, owner ruling on D-093).  Was
    `fill:none;stroke:currentColor;stroke-width:1.7`.  That is what drew sixteen HOLLOW tiles for a
@@ -481,14 +479,14 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
   color:var(--ink-soft);opacity:.55}
 .fav{position:absolute;top:2px;right:4px;font-size:.72rem;color:var(--ink-soft);cursor:pointer}
 /* ✱ butter is the FILL; the ink outline carries the state, so §3.2 holds and the
-   shape clears 1.4.11 in light theme (butter alone on paper is 1.73:1). */
+   shape clears 1.4.11 in light theme (37596 butter alone on paper is 1.24:1). */
 .fav.on{color:var(--butter);-webkit-text-stroke:.7px var(--ink);paint-order:stroke fill}
 /* REMOVED 2026-08-15 (ADR-104): .online / .toggle / .disclosure / .onresults / .priv styled the
    online opt-in panel, its switch, its privacy disclosure and its results grid.  Deleted with the
    markup rather than left behind -- a spec that still styles a removed control has not removed it,
    and the next implementer would reasonably read dead CSS as an unimplemented requirement. */
 
-.pgrid{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--paper);
+.pgrid{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--surface);
   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
   transform:translateY(103%);transition:transform .3s cubic-bezier(.05,.7,.1,1);
   max-height:78%;overflow:auto;padding:0 var(--gap-lg) var(--gap-xl)}
@@ -500,14 +498,14 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
    amendment: every token .pgc paints with takes its light value in both themes, so a card reads as
    paper on any desk.  --ink-line is restated too because the hard shadow falls on the CARD's own
    plane here, unlike the sheet's, which falls on the bench and must follow the room. */
-.pgc{--paper:#FFF6E8;--ink:#33261C;--ink-soft:#6E5947;--ink-line:#33261C;
-  --leaf-tint:#DCE8CE;--leaf-text:#3E6330;
+.pgc{--paper:#FFF6E8;--ink:#27270F;--ink-soft:#6A452F;--ink-line:#27270F;
+  --leaf-tint:#BBCA6F;--on-leaf:#27270F;
   aspect-ratio:3/4;border-radius:var(--br-sm);background:var(--paper);border:1.5px solid var(--ink);
   cursor:pointer;display:grid;place-items:center;font-size:.72rem;font-weight:700;color:var(--ink-soft);
   box-shadow:3px 3px 0 var(--ink-line);font-variant-numeric:tabular-nums}
-.pgc.on{background:var(--leaf-tint);color:var(--leaf-text)}
+.pgc.on{background:var(--leaf-tint);color:var(--on-leaf)}
 .dclose{width:34px;height:34px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .dclose svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 
@@ -518,16 +516,14 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
      This comment used to claim it was the ONE such case in the corpus.  It was not:
      a review found two more.  The Proof's .flash is the same toast pattern and is now
      resolved identically; .chip .sw below is benign and says why. */
-  gap:var(--gap-md);background:var(--ink);color:var(--paper);border:1.5px solid var(--ink-line);
+  gap:var(--gap-md);background:var(--surface-soft);color:var(--ink);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg);font-size:.79rem;
   opacity:0;transform:translateY(8px) rotate(-.6deg);pointer-events:none;
   transition:opacity .18s,transform .18s}
 .snack.show{opacity:1;transform:rotate(-.6deg);pointer-events:auto}
 .snack span{flex:1}
-/* ✱ Undo was butter — 7.89:1 in light but 1.59:1 in dark, where the ink ground turns
-   cream.  It is now the snackbar's own paper colour, underlined so it still reads as
-   the action.  V21-SPEC §3.2's single butter exception is retired, not lived with. */
-.snack button{font-family:var(--sans);font-size:.78rem;font-weight:700;color:var(--paper);
+/* The action shares the support scrap's ordinary ink and stays underlined. */
+.snack button{font-family:var(--sans);font-size:.78rem;font-weight:700;color:var(--ink);
   text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;
   background:none;border:0;border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md);cursor:pointer}
 
@@ -536,7 +532,7 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 .state{font-family:var(--voice);font-weight:700;font-size:1rem}
 .hint{font-size:.8rem;color:var(--ink-soft);margin-top:var(--gap-hair)}
 .controls{display:flex;flex-wrap:wrap;gap:var(--gap-sm);justify-content:center;max-width:680px}
-.ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--paper);color:var(--ink);
+.ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--surface);color:var(--ink);
   border:1.5px solid var(--ink);border-radius:var(--br-pill);padding:var(--gap-sm) var(--gap-md);cursor:pointer;
   box-shadow:2px 2px 0 var(--ink-line)}
 .ctl:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink-line)}
@@ -1008,9 +1004,9 @@ addEventListener('keydown',e=>{
      other on-states were considered and rejected by their own stated rules: `--butter-tint` is what
      `.ctx button:hover` already spends and V21-SPEC §3.2 forbids butter as a state at all (butter is
      material); `.fpage.on`'s berry ring is A2's *current-page* assignment, a different question; and
-     `.pgc.on`'s `leaf-tint` ground measures #333B27 against a #332B22 dark paper — the same defect
-     ADR-100 §4 booked against `butterTint`, an on-state you cannot see.  `leaf`/`on-leaf` is legible in
-     both themes because both halves flip.
+     `.pgc.on` now uses the lit `--leaf-tint` ground with lit `--on-leaf`; the pair remains legible on
+     either room because the card represents paper and does not theme. `leaf`/`on-leaf` remains the
+     corresponding themed action pair elsewhere.
 
      A new selector cannot be added in place without shifting citations, so like A1 it lives in the
      trailing <style>, where the cascade gives it the last word over `.ctx button:hover` (equal

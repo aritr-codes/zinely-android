@@ -103,7 +103,7 @@ class TypeBarGoldenTest {
                 Box(
                     modifier = Modifier
                         .testTag(HOST_TAG)
-                        .background(ZinelyTheme.colors.desk)
+                        .background(ZinelyTheme.v21Colors.desk)
                         .padding(12.dp),
                 ) {
                     TypeBar(element = element, dispatch = {}, onAnnounce = {}, onPreview = {})
@@ -197,11 +197,11 @@ class TypeBarGoldenTest {
             "the teal ink swatch did not paint in the light Type bar",
             bmp.countColour(Color(0xFF2A9D8F).toArgb()) > 200,
         )
-        // The light desk (#E7DECE) must be the ground the card floats on — the same non-vacuity floor the
+        // The light 37596 room (#E9E29B) must be the ground the card floats on.
         // dark case asserts.
         assertTrue(
             "the light desk did not paint behind the Type bar",
-            bmp.countColour(Color(0xFFE7DECE).toArgb()) > 200,
+            bmp.countColour(Color(0xFFE9E29B).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/type_bar_light.png", aa())
     }
@@ -216,10 +216,10 @@ class TypeBarGoldenTest {
             "the teal ink swatch did not paint in the dark Type bar",
             bmp.countColour(Color(0xFF2A9D8F).toArgb()) > 200,
         )
-        // Dark desk (#201F1E) must be the ground the card floats on.
+        // Dark room (#242312) must be the ground the card floats on.
         assertTrue(
             "the dark desk did not paint behind the Type bar",
-            bmp.countColour(Color(0xFF201F1E).toArgb()) > 200,
+            bmp.countColour(Color(0xFF242312).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/type_bar_dark.png", aa())
     }
@@ -240,7 +240,7 @@ class TypeBarGoldenTest {
         showCard(darkTheme = false, element = MinSizeText)
         // V2.1 `--ink`, light (`v21-typebar.html` `.tysize button{border:1.5px solid var(--ink)}`). Was
         // V1's `--field-edge` #DED4C2, a token V2.1 does not define.
-        val unfadedEdge = Color(0xFF33261C).toArgb()
+        val unfadedEdge = Color(0xFF27270F).toArgb()
 
         // Non-vacuity: at the ramp floor "Larger" is still enabled, so the edge IS on screen — proving the
         // crop and the colour are right before the disabled case asserts an absence.

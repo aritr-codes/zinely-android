@@ -367,7 +367,7 @@ internal fun BenchContextBar(
                     // why. Nothing that clips needs to sit right of anything here, because there is nothing
                     // painting outside the node to protect.
                     .clip(BenchContextBarShape)
-                    .background(colors.paper)
+                    .background(colors.surface)
                     .border(BenchChromeBorder, colors.ink, BenchContextBarShape)
                     .padding(BenchContextBarPaddingDp),
                 horizontalArrangement = Arrangement.spacedBy(BenchContextBarGapDp),

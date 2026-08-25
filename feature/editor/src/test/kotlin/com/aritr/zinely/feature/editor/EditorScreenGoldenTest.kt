@@ -274,30 +274,42 @@ class EditorScreenGoldenTest {
         // property of the test rather than of the fixture. Jam is dark in the middle channel
         // (mixed ≈ 211/91/59, so g sits well below the r–b midpoint); butter is bright there (≈ 250/185/73,
         // g above it). The midpoint separates them by a wide margin in both directions.
-        var cue: Int? = null
-        var cueScore = 0
         val histogram = mutableMapOf<Int, Int>()
         for (y in sheet.top.toInt() + 2 until sheet.bottom.toInt() - 2) {
             for (x in sheet.left.toInt() + 2 until sheet.right.toInt() - 2) {
                 val p = raster.getPixel(x, y)
-                val r = Color.red(p)
-                val g = Color.green(p)
-                val b = Color.blue(p)
-                val score = r - b
-                if (r > g && g > b && g * 2 < r + b && score > cueScore) { cueScore = score; cue = p }
                 histogram[p] = (histogram[p] ?: 0) + 1
             }
         }
-        val cuePx = requireNotNull(cue) { "no jam-hued pixel on the sheet — the keep-clear warning did not draw at all" }
         // Paper is whatever most of the sheet is: the marks are strokes and the text is one small box, so
         // the mode is the washed paper itself — measured in this raster, so the grain divides back out.
         val paperPx = histogram.maxByOrNull { it.value }!!.key
 
-        // implied alpha per channel, against jam #CF4A28 resolved through the island (light in both themes).
+        // implied alpha per channel, against the 37596 consequence ink resolved through the lit island.
         val channel = listOf(Color::red, Color::green, Color::blue)
-        val jam = listOf(0xCF, 0x4A, 0x28)
+        val jam = listOf(0xA9, 0x30, 0x3D)
+        val expectedCue = jam.mapIndexed { i, value ->
+            (value * BenchStudio.KEEP_CLEAR_WARN_ALPHA + channel[i](paperPx) * (1f - BenchStudio.KEEP_CLEAR_WARN_ALPHA))
+                .toInt()
+        }
+        var cuePx: Int? = null
+        var cueDistance = Int.MAX_VALUE
+        histogram.keys.forEach { pixel ->
+            val distance = channel.indices.sumOf { i ->
+                val delta = channel[i](pixel) - expectedCue[i]
+                delta * delta
+            }
+            if (distance < cueDistance) {
+                cueDistance = distance
+                cuePx = pixel
+            }
+        }
+        require(cueDistance < 2_500) {
+            "no keep-clear jam stroke was found near its expected composite; nearest squared distance=$cueDistance"
+        }
+        val resolvedCue = requireNotNull(cuePx)
         val alphas = channel.mapIndexed { i, read ->
-            (read(paperPx) - read(cuePx)).toFloat() / (read(paperPx) - jam[i]).toFloat()
+            (read(paperPx) - read(resolvedCue)).toFloat() / (read(paperPx) - jam[i]).toFloat()
         }
         val implied = alphas.average()
         // A **band**, not a floor. A one-sided `>` catches the wash and nothing else: it would pass just as

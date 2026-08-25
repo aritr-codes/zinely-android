@@ -232,7 +232,7 @@ internal fun BenchStyleRow(
                     // is how a raster probe aimed at the top rule ended up reading the chips instead and
                     // reported a deleted rule as present.
                     .testTag(BenchStyleRowTestTag)
-                    .background(colors.paper)
+                    .background(colors.surface)
                     .benchStyleRowRules(solid = colors.ink, dashed = colors.hair)
                     .padding(horizontal = BenchStyleRowPaddingH, vertical = BenchStyleRowPaddingV),
                 horizontalArrangement = Arrangement.spacedBy(BenchStyleRowGap),
@@ -291,7 +291,7 @@ private fun InertChip(label: String, because: String, swatch: Color? = null) {
     Row(
         modifier = Modifier
             .clip(BenchStyleChipShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(
                 BenchStyleRule,
                 colors.ink.copy(alpha = ZinelyV21Dimens.disabledAlpha),

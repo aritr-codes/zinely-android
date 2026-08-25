@@ -74,17 +74,15 @@ import com.aritr.zinely.ui.theme.ZinelyV21Colors
  * **Light is byte-identical** — these are the light tokens' own values, so the amendment can only be
  * seen at night, which is the only place the defect was.
  *
- * The four ink stocks keep theming, deliberately. They are legible in both themes (the dark set is the
- * lighter, more saturated cut), and a shelf of six invariant covers on a dark desk would be a wall of
- * light. The rule this file now follows: **a cover's stock is paper and does not theme; a cover's ink
- * is chosen from the palette and the palette adapts.**
+ * All six maker-stock fills are pinned to the established cover recipe. They are saved visual identity,
+ * not app chrome, so changing the room theme or future studio palette must not repaint an existing zine.
+ * The four ink stocks remain saturated objects against both rooms; the two paper stocks remain lit.
  */
 internal fun ZineCoverSurface.v21Fill(colors: ZinelyV21Colors): Color = when (this) {
-    ZineCoverSurface.MatchaInk -> colors.leaf
-    ZineCoverSurface.StrawberryInk -> colors.berry
-    ZineCoverSurface.OchreInk -> colors.butter
-    // No V2.1 ink is teal. Jam is what is left, and it is the only ink not already spoken for.
-    ZineCoverSurface.TealInk -> colors.jam
+    ZineCoverSurface.MatchaInk -> ZineV21CoverLeaf
+    ZineCoverSurface.StrawberryInk -> ZineV21CoverBerry
+    ZineCoverSurface.OchreInk -> ZineV21CoverButter
+    ZineCoverSurface.TealInk -> ZineV21CoverJam
     ZineCoverSurface.PaperMatchaBand -> ZineV21StockCream
     ZineCoverSurface.PaperStrawberryBand -> ZineV21StockPaper
 }
@@ -104,13 +102,13 @@ internal fun ZineCoverSurface.v21MarkInk(colors: ZinelyV21Colors): Color = when 
 }
 
 /**
- * `.cover{border:1.5px solid var(--ink)}` — themed, except on the two stocks that no longer theme.
+ * `.cover{border:1.5px solid var(--ink)}` — pinned with every authored cover stock.
  *
- * `--ink` is `#F6EAD6` in dark, which is the cream the paper stocks now *are*: an outline at **1.01:1**
+ * The old dark `--ink` was `#F6EAD6`, which was the cream the paper stocks already were: an outline at **1.01:1**
  * on `.paper-c`'s `#FDEBC4` and **1.11:1** on `.paper-s`'s `#FFF6E8` is no outline. (Both figures read
  * `1.03` here until a review recomputed them; neither was ever measured.)
  * The border is part of the printed object wherever the fill is, so
- * it is pinned with it. The four ink covers keep the themed border, where it still contrasts.
+ * it is pinned with it. The four ink covers are equally physical and keep their authored border.
  */
 internal fun ZineCoverSurface.v21BorderInk(colors: ZinelyV21Colors): Color = when (this) {
     ZineCoverSurface.PaperMatchaBand, ZineCoverSurface.PaperStrawberryBand -> ZineV21StockEdge
@@ -118,6 +116,10 @@ internal fun ZineCoverSurface.v21BorderInk(colors: ZinelyV21Colors): Color = whe
 }
 
 private val ZineV21MarkOnInk = Color(0xEBFFF6E8)
+private val ZineV21CoverLeaf = Color(0xFF4E7A3C)
+private val ZineV21CoverBerry = Color(0xFFE4879F)
+private val ZineV21CoverButter = Color(0xFFF6B22C)
+private val ZineV21CoverJam = Color(0xFFCF4A28)
 
 /** The light `--paper` / `--butter-tint` / `--ink-soft` / `--ink`, pinned. See [v21Fill]. */
 private val ZineV21StockPaper = Color(0xFFFFF6E8)

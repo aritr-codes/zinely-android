@@ -74,7 +74,7 @@ class BenchContextBarTest {
         val BACKDROP = Color(0xFF102030)
     }
 
-    private var paperArgb: Int = 0
+    private var surfaceArgb: Int = 0
     private var inkArgb: Int = 0
     private var jamTextArgb: Int = 0
     private var inkSoftArgb: Int = 0
@@ -85,7 +85,7 @@ class BenchContextBarTest {
             ZinelyTheme {
                 val base = LocalDensity.current
                 CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
-                    paperArgb = ZinelyTheme.v21Colors.paper.toArgb()
+                    surfaceArgb = ZinelyTheme.v21Colors.surface.toArgb()
                     inkArgb = ZinelyTheme.v21Colors.ink.toArgb()
                     jamTextArgb = ZinelyTheme.v21Colors.jamText.toArgb()
                     inkSoftArgb = ZinelyTheme.v21Colors.inkSoft.toArgb()
@@ -192,11 +192,11 @@ class BenchContextBarTest {
         val on = groundOf(bmp, Copy.BenchVerbs.COPIER)
         assertTrue(
             "a Copier that is on sits on leaf, not on the card's paper",
-            dist(on, leafArgb) < dist(on, paperArgb),
+            dist(on, leafArgb) < dist(on, surfaceArgb),
         )
         // The neighbours must not gain the ground with it — a bar that fills every verb says nothing.
         val reframe = groundOf(bmp, Copy.BenchVerbs.REFRAME)
-        assertTrue("Reframe is not a toggle and keeps paper", dist(reframe, paperArgb) < dist(reframe, leafArgb))
+        assertTrue("Reframe is not a toggle and keeps the tool surface", dist(reframe, surfaceArgb) < dist(reframe, leafArgb))
     }
 
     /** The other half of the pair — [host] may set content only once, so the off state is its own test. */
@@ -206,7 +206,7 @@ class BenchContextBarTest {
         val off = groundOf(hostBitmap(), Copy.BenchVerbs.COPIER)
         assertTrue(
             "an off Copier draws no ground of its own",
-            dist(off, paperArgb) < dist(off, leafArgb),
+            dist(off, surfaceArgb) < dist(off, leafArgb),
         )
     }
 
@@ -465,8 +465,8 @@ class BenchContextBarTest {
         // while sitting comfortably inside the smaller arc V2 drew. Written as a fraction of the measured
         // radius rather than as a pixel count, so it does not encode this raster's density.
         val a = (r * 0.22f).toInt()
-        assertNotEquals("the corner is cut by the pill radius", paperArgb, bmp.getPixel(left + a, top + a))
-        assertEquals("past the arc, the top edge is the bar's fill", paperArgb, bmp.getPixel(left + r + 6, top + 5))
+        assertNotEquals("the corner is cut by the pill radius", surfaceArgb, bmp.getPixel(left + a, top + a))
+        assertEquals("past the arc, the top edge is the bar's fill", surfaceArgb, bmp.getPixel(left + r + 6, top + 5))
     }
 
     @Test
@@ -573,10 +573,10 @@ class BenchContextBarTest {
         assertNotEquals("Font is dimmed; Edit is not", edit, font)
         // .35 alpha over `paper` lands between the two, and much nearer paper than full inkSoft.
         assertTrue("the dimmed glyph is lighter than the live one", luma(font) > luma(edit))
-        assertTrue("…and still darker than the paper it sits on", luma(font) < luma(paperArgb))
+        assertTrue("…and still darker than the surface it sits on", luma(font) < luma(surfaceArgb))
         assertTrue(
             "the dim is the frozen .35, not an arbitrary fade",
-            dist(font, inkSoftArgb) > dist(font, paperArgb),
+            dist(font, inkSoftArgb) > dist(font, surfaceArgb),
         )
     }
 
@@ -593,7 +593,7 @@ class BenchContextBarTest {
         val y = ((barB.top + barB.bottom) / 2f - hostB.top).toInt()
         assertTrue(
             "the bar's edge is ink, not its own paper fill",
-            dist(bmp.getPixel(x, y), inkArgb) < dist(bmp.getPixel(x, y), paperArgb),
+            dist(bmp.getPixel(x, y), inkArgb) < dist(bmp.getPixel(x, y), surfaceArgb),
         )
     }
 

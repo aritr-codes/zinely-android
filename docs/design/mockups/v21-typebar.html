@@ -69,17 +69,15 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
    ✱ marks a departure from the frozen V2 token contract.
    ========================================================================= */
 :root{
-  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#FBE9CE; --desk-edge:#E9D2AE;
-  --ink:#33261C; --ink-soft:#6E5947; --ink-faint:#A08B74;
-  --leaf:#4E7A3C; --leaf-text:#3E6330; --leaf-tint:#DCE8CE; --on-leaf:#FFF6E8;
-  --butter:#F6B22C; --butter-tint:#FDEBC4;
-  --berry:#E4879F; --berry-tint:#F8DCE2;
-  --jam:#CF4A28;            /* fills, the cut line, the delete affordance              */
-  --jam-text:#A63B20;       /* ✱ jam AS TEXT — AA-measured 2026-08-09, see V21-SPEC §4.1 */
-  --on-jam:#FFF6E8;         /* ✱ label on a jam-text ground (mirrors --on-leaf)          */
-  --hair:rgba(51,38,28,.16); --ink-line:#33261C;
-  --stage:#F2DEBC; --soft-shadow:rgba(74,54,34,.30); --contact:rgba(74,54,34,.20);
-  --bench:#EBD6B4;                    /* ✱ the worktop the page lies on */
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#E9E29B; --desk-edge:#BBCA6F; --bench:#E9E29B;
+  --surface:#F2CFBB; --surface-soft:#F1B4AF;
+  --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546;
+  --leaf:#8E9546; --leaf-text:#555A1B; --leaf-tint:#BBCA6F; --on-leaf:#27270F;
+  --butter:#E9E29B; --butter-tint:#F2CFBB;
+  --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#A9303D; --jam-text:#A9303D; --on-jam:#FFF9DB;
+  --hair:rgba(39,39,15,.16); --ink-line:#27270F;
+  --stage:#F2DEBC; --soft-shadow:rgba(39,39,15,.30); --contact:rgba(39,39,15,.20);
   --br-xs:4px; --br-sm:8px; --br-md:14px; --br-lg:22px; --br-xl:36px; --br-pill:999px;
   /* ✱ the spacing ladder — measured into the corpus 2026-08-09, see V21-SPEC.md §3.3 */
   --gap-hair:2px; --gap-xs:4px; --gap-sm:8px; --gap-md:12px;
@@ -91,22 +89,20 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --bench:#211B15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
 }}
 :root[data-theme="dark"]{
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --bench:#211B15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
 }
 :root[data-hard="off"]{--hard:0px}
 :root[data-tilt="off"] .thumb,:root[data-tilt="off"] .tile{--tt:0deg!important}
@@ -176,7 +172,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 
 /* THE CARD IS `.inkpop`'s CARD.  Same app, same canvas, same job: a floating tray of
    controls that belongs to the element that summoned it, standing where `.inkpop` and
-   `.ctx` stand.  --paper ground, 1.5px --ink edge, --br-lg, and the 4px --hard offset
+   `.ctx` stand.  --surface ground, 1.5px --ink edge, --br-lg, and the 4px --hard offset
    shadow the corpus gives a card that has left the surface.  V1 asked for a `--menu`
    ground, a `--fieldEdge` hairline and `shadowElevation = 6dp`: one ground V2.1 does
    not define, and a soft blur in a language whose shadows are all flat and offset.
@@ -208,7 +204,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .typebar{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--gap-md) + 74px);
   z-index:34;width:max-content;max-width:calc(100% - 24px);
   display:flex;flex-direction:column;align-items:stretch;gap:var(--gap-md);
-  background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-lg);
+  background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--br-lg);
   padding:var(--gap-md) var(--gap-lg);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line)}
 /* the same card, shown loose on the page so a state can be examined without a phone
@@ -246,7 +242,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    comes with it. */
 .tysize{display:flex;align-items:center;gap:var(--gap-sm)}
 .tysize button{width:40px;height:40px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;padding:0;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;padding:0;
   box-shadow:2px 2px 0 var(--ink-line)}
 .tysize button:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 .tysize button:disabled{opacity:.35;box-shadow:none;cursor:default}
@@ -262,7 +258,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    NOT a joined segmented control any more.  V1 drew one box with hairline dividers and
    filled the chosen third with coral under white.  V2.1 has no joined segment anywhere
    and no coral at all; what it has for "one choice of N, spelled out in words" is the
-   Proof's `.paperseg` — separate --paper buttons on a --gap-sm gap, the chosen one
+   Proof's `.paperseg` — separate --surface buttons on a --gap-sm gap, the chosen one
    --leaf under --on-leaf.  Same three options, same three words, same radio semantics.
    `.paperseg` rests at 3px (a drawer control); everything inside this card rests at 2px
    and presses flush, which is the Flat tier the Reframe pad's buttons carry.  Depth is
@@ -271,12 +267,12 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .tyalign button{font-family:var(--sans);font-size:.78rem;font-weight:600;
   min-width:46px;min-height:46px;padding:var(--gap-sm) var(--gap-md);
   border-radius:var(--br-md);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
 .tyalign button[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
 .tyalign button:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 
 /* ---- Style: two independent toggles --------------------------------------
-   The corpus's two-state control is `.chip2`: --paper/--ink-soft at rest, --leaf/--on-leaf
+   The corpus's two-state control is `.chip2`: --surface/--ink-soft at rest, --leaf/--on-leaf
    when on.  That rule is taken exactly.  What is NOT taken is `.chip2`'s pill geometry —
    these two keep the frozen 46px box, because it is one of the two things the row's shared
    right edge is measured from, and a re-skin does not move measurements.  So this selector
@@ -293,7 +289,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .tytog{display:flex;gap:var(--gap-sm)}
 .tytog button{font-family:var(--sans);font-size:1.05rem;min-width:46px;min-height:46px;
   border-radius:var(--br-md);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;padding:0;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;padding:0;
   box-shadow:2px 2px 0 var(--ink-line)}
 .tytog button[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
 .tytog button:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -313,7 +309,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    pot's fill is the paper-space RGBA `TextInk` commits — printed ink, theme-independent
    by ADR-055 Decision 6, and it must not resolve through a themed token or a zine styled
    at night would print differently from one styled at noon.  The 1.5px --ink ring is what
-   separates any fill from the card's --paper ground whatever the fill becomes, which is
+   separates any fill from the card's --surface ground whatever the fill becomes, which is
    the reasoning `v21-bench.html:274-278` already records for `.chip .sw`.  V1 painted the
    Coral swatch through `ZinelyTheme.colors.coralText` — a themed lookup, on the one
    control whose whole contract is that it is not themed.
@@ -360,7 +356,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .bar{flex:none;display:flex;align-items:center;gap:var(--gap-sm);
   padding:var(--gap-sm) var(--gap-lg) var(--gap-lg);background:var(--desk)}
 .icon-btn{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .icon-btn:disabled{opacity:.35;box-shadow:none;cursor:default}
 .icon-btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -664,11 +660,11 @@ is <code>--leaf</code> under <code>--on-leaf</code>, which does. Separately, the
 painted through the themed <code>coralText</code> lookup on the one control that must not theme; it now
 draws its committed value like the other four.
 <br><b>2. The card joins the corpus.</b> <code>--menu</code> ground, <code>--fieldEdge</code> hairline and a
-6&nbsp;dp soft elevation became <code>.inkpop</code>'s card: <code>--paper</code>, a 1.5&nbsp;px
+6&nbsp;dp soft elevation became <code>.inkpop</code>'s card: <code>--surface</code>, a 1.5&nbsp;px
 <code>--ink</code> edge, <code>--br-lg</code>, and the flat 4&nbsp;px offset shadow. V2.1 has no blurred
 shadow anywhere; a soft one is a V1 tell as reliable as coral.
-<br><b>3. Every <code>--field</code> fill became <code>--paper</code>.</b> The controls inside a paper card
-are paper, separated by their ink edges — the corpus's one mechanism for separating a control from its
+<br><b>3. Every <code>--field</code> fill became <code>--surface</code>.</b> The controls inside a chrome card
+share its themed surface, separated by their ink edges — the corpus's mechanism for separating a control from its
 ground, and the reason it needs no second fill token.
 <br><b>4. The joined segment became <code>.paperseg</code>.</b> Three separate buttons on a gap, because
 that is what V2.1 has for a spelled-out choice of N and it costs one rule instead of two plus a divider.
@@ -743,27 +739,15 @@ to exactly 360; measured, they blow it past.
 <br><b>What is now owed is a ruling, not a ruler.</b> The Colour row must wrap, scroll, or stop pinning its
 swatches to a fixed 48&nbsp;dp at large font scales — and each of those is a design choice this file has to
 make before it can be frozen.
-<br>A third item stood here — the five ink fills against the dark <code>--paper</code> — filed as needing a
-device. It needed arithmetic instead, and the arithmetic is below.</p>
+<br>A third item stood here — the five physical ink fills against dark chrome. The ruling below keeps
+the swatches physical while moving their surrounding card to themed <code>--surface</code>.</p>
 
-<p class="cap"><b>The five ink fills on a dark card — measured, not pending.</b>
-The corpus has AA measurements for <code>--on-leaf</code> on <code>--leaf</code> at <code>.9rem</code>
-(<code>.paperseg</code>) and <code>.76rem</code> (<code>.chip2</code>); this file uses <code>.78rem</code>,
-inside that range, so the chosen state's <i>type</i> is covered. The <i>fills</i> were not measured anywhere,
-so they were measured here, against the room's dark <code>--paper</code> #332B22 — the right ground, because
-this card floats on the <b>bench</b> and not inside the sheet island (<a href="../../DECISIONS.md#adr-102-island-v21">ADR-102 §12.1</a>),
-which is what keeps page text on light paper in both themes and is why this is a swatch question and never a
-text-legibility one:
-<br><code>--pen-ink</code> #23201C <b>1.17:1</b> &middot; <code>--pen-blue</code> #264653 <b>1.38:1</b> &middot;
-<code>--pen-coral</code> #A63C22 <b>2.18:1</b> &middot; <code>--pen-ochre</code> #7A5E12 <b>2.28:1</b> &middot;
-<code>--pen-teal</code> #2A9D8F <b>4.19:1</b>.
-<br>So on a dark card the default ink's pot is very nearly the card itself. <b>It is already answered, in
-part, and by the rule this file transcribed rather than by a new one:</b> the <code>1.5px --ink</code> ring
-is high-contrast against both the fill and the ground in either theme, which is exactly the reasoning
-<code>v21-bench.html:274-278</code> records for <code>.chip .sw</code>. What the ring guarantees is that
-every pot is <i>found</i>; what it does not guarantee is that two dark pots are told <i>apart</i> by fill —
-and 1.17 against 1.38 is the pair that tests it. The values themselves cannot move (ADR-055 D6). So if this
-reads as a defect the answer is a treatment, and a treatment is a design decision the owner makes.</p>
+<p class="cap"><b>The five ink fills stay physical on a chrome card.</b>
+The card is themed <code>--surface</code>, not physical <code>--paper</code>, so its labels and controls stay
+readable in both rooms. The swatches remain the exact paper-space colours the document stores (ADR-055 D6).
+Their fill is not text or the sole state signal: each pot has an ink edge, a name, and the selected pot has
+the corpus's dashed ring. The ring guarantees every pot is found; the label and selection treatment tell
+the choices apart without changing what any ink will print.</p>
 
 <p class="cap"><b>Two questions this file does not answer, because they are the owner's.</b>
 <br><b>1. How the panel closes.</b> On the V2.1 Bench, <code>Size</code> on the context bar opens it — and

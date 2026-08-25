@@ -291,7 +291,7 @@ private fun BenchAddOption(
             // purpose. The sheet's own bottom padding is what gives the shadow room to land.
             .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, colors.inkLine, BenchOptShape)
             .clip(BenchOptShape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchOptBorder, colors.ink, BenchOptShape)
             .clickable(interactionSource = interaction, indication = null, onClick = choose)
             .testTag(testTag)

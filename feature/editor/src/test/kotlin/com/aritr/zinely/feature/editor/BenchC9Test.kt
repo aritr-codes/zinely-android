@@ -557,16 +557,15 @@ class BenchC9Test {
             // ⚠ **AMENDED AGAIN by ADR-102 P5 — the card is LIT, and the two themes are now one number.**
             // Everything above this line is the V2 card's history and is kept because it is the record of
             // three wrong models and one device measurement. What it describes no longer exists: the
-            // V2.1 `.pgc` restates six on-paper tokens (`v21-bench.html:456-457`,
-            // [benchGridCardIsland]), so *whatever room the app is in* the number is `#6E5947` on
-            // `#FFF6E8` — **6.78:1** — and the frozen size is 11.52sp bold rather than 9sp. Two defects
+            // V2.1 `.pgc` restates its on-paper tokens (`v21-bench.html`, [benchGridCardIsland]), so
+            // *whatever room the app is in* the number is the amended lit `inkSoft` (`#6A452F`) on
+            // `#FFF6E8` — safely above AA — and the frozen size is 11.52sp bold rather than 9sp. Two defects
             // closed from opposite ends: the token by the 2026-08-12 AA fix, the ground and the size by
             // the freeze.
             //
-            // The room's own `inkSoft`/`paper` pairing is still asserted, unchanged, because the page
-            // itself and every other chrome badge still draw it. The card's pairing is asserted *beside*
-            // it, from the island, so a regression that un-lit the card fails here rather than passing on
-            // the room's arithmetic.
+            // The card pairing is asserted from the physical island, separately from themed chrome. That
+            // separation matters: a regression that un-lit the card must fail here rather than passing on
+            // the room's surface arithmetic.
             val ratio = contrastRatio(c.inkSoft, c.paper)
             assertTrue(
                 "$theme cell badge on the cell's paper: ${"%.3f".format(ratio)}:1 " +
@@ -596,6 +595,11 @@ class BenchC9Test {
                 "the lit card's number $where measures ${"%.3f".format(lit)}:1, below 1.4.3 AA's 4.5:1",
                 lit >= 4.5f,
             )
+            val current = contrastRatio(card.onLeaf, card.leafTint)
+            assertTrue(
+                "the lit current-page number $where measures ${"%.3f".format(current)}:1, below AA",
+                current >= 4.5f,
+            )
         }
 
         // …and the pairing itself, because everything above is arithmetic over tokens and would go on
@@ -614,8 +618,8 @@ class BenchC9Test {
             grid.contains("if (current) card.leafTint else card.paper"),
         )
         assertTrue(
-            "BenchPageGrid no longer writes its page number in `card.inkSoft` — same failure, other side",
-            grid.contains("if (current) card.leafText else card.inkSoft"),
+            "BenchPageGrid no longer routes current and ordinary page numbers through their actual grounds",
+            grid.contains("if (current) card.onLeaf else card.inkSoft"),
         )
     }
 

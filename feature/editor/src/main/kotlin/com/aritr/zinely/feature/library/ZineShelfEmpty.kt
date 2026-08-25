@@ -43,6 +43,7 @@ import com.aritr.zinely.ui.components.zinelyV21HardShadow
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import java.util.Locale
 
 /** The test handle on the empty state as a whole. */
@@ -293,16 +294,17 @@ private fun TransformColumn(label: String, illustration: @Composable () -> Unit)
 @Composable
 private fun SheetIllustration() {
     val colors = ZinelyTheme.v21Colors
+    val printed = remember { zinelyV21LightColors() }
 
     Canvas(
         modifier = Modifier
             .testTag(ZineSheetIllustrationTestTag)
             .size(width = SheetWidth, height = SheetHeight)
             .graphicsLayer { rotationZ = SheetRotation }
-            .zinelyV21HardShadow(IllustrationShadow, colors.inkLine, SheetShape)
+            .zinelyV21HardShadow(IllustrationShadow, printed.inkLine, SheetShape)
             .clip(SheetShape)
-            .background(colors.paper)
-            .border(IllustrationBorder, colors.ink, SheetShape),
+            .background(printed.paper)
+            .border(IllustrationBorder, printed.ink, SheetShape),
     ) {
         // Everything below is positioned in the **padding box**, not the border box: the frozen rules are
         // absolutely-positioned children of a bordered element, and CSS resolves both their offsets and
@@ -319,7 +321,7 @@ private fun SheetIllustration() {
         // `.v1{left:33%}` and `.v3{left:67%}` — fractions of the sheet's padding box, not of anything else.
         for (fraction in listOf(FirstFoldFraction, ThirdFoldFraction)) {
             drawRect(
-                color = colors.hair,
+                color = printed.hair,
                 topLeft = Offset(border + fraction * boxWidth, inset),
                 size = Size(thickness, ruleHeight),
             )
@@ -334,7 +336,7 @@ private fun SheetIllustration() {
         var y = inset
         while (y < inset + ruleHeight) {
             drawRect(
-                color = colors.inkFaint,
+                color = printed.inkFaint,
                 topLeft = Offset(x, y),
                 size = Size(thickness, minOf(dash, inset + ruleHeight - y)),
                 alpha = DashAlpha,
@@ -345,7 +347,7 @@ private fun SheetIllustration() {
         // `.h{left:7px;right:7px;height:1px;top:50%}` — 7px in from the padding box on both sides, and
         // its top edge at half that box's height.
         drawRect(
-            color = colors.hair,
+            color = printed.hair,
             topLeft = Offset(inset, border + HalfwayFraction * boxHeight),
             size = Size(boxWidth - 2 * RuleInset.toPx(), thickness),
         )
@@ -392,10 +394,10 @@ private fun BookIllustration() {
             .testTag(ZineBookIllustrationTestTag)
             .size(width = BookWidth, height = BookHeight)
             .graphicsLayer { rotationZ = BookRotation }
-            .zinelyV21HardShadow(IllustrationShadow, colors.inkLine, BookShape)
+            .zinelyV21HardShadow(IllustrationShadow, colors.onLeaf, BookShape)
             .clip(BookShape)
             .background(colors.leaf)
-            .border(IllustrationBorder, colors.ink, BookShape),
+            .border(IllustrationBorder, colors.onLeaf, BookShape),
     ) {
         // `::before{left:6px;top:6px;bottom:6px}` — the crease, a highlight rather than a drawn line.
         // Padding box again: 6px in from the border, not from the node's edge. See [SheetIllustration].
