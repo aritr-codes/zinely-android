@@ -249,6 +249,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    // ADR-111: one platform-owned launch transition across minSdk 24+; no custom splash Activity.
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
     // EditorBootstrap unit tests (ADR-030): load over a fake DocumentRepository (runTest) and

@@ -12687,3 +12687,11 @@ not a document paper or application-surface token.
 
 The frozen visual/interaction contract is [APP-ENTRY-FREEZE.md](design/APP-ENTRY-FREEZE.md), backed by the interactive
 [HTML mask/transition prototype](design/mockups/app-entry.html) and [R13 platform research](RESEARCH.md#r13-android-launcher-identity-and-launch-transition----verified--recommendation). Release packaging plus two physical-device passes must verify launcher masking, cold/warm launch, share-in, light/dark handoff, and absence of a duplicate or delayed splash.
+
+**Implementation and device evidence (2026-08-25):** AndroidX `core-splashscreen:1.2.0` now owns the starting theme
+and `MainActivity` installs it before `super.onCreate()`. The supplied artwork drives deterministic legacy assets and
+the adaptive foreground, bounded by a 6dp safe-zone inset; themed launchers receive a separate Z-only monochrome path.
+The focused manifest/theme regression, lint, debug assembly, signed release assembly, packaged-manifest inspection,
+and independent review are green. Two physical passes on Samsung `SM-A176B` / Android 16 verified the circular launcher
+mask, dark and light cold starts, direct warm return, intact existing library, and restored device settings. See the
+[device-verification report](reviews/2026-08-25-app-entry-device-verification.md).

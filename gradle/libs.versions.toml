@@ -1,6 +1,7 @@
 [versions]
 agp = "9.2.1"
 coreKtx = "1.10.1"
+coreSplashscreen = "1.2.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
 espressoCore = "3.5.1"
@@ -50,6 +51,7 @@ room = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -118,4 +120,3 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 # S6.1 (ADR-042): Room schema export/validation for :data-android.
 room = { id = "androidx.room", version.ref = "room" }
-
