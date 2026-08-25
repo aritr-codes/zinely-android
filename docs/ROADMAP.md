@@ -131,8 +131,8 @@ flowchart LR
 - **Supplies — the decorative third primitive** (`DecorElement`; [ADR-105](DECISIONS.md#adr-105),
   [ADR-104](DECISIONS.md#adr-104), [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md)). Phased **P1 ink reaches
   paper · P2 the drawer · P3 the Art sheet**; §10.1 of the spec owns the per-phase detail, this row owns
-  the phasing's place in the plan. ⚠ **The set beyond the frozen sixteen is gated on
-  [ADR-107](DECISIONS.md#adr-107), which is `Proposed`.**
+  the phasing's place in the plan. **[ADR-107](DECISIONS.md#adr-107) now accepts a staged 16→32 first
+  expansion; [D-080](design/V2-SPEC-DEFECTS.md#d-080) gates its implementation on rendered DESIGN FREEZE.**
 - **The V2.1 re-skin** — Library, Bench and Proof re-drawn against `V21-SPEC.md`
   ([ADR-100](DECISIONS.md#adr-100) · [ADR-101](DECISIONS.md#adr-101) · [ADR-102](DECISIONS.md#adr-102), all
   Accepted). ⚠ **Partly landed.** The eight Library composables are on `main`; `ZineV21Cover` and

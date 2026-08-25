@@ -553,20 +553,20 @@ never be anything else.
 
 ### 4.3 The worked curation list — [ADR-107 R1](../DECISIONS.md#adr-107)'s first deliverable {#curation-list}
 
-R1 sets a target of ~60 and **refuses to assert a per-family number**, because a count asserted up front
-hides the risk that matters: [R2's art-fatigue mechanism operating *inside* a family](../DECISIONS.md#adr-107).
-Fifteen near-duplicate fasteners are as legible a repetition as any shuffle. This section is the count
-worked rather than asserted.
+R1 originally worked a target of ~60 and **refused to assert a per-family number**, because a count asserted
+up front hides the risk that matters: [R2's art-fatigue mechanism operating *inside* a family](../DECISIONS.md#adr-107).
+The worked list produced 51; the 2026-08-25 owner amendment deliberately stages only sixteen of those
+candidates first. Fifteen near-duplicate fasteners are as legible a repetition as any shuffle.
 
-**The answer is ~51, not 60, and one family is why.**
+**The worked ceiling remains ~51; the accepted first expansion stops at 32.**
 
-| Family | Ships | Proposed | Total | Ceiling reached? |
-|---|---|---|---|---|
-| **Tape & fixings** — things that *attach* | 4 | 10 | **14** | No — the physical world has many fasteners |
-| **Stamps & marks** — things that *point*, plus the *process* | 4 | 11 | **15** | No — process marks are a deep seam |
-| **Cut paper** — hand-torn edges, things cut *out* | 4 | 9 | **13** | No |
-| **Cut shapes** — scissor-clean geometry | 4 | 5 | **9** | ⚠ **Yes** — see §4.3.5 |
-| | **16** | **35** | **51** | |
+| Family | Ships now | Accepted first wave | Backlog | Worked total | Ceiling reached? |
+|---|---:|---:|---:|---:|---|
+| **Tape & fixings** — things that *attach* | 4 | 4 | 6 | **14** | No — the physical world has many fasteners |
+| **Stamps & marks** — things that *point*, plus the *process* | 4 | 6 | 5 | **15** | No — process marks are a deep seam |
+| **Cut paper** — hand-torn edges, things cut *out* | 4 | 5 | 4 | **13** | No |
+| **Cut shapes** — scissor-clean geometry | 4 | 1 | 4 | **9** | ⚠ **Yes** — see §4.3.5 |
+| | **16** | **16** | **19** | **51** | |
 
 #### 4.3.1 The filter that did the work
 
@@ -886,29 +886,17 @@ There is no `EDIT` action for decor because there is nothing inside a supply to 
 
 ## 9. What Supplies is not
 
-- ⚠ **Amendment PROPOSED 2026-08-18 by [ADR-107 R5](../DECISIONS.md#adr-107) — `Proposed`, pending
-  [D-080](V2-SPEC-DEFECTS.md#d-080). Nothing below is amended yet; read the ADR before acting.** In short:
-  the **search-field** bullet's own premise is *the sixteen*, and ADR-107 R1 spends it — so at ~60 both the
-  family **chips** and a **text field** are proposed to ship, on ADR-104's own finding that *"a large
-  library without excellent search is worse than none"*. The **tags/filters/sort** bullet states no premise
-  and is therefore a straight reversal, recorded as one. ⚠ A first draft of R5 deferred the text field and
-  claimed amendment **A5** had removed the chips *"for the identical sixteen-item reason"*; independent
-  review showed A5's own comment (`v21-bench.html:451-456`) gives different grounds — filtering ruled out,
-  and families already heading their own sections. The second is the real one, and it expires on **scroll
-  depth**, not on the sixteen.
-- **No search field.** Sixteen items fit on one screen; a search box over sixteen advertises an absence.
-  This is the frozen file's own reasoning (`v21-bench.html:447-450`) and what ADR-104 physically removed.
-  Amendment **A5** applied the same reasoning to the four family *chips*, which filtered the same sixteen:
-  a chip row is that box with four buttons instead of a caret, so it was removed, not re-tasked.
-- **No categories beyond the four.** No tags, no filters, no sort.
-- **Favourites and recents are ⚠ DEFERRED, not banned.** The first draft banned them and argued for it.
-  That was wrong on authority and on product. `v21-bench.html:70` — written under ADR-104 — says *"The
-  favourites star stays specified (deferred in sequencing, **not removed from the spec**)"*; the sheet
-  draws `☆` on every tile (`:846`) and captions it *"Recent and ⭐ cut long-session friction"* (`:864`);
-  `ZINE-DIRECTION.md:655` says *"Not struck, just not first."* Banning them would remove controls the
-  frozen file draws — a new amendment I have no authority to make. And the product argument was weak: *"the
-  drawer is the same every time you open it"* describes a cabinet nobody uses. A real cabinet is exactly
-  where the thing you reach for forty times ends up in front.
+- ✅ **Amended 2026-08-25 by the accepted [ADR-107](../DECISIONS.md#adr-107) owner ruling.** The first
+  catalogue expansion stops at 32 rather than jumping directly to the worked ~51 list. With that growth,
+  local name/tag search and visible reversible family filters ship together; [D-080](V2-SPEC-DEFECTS.md#d-080)
+  keeps production admission blocked only until the rendered A15 visual freeze.
+- **Search serves growth, not a sixteen-item cabinet.** It matches the maker-facing name and curated local
+  tags. No query, project data or usage signal leaves the device.
+- **No categories beyond the four and no sort.** The four physical families remain the only visible
+  taxonomy. Family buttons filter; tags are discovery metadata, not another shelf the maker must learn.
+- **Favourites and Recent are retrieval shortcuts, not catalogue order.** They may reflect the maker's own
+  use while the family-shelved master catalogue remains stable. Neither authorises shuffled results,
+  surprise placement, generated outlines or app-authored compositions.
 - **No packs UI in beta.** Curated packs are post-beta (ADR-104). Shipping the shelf before any pack exists
   is dead UI, which Amendment 3 exists to prevent.
 - **No emoji, no imported SVG, no custom shape drawing.** Each re-opens provenance — the question
@@ -960,7 +948,7 @@ page, diffing PDF operators, settles it.
 | **S2 / S2′** | ✅ Shipped as one change (P1). Schema **v1 → v2 with an identity migrator** — the migrator is required because `DocumentMigrations` enforces a contiguous chain and throws on a gap. |
 | **S3** | ✅ Shipped (P2). `DrawShape` · `SupplyOutline` · `SupplyCatalog`. |
 | **S4** | ✅ **Shipped (P3).** `CanvasReplayer:132` sets `shapePaint.color` and calls `canvas.drawPath(command.outline.toPath(), shapePaint)` — its **own** paint, AA on, deliberately not the pinned `fillPaint` (§3.5). ⚠ This row read *"stubbed, not done"* until 2026-08-17, when **the device contradicted the document**: a placed `shape.rect` drew as a filled square on SM-A176B. The row was stale from the commit that closed it. *A status table is a claim like any other.* |
-| **S5** | ✅ **16 of 16, completed 2026-08-22 under A11.** The last four are authored as the one coherent tear family (`tape.torn` · `paper.strip` · `paper.underline`) and a closed-ribbon paper clip (`fix.clip`) that works in the existing fill-only renderer. The exact paths were frozen in `v21-bench.html` before Kotlin, then parity-checked against `SupplyCatalog`; no family, name, order, renderer rule or document semantics changed. All sixteen tiles are now live. This closes [D-104](V2-SPEC-DEFECTS.md#d-104) but does **not** accept ADR-107's proposed 16→51 expansion. |
+| **S5** | ✅ **16 of 16, completed 2026-08-22 under A11.** The last four are authored as the one coherent tear family (`tape.torn` · `paper.strip` · `paper.underline`) and a closed-ribbon paper clip (`fix.clip`) that works in the existing fill-only renderer. The exact paths were frozen in `v21-bench.html` before Kotlin, then parity-checked against `SupplyCatalog`; no family, name, order, renderer rule or document semantics changed. All sixteen tiles are now live. This closes [D-104](V2-SPEC-DEFECTS.md#d-104). That package did not itself widen the catalogue; the later accepted [ADR-107](../DECISIONS.md#adr-107) stages 16→32 behind D-080's visual freeze. |
 | **S6** | ✅ Shipped. Sixteen names in `core:copy`, five documented departures from §4's prose. |
 | **S7 / S7′** | 🟡 **Partly landed (P-G).** The **Art sheet** exists — sixteen tiles, four headings, four inert (twelve when it landed) ([ADR-105 amendment](../DECISIONS.md#adr-105), [D-086](V2-SPEC-DEFECTS.md#d-086)) — and the `INK` **routing** defect is fixed: `EditorScreen` now derives `inkPopoverVisible = inkPopoverOpen && inkTarget != null`, with all five consumers reading the derived value, so the stranded empty-popover state is **unconstructible** rather than guarded at one entry. The verb stays disabled. ⚠ The *trigger* is still unexercisable for decor precisely because that verb is disabled — the fix is pinned by construction and by the live text path, not by a decor tap. **S7-placement then closed the loop:** `Intent.PlaceSupply`, the [§5.2 scale ruling](#s-5-2-ruling), the Add chooser's **Art row released**, and the sheet wired so an authored tile places and an inert tile stays a no-op. **Still owed:** S7′'s silent seams — two of which S7-placement found by mutation and fixed (`benchDeleteLabel` said *"Photo deleted."* for a supply; `benchInkCount` under-counted the print cost).
 

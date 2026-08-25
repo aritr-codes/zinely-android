@@ -127,9 +127,9 @@ section, so its absence here was the defect, not the work.
   [§5's non-negotiables](#5-product-principles-non-negotiable) and §7.2's first clause are untouched.
 - **Where the phasing lives.** [ROADMAP.md](ROADMAP.md) (V1), P1–P3; the per-phase detail is
   [SUPPLIES-SPEC §10.1](design/SUPPLIES-SPEC.md).
-- ⚠ **Not settled by this row.** The set **beyond** the frozen sixteen — roughly 35 further marks, their
-  names, order and the search control — is [ADR-107](DECISIONS.md#adr-107), still `Proposed`. This section
-  records the primitive that ships; it does not widen the catalogue.
+- **Settled but not yet shipped.** [ADR-107](DECISIONS.md#adr-107) accepts a staged first expansion from
+  16 to 32 with local search, family filters, Recent and Favourites; the remaining candidates stay backlog.
+  [D-080](design/V2-SPEC-DEFECTS.md#d-080) still gates production admission on rendered DESIGN FREEZE.
 
 *This row is a **record of scope that changed**, not a decision. The decisions are the ADRs it links.*
 

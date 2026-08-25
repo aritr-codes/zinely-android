@@ -4879,7 +4879,7 @@ completed with the device returned to its original display settings.
 
 ### D-080 · The frozen `Art` sheet gives its own entry no glyph, filters nothing, and specifies no empty state {#d-080}
 
-**Status: 🟦 OPEN — owner amendment required. ⚠ SCOPE EXTENDED 2026-08-18 — see §4 below.**
+**Status: 🟦 OPEN — owner scope amendment accepted 2026-08-25; rendered A15 DESIGN FREEZE pending.**
 Raised 2026-08-16 while scoping
 [F-3](../BETA-UX-REVIEW.md) of the beta UX review. Nothing here blocks today's work: the sheet itself is
 fenced by [OD-2](#d-029) and sequenced behind [ADR-105](../DECISIONS.md#adr-105) D-4. It is filed **now**
@@ -4950,9 +4950,16 @@ R1 spends) and its *"no tags, no filters, no sort"* bullet (which states no prem
 reversal, not an expiry). Per [V2-CONSTITUTION §VI](V2-CONSTITUTION.md) `v21-bench.html` is amended in the
 same act.
 
-⚠ **This entry now gates R1 as well as R5.** ADR-107's sequencing gate says the ~51 marks may be authored
-and tested but may not enter the shipped sheet before this ruling — because a sixty-mark drawer with no
-filter is the failure ADR-104 names as *"a large library without excellent search is worse than none"*.
+✅ **Owner ruling, 2026-08-25.** [ADR-107's owner amendment](../DECISIONS.md#adr-107) is authoritative:
+the first expansion stops at **32**, the remaining candidates stay a curated backlog, the four family
+filters and local name/tag search ship with growth, Recent and Favourites remain retrieval shortcuts, and
+catalogue order, outline geometry, placement and composition are not randomised. A15 iteration 2 in
+[`v21-bench.html`](mockups/v21-bench.html) draws that ruled density and the required empty/recovery state.
+
+**What remains open is visual, not product scope.** A15 has not been rendered and accepted as DESIGN
+FREEZE, so none of its preliminary new silhouettes is production geometry and Compose admission remains
+blocked. Once the rendered review freezes A15, this entry closes and R1 may enter the shipping catalogue
+through the existing `SupplyCatalog` / `Copy.Supplies` / shared-render pipeline.
 
 ---
 
@@ -6867,7 +6874,7 @@ invented mark for an unauthored supply, and an honest disabled explanation — r
 | **Artifacts** | `core/copy/.../Copy.kt` (`Supplies.TAPE_AND_FIXINGS`, `Supplies.CUT_PAPER`) · the Art sheet's family headings |
 | **Found** | 2026-08-20, package **P4**, **Pass 2 device verification** on SM-A176B / Android 16 |
 | **Severity** | **A promise the screen makes and does not keep.** No incorrect behaviour |
-| **Status** | ✅ **CLOSED 2026-08-22** — A11 completed the frozen sixteen without changing their names, order or families. `TAPE & FIXINGS` now shows Torn tape and Paper clip; `CUT PAPER` now shows Torn strip and Marker underline. The headings keep the promise they already made, so no copy change is required. This does not accept ADR-107's proposed larger library. |
+| **Status** | ✅ **CLOSED 2026-08-22** — A11 completed the frozen sixteen without changing their names, order or families. `TAPE & FIXINGS` now shows Torn tape and Paper clip; `CUT PAPER` now shows Torn strip and Marker underline. The headings keep the promise they already made, so no copy change is required. That closure did not itself widen the library; ADR-107's later 2026-08-25 ruling does. |
 
 P4 replaced the four unauthored tiles' invented glyphs with the words `NOT AVAILABLE YET`
 ([D-086 ruling](#d-086-ruling)). That was the right trade and it is not in question here. But it moved the
@@ -6896,6 +6903,11 @@ mistaken for closed when [D-086](#d-086) is read as done.
 what they currently hold; or accept it as a temporary state that ADR-107 retires. The first is the only
 one that does not spend a copy change on a condition meant to be temporary — which is an argument, not a
 ruling, and the ruling is the owner's.
+
+⚠ **Later status, 2026-08-25:** the paragraph above records the alternatives as they stood when D-104 was
+open. ADR-107 is now accepted with a staged 16→32 expansion; [D-080](#d-080) owns that later surface's
+remaining visual-freeze gate. This does not reopen D-104, whose frozen-sixteen heading defect was already
+closed by A11.
 
 ---
 
