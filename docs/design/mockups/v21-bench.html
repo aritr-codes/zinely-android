@@ -1381,3 +1381,149 @@ function placeTextAndEdit(){
   source.insertAdjacentElement('afterend',node); select(node); edit();
 }
 </script>
+<!-- ===========================================================================
+A15 DRAFT · 2026-08-25 (D-080 / ADR-107 R5) — find a material without turning
+the Art box into a stock browser. OWNER RULING REQUIRED; THIS IS NOT FROZEN.
+
+WHY THIS DRAFT EXISTS. A5 correctly removed search and filters from a cabinet of
+sixteen things that fit at once. ADR-107 proposes a materially different cabinet:
+roughly fifty-one authored supplies, where showing every family in full makes
+recognition slower and pushes a known material several screens away. D-080 also
+records the duplicate Photo/Art glyph and the missing no-results state.
+
+PROPOSED RULING. Art receives its own collage glyph: two overlapping paper scraps
+and one printed dot, not the Photo frame. The Art sheet keeps one surface and one
+local, offline catalogue. A search field matches the user-facing name and curated
+tags. Four family buttons filter that same catalogue; there is deliberately no
+fifth pseudo-family named All. Pressing the selected family again clears it, so an
+active filter is visible and directly reversible. Typing or filtering hides the
+duplicated Recent row. Clearing both restores the complete, family-shelved box.
+
+No result is not a blank grid. It says `No art found`, suggests another word, and
+offers `Show all art`, which clears search and family together. Result changes are
+announced politely; the search field has a visible label; family buttons expose
+pressed state; every target remains at least 48px. Filtering is immediate and
+local. No query, tag, project data or usage signal leaves the device.
+
+This draft demonstrates the interaction over the frozen sixteen only. Acceptance
+freezes the controls and states, not ADR-107 R1's proposed membership, names,
+order, outlines or scroll depth; those remain a separate owner act. Production
+copy and tag vocabulary belong in :core:copy, and filtering remains pure Kotlin.
+=========================================================================== -->
+<style>
+.art-tools{display:flex;flex-direction:column;gap:var(--gap-sm);margin:0 0 var(--gap-md)}
+.art-search-label{font-family:var(--voice);font-size:.78rem;font-weight:700;color:var(--ink)}
+.art-search-wrap{position:relative}
+.art-search{width:100%;min-height:48px;padding:0 44px 0 var(--gap-md);font:500 .88rem var(--sans);
+  color:var(--ink);background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-md);
+  box-shadow:2px 2px 0 var(--ink-line);outline:none}
+.art-search:focus-visible{box-shadow:0 0 0 3px var(--berry),2px 2px 0 var(--ink-line)}
+.art-search-mark{position:absolute;right:var(--gap-md);top:50%;width:20px;height:20px;
+  transform:translateY(-50%);color:var(--ink-soft);pointer-events:none}
+.art-search-mark svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round}
+.art-families{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap-sm)}
+.art-family{min-height:48px;padding:var(--gap-sm) var(--gap-md);font:700 .72rem var(--sans);
+  color:var(--ink-soft);background:var(--surface);border:1.5px solid var(--ink);
+  border-radius:var(--br-pill);box-shadow:2px 2px 0 var(--ink-line);cursor:pointer}
+.art-family[aria-pressed="true"]{color:var(--on-leaf);background:var(--leaf)}
+.art-family:active,.art-reset:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
+.art-results{min-height:20px;color:var(--ink-soft);font-size:.72rem}
+.art-empty{display:none;text-align:center;margin:var(--gap-xl) 0 var(--gap-lg);padding:var(--gap-xl);
+  color:var(--ink-soft);background:var(--butter-tint);border:1.5px dashed var(--ink);
+  border-radius:var(--br-md)}
+.art-empty.show{display:block}
+.art-empty b{display:block;margin-bottom:var(--gap-xs);font:700 1rem var(--voice);color:var(--ink)}
+.art-reset{min-height:48px;margin-top:var(--gap-md);padding:var(--gap-sm) var(--gap-lg);
+  font:700 .78rem var(--sans);color:var(--on-leaf);background:var(--leaf);
+  border:1.5px solid var(--ink);border-radius:var(--br-pill);box-shadow:2px 2px 0 var(--ink-line);
+  cursor:pointer}
+</style>
+<script>
+const openSupplyBeforeA15=openSupply;
+openSupply=function(){
+  openSupplyBeforeA15();
+  const icon=$('sheet').querySelector('[data-a="art"] .ico');
+  if(icon) icon.innerHTML=svg('<path d="M4 7l8-3 3 9-8 3z"/><path d="M11 12l8-2 1 8-8 2z"/><circle cx="17.5" cy="6.5" r="2.5"/>');
+};
+
+const openArtBeforeA15=openArt;
+const ART_TAGS={
+  'tape.torn':'tape torn strip sticky collage','fix.corner':'corner mount photo fixing',
+  'fix.staple':'staple fixing metal','fix.clip':'clip paper wire fixing',
+  'mark.asterisk':'star asterisk burst stamp','mark.arrow':'arrow pointer direction stamp',
+  'mark.halftone':'halftone dots texture print','mark.registration':'registration cross print mark',
+  'paper.strip':'torn strip paper collage','paper.window':'window frame paper cutout',
+  'paper.tag':'speech tag label bubble paper','paper.underline':'marker underline highlight paper',
+  'shape.rect':'rectangle square block shape','shape.circle':'circle dot round shape',
+  'shape.triangle':'triangle shape','shape.rule':'straight rule line shape'
+};
+
+openArt=function(){
+  openArtBeforeA15();
+  const sheet=$('sheet'), heading=sheet.querySelector('h3');
+  const controls=document.createElement('div');
+  controls.className='art-tools';
+  controls.innerHTML='<label class="art-search-label" for="artSearch">Find a piece</label>'
+    +'<div class="art-search-wrap"><input class="art-search" id="artSearch" type="search" '
+    +'placeholder="Search names and tags" autocomplete="off">'
+    +'<span class="art-search-mark" aria-hidden="true">'+svg('<circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/>')+'</span></div>'
+    +'<div class="art-families" aria-label="Art families">'
+    +FAMILIES.map(f=>'<button class="art-family" type="button" aria-pressed="false">'+f+'</button>').join('')
+    +'</div><div class="art-results" role="status" aria-live="polite"></div>';
+  heading.insertAdjacentElement('afterend',controls);
+
+  const empty=document.createElement('div');
+  empty.className='art-empty';
+  empty.innerHTML='<b>No art found</b><span>Try another word, or open the full box.</span>'
+    +'<br><button class="art-reset" type="button">Show all art</button>';
+  sheet.appendChild(empty);
+
+  const recentLabel=[...sheet.querySelectorAll('.lbl')].find(x=>x.textContent.startsWith('Recent'));
+  const recentGrid=recentLabel.nextElementSibling;
+  const familySections=FAMILIES.map(name=>{
+    const label=[...sheet.querySelectorAll('.lbl')].find(x=>x.textContent===name);
+    const grid=label.nextElementSibling;
+    [...grid.querySelectorAll('.tile')].forEach(tile=>tile.dataset.family=name);
+    return {name,label,grid};
+  });
+  let activeFamily='';
+  const search=$('artSearch'), status=sheet.querySelector('.art-results');
+  const families=[...sheet.querySelectorAll('.art-family')];
+
+  function applyArtFilter(){
+    const query=search.value.trim().toLocaleLowerCase();
+    let visible=0;
+    familySections.forEach(section=>{
+      let sectionVisible=0;
+      [...section.grid.querySelectorAll('.tile')].forEach(tile=>{
+        const terms=(tile.getAttribute('aria-label')+' '+(ART_TAGS[tile.dataset.supply]||'')).toLocaleLowerCase();
+        const show=(!activeFamily||section.name===activeFamily)&&(!query||terms.includes(query));
+        tile.hidden=!show;
+        if(show){ visible++; sectionVisible++; }
+      });
+      section.label.hidden=sectionVisible===0;
+      section.grid.hidden=sectionVisible===0;
+    });
+    const narrowed=Boolean(activeFamily||query);
+    recentLabel.hidden=narrowed; recentGrid.hidden=narrowed;
+    empty.classList.toggle('show',visible===0);
+    status.textContent=visible+' '+(visible===1?'piece':'pieces');
+  }
+
+  families.forEach(button=>button.onclick=e=>{
+    e.stopPropagation();
+    activeFamily=activeFamily===button.textContent?'':button.textContent;
+    families.forEach(x=>x.setAttribute('aria-pressed',String(x.textContent===activeFamily)));
+    applyArtFilter();
+  });
+  search.oninput=applyArtFilter;
+  empty.querySelector('.art-reset').onclick=e=>{
+    e.stopPropagation(); activeFamily=''; search.value='';
+    families.forEach(x=>x.setAttribute('aria-pressed','false'));
+    applyArtFilter(); search.focus();
+  };
+  applyArtFilter();
+  cap('Adding · Art','Find a piece by name or material family, then place it on the page.');
+};
+</script>
