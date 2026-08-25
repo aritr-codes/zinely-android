@@ -120,6 +120,7 @@
 | [ADR-108](#adr-108) | ✅ **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed | **Accepted 2026-08-20**; R4 shipped as *generation* — the tile renders the authored outline, `BenchArtGlyphs` deleted.
 | [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The open question is not rendering but *when the maker first sees the join* — no screen shows it | Proposed |
 | [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
+| [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12651,3 +12652,38 @@ The same layer contains the narrow commit boundary used by the Android adapter: 
 **Backup production + Android SAF transport (2026-08-22):** `:core:data-storage` produces a manifest-first v2 ZIP from a repository-frozen files-as-truth snapshot, streaming documents and globally deduplicated assets while verifying actual SHA-256/byte counts and contract limits. It refuses existing destinations and removes incomplete private output on failure or cancellation. `RoomProjectRepository` exposes `LibraryBackupRepository` under the same writer lease and fails closed on unreadable metadata, missing assets, or poisoned bytes. The thin `LibrarySafTransport` copies provider input to unique bounded private cache before trusted restore and streams a complete private backup to a user-selected provider destination without assuming seeking or duplicating ZIP validation. External delivery remains best-effort because provider storage cannot be made app-private-atomic. JVM matrices and Android `ContentResolver` transport coverage are in place, and a debug-only picker harness exists for the required Samsung `SM-A176B` manual backup/restore/cancel/invalid-file pass. The production user surface, frozen copy, lifecycle-owned progress, and final physical-device picker verification remain later stages; `.zine` is still not user-ready.
 
 **Production user surface (2026-08-22):** the shelf now owns a quiet library-level `Backups` action (or `Restore a backup` when empty), opening the frozen chooser in [BACKUP-RESTORE-FREEZE.md](design/BACKUP-RESTORE-FREEZE.md). `HomeViewModel` owns single-flight picker and operation state, commits pending shelf deletes before handoff, maps storage failures into `:core:copy`, and delegates every byte and transaction to the accepted SAF/repository layers. The Android destination alone owns `CreateDocument` / `OpenDocument`; picker launch failure, picker cancellation, explicit operation cancellation, additive success, newer-version refusal, and retry are distinct states. Shared `ZSheet` lifecycle callbacks make initial focus and post-animation focus return deterministic, and large-font error actions stack before they can clip. Focused Compose/Robolectric tests, eight light/dark backup-surface goldens, the storage and Android unit matrices, lint, debug assembly, and release assembly are green. Both production-UI device passes are accepted on Samsung `SM-A176B` / Android 16: a four-zine shelf saved through the real Android document picker, the exact resulting file restored four additive copies, invalid input and picker cancellation preserved the existing shelf, restored content remained editable and autosaved across cold relaunch, and large-text/platform accessibility checks passed. See [the device-verification report](reviews/2026-08-22-backup-restore-ui-device-verification.md).
+
+## ADR-111 {#adr-111}
+
+### The threshold carries the mark — adaptive logo and system-only launch transition
+
+**Status:** Accepted · **Date:** 2026-08-25 · **Supersedes:** stock Android Studio launcher artwork · **Extends:** [ADR-030](#adr-030)
+
+#### Context and decision
+
+The owner supplied `APP_LOGO.png` as Zinely's application mark. Android also imposes a system splash on modern
+versions, so leaving the stock launcher robot or building a second custom splash would make the product threshold
+either generic or needlessly slow.
+
+1. **`APP_LOGO.png` is the immutable artwork master.** Launcher density assets are deterministic projections of
+   that file; they are not redrawn, recoloured, or generated from a prompt.
+2. **Adaptive identity uses platform layers.** The supplied collage is the foreground, its measured edge pink
+   `#FBCDD0` is the background, and a simplified hand-cut Z is the monochrome layer. Android owns the final launcher
+   mask and themed-icon colour.
+3. **Launch uses AndroidX SplashScreen, not another Activity.** `MainActivity` installs the system splash before
+   `super.onCreate()`. The starting theme uses the logo and pink ground, then immediately posts to `Theme.Zinely`.
+   There is no keep condition, custom exit animation, branding image, slogan, progress copy, or minimum duration.
+4. **Single-Activity and share-in ownership remain unchanged.** The splash is a theme transition around the existing
+   `MainActivity`; it adds no route, state holder, persistence dependency, or second intent receiver.
+5. **The mark stays at the threshold.** No persistent Shelf/Bench/Proof logo is introduced. This preserves the
+   experience rule that startup points toward making rather than presenting marketing.
+
+#### Consequences and verification boundary
+
+AndroidX `core-splashscreen` is one narrow platform-compatibility dependency. The full collage may lose decorative
+edge detail under some launcher masks, but its central Z remains inside the safe composition and the monochrome
+fallback remains recognisable. Dark theme deliberately uses the same pink launch artwork because it is brand identity,
+not a document paper or application-surface token.
+
+The frozen visual/interaction contract is [APP-ENTRY-FREEZE.md](design/APP-ENTRY-FREEZE.md), backed by the interactive
+[HTML mask/transition prototype](design/mockups/app-entry.html) and [R13 platform research](RESEARCH.md#r13-android-launcher-identity-and-launch-transition----verified--recommendation). Release packaging plus two physical-device passes must verify launcher masking, cold/warm launch, share-in, light/dark handoff, and absence of a duplicate or delayed splash.

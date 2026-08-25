@@ -359,3 +359,29 @@ Audit each baseline area as **green** (credible for public beta), **yellow** (fu
 clear), or **red** (blocker). Public beta requires no unresolved red item in persistence, editor ownership,
 rendering/export, backup/restore, navigation, or accessibility, and no obvious interaction-critical performance
 failure on a representative physical device.
+
+## R13. Android launcher identity and launch transition — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+### R13.1 Adaptive icon contract — ✅ VERIFIED
+
+Android adaptive icons separate foreground, background, and optional monochrome layers, then let each launcher apply
+its own mask and visual treatment. The foreground must keep its recognition-critical content inside the platform safe
+zone; themed icons use the monochrome layer rather than a developer-chosen colour.
+**Source:** [Android adaptive icon guidance](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive).
+
+### R13.2 Splash contract — ✅ VERIFIED
+
+Android 12 and newer always provide a system splash. AndroidX `core-splashscreen` carries the same theme-driven
+contract back to earlier supported versions: a starting theme supplies background and icon, `installSplashScreen()`
+runs before `super.onCreate()`, and `postSplashScreenTheme` returns the Activity to its normal theme. The current
+stable artifact is `androidx.core:core-splashscreen:1.2.0`.
+**Sources:** [SplashScreen overview](https://developer.android.com/develop/ui/views/launch/splash-screen) ·
+[migration guidance](https://developer.android.com/develop/ui/views/launch/splash-screen/migrate) ·
+[AndroidX Core releases](https://developer.android.com/jetpack/androidx/releases/core).
+
+### R13.3 Zinely application — 🟦 RECOMMENDATION
+
+Use the supplied `APP_LOGO.png` unchanged for launcher identity, an edge-matched pink background for adaptive crops,
+and a simplified Z-only monochrome layer. Use only the system splash transition, with no custom Activity, branding
+panel, copy, animation, or keep condition. This preserves Zinely's fast-entry rule: identity appears at the threshold,
+then gets out of the maker's way. Frozen in [APP-ENTRY-FREEZE.md](design/APP-ENTRY-FREEZE.md).
