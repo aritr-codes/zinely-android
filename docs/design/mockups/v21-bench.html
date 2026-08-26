@@ -1918,3 +1918,72 @@ openInk=function(){
   cap('Ink','Choose a named ink. Starting palettes show combinations; tapping one applies the named primary ink.');
 };
 </script>
+
+<!-- ===========================================================================
+A19 · 2026-08-26 (ADR-109 owner ruling) — one photo across the fold.
+DESIGN FROZEN 2026-08-26.
+
+The action belongs to the selected-photo context bar, because it transforms a
+photo already on the page; it is not another kind of thing in Add. "Across
+fold" is the visible verb. It opens one calm confirmation before changing the
+document. The sheet names both pages, states that existing page content stays
+on top, and warns that the middle of the photo lands on the physical fold.
+
+Confirm creates two ordinary full-page photos behind existing content, sharing
+one asset with complementary crops. It replaces the selected photo in place and
+adds its partner on the fixed booklet pair (2|3, 4|5, 6|7, 8|1). It deletes
+nothing else. The whole act is one undo step. The Bench continues to show one
+page at a time; the first complete join is the printed and folded zine, so the
+confirmation says that before the maker commits. Back, outside-tap and Cancel
+dismiss without a document change. Confirm says "Across pages"; success says
+"Photo runs across pages 2 & 3" and offers Undo.
+=========================================================================== -->
+<style>
+.spread-confirm{position:absolute;inset:0;z-index:90;display:none;align-items:flex-end;
+  padding:var(--gap-md);background:rgba(25,22,16,.48)}
+.spread-confirm.show{display:flex}
+.spread-card{width:100%;padding:var(--gap-lg);background:var(--surface);color:var(--ink);
+  border:1.5px solid var(--ink);border-radius:var(--br-lg);box-shadow:var(--shadow-card)}
+.spread-card h3{margin:0 0 var(--gap-sm);font:700 1.22rem/1.1 var(--voice)}
+.spread-card p{margin:0 0 var(--gap-sm);font:500 .82rem/1.45 var(--sans);color:var(--ink-soft)}
+.spread-pages{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin:var(--gap-md) 0;
+  border:1.5px solid var(--ink);border-radius:var(--br-md);overflow:hidden;background:var(--ink)}
+.spread-page{min-height:86px;display:grid;place-items:center;background:var(--paper);color:#27270F;
+  font:700 .7rem var(--sans)}
+.spread-actions{display:flex;justify-content:flex-end;gap:var(--gap-sm);margin-top:var(--gap-md)}
+.spread-actions button{min-height:48px;padding:0 var(--gap-lg);border:1.5px solid var(--ink);
+  border-radius:var(--br-pill);background:transparent;color:var(--ink);font:700 .76rem var(--sans)}
+.spread-actions .spread-do{background:var(--leaf);color:var(--on-leaf)}
+</style>
+<script>
+ICON.spread=svg('<rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/><path d="M11 5v14M8 12h8"/>');
+const toolsForBeforeA19=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForBeforeA19(kind);
+  if(kind!=='photo')return tools;
+  return [tools[0],['Across fold',ICON.spread,openSpreadConfirm],...tools.slice(1)];
+};
+const spread=document.createElement('div');
+spread.className='spread-confirm'; spread.id='spreadConfirm';
+spread.setAttribute('role','dialog'); spread.setAttribute('aria-modal','true');
+spread.setAttribute('aria-labelledby','spreadTitle');
+spread.innerHTML='<section class="spread-card"><h3 id="spreadTitle">Run this photo across pages 2 &amp; 3?</h3>'
+  +'<p>Zinely will place one half on each page. Existing words and art stay on top.</p>'
+  +'<div class="spread-pages" aria-hidden="true"><div class="spread-page">Page 2</div><div class="spread-page">Page 3</div></div>'
+  +'<p><b>Keep faces and words away from the middle.</b> It lands on the fold. You will see the complete picture after printing and folding.</p>'
+  +'<div class="spread-actions"><button type="button" class="spread-cancel">Cancel</button>'
+  +'<button type="button" class="spread-do">Across pages</button></div></section>';
+$('phone').appendChild(spread);
+function closeSpreadConfirm(){spread.classList.remove('show');if(sel)$('ctx').classList.add('show');}
+function openSpreadConfirm(){
+  $('ctx').classList.remove('show'); spread.classList.add('show');
+  spread.querySelector('.spread-cancel').focus();
+  cap('Across fold','One photo, two ordinary pages, one physical fold. Nothing else is removed.');
+}
+spread.onclick=e=>{e.stopPropagation();if(e.target===spread)closeSpreadConfirm();};
+spread.querySelector('.spread-cancel').onclick=e=>{e.stopPropagation();closeSpreadConfirm();};
+spread.querySelector('.spread-do').onclick=e=>{
+  e.stopPropagation();closeSpreadConfirm();toast('Photo runs across pages 2 & 3',true);
+  cap('Across fold · pages 2 & 3','Each half stays editable. Print and fold the zine to see the complete picture.');
+};
+</script>

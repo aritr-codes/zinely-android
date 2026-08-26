@@ -92,6 +92,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
 /** Test tag on the editor canvas Box (the measured, gesture-bearing area). */
@@ -264,6 +265,10 @@ public fun EditorScreen(
     // ----- C4 (ADR-094) -------------------------------------------------------------------
     // The Add chooser (rows 4.4a-4.4d). Open/closed only: the sheet itself is ZSheet, per OD-21.
     var addChooserOpen by remember { mutableStateOf(false) }
+    // Frozen Bench A19: the selected photo whose two-page confirmation is open. The document is not
+    // touched until confirmation; dismissal clears only this ephemeral id.
+    var spreadPhotoId by remember { mutableStateOf<String?>(null) }
+    var spreadBusy by remember { mutableStateOf(false) }
 
     // The Art sheet — the frozen `openArt()` (ADR-105 step S7). It is a *second* state rather than a mode
     // of `addChooserOpen` because the two are separate Compose `Dialog`s where the freeze had one `#sheet`
@@ -304,6 +309,7 @@ public fun EditorScreen(
     // because an ink is one undoable command the bar's own Undo already reverses.
     var snackAction by remember { mutableStateOf<String?>(null) }
     val c4Scope = rememberCoroutineScope()
+    val spreadJob = remember { arrayOfNulls<Job>(1) }
     // One job, cancelled on re-entry: two deletes in quick succession must not leave the first
     // coroutine to clear `snackVisible` out from under the second, which is how a snackbar ends up
     // dismissing itself 200ms after it appears.
@@ -550,6 +556,65 @@ public fun EditorScreen(
     val ctxElement = uiState.selection.singleOrNull()?.let { id ->
         uiState.document.pages[uiState.currentPageIndex].elements.firstOrNull { it.id == id }
     }
+    val spreadTarget = spreadPhotoId?.let { id ->
+        uiState.document.pages.getOrNull(uiState.currentPageIndex)
+            ?.elements?.firstOrNull { it.id == id } as? ImageElement
+    }
+    val spreadPages = imageSpreadPageNumbers(uiState.currentPageIndex)
+    val spreadInnerEdge = imageSpreadInnerEdge(
+        pages = uiState.document.pages,
+        pageIndex = uiState.currentPageIndex,
+        selected = ctxElement as? ImageElement,
+        pageSizePt = pageSizePt,
+    )
+    val dismissSpread = {
+        spreadJob[0]?.cancel()
+        spreadJob[0] = null
+        spreadBusy = false
+        spreadPhotoId = null
+    }
+    val confirmSpread = {
+        val target = spreadTarget
+        val pages = spreadPages
+        val sourcePageIndex = uiState.currentPageIndex
+        if (target == null || pages == null || spreadBusy) {
+            dismissSpread()
+        } else {
+            spreadJob[0]?.cancel()
+            spreadJob[0] = c4Scope.launch {
+                spreadBusy = true
+                try {
+                    val intrinsic = withContext(Dispatchers.IO) {
+                        readImageIntrinsics(imageBytes, target.assetId)
+                    }
+                    if (!isActive) return@launch
+                    val stillCurrent = currentState().let { latest ->
+                        latest.currentPageIndex == sourcePageIndex &&
+                            latest.document.pages.getOrNull(sourcePageIndex)
+                                ?.elements?.any { it.id == target.id && it is ImageElement && it.assetId == target.assetId } == true
+                    }
+                    if (intrinsic == null || !stillCurrent) {
+                        snackMessage = Copy.Spread.PHOTO_UNAVAILABLE
+                        snackAction = null
+                    } else {
+                        dispatch(Intent.MakeImageSpread(target.id, intrinsic.aspect, pageSizePt))
+                        snackMessage = Copy.Spread.success(pages.first, pages.second)
+                        snackAction = UndoActionLabel
+                    }
+                    spreadPhotoId = null
+                    snackVisible = true
+                    deleteJob[0]?.cancel()
+                    deleteJob[0] = c4Scope.launch {
+                        delay(BenchSnackDeleteMillis)
+                        snackVisible = false
+                    }
+                } finally {
+                    spreadBusy = false
+                    spreadJob[0] = null
+                }
+            }
+        }
+    }
     val ctxKind = ctxElement?.let { benchVerbKindOf(it) }
     // The element `.inkpop` can actually recolour, resolved ONCE for the three sites that need it —
     // the `Ink` verb's routing, the popover's own visibility, and the F-5 clearance term. See
@@ -588,7 +653,8 @@ public fun EditorScreen(
         // The freeze's own swap: `openInk` runs `ctx.classList.remove('show')` and `inkClose` restores
         // it (`v2-bench.html:692`, `:697`). Two floating cards share this 12dp inset, so one of them is
         // always the one that is up.
-        !inkPopoverVisible
+        !inkPopoverVisible &&
+        spreadPhotoId == null
     var contextBarHeight by remember { mutableStateOf(BenchContextBarReservedHeightDp) }
 
     // The popover belongs to the element that summoned it. Any change of that element — a reselect, a
@@ -1267,6 +1333,7 @@ public fun EditorScreen(
                             // and the selection state the freeze used to reveal on is not consulted here
                             // at all. The wash and the cue no longer answer the same question.
                             panelWidthPt = pageSizePt.width,
+                            suppressedEdge = spreadInnerEdge,
                         )
                         BenchPageNumber(
                             pageNumber = uiState.currentPageIndex + 1,
@@ -1588,6 +1655,8 @@ public fun EditorScreen(
                         // recolour — while naming which element it is for.
                         Copy.BenchVerbs.INK -> inkPopoverFor = ctxElement?.id?.takeIf { inkTarget != null }
                             Copy.BenchVerbs.REFRAME -> if (id != null) dispatch(Intent.BeginReframe(id))
+                            Copy.BenchVerbs.ACROSS_FOLD ->
+                                if (ctxElement is ImageElement) spreadPhotoId = ctxElement.id
                             // X3b (ADR-106): a toggle, so tapping it again is the undo the user reaches
                             // for first — and Undo is the one they reach for second. Both work.
                             Copy.BenchVerbs.COPIER -> if (id != null) dispatch(Intent.ToggleCopier(id))
@@ -1844,6 +1913,17 @@ public fun EditorScreen(
             visible = artSheetOpen,
             onDismiss = { artSheetFor = null },
             onPick = placeSupply,
+        )
+
+        // ADR-109 / frozen Bench A19. The one-page editor must explain the physical two-page result
+        // before writing it; the reducer still owns the single atomic/undoable document change.
+        ImageSpreadSheet(
+            visible = spreadTarget != null && spreadPages != null,
+            leftPageNumber = spreadPages?.first ?: 1,
+            rightPageNumber = spreadPages?.second ?: 2,
+            busy = spreadBusy,
+            onDismiss = dismissSpread,
+            onConfirm = confirmSpread,
         )
 
         // The transform context bar is hidden during a Reframe session — the Reframe controls take over.

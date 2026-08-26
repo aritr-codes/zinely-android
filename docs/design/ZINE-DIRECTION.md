@@ -368,7 +368,7 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 | Free colour picker / font picker | **DO NOT BUILD** | Materials are finite and named — the whole strategy |
 | Opacity & blend sliders | **DO NOT BUILD** | Translucency is a material property, not a control |
 | Pattern fill / auto-tiling | **DO NOT BUILD** | Names no physical cause a person could produce |
-| Emoji in text | **DO NOT BUILD** | Per-OEM rasters make the same zine export differently on two phones |
+| Emoji in text | **SEPTEMBER REQUIREMENT — ADR-112 GATED** | Per-OEM fallback remains forbidden; a bundled deterministic renderer must prove screen/PNG/PDF parity first |
 | Page background colour | **DO NOT BUILD** | Home printers cannot bleed — prints as a panel in a white margin |
 | Templates gallery | **DO NOT BUILD** | *"Blank is a peer"* |
 | Onboarding tour | **DO NOT BUILD** | Empty states already teach |

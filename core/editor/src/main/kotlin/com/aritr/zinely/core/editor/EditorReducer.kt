@@ -187,6 +187,57 @@ public object EditorReducer {
             if (el == null) Reduction(model)
             else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, el.copy(copier = !el.copier)))
         }
+        is Intent.MakeImageSpread -> {
+            val sourcePage = currentPage(model)
+            val source = sourcePage.elements.firstOrNull { it.id == intent.id } as? ImageElement
+            val pair = imageSpreadPair(model.currentPageIndex)
+            val pageAspect = intent.pageSizePt.width / intent.pageSizePt.height
+            val crops = imageSpreadCrops(intent.photoAspect, pageAspect)
+            val partnerPage = pair?.partnerPageIndex?.let(model.document.pages::getOrNull)
+            if (source == null || pair == null || crops == null || partnerPage == null) {
+                Reduction(model)
+            } else {
+                val (leftCrop, rightCrop) = crops
+                val fullPage = Transform(
+                    xPt = 0.0,
+                    yPt = 0.0,
+                    widthPt = intent.pageSizePt.width,
+                    heightPt = intent.pageSizePt.height,
+                )
+                val sourceBack = (sourcePage.elements.minOfOrNull { it.zIndex } ?: 0).let {
+                    if (it == Int.MIN_VALUE) it else it - 1
+                }
+                val partnerBack = (partnerPage.elements.minOfOrNull { it.zIndex } ?: 0).let {
+                    if (it == Int.MIN_VALUE) it else it - 1
+                }
+                val sourceCrop = if (pair.sourceIsLeft) leftCrop else rightCrop
+                val partnerCrop = if (pair.sourceIsLeft) rightCrop else leftCrop
+                val sourceAfter = source.copy(
+                    transform = fullPage,
+                    zIndex = sourceBack,
+                    crop = sourceCrop,
+                    fit = Fit.FIT,
+                )
+                val partner = source.copy(
+                    id = "el-${model.nextToken}",
+                    transform = fullPage,
+                    zIndex = partnerBack,
+                    crop = partnerCrop,
+                    fit = Fit.FIT,
+                )
+                committing(
+                    model.copy(nextToken = model.nextToken + 1, selection = setOf(source.id)),
+                    MakeImageSpreadCommand(
+                        sourcePageIndex = model.currentPageIndex,
+                        sourceId = source.id,
+                        beforeSource = source,
+                        afterSource = sourceAfter,
+                        partnerPageIndex = pair.partnerPageIndex,
+                        partner = partner,
+                    ),
+                )
+            }
+        }
 
         // — transform: begin/commit/cancel + a11y twins —
         is Intent.BeginTransform -> {
@@ -476,6 +527,7 @@ public object EditorReducer {
         is PlaceCommand -> pageIndex
         is EditTextCommand -> pageIndex
         is EditImageCommand -> pageIndex
+        is MakeImageSpreadCommand -> sourcePageIndex
         is EditDecorCommand -> pageIndex
         is AddPageCommand, is DeletePageCommand -> null
     }

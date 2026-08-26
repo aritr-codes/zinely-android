@@ -427,3 +427,27 @@ five-column grid so ten spot inks never create an orphan row. Palette recipes sh
 their copy must describe the implemented action: under OD-24 a recipe applies its primary ink, not a complete zine-wide
 theme. The interactive specification is Bench amendment A16, owner-approved and DESIGN FROZEN on 2026-08-26
 through D-080 and D-107.
+## R15. Deterministic emoji output — launch renderer gate (2026-08-26)
+
+**Verified:** Android's Emoji2 documentation distinguishes a bundled font from the default downloadable-font
+configuration. The bundled artifact keeps availability offline and consistent, but Google's own guidance records a
+material app-size cost. Emoji2 1.6.0 is the current stable line and advertises Emoji 16.0 support. `EmojiCompat`
+materialises emoji through spans; Android's `ReplacementSpan` contract draws replacements directly into the target
+`Canvas`, so the PDF backend must be measured rather than assumed to preserve vector glyphs.
+
+**Verified:** Google's Noto Emoji repository licenses the fonts under OFL and its SVG artwork under Apache 2.0.
+Noto's usage guidance distinguishes the monochrome Noto Emoji font from the colour font and describes the former as
+the print-oriented/vector option, while warning that its encoded coverage is only a subset of the complete emoji
+set. Coverage of ZWJ sequences therefore cannot be inferred from the project name.
+
+**Recommendation:** keep all system/OEM and downloadable fallback out of document rendering. Spike the bundled
+Emoji2 font and monochrome Noto Emoji through Zinely's actual `CanvasReplayer` at screen, imposed PNG and PDF
+surfaces before choosing. Measure coverage, 10/24/48-pt print quality, APK size, render cost and failure behavior.
+If neither candidate satisfies the fixed launch corpus, the remaining honest option is a bundled vector-asset
+renderer—not an OEM fallback.
+
+Sources: [Android Emoji2 guide](https://developer.android.com/develop/ui/views/text-and-emoji/emoji2) ·
+[AndroidX Emoji2 releases](https://developer.android.com/jetpack/androidx/releases/emoji2) ·
+[ReplacementSpan API](https://developer.android.com/reference/android/text/style/ReplacementSpan) ·
+[Noto Emoji repository](https://github.com/googlefonts/noto-emoji) ·
+[Noto usage guidance](https://github.com/notofonts/noto-docs/blob/main/docs/website/use.md)

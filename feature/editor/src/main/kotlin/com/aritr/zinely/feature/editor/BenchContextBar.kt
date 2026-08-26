@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -153,6 +154,9 @@ internal fun benchContextVerbs(
     )
     BenchVerbKind.PHOTO -> listOf(
         BenchVerb(Copy.BenchVerbs.REFRAME, Icons.Filled.Crop),
+        // ADR-109 / frozen Bench A19: this is an edit to a selected photo, not another thing in Add.
+        // The confirmation and crop transaction are owned by the host/reducer; the bar names only entry.
+        BenchVerb(Copy.BenchVerbs.ACROSS_FOLD, Icons.Filled.ViewWeek),
         // The one verb this bar gained after its freeze, and the freeze was amended first
         // (`v21-bench.html:690`) exactly as CLAUDE.md's HTML-first rule requires — never the reverse.
         // (Was cited as :674, which is the *text* list; corrected by review after counting the lines.)

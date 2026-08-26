@@ -207,6 +207,7 @@ public object Copy {
         public const val SIZE: String = "Size"
         public const val INK: String = "Ink"
         public const val REFRAME: String = "Reframe"
+        public const val ACROSS_FOLD: String = "Across fold"
 
         /** The photocopier filter's toggle (`v21-bench.html:690`, ADR-106). It names the machine, not
          *  the algorithm: nobody asks a copier for Floyd–Steinberg. */
@@ -265,6 +266,28 @@ public object Copy {
          * type, then leave the session — and it is true whether the box currently holds words or not.
          */
         public const val FINISH_TYPING: String = "Finish typing to change this"
+    }
+
+    /** One-photo-across-two-pages confirmation (ADR-109 / frozen Bench A19). */
+    public object Spread {
+        public const val CONFIRM: String = "Across pages"
+        public const val CANCEL: String = "Cancel"
+        public const val KEEPS_CONTENT: String =
+            "Zinely will place one half on each page. Existing words and art stay on top."
+        public const val FOLD_WARNING: String =
+            "Keep faces and words away from the middle. It lands on the fold. " +
+                "You will see the complete picture after printing and folding."
+        public const val PHOTO_UNAVAILABLE: String = "This photo couldn’t be prepared for the fold."
+
+        public fun title(leftPageNumber: Int, rightPageNumber: Int): String =
+            if (leftPageNumber == 8 && rightPageNumber == 1) {
+                "Wrap this photo around pages 8 & 1?"
+            } else {
+                "Run this photo across pages $leftPageNumber & $rightPageNumber?"
+            }
+
+        public fun success(leftPageNumber: Int, rightPageNumber: Int): String =
+            "Photo runs across pages $leftPageNumber & $rightPageNumber"
     }
 
     /**

@@ -46,13 +46,15 @@ and print output outrank feature count.
 
 **Launch Musts:** crash/data-loss safety; additive `.zine` backup/restore; autosave/session ownership; editor
 create/edit/undo/redo; accurate shared preview/PDF rendering; correct imposition and fold guidance; usable
-first-run/shelf navigation; accessible primary flows; honest failure and unsupported-character behavior.
+first-run/shelf navigation; accessible primary flows; **deterministic offline emoji printing**; and the accepted
+**one-photo-across-the-fold** action. Emoji remains gated by [ADR-112](DECISIONS.md#adr-112)'s measured renderer
+spike; spreads remain gated by [ADR-109](DECISIONS.md#adr-109)'s export-seam and physical-fold verification.
 
 **Launch candidates, only while the Musts stay green:** the already-approved A16 Art + Ink implementation;
 small contextual guidance for alignment/resize/rotate/Reframe; a user-controlled post-save PDF-open affordance.
 
 **Deferred beyond launch:** broad onboarding/tutorial systems, cloud/accounts/social features, new formats,
-direct printing without fixed-scale proof, and vector emoji rendering. The
+and direct printing without fixed-scale proof. The
 [stakeholder feedback review](reviews/2026-08-26-stakeholder-feedback.md) records why these are not all the same
 kind of gap.
 
@@ -178,12 +180,9 @@ flowchart LR
 - Drawing / stickers / freehand layer.
 - **Custom font import** (`.ttf`).
 - **Print-shop export groundwork**: bleed, trim/crop marks, margins — still RGB ([ADR-002](DECISIONS.md#adr-002)).
-- **`X9` — multi-page spreads** (one photo across two facing pages). ⚠ `Proposed`, gated on
-  [ADR-109](DECISIONS.md#adr-109). Two ordinary images, no schema bump and **no imposition change** — the
-  ADR refutes the *"per-edge safe area is the one engine change"* note that
-  [`ZINE-DIRECTION.md:732`](design/ZINE-DIRECTION.md) still carries. The owner-owed part is the **control**,
-  not the engineering. The id is `X9` from `ZINE-DIRECTION.md`'s table, which is the authoritative one
-  ([D-099](design/V2-SPEC-DEFECTS.md#d-099) — `BETA-DIRECTION.md` numbers the same item `X11`).
+- ~~**`X9` — multi-page spreads**~~ moved into the 2026-09-11 Launch Musts by the owner's 2026-08-26 scope
+  ruling and accepted [ADR-109](DECISIONS.md#adr-109). It remains two ordinary images with no schema or
+  imposition change; V2 does not carry a second implementation of it.
 - Batch export; grid/layers panel.
 - Optional, explicit, user-initiated community sharing (network strictly opt-in).
 
@@ -230,6 +229,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-08-26 | **Owner moved emoji printing and X9 spreads into the September public-launch scope.** X9's A19 HTML ruling is frozen; emoji production remains blocked on the deterministic offline renderer spike rather than taking an OEM-dependent shortcut. | [ADR-109](DECISIONS.md#adr-109) · [ADR-112](DECISIONS.md#adr-112) |
 | 2026-08-26 | **Public launch set for 2026-09-11.** The remaining runway is explicitly stabilisation-first: feature freeze on 2026-09-04, release-candidate verification before stakeholder acceptance, and no broad feature expansion. The stakeholder pass is classified against current source so discoverability reports are not misimplemented as missing editor capabilities. | [Stakeholder feedback review](reviews/2026-08-26-stakeholder-feedback.md) · [D-080](design/V2-SPEC-DEFECTS.md#d-080) · [D-107](design/V2-SPEC-DEFECTS.md#d-107) |
 | 2026-08-18 | ⚠ **Phasing that had shipped without a roadmap row is recorded**: the V2.1 re-skin (V1) and the supplies programme P1–P3 (V1), plus spreads as **`X9`** under V2. A merge-readiness review found this document silent on ~74k lines already on `feat/supplies-p3-art-sheet` — `SUPPLIES-SPEC §10.1` had been carrying the phasing, and [CLAUDE.md](../CLAUDE.md#documentation-rule-mandatory) gives phasing to this file. 🟨 Recording it here does **not** accept [ADR-107](DECISIONS.md#adr-107) or [ADR-109](DECISIONS.md#adr-109), both still `Proposed` | [ADR-105](DECISIONS.md#adr-105), [ADR-107](DECISIONS.md#adr-107), [ADR-109](DECISIONS.md#adr-109), [D-099](design/V2-SPEC-DEFECTS.md#d-099) |
 | 2026-06-19 | Initial roadmap established | [PRD §7](PRD.md#7-scope--mvp) |

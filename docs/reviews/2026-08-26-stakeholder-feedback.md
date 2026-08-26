@@ -27,7 +27,7 @@ surface.
 | Resize and rotation were initially assumed missing | **Resolved by [D-109 / OD-53](../design/V2-SPEC-DEFECTS.md#d-109).** The selected-object toolbar now names Move, Resize, Rotate, Layer and text Style directly; the first-use coach points to those controls without blocking the canvas. | **Closed — focused tests/goldens and Samsung verification complete** |
 | Edge handles were expected to crop like Canva | **Resolved by [D-109 / OD-53](../design/V2-SPEC-DEFECTS.md#d-109).** Zinely intentionally separates element resize from non-destructive photo `Reframe`; the first-use photo coach now says `Pull a handle to resize` and `Reframe crops inside` without changing the shared transform model. | **Closed — focused tests/goldens and Samsung verification complete** |
 | Page thumbnails should enlarge when tapped | **Resolved by [D-065 / OD-54](../design/V2-SPEC-DEFECTS.md#d-065).** Tapping the navigator opens a three-column all-pages overview whose miniatures use the shared page renderer and therefore show the live page content; choosing one closes the overview on that page. | **Closed — focused tests/goldens and Samsung verification complete** |
-| Emoji should print | **Known fidelity limitation.** Unsupported emoji are saved and warned about rather than silently dropped. True print fidelity needs a deliberate vector-emoji/content strategy; it is not a safe deadline patch to the text renderer. | **Disclose for launch; post-launch feature unless scope is explicitly changed** |
+| Emoji should print | **Owner changed scope on 2026-08-26: September launch requirement.** [ADR-112](../DECISIONS.md#adr-112) keeps the old reproducibility constraint and requires a measured bundled/offline renderer; system emoji fallback is still not acceptable. | **In progress — launch blocker; renderer spike before production choice** |
 | Preview animation is unnecessary | **Resolved by the frozen P3 amendment in [`v21-proof.html`](../design/mockups/v21-proof.html).** The evidence identifies the Read page swing specifically. Page changes are now immediate; the physical spine/stack model, gestures, page announcement, fold instruction motion and chrome transitions remain intact. | **Closed — focused interaction/accessibility tests and Samsung verification complete** |
 | Open the PDF after saving | **Resolved by the frozen P2 amendment in [`v21-proof.html`](../design/mockups/v21-proof.html).** Save still keeps the maker in Proof, but the completion now offers an explicit `Open PDF` action for the exact durable Downloads item beside the primary fold hand-off. | **Closed — focused tests/goldens plus normal/large-font Samsung passes complete** |
 
@@ -40,7 +40,7 @@ The session does not justify a new editor architecture or a broad tutorial. It p
 2. replace or redesign the inert typing chips through the HTML-first process;
 3. teach resize, rotate, alignment and Reframe at the moment each becomes relevant;
 4. make the all-pages affordance and post-save outcome self-evident;
-5. retain honest emoji limitations until output fidelity can be guaranteed.
+5. replace the honest emoji limitation only after ADR-112 proves deterministic screen/PNG/PDF output.
 
 The positive speed feedback is a constraint: no guidance change may make manipulation slower, noisier, or more
 modal.

@@ -118,9 +118,10 @@
 | [ADR-106](#adr-106) | **The photocopier filter — a flag on the tape, not a filtered asset.** Adopted by the implementer under explicit owner delegation of D-082's five questions | Accepted |
 | [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** First admits a 16-supply expansion to 32, keeps the remaining ~19 candidates as a curated backlog, upholds the randomiser ban, withdraws app-authored composites, and ships search with growth. | Accepted |
 | [ADR-108](#adr-108) | ✅ **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed | **Accepted 2026-08-20**; R4 shipped as *generation* — the tile renders the authored outline, `BenchArtGlyphs` deleted.
-| [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The open question is not rendering but *when the maker first sees the join* — no screen shows it | Proposed |
+| [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The frozen confirmation explains that the complete join first appears in the printed and folded zine | Accepted |
 | [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
 | [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
+| [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, but only through one bundled, deterministic preview/export path.** A measured renderer spike chooses the representation; system/OEM fallback remains forbidden. | Proposed |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12172,7 +12173,7 @@ citing that the draft refuted two of the four claims it was handed — including
 
 ### One photo across two pages — spreads as two ordinary images, and the cue that must stop lying
 
-**Status:** Proposed · **Date:** 2026-08-18 · **Supersedes:** nothing · **Amends the freeze:** yes (`v21-bench.html`, owner act)
+**Status:** Accepted · **Date:** 2026-08-18 · **Accepted:** 2026-08-26 · **Supersedes:** nothing · **Amends the freeze:** yes (`v21-bench.html` A19)
 
 ---
 
@@ -12565,6 +12566,12 @@ command.** Contrast ADR-105, where the new primitive did need one — this one d
 | 1 | Amend `v21-bench.html` with the spread control — placement, label, and the fold warning | Design freeze; no Compose work may precede it |
 | 2 | Rule on **where the maker first sees the join**, given that no on-screen surface shows it | It is the feature's acceptance criterion, not a polish item — see the skeptical pass |
 
+✅ **RESOLVED 2026-08-26 — owner accepted A19.** `v21-bench.html` freezes `Across fold` in the
+selected-photo context bar and one pre-commit confirmation. The confirmation names the fixed partner pages,
+keeps existing words and art on top, warns that faces and words should stay away from the physical fold, and
+states that the complete picture appears after printing and folding. It does not add a side-by-side editor or
+preview. Cancel, Back, and outside-tap are no-ops; confirm is one undoable document action.
+
 *(A third item in an earlier draft asked the owner to confirm the cue change did not contradict
 BETA-DIRECTION §3.10. It never did — §3.10's own corrected paragraph says the same thing. The item is
 deleted rather than downgraded, because a checklist row that asks the owner to rule on a
@@ -12707,3 +12714,49 @@ The focused manifest/theme regression, lint, debug assembly, signed release asse
 and independent review are green. Two physical passes on Samsung `SM-A176B` / Android 16 verified the circular launcher
 mask, dark and light cold starts, direct warm return, intact existing library, and restored device settings. See the
 [device-verification report](reviews/2026-08-25-app-entry-device-verification.md).
+
+## ADR-112 {#adr-112}
+
+### Emoji may print only when Zinely owns the glyphs and the output
+
+**Status:** Proposed · **Date:** 2026-08-26 · **Supersedes on acceptance:** the beta-wide prohibition on
+emoji in text output · **Extends:** [ADR-001](#adr-001), [ADR-028](#adr-028), [ADR-057](#adr-057)
+
+#### Context
+
+The owner has made emoji printing a requirement for the 2026-09-11 public launch. The existing prohibition was
+not aesthetic: Android system emoji differ by OEM and colour-font glyphs can be rasterised or omitted by PDF
+backends. Routing typed emoji through Samsung/Google fallback would therefore make the same document print
+differently on two phones and would violate preview/export parity.
+
+The launch requirement changes scope, not those constraints. Zinely must own a fixed, offline emoji corpus and
+route preview, raster and PDF through the same render seam. The pure document and draw-command modules remain
+platform-independent; no emoji bytes, Android spans, or device font lookup enter them.
+
+#### Decision gate
+
+No production implementation is selected until a focused Android renderer spike measures these candidates:
+
+1. **Bundled Emoji2 font and spans:** broad sequence coverage and one offline payload, but colour glyphs may be
+   fixed-resolution bitmaps in PDF and the bundled font materially increases APK size.
+2. **Bundled monochrome Noto Emoji outlines:** print-native vector output and a Zinely-like ink treatment, but its
+   encoded/sequence coverage must be measured against the launch corpus rather than assumed.
+3. **Bundled Noto vector assets with an inline renderer:** deterministic vector output and broad visual control,
+   but materially more layout, line-breaking and asset-provenance work than either font path.
+
+System fallback and downloadable emoji fonts are rejected: the first is device-dependent and the second breaks
+offline-first. Silently keeping the current warning after accepting launch scope is also rejected.
+
+The spike must render one fixed corpus through the real `CanvasReplayer` to screen bitmap, 300-DPI imposed PNG,
+and PDF at 10, 24 and 48 pt. It includes single-codepoint emoji, variation selectors, skin tones, flags, keycaps,
+ZWJ family/profession sequences, surrounding Latin text and line wraps. Acceptance requires:
+
+- the same grapheme coverage and layout on every surface;
+- no OEM glyph substitution and no network access;
+- readable printed output at all three sizes, with the 48-pt case free of visible source-resolution pixelation;
+- a recorded APK-size delta and bounded render-time/memory delta;
+- deterministic failure before export if the bundled corpus cannot represent a saved sequence.
+
+Only after the evidence selects a representation does this ADR become Accepted. The production change then lands
+at `SharedTextLayout`/`CanvasReplayer`, the existing single preview/export seam, plus coverage analysis and honest
+editor copy. It does not introduce emoji as controls, stickers, or random Art supplies.

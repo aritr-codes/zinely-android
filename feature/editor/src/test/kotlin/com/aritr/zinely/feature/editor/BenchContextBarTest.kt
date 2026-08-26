@@ -131,11 +131,17 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `the photo verbs are the frozen four, in the frozen order`() {
+    fun `the photo verbs include the frozen spread action in order`() {
         // `Copier` is the amendment ADR-106 made to this freeze, in `v21-bench.html:690` before it was
         // made here. Order is asserted, not just membership: a permutation is the wrong bar.
         assertEquals(
-            listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.COPIER, Copy.BenchVerbs.REPLACE, Copy.BenchVerbs.DELETE),
+            listOf(
+                Copy.BenchVerbs.REFRAME,
+                Copy.BenchVerbs.ACROSS_FOLD,
+                Copy.BenchVerbs.COPIER,
+                Copy.BenchVerbs.REPLACE,
+                Copy.BenchVerbs.DELETE,
+            ),
             benchContextVerbs(BenchVerbKind.PHOTO).map { it.label },
         )
     }
@@ -163,7 +169,7 @@ class BenchContextBarTest {
         // ride `stateDescription` and they cannot collide (a disabled verb has no setting; a toggle is
         // live by construction) — but a blanket "only Copier has a state" would have been false, and the
         // first draft of this test asserted exactly that.
-        for (label in listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.DELETE)) {
+        for (label in listOf(Copy.BenchVerbs.REFRAME, Copy.BenchVerbs.ACROSS_FOLD, Copy.BenchVerbs.DELETE)) {
             composeRule.onNodeWithTag("$BenchContextBarTestTag-$label")
                 .assert(SemanticsMatcher.keyIsDefined(SemanticsProperties.StateDescription).not())
         }

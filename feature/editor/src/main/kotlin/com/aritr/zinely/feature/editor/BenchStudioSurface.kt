@@ -670,11 +670,14 @@ internal fun Modifier.benchPageSurface(): Modifier {
  *   area rather than a transcribed pixel count — see [BenchStudio]. **Kept over the freeze's flat
  *   `inset:14px`**: the prototype has one page size and the product has several, so a transcribed
  *   pixel count would draw a boundary that is not the printer's.
+ * @param suppressedEdge the physical join of an ADR-109 image pair. That edge is intentionally crossed,
+ *   so drawing the warning there would instruct the maker to create a white stripe by hand.
  */
 @Composable
 internal fun BenchKeepClear(
     warn: Boolean,
     panelWidthPt: Double,
+    suppressedEdge: SpreadInnerEdge? = null,
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -722,16 +725,32 @@ internal fun BenchKeepClear(
                 val edge = inset + stroke / 2f
                 val dash = with(density) { BenchStudio.KeepClearDash.toPx() }
                 val radius = with(density) { BenchStudio.KeepClearRadius.toPx() }
-                drawRoundRect(
-                    color = color.copy(alpha = alpha),
-                    topLeft = Offset(edge, edge),
-                    size = Size(size.width - 2 * edge, size.height - 2 * edge),
-                    cornerRadius = CornerRadius(radius, radius),
-                    style = Stroke(
-                        width = stroke,
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)),
-                    ),
-                )
+                val lineColor = color.copy(alpha = alpha)
+                val lineStyle = Stroke(width = stroke, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash)))
+                if (suppressedEdge == null) {
+                    drawRoundRect(
+                        color = lineColor,
+                        topLeft = Offset(edge, edge),
+                        size = Size(size.width - 2 * edge, size.height - 2 * edge),
+                        cornerRadius = CornerRadius(radius, radius),
+                        style = lineStyle,
+                    )
+                } else {
+                    // The other three sides remain honest. Only the shared fold edge disappears.
+                    drawLine(
+                        lineColor, Offset(edge, edge), Offset(size.width - edge, edge),
+                        strokeWidth = stroke, pathEffect = lineStyle.pathEffect,
+                    )
+                    drawLine(
+                        lineColor, Offset(edge, size.height - edge), Offset(size.width - edge, size.height - edge),
+                        strokeWidth = stroke, pathEffect = lineStyle.pathEffect,
+                    )
+                    val x = if (suppressedEdge == SpreadInnerEdge.LEFT) size.width - edge else edge
+                    drawLine(
+                        lineColor, Offset(x, edge), Offset(x, size.height - edge),
+                        strokeWidth = stroke, pathEffect = lineStyle.pathEffect,
+                    )
+                }
             },
     )
 }

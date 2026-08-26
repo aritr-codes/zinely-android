@@ -2,6 +2,7 @@ package com.aritr.zinely.core.editor
 
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
@@ -136,6 +137,19 @@ public sealed interface Intent {
     /** Turn the photocopier filter (X3b, ADR-106) on or off for one photo. One undoable command, and
      *  its own inverse; no-op if [id] names nothing or names a text element. */
     public data class ToggleCopier(val id: String) : Intent
+
+    /**
+     * Turn one placed photo into the current page's half of a fixed mini-zine spread and add the other
+     * half to its booklet partner (ADR-109). [photoAspect] is read from the authoritative import master
+     * by the Android feature boundary; [pageSizePt] is the same imposed panel size the editor renders.
+     * The pure reducer owns the fixed 2|3, 4|5, 6|7, 8|1 table, crop geometry, id allocation and one-step
+     * undo. Invalid dimensions, a missing partner page, or a non-image [id] are no-ops.
+     */
+    public data class MakeImageSpread(
+        val id: String,
+        val photoAspect: Double,
+        val pageSizePt: PtSize,
+    ) : Intent
 
     /** Commit the session's draft. [token] rejects a late commit after nav/cancel/new session (D5). */
     public data class CommitText(val id: String, val after: TextElement, val token: Long) : Intent
