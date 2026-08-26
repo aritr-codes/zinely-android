@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -110,7 +111,7 @@ class BenchArtPlacementTest {
         setScreen(store)
         openArt()
 
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         val placed = decor(store).single()
@@ -126,7 +127,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         // The freeze's `selectByKind('decor')`, delivered by the reducer's own auto-select. The context bar
@@ -142,7 +143,7 @@ class BenchArtPlacementTest {
         setScreen(store)
         openArt()
 
-        composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         assertEquals("tape.torn", decor(store).single().supplyId)
@@ -154,7 +155,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.triangle")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.triangle")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         // The screen must use the same geometry the pure helper computes — not a second, drifting copy.
@@ -166,7 +167,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.rule")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.rule")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         val ink = decor(store).single().ink
@@ -183,7 +184,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         val id = decor(store).single().id
@@ -196,7 +197,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
         composeRule.waitForIdle()
         assertEquals(1, decor(store).size)
 
@@ -214,7 +215,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
@@ -240,7 +241,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store, fontScale = 1.8f)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
@@ -260,7 +261,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
         composeRule.waitForIdle()
         // The placement auto-selected, so the context bar is up — the precondition, asserted so this test
         // cannot pass by the bar never having been there.
@@ -272,9 +273,9 @@ class BenchArtPlacementTest {
     }
 
     @Test
-    fun `Given the sixteen, When the cabinet opens on the real screen, Then every tile is there`() {
+    fun `Given the thirty two, When the cabinet opens on the real screen, Then every tile is there`() {
         // The chooser's promise — "tape, stamps and cut paper live here" — is true of the *cabinet*, not of
-        // every tile in it, so the cabinet must hold all sixteen however few are authored.
+        // every tile in it, so the cabinet must hold all thirty two.
         //
         // ⚠ This test also used to re-assert a hard-coded set of four authored ids, under a comment saying
         // it was pinned against the catalogue so it would "follow instead of failing". It did neither: it
@@ -287,6 +288,6 @@ class BenchArtPlacementTest {
         for (id in Copy.Supplies.NAMES.keys) {
             composeRule.onNodeWithTag(benchArtTileTestTag(id)).assertExists()
         }
-        assertEquals("the freeze specifies sixteen", 16, Copy.Supplies.NAMES.size)
+        assertEquals("A16 freezes thirty two", 32, Copy.Supplies.NAMES.size)
     }
 }

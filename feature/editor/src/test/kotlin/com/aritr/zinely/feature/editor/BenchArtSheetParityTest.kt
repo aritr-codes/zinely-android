@@ -4,324 +4,172 @@ import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.render.Segment
 import com.aritr.zinely.core.render.SupplyCatalog
 import java.io.File
+import java.util.Locale
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Pins the Art sheet against the frozen file it was transcribed from — `openArt()`'s `SUP` array
- * (`v21-bench.html:870-880`), as amended by **A5** and **A7** — A7 is what made those lines generated
- * rather than drawn, so this test compares them with the generator instead of with a second drawing.
- *
- * This is the same instrument `ZinelyV2IconsTest` uses on the V2 icon set and for the same reason: a
- * transcription that is only *checked* once drifts the first time either side is edited. It re-extracts the
- * sixteen entries from the HTML at run time and compares ids, order, spoken names and geometry against the
- * Kotlin, in both directions, so the two cannot disagree without a red test.
- *
- * ⚠ **It reads the mockup at a relative path, not a resource.** The frozen file is documentation and is not
- * packaged; the path is the one `ZinelyV2IconsTest` already uses, one level deeper.
- */
+/** Source-level parity with the owner-approved A16 Art amendment. */
 class BenchArtSheetParityTest {
 
-    private val frozen = File("../../docs/design/mockups/v21-bench.html").readText()
+    private data class FrozenSupply(
+        val family: String,
+        val id: String,
+        val name: String,
+        val path: String,
+    )
 
-    /**
-     * The frozen `SUP` entries as `id → (name, inner SVG markup)`, in file order.
-     *
-     * `SUP` is a JS array literal of three-element arrays; the third element is either a quoted string of
-     * SVG children or the bare identifier `DECOR.star`, which is resolved here from its own declaration
-     * (`:641`) rather than hard-coded — the freeze reuses that glyph deliberately, and a test that inlined
-     * it would keep passing if the freeze changed the star.
-     */
-    private fun frozenSupplies(): List<Triple<String, String, String>> {
-        val body = frozen.substringAfter("function openArt(){").substringBefore("\$('sheet').innerHTML")
-        val star = Regex("""star:'([^']*)'""").find(frozen)!!.groupValues[1]
-        return Regex("""\['([a-z]+\.[a-z]+)','([^']*)',(?:'([^']*)'|(DECOR\.star)|(null))]""")
-            .findAll(body)
-            .map { m ->
-                // A7: the third slot is now the supply's own outline as SVG path data. The parser keeps
-                // accepting the historical literal `null` so a regression fails as data, not as parsing.
-                // is generated with the rest — but the alternative is kept so this extractor keeps reading
-                // the file it is pointed at rather than the file it expects.
-                val markup = if (m.groupValues[5] == "null") "" else m.groupValues[3].ifEmpty { star }
-                Triple(m.groupValues[1], m.groupValues[2], markup)
+    private val frozen = File("../../docs/design/mockups/v21-bench.html").readText()
+    private val a16 = frozen.substringAfter("A16 ITERATION 3").substringBefore("</html>")
+
+    private fun frozenSupplies(): List<FrozenSupply> {
+        val original = Regex("""\['([a-z]+\.[a-z]+)','([^']*)','<path d="([^"]*)"/>'\]""")
+            .findAll(frozen.substringAfter("const SUP=[").substringBefore("];"))
+            .mapIndexed { index, match ->
+                FrozenSupply(
+                    family = Copy.Supplies.BY_FAMILY.keys.elementAt(index / 4),
+                    id = match.groupValues[1],
+                    name = match.groupValues[2],
+                    path = match.groupValues[3],
+                )
             }
             .toList()
+        val expansion = Regex("""\['([^']+)','([^']+)','([^']+)','<path d="([^"]*)"/>'\]""")
+            .findAll(frozen.substringAfter("const ART_FIRST_WAVE=[").substringBefore("];"))
+            .map { match ->
+                FrozenSupply(
+                    family = match.groupValues[1],
+                    id = match.groupValues[2],
+                    name = match.groupValues[3],
+                    path = match.groupValues[4],
+                )
+            }
+            .toList()
+        return Copy.Supplies.BY_FAMILY.keys.flatMap { family ->
+            (original + expansion).filter { it.family == family }
+        }
     }
 
-    /** The `d`/`cx,cy,r`/`x,y,w,h` of each child, in the notation both sides are compared in. */
-    private fun frozenGeometry(markup: String): List<String> =
-        Regex("""<(path|circle|rect)\s*([^>]*?)/?>""").findAll(markup).map { m ->
-            val at = Regex("""([\w-]+)=['"]([^'"]*)['"]""").findAll(m.groupValues[2])
-                .associate { it.groupValues[1] to it.groupValues[2] }
-            when (m.groupValues[1]) {
-                "path" -> "path:${at.getValue("d")}"
-                "circle" -> "circle:${at.getValue("cx")},${at.getValue("cy")},${at.getValue("r")}"
-                else -> "rect:${at["x"] ?: "0"},${at["y"] ?: "0"}," +
-                    "${at.getValue("width")},${at.getValue("height")},${at["rx"] ?: "0"}"
-            }
-        }.toList()
-
-    /**
-     * The catalogue side: [supplyId]'s authored outline as SVG path data in the frozen 24 viewBox, or `null`
-     * when it has none.
-     *
-     * ⚠ **This is a generator, and that is the point.** It used to read `BenchArtGlyphs` — a hand-authored
-     * icon set kept beside the catalogue — so the test could only ever prove the two *hand-drawn* copies
-     * agreed with each other, never that either depicted the mark. They did not: every tile was stroked
-     * against a fill-only renderer, and `mark.halftone` drew seven dots for a sixteen-dot mark, with this
-     * test green throughout. `v21-bench.html`'s `SUP` table is now generated by exactly this function, so
-     * the assertion below is the generation itself, run again and checked.
-     */
-    private fun catalogueGeometry(supplyId: String): String? {
-        val outline = SupplyCatalog.outlineOf(supplyId) ?: return null
-        fun n(v: Double): String {
-            val printed = String.format(java.util.Locale.ROOT, "%.2f", v * VIEWBOX)
-            return printed.trimEnd('0').trimEnd('.').ifEmpty { "0" }
-        }
-        return outline.subpaths.joinToString(" ") { sub ->
-            val head = "M${n(sub.start.x)} ${n(sub.start.y)}"
-            val body = sub.segments.joinToString(" ") { seg ->
-                when (seg) {
-                    is Segment.LineTo -> "L${n(seg.to.x)} ${n(seg.to.y)}"
-                    is Segment.CubicTo ->
-                        "C${n(seg.c1.x)} ${n(seg.c1.y)} ${n(seg.c2.x)} ${n(seg.c2.y)} " +
-                            "${n(seg.to.x)} ${n(seg.to.y)}"
+    private fun cataloguePath(supplyId: String): String {
+        val outline = SupplyCatalog.outlineOf(supplyId) ?: error("$supplyId has no authored outline")
+        fun n(value: Double): String = String.format(Locale.ROOT, "%.2f", value * VIEWBOX)
+            .trimEnd('0').trimEnd('.').ifEmpty { "0" }
+        return outline.subpaths.joinToString(" ") { subpath ->
+            val head = "M${n(subpath.start.x)} ${n(subpath.start.y)}"
+            val body = subpath.segments.joinToString(" ") { segment ->
+                when (segment) {
+                    is Segment.LineTo -> "L${n(segment.to.x)} ${n(segment.to.y)}"
+                    is Segment.CubicTo -> "C${n(segment.c1.x)} ${n(segment.c1.y)} " +
+                        "${n(segment.c2.x)} ${n(segment.c2.y)} ${n(segment.to.x)} ${n(segment.to.y)}"
                 }
             }
             "$head $body Z"
         }
     }
 
-    /** `svg(d)` writes `viewBox="0 0 24 24"` for every mark in the frozen file. */
-    private val VIEWBOX = 24.0
-
-    @Test
-    fun the_frozen_sheet_offers_sixteen_supplies_and_the_extractor_found_them_all() {
-        // Non-vacuity first: every assertion below is over this list, and a regex that silently matched
-        // nothing would make the whole file pass while asserting about an empty set.
-        assertEquals("the extractor did not find the frozen sixteen", 16, frozenSupplies().size)
-    }
-
-    @Test
-    fun the_ids_and_their_order_are_the_frozen_ones() {
-        assertEquals(
-            "the sheet's supply order is SUPPLIES-SPEC §4's, frozen — position is the only way a maker " +
-                "finds a supply twice on a surface with no search and no sort",
-            frozenSupplies().map { it.first },
-            Copy.Supplies.BY_FAMILY.values.flatMap { it.keys },
-        )
-    }
-
-    @Test
-    fun every_spoken_name_matches_the_copy_layer() {
-        // A5's reconciliation ran in both directions and ended with the copy winning; this is the assertion
-        // that keeps it won. Five of the sixteen names depart from §4's prose, each for a documented reason.
-        assertEquals(
-            frozenSupplies().associate { it.first to it.second },
-            frozenSupplies().associate { it.first to Copy.Supplies.NAMES.getValue(it.first) },
-        )
-    }
-
-    @Test
-    fun every_frozen_tile_is_its_catalogue_outline() {
-        for ((id, _, markup) in frozenSupplies()) {
-            val expected = catalogueGeometry(id)
-            if (expected == null) {
-                assertEquals(
-                    "$id has no authored outline, so the freeze must draw no mark for it — a picture of an " +
-                        "unauthored supply is an invention, not a depiction (A7)",
-                    emptyList<String>(),
-                    frozenGeometry(markup),
-                )
-            } else {
-                assertEquals(
-                    "$id's tile has drifted from its own outline — the freeze's `d` is GENERATED from " +
-                        "SupplyCatalog and must stay that way (A7 / D-093)",
-                    listOf("path:$expected"),
-                    frozenGeometry(markup),
-                )
+    /** Canonicalises the frozen SVG's H/V shorthand to the catalogue's absolute M/L/C notation. */
+    private fun normalisePath(path: String): List<String> {
+        val tokens = Regex("""[MLHVCZ]|-?\d+(?:\.\d+)?""").findAll(path).map { it.value }.toList()
+        val output = mutableListOf<String>()
+        var index = 0
+        var command = ""
+        var x = 0.0
+        var y = 0.0
+        fun number(): Double = tokens[index++].toDouble()
+        fun n(value: Double): String = String.format(Locale.ROOT, "%.2f", value)
+            .trimEnd('0').trimEnd('.').ifEmpty { "0" }
+        while (index < tokens.size) {
+            if (tokens[index].length == 1 && tokens[index][0].isLetter()) command = tokens[index++]
+            when (command) {
+                "M", "L" -> {
+                    x = number()
+                    y = number()
+                    output += "$command${n(x)} ${n(y)}"
+                    if (command == "M") command = "L"
+                }
+                "H" -> {
+                    x = number()
+                    output += "L${n(x)} ${n(y)}"
+                }
+                "V" -> {
+                    y = number()
+                    output += "L${n(x)} ${n(y)}"
+                }
+                "C" -> {
+                    val c1x = number()
+                    val c1y = number()
+                    val c2x = number()
+                    val c2y = number()
+                    x = number()
+                    y = number()
+                    output += "C${n(c1x)} ${n(c1y)} ${n(c2x)} ${n(c2y)} ${n(x)} ${n(y)}"
+                }
+                "Z" -> {
+                    output += "Z"
+                    command = ""
+                }
+                else -> error("Unsupported frozen SVG command near ${tokens.getOrNull(index)}")
             }
+        }
+        return output
+    }
+
+    @Test
+    fun a16_is_the_frozen_source_and_not_an_unapproved_iteration() {
+        assertTrue(a16.contains("DESIGN FROZEN 2026-08-26"))
+        assertTrue(a16.contains("production source of truth for the Compose implementation"))
+    }
+
+    @Test
+    fun all_thirty_two_ids_names_families_order_and_geometry_match_the_freeze() {
+        val expected = frozenSupplies()
+        val actual = Copy.Supplies.BY_FAMILY.flatMap { (family, supplies) ->
+            supplies.map { (id, name) -> Triple(family, id, name) }
+        }
+        assertEquals(32, expected.size)
+        assertEquals(expected.map { Triple(it.family, it.id, it.name) }, actual)
+        expected.forEach { supply ->
+            assertEquals(supply.id, normalisePath(supply.path), normalisePath(cataloguePath(supply.id)))
         }
     }
 
     @Test
-    fun the_generator_agrees_with_two_hand_checked_outlines() {
-        // ⚠ **The generator is its own oracle everywhere else in this file**, and a test that regenerates
-        // what it is checking agrees with itself by construction. These two are read off `SupplyCatalog`'s
-        // constants **by hand** and pinned as literals: `RECT` is the full unit square, and `WINDOW` is the
-        // square with a `0.14`-inset square removed (0.14 × 24 = 3.36; 24 − 3.36 = 20.64). If the scaling,
-        // the rounding or the subpath order ever drifts, these fail while everything else stays green.
-        assertEquals("shape.rect", "M0 0 L24 0 L24 24 L0 24 Z", catalogueGeometry("shape.rect"))
-        assertEquals(
-            "paper.window",
-            "M0 0 L24 0 L24 24 L0 24 Z M3.36 3.36 L20.64 3.36 L20.64 20.64 L3.36 20.64 Z",
-            catalogueGeometry("paper.window"),
-        )
-        // …and a mark with curves, so the cubic branch is not left unexercised: the inscribed circle's
-        // control offset is KAPPA = 0.5522847… × 0.5 × 24 = 6.63.
-        assertTrue(
-            "the cubic branch must emit C with three points",
-            catalogueGeometry("shape.circle")!!.startsWith("M12 0 C18.63 0 24 5.37 24 12 "),
-        )
+    fun layout_measurements_match_the_frozen_material_cards() {
+        assertTrue(a16.contains("grid-template-columns:repeat(3,minmax(0,1fr))"))
+        assertTrue(a16.contains("grid-auto-columns:104px"))
+        assertTrue(a16.contains("height:134px"))
+        assertTrue(a16.contains("width:48px;height:48px"))
+        assertEquals(3, BenchArtGridColumns)
+        assertEquals(104f, BenchArtRailCardWidth.value, 0f)
+        assertEquals(134f, BenchArtCardHeight.value, 0f)
+        assertEquals(46f, BenchArtGlyphSize.value, 0f)
+        assertEquals(12f, BenchArtGridGap.value, 0f)
     }
 
     @Test
-    fun the_word_is_drawn_at_the_frozen_size_and_case() {
-        // These four are the only measurements this amendment added, and they were the only transcriptions
-        // in the file with nothing comparing them to the freeze. ⚠ `text-transform` is what that gap cost:
-        // the Compose control shipped without it, so the freeze said NOT AVAILABLE YET and the app said
-        // `Not available yet`. A review caught it; this assertion is what catches the next one.
-        assertEquals("uppercase", decl(".tile.na .naw", "text-transform"))
-        assertEquals(".56rem", decl(".tile.na .naw", "font-size"))
-        assertEquals(".08em", decl(".tile.na .naw", "letter-spacing"))
-        assertEquals("700", decl(".tile.na .naw", "font-weight"))
-        assertEquals(".55", decl(".tile.na .naw", "opacity"))
-        assertEquals(0.55f, BenchArtNotYetAlpha, 0f)
-        // `.56rem` at the 16px root this file's other rem transcriptions assume.
-        assertEquals(8.96f, BenchArtNotYetSize.value, 0.001f)
-        assertEquals(0.08f, BenchArtNotYetTracking.value, 0.001f)
+    fun search_families_favourites_and_empty_state_keep_the_frozen_contract() {
+        assertTrue(a16.contains("search.placeholder='${Copy.BenchArt.SEARCH_HINT}'"))
+        assertTrue(frozen.contains("const ART_FAVOURITES=new Set()"))
+        assertTrue(a16.contains("aria-live=\"polite\""))
+        assertTrue(frozen.contains("favouriteEmpty.textContent='${Copy.BenchArt.FAVOURITES_EMPTY}'"))
+        assertTrue(frozen.contains("<b>${Copy.BenchArt.NO_RESULTS}</b>"))
+        assertTrue(frozen.contains("<span>${Copy.BenchArt.NO_RESULTS_HINT}</span>"))
+        assertTrue(frozen.contains(">${Copy.BenchArt.SHOW_ALL}</button>"))
+        assertEquals(4, Copy.Supplies.BY_FAMILY.size)
     }
 
     @Test
-    fun the_frozen_sheet_fills_its_tiles_with_the_renderers_own_rule() {
-        // The one CSS line D-093 is about. It read `fill:none;stroke:currentColor` — sixteen hollow tiles
-        // for a catalogue with no hollow mark in it. Asserted as text because that is the form the freeze
-        // is in, and because a golden cannot tell "hollow by rule" from "hollow because this mark has a
-        // hole": `paper.window`, `fix.corner` and `mark.registration` legitimately show one.
-        val rule = frozen.substringAfter(".tile svg{").substringBefore("}")
-        assertTrue("the frozen tile rule no longer fills: $rule", rule.contains("fill:currentColor"))
-        assertTrue("the frozen tile rule lost its even-odd: $rule", rule.contains("fill-rule:evenodd"))
-        assertTrue("the frozen tile rule still strokes: $rule", rule.contains("stroke:none"))
+    fun family_material_tilts_match_a16() {
+        assertEquals(-0.55f, BenchArtTilt[0], 0f)
+        assertEquals(0.45f, BenchArtTilt[1], 0f)
+        assertEquals(-0.35f, BenchArtTilt[2], 0f)
+        assertEquals(0.35f, BenchArtTilt[3], 0f)
+        Copy.Supplies.BY_FAMILY.values.forEachIndexed { index, supplies ->
+            supplies.keys.forEach { id -> assertEquals(index, benchArtFamilyIndex(id)) }
+        }
     }
 
-    @Test
-    fun all_sixteen_frozen_supplies_carry_an_authored_mark() {
-        val unauthored = frozenSupplies().filter { catalogueGeometry(it.first) == null }.map { it.first }
-        assertEquals("A11 completes the frozen cabinet", emptyList<String>(), unauthored)
-        assertTrue(frozenSupplies().all { frozenGeometry(it.third).isNotEmpty() })
-    }
-
-    // ── the transcribed MEASUREMENTS, read out of the frozen CSS ──────────────────────────────────────
-    //
-    // Everything above pins the sheet's *content*. These pin its numbers, and they exist because nothing
-    // else can: the goldens were recorded from this implementation, so they pin regression rather than
-    // correctness, and at `changeThreshold = 0.02f` a dropped letter-spacing or a 1.7→1.8 stroke across
-    // sixteen thin outlines moves far less than 2 % of the frame. "Transcribed from the freeze" is only a
-    // checkable claim if something compares it to the freeze.
-
-    /** One `--gap-*` / `--br-*` custom property, in px, from the file's own `:root`. */
-    private fun token(name: String): Float =
-        Regex("""$name\s*:\s*([\d.]+)px""").find(frozen)!!.groupValues[1].toFloat()
-
-    /** The declaration block of one CSS rule, whitespace-normalised. */
-    private fun rule(selector: String): String {
-        val at = frozen.indexOf("\n$selector{")
-        require(at >= 0) { "$selector is no longer in the frozen file" }
-        return frozen.substring(frozen.indexOf('{', at) + 1, frozen.indexOf('}', at))
-            .replace(Regex("""\s+"""), " ").trim()
-    }
-
-    /** A single declaration's value out of a rule — `.tile svg` `stroke-width` → `1.7`. */
-    /** The same lookup, but `null` when the freeze makes no such declaration — see [declOrNull]'s use. */
-    private fun declOrNull(selector: String, property: String): String? =
-        Regex("""(?:^|;)\s*$property\s*:\s*([^;]+)""").find(rule(selector))?.groupValues?.get(1)?.trim()
-
-    private fun decl(selector: String, property: String): String =
-        Regex("""(?:^|;)\s*$property\s*:\s*([^;]+)""").find(rule(selector))!!.groupValues[1].trim()
-
-    @Test
-    fun the_grid_and_tile_geometry_is_the_frozen_geometry() {
-        assertEquals("`.grid{grid-template-columns}`", "repeat(4,1fr)", decl(".grid", "grid-template-columns"))
-        assertEquals("`.grid{gap:var(--gap-sm)}`", "var(--gap-sm)", decl(".grid", "gap"))
-        assertEquals(token("--gap-sm"), BenchArtGridGap.value, 0f)
-        assertEquals(4, BenchArtGridColumns)
-
-        // `.tile{aspect-ratio:1}` — the square is what makes a 4-column grid a cabinet rather than a list.
-        assertEquals("1", decl(".tile", "aspect-ratio"))
-        assertEquals("var(--br-sm)", decl(".tile", "border-radius"))
-        assertEquals(token("--br-sm"), com.aritr.zinely.ui.theme.ZinelyV21Dimens.radiusSm.value, 0f)
-        assertTrue("`.tile{border:1.5px solid var(--ink)}`", decl(".tile", "border").startsWith("1.5px"))
-        assertEquals(1.5f, BenchArtTileBorder.value, 0f)
-        // `box-shadow:2px 2px 0 var(--ink-line)` is ZinelyV21Press.Flat's resting offset; `:active` moves
-        // the tile 2px and sheds the shadow entirely, which is Flat's travel and its pressed offset.
-        assertTrue("`.tile{box-shadow:2px 2px 0 …}`", decl(".tile", "box-shadow").startsWith("2px 2px 0"))
-        assertEquals(2f, com.aritr.zinely.ui.theme.ZinelyV21Press.Flat.rest.value, 0f)
-        assertEquals(2f, com.aritr.zinely.ui.theme.ZinelyV21Press.Flat.travel.value, 0f)
-        assertEquals(0f, com.aritr.zinely.ui.theme.ZinelyV21Press.Flat.pressed.value, 0f)
-    }
-
-    @Test
-    fun the_mark_is_drawn_at_the_frozen_size_and_fill() {
-        assertEquals("60%", decl(".tile svg", "width"))
-        assertEquals("60%", decl(".tile svg", "height"))
-        assertEquals(0.6f, BenchArtGlyphFraction, 0f)
-        // ⚠ The stroke assertions that stood here — `stroke-width: 1.7`, `fill: none`, and the two round
-        // line joins — are GONE rather than updated, because the freeze no longer makes those declarations
-        // (A7). Asserting their absence is what keeps a future re-stroke from passing quietly.
-        assertEquals("currentColor", decl(".tile svg", "fill"))
-        assertEquals("evenodd", decl(".tile svg", "fill-rule"))
-        assertEquals("none", decl(".tile svg", "stroke"))
-        assertNull("a tile has no stroke weight any more", declOrNull(".tile svg", "stroke-width"))
-    }
-
-    @Test
-    fun the_section_heading_is_the_frozen_lbl() {
-        // .62rem at the prototype's 16px root. The conversion is stated here rather than trusted to a
-        // comment, because the sp value is the thing that ships.
-        assertEquals(".62rem", decl(".lbl", "font-size"))
-        assertEquals(0.62f * 16f, BenchArtLabelSize.value, 0.001f)
-        assertEquals("700", decl(".lbl", "font-weight"))
-        assertEquals(".12em", decl(".lbl", "letter-spacing"))
-        assertEquals(0.12f, BenchArtLabelTracking.value, 0f)
-        assertEquals("uppercase", decl(".lbl", "text-transform"))
-        // `margin:var(--gap-md) 0 var(--gap-sm)` — 12 above, 8 below.
-        assertEquals("var(--gap-md) 0 var(--gap-sm)", decl(".lbl", "margin"))
-        assertEquals(token("--gap-md"), BenchArtLabelSpaceAbove.value, 0f)
-        assertEquals(token("--gap-sm"), BenchArtLabelSpaceBelow.value, 0f)
-    }
-
-    @Test
-    fun the_tint_and_tilt_cycle_is_the_frozen_one_including_which_rule_wins_at_position_twelve() {
-        // Position 12 matches BOTH `3n` and `4n`; CSS resolves it by source order, so `4n` — declared
-        // second — wins. Asserted as an ordering fact about the file, because the Kotlin encodes it as a
-        // `%4`-before-`%3` branch and a reader who reverses those two lines produces a berry tile at
-        // position 12 and nowhere else. That is a one-tile difference in sixteen.
-        assertTrue(
-            "the freeze no longer declares 3n before 4n — the tint cycle's precedence has moved",
-            frozen.indexOf(".tile:nth-child(3n)") < frozen.indexOf(".tile:nth-child(4n)"),
-        )
-        assertEquals("-1.6deg", decl(".tile:nth-child(3n)", "--tt"))
-        assertEquals("1.4deg", decl(".tile:nth-child(4n)", "--tt"))
-        assertEquals("var(--berry-tint)", decl(".tile:nth-child(3n)", "background"))
-        assertEquals("var(--butter-tint)", decl(".tile:nth-child(4n)", "background"))
-        assertEquals("var(--on-leaf)", decl(".tile:nth-child(3n)", "color"))
-        assertEquals("var(--ink)", decl(".tile:nth-child(4n)", "color"))
-        // The Kotlin side of the same cycle: index 0 = leaf/0deg, 1 = berry/-1.6, 2 = butter/+1.4, and
-        // the branch order is what puts position 12 on the butter arm.
-        assertEquals(0f, BenchArtTilt[0], 0f)
-        assertEquals(-1.6f, BenchArtTilt[1], 0f)
-        assertEquals(1.4f, BenchArtTilt[2], 0f)
-        assertEquals("position 1 is the base leaf tile", 0, benchArtTintIndex(1))
-        assertEquals("position 2 is the base leaf tile", 0, benchArtTintIndex(2))
-        assertEquals("position 3 is 3n — berry", 1, benchArtTintIndex(3))
-        assertEquals("position 4 is 4n — butter", 2, benchArtTintIndex(4))
-        assertEquals("position 12 matches both, and 4n is declared later so it wins", 2, benchArtTintIndex(12))
-        // …and the base, which is what positions 1 and 2 of every row wear.
-        assertEquals("var(--leaf-tint)", decl(".tile", "background"))
-        assertEquals("var(--on-leaf)", decl(".tile", "color"))
-    }
-
-    @Test
-    fun the_frozen_sheet_still_has_no_chip_row_no_filter_and_no_search() {
-        // A5 removed the chips and ADR-104 removed the search box, both by ruling. This asserts the *freeze*
-        // still says so — if someone re-adds either upstream, this implementation is out of date and should
-        // fail loudly rather than silently become the thing that diverges.
-        val art = frozen.substringAfter("function openArt(){").substringBefore("function showSheet")
-        assertFalse("the frozen Art sheet has grown a chip row again", art.contains("class=\"chips\""))
-        assertFalse("the frozen Art sheet has grown a search field again", art.contains("class=\"search\""))
-        assertTrue("the frozen Art sheet no longer shelves under .lbl headings", art.contains("class=\"lbl\""))
+    private companion object {
+        const val VIEWBOX = 24.0
     }
 }

@@ -124,8 +124,8 @@ class SupplyPlacementTest {
     }
 
     @Test
-    fun `Given the three fixings, When they are placed, Then all three share one sizing constant`() {
-        // The split is per *sizing group*, not per supply — a staple, a corner and a clip are the same kind
+    fun `Given the six fixings, When they are placed, Then all six share one sizing constant`() {
+        // The split is per *sizing group*, not per supply — all six are the same kind
         // of compact object, and giving each its own number would be per-supply sizing with extra steps,
         // which is what §5.2 exists to refuse.
         val sizes = BenchFixings.map { benchSupplyPlacement(it, page) }.map { it.widthPt to it.heightPt }
@@ -138,7 +138,7 @@ class SupplyPlacementTest {
         assertEquals(
             "every member of Tape & fixings must be either tape or an enumerated fixing",
             family,
-            BenchFixings + "tape.torn",
+            BenchFixings + setOf("tape.torn", "tape.masking"),
         )
     }
 
@@ -156,7 +156,7 @@ class SupplyPlacementTest {
     }
 
     @Test
-    fun `Given every one of the sixteen, When its family is read, Then the copy layer names one`() {
+    fun `Given every one of the thirty two, When its family is read, Then the copy layer names one`() {
         for (id in Copy.Supplies.NAMES.keys) {
             assertTrue("$id must belong to a family", benchSupplyFamily(id) != null)
         }

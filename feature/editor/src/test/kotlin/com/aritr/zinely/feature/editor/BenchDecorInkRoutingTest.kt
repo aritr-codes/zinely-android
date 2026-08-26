@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -228,7 +229,7 @@ class BenchDecorInkRoutingTest {
 
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REPLACE}").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
         composeRule.waitForIdle()
 
         val after = theSupply()

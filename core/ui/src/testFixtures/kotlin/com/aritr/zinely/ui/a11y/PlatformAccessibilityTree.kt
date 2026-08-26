@@ -69,6 +69,10 @@ public data class PlatformA11yNode(
     val isClickable: Boolean,
     /** `AccessibilityNodeInfo.isEnabled()` — the bit that lied in `f4faaa4`; the reason this harness exists. */
     val isEnabled: Boolean,
+    /** `AccessibilityNodeInfo.isCheckable()` — whether a service is told this control owns checked state. */
+    val isCheckable: Boolean,
+    /** `AccessibilityNodeInfo.isChecked()` — the current checked bit exposed to a service. */
+    val isChecked: Boolean,
     /** `AccessibilityNodeInfo.getBoundsInScreen(...)` — the on-screen hit-rect the service reports. */
     val boundsInScreen: Rect,
     /** `AccessibilityNodeInfo.getContentDescription()` — the spoken label, for cross-checking identity. */
@@ -154,6 +158,8 @@ public fun SemanticsNodeInteraction.platformNode(activity: Activity): PlatformA1
         className = info.className?.toString(),
         isClickable = info.isClickable,
         isEnabled = info.isEnabled,
+        isCheckable = info.isCheckable,
+        isChecked = info.isChecked,
         boundsInScreen = bounds,
         contentDescription = info.contentDescription?.toString(),
         isLongClickable = info.isLongClickable,

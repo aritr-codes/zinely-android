@@ -4880,6 +4880,17 @@ completed with the device returned to its original display settings.
 ### D-080 · The frozen `Art` sheet gives its own entry no glyph, filters nothing, and specifies no empty state {#d-080}
 
 **Status: ✅ RESOLVED 2026-08-26 — owner approved A16's combined Art + Ink surface as DESIGN FROZEN.**
+**Implementation update, 2026-08-26:** the Art half of A16 is implemented in Compose with all 32 authored
+supplies, deterministic local search, reversible family filters, Recent/Favourites retrieval rails, and
+the frozen empty states. Focused interaction, platform-accessibility, placement, parity and forced
+Roborazzi verification cover the surface. The adjacent Ink half remains a separate implementation package.
+
+**Device verification, 2026-08-26 — PASS on both readings.** Samsung SM-A176B / Android 16, final release
+APK for this package. Pass 1 exercised the 32-piece cabinet, tag search (`manicule` → Pointing hand), the
+10-piece Stamps & marks filter, favourite checked state in the platform tree, placement, and Back dismissal.
+Pass 2 found the invitation, search, family shelves, count, empty Favourites material and named cards
+understandable without implementation knowledge. The device's temporary verification display overrides
+were then removed (`font_scale=1.0`, physical density restored to 450).
 Raised 2026-08-16 while scoping
 [F-3](../BETA-UX-REVIEW.md) of the beta UX review. Nothing here blocks today's work: the sheet itself is
 fenced by [OD-2](#d-029) and sequenced behind [ADR-105](../DECISIONS.md#adr-105) D-4. It is filed **now**

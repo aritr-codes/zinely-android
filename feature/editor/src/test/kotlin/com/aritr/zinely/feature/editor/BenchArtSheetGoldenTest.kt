@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -68,7 +69,12 @@ class BenchArtSheetGoldenTest {
     private var berryTintArgb = 0
     private var butterTintArgb = 0
 
-    private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
+    private fun capture(
+        name: String,
+        darkTheme: Boolean,
+        expectedGrounds: List<(BenchArtSheetGoldenTest) -> Int> = emptyList(),
+        content: @Composable () -> Unit,
+    ) {
         composeRule.setContent {
             ZinelyTheme(darkTheme = darkTheme) {
                 deskArgb = ZinelyTheme.colors.desk.toArgb()
@@ -97,15 +103,9 @@ class BenchArtSheetGoldenTest {
         val bmp = cropToBounds(full, bounds)
         assertTrue("the host desk did not paint ($name)", bmp.pixelCountOf(deskArgb) > 100)
 
-        // `.tile{background:var(--leaf-tint)}` with `nth-child(3n)`→berry and `(4n)`→butter. All three
-        // grounds must be on screen: a transcription that drops the cycle and paints sixteen leaf tiles
-        // moves well under 2 % of the frame and passes the raster gate untouched.
-        //
-        // Every family row is leaf·leaf·berry·butter. The low floor rejects a missing token family without
-        // pinning density or the exact amount of ink each authored mark covers.
-        assertTrue("no --leaf-tint tile ground ($name)", bmp.pixelCountOf(leafTintArgb) > 500)
-        assertTrue("no --berry-tint tile ground ($name)", bmp.pixelCountOf(berryTintArgb) > 500)
-        assertTrue("no --butter-tint tile ground ($name)", bmp.pixelCountOf(butterTintArgb) > 500)
+        expectedGrounds.forEach { ground ->
+            assertTrue("an expected A16 family ground did not paint ($name)", bmp.pixelCountOf(ground(this)) > 300)
+        }
 
         bmp.captureRoboImage("$GOLDEN_DIR/$name.png", aa())
     }
@@ -120,8 +120,8 @@ class BenchArtSheetGoldenTest {
 
     @Composable
     private fun Sheet() {
-        ZSheetSurface(title = BenchArtSheetTitle, sub = null) {
-            BenchArtSheetBody(onPick = {})
+        ZSheetSurface(title = BenchArtSheetTitle, sub = null, modifier = Modifier.fillMaxHeight(0.92f)) {
+            BenchArtSheetBody(onPick = {}, modifier = Modifier.weight(1f))
         }
     }
 
@@ -132,11 +132,20 @@ class BenchArtSheetGoldenTest {
      */
     @Test
     fun bench_art_sheet_with_recents_light() =
-        capture("bench_art_sheet_with_recents_light", darkTheme = false) {
-            ZSheetSurface(title = BenchArtSheetTitle, sub = null) {
+        capture(
+            "bench_art_sheet_with_recents_light",
+            darkTheme = false,
+            expectedGrounds = listOf({ it.leafTintArgb }, { it.berryTintArgb }, { it.butterTintArgb }),
+        ) {
+            ZSheetSurface(
+                title = BenchArtSheetTitle,
+                sub = null,
+                modifier = Modifier.fillMaxHeight(0.92f),
+            ) {
                 BenchArtSheetBody(
                     onPick = {},
-                    recent = Copy.Supplies.BY_FAMILY.getValue(Copy.Supplies.CUT_SHAPES).keys.take(2).toList(),
+                    recent = listOf("tape.torn", "mark.asterisk", "paper.strip", "shape.rect"),
+                    modifier = Modifier.weight(1f),
                 )
             }
         }

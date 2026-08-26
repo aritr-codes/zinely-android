@@ -76,8 +76,16 @@ class SupplyCatalogTest {
             val spanX = pts.maxOf { it.x } - pts.minOf { it.x }
             val spanY = pts.maxOf { it.y } - pts.minOf { it.y }
             assertTrue(spanX > 0.0 && spanY > 0.0, "$id is degenerate on an axis (${spanX}x$spanY)")
+            // A16 deliberately freezes two inset marks: Push pin starts below the tile edge (2..24),
+            // and Folded corner is an inset scrap (2..22). Their visible margin is content, not an
+            // accidentally undersized authoring box; source-level parity pins the exact frozen bounds.
+            val expectedSpan = when (id) {
+                "fix.pushpin" -> 22.0 / 24.0
+                "paper.dogear" -> 20.0 / 24.0
+                else -> 1.0
+            }
             assertEquals(
-                1.0,
+                expectedSpan,
                 maxOf(spanX, spanY),
                 1e-9,
                 "$id fills neither axis of its square — it would render smaller than its own box",
@@ -141,11 +149,11 @@ class SupplyCatalogTest {
     }
 
     @Test
-    fun `given the frozen cabinet, when catalogue keys are read, then all sixteen are authored`() {
+    fun `given the frozen expanded cabinet, when catalogue keys are read, then all thirty two are authored`() {
         assertEquals(
             Copy.Supplies.NAMES.keys,
             SupplyCatalog.OUTLINES.keys,
-            "the frozen sixteen and the authored catalogue must be the same cabinet",
+            "the frozen expanded vocabulary and the authored catalogue must be the same cabinet",
         )
         for (id in Copy.Supplies.NAMES.keys) assertNotNull(SupplyCatalog.outlineOf(id), "$id has no mark")
     }

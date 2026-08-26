@@ -383,10 +383,23 @@ public object Copy {
     public object BenchArt {
         /** Compact visible state for a tile; the fuller spoken reason remains [BenchVerbs.NOT_YET]. */
         public const val NOT_YET: String = "Not yet"
+        public const val TITLE: String = "Art"
+        public const val FIND_A_PIECE: String = "Find a piece"
+        public const val SEARCH_HINT: String = "Try tape, star, torn…"
+        public const val RECENT: String = "Recent"
+        public const val FAVOURITES: String = "Favourites"
+        public const val FAVOURITES_EMPTY: String = "Star pieces to keep them close."
+        public const val NO_RESULTS: String = "No art found"
+        public const val NO_RESULTS_HINT: String = "Try another word, or open the full box."
+        public const val SHOW_ALL: String = "Show all art"
+
+        public fun resultCount(count: Int): String = "$count ${if (count == 1) "piece" else "pieces"}"
+        public fun addFavourite(name: String): String = "Add $name to favourites"
+        public fun removeFavourite(name: String): String = "Remove $name from favourites"
     }
 
     /**
-     * **The sixteen supplies** — the Zinely cabinet's whole vocabulary
+     * **The thirty-two supplies** — the Zinely cabinet's current vocabulary
      * ([SUPPLIES-SPEC §4](../../../../../../../docs/design/SUPPLIES-SPEC.md),
      * [ADR-105](../../../../../../../docs/DECISIONS.md#adr-105) step S6). *Art* is the verb; Supplies is
      * the drawer (§1).
@@ -405,7 +418,7 @@ public object Copy {
      *
      * ### The names, and where they depart from §4's prose
      *
-     * §4 restores `ZINE-DIRECTION.md` §9.2's sixteen verbatim, and that prose is a *specification*, not a
+     * §4 restores `ZINE-DIRECTION.md` §9.2's original sixteen verbatim, and that prose is a *specification*, not a
      * set of labels: two entries are slash-pairs (*star/asterisk*, *cut label/speech tag*) and a screen
      * reader cannot say a slash. So the naming here picks one word per supply, and departs in exactly five
      * places, each for a reason that shows up in speech:
@@ -455,9 +468,9 @@ public object Copy {
         /**
          * Family heading → its supplies, `supplyId` → spoken and drawn name, both in §4's frozen order.
          *
-         * Ordered maps throughout: the drawer is *"the same every time you open it"* is the one claim §9
-         * withdrew, but the **order** is still frozen design — sixteen items on one screen have no sort
-         * control and no search, so position is the only way a maker finds a supply twice.
+         * Ordered maps throughout: the **order** is frozen design even though A16 adds local search and
+         * reversible family filters. Search narrows this master order; it never shuffles it, so the cabinet
+         * remains familiar between openings.
          */
         public val BY_FAMILY: Map<String, Map<String, String>> = linkedMapOf(
             TAPE_AND_FIXINGS to linkedMapOf(
@@ -465,30 +478,95 @@ public object Copy {
                 "fix.corner" to "Photo corner",
                 "fix.staple" to "Staple",
                 "fix.clip" to "Paper clip",
+                "tape.masking" to "Masking tape",
+                "fix.stitch" to "Saddle stitch",
+                "fix.grommet" to "Eyelet",
+                "fix.pushpin" to "Push pin",
             ),
             STAMPS_AND_MARKS to linkedMapOf(
                 "mark.asterisk" to "Star",
                 "mark.arrow" to "Arrow",
                 "mark.halftone" to "Halftone dots",
                 "mark.registration" to "Registration cross",
+                "mark.hand" to "Pointing hand",
+                "mark.crop" to "Crop marks",
+                "mark.bar" to "Colour bar",
+                "mark.scan" to "Copier streak",
+                "mark.perf" to "Perforation",
+                "mark.burst" to "Starburst",
             ),
             CUT_PAPER to linkedMapOf(
                 "paper.strip" to "Torn strip",
                 "paper.window" to "Window frame",
                 "paper.tag" to "Speech tag",
                 "paper.underline" to "Marker underline",
+                "paper.stub" to "Ticket stub",
+                "paper.stamp" to "Postage stamp",
+                "paper.deckle" to "Deckle edge",
+                "paper.hole" to "Torn hole",
+                "paper.dogear" to "Folded corner",
             ),
             CUT_SHAPES to linkedMapOf(
                 "shape.rect" to "Rectangle",
                 "shape.circle" to "Circle",
                 "shape.triangle" to "Triangle",
                 "shape.rule" to "Straight rule",
+                "shape.ring" to "Ring",
             ),
         )
 
         /** Every supply, flattened — derived from [BY_FAMILY] so the two can never disagree. */
         public val NAMES: Map<String, String> =
             BY_FAMILY.values.flatMap { it.entries }.associate { it.key to it.value }
+
+        /** Curated local synonyms. They improve recognition; they never leave the device. */
+        public val TAGS: Map<String, String> = mapOf(
+            "tape.torn" to "tape torn strip sticky collage",
+            "fix.corner" to "corner mount photo fixing",
+            "fix.staple" to "staple fixing metal",
+            "fix.clip" to "clip paper wire fixing",
+            "mark.asterisk" to "star asterisk burst stamp",
+            "mark.arrow" to "arrow pointer direction stamp",
+            "mark.halftone" to "halftone dots texture print",
+            "mark.registration" to "registration cross print mark",
+            "paper.strip" to "torn strip paper collage",
+            "paper.window" to "window frame paper cutout",
+            "paper.tag" to "speech tag label bubble paper",
+            "paper.underline" to "marker underline highlight paper",
+            "shape.rect" to "rectangle square block shape",
+            "shape.circle" to "circle dot round shape",
+            "shape.triangle" to "triangle shape",
+            "shape.rule" to "straight rule line shape",
+            "tape.masking" to "masking tape clean sticky collage",
+            "fix.stitch" to "saddle stitch binding thread",
+            "fix.grommet" to "eyelet grommet hole binding",
+            "fix.pushpin" to "push pin tack fixing",
+            "mark.hand" to "pointing hand manicule pointer",
+            "mark.crop" to "crop trim printer marks",
+            "mark.bar" to "colour color bar print register",
+            "mark.scan" to "copier scan streak photocopy",
+            "mark.perf" to "perforation tear line print",
+            "mark.burst" to "starburst burst stamp",
+            "paper.stub" to "ticket stub perforated paper",
+            "paper.stamp" to "postage stamp serrated paper",
+            "paper.deckle" to "deckle rough paper edge",
+            "paper.hole" to "torn hole ripped paper",
+            "paper.dogear" to "folded corner dog ear paper",
+            "shape.ring" to "ring circle hole shape",
+        )
+
+        /** Stable, local name/tag search with an optional one-of-four family filter. */
+        public fun matchingIds(query: String = "", family: String? = null): List<String> {
+            val needle = query.trim().lowercase()
+            return BY_FAMILY.asSequence()
+                .filter { (familyName, _) -> family == null || familyName == family }
+                .flatMap { (_, supplies) -> supplies.asSequence() }
+                .filter { (id, name) ->
+                    needle.isEmpty() || "$name ${TAGS[id].orEmpty()}".lowercase().contains(needle)
+                }
+                .map { it.key }
+                .toList()
+        }
     }
 
     /**

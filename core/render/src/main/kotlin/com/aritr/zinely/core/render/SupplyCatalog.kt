@@ -40,13 +40,12 @@ import com.aritr.zinely.core.model.PtPoint
  *
  * ### Attestation (§4.1, the definition of done)
  *
- * **All sixteen outlines below were authored from scratch, in this file, by writing coordinates. No
+ * **All thirty-two outlines below were authored from scratch, in this file, by writing coordinates. No
  * reference art was traced, opened or consulted; they are elementary geometry — squares, inscribed
  * circles, polygons written vertex by vertex, and one star polygon evaluated at two radii — and they
  * carry no third-party licence. They are covered by the repository licence.** §4.1 requires one attestation per supply and there is
  * no colophon surface yet (X11 is unbuilt), so it lives here, next to the coordinates it is about; it
- * moves to the colophon when there is one. The final four's specific attestation sits with their
- * coordinates below.
+ * moves to the colophon when there is one.
  */
 public object SupplyCatalog {
 
@@ -399,6 +398,112 @@ public object SupplyCatalog {
         PtPoint(0.50, 0.14),
     )
 
+    // =============================================================================================
+    // ADR-107 first expansion — sixteen print-native materials, authored from A15/A16's ruled set.
+
+    private val MASKING_TAPE: SupplyOutline = closed(
+        p24(0, 3), p24(24, 3), p24(24, 21), p24(0, 21),
+    )
+
+    private val SADDLE_STITCH: SupplyOutline = SupplyOutline(
+        bar24(5, 0, 8, 24) + bar24(16, 0, 19, 24),
+    )
+
+    private val EYELET: SupplyOutline = SupplyOutline(
+        circle(0.5, 0.5, 0.5) + circleReverse(0.5, 0.5, 7.0 / 24.0),
+    )
+
+    private val PUSH_PIN: SupplyOutline = closed(
+        p24(5, 2), p24(19, 2), p24(17, 8), p24(14, 10), p24(14, 17),
+        p24(12, 24), p24(10, 17), p24(10, 10), p24(7, 8),
+    )
+
+    private val POINTING_HAND: SupplyOutline = closed(
+        p24(0, 9), p24(10, 9), p24(10, 5), p24(13, 5), p24(13, 8), p24(16, 6),
+        p24(18, 8), p24(21, 8), p24(24, 11), p24(21, 14), p24(18, 14), p24(16, 16),
+        p24(13, 14), p24(13, 18), p24(10, 18), p24(10, 14), p24(0, 14),
+    )
+
+    private val CROP_MARKS: SupplyOutline = SupplyOutline(
+        closed(
+            p24(0, 0), p24(9, 0), p24(9, 2), p24(2, 2), p24(2, 9), p24(0, 9),
+        ).subpaths + closed(
+            p24(15, 0), p24(24, 0), p24(24, 9), p24(22, 9), p24(22, 2), p24(15, 2),
+        ).subpaths + closed(
+            p24(0, 15), p24(2, 15), p24(2, 22), p24(9, 22), p24(9, 24), p24(0, 24),
+        ).subpaths + closed(
+            p24(22, 15), p24(24, 15), p24(24, 24), p24(15, 24), p24(15, 22), p24(22, 22),
+        ).subpaths,
+    )
+
+    private val COLOUR_BAR: SupplyOutline = SupplyOutline(
+        bar24(0, 4, 5, 20) + bar24(6.5, 4, 11.5, 20) +
+            bar24(13, 4, 18, 20) + bar24(19.5, 4, 24, 20),
+    )
+
+    private val COPIER_STREAK: SupplyOutline = SupplyOutline(
+        closed(p24(2, 0), p24(5, 0), p24(4, 24), p24(0, 24)).subpaths +
+            closed(p24(9, 0), p24(11, 0), p24(13, 24), p24(8, 24)).subpaths +
+            closed(p24(17, 0), p24(22, 0), p24(24, 24), p24(19, 24)).subpaths,
+    )
+
+    private val PERFORATION: SupplyOutline = SupplyOutline(
+        bar24(0, 10, 3, 14) + bar24(5, 10, 8, 14) + bar24(10, 10, 13, 14) +
+            bar24(15, 10, 18, 14) + bar24(20, 10, 24, 14),
+    )
+
+    private val STARBURST: SupplyOutline = closed(
+        p24(12, 0), p24(14, 7), p24(19, 2), p24(18, 9), p24(24, 8), p24(19, 12),
+        p24(24, 16), p24(18, 15), p24(19, 22), p24(14, 17), p24(12, 24), p24(10, 17),
+        p24(5, 22), p24(6, 15), p24(0, 16), p24(5, 12), p24(0, 8), p24(6, 9),
+        p24(5, 2), p24(10, 7),
+    )
+
+    private val TICKET_STUB: SupplyOutline = SupplyOutline(listOf(Subpath(
+        start = p24(0, 3),
+        segments = listOf(
+            Segment.LineTo(p24(24, 3)), Segment.LineTo(p24(24, 9)),
+            Segment.CubicTo(p24(20, 9), p24(20, 15), p24(24, 15)),
+            Segment.LineTo(p24(24, 21)), Segment.LineTo(p24(0, 21)), Segment.LineTo(p24(0, 15)),
+            Segment.CubicTo(p24(4, 15), p24(4, 9), p24(0, 9)),
+        ),
+    )))
+
+    private val POSTAGE_STAMP: SupplyOutline = closed(
+        p24(2, 0), p24(4, 2), p24(6, 0), p24(8, 2), p24(10, 0), p24(12, 2),
+        p24(14, 0), p24(16, 2), p24(18, 0), p24(20, 2), p24(22, 0), p24(24, 2),
+        p24(22, 4), p24(24, 6), p24(22, 8), p24(24, 10), p24(22, 12), p24(24, 14),
+        p24(22, 16), p24(24, 18), p24(22, 20), p24(24, 22), p24(22, 24), p24(20, 22),
+        p24(18, 24), p24(16, 22), p24(14, 24), p24(12, 22), p24(10, 24), p24(8, 22),
+        p24(6, 24), p24(4, 22), p24(2, 24), p24(0, 22), p24(2, 20), p24(0, 18),
+        p24(2, 16), p24(0, 14), p24(2, 12), p24(0, 10), p24(2, 8), p24(0, 6),
+        p24(2, 4), p24(0, 2),
+    )
+
+    private val DECKLE_EDGE: SupplyOutline = closed(
+        p24(1, 1), p24(5, 0), p24(8, 2), p24(12, 0), p24(16, 1), p24(20, 0),
+        p24(24, 2), p24(23, 6), p24(24, 10), p24(22, 14), p24(24, 18), p24(23, 23),
+        p24(19, 24), p24(15, 22), p24(11, 24), p24(7, 23), p24(3, 24), p24(0, 21),
+        p24(2, 17), p24(0, 13), p24(1, 9), p24(0, 5),
+    )
+
+    private val TORN_HOLE: SupplyOutline = SupplyOutline(
+        closed(
+            p24(2, 4), p24(7, 0), p24(12, 2), p24(17, 0), p24(23, 5), p24(22, 10),
+            p24(24, 15), p24(20, 22), p24(14, 21), p24(9, 24), p24(3, 20), p24(1, 14), p24(0, 9),
+        ).subpaths + closed(
+            p24(7, 8), p24(6, 13), p24(9, 18), p24(14, 17), p24(18, 14), p24(17, 9), p24(13, 6),
+        ).subpaths,
+    )
+
+    private val FOLDED_CORNER: SupplyOutline = closed(
+        p24(2, 2), p24(17, 2), p24(22, 7), p24(22, 22), p24(2, 22),
+    )
+
+    private val RING: SupplyOutline = SupplyOutline(
+        circle(0.5, 0.5, 0.5) + circleReverse(0.5, 0.5, 7.0 / 24.0),
+    )
+
     /** Every authored outline, keyed by the `supplyId` written into saved documents. */
     public val OUTLINES: Map<String, SupplyOutline> = linkedMapOf(
         "shape.rect" to RECT,
@@ -419,6 +524,23 @@ public object SupplyCatalog {
         "paper.strip" to TORN_STRIP,
         "paper.underline" to MARKER_UNDERLINE,
         "fix.clip" to PAPER_CLIP,
+        // ADR-107 first expansion (A15/A16).
+        "tape.masking" to MASKING_TAPE,
+        "fix.stitch" to SADDLE_STITCH,
+        "fix.grommet" to EYELET,
+        "fix.pushpin" to PUSH_PIN,
+        "mark.hand" to POINTING_HAND,
+        "mark.crop" to CROP_MARKS,
+        "mark.bar" to COLOUR_BAR,
+        "mark.scan" to COPIER_STREAK,
+        "mark.perf" to PERFORATION,
+        "mark.burst" to STARBURST,
+        "paper.stub" to TICKET_STUB,
+        "paper.stamp" to POSTAGE_STAMP,
+        "paper.deckle" to DECKLE_EDGE,
+        "paper.hole" to TORN_HOLE,
+        "paper.dogear" to FOLDED_CORNER,
+        "shape.ring" to RING,
     )
 
     /** The outline for [supplyId], or `null` when it is not authored yet (or not a supply at all). */
@@ -429,6 +551,11 @@ public object SupplyCatalog {
     private fun bar(x0: Double, y0: Double, x1: Double, y1: Double): List<Subpath> = closed(
         PtPoint(x0, y0), PtPoint(x1, y0), PtPoint(x1, y1), PtPoint(x0, y1),
     ).subpaths
+
+    private fun p24(x: Number, y: Number): PtPoint = PtPoint(x.toDouble() / 24.0, y.toDouble() / 24.0)
+
+    private fun bar24(x0: Number, y0: Number, x1: Number, y1: Number): List<Subpath> =
+        bar(x0.toDouble() / 24.0, y0.toDouble() / 24.0, x1.toDouble() / 24.0, y1.toDouble() / 24.0)
 
     /**
      * One circle of radius [r] about ([cx],[cy]), as the same four-cubic approximation [CIRCLE] uses.
@@ -446,6 +573,22 @@ public object SupplyCatalog {
                     Segment.CubicTo(PtPoint(cx + r, cy + k), PtPoint(cx + k, cy + r), PtPoint(cx, cy + r)),
                     Segment.CubicTo(PtPoint(cx - k, cy + r), PtPoint(cx - r, cy + k), PtPoint(cx - r, cy)),
                     Segment.CubicTo(PtPoint(cx - r, cy - k), PtPoint(cx - k, cy - r), PtPoint(cx, cy - r)),
+                ),
+            ),
+        )
+    }
+
+    /** Counter-clockwise partner used by A16's explicitly authored even-odd ring paths. */
+    private fun circleReverse(cx: Double, cy: Double, r: Double): List<Subpath> {
+        val k = KAPPA * 2.0 * r
+        return listOf(
+            Subpath(
+                start = PtPoint(cx, cy - r),
+                segments = listOf(
+                    Segment.CubicTo(PtPoint(cx - k, cy - r), PtPoint(cx - r, cy - k), PtPoint(cx - r, cy)),
+                    Segment.CubicTo(PtPoint(cx - r, cy + k), PtPoint(cx - k, cy + r), PtPoint(cx, cy + r)),
+                    Segment.CubicTo(PtPoint(cx + k, cy + r), PtPoint(cx + r, cy + k), PtPoint(cx + r, cy)),
+                    Segment.CubicTo(PtPoint(cx + r, cy - k), PtPoint(cx + k, cy - r), PtPoint(cx, cy - r)),
                 ),
             ),
         )

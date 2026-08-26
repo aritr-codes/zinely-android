@@ -665,8 +665,10 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    `:core:editor` cannot see `:core:copy`, and only `Copy.Supplies.BY_FAMILY` knows a supply's family.
    `benchDeleteLabel` and `benchInkCount` joined the list of seams that must stay exhaustive over `Element`;
    both were silently wrong for decor until mutation testing found them.
-   **Still not built:** twelve of the sixteen authored outlines (only the `shape.*` family exists; the rest
-   need a designer). A supply with no authored outline draws nothing — `outlineOf()`
+   **Expanded under ADR-107 / A16 (2026-08-26):** the catalogue now contains 32 locally authored,
+   print-native outlines. The Art sheet searches names and curated local tags, filters by the four stable
+   families, and renders every tile through the same `SupplyCatalog` outline used by the page renderer.
+   A supply with no authored outline still draws nothing — `outlineOf()`
    returns `null` at the render boundary, which is deliberately *not* a validation failure, so a document
    made on a later build stays openable here.
    ⚠ **The PDF surface is unproven rather than broken:** `PdfDocument` cannot run under Robolectric, so the
