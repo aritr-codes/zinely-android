@@ -7000,7 +7000,7 @@ information away.
 | **Artifacts** | `docs/design/mockups/v21-bench.html` (`openInk`, A16) · `feature/editor/.../BenchInkPopover.kt` (`BenchInkPreset.applied`) · [OD-24](#d-028-ruling) |
 | **Found** | 2026-08-25, owner rendered review alongside D-080/A15 |
 | **Severity** | **Visible UX and trust defect.** The controls work, but the tray is hard to scan and its prototype caption describes an action the product does not perform |
-| **Status** | ✅ **RESOLVED 2026-08-26 — owner approved A16 as DESIGN FROZEN; Compose implementation authorised** |
+| **Status** | ✅ **RESOLVED + IMPLEMENTED 2026-08-26 — A16 is frozen and the Compose tray now matches it** |
 
 The 411dp device geometry already recorded under D-090 makes the ten-ink band wrap **9 + 1**, leaving `Ink`
 alone on a second row. The painted pots carry no visible names, the current ink is only a dashed ring among
@@ -7020,3 +7020,9 @@ tints for text exactly as OD-24 requires; and present the three recipes as `Star
 now honest. [RESEARCH R14](../RESEARCH.md#r14-art-cabinet-and-ink-tray-hierarchy--verified--recommendation)
 holds the external evidence. The visual/interaction contract is frozen; it does not change ink values,
 document semantics, renderer behavior or print output.
+
+**Implementation:** `BenchInkPopover` now renders the document-backed current-ink card, deterministic
+five-column named choices and three equal starting-palette actions. The outer named choice owns the
+radio semantics and ≥48dp target while the inner pot remains 30dp. `BenchC6Test` fences the 5×2 geometry,
+current-ink update, text tint omission and honest visible actions; `BenchInkPresetPlatformA11yTest`
+continues to inspect the Android accessibility tree.

@@ -316,10 +316,12 @@ public object Copy {
         public const val DONE: String = EditText.DONE
 
         // — the four band labels, verbatim (`v2-bench.html:690` Inks/Neutrals, `:688` Paper tints, `:682` the presets) —
-        public const val INKS: String = "Inks"
+        public const val INKS: String = "Spot inks"
         public const val PAPER_TINTS: String = "Paper tints"
         public const val NEUTRALS: String = "Neutrals"
-        public const val PRESETS: String = "Ready-made palettes"
+        public const val PRESETS: String = "Starting palettes"
+        public const val CURRENT_INK: String = "Current ink"
+        public const val CUSTOM_INK: String = "Custom ink"
 
         // — band 1, the ten riso spot inks, in frozen order —
         public const val MATCHA: String = "Matcha"
@@ -377,7 +379,11 @@ public object Copy {
          * circles — so the recipe's name carries it, with its primary ink named because that is the one
          * the tap actually applies (OD-24).
          */
-        public fun presetLabel(name: String, primary: String): String = "$name. Primary ink $primary"
+        public fun apply(primary: String): String = "Apply $primary"
+
+        public fun currentInk(name: String): String = "$CURRENT_INK, $name"
+
+        public fun presetLabel(name: String, primary: String): String = "$name. ${apply(primary)}"
     }
 
     public object BenchArt {

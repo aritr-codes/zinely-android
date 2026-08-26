@@ -165,6 +165,10 @@ class BenchC6Test {
         composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
             .fetchSemanticsNodes()[index].boundsInRoot
 
+    private fun potBounds(index: Int) =
+        composeRule.onAllNodesWithTag(BenchInkPotTestTag, useUnmergedTree = true)
+            .fetchSemanticsNodes()[index].boundsInRoot
+
     private fun textOf(store: EditorStore, id: String) =
         store.uiState.value.document.pages[store.uiState.value.currentPageIndex]
             .elements.first { it.id == id } as TextElement
@@ -499,7 +503,7 @@ class BenchC6Test {
         // DEFINES `TITLE` — `x == x`, and blind to the header word changing.
         assertEquals(Copy.BenchInk.DONE, "Done")
         assertEquals(Copy.BenchInk.TITLE, "Ink")
-        composeRule.onNodeWithText("Ink").assertIsDisplayed()
+        composeRule.onNodeWithTag(BenchInkTitleTestTag).assertIsDisplayed()
     }
 
     /**
@@ -521,7 +525,7 @@ class BenchC6Test {
         openInk(store)
         val card = bounds(BenchInkPopoverTestTag)
         val done = bounds(BenchInkDoneTestTag)
-        val title = composeRule.onNodeWithText(Copy.BenchInk.TITLE).fetchSemanticsNode().boundsInRoot
+        val title = bounds(BenchInkTitleTestTag)
         // **Restated, not relaxed.** The old number (V2's `.inkpop{padding:12px 14px 14px}` plus a 1px
         // border = 15dp) described a box that no longer exists, and it failed by exactly the 3dp it was
         // wrong by. V2.1 freezes `.inkpop{padding:var(--gap-md) var(--gap-md) var(--gap-lg)}`
@@ -564,8 +568,8 @@ class BenchC6Test {
         composeRule.mainClock.advanceTimeBy(300)
         composeRule.waitForIdle()
 
-        val note = composeRule.onNodeWithTag(BenchInkUseNoteTestTag, useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInWindow
+        val note = composeRule.onAllNodesWithTag(BenchInkPresetTestTag, useUnmergedTree = true)
+            .fetchSemanticsNodes().last().boundsInWindow
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
         val paper = zinelyV21LightColors().surface.toArgb()
         val ink = zinelyV21LightColors().ink.toArgb()
@@ -592,7 +596,7 @@ class BenchC6Test {
     /**
      * Row 6.3 — four bands in the freeze, **three** for a text target. ADR-089's own table said three
      * and `openInk` emits four; OD-24 then fenced `Paper tints` away from a text element, so a text
-     * target sees `Inks · Neutrals · Ready-made palettes`. The labels are asserted as an ordered list for
+     * target sees `Spot inks · Neutrals · Starting palettes`. The labels are asserted as an ordered list for
      * the same reason the swatches are. (The name said "four" while the body asserted three, which
      * independent review named — the count in a test's name is a claim like any other.)
      */
@@ -618,27 +622,30 @@ class BenchC6Test {
     // The swatches (rows 6.4-6.6)
     // =================================================================================================
 
-    /** Row 6.4/6.5 — fourteen pots for a text element, each the frozen 30dp (`v21-bench.html:250`). */
+    /** A16 — fourteen named targets for text, each retaining a frozen 30dp painted pot. */
     @Test
     fun every_swatch_is_the_frozen_thirty_dp() {
         val store = store()
         setScreen(store)
         openInk(store)
         assertEquals("ten inks plus four neutrals", 14, count(BenchInkSwatchTestTag))
-        val first = swatchBounds(0)
+        val first = potBounds(0)
         assertEquals(px(30.dp), first.width, 1f)
         assertEquals(px(30.dp), first.height, 1f)
     }
 
-    /** Row 6.4b — `.pots{gap:var(--gap-sm)}` (`v21-bench.html:249`), measured edge to edge within a band. */
+    /** A16 — the ten spot inks are a stable five-by-two grid with no orphan wrap. */
     @Test
     fun the_swatch_row_keeps_the_frozen_eight_dp_gap() {
         val store = store()
         setScreen(store)
         openInk(store)
-        val a = swatchBounds(0)
-        val b = swatchBounds(1)
-        assertEquals(px(8.dp), b.left - a.right, 1f)
+        val firstRow = (0 until 5).map(::swatchBounds)
+        val secondRow = (5 until 10).map(::swatchBounds)
+        assertTrue(firstRow.zipWithNext().all { (a, b) -> kotlin.math.abs(a.top - b.top) <= 1f })
+        assertTrue(secondRow.zipWithNext().all { (a, b) -> kotlin.math.abs(a.top - b.top) <= 1f })
+        assertTrue(secondRow.first().top > firstRow.first().top)
+        assertEquals(firstRow.first().left, secondRow.first().left, 1f)
     }
 
     /**
@@ -681,7 +688,9 @@ class BenchC6Test {
         openInk(store)
         val node = composeRule.onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)
             .fetchSemanticsNodes()[0]
-        assertEquals("the paint does not grow", px(30.dp), node.boundsInRoot.width, 1f)
+        val pot = potBounds(0)
+        assertEquals("the paint does not grow", px(30.dp), pot.width, 1f)
+        assertEquals("the paint remains circular", px(30.dp), pot.height, 1f)
         assertTrue(
             "the target reaches the floor: ${node.touchBoundsInRoot.width}px wide, " +
                 "${node.touchBoundsInRoot.height}px tall against ${px(48.dp)}px",
@@ -908,7 +917,7 @@ class BenchC6Test {
         // form of this probe measured it and let the mutation through.
         // `Ink` matches one node: the Neutrals swatch of the same name publishes a contentDescription,
         // not text.
-        val title = composeRule.onNodeWithText(Copy.BenchInk.TITLE).fetchSemanticsNode().boundsInWindow
+        val title = composeRule.onNodeWithTag(BenchInkTitleTestTag).fetchSemanticsNode().boundsInWindow
         var widest = 0
         for (y in title.top.toInt() + 1 until title.bottom.toInt() - 1) {
             for (x in title.left.toInt() + 1 until title.right.toInt() - 1) {
@@ -1017,21 +1026,48 @@ class BenchC6Test {
         ).assertIsDisplayed()
     }
 
-    /** Row 6.12b — the note is one sentence with the live count, published as one node. */
+    /** A16 — the current ink is visible, named, and updates through the same document-backed selection. */
     @Test
-    fun the_ink_note_reads_as_one_sentence() {
+    fun the_current_ink_summary_names_the_document_ink_and_updates() {
         val store = store()
         setScreen(store)
-        placedText(store)
-        composeRule.waitForIdle()
         openInk(store)
-        composeRule.onNodeWithContentDescription(Copy.BenchInk.useNote(1)).assertIsDisplayed()
-
-        // …and it MOVES. Read only at 1, the note cannot tell a live count from a constant, and the
-        // zine-wide clause was closed on the pure function alone while the wiring went unasserted.
-        // Inking this element apart from the first leaves two distinct inks in the document.
+        composeRule.onNodeWithTag(BenchInkCurrentTestTag).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(Copy.BenchInk.FOREST).performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithContentDescription(Copy.BenchInk.useNote(2)).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(Copy.BenchInk.currentInk(Copy.BenchInk.FOREST))
+            .assertIsDisplayed()
+    }
+
+    /** A16 — palettes describe combinations but state the exact ink a tap applies. */
+    @Test
+    fun starting_palettes_show_their_honest_actions() {
+        val store = store()
+        setScreen(store)
+        openInk(store)
+        assertEquals(Copy.BenchInk.PRESETS, "Starting palettes")
+        listOf(Copy.BenchInk.INK, Copy.BenchInk.BRICK, Copy.BenchInk.FOREST).forEach { ink ->
+            composeRule.onNodeWithText(Copy.BenchInk.apply(ink), useUnmergedTree = true).assertIsDisplayed()
+        }
+    }
+
+    /** A16 — a starting palette translates by one dp while pressed and returns exactly to rest. */
+    @Test
+    fun a_pressed_starting_palette_moves_by_the_frozen_one_dp() {
+        val store = store()
+        setScreen(store)
+        openInk(store)
+        val palette = composeRule.onAllNodesWithTag(BenchInkPresetTestTag, useUnmergedTree = true)[0]
+        val rest = palette.fetchSemanticsNode().boundsInRoot
+        palette.performTouchInput { down(center) }
+        composeRule.waitForIdle()
+        val pressed = palette.fetchSemanticsNode().boundsInRoot
+        assertEquals(px(1.dp), pressed.left - rest.left, 1f)
+        assertEquals(px(1.dp), pressed.top - rest.top, 1f)
+        palette.performTouchInput { up() }
+        composeRule.waitForIdle()
+        val released = palette.fetchSemanticsNode().boundsInRoot
+        assertEquals(rest.left, released.left, 1f)
+        assertEquals(rest.top, released.top, 1f)
     }
 }

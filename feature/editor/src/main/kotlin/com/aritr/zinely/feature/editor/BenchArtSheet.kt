@@ -105,7 +105,7 @@ internal val BenchArtTilt = floatArrayOf(-0.55f, 0.45f, -0.35f, 0.35f)
 
 internal fun benchArtFamilyIndex(supplyId: String): Int =
     Copy.Supplies.BY_FAMILY.entries.indexOfFirst { supplyId in it.value }.also {
-        require(it >= 0) { "$supplyId is not in a frozen Art family" }
+        require(it >= 0) { "unknown_art_family:$supplyId" }
     }
 
 /**
@@ -447,8 +447,8 @@ private fun BenchArtTile(
         else -> colors.butter
     }
     val mark = if (family == 3) colors.onButter else colors.onLeaf
-    val outline = requireNotNull(SupplyCatalog.outlineOf(supplyId)) { "$supplyId has no authored outline" }
-    val name = requireNotNull(Copy.Supplies.NAMES[supplyId]) { "$supplyId has no user-facing name" }
+    val outline = requireNotNull(SupplyCatalog.outlineOf(supplyId)) { "missing_art_outline:$supplyId" }
+    val name = requireNotNull(Copy.Supplies.NAMES[supplyId]) { "missing_art_name:$supplyId" }
     val pick = benchTap { onPick(supplyId) }
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()

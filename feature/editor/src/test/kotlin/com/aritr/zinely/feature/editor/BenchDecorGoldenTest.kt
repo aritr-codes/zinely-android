@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -123,7 +124,6 @@ class BenchDecorGoldenTest {
             bands = benchInkBands(inks, BenchVerbKind.DECOR),
             presets = benchInkPresets(inks),
             selected = null,
-            inkCount = 2,
             onPick = {},
             onPreset = {},
             onDone = {},
@@ -281,7 +281,6 @@ class BenchDecorGoldenTest {
                         bands = benchInkBands(inks, BenchVerbKind.DECOR),
                         presets = benchInkPresets(inks),
                         selected = selected.value,
-                        inkCount = 2,
                         onPick = {},
                         onPreset = {},
                         onDone = {},
@@ -290,15 +289,23 @@ class BenchDecorGoldenTest {
             }
         }
         composeRule.waitForIdle()
-        val unringed = full().pixelCountOf(inkArgb)
+        val tintIndex = benchInkBands(inks, BenchVerbKind.DECOR)
+            .flatMap { it.swatches }
+            .indexOfFirst { it.value == tint.value }
+        val swatchBounds = composeRule
+            .onAllNodesWithTag(BenchInkSwatchTestTag, useUnmergedTree = true)[tintIndex]
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val unringed = cropToBounds(full(), swatchBounds).pixelCountOf(inkArgb)
 
         selected.value = tint.value
         composeRule.waitForIdle()
         val ringed = full()
+        val ringedSwatchInk = cropToBounds(ringed, swatchBounds).pixelCountOf(inkArgb)
         assertTrue(
-            "no ink ring appeared on the supply's own tint ($unringed -> ${ringed.pixelCountOf(inkArgb)}) " +
+            "no ink ring appeared on the supply's own tint ($unringed -> $ringedSwatchInk) " +
                 "— a decor popover that cannot ring a paper tint is showing the band and disowning it",
-            ringed.pixelCountOf(inkArgb) > unringed,
+            ringedSwatchInk > unringed,
         )
 
         val card = crop(BenchInkPopoverTestTag, ringed)

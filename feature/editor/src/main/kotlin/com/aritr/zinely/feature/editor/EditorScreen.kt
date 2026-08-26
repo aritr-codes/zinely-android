@@ -1624,7 +1624,6 @@ public fun EditorScreen(
                     // [benchInkColorOf] so a supply's `ink` and a text box's `style.color` reach it through
                     // one binding — the same reason the target itself does.
                     selected = benchInkColorOf(inkTarget)?.toComposeColor(),
-                    inkCount = benchInkCount(uiState.document.pages),
                     onPick = { swatch -> applyInk(swatch.name, swatch.value) },
                     // OD-24: the recipe's PRIMARY ink, and the snack says the recipe's name — which is
                     // what the frozen `applyInk(c, PRESETS[i][0])` passes.
