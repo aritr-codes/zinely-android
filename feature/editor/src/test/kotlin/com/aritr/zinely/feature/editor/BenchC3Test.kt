@@ -3,11 +3,8 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -607,7 +604,7 @@ class BenchC3Test {
     @Test
     fun the_style_row_is_absent_at_rest_and_docked_while_editing() {
         // Row 3.4: `.kbstack` is `translateY(102%)` — offscreen — except under `.editing`. Absent rather
-        // than merely translated: a `graphicsLayer` moves pixels, not nodes, and four controls left in the
+        // than merely translated: a `graphicsLayer` moves pixels, not nodes, and editing actions left in the
         // accessibility tree at rest is a defect (`SurfaceTraversalOrderTest` reads that tree directly).
         val store = store()
         val id = placedText(store)
@@ -619,31 +616,37 @@ class BenchC3Test {
     }
 
     @Test
-    fun three_of_the_four_style_controls_are_inert_and_say_so() {
-        // Row 3.6. `Fraunces`, `A 23` and `Ink` are wired to NOTHING in the freeze — `#editColour` included,
-        // because `openInk` is bound only in `buildCtx` to the `.ctx` bar's Ink verb. They ship drawn and
-        // disabled under OD-9, and the announcement must agree with the paint (ADR-092 row 2.13c-i).
+    fun the_typing_row_shows_only_live_ink_and_done() {
+        // D-108: the frozen HTML already wires Ink. Font and Size are absent rather than painted as broken
+        // controls; the complete style surface remains available after Done.
         val store = store()
         val id = placedText(store)
         store.dispatch(Intent.BeginEditText(id))
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.FONT}").assertIsNotEnabled()
-        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.SIZE}").assertIsNotEnabled()
-        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.INK}").assertIsNotEnabled()
+        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.FONT}").assertDoesNotExist()
+        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.SIZE}").assertDoesNotExist()
+        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.INK}").assertIsEnabled()
+        composeRule.onNodeWithTag("$BenchStyleRowTestTag-hint").assertIsDisplayed()
         composeRule.onNodeWithTag("$BenchStyleRowTestTag-done").assertIsEnabled()
+    }
 
-        // F-1: "disabled" is not an explanation. Each chip announces WHY, as state rather than as name —
-        // and the two sentences differ, because only one of the two absences is permanent. `Font` has no
-        // capability behind it; `Size` and `Ink` are live on the selection bar one tap away (D-042).
-        fun state(label: String) = composeRule
-            .onNodeWithTag("$BenchStyleRowTestTag-$label")
-            .fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription)
+    @Test
+    fun ink_commits_the_draft_before_opening_the_tray() {
+        val store = store()
+        val id = placedText(store)
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("fresh words")
 
-        assertEquals(Copy.BenchVerbs.NOT_YET, state(Copy.BenchVerbs.FONT))
-        assertEquals(Copy.BenchVerbs.FINISH_TYPING, state(Copy.BenchVerbs.SIZE))
-        assertEquals(Copy.BenchVerbs.FINISH_TYPING, state(Copy.BenchVerbs.INK))
-        assertEquals("the one live control must not carry a reason", null, state("done"))
+        composeRule.onNodeWithTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.INK}").performClick()
+        composeRule.waitForIdle()
+
+        assertTrue(store.uiState.value.interaction !is Interaction.EditingText)
+        val restored = store.uiState.value.document.pages.flatMap { it.elements }
+            .single { it.id == id } as TextElement
+        assertEquals("fresh words", restored.text)
+        composeRule.onNodeWithTag(BenchInkPopoverTestTag).assertIsDisplayed()
     }
 
     @Test
@@ -670,13 +673,7 @@ class BenchC3Test {
     }
 
     @Test
-    fun the_chips_are_spaced_by_the_frozen_eight_px_gap() {
-        // Frozen `.styletb{gap:var(--gap-sm)}` (`v21-bench.html:267`) — asserted on the chips' ANNOUNCED bounds, which
-        // makes it two assertions in one. The gap is a frozen property in its own right; and because a
-        // chip's node covers its padding only when `testTag` sits above `.padding`, a chip that reports its
-        // inner content box instead shows this gap as 6 + 12 + 12 = 30dp. That defect shipped once — the
-        // chips announced 28dp wide where they are drawn 52dp, so TalkBack's focus rectangle was 24dp
-        // narrower than the control it outlined — and nothing here could see it until this test existed.
+    fun the_live_ink_chip_keeps_its_content_derived_geometry() {
         val store = store()
         val id = placedText(store)
         store.dispatch(Intent.BeginEditText(id))
@@ -686,21 +683,7 @@ class BenchC3Test {
             .onNodeWithTag("$BenchStyleRowTestTag-$label", useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
 
-        val expected = with(composeRule.density) { 8.dp.toPx() }
-        val font = chip(Copy.BenchVerbs.FONT)
-        val size = chip(Copy.BenchVerbs.SIZE)
         val ink = chip(Copy.BenchVerbs.INK)
-        assertEquals("Font→Size gap", expected, size.left - font.right, 1f)
-        assertEquals("Size→Ink gap", expected, ink.left - size.right, 1f)
-        // ⚠ V2.1's chips declare NO height (`v21-bench.html:269-272`), where V2 pinned `height:34px`.
-        assertEquals("the chips share one content-derived height", font.height, ink.height, 0.5f)
-        // ⚠ **The line above is a sibling comparison, and on its own it proves nothing about the property
-        // it is named for.** Re-pinning `height:34.dp` makes both chips 34dp and it still passes; so do the
-        // padding readings below, because a 34dp chip around a 15dp swatch leaves 9.5dp top and bottom,
-        // which clears the 8dp floor and is perfectly centred. A review pointed out that **no assertion in
-        // this file would have failed if the frozen "no declared height" regressed to a pinned one** — the
-        // comment here even conceded the gap and then pointed at the checks that do not close it.
-        //
         // The chip is its content plus 8dp above and below; against a 15dp swatch and a 12.48sp line that
         // lands near 31–32dp and cannot reach 34 without the type growing. So the pinned value is excluded
         // by name. Written against the LITERAL 34dp rather than a constant, for the reason the swatch test
@@ -712,7 +695,7 @@ class BenchC3Test {
             1f,
         )
 
-        // Frozen `.styletb .chip{padding:0 12px}` (`:262`), measured from the chip's announced left edge
+        // Frozen `.styletb .chip{padding:var(--gap-sm) var(--gap-md)}`, measured from the announced edge
         // to the swatch — the only landmark inside a chip that keeps its own node, since
         // `clearAndSetSemantics` erases the label's. One assertion, two defects: it reads 0 if the
         // padding is dropped, and 0 again if `testTag` slips back below `.padding` so the node reports
@@ -737,7 +720,7 @@ class BenchC3Test {
     @Test
     fun the_ink_swatch_is_the_frozen_fifteen_px_dot() {
         // Row 3.9: `editSw.style.background = getComputedStyle(t).color`. The chip is
-        // inert but the dot is not decorative — it is the one thing about it that tells the truth.
+        // live, and the dot reports the exact value the action will change.
         val store = store()
         val id = placedText(store)
         store.dispatch(Intent.StyleText(id = id, color = com.aritr.zinely.core.model.ColorRgba(0xA6, 0x3C, 0x22)))

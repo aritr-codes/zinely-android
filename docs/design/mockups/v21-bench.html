@@ -336,6 +336,8 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   padding:var(--gap-sm) var(--gap-md);cursor:pointer;display:flex;align-items:center;gap:var(--gap-sm);
   box-shadow:2px 2px 0 var(--ink-line)}
 .chip:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
+.editHint{font-family:var(--sans);font-size:.68rem;font-weight:600;color:var(--ink-soft);
+  line-height:1.15;min-width:0;flex:1}
 /* ✱ border and background are both --ink here, and deliberately so.  This is a colour
    SWATCH: the fill is the maker's current ink, set at runtime (see #editSw), and --ink is
    only its default.  The ring's job is to separate the swatch from the chip's --paper
@@ -571,10 +573,8 @@ is about <b>material</b> — the page, the shelf, the ink pots, the supply drawe
 
   <div class="kbstack" id="kbstack">
     <div class="styletb">
-      <button class="chip">Aa Font</button>
-      <button class="chip">Size</button>
-      <button class="chip" id="editColour">Ink <span class="sw" id="editSw"></span></button>
-      <span class="grow"></span>
+      <button class="chip" id="editColour" type="button">Ink <span class="sw" id="editSw"></span></button>
+      <span class="editHint">More styles after Done</span>
       <button class="doneEdit" id="doneEdit">Done</button>
     </div>
     <div class="kb" id="kb"></div>
@@ -774,7 +774,8 @@ function edit(){
 }
 $('doneEdit').onclick=e=>{ e.stopPropagation(); sel&&sel.classList.remove('editing');
   $('kbstack').classList.remove('show'); if(sel) select(sel); };
-$('editColour').onclick=e=>{ e.stopPropagation(); $('kbstack').classList.remove('show'); openInk(); };
+$('editColour').onclick=e=>{ e.stopPropagation(); sel&&sel.classList.remove('editing');
+  $('kbstack').classList.remove('show'); openInk(); };
 
 /* ===== delete + undo ====================================================== */
 let bin=null;

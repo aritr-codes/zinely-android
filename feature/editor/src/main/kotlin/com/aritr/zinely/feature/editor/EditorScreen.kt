@@ -844,6 +844,16 @@ public fun EditorScreen(
         uiState.document.pages[uiState.currentPageIndex].elements
             .firstOrNull { it.id == session.id } as? TextElement
     }
+    // D-108: Ink is available from the typing row, but the draft is owned by the in-place field and only
+    // commits on focus loss. Queue the tray until that commit has closed EditingText; opening it in the
+    // same callback would let the popover race the session's token-guarded dispose commit.
+    var inkAfterEditFor by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(editingElement?.id, inkAfterEditFor, ctxElement?.id) {
+        val pending = inkAfterEditFor ?: return@LaunchedEffect
+        if (editingElement != null) return@LaunchedEffect
+        inkAfterEditFor = null
+        if (ctxElement?.id == pending) inkPopoverFor = pending
+    }
     // Text editing is a surface inside the editor, not a navigation destination. Own Back at the screen
     // boundary where it can outrank the NavHost: a handler inside BasicTextField loses that race on real
     // Samsung firmware once the IME has consumed its own Back. The first press may hide the keyboard; the
@@ -1880,6 +1890,10 @@ public fun EditorScreen(
                 inkSwatch = editingElement?.style?.color
                     ?.let { Color(it.r, it.g, it.b, it.a) }
                     ?: ZinelyTheme.v2Colors.ink,
+                onInk = {
+                    editingElement?.id?.let { inkAfterEditFor = it }
+                    focusManager.clearFocus()
+                },
                 // Frozen `#doneEdit → endEdit()` (`:563`). It clears focus rather than dispatching, and
                 // that is deliberate: the draft lives inside the session composable (feature-ephemeral by
                 // ADR-029 §5.6, and never reaches the store until commit), so the only correct way to end

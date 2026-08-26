@@ -173,13 +173,13 @@ class BenchStyleRowGoldenTest {
     @Test
     fun bench_style_row_light() =
         capture("bench_style_row_light", darkTheme = false) {
-            BenchStyleRow(visible = true, inkSwatch = coralInk, onDone = {})
+            BenchStyleRow(visible = true, inkSwatch = coralInk, onInk = {}, onDone = {})
         }
 
     @Test
     fun bench_style_row_dark() =
         capture("bench_style_row_dark", darkTheme = true) {
-            BenchStyleRow(visible = true, inkSwatch = coralInk, onDone = {})
+            BenchStyleRow(visible = true, inkSwatch = coralInk, onInk = {}, onDone = {})
         }
 
     /**

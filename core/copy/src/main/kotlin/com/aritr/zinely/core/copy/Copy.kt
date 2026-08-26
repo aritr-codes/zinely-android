@@ -748,9 +748,12 @@ public object Copy {
     public object EditText {
         public const val ZINE_TEXT: String = "Zine text"
 
+        /** Quiet route from the compact typing row to the complete selected-text style tools. */
+        public const val MORE_STYLES_AFTER_DONE: String = "More styles after Done"
+
         /**
-         * The frozen editing row's `#doneEdit` button (`v2-bench.html:410`) — the one live control in
-         * `BenchStyleRow`. Ends the session and returns the element to Selected (ADR-093 row 3.10).
+         * The frozen editing row's `#doneEdit` button (`v2-bench.html:410`) — the row's primary
+         * completion action. Ends the session and returns the element to Selected (ADR-093 row 3.10).
          */
         public const val DONE: String = "Done"
     }

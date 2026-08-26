@@ -7026,3 +7026,50 @@ five-column named choices and three equal starting-palette actions. The outer na
 radio semantics and ≥48dp target while the inner pot remains 30dp. `BenchC6Test` fences the 5×2 geometry,
 current-ink update, text tint omission and honest visible actions; `BenchInkPresetPlatformA11yTest`
 continues to inspect the Android accessibility tree.
+
+---
+
+### D-108 — the typing row depicts three tools but only Done works {#d-108}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`.styletb`) · `feature/editor/.../BenchStyleRow.kt` · [stakeholder feedback review](../reviews/2026-08-26-stakeholder-feedback.md) |
+| **Found** | 2026-08-26, stakeholder release-candidate pass; independently matches the earlier F-1 first-time-user reading |
+| **Severity** | **P1 discoverability and trust defect.** The row paints controls that read as broken at the exact moment the maker is trying to type |
+| **Status** | ✅ **CLOSED 2026-08-26 — DESIGN FROZEN, implemented, focused tests/goldens pass, two Samsung device passes complete** |
+
+**Repository correction.** `BenchStyleRow` currently says all three style chips are frozen-and-inert, but
+the frozen HTML binds `#editColour.onclick` and opens the Ink tray. Compose therefore has two separate
+problems: it diverges from the prototype for Ink, and it preserves `Font` / `Size` as non-working button
+shapes. TalkBack state descriptions explain the absence, but the stakeholder's screenshot establishes that
+the visual first reading is still *disabled or broken*.
+
+**Ruling (OD-52).** The typing row contains only:
+
+1. a live `Ink` button with the edited element's current swatch;
+2. the quiet, non-interactive cue `More styles after Done`; and
+3. the existing primary `Done` action.
+
+`Font` and `Size` are removed from the typing row, not from the product. `Done` still returns the element to
+Selected, where the existing Type surface owns size, alignment, bold, italic and text ink. Opening Ink ends
+the typing session cleanly before presenting the tray, so no hidden edit draft competes with a second tool
+surface. This is contextual guidance, not a tutorial or a new editor architecture.
+
+The ruling follows the stakeholder evidence directly and agrees with the established-editor baseline:
+[Canva's current text-editing guidance](https://www.canva.com/help/add-and-edit-text/) places formatting on
+an editor toolbar while text is selected, and [Android accessibility guidance](https://developer.android.com/guide/topics/ui/accessibility/principles)
+requires controls and actions to expose their actual purpose. Zinely need not imitate Canva's density; the
+useful baseline is simply that a control-shaped object should perform the action it names.
+
+**Rejected:** making `Font` live (the capability does not exist); duplicating the complete
+Type bar above the IME (crowded, higher implementation risk, and redundant); leaving dim controls in place
+with better explanations (already tried, and the visual failure was reproduced); or silently deleting Ink
+(would preserve the Compose bug by amending the source of truth around it).
+
+**Device verification.** Pass 1 on `SM-A176B` / Android 16 at the device's normal `1.0` font scale typed a
+new draft, opened Ink from the live row, observed the IME and edit session stand down, applied Strawberry,
+and returned to the selected-text tools with the draft preserved. Pass 2 at `2.0` font scale caught Done
+being pushed off-screen by the new hint. The HTML was amended first so the hint owns the flexible middle
+space; Compose then matched it with a two-line, ellipsising weighted label. The pass was rerun on the rebuilt
+release APK: Ink, the cue and Done are all visible and actionable, and Ink still opens the tray. The device
+was restored to its original `font_scale=1.0` and physical density `450` after verification.
