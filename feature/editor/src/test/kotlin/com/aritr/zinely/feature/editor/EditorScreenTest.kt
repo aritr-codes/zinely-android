@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -1024,6 +1025,26 @@ class EditorScreenTest {
     }
 
     @Test
+    fun duplicate_copies_the_selected_object_selects_the_copy_and_offers_one_undo() {
+        val store = selectedPhoto()
+        val source = store.uiState.value.document.pages.single().elements.single() as ImageElement
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}").performClick()
+        composeRule.waitForIdle()
+
+        val elements = store.uiState.value.document.pages.single().elements
+        assertEquals(2, elements.size)
+        val copy = elements.last() as ImageElement
+        assertNotEquals(source.id, copy.id)
+        assertEquals(source.assetId, copy.assetId)
+        assertEquals(setOf(copy.id), store.uiState.value.selection)
+        composeRule.onNodeWithTag(BenchBarUndoTag).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf(source), store.uiState.value.document.pages.single().elements)
+    }
+
+    @Test
     fun confirming_across_fold_writes_one_shared_asset_pair() {
         val store = selectedPhotoInEightPageZine()
         setScreen(store, imageBytes = reframeTestPhoto(widthPx = 400, heightPx = 200))
@@ -1086,6 +1107,7 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").assertIsNotEnabled()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.INK}").assertIsNotEnabled()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}").assertIsNotEnabled()
         // Delete stays live — a blank box is exactly the one you most want to get rid of.
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertIsEnabled()
     }

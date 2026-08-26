@@ -185,6 +185,13 @@ public sealed interface Intent {
     public data class RotateBy(val degrees: Double) : Intent
 
     // — structure —
+    /**
+     * Make one independent copy of the current page's element at [id]. The reducer mints the copy's id,
+     * raises it above the page's current stack, offsets it within [pageSizePt], and selects the copy. The
+     * complete act is one [PlaceCommand], so Undo removes only the copy. Missing ids, blank text boxes and
+     * invalid page sizes are no-ops.
+     */
+    public data class DuplicateElement(val id: String, val pageSizePt: PtSize) : Intent
     public data class Reorder(val id: String, val op: ReorderOp) : Intent
     public data class Delete(val ids: Set<String>) : Intent
 

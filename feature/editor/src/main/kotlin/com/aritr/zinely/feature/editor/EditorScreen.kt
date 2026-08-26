@@ -1660,6 +1660,17 @@ public fun EditorScreen(
                             // X3b (ADR-106): a toggle, so tapping it again is the undo the user reaches
                             // for first — and Undo is the one they reach for second. Both work.
                             Copy.BenchVerbs.COPIER -> if (id != null) dispatch(Intent.ToggleCopier(id))
+                            Copy.BenchVerbs.DUPLICATE -> if (id != null) {
+                                dispatch(Intent.DuplicateElement(id, pageSizePt))
+                                deleteJob[0]?.cancel()
+                                snackMessage = Copy.Snack.DUPLICATED
+                                snackAction = UndoActionLabel
+                                snackVisible = true
+                                deleteJob[0] = c4Scope.launch {
+                                    delay(BenchSnackDeleteMillis)
+                                    snackVisible = false
+                                }
+                            }
                             Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
                             // §8 `Replace supply` — the Art sheet, re-summoned with a target instead of a
                             // blank page. Guarded on the element actually being decor: the frozen PHOTO row

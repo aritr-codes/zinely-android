@@ -7,6 +7,7 @@ import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.TextStyle
@@ -285,6 +286,7 @@ public object EditorReducer {
         is Intent.RotateBy -> bakeSelection(model) { it.copy(rotationDegrees = it.rotationDegrees + intent.degrees) }
 
         // — structure —
+        is Intent.DuplicateElement -> duplicateElement(model, intent)
         is Intent.Reorder -> {
             val page = currentPage(model)
             val beforeZ = page.elements.associate { it.id to it.zIndex }
@@ -359,6 +361,46 @@ public object EditorReducer {
 
     private fun transformsOf(model: EditorModel, ids: Set<String>): Map<String, Transform> =
         currentPage(model).elements.filter { it.id in ids }.associate { it.id to it.transform }
+
+    /**
+     * Duplicate is placement, not an edit of the source: a fresh reducer-owned id, the next z-rank and the
+     * existing [PlaceCommand] give it the same persistence/undo guarantees as Text, Photo and Art placement.
+     * The 12pt diagonal offset is deterministic. Each axis tries forward first, reverses at the far edge,
+     * and leaves an axis unchanged only when the element already consumes the whole page on that axis.
+     */
+    private fun duplicateElement(model: EditorModel, intent: Intent.DuplicateElement): Reduction {
+        if (!intent.pageSizePt.width.isFinite() || !intent.pageSizePt.height.isFinite() ||
+            intent.pageSizePt.width <= 0.0 || intent.pageSizePt.height <= 0.0
+        ) return Reduction(model)
+        val source = currentPage(model).elements.firstOrNull { it.id == intent.id } ?: return Reduction(model)
+        // A blank box is an unfinished text session, not authored content. Refusing to duplicate it keeps
+        // the same no-invisible-elements invariant as styleText/endTextSession (ADR-055).
+        if (source is TextElement && source.text.isBlank()) return Reduction(model)
+        val id = "el-${model.nextToken}"
+        val copy = source.duplicateAs(
+            id = id,
+            transform = source.transform.offsetForDuplicate(intent.pageSizePt),
+            zIndex = nextZ(model),
+        )
+        return committing(
+            model.copy(nextToken = model.nextToken + 1, selection = setOf(id), interaction = Interaction.Idle),
+            PlaceCommand(model.currentPageIndex, copy),
+        )
+    }
+
+    private fun Transform.offsetForDuplicate(pageSizePt: PtSize): Transform = copy(
+        xPt = duplicateAxisOffset(xPt, widthPt, pageSizePt.width),
+        yPt = duplicateAxisOffset(yPt, heightPt, pageSizePt.height),
+    )
+
+    private fun duplicateAxisOffset(position: Double, extent: Double, pageExtent: Double): Double {
+        if (!position.isFinite() || !extent.isFinite() || extent <= 0.0 || extent >= pageExtent) return position
+        val forwardRoom = pageExtent - position - extent
+        if (forwardRoom > 0.0) return position + minOf(DUPLICATE_OFFSET_PT, forwardRoom)
+        val backwardRoom = position
+        if (backwardRoom > 0.0) return position - minOf(DUPLICATE_OFFSET_PT, backwardRoom)
+        return position
+    }
 
     /** Apply [cmd], push to undo, clear redo, and request an autosave (the only place autosave is emitted). */
     private fun committing(model: EditorModel, cmd: Command): Reduction {
@@ -558,3 +600,6 @@ public object EditorReducer {
         is AddPageCommand, is DeletePageCommand -> null
     }
 }
+
+/** One sixth of an inch: visible at phone scale, small enough to preserve the maker's composition. */
+internal const val DUPLICATE_OFFSET_PT: Double = 12.0

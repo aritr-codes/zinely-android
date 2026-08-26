@@ -29,6 +29,17 @@ internal fun Element.withZIndex(z: Int): Element = when (this) {
     is DecorElement -> copy(zIndex = z)
 }
 
+/**
+ * Copy every authored property while replacing only the three identities of a new placement: durable id,
+ * geometry and stack rank. Exhaustive on purpose — a future element kind must declare what duplication
+ * preserves instead of silently losing one of its fields.
+ */
+internal fun Element.duplicateAs(id: String, transform: Transform, zIndex: Int): Element = when (this) {
+    is TextElement -> copy(id = id, transform = transform, zIndex = zIndex)
+    is ImageElement -> copy(id = id, transform = transform, zIndex = zIndex)
+    is DecorElement -> copy(id = id, transform = transform, zIndex = zIndex)
+}
+
 /** Replace page `pageIndex` by mapping it; out-of-range index returns the document unchanged. */
 internal fun ZineDocument.mapPage(pageIndex: Int, f: (Page) -> Page): ZineDocument {
     if (pageIndex !in pages.indices) return this

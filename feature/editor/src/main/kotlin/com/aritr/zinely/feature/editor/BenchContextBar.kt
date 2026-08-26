@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -150,6 +151,10 @@ internal fun benchContextVerbs(
             Copy.BenchVerbs.INK, Icons.Filled.Palette, enabled = styleable,
             unavailableBecause = Copy.BenchVerbs.TYPE_FIRST.takeUnless { styleable },
         ),
+        BenchVerb(
+            Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy, enabled = styleable,
+            unavailableBecause = Copy.BenchVerbs.TYPE_FIRST.takeUnless { styleable },
+        ),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
     BenchVerbKind.PHOTO -> listOf(
@@ -172,6 +177,7 @@ internal fun benchContextVerbs(
             Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz, enabled = false,
             unavailableBecause = Copy.BenchVerbs.NOT_YET,
         ),
+        BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
     // Reachable as of ADR-105 / package P1. The `error(...)` that stood here cited OD-2 as live; OD-2
@@ -195,6 +201,7 @@ internal fun benchContextVerbs(
     BenchVerbKind.DECOR -> listOf(
         BenchVerb(Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz),
         BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette),
+        BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
 }
@@ -483,7 +490,10 @@ private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modi
                     verb.unavailableBecause?.let { stateDescription = it }
                 }
             }
-            .padding(BenchContextBarButtonPaddingDp),
+            .padding(
+                horizontal = BenchContextBarButtonHorizontalPaddingDp,
+                vertical = BenchContextBarButtonPaddingDp,
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(BenchContextBarLabelGapDp, Alignment.CenterVertically),
     ) {
@@ -526,8 +536,8 @@ internal val BenchContextBarShape: RoundedCornerShape = RoundedCornerShape(perce
 /** Frozen `.ctx{padding:var(--gap-xs)}` (`v21-bench.html:225`) — 4, where V2 padded 8. */
 internal val BenchContextBarPaddingDp = ZinelyV21Dimens.gapXs
 
-/** Frozen `.ctx{gap:var(--gap-hair)}` (`v21-bench.html:224`) — 2, where V2 gapped 6. */
-internal val BenchContextBarGapDp = ZinelyV21Dimens.gapHair
+/** A21's compact six-action gap — 1dp keeps every 50dp floor visible on a 360dp phone. */
+internal val BenchContextBarGapDp = 1.dp
 
 /**
  * ⚠ **V2.1's `.ctx button` declares no height** (`v21-bench.html:228-230`), where V2 pinned 40dp. Its
@@ -558,6 +568,9 @@ internal val BenchContextBarButtonShape: RoundedCornerShape = RoundedCornerShape
 
 /** Frozen `.ctx button{padding:var(--gap-sm) var(--gap-sm)}` (`v21-bench.html:229`) — 8 on every side. */
 internal val BenchContextBarButtonPaddingDp = ZinelyV21Dimens.gapSm
+
+/** A21 changes only horizontal padding to 2dp; vertical padding remains the frozen 8dp. */
+internal val BenchContextBarButtonHorizontalPaddingDp = 2.dp
 
 /** Frozen `.ctx button{gap:var(--gap-hair)}` (`v21-bench.html:230`) — glyph over caption. */
 internal val BenchContextBarLabelGapDp = ZinelyV21Dimens.gapHair

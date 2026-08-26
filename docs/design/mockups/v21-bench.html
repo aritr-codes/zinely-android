@@ -2005,3 +2005,61 @@ spread.querySelector('.spread-do').onclick=e=>{
   cap('Across fold · pages 2 & 3','Each half stays editable. Print and fold the zine to see the complete picture.');
 };
 </script>
+
+<!-- ===========================================================================
+A21 · 2026-08-26 (owner QoL ruling) — duplicate the thing in hand.
+DESIGN FROZEN 2026-08-26.
+
+Duplicate is a universal selected-element verb: Text, Photo and Art all place it
+immediately before destructive Delete in the existing contextual tool. It opens
+no sheet and asks no confirmation. One tap creates one independent copy 12pt down
+and right, raises it above the current page stack, and selects the copy so the next
+drag or style change acts on the new thing. At a page edge the offset reverses on
+that axis; an object that consumes a whole axis stays aligned on that axis. The
+source never moves. Text/style, photo asset/framing/filter, and Art supply/ink/
+mirror properties survive exactly; only id, position and z-rank change.
+
+Six honest actions must still fit a 360dp phone without shrinking their 50dp touch
+floors. This amendment compacts only the new six-verb rows: horizontal button
+padding is 2dp (vertical stays 8dp) and the hair gap is 1dp. Labels, touch floors,
+the content-width pill and every action remain visible without horizontal scroll.
+
+An unfinished blank text box is not authored content: Duplicate stays visible but
+unavailable there and says `Type something first`, matching Size and Ink.
+
+The act is one undo step. Its snack says "Duplicated" and offers Undo. Undo removes
+only the copy. This is the mobile translation of the earlier frozen V1 Bench's
+selected-object Duplicate — not a layer panel, clipboard, multi-select operation,
+or page duplication. Page duplication remains a separate page-navigation ruling.
+=========================================================================== -->
+<script>
+ICON.duplicate=svg('<rect x="8" y="8" width="11" height="11" rx="1.5"/><path d="M16 8V6.5A1.5 1.5 0 0 0 14.5 5h-8A1.5 1.5 0 0 0 5 6.5v8A1.5 1.5 0 0 0 6.5 16H8"/>');
+const a21Style=document.createElement('style');
+a21Style.textContent='.ctx{gap:1px}.ctx button{padding:8px 2px}';
+document.head.appendChild(a21Style);
+const toolsForBeforeA21=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForBeforeA21(kind);
+  return [...tools.slice(0,-1),['Duplicate',ICON.duplicate,duplicateSelected],tools[tools.length-1]];
+};
+function duplicateSelected(){
+  if(!sel)return;
+  const original=sel,copy=original.cloneNode(true),host=$('content').getBoundingClientRect();
+  const box=original.getBoundingClientRect(),offset=12;
+  const axis=(start,size,limit)=>start+size+offset<=limit?start+offset:Math.max(0,start-offset);
+  copy.classList.remove('selected','editing');
+  copy.style.position='absolute';copy.style.width=box.width+'px';copy.style.height=box.height+'px';
+  copy.style.left=axis(box.left-host.left,box.width,host.width)+'px';
+  copy.style.top=axis(box.top-host.top,box.height,host.height)+'px';
+  copy.onclick=e=>{e.stopPropagation();select(copy);};
+  copy.ondblclick=e=>{e.stopPropagation();select(copy);if(copy.dataset.kind==='text')edit();};
+  $('content').appendChild(copy);select(copy);
+  bin={duplicate:copy,original};toast('Duplicated',true);
+}
+const undoSnackBeforeA21=$('undoSnack').onclick;
+$('undoSnack').onclick=e=>{
+  if(!bin||!bin.duplicate)return undoSnackBeforeA21(e);
+  e.stopPropagation();const original=bin.original;bin.duplicate.remove();bin=null;
+  select(original);$('snack').classList.remove('show');toast('Duplicate undone',false);
+};
+</script>

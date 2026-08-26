@@ -222,6 +222,7 @@ public object Copy {
         public const val COPIER_ON: String = "On"
         public const val COPIER_OFF: String = "Off"
         public const val REPLACE: String = "Replace"
+        public const val DUPLICATE: String = "Duplicate"
         public const val DELETE: String = "Delete"
 
         /**
@@ -644,6 +645,9 @@ public object Copy {
          * the `Undo` action — the placement is one command, so one press takes it back.
          */
         public const val PLACED: String = "Placed on the page"
+
+        /** One selected page object was copied and the new copy is now selected. */
+        public const val DUPLICATED: String = "Duplicated"
     }
 
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */
