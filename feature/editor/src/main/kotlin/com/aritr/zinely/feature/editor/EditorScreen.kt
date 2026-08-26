@@ -1438,9 +1438,10 @@ public fun EditorScreen(
                     }
                 }
 
-                // One-time move/resize hint: the moment a placed element is single-selected (handles up,
-                // not editing) we float in the gentle "drag to move · pinch to resize" note — those two
-                // gestures have no discrete-control twin, so a beginner can miss them. It is non-blocking
+                // One-time transform hint: the moment a placed element is single-selected (handles up,
+                // not editing) we name the handles and lower turn controls a beginner can otherwise miss.
+                // A photo gets the contextual crop distinction: Reframe changes what sits inside its frame.
+                // It is non-blocking
                 // (declares no pointerInput; touches fall through to the gesture surface) and one-time per
                 // screen. Sits below the edit overlay so a text session always wins the top of the canvas.
                 // Also gate on no in-flight gesture so the hint is gone the same frame a drag begins
@@ -1454,6 +1455,9 @@ public fun EditorScreen(
                         !moveResizeHintDismissed && moveResizeHintSeen == false && !saveErrorVisible
                 if (showMoveResizeHint) {
                     EditorMoveResizeHint(
+                        photo = uiState.selection.singleOrNull()?.let { id ->
+                            currentPage.elements.firstOrNull { it.id == id }
+                        } is ImageElement,
                         onDismiss = {
                             moveResizeHintDismissed = true
                             onMoveResizeHintSeen()

@@ -28,8 +28,8 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * **CI-25** golden net for [EditorMoveResizeHint], light + dark (roadmap §C1; the frozen [TypeBarGoldenTest]
- * two-proof shape). The one-time teaching sticky is static text (no motion), so a single visible capture is
- * its full state.
+ * two-proof shape). The one-time support scrap is static text (no motion); both generic and photo copy are
+ * captured because the latter adds the Reframe/crop distinction.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -76,6 +76,13 @@ class EditorMoveResizeHintGoldenTest {
         // Non-vacuity (the real guard): the component's own node must be present. A blanked component
         // in a later re-record fails here — a desk-pixel count on a desk-backed host would still pass.
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertExists()
+        val hint = composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).fetchSemanticsNode().boundsInRoot
+        val dismiss = composeRule.onNodeWithTag(MoveResizeHintDismissTag).fetchSemanticsNode().boundsInRoot
+        assertTrue(
+            "Got it must remain inside the support scrap ($name): hint=$hint dismiss=$dismiss",
+            dismiss.left >= hint.left && dismiss.top >= hint.top &&
+                dismiss.right <= hint.right && dismiss.bottom <= hint.bottom,
+        )
         val bmp = hostBitmap()
         // Secondary sanity: the host raster is non-empty (the desk ground painted).
         assertTrue(
@@ -95,5 +102,17 @@ class EditorMoveResizeHintGoldenTest {
     fun editor_move_resize_hint_dark() =
         capture("editor_move_resize_hint_dark", darkTheme = true) {
             EditorMoveResizeHint(onDismiss = {})
+        }
+
+    @Test
+    fun editor_photo_move_resize_hint_light() =
+        capture("editor_photo_move_resize_hint_light", darkTheme = false) {
+            EditorMoveResizeHint(photo = true, onDismiss = {})
+        }
+
+    @Test
+    fun editor_photo_move_resize_hint_dark() =
+        capture("editor_photo_move_resize_hint_dark", darkTheme = true) {
+            EditorMoveResizeHint(photo = true, onDismiss = {})
         }
 }

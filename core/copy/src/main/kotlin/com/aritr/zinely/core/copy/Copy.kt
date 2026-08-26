@@ -682,7 +682,10 @@ public object Copy {
 
     /** The move/resize coach hint (`EditorMoveResizeHint.kt`). Dismiss label is [Common.GOT_IT]. */
     public object MoveResizeHint {
-        public const val TEXT: String = "Drag to move it. Pinch to resize."
+        public const val TEXT: String =
+            "Drag to move. Pull a handle to resize. Turn it with the arrows below."
+        public const val PHOTO_TEXT: String =
+            "Drag to move. Pull a handle to resize. Turn it below; Reframe crops inside."
     }
 
     /** Save-failure banner copy (`EditorSaveFailure.kt`). */
@@ -749,7 +752,7 @@ public object Copy {
         public const val ZINE_TEXT: String = "Zine text"
 
         /** Quiet route from the compact typing row to the complete selected-text style tools. */
-        public const val MORE_STYLES_AFTER_DONE: String = "More styles after Done"
+        public const val MORE_STYLES_AFTER_DONE: String = "Align, size & more after Done"
 
         /**
          * The frozen editing row's `#doneEdit` button (`v2-bench.html:410`) — the row's primary

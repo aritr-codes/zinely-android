@@ -574,7 +574,7 @@ is about <b>material</b> — the page, the shelf, the ink pots, the supply drawe
   <div class="kbstack" id="kbstack">
     <div class="styletb">
       <button class="chip" id="editColour" type="button">Ink <span class="sw" id="editSw"></span></button>
-      <span class="editHint">More styles after Done</span>
+      <span class="editHint">Align, size &amp; more after Done</span>
       <button class="doneEdit" id="doneEdit">Done</button>
     </div>
     <div class="kb" id="kb"></div>
@@ -923,6 +923,54 @@ addEventListener('keydown',e=>{
   if(e.key!=='w'&&e.key!=='W') return;
   document.querySelector('.keepclear').classList.toggle('warn');
 });
+</script>
+
+<!-- ===========================================================================
+A17 · 2026-08-26 (D-109 stakeholder discoverability ruling) — name the move the
+maker can already make.
+
+The editor already exposes handles, turn controls, text alignment and non-
+destructive Reframe. The stakeholder found each capability only after asking or
+experimenting, so adding more machinery would solve the wrong problem. The
+existing one-time coach remains one quiet, dismissible support scrap; its words
+now point at the controls actually painted on the screen. Every selected element
+says that handles resize and the controls below turn it. A selected photo adds
+one honest distinction: Reframe crops inside the frame. The typing hand-off names
+Align and Size instead of the vague "More styles" umbrella.
+
+No gesture, handle meaning, crop behavior, persistence flag, context-bar action,
+or document/rendering semantic changes. The photo line is contextual, not a
+second onboarding sequence. DESIGN FROZEN 2026-08-26.
+=========================================================================== -->
+<style>
+.coach-a17{position:absolute;left:50%;top:76px;z-index:61;display:none;align-items:center;
+  width:min(320px,calc(100% - 28px));gap:var(--gap-md);padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg);
+  transform:translateX(-50%) rotate(-.6deg);background:var(--surface-soft);color:var(--ink);
+  border:1.5px solid var(--ink);border-radius:var(--br-pill);font-size:.79rem}
+.coach-a17.show{display:flex}
+.coach-a17 span{flex:1}
+.coach-a17 button{min-width:48px;min-height:48px;padding:var(--gap-xs) var(--gap-md);border:0;
+  border-radius:var(--br-pill);background:none;color:var(--ink);font:700 .78rem var(--sans);
+  text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;cursor:pointer}
+</style>
+<script>
+const coach=document.createElement('div');
+coach.className='coach-a17'; coach.id='coachA17';
+coach.innerHTML='<span></span><button type="button">Got it</button>';
+$('phone').appendChild(coach);
+coach.onclick=e=>e.stopPropagation();
+coach.querySelector('button').onclick=e=>{e.stopPropagation();coach.classList.remove('show');};
+
+const selectBeforeA17=select;
+select=function(node){
+  selectBeforeA17(node);
+  coach.querySelector('span').textContent=node.dataset.kind==='photo'
+    ? 'Drag to move. Pull a handle to resize. Turn it below; Reframe crops inside.'
+    : 'Drag to move. Pull a handle to resize. Turn it with the arrows below.';
+  coach.classList.add('show');
+};
+const deselectBeforeA17=deselect;
+deselect=function(){coach.classList.remove('show');deselectBeforeA17();};
 </script>
 
 

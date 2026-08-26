@@ -7073,3 +7073,35 @@ being pushed off-screen by the new hint. The HTML was amended first so the hint 
 space; Compose then matched it with a two-line, ellipsising weighted label. The pass was rerun on the rebuilt
 release APK: Ink, the cue and Done are all visible and actionable, and Ink still opens the tray. The device
 was restored to its original `font_scale=1.0` and physical density `450` after verification.
+
+---
+
+### D-109 — editor capability is discovered by accident instead of by the surface {#d-109}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (A17) · `EditorMoveResizeHint.kt` · [stakeholder feedback review](../reviews/2026-08-26-stakeholder-feedback.md) |
+| **Found** | 2026-08-26, stakeholder release-candidate pass |
+| **Severity** | **P1 first-use discoverability.** Resize, rotation, alignment and photo cropping work, but were initially reported as missing |
+| **Status** | 🟦 **DESIGN FROZEN 2026-08-26 — implementation and verification in progress** |
+
+The feedback screenshots establish a coherent mismatch rather than four missing features. The stakeholder asked
+for centre alignment while the text editor showed an inert-looking typing row, later found resize and rotation
+after experimenting, and interpreted the eight resize handles as Canva-style crop handles despite the labelled
+`Reframe` verb below the photo. Replacing Zinely's transform semantics with crop semantics would break the shared
+element model and make text, Art and photos manipulate differently.
+
+**Ruling (OD-53 / Bench A17).** Keep every existing capability and make the current one-time guidance concrete:
+
+1. the typing hand-off says `Align, size & more after Done`, explicitly naming the two tools the stakeholder sought;
+2. the first selected element says `Drag to move. Pull a handle to resize. Turn it with the arrows below.`; and
+3. when that first selection is a photo, the last sentence becomes `Turn it below; Reframe crops inside.`
+
+The hint retains its existing persisted one-time gate, non-modal support-scrap treatment and `Got it` dismissal.
+There is no tutorial, new onboarding state, gesture change, crop-handle mode or document/rendering change. The
+photo sentence is contextual because `Reframe` is nonsensical for text and Art; the existing labelled Reframe verb
+and accessibility action remain the durable route after the coach is gone.
+
+**Rejected:** changing handles to crop (breaks cross-element transform consistency); adding a permanent legend
+(noise on the creative surface); adding separate persisted hints for every capability (onboarding state growth for
+one observed misunderstanding); and leaving `More styles` vague (it does not name alignment, the requested action).

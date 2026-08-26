@@ -421,11 +421,22 @@ class EditorScreenTest {
     @Test
     fun a_move_resize_hint_appears_once_an_element_is_selected() {
         // Discoverability teach: once a placed element is single-selected (handles visible, Idle), the
-        // one-time hint floats in to say the moves are drag/pinch — the gestures that have no other twin.
+        // one-time hint names the handles and lower turn controls already on screen.
         val store = store()
         store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects, Idle
         setScreen(store)
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.MoveResizeHint.TEXT).assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.MoveResizeHint.PHOTO_TEXT).assertDoesNotExist()
+    }
+
+    @Test
+    fun a_first_selected_photo_explains_that_Reframe_crops_inside() {
+        setScreen(selectedPhoto())
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(Copy.MoveResizeHint.PHOTO_TEXT).assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.MoveResizeHint.TEXT).assertDoesNotExist()
     }
 
     @Test
@@ -850,7 +861,9 @@ class EditorScreenTest {
     @Test
     @Config(qualifiers = "night")
     fun the_verb_bar_is_legible_at_night() {
-        setScreen(selectedText())
+        // This test samples the context bar's own pixels. Keep the unrelated one-time coach out of the
+        // fixture so a copy/height change to that overlay cannot perturb Robolectric's first raster frame.
+        setScreen(selectedText(), moveResizeHintSeen = true)
         composeRule.waitForIdle()
         val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
