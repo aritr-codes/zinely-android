@@ -29,9 +29,9 @@
      │       A side-by-side spread was built and REJECTED (owner, 2026-08-09):      │
      │       two mini-zine pages at 390px are two pages you cannot read.  A tablet  │
      │       spread stays a scope decision, not a free consequence of this HTML.    │
-     │    3. Turning a page is a restrained swing on the spine (~300ms), not a 3D   │
-     │       flipbook.  prefers-reduced-motion downgrades it to a short cross-fade  │
-     │       rather than removing the page change.                                  │
+     │    3. A page change is immediate. The physical spine, gutter and stack edge  │
+     │       already make the booklet model legible; animating the user's page      │
+     │       delays reading without adding information.                             │
      │    4. The fold ARROWS were rebuilt on the Yoshizawa-Randlett conventions as  │
      │       set out by Robert Lang, after the owner read them as messy:            │
      │       langorigami.com/article/origami-diagramming-conventions.  The defect   │
@@ -167,8 +167,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .leaf{position:relative;width:var(--leafw,244px);aspect-ratio:3/4;background:var(--paper);
   border:1.5px solid var(--ink);padding:var(--gap-xl) var(--gap-lg);overflow:hidden;
   display:flex;flex-direction:column;gap:var(--gap-sm);backface-visibility:hidden;
-  transform-origin:var(--spineside,left) center;
-  transition:transform .3s cubic-bezier(.22,.61,.24,1),opacity .3s ease}
+  transform-origin:var(--spineside,left) center}
 .leaf::after{content:"";position:absolute;inset:0;background-image:var(--grain);
   background-size:130px 130px;mix-blend-mode:multiply;opacity:.4;pointer-events:none}
 /* the gutter: a soft shade and a crease line on the bound edge only */
@@ -201,11 +200,6 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .pgn{position:absolute;bottom:8px;font-size:.62rem;font-weight:700;color:var(--ink-soft);
   font-variant-numeric:tabular-nums}
 .leaf.R .pgn{right:12px} .leaf.L .pgn{left:12px}
-
-/* the turn — a restrained swing on the spine, never a 180° flipbook */
-.book.turn-fwd .leaf{transform:rotateY(-26deg) translateX(-3%);opacity:0}
-.book.turn-back .leaf{transform:rotateY(26deg) translateX(3%);opacity:0}
-.book.settle .leaf{transform:none;opacity:1}
 
 /* zine content — set in the voice face, because it is the maker's writing */
 .cv{align-items:center;justify-content:center;text-align:center;gap:var(--gap-md)}
@@ -564,13 +558,9 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .grp{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
   font-weight:700;width:100%;text-align:center;margin-top:var(--gap-xs)}
 
-/* Reduced motion: the page still CHANGES — it just cross-fades instead of
-   swinging, and the arrow stops pulsing.  Removing the transition entirely
-   would lose the "something turned" signal, which is the accessibility bug,
-   not the fix. */
+/* Reduced motion still governs the instructional fold arrow and chrome. Page
+   changes are immediate for everyone, so they need no separate downgrade. */
 @media (prefers-reduced-motion:reduce){
-  .book.turn-fwd .leaf,.book.turn-back .leaf{transform:none;opacity:0}
-  .leaf{transition:opacity .12s linear}
   .arrow.mv{animation:none;opacity:1}
   .drawer,.scrim,.btn{transition-duration:.01ms}
 }
@@ -580,7 +570,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 Proof — “how do I print it correctly?” · <b>V2.1 handmade direction</b></p>
 <p class="cap">Same screen as the frozen <b>v2-proof.html</b>. The pages sit as the booklet they actually are —
 cover alone, then 2|3, 4|5, 6|7, back alone — but <b>one leaf at a time</b>, with the spine on the correct side
-and the rest of the book visible as a stack edge. Turning swings briefly on that spine. The fold guide is eight
+and the rest of the book visible as a stack edge. Page changes are immediate. The fold guide is eight
 single actions drawn on your own printed sheet.</p>
 
 <div class="phone">
@@ -807,11 +797,7 @@ function render(){
   document.getElementById('tapNext').disabled = (spread === SPREADS.length-1);
 }
 
-/* the turn: swing out on the spine, swap, swing back in */
-let turning = false;
 function turn(dir){
-  if (turning) return;
-  // advance the model first — if there is nowhere to go, don't animate
   const before = [spread, side].join();
   if (dir > 0){
     const [l,r] = SPREADS[spread];
@@ -823,15 +809,7 @@ function turn(dir){
     else if (spread > 0){ spread--; side = SPREADS[spread][1] === null ? 0 : 1; }
   }
   if ([spread, side].join() === before) return;
-
-  turning = true;
-  book.classList.add(dir > 0 ? 'turn-fwd' : 'turn-back');
-  setTimeout(() => {
-    render();
-    book.classList.remove('turn-fwd','turn-back');
-    book.classList.add('settle');
-    setTimeout(() => { book.classList.remove('settle'); turning = false; }, 300);
-  }, 180);
+  render();
 }
 render();
 
@@ -1121,4 +1099,13 @@ addEventListener('keydown', e => {
      as a button, survives configuration change with the completion, and a phone
      with no PDF viewer gets the existing friendly "No app ... can open" message.
      The action never re-renders, rewrites, or searches Downloads by filename.
+
+     P3 (stakeholder feedback, 2026-08-26) — DESIGN FROZEN.
+
+     Page changes in Read are immediate. The leaf swing and reduced-motion
+     cross-fade are removed; neither communicates state that the page ticket,
+     physical gutter and stack edge do not already state. Tap edges, horizontal
+     drag, reading order, current-page announcement, booklet geometry and all
+     rendering remain unchanged. This does not remove fold instruction motion
+     or chrome transitions: the feedback names the page animation specifically.
 =========================================================================== -->

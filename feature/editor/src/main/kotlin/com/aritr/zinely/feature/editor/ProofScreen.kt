@@ -420,7 +420,6 @@ public fun ProofScreen(
                     pages = pages,
                     pageSizePt = pageSizePt,
                     defaults = defaults,
-                    reduceMotion = reduceMotion,
                     imageBytes = imageBytes,
                     onLeafChange = { leafPage = it },
                     modifier = Modifier
