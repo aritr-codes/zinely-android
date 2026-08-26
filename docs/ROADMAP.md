@@ -27,6 +27,35 @@ timeline
 
 The build order inside every phase follows risk: **prove the riskiest, most isolatable thing first.** That is why the **imposition engine** (pure Kotlin, fully testable) is the first vertical spike — see [spikes/imposition-engine.md](spikes/imposition-engine.md) and [ADR-007](DECISIONS.md#adr-007).
 
+### Public launch runway — 2026-09-11
+
+The owner set **11 September 2026** as the public-launch date on 2026-08-26. The remaining runway is a
+stabilisation programme, not permission to widen scope. Repository evidence, release-candidate device behavior
+and print output outrank feature count.
+
+| Window | Gate | Required outcome |
+|---|---|---|
+| **26–29 Aug** | Scope and defect closure | Freeze the accepted Art + Ink surface; classify the stakeholder pass; reproduce current-release gaps; keep persistence, export, backup/restore and print parity green |
+| **30 Aug–3 Sep** | Focused implementation | Implement A16 through existing supply/render seams; resolve the inert typing-row ruling; add only contextual discoverability improvements proven by feedback; no new architecture |
+| **4 Sep** | **Feature freeze** | No new capability enters after this date without a P0 launch-blocker finding |
+| **5–7 Sep** | Release-candidate verification | Full JVM/Android/lint/debug/release gates; explicit golden reruns; two physical-device passes; backup/restore, edit/autosave, Proof, PDF and physical fold smoke |
+| **8 Sep** | RC handoff | Signed candidate, release notes, privacy/known-limitations text and stakeholder smoke package |
+| **9 Sep** | Stakeholder acceptance | Only evidenced P0/P1 corrections; no visual or feature expansion |
+| **10 Sep** | Release lock | Version/signing/install/upgrade checks; final diff and clean-tree audit |
+| **11 Sep** | Public launch | Publish the accepted signed artifact and support/reporting instructions |
+
+**Launch Musts:** crash/data-loss safety; additive `.zine` backup/restore; autosave/session ownership; editor
+create/edit/undo/redo; accurate shared preview/PDF rendering; correct imposition and fold guidance; usable
+first-run/shelf navigation; accessible primary flows; honest failure and unsupported-character behavior.
+
+**Launch candidates, only while the Musts stay green:** the already-approved A16 Art + Ink implementation;
+small contextual guidance for alignment/resize/rotate/Reframe; a user-controlled post-save PDF-open affordance.
+
+**Deferred beyond launch:** broad onboarding/tutorial systems, cloud/accounts/social features, new formats,
+direct printing without fixed-scale proof, and vector emoji rendering. The
+[stakeholder feedback review](reviews/2026-08-26-stakeholder-feedback.md) records why these are not all the same
+kind of gap.
+
 ```mermaid
 flowchart LR
     S1["Spike: imposition engine\n(+ SVG proof sheet)"] --> S2["Data/storage layer\n(Room meta + JSON doc)"]
@@ -132,7 +161,8 @@ flowchart LR
   [ADR-104](DECISIONS.md#adr-104), [SUPPLIES-SPEC](design/SUPPLIES-SPEC.md)). Phased **P1 ink reaches
   paper · P2 the drawer · P3 the Art sheet**; §10.1 of the spec owns the per-phase detail, this row owns
   the phasing's place in the plan. **[ADR-107](DECISIONS.md#adr-107) now accepts a staged 16→32 first
-  expansion; [D-080](design/V2-SPEC-DEFECTS.md#d-080) gates its implementation on rendered DESIGN FREEZE.**
+  expansion; [D-080](design/V2-SPEC-DEFECTS.md#d-080) and [D-107](design/V2-SPEC-DEFECTS.md#d-107) closed
+  when the owner accepted A16's combined Art + Ink DESIGN FREEZE on 2026-08-26.**
 - **The V2.1 re-skin** — Library, Bench and Proof re-drawn against `V21-SPEC.md`
   ([ADR-100](DECISIONS.md#adr-100) · [ADR-101](DECISIONS.md#adr-101) · [ADR-102](DECISIONS.md#adr-102), all
   Accepted). ⚠ **Partly landed.** The eight Library composables are on `main`; `ZineV21Cover` and
@@ -200,6 +230,7 @@ are **eleven milestones, C0–C10**, each leaving the app shippable.
 ## Change log
 | Date | Change | Linked ADR / PRD |
 |---|---|---|
+| 2026-08-26 | **Public launch set for 2026-09-11.** The remaining runway is explicitly stabilisation-first: feature freeze on 2026-09-04, release-candidate verification before stakeholder acceptance, and no broad feature expansion. The stakeholder pass is classified against current source so discoverability reports are not misimplemented as missing editor capabilities. | [Stakeholder feedback review](reviews/2026-08-26-stakeholder-feedback.md) · [D-080](design/V2-SPEC-DEFECTS.md#d-080) · [D-107](design/V2-SPEC-DEFECTS.md#d-107) |
 | 2026-08-18 | ⚠ **Phasing that had shipped without a roadmap row is recorded**: the V2.1 re-skin (V1) and the supplies programme P1–P3 (V1), plus spreads as **`X9`** under V2. A merge-readiness review found this document silent on ~74k lines already on `feat/supplies-p3-art-sheet` — `SUPPLIES-SPEC §10.1` had been carrying the phasing, and [CLAUDE.md](../CLAUDE.md#documentation-rule-mandatory) gives phasing to this file. 🟨 Recording it here does **not** accept [ADR-107](DECISIONS.md#adr-107) or [ADR-109](DECISIONS.md#adr-109), both still `Proposed` | [ADR-105](DECISIONS.md#adr-105), [ADR-107](DECISIONS.md#adr-107), [ADR-109](DECISIONS.md#adr-109), [D-099](design/V2-SPEC-DEFECTS.md#d-099) |
 | 2026-06-19 | Initial roadmap established | [PRD §7](PRD.md#7-scope--mvp) |
 | 2026-06-19 | S1 imposition engine spike implemented (pure Kotlin, 95 tests, Codex-reviewed) | [ADR-007](DECISIONS.md#adr-007) |
