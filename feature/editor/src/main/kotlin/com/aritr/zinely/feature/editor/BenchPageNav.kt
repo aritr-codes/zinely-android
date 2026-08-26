@@ -531,7 +531,7 @@ private fun BenchPageThumb(
             // scheme reads the page's tokens, not the room's, exactly as `.pthumb`'s five restated custom
             // properties cascade to its contents.
             CompositionLocalProvider(LocalZinelyV2Colors provides sheet) {
-                BenchThumbPage(
+                BenchPageMiniature(
                     page = page,
                     pageSizePt = pageSizePt,
                     defaults = defaults,
@@ -558,7 +558,7 @@ private fun BenchPageThumb(
  * kept the capability, so C5 keeps the code that provides it rather than writing a second one.
  */
 @Composable
-private fun BenchThumbPage(
+internal fun BenchPageMiniature(
     page: Page,
     pageSizePt: PtSize,
     defaults: DocumentDefaults,

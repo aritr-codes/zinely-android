@@ -595,11 +595,8 @@ class BenchC9Test {
                 "the lit card's number $where measures ${"%.3f".format(lit)}:1, below 1.4.3 AA's 4.5:1",
                 lit >= 4.5f,
             )
-            val current = contrastRatio(card.onLeaf, card.leafTint)
-            assertTrue(
-                "the lit current-page number $where measures ${"%.3f".format(current)}:1, below AA",
-                current >= 4.5f,
-            )
+            // A18 keeps the same badge pairing on the current page. Current state is the berry ring
+            // outside the artifact, never a recolouring of the maker's page or its address badge.
         }
 
         // …and the pairing itself, because everything above is arithmetic over tokens and would go on
@@ -615,11 +612,15 @@ class BenchC9Test {
         assertTrue(
             "BenchPageGrid no longer fills its card from the lit island — the ratios above are now " +
                 "measuring a pairing the grid does not draw, exactly as D-061 did",
-            grid.contains("if (current) card.leafTint else card.paper"),
+            grid.contains(".background(card.paper)"),
         )
         assertTrue(
-            "BenchPageGrid no longer routes current and ordinary page numbers through their actual grounds",
-            grid.contains("if (current) card.onLeaf else card.inkSoft"),
+            "BenchPageGrid no longer routes every page-number badge through its actual lit ground",
+            grid.contains("color = card.inkSoft"),
+        )
+        assertTrue(
+            "BenchPageGrid no longer marks the current page outside the artifact",
+            grid.contains("zinelyV21OuterRing(BenchThumbCurrentRing, room.berry, shape)"),
         )
     }
 

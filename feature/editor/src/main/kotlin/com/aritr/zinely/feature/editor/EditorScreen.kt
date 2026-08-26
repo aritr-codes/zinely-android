@@ -1939,6 +1939,8 @@ public fun EditorScreen(
                 visible = pageGridOpen,
                 pages = uiState.document.pages,
                 currentPageIndex = uiState.currentPageIndex,
+                pageSizePt = pageSizePt,
+                defaults = uiState.document.defaults,
                 // Choosing a page here does what choosing one on the strip does, and then stands the grid
                 // down — a picker that stayed open after picking would be a panel, which is what
                 // "summoned, never default" refuses.
@@ -1948,6 +1950,7 @@ public fun EditorScreen(
                     pageGridOpen = false
                 },
                 onDismiss = { pageGridOpen = false },
+                imageBytes = imageBytes,
             )
         }
     }

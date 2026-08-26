@@ -29,6 +29,7 @@ import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -798,6 +799,8 @@ class BenchC5Test {
                         visible = open.value,
                         pages = pages,
                         currentPageIndex = 0,
+                        pageSizePt = PtSize(100.0, 130.0),
+                        defaults = DocumentDefaults(),
                         onSelectPage = {},
                         onDismiss = {},
                     )

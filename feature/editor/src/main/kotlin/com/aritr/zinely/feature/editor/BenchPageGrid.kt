@@ -31,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -55,7 +56,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
+import com.aritr.zinely.core.model.DocumentDefaults
 import com.aritr.zinely.core.model.Page
+import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.render.android.AssetBytesSource
+import com.aritr.zinely.ui.components.zinelyV21OuterRing
 import com.aritr.zinely.ui.components.zinelyV21Pressable
 import com.aritr.zinely.ui.theme.ZinelyHaptic
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -66,6 +71,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Press
 import com.aritr.zinely.ui.theme.ZinelyV21Scrim
 import com.aritr.zinely.ui.theme.ZinelyV2IconPaint
 import com.aritr.zinely.ui.theme.ZinelyV2Icons
+import com.aritr.zinely.ui.theme.LocalZinelyV2Colors
 import com.aritr.zinely.ui.theme.toImageVector
 import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import kotlin.math.roundToInt
@@ -92,6 +98,9 @@ public const val BenchPageGridCloseTag: String = "bench-page-grid-close"
 
 /** Per-cell test tag, 1-based like the frozen `openGrid()`. */
 public fun benchPageCellTag(pageNumber: Int): String = "bench-page-cell-$pageNumber"
+
+/** The live page miniature inside a grid cell, unmerged-tree only. */
+public fun benchPageGridPageTag(pageNumber: Int): String = "bench-page-grid-page-$pageNumber"
 
 /**
  * Frozen `.pgrid{border-radius:var(--br-xl) var(--br-xl) 0 0; border-top:2px solid var(--ink);
@@ -306,9 +315,12 @@ internal fun BenchPageGrid(
     visible: Boolean,
     pages: List<Page>,
     currentPageIndex: Int,
+    pageSizePt: PtSize,
+    defaults: DocumentDefaults,
     onSelectPage: (Int) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    imageBytes: AssetBytesSource = EmptyAssetBytes,
 ) {
     val visibleState = remember { MutableTransitionState(false) }
     visibleState.targetState = visible
@@ -363,8 +375,11 @@ internal fun BenchPageGrid(
             BenchPageGridSurface(
                 pages = pages,
                 currentPageIndex = currentPageIndex,
+                pageSizePt = pageSizePt,
+                defaults = defaults,
                 onSelectPage = onSelectPage,
                 onDismiss = onDismiss,
+                imageBytes = imageBytes,
                 // `max-height:78%`, resolved against the box this overlay was given. See the deviation
                 // above for why that box is the canvas rather than the phone.
                 modifier = Modifier.heightIn(max = maxHeight * BenchGridMaxHeightFraction),
@@ -381,9 +396,12 @@ internal fun BenchPageGrid(
 internal fun BenchPageGridSurface(
     pages: List<Page>,
     currentPageIndex: Int,
+    pageSizePt: PtSize,
+    defaults: DocumentDefaults,
     onSelectPage: (Int) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    imageBytes: AssetBytesSource = EmptyAssetBytes,
 ) {
     val colors = ZinelyTheme.v21Colors
     // The panel is CHROME and keeps the room (the OD-47 amendment says so in terms) — its ground is the
@@ -486,12 +504,16 @@ internal fun BenchPageGridSurface(
                 pages.chunked(BenchGridColumns).forEachIndexed { rowIndex, rowPages ->
                     if (rowIndex > 0) Spacer(Modifier.height(BenchGridGap))
                     Row(horizontalArrangement = Arrangement.spacedBy(BenchGridGap)) {
-                        rowPages.forEachIndexed { columnIndex, _ ->
+                        rowPages.forEachIndexed { columnIndex, page ->
                             val index = rowIndex * BenchGridColumns + columnIndex
                             BenchPageCell(
                                 pageNumber = index + 1,
                                 pageCount = pages.size,
+                                page = page,
                                 current = index == currentPageIndex,
+                                pageSizePt = pageSizePt,
+                                defaults = defaults,
+                                imageBytes = imageBytes,
                                 width = cellWidth,
                                 onClick = { onSelectPage(index) },
                             )
@@ -557,7 +579,7 @@ private fun BenchPageGridClose(onDismiss: () -> Unit) {
 }
 
 /**
- * One frozen `.pgc` — a **lit** sheet of paper carrying its number, centred.
+ * One A18 `.pgc` — a **lit** sheet carrying the real page miniature and a small number badge.
  *
  * The card wears [ZinelyV21Press.Raised], its 3dp rest transcribed from
  * `box-shadow:3px 3px 0 var(--ink-line)` (`v21-bench.html:460`); see [BenchPageGridClose] for why a
@@ -571,7 +593,11 @@ private fun BenchPageGridClose(onDismiss: () -> Unit) {
 private fun BenchPageCell(
     pageNumber: Int,
     pageCount: Int,
+    page: Page,
     current: Boolean,
+    pageSizePt: PtSize,
+    defaults: DocumentDefaults,
+    imageBytes: AssetBytesSource,
     width: Dp,
     onClick: () -> Unit,
 ) {
@@ -582,6 +608,8 @@ private fun BenchPageCell(
     // allocations per frame in a surface that scrolls. Cheap to hold, and the key is the only input.
     val room = ZinelyTheme.v21Colors
     val card = remember(room) { benchGridCardIsland(room) }
+    val pageRoom = ZinelyTheme.v2Colors
+    val pageSheet = remember(pageRoom) { benchThumbIsland(pageRoom) }
     // Snap — the grid and the strip are the same choice made two ways, so they must feel the same.
     val pick = benchTap(ZinelyHaptic.Snap, onClick)
     val interaction = remember { MutableInteractionSource() }
@@ -596,11 +624,14 @@ private fun BenchPageCell(
             // The 12dp `.pgg` gap and the panel's 16dp flanks are what leave it the 3dp it needs; the
             // scroll viewport clips at the panel's padding edge, which is 13dp clear of any card.
             .zinelyV21Pressable(pressed, ZinelyV21Press.Raised, card.inkLine, shape)
+            // A18 reuses the filmstrip's established current-page signal. The ring sits outside the
+            // artifact, so selecting a page never recolours the maker's work.
+            .then(
+                if (current) Modifier.zinelyV21OuterRing(BenchThumbCurrentRing, room.berry, shape)
+                else Modifier,
+            )
             .clip(shape)
-            // `.pgc.on{background:var(--leaf-tint)}` (`:461`) — the current page's whole mark. V2 drew a
-            // 2dp `--matcha` border against every other cell's 1px; V2.1 says the *tint* carries the
-            // state and every card keeps the same uniform 1.5dp ink edge.
-            .background(if (current) card.leafTint else card.paper)
+            .background(card.paper)
             .border(BenchChromeBorder, card.ink, shape)
             .clickable(interactionSource = interaction, indication = null, onClick = pick)
             .testTag(benchPageCellTag(pageNumber))
@@ -626,20 +657,37 @@ private fun BenchPageCell(
             },
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "$pageNumber",
-            // 6.78:1 on the lit card, in both themes, at 11.52sp bold — the AA failure ADR-102 §12.5
-            // booked against this cell, closed by the size the freeze gives it and the ground OD-47
-            // gives the card. `card.inkSoft`, never the room's: the number sits on the card's paper.
-            color = if (current) card.onLeaf else card.inkSoft,
-            fontSize = BenchCellNumberSize,
-            fontWeight = FontWeight.Bold,
-            fontFamily = ZinelyV21Fonts.Work,
-            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-            // `font-variant-numeric:tabular-nums`. `Text` has no parameter for it, so it goes through
-            // the style: a proportional `1` would leave page 1's number visibly off the card's centre
-            // against page 8's.
-            style = LocalTextStyle.current.copy(fontFeatureSettings = "tnum"),
-        )
+        CompositionLocalProvider(LocalZinelyV2Colors provides pageSheet) {
+            BenchPageMiniature(
+                page = page,
+                pageSizePt = pageSizePt,
+                defaults = defaults,
+                imageBytes = imageBytes,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(benchPageGridPageTag(pageNumber)),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(6.dp)
+                .height(24.dp)
+                .width(24.dp)
+                .clip(RoundedCornerShape(ZinelyV21Dimens.radiusPill))
+                .background(card.paper)
+                .border(BenchChromeBorder, card.ink, RoundedCornerShape(ZinelyV21Dimens.radiusPill)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "$pageNumber",
+                color = card.inkSoft,
+                fontSize = BenchCellNumberSize,
+                fontWeight = FontWeight.Bold,
+                fontFamily = ZinelyV21Fonts.Work,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+                style = LocalTextStyle.current.copy(fontFeatureSettings = "tnum"),
+            )
+        }
     }
 }
