@@ -7101,7 +7101,7 @@ was restored to its original `font_scale=1.0` and physical density `450` after v
 | **Artifacts** | `docs/design/mockups/v21-bench.html` (A17) · `EditorMoveResizeHint.kt` · [stakeholder feedback review](../reviews/2026-08-26-stakeholder-feedback.md) |
 | **Found** | 2026-08-26, stakeholder release-candidate pass |
 | **Severity** | **P1 first-use discoverability.** Resize, rotation, alignment and photo cropping work, but were initially reported as missing |
-| **Status** | 🟦 **DESIGN FROZEN 2026-08-26 — implementation and verification in progress** |
+| **Status** | ✅ **FIXED 2026-08-26 — implemented in `8e44686`; focused tests/goldens and Samsung verification pass** |
 
 The feedback screenshots establish a coherent mismatch rather than four missing features. The stakeholder asked
 for centre alignment while the text editor showed an inert-looking typing row, later found resize and rotation
@@ -7123,3 +7123,7 @@ and accessibility action remain the durable route after the coach is gone.
 **Rejected:** changing handles to crop (breaks cross-element transform consistency); adding a permanent legend
 (noise on the creative surface); adding separate persisted hints for every capability (onboarding state growth for
 one observed misunderstanding); and leaving `More styles` vague (it does not name alignment, the requested action).
+
+**Verification.** Focused editor interaction, copy, persistence-gate and light/dark golden coverage passed. On the
+Samsung `SM-A176B`, the normal-font pass confirmed the contextual text/photo guidance and the maximum-font pass
+kept the typing hand-off, Ink and Done visible together; the device was restored to `font_scale=1.0` afterwards.
