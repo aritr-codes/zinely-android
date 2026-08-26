@@ -1099,6 +1099,9 @@ public object Copy {
         /** `.done` — the persistent completion the band raises in place of `.commit` after a save. */
         public const val SAVED_TO_YOUR_PHONE: String = "Saved to your phone"
 
+        /** Explicitly inspect the exact durable file from this save; saving itself never navigates away. */
+        public const val OPEN_PDF: String = "Open PDF"
+
         /**
          * `.done`'s body — and the **last** sentence a user reads before they walk to a printer.
          *

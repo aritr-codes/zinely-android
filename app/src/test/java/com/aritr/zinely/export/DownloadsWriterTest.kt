@@ -1,6 +1,7 @@
 package com.aritr.zinely.export
 
 import android.content.Context
+import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.test.core.app.ApplicationProvider
@@ -23,6 +24,9 @@ import java.io.File
 class DownloadsWriterTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
+    private fun writer(): DownloadsWriter = DownloadsWriter(context) { owner, file ->
+        Uri.parse("content://${owner.packageName}.fileprovider/downloaded_exports/${file.name}")
+    }
 
     // ---- API branch selection (pure) ----
 
@@ -57,10 +61,11 @@ class DownloadsWriterTest {
     @Test
     @Config(sdk = [26])
     fun legacyWrite_writesFileToPublicDownloadsWithSanitisedName() {
-        val name = DownloadsWriter(context).write("My Zine", "pdf", "application/pdf") { out ->
+        val downloaded = writer().write("My Zine", "pdf", "application/pdf") { out ->
             out.write("hello".toByteArray())
         }
-        assertEquals("My Zine.pdf", name)
+        assertEquals("My Zine.pdf", downloaded.displayName)
+        assertEquals("content", downloaded.uri.scheme)
         @Suppress("DEPRECATION")
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val file = File(dir, "My Zine.pdf")
@@ -71,11 +76,13 @@ class DownloadsWriterTest {
     @Test
     @Config(sdk = [26])
     fun legacyWrite_secondSaveGetsNonDestructiveCollisionSuffix() {
-        val writer = DownloadsWriter(context)
+        val writer = writer()
         val first = writer.write("My Zine", "pdf", "application/pdf") { it.write("one".toByteArray()) }
         val second = writer.write("My Zine", "pdf", "application/pdf") { it.write("two".toByteArray()) }
-        assertEquals("My Zine.pdf", first)
-        assertEquals("My Zine (1).pdf", second)
+        assertEquals("My Zine.pdf", first.displayName)
+        assertEquals("My Zine (1).pdf", second.displayName)
+        assertEquals("content", first.uri.scheme)
+        assertEquals("content", second.uri.scheme)
         @Suppress("DEPRECATION")
         val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         // Non-destructive: the first copy is untouched.

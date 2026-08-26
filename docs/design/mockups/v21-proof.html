@@ -306,14 +306,14 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .done h4{font-family:var(--voice);font-weight:700;font-size:1.16rem;margin:var(--gap-xs) 0 0}
 .done p{font-size:.78rem;color:var(--ink-soft);margin:0;max-width:30ch}
 .done .row{display:flex;gap:var(--gap-sm);margin-top:var(--gap-sm)}
-.foldit,.shelf{font-family:var(--sans);font-size:.86rem;font-weight:600;border-radius:var(--br-pill);
+.openpdf,.foldit,.shelf{font-family:var(--sans);font-size:.86rem;font-weight:600;border-radius:var(--br-pill);
   border:1.5px solid var(--ink);padding:var(--gap-md) var(--gap-lg);cursor:pointer;
   box-shadow:3px 3px 0 var(--ink-line)}
 /* "Fold it up" is the next move, so it takes leaf — the ONE action colour.
    Butter never carries an action; it is material (tape, stamps, rings). */
 .foldit{background:var(--leaf);color:var(--on-leaf)}
-.shelf{background:var(--surface);color:var(--ink-soft)}
-.foldit:active,.shelf:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
+.openpdf,.shelf{background:var(--surface);color:var(--ink-soft)}
+.foldit:active,.openpdf:active,.shelf:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
 /* ADR-101 §6.9 — the band's two post-save states. `.wf` is what it says once the fold guide's finish
    button has been pressed; `.wu` is what it says before. The demoted "How to fold" keeps the guide
    reachable without re-issuing an instruction the user has just reported carrying out — it is a link,
@@ -639,6 +639,7 @@ single actions drawn on your own printed sheet.</p>
       <p class="wu">In Downloads — “zine.pdf”. Print it at 100%, landscape, one side — then fold it up.</p>
       <p class="wf">Still in Downloads as “zine.pdf”, if you want to print another.</p>
       <div class="row">
+        <button class="openpdf" onclick="flash('Opens the saved PDF')">Open PDF</button>
         <button class="foldit wu" onclick="openDrawer('fold')">Fold it up</button>
         <button class="foldagain wf" onclick="openDrawer('fold')">How to fold</button>
         <!-- "Back to shelf" is NOT built: its own flash text admits the shelf does not exist ("the
@@ -1105,4 +1106,19 @@ addEventListener('keydown', e => {
      the engine convention (`decorativeImpositionRows()`); the numbers here are
      documentation of that derivation, and a future convention change must be
      made in the engine, where both surfaces will follow it.
+
+     P2 (stakeholder feedback, 2026-08-26) — DESIGN FROZEN.
+
+     A successful save keeps the maker in Proof for the physical fold hand-off;
+     it does not automatically launch another app. Automatic ACTION_VIEW would
+     make the completion disappear at the moment it becomes useful, and would
+     turn "Save" into surprising navigation. The persistent `.done` block now
+     offers an explicit `Open PDF` secondary action beside the leaf-primary
+     `Fold it up`. It remains available after the maker marks the fold complete.
+
+     `Open PDF` opens only the exact durable Downloads item created by this save,
+     through Android's scoped content URI. It has a 48dp-or-larger target, reads
+     as a button, survives configuration change with the completion, and a phone
+     with no PDF viewer gets the existing friendly "No app ... can open" message.
+     The action never re-renders, rewrites, or searches Downloads by filename.
 =========================================================================== -->

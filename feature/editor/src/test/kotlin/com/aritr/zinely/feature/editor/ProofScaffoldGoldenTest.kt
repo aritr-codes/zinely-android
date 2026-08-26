@@ -21,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
  * The Proof surface frame at rest, light + dark: the desk ground and the band's commit action must
@@ -72,6 +73,32 @@ class ProofScaffoldGoldenTest {
         return Bitmap.createBitmap(full, x, y, w, h)
     }
 
+    private fun savedBitmap(darkTheme: Boolean): Bitmap {
+        val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        composeRule.setContent {
+            ZinelyTheme(darkTheme = darkTheme) {
+                Box(Modifier.size(420.dp, 820.dp)) {
+                    ProofScreen(
+                        onBack = {},
+                        savedSignals = saved,
+                        onOpenSavedPdf = {},
+                        startDrawer = ProofDrawer.None,
+                    )
+                }
+            }
+        }
+        saved.tryEmit("zine.pdf")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ProofOpenPdfTestTag).fetchSemanticsNode()
+        val bounds = composeRule.onNodeWithTag(ProofScreenTestTag).fetchSemanticsNode().boundsInRoot
+        val full = composeRule.activity.window.decorView.rasterizeToBitmap()
+        val x = bounds.left.roundToInt().coerceAtLeast(0)
+        val y = bounds.top.roundToInt().coerceAtLeast(0)
+        val w = bounds.width.roundToInt().coerceAtMost(full.width - x)
+        val h = bounds.height.roundToInt().coerceAtMost(full.height - y)
+        return Bitmap.createBitmap(full, x, y, w, h)
+    }
+
     private fun Bitmap.countColour(argb: Int): Int {
         var n = 0
         for (yy in 0 until height) for (xx in 0 until width) if (getPixel(xx, yy) == argb) n++
@@ -109,5 +136,17 @@ class ProofScaffoldGoldenTest {
             bmp.countColour(Color(0xFFBBCA6F).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/proof_scaffold_dark.png", aa())
+    }
+
+    @Test
+    fun proof_saved_light() {
+        savedBitmap(darkTheme = false)
+            .captureRoboImage("$GOLDEN_DIR/proof_saved_light.png", aa())
+    }
+
+    @Test
+    fun proof_saved_dark() {
+        savedBitmap(darkTheme = true)
+            .captureRoboImage("$GOLDEN_DIR/proof_saved_dark.png", aa())
     }
 }

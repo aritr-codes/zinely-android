@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -307,6 +308,8 @@ private fun ProofDestination(
     // keeps the completion without re-announcing it, and it cannot resurrect a completion the screen
     // cleared. (ADR-101 P2 retired the five-second snackbar this used to raise.)
     val saved = remember { MutableSharedFlow<String>(extraBufferCapacity = 1) }
+    var savedUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    var savedMime by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Route each finished export purely by its ExportOutcome subtype (ADR-054) — no remembered target.
     // Collect only while STARTED so an export finishing while backgrounded doesn't launch at a stopped
@@ -349,10 +352,14 @@ private fun ProofDestination(
                     } catch (e: ActivityNotFoundException) {
                         Toast.makeText(context, Copy.Nav.NO_APP_TO_OPEN, Toast.LENGTH_SHORT).show()
                     }
-                    // Save PDF → a durable copy is already in Downloads (ADR-054): raise the band's
-                    // completion and its fold hand-off (ADR-041), naming the file actually written. No
-                    // Intent, so no ActivityNotFound path here.
-                    is ExportSaved -> saved.tryEmit(outcome.displayName)
+                    // Save PDF → a durable copy is already in Downloads (ADR-054). Remember its exact
+                    // scoped URI for the completion's explicit Open PDF action, then raise the band. Save
+                    // itself never launches another app: the maker keeps the fold hand-off in view.
+                    is ExportSaved -> {
+                        savedUri = outcome.uri
+                        savedMime = outcome.mime
+                        saved.tryEmit(outcome.displayName)
+                    }
                 }
             }
         }
@@ -404,6 +411,15 @@ private fun ProofDestination(
                 // The post-export hand-off (ADR-041): one signal per successful Save-PDF, which raises
                 // the band's `.done` block and its "Fold it up".
                 savedSignals = saved,
+                onOpenSavedPdf = savedUri?.let { uri ->
+                    {
+                        try {
+                            context.startActivity(openDocumentIntent(uri, savedMime ?: "application/pdf"))
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(context, Copy.Nav.NO_APP_TO_OPEN, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
                 // The Read act (ADR-058) — the finished zine, page by page. Everything it needs was
                 // already resolved here for the export path (the ADR-051 shared-VM seam), so this is
                 // three existing values threaded one level down, not a new seam: the SAME document,
@@ -435,6 +451,13 @@ private fun shareIntent(uri: Uri, mime: String): Intent =
     Intent(Intent.ACTION_SEND).apply {
         type = mime
         putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+/** Opens one exact saved export without searching Downloads by its display name. */
+internal fun openDocumentIntent(uri: Uri, mime: String): Intent =
+    Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mime)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
