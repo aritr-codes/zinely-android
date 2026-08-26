@@ -208,13 +208,19 @@ CC BY-SA's trigger is *Adapted Material*, not use ([§1(a)](https://creativecomm
 | ❌ **Reject** | **OpenMoji (CC BY-SA)** · Noun Project (no redistribution right; scraping prohibited) · Flaticon (no redistribution) · **unDraw** (*"no right to compile assets… or distribute the assets in packs"* — aimed precisely at apps like ours) · **Blush** (*"printing an Illustration straight onto a T-shirt is not allowed"* — hostile to a printing app) · Internet Archive (no archive-wide licence) |
 | ⏸ **Unverified — do not use yet** | Rijksmuseum · Smithsonian · Wikimedia (per-file triage) · Open Font Library (dormant) |
 
-### Emoji: bundle vectors, never text runs
+### Emoji: own the glyphs and verify the real print path
 
 Skia's PDF backend keeps a font embedded only if each glyph *"is empty or has an unmodified path"*; a colour glyph fails and falls to a **Type3 font** — CBDT emoji become **rasterised images at a fixed 64px/em strike**. The PDF Association confirms no colour-font format is supported in PDF, **including PDF 2.0** ([paper](https://pdfa.org/wp-content/uploads/2021/06/OpenType-Color-Fonts-in-PDF.pdf)). And Android 13+ ships COLRv1 while earlier ships CBDT, Samsung ships its own designs, and `androidx.emoji2` defaults to **downloadable fonts over the network** — which this product cannot take.
 
 > **The same zine exported on two phones would contain different artwork.** For a product whose promise is a reproducible printed object, that is a correctness defect, not a cosmetic one.
 
-**Recommendation:** bundled vector emoji placed as ordinary objects, never in text runs. **Unicode geometric shapes, arrows and dingbats are meaningfully safer** — monochrome outlines keep the TrueType path and embed as a proper subset — on two conditions: **ship the font**, and append **VS15 `U+FE0E`** to codepoints with `Emoji_Presentation=Yes` or they re-enter the emoji font. Monochrome ink is already the aesthetic.
+**The original recommendation was:** bundled vector emoji placed as ordinary objects, never in text runs.
+**ADR-112 supersedes that recommendation with measured production evidence:** bundled Emoji2 with forced
+replacement draws deterministic local spans through Zinely's one `StaticLayout`/Canvas seam, and the real Samsung
+PDF path rasterises those spans successfully at 10/24/48 pt. The output is not clean vector text, but it is owned,
+offline and preview/export-consistent; the accepted 9.42-MiB APK cost removes OEM artwork from the document.
+Unicode geometric shapes, arrows and dingbats remain safer as monochrome Inter glyphs where the design asks for
+ink rather than emoji.
 
 ### Ruling: bundled library only. No network. Ever.
 

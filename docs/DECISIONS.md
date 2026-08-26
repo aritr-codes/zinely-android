@@ -121,7 +121,7 @@
 | [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The frozen confirmation explains that the complete join first appears in the printed and folded zine | Accepted |
 | [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
 | [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
-| [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, but only through one bundled, deterministic preview/export path.** A measured renderer spike chooses the representation; system/OEM fallback remains forbidden. | Proposed |
+| [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12719,7 +12719,7 @@ mask, dark and light cold starts, direct warm return, intact existing library, a
 
 ### Emoji may print only when Zinely owns the glyphs and the output
 
-**Status:** Proposed · **Date:** 2026-08-26 · **Supersedes on acceptance:** the beta-wide prohibition on
+**Status:** Accepted · **Date:** 2026-08-26 · **Supersedes:** the beta-wide prohibition on
 emoji in text output · **Extends:** [ADR-001](#adr-001), [ADR-028](#adr-028), [ADR-057](#adr-057)
 
 #### Context
@@ -12760,3 +12760,24 @@ ZWJ family/profession sequences, surrounding Latin text and line wraps. Acceptan
 Only after the evidence selects a representation does this ADR become Accepted. The production change then lands
 at `SharedTextLayout`/`CanvasReplayer`, the existing single preview/export seam, plus coverage analysis and honest
 editor copy. It does not introduce emoji as controls, stickers, or random Art supplies.
+
+#### Outcome and measured evidence
+
+**Bundled Emoji2 1.6.0 is selected.** `ZinelyApplication` starts its local font load; `replaceAll=true` prevents
+OEM substitution; and `SharedTextLayout` processes text once before the existing `StaticLayout` replay. Preview,
+300-DPI raster and PDF therefore keep the same draw-command and Android-Canvas path. The pure document and render
+cores remain Android-free. The product coverage promise now includes emoji while Inter's cmap guard continues to
+own only Latin, Cyrillic and Greek.
+
+The fixed launch corpus (basic, skin tone, profession/family ZWJ, flag, keycap, variation-selector and recent ZWJ
+sequences) produced bundled replacement spans on the Samsung `SM-A176B` / Android 16. Real raster and
+`PdfDocument`→`PdfRenderer` output carried ink at **10, 24 and 48 pt**, with ink area increasing at each size. A
+measured warm 24-pt raster averaged **0.817 ms** with emoji versus **0.727 ms** for plain text. Bundled-font startup
+measured **301.80 ms** off the UI thread and **9,886 KiB** additional PSS in the instrumented process. The signed
+release APK grew from **19,152,384** to **29,024,413 bytes**: **9,872,029 bytes (9.42 MiB)**. That cost is accepted
+for deterministic, offline launch behavior; a downloadable or OEM font is not an allowed size optimization.
+
+The Android proof is `EmojiRenderingInstrumentedTest`; JVM/Robolectric remains the wrong tier because it cannot
+complete Emoji2's bundled asset-font load. The renderer test also holds a 32-MiB load-memory ceiling, a 500-ms
+warm-render ceiling and a relative plain/emoji cost discriminator. No UI control, Art supply or document schema was
+added.

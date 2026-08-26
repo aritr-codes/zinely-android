@@ -440,11 +440,11 @@ Noto's usage guidance distinguishes the monochrome Noto Emoji font from the colo
 the print-oriented/vector option, while warning that its encoded coverage is only a subset of the complete emoji
 set. Coverage of ZWJ sequences therefore cannot be inferred from the project name.
 
-**Recommendation:** keep all system/OEM and downloadable fallback out of document rendering. Spike the bundled
-Emoji2 font and monochrome Noto Emoji through Zinely's actual `CanvasReplayer` at screen, imposed PNG and PDF
-surfaces before choosing. Measure coverage, 10/24/48-pt print quality, APK size, render cost and failure behavior.
-If neither candidate satisfies the fixed launch corpus, the remaining honest option is a bundled vector-asset
-renderer—not an OEM fallback.
+**Measured outcome:** bundled Emoji2 1.6.0 was selected and forced with `replaceAll=true`; system/OEM and
+downloadable fallback stay out of document rendering. On the Samsung `SM-A176B`, the fixed launch corpus produced
+bundled spans and real raster/PDF ink at 10/24/48 pt. Warm 24-pt raster measured 0.817 ms with emoji versus
+0.727 ms plain; font startup measured 301.80 ms off the UI thread and 9,886 KiB PSS; the signed release APK grew
+9.42 MiB. See [ADR-112](DECISIONS.md#adr-112) for the accepted bounds and implementation seam.
 
 Sources: [Android Emoji2 guide](https://developer.android.com/develop/ui/views/text-and-emoji/emoji2) ·
 [AndroidX Emoji2 releases](https://developer.android.com/jetpack/androidx/releases/emoji2) ·

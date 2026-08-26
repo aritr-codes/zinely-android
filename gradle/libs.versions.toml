@@ -48,6 +48,7 @@ roborazzi = "1.64.0"
 # invariant); Room 2.7+ folds coroutines/Flow support into room-runtime, so no room-ktx artifact.
 # The androidx.room Gradle plugin owns schema export (data-android/schemas, checked in).
 room = "2.8.4"
+emoji2 = "1.6.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -101,6 +102,8 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 # S6.1 (ADR-042): project-metadata Room index (:data-android only).
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-emoji2 = { group = "androidx.emoji2", name = "emoji2", version.ref = "emoji2" }
+androidx-emoji2-bundled = { group = "androidx.emoji2", name = "emoji2-bundled", version.ref = "emoji2" }
 roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
 roborazzi-junit-rule = { group = "io.github.takahirom.roborazzi", name = "roborazzi-junit-rule", version.ref = "roborazzi" }
 # S4 :feature:editor preview-host parity: Roborazzi's Compose capture (captureRoboImage on a
