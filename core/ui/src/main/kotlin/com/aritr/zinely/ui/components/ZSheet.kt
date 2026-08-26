@@ -51,6 +51,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.paneTitle
@@ -264,6 +265,14 @@ public fun ZSheetSurface(
                 end = ZinelyV21Dimens.gapLg,
                 bottom = ZinelyV21Dimens.gapXl,
             )
+            // D-087: make the whole sheet a pointer hit target so inert titles, gaps and padding cannot
+            // fall through to the scrim sibling. Observe without consuming: descendant controls and
+            // scrolling bodies still receive the same gesture stream.
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) awaitPointerEvent()
+                }
+            }
             .semantics { paneTitle = title },
     ) {
         // `.grip`/`.grab{width:44px;height:5px;border-radius:var(--br-pill);background:var(--ink-faint);

@@ -5632,7 +5632,7 @@ reader was always told, and the tile no longer shows them a mark they cannot hav
 | **Artifacts** | `core/ui`'s `ZSheetSurface` / `ZSheet` scrim · `feature/editor/.../BenchArtSheet.kt` (patched locally) |
 | **Found** | 2026-08-16, package **S7-placement** — and only because the Art sheet finally got a production call site |
 | **Severity** | **Live interaction defect**, pre-existing and general. Symptom fixed on the Art sheet's inert tiles; the cause is untouched |
-| **Status** | ⏳ **OPEN** — needs a root-cause fix in `ZSheetSurface` |
+| **Status** | ✅ **FIXED 2026-08-26** — `ZSheetSurface` is now the shared non-consuming pointer boundary; focused root-component regression passes |
 
 **The defect.** A composable with no pointer-input node is not in the hit path, so a touch on it falls
 through to the sheet's full-screen scrim **sibling**, whose `clickable` is `onDismiss`. On the Art sheet
@@ -5653,6 +5653,12 @@ blindness hides.
 
 **Deferred rather than fixed here** because the root cause interacts with a decision nobody has made: how a
 scrim should behave under a future **scrolling** sheet body. Fixing it blind would prejudge that.
+
+**Resolution.** The surface itself now participates in pointer hit testing across its complete painted bounds.
+Its observer deliberately consumes nothing, so nested buttons and scrolling bodies retain their gesture streams;
+the lower scrim sibling simply never becomes the hit target for a touch that began inside the sheet. The shared
+component regression taps the inert title first (no dismiss), then the real scrim (dismiss), protecting both sides
+of the contract without adding caller patches.
 
 ---
 
