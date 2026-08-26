@@ -298,10 +298,10 @@ public object EditorReducer {
         // — pages — selection/interaction are per-page, so a page switch clears them and ends any
         // open transform session (else a stale same-index/same-token commit could hit the wrong page).
         is Intent.GoToPage ->
-            Reduction(leavePage(model, intent.index.coerceIn(0, model.document.pages.lastIndex)))
+            leavePage(model, intent.index.coerceIn(0, model.document.pages.lastIndex))
         Intent.AddPage -> {
             val at = model.document.pages.size
-            committing(leavePage(model, at), AddPageCommand(Page(index = at, role = PageRole.INTERIOR), at))
+            committing(leavePage(model, at).model, AddPageCommand(Page(index = at, role = PageRole.INTERIOR), at))
         }
         is Intent.DeletePage -> {
             if (model.document.pages.size <= 1) Reduction(model) else {
@@ -309,9 +309,14 @@ public object EditorReducer {
                 // If the deleted page is at/ before current, current shifts down one to follow its page.
                 val shifted = if (at <= model.currentPageIndex) model.currentPageIndex - 1 else model.currentPageIndex
                 val newCurrent = shifted.coerceIn(0, model.document.pages.size - 2)
+                val left = leavePage(model, newCurrent).model
+                val liveIds = left.document.pages.asSequence()
+                    .flatMap { it.elements.asSequence() }
+                    .map { it.id }
+                    .toSet()
                 committing(
-                    leavePage(model, newCurrent),
-                    DeletePageCommand(model.document.pages[at], at, model.selection),
+                    left,
+                    DeletePageCommand(left.document.pages[at], at, model.selection.intersect(liveIds)),
                 )
             }
         }
@@ -325,9 +330,25 @@ public object EditorReducer {
 
     private fun currentPage(model: EditorModel): Page = model.document.pages[model.currentPageIndex]
 
-    /** Switch to [pageIndex], dropping the (per-page) selection and ending any open transform session. */
-    private fun leavePage(model: EditorModel, pageIndex: Int): EditorModel =
-        model.copy(currentPageIndex = pageIndex, selection = emptySet(), interaction = Interaction.Idle)
+    /**
+     * Switch to [pageIndex], dropping per-page state after closing an open text session through the same
+     * cleanup seam as Done/Back. This matters for a freshly placed blank box: simply setting the interaction
+     * to Idle leaves an invisible element in the authoritative document (D-041). Add/Delete page callers use
+     * the cleaned model and let their structural commit emit the final autosave; plain navigation returns the
+     * cleanup autosave itself when the document changed.
+     */
+    private fun leavePage(model: EditorModel, pageIndex: Int): Reduction {
+        val closed = (model.interaction as? Interaction.EditingText)
+            ?.let { endTextSession(model, it.id, after = null) }
+            ?: Reduction(model)
+        return closed.copy(
+            model = closed.model.copy(
+                currentPageIndex = pageIndex,
+                selection = emptySet(),
+                interaction = Interaction.Idle,
+            ),
+        )
+    }
 
     private fun nextZ(model: EditorModel): Int = (currentPage(model).elements.maxOfOrNull { it.zIndex } ?: -1) + 1
 
