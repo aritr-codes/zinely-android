@@ -924,6 +924,7 @@ addEventListener('keydown',e=>{
 });
 </script>
 
+
 <!-- ===========================================================================
      AMENDMENT LOG — appended, never inserted.
 
@@ -1623,5 +1624,200 @@ openArt=function(){
   };
   applyArtFilter();
   cap('Adding · Art','Find a piece by name or material family, then place it on the page.');
+};
+</script>
+
+<!-- ===========================================================================
+A16 ITERATION 3 · 2026-08-25 (D-080 / D-107) — a readable
+materials cabinet and an honest active-ink tray. DESIGN FROZEN 2026-08-26.
+
+This amendment responds to the owner's rendered review of A15. The four-column
+anonymous glyph wall made recognition depend on memory, the 2×2 family controls
+spent nearly a screen on navigation, and the star sat on top of the artwork. Ink
+wrapped its final pot onto an orphan row, hid the active ink's name, and called
+its primary-ink shortcuts whole-zine pairs even though OD-24 applies only the
+first swatch.
+
+A16 keeps A15's accepted information architecture and no-randomisation fence.
+Search remains local; the four real families remain the only filters; clearing
+one returns the complete, stable catalogue. The change is presentation: compact
+horizontal filters, three named material cards per row, deterministic family
+papers, Recent/Favourites rails, and a favourite target in the label band rather
+than over the mark. Ink shows the active ink, lays swatches on a deliberate grid,
+keeps 48px targets around smaller painted pots, and labels palette shortcuts by
+the primary ink they actually apply. The owner approved this rendered Art + Ink
+contract on 2026-08-26; its layout, interaction, copy and states are now the
+production source of truth for the Compose implementation.
+=========================================================================== -->
+<style>
+/* A16 · shared surface rhythm */
+.sheet.art-a16{background:var(--surface);padding-left:var(--gap-lg);padding-right:var(--gap-lg)}
+.sheet.art-a16 .sh{margin-bottom:var(--gap-sm)}
+.sheet.art-a16 .art-tools{gap:var(--gap-sm);margin-bottom:var(--gap-sm)}
+.sheet.art-a16 .art-search-label{font-size:.72rem;letter-spacing:.01em}
+.sheet.art-a16 .art-search{min-height:48px;border-radius:var(--br-pill);padding-left:var(--gap-lg);
+  background:var(--paper);color:#27270F;box-shadow:none}
+.sheet.art-a16 .art-search::placeholder{color:#6A452F;opacity:.82}
+.sheet.art-a16 .art-families{display:flex;gap:var(--gap-sm);overflow-x:auto;padding:2px 2px 5px;
+  scrollbar-width:none;scroll-snap-type:x proximity}
+.sheet.art-a16 .art-families::-webkit-scrollbar{display:none}
+.sheet.art-a16 .art-family{flex:0 0 auto;min-height:48px;padding:var(--gap-sm) var(--gap-md);
+  box-shadow:none;scroll-snap-align:start;white-space:nowrap}
+.sheet.art-a16 .art-results{display:flex;align-items:center;min-height:24px;font-weight:700}
+.sheet.art-a16 .lbl{display:flex;align-items:baseline;justify-content:space-between;
+  margin-top:var(--gap-lg);margin-bottom:var(--gap-sm);font-size:.64rem}
+.sheet.art-a16 .art-section-count{font:600 .66rem var(--sans);letter-spacing:0;
+  text-transform:none;color:var(--ink-soft);opacity:.82}
+.sheet.art-a16 .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap-md)}
+.sheet.art-a16 .art-rail{display:grid;grid-auto-flow:column;grid-auto-columns:104px;
+  grid-template-columns:none;overflow-x:auto;padding:2px 4px 8px 2px;scroll-snap-type:x proximity}
+.sheet.art-a16 .art-rail .art-tile-wrap{scroll-snap-align:start}
+.sheet.art-a16 .art-tile-wrap{aspect-ratio:auto;min-height:134px}
+.sheet.art-a16 .art-tile-wrap>.tile{width:100%;height:134px;aspect-ratio:auto;display:flex;
+  flex-direction:column;justify-content:flex-start;overflow:hidden;padding:0;transform:rotate(var(--tt,0deg))}
+.sheet.art-a16 .art-tile-wrap>.tile svg{width:46px;height:46px;margin:auto;flex:none}
+.sheet.art-a16 .art-tile-name{display:flex;align-items:center;width:100%;min-height:48px;
+  margin-top:auto;padding:6px 38px 6px 8px;border-top:1.5px solid rgba(39,39,15,.22);
+  background:rgba(255,246,232,.72);color:#27270F;font:700 .66rem/1.15 var(--sans);
+  text-align:left}
+.sheet.art-a16 .art-favourite-action{top:auto;right:0;bottom:0;width:48px;height:48px;
+  color:#6A452F;font-size:1rem}
+.sheet.art-a16 .art-family-tape>.tile{--tt:-.55deg;background:var(--leaf-tint);color:#27270F}
+.sheet.art-a16 .art-family-marks>.tile{--tt:.45deg;background:var(--berry-tint);color:#27270F}
+.sheet.art-a16 .art-family-paper>.tile{--tt:-.35deg;background:var(--paper);color:#27270F}
+.sheet.art-a16 .art-family-shapes>.tile{--tt:.35deg;background:var(--butter);color:#27270F}
+.sheet.art-a16 .art-favourite-empty{margin:0;padding:var(--gap-md);border:1.5px dashed var(--ink);
+  border-radius:var(--br-md);background:var(--butter-tint)}
+.sheet.art-a16 .art-favourite-grid>.tile{width:104px;height:134px;aspect-ratio:auto;display:flex;
+  flex-direction:column;padding:0;overflow:hidden;scroll-snap-align:start}
+.sheet.art-a16 .art-favourite-grid>.tile svg{width:46px;height:46px;margin:auto}
+
+/* A16 · Ink is a compact tool tray, not a second catalogue. */
+.inkpop.ink-a16{padding:var(--gap-md);background:var(--surface);max-height:calc(100% - 24px);overflow:auto}
+.inkpop.ink-a16 h4{margin-bottom:var(--gap-sm)}
+.inkpop.ink-a16 h4 button{min-width:64px;min-height:48px;padding:0 var(--gap-md)}
+.ink-current{display:flex;align-items:center;gap:var(--gap-sm);min-height:52px;padding:var(--gap-sm) var(--gap-md);
+  background:var(--paper);color:#27270F;border:1.5px solid var(--ink);border-radius:var(--br-md)}
+.ink-current-pot{width:30px;height:30px;flex:none;border:1.5px solid #27270F;border-radius:50%}
+.ink-current-copy{display:flex;min-width:0;flex-direction:column;line-height:1.15}
+.ink-current-copy small{font-size:.61rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6A452F}
+.ink-current-copy b{font:700 .88rem var(--voice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inkpop.ink-a16 .inklbl{margin-top:var(--gap-sm);margin-bottom:2px}
+.inkpop.ink-a16 .pots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0}
+.ink-choice{display:flex;min-width:0;min-height:56px;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;background:transparent;border:0;color:var(--ink-soft);cursor:pointer;
+  font:600 .56rem/1 var(--sans)}
+.ink-choice .pot{display:block;width:30px;height:30px;flex:none;pointer-events:none}
+.ink-choice .ink-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ink-choice.on .pot::after{content:"";position:absolute;inset:-5px;border:1.6px dashed var(--ink);
+  border-radius:var(--br-pill)}
+.ink-choice:focus-visible{outline:3px solid var(--berry);outline-offset:-3px;border-radius:var(--br-sm)}
+.inkpop.ink-a16 .presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap-sm)}
+.inkpop.ink-a16 .preset{min-height:58px;min-width:0;flex-direction:column;align-items:flex-start;
+  justify-content:center;gap:3px;padding:var(--gap-sm);border-radius:var(--br-md);box-shadow:none;
+  color:var(--ink);text-align:left}
+.inkpop.ink-a16 .preset i b{width:16px;height:16px}
+.ink-preset-name{font-weight:700;line-height:1.05}
+.ink-preset-action{font-size:.57rem;color:var(--ink-soft);line-height:1.1}
+.inkpop.ink-a16 .preset:active{transform:translate(1px,1px)}
+</style>
+<script>
+const openArtBeforeA16=openArt;
+openArt=function(){
+  openArtBeforeA16();
+  const sheet=$('sheet');
+  sheet.classList.add('art-a16');
+  const search=$('artSearch');
+  search.placeholder='Try tape, star, torn…';
+
+  const familyClass={
+    'Tape & fixings':'art-family-tape','Stamps & marks':'art-family-marks',
+    'Cut paper':'art-family-paper','Cut shapes':'art-family-shapes'
+  };
+  sheet.querySelectorAll('.art-tile-wrap').forEach(wrapper=>{
+    const tile=wrapper.querySelector('.tile');
+    if(!tile)return;
+    const matchingFamilyTile=[...sheet.querySelectorAll('.tile')].find(candidate=>
+      candidate!==tile&&candidate.dataset.supply===tile.dataset.supply&&candidate.dataset.family);
+    const family=tile.dataset.family||(matchingFamilyTile&&matchingFamilyTile.dataset.family)||'';
+    wrapper.classList.add(familyClass[family]||'');
+    if(!tile.querySelector('.art-tile-name')){
+      const name=document.createElement('span');
+      name.className='art-tile-name';
+      name.textContent=tile.getAttribute('aria-label');
+      tile.appendChild(name);
+    }
+  });
+  [...sheet.querySelectorAll('.lbl')].forEach(label=>{
+    const grid=label.nextElementSibling;
+    if(!grid||!grid.classList.contains('grid'))return;
+    const count=grid.querySelectorAll('.tile').length;
+    const countNode=document.createElement('span');
+    countNode.className='art-section-count';
+    countNode.textContent=count+(count===1?' piece':' pieces');
+    label.appendChild(countNode);
+    if(label.firstChild.textContent.trim()==='Recent'||label.firstChild.textContent.trim()==='Favourites'){
+      grid.classList.add('art-rail');
+    }
+  });
+  cap('Adding · Art','Browse named materials, narrow by family, or search the box. Nothing is shuffled.');
+};
+
+const inkChoices=list=>'<div class="pots">'+list.map(([name,colour,spoken])=>
+  '<button class="ink-choice" type="button" aria-label="'+(spoken||name)+'" data-ink="'+colour+'" data-name="'+name+'">'
+  +'<span class="pot" style="background:'+colour+'"></span><span class="ink-name" aria-hidden="true">'+name+'</span></button>'
+).join('')+'</div>';
+
+openInk=function(){
+  if(!sel)selectByKind('text');
+  const target=sel&&sel.querySelector('.t-title,.t-body,svg');
+  const targetColour=target?getComputedStyle(target).color:'#2A251E';
+  const colourKey=value=>{const context=document.createElement('canvas').getContext('2d');context.fillStyle=value;return context.fillStyle.toLowerCase();};
+  const allSwatches=[...INKS,...TINTS,...NEUT];
+  const current=allSwatches.find(([,colour])=>colourKey(colour)===colourKey(targetColour));
+  const isText=sel&&sel.dataset.kind==='text';
+  const bands='<div class="inklbl">Spot inks</div>'+inkChoices(INKS)
+    +(isText?'':'<div class="inklbl">Paper tints</div>'+inkChoices(TINTS))
+    +'<div class="inklbl">Neutrals</div>'+inkChoices(NEUT);
+  const presets=PRESETS.map(([name,colours])=>{
+    const primary=allSwatches.find(([,colour])=>colour.toLowerCase()===colours[0].toLowerCase());
+    const primaryName=primary?primary[0]:'primary ink';
+    return '<button class="preset" type="button" data-name="'+name+'" data-ink="'+colours[0]+'" data-primary="'+primaryName
+      +'" aria-label="'+name+'. Apply '+primaryName+'"><i aria-hidden="true">'
+      +colours.map(c=>'<b style="background:'+c+'"></b>').join('')+'</i><span class="ink-preset-name">'+name
+      +'</span><span class="ink-preset-action">Apply '+primaryName+'</span></button>';
+  }).join('');
+  $('inkpop').classList.add('ink-a16');
+  $('inkpop').innerHTML='<h4>Ink<button id="inkClose" type="button">Done</button></h4>'
+    +'<div class="ink-current" aria-live="polite"><span class="ink-current-pot" style="background:'+targetColour+'"></span>'
+    +'<span class="ink-current-copy"><small>Current ink</small><b>'+(current?current[0]:'Custom ink')+'</b></span></div>'
+    +bands+'<div class="inklbl">Starting palettes</div><div class="presets">'+presets+'</div>';
+  $('inkpop').classList.add('show'); $('ctx').classList.remove('show');
+  const currentPot=$('inkpop').querySelector('.ink-current-pot');
+  const currentName=$('inkpop').querySelector('.ink-current-copy b');
+  function applyChoice(name,colour,button){
+    $('inkpop').querySelectorAll('.ink-choice').forEach(x=>x.classList.remove('on'));
+    if(button)button.classList.add('on');
+    if(target)target.style.color=colour;
+    $('editSw').style.background=colour;
+    currentPot.style.background=colour; currentName.textContent=name;
+    toast('Ink · '+name,false);
+  }
+  $('inkClose').onclick=e=>{e.stopPropagation();$('inkpop').classList.remove('show');
+    if(sel){buildCtx(sel.dataset.kind);$('ctx').classList.add('show');}};
+  $('inkpop').querySelectorAll('.ink-choice').forEach(button=>button.onclick=e=>{
+    e.stopPropagation();applyChoice(button.dataset.name,button.dataset.ink,button);
+  });
+  if(current){
+    const selectedChoice=[...$('inkpop').querySelectorAll('.ink-choice')].find(button=>
+      colourKey(button.dataset.ink)===colourKey(current[1]));
+    if(selectedChoice)selectedChoice.classList.add('on');
+  }
+  $('inkpop').querySelectorAll('.preset').forEach(button=>button.onclick=e=>{
+    e.stopPropagation();
+    const matching=[...$('inkpop').querySelectorAll('.ink-choice')].find(x=>x.dataset.ink.toLowerCase()===button.dataset.ink.toLowerCase());
+    applyChoice(button.dataset.primary,button.dataset.ink,matching);
+  });
+  cap('Ink','Choose a named ink. Starting palettes show combinations; tapping one applies the named primary ink.');
 };
 </script>

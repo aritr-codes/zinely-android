@@ -4879,7 +4879,7 @@ completed with the device returned to its original display settings.
 
 ### D-080 · The frozen `Art` sheet gives its own entry no glyph, filters nothing, and specifies no empty state {#d-080}
 
-**Status: 🟦 OPEN — owner scope amendment accepted 2026-08-25; rendered A15 DESIGN FREEZE pending.**
+**Status: ✅ RESOLVED 2026-08-26 — owner approved A16's combined Art + Ink surface as DESIGN FROZEN.**
 Raised 2026-08-16 while scoping
 [F-3](../BETA-UX-REVIEW.md) of the beta UX review. Nothing here blocks today's work: the sheet itself is
 fenced by [OD-2](#d-029) and sequenced behind [ADR-105](../DECISIONS.md#adr-105) D-4. It is filed **now**
@@ -4956,10 +4956,18 @@ filters and local name/tag search ship with growth, Recent and Favourites remain
 catalogue order, outline geometry, placement and composition are not randomised. A15 iteration 2 in
 [`v21-bench.html`](mockups/v21-bench.html) draws that ruled density and the required empty/recovery state.
 
-**What remains open is visual, not product scope.** A15 has not been rendered and accepted as DESIGN
-FREEZE, so none of its preliminary new silhouettes is production geometry and Compose admission remains
-blocked. Once the rendered review freezes A15, this entry closes and R1 may enter the shipping catalogue
-through the existing `SupplyCatalog` / `Copy.Supplies` / shared-render pipeline.
+⚠ **Rendered review rejected A15's presentation, 2026-08-25.** The scope above still stands, but the owner
+found the 2×2 filter block, anonymous four-column glyph wall, overlaid favourite stars and long undifferentiated
+scroll visually weak. The adjacent Ink tray was brought into the same review; [D-107](#d-107) owns that
+companion finding rather than making this Art entry a second source of truth.
+
+**Visual resolution, owner-approved 2026-08-26.** A16 applies the Art evidence in
+[RESEARCH R14](../RESEARCH.md#r14-art-cabinet-and-ink-tray-hierarchy--verified--recommendation): named
+three-column material cards, compact horizontal family filters, deterministic family papers, unobstructed
+favourite controls and Recent/Favourites rails. The owner accepted the rendered combined Art + Ink surface;
+A16's layout, interaction, copy and states are the production source of truth. Compose implementation is now
+authorised through the existing `SupplyCatalog` / `Copy.Supplies` / shared-render pipeline. This ruling does
+not randomise catalogue content, outlines, placement or composition and does not alter document semantics.
 
 ---
 
@@ -6971,3 +6979,33 @@ keeping its label, order, bottom inset and horizontal geometry. D-089/A8 still a
 uses the bar's measured live height, so the required 12dp painted clearance survives that growth. Capping
 font scale, ellipsizing or shortening action names were rejected because each would repair layout by taking
 information away.
+
+---
+
+### D-107 — the Ink tray hides its active choice, wraps one orphan swatch, and overpromises its palette action {#d-107}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (`openInk`, A16) · `feature/editor/.../BenchInkPopover.kt` (`BenchInkPreset.applied`) · [OD-24](#d-028-ruling) |
+| **Found** | 2026-08-25, owner rendered review alongside D-080/A15 |
+| **Severity** | **Visible UX and trust defect.** The controls work, but the tray is hard to scan and its prototype caption describes an action the product does not perform |
+| **Status** | ✅ **RESOLVED 2026-08-26 — owner approved A16 as DESIGN FROZEN; Compose implementation authorised** |
+
+The 411dp device geometry already recorded under D-090 makes the ten-ink band wrap **9 + 1**, leaving `Ink`
+alone on a second row. The painted pots carry no visible names, the current ink is only a dashed ring among
+the pots, and the three recipe pills compress their dots and labels into the remaining width. Each fact is
+survivable alone; together they make a tool the maker must remember rather than read.
+
+The stronger problem is semantic. The frozen caption says the ready-made pairs are *"a whole zine in one
+tap"*. [OD-24](#d-028-ruling) and `BenchInkPreset.applied` are explicit that a recipe applies
+`dots.first()` — its **primary ink** — to the selected element. The other dots are a suggested combination,
+not a document-wide operation. Preserving the caption would make a prettier panel continue to promise a
+feature that does not exist.
+
+**A16 resolution, owner-approved 2026-08-26:** show a paper-backed current-ink summary;
+place ten spot inks on a stable 5×2 grid; keep each painted pot at 30px inside a ≥48px named target; omit paper
+tints for text exactly as OD-24 requires; and present the three recipes as `Starting palettes`, each stating
+`Apply Ink`, `Apply Brick`, or `Apply Forest`. The recipe still shows the whole combination, but its action is
+now honest. [RESEARCH R14](../RESEARCH.md#r14-art-cabinet-and-ink-tray-hierarchy--verified--recommendation)
+holds the external evidence. The visual/interaction contract is frozen; it does not change ink values,
+document semantics, renderer behavior or print output.

@@ -385,3 +385,45 @@ Use the supplied `APP_LOGO.png` unchanged for launcher identity, an edge-matched
 and a simplified Z-only monochrome layer. Use only the system splash transition, with no custom Activity, branding
 panel, copy, animation, or keep condition. This preserves Zinely's fast-entry rule: identity appears at the threshold,
 then gets out of the maker's way. Frozen in [APP-ENTRY-FREEZE.md](design/APP-ENTRY-FREEZE.md).
+
+## R14. Art cabinet and Ink tray hierarchy — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+### R14.1 Creative libraries combine search, grouping and readable identity — ✅ VERIFIED
+
+Figma's Assets panel combines a search field with library filters and grouped assets, and its component descriptions
+are visible in the Assets panel and participate in search. Adobe Express similarly places shape discovery inside the
+focused `Elements → Shapes` hierarchy rather than presenting an undifferentiated stock wall.
+
+**Sources:** [Figma — Explore the navigation bar and left sidebar](https://help.figma.com/hc/en-us/articles/360039831974-Explore-the-navigation-bar-and-left-sidebar) ·
+[Figma — Add descriptions to styles, components, and variables](https://help.figma.com/hc/en-us/articles/7938814091287-Add-descriptions-to-styles-components-and-variables) ·
+[Adobe Express — Add and customize shapes](https://helpx.adobe.com/express/web/add-images-and-visuals/charts-tables-shapes/add-and-customize-shapes.html).
+
+### R14.2 Colour tools expose the active colour and reusable combinations — ✅ VERIFIED
+
+Procreate Pocket keeps the active primary and secondary colours visible in its colour interface; tapping a swatch sets
+the current colour, and a default palette remains available for reuse. Adobe Express recommends small colour themes of
+two to five frequently paired colours and makes multiple common themes directly reachable.
+
+**Sources:** [Procreate Pocket — Colors interface](https://help.procreate.com/pocket/handbook/colors/colors-interface) ·
+[Procreate Pocket — Palettes](https://help.procreate.com/pocket/handbook/4.0/colors/colors-palettes) ·
+[Adobe Express — Apply color themes](https://helpx.adobe.com/express/web/add-images-and-visuals/images-and-backgrounds/apply-color-themes.html).
+
+### R14.3 Touch size need not become visual bulk — ✅ VERIFIED
+
+Android recommends at least 48dp interactive targets and explicitly permits a smaller painted icon inside that larger
+touch area. Controls can therefore remain visually light while preserving reliable touch and accessibility behavior.
+
+**Source:** [Android Accessibility Help — Touch target size](https://support.google.com/accessibility/android/answer/7101858?hl=en).
+
+### R14.4 Zinely application — 🟦 RECOMMENDATION
+
+For Art, retain one local catalogue with search and the four authored families, but replace the anonymous four-column
+glyph wall with named material cards, compact horizontally scrolling family filters, and Recent/Favourites rails.
+Family styling must be deterministic; catalogue order and placement remain unrandomised. The favourite action belongs
+in the card's label band rather than over the material silhouette.
+
+For Ink, show the current ink by both colour and name, place smaller painted pots inside 48dp choices, and use a stable
+five-column grid so ten spot inks never create an orphan row. Palette recipes should remain directly reachable, but
+their copy must describe the implemented action: under OD-24 a recipe applies its primary ink, not a complete zine-wide
+theme. The interactive specification is Bench amendment A16, owner-approved and DESIGN FROZEN on 2026-08-26
+through D-080 and D-107.
