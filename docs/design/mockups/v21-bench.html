@@ -1465,6 +1465,23 @@ This amendment freezes layout only. Labels, actions, reducer intents, availabili
 platform accessibility semantics do not change. Every rendered control remains named, clickable and
 enabled in the platform accessibility tree.
 =========================================================================== -->
+<!-- ===========================================================================
+A20 · 2026-08-26 (owner-approved, D-110) — new words begin centred.
+
+THE RULING: Add > Text creates the newly minted Text element with centred paragraph alignment. The
+existing centred 70% x 16% frame, D-052 cascade, immediate edit session, selection, undo/autosave and
+accessibility behavior do not change. The Type surface still offers Left, Centre and Right immediately
+after Done, so this is a friendly starting point rather than a restriction.
+
+This is a placement-time default only. Existing Text elements keep their stored alignment, including
+the historical left/start fallback when an older payload omitted the field. The model and serializer
+defaults therefore do not move, and opening an existing zine cannot restyle it. Photo, Art and ordinary
+text-style edits are outside this amendment.
+
+🔒 DESIGN FREEZE — owner approved the mobile-adapted recommendation on 2026-08-26. Compose must
+implement this at the reducer-owned Add > Text placement seam, never by changing TextStyle's model
+default or by applying a render-time override.
+=========================================================================== -->
 <script>
 function placeTextAndEdit(){
   const source=[...document.querySelectorAll('.el')].find(e=>e.dataset.kind==='text');
@@ -1473,6 +1490,7 @@ function placeTextAndEdit(){
   const i=ELS.push(entry)-1, node=source.cloneNode(true), offset=Math.min(12*ordinal,48);
   node.dataset.i=i; node.dataset.kind='text'; node.setAttribute('aria-label',entry.label+'. Tap to select.');
   node.querySelector('.t-title,.t-body').innerHTML='New words<span class="caret"></span>';
+  node.style.textAlign='center';
   node.style.transform=`translate(${offset}px,${offset}px)`;
   node.onclick=e=>{e.stopPropagation();select(node)};
   node.ondblclick=e=>{e.stopPropagation();select(node);edit()};

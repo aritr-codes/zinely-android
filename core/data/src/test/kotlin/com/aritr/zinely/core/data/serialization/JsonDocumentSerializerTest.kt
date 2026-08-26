@@ -86,6 +86,36 @@ class JsonDocumentSerializerTest {
     }
 
     @Test
+    fun `an existing text payload without align keeps the historical start fallback`() {
+        val doc = ZineDocument(
+            format = ZineFormat.SINGLE_SHEET_8,
+            paperSize = PaperSize.LETTER,
+            pages = listOf(
+                Page(
+                    index = 0,
+                    role = PageRole.INTERIOR,
+                    elements = listOf(
+                        TextElement(
+                            id = "legacy-text",
+                            transform = Transform(1.0, 2.0, 30.0, 40.0),
+                            text = "already here",
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val encoded = serializer.serialize(doc)
+        assertTrue(encoded.contains("\"align\":\"start\""), encoded)
+
+        val legacyWithoutAlign = encoded.replace("\"align\":\"start\",", "")
+        assertTrue(!legacyWithoutAlign.contains("\"align\""), legacyWithoutAlign)
+        val decoded = serializer.deserialize(legacyWithoutAlign)
+        val text = decoded.pages.single().elements.single() as TextElement
+
+        assertEquals(TextAlign.START, text.style.align)
+    }
+
+    @Test
     fun `serialize always writes the current schema version`() {
         val stale = sample(schemaVersion = 0)
         val decoded = serializer.deserialize(serializer.serialize(stale))

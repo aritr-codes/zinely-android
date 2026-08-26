@@ -8,6 +8,7 @@ import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
@@ -54,6 +55,7 @@ class EditorAddTextTest {
         val state = store.uiState.value
         val text = state.document.pages[0].elements.filterIsInstance<TextElement>().single()
         assertEquals("", text.text) // empty — not a "Your words here" placeholder
+        assertEquals(TextAlign.CENTER, text.style.align)
         assertEquals(91.8, text.transform.xPt, 1e-9)
         assertEquals(332.64, text.transform.yPt, 1e-9)
         val interaction = state.interaction

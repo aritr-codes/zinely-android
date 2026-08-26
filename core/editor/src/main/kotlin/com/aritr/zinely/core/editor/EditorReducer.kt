@@ -7,7 +7,9 @@ import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 
 /**
@@ -69,6 +71,9 @@ public object EditorReducer {
                 transform = intent.transform,
                 zIndex = nextZ(model),
                 text = "",
+                // D-110/A20 is deliberately a placement default. Keep TextStyle's model/JSON fallback
+                // at START so opening an existing document can never restyle its saved words.
+                style = TextStyle(align = TextAlign.CENTER),
             )
             val placed = committing(
                 model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),

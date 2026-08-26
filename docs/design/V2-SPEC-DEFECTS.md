@@ -7144,3 +7144,30 @@ one observed misunderstanding); and leaving `More styles` vague (it does not nam
 **Verification.** Focused editor interaction, copy, persistence-gate and light/dark golden coverage passed. On the
 Samsung `SM-A176B`, the normal-font pass confirmed the contextual text/photo guidance and the maximum-font pass
 kept the typing hand-off, Ink and Done visible together; the device was restored to `font_scale=1.0` afterwards.
+
+---
+
+### D-110 — newly added text starts left-aligned despite a centred creative starting point {#d-110}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-bench.html` (A20) · `EditorReducer.kt` · `TextEditSessionTest.kt` |
+| **Found** | 2026-08-26, stakeholder desktop-brief adaptation |
+| **Severity** | **P2 creative-flow default.** The capability already exists, but every new box begins one style adjustment away from the requested starting point |
+| **Status** | 🟨 **IMPLEMENTED 2026-08-26 — frozen contract and focused reducer coverage complete; shared device acceptance remains required** |
+
+The desktop brief asks for centred text by default. Zinely adopts the useful creative default without adopting
+the desktop properties-panel architecture: `Add › Text` still places the bounded D-052 frame and opens its
+in-place editing session, but the newly minted element begins with `TextAlign.CENTER`. The existing Type surface
+continues to offer Left, Centre and Right after Done.
+
+**Ruling (Bench A20 — 🔒 DESIGN FREEZE, owner-approved 2026-08-26).** Centre is assigned only by the
+reducer-owned `PlaceTextAndEdit` placement act. `TextStyle.align` keeps its `START` model default, persisted text
+is not migrated or rewritten, and the renderer receives no fallback override. Therefore a legacy document whose
+text is left-aligned remains byte- and behavior-compatible when opened; only a genuinely new box receives the
+new starting style.
+
+**Verification contract.** Focused reducer coverage must prove that the minted element is centred, a pre-existing
+start-aligned element is untouched, the style survives text commit plus undo/redo, and cancel still coalesces an
+untouched empty placement. Device acceptance must additionally confirm that the first typed words render centred
+and that Left/Centre/Right remain directly reachable through the established Type surface.
