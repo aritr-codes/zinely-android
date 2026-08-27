@@ -11,8 +11,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -21,7 +23,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Crop
@@ -353,12 +357,14 @@ internal fun BenchContextBar(
         // `left:50%;transform:translateX(-50%)` — the card is content-width and centred, where V2's was a
         // full-width strip inset 12dp on both sides. The host hands this composable a `fillMaxWidth`
         // modifier it cannot change, so the centring happens here.
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = BenchContextBarInsetDp),
             contentAlignment = Alignment.BottomCenter,
         ) {
+            val scrollState = rememberScrollState()
+            val maxBarWidth = maxWidth
             Row(
                 modifier = Modifier
                     // The tag is the card itself, so the node's bounds are the pill — its ground, its ink
@@ -377,9 +383,18 @@ internal fun BenchContextBar(
                     // `border-radius` and stops — the freeze's own banner at `v21-bench.html:220-222` says
                     // why. Nothing that clips needs to sit right of anything here, because there is nothing
                     // painting outside the node to protect.
+                    // At enlarged text, the six-verb Text and Photo sets can be wider than a phone.
+                    // Keep the frozen single-row pill and full labels, but constrain its viewport to the
+                    // available canvas width and let the verbs scroll. The
+                    // four-verb Art set and every default-scale bar remain content-width; only genuine
+                    // overflow gains a horizontal axis. This was found on the SM-A176B at font scale 1.8,
+                    // where unconstrained measurement produced a card wider than the screen and clipped
+                    // Duplicate/Delete entirely.
+                    .widthIn(max = maxBarWidth)
                     .clip(BenchContextBarShape)
                     .background(colors.surface)
                     .border(BenchChromeBorder, colors.ink, BenchContextBarShape)
+                    .horizontalScroll(scrollState)
                     .padding(BenchContextBarPaddingDp),
                 horizontalArrangement = Arrangement.spacedBy(BenchContextBarGapDp),
                 verticalAlignment = Alignment.CenterVertically,

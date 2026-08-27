@@ -26,6 +26,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -435,6 +436,26 @@ class BenchContextBarTest {
                 button.top >= bar.top - 1f && button.bottom <= bar.bottom + 1f,
             )
         }
+    }
+
+    @Test
+    fun `the six photo verbs stay in a phone-width scrollable pill at font scale 1_8`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO), fontScale = 1.8f)
+
+        val hostBounds = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow
+        val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
+        assertEquals(hostBounds.left.toDouble(), bar.left.toDouble(), 1.0)
+        assertEquals(hostBounds.right.toDouble(), bar.right.toDouble(), 1.0)
+
+        val duplicate = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}")
+        val delete = composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}")
+        duplicate.performScrollTo().assertHasClickAction()
+        delete.performScrollTo().assertHasClickAction()
+        val deleteBounds = delete.fetchSemanticsNode().boundsInWindow
+        assertTrue(
+            "Delete must be reachable inside the scrolled pill at fontScale 1.8; button=$deleteBounds bar=$bar",
+            deleteBounds.left >= bar.left - 1f && deleteBounds.right <= bar.right + 1f,
+        )
     }
 
     // ── Row 2.10 — the bar's own geometry ───────────────────────────────────────────────────────────
