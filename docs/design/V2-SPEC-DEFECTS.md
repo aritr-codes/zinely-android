@@ -7154,7 +7154,7 @@ kept the typing hand-off, Ink and Done visible together; the device was restored
 | **Artifacts** | `docs/design/mockups/v21-bench.html` (A20) · `EditorReducer.kt` · `TextEditSessionTest.kt` |
 | **Found** | 2026-08-26, stakeholder desktop-brief adaptation |
 | **Severity** | **P2 creative-flow default.** The capability already exists, but every new box begins one style adjustment away from the requested starting point |
-| **Status** | 🟨 **IMPLEMENTED 2026-08-26 — frozen contract and focused reducer coverage complete; shared device acceptance remains required** |
+| **Status** | ✅ **CLOSED 2026-08-27 — frozen contract, focused coverage and two-pass Samsung acceptance complete** |
 
 The desktop brief asks for centred text by default. Zinely adopts the useful creative default without adopting
 the desktop properties-panel architecture: `Add › Text` still places the bounded D-052 frame and opens its
@@ -7171,3 +7171,13 @@ new starting style.
 start-aligned element is untouched, the style survives text commit plus undo/redo, and cancel still coalesces an
 untouched empty placement. Device acceptance must additionally confirm that the first typed words render centred
 and that Left/Centre/Right remain directly reachable through the established Type surface.
+
+**Device acceptance — 2026-08-27.** The release-signed `0.9.0-beta.2` build was installed in place on the
+Samsung `SM-A176B` without clearing its existing library. Pass 1 created a fresh zine through the production
+`Add › Text` route: `hello zine` rendered centred while editing, and the platform accessibility tree exposed
+Left, Center and Right as enabled radio buttons with Center selected. Switching Left → Right → Center updated
+the checked state each time. After force-stop and relaunch, the saved text remained present and visually centred.
+At `font_scale=1.8`, all three choices remained enabled and reachable; `Right` wrapped onto two lines, recorded as
+pre-existing large-text polish rather than a D-110 regression. The device was restored to `font_scale=1.0`.
+Pass 2 found the starting point understandable and the editing hand-off itself explains where alignment lives:
+`Align, size & more after Done`. No additional navigation or modal instruction was required.
