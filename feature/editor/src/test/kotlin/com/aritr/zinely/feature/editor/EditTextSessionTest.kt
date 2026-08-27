@@ -63,7 +63,7 @@ class EditTextSessionTest {
         return s
     }
 
-    private fun setSession(store: EditorStore) {
+    private fun setSession(store: EditorStore, onCommitted: () -> Unit = {}) {
         composeRule.setContent {
             ZinelyTheme {
                 val state by store.uiState.collectAsState()
@@ -71,7 +71,12 @@ class EditTextSessionTest {
                 if (session is Interaction.EditingText) {
                     val element = state.document.pages[0].elements
                         .first { it.id == session.id } as TextElement
-                    EditTextSession(session = session, element = element, dispatch = store::dispatch)
+                    EditTextSession(
+                        session = session,
+                        element = element,
+                        dispatch = store::dispatch,
+                        onCommitted = onCommitted,
+                    )
                 }
             }
         }
@@ -114,5 +119,22 @@ class EditTextSessionTest {
         store.dispatch(Intent.Undo)
         val restored = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
         assertEquals("old", restored.text) // one undo fully restores ⇒ there was exactly one command
+    }
+
+    @Test
+    fun cancellation_never_reports_a_successful_text_commit() {
+        val store = store(initialText = "old")
+        val id = store.uiState.value.selection.single()
+        var commits = 0
+        setSession(store, onCommitted = { commits += 1 })
+
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("discarded")
+        val token = (store.uiState.value.interaction as Interaction.EditingText).token
+        store.dispatch(Intent.CancelText(id, token))
+        composeRule.waitForIdle()
+
+        assertEquals(0, commits)
+        val element = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
+        assertEquals("old", element.text)
     }
 }

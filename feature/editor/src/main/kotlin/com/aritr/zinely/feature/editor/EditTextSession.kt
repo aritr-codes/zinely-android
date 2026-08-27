@@ -89,6 +89,9 @@ public const val EditTextSessionTestTag: String = "edit-text-session"
  *   two escape here rather than the caret moving inside this file, which owns the *session*, not the skin.
  * @param onCoverageChanged reports the draft's current [TextCoverage] (ADR-070): on the seed, on every
  *   keystroke, and [TextCoverage.Covered] on dispose. The host raises the [EditorCoverageNotice] from it.
+ * @param onCommitted observes a successful [Intent.CommitText] reduction. Hosts use this only for
+ *   ephemeral follow-up work that must happen after the draft is safe in the document, such as a queued
+ *   page transition; it is never invoked for cancellation.
  */
 @Composable
 public fun EditTextSession(
@@ -103,6 +106,7 @@ public fun EditTextSession(
     cursorColor: Color = ZinelyTheme.colors.coralStrong,
     onTextLayout: (TextLayoutResult) -> Unit = {},
     onDraftChanged: (TextFieldValue) -> Unit = {},
+    onCommitted: () -> Unit = {},
 ) {
     var draft by remember(session.token) { mutableStateOf(TextFieldValue(element.text)) }
     var committed by remember(session.token) { mutableStateOf(false) }
@@ -127,6 +131,7 @@ public fun EditTextSession(
         if (committed) return
         committed = true
         dispatch(Intent.CommitText(session.id, element.copy(text = latestDraft.text), session.token))
+        onCommitted()
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current

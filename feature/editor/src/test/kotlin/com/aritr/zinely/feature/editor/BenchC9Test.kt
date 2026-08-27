@@ -10,6 +10,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -18,6 +19,7 @@ import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
+import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -268,6 +270,71 @@ class BenchC9Test {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchPageGridTestTag).assertDoesNotExist()
         assertEquals("after the scrim", BenchState.Rest, modelState(store))
+    }
+
+    /**
+     * A page switch is a text-session boundary, not a cancellation. The draft is feature-local until the
+     * field commits, whereas GoToPage deliberately invalidates the reducer session. Exercise the real
+     * filmstrip callback so a mutation that dispatches GoToPage before clearing focus loses this exact
+     * draft again.
+     */
+    @Test
+    fun filmstrip_page_change_commits_an_open_text_draft_before_navigating() {
+        val store = store(pageCount = 2)
+        val id = placedText(store)
+        setScreen(store)
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("kept on page one")
+
+        composeRule.onNodeWithTag(benchThumbTag(2)).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(1, store.uiState.value.currentPageIndex)
+        val committed = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
+        assertEquals("kept on page one", committed.text)
+        // One finished edit remains one undo step even though navigation followed it.
+        store.dispatch(Intent.Undo)
+        val restored = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
+        assertEquals("hi", restored.text)
+    }
+
+    /** The all-pages sheet shares the same safe navigation seam and dismisses as soon as a page is chosen. */
+    @Test
+    fun page_grid_change_commits_an_open_text_draft_and_dismisses() {
+        val store = store(pageCount = 2)
+        val id = placedText(store)
+        setScreen(store)
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(EditTextSessionTestTag).performTextReplacement("kept from all pages")
+
+        composeRule.onNodeWithTag(BenchGridButtonTestTag).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(benchPageGridPageTag(2), useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(1, store.uiState.value.currentPageIndex)
+        composeRule.onNodeWithTag(BenchPageGridTestTag).assertDoesNotExist()
+        val committed = store.uiState.value.document.pages[0].elements.single { it.id == id } as TextElement
+        assertEquals("kept from all pages", committed.text)
+    }
+
+    /** A fresh blank box still uses the ordinary commit path, coalesces away, and never blocks navigation. */
+    @Test
+    fun page_change_coalesces_a_fresh_blank_text_session_before_navigating() {
+        val store = store(pageCount = 2)
+        setScreen(store)
+        store.dispatch(Intent.PlaceText(Transform(20.0, 60.0, 60.0, 18.0), ""))
+        val id = store.uiState.value.selection.single()
+        store.dispatch(Intent.BeginEditText(id))
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(benchThumbTag(2)).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(1, store.uiState.value.currentPageIndex)
+        assertTrue(store.uiState.value.document.pages[0].elements.isEmpty())
     }
 
     // =================================================================================================

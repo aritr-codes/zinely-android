@@ -192,6 +192,7 @@ internal fun BenchEditingSurface(
     pageOffset: PtPoint,
     modifier: Modifier = Modifier,
     onCoverageChanged: (TextCoverage) -> Unit = {},
+    onCommitted: () -> Unit = {},
 ) {
     val density = LocalDensity.current
     val t = element.transform
@@ -291,6 +292,7 @@ internal fun BenchEditingSurface(
                 )
             },
         onCoverageChanged = onCoverageChanged,
+        onCommitted = onCommitted,
         textStyle = textStyle,
         // The platform cursor is suppressed, not recoloured — two carets would be two carets.
         cursorColor = Color.Transparent,

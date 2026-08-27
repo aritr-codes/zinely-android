@@ -938,6 +938,9 @@ public fun EditorScreen(
     // commits on focus loss. Queue the tray until that commit has closed EditingText; opening it in the
     // same callback would let the popover race the session's token-guarded dispose commit.
     var inkAfterEditFor by remember { mutableStateOf<String?>(null) }
+    // A page target is feature-ephemeral like the draft. It is consumed only by the successful commit
+    // callback below and cleared by cancellation, never inferred from a reducer state transition.
+    var pageAfterEditIndex by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(editingElement?.id, inkAfterEditFor, ctxElement?.id) {
         val pending = inkAfterEditFor ?: return@LaunchedEffect
         if (editingElement != null) return@LaunchedEffect
@@ -950,11 +953,35 @@ public fun EditorScreen(
     // next discards the draft and returns to the selected page instead of leaving for the shelf.
     // CancelText also coalesces a freshly placed blank box away, so opening Text and backing out is clean.
     BackHandler(enabled = editingElement != null) {
+        // Cancellation is a cancellation, never an implicit page change. A page target can only survive
+        // until the matching successful CommitText callback consumes it.
+        pageAfterEditIndex = null
         editingTextSession?.let { dispatch(Intent.CancelText(it.id, it.token)) }
     }
     // The frozen editing row's Done ends the session by clearing focus — see its call site for why that,
     // and not a dispatch, is the correct end (the draft is feature-ephemeral).
     val focusManager = LocalFocusManager.current
+    // Page navigation must use the same commit-before-transition boundary. GoToPage deliberately closes
+    // an open text session; dispatching it first invalidates the field token before its feature-local
+    // draft can be committed. Queue the target, clear focus (the session's established commit path), and
+    // navigate from that successful commit callback. This keeps the edit as one undo step and makes both
+    // the filmstrip and the all-pages sheet safe exits while typing; cancellation cannot consume a target.
+    fun navigateAfterTextCommit() {
+        val target = pageAfterEditIndex ?: return
+        pageAfterEditIndex = null
+        dispatch(Intent.GoToPage(target))
+    }
+    fun navigateToPage(target: Int) {
+        if (reframing != null) commitReframe()
+        // A page chosen from the all-pages sheet has been chosen even while its draft is flushing.
+        pageGridOpen = false
+        if (editingTextSession != null) {
+            pageAfterEditIndex = target
+            focusManager.clearFocus()
+        } else {
+            dispatch(Intent.GoToPage(target))
+        }
+    }
 
     // D-043 / OD-16, 2026-08-03: the amended pan is `min(96dp, slack + clearance)`, and the clearance term
     // needs two window-space edges that live on opposite sides of this layout — where the `.kbstack` docks,
@@ -1379,6 +1406,7 @@ public fun EditorScreen(
                             pageOffset = uiState.view.pageOffset,
                             modifier = Modifier.align(Alignment.TopStart),
                             onCoverageChanged = { editCoverage = it },
+                            onCommitted = ::navigateAfterTextCommit,
                         )
                     }
                     // The page gesture surface and resize handles are inert while a text session is open (Codex
@@ -1888,12 +1916,9 @@ public fun EditorScreen(
             currentPageIndex = uiState.currentPageIndex,
             pageSizePt = pageSizePt,
             defaults = uiState.document.defaults,
-            // Leaving the panel commits the open framing first (bench: never strand a session on an
-            // off-screen photo), then navigates.
-            onSelectPage = { idx ->
-                if (reframing != null) commitReframe()
-                dispatch(Intent.GoToPage(idx))
-            },
+            // Leaving the panel commits an open framing first (bench: never strand a session on an
+            // off-screen photo), and commits a text draft before the reducer leaves its page.
+            onSelectPage = ::navigateToPage,
             onOpenGrid = { pageGridOpen = true },
             modifier = Modifier.fillMaxWidth(),
             imageBytes = imageBytes,
@@ -2101,11 +2126,7 @@ public fun EditorScreen(
                 // Choosing a page here does what choosing one on the strip does, and then stands the grid
                 // down — a picker that stayed open after picking would be a panel, which is what
                 // "summoned, never default" refuses.
-                onSelectPage = { idx ->
-                    if (reframing != null) commitReframe()
-                    dispatch(Intent.GoToPage(idx))
-                    pageGridOpen = false
-                },
+                onSelectPage = ::navigateToPage,
                 onDismiss = { pageGridOpen = false },
                 imageBytes = imageBytes,
             )
