@@ -1623,10 +1623,7 @@ public fun EditorScreen(
                             // set ever does read `styleable`, the failure should be a control that is *off*
                             // — visible and recoverable — rather than one that is on and lies about what it
                             // can do. Only TEXT reads it today.
-                            styleable = when (val selected = ctxElement) {
-                                is TextElement -> selected.text.isNotBlank()
-                                is DecorElement, is ImageElement, null -> false
-                            },
+                            styleable = (ctxElement as? TextElement)?.text?.isNotBlank() == true,
                             // The toggle reads its state from the document, never from local UI state —
                             // so Undo, a page change and a reload all move the announced state with it.
                             copierOn = (ctxElement as? ImageElement)?.copier ?: false,
