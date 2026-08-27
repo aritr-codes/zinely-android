@@ -144,6 +144,10 @@ public object Copy {
          * verb, not its outcome, exactly as `Reframe photo` names the session and not the crop.
          */
         public const val REPLACE_SUPPLY: String = "Replace supply"
+        public const val FLIP_LEFT_RIGHT: String = "Flip left to right"
+        public const val FLIP_TOP_BOTTOM: String = "Flip top to bottom"
+        public const val REMOVE_LEFT_RIGHT_FLIP: String = "Remove left-right flip"
+        public const val REMOVE_TOP_BOTTOM_FLIP: String = "Remove top-bottom flip"
         public const val MOVE_LEFT: String = "Move left"
         public const val MOVE_RIGHT: String = "Move right"
         public const val MOVE_UP: String = "Move up"
@@ -221,6 +225,7 @@ public object Copy {
          *  them: a disabled verb has no setting to report, a toggle is live by construction. */
         public const val COPIER_ON: String = "On"
         public const val COPIER_OFF: String = "Off"
+        public const val FLIP: String = "Flip"
         public const val REPLACE: String = "Replace"
         public const val DUPLICATE: String = "Duplicate"
         public const val DELETE: String = "Delete"
@@ -648,6 +653,10 @@ public object Copy {
 
         /** One selected page object was copied and the new copy is now selected. */
         public const val DUPLICATED: String = "Duplicated"
+        public const val FLIPPED_LEFT_RIGHT: String = "Flipped left-right"
+        public const val FLIPPED_TOP_BOTTOM: String = "Flipped top-bottom"
+        public const val LEFT_RIGHT_FLIP_REMOVED: String = "Left-right flip removed"
+        public const val TOP_BOTTOM_FLIP_REMOVED: String = "Top-bottom flip removed"
     }
 
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */
@@ -687,6 +696,13 @@ public object Copy {
         public const val TEXT_STYLE: String = "Text style"
         public const val SHOWING: String = "Showing"
         public const val HIDDEN: String = "Hidden"
+
+        /** Compact selected-piece tray (ADR-113 / frozen Bench A22). */
+        public const val FLIP: String = "Flip"
+        public const val FLIP_HELP: String = "Turn the selected piece over without moving it."
+        public const val LEFT_RIGHT: String = "Left-right"
+        public const val TOP_BOTTOM: String = "Top-bottom"
+        public const val DONE: String = "Done"
     }
 
     /**

@@ -155,12 +155,13 @@ class BenchDecorGoldenTest {
     // =================================================================================================
 
     /**
-     * The frozen decor row — `Replace · Ink · Delete` (`v21-bench.html:71`) — drawn at **full strength**.
+     * The frozen decor row — `Replace · Ink · Flip · Duplicate · Delete` (Bench A22) — drawn at
+     * **full strength**.
      *
      * [assertVerbAtFullStrength] carries the measurement and explains it; this test's job is the set.
      */
     @Test
-    fun the_decor_verb_row_draws_its_three_frozen_verbs_and_none_of_them_is_dim() {
+    fun the_decor_verb_row_draws_its_five_frozen_verbs_and_none_of_them_is_dim() {
         decorBar(darkTheme = false)
 
         // ⚠ **Asserted per verb, not over the card.** The first cut counted `inkSoft` across the whole
@@ -172,12 +173,14 @@ class BenchDecorGoldenTest {
         // to `disabledAlpha` and the other's pixels cover for it.
         val bar = full()
         assertEquals(
-            "the frozen decor set is Replace · Ink · Delete",
-            3,
+            "the frozen decor set is Replace · Ink · Flip · Duplicate · Delete",
+            5,
             benchContextVerbs(BenchVerbKind.DECOR).size,
         )
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.REPLACE, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.INK, inkSoftArgb)
+        assertVerbAtFullStrength(bar, Copy.BenchVerbs.FLIP, inkSoftArgb)
+        assertVerbAtFullStrength(bar, Copy.BenchVerbs.DUPLICATE, inkSoftArgb)
         // `.ctx button.danger{color:var(--jam-text)}` — jam is the one urgent colour in V2.1 and Delete
         // is the one verb entitled to it, so it is measured on its own channel.
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.DELETE, jamTextArgb)
@@ -193,6 +196,8 @@ class BenchDecorGoldenTest {
         val bar = full()
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.REPLACE, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.INK, inkSoftArgb)
+        assertVerbAtFullStrength(bar, Copy.BenchVerbs.FLIP, inkSoftArgb)
+        assertVerbAtFullStrength(bar, Copy.BenchVerbs.DUPLICATE, inkSoftArgb)
         assertVerbAtFullStrength(bar, Copy.BenchVerbs.DELETE, jamTextArgb)
 
         composeRule.onNodeWithTag(HOST_TAG)

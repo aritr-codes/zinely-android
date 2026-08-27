@@ -132,6 +132,42 @@ class SceneRendererTest {
     }
 
     @Test
+    fun `photo horizontal vertical and combined flips reflect inside the unchanged local box`() {
+        fun matrix(horizontal: Boolean, vertical: Boolean) = (
+            SceneRenderer.render(
+                page(
+                    elements = listOf(
+                        ImageElement(
+                            id = "img",
+                            transform = Transform(10.0, 20.0, 40.0, 25.0),
+                            assetId = "asset",
+                            crop = Crop(0.1, 0.2, 0.8, 0.9),
+                            fit = Fit.FILL,
+                            flippedHorizontally = horizontal,
+                            flippedVertically = vertical,
+                        ),
+                    ),
+                ),
+                pageSize,
+                noDefaults,
+            ).single() as DrawImage
+        )
+
+        val h = matrix(horizontal = true, vertical = false)
+        assertPoint(50.0, 20.0, h.localToPage.map(PtPoint(0.0, 0.0)))
+        assertPoint(10.0, 45.0, h.localToPage.map(PtPoint(40.0, 25.0)))
+        val v = matrix(horizontal = false, vertical = true)
+        assertPoint(10.0, 45.0, v.localToPage.map(PtPoint(0.0, 0.0)))
+        assertPoint(50.0, 20.0, v.localToPage.map(PtPoint(40.0, 25.0)))
+        val both = matrix(horizontal = true, vertical = true)
+        assertPoint(50.0, 45.0, both.localToPage.map(PtPoint(0.0, 0.0)))
+        assertPoint(10.0, 20.0, both.localToPage.map(PtPoint(40.0, 25.0)))
+        assertPoint(30.0, 32.5, both.localToPage.map(PtPoint(20.0, 12.5)))
+        assertEquals(Crop(0.1, 0.2, 0.8, 0.9), both.crop)
+        assertEquals(both.box, both.localClip)
+    }
+
+    @Test
     fun `rotation maps the element-local center to the page-space box center`() {
         val el = TextElement(id = "r", transform = Transform(10.0, 20.0, 100.0, 50.0, rotationDegrees = 90.0), zIndex = 0, text = "x")
         val cmd = SceneRenderer.render(page(elements = listOf(el)), pageSize, noDefaults).single() as DrawTextBox

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.Flip
 import androidx.compose.material.icons.filled.Grain
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -48,6 +49,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -163,6 +166,7 @@ internal fun benchContextVerbs(
     )
     BenchVerbKind.PHOTO -> listOf(
         BenchVerb(Copy.BenchVerbs.REFRAME, Icons.Filled.Crop),
+        BenchVerb(Copy.BenchVerbs.FLIP, Icons.Filled.Flip),
         // ADR-109 / frozen Bench A19: this is an edit to a selected photo, not another thing in Add.
         // The confirmation and crop transaction are owned by the host/reducer; the bar names only entry.
         BenchVerb(Copy.BenchVerbs.ACROSS_FOLD, Icons.Filled.ViewWeek),
@@ -205,6 +209,7 @@ internal fun benchContextVerbs(
     BenchVerbKind.DECOR -> listOf(
         BenchVerb(Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz),
         BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette),
+        BenchVerb(Copy.BenchVerbs.FLIP, Icons.Filled.Flip),
         BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
@@ -338,6 +343,7 @@ internal fun BenchContextBar(
     onVerb: (BenchVerb) -> Unit,
     modifier: Modifier = Modifier,
     onHeightChanged: (Dp) -> Unit = {},
+    focusRequesterForLabel: (String) -> FocusRequester? = { null },
 ) {
     val colors = ZinelyTheme.v21Colors
     val motion = if (ZinelyTheme.motion.reduceMotion) 0 else BenchContextBarEnterMillis
@@ -400,7 +406,11 @@ internal fun BenchContextBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 for (verb in verbs) {
-                    BenchVerbButton(verb = verb, onClick = { onVerb(verb) })
+                    BenchVerbButton(
+                        verb = verb,
+                        onClick = { onVerb(verb) },
+                        focusRequester = focusRequesterForLabel(verb.label),
+                    )
                 }
             }
         }
@@ -425,7 +435,12 @@ internal fun BenchContextBar(
  * and it is not removed, because removing it would take away feedback the shipped control already had.
  */
 @Composable
-private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun BenchVerbButton(
+    verb: BenchVerb,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null,
+) {
     val colors = ZinelyTheme.v21Colors
     val fontScale = LocalDensity.current.fontScale
     // `.ctx button.on{background:var(--leaf);color:var(--on-leaf)}` — the freeze's A4 amendment, made in
@@ -448,6 +463,7 @@ private fun BenchVerbButton(verb: BenchVerb, onClick: () -> Unit, modifier: Modi
     val fire = benchTap(if (verb.danger) ZinelyHaptic.Boundary else ZinelyHaptic.Tick, onClick)
     Column(
         modifier = modifier
+            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .then(
                 if (fontScale <= 1f) Modifier.height(BenchContextBarButtonHeightDp)
                 else Modifier.heightIn(min = BenchContextBarButtonHeightDp),

@@ -193,6 +193,25 @@ public object EditorReducer {
             if (el == null) Reduction(model)
             else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, el.copy(copier = !el.copier)))
         }
+        is Intent.ToggleFlip -> {
+            when (val el = currentPage(model).elements.firstOrNull { it.id == intent.id }) {
+                is ImageElement -> {
+                    val after = when (intent.axis) {
+                        FlipAxis.HORIZONTAL -> el.copy(flippedHorizontally = !el.flippedHorizontally)
+                        FlipAxis.VERTICAL -> el.copy(flippedVertically = !el.flippedVertically)
+                    }
+                    committing(model, EditImageCommand(model.currentPageIndex, el.id, el, after))
+                }
+                is DecorElement -> {
+                    val after = when (intent.axis) {
+                        FlipAxis.HORIZONTAL -> el.copy(mirrored = !el.mirrored)
+                        FlipAxis.VERTICAL -> el.copy(flippedVertically = !el.flippedVertically)
+                    }
+                    committing(model, EditDecorCommand(model.currentPageIndex, el.id, el, after))
+                }
+                is TextElement, null -> Reduction(model)
+            }
+        }
         is Intent.MakeImageSpread -> {
             val sourcePage = currentPage(model)
             val source = sourcePage.elements.firstOrNull { it.id == intent.id } as? ImageElement

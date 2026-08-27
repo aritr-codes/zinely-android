@@ -36,6 +36,7 @@ class SceneRendererDecorTest {
         supplyId: String = "shape.rect",
         transform: Transform = Transform(10.0, 20.0, 40.0, 25.0),
         mirrored: Boolean = false,
+        flippedVertically: Boolean = false,
     ) = DecorElement(
         id = "d1",
         transform = transform,
@@ -43,6 +44,7 @@ class SceneRendererDecorTest {
         supplyId = supplyId,
         ink = ink,
         mirrored = mirrored,
+        flippedVertically = flippedVertically,
     )
 
     private fun tape(element: DecorElement) =
@@ -106,6 +108,18 @@ class SceneRendererDecorTest {
                 listOf(ps.minOf { it.x }, ps.minOf { it.y }, ps.maxOf { it.x }, ps.maxOf { it.y })
             }
         assertEquals(bounds(plain), bounds(m))
+    }
+
+    @Test
+    fun `vertical and combined art flips reflect the outline in unit space without moving its box`() {
+        val vertical = (tape(decor(flippedVertically = true))[0] as DrawShape).localToPage
+        assertPoint(10.0, 45.0, vertical.map(PtPoint(0.0, 0.0)))
+        assertPoint(50.0, 20.0, vertical.map(PtPoint(1.0, 1.0)))
+
+        val both = (tape(decor(mirrored = true, flippedVertically = true))[0] as DrawShape).localToPage
+        assertPoint(50.0, 45.0, both.map(PtPoint(0.0, 0.0)))
+        assertPoint(10.0, 20.0, both.map(PtPoint(1.0, 1.0)))
+        assertPoint(30.0, 32.5, both.map(PtPoint(0.5, 0.5)))
     }
 
     @Test

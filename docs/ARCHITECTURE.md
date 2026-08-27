@@ -401,6 +401,25 @@ Two related gaps are **accepted for the beta and tracked, not fixed**:
 
 The **Type bar** (`:feature:editor`) is the surface: four rows — size stepper · alignment segment · bold/italic · the five text inks — opened by one "Text style" (`Aa`) control on `EditorContextBar`, offered only for a single non-blank `TextElement` outside an edit session. It owns two display→model mappings the model does not constrain (the discrete pt ramp onto `sizePt: Double`; the five inks onto fixed paper-space `ColorRgba` — theme-independent, because export is ink-on-paper). `Ctrl/Cmd + B/I` route through the *same* toggle verbs the bar's buttons call, so the pointer and keyboard paths cannot drift. `:core:model`, `:core:render`, `:render-android`, persistence, and export are **unchanged** — style already round-tripped and already rendered through the single `CanvasReplayer` path, so `preview == export` holds for styled text by construction.
 
+### 7.2 Photo/Art flip — persisted local-axis reflection ([ADR-113](DECISIONS.md#adr-113))
+
+Flip is a one-shot element edit, not a transform session. `Intent.ToggleFlip(id, axis)` resolves one Photo
+or Art element on the current page and commits one typed before/after command; Text, missing ids and
+off-page ids are no-ops. The compact `FlipTray` is feature-ephemeral disclosure state only. Each axis tap
+changes the document immediately, so one tap is one autosave and one undo step.
+
+The document schema is **v3**. `ImageElement` carries `flippedHorizontally` and `flippedVertically`;
+`DecorElement.mirrored` remains the historical horizontal wire field and `flippedVertically` adds the
+other axis. The v2→v3 migrator is an identity step: default false is the correct forward value, while the
+version gate prevents a v2 build from tolerantly decoding and later erasing active flags on save.
+
+`SceneRenderer` folds reflection into `DrawImage.localToPage` in photo-box coordinates and into
+`DrawShape.localToPage` in Art's unit-square coordinates. Every consumer — Bench preview, thumbnails,
+Read, raster and PDF — therefore replays the same matrix through `CanvasReplayer`; no backend and no
+Composable owns a document-only flip branch. `ReframeOverlay` is the existing direct-draw exception: it
+reflects its draft bitmap and reverses crop deltas on active axes so drag remains screen-directional, while
+the reducer's Reframe commit continues to take only crop/fit and preserves both flags.
+
 ## 8. Navigation (technical)
 
 Single Activity (`MainActivity`) + `navigation-compose` with type-safe `@Serializable` routes; navigation triggered from UI via `NavController`, never from a ViewModel. One-shot ViewModel events use `Channel`+`receiveAsFlow()` where exactly-once delivery matters, else `SharedFlow(replay=0)`. User-facing *target* flow map: [PRD §9](PRD.md#9-navigation-map-mvp).
@@ -645,7 +664,8 @@ path; the [privacy invariant](PRD.md#5-product-principles-non-negotiable) holds 
    `Element` is now `ImageElement | TextElement | DecorElement` and is **closed** at three
    ([ADR-105](DECISIONS.md#adr-105), [SUPPLIES-SPEC §2](design/SUPPLIES-SPEC.md)). `DecorElement`
    carries `supplyId` (a `family.name` catalogue key, never geometry and never a content hash), an
-   `ink`, and a `mirrored` flag; a supply is authored code, so it needs no asset-store entry and no GC
+   `ink`, a historical horizontal `mirrored` flag and, since [ADR-113](DECISIONS.md#adr-113), a vertical
+   flip flag; a supply is authored code, so it needs no asset-store entry and no GC
    root — which is what removed most of the cost this item anticipated.
    **Shipped in package P1:** the schema (`CURRENT_SCHEMA_VERSION` **1 → 2**, with an *identity*
    v1→v2 migrator — the bump exists so an older build fails honestly via

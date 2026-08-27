@@ -133,12 +133,13 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `the photo verbs include the frozen spread action in order`() {
+    fun `the photo verbs include Flip and the frozen spread action in order`() {
         // `Copier` is the amendment ADR-106 made to this freeze, in `v21-bench.html:690` before it was
         // made here. Order is asserted, not just membership: a permutation is the wrong bar.
         assertEquals(
             listOf(
                 Copy.BenchVerbs.REFRAME,
+                Copy.BenchVerbs.FLIP,
                 Copy.BenchVerbs.ACROSS_FOLD,
                 Copy.BenchVerbs.COPIER,
                 Copy.BenchVerbs.REPLACE,
@@ -174,6 +175,7 @@ class BenchContextBarTest {
         // first draft of this test asserted exactly that.
         for (label in listOf(
             Copy.BenchVerbs.REFRAME,
+            Copy.BenchVerbs.FLIP,
             Copy.BenchVerbs.ACROSS_FOLD,
             Copy.BenchVerbs.DUPLICATE,
             Copy.BenchVerbs.DELETE,
@@ -234,7 +236,7 @@ class BenchContextBarTest {
     }
 
     /**
-     * Given a `DecorElement`, when its verb set is asked for, then it is the frozen Replace / Ink,
+     * Given a `DecorElement`, when its verb set is asked for, A22 places Flip after Replace / Ink,
      * followed by universal Duplicate and destructive Delete.
      *
      * Replaces `the decor set fails loudly instead of defaulting to empty`, which asserted the
@@ -245,12 +247,13 @@ class BenchContextBarTest {
      * reachable one, and the thing it was really guarding — "a bar with no verbs" — is asserted below.
      */
     @Test
-    fun `the decor set includes Duplicate immediately before Delete`() {
+    fun `the decor set includes Flip and Duplicate immediately before Delete`() {
         val decor = benchContextVerbs(BenchVerbKind.DECOR).map { it.label }
         assertEquals(
             listOf(
                 Copy.BenchVerbs.REPLACE,
                 Copy.BenchVerbs.INK,
+                Copy.BenchVerbs.FLIP,
                 Copy.BenchVerbs.DUPLICATE,
                 Copy.BenchVerbs.DELETE,
             ),
@@ -275,6 +278,7 @@ class BenchContextBarTest {
         // class, which this row wore for two packages, no longer applies to any of its three controls.
         val byLabel = benchContextVerbs(BenchVerbKind.DECOR).associateBy { it.label }
         assertTrue(byLabel.getValue(Copy.BenchVerbs.REPLACE).enabled)
+        assertTrue(byLabel.getValue(Copy.BenchVerbs.FLIP).enabled)
         assertTrue(byLabel.getValue(Copy.BenchVerbs.DUPLICATE).enabled)
         assertTrue(byLabel.getValue(Copy.BenchVerbs.INK).enabled)
         assertTrue(byLabel.getValue(Copy.BenchVerbs.DELETE).enabled)
@@ -284,6 +288,7 @@ class BenchContextBarTest {
         assertTrue(byLabel.getValue(Copy.BenchVerbs.DELETE).danger)
         assertFalse(byLabel.getValue(Copy.BenchVerbs.INK).danger)
         assertFalse(byLabel.getValue(Copy.BenchVerbs.REPLACE).danger)
+        assertFalse(byLabel.getValue(Copy.BenchVerbs.FLIP).danger)
         assertFalse(byLabel.getValue(Copy.BenchVerbs.DUPLICATE).danger)
     }
 
@@ -422,6 +427,7 @@ class BenchContextBarTest {
         listOf(
             Copy.BenchVerbs.REPLACE,
             Copy.BenchVerbs.INK,
+            Copy.BenchVerbs.FLIP,
             Copy.BenchVerbs.DUPLICATE,
             Copy.BenchVerbs.DELETE,
         ).forEach { label ->
@@ -439,7 +445,7 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `the six photo verbs stay in a phone-width scrollable pill at font scale 1_8`() {
+    fun `the seven photo verbs stay in a phone-width scrollable pill at font scale 1_8`() {
         host(benchContextVerbs(BenchVerbKind.PHOTO), fontScale = 1.8f)
 
         val hostBounds = composeRule.onNodeWithTag(HOST).fetchSemanticsNode().boundsInWindow

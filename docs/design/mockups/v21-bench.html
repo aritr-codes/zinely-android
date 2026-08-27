@@ -926,6 +926,131 @@ addEventListener('keydown',e=>{
 </script>
 
 <!-- ===========================================================================
+A22 · 2026-08-27 (owner-approved, ADR-113) — turn one Photo or Art piece.
+DESIGN FROZEN 2026-08-27.
+
+A single `Flip` verb joins the selected Photo and Art context bars. It replaces
+that bar with one compact tray containing two independent toggles: `Left-right`
+and `Top-bottom`. Each tap applies immediately and is one undo step. The piece
+keeps the same box, centre, crop, rotation, z-order and asset/supply id. The axes
+belong to its own unrotated box, so a rotated piece flips without moving.
+
+Done and Back close the tray without another document change. Outside-tap follows
+the Bench's existing contextual-popover rule and clears selection. Text is
+excluded: mirrored words are not another style. Initial scope is one selected
+piece; multi-selection keeps the shared transform bar and has no Flip action.
+
+Flip is labelled. Opening focuses Left-right. Both choices are 48px+ controls
+with visible labels and `aria-pressed`; state never depends on colour or the
+canvas alone. Done returns focus to Flip. At large text the choices stack and the
+tray scrolls instead of clipping. Production exposes equivalent single-element
+custom actions whose labels say `Remove ... flip` when active.
+=========================================================================== -->
+<style>
+.flip-pop{position:absolute;left:12px;right:12px;bottom:12px;z-index:42;
+  max-height:calc(100% - 24px);overflow:auto;padding:var(--gap-md);
+  background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);
+  border-radius:var(--br-lg);box-shadow:var(--hard) var(--hard) 0 var(--ink-line);
+  opacity:0;transform:translateY(10px);pointer-events:none;
+  transition:opacity .18s,transform .18s}
+.flip-pop.show{opacity:1;transform:none;pointer-events:auto}
+.flip-pop h4{display:flex;align-items:center;justify-content:space-between;gap:var(--gap-md);
+  margin:0 0 var(--gap-sm);font:700 1.02rem var(--voice)}
+.flip-done{min-width:64px;min-height:48px;padding:0 var(--gap-md);border:1.5px solid var(--ink);
+  border-radius:var(--br-pill);background:var(--leaf);color:var(--on-leaf);
+  font:700 .78rem var(--sans);cursor:pointer}
+.flip-copy{margin:0 0 var(--gap-md);color:var(--ink-soft);font:500 .72rem/1.35 var(--sans)}
+.flip-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap-sm)}
+.flip-choice{min-height:72px;padding:var(--gap-sm);display:flex;align-items:center;
+  justify-content:center;gap:var(--gap-sm);border:1.5px solid var(--ink);
+  border-radius:var(--br-md);background:var(--paper);color:#27270F;
+  font:700 .72rem/1.15 var(--sans);cursor:pointer}
+.flip-choice svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.flip-choice[aria-pressed="true"]{background:var(--leaf);color:var(--on-leaf)}
+.flip-choice:focus-visible,.flip-done:focus-visible{outline:3px solid var(--berry);outline-offset:2px}
+.el>.photo,.el.sticker>svg{--flip-x:1;--flip-y:1;
+  transform:scale(var(--flip-x),var(--flip-y));transform-origin:center}
+.el[data-flip-x="true"]>.photo,.el.sticker[data-flip-x="true"]>svg{--flip-x:-1}
+.el[data-flip-y="true"]>.photo,.el.sticker[data-flip-y="true"]>svg{--flip-y:-1}
+@media (max-width:340px){.flip-choices{grid-template-columns:1fr}}
+</style>
+<script>
+ICON.flip=svg('<path d="M12 3v18"/><path d="M9 7 5 12l4 5"/><path d="m15 7 4 5-4 5"/>');
+const toolsForBeforeA22=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForBeforeA22(kind);
+  if(kind==='photo')return [...tools.slice(0,1),['Flip',ICON.flip,openFlip],...tools.slice(1)];
+  if(kind==='decor')return [...tools.slice(0,2),['Flip',ICON.flip,openFlip],...tools.slice(2)];
+  return tools;
+};
+
+const flipPanel=document.createElement('section');
+flipPanel.className='flip-pop'; flipPanel.id='flipPanel';
+flipPanel.setAttribute('role','dialog');
+flipPanel.setAttribute('aria-modal','false');
+flipPanel.setAttribute('aria-labelledby','flipTitle');
+flipPanel.innerHTML='<h4 id="flipTitle">Flip<button type="button" class="flip-done">Done</button></h4>'
+  +'<p class="flip-copy">Turn the selected piece over without moving it.</p>'
+  +'<div class="flip-choices">'
+  +'<button type="button" class="flip-choice" data-axis="x" aria-label="Flip left to right" aria-pressed="false">'
+  +svg('<path d="M12 3v18"/><path d="M9 7 5 12l4 5"/><path d="m15 7 4 5-4 5"/>')+'<span>Left-right</span></button>'
+  +'<button type="button" class="flip-choice" data-axis="y" aria-label="Flip top to bottom" aria-pressed="false">'
+  +svg('<path d="M3 12h18"/><path d="m7 9 5-4 5 4"/><path d="m7 15 5 4 5-4"/>')+'<span>Top-bottom</span></button>'
+  +'</div>';
+$('phone').appendChild(flipPanel);
+flipPanel.onclick=e=>e.stopPropagation();
+
+function syncFlipPanel(){
+  flipPanel.querySelectorAll('.flip-choice').forEach(button=>{
+    const on=sel&&sel.dataset[button.dataset.axis==='x'?'flipX':'flipY']==='true';
+    button.setAttribute('aria-pressed',String(!!on));
+  });
+}
+function closeFlip(returnFocus){
+  if(!flipPanel.classList.contains('show'))return;
+  flipPanel.classList.remove('show');
+  if(sel){buildCtx(sel.dataset.kind);$('ctx').classList.add('show');}
+  if(returnFocus&&sel){
+    requestAnimationFrame(()=>{
+      const button=[...$('ctx').querySelectorAll('button')].find(x=>x.textContent.trim()==='Flip');
+      if(button)button.focus();
+    });
+  }
+}
+function openFlip(){
+  if(!sel||!['photo','decor'].includes(sel.dataset.kind))return;
+  $('ctx').classList.remove('show'); $('inkpop').classList.remove('show');
+  flipPanel.classList.add('show'); syncFlipPanel();
+  flipPanel.querySelector('.flip-choice').focus();
+  cap('Flip · '+(sel.dataset.kind==='photo'?'Photo':'Art'),
+    'Turn it left to right or top to bottom. Its place and size stay put.');
+}
+flipPanel.querySelector('.flip-done').onclick=e=>{e.stopPropagation();closeFlip(true);};
+flipPanel.querySelectorAll('.flip-choice').forEach(button=>button.onclick=e=>{
+  e.stopPropagation(); if(!sel)return;
+  const key=button.dataset.axis==='x'?'flipX':'flipY';
+  const before=sel.dataset[key]==='true';
+  const target=sel;
+  target.dataset[key]=String(!before); syncFlipPanel();
+  const axis=key==='flipX'?'left to right':'top to bottom';
+  toast((!before?'Flipped ':'Flip removed · ')+axis,true);
+  $('undoSnack').onclick=event=>{
+    event.stopPropagation();target.dataset[key]=String(before);syncFlipPanel();
+    $('snack').classList.remove('show');toast('Put back',false);
+  };
+});
+
+const deselectBeforeA22=deselect;
+deselect=function(){flipPanel.classList.remove('show');deselectBeforeA22();};
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&flipPanel.classList.contains('show')){
+    e.preventDefault();e.stopImmediatePropagation();closeFlip(true);
+  }
+},true);
+</script>
+
+<!-- ===========================================================================
 A18 · 2026-08-26 (D-065 stakeholder page-navigation ruling) — the larger page
 chooser shows the pages, not blank stand-ins. DESIGN FROZEN 2026-08-26.
 
@@ -2061,5 +2186,19 @@ $('undoSnack').onclick=e=>{
   if(!bin||!bin.duplicate)return undoSnackBeforeA21(e);
   e.stopPropagation();const original=bin.original;bin.duplicate.remove();bin=null;
   select(original);$('snack').classList.remove('show');toast('Duplicate undone',false);
+};
+</script>
+
+<script>
+// A22 is the latest contextual-bar ruling even though its self-contained prototype block sits beside
+// the original design amendments above. Re-assert its final order after A19/A21 have added their verbs.
+const toolsForA22FrozenOrder=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForA22FrozenOrder(kind);
+  if(!['photo','decor'].includes(kind))return tools;
+  const flip=tools.find(tool=>tool[0]==='Flip');
+  const without=tools.filter(tool=>tool[0]!=='Flip');
+  const at=kind==='photo'?1:2;
+  return [...without.slice(0,at),flip,...without.slice(at)];
 };
 </script>

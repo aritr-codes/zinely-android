@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
@@ -143,8 +144,20 @@ public fun ReframeOverlay(
                     val frameWpx = element.transform.widthPt * screenPxPerPt
                     val frameHpx = element.transform.heightPt * screenPxPerPt
                     val (cw0, ch0) = Framing.coverExtent(pratio, bratio)
-                    val fx = if (frameWpx > 0f) -pan.x * (cw0 / d.zoom) / frameWpx else 0.0
-                    val fy = if (frameHpx > 0f) -pan.y * (ch0 / d.zoom) / frameHpx else 0.0
+                    val fx = reframePanFraction(
+                        panPx = pan.x,
+                        coverExtent = cw0,
+                        zoom = d.zoom,
+                        framePx = frameWpx,
+                        flipped = element.flippedHorizontally,
+                    )
+                    val fy = reframePanFraction(
+                        panPx = pan.y,
+                        coverExtent = ch0,
+                        zoom = d.zoom,
+                        framePx = frameHpx,
+                        flipped = element.flippedVertically,
+                    )
                     onDraft(Framing.panned(d, fx, fy, pratio, bratio))
                 }
             },
@@ -163,11 +176,23 @@ public fun ReframeOverlay(
             // drawing nothing beats drawing a lie (Observation O-1).
             val dst = if (framable) photoDestPx(draft, frame, pratio, bratio) else null
             if (dst != null && decoded != null && dst.width >= 1f && dst.height >= 1f) {
-                drawImage(
-                    image = decoded.bitmap,
-                    dstOffset = IntOffset(dst.left.roundToInt(), dst.top.roundToInt()),
-                    dstSize = IntSize(dst.width.roundToInt(), dst.height.roundToInt()),
-                )
+                withTransform({
+                    scale(
+                        scaleX = if (element.flippedHorizontally) -1f else 1f,
+                        scaleY = if (element.flippedVertically) -1f else 1f,
+                        pivot = center,
+                    )
+                }) {
+                    drawImage(
+                        image = decoded.bitmap,
+                        dstOffset = IntOffset(dst.left.roundToInt(), dst.top.roundToInt()),
+                        dstSize = IntSize(dst.width.roundToInt(), dst.height.roundToInt()),
+                    )
+                    // The dim belongs to the cropped-away photo, so it reflects with that photo too.
+                    for (r in photoScrimRectsPx(dst, frame)) {
+                        drawRect(scrim, topLeft = r.topLeft, size = r.size)
+                    }
+                }
             }
             // 2) Scrim the PHOTO'S OVERFLOW ONLY — `dst - frame`, never the stage.
             //
@@ -189,9 +214,7 @@ public fun ReframeOverlay(
             // deviates is that these rects are square while the frame is rounded, so in each 4dp corner arc
             // a sliver of photo paints outside the ground and outside the boundary, undimmed. Clipping the
             // photo to a rounded rect and drawing it twice would close it, and is not worth 4dp of corner.
-            if (dst != null) {
-                for (r in photoScrimRectsPx(dst, frame)) drawRect(scrim, topLeft = r.topLeft, size = r.size)
-            }
+            // Drawn with the photo above so reflection cannot leave the overflow dim on the old side.
             // 3) The drawn boundary — `.frame::after{border:1.6px dashed var(--ink);border-radius:var(--br-xs)}`.
             val dashPx = SelectionOutlineDashDp.toPx()
             drawRoundRect(
@@ -217,6 +240,19 @@ public fun ReframeOverlay(
             }
         }
     }
+}
+
+/** Screen-directional drag converted into crop-fraction movement for one possibly reflected axis. */
+internal fun reframePanFraction(
+    panPx: Float,
+    coverExtent: Double,
+    zoom: Double,
+    framePx: Double,
+    flipped: Boolean,
+): Double {
+    if (framePx <= 0.0 || !coverExtent.isFinite() || !zoom.isFinite() || zoom <= 0.0) return 0.0
+    val unflipped = -panPx * (coverExtent / zoom) / framePx
+    return if (flipped) -unflipped else unflipped
 }
 
 /** A decoded photo + its aspect (`w/h`). */

@@ -7,6 +7,9 @@ import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
 
+/** One element-local reflection axis (ADR-113). */
+public enum class FlipAxis { HORIZONTAL, VERTICAL }
+
 /**
  * Editor intents (ADR-029 §2.2). Each folds purely into a new [EditorModel] via [EditorReducer.reduce].
  * `UpdateTransform` is deliberately absent — live drag frames are preview-only via `graphicsLayer{}` and
@@ -137,6 +140,12 @@ public sealed interface Intent {
     /** Turn the photocopier filter (X3b, ADR-106) on or off for one photo. One undoable command, and
      *  its own inverse; no-op if [id] names nothing or names a text element. */
     public data class ToggleCopier(val id: String) : Intent
+
+    /**
+     * Toggle one reflection axis on a Photo or Art element. Text, missing ids and off-page ids are
+     * no-ops. Each accepted tap is one typed edit command, one autosave and one undo step (ADR-113).
+     */
+    public data class ToggleFlip(val id: String, val axis: FlipAxis) : Intent
 
     /**
      * Turn one placed photo into the current page's half of a fixed mini-zine spread and add the other

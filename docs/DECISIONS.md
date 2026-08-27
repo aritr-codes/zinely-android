@@ -122,6 +122,7 @@
 | [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
 | [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
+| [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12781,3 +12782,93 @@ The Android proof is `EmojiRenderingInstrumentedTest`; JVM/Robolectric remains t
 complete Emoji2's bundled asset-font load. The renderer test also holds a 32-MiB load-memory ceiling, a 500-ms
 warm-render ceiling and a relative plain/emoji cost discriminator. No UI control, Art supply or document schema was
 added.
+
+## ADR-113 {#adr-113}
+
+### Turn the piece, not the workspace — mobile flip for Photos and Art
+
+**Status:** Accepted — owner-approved and DESIGN FROZEN 2026-08-27  
+**Date:** 2026-08-27 — **Supersedes:** nothing — **Extends:** [ADR-006](#adr-006),
+[ADR-020](#adr-020), [ADR-027](#adr-027), [ADR-029](#adr-029), [ADR-105](#adr-105)
+
+#### The smallest mobile answer
+
+The Bench answers *“How do I change this piece?”*, not with a desktop properties panel, but with
+[A22 in the canonical Bench prototype](design/mockups/v21-bench.html):
+
+1. A single selected **Photo** or **Art** element gains one labelled **Flip** verb. Text is excluded;
+   mirrored words are not another text style.
+2. Flip replaces the element-verb pill with a compact tray containing two independent, immediately
+   applied toggles: **Left-right** and **Top-bottom**. Each toggle is one reducer action, one autosave and
+   one undo entry; tapping an active toggle removes it. Done and Back close the tray without mutating the
+   document.
+3. The axes are the element's own unrotated box axes. Reflection changes content inside that box; it does
+   not move the box, alter rotation or crop, change z-order, replace an asset, or change Art supply/ink.
+4. Initial scope is exactly one selected element. Multi-selection keeps its existing shared transform bar
+   and exposes no Flip verb or flip custom actions. Group-axis reflection is a separate future feature.
+
+These interaction, scope and schema consequences were explicitly approved by the owner on 2026-08-27.
+A22 is therefore frozen before Compose implementation, as required by the HTML-first workflow.
+
+#### Persistence and downgrade protection
+
+The smallest wire change is:
+
+| Element | Existing field kept | Additive fields | Meaning |
+|---|---|---|---|
+| `ImageElement` | — | `flippedHorizontally: Boolean = false`, `flippedVertically: Boolean = false` | reflect photo content inside its box |
+| `DecorElement` | `mirrored: Boolean = false` | `flippedVertically: Boolean = false` | `mirrored` remains the historical horizontal wire field |
+| `TextElement` | unchanged | none | text is not flippable |
+
+Renaming `mirrored` is rejected: it would add a migration and wire alias only for symmetry. Negative
+dimensions are also rejected because `Transform` requires positive width/height, and rewriting image bytes
+would violate content-addressed, reversible asset semantics.
+
+The document schema moves **v2 → v3** through the existing contiguous identity-migrator chain. Defaults make
+the forward migration structurally empty, but the version gate is load-bearing: an older build must refuse a
+v3 document before it can ignore the flip keys and save the zine back unflipped. Existing v2 documents migrate
+with every new flag false; existing `mirrored=true` remains a horizontal Art flip. Backup manifests already
+carry the document schema version and inherit the same gate.
+
+#### Reducer and undo
+
+One pure `FlipAxis` (`HORIZONTAL`, `VERTICAL`) and `Intent.ToggleFlip(id, axis)` are sufficient. The reducer
+resolves the current page only: Photo commits one `EditImageCommand`; Art maps horizontal to `mirrored` and
+vertical to `flippedVertically`, committing one `EditDecorCommand`. Text, missing ids and off-page ids are
+no-ops with no history or autosave. Undo/redo restore the complete typed element.
+
+#### Shared render invariant
+
+Reflection is folded into each command's `localToPage` inside `SceneRenderer`, before every Android backend:
+
+```text
+Photo: translate + rotate-about-centre + reflect-in-local-box
+Art:   translate + rotate-about-centre + scale-unit-square-to-box + reflect-in-unit-square
+```
+
+The transforms are `x -> width - x` / `y -> height - y` for Photo and their unit-square equivalents for
+Art. `DrawImage`, `DrawShape`, `CanvasReplayer`, preview, page thumbnails, raster and PDF gain no separate
+flip branch. The local clip moves with the content, crop remains a source-region decision, and
+`CanvasReplayer.uniformScale()` already uses `sqrt(abs(determinant))`, so reflection cannot reduce decode
+resolution. A Compose-only `graphicsLayer(scaleX = -1f)` document effect is forbidden.
+
+`ReframeOverlay` is the one direct-draw exception. It must show an already-flipped photo honestly and invert
+pan deltas on active axes so dragging the visible photo right/down still moves it right/down. Reframe commits
+only crop/fit and preserves both flip flags.
+
+#### Accessibility contract
+
+- Flip, Left-right, Top-bottom and Done are text labels. Toggle state is visible and exposed semantically.
+- Controls are at least 48 dp. At large text they grow or stack and the tray scrolls rather than clipping.
+- Opening focuses Left-right; Done and Back close the tray and return focus to Flip. Outside-tap follows the
+  existing contextual-popover rule and clears selection.
+- A Photo or Art element receives matching custom actions. Active labels become **Remove left-right flip**
+  and **Remove top-bottom flip**. Text, multi-selection and Reframe expose neither.
+- The change is immediate and has no decorative flip animation; reduced motion needs no special branch.
+
+#### Verification gate
+
+Acceptance requires v2→v3 migration/round-trip/anti-downgrade tests; reducer no-op and one-step undo/redo
+proofs; asymmetric X/Y/X+Y render matrices for Photo and Art; Reframe orientation and screen-directional pan;
+Compose order/state/focus/large-text and platform-tree checks; shared preview/raster/PDF evidence; both Samsung
+device passes; and independent review of the actual repository state.

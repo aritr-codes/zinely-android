@@ -64,6 +64,7 @@ import com.aritr.zinely.ui.theme.rememberReduceMotion
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.EditorUiState
 import com.aritr.zinely.core.editor.FramingMath
+import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
 import com.aritr.zinely.core.editor.LiveTransform
@@ -496,6 +497,10 @@ public fun EditorScreen(
     // Type-bar visibility is surface-only state (a disclosure flag, not a styling draft): the bar is
     // non-modal and the reducer neither knows nor needs to know it is open.
     var typeBarOpen by remember { mutableStateOf(false) }
+    var flipTrayFor by remember { mutableStateOf<String?>(null) }
+    var flipReturnPending by remember { mutableStateOf(false) }
+    val flipVerbFocus = remember { FocusRequester() }
+    val flipFirstFocus = remember { FocusRequester() }
     // Back stands the panel down instead of leaving the editor — the same rule the page grid and the ink
     // popover already follow, and the same reason: a prototype has no Back, so the freeze cannot specify
     // it, and an overlay you summoned is one Android expects Back to dismiss.
@@ -616,6 +621,9 @@ public fun EditorScreen(
         }
     }
     val ctxKind = ctxElement?.let { benchVerbKindOf(it) }
+    val flipTarget = ctxElement?.takeIf { it is ImageElement || it is DecorElement }
+    val flipTrayVisible = flipTrayFor != null && flipTrayFor == flipTarget?.id &&
+        benchStateOf(uiState.selection, uiState.interaction, addChooserOpen || artSheetOpen) == BenchState.Selected
     // The element `.inkpop` can actually recolour, resolved ONCE for the three sites that need it —
     // the `Ink` verb's routing, the popover's own visibility, and the F-5 clearance term. See
     // [benchInkTargetOf] for why the routing has to consult it rather than opening unconditionally.
@@ -633,6 +641,11 @@ public fun EditorScreen(
     // summoned is one Android expects Back to dismiss. Enabled on the *derived* visibility, so Back can
     // never be captured by a popover that is not on screen.
     BackHandler(enabled = inkPopoverVisible) { inkPopoverFor = null }
+    val closeFlipTray = {
+        flipTrayFor = null
+        flipReturnPending = true
+    }
+    BackHandler(enabled = flipTrayVisible) { closeFlipTray() }
     // C9 row 9.1: the Bench's four states, derived in one place. The `!EditingText` term spelled out here
     // is subsumed by `benchState == Selected`; `ctxKind != null` stays, because it asks a different
     // question (a single element, of a kind the freeze gives verbs to). So the one behavioural change is
@@ -654,8 +667,19 @@ public fun EditorScreen(
         // it (`v2-bench.html:692`, `:697`). Two floating cards share this 12dp inset, so one of them is
         // always the one that is up.
         !inkPopoverVisible &&
+        !flipTrayVisible &&
         spreadPhotoId == null
     var contextBarHeight by remember { mutableStateOf(BenchContextBarReservedHeightDp) }
+
+    LaunchedEffect(ctxElement?.id) {
+        if (ctxElement?.id != flipTrayFor) flipTrayFor = null
+    }
+    LaunchedEffect(ctxVisible, flipReturnPending) {
+        if (ctxVisible && flipReturnPending) {
+            runCatching { flipVerbFocus.requestFocus() }
+            flipReturnPending = false
+        }
+    }
 
     // The popover belongs to the element that summoned it. Any change of that element — a reselect, a
     // deselect, a page change, a delete — stands it down, which is the freeze doing the same at four
@@ -1657,6 +1681,10 @@ public fun EditorScreen(
                             // X3b (ADR-106): a toggle, so tapping it again is the undo the user reaches
                             // for first — and Undo is the one they reach for second. Both work.
                             Copy.BenchVerbs.COPIER -> if (id != null) dispatch(Intent.ToggleCopier(id))
+                            Copy.BenchVerbs.FLIP -> if (ctxElement is ImageElement || ctxElement is DecorElement) {
+                                flipTrayFor = ctxElement.id
+                                flipReturnPending = false
+                            }
                             Copy.BenchVerbs.DUPLICATE -> if (id != null) {
                                 dispatch(Intent.DuplicateElement(id, pageSizePt))
                                 deleteJob[0]?.cancel()
@@ -1683,7 +1711,48 @@ public fun EditorScreen(
                     onHeightChanged = { measured ->
                         contextBarHeight = maxOf(BenchContextBarReservedHeightDp, measured)
                     },
+                    focusRequesterForLabel = { label ->
+                        flipVerbFocus.takeIf { label == Copy.BenchVerbs.FLIP }
+                    },
                     modifier = ctxModifier,
+                )
+
+                FlipTray(
+                    visible = flipTrayVisible,
+                    element = flipTarget,
+                    onToggle = { axis ->
+                        val target = flipTarget ?: return@FlipTray
+                        val wasOn = when (target) {
+                            is ImageElement -> if (axis == FlipAxis.HORIZONTAL) {
+                                target.flippedHorizontally
+                            } else {
+                                target.flippedVertically
+                            }
+                            is DecorElement -> if (axis == FlipAxis.HORIZONTAL) {
+                                target.mirrored
+                            } else {
+                                target.flippedVertically
+                            }
+                            else -> false
+                        }
+                        dispatch(Intent.ToggleFlip(target.id, axis))
+                        deleteJob[0]?.cancel()
+                        snackMessage = when (axis to wasOn) {
+                            FlipAxis.HORIZONTAL to false -> Copy.Snack.FLIPPED_LEFT_RIGHT
+                            FlipAxis.HORIZONTAL to true -> Copy.Snack.LEFT_RIGHT_FLIP_REMOVED
+                            FlipAxis.VERTICAL to false -> Copy.Snack.FLIPPED_TOP_BOTTOM
+                            else -> Copy.Snack.TOP_BOTTOM_FLIP_REMOVED
+                        }
+                        snackAction = UndoActionLabel
+                        snackVisible = true
+                        deleteJob[0] = c4Scope.launch {
+                            delay(BenchSnackDeleteMillis)
+                            snackVisible = false
+                        }
+                    },
+                    onDone = closeFlipTray,
+                    firstFocusRequester = flipFirstFocus,
+                    modifier = ctxModifier.zIndex(1f),
                 )
 
                 // C6 rows 6.1-6.14: the frozen `.inkpop` (`v2-bench.html:377-390`, markup `:506`).
