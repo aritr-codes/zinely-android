@@ -227,6 +227,24 @@ class BenchContextBarTest {
     }
 
     @Test
+    fun `Copier adds a visible state cue only while on`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO, copierOn = true))
+        composeRule.onNodeWithTag(
+            benchVerbStateCueTag(Copy.BenchVerbs.COPIER),
+            useUnmergedTree = true,
+        ).assertExists()
+    }
+
+    @Test
+    fun `Copier off removes the visible state cue`() {
+        host(benchContextVerbs(BenchVerbKind.PHOTO, copierOn = false))
+        composeRule.onNodeWithTag(
+            benchVerbStateCueTag(Copy.BenchVerbs.COPIER),
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
+    }
+
+    @Test
     fun `the universal Duplicate and Delete are the only verbs shared by text and photo`() {
         val text = benchContextVerbs(BenchVerbKind.TEXT).map { it.label }.toSet()
         val photo = benchContextVerbs(BenchVerbKind.PHOTO).map { it.label }.toSet()

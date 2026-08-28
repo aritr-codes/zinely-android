@@ -104,6 +104,7 @@ class ZineActionSheetTest {
         /** `border-top:1px solid var(--hair)` · `.danger{border-top:8px solid var(--desk)}` */
         /** `.sh-head{border-bottom:1.5px dashed var(--hair)}` — the sheet's one divider. */
         const val HEAD_DIVIDER = 1.5f
+        const val DANGER_DIVIDER = 8f
 
         /** `.sh-ttl{font-family:var(--voice);font-size:1.22rem;font-weight:700}` — 19.52px in Averia. */
         val TITLE_SIZE = 19.52.sp
@@ -292,7 +293,7 @@ class ZineActionSheetTest {
     }
 
     @Test
-    fun `the head is the sheet's only divider, and Delete is set apart by colour alone`() {
+    fun `Delete has an eight pixel non-colour safety boundary`() {
         surface()
         // `.sh-head{border-bottom:1.5px dashed var(--hair)}` — one divider, under the header.
         val divider = composeRule.onNodeWithTag(ZineActionHeadDividerTestTag)
@@ -306,24 +307,27 @@ class ZineActionSheetTest {
         val title = composeRule.onNodeWithTag(ZineActionTitleTestTag).fetchSemanticsNode().boundsInRoot
         assertTrue("and it sits below the header, not above it", divider.top > title.bottom)
 
-        // **And nothing separates the rows.** V2's `.act` carried `border-top:1px solid var(--hair)`
-        // and Delete carried `border-top:8px solid var(--desk)` — a band of the desk showing through
-        // the sheet, so the destructive row sat visibly apart. V2.1 writes `.act{border:none}`.
-        //
-        // Asserted as an *absence*, and asserted by geometry rather than by the missing tag: the five
-        // rows stack with no gap at all, so any separator would show up as a gap between them. A test
-        // that only checked the tag was gone would pass against a separator drawn some other way.
+        val dangerDivider = composeRule.onNodeWithTag(ZineActionDangerDividerTestTag)
+            .fetchSemanticsNode().boundsInRoot
+        assertEquals(
+            "the destructive boundary is ${DANGER_DIVIDER}px",
+            DANGER_DIVIDER,
+            dangerDivider.height,
+            HALF_PIXEL,
+        )
         val rows = ZineAction.entries.map {
             composeRule.onNodeWithTag(zineActionTestTag(it)).fetchSemanticsNode().boundsInRoot
         }
-        rows.zipWithNext().forEach { (above, below) ->
+        rows.zipWithNext().dropLast(1).forEach { (above, below) ->
             assertEquals(
-                "the rows touch — no border, no band, no gap",
+                "reversible rows remain grouped",
                 above.bottom,
                 below.top,
                 HALF_PIXEL,
             )
         }
+        assertEquals(rows[3].bottom, dangerDivider.top, HALF_PIXEL)
+        assertEquals(dangerDivider.bottom, rows[4].top, HALF_PIXEL)
     }
 
     @Test

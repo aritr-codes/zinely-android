@@ -77,6 +77,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 
 /** Test tag on the frozen verb bar; absent from the tree when it is not showing. */
 internal const val BenchContextBarTestTag: String = "bench-context-bar"
+internal fun benchVerbStateCueTag(label: String): String = "$BenchContextBarTestTag-$label-cue"
 
 /**
  * What the selected element is, for the purpose of choosing verbs. The freeze's `toolsFor()` branches
@@ -461,7 +462,7 @@ private fun BenchVerbButton(
     // Delete is the one verb that cannot be taken back by pressing it again — Boundary says so in the
     // hand before the snackbar says it in words. Every other verb is an ordinary action.
     val fire = benchTap(if (verb.danger) ZinelyHaptic.Boundary else ZinelyHaptic.Tick, onClick)
-    Column(
+    Box(
         modifier = modifier
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
             .then(
@@ -525,25 +526,37 @@ private fun BenchVerbButton(
                 horizontal = BenchContextBarButtonHorizontalPaddingDp,
                 vertical = BenchContextBarButtonPaddingDp,
             ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(BenchContextBarLabelGapDp, Alignment.CenterVertically),
     ) {
-        Icon(
-            imageVector = verb.icon,
-            contentDescription = null,
-            // No second alpha: the layer above already carries the frozen `.35` for the whole control.
-            tint = tint,
-            modifier = Modifier.size(BenchContextBarIconDp),
-        )
-        Text(
-            text = verb.label,
-            color = tint,
-            fontSize = BenchContextBarLabelSp,
-            // `.ctx button{font-weight:600}` — V2 asked for 500.
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = ZinelyV21Fonts.Work,
-            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-        )
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(BenchContextBarLabelGapDp, Alignment.CenterVertically),
+        ) {
+            Icon(
+                imageVector = verb.icon,
+                contentDescription = null,
+                // No second alpha: the layer above already carries the frozen `.35` for the whole control.
+                tint = tint,
+                modifier = Modifier.size(BenchContextBarIconDp),
+            )
+            Text(
+                text = verb.label,
+                color = tint,
+                fontSize = BenchContextBarLabelSp,
+                // `.ctx button{font-weight:600}` — V2 asked for 500.
+                fontWeight = FontWeight.SemiBold,
+                fontFamily = ZinelyV21Fonts.Work,
+                lineHeight = ZinelyV21Fonts.InheritedLineHeight,
+            )
+        }
+        if (checkedOn) {
+            EditorSelectionCue(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 2.dp, end = 2.dp)
+                    .testTag(benchVerbStateCueTag(verb.label)),
+            )
+        }
     }
 }
 

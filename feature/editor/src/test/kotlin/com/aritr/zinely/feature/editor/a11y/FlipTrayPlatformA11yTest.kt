@@ -8,11 +8,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Transform
+import com.aritr.zinely.feature.editor.FlipDoneTestTag
 import com.aritr.zinely.feature.editor.FlipTray
 import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
@@ -67,6 +69,7 @@ class FlipTrayPlatformA11yTest {
             .onNodeWithContentDescription(Copy.A11y.FLIP_TOP_BOTTOM)
             .platformNode(composeRule.activity)
         val floor = with(composeRule.density) { 48.dp.toPx() }
+        val compactCeiling = with(composeRule.density) { 64.dp.toPx() }
 
         assertEquals(Copy.A11y.FLIP_LEFT_RIGHT, horizontal.contentDescription)
         assertEquals(Copy.A11y.FLIP_TOP_BOTTOM, vertical.contentDescription)
@@ -79,6 +82,31 @@ class FlipTrayPlatformA11yTest {
                 "Flip target is ${node.boundsInScreen.width()}×${node.boundsInScreen.height()}px, under 48dp",
                 node.boundsInScreen.width() >= floor - 1f && node.boundsInScreen.height() >= floor - 1f,
             )
+            assertTrue(
+                "Flip target is ${node.boundsInScreen.height()}px tall, no longer compact at default text scale",
+                node.boundsInScreen.height() <= compactCeiling + 1f,
+            )
         }
+    }
+
+    @Test
+    fun done_is_a_named_clickable_platform_control_with_a_compact_target() {
+        render()
+        val done = composeRule
+            .onNodeWithTag(FlipDoneTestTag)
+            .platformNode(composeRule.activity)
+        val floor = with(composeRule.density) { 48.dp.toPx() }
+        val compactCeiling = with(composeRule.density) { 56.dp.toPx() }
+
+        assertEquals(Copy.Editor.DONE, done.contentDescription)
+        assertTrue(done.isEnabled && done.isClickable)
+        assertTrue(
+            "Done target is ${done.boundsInScreen.height()}px tall, under 48dp",
+            done.boundsInScreen.height() >= floor - 1f,
+        )
+        assertTrue(
+            "Done target is ${done.boundsInScreen.height()}px tall, no longer compact at default text scale",
+            done.boundsInScreen.height() <= compactCeiling + 1f,
+        )
     }
 }

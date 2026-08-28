@@ -75,11 +75,13 @@ class BenchArtSheetTest {
         val family = Copy.Supplies.CUT_SHAPES
         composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).performScrollTo().performClick()
         composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("5 pieces")
+        composeRule.onNodeWithTag(benchArtFamilyCueTestTag(family), useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).assertExists()
         composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).assertDoesNotExist()
 
         composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).performScrollTo().performClick()
         composeRule.onNodeWithTag(BenchArtResultCountTestTag).assertTextEquals("32 pieces")
+        composeRule.onNodeWithTag(benchArtFamilyCueTestTag(family), useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).assertExists()
     }
 

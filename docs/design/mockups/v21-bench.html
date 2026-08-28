@@ -961,7 +961,7 @@ custom actions whose labels say `Remove ... flip` when active.
   font:700 .78rem var(--sans);cursor:pointer}
 .flip-copy{margin:0 0 var(--gap-md);color:var(--ink-soft);font:500 .72rem/1.35 var(--sans)}
 .flip-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap-sm)}
-.flip-choice{min-height:72px;padding:var(--gap-sm);display:flex;align-items:center;
+.flip-choice{min-height:56px;padding:var(--gap-sm);display:flex;align-items:center;
   justify-content:center;gap:var(--gap-sm);border:1.5px solid var(--ink);
   border-radius:var(--br-md);background:var(--paper);color:#27270F;
   font:700 .72rem/1.15 var(--sans);cursor:pointer}
@@ -2202,3 +2202,26 @@ toolsFor=function(kind){
   return [...without.slice(0,at),flip,...without.slice(at)];
 };
 </script>
+
+<!-- ===========================================================================
+A23 · 2026-08-28 (bug fix + accessibility) — compact stateful controls stay
+compact and never say "on" by colour alone.
+
+Device review found the Compose A22 choices reading taller than the frozen 56px
+resting height because their inner padding was stacked on top of the floor. The
+same pass also left three Bench controls relying on colour alone for their
+active state: Flip choices, Copier, and the Art family filter pills. The fix is
+post-freeze accessibility work, not a redesign: the 56px resting choice stays
+48px+ touchable and gains one small paper check tucked into the corner when
+active. The same visible cue is reused for the other editor toggles so state
+survives greyscale, glare, and low-colour perception.
+=========================================================================== -->
+<style>
+.flip-choice,.ctx button,.art-family{position:relative}
+.flip-choice{padding:6px var(--gap-sm)}
+.flip-choice[aria-pressed="true"]::after,.ctx button.on::after,.art-family.on::after{
+  content:"✓";position:absolute;top:6px;right:6px;width:20px;height:20px;display:grid;place-items:center;
+  border:2px solid var(--ink);border-radius:999px;background:var(--paper);color:var(--ink);
+  font:700 .72rem/1 var(--sans)
+}
+</style>

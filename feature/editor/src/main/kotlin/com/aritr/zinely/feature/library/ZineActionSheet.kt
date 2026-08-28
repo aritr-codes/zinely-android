@@ -77,14 +77,12 @@ import kotlin.math.roundToInt
  * at the draw site: a row's icon is not a decoration chosen by the renderer, it is part of what the
  * design says that row *is*. All five survive the re-freeze unchanged, glyphs included.
  *
- * ### ⚠️ Delete is now separated **only** by colour
+ * ### Delete has a non-colour safety boundary
  *
  * V2's `.act.danger` traded the 1px hairline every other row carried for `border-top:8px solid
  * var(--desk)` — a band of the desk showing through the sheet, so the destructive row sat visibly
- * apart. V2.1's `.act` writes `border:none` and the danger row differs by ink alone (`jam-text`, and a
- * `berry-tint` icon chip instead of `butter-tint`). Transcribed as frozen, and **recorded**: separation
- * by position is a stronger guard against a mis-tap than separation by hue, and colour alone is the
- * weaker signal for anyone who cannot distinguish the two tints.
+ * apart. V2.1 originally removed that band and left consequence colour as the only distinction.
+ * Accessibility amendment A24 restores the 8px desk band, retaining the consequence ink and icon tint.
  *
  * @property label the row's spoken and printed text, verbatim from the frozen markup.
  * @property glyph the frozen `.ic` character. Three of these six codepoints (counting the shelf's `⋯`)
@@ -131,6 +129,9 @@ internal fun zineActionTestTag(action: ZineAction): String = "zine-action-${acti
 
 /** `.sh-head{border-bottom:1.5px dashed var(--hair)}` — the sheet's one divider. */
 internal const val ZineActionHeadDividerTestTag: String = "zine-action-head-divider"
+
+/** A24: the non-colour safety boundary immediately before the destructive action. */
+internal const val ZineActionDangerDividerTestTag: String = "zine-action-danger-divider"
 
 /** `.grab` — the handle. */
 internal const val ZineActionGrabTestTag: String = "zine-action-grab"
@@ -418,6 +419,15 @@ internal fun ZineActionSheetSurface(
         )
 
         ZineAction.entries.forEach { action ->
+            if (action.danger) {
+                Box(
+                    Modifier
+                        .testTag(ZineActionDangerDividerTestTag)
+                        .fillMaxWidth()
+                        .height(DangerDivider)
+                        .background(colors.desk),
+                )
+            }
             ActionRow(
                 action = action,
                 enabled = target.isEnabled(action),
@@ -581,6 +591,9 @@ private val HeadPadding = PaddingValues(
 /** `border-bottom:1.5px dashed var(--hair)`; the dash rhythm is a browser default, approximated. */
 private val HeadDivider = 1.5.dp
 private val HeadDividerDash = 3.dp
+
+/** A24: the destructive row is separated by position as well as consequence colour. */
+private val DangerDivider = 8.dp
 
 /** `.sh-ttl{font-size:1.22rem;line-height:1.15}` — 19.52px, unrounded. */
 private val TitleSize = 19.52.sp

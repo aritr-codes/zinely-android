@@ -10,11 +10,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.render.SupplyCatalog
 import com.aritr.zinely.feature.editor.BenchArtSearchTestTag
 import com.aritr.zinely.feature.editor.BenchArtSheetBody
 import com.aritr.zinely.feature.editor.benchArtFavouriteTestTag
+import com.aritr.zinely.feature.editor.benchArtFamilyFilterTestTag
 import com.aritr.zinely.feature.editor.benchArtTileTestTag
 import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.a11y.platformTraversalStops
@@ -119,6 +121,31 @@ class BenchArtSheetPlatformA11yTest {
         assertEquals(2, checkedCopies.fetchSemanticsNodes().size)
         assertTrue(checkedCopies[0].platformNode(composeRule.activity).isChecked)
         assertTrue(checkedCopies[1].platformNode(composeRule.activity).isChecked)
+    }
+
+    @Test
+    fun family_filter_exposes_name_selection_and_a_full_touch_target_to_the_platform() {
+        render()
+        val family = Copy.Supplies.CUT_SHAPES
+        val control = composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family)).performScrollTo()
+        val unselected = control.platformNode(composeRule.activity)
+        val targetFloor = with(composeRule.density) { 48.dp.toPx() }
+
+        assertEquals(family, unselected.contentDescription?.toString())
+        assertTrue(unselected.isEnabled && unselected.isClickable)
+        assertTrue(!unselected.isSelected)
+        assertEquals("Not selected", unselected.stateDescription?.toString())
+        assertTrue(unselected.boundsInScreen.height() >= targetFloor - 1f)
+
+        control.performClick()
+        composeRule.waitForIdle()
+        assertEquals(
+            "Selected",
+            composeRule.onNodeWithTag(benchArtFamilyFilterTestTag(family))
+                .platformNode(composeRule.activity)
+                .stateDescription
+                ?.toString(),
+        )
     }
 
 }

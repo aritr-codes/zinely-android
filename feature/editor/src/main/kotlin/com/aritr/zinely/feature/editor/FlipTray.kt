@@ -9,8 +9,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +21,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.toggleable
@@ -26,13 +30,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.SwapVert
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +50,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.testTag as semanticsTestTag
@@ -54,11 +59,13 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.FlipAxis
 import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.Element
 import com.aritr.zinely.core.model.ImageElement
+import com.aritr.zinely.ui.components.zinelyFocusRing
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
@@ -68,6 +75,8 @@ internal const val FlipTrayTestTag = "flip-tray"
 internal const val FlipLeftRightTestTag = "flip-left-right"
 internal const val FlipTopBottomTestTag = "flip-top-bottom"
 internal const val FlipDoneTestTag = "flip-done"
+private val FlipChoiceVerticalPadding = 6.dp
+private val FlipChoiceCueInset = 6.dp
 
 /** Frozen Bench A22: one compact, immediately-applied two-axis tray for one Photo or Art piece. */
 @Composable
@@ -96,6 +105,7 @@ internal fun FlipTray(
                     .padding(12.dp)
                     .heightIn(max = maxHeight - 24.dp)
                     .pointerInput(Unit) { detectTapGestures { } }
+                    .semantics { paneTitle = Copy.Editor.FLIP }
                     .testTag(FlipTrayTestTag),
                 color = colors.surface,
                 contentColor = colors.ink,
@@ -119,17 +129,12 @@ internal fun FlipTray(
                             fontFamily = ZinelyV21Fonts.Voice,
                             fontWeight = FontWeight.Bold,
                         )
-                        Button(
+                        FlipDoneButton(
                             onClick = onDone,
+                            testTag = FlipDoneTestTag,
                             modifier = Modifier
-                                .defaultMinSize(minWidth = 64.dp, minHeight = 48.dp)
-                                .testTag(FlipDoneTestTag),
-                            shape = RoundedCornerShape(percent = 50),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.leaf,
-                                contentColor = colors.onLeaf,
-                            ),
-                        ) { Text(Copy.Editor.DONE) }
+                                .defaultMinSize(minWidth = 64.dp, minHeight = 48.dp),
+                        )
                     }
                     Text(
                         text = Copy.Editor.FLIP_HELP,
@@ -205,14 +210,30 @@ private fun FlipChoice(
 ) {
     val colors = ZinelyTheme.v21Colors
     val content = if (checked) colors.onLeaf else Color(0xFF27270F)
-    Row(
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = 72.dp)
+            .defaultMinSize(minHeight = 56.dp)
             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
-            .background(if (checked) colors.leaf else colors.paper, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
-            .border(1.5.dp, colors.ink, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
-            .toggleable(value = checked, role = Role.Button) { onToggle(axis) }
+            .zinelyFocusRing(interaction, ZinelyV21Dimens.radiusMd)
+            .background(
+                when {
+                    checked -> colors.leaf
+                    pressed -> colors.leafTint
+                    else -> colors.paper
+                },
+                shape,
+            )
+            .border(1.5.dp, colors.ink, shape)
+            .toggleable(
+                value = checked,
+                role = Role.Button,
+                interactionSource = interaction,
+                indication = null,
+            ) { onToggle(axis) }
             .clearAndSetSemantics {
                 // The visible label is a child of toggleable. Name the actionable parent explicitly so the
                 // platform AccessibilityNodeInfo does not expose an unnamed checkable View to TalkBack.
@@ -226,21 +247,80 @@ private fun FlipChoice(
                 onClick { onToggle(axis); true }
                 semanticsTestTag = testTag
             }
-            .padding(ZinelyV21Dimens.gapSm),
-        horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
+    ) {
+        Row(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .padding(horizontal = ZinelyV21Dimens.gapSm, vertical = FlipChoiceVerticalPadding),
+            horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = if (axis == FlipAxis.HORIZONTAL) Icons.Filled.SwapHoriz else Icons.Filled.SwapVert,
+                contentDescription = null,
+                tint = content,
+                modifier = Modifier.size(24.dp),
+            )
+            Text(
+                text = label,
+                color = content,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        if (checked) {
+            EditorSelectionCue(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = FlipChoiceCueInset, end = FlipChoiceCueInset)
+                    .testTag(selectionCueTag(testTag)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FlipDoneButton(
+    onClick: () -> Unit,
+    testTag: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = ZinelyTheme.v21Colors
+    val interaction = remember { MutableInteractionSource() }
+    val activate = benchTap(action = onClick)
+    val shape = RoundedCornerShape(percent = 50)
+    Row(
+        modifier = modifier
+            .zinelyFocusRing(interaction, ZinelyV21Dimens.radiusPill)
+            .background(colors.leaf, shape)
+            .border(1.5.dp, colors.ink, shape)
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                role = Role.Button,
+                onClick = activate,
+            )
+            .clearAndSetSemantics {
+                contentDescription = Copy.Editor.DONE
+                role = Role.Button
+                onClick {
+                    activate()
+                    true
+                }
+                semanticsTestTag = testTag
+            }
+            .padding(horizontal = ZinelyV21Dimens.gapMd),
+        horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = if (axis == FlipAxis.HORIZONTAL) Icons.Filled.SwapHoriz else Icons.Filled.SwapVert,
-            contentDescription = null,
-            tint = content,
-            modifier = Modifier.size(24.dp),
-        )
         Text(
-            text = label,
-            color = content,
+            text = Copy.Editor.DONE,
+            color = colors.onLeaf,
             fontFamily = ZinelyV21Fonts.Work,
             fontWeight = FontWeight.Bold,
+            fontSize = 12.48.sp,
+            lineHeight = ZinelyV21Fonts.InheritedLineHeight,
         )
     }
 }

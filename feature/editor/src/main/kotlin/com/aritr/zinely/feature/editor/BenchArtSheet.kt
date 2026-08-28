@@ -89,6 +89,7 @@ public fun benchArtFavouriteTileTestTag(supplyId: String): String = "bench-art-f
 public fun benchArtFavouriteTestTag(supplyId: String): String = "bench-art-favourite-$supplyId"
 public fun benchArtLabelTestTag(family: String): String = "bench-art-label-$family"
 public fun benchArtFamilyFilterTestTag(family: String): String = "bench-art-filter-$family"
+public fun benchArtFamilyCueTestTag(family: String): String = "bench-art-filter-cue-$family"
 
 public const val BenchArtSheetTitle: String = Copy.BenchArt.TITLE
 public const val BenchArtRecentHeading: String = Copy.BenchArt.RECENT
@@ -333,12 +334,7 @@ private fun BenchArtFamilyFilters(selectedFamily: String?, onSelect: (String) ->
             val colors = ZinelyTheme.v21Colors
             val interaction = remember { MutableInteractionSource() }
             val pressed by interaction.collectIsPressedAsState()
-            Text(
-                text = family,
-                color = if (isSelected) colors.onLeaf else colors.ink,
-                fontFamily = ZinelyV21Fonts.Work,
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
+            Box(
                 modifier = Modifier
                     .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, RoundedCornerShape(50))
                     .clip(RoundedCornerShape(50))
@@ -354,7 +350,24 @@ private fun BenchArtFamilyFilters(selectedFamily: String?, onSelect: (String) ->
                         selected = isSelected
                         onClick { onSelect(family); true }
                     },
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = family,
+                    color = if (isSelected) colors.onLeaf else colors.ink,
+                    fontFamily = ZinelyV21Fonts.Work,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                )
+                if (isSelected) {
+                    EditorSelectionCue(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 6.dp, end = 6.dp)
+                            .testTag(benchArtFamilyCueTestTag(family)),
+                    )
+                }
+            }
         }
     }
 }

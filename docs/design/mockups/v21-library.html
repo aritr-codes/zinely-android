@@ -27,6 +27,9 @@
      │  D-111 AMENDMENT · 2026-08-28: an unavailable zine remains on the shelf.   │
      │  Its action sheet preserves all five rows: Open, Share & export and         │
      │  Duplicate are disabled; Rename and Delete remain live. No shelf badge.     │
+     │                                                                             │
+     │  A24 ACCESSIBILITY AMENDMENT · 2026-08-28: Delete is separated from the    │
+     │  reversible actions by an 8px desk band as well as consequence colour.     │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -369,7 +372,7 @@ body{
 .act .ic{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:var(--br-sm);
   background:var(--butter);color:var(--on-leaf);font-size:.95rem}
 .act:active{background:var(--leaf-tint);color:var(--on-leaf)}
-.act.danger{color:var(--jam-text)} .act.danger .ic{background:var(--berry-tint);color:var(--on-leaf)}
+.act.danger{border-top:8px solid var(--desk);color:var(--jam-text)} .act.danger .ic{background:var(--berry-tint);color:var(--on-leaf)}
 .act:disabled{opacity:.45;cursor:default}
 .act:disabled:active{background:none;color:var(--ink)}
 .act:disabled .ic{background:var(--butter);color:var(--on-leaf)}

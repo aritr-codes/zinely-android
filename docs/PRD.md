@@ -263,7 +263,7 @@ stateDiagram-v2
 | NFR-4 | **Durability:** no edit older than the autosave debounce is lost on crash; a crash never corrupts the last good save ([R4.3](RESEARCH.md#r43-crash-safety--verified)) |
 | NFR-5 | **Fidelity:** preview matches export within tolerance (Roborazzi diff) ([ADR-006](DECISIONS.md#adr-006)) |
 | NFR-6 | **Print accuracy:** at 100% scale, fold/cut geometry lands within tolerance on consumer printers ([ADR-012](DECISIONS.md#adr-012)) |
-| NFR-7 | **Accessibility:** M3 touch targets, content descriptions, dynamic type (full pass in V1) |
+| NFR-7 | **Accessibility:** every shipped UI surface meets **WCAG 2 AA** as an implementation requirement, including AA text/non-text contrast, non-colour state cues, ≥48dp touch targets, scalable text without loss of content or action, concise semantic labels and state, and logical focus/traversal. Accessibility is verified while the surface is built; it is not deferred to a later review pass. |
 | NFR-8 | **Min SDK 24** (Android 7.0), ratified [ADR-024](DECISIONS.md#adr-024); target latest (`targetSdk 36`) |
 
 ## 12. Success criteria (MVP)

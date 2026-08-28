@@ -10,10 +10,14 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -25,6 +29,7 @@ import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -48,6 +53,7 @@ class FlipTrayTest {
     fun `tray exposes two immediate toggles and focuses left-right on open`() {
         val toggles = mutableListOf<FlipAxis>()
         val visible = mutableStateOf(false)
+        val element = mutableStateOf(photo)
         composeRule.setContent {
             ZinelyTheme {
                 inputMode = LocalInputModeManager.current
@@ -55,8 +61,15 @@ class FlipTrayTest {
                 Box(Modifier.fillMaxSize()) {
                     FlipTray(
                         visible = visible.value,
-                        element = photo,
-                        onToggle = toggles::add,
+                        element = element.value,
+                        onToggle = { axis ->
+                            toggles += axis
+                            if (axis == FlipAxis.HORIZONTAL) {
+                                element.value = element.value.copy(
+                                    flippedHorizontally = !element.value.flippedHorizontally,
+                                )
+                            }
+                        },
                         onDone = {},
                         firstFocusRequester = firstFocusRequester,
                     )
@@ -69,9 +82,24 @@ class FlipTrayTest {
         }
         composeRule.waitForIdle()
 
+        composeRule.onNodeWithTag(FlipTrayTestTag)
+            .assert(
+                androidx.compose.ui.test.SemanticsMatcher.expectValue(
+                    SemanticsProperties.PaneTitle,
+                    Copy.Editor.FLIP,
+                ),
+            )
+        composeRule.onNodeWithTag(selectionCueTag(FlipLeftRightTestTag), useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(selectionCueTag(FlipTopBottomTestTag), useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(FlipLeftRightTestTag).assertIsOff().assertIsFocused().performClick()
+        composeRule.onNodeWithTag(selectionCueTag(FlipLeftRightTestTag), useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(FlipTopBottomTestTag).assertIsOn()
-        composeRule.onNodeWithTag(FlipDoneTestTag).assertTextEquals(Copy.Editor.DONE)
+        composeRule.onNodeWithTag(FlipDoneTestTag)
+            .assertContentDescriptionEquals(Copy.Editor.DONE)
+        val doneBounds = composeRule.onNodeWithTag(FlipDoneTestTag).getUnclippedBoundsInRoot()
+        val doneHeight = doneBounds.bottom - doneBounds.top
+        assertTrue(doneHeight.value >= 48f)
+        assertTrue(doneHeight.value <= 56f)
         assertEquals(listOf(FlipAxis.HORIZONTAL), toggles)
     }
 
