@@ -43,7 +43,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.testTag as semanticsTestTag
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -206,8 +213,19 @@ private fun FlipChoice(
             .background(if (checked) colors.leaf else colors.paper, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
             .border(1.5.dp, colors.ink, RoundedCornerShape(ZinelyV21Dimens.radiusMd))
             .toggleable(value = checked, role = Role.Button) { onToggle(axis) }
-            .semantics { stateDescription = if (checked) Copy.BenchVerbs.COPIER_ON else Copy.BenchVerbs.COPIER_OFF }
-            .testTag(testTag)
+            .clearAndSetSemantics {
+                // The visible label is a child of toggleable. Name the actionable parent explicitly so the
+                // platform AccessibilityNodeInfo does not expose an unnamed checkable View to TalkBack.
+                contentDescription = when (axis) {
+                    FlipAxis.HORIZONTAL -> Copy.A11y.FLIP_LEFT_RIGHT
+                    FlipAxis.VERTICAL -> Copy.A11y.FLIP_TOP_BOTTOM
+                }
+                role = Role.Button
+                toggleableState = ToggleableState(checked)
+                stateDescription = if (checked) Copy.BenchVerbs.COPIER_ON else Copy.BenchVerbs.COPIER_OFF
+                onClick { onToggle(axis); true }
+                semanticsTestTag = testTag
+            }
             .padding(ZinelyV21Dimens.gapSm),
         horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
