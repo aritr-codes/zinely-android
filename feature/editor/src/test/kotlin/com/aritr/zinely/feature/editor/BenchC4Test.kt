@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -271,6 +272,16 @@ class BenchC4Test {
             3,
             composeRule.onNodeWithTag(BenchAddChooserTestTag).fetchSemanticsNode().children.size,
         )
+    }
+
+    @Test
+    fun photo_and_art_use_their_distinct_frozen_marks() {
+        // D-094 / A15 / A16: this mapping, not merely the catalogue, is the regression boundary. The
+        // visible titles and subtitles remain the primary accessible names; the glyphs add a non-colour
+        // cue for sighted scanning.
+        assertEquals("Art", BenchAddPhotoGlyph.name)
+        assertEquals("Collage", BenchAddArtGlyph.name)
+        assertNotEquals(BenchAddPhotoGlyph, BenchAddArtGlyph)
     }
 
     @Test

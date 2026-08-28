@@ -257,6 +257,20 @@ public object ZinelyV2Icons {
         Rect(3f, 4f, 18f, 16f, 2f),
     )
 
+    /**
+     * `v21-bench.html` A15/A16 — two overlapping paper scraps and one printed dot.
+     *
+     * The owner-approved amendment gives the Add chooser's `Art` row this collage mark so it no longer
+     * repeats [Art], the older frame-and-horizon mark now used for `Photo` there. Paint remains a property
+     * of the chooser's `.opt .ico` container, like the other Bench controls.
+     */
+    public val Collage: ZinelyV2Icon = icon(
+        "Collage",
+        Path("M4 7l8-3 3 9-8 3z"),
+        Path("M11 12l8-2 1 8-8 2z"),
+        Circle(17.5f, 6.5f, 2.5f),
+    )
+
     /** `bench:598` */
     public val Search: ZinelyV2Icon = icon(
         "Search",
@@ -396,6 +410,7 @@ public object ZinelyV2Icons {
         Delete,
         Shield,
         Art,
+        Collage,
         Search,
         Favourite,
         Globe,

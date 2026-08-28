@@ -5673,14 +5673,14 @@ of the contract without adding caller patches.
 
 ---
 
-### D-088 — the Art row ships Photo's glyph, verbatim and on purpose {#d-088}
+### D-088 — the Art row ships Photo's glyph, verbatim and on purpose {#d-088} — ✅ **SUPERSEDED**
 
 | | |
 |---|---|
 | **Artifacts** | `feature/editor/.../BenchAddChooser.kt` · `docs/design/mockups/v21-bench.html:840-841` · [D-080](#d-080) · D-051 / OD-26 |
 | **Found** | 2026-08-16, package **S7-placement**, while adding the Add chooser's Art row |
 | **Severity** | Cosmetic, inherited from the frozen file. Two chooser rows now carry the same icon |
-| **Status** | ✅ **Ruled — carried forward, no implementation change** (consistent with D-051 / OD-26) |
+| **Status** | ✅ **SUPERSEDED 2026-08-29 by [D-094's owner-approved A15/A16 collage ruling](#d-094-ruling)** |
 
 The frozen mockup gives the **Art** row at `:829` the **byte-identical** SVG it gives **Photo** at `:828`.
 S7 first drew a star instead, reasoning that the duplicate was obviously an authoring slip.
@@ -5691,8 +5691,9 @@ carried forward, no implementation change — which the **Photo row above it alr
 star would have obeyed the ruling on one row and overruled it on the row directly beneath. *Consistency
 with a known-imperfect spec beats a local improvement that makes the spec's own record incoherent.*
 
-⚠ **[D-080](#d-080) should be read with this entry**: a reader of D-080 could reasonably assume Compose had
-diverged. It has not. The duplicate ships.
+This was the correct implementation ruling while the frozen file still duplicated the mark. It is retained as
+history, not current direction: A15 later amended the HTML, A16 froze the accepted design, and
+[D-094](#d-094-ruling) now requires Compose to give Art the distinct collage glyph.
 
 ### D-090 — the decor verb row has never had a golden, so its pixels are unobserved {#d-090}
 
@@ -6055,14 +6056,14 @@ and four lose their glyph. The `*_compare.png` was read before the re-record, an
 
 ---
 
-### D-094 — `Photo` and `Art` carry byte-identical glyphs, in the frozen file {#d-094}
+### D-094 — `Photo` and `Art` carry byte-identical glyphs, in the frozen file {#d-094} — ✅ **RULED & FIXED**
 
 | | |
 |---|---|
 | **Artifacts** | [`v21-bench.html` §`openSupply()`, `:828-829`](mockups/v21-bench.html) · `feature/editor/.../BenchAddChooser.kt` |
 | **Found** | 2026-08-18, **Pass 2 on SM-A176B** — the first thing seen on opening the chooser, before anything was placed |
 | **Severity** | Open design question. Two of the three ways into the page are visually indistinguishable |
-| **Status** | ⏳ **OPEN — owner act.** The duplication is in the frozen file, so the fix is an amendment, not a code change |
+| **Status** | ✅ **CLOSED 2026-08-29 — A15/A16's owner-approved collage glyph is implemented in Compose** |
 
 **The observation.** The `Add to your page` sheet offers three rows — `Text`, `Photo`, `Art`. `Photo` and
 `Art` are drawn with **the same icon**: a framed picture with a mountain-and-sun path. Not similar —
@@ -6100,6 +6101,14 @@ holding, and *"which of these two identical things do I want?"* is a question th
 **Related.** [D-093](#d-093) is the same species one level down — there, the tile's picture mispredicts the
 mark; here, the row's picture fails to distinguish the *category*. Both are the drawer's iconography
 promising something other than what it delivers, and both are owner acts because both live in the freeze.
+
+#### Ruling and implementation, 2026-08-29 {#d-094-ruling}
+
+The owner confirmed that `Photo` and `Art` should be different. A15 had already supplied the exact answer,
+and A16 froze its accepted information architecture: `Photo` keeps the frame-and-horizon picture mark;
+`Art` uses **two overlapping paper scraps and one printed dot**. Compose now transcribes that collage path
+for the Art row. Titles, subtitles, 48dp-or-larger row targets, traversal order, contrast, and the existing
+single-node TalkBack descriptions are unchanged; the distinct glyph is an additional non-colour cue.
 
 ---
 
