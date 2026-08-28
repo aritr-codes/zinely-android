@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +73,8 @@ import com.aritr.zinely.ui.theme.ZinelyTheme
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 import com.aritr.zinely.ui.theme.ZinelyV21Press
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** A16's searchable, deterministic Art cabinet. */
 public const val BenchArtSheetTestTag: String = "bench-art-sheet"
@@ -125,6 +128,15 @@ internal fun BenchArtSheet(
 ) {
     var sessionRecent by rememberSaveable { mutableStateOf(recent.distinct().take(6)) }
     var favourites by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    val supplyPainter = remember { SupplyPainter() }
+
+    LaunchedEffect(supplyPainter) {
+        // Warm the immutable catalogue paths off the UI thread so the first Art opening is not paying for
+        // outline-to-Path construction while the sheet animates in.
+        withContext(Dispatchers.Default) {
+            supplyPainter.prewarm(SupplyCatalog.OUTLINES.values)
+        }
+    }
 
     ZSheet(
         visible = visible,
@@ -142,6 +154,7 @@ internal fun BenchArtSheet(
             onFavouriteChange = { id, favourite ->
                 favourites = if (favourite) (favourites + id).distinct() else favourites.filterNot { it == id }
             },
+            supplyPainter = supplyPainter,
             modifier = Modifier.weight(1f),
         )
     }
@@ -153,8 +166,10 @@ internal fun BenchArtSheetBody(
     recent: List<String> = emptyList(),
     favourites: Set<String> = emptySet(),
     onFavouriteChange: (supplyId: String, favourite: Boolean) -> Unit = { _, _ -> },
+    supplyPainter: SupplyPainter? = null,
     modifier: Modifier = Modifier,
 ) {
+    val sharedSupplyPainter = supplyPainter ?: remember { SupplyPainter() }
     val colors = ZinelyTheme.v21Colors
     var query by rememberSaveable { mutableStateOf("") }
     var selectedFamily by rememberSaveable { mutableStateOf<String?>(null) }
@@ -188,13 +203,27 @@ internal fun BenchArtSheetBody(
                 val familyMatches = supplies.keys.filter(matches::contains)
                 if (familyMatches.isNotEmpty()) {
                     BenchArtLabel(family, collapsed = false)
-                    BenchArtGrid(familyMatches, favourites, onPick, onFavouriteChange, ::benchArtTileTestTag)
+                    BenchArtGrid(
+                        supplyIds = familyMatches,
+                        favourites = favourites,
+                        onPick = onPick,
+                        onFavouriteChange = onFavouriteChange,
+                        tag = ::benchArtTileTestTag,
+                        supplyPainter = sharedSupplyPainter,
+                    )
                 }
             }
         } else {
             if (recent.isNotEmpty()) {
                 BenchArtLabel(Copy.BenchArt.RECENT, collapsed = true)
-                BenchArtRail(recent, favourites, onPick, onFavouriteChange, ::benchArtRecentTileTestTag)
+                BenchArtRail(
+                    supplyIds = recent,
+                    favourites = favourites,
+                    onPick = onPick,
+                    onFavouriteChange = onFavouriteChange,
+                    tag = ::benchArtRecentTileTestTag,
+                    supplyPainter = sharedSupplyPainter,
+                )
             }
             BenchArtLabel(Copy.BenchArt.FAVOURITES, collapsed = recent.isEmpty())
             if (favourites.isEmpty()) {
@@ -222,11 +251,25 @@ internal fun BenchArtSheetBody(
                 )
             } else {
                 val favouriteIds = Copy.Supplies.NAMES.keys.filter(favourites::contains)
-                BenchArtRail(favouriteIds, favourites, onPick, onFavouriteChange, ::benchArtFavouriteTileTestTag)
+                BenchArtRail(
+                    supplyIds = favouriteIds,
+                    favourites = favourites,
+                    onPick = onPick,
+                    onFavouriteChange = onFavouriteChange,
+                    tag = ::benchArtFavouriteTileTestTag,
+                    supplyPainter = sharedSupplyPainter,
+                )
             }
             Copy.Supplies.BY_FAMILY.forEach { (family, supplies) ->
                 BenchArtLabel(family, collapsed = false)
-                BenchArtGrid(supplies.keys.toList(), favourites, onPick, onFavouriteChange, ::benchArtTileTestTag)
+                BenchArtGrid(
+                    supplyIds = supplies.keys.toList(),
+                    favourites = favourites,
+                    onPick = onPick,
+                    onFavouriteChange = onFavouriteChange,
+                    tag = ::benchArtTileTestTag,
+                    supplyPainter = sharedSupplyPainter,
+                )
             }
         }
     }
@@ -383,6 +426,7 @@ private fun BenchArtGrid(
     onPick: (String) -> Unit,
     onFavouriteChange: (String, Boolean) -> Unit,
     tag: (String) -> String,
+    supplyPainter: SupplyPainter,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(BenchArtGridGap)) {
         supplyIds.chunked(BenchArtGridColumns).forEach { row ->
@@ -394,6 +438,7 @@ private fun BenchArtGrid(
                         onPick = onPick,
                         onFavouriteChange = onFavouriteChange,
                         testTag = tag(id),
+                        supplyPainter = supplyPainter,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -410,6 +455,7 @@ private fun BenchArtRail(
     onPick: (String) -> Unit,
     onFavouriteChange: (String, Boolean) -> Unit,
     tag: (String) -> String,
+    supplyPainter: SupplyPainter,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(BenchArtGridGap),
@@ -422,6 +468,7 @@ private fun BenchArtRail(
                 onPick = onPick,
                 onFavouriteChange = onFavouriteChange,
                 testTag = tag(id),
+                supplyPainter = supplyPainter,
                 modifier = Modifier.width(BenchArtRailCardWidth),
             )
         }
@@ -436,6 +483,7 @@ private fun BenchArtTile(
     onPick: (String) -> Unit,
     onFavouriteChange: (String, Boolean) -> Unit,
     testTag: String,
+    supplyPainter: SupplyPainter,
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -475,7 +523,7 @@ private fun BenchArtTile(
                 },
             contentAlignment = Alignment.Center,
         ) {
-            BenchArtMark(outline = outline, color = mark)
+            BenchArtMark(outline = outline, color = mark, supplyPainter = supplyPainter)
         }
         Box(
             modifier = Modifier.fillMaxWidth().height(48.dp).background(colors.paper),
@@ -520,11 +568,12 @@ private fun BenchArtTile(
 
 /** The authored outline itself, using the same Android painter seam as page rendering. */
 @Composable
-private fun BenchArtMark(outline: SupplyOutline, color: Color) {
-    val painter = remember { SupplyPainter() }
+private fun BenchArtMark(outline: SupplyOutline, color: Color, supplyPainter: SupplyPainter) {
     val argb = color.toArgb()
     Canvas(modifier = Modifier.size(BenchArtGlyphSize)) {
-        drawIntoCanvas { canvas -> painter.drawUnitSquare(canvas.nativeCanvas, outline, argb, size.width, size.height) }
+        drawIntoCanvas { canvas ->
+            supplyPainter.drawUnitSquare(canvas.nativeCanvas, outline, argb, size.width, size.height)
+        }
     }
 }
 

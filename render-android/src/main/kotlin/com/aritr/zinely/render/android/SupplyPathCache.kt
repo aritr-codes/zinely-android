@@ -15,6 +15,12 @@ import java.util.IdentityHashMap
 internal class SupplyPathCache {
     private val paths = IdentityHashMap<SupplyOutline, Path>()
 
+    @Synchronized
     fun pathFor(outline: SupplyOutline): Path =
         paths[outline] ?: outline.toPath().also { paths[outline] = it }
+
+    @Synchronized
+    fun prewarm(outlines: Iterable<SupplyOutline>) {
+        outlines.forEach(::pathFor)
+    }
 }

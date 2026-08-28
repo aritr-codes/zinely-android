@@ -35,4 +35,16 @@ class SupplyPathCacheTest {
 
         assertNotSame(canonicalPath, distinctPath)
     }
+
+    @Test
+    fun `prewarm builds the canonical paths before the first visible draw`() {
+        val cache = SupplyPathCache()
+        val first = requireNotNull(SupplyCatalog.outlineOf("shape.rect"))
+        val second = requireNotNull(SupplyCatalog.outlineOf("mark.registration"))
+
+        cache.prewarm(listOf(first, second))
+
+        assertSame(cache.pathFor(first), cache.pathFor(first))
+        assertSame(cache.pathFor(second), cache.pathFor(second))
+    }
 }

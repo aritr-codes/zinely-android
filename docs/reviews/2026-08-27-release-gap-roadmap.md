@@ -26,7 +26,7 @@ authoritative; this file does not close a device or Play Console gate by itself.
 
 | Candidate | Boundary to preserve |
 |---|---|
-| Art drawer first-cold-open latency | Measure post-install first open on Samsung; optimize only the cold path, not the art interaction design. |
+| Art drawer first-cold-open latency | A repo-side cold-path optimization is now in place: the Art sheet shares one painter and prewarms canonical supply paths without changing the frozen cabinet or render contract. The remaining gate is the post-install Samsung timing rerun, still needed to prove the first-open spike is materially reduced on hardware. |
 | Orphaned image assets after delete/import churn | Correct the optimistic contract wording now; implement a transactional sweeper only with import pinning and recovery tests. |
 | SAF out-of-space classification | Improve error mapping only after a realistic low-storage experiment. |
 | Library scale features (search, sort, archive/status) | Add a query boundary to `ProjectRepository`; do not bolt filtering onto the current whole-list stream. |
