@@ -74,7 +74,11 @@ class EditTextSessionTest {
                     EditTextSession(
                         session = session,
                         element = element,
-                        dispatch = store::dispatch,
+                        commitText = { intent ->
+                            val before = store.uiState.value
+                            store.dispatch(intent)
+                            store.uiState.value != before
+                        },
                         onCommitted = onCommitted,
                     )
                 }

@@ -73,7 +73,7 @@ public const val EditTextSessionTestTag: String = "edit-text-session"
  *
  * @param session the open edit session (its `id`/`token` scope the commit).
  * @param element the document [TextElement] being edited (the `before`; seeds the draft + carries style).
- * @param dispatch forwards an [Intent] into the store.
+ * @param commitText forwards [Intent.CommitText] into the store and reports whether it was accepted.
  * @param modifier sizing/placement applied by the host (C3: the element's own device rect on the page).
  * @param textStyle how the draft is drawn. Hoisted for C3 ([BenchEditingSurface]): editing happens **in
  *   place** on the page now, so the draft must be drawn in the element's own size, ink, alignment and
@@ -89,15 +89,17 @@ public const val EditTextSessionTestTag: String = "edit-text-session"
  *   two escape here rather than the caret moving inside this file, which owns the *session*, not the skin.
  * @param onCoverageChanged reports the draft's current [TextCoverage] (ADR-070): on the seed, on every
  *   keystroke, and [TextCoverage.Covered] on dispose. The host raises the [EditorCoverageNotice] from it.
- * @param onCommitted observes a successful [Intent.CommitText] reduction. Hosts use this only for
- *   ephemeral follow-up work that must happen after the draft is safe in the document, such as a queued
- *   page transition; it is never invoked for cancellation.
+ * @param onCommitted observes an explicit [Intent.CommitText] boundary (focus loss, IME Done or lifecycle
+ *   pause). Hosts use this only for ephemeral follow-up work that must happen after the draft is dispatched,
+ *   such as a queued page transition; it is never invoked by the disposal fallback after cancellation.
+ * @param commitText dispatches a text commit and reports whether the reducer accepted it. A stale commit
+ *   must not trigger host follow-up work.
  */
 @Composable
 public fun EditTextSession(
     session: Interaction.EditingText,
     element: TextElement,
-    dispatch: (Intent) -> Unit,
+    commitText: (Intent.CommitText) -> Boolean,
     modifier: Modifier = Modifier,
     onCoverageChanged: (TextCoverage) -> Unit = {},
     textStyle: ComposeTextStyle = LocalTextStyle.current
@@ -127,11 +129,14 @@ public fun EditTextSession(
         latestOnCoverage(analyzeTextCoverage(draft.text))
     }
 
-    fun commit() {
+    fun commit(notifyHost: Boolean = true) {
         if (committed) return
         committed = true
-        dispatch(Intent.CommitText(session.id, element.copy(text = latestDraft.text), session.token))
-        onCommitted()
+        val accepted = commitText(Intent.CommitText(session.id, element.copy(text = latestDraft.text), session.token))
+        // A disposal commit is deliberately silent: after CancelText its token is stale and the reducer
+        // correctly ignores it, so treating it as a successful commit could advance a queued page change.
+        // Focus loss, IME Done and lifecycle pause are the explicit commit boundaries that may notify a host.
+        if (notifyHost && accepted) onCommitted()
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -146,7 +151,7 @@ public fun EditTextSession(
             lifecycleOwner.lifecycle.removeObserver(observer)
             // Leaving composition without an explicit commit (e.g. the session was navigated away) ⇒ commit
             // the draft so a tap-away is never lost; the token guard no-ops if the store already moved on.
-            commit()
+            commit(notifyHost = false)
             // Clear the coverage notice with the session (ADR-070): the draft is gone, so there is no
             // longer any unprintable-in-progress text to warn about.
             latestOnCoverage(TextCoverage.Covered)

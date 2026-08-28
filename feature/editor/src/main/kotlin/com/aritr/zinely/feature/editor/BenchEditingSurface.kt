@@ -187,7 +187,7 @@ internal fun benchCaretAlphaAt(elapsedMillis: Long, reduceMotion: Boolean): Floa
 internal fun BenchEditingSurface(
     session: Interaction.EditingText,
     element: TextElement,
-    dispatch: (Intent) -> Unit,
+    commitText: (Intent.CommitText) -> Boolean,
     screenPxPerPt: Float,
     pageOffset: PtPoint,
     modifier: Modifier = Modifier,
@@ -274,7 +274,7 @@ internal fun BenchEditingSurface(
     EditTextSession(
         session = session,
         element = element,
-        dispatch = dispatch,
+        commitText = commitText,
         modifier = modifier
             .offset { IntOffset(xPx.roundToInt(), yPx.roundToInt()) }
             .size(with(density) { wPx.toDp() }, with(density) { hPx.toDp() })

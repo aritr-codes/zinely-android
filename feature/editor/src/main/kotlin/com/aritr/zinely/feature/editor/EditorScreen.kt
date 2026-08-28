@@ -1401,7 +1401,11 @@ public fun EditorScreen(
                         BenchEditingSurface(
                             session = interaction,
                             element = editingElement,
-                            dispatch = dispatch,
+                            commitText = { intent ->
+                                val before = store.uiState.value
+                                dispatch(intent)
+                                store.uiState.value != before
+                            },
                             screenPxPerPt = uiState.view.screenPxPerPt,
                             pageOffset = uiState.view.pageOffset,
                             modifier = Modifier.align(Alignment.TopStart),
