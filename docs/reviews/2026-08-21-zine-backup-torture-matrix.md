@@ -28,7 +28,7 @@ This is the gate required by the V1 execution plan. A row is green only at the l
 | Failure during commit | All-or-nothing project visibility; Room rebuilds from files | JVM/Android integration | 🟨 Journal/rollback primitive green; repository lock, recovery wiring, and Room integration pending |
 | Existing project id collision | Restore mints a new local id; never overwrites | repository integration | 🟨 Pure allocator green; repository integration pending |
 | Repeated restore of same backup | Safe additive duplicates; assets deduplicate by verified hash | repository integration | 🟨 Pure id/allocation and verified-asset dedupe green; repository integration pending |
-| Backup → uninstall/wipe → restore | All zines, text, photos, covers, timestamps, and print output survive | physical device | ⬜ Pending |
+| Backup → uninstall/wipe → restore | All zines, text, photos, covers, timestamps, and print output survive | physical device | 🟨 Samsung clean reinstall pass: one real zine and committed text survived; media, cover, timestamp, and print-output parity still pending |
 | Restore onto a second device/API level | Same library and rendered/printed result | three-device gate incl. API 24 | ⬜ Pending |
 | SAF provider revokes/returns null/throws mid-stream | Calm retry/alternate exit; no partial restore | Android/device | ⬜ Pending |
 | Airplane mode full journey | No behavior change and no network dependency | physical device | ⬜ Pending |
@@ -36,3 +36,13 @@ This is the gate required by the V1 execution plan. A row is green only at the l
 ## Current package verdict
 
 The pure v2 contract passed independent review after its one required fix and is **GO as foundation work**. The feature itself remains **NO-GO for users** until every pending correctness row through transactional restore is green; the release gate additionally requires the physical-device rows and frozen UI flow.
+
+## 2026-08-28 Samsung recovery evidence
+
+On Samsung SM-A176B (`RZCYA1VBQ2H`, Android 16), the current debug APK created a real A4 zine with
+committed text `Restore-verify`, exported it through **Back up this shelf** to a 2,097-byte `.zine` in
+Downloads, then underwent uninstall, reinstall, and in-app restore. The fresh installation reported
+**“1 zine added to your shelf”**; the shelf contained one zine and reopening it exposed the persisted
+`Text: Restore-verify` element. The archive was a normal production export, not a synthetic or corrupt
+fixture. See [the device report](2026-08-28-backup-wipe-restore-device-verification.md) for the bounded
+claim and exact flow.
