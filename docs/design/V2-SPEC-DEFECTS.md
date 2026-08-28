@@ -7181,3 +7181,44 @@ At `font_scale=1.8`, all three choices remained enabled and reachable; `Right` w
 pre-existing large-text polish rather than a D-110 regression. The device was restored to `font_scale=1.0`.
 Pass 2 found the starting point understandable and the editing hand-off itself explains where alignment lives:
 `Align, size & more after Done`. No additional navigation or modal instruction was required.
+
+---
+
+### D-111 — an indexed zine can look healthy even when its authoritative document is unavailable {#d-111}
+
+| | |
+|---|---|
+| **Artifacts** | `docs/design/mockups/v21-library.html` (D-111 amendment) · the Library action sheet · the authoritative document revalidation seam |
+| **Found** | 2026-08-28, release-gap audit |
+| **Severity** | **Trust and recovery defect.** The files are authoritative and Room is rebuildable, so an indexed card may survive a corrupt or newer-than-supported `document.json`; opening it later reads as Zinely losing a zine. |
+| **Status** | ✅ **RULED — owner-approved 2026-08-28.** The action sheet gains an unavailable-project state; the shelf itself does not. |
+
+**Frozen amendment.** A project whose authoritative document is unavailable remains in its existing shelf position,
+with its existing cover, title, date and overflow door. It receives **no badge, warning mark, card replacement or
+shelf-wide error state**: the shelf still answers *“Which zine is mine?”*, and the index remains useful for the
+actions that do not need the document body.
+
+Tapping that unavailable card's ordinary open target routes to this same action sheet instead of attempting a failed
+bench open. The shelf adds no second affordance; it only chooses the honest reachable door when the document body is
+known unreadable.
+
+Opening that project's existing action sheet preserves its five rows, title, format/date disclosure, order and
+geometry. The rows have this exact availability:
+
+| Row | State | Reason |
+|---|---|---|
+| Open on the bench | disabled | Opening requires a readable authoritative document. |
+| Share & export | disabled | Export requires the same document. |
+| Rename | enabled | Title metadata remains independently editable. |
+| Duplicate | disabled | Duplication must not copy an unreadable or newer document. |
+| Delete | enabled | The maker retains a local recovery/cleanup choice. |
+
+Disabled rows remain visible in place, use real disabled semantics, and keep their labels; they are not removed,
+reordered, or converted into a new dialog. Their reason comes from the detected health condition through the
+implementation's copy/accessibility seam, not from a second hard-coded explanation in the frozen sheet. This
+amendment deliberately does not decide persistence, index reconciliation cadence, repair, backup recovery, or
+the wording for each failure family; those belong to the derived project-health implementation and its tests.
+
+**Rejected.** A shelf badge or a second “broken zine” card would make a maker diagnose storage before they can
+recognise their work. Hiding the card would make recovery and deletion harder. Removing disabled rows would make
+the action sheet's stable order depend on a failure that the maker did not cause.

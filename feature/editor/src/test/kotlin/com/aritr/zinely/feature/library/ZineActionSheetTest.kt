@@ -17,6 +17,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -64,6 +66,12 @@ class ZineActionSheetTest {
         const val TITLE = "Sunday market"
         const val SUBTITLE = "A4 · 2 days ago"
         val TARGET = ZineActionTarget(TITLE, SUBTITLE)
+        const val UNAVAILABLE_REASON = "This zine needs a newer version of Zinely."
+        val UNAVAILABLE_TARGET = ZineActionTarget(
+            title = TITLE,
+            subtitle = SUBTITLE,
+            unavailableReason = UNAVAILABLE_REASON,
+        )
 
         /**
          * `.sheet{left:0;right:0;bottom:0}` — **the card stopped floating**.
@@ -414,6 +422,24 @@ class ZineActionSheetTest {
         composeRule.onNodeWithText(SUBTITLE).assertExists()
     }
 
+    @Test
+    fun `an unavailable zine disables open share and duplicate but keeps rename and delete live`() {
+        surface(UNAVAILABLE_TARGET)
+
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Open))
+            .assertIsNotEnabled()
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.StateDescription,
+                    UNAVAILABLE_REASON,
+                ),
+            )
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.ShareExport)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Duplicate)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Rename)).assertIsEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Delete)).assertIsEnabled()
+    }
+
     // ---------------------------------------------------------------------------------------------
     // Type and ink
     // ---------------------------------------------------------------------------------------------
@@ -589,11 +615,11 @@ class ZineActionSheetTest {
     }
 
     /** The sheet's body in a plain host — for geometry and pixels the decor raster must be able to see. */
-    private fun surface() {
+    private fun surface(target: ZineActionTarget = TARGET) {
         composeRule.setContent {
             Host(dark = false) {
                 Box(Modifier.align(Alignment.BottomCenter)) {
-                    ZineActionSheetSurface(target = TARGET, onAction = { chosen += it })
+                    ZineActionSheetSurface(target = target, onAction = { chosen += it })
                 }
             }
         }

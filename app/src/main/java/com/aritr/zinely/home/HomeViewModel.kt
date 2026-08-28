@@ -5,8 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
+import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.data.android.prefs.PreferredPaperStore
@@ -54,12 +56,11 @@ internal sealed interface HomeUiState {
     data object Empty : HomeUiState
     data object Error : HomeUiState
     /**
-     * The same visible projects, projected twice — V1's [HomeZineCard]s and the V2 Library's
-     * [LibraryZine]s — from one pass over one list, at one `now`. Two projections rather than one shared
-     * card because they disclose different things: V1's card carries `"8-page mini · A4"` on the shelf,
-     * and V2's shelf carries **no** metadata at all, holding `"A4 · Edited 2 days ago"` back for the
-     * action sheet (ADR-086 rows 6–8). Collapsing them would mean one of the two screens showing a line
-     * its frozen design says it must not.
+     * Two shelf projections from one pass over one repository answer, at one `now`.
+     *
+     * [cards] stays the healthy V1/V1.5 metadata view used by the still-shared actions that need a
+     * readable authoritative document. [zines] is the wider V2 Library view, which can keep an
+     * unavailable project visible for Rename/Delete without pretending it still opens normally.
      */
     data class Content(
         val cards: List<HomeZineCard>,
@@ -72,11 +73,11 @@ internal sealed interface HomeUiState {
 
 /**
  * The Home · "My zines" shelf (read shelf: ADR-043; actions: ADR-044; MVVM — ADR-005 scoped MVI to
- * the editor). Maps the [ProjectRepository]'s newest-first [ProjectSummary] stream to warm
- * [HomeZineCard]s — **order passed through untouched** (the ADR-042 §7 repository contract, never
- * re-derived here). Recency labels are computed at emission and go stale until the next one —
- * accepted for a shelf you just navigated to (fresh subscription = fresh labels via
- * WhileSubscribed); a ticking clock is not this slice's problem.
+ * the editor). Maps the [ProjectRepository]'s newest-first shelf stream to the V2 Library, while the
+ * narrower healthy [ProjectSummary] projection continues to feed the older card-shaped seams. Order is
+ * passed through untouched; recency labels are computed at emission and go stale until the next one —
+ * accepted for a shelf you just navigated to (fresh subscription = fresh labels via WhileSubscribed); a
+ * ticking clock is not this slice's problem.
  *
  * S6.3 actions (ADR-044): create with warm defaults; rename/duplicate delegating to the store
  * (which enforces the open-editor exclusion and answers [DataError.Busy]); delete as a deferred
@@ -183,7 +184,7 @@ internal class HomeViewModel @Inject constructor(
      */
     private fun shelfStateFlow(): Flow<HomeUiState> =
         combine(
-            projectRepository.observeProjects(),
+            projectRepository.observeShelfProjects(),
             pendingDeletes,
         ) { projects, pending ->
             if (projects.isEmpty()) {
@@ -200,7 +201,9 @@ internal class HomeViewModel @Inject constructor(
                 }
                 val visible = projects.filterNot { it.id in pending }
                 HomeUiState.Content(
-                    cards = visible.map { it.toCard(now) },
+                    cards = visible
+                        .mapNotNull { (it as? ProjectShelfEntry.Available)?.summary }
+                        .map { it.toCard(now) },
                     zines = visible.map { it.toLibraryZine(now, fallbackCovers::get) },
                 )
             }
@@ -333,8 +336,8 @@ internal class HomeViewModel @Inject constructor(
      * [id] is not a visible card (double-tap, or already pending).
      */
     fun delete(id: String) {
-        val cards = (state.value as? HomeUiState.Content)?.cards ?: return
-        val title = cards.firstOrNull { it.id == id }?.title ?: return
+        val zines = (state.value as? HomeUiState.Content)?.zines ?: return
+        val title = zines.firstOrNull { it.id == id }?.title ?: return
         pendingDeletes.update { it + id }
         eventQueue.trySend(HomeShelfEvent.DeletePrompt(id, title))
     }
@@ -535,6 +538,31 @@ internal fun ProjectSummary.toLibraryZine(
     // makes the fallback stable for as long as this session lasts; see [HomeViewModel.fallbackCover].
     cover = cover ?: fallbackCover(id),
 )
+
+internal fun ProjectShelfEntry.toLibraryZine(
+    nowEpochMs: Long,
+    fallbackCover: (String) -> ZineCoverRecipe = { newZineCoverRecipe() },
+): LibraryZine = when (this) {
+    is ProjectShelfEntry.Available -> summary.toLibraryZine(nowEpochMs, fallbackCover)
+    is ProjectShelfEntry.Unavailable -> LibraryZine(
+        id = id,
+        title = title,
+        subtitle = buildString {
+            paperSize?.let {
+                append(it.shelfLabel())
+                append(" · ")
+            }
+            append(editedLabel(updatedAtEpochMs, nowEpochMs))
+        },
+        cover = cover ?: fallbackCover(id),
+        unavailableReason = reason.shelfUnavailableReason(),
+    )
+}
+
+private fun ProjectUnavailableReason.shelfUnavailableReason(): String = when (this) {
+    ProjectUnavailableReason.CORRUPT -> Copy.Shelf.UNAVAILABLE_DAMAGED
+    ProjectUnavailableReason.NEWER_APP_REQUIRED -> Copy.Shelf.UNAVAILABLE_NEWER_APP
+}
 
 /** Warm, jargon-free format name (never the enum's SCREAMING_SNAKE identity). */
 private fun ZineFormat.shelfLabel(): String = when (this) {

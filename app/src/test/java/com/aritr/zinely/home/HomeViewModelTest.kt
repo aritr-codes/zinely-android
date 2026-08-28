@@ -3,8 +3,11 @@ package com.aritr.zinely.home
 import android.net.Uri
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectRepository
 import com.aritr.zinely.core.data.repository.ProjectSummary
+import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.PaperSize
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.data.android.LibraryBackupReceipt
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -77,12 +81,19 @@ class HomeViewModelTest {
         var observeFailure: Throwable? = null
 
         override fun observeProjects(): Flow<List<ProjectSummary>> = flow {
+            emitAll(projects)
+        }
+
+        var shelfProjection: (List<ProjectSummary>) -> List<ProjectShelfEntry> =
+            { items -> items.map(ProjectShelfEntry::Available) }
+
+        override fun observeShelfProjects(): Flow<List<ProjectShelfEntry>> = flow {
             observeCollections++
             observeFailure?.let { failure ->
                 observeFailure = null // one scripted failure: a retry must be able to succeed
                 throw failure
             }
-            emitAll(projects)
+            emitAll(projects.map(shelfProjection))
         }
 
         override suspend fun getProject(id: String): DataResult<ProjectSummary> =
@@ -319,6 +330,39 @@ class HomeViewModelTest {
 
         val cards = (viewModel.state.value as HomeUiState.Content).cards
         assertEquals(listOf("z2", "z1"), cards.map { it.id })
+        job.cancel()
+    }
+
+    @Test
+    fun `an unavailable zine stays visible while the healthy card path excludes it`() = runTest {
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        repository.shelfProjection = { items ->
+            listOf(
+                ProjectShelfEntry.Available(items.first()),
+                ProjectShelfEntry.Unavailable(
+                    id = "z2",
+                    title = "Broken one",
+                    paperSize = PaperSize.A4,
+                    updatedAtEpochMs = now,
+                    cover = null,
+                    reason = ProjectUnavailableReason.CORRUPT,
+                ),
+            )
+        }
+
+        val job = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(
+            listOf(
+                summary("z1", "Healthy one", now),
+                summary("z2", "Broken one", now, paperSize = PaperSize.A4),
+            ),
+        )
+
+        val content = viewModel.state.value as HomeUiState.Content
+        assertEquals(listOf("z1"), content.cards.map { it.id })
+        assertEquals(listOf("z1", "z2"), content.zines.map { it.id })
+        assertEquals(Copy.Shelf.UNAVAILABLE_DAMAGED, content.zines.last().unavailableReason)
         job.cancel()
     }
 

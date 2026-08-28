@@ -19,6 +19,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
@@ -316,6 +317,24 @@ class ZineLibraryScreenTest {
         // hard-wired to the first zine, which is the defect this row exists to gate.
         composeRule.onNodeWithTag(ZineActionSubtitleTestTag).assertTextEquals(subtitleOf(2))
         composeRule.onNodeWithTag(ZineActionTitleTestTag).assertTextEquals(titleOf(2))
+    }
+
+    @Test
+    fun `tapping an unavailable zine opens its sheet instead of navigating`() {
+        content(
+            listOf(
+                unavailableZine(0, Copy.Shelf.UNAVAILABLE_DAMAGED),
+                zines(1).single(),
+            ),
+        )
+
+        composeRule.onNodeWithTag(zineShelfCoverTestTag(0)).performClick()
+
+        assertTrue("an unavailable zine must not navigate straight to the bench", opened.isEmpty())
+        composeRule.onNodeWithTag(ZineActionSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Open)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.ShareExport)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Duplicate)).assertIsNotEnabled()
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -649,5 +668,8 @@ class ZineLibraryScreenTest {
                 ),
             )
         }
+
+        fun unavailableZine(index: Int, reason: String): LibraryZine =
+            zines(index + 1)[index].copy(unavailableReason = reason)
     }
 }

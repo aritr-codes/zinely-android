@@ -9,7 +9,9 @@ import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
 import com.aritr.zinely.core.data.repository.ProjectRepository
+import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectSummary
+import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.core.data.storage.AdditiveLibraryRestoreCommitter
 import com.aritr.zinely.core.data.storage.FileSystemOps
@@ -58,6 +60,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -135,6 +138,18 @@ internal class RoomProjectRepository(
                 }
             }
             .map { rows -> rows.mapNotNull(::toSummary).sortedByDescending { it.updatedAtEpochMs } }
+            .flowOn(io)
+
+    override fun observeShelfProjects(): Flow<List<ProjectShelfEntry>> =
+        dao.observeAll()
+            .onStart {
+                mutex.withLock {
+                    if (ensureReconciledLocked() is DataResult.Failure) {
+                        throw IOException("library recovery failed before Room reconciliation")
+                    }
+                }
+            }
+            .map(::toShelfEntries)
             .flowOn(io)
 
     override suspend fun getProject(id: String): DataResult<ProjectSummary> = withContext(io) {
@@ -812,6 +827,65 @@ internal class RoomProjectRepository(
         )
     }
 
+    private suspend fun toShelfEntries(rows: List<ProjectEntity>): List<ProjectShelfEntry> {
+        val indexed = rows.associateBy { it.id }
+        return listProjectIds()
+            .mapNotNull { id ->
+                val docFile = paths.documentFile(id) ?: return@mapNotNull null
+                when (val loaded = documents.load(id)) {
+                    is DataResult.Success -> {
+                        indexed[id]?.let(::toSummary)?.let(ProjectShelfEntry::Available)
+                    }
+                    is DataResult.Failure -> unavailableShelfEntry(
+                        id = id,
+                        docFile = docFile,
+                        indexed = indexed[id],
+                        error = loaded.error,
+                    )
+                }
+            }
+            .sortedByDescending { it.updatedAtEpochMs }
+    }
+
+    private fun unavailableShelfEntry(
+        id: String,
+        docFile: Path,
+        indexed: ProjectEntity?,
+        error: DataError,
+    ): ProjectShelfEntry? {
+        val reason = when (error) {
+            is DataError.SchemaTooNew -> ProjectUnavailableReason.NEWER_APP_REQUIRED
+            is DataError.Corrupt, is DataError.Invalid, is DataError.Io, is DataError.Unknown ->
+                ProjectUnavailableReason.CORRUPT
+            is DataError.NotFound, is DataError.Busy -> return null
+            is DataError.OutOfSpace -> return null
+        }
+        val meta = readMetaOrNull(id)
+        val wire = peekDocumentWire(docFile)
+        val updatedAt = max(indexed?.updatedAtEpochMs ?: 0L, fileMtimeOrNull(docFile) ?: clock())
+        return ProjectShelfEntry.Unavailable(
+            id = id,
+            title = indexed?.title ?: meta?.title ?: DEFAULT_TITLE,
+            paperSize = indexed?.paperSizeOrNull() ?: wire.paperSize,
+            updatedAtEpochMs = updatedAt,
+            cover = indexed?.coverRecipe() ?: meta?.coverRecipe(),
+            reason = reason,
+        )
+    }
+
+    private fun peekDocumentWire(docFile: Path): DocumentWirePeek {
+        val root = try {
+            json.parseToJsonElement(Files.readString(docFile)).jsonObject
+        } catch (_: Exception) {
+            return DocumentWirePeek()
+        }
+        return DocumentWirePeek(
+            schemaVersion = root["schemaVersion"]?.jsonPrimitive?.intOrNull,
+            paperSize = root["paperSize"]?.jsonPrimitive?.contentOrNull
+                ?.let { name -> PaperSize.entries.firstOrNull { it.name == name } },
+        )
+    }
+
     /**
      * The indexed cover, or `null` when this project is **legacy** — created before the field existed,
      * so it has never been assigned one ([D-026](docs/design/V2-SPEC-DEFECTS.md#d-026-ruling)).
@@ -825,6 +899,9 @@ internal class RoomProjectRepository(
         val stamp = ZineCoverStamp.entries.firstOrNull { it.name == coverStamp } ?: return null
         return ZineCoverRecipe(surface, stamp)
     }
+
+    private fun ProjectEntity.paperSizeOrNull(): PaperSize? =
+        PaperSize.entries.firstOrNull { it.name == paperSize }
 
     /** The sidecar's cover, by the same total mapping the index uses. */
     private fun ProjectMeta.coverRecipe(): ZineCoverRecipe? {
@@ -872,6 +949,11 @@ internal class RoomProjectRepository(
     private data class PreparedAndroidRestore(
         val restore: PreparedLibraryRestore,
         val ids: List<Pair<String, String>>,
+    )
+
+    private data class DocumentWirePeek(
+        val schemaVersion: Int? = null,
+        val paperSize: PaperSize? = null,
     )
 
     private companion object {

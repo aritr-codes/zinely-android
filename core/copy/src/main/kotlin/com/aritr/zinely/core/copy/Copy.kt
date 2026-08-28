@@ -973,6 +973,8 @@ public object Copy {
         public const val SAVE: String = "Save"
         public const val SORT: String = "Sort"
         public const val UNDO: String = "Undo"
+        public const val UNAVAILABLE_DAMAGED: String = "This zine looks damaged, so it can’t be opened."
+        public const val UNAVAILABLE_NEWER_APP: String = "This zine needs a newer version of Zinely."
 
         public fun cardOpenLabel(title: String): String = "$title, finished zine. Open on the bench."
         public fun actionsFor(title: String): String = "Actions for $title"

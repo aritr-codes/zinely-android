@@ -67,6 +67,7 @@ public data class LibraryZine(
     val title: String,
     val subtitle: String,
     val cover: ZineCoverRecipe,
+    val unavailableReason: String? = null,
 )
 
 /**
@@ -341,7 +342,15 @@ public fun ZineLibraryScreen(
 
             is LibraryShelfState.Content -> ZineShelf(
                 zines = zines.map { ZineShelfItem(it.title, it.cover, it.subtitle) },
-                onOpen = { index -> zines.getOrNull(index)?.let { onOpenZine(it.id) } },
+                onOpen = { index ->
+                    zines.getOrNull(index)?.let {
+                        if (it.unavailableReason == null) {
+                            onOpenZine(it.id)
+                        } else {
+                            openSheet = LibrarySheet.Actions(it.id)
+                        }
+                    }
+                },
                 onActions = { index ->
                     zines.getOrNull(index)?.let { openSheet = LibrarySheet.Actions(it.id) }
                 },
@@ -469,10 +478,24 @@ public fun ZineLibraryScreen(
     // triggers", which is here. Every row dismisses first: each of the five leads somewhere else, and a
     // sheet left standing over a pushed route is the one shape none of them wants.
     ZineActionSheet(
-        target = actionTarget?.let { ZineActionTarget(it.title, it.subtitle) },
+        target = actionTarget?.let {
+            ZineActionTarget(
+                title = it.title,
+                subtitle = it.subtitle,
+                unavailableReason = it.unavailableReason,
+            )
+        },
         onDismiss = { openSheet = null },
         onAction = { action ->
             val zine = actionTarget ?: return@ZineActionSheet
+            if (
+                zine.unavailableReason != null &&
+                (action == ZineAction.Open ||
+                    action == ZineAction.ShareExport ||
+                    action == ZineAction.Duplicate)
+            ) {
+                return@ZineActionSheet
+            }
             // Every row answers the hand, not only the two that change the shelf. Three of these five
             // buzzed and three did not, which reads as the quiet ones having failed. `Tick` for the rows
             // that lead somewhere; `Snap`/`Boundary` below stay as they are, because duplicating and

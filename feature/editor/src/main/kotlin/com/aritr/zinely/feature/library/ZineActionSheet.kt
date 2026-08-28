@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -115,6 +117,7 @@ internal enum class ZineAction(
 internal data class ZineActionTarget(
     val title: String,
     val subtitle: String,
+    val unavailableReason: String? = null,
 )
 
 /** The scrim behind an open sheet — `.scrim`. */
@@ -415,7 +418,12 @@ internal fun ZineActionSheetSurface(
         )
 
         ZineAction.entries.forEach { action ->
-            ActionRow(action = action, onAction = onAction)
+            ActionRow(
+                action = action,
+                enabled = target.isEnabled(action),
+                disabledReason = target.unavailableReason,
+                onAction = onAction,
+            )
         }
     }
 }
@@ -464,7 +472,12 @@ private fun ZineActionGrab() {
  * state a touch device actually has. The wash is therefore visible on every device rather than on none.
  */
 @Composable
-private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
+private fun ActionRow(
+    action: ZineAction,
+    enabled: Boolean,
+    disabledReason: String?,
+    onAction: (ZineAction) -> Unit,
+) {
     val colors = ZinelyTheme.v21Colors
 
     val interaction = remember { MutableInteractionSource() }
@@ -475,12 +488,19 @@ private fun ActionRow(action: ZineAction, onAction: (ZineAction) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .testTag(zineActionTestTag(action))
+            .semantics {
+                if (!enabled && disabledReason != null) {
+                    stateDescription = disabledReason
+                }
+            }
             .zinelyV2Control(
                 label = action.label,
+                enabled = enabled,
                 interactionSource = interaction,
                 onClick = { onAction(action) },
             )
             .background(if (pressed) colors.leafTint else Color.Transparent)
+            .alpha(if (enabled) 1f else ZinelyV21Dimens.disabledAlpha)
             .padding(
                 horizontal = ZinelyV21Dimens.gapXl,
                 vertical = ZinelyV21Dimens.gapLg,
@@ -576,3 +596,8 @@ private val RowTextSize = 16.sp
 /** `.act .ic{width:30px;height:30px;font-size:.95rem}` = 15.2px. */
 private val IconChip = 30.dp
 private val IconSize = 15.2.sp
+
+private fun ZineActionTarget.isEnabled(action: ZineAction): Boolean = when (action) {
+    ZineAction.Open, ZineAction.ShareExport, ZineAction.Duplicate -> unavailableReason == null
+    ZineAction.Rename, ZineAction.Delete -> true
+}
