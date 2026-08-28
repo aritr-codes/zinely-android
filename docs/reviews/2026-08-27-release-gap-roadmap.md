@@ -16,17 +16,24 @@ authoritative; this file does not close a device or Play Console gate by itself.
 
 | Gap | Why it matters | Required next action |
 |---|---|---|
-| Flip's full Samsung release report is incomplete. | The change crosses schema, reducer, renderer, PDF and Compose layers. The named-toggle defect is fixed and guarded by a new platform-node regression test, but the patched Samsung rerun is still blocked and automation does not replace the required device gate. | Complete and commit the focused Flip device pass: Photo and Art H/V, undo/redo, reopen, Reframe, Proof/PDF parity, large font and TalkBack, with the required second reader. |
+| ~~Flip's approved P1 verification is incomplete.~~ | **Closed by owner acceptance on 2026-08-28.** The cross-schema/reducer/renderer/PDF/Compose implementation and focused automation are complete; the named-toggle repair has direct platform-node coverage and a committed Samsung accessibility report. The owner separately completed the human TalkBack spoken-order check and declared the approved P1 work complete. | Keep the existing Flip behavior and regression coverage intact. Any broader matrix expansion is post-gate evidence, not a reason to reopen the accepted P1 slice. |
 | Public Play privacy policy and declarations are not complete. | Google Play requires the Data safety form and a privacy-policy link, including for apps that collect no user data. | Owner supplies the public URL, support contact and final data-use confirmation; then publish the policy and complete Data safety, content rating and target-audience declarations. |
-| Disaster-recovery evidence is incomplete. | Backup/restore is the user's recovery promise. Wipe/reinstall restore, another device/API, provider interruption and offline journey remain unproven. | Prioritize a Samsung wipe/reinstall restore from a real `.zine` archive; record the result in the torture matrix. |
-| Already-indexed corrupt/newer document files can remain visible in the Room index. | Files are authoritative and Room is rebuildable; a stale row can present an apparently healthy zine that later fails to open. | Design a per-project revalidation/health-state seam. Do not add shelf-side cleanup. |
+| ~~The approved clean-reinstall recovery pass is incomplete.~~ | **Closed for the approved P1 scope on 2026-08-28.** A production `.zine` archive survived uninstall/reinstall and restored an openable zine with committed text on Samsung; the bounded report and torture matrix retain the exact limits. | Keep another-device/API, provider interruption, offline, media/cover and print-parity expansion in the torture matrix as post-gate evidence rather than overstating this pass. |
+| ~~Already-indexed corrupt/newer document files can remain falsely healthy in the Room index.~~ | **Closed 2026-08-28.** D-111 adds the shelf-only files-as-truth health projection: corrupt/newer projects remain visible and route to their existing action sheet, where Open, Share and Duplicate are disabled while Rename and Delete remain reachable. | Preserve the existing repository/UI focused coverage. The deliberately invalid physical-file scenario remains optional destructive QA, not an implementation blocker. |
 | ~~Reframe refusal is silent for an unreadable photo.~~ | **Closed 2026-08-28.** The owner authorised autonomous implementation of the focused slice; A25 records the implementation-selected concise recovery line in the existing Bench snack. The same line is visible and announced once through the snack's polite live region, Reframe stays closed, the document is untouched, and the ordinary Add control is the truthful recovery path. | Implemented through `:core:copy` and the existing surface-owned readability gate; focused UI coverage pins refusal, no mutation, visible copy, announcement semantics, no false Undo, and the enabled Add exit. |
+
+### 2026-08-28 checkpoint reconciliation
+
+- The owner completed the human TalkBack spoken-order verification.
+- The intentional action-sheet change was recorded by the pinned CI workflow, visually inspected, and
+  adopted only as `v21_sheet_light.png` / `v21_sheet_dark.png` in `f43683c`.
+- Reframe failure feedback is closed in `9d52335`; no document schema change was required.
 
 ## P2 — post-gate quality and scale
 
 | Candidate | Boundary to preserve |
 |---|---|
-| Art drawer first-cold-open latency | A repo-side cold-path optimization is now in place: the Art sheet shares one painter and prewarms canonical supply paths without changing the frozen cabinet or render contract. The remaining gate is the post-install Samsung timing rerun, still needed to prove the first-open spike is materially reduced on hardware. |
+| Art drawer first-cold-open latency | The repo-side prewarm remains safe, but the 2026-08-28 Samsung release-parity rerun did **not** clear the gate: two post-install samples rendered 31 frames with 7 / 6 janky (22.58% / 19.35%) and 42 / 29 ms medians. Responsiveness stays **Yellow**; investigate the remaining UI-thread/draw cost before claiming the cold spike is fixed. |
 | Orphaned image assets after delete/import churn | Correct the optimistic contract wording now; implement a transactional sweeper only with import pinning and recovery tests. |
 | SAF out-of-space classification | Improve error mapping only after a realistic low-storage experiment. |
 | Library scale features (search, sort, archive/status) | Add a query boundary to `ProjectRepository`; do not bolt filtering onto the current whole-list stream. |

@@ -29,8 +29,27 @@ This preserves the existing architecture:
 
 All passed on 2026-08-28.
 
-## Remaining open verification
+## Samsung post-install measurement — gate remains open
 
-The required post-install Samsung measurement is still open. On 2026-08-28 the connected device
-`RZCYA1VBQ2H` moved from `offline` to `unauthorized` after `adb reconnect` and an ADB server restart, so
-the physical cold-open timing rerun could not be completed from the repository side.
+The device rerun completed on 2026-08-28 on Samsung SM-A176B (`RZCYA1VBQ2H`), Android 16, at the
+panel's active 60 Hz mode. The measured artifact was the verified release APK re-signed locally with
+the standard debug key solely so it could update the existing debug-signed installation without an
+uninstall or data loss. No source or packaged code changed, and this profiling artifact is not
+distributable.
+
+For each sample the APK was installed over itself, Zinely was launched from a stopped process, the
+existing test zine was opened, the Add tray was allowed to settle, `dumpsys gfxinfo
+com.aritr.zinely reset` isolated the transition, and Art was opened once:
+
+| Sample | Frames | Janky frames | Median | P90 | Result |
+|---|---:|---:|---:|---:|---|
+| Release-parity cold 1 | 31 | 7 (22.58%) | 42 ms | 101 ms | Does not clear the gate |
+| Release-parity cold 2 | 31 | 6 (19.35%) | 29 ms | 109 ms | Does not clear the gate |
+
+Two exploratory debug-build cold samples agreed directionally (28 frames; 9 / 8 janky; 38 / 32 ms
+medians) but are not used as the release decision. The repeated release-parity result remains materially
+worse than the previously recorded settled warm transition (18 frames, 2 janky, 7–8 ms median), so the
+prewarm implementation is retained as safe foundation work while responsiveness stays **Yellow**.
+
+The Samsung was restored to the original debug build after profiling, app data was preserved, and
+`font_scale` remained `1.0`.
