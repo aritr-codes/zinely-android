@@ -687,6 +687,8 @@ public object Copy {
         public const val SHOWING_WHOLE_PHOTO: String = "Showing the whole photo. Margins may appear on paper."
         public const val FRAMING_RESET: String = "Framing reset. Cancel to undo."
         public const val REFRAMING_CANCELLED: String = "Reframing cancelled."
+        public const val REFRAME_UNAVAILABLE: String =
+            "This photo can’t be reframed. Try adding it again."
         public const val WHOLE_PHOTO_INERT: String =
             "Whole photo can’t be moved or zoomed. Choose Fill to adjust it."
         public const val PREVIEW: String = "Preview"

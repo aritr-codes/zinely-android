@@ -754,7 +754,18 @@ public fun EditorScreen(
                 readImageIntrinsics(imageBytes, rf.before.assetId)
             }
             if (measurable == null) {
-                if (ReframeUnavailableAnnouncement.isNotBlank()) sayReframe(ReframeUnavailableAnnouncement)
+                // A25: the refusal is visible and spoken once. BenchSnack owns the polite live-region
+                // announcement, so do not also send the same line through `sayReframe` and make TalkBack
+                // repeat it. The ordinary Add control returns as the truthful recovery path; Photo Replace
+                // remains an intentionally unavailable future enhancement and is never promised here.
+                deleteJob[0]?.cancel()
+                snackMessage = Copy.Editor.REFRAME_UNAVAILABLE
+                snackAction = null
+                snackVisible = true
+                deleteJob[0] = c4Scope.launch {
+                    delay(BenchSnackDeleteMillis)
+                    snackVisible = false
+                }
                 dispatch(Intent.CancelReframe(rf.token))
                 return@LaunchedEffect
             }
@@ -2142,19 +2153,6 @@ public fun EditorScreen(
  * Apply a fit choice to the working [FramingDraft] (bench `setFit`): choosing "Whole photo" re-centres to
  * a clean baseline (zoom 1, no pan); choosing "Fill" keeps the current pan/zoom.
  */
-/**
- * **FOUNDER-OWNED COPY — AWAITING WORDING (M7-01 / RF-4).**
- *
- * The line spoken when Reframe is declined because the photo cannot be read. Deliberately empty: M7-01
- * was not authorised to invent user-facing text, and the founder is supplying it separately. While it is
- * empty the refusal is silent — which is a *known, temporary* Article 5 gap, not the intended end state:
- * declining without saying why is honest about the framing but not about the reason.
- *
- * Replace the empty string with the founder's wording; no other change is needed, as the refusal path
- * already speaks it through the same `announceForAccessibility` drain every other Reframe line uses.
- */
-internal const val ReframeUnavailableAnnouncement: String = ""
-
 /**
  * The line spoken when an adjustment is asked for in "Whole photo", where pan and zoom do nothing.
  *

@@ -975,6 +975,23 @@ custom actions whose labels say `Remove ... flip` when active.
 .el[data-flip-y="true"]>.photo,.el.sticker[data-flip-y="true"]>svg{--flip-y:-1}
 @media (max-width:340px){.flip-choices{grid-template-columns:1fr}}
 </style>
+
+<!-- ===========================================================================
+A25 · 2026-08-28 (error exit + accessibility) — an unreadable photo is refused
+before Reframe opens, and the refusal is never silent.
+
+The Bench shows its existing support-paper snack for 3200ms with the exact line
+"This photo can’t be reframed. Try adding it again." and no action button.
+The same line is the snack's one polite live-region announcement. Reframe chrome
+never appears, the document is untouched, and the ordinary Add control returns
+as the truthful recovery path. Photo Replace remains unavailable and is not
+promised. The snack, rather than a second
+announcement channel, owns speech so TalkBack does not repeat the outcome.
+
+This is a declarative failure-state ruling rather than dead prototype code: the
+static corpus has no corrupt image fixture capable of entering the state. Compose
+must prove the state through the real asset-read failure seam and its tests.
+=========================================================================== -->
 <script>
 ICON.flip=svg('<path d="M12 3v18"/><path d="M9 7 5 12l4 5"/><path d="m15 7 4 5-4 5"/>');
 const toolsForBeforeA22=toolsFor;
