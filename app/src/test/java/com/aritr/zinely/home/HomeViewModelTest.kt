@@ -567,6 +567,21 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `flush pending deletes commits each hidden zine`() = runTest {
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        repository.projects.emit(listOf(summary("z1", "One", now), summary("z2", "Two", now)))
+        viewModel.delete("z1")
+        viewModel.delete("z2")
+
+        viewModel.flushPendingDeletes()
+
+        assertEquals(listOf("z1", "z2"), repository.deleted)
+        stateJob.cancel()
+    }
+
+    @Test
     fun `a successful commit keeps the card hidden until the store emits the shorter list`() = runTest {
         // Given — unhiding on success would flash the deleted card back for the window between
         // deleteProject returning and observeProjects() re-emitting (reviewer Required Fix)

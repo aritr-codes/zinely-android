@@ -23,9 +23,11 @@ import com.aritr.zinely.feature.library.LibraryBackupRestoreMode
 import com.aritr.zinely.feature.library.LibraryBackupRestoreUiState
 import com.aritr.zinely.feature.library.LibraryZine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +42,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -356,6 +359,21 @@ internal class HomeViewModel @Inject constructor(
      */
     fun commitDelete(id: String) {
         viewModelScope.launch { performCommit(id) }
+    }
+
+    /**
+     * Commit any pending delete as Home leaves the foreground.
+     *
+     * The undo window is still in-memory and reversible while the shelf stays visible. Once the
+     * destination stops, though, a process kill can drop that in-memory state before the snackbar's
+     * timeout path runs, which makes the zine reappear on a cold boot. Flushing here keeps the
+     * user-visible "delete means delete" contract without changing the on-screen undo behaviour.
+     */
+    fun flushPendingDeletes() {
+        if (pendingDeletes.value.isEmpty()) return
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            withContext(NonCancellable) { commitPendingDeletesNow() }
+        }
     }
 
     /** The one commit path [commitDelete] and [commitPendingDeletesNow] share. */

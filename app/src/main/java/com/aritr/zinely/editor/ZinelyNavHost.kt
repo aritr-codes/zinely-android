@@ -70,6 +70,7 @@ import com.aritr.zinely.MainActivity
 import android.net.Uri
 import android.widget.Toast
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
@@ -178,6 +179,7 @@ private fun HomeDestination(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
     val preferredPaper by viewModel.preferredPaper.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
     val appVersion = remember(context) {
         @Suppress("DEPRECATION")
         context.packageManager.getPackageInfo(context.packageName, 0).versionName.orEmpty()
@@ -204,6 +206,13 @@ private fun HomeDestination(
                 onFailure = viewModel::backupRestorePickerFailed,
             )
         }
+    }
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) viewModel.flushPendingDeletes()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     ZineLibraryScreen(
