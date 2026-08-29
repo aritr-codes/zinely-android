@@ -999,26 +999,30 @@ public object Copy {
 
     /** The Shelf-owned printer's note: paper preference, bundled type, privacy, and build identity. */
     public object Colophon {
-        public const val ACTION: String = "Colophon"
-        public const val TITLE: String = "Colophon"
-        public const val INTRO: String = "A little note about the paper, type, and care behind Zinely."
-        public const val DEFAULT_PAPER: String = "Default paper"
+        public const val ACTION: String = "About"
+        public const val TITLE: String = "About Zinely"
+        public const val TAGLINE: String = "Some things deserve pages."
+        public const val INTRO: String =
+            "Zinely began with a simple wish: to make something for someone. " +
+                "We hope it helps you make something worth keeping."
+        public const val DEFAULT_PAPER: String = "Paper for new zines"
         public const val PAPER_EXPLANATION: String =
-            "Used first when you start a zine. You can still choose another."
-        public const val TYPEFACES: String = "Typefaces"
-        public const val AVERIA_ROLE: String = "Our handmade voice"
-        public const val FRAUNCES_ROLE: String = "Our editorial face"
-        public const val INTER_ROLE: String = "Our working face"
-        public const val LICENCE: String = "SIL Open Font License"
-        public const val HOW_IT_WORKS: String = "How Zinely works"
+            "We’ll suggest this paper when you start. You can always choose the other one."
+        public const val TYPEFACES: String = "Fonts we use"
+        public const val AVERIA_ROLE: String = "Warm, handmade lettering"
+        public const val FRAUNCES_ROLE: String = "A little bookish flair"
+        public const val INTER_ROLE: String = "Clear, everyday text"
+        public const val LICENCE_ACTION: String = "Read font licence"
+        public const val LICENCE_TITLE: String = "Font licence"
+        public const val HOW_IT_WORKS: String = "Your zines stay yours"
         public const val OFFLINE_PROMISE: String =
-            "Zinely works offline, and your zines stay on this device unless you choose to share or back them up."
-        public const val VERSION: String = "Version"
-        public const val BACK_TO_SHELF: String = "Back to your shelf"
-        public const val BACK_TO_COLOPHON: String = "Back to Colophon"
-        public const val LICENCE_UNAVAILABLE: String = "This licence notice couldn’t be opened."
+            "Zinely works offline. Your zines stay on this device unless you choose to share or back them up."
+        public const val VERSION: String = "App version"
+        public const val BACK_TO_SHELF: String = "Back to My Shelf"
+        public const val BACK_TO_COLOPHON: String = "Back to About Zinely"
+        public const val LICENCE_UNAVAILABLE: String = "This font licence couldn’t be opened."
         public const val PAPER_SAVE_FAILED: String = "Couldn’t save that paper choice."
-        public fun licenceButton(family: String): String = "$family, $LICENCE"
+        public fun licenceButton(family: String): String = "$family, $LICENCE_ACTION"
         public fun paperSelected(paper: String): String = "$paper is now your default paper"
     }
 

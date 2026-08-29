@@ -4,9 +4,10 @@ Status: DESIGN FREEZE
 Date: 2026-08-22  
 Canonical visual source: [mockups/backup-restore.html](mockups/backup-restore.html)
 
-**D-079 amendment · 2026-08-24:** the Shelf now has two equal quiet dock actions: this flow's
-`Backups` / `Restore a backup`, and `Colophon`. The Colophon owns the sole product-level offline/privacy
-sentence; this flow retains only operational destination, additive-restore, and recovery copy.
+**D-079 amendment · 2026-08-24; copy amended 2026-08-29:** the Shelf has two equal quiet dock actions: this
+flow's `Backups` / `Restore a backup`, and `About`. The sibling `About Zinely` destination (internally the
+Colophon) owns the sole product-level offline/privacy sentence; this flow retains only operational
+destination, additive-restore, and recovery copy.
 
 This document freezes the first production `.zine` backup/restore user flow. The repository and
 current V2.1 shelf were reviewed, the interactive HTML was critiqued on the Samsung SM_A176B, and
@@ -15,13 +16,13 @@ this contract without inventing a second interaction model.
 
 ## Entry point
 
-- The shelf does not gain a generic settings destination; its separate statement of craft is the
-  [Colophon](COLOPHON-FREEZE.md).
+- The shelf does not gain a generic settings destination; its separate statement of craft is
+  [`About Zinely`](COLOPHON-FREEZE.md), internally the Colophon surface.
 - Backup / restore enters from the first of the dock's two quiet secondary actions.
 - Content shelf label: `Backups`.
 - Empty shelf label: `Restore a backup`.
 - Loading and shelf-error states do not expose the trust action.
-- `Colophon` is the second quiet action beside it in content and empty states; loading and shelf-error
+- `About` is the second quiet action beside it in content and empty states; loading and shelf-error
   states continue to answer their current question before exposing either utility.
 
 Rationale:
@@ -137,7 +138,7 @@ The retry action relaunches the appropriate picker rather than retrying hidden s
 
 - The implementation reuses the trusted backup repositories and SAF transport.
 - The UI does not duplicate archive validation logic.
-- No settings/Colophon logic is introduced in the backup package; the actions are sibling Shelf routes.
+- No settings/Colophon logic is introduced in the backup package; `Backups` and `About` are sibling Shelf routes.
 - The dock remains the only primary-action host on the shelf.
 
 ## Implementation status

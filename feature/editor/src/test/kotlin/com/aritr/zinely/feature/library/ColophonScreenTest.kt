@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -57,6 +58,24 @@ class ColophonScreenTest {
             .performScrollToNode(hasTestTag(ColophonVersionTestTag))
         composeRule.onNodeWithTag(ColophonVersionTestTag).assertIsDisplayed()
         composeRule.onNodeWithText("v9.9.9").assertIsDisplayed()
+    }
+
+    @Test
+    fun `about zinely opens with the approved personal brand note`() {
+        setContent(
+            preferredPaper = PaperSize.A4,
+            appVersion = "v1",
+            onBackToShelf = {},
+            onPreferredPaperChange = {},
+        )
+
+        composeRule.onNodeWithText("About Zinely").assertTextEquals(Copy.Colophon.TITLE)
+        composeRule.onNodeWithText("Some things deserve pages.").assertTextEquals(Copy.Colophon.TAGLINE)
+        composeRule.onNodeWithText(
+            "Zinely began with a simple wish: to make something for someone. " +
+                "We hope it helps you make something worth keeping.",
+        ).assertTextEquals(Copy.Colophon.INTRO)
+        composeRule.onNodeWithText("Paper for new zines").assertTextEquals(Copy.Colophon.DEFAULT_PAPER)
     }
 
     @Test

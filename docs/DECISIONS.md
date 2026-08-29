@@ -10788,7 +10788,11 @@ Plus one statement of craft, the **colophon**.
 
 1. **The café is retained as register, not place.** Quiet, warm, unhurried, private, yours — still binding.
 2. **Every surface belongs to one of the three places, or is mis-homed** and gets redesigned or removed.
-3. **Settings becomes the colophon** — the printer's note stating how the thing was made. It carries the paper
+3. **Settings becomes the colophon** — the printer's note stating how the thing was made. `Colophon` is the
+   internal small-press concept; **owner copy amendment, 2026-08-29:** the Shelf action says `About`, while the
+   destination, pane title, and licence Back label say `About Zinely`. Its approved opening is
+   `Some things deserve pages.` followed by `Zinely began with a simple wish: to make something for
+   someone. We hope it helps you make something worth keeping.` It carries the paper
    default, the typefaces *with their licences*, one offline sentence, and the version. This discharges a real
    OFL obligation (three notices ship today reachable from no UI) in the one place self-description reads as
    craft rather than defensiveness. **D-079 owner ruling, 2026-08-24:** it is Shelf-owned and reached as the

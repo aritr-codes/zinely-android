@@ -1,14 +1,15 @@
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Zinely — Colophon (DESIGN FREEZE)</title>
+<title>Zinely — About Zinely (DESIGN FREEZE)</title>
 
 <!--
   DESIGN FREEZE — 2026-08-24 — D-079 / ADR-103
 
-  Canonical interactive specification for the Shelf-owned Colophon.
+  Canonical interactive specification for the Shelf-owned Colophon, presented to makers as About Zinely.
   - Entry: the second quiet dock action, beside Backups.
-  - Back from Colophon returns to the Shelf; Back from a licence returns to Colophon.
+  - The Shelf action is About; the destination, pane title, and licence Back label are About Zinely.
+  - Back from About Zinely returns to the Shelf; Back from a licence returns to About Zinely.
   - The page scrolls at large text. No content or action is pinned over the scroll region.
   - Default paper changes only the preselection for a future zine; it never rewrites an existing zine.
   - Each bundled typeface opens its locally bundled SIL OFL notice.
@@ -54,6 +55,7 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;gap:18px;padding:
 .top h1{margin:0;text-align:center;font:700 25px/1.1 var(--voice)}
 .scroll{overflow-y:auto;overscroll-behavior:contain;padding:22px 24px 42px;scrollbar-gutter:stable}
 .intro{margin:0 0 22px;color:var(--ink-soft);font-size:14px;line-height:1.55}
+.intro p{margin:0}.intro .featured{margin-bottom:8px;color:var(--ink);font:700 19px/1.25 var(--voice)}
 .section{margin-top:24px}.section:first-of-type{margin-top:0}
 .eyebrow{margin:0 0 10px;color:var(--ink-soft);font-size:11px;font-weight:700;
   letter-spacing:.1em;text-transform:uppercase}
@@ -89,51 +91,54 @@ body{margin:0;min-height:100vh;display:grid;place-items:center;gap:18px;padding:
 </style>
 
 <p class="cap"><span class="badge">design freeze · D-079</span><br>
-Shelf → Colophon. Test the paper preference, each local licence, Back/Escape, scrolling, and day/night.</p>
+Shelf → About Zinely. Test the paper preference, each local licence, Back/Escape, scrolling, and day/night.</p>
 
-<main class="phone" aria-label="Interactive Colophon prototype">
+<main class="phone" aria-label="Interactive About Zinely prototype">
   <section class="screen main" id="mainScreen" aria-labelledby="colophonTitle">
     <header class="top">
-      <button class="back" type="button" aria-label="Back to your shelf" id="shelfBack">←</button>
-      <h1 id="colophonTitle">Colophon</h1><span></span>
+      <button class="back" type="button" aria-label="Back to My Shelf" id="shelfBack">←</button>
+      <h1 id="colophonTitle">About Zinely</h1><span></span>
     </header>
     <div class="scroll" tabindex="0">
-      <p class="intro">A little note about the paper, type, and care behind Zinely.</p>
+      <div class="intro">
+        <p class="featured">Some things deserve pages.</p>
+        <p>Zinely began with a simple wish: to make something for someone. We hope it helps you make something worth keeping.</p>
+      </div>
 
       <section class="section" aria-labelledby="paperTitle">
-        <h2 class="eyebrow" id="paperTitle">Default paper</h2>
+        <h2 class="eyebrow" id="paperTitle">Paper for new zines</h2>
         <div class="card paper-choices" role="radiogroup" aria-labelledby="paperTitle">
           <button class="choice" role="radio" aria-checked="true" data-paper="A4">A4</button>
           <button class="choice" role="radio" aria-checked="false" data-paper="US Letter">US Letter</button>
         </div>
-        <p class="note" id="paperHelp">Used first when you start a zine. You can still choose another.</p>
+        <p class="note" id="paperHelp">We’ll suggest this paper when you start. You can always choose the other one.</p>
       </section>
 
       <section class="section" aria-labelledby="typeTitle">
-        <h2 class="eyebrow" id="typeTitle">Typefaces</h2>
+        <h2 class="eyebrow" id="typeTitle">Fonts we use</h2>
         <div class="card">
           <button class="font-row" data-name="Averia Sans Libre"
             data-src="../../../feature/editor/src/main/assets/fonts/OFL-AveriaSansLibre.txt">
-            <span><b>Averia Sans Libre</b><small>Our handmade voice · SIL Open Font License</small></span><span class="arrow">→</span>
+            <span><b>Averia Sans Libre</b><small>Warm, handmade lettering · Read font licence</small></span><span class="arrow">→</span>
           </button>
           <button class="font-row" data-name="Fraunces"
             data-src="../../../feature/editor/src/main/assets/fonts/OFL-Fraunces.txt">
-            <span><b>Fraunces</b><small>Our editorial face · SIL Open Font License</small></span><span class="arrow">→</span>
+            <span><b>Fraunces</b><small>A little bookish flair · Read font licence</small></span><span class="arrow">→</span>
           </button>
           <button class="font-row" data-name="Inter"
             data-src="../../../feature/editor/src/main/assets/fonts/OFL-Inter.txt">
-            <span><b>Inter</b><small>Our working face · SIL Open Font License</small></span><span class="arrow">→</span>
+            <span><b>Inter</b><small>Clear, everyday text · Read font licence</small></span><span class="arrow">→</span>
           </button>
         </div>
       </section>
 
       <section class="section" aria-labelledby="careTitle">
-        <h2 class="eyebrow" id="careTitle">How Zinely works</h2>
-        <p class="promise">Zinely works offline, and your zines stay on this device unless you choose to share or back them up.</p>
+        <h2 class="eyebrow" id="careTitle">Your zines stay yours</h2>
+        <p class="promise">Zinely works offline. Your zines stay on this device unless you choose to share or back them up.</p>
       </section>
 
       <section class="section" aria-labelledby="versionTitle">
-        <h2 class="eyebrow" id="versionTitle">Version</h2>
+        <h2 class="eyebrow" id="versionTitle">App version</h2>
         <div class="card version"><strong>Zinely</strong><span>0.9.0-beta.2</span></div>
       </section>
     </div>
@@ -141,11 +146,11 @@ Shelf → Colophon. Test the paper preference, each local licence, Back/Escape, 
 
   <section class="screen licence-page" id="licenceScreen" aria-labelledby="licenceTitle">
     <header class="top">
-      <button class="back" type="button" aria-label="Back to Colophon" id="licenceBack">←</button>
+      <button class="back" type="button" aria-label="Back to About Zinely" id="licenceBack">←</button>
       <h1 id="licenceTitle">Typeface</h1><span></span>
     </header>
     <div class="scroll" tabindex="0">
-      <p class="licence-lead">Bundled with Zinely under the SIL Open Font License 1.1.</p>
+      <p class="licence-lead">Font licence</p>
       <iframe class="licence-frame" id="licenceFrame" title="Typeface licence text"></iframe>
     </div>
   </section>

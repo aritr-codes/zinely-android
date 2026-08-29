@@ -72,7 +72,7 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 | pages | **Pages** / "page 3 of 8" | Canvas list / Artboards |
 | export | **Print & fold** | Export / Generate PDF |
 | share | **Send to a friend** | Share via… |
-| settings | **Settings** *(plain is fine here)* | Preferences / Configuration |
+| app note and small defaults | Shelf: **About** · screen: **About Zinely** | Colophon / Settings / Preferences |
 | the supply shelf | **Supplies** *(the tray's section heading / screen-reader landmark)* | Tools / Toolbar |
 
 ### Onboarding & first run
@@ -80,7 +80,7 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 - Welcome headline: **"Make a little zine."**
 - Welcome sub: **"Photos, words, and whatever you feel like. It folds into a tiny book."**
 - Welcome primary button: **"Start making"**
-- Colophon privacy reassurance (the **one** product-level instance): **"Zinely works offline, and your
+- About Zinely privacy reassurance (the **one** product-level instance): **"Zinely works offline, and your
   zines stay on this device unless you choose to share or back them up."**
 
 ### Empty states
@@ -93,18 +93,27 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
   the add actions).
 - No projects yet (future home): **"Nothing here yet — let's change that."** / **[ Start a zine ]**
 
-### Colophon
+### About Zinely (internal Colophon surface)
 
 The [D-079](V2-SPEC-DEFECTS.md#d-079) owner ruling makes this the only surface where Zinely describes its
 privacy/offline model as product copy. Error and recovery copy may still say work is safe when that fact is
-the answer to the current failure.
+the answer to the current failure. `Colophon` remains the architectural small-press term, but it is not
+maker-facing copy: plain `About` gets the maker there, and `About Zinely` names the destination.
 
-- Title: **"Colophon"**
-- Intro: **"A little note about the paper, type, and care behind Zinely."**
-- Default-paper explanation: **"Used first when you start a zine. You can still choose another."**
-- Typeface licence label: **"SIL Open Font License"**
-- Privacy sentence: **"Zinely works offline, and your zines stay on this device unless you choose to share
-  or back them up."**
+- Shelf action: **"About"**
+- Title and pane title: **"About Zinely"**
+- Featured opening: **"Some things deserve pages."**
+- Intro: **"Zinely began with a simple wish: to make something for someone. We hope it helps you make
+  something worth keeping."**
+- Licence Back label: **"Back to About Zinely"**
+- Paper heading and explanation: **"Paper for new zines"** / **"We’ll suggest this paper when you start. You
+  can always choose the other one."**
+- Font heading and roles: **"Fonts we use"** / **"Warm, handmade lettering"** / **"A little bookish flair"** /
+  **"Clear, everyday text"**
+- Licence row and child labels: **"Read font licence"** / **"Font licence"**
+- Privacy heading and sentence: **"Your zines stay yours"** / **"Zinely works offline. Your zines stay on
+  this device unless you choose to share or back them up."**
+- Version heading: **"App version"**
 
 ### Hints (contextual, one-time, dismissible)
 

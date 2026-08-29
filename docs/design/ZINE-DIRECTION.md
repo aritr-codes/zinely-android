@@ -76,14 +76,20 @@ The café was doing two jobs — supplying the *feeling* and supplying the *plac
 | **A material** | **Stock you place and cannot un-invent.** Photos, words, tape, stamps, cut paper | Materials are finite, named, and authored. Five inks, three voices, sixteen supplies. Never a picker over infinity |
 | **Importing** | **Bringing stock to the bench** — from the drawer (gallery), from the camera, from another app | Import is not "upload". It never leaves the phone, so it is a *reach*, not a *transfer* |
 | **Exporting** | **The press run.** Ink meets paper; a sheet exists that did not before | The primary output is a foldable sheet. Page images are offcuts you may also keep |
-| **Settings** | **The colophon** — the printer's note at the back of a book saying how it was made | See §2.3. This is the single best fit in the whole metaphor and it solves a legal obligation |
+| **Settings** | **The colophon**, presented as **About Zinely** — the printer's note at the back of a book saying how it was made | See §2.3. The concept fits the metaphor and solves a legal obligation; the maker-facing name stays plain |
 | **A future feature** | **A new supply, a new mark, or a shorter path to the press run** | If it is none of those three, it belongs to a different product |
 
-## 2.3 Settings is a colophon
+## 2.3 Settings is a colophon, presented as About Zinely
 
 ✅ **VERIFIED: no settings surface exists anywhere in `src/main`.** No route, no screen, no file. For a complete product that is a gap — but "Settings" is a generic-Android answer, and the press already has the right object.
 
 A **colophon** is the note at the back of a printed book stating how it was made: the press, the typefaces, the paper, the edition. It is not a preferences panel that apologises for itself; it is *a statement of craft*, and it is the one place a confident product is allowed to talk about itself.
+
+**Naming amendment · 2026-08-29:** `Colophon` remains the architectural name for that small-press concept,
+not required vocabulary for the maker. The Shelf action says **`About`** and the destination, pane title, and
+licence Back label say **`About Zinely`**. Its approved warm opening is **“Some things deserve pages.”** followed
+by **“Zinely began with a simple wish: to make something for someone. We hope it helps you make something
+worth keeping.”** This changes the invitation, not the four contents or D-079's privacy invariant.
 
 **It carries exactly four things, and each earns its place:**
 
@@ -94,8 +100,9 @@ A **colophon** is the note at the back of a printed book stating how it was made
 | **How Zinely works** — the offline statement, **stated once, here** | §13's subtraction moves four scattered privacy reassurances into one confident sentence in the one place it is not defensive |
 | **Version, and nothing else** | No account, no sync, no analytics toggle, no notification settings. There is nothing to configure because there is nothing running |
 
-**Reached from the Shelf**, not the Bench — you read a colophon when you are not working. **D-079 owner
-ruling, 2026-08-24:** it is the second quiet dock action beside `Backups`; its complete navigation, copy,
+**Reached from the Shelf**, not the Bench — you read this statement of craft when you are not working.
+**D-079 owner ruling, 2026-08-24; copy amended 2026-08-29:** `About` is the second quiet dock action beside
+`Backups`; its complete navigation, copy,
 large-text, licence and semantic contract is DESIGN FROZEN in
 [`COLOPHON-FREEZE.md`](COLOPHON-FREEZE.md). **BUILD.**
 

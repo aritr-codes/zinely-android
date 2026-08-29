@@ -4876,22 +4876,26 @@ is a different thing — a dead `.privacyline` CSS rule in `v2-proof.html`.
 
 #### Ruling — option (b), the promise survives once in the Shelf-owned Colophon
 
+**Owner-facing copy amended 2026-08-29:** the internal surface remains the Colophon; its Shelf action is
+`About` and its destination is `About Zinely`. The four-part scope and sole-privacy-sentence ruling below do
+not change.
+
 The owner directed the thorough resolution on 2026-08-24. [ZINE-DIRECTION §2.3](ZINE-DIRECTION.md) already
 settled the product object; this ruling supplies the missing interaction and copy:
 
-- **Home:** a second quiet Shelf-dock action, `Colophon`, beside `Backups`. It is not reachable from the
-  Bench or Proof and is not renamed Settings/About/Privacy.
+- **Home:** a second quiet Shelf-dock action, `About`, beside `Backups`, opening `About Zinely`. It is not
+  reachable from the Bench or Proof and is not a generic Settings/Privacy destination.
 - **Contents:** default paper (`A4` / `US Letter`, future-creation preselection only); the bundled typefaces
   (`Averia Sans Libre`, `Fraunces`, `Inter`) with locally readable OFL notices; one honest offline/privacy
   sentence; and the real app version.
-- **The survivor:** `Zinely works offline, and your zines stay on this device unless you choose to share or
+- **The survivor:** `Zinely works offline. Your zines stay on this device unless you choose to share or
   back them up.` It appears once, in the Colophon. This wording names the user-controlled exits rather than
   making the false absolute claim that content can never leave the device.
 - **Struck:** the Library empty-state slogan; the Bench Photo/add-sheet/caption/Done repetitions; the Proof
   ready-row suffix; and the Backup sheet's no-send slogan. Operational error/recovery messages remain where
   they explain the current failure rather than advertise privacy.
-- **Accessibility and navigation:** the Colophon scrolls at maximum font scale, paper is one radio group,
-  each typeface row drills into a locally readable licence, Back unwinds licence → Colophon → Shelf, and
+- **Accessibility and navigation:** About Zinely scrolls at maximum font scale, paper is one radio group,
+  each typeface row drills into a locally readable licence, Back unwinds licence → About Zinely → Shelf, and
   focus returns to the invoking control.
 
 The canonical interactive spec is [`v21-colophon.html`](mockups/v21-colophon.html); the complete state, copy,

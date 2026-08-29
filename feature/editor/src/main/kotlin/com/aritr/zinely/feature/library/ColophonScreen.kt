@@ -188,6 +188,15 @@ private fun ColophonMain(
                 modifier = Modifier.semantics { heading() },
             )
         }
+        item {
+            Text(
+                Copy.Colophon.TAGLINE,
+                color = colors.ink,
+                fontFamily = ZinelyV21Fonts.Editorial,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 21.sp,
+            )
+        }
         item { BodyText(Copy.Colophon.INTRO) }
         item { SectionHeading(Copy.Colophon.DEFAULT_PAPER) }
         item {
@@ -256,7 +265,7 @@ private fun ColophonMain(
                 Column(Modifier.weight(1f)) {
                     Text(typeface.family, color = printed.ink, fontWeight = FontWeight.Bold)
                     Text(typeface.role, color = printed.inkSoft, fontSize = 13.sp)
-                    Text(Copy.Colophon.LICENCE, color = printed.leafText, fontSize = 12.sp)
+                    Text(Copy.Colophon.LICENCE_ACTION, color = printed.leafText, fontSize = 12.sp)
                 }
                 Text("›", color = printed.inkSoft, fontSize = 24.sp)
             }
@@ -302,7 +311,7 @@ private fun LicenceScreen(
     ) {
         ColophonHeader(Copy.Colophon.BACK_TO_COLOPHON, onBack, Modifier.testTag(ColophonBackTestTag))
         SectionHeading(typeface.family)
-        Text(Copy.Colophon.LICENCE, color = colors.inkSoft, fontSize = 13.sp)
+        Text(Copy.Colophon.LICENCE_TITLE, color = colors.inkSoft, fontSize = 13.sp)
         Spacer(Modifier.height(ZinelyV21Dimens.gapLg))
         Box(
             Modifier
