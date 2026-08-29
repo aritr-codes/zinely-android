@@ -210,7 +210,9 @@ private fun FlipChoice(
     focusRequester: FocusRequester? = null,
 ) {
     val colors = ZinelyTheme.v21Colors
-    val content = if (checked) colors.onLeaf else colors.ink
+    // Choice paper stays physically bright in both themes, so room-space `ink` becomes unreadably light
+    // here in dark mode. Use the palette's explicit dark-on-bright material ink for the unselected state.
+    val content = if (checked) colors.onLeaf else colors.onButter
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)

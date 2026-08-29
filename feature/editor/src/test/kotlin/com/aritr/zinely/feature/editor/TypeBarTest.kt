@@ -685,8 +685,8 @@ class TypeBarTest {
         fun leftOf(label: String) =
             composeRule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.left
 
-        // The last control of the first three rows, then the Colour row's 3-column grid box. In the
-        // compact 3+2 layout the second row ends early, so "Ochre" is no longer the cluster's right edge.
+        // The last control of the first three rows, then the Colour row's full five-tile line. Its caption
+        // is stacked above, so the fixed ink cluster no longer has to share horizontal space with text.
         val colourRowRight = composeRule.onNodeWithTag(TypeBarInkRowTestTag).fetchSemanticsNode().boundsInRoot.right
         val rightEdges = listOf(rightOf("Larger"), rightOf("Right"), rightOf("Italic"), colourRowRight)
         val labelLefts = listOf(leftOf("Size"), leftOf("Align"), leftOf("Style"), leftOf("Colour"))
@@ -711,8 +711,7 @@ class TypeBarTest {
         openTypeBar()
 
         val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
-        // The widest row is Colour again, but now as the 3-column compact grid: 3x48dp tiles + 2x8dp gaps
-        // = 160dp, plus the unchanged label column and card padding.
+        // The widest row is Colour: 5x48dp tiles + 4x4dp gaps, with the caption stacked above.
         with(composeRule.density) {
             assertTrue(
                 "the Type bar filled its parent (${card.width.toDp()}) instead of hugging its widest row",
@@ -732,11 +731,9 @@ class TypeBarTest {
         // i.e. edge-to-edge on this device, over the frozen `max-width:calc(100% - 24px)` (= 336dp), and
         // clipping below 360dp. The frozen cluster was 192dp, which put the card at 280dp.
         //
-        // The August 29, 2026 compactness ruling changes the Colour row from one 5-wide strip to a 3+2
-        // grid of visible 48dp tiles. The cap it is measured against — the frozen
-        // `max-width:calc(100% - 24px)` = 336dp — has not moved. What this second assertion pins is that
-        // the width is EXPLAINED: 32 (card padding) + 64.5 (label + gap) + 160 (3x48 + 2x8). Anything
-        // wider means a control or gap inflated again.
+        // The Samsung follow-up keeps one five-wide line of visible 48dp tiles but stacks the Colour
+        // caption above it. The cap remains 336dp. The measured width is explained by 32dp card padding
+        // plus 256dp of controls (5x48 + 4x4); anything wider means a control or gap inflated again.
         //
         // The sibling test above could not see this: it is pinned to the 430dp bench viewport and only
         // asserts `< 430dp`, which a 360dp card passes. This one pins the smallest phone we support and
@@ -751,9 +748,11 @@ class TypeBarTest {
                 card.width.toDp() <= 336.dp,
             )
             // …and it got there by matching the spec's paint, not by being squeezed.
-            assertTrue(
-                "the Type bar is ${card.width.toDp()}, not the compact spec's measured 257.5dp width",
-                card.width.toDp() <= 258.dp,
+            assertEquals(
+                "the Type bar is not the hardware-refined spec's measured 288dp width",
+                288f,
+                card.width.toDp().value,
+                0.5f,
             )
         }
         // The cap must not have been bought with the touch target. Asserted on the PLATFORM tree, not on

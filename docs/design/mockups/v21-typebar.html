@@ -211,17 +211,18 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    around it.  Presentation of this document only — not part of the specification. */
 .typebar.loose{position:static;transform:none;margin:0}
 
-/* THE ROW: label pinned left, control cluster pinned right, on a grid common to all four.
+/* THE ROW: label pinned left, control cluster pinned right, on a grid common to the first three.
    `min-width:46px` on the label is the frozen V1 floor and is kept — it is a layout
    invariant, not clothes, and dropping it lets a short label collapse the grid. */
 .tyrow{display:flex;align-items:center;justify-content:space-between;gap:var(--gap-lg)}
+.tyrow.colour{flex-direction:column;align-items:flex-start;gap:var(--gap-xs)}
 /* `.inklbl` (v21-bench.html:247-248) verbatim — the corpus's row label INSIDE a floating
    card, which is exactly what these four are.  The uppercase is `text-transform`, so the
    strings stay the shipped "Size" / "Align" / "Style" / "Colour" and a screen reader
    still reads them in their own case.  V1 drew them at 11sp/.02em sentence case, which
    is the V1 caption scale and has no V2.1 counterpart. */
 .tylab{flex:none;min-width:46px;font-size:.6rem;font-weight:700;letter-spacing:.13em;
-  text-transform:uppercase;color:var(--ink-soft)}
+  text-transform:uppercase;color:var(--ink)}
 
 /* ---- Size: the Reframe pad's zoom stepper, unchanged ---------------------
    `.zoom` / `.zoom button` / `.zoom b` from v21-reframe.html:191-201, transcribed.
@@ -242,7 +243,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    comes with it. */
 .tysize{display:flex;align-items:center;gap:var(--gap-sm)}
 .tysize button{width:40px;height:40px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;padding:0;
+  background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;padding:0;
   box-shadow:2px 2px 0 var(--ink-line)}
 .tysize button:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 .tysize button:disabled{opacity:.35;box-shadow:none;cursor:default}
@@ -252,7 +253,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    58px is the frozen box the burst must not shift inside, and a floor survives a font
    scale that a fixed width clips. */
 .tyval{flex:none;min-width:58px;text-align:center;font-size:.78rem;font-weight:700;
-  color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  color:var(--ink);font-variant-numeric:tabular-nums}
 
 /* ---- Align: `.paperseg`, at this card's scale ----------------------------
    NOT a joined segmented control any more.  V1 drew one box with hairline dividers and
@@ -267,7 +268,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .tyalign button{font-family:var(--sans);font-size:.78rem;font-weight:600;
   min-width:46px;min-height:46px;padding:var(--gap-sm) var(--gap-sm);
   border-radius:var(--br-md);border:1.5px solid var(--ink);
-  background:var(--surface);color:var(--ink-soft);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
+  background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
 .tyalign button[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
 .tyalign button:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 
@@ -289,7 +290,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .tytog{display:flex;gap:var(--gap-sm)}
 .tytog button{font-family:var(--sans);font-size:1.05rem;min-width:46px;min-height:46px;
   border-radius:var(--br-md);border:1.5px solid var(--ink);
-  background:var(--surface);color:var(--ink-soft);cursor:pointer;padding:0;
+  background:var(--surface);color:var(--ink);cursor:pointer;padding:0;
   box-shadow:2px 2px 0 var(--ink-line)}
 .tytog button[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
 .tytog button:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -316,14 +317,14 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 
    ⚠ 2026-08-29 — the compactness ruling stops borrowing the touch target from hidden
    overlap.  The visible control is now a 48px tile, carrying the same 30px physical pot in
-   its centre.  That keeps the platform floor explicit, narrows the card by moving the row
-   from a 5-wide strip to a 3+2 grid, and gives the selected state a second non-colour cue:
-   a small paper check in the tile corner.  The row's shared right edge is therefore the
-   3-column grid box, not the second row's last visible pot.
+   its centre.  Hardware review found the intermediate 3+2 grid made the transient card too
+   tall, so the Colour caption now sits above one five-tile line.  This keeps the platform
+   floor explicit, shortens the card, and gives the selected state a second non-colour cue:
+   a small paper check in the tile corner.
 
    The older 38px-pitch defect is kept in the notes below as history, because it explains
    why the card is not allowed to "look smaller" by shrinking the target back under 48. */
-.tyinks{display:grid;grid-template-columns:repeat(3,48px);gap:var(--gap-sm)}
+.tyinks{display:flex;gap:var(--gap-xs)}
 .inkopt{width:48px;height:48px;border:0;background:none;cursor:pointer;padding:0;position:relative;
   display:grid;place-items:center}
 .inkopt[aria-checked="true"]::after{content:"✓";position:absolute;top:4px;right:4px;width:20px;height:20px;
@@ -407,7 +408,7 @@ that is still furnished by V1.</p>
       </div>
     </div>
 
-    <!-- The panel. Four rows, one shared right edge, no primary and no ring. -->
+    <!-- The panel. Three aligned rows plus a stacked-caption colour row; no primary and no ring. -->
     <div class="typebar" role="group" aria-label="Text style">
 
       <div class="tyrow">
@@ -445,7 +446,7 @@ that is still furnished by V1.</p>
         </div>
       </div>
 
-      <div class="tyrow">
+      <div class="tyrow colour">
         <span class="tylab" id="lab-colour-1">Colour</span>
         <div class="tyinks" role="radiogroup" aria-labelledby="lab-colour-1">
           <button class="inkopt" role="radio" aria-checked="true"  aria-label="Ink"><span class="pot ink"></span></button>
@@ -526,7 +527,7 @@ that is still furnished by V1.</p>
         </div>
       </div>
 
-      <div class="tyrow">
+      <div class="tyrow colour">
         <span class="tylab" id="lab-colour-2">Colour</span>
         <div class="tyinks" role="radiogroup" aria-labelledby="lab-colour-2">
           <button class="inkopt" role="radio" aria-checked="false" aria-label="Ink"><span class="pot ink"></span></button>
@@ -588,7 +589,7 @@ two can be read at size. Neither is reachable from the two frames above.</p>
           <button role="checkbox" aria-checked="false" aria-label="Italic"><span class="i">I</span></button>
         </div>
       </div>
-      <div class="tyrow">
+      <div class="tyrow colour">
         <span class="tylab" id="lab-colour-3">Colour</span>
         <div class="tyinks" role="radiogroup" aria-labelledby="lab-colour-3">
           <button class="inkopt" role="radio" aria-checked="false" aria-label="Ink"><span class="pot ink"></span></button>
@@ -628,7 +629,7 @@ two can be read at size. Neither is reachable from the two frames above.</p>
           <button role="checkbox" aria-checked="false" aria-label="Italic"><span class="i">I</span></button>
         </div>
       </div>
-      <div class="tyrow">
+      <div class="tyrow colour">
         <span class="tylab" id="lab-colour-4">Colour</span>
         <div class="tyinks" role="radiogroup" aria-labelledby="lab-colour-4">
           <button class="inkopt" role="radio" aria-checked="false" aria-label="Ink"><span class="pot ink"></span></button>
@@ -672,7 +673,7 @@ colour to say it.
 label inside a floating card.
 </p>
 
-<p class="cap"><b>What this file deliberately does NOT change.</b> The four-row grid and its shared right
+<p class="cap"><b>What this file deliberately does NOT change.</b> The first three rows' shared right
 edge; the ten-stop ramp and its ends; the 400&nbsp;ms settle that coalesces a burst into one undo entry
 while the canvas repaints on every step; the absence of any commit, cancel or close control, because this
 bar owns no state and cancel is undo; the <code>46&nbsp;px</code> control floor and the <code>58&nbsp;px</code>
@@ -699,9 +700,9 @@ Depth follows where a control lives.</p>
 <br><b>1. The swatch target.</b> The old warning about a 38&nbsp;px pitch is kept as history because it
 explains the defect, but it is no longer the shipped geometry. The ruling taken on
 <b>2026-08-29</b> makes each visible colour control a <b>48&nbsp;px tile</b> with the same 30&nbsp;px pot
-inside it, arranged as a fixed <b>3&nbsp;+&nbsp;2 grid</b>. The target is therefore visible rather than
-borrowed from hidden overlap, the selected ink says itself in two ways (dashed ring + paper check), and the
-row stops being the width driver for the whole card.
+inside it. The hardware follow-up keeps all five in one line and moves the Colour caption above that line,
+so the target stays visible, the selected ink still says itself twice (dashed ring + paper check), and the
+card becomes shorter without placing the label beside a fixed-width cluster.
 <br><b>Device-confirmed on 2026-08-15:</b> the platform tree on SM-A176B already reported the shipped row at
 <b>48.0 × 48.0dp</b> per swatch when the touch-target fix landed. Compose keeps that floor and the focused
 tests now assert the platform node rather than the merged tree
@@ -725,11 +726,12 @@ to exactly 360; measured, they blow it past.
 <code>Align</code> row's <b>Right</b> button <b>wraps mid-word</b> — it renders as <code>Righ</code> /
 <code>t</code> on two lines (bounds 242&nbsp;px tall against its siblings' 142). That is visible on the
 411&nbsp;dp screen today.
-<br><b>The ruling is now taken, 2026-08-29.</b> The Colour row becomes a <b>fixed 3&nbsp;+&nbsp;2 grid</b>
-of <b>48&nbsp;dp tiles</b>, each carrying the same <b>30&nbsp;dp physical pot</b> inside it. The target is
-therefore visible rather than borrowed from hidden overlap, the row stops being the card's width driver,
-and the chosen ink now says <i>selected</i> in two ways: the corpus's dashed ring around the pot and a
-small paper check tucked into the tile's corner. No nested horizontal scroll is introduced.
+<br><b>The ruling is now taken, 2026-08-29, with the Samsung follow-up folded in.</b> The Colour row is one
+line of <b>48&nbsp;dp tiles</b>, each carrying the same <b>30&nbsp;dp physical pot</b>, with its caption
+stacked above. The target is visible rather than borrowed from hidden overlap, the card stays shorter than
+the intermediate 3&nbsp;+&nbsp;2 draft, and the chosen ink says <i>selected</i> in two ways: the corpus's
+dashed ring around the pot and a small paper check tucked into the tile's corner. No nested horizontal
+scroll is introduced.
 <br><b>The align row gives back 4&nbsp;px of side padding per choice.</b> The 46&nbsp;px floor stays; only
 the spare chrome goes, which is enough to stop <code>Right</code> wrapping mid-word at the large-font
 device state this note recorded.

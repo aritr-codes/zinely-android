@@ -148,12 +148,12 @@ class TypeBarGoldenTest {
     }
 
     /**
-     * The card's `width:max-content` width, **measured rather than derived** — 257.5dp under this
+     * The card's `width:max-content` width, **measured rather than derived** — 288dp under this
      * fixture's density and font scale.
      *
-     * The August 29, 2026 compactness ruling changes the Colour row from one 5-wide strip to a 3+2 grid
-     * of visible 48dp tiles. The physical pots still paint 30dp, the selected cue is now explicit, and
-     * the card is still inside the frozen `max-width:calc(100% - 24px)` on the narrowest phone
+     * The August 29, 2026 Samsung refinement stacks the Colour caption above one five-tile line. The
+     * physical pots still paint 30dp, every tile remains 48dp, the selected cue is explicit, and the
+     * card is still inside the frozen `max-width:calc(100% - 24px)` on the narrowest phone
      * ([TypeBarTest.the_card_honours_the_frozen_max_width_on_the_smallest_supported_phone]).
      *
      * V1's version of this KDoc computed the number from the rules (`28 + 60 + 192 = 280`) and named
@@ -178,8 +178,8 @@ class TypeBarGoldenTest {
         val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
         with(composeRule.density) {
             assertEquals(
-                "the Type bar is not the measured 257.5dp wide; got ${card.width.toDp()}",
-                257.5f, card.width.toDp().value, 0.5f,
+                "the Type bar is not the measured 288dp wide; got ${card.width.toDp()}",
+                288f, card.width.toDp().value, 0.5f,
             )
         }
     }

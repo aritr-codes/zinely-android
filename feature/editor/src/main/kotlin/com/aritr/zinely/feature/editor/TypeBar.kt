@@ -406,7 +406,7 @@ internal fun TypeBar(
                         }
                     }
                 }
-                TypeRow(Copy.Type.ROW_COLOUR) {
+                TypeColourRow(Copy.Type.ROW_COLOUR) {
                     InkRow(
                         color = style.color,
                         onInk = { ink ->
@@ -472,7 +472,32 @@ private fun TypeRow(label: String, control: @Composable () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        TypeRowLabel(
+            label = label,
+            modifier = Modifier.padding(end = ZinelyV21Dimens.gapLg),
+        )
+        control()
+    }
+}
+
+/**
+ * Colour is the only five-choice row. Stacking its caption above one 48dp line keeps every ink visible
+ * without making the transient card as tall as the earlier 3+2 grid.
+ */
+@Composable
+private fun TypeColourRow(label: String, control: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs),
+    ) {
+        TypeRowLabel(label = label)
+        control()
+    }
+}
+
+@Composable
+private fun TypeRowLabel(label: String, modifier: Modifier = Modifier) {
+    Text(
             // `text-transform:uppercase` is a *rendering* transform: the string stays the shipped "Size" /
             // "Align" / "Style" / "Colour" and a screen reader reads it in its own case. Compose has no
             // such transform — uppercasing the string uppercases what TalkBack speaks too — so the case is
@@ -482,11 +507,12 @@ private fun TypeRow(label: String, control: @Composable () -> Unit) {
             // `.tylab{min-width:46px}` — a floor, not a fixed width: under `space-between` a fixed width
             // would clip a longer label instead of widening the label column, and the spec says min-width.
             // Padding sits outside the floor so the row's gap is additive to it.
-            modifier = Modifier
-                .padding(end = ZinelyV21Dimens.gapLg)
+            modifier = modifier
                 .widthIn(min = 46.dp)
                 .semantics { contentDescription = label },
-            color = ZinelyTheme.v21Colors.inkSoft,
+            // This card sits on the room-space dark surface in dark mode. `inkSoft` becomes muddy at the
+            // small all-caps size; primary room ink clears AA while case and weight keep the caption quiet.
+            color = ZinelyTheme.v21Colors.ink,
             // `.tylab{font-size:.6rem;font-weight:700;letter-spacing:.13em}` — `.inklbl`
             // (`v21-bench.html:247-248`) verbatim: the corpus's own row label INSIDE a floating card,
             // which is exactly what these four are. `.inklbl`'s `margin` is the one thing dropped, this
@@ -496,8 +522,6 @@ private fun TypeRow(label: String, control: @Composable () -> Unit) {
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.13.em,
         )
-        control()
-    }
 }
 
 /**
@@ -528,10 +552,10 @@ private fun SizeStepper(index: Int, onStep: (Int) -> Unit) {
                 .clearAndSetSemantics { contentDescription = Copy.Type.sizePointAnnouncement(TypeSizesPt[index].toInt()) },
             textAlign = ComposeTextAlign.Center,
             // `.tyval{font-size:.78rem;font-weight:700;color:var(--ink-soft)}` — a number, so it is quiet
-            // and tabular; `--ink-soft` and never `--ink-faint`, which fails AA at this size on paper.
+            // and tabular; room ink is required here because the dark-theme surface is not paper.
             fontSize = 12.48.sp,
             fontWeight = FontWeight.Bold,
-            color = ZinelyTheme.v21Colors.inkSoft,
+            color = ZinelyTheme.v21Colors.ink,
             // `font-variant-numeric:tabular-nums`. Not cosmetic: the readout is a centred number that
             // changes on every tap, so proportional digits shift the glyph run mid-burst. Tabular figures
             // hold the centre still; the `min-width` alone does not stop the digits dancing. Carried on
@@ -616,7 +640,7 @@ private fun StepButton(icon: ImageVector, description: String, enabled: Boolean,
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = colors.inkSoft, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = colors.ink, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -705,7 +729,7 @@ private fun AlignOption(label: String, value: TextAlign, current: TextAlign, onA
     ) {
         Text(
             text = label,
-            color = if (isSel) colors.onLeaf else colors.inkSoft,
+            color = if (isSel) colors.onLeaf else colors.ink,
             fontSize = 12.48.sp,
             fontWeight = FontWeight.SemiBold,
         )
@@ -772,7 +796,7 @@ private fun StyleToggle(
             fontSize = 16.8.sp,
             fontWeight = weight,
             fontStyle = fontStyle,
-            color = if (on) colors.onLeaf else colors.inkSoft,
+            color = if (on) colors.onLeaf else colors.ink,
         )
     }
 }
@@ -784,28 +808,19 @@ private fun StyleToggle(
  * Single-select, so it reads as a radio group for the same reason alignment does: a box has exactly one
  * ink. A swatch whose RGBA is not one of the five (a document from elsewhere) simply shows none selected.
  *
- * The 2026-08-29 compactness ruling makes this a 3+2 grid of explicit 48dp tiles rather than one long row
- * of hidden touch expansions: the card gets narrower, the chosen ink gains a visible non-colour cue, and
- * the target a finger reaches is the one the eye sees. The row's shared right edge is now the 3-column
- * grid box itself, not the last visible pot in the second row.
+ * The 2026-08-29 hardware refinement keeps one visible line of explicit 48dp tiles. The Colour caption
+ * sits above it, so the transient card stays shorter while every ink remains visible and the chosen ink
+ * keeps its non-colour cue.
  */
 @Composable
 private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
-    Column(
+    Row(
         modifier = Modifier
             .testTag(TypeBarInkRowTestTag)
             .selectableGroup(),
-        verticalArrangement = Arrangement.spacedBy(SwatchRowGap),
-        horizontalAlignment = Alignment.Start,
+        horizontalArrangement = Arrangement.spacedBy(SwatchGridGap),
     ) {
-        listOf(
-            TextInk.entries.take(3),
-            TextInk.entries.drop(3),
-        ).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(SwatchGridGap)) {
-                row.forEach { ink -> Swatch(ink = ink, selected = ink.rgba == color, onInk = onInk) }
-            }
-        }
+        TextInk.entries.forEach { ink -> Swatch(ink = ink, selected = ink.rgba == color, onInk = onInk) }
     }
 }
 
@@ -840,8 +855,8 @@ private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
  * implied by spacing arithmetic.
  *
  * **Confirmed on device 2026-08-15** (SM-A176B, Android 16, density 420): the shipped row already reached a
- * full 48.0 × 48.0dp per swatch in the platform tree. The compact 3+2 grid preserves that floor while
- * narrowing the card and making the reachable area match the visible tile.
+ * full 48.0 × 48.0dp per swatch in the platform tree. The stacked-caption row preserves that floor while
+ * shortening the card and making the reachable area match the visible tile.
  *
  * `TypeBarSwatchPlatformA11yTest` asserts this on the **platform** tree, which is the only tree that can
  * fail: `touchBoundsInRoot` is the *pre*-pruning value and reported a flat 48dp all through the defect.
@@ -912,11 +927,8 @@ private val SwatchSize = 30.dp
 /** The compact colour-tile footprint chosen on 2026-08-29: the visible target is the real target. */
 private val SwatchTouchSize = 48.dp
 
-/** The 3+2 colour grid uses the card's own gap rhythm, not hidden target-overlap arithmetic. */
-private val SwatchGridGap = ZinelyV21Dimens.gapSm
-
-/** Two rows, kept close so the card narrows more than it grows. */
-private val SwatchRowGap = ZinelyV21Dimens.gapXs
+/** A compact visible gap: every tile itself remains a full 48dp target. */
+private val SwatchGridGap = ZinelyV21Dimens.gapXs
 
 /** The paper check cue sits just inside the 48dp tile. */
 private val SwatchCueInset = 4.dp

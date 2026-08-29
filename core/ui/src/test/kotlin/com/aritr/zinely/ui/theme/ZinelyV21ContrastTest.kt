@@ -77,6 +77,7 @@ class ZinelyV21ContrastTest {
             assertClears("$label onPrimary / primary", colors.onLeaf, colors.leaf, WcagContrast.AA_NORMAL)
             assertClears("$label onPrimary / quiet action", colors.onLeaf, colors.leafTint, WcagContrast.AA_NORMAL)
             assertClears("$label onButter / butter", colors.onButter, colors.butter, WcagContrast.AA_NORMAL)
+            assertClears("$label onButter / paper", colors.onButter, colors.paper, WcagContrast.AA_NORMAL)
         }
     }
 
@@ -112,8 +113,11 @@ class ZinelyV21ContrastTest {
         for ((label, colors) in listOf("day" to zinelyV21LightColors(), "night" to zinelyV21DarkColors())) {
             assertClears("$label ink / room", colors.ink, colors.desk, WcagContrast.AA_LARGE)
             assertClears("$label ink / room edge", colors.ink, colors.deskEdge, WcagContrast.AA_LARGE)
-            assertClears("$label ink / surface", colors.ink, colors.surface, WcagContrast.AA_LARGE)
-            assertClears("$label ink / surfaceSoft", colors.ink, colors.surfaceSoft, WcagContrast.AA_LARGE)
+            // Floating editor cards use this pair for 9.6sp captions and 12.48sp controls, so the normal-
+            // text threshold is the relevant contract; large-text AA would allow the muddy TypeBar state
+            // caught on the Samsung in dark mode.
+            assertClears("$label ink / surface", colors.ink, colors.surface, WcagContrast.AA_NORMAL)
+            assertClears("$label ink / surfaceSoft", colors.ink, colors.surfaceSoft, WcagContrast.AA_NORMAL)
         }
     }
 }
