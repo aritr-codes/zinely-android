@@ -159,10 +159,32 @@ class HomeViewModelTest {
         }
     }
 
+    private class FakePendingDeleteStore(
+        initialIds: Set<String> = emptySet(),
+    ) : PendingDeleteStore {
+        val ids = initialIds.toMutableSet()
+        var writesSucceed = true
+
+        override fun pendingIds(): Set<String> = ids.toSet()
+
+        override fun add(id: String): Boolean {
+            if (!writesSucceed) return false
+            ids += id
+            return true
+        }
+
+        override fun remove(id: String): Boolean {
+            if (!writesSucceed) return false
+            ids -= id
+            return true
+        }
+    }
+
     private val dispatcher = UnconfinedTestDispatcher()
     private lateinit var repository: FakeProjectRepository
     private lateinit var transport: FakeLibrarySafTransport
     private lateinit var preferredPaperStore: FakePreferredPaperStore
+    private lateinit var pendingDeleteStore: FakePendingDeleteStore
 
     @Before
     fun setUp() {
@@ -170,9 +192,10 @@ class HomeViewModelTest {
         repository = FakeProjectRepository()
         transport = FakeLibrarySafTransport()
         preferredPaperStore = FakePreferredPaperStore()
+        pendingDeleteStore = FakePendingDeleteStore()
     }
 
-    private fun viewModel() = HomeViewModel(repository, transport, preferredPaperStore)
+    private fun viewModel() = HomeViewModel(repository, transport, preferredPaperStore, pendingDeleteStore)
 
     @After
     fun tearDown() {
@@ -506,6 +529,7 @@ class HomeViewModelTest {
         // Then — card hidden, one prompt with the title, nothing deleted in the store
         assertEquals(listOf("z2"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
         assertEquals(listOf<HomeShelfEvent>(HomeShelfEvent.DeletePrompt("z1", "Zine one")), events)
+        assertEquals(setOf("z1"), pendingDeleteStore.ids)
         assertTrue(repository.deleted.isEmpty())
         stateJob.cancel()
         eventsJob.cancel()
@@ -545,6 +569,7 @@ class HomeViewModelTest {
 
         // Then
         assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        assertTrue(pendingDeleteStore.ids.isEmpty())
         assertTrue(repository.deleted.isEmpty())
         stateJob.cancel()
     }
@@ -563,7 +588,37 @@ class HomeViewModelTest {
 
         // Then
         assertEquals(listOf("z1"), repository.deleted)
+        assertTrue(pendingDeleteStore.ids.isEmpty())
         stateJob.cancel()
+    }
+
+    @Test
+    fun `a process restart finishes a delete whose undo marker was already durable`() = runTest {
+        pendingDeleteStore = FakePendingDeleteStore(setOf("z1"))
+
+        viewModel()
+
+        assertEquals(listOf("z1"), repository.deleted)
+        assertTrue(pendingDeleteStore.ids.isEmpty())
+    }
+
+    @Test
+    fun `delete stays visible when its durable marker cannot be written`() = runTest {
+        val now = System.currentTimeMillis()
+        val viewModel = viewModel()
+        val stateJob = launch(Dispatchers.Main) { viewModel.state.collect {} }
+        val events = mutableListOf<HomeShelfEvent>()
+        val eventsJob = launch(Dispatchers.Main) { viewModel.events.collect { events += it } }
+        repository.projects.emit(listOf(summary("z1", "One", now)))
+        pendingDeleteStore.writesSucceed = false
+
+        viewModel.delete("z1")
+
+        assertEquals(listOf("z1"), (viewModel.state.value as HomeUiState.Content).cards.map { it.id })
+        assertEquals(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE), events.single())
+        assertTrue(repository.deleted.isEmpty())
+        stateJob.cancel()
+        eventsJob.cancel()
     }
 
     @Test

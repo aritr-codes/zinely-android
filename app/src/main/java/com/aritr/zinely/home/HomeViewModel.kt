@@ -83,9 +83,10 @@ internal sealed interface HomeUiState {
  * ticking clock is not this slice's problem.
  *
  * S6.3 actions (ADR-044): create with warm defaults; rename/duplicate delegating to the store
- * (which enforces the open-editor exclusion and answers [DataError.Busy]); delete as a deferred
- * commit — the card hides immediately, a queued [HomeShelfEvent.DeletePrompt] drives one undo
- * snackbar, and only its dismissal calls [ProjectRepository.deleteProject]. A failed commit
+ * (which enforces the open-editor exclusion and answers [DataError.Busy]); delete as a durable deferred
+ * commit — [PendingDeleteStore] records the intent before the card hides, a queued
+ * [HomeShelfEvent.DeletePrompt] drives one undo snackbar, and its dismissal calls
+ * [ProjectRepository.deleteProject]. A process restart finishes any recorded intent. A failed commit
  * unhides the card: the shelf never lies about what was deleted. [HomeUiState.Empty] means the
  * STORE is empty; a shelf filtered to zero by pending deletes stays a zero-card
  * [HomeUiState.Content] (the invitation would be dishonest while a delete is still reversible).
@@ -95,9 +96,10 @@ internal class HomeViewModel @Inject constructor(
     private val projectRepository: ProjectRepository,
     private val librarySafTransport: LibrarySafTransport,
     private val preferredPaperStore: PreferredPaperStore,
+    private val pendingDeleteStore: PendingDeleteStore,
 ) : ViewModel() {
 
-    /** Ids hidden from the shelf while their undo window is open (ADR-044 §3). */
+    /** Ids hidden from the shelf while their undo window is open or a durable interrupted delete resumes. */
     private val pendingDeletes = MutableStateFlow<Set<String>>(emptySet())
 
     /** This session's display-only covers for zines the store could not assign one to. */
@@ -132,6 +134,16 @@ internal class HomeViewModel @Inject constructor(
     private var backupRestoreJob: Job? = null
     private var backupRestorePickerPending: Boolean = false
     private var backupRestoreCancellationRequested: Boolean = false
+
+    init {
+        val interruptedDeletes = pendingDeleteStore.pendingIds()
+        if (interruptedDeletes.isNotEmpty()) {
+            pendingDeletes.value = interruptedDeletes
+            viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                withContext(NonCancellable) { commitPendingDeletesNow() }
+            }
+        }
+    }
 
     /**
      * Bumped by [retry]. `flatMapLatest` below turns each bump into a **fresh** subscription to
@@ -335,18 +347,27 @@ internal class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Hide the card and prompt for undo — the store is untouched until [commitDelete]. Ignored when
-     * [id] is not a visible card (double-tap, or already pending).
+     * Durably record the delete intent, then hide the card and prompt for undo. The project store is
+     * untouched until [commitDelete], while the tiny marker lets a new process finish the request. Ignored
+     * when [id] is not a visible card (double-tap, or already pending).
      */
     fun delete(id: String) {
         val zines = (state.value as? HomeUiState.Content)?.zines ?: return
         val title = zines.firstOrNull { it.id == id }?.title ?: return
+        if (!pendingDeleteStore.add(id)) {
+            eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+            return
+        }
         pendingDeletes.update { it + id }
         eventQueue.trySend(HomeShelfEvent.DeletePrompt(id, title))
     }
 
-    /** Undo within the window: unhide; the store was never called. */
+    /** Undo within the window: clear the durable intent, then unhide; the project store was never called. */
     fun undoDelete(id: String) {
+        if (!pendingDeleteStore.remove(id)) {
+            eventQueue.trySend(HomeShelfEvent.Message(GENERIC_FAILURE_MESSAGE))
+            return
+        }
         pendingDeletes.update { it - id }
     }
 
@@ -379,9 +400,15 @@ internal class HomeViewModel @Inject constructor(
     /** The one commit path [commitDelete] and [commitPendingDeletesNow] share. */
     private suspend fun performCommit(id: String): Boolean =
         when (val result = projectRepository.deleteProject(id)) {
-            is DataResult.Success -> true // stay hidden; the store flow removes the card
+            is DataResult.Success -> {
+                // If clearing the marker fails, retrying this idempotent delete on the next start is safe.
+                pendingDeleteStore.remove(id)
+                true // stay hidden; the store flow removes the card
+            }
             is DataResult.Failure -> {
-                pendingDeletes.update { it - id } // the card is still real — show it again
+                // Only show the real card again after clearing the durable retry intent. Otherwise the next
+                // process would legitimately finish a delete the current UI appeared to cancel.
+                if (pendingDeleteStore.remove(id)) pendingDeletes.update { it - id }
                 eventQueue.send(HomeShelfEvent.Message(result.error.warmMessage()))
                 false
             }
