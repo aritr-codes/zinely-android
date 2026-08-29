@@ -42,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -75,7 +74,7 @@ internal const val FlipTrayTestTag = "flip-tray"
 internal const val FlipLeftRightTestTag = "flip-left-right"
 internal const val FlipTopBottomTestTag = "flip-top-bottom"
 internal const val FlipDoneTestTag = "flip-done"
-private val FlipChoiceVerticalPadding = 6.dp
+private val FlipChoiceVerticalPadding = 0.dp
 private val FlipChoiceCueInset = 6.dp
 
 /** Frozen Bench A22: one compact, immediately-applied two-axis tray for one Photo or Art piece. */
@@ -116,7 +115,7 @@ internal fun FlipTray(
                 Column(
                     modifier = Modifier
                         .verticalScroll(rememberScrollState())
-                        .padding(ZinelyV21Dimens.gapMd),
+                        .padding(ZinelyV21Dimens.gapSm),
                     verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
                 ) {
                     Row(
@@ -138,8 +137,10 @@ internal fun FlipTray(
                     }
                     Text(
                         text = Copy.Editor.FLIP_HELP,
-                        color = colors.inkSoft,
+                        color = colors.ink,
                         fontFamily = ZinelyV21Fonts.Work,
+                        fontSize = 12.48.sp,
+                        lineHeight = ZinelyV21Fonts.InheritedLineHeight,
                     )
 
                     val horizontal = element.horizontalFlipOn()
@@ -209,7 +210,7 @@ private fun FlipChoice(
     focusRequester: FocusRequester? = null,
 ) {
     val colors = ZinelyTheme.v21Colors
-    val content = if (checked) colors.onLeaf else Color(0xFF27270F)
+    val content = if (checked) colors.onLeaf else colors.ink
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val shape = RoundedCornerShape(ZinelyV21Dimens.radiusMd)
@@ -260,7 +261,7 @@ private fun FlipChoice(
                 imageVector = if (axis == FlipAxis.HORIZONTAL) Icons.Filled.SwapHoriz else Icons.Filled.SwapVert,
                 contentDescription = null,
                 tint = content,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(20.dp),
             )
             Text(
                 text = label,

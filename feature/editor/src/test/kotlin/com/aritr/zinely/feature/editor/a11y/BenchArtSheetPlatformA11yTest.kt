@@ -1,11 +1,15 @@
 package com.aritr.zinely.feature.editor.a11y
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,11 +19,12 @@ import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.render.SupplyCatalog
 import com.aritr.zinely.feature.editor.BenchArtSearchTestTag
 import com.aritr.zinely.feature.editor.BenchArtSheetBody
+import com.aritr.zinely.feature.editor.BenchArtSheetTestTag
 import com.aritr.zinely.feature.editor.benchArtFavouriteTestTag
+import com.aritr.zinely.feature.editor.benchArtFavouriteTileTestTag
 import com.aritr.zinely.feature.editor.benchArtFamilyFilterTestTag
 import com.aritr.zinely.feature.editor.benchArtTileTestTag
 import com.aritr.zinely.ui.a11y.platformNode
-import com.aritr.zinely.ui.a11y.platformTraversalStops
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -75,42 +80,43 @@ class BenchArtSheetPlatformA11yTest {
         composeRule.waitForIdle()
     }
 
-    private fun tile(supplyId: String) =
-        composeRule.onNodeWithTag(benchArtTileTestTag(supplyId))
-            .performScrollTo()
-            .platformNode(composeRule.activity)
-
-    @Test
-    fun every_tile_carries_its_own_spoken_name_to_the_platform() {
-        render()
-        for ((id, name) in Copy.Supplies.NAMES) {
-            assertEquals("$id must be announced by its name, never by its id", name, tile(id).contentDescription?.toString())
-            assertEquals("$id must reach the platform as a button", "android.widget.Button", tile(id).className)
-        }
+    private fun reveal(tag: String) {
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).performScrollToNode(hasTestTag(tag))
+        composeRule.waitForIdle()
     }
 
+    private fun tile(supplyId: String) =
+        benchArtTileTestTag(supplyId).also(::reveal).let { tag ->
+            composeRule.onNodeWithTag(tag).platformNode(composeRule.activity)
+        }
+
     @Test
-    fun all_thirty_two_are_enabled_and_activatable_by_a_service() {
+    fun every_tile_carries_its_name_and_live_action_state_to_the_platform() {
         render()
-        assertEquals(32, SupplyCatalog.OUTLINES.size)
-        for (id in Copy.Supplies.NAMES.keys) {
+        for ((id, name) in Copy.Supplies.NAMES) {
             val node = tile(id)
+            assertEquals("$id must be announced by its name, never by its id", name, node.contentDescription?.toString())
+            assertEquals("$id must reach the platform as a button", "android.widget.Button", node.className)
             assertTrue("$id has an authored outline and must be enabled to the platform", node.isEnabled)
             assertTrue("$id must be activatable by an accessibility service, not only by touch", node.isClickable)
             // A live control has no reason to report state, and a stale one here would read as an
             // explanation of an absence that does not exist.
             assertNull("$id is live and must not claim to be unavailable", node.stateDescription)
         }
+        assertEquals(32, SupplyCatalog.OUTLINES.size)
     }
 
     @Test
     fun search_and_favourite_controls_expose_their_label_and_state_to_the_platform() {
         render()
-        val search = platformTraversalStops(composeRule.activity)
-            .single { it.className == "android.widget.EditText" }
-        assertEquals(Copy.BenchArt.FIND_A_PIECE, search.label)
+        val search = composeRule.onNodeWithTag(BenchArtSearchTestTag).platformNode(composeRule.activity)
+        assertEquals("android.widget.EditText", search.className)
+        assertTrue(search.isEnabled)
+        composeRule.onNodeWithTag(BenchArtSearchTestTag)
+            .assertContentDescriptionEquals(Copy.BenchArt.FIND_A_PIECE)
 
-        val favourite = composeRule.onNodeWithTag(benchArtFavouriteTestTag("tape.torn")).performScrollTo()
+        reveal(benchArtTileTestTag("tape.torn"))
+        val favourite = composeRule.onNodeWithTag(benchArtFavouriteTestTag("tape.torn"))
         val unchecked = favourite.platformNode(composeRule.activity)
         assertEquals("android.widget.CheckBox", unchecked.className)
         assertTrue(unchecked.isCheckable)
@@ -119,8 +125,12 @@ class BenchArtSheetPlatformA11yTest {
         composeRule.waitForIdle()
         val checkedCopies = composeRule.onAllNodesWithTag(benchArtFavouriteTestTag("tape.torn"))
         assertEquals(2, checkedCopies.fetchSemanticsNodes().size)
-        assertTrue(checkedCopies[0].platformNode(composeRule.activity).isChecked)
-        assertTrue(checkedCopies[1].platformNode(composeRule.activity).isChecked)
+        assertTrue(
+            checkedCopies
+                .onFirst()
+                .platformNode(composeRule.activity)
+                .isChecked,
+        )
     }
 
     @Test

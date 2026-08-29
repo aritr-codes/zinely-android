@@ -81,9 +81,9 @@ public const val ReframePadHintTestTag: String = "reframe-pad-hint"
 
 /** `.pad` — the precision card: `--paper`, 1.5px ink, `--br-md`, a 2px printed shadow. */
 private val PadRadius = ZinelyV21Dimens.radiusMd
-private val PadPaddingH = ZinelyV21Dimens.gapMd
+private val PadPaddingH = ZinelyV21Dimens.gapSm
 private val PadPaddingV = ZinelyV21Dimens.gapSm
-private val PadGap = ZinelyV21Dimens.gapLg
+private val PadGap = ZinelyV21Dimens.gapMd
 
 /**
  * `.pad{gap:var(--gap-sm)}` in its **column** direction — the space between the control row and
@@ -110,10 +110,10 @@ private val ZoomGap = ZinelyV21Dimens.gapSm
 private val ZoomReadoutWidth = 46.dp
 private val ZoomReadoutSize = 12.48.sp
 
-/** `.fit{--br-md; padding:var(--gap-sm) var(--gap-md)}`, `b{.82rem}` / `span{.68rem}`. */
+/** `.fit{--br-md; padding:var(--gap-xs) var(--gap-sm)}`, `b{.82rem}` / `span{.68rem}`. */
 private val FitRadius = ZinelyV21Dimens.radiusMd
-private val FitPaddingH = ZinelyV21Dimens.gapMd
-private val FitPaddingV = ZinelyV21Dimens.gapSm
+private val FitPaddingH = ZinelyV21Dimens.gapSm
+private val FitPaddingV = ZinelyV21Dimens.gapXs
 private val FitLineGap = 1.dp
 private val FitTitleSize = 13.12.sp
 private val FitSubSize = 10.88.sp
@@ -195,7 +195,7 @@ public fun ReframeControls(
             .testTag(ReframeControlsTestTag)
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs),
     ) {
         ReframePad(
             zoomPercent = zoomPercent,
@@ -210,13 +210,13 @@ public fun ReframeControls(
                 // No inset padding here: this stands in the same slot as [BenchBottomBar], which takes
                 // none either — the Bench applies the navigation-bar inset once, at the scaffold.
                 .background(colors.desk),
-            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
+            verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs),
         ) {
-            // `.fitrow{padding:0 var(--gap-lg) var(--gap-sm)}`
+            // `.fitrow{padding:0 var(--gap-md) var(--gap-xs)}`
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = ZinelyV21Dimens.gapLg),
+                    .padding(horizontal = ZinelyV21Dimens.gapMd),
                 horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
             ) {
                 FitChip(Copy.Reframe.FILL, Copy.Reframe.CROPS_EDGES, FrameFit.FILL, fit, onFit, Modifier.weight(1f))
@@ -229,7 +229,7 @@ public fun ReframeControls(
                     Modifier.weight(1f),
                 )
             }
-            // `.bar{padding:var(--gap-sm) var(--gap-lg) var(--gap-lg)}` — the Bench's own bar, so the
+            // `.bar{padding:var(--gap-xs) var(--gap-md) var(--gap-md)}` — the Bench's own bar, so the
             // session's actions land where the Bench's actions were.
             //
             // The top `gapSm` is transcribed here rather than left to the parent's `spacedBy`: the CSS
@@ -239,10 +239,10 @@ public fun ReframeControls(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = ZinelyV21Dimens.gapLg,
-                        end = ZinelyV21Dimens.gapLg,
-                        top = ZinelyV21Dimens.gapSm,
-                        bottom = ZinelyV21Dimens.gapLg,
+                        start = ZinelyV21Dimens.gapMd,
+                        end = ZinelyV21Dimens.gapMd,
+                        top = ZinelyV21Dimens.gapXs,
+                        bottom = ZinelyV21Dimens.gapMd,
                     ),
                 horizontalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
                 verticalAlignment = Alignment.CenterVertically,
@@ -666,7 +666,7 @@ private fun ReframeTextButton(word: String, spokenLabel: String, onClick: () -> 
                 role = Role.Button
                 onClick { act(); true }
             }
-            .padding(horizontal = ZinelyV21Dimens.gapMd),
+            .padding(horizontal = ZinelyV21Dimens.gapSm),
         contentAlignment = Alignment.Center,
     ) {
         Text(

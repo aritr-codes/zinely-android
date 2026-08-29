@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -428,14 +429,15 @@ internal fun BenchPageGridSurface(
                     )
                 }
             }
-            // The canvas underneath keeps its drag, tap and pinch detectors. Without a consumer here a
-            // gesture that starts on the panel would reach the page behind it — moving an element the
-            // user cannot see. The panel is opaque, so it must be opaque to touch as well. (The scrim
-            // takes the rest, and turns it into a dismissal.)
+            // Let child controls handle their gestures first. At Final, only blank panel-space events
+            // remain unconsumed; consuming those keeps the hidden canvas inert without stealing the
+            // close button or page-cell clicks.
             .pointerInput(Unit) {
                 awaitPointerEventScope {
                     while (true) {
-                        awaitPointerEvent().changes.forEach { it.consume() }
+                        awaitPointerEvent(PointerEventPass.Final).changes
+                            .filterNot { it.isConsumed }
+                            .forEach { it.consume() }
                     }
                 }
             }

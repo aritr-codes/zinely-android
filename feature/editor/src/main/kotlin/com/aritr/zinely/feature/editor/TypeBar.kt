@@ -82,6 +82,7 @@ import kotlinx.coroutines.delay
 
 /** Test tag on the Type bar surface; absent from the tree unless a single non-blank text box is selected. */
 public const val TypeBarTestTag: String = "type-bar"
+internal const val TypeBarInkRowTestTag: String = "type-bar-ink-row"
 
 /**
  * The point ramp the size stepper walks (frozen bench.html `SIZES`). This is a **surface-owned
@@ -699,7 +700,7 @@ private fun AlignOption(label: String, value: TextAlign, current: TextAlign, onA
                 selected = isSel
                 onClick { onAlign(value); true }
             }
-            .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),
+            .padding(horizontal = ZinelyV21Dimens.gapSm, vertical = ZinelyV21Dimens.gapSm),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -782,22 +783,37 @@ private fun StyleToggle(
  *
  * Single-select, so it reads as a radio group for the same reason alignment does: a box has exactly one
  * ink. A swatch whose RGBA is not one of the five (a document from elsewhere) simply shows none selected.
+ *
+ * The 2026-08-29 compactness ruling makes this a 3+2 grid of explicit 48dp tiles rather than one long row
+ * of hidden touch expansions: the card gets narrower, the chosen ink gains a visible non-colour cue, and
+ * the target a finger reaches is the one the eye sees. The row's shared right edge is now the 3-column
+ * grid box itself, not the last visible pot in the second row.
  */
 @Composable
 private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
-    Row(
-        modifier = Modifier.selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(SwatchGap),
+    Column(
+        modifier = Modifier
+            .testTag(TypeBarInkRowTestTag)
+            .selectableGroup(),
+        verticalArrangement = Arrangement.spacedBy(SwatchRowGap),
+        horizontalAlignment = Alignment.Start,
     ) {
-        TextInk.entries.forEach { ink -> Swatch(ink = ink, selected = ink.rgba == color, onInk = onInk) }
+        listOf(
+            TextInk.entries.take(3),
+            TextInk.entries.drop(3),
+        ).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(SwatchGridGap)) {
+                row.forEach { ink -> Swatch(ink = ink, selected = ink.rgba == color, onInk = onInk) }
+            }
+        }
     }
 }
 
 /**
- * A 30dp ink pot — `.pot` (`v21-bench.html:250-253`), transcribed. The ink popover's pot **is** this
- * control: a colour swatch, single-select, in a floating card on this canvas. So the selected state is the
- * corpus's dashed outer ring rather than V1's 2dp solid inner one — the same hand as the selection ring on
- * the page, meaning the same thing: this is the one that is chosen.
+ * A 48dp ink tile carrying a 30dp physical pot — the 2026-08-29 compactness ruling taken in
+ * `v21-typebar.html`. The chosen state is said twice on purpose: the corpus's dashed pot ring stays, and a
+ * small paper check lands in the corner so the state survives greyscale and low-colour perception without
+ * changing what any ink will print.
  *
  * ⚠ **The fill is a model value, not a token, and the ink edge is why that is safe.** Every pot's fill is
  * now the paper-space RGBA [TextInk] commits — printed ink, theme-independent by ADR-055 Decision 6 — and
@@ -811,30 +827,21 @@ private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
  * The physical ink values cannot move with theme (ADR-055 D6); the label and selection ring carry the
  * state while the themed surface keeps the surrounding controls readable.
  *
- * **No `minimumInteractiveComponentSize` — the target survives without it, at the spec's pitch.** The
- * modifier does not create the target; it only reserves *layout* space for one ("This modifier is not
- * needed for touch target expansion to happen. It only affects layout" — its own KDoc). The target comes
- * from the input layer, which expands any clickable's touch bounds to
- * `ViewConfiguration.minimumTouchTargetSize` regardless (`NodeCoordinator.touchBoundsInRoot`);
- * [TypeBarTest] asserts exactly that on this swatch.
+ * **No `minimumInteractiveComponentSize` — the visible 48dp tile already is the target.** The modifier
+ * does not create the target; it only reserves *layout* space for one ("This modifier is not needed for
+ * touch target expansion to happen. It only affects layout" — its own KDoc). The target comes from the
+ * clickable tile itself, and the input layer would still expand it to `ViewConfiguration.minimumTouchTargetSize`
+ * if the visible control were smaller. [TypeBarTest] asserts the platform node the service actually reads.
  *
- * **The pitch is [SwatchGap] + [SwatchSize] = 48dp, and that number is the whole reason the gap is 18dp.**
- * Expansion is 48dp; if the pitch is smaller, neighbouring expansions overlap and Compose prunes the
- * overlap before reporting bounds to the accessibility layer (`SemanticsOwner.getAllUncoveredSemanticsNodes`
- * intersects each node against the unaccounted region, which `AndroidComposeViewAccessibilityDelegateCompat`
- * hands to `setBoundsInScreen`). That is not a theory: at V1's 40dp pitch four of five swatches were
- * measured reporting 40×48, and at V2.1's first 38dp pitch (30dp pot + `gapSm`) a device dump reported
- * **38.1 × 48.0dp** for Ink / Coral / Teal / Blue — only Ochre reached 48×48, and only because it has no
- * right-hand neighbour. Both cleared WCAG 2.5.8 AA (24×24) and both were under Material's 48dp guideline.
- * At 48dp pitch the expansions abut exactly and nothing is pruned. Tapping was unaffected throughout: a hit
- * inside the paint always wins outright, and the gaps resolve to the nearest pot.
+ * **The earlier overlap defect stays recorded as history, not as the current geometry.** V1's 40dp pitch and
+ * V2.1's first 38dp pitch let neighbouring 48dp expansions collide, so Compose pruned the overlap before
+ * reporting bounds to accessibility. The 2026-08-29 ruling stops borrowing that hidden expansion: each tile
+ * is explicitly 48dp, the 30dp pot remains centered inside it, and the selected cue is visible rather than
+ * implied by spacing arithmetic.
  *
- * **Confirmed on device 2026-08-15** (SM-A176B, Android 16, density 420). `uiautomator` reports all five
- * swatches at 126 × 126px — a flat **48.0 × 48.0dp** — with bounds that abut exactly:
- * Ink `[307,1574][433,1700]`, Coral `[433,…]`, Teal `[559,…]`, Blue `[685,…]`, Ochre `[811,1574][937,1700]`.
- * Ochre is no longer the only one to reach 48×48. This is the dump `v21-typebar.html` asked for when it
- * said the measurement *"must be re-dumped, not re-reasoned"* — the paragraph above previously rested on
- * `TypeBarSwatchPlatformA11yTest` alone, which is Robolectric's platform tree rather than the device's.
+ * **Confirmed on device 2026-08-15** (SM-A176B, Android 16, density 420): the shipped row already reached a
+ * full 48.0 × 48.0dp per swatch in the platform tree. The compact 3+2 grid preserves that floor while
+ * narrowing the card and making the reachable area match the visible tile.
  *
  * `TypeBarSwatchPlatformA11yTest` asserts this on the **platform** tree, which is the only tree that can
  * fail: `touchBoundsInRoot` is the *pre*-pruning value and reported a flat 48dp all through the defect.
@@ -853,56 +860,66 @@ private fun Swatch(ink: TextInk, selected: Boolean, onInk: (TextInk) -> Unit) {
     Box(
         modifier = Modifier
             .testTag("$TypeBarTestTag-ink-${ink.label}")
-            .size(SwatchSize)
+            .size(SwatchTouchSize)
             // `.pot[aria-checked="true"]::after{inset:-5px;border:1.6px dashed}` — an OUTER ring, so it is
             // drawn behind rather than inset into the 30dp box. The pot's own size is unchanged by
             // selection, which is what keeps the row from reflowing as the choice moves along it.
-            .drawBehind {
-                if (!selected) return@drawBehind
-                val out = SwatchRingInset.toPx()
-                val w = SwatchRingStroke.toPx()
-                // A CSS border paints INSIDE its box, so `inset:-5px` puts the ring's *outer edge* at -5
-                // and its stroke centre-line — which is what Compose's [Stroke] is centred on — half a
-                // stroke further in. Transcribing the literal would stand the ring 0.8dp too far out, the
-                // exact error [SelectionOutlineInsetDp] records against the same declaration.
-                val edge = -out + w / 2f
-                val ringW = size.width + 2f * out - w
-                val ringH = size.height + 2f * out - w
-                val dash = w * 2f
-                drawRoundRect(
-                    color = colors.ink,
-                    topLeft = Offset(edge, edge),
-                    size = Size(ringW, ringH),
-                    cornerRadius = CornerRadius(ringH / 2f, ringH / 2f),
-                    style = Stroke(width = w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))),
-                )
-            }
-            .clip(shape)
-            .background(paint)
-            .border(BenchChromeBorder, colors.ink, shape)
             .selectable(
                 selected = selected,
                 role = Role.RadioButton,
                 onClick = { onInk(ink) },
             )
             .semantics { contentDescription = ink.label },
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(SwatchSize)
+                .drawBehind {
+                    if (!selected) return@drawBehind
+                    val out = SwatchRingInset.toPx()
+                    val w = SwatchRingStroke.toPx()
+                    val edge = -out + w / 2f
+                    val ringW = size.width + 2f * out - w
+                    val ringH = size.height + 2f * out - w
+                    val dash = w * 2f
+                    drawRoundRect(
+                        color = colors.ink,
+                        topLeft = Offset(edge, edge),
+                        size = Size(ringW, ringH),
+                        cornerRadius = CornerRadius(ringH / 2f, ringH / 2f),
+                        style = Stroke(width = w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))),
+                    )
+                }
+                .clip(shape)
+                .background(paint)
+                .border(BenchChromeBorder, colors.ink, shape),
+        )
+        if (selected) {
+            EditorSelectionCue(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = SwatchCueInset, end = SwatchCueInset)
+                    .testTag(selectionCueTag("$TypeBarTestTag-ink-${ink.label}")),
+            )
+        }
+    }
 }
 
 /** `.pot{width:30px;height:30px}`. */
 private val SwatchSize = 30.dp
 
-/**
- * `.tyinks{--gap-pot:18px}` — the ink row's gap, and the one number in this card derived from the
- * PLATFORM rather than from the corpus.
- *
- * It is `48dp - `[SwatchSize], not a spacing token: 18dp is exactly the gap at which the swatch pitch
- * reaches the platform's minimum touch target, so two neighbouring expansions abut instead of overlapping
- * and neither is pruned out of the accessibility tree (see [Swatch]). Every other cluster in the card sits
- * on `gapSm`; this one cannot, and rounding it up to `gapXl` (24dp) would widen the Colour row 24dp to buy
- * nothing. If either the pot size or `ViewConfiguration.minimumTouchTargetSize` moves, this moves with it.
- */
-private val SwatchGap = 18.dp
+/** The compact colour-tile footprint chosen on 2026-08-29: the visible target is the real target. */
+private val SwatchTouchSize = 48.dp
+
+/** The 3+2 colour grid uses the card's own gap rhythm, not hidden target-overlap arithmetic. */
+private val SwatchGridGap = ZinelyV21Dimens.gapSm
+
+/** Two rows, kept close so the card narrows more than it grows. */
+private val SwatchRowGap = ZinelyV21Dimens.gapXs
+
+/** The paper check cue sits just inside the 48dp tile. */
+private val SwatchCueInset = 4.dp
 
 /** `.pot[aria-checked="true"]::after{inset:-5px}` — how far the ring sits outside the pot. */
 private val SwatchRingInset = 5.dp

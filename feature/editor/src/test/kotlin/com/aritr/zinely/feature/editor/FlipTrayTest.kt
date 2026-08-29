@@ -18,7 +18,6 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -91,6 +90,10 @@ class FlipTrayTest {
             )
         composeRule.onNodeWithTag(selectionCueTag(FlipLeftRightTestTag), useUnmergedTree = true).assertDoesNotExist()
         composeRule.onNodeWithTag(selectionCueTag(FlipTopBottomTestTag), useUnmergedTree = true).assertExists()
+        val leftRightBounds = composeRule.onNodeWithTag(FlipLeftRightTestTag).getUnclippedBoundsInRoot()
+        val leftRightHeight = leftRightBounds.bottom - leftRightBounds.top
+        assertTrue(leftRightHeight.value >= 56f)
+        assertTrue(leftRightHeight.value <= 57f)
         composeRule.onNodeWithTag(FlipLeftRightTestTag).assertIsOff().assertIsFocused().performClick()
         composeRule.onNodeWithTag(selectionCueTag(FlipLeftRightTestTag), useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(FlipTopBottomTestTag).assertIsOn()

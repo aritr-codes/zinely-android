@@ -373,6 +373,7 @@ class TypeBarTest {
         assertEquals(TextInk.Teal.rgba, textOf(s).style.color)
         composeRule.onNodeWithContentDescription("Teal").assertIsSelected()
         composeRule.onNodeWithContentDescription("Coral").assertIsNotSelected()
+        composeRule.onNodeWithTag(selectionCueTag("$TypeBarTestTag-ink-Teal"), useUnmergedTree = true).assertExists()
         assertTrue("Colour Teal" in announced)
     }
 
@@ -684,8 +685,10 @@ class TypeBarTest {
         fun leftOf(label: String) =
             composeRule.onNodeWithContentDescription(label).fetchSemanticsNode().boundsInRoot.left
 
-        // The last control of each row, top to bottom: Size · Align · Style · Colour.
-        val rightEdges = listOf(rightOf("Larger"), rightOf("Right"), rightOf("Italic"), rightOf("Ochre"))
+        // The last control of the first three rows, then the Colour row's 3-column grid box. In the
+        // compact 3+2 layout the second row ends early, so "Ochre" is no longer the cluster's right edge.
+        val colourRowRight = composeRule.onNodeWithTag(TypeBarInkRowTestTag).fetchSemanticsNode().boundsInRoot.right
+        val rightEdges = listOf(rightOf("Larger"), rightOf("Right"), rightOf("Italic"), colourRowRight)
         val labelLefts = listOf(leftOf("Size"), leftOf("Align"), leftOf("Style"), leftOf("Colour"))
 
         assertTrue(
@@ -708,8 +711,8 @@ class TypeBarTest {
         openTypeBar()
 
         val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
-        // The widest row is Colour (five 30dp pots + four 18dp `SwatchGap`s = 222dp) plus the label column
-        // and the card's 16dp side padding — comfortably inside the 430dp device the golden tier pins.
+        // The widest row is Colour again, but now as the 3-column compact grid: 3x48dp tiles + 2x8dp gaps
+        // = 160dp, plus the unchanged label column and card padding.
         with(composeRule.density) {
             assertTrue(
                 "the Type bar filled its parent (${card.width.toDp()}) instead of hugging its widest row",
@@ -729,13 +732,11 @@ class TypeBarTest {
         // i.e. edge-to-edge on this device, over the frozen `max-width:calc(100% - 24px)` (= 336dp), and
         // clipping below 360dp. The frozen cluster was 192dp, which put the card at 280dp.
         //
-        // ⚠ The expected width moved to 318.5dp with the 2026-08-15 touch-target fix, and it is the SAME
-        // invariant, not a relaxed one: `SwatchGap` went 8dp -> 18dp so the swatch pitch reaches the
-        // platform's 48dp minimum (see `every_type_bar_control_reports_a_full_48dp_target_to_the_platform`),
-        // which widens the Colour cluster by 40dp to 222dp. The cap it is measured against — the frozen
-        // `max-width:calc(100% - 24px)` = 336dp — has not moved, and the card is still under it with 17.5dp
-        // to spare. What this second assertion pins is that the width is EXPLAINED: 32 (card padding) +
-        // 64.5 (label + gap) + 222 (5x30 + 4x18). Anything wider means a control is inflated again.
+        // The August 29, 2026 compactness ruling changes the Colour row from one 5-wide strip to a 3+2
+        // grid of visible 48dp tiles. The cap it is measured against — the frozen
+        // `max-width:calc(100% - 24px)` = 336dp — has not moved. What this second assertion pins is that
+        // the width is EXPLAINED: 32 (card padding) + 64.5 (label + gap) + 160 (3x48 + 2x8). Anything
+        // wider means a control or gap inflated again.
         //
         // The sibling test above could not see this: it is pinned to the 430dp bench viewport and only
         // asserts `< 430dp`, which a 360dp card passes. This one pins the smallest phone we support and
@@ -751,8 +752,8 @@ class TypeBarTest {
             )
             // …and it got there by matching the spec's paint, not by being squeezed.
             assertTrue(
-                "the Type bar is ${card.width.toDp()}, not the spec's max-content 318.5dp",
-                card.width.toDp() <= 319.dp,
+                "the Type bar is ${card.width.toDp()}, not the compact spec's measured 257.5dp width",
+                card.width.toDp() <= 258.dp,
             )
         }
         // The cap must not have been bought with the touch target. Asserted on the PLATFORM tree, not on
@@ -809,8 +810,8 @@ class TypeBarTest {
      *     Ochre                       48.0 x 48.0 dp   <- no right-hand neighbour to collide with
      *     Bold / Italic               48.0 x 46.1 dp   <- the Colour row's 9dp reach across an 8dp row gap
      *
-     * Both are fixed by pitch, not by paint: `SwatchGap` 8dp -> 18dp (30 + 18 = 48) and the card's row gap
-     * `gapSm` -> `gapMd` (12 > the pot's 9dp reach). Neither control's painted size moved.
+     * The old collision is now removed more directly: the colour controls expose their 48dp tiles openly,
+     * and the rows stay separated enough that the colour row no longer prunes the style row above it.
      *
      * Rendered through the whole [EditorScreen], deliberately: pruning is a property of the SURFACE, and a
      * standalone `TypeBar` would answer a question about a screen that does not exist. Robolectric runs the
@@ -822,8 +823,7 @@ class TypeBarTest {
         render(storeWithText())
         openTypeBar()
 
-        // The colour row, where the horizontal collision was. Ochre is included even though it never
-        // failed: it is the control that proves the cause was the neighbour and not the pot.
+        // The colour row now exposes the 48dp tile directly instead of borrowing it from hidden overlap.
         listOf("Ink", "Coral", "Teal", "Blue", "Ochre").forEach { assertPlatformTargetAtLeast48(it) }
         // The style row, where the vertical collision was — cut by the Colour row BELOW it.
         listOf("Bold", "Italic").forEach { assertPlatformTargetAtLeast48(it) }
@@ -845,9 +845,7 @@ class TypeBarTest {
             val w = bounds.width().toDp()
             val h = bounds.height().toDp()
             assertTrue(
-                "$label reports ${w.value} x ${h.value} dp to the platform tree — under the 48dp minimum. " +
-                    "The paint is fine; the PITCH is not (neighbouring 48dp expansions overlap and the " +
-                    "overlap is pruned before setBoundsInScreen).",
+                "$label reports ${w.value} x ${h.value} dp to the platform tree — under the 48dp minimum.",
                 w >= 47.9.dp && h >= 47.9.dp,
             )
         }

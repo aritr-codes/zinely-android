@@ -5,12 +5,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -92,6 +93,11 @@ class BenchArtPlacementTest {
         composeRule.waitForIdle()
     }
 
+    private fun reveal(tag: String) {
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).performScrollToNode(hasTestTag(tag))
+        composeRule.waitForIdle()
+    }
+
     private fun decor(store: EditorStore) =
         store.uiState.value.document.pages[0].elements.filterIsInstance<DecorElement>()
 
@@ -111,7 +117,8 @@ class BenchArtPlacementTest {
         setScreen(store)
         openArt()
 
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
 
         val placed = decor(store).single()
@@ -127,7 +134,8 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.rect"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).performClick()
         composeRule.waitForIdle()
 
         // The freeze's `selectByKind('decor')`, delivered by the reducer's own auto-select. The context bar
@@ -143,7 +151,8 @@ class BenchArtPlacementTest {
         setScreen(store)
         openArt()
 
-        composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("tape.torn"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).performClick()
         composeRule.waitForIdle()
 
         assertEquals("tape.torn", decor(store).single().supplyId)
@@ -155,7 +164,8 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.triangle")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.triangle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.triangle")).performClick()
         composeRule.waitForIdle()
 
         // The screen must use the same geometry the pure helper computes — not a second, drifting copy.
@@ -167,7 +177,8 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.rule")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.rule"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.rule")).performClick()
         composeRule.waitForIdle()
 
         val ink = decor(store).single().ink
@@ -184,7 +195,8 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
 
         val id = decor(store).single().id
@@ -197,7 +209,8 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
         assertEquals(1, decor(store).size)
 
@@ -215,7 +228,8 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
@@ -241,7 +255,8 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store, fontScale = 1.8f)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
 
         val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
@@ -261,7 +276,8 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
-        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performScrollTo().performClick()
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
         // The placement auto-selected, so the context bar is up — the precondition, asserted so this test
         // cannot pass by the bar never having been there.
@@ -286,6 +302,7 @@ class BenchArtPlacementTest {
         setScreen(store())
         openArt()
         for (id in Copy.Supplies.NAMES.keys) {
+            reveal(benchArtTileTestTag(id))
             composeRule.onNodeWithTag(benchArtTileTestTag(id)).assertExists()
         }
         assertEquals("A16 freezes thirty two", 32, Copy.Supplies.NAMES.size)

@@ -130,7 +130,7 @@ internal const val ZineShelfHeadTestTag: String = "shelf-head"
  * ### The heading scrolls away, because it is a cell in the grid
  *
  * `.shelf-head` is a `grid-column:1 / -1` **item inside the scrolling `.shelf`**, not a bar above it.
- * So "Your shelf" travels up with the covers and leaves the viewport. That is a one-character difference
+ * So "My Shelf" travels up with the covers and leaves the viewport. That is the kind of tiny copy change
  * to write and an invisible one to review — a pinned header composes perfectly, looks deliberate, and
  * is a different screen — so it is asserted (`the heading scrolls away with the covers`).
  *
@@ -265,7 +265,7 @@ internal fun ZineShelf(
 }
 
 /**
- * `.shelf-head` — *"Your shelf"*, its hand-drawn swipe, and the count.
+ * `.shelf-head` — *"My Shelf"*, its hand-drawn swipe, and the count.
  *
  * ```css
  * .shelf-head{grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;
@@ -526,7 +526,7 @@ private val ShelfRowGap = ZinelyV21Dimens.gapXl
 private val ShelfColumnGap = ZinelyV21Dimens.gapLg
 
 /** `.shelf-head h1{margin:0}` — the heading's own text. */
-private const val ShelfHeadingText = "Your shelf"
+private const val ShelfHeadingText = "My Shelf"
 
 /** `font-size:2rem` against the browser's 16px root, and `line-height:1.05` of that. */
 private val ShelfHeadingSize = 32.sp

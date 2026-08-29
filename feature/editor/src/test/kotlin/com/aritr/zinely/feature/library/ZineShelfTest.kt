@@ -78,7 +78,7 @@ class ZineShelfTest {
 
     private companion object {
         const val SHELF = "shelf"
-        const val HEADING = "Your shelf"
+        const val HEADING = "My Shelf"
 
         /**
          * `.shelf{padding:var(--gap-xl) var(--gap-lg) 132px}` and `gap:var(--gap-xl) var(--gap-lg)` —

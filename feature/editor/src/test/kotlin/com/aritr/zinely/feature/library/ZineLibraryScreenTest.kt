@@ -646,7 +646,7 @@ class ZineLibraryScreenTest {
     }
 
     private companion object {
-        const val SHELF_HEADING = "Your shelf"
+        const val SHELF_HEADING = "My Shelf"
         const val NEW_TITLE = "Coffee log"
         const val PLACEHOLDERS = 4
         const val HALF_PIXEL = 0.5f

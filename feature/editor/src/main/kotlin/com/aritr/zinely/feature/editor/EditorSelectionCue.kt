@@ -25,8 +25,10 @@ private val EditorSelectionCueBorder = 2.dp
 internal fun EditorSelectionCue(
     modifier: Modifier = Modifier,
     containerColor: Color = ZinelyTheme.v21Colors.paper,
-    contentColor: Color = ZinelyTheme.v21Colors.ink,
-    borderColor: Color = ZinelyTheme.v21Colors.ink,
+    // Paper remains physically bright in both themes. `ink` becomes light room-copy in dark mode and
+    // disappears on it; `onButter` is the palette's explicit dark-on-bright material ink in both themes.
+    contentColor: Color = ZinelyTheme.v21Colors.onButter,
+    borderColor: Color = ZinelyTheme.v21Colors.onButter,
 ) {
     Box(
         modifier = modifier

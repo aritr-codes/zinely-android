@@ -385,6 +385,38 @@ class BenchC4Test {
         )
     }
 
+    @Test
+    fun done_confirms_saved_even_when_the_current_page_has_no_selection() {
+        // The frozen handler is `deselect(); toast('Saved', false)`. A fresh/resting page makes the
+        // deselect half a no-op, so the confirmation is the only visible evidence that the live checkmark
+        // accepted the press.
+        composeRule.mainClock.autoAdvance = false
+        setScreen(store())
+
+        composeRule.onNodeWithTag(BenchBarDoneTag).performClick()
+        // Let the status chip's frozen fade move past zero alpha; the Done callback itself is already
+        // synchronous, but a zero-alpha graphics layer is correctly not considered displayed.
+        composeRule.mainClock.advanceTimeBy(100L)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun done_confirms_saved_on_a_newly_created_page() {
+        composeRule.mainClock.autoAdvance = false
+        val store = store()
+        store.dispatch(Intent.AddPage)
+        assertEquals(1, store.uiState.value.currentPageIndex)
+        setScreen(store)
+
+        composeRule.onNodeWithTag(BenchBarDoneTag).performClick()
+        composeRule.mainClock.advanceTimeBy(100L)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BenchSavedChipTestTag).assertIsDisplayed()
+    }
+
     // --- Rows 4.9 / 4.10: the status strip ----------------------------------------------------------
 
     @Test

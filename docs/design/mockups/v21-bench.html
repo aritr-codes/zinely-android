@@ -397,7 +397,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .gridbtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
-.filmstrip{flex:1;display:flex;gap:var(--gap-sm);overflow-x:auto;padding:var(--gap-hair) 0 var(--gap-xs);scrollbar-width:none}
+.filmstrip{flex:1;display:flex;gap:var(--gap-sm);overflow-x:auto;padding:var(--gap-hair) var(--gap-xs) var(--gap-xs) 0;scrollbar-width:none}
 .filmstrip::-webkit-scrollbar{display:none}
 .fpage{flex:none;width:29px;height:38px;border-radius:var(--br-xs);background:var(--paper);
   border:1.5px solid var(--ink);cursor:pointer;display:grid;place-items:center;
@@ -948,7 +948,7 @@ custom actions whose labels say `Remove ... flip` when active.
 =========================================================================== -->
 <style>
 .flip-pop{position:absolute;left:12px;right:12px;bottom:12px;z-index:42;
-  max-height:calc(100% - 24px);overflow:auto;padding:var(--gap-md);
+  max-height:calc(100% - 24px);overflow:auto;padding:var(--gap-sm);
   background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);
   border-radius:var(--br-lg);box-shadow:var(--hard) var(--hard) 0 var(--ink-line);
   opacity:0;transform:translateY(10px);pointer-events:none;
@@ -959,13 +959,13 @@ custom actions whose labels say `Remove ... flip` when active.
 .flip-done{min-width:64px;min-height:48px;padding:0 var(--gap-md);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);background:var(--leaf);color:var(--on-leaf);
   font:700 .78rem var(--sans);cursor:pointer}
-.flip-copy{margin:0 0 var(--gap-md);color:var(--ink-soft);font:500 .72rem/1.35 var(--sans)}
+.flip-copy{margin:0 0 var(--gap-sm);color:var(--ink);font:500 .72rem/1.35 var(--sans)}
 .flip-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap-sm)}
 .flip-choice{min-height:56px;padding:var(--gap-sm);display:flex;align-items:center;
   justify-content:center;gap:var(--gap-sm);border:1.5px solid var(--ink);
   border-radius:var(--br-md);background:var(--paper);color:#27270F;
   font:700 .72rem/1.15 var(--sans);cursor:pointer}
-.flip-choice svg{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;
+.flip-choice svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;
   stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .flip-choice[aria-pressed="true"]{background:var(--leaf);color:var(--on-leaf)}
 .flip-choice:focus-visible,.flip-done:focus-visible{outline:3px solid var(--berry);outline-offset:2px}

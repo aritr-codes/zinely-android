@@ -265,7 +265,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    assigned by where a control lives, so the tier follows the card, not the source rule. */
 .tyalign{display:flex;gap:var(--gap-sm)}
 .tyalign button{font-family:var(--sans);font-size:.78rem;font-weight:600;
-  min-width:46px;min-height:46px;padding:var(--gap-sm) var(--gap-md);
+  min-width:46px;min-height:46px;padding:var(--gap-sm) var(--gap-sm);
   border-radius:var(--br-md);border:1.5px solid var(--ink);
   background:var(--surface);color:var(--ink-soft);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
 .tyalign button[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
@@ -314,27 +314,24 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    Coral swatch through `ZinelyTheme.colors.coralText` — a themed lookup, on the one
    control whose whole contract is that it is not themed.
 
-   ⚠ 2026-08-15 — THE POT GAP IS 18px, NOT --gap-sm, AND THE REASON IS A TOUCH TARGET.
-   Measured, not reasoned: `adb shell uiautomator dump` on a SM-A176B (Android 16, density
-   override 420) with this panel open reported Ink / Coral / Teal / Blue at 38.1 x 48.0 dp
-   on the PLATFORM accessibility tree — under the 48dp minimum on the horizontal axis.
-   Only Ochre came back 48.0 x 48.0, and only because it has no right-hand neighbour.
+   ⚠ 2026-08-29 — the compactness ruling stops borrowing the touch target from hidden
+   overlap.  The visible control is now a 48px tile, carrying the same 30px physical pot in
+   its centre.  That keeps the platform floor explicit, narrows the card by moving the row
+   from a 5-wide strip to a 3+2 grid, and gives the selected state a second non-colour cue:
+   a small paper check in the tile corner.  The row's shared right edge is therefore the
+   3-column grid box, not the second row's last visible pot.
 
-   The pot paints at 30px and that does not move.  What was wrong is the PITCH: 30px pot +
-   8px gap = 38px, while the platform expands every control's touch bounds to 48px, so two
-   neighbouring expansions overlap by 10px and the tree prunes the overlap before it
-   reports a hit-rect.  A control that paints correctly therefore reported a target 10dp
-   narrower than the one it was granted.  18px is the exact gap at which the pitch reaches
-   48px and the expansions stop colliding — 30 + 18 = 48 — so it is named here rather than
-   rounded up to --gap-xl (24px), which would widen the row 24px for nothing.
-
-   Named, not a literal, for the same reason every other number in this file is: it is a
-   measurement of the platform's minimum target divided against the pot, and the next
-   reader needs to see which of the two it follows if either moves. */
-.tyinks{--gap-pot:18px;display:flex;gap:var(--gap-pot)}
+   The older 38px-pitch defect is kept in the notes below as history, because it explains
+   why the card is not allowed to "look smaller" by shrinking the target back under 48. */
+.tyinks{display:grid;grid-template-columns:repeat(3,48px);gap:var(--gap-sm)}
+.inkopt{width:48px;height:48px;border:0;background:none;cursor:pointer;padding:0;position:relative;
+  display:grid;place-items:center}
+.inkopt[aria-checked="true"]::after{content:"✓";position:absolute;top:4px;right:4px;width:20px;height:20px;
+  display:grid;place-items:center;border:2px solid var(--on-butter);border-radius:999px;background:var(--paper);
+  color:var(--on-butter);font:700 .72rem/1 var(--sans)}
 .pot{width:30px;height:30px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
   cursor:pointer;padding:0;position:relative}
-.pot[aria-checked="true"]::after{content:"";position:absolute;inset:-5px;border:1.6px dashed var(--ink);
+.inkopt[aria-checked="true"] .pot::after{content:"";position:absolute;inset:-5px;border:1.6px dashed var(--ink);
   border-radius:var(--br-pill)}
 
 /* ✱ NOT DESIGN TOKENS.  These five are `TextInk`'s committed values, transcribed so no
@@ -451,11 +448,11 @@ that is still furnished by V1.</p>
       <div class="tyrow">
         <span class="tylab" id="lab-colour-1">Colour</span>
         <div class="tyinks" role="radiogroup" aria-labelledby="lab-colour-1">
-          <button class="pot ink"   role="radio" aria-checked="true"  aria-label="Ink"></button>
-          <button class="pot coral" role="radio" aria-checked="false" aria-label="Coral"></button>
-          <button class="pot teal"  role="radio" aria-checked="false" aria-label="Teal"></button>
-          <button class="pot blue"  role="radio" aria-checked="false" aria-label="Blue"></button>
-          <button class="pot ochre" role="radio" aria-checked="false" aria-label="Ochre"></button>
+          <button class="inkopt" role="radio" aria-checked="true"  aria-label="Ink"><span class="pot ink"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Coral"><span class="pot coral"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Teal"><span class="pot teal"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Blue"><span class="pot blue"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Ochre"><span class="pot ochre"></span></button>
         </div>
       </div>
 
@@ -532,11 +529,11 @@ that is still furnished by V1.</p>
       <div class="tyrow">
         <span class="tylab" id="lab-colour-2">Colour</span>
         <div class="tyinks" role="radiogroup" aria-labelledby="lab-colour-2">
-          <button class="pot ink"   role="radio" aria-checked="false" aria-label="Ink"></button>
-          <button class="pot coral" role="radio" aria-checked="true"  aria-label="Coral"></button>
-          <button class="pot teal"  role="radio" aria-checked="false" aria-label="Teal"></button>
-          <button class="pot blue"  role="radio" aria-checked="false" aria-label="Blue"></button>
-          <button class="pot ochre" role="radio" aria-checked="false" aria-label="Ochre"></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Ink"><span class="pot ink"></span></button>
+          <button class="inkopt" role="radio" aria-checked="true"  aria-label="Coral"><span class="pot coral"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Teal"><span class="pot teal"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Blue"><span class="pot blue"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Ochre"><span class="pot ochre"></span></button>
         </div>
       </div>
 
@@ -594,11 +591,11 @@ two can be read at size. Neither is reachable from the two frames above.</p>
       <div class="tyrow">
         <span class="tylab" id="lab-colour-3">Colour</span>
         <div class="tyinks" role="radiogroup" aria-labelledby="lab-colour-3">
-          <button class="pot ink"   role="radio" aria-checked="false" aria-label="Ink"></button>
-          <button class="pot coral" role="radio" aria-checked="false" aria-label="Coral"></button>
-          <button class="pot teal"  role="radio" aria-checked="false" aria-label="Teal"></button>
-          <button class="pot blue"  role="radio" aria-checked="true"  aria-label="Blue"></button>
-          <button class="pot ochre" role="radio" aria-checked="false" aria-label="Ochre"></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Ink"><span class="pot ink"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Coral"><span class="pot coral"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Teal"><span class="pot teal"></span></button>
+          <button class="inkopt" role="radio" aria-checked="true"  aria-label="Blue"><span class="pot blue"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Ochre"><span class="pot ochre"></span></button>
         </div>
       </div>
     </div>
@@ -634,11 +631,11 @@ two can be read at size. Neither is reachable from the two frames above.</p>
       <div class="tyrow">
         <span class="tylab" id="lab-colour-4">Colour</span>
         <div class="tyinks" role="radiogroup" aria-labelledby="lab-colour-4">
-          <button class="pot ink"   role="radio" aria-checked="false" aria-label="Ink"></button>
-          <button class="pot coral" role="radio" aria-checked="false" aria-label="Coral"></button>
-          <button class="pot teal"  role="radio" aria-checked="false" aria-label="Teal"></button>
-          <button class="pot blue"  role="radio" aria-checked="false" aria-label="Blue"></button>
-          <button class="pot ochre" role="radio" aria-checked="false" aria-label="Ochre"></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Ink"><span class="pot ink"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Coral"><span class="pot coral"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Teal"><span class="pot teal"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Blue"><span class="pot blue"></span></button>
+          <button class="inkopt" role="radio" aria-checked="false" aria-label="Ochre"><span class="pot ochre"></span></button>
         </div>
       </div>
     </div>
@@ -698,25 +695,17 @@ press flush inside a card exactly like this one. The Reframe pad is the nearest 
 <i>situation</i> rather than by <i>shape</i>, so its Flat tier is what every control in this card carries.
 Depth follows where a control lives.</p>
 
-<p class="cap"><b>Two things that need a device before this can be frozen.</b>
-<br><b>1. The swatch pitch. <span style="color:var(--leaf-text)">— RESOLVED 2026-08-15, but the dump is
-still owed.</span></b> This item's premise is now stale and is recorded rather than deleted, because the
-number it names is the one that caused the problem. It read: <i>"<code>.pot</code> is 30&nbsp;px on a
-<code>--gap-sm</code> gap — a 38&nbsp;px pitch, where V1's frozen 32&nbsp;px&nbsp;+&nbsp;8 gave 40"</i>, and
-warned that <code>Swatch</code>'s KDoc measurement — neighbouring 48&nbsp;dp touch expansions overlap,
-Compose prunes the overlap before reporting bounds, and four of five swatches report <b>40×48</b> to
-TalkBack rather than 48×48 — would no longer describe the shipped control.
-<br>Both sides have since moved to <b>48</b>, independently and to the same number. This file declares
-<code>.tyinks{--gap-pot:18px}</code> against a 30&nbsp;px <code>.pot</code>, and the shipped
-<code>TypeBar.kt</code> declares <code>SwatchSize&nbsp;=&nbsp;30.dp</code> with
-<code>SwatchGap&nbsp;=&nbsp;18.dp</code> — <b>a 48&nbsp;dp pitch on both sides</b>, so the expansions no
-longer overlap and there is nothing left for Compose to prune. A Robolectric test now asserts it against the
-<i>platform</i> node rather than the merged tree
+<p class="cap"><b>Two measurements this card owed, and how they were closed.</b>
+<br><b>1. The swatch target.</b> The old warning about a 38&nbsp;px pitch is kept as history because it
+explains the defect, but it is no longer the shipped geometry. The ruling taken on
+<b>2026-08-29</b> makes each visible colour control a <b>48&nbsp;px tile</b> with the same 30&nbsp;px pot
+inside it, arranged as a fixed <b>3&nbsp;+&nbsp;2 grid</b>. The target is therefore visible rather than
+borrowed from hidden overlap, the selected ink says itself in two ways (dashed ring + paper check), and the
+row stops being the width driver for the whole card.
+<br><b>Device-confirmed on 2026-08-15:</b> the platform tree on SM-A176B already reported the shipped row at
+<b>48.0 × 48.0dp</b> per swatch when the touch-target fix landed. Compose keeps that floor and the focused
+tests now assert the platform node rather than the merged tree
 (<code>every_type_bar_control_reports_a_full_48dp_target_to_the_platform</code>).
-<br><b>What is still owed:</b> the caption asked for a <i>device</i> dump — <i>"re-dumped, not
-re-reasoned"</i> — and a platform-node assertion in Robolectric is not that. The
-<code>uiautomator</code> dump of the shipped Type bar is the last piece of this item, and the KDoc on
-<code>Swatch</code> must be corrected to whatever it reports.
 <br><b>2. The card's width at a large font scale. <span style="color:var(--berry)">— MEASURED 2026-08-15.
 The answer is NO, and this item is now a design decision rather than a measurement.</span></b> The
 <code>max-width:calc(100% - 24px)</code> floor is transcribed from the frozen rule, but this card's rows
@@ -736,9 +725,14 @@ to exactly 360; measured, they blow it past.
 <code>Align</code> row's <b>Right</b> button <b>wraps mid-word</b> — it renders as <code>Righ</code> /
 <code>t</code> on two lines (bounds 242&nbsp;px tall against its siblings' 142). That is visible on the
 411&nbsp;dp screen today.
-<br><b>What is now owed is a ruling, not a ruler.</b> The Colour row must wrap, scroll, or stop pinning its
-swatches to a fixed 48&nbsp;dp at large font scales — and each of those is a design choice this file has to
-make before it can be frozen.
+<br><b>The ruling is now taken, 2026-08-29.</b> The Colour row becomes a <b>fixed 3&nbsp;+&nbsp;2 grid</b>
+of <b>48&nbsp;dp tiles</b>, each carrying the same <b>30&nbsp;dp physical pot</b> inside it. The target is
+therefore visible rather than borrowed from hidden overlap, the row stops being the card's width driver,
+and the chosen ink now says <i>selected</i> in two ways: the corpus's dashed ring around the pot and a
+small paper check tucked into the tile's corner. No nested horizontal scroll is introduced.
+<br><b>The align row gives back 4&nbsp;px of side padding per choice.</b> The 46&nbsp;px floor stays; only
+the spare chrome goes, which is enough to stop <code>Right</code> wrapping mid-word at the large-font
+device state this note recorded.
 <br>A third item stood here — the five physical ink fills against dark chrome. The ruling below keeps
 the swatches physical while moving their surrounding card to themed <code>--surface</code>.</p>
 

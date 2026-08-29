@@ -20,6 +20,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -223,6 +224,22 @@ public fun EditorScreen(
             delay(SavedConfirmationVisibleMs)
             savedVisible = false
         }
+    }
+
+    // The frozen bottom-bar checkmark is a deliberate confirmation even when there is no selection to
+    // clear: `doneBtn` calls `deselect(); toast('Saved', false)` in v21-bench.html. Compose previously kept
+    // only the first half, so on a fresh/current page the live button appeared to do nothing. Keep this
+    // feedback separate from the autosave stream above: it does not schedule a second write, and a known
+    // save failure suppresses it through the same honesty gate as the ordinary confirmation.
+    var doneConfirmationPulse by remember { mutableIntStateOf(0) }
+    var doneSavedVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(doneConfirmationPulse) {
+        if (doneConfirmationPulse == 0) return@LaunchedEffect
+        delay(SavedConfirmationVisibleMs)
+        doneSavedVisible = false
+    }
+    LaunchedEffect(saveErrorVisible) {
+        if (saveErrorVisible) doneSavedVisible = false
     }
 
     // Feature-ephemeral gesture accumulators — the live pan/pinch frame and the handle-resize override.
@@ -1078,7 +1095,7 @@ public fun EditorScreen(
         // sits directly inside `.phone`, above `.canvasArea`). It carries the autosave chip that
         // `EditorSavedConfirmation` used to float over the canvas - one message, one presentation,
         // per OD-14 - and its left slot is deliberately empty; see [BenchStatusStrip].
-        BenchStatusStrip(savedVisible = savedVisible && !saveErrorVisible)
+        BenchStatusStrip(savedVisible = (savedVisible || doneSavedVisible) && !saveErrorVisible)
 
         // The "Preview" entry to the unified Proof surface (M5, ADR-051). A quiet top-end nav
         // action (not a thumb-zone craft supply — it advances the journey, it doesn't place content);
@@ -2002,7 +2019,13 @@ public fun EditorScreen(
                 // Row 4.8b: the frozen `deselect()` branch. `SelectAt` with a miss reduces to
                 // ClearSelection's exact state - the same one line C2a used for tap-to-dismiss, so
                 // there is one deselect path and not two that can drift.
-                onDone = { dispatch(Intent.ClearSelection) },
+                onDone = {
+                    dispatch(Intent.ClearSelection)
+                    if (!saveErrorVisible) {
+                        doneSavedVisible = true
+                        doneConfirmationPulse += 1
+                    }
+                },
                 modifier = Modifier.fillMaxWidth(),
             )
         }

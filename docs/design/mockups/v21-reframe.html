@@ -218,7 +218,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    preserves the original geometry exactly. */
 .pad{position:absolute;left:50%;bottom:calc(var(--gap-sm) + 124px);transform:translateX(-50%);z-index:30;
   display:flex;flex-direction:column;align-items:center;gap:var(--gap-sm);background:var(--surface);
-  border:1.5px solid var(--ink);border-radius:var(--br-md);padding:var(--gap-sm) var(--gap-md);
+  border:1.5px solid var(--ink);border-radius:var(--br-md);padding:var(--gap-sm);
   box-shadow:2px 2px 0 var(--ink-line)}
 .nudge{display:grid;grid-template-columns:repeat(3,34px);grid-template-rows:repeat(3,34px);gap:var(--gap-hair)}
 .nudge button{border:1.5px solid var(--ink);border-radius:var(--br-sm);background:var(--surface);
@@ -243,7 +243,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    the tool rather than as a notice bolted under it.  Shown only while every nudge is
    unavailable; removed from the DOM (not merely hidden) the moment one goes live, so it is
    never announced to a screen reader as stale advice. */
-.padrow{display:flex;align-items:center;gap:var(--gap-lg)}
+.padrow{display:flex;align-items:center;gap:var(--gap-md)}
 .padhint{margin:0;text-align:center;color:var(--ink-soft);
   font-size:12.5px;letter-spacing:.005em}
 /* the readout is a NUMBER, so it is tabular and quiet — the same treatment the page
@@ -253,7 +253,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 
 /* ============ the band — the Bench's own bar, wearing session tools ======= */
 .bar{flex:none;display:flex;align-items:center;gap:var(--gap-sm);
-  padding:var(--gap-sm) var(--gap-lg) var(--gap-lg);background:var(--desk)}
+  padding:var(--gap-xs) var(--gap-md) var(--gap-md);background:var(--desk)}
 /* RETAINED DELIBERATELY, 2026-08-15: no markup in this file uses `.icon-btn` any more — Reset
    was the last one and now carries a word (F-9). It is kept because the Bench and the Proof
    both draw icon-only controls from this same geometry, and this file is the corpus companion
@@ -296,10 +296,10 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 /* NOT a segmented control any more.  It is one binary, and the corpus already has a
    two-state chip (`.chip2` on the Bench's art tray): --paper at rest, --leaf when on.
    Coral does not exist in V2.1 and a white-on-coral segment was the V1 tell. */
-.fitrow{flex:none;display:flex;gap:var(--gap-sm);padding:0 var(--gap-lg) var(--gap-sm);background:var(--desk)}
+.fitrow{flex:none;display:flex;gap:var(--gap-sm);padding:0 var(--gap-md) var(--gap-xs);background:var(--desk)}
 .fit{flex:1;font-family:var(--sans);cursor:pointer;text-align:left;
   background:var(--surface);color:var(--ink-soft);border:1.5px solid var(--ink);
-  border-radius:var(--br-md);padding:var(--gap-sm) var(--gap-md);
+  border-radius:var(--br-md);padding:var(--gap-xs) var(--gap-sm);
   box-shadow:2px 2px 0 var(--ink-line);display:flex;flex-direction:column;gap:1px}
 .fit:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 .fit b{font-size:.82rem;font-weight:700;color:var(--ink)}

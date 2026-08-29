@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +18,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -177,35 +178,118 @@ internal fun BenchArtSheetBody(
     val matches = Copy.Supplies.matchingIds(query, selectedFamily)
     val narrowed = query.isNotBlank() || selectedFamily != null
 
-    Column(
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapSm),
         modifier = modifier
             .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
             .testTag(BenchArtSheetTestTag),
     ) {
-        BenchArtSearch(value = query, onValueChange = { query = it })
-        BenchArtFamilyFilters(
-            selectedFamily = selectedFamily,
-            onSelect = { family -> selectedFamily = if (selectedFamily == family) null else family },
-        )
-        Text(
-            text = Copy.BenchArt.resultCount(matches.size),
-            color = ZinelyTheme.v21Colors.inkSoft,
-            fontFamily = ZinelyV21Fonts.Work,
-            fontSize = 12.sp,
-            modifier = Modifier.testTag(BenchArtResultCountTestTag).semantics { liveRegion = LiveRegionMode.Polite },
-        )
+        item(key = "search") {
+            BenchArtSearch(value = query, onValueChange = { query = it })
+        }
+        item(key = "family-filters") {
+            BenchArtFamilyFilters(
+                selectedFamily = selectedFamily,
+                onSelect = { family -> selectedFamily = if (selectedFamily == family) null else family },
+            )
+        }
+        item(key = "result-count") {
+            Text(
+                text = Copy.BenchArt.resultCount(matches.size),
+                color = ZinelyTheme.v21Colors.inkSoft,
+                fontFamily = ZinelyV21Fonts.Work,
+                fontSize = 12.sp,
+                modifier = Modifier.testTag(BenchArtResultCountTestTag).semantics { liveRegion = LiveRegionMode.Polite },
+            )
+        }
 
         if (matches.isEmpty()) {
-            BenchArtNoResults(onShowAll = { query = ""; selectedFamily = null })
+            item(key = "no-results") {
+                BenchArtNoResults(onShowAll = { query = ""; selectedFamily = null })
+            }
         } else if (narrowed) {
             Copy.Supplies.BY_FAMILY.forEach { (family, supplies) ->
                 val familyMatches = supplies.keys.filter(matches::contains)
                 if (familyMatches.isNotEmpty()) {
-                    BenchArtLabel(family, collapsed = false)
-                    BenchArtGrid(
-                        supplyIds = familyMatches,
+                    item(key = "label-$family") { BenchArtLabel(family, collapsed = false) }
+                    items(
+                        items = familyMatches.chunked(BenchArtGridColumns),
+                        key = { row -> "filtered-$family-${row.first()}" },
+                    ) { row ->
+                        BenchArtGridRow(
+                            supplyIds = row,
+                            favourites = favourites,
+                            onPick = onPick,
+                            onFavouriteChange = onFavouriteChange,
+                            tag = ::benchArtTileTestTag,
+                            supplyPainter = sharedSupplyPainter,
+                        )
+                    }
+                }
+            }
+        } else {
+            if (recent.isNotEmpty()) {
+                item(key = "label-recent") { BenchArtLabel(Copy.BenchArt.RECENT, collapsed = true) }
+                item(key = "rail-recent") {
+                    BenchArtRail(
+                        supplyIds = recent,
+                        favourites = favourites,
+                        onPick = onPick,
+                        onFavouriteChange = onFavouriteChange,
+                        tag = ::benchArtRecentTileTestTag,
+                        supplyPainter = sharedSupplyPainter,
+                    )
+                }
+            }
+            item(key = "label-favourites") {
+                BenchArtLabel(Copy.BenchArt.FAVOURITES, collapsed = recent.isEmpty())
+            }
+            if (favourites.isEmpty()) {
+                item(key = "favourites-empty") {
+                    Text(
+                        text = Copy.BenchArt.FAVOURITES_EMPTY,
+                        color = colors.ink,
+                        fontFamily = ZinelyV21Fonts.Work,
+                        fontSize = 13.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(ZinelyV21Dimens.radiusMd))
+                            .background(colors.butterTint)
+                            .drawBehind {
+                                val stroke = 1.5.dp.toPx()
+                                drawRoundRect(
+                                    color = colors.ink,
+                                    cornerRadius = CornerRadius(ZinelyV21Dimens.radiusMd.toPx()),
+                                    style = Stroke(
+                                        width = stroke,
+                                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(7.dp.toPx(), 5.dp.toPx())),
+                                    ),
+                                )
+                            }
+                            .padding(ZinelyV21Dimens.gapMd),
+                    )
+                }
+            } else {
+                val favouriteIds = Copy.Supplies.NAMES.keys.filter(favourites::contains)
+                item(key = "rail-favourites") {
+                    BenchArtRail(
+                        supplyIds = favouriteIds,
+                        favourites = favourites,
+                        onPick = onPick,
+                        onFavouriteChange = onFavouriteChange,
+                        tag = ::benchArtFavouriteTileTestTag,
+                        supplyPainter = sharedSupplyPainter,
+                    )
+                }
+            }
+            Copy.Supplies.BY_FAMILY.forEach { (family, supplies) ->
+                item(key = "label-$family") { BenchArtLabel(family, collapsed = false) }
+                items(
+                    items = supplies.keys.chunked(BenchArtGridColumns),
+                    key = { row -> "catalogue-$family-${row.first()}" },
+                ) { row ->
+                    BenchArtGridRow(
+                        supplyIds = row,
                         favourites = favourites,
                         onPick = onPick,
                         onFavouriteChange = onFavouriteChange,
@@ -213,64 +297,6 @@ internal fun BenchArtSheetBody(
                         supplyPainter = sharedSupplyPainter,
                     )
                 }
-            }
-        } else {
-            if (recent.isNotEmpty()) {
-                BenchArtLabel(Copy.BenchArt.RECENT, collapsed = true)
-                BenchArtRail(
-                    supplyIds = recent,
-                    favourites = favourites,
-                    onPick = onPick,
-                    onFavouriteChange = onFavouriteChange,
-                    tag = ::benchArtRecentTileTestTag,
-                    supplyPainter = sharedSupplyPainter,
-                )
-            }
-            BenchArtLabel(Copy.BenchArt.FAVOURITES, collapsed = recent.isEmpty())
-            if (favourites.isEmpty()) {
-                Text(
-                    text = Copy.BenchArt.FAVOURITES_EMPTY,
-                    color = colors.ink,
-                    fontFamily = ZinelyV21Fonts.Work,
-                    fontSize = 13.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(ZinelyV21Dimens.radiusMd))
-                        .background(colors.butterTint)
-                        .drawBehind {
-                            val stroke = 1.5.dp.toPx()
-                            drawRoundRect(
-                                color = colors.ink,
-                                cornerRadius = CornerRadius(ZinelyV21Dimens.radiusMd.toPx()),
-                                style = Stroke(
-                                    width = stroke,
-                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(7.dp.toPx(), 5.dp.toPx())),
-                                ),
-                            )
-                        }
-                        .padding(ZinelyV21Dimens.gapMd),
-                )
-            } else {
-                val favouriteIds = Copy.Supplies.NAMES.keys.filter(favourites::contains)
-                BenchArtRail(
-                    supplyIds = favouriteIds,
-                    favourites = favourites,
-                    onPick = onPick,
-                    onFavouriteChange = onFavouriteChange,
-                    tag = ::benchArtFavouriteTileTestTag,
-                    supplyPainter = sharedSupplyPainter,
-                )
-            }
-            Copy.Supplies.BY_FAMILY.forEach { (family, supplies) ->
-                BenchArtLabel(family, collapsed = false)
-                BenchArtGrid(
-                    supplyIds = supplies.keys.toList(),
-                    favourites = favourites,
-                    onPick = onPick,
-                    onFavouriteChange = onFavouriteChange,
-                    tag = ::benchArtTileTestTag,
-                    supplyPainter = sharedSupplyPainter,
-                )
             }
         }
     }
@@ -433,7 +459,7 @@ private fun BenchArtLabel(text: String, collapsed: Boolean) {
 }
 
 @Composable
-private fun BenchArtGrid(
+private fun BenchArtGridRow(
     supplyIds: List<String>,
     favourites: Set<String>,
     onPick: (String) -> Unit,
@@ -441,23 +467,22 @@ private fun BenchArtGrid(
     tag: (String) -> String,
     supplyPainter: SupplyPainter,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(BenchArtGridGap)) {
-        supplyIds.chunked(BenchArtGridColumns).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(BenchArtGridGap)) {
-                row.forEach { id ->
-                    BenchArtTile(
-                        supplyId = id,
-                        favourite = id in favourites,
-                        onPick = onPick,
-                        onFavouriteChange = onFavouriteChange,
-                        testTag = tag(id),
-                        supplyPainter = supplyPainter,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-                repeat(BenchArtGridColumns - row.size) { Box(Modifier.weight(1f)) }
-            }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(BenchArtGridGap),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        supplyIds.forEach { id ->
+            BenchArtTile(
+                supplyId = id,
+                favourite = id in favourites,
+                onPick = onPick,
+                onFavouriteChange = onFavouriteChange,
+                testTag = tag(id),
+                supplyPainter = supplyPainter,
+                modifier = Modifier.weight(1f),
+            )
         }
+        repeat(BenchArtGridColumns - supplyIds.size) { Box(Modifier.weight(1f)) }
     }
 }
 

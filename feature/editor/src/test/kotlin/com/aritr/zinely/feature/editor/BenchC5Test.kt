@@ -260,6 +260,21 @@ class BenchC5Test {
         assertEquals(0, count(BenchPageGridTestTag))
     }
 
+    @Test
+    fun choosing_first_middle_and_final_cells_navigates_each_time_and_dismisses_the_grid() {
+        val store = store()
+        setScreen(store)
+
+        listOf(1, 4, 8).forEach { pageNumber ->
+            composeRule.onNodeWithTag(BenchGridButtonTestTag).performClick()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithTag(benchPageCellTag(pageNumber)).performClick()
+            composeRule.waitForIdle()
+            assertEquals(pageNumber - 1, store.uiState.value.currentPageIndex)
+            assertEquals("the grid stayed up after choosing page $pageNumber", 0, count(BenchPageGridTestTag))
+        }
+    }
+
     /**
      * Row 5.15: the head's close dismisses without changing the page — leaving is not choosing.
      *
@@ -278,6 +293,23 @@ class BenchC5Test {
         composeRule.waitForIdle()
         assertEquals(3, store.uiState.value.currentPageIndex)
         assertEquals(0, count(BenchPageGridTestTag))
+    }
+
+    @Test
+    fun the_grid_can_be_opened_and_closed_repeatedly_before_a_page_is_chosen() {
+        val store = store()
+        setScreen(store)
+        store.dispatch(Intent.GoToPage(2))
+        composeRule.waitForIdle()
+
+        repeat(3) { pass ->
+            composeRule.onNodeWithTag(BenchGridButtonTestTag).performClick()
+            composeRule.waitForIdle()
+            composeRule.onNodeWithTag(BenchPageGridCloseTag).performClick()
+            composeRule.waitForIdle()
+            assertEquals("close/open cycle ${pass + 1} changed the page", 2, store.uiState.value.currentPageIndex)
+            assertEquals("close/open cycle ${pass + 1} left the grid behind", 0, count(BenchPageGridTestTag))
+        }
     }
 
     /**
@@ -570,13 +602,12 @@ class BenchC5Test {
     }
 
     /**
-     * The frozen `.filmstrip{padding:var(--gap-hair) 0 var(--gap-xs)}` (`v21-bench.html:333`) — **zero** on
-     * the sides, where V2 had 4.
+     * The frozen `.filmstrip{padding:var(--gap-hair) var(--gap-xs) var(--gap-xs) 0}` (`v21-bench.html:400`)
+     * — flush on the leading edge, 4px on the trailing edge.
      *
-     * Asserting a zero looks like asserting nothing, and it is the opposite: the strip's leading sheet now
-     * sits flush against the strip's edge, and a 4dp inset creeping back in — from a stray `padding`, or
-     * from someone "tidying" the horizontal term out of the auto-centre arithmetic — is invisible to every
-     * other test here.
+     * The asymmetry is the thing to hold. The strip's first sheet still sits flush against the leading
+     * edge, while a small trailing inset keeps the last current-page ring from shearing at the viewport.
+     * Either side can drift alone.
      *
      * V2's version of this test had to move the current page away first, because `scale(1.16)` made sheet 1
      * overhang its own box by 2.08dp and read 1.92 instead of 4. That confound is gone with the transform,
@@ -589,6 +620,15 @@ class BenchC5Test {
         store.dispatch(Intent.GoToPage(3))
         composeRule.waitForIdle()
         assertEquals(0f, bounds(benchThumbTag(1)).left - bounds(BenchFilmstripTestTag).left, 1f)
+    }
+
+    @Test
+    fun the_last_sheet_keeps_four_pixels_of_trailing_clearance() {
+        val store = store()
+        setScreen(store)
+        store.dispatch(Intent.GoToPage(7))
+        composeRule.waitForIdle()
+        assertEquals(px(4.dp), bounds(BenchFilmstripTestTag).right - bounds(benchThumbTag(8)).right, 1f)
     }
 
     /**
