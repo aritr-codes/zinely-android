@@ -3,6 +3,7 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.key.KeyEvent
@@ -45,7 +46,10 @@ import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
 import com.aritr.zinely.ui.a11y.platformNode
+import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.zinelyV21DarkColors
+import com.aritr.zinely.ui.theme.zinelyV21LightColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -156,6 +160,10 @@ class TypeBarTest {
 
     private fun hasRole(role: Role) =
         SemanticsMatcher.expectValue(SemanticsProperties.Role, role)
+
+    private fun channelDistance(a: Int, b: Int) = listOf(0, 8, 16).sumOf { shift ->
+        kotlin.math.abs(((a shr shift) and 0xFF) - ((b shr shift) and 0xFF))
+    }
 
     /**
      * Press one key with a modifier held, and report whether the editor **consumed** it — the Compose
@@ -759,6 +767,30 @@ class TypeBarTest {
         // `touchBoundsInRoot` — see [every_type_bar_control_reports_a_full_48dp_target_to_the_platform]
         // for why the latter cannot fail.
         assertPlatformTargetAtLeast48("Teal")
+    }
+
+    @Test
+    @Config(qualifiers = "+night")
+    fun the_card_uses_the_room_palette_at_night_and_not_the_paper_island() {
+        // The standalone TypeBar golden cannot catch a provider-boundary regression in EditorScreen.
+        // The canvas intentionally islands paper ink to the light palette, while this floating editor
+        // card must restore the surrounding room palette. On Samsung hardware the missed restoration
+        // paired light-theme dark ink with the dark room surface and made every inactive label muddy.
+        render(storeWithText())
+        openTypeBar()
+
+        val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInWindow
+        val bitmap = composeRule.activity.window.decorView.rasterizeToBitmap()
+        // Centre of the straight top edge, one physical pixel inside the 1.5dp border: no rounded corner,
+        // shadow, text, or grain can contribute here.
+        val edge = bitmap.getPixel(card.center.x.toInt(), card.top.toInt() + 1)
+        val toRoom = channelDistance(edge, zinelyV21DarkColors().ink.toArgb())
+        val toIsland = channelDistance(edge, zinelyV21LightColors().ink.toArgb())
+        assertTrue(
+            "the Type bar edge is #%06X — %d from room ink and %d from paper-island ink"
+                .format(edge and 0xFFFFFF, toRoom, toIsland),
+            toRoom < toIsland,
+        )
     }
 
     /**

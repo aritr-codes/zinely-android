@@ -1875,20 +1875,30 @@ public fun EditorScreen(
                 // on the next recomposition (ADR-055 §3). Reveals without motion, deliberately: no
                 // enter/exit animation to gate on reduced motion (ADR-055 §4).
                 if (styleTarget != null && typeBarOpen && reframing == null) {
-                    TypeBar(
-                        element = styleTarget,
-                        dispatch = dispatch,
-                        onAnnounce = sayStyle,
-                        onPreview = { styleOverride = it },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            // bench `.typebar{max-width:calc(100% - 24px)}` — the frozen cap, which the
-                            // first port dropped. On a centred max-content card a symmetric 12dp padding
-                            // IS that cap: it lowers the incoming max constraint, which is what the card's
-                            // `width(IntrinsicSize.Max)` clamps against. Without it the bar has no floor
-                            // under it on a narrow screen or a large font scale.
-                            .padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
-                    )
+                    // The bar is chrome floating over the artifact, not part of the lit paper island.
+                    // Restore both room palettes just as the neighbouring context bar does. Without this
+                    // boundary, dark mode paired the island's dark light-theme ink with the room's dark
+                    // surface: standalone TypeBar goldens stayed correct while the real editor measured
+                    // unreadable on Samsung hardware.
+                    CompositionLocalProvider(
+                        LocalZinelyV2Colors provides roomColors,
+                        LocalZinelyV21Colors provides roomColors21,
+                    ) {
+                        TypeBar(
+                            element = styleTarget,
+                            dispatch = dispatch,
+                            onAnnounce = sayStyle,
+                            onPreview = { styleOverride = it },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                // bench `.typebar{max-width:calc(100% - 24px)}` — the frozen cap, which the
+                                // first port dropped. On a centred max-content card a symmetric 12dp padding
+                                // IS that cap: it lowers the incoming max constraint, which is what the card's
+                                // `width(IntrinsicSize.Max)` clamps against. Without it the bar has no floor
+                                // under it on a narrow screen or a large font scale.
+                                .padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
+                        )
+                    }
                 }
 
                 // C4 rows 4.11-4.12: the frozen `.snack` (`v2-bench.html:361-364`, markup `:443`).
