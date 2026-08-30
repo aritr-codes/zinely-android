@@ -288,9 +288,10 @@ public fun EditorScreen(
     var spreadPhotoId by remember { mutableStateOf<String?>(null) }
     var spreadBusy by remember { mutableStateOf(false) }
 
-    // The Art sheet — the frozen `openArt()` (ADR-105 step S7). It is a *second* state rather than a mode
-    // of `addChooserOpen` because the two are separate Compose `Dialog`s where the freeze had one `#sheet`
-    // whose `innerHTML` was swapped. Both feed `benchStateOf` below: `openArt()` captions this surface as
+    // The Art sheet — the frozen `openArt()` (ADR-105 step S7). Purpose remains separate from the chooser's
+    // open flag because direct Replace enters the cabinet without visiting Add. Production now feeds both
+    // bodies through one `ZSheet`, matching the freeze's one `#sheet` whose `innerHTML` was swapped and
+    // avoiding a second platform-window cold start. Both feed `benchStateOf` below: `openArt()` captions it as
     // a *variant of the Adding narration*, not as a state of its own, so the Bench is in `Adding` for
     // either sheet — a bar that returned to `Rest` behind an open cabinet would be the C9 invariant
     // failing in the one place nobody had opened yet. (The caption itself is not quoted here: C9's
@@ -2040,28 +2041,32 @@ public fun EditorScreen(
             )
         }
 
-        // C4 rows 4.4a-4.4d: the frozen Add chooser, all three rows as of ADR-105 S7. A Dialog, so where
-        // it is declared does not affect layout.
-        BenchAddChooser(
-            visible = addChooserOpen,
-            onDismiss = { addChooserOpen = false },
+        // C4 rows 4.4a-4.4d plus the frozen `openArt()` cabinet. The HTML swaps one sheet's body; this
+        // shared host does the same, keeping window modality/focus containment while avoiding a second
+        // Dialog creation during the interaction-critical Add → Art transition.
+        BenchAddArtSheet(
+            visible = addChooserOpen || artSheetOpen,
+            artPurpose = artSheetFor,
+            onDismiss = {
+                addChooserOpen = false
+                artSheetFor = null
+            },
             onAddText = {
+                addChooserOpen = false
                 addTextAndEdit(
                     pageSizePt = pageSizePt,
                     existingElementCount = uiState.document.pages[uiState.currentPageIndex].elements.size,
                     dispatch = dispatch,
                 )
             },
-            onAddPhoto = { dispatch(Intent.RequestAddImage) },
-            onAddArt = { artSheetFor = BenchArtPurpose.Place },
-        )
-
-        // The frozen `openArt()` cabinet (ADR-105 S7). `onPick` is only ever called for one of the four
-        // authored supplies — an unauthored tile carries no click at all, so `BenchArtSheet` is where
-        // "inert stays inert" is enforced, and `placeSupply` is not asked to re-check it.
-        BenchArtSheet(
-            visible = artSheetOpen,
-            onDismiss = { artSheetFor = null },
+            onAddPhoto = {
+                addChooserOpen = false
+                dispatch(Intent.RequestAddImage)
+            },
+            onAddArt = {
+                addChooserOpen = false
+                artSheetFor = BenchArtPurpose.Place
+            },
             onPick = placeSupply,
         )
 

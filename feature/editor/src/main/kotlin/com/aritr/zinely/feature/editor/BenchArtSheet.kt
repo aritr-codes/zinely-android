@@ -162,6 +162,64 @@ internal fun BenchArtSheet(
     }
 }
 
+/**
+ * Production Add/Art host. The frozen Bench mutates one `#sheet`; keeping one [ZSheet] alive here avoids
+ * closing the Add dialog and cold-starting a second window before Art can draw. Direct Replace entry uses
+ * the same host with [artPurpose] already present. The cabinet's state and painter stay alive while the
+ * chooser body is showing, so background path warmup still begins with the editor rather than on the tap.
+ */
+@Composable
+internal fun BenchAddArtSheet(
+    visible: Boolean,
+    artPurpose: BenchArtPurpose?,
+    onDismiss: () -> Unit,
+    onAddText: () -> Unit,
+    onAddPhoto: () -> Unit,
+    onAddArt: () -> Unit,
+    onPick: (supplyId: String) -> Unit,
+    recent: List<String> = emptyList(),
+) {
+    var sessionRecent by rememberSaveable { mutableStateOf(recent.distinct().take(6)) }
+    var favourites by rememberSaveable { mutableStateOf(emptyList<String>()) }
+    val supplyPainter = remember { SupplyPainter() }
+
+    LaunchedEffect(supplyPainter) {
+        withContext(Dispatchers.Default) {
+            supplyPainter.prewarm(SupplyCatalog.OUTLINES.values)
+        }
+    }
+
+    val showingArt = artPurpose != null
+    ZSheet(
+        visible = visible,
+        onDismiss = onDismiss,
+        title = if (showingArt) BenchArtSheetTitle else BenchAddChooserTitle,
+        modifier = if (showingArt) Modifier.fillMaxHeight(0.92f) else Modifier,
+    ) {
+        if (showingArt) {
+            BenchArtSheetBody(
+                onPick = { id ->
+                    sessionRecent = (listOf(id) + sessionRecent.filterNot { it == id }).take(6)
+                    onPick(id)
+                },
+                recent = sessionRecent,
+                favourites = favourites.toSet(),
+                onFavouriteChange = { id, favourite ->
+                    favourites = if (favourite) (favourites + id).distinct() else favourites.filterNot { it == id }
+                },
+                supplyPainter = supplyPainter,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            BenchAddChooserBody(
+                onAddText = onAddText,
+                onAddPhoto = onAddPhoto,
+                onAddArt = onAddArt,
+            )
+        }
+    }
+}
+
 @Composable
 internal fun BenchArtSheetBody(
     onPick: (supplyId: String) -> Unit,

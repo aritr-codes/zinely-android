@@ -53,3 +53,56 @@ prewarm implementation is retained as safe foundation work while responsiveness 
 
 The Samsung was restored to the original debug build after profiling, app data was preserved, and
 `font_scale` remained `1.0`.
+
+## Follow-up trace diagnosis — 2026-08-30
+
+A later release-parity pass after the painter/cache work still failed the cold-open gate:
+
+| Sample | Frames | Janky frames | Median | P90 |
+|---|---:|---:|---:|---:|
+| Release-parity cold 1 | 30 | 10 (33.33%) | 40 ms | 200 ms |
+| Release-parity cold 2 | 28 | 8 (28.57%) | 48 ms | 200 ms |
+| Release-parity cold 3 | 31 | 8 (25.81%) | 29 ms | 101 ms |
+| Release-parity cold 4 | 29 | 6 (20.69%) | 27 ms | 200 ms |
+| Release-parity cold 5 | 29 | 8 (27.59%) | 38 ms | 200 ms |
+
+An `atrace` capture (`gfx` and `view`) then isolated a second interaction-critical cost: production
+closed the Add `Dialog` and created a new Art `Dialog`, while the frozen HTML kept one `#sheet` and
+replaced only its `innerHTML`. The new Art window paid its own attach, measure, layout, and first-draw
+work before the cabinet animation could settle. This explains why removing path construction alone did
+not materially lower cold-open jank.
+
+The smallest coherent follow-up therefore keeps one production `ZSheet`/`Dialog` alive for Add and Art
+and swaps only the hosted body. Direct cabinet entry still opens Art in that same host, sheet modality
+and focus containment remain owned by `ZSheet`, and the standalone chooser/cabinet composables remain
+available as focused component seams. No reducer, renderer, persistence, schema, copy, or saved-document
+behavior changes.
+
+Host verification for this candidate passed the complete `:feature:editor:testDebugUnitTest` suite,
+`:app:lintDebug`, `:app:assembleDebug`, and `:app:assembleRelease`.
+
+## Shared-host Samsung verification — 2026-08-30
+
+The rebuilt release-parity artifact was measured on Samsung SM-A176B (`RZCYA1VBQ2H`) with the same
+force-stop, launch, open-project, open-Add, reset-`gfxinfo`, tap-Art protocol:
+
+| Sample | Frames | Janky frames | Median | P90 |
+|---|---:|---:|---:|---:|
+| Shared-host cold 1 | 3 | 2 | 150 ms | 200 ms |
+| Shared-host cold 2 | 3 | 3 | 150 ms | 150 ms |
+| Shared-host cold 3 | 3 | 3 | 150 ms | 150 ms |
+| Shared-host cold 4 | 3 | 2 | 150 ms | 150 ms |
+| Shared-host cold 5 | 3 | 2 | 150 ms | 200 ms |
+
+The percentage alone is misleading for this transition because the optimized path renders only three
+frames instead of animating 28–31 frames through a second dialog. Absolute missed frames fell from
+6–10 (mean 8.0) to 2–3 (mean 2.4), a 70% reduction, while total transition frame work fell by about
+90%. A follow-up trace confirmed that the remaining misses are the first Art-body display-list record
+and raster in the existing shared window; no second `Dialog` is created.
+
+The device regression pass also verified distinct Photo/Art chooser semantics, a complete and scrollable
+Art cabinet at font scales 1.0 and 1.8, first/middle/final-page navigation, repeated page-panel dismissal,
+final-page navigation-bar clearance, compact Flip/Reframe panels, and the named Ink swatches in dark
+mode. Font scale was restored to 1.0; dark mode and accessibility settings were left at their captured
+baselines. The performance gate is closed for this slice. The remaining 125–200 ms first-body draw is a
+measured optimization opportunity, not a regression or a reason to reintroduce a second window.

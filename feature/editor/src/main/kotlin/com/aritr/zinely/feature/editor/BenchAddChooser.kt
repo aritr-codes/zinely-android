@@ -196,47 +196,66 @@ internal fun BenchAddChooser(
     onAddArt: () -> Unit,
 ) {
     ZSheet(visible = visible, onDismiss = onDismiss, title = BenchAddChooserTitle) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(BenchAddChooserTestTag),
-            verticalArrangement = Arrangement.spacedBy(BenchOptGap),
-        ) {
-            BenchAddOption(
-                icon = ZinelyV2Icons.Font.toImageVector(
-                    BenchOptGlyphSize,
-                    ZinelyV2IconPaint.Stroke(BenchOptStroke),
-                ),
-                title = BenchAddTextTitle,
-                subtitle = BenchAddTextSubtitle,
-                testTag = BenchAddChooserTextTag,
-                onClick = { onDismiss(); onAddText() },
-            )
-            // `ICON_PICTURE` — the frame-plus-horizon mark. Its catalogue name predates the A15/A16
-            // distinction; in this chooser it is the frozen Photo mark.
-            BenchAddOption(
-                icon = BenchAddPhotoGlyph.toImageVector(
-                    BenchOptGlyphSize,
-                    ZinelyV2IconPaint.Stroke(BenchOptStroke),
-                ),
-                title = BenchAddPhotoTitle,
-                subtitle = BenchAddPhotoSubtitle,
-                testTag = BenchAddChooserPhotoTag,
-                onClick = { onDismiss(); onAddPhoto() },
-            )
-            // A15/A16's owner-approved collage: two paper scraps plus one printed dot, visibly distinct
-            // from Photo without changing the row's label, target, focus order, or semantics.
-            BenchAddOption(
-                icon = BenchAddArtGlyph.toImageVector(
-                    BenchOptGlyphSize,
-                    ZinelyV2IconPaint.Stroke(BenchOptStroke),
-                ),
-                title = BenchAddArtTitle,
-                subtitle = BenchAddArtSubtitle,
-                testTag = BenchAddChooserArtTag,
-                onClick = { onDismiss(); onAddArt() },
-            )
-        }
+        BenchAddChooserBody(
+            onAddText = { onDismiss(); onAddText() },
+            onAddPhoto = { onDismiss(); onAddPhoto() },
+            onAddArt = { onDismiss(); onAddArt() },
+        )
+    }
+}
+
+/**
+ * The chooser rows without their window host. Production's Add → Art path reuses one [ZSheet] and swaps
+ * this body for [BenchArtSheetBody], matching the frozen `#sheet.innerHTML` transition and avoiding a
+ * second platform-window cold start. The standalone [BenchAddChooser] remains the focused component seam.
+ */
+@Composable
+internal fun BenchAddChooserBody(
+    onAddText: () -> Unit,
+    onAddPhoto: () -> Unit,
+    onAddArt: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(BenchAddChooserTestTag),
+        verticalArrangement = Arrangement.spacedBy(BenchOptGap),
+    ) {
+        BenchAddOption(
+            icon = ZinelyV2Icons.Font.toImageVector(
+                BenchOptGlyphSize,
+                ZinelyV2IconPaint.Stroke(BenchOptStroke),
+            ),
+            title = BenchAddTextTitle,
+            subtitle = BenchAddTextSubtitle,
+            testTag = BenchAddChooserTextTag,
+            onClick = onAddText,
+        )
+        // `ICON_PICTURE` — the frame-plus-horizon mark. Its catalogue name predates the A15/A16
+        // distinction; in this chooser it is the frozen Photo mark.
+        BenchAddOption(
+            icon = BenchAddPhotoGlyph.toImageVector(
+                BenchOptGlyphSize,
+                ZinelyV2IconPaint.Stroke(BenchOptStroke),
+            ),
+            title = BenchAddPhotoTitle,
+            subtitle = BenchAddPhotoSubtitle,
+            testTag = BenchAddChooserPhotoTag,
+            onClick = onAddPhoto,
+        )
+        // A15/A16's owner-approved collage: two paper scraps plus one printed dot, visibly distinct
+        // from Photo without changing the row's label, target, focus order, or semantics.
+        BenchAddOption(
+            icon = BenchAddArtGlyph.toImageVector(
+                BenchOptGlyphSize,
+                ZinelyV2IconPaint.Stroke(BenchOptStroke),
+            ),
+            title = BenchAddArtTitle,
+            subtitle = BenchAddArtSubtitle,
+            testTag = BenchAddChooserArtTag,
+            onClick = onAddArt,
+        )
     }
 }
 
