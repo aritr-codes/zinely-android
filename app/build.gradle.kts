@@ -21,7 +21,9 @@ plugins {
 // elements (document schema v1 -> v2), and the Art sheet's sixteen supplies. Still 0.9.x rather than
 // 0.10.0 because the two device passes that would accept those surfaces have not run — see the known
 // limitations in CHANGELOG.md, which are the reason this is an increment and not a milestone.
-val zinelyVersionName = "0.9.0-beta.2"
+// "0.9.0-beta.3" = the 2026-08-30 tester build: editor reliability/accessibility refinements,
+// persistent deletion, About Zinely, and Art cold-open performance work.
+val zinelyVersionName = "0.9.0-beta.3"
 
 // Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
 // or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
@@ -99,10 +101,10 @@ android {
         // was ever distributed with an upgrade path); 2 was the first beta *build*, which was
         // assembled and smoke-tested but never cut — and it was already installed on a verification
         // device, so shipping the real beta under 2 would be an install that silently refuses to
-        // update. 3 is the artifact actually distributed as 0.9.0-beta.1. 4 is 0.9.0-beta.2, and the
-        // bump is not bookkeeping: anyone holding beta.1 has versionCode 3 installed, and an APK
-        // carrying the same code is refused as an update rather than offered as one.
-        versionCode = 4
+        // update. 3 is the artifact actually distributed as 0.9.0-beta.1, 4 is 0.9.0-beta.2, and 5
+        // is 0.9.0-beta.3. These bumps are not bookkeeping: Android uses the code to decide whether
+        // an APK can update an installed tester build.
+        versionCode = 5
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

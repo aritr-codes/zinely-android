@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0-beta.3] — 2026-08-30 — Make the editor lighter, clearer, and more dependable
+
+The third build for the beta cohort. `versionCode 5`, signed with the same release key as earlier
+beta builds, so it installs over an existing tester copy and keeps its zines.
+
+This release includes the editor, accessibility, reliability, backup, rendering, and performance
+work documented below. Highlights include persistent zine deletion, the warmer **About Zinely**
+screen, clearer dark-mode editing controls, more compact Flip/Reframe surfaces, reliable page-panel
+navigation, and reduced Art cold-open contention. Replace Photo is not part of this release.
+
 ### Added — nothing you type disappears without a word · [ADR-070](docs/DECISIONS.md#adr-070)
 
 Zinely prints a defined set of scripts (Latin, Cyrillic, Greek). Type a character outside it — Bengali,
@@ -454,7 +464,9 @@ The riskiest, most isolatable thing first: the math that makes a folded zine cor
   SVG proof sheet); pure Kotlin, golden-tested against the imposition oracle
   ([ADR-007](docs/DECISIONS.md#adr-007)). Tagged `v0.1.0-imposition-engine`.
 
-[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.1...HEAD
+[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.3...HEAD
+[0.9.0-beta.3]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.2...v0.9.0-beta.3
+[0.9.0-beta.2]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.1...v0.9.0-beta.2
 [0.9.0-beta.1]: https://github.com/aritr-codes/zinely-android/compare/v0.8.0...v0.9.0-beta.1
 [0.8.0]: https://github.com/aritr-codes/zinely-android/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/aritr-codes/zinely-android/compare/v0.6.0-alpha.1...v0.7.0
