@@ -2,14 +2,14 @@ package com.aritr.zinely.ui.components
 
 import android.graphics.BlurMaskFilter
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.translate
 import com.aritr.zinely.ui.theme.ZinelyV2ShadowLayer
@@ -39,24 +39,50 @@ import com.aritr.zinely.ui.theme.ZinelyV2ShadowLayer
  * ([ZinelyV2ShadowLayer] KDoc, idiom 1).
  */
 public fun Modifier.zinelyV2Shadow(layers: List<ZinelyV2ShadowLayer>, shape: Shape): Modifier =
-    drawBehind {
-        for (layer in layers.asReversed()) drawV2ShadowLayer(layer, shape)
-    }
-
-private fun DrawScope.drawV2ShadowLayer(layer: ZinelyV2ShadowLayer, shape: Shape) {
-    val path = spreadPath(shape.createOutline(size, layoutDirection, this), layer.spread.toPx())
-    val blurPx = layer.blur.toPx()
-    translate(top = layer.dy.toPx()) {
-        if (blurPx <= 0f) {
-            drawPath(path, layer.color)
-        } else {
-            val paint = Paint().also { it.color = layer.color }
-            paint.asFrameworkPaint().maskFilter =
-                BlurMaskFilter(cssBlurToAndroidRadius(blurPx), BlurMaskFilter.Blur.NORMAL)
-            drawIntoCanvas { it.drawPath(path, paint) }
+    drawWithCache {
+        // A sheet animates for many draw frames without changing its size, shape, or theme. Building its
+        // Path, Paint, and BlurMaskFilter on every one of those frames made the first Art opening pay the
+        // same immutable setup cost repeatedly. CacheDrawScope invalidates this block whenever any input
+        // read here changes, while onDrawBehind reuses the prepared objects for the animation itself.
+        val outline = shape.createOutline(size, layoutDirection, this)
+        val prepared = layers.asReversed().map { layer ->
+            val path = spreadPath(outline, layer.spread.toPx())
+            val blurPx = layer.blur.toPx()
+            PreparedV2Shadow(
+                path = path,
+                color = layer.color,
+                dyPx = layer.dy.toPx(),
+                paint = if (blurPx <= 0f) {
+                    null
+                } else {
+                    Paint().also { paint ->
+                        paint.color = layer.color
+                        paint.asFrameworkPaint().maskFilter =
+                            BlurMaskFilter(cssBlurToAndroidRadius(blurPx), BlurMaskFilter.Blur.NORMAL)
+                    }
+                },
+            )
+        }
+        onDrawBehind {
+            prepared.forEach { shadow ->
+                translate(top = shadow.dyPx) {
+                    val paint = shadow.paint
+                    if (paint == null) {
+                        drawPath(shadow.path, shadow.color)
+                    } else {
+                        drawIntoCanvas { it.drawPath(shadow.path, paint) }
+                    }
+                }
+            }
         }
     }
-}
+
+private data class PreparedV2Shadow(
+    val path: Path,
+    val color: Color,
+    val dyPx: Float,
+    val paint: Paint?,
+)
 
 /**
  * The shadow's own outline: [outline] inflated by [spread] on every side, corner radii grown by the

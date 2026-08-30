@@ -15,11 +15,20 @@ import java.util.IdentityHashMap
 internal class SupplyPathCache {
     private val paths = IdentityHashMap<SupplyOutline, Path>()
 
-    @Synchronized
-    fun pathFor(outline: SupplyOutline): Path =
-        paths[outline] ?: outline.toPath().also { paths[outline] = it }
+    fun pathFor(outline: SupplyOutline): Path {
+        synchronized(paths) {
+            paths[outline]?.let { return it }
+        }
 
-    @Synchronized
+        // Path construction can be the expensive part. Keep it outside the cache monitor so a visible
+        // tile never waits for an entire background prewarm pass before it can draw. A concurrent miss
+        // may build the same immutable path twice; publishing only one instance is cheap and deterministic.
+        val created = outline.toPath()
+        return synchronized(paths) {
+            paths[outline] ?: created.also { paths[outline] = it }
+        }
+    }
+
     fun prewarm(outlines: Iterable<SupplyOutline>) {
         outlines.forEach(::pathFor)
     }
