@@ -349,8 +349,8 @@ class BenchContextBarTest {
     /**
      * **F-1 — a control that is drawn and disabled says why.**
      *
-     * [OD-9](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps `Font` and `Replace`
-     * drawn and forbids inventing a capability for them. It does not make them mute, and a first-time
+     * [OD-9](../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps `Font` drawn and
+     * forbids inventing a capability for it. It does not make the control mute, and a first-time
      * device pass found that silence is what reads as breakage rather than as "not built yet"
      * (`docs/BETA-UX-REVIEW.md` F-1). Explaining an absence invents nothing.
      *

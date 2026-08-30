@@ -174,8 +174,8 @@ internal fun benchContextVerbs(
         // The one verb this bar gained after its freeze, and the freeze was amended first
         // (`v21-bench.html:690`) exactly as CLAUDE.md's HTML-first rule requires — never the reverse.
         // (Was cited as :674, which is the *text* list; corrected by review after counting the lines.)
-        // It is live, not drawn-and-inert like Font and Replace: the whole feature is one boolean on
-        // the selected photo, so there is nothing left to invent ([ADR-106]).
+        // It is live: the whole feature is one boolean on the selected photo, so there is nothing left
+        // to invent ([ADR-106]). Font is the remaining drawn-and-inert verb.
         BenchVerb(Copy.BenchVerbs.COPIER, Icons.Filled.Grain, checked = copierOn),
         // D-038 is now complete: the existing picker effect carries this photo's id to the existing
         // reducer-owned ReplaceImage command, so framing and every other property remain untouched.
@@ -189,8 +189,7 @@ internal fun benchContextVerbs(
     // assigns the supplies programme as the phase that takes it. The fence expired; this is the record.
     //
     // The frozen verb set is Replace / Ink / Delete (`v21-bench.html:71`), and it is transcribed whole.
-    // Two of the three are drawn-and-inert under exactly the OD-9 class Font and Replace-photo already
-    // sit in — "a control the freeze draws is kept drawn and invents nothing":
+    // All three are live; each existing reducer path preserves the element identity and document rules:
     //  - `Replace` is **live as of the replace-supply package**: it re-summons the Art sheet carrying the
     //    selected supply's id, and the tapped tile becomes that element's new outline
     //    ([Intent.ReplaceSupply]). The incoming family's §5.2 scale is applied at the outgoing element's

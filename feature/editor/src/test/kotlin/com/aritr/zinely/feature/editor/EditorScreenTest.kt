@@ -84,9 +84,9 @@ class EditorScreenTest {
      */
     private val midPageTextBox = Transform(20.0, 76.0, 20.0, 18.0)
 
-    private fun store(): EditorStore {
+    private fun store(onEffect: (Effect) -> Unit = {}): EditorStore {
         val runner = object : EditorEffectRunner {
-            override fun run(effect: Effect, dispatch: (Intent) -> Unit) = Unit
+            override fun run(effect: Effect, dispatch: (Intent) -> Unit) = onEffect(effect)
         }
         return EditorStore(
             EditorModel(
@@ -966,12 +966,28 @@ class EditorScreenTest {
         )
     }
 
-    private fun selectedPhoto(): EditorStore = store().also {
+    private fun selectedPhoto(onEffect: (Effect) -> Unit = {}): EditorStore = store(onEffect).also {
         it.dispatch(
             Intent.CommitAddImage(
                 ImageElement(id = "photo", transform = Transform(20.0, 20.0, 40.0, 30.0), assetId = "a"),
             ),
         )
+    }
+
+    @Test
+    fun photo_Replace_requests_the_targeted_picker_without_opening_Art() {
+        val effects = mutableListOf<Effect>()
+        val store = selectedPhoto(effects::add)
+        val photoId = store.uiState.value.selection.single()
+        effects.clear() // The fixture's CommitAddImage autosave is outside the action under test.
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REPLACE}").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf(Effect.PickAndDecodeImage(replacingId = photoId)), effects)
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).assertDoesNotExist()
     }
 
     private fun selectedPhotoInEightPageZine(): EditorStore {
