@@ -133,11 +133,9 @@ jobs:
         # roborazzi/. This step is RED until those PNGs are committed — that transient is the deliberate,
         # reviewed golden-landing dance, not drift.
         #
-        # :core:ui (C2, CI-34): the extracted design-system module. It owns no golden of its own yet
-        # (the z_components_* goldens stay under feature/editor/src/test/roborazzi/ with their shared
-        # rasterizeToBitmap host helper), so its verifyRoborazziDebug runs the moved token/contrast
-        # unit tests in verify mode with nothing to pixel-diff — a green no-op that keeps the task wired
-        # for when a golden is co-located here later.
+        # :core:ui (C2, CI-34): the extracted design-system module. Its V2 foundation catalogue golden
+        # is co-located under core/ui/src/test/roborazzi/; the z_components_* goldens remain under
+        # feature/editor/src/test/roborazzi/ with their shared rasterizeToBitmap host helper.
         run: |
           ./gradlew :render-android:verifyRoborazziDebug :feature:editor:verifyRoborazziDebug \
             :core:ui:verifyRoborazziDebug \
@@ -166,4 +164,5 @@ jobs:
           path: |
             render-android/build/outputs/roborazzi/**
             feature/editor/build/outputs/roborazzi/**
+            core/ui/build/outputs/roborazzi/**
           if-no-files-found: ignore

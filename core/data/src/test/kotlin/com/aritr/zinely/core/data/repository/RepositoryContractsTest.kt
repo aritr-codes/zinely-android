@@ -6,6 +6,7 @@ import com.aritr.zinely.core.model.ZineFormat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -23,6 +24,9 @@ class RepositoryContractsTest {
         private val summaries = MutableStateFlow<List<ProjectSummary>>(emptyList())
 
         override fun observeProjects(): Flow<List<ProjectSummary>> = summaries
+
+        override fun observeShelfProjects(): Flow<List<ProjectShelfEntry>> =
+            summaries.map { projects -> projects.map(ProjectShelfEntry::Available) }
 
         override suspend fun createProject(
             title: String,
@@ -89,6 +93,7 @@ class RepositoryContractsTest {
         val loaded = repo.load(id)
         assertEquals(PaperSize.A4, loaded.getOrNull()?.paperSize)
         assertEquals(listOf("My Zine"), repo.observeProjects().first().map { it.title })
+        assertEquals(listOf("My Zine"), repo.observeShelfProjects().first().map { it.title })
     }
 
     @Test
