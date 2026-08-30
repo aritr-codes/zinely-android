@@ -173,7 +173,7 @@ unblocked and no entry blocks it**. **D-031 was ruled on 2026-08-01 (OD-9)** and
 | [**D-041**](#d-041) | ✅ **FIXED 2026-08-26 — all page-leave paths close text through `endTextSession`; focused reducer regressions pass** | leaving a page while a text session is open **orphans an empty text box**: `Intent.GoToPage → leavePage` cleared selection and interaction without running `endTextSession`, so the blank-box cleanup that every other exit performs never happened. The shared leave seam now coalesces a fresh blank placement before navigation or a structural page change, while preserving real text |
 | [**D-040**](#d-040) | ✅ **FIXED in C2b, no ruling needed — and reachable, which took two goes to establish** | the frozen bar offered **Size** and **Ink** on a *still-blank* text box, which the reducer refuses to style — and the tap was a **dead end that swallowed the toolbar**: it hid the frozen bar and raised nothing in its place, with no state that brought either back. Found by review, not by a test. Fixed under the ruling that already covers it ([OD-9](#d-031-ruling)): the two verbs ship inert there, exactly as `Font` does. **The implementer then claimed on device Pass 1 that the state was unreachable, and that claim was false** — see the correction below; the blank box is two taps away, and the guard was afterwards watched working on hardware |
 | [**D-039**](#d-039) | ✅ **RESOLVED 2026-08-02 by owner ruling — [OD-14](#d-039-ruling)** | since C2b the Bench offers the same verb twice — **`Delete` in both bars, and `Reframe` in both a bar and an on-canvas chip**. C2b's device Pass 2 **did not pass** on this, and [ADR-092](../DECISIONS.md#adr-092) was held at `Proposed` until [OD-14](#d-039-ruling) resolved it; it is now `Accepted`. one per bar, both announcing the same word to TalkBack. Not an accident and not a bug: it is the priced cost of [OD-11](#d-034-ruling)'s *additive*. Both delete the selection, so the duplication is redundant rather than ambiguous, and any real disambiguation is a **third** mechanism neither bar specifies. Deferred to device Pass 1, where the sweep can be heard rather than reasoned about |
-| [**D-038**](#d-038) | 🟦 **OPEN — an owner ruling, and it fences nothing** | the frozen photo bar offers **Replace**, and the product cannot honour it. `Intent.ReplaceImage(id, assetId)` exists in the reducer and is **dispatched from nowhere**; the only picker (`RequestAddImage` → `PickAndDecodeImage` → `CommitAddImage`) **creates** an element rather than re-pointing one, so reaching Replace is a flow change, not a wiring. C2b ships it **drawn and disabled** under [OD-9](#d-031-ruling)'s class — *a control the freeze draws stays drawn and invents nothing* — exactly as `Font` does. The question is whether the capability should exist |
+| [**D-038**](#d-038) | 🟨 **IMPLEMENTED 2026-08-30 — verification pending** | The frozen photo bar's **Replace** verb now dispatches `RequestReplaceImage(id)`. The reducer verifies the selected current-page `ImageElement` and emits the existing picker effect carrying that id; the existing pipeline dispatches `ReplaceImage(id, decodedAssetId)` on success. Add remains `CommitAddImage`; cancellation/failure leave document, selection and history unchanged. The existing reducer command swaps only `assetId`, preserving every other image property with one undoable autosave-backed edit; same-asset replacement is a no-op. |
 | [**D-036**](#d-036) | 🟦 **OPEN — documentation only, fences nothing** | the frozen Bench draws **four** resize handles; the editor has **eight**, and the extra four carry axis-constrained resize. C2a kept all eight under [OD-11](#d-034-ruling) (*the frozen vocabulary is additive; no existing capability is removed*), which the review confirmed is the right reading. What is owed is the **canonical file catching up** with that ruling — recommendation **(a)**, draw eight |
 | ~~[**D-035**](#d-035)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-035-ruling), OD-12 | the dark theme dimmed the sheet while the document's content ink stayed black — correctly, because it prints — leaving the user's own words at **1.60:1**. Ruled: **the artifact does not dim; the room around it may.** The frozen `.page` becomes a light-theme island of eight restated light tokens; `.phone` still dims |
 | ~~[**D-034**](#d-034)~~ | ✅ **RESOLVED 2026-08-02** — [owner ruling](#d-034-ruling), OD-11 | the frozen `.ctx` is a **verb** bar and the shipped `EditorContextBar` is the **WCAG 2.5.7** single-pointer twin of the drag gestures — **and they are not mutually exclusive.** The frozen bar is **additive**; the transform controls stay, because a parity phase does not remove an accessibility path. C2 splits into **C2a** (unblocked) and **C2b** (`.ctx*`) |
@@ -4262,7 +4262,13 @@ being settled by whoever is holding the phone.
 
 **Recommendation, revised after Pass 2, and since superseded by [OD-14](#d-039-ruling) above: (b) is no longer sufficient.** The device decided, which was the whole point of running two passes — and it decided against the cheap fix. What is needed is a rule for *which* bar owns a verb the two share, so that each verb appears once: the frozen bar is the one the freeze specifies and the one a sighted beginner will reach for, and `EditorContextBar`'s value under [ADR-029](../DECISIONS.md#adr-029) §6 is the **transform** verbs (move, resize, rotate, order) that no gesture-free path otherwise offers — not `Delete`, which the frozen bar now carries. Dropping the shared verbs from the transform bar would remove no capability from any input method, but it touches a fenced component and rests on an accessibility argument, so it is put rather than taken. The on-canvas `Reframe` chip is the third copy and the easiest to retire.
 
-### D-038 — the frozen photo bar offers Replace, and nothing can reach it {#d-038}
+### D-038 — Replace Photo reaches the existing image pipeline {#d-038}
+
+**Implemented 2026-08-30; verification pending.** The deferred vertical slice now carries a selected current-page photo id through
+`RequestReplaceImage` → `PickAndDecodeImage(replacingId)` and dispatches `ReplaceImage(id, assetId)` after
+the existing picker/decode/AssetStore pipeline succeeds. Add remains the null-target path. Cancel and failure
+produce no replacement intent; the existing `EditImageCommand` changes only `assetId`, with one autosave and
+undo/redo entry for a real replacement and no entry for the same asset.
 
 **Raised 2026-08-02 by C2b's pre-implementation blocker check. It does not fence C2b**, which ships the verb under an
 existing ruling; it is filed because the ruling it ships under decides *appearance*, and this entry is about *capability*.
@@ -4274,9 +4280,9 @@ map onto intents the editor already dispatches. Replace does not.
 
 | | |
 |---|---|
-| `Intent.ReplaceImage(id, assetId)` | **exists in the reducer** ([`EditorReducer.kt:97`](../../core/editor/src/main/kotlin/com/aritr/zinely/core/editor/EditorReducer.kt#L97)) and is **dispatched from nowhere** in any `src/main` |
-| the only image picker | `Intent.RequestAddImage` → `Effect.PickAndDecodeImage` → `Intent.CommitAddImage` — which **adds a new element** |
-| what Replace would need | that same pick, carried back to an **existing element's id** — a new parameter on the effect, i.e. a change to the effect protocol |
+| `Intent.ReplaceImage(id, assetId)` | existing reducer command; dispatched by the effect runner only after a targeted picker success |
+| image picker effect | `Intent.RequestAddImage` → `Effect.PickAndDecodeImage()` → `Intent.CommitAddImage`; `Intent.RequestReplaceImage(id)` → `Effect.PickAndDecodeImage(id)` → `Intent.ReplaceImage(id, assetId)` |
+| replacement safety | reducer validates the target is a current-page `ImageElement`; it preserves every non-asset property and no-ops for an identical asset |
 
 **Why this is not another D-037.** [D-037](#d-037) looked identical from the outside — an intent sitting in the reducer with
 nothing dispatching it — and its fix was one line, because `SelectAt`'s miss branch already produced the state. Here the
@@ -4284,10 +4290,8 @@ missing piece is a **flow**: a picker that knows which element it is replacing. 
 existing capability, not a new feature"*, and that scoping is exactly what does **not** transfer, so it is asked rather than
 assumed.
 
-**What C2b did in the meantime.** Shipped `Replace` **drawn and disabled**, under [OD-9](#d-031-ruling)'s class — *the freeze
-specifies the editing surface, not the whole application flow*, so a control it draws stays drawn and invents nothing. It is
-announced as disabled to the platform, not merely inert to touch ([ADR-092](../DECISIONS.md#adr-092) row 2.13a). The bar is
-faithful; the capability is the owner's call.
+**Historical interim.** C2b shipped `Replace` drawn and disabled under [OD-9](#d-031-ruling). That interim is superseded:
+the frozen verb is now enabled for photos; Art's identically labelled Replace continues to open the Art cabinet.
 
 **Options for the owner**
 
@@ -4297,10 +4301,8 @@ faithful; the capability is the owner's call.
 | **(b)** | **Leave it drawn and disabled**, as C2b shipped it, and record it as specified-but-unreachable beside `Font`. |
 | **(c)** | Amend the frozen Bench to drop `Replace` from the photo set, so spec and product agree. |
 
-**Recommendation: (a), scheduled — not now.** A user who sees *Replace* on a photo has been told the app can replace it, and
-`Font` is a weaker case only because [ADR-055](../DECISIONS.md#adr-055) genuinely excludes font choice by design, while
-nothing excludes this. **(b)** is the honest interim, which is why C2b shipped it; **(c)** removes something the product
-plausibly wants. The cost of (a) is one effect parameter and one reducer path that is already written and already tested.
+**Outcome: (a) implemented.** The effect parameter and request intent make the picker target explicit without a second
+picker, storage path, document field or schema change.
 
 ### D-037 — the dim shipped without either of the two ways the freeze gives the user out of it {#d-037}
 

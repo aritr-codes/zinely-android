@@ -90,7 +90,7 @@ class EditorStoreTest {
 
         store.dispatch(Intent.RequestAddImage)
 
-        assertEquals(listOf(Effect.PickAndDecodeImage), runner.effects)
+        assertEquals(listOf(Effect.PickAndDecodeImage()), runner.effects)
         assertTrue(store.uiState.value.document.pages[0].elements.isEmpty())
     }
 

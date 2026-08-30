@@ -258,7 +258,7 @@ The complete creative loop, audited stage by stage. Verdicts are decisions, not 
 | Text: create, edit, size, bold/italic, align, ink | ✅ ships | **Already complete** |
 | Text: **font choice** | ✅ drawn, permanently disabled (`BenchContextBar.kt:99`) | **Needs completing → BUILD** as three named voices |
 | Image: import, reframe, resize, rotate, position, delete | ✅ ships | **Already complete** |
-| Image: **replace** | ✅ drawn, disabled; `Intent.ReplaceImage` exists and is dispatched from nowhere | **Needs completing → BUILD.** Closes D-038 |
+| Image: **replace** | ✅ implemented; targeted picker success dispatches the existing `Intent.ReplaceImage` | **Verification pending.** D-038 implementation dated 2026-08-30 |
 | **Decor / graphics** | ✅ half-built: `DecorElement` prior art (OD-2), decor verb set in the freeze at `v21-bench.html` §`toolsFor()` (`:679`), `BenchInkPopover.kt:140` handles `DECOR`, and `BenchContextBar.kt:125` **throws** | **Missing but structurally required → BUILD.** §9 |
 | **Duplicate element** | ✅ verified absent from `Intent` | **Missing but important → BUILD.** Repeated marks are the medium |
 | Layering | ✅ implemented 3× (`ZOrder.kt:37`, `EditorContextBar.kt:177`, `EditorA11y.kt:70`) but **both buttons clipped** | **Needs fixing.** Layout defect, not missing capability |
@@ -330,7 +330,7 @@ Also genuinely working: the Shelf's tilted taped cover with the `US LETTER` stam
 
 ## What is incomplete
 
-Font choice (drawn, dead) · Replace (drawn, dead) · Decor (half-built) · page reorder (in the freeze, not in the code) · page grid draws no content · the fold act buried in a drawer · no colophon · gallery-only import · no duplicate.
+Font choice (drawn, dead) · Decor (half-built) · page reorder (in the freeze, not in the code) · page grid draws no content · the fold act buried in a drawer · no colophon · gallery-only import · no duplicate.
 
 ## What should be removed
 
@@ -351,7 +351,7 @@ Step 14 of the walkthrough is *export/share*. **But the loop does not end there 
 | World metaphor = small press | **BUILD** (ADR-103 + Amendment 2) | Only candidate explaining the vocabulary law, the FINISHING north star, ADR-090, one focal zone, and "what is a Type bar?" |
 | Colophon (settings/licences/paper default) | **BUILD** | Verified absent; discharges the OFL obligation; the metaphor's best fit |
 | Font as three named voices | **FINISH** | ⚠ needs 8 static TTFs sourced — *not* "asset cost already paid". Decision holds because a dead control is a launch blocker |
-| Replace image | **FINISH** | Reducer intent exists; closes D-038 |
+| Replace image | **VERIFY** | Targeted picker reuses the existing reducer command; implementation dated 2026-08-30 |
 | Decor / DecorElement | **BUILD** | §9. Half-built, freeze-anticipated, and the product contradicts itself without it |
 | Duplicate element | **BUILD** | Verified absent; `PlaceCommand` generalises to it |
 | Page reorder | **FINISH** | Already in the frozen spec — parity work |
@@ -735,7 +735,7 @@ The line alphabet · the tilt law · the stamped-label rule · the four motion c
 | X3 | **Take a photo** | — | ✅ `FileProvider` already declared |
 | X3b | **Photocopier filter** ↑ *promoted from X13* — 1-bit Floyd–Steinberg over a downscaled bitmap. ⚠ **BUILT 2026-08-16, not accepted** — [ADR-106](../DECISIONS.md#adr-106) is `Proposed`, the dot size and the control's place are unspecified ([D-082](V2-SPEC-DEFECTS.md#d-082)), and **neither device pass has run** | X3 | ✅ as costed: pure Kotlin in `core:render`, one flag on `ImageElement`, one `if` in the single replayer. The cost the estimate missed is not code — it is that no frozen file draws the control, so the Bench's photo bar was amended to gain one |
 | X4 | **Duplicate element** — one verb over `PlaceCommand` | A3 | ✅ |
-| X5 | **Replace image** — closes D-038 | — | ✅ intent exists |
+| X5 | **Replace image** — implementation dated 2026-08-30 | — | 🟨 targeted picker and reducer flow await full verification |
 | X6 | **Font as three named voices** | A4 | ✅ **Source and place 8 static TTFs — no subsetting.** Averia carries RFNs `'Averia'`/`'Averia Libre'`; subsetting makes a Modified Version and clause 5 voids the licence on breach, so unmodified statics are both safer and less work (§16.5). ~840KB. No schema change (`TextStyle.fontFamily` exists) |
 | X7 | **Page grid draws content**; current page `leaf` → `berry` | A5 | ✅ breaks 2 tests — budgeted |
 | X8 | **Page reorder** (+ non-drag a11y actions) **and page duplicate** | X7, A6 | ✅ reorder is parity |

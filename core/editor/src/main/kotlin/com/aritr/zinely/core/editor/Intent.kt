@@ -27,6 +27,11 @@ public sealed interface Intent {
      *  so this cannot accidentally begin editing a previously selected element between two dispatches. */
     public data class PlaceTextAndEdit(val transform: Transform) : Intent
     public data object RequestAddImage : Intent
+    /**
+     * Ask the existing image pipeline to replace the current-page photo at [id]. This request is deliberately
+     * not a document edit: a picker cancel or failure must leave the document, history and selection intact.
+     */
+    public data class RequestReplaceImage(val id: String) : Intent
     public data class CommitAddImage(val element: com.aritr.zinely.core.model.ImageElement) : Intent
 
     /**
@@ -228,8 +233,11 @@ public sealed interface Effect {
     /** Persist the document — emitted ONLY by document-mutating intents; runner debounces (required-fix #5). */
     public data class Autosave(val document: com.aritr.zinely.core.model.ZineDocument) : Effect
 
-    /** Launch the pick→decode→AssetStore pipeline; success dispatches [Intent.CommitAddImage] (rec #6). */
-    public data object PickAndDecodeImage : Effect
+    /**
+     * Launch the pick→decode→AssetStore pipeline. A null [replacingId] adds a photo; a non-null target
+     * replaces that existing photo in place after a successful decode.
+     */
+    public data class PickAndDecodeImage(val replacingId: String? = null) : Effect
 
     /** An accessibility live-region announcement (e.g. selection / off-page undo). */
     public data class Announce(val text: String) : Effect

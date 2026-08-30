@@ -1758,13 +1758,13 @@ public fun EditorScreen(
                                 }
                             }
                             Copy.BenchVerbs.DELETE -> softDelete(uiState.selection)
-                            // §8 `Replace supply` — the Art sheet, re-summoned with a target instead of a
-                            // blank page. Guarded on the element actually being decor: the frozen PHOTO row
-                            // carries a `Replace` of its own that stays disabled ([D-038], an owner
-                            // question), and if that one is ever enabled it must not fall into this arm and
-                            // offer a maker paper stamps as replacements for their photograph.
-                            Copy.BenchVerbs.REPLACE ->
-                                if (ctxElement is DecorElement) artSheetFor = BenchArtPurpose.Replace(ctxElement.id)
+                            // The same frozen label has two deliberately disjoint flows: Photo reuses the
+                            // Android image pipeline; Art reopens its cabinet. Neither may fall through.
+                            Copy.BenchVerbs.REPLACE -> when (ctxElement) {
+                                is ImageElement -> dispatch(Intent.RequestReplaceImage(ctxElement.id))
+                                is DecorElement -> artSheetFor = BenchArtPurpose.Replace(ctxElement.id)
+                                else -> Unit
+                            }
                             // Font ships disabled and never arrives here (ADR-092 §1(c)).
                             else -> Unit
                         }

@@ -151,12 +151,15 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `Copier is live, unlike the two verbs the bar draws without a behaviour`() {
+    fun `Copier and photo Replace are live and semantically operable`() {
         val copier = benchContextVerbs(BenchVerbKind.PHOTO).single { it.label == Copy.BenchVerbs.COPIER }
         assertEquals(true, copier.enabled)
         assertEquals(false, copier.danger)
         host(benchContextVerbs(BenchVerbKind.PHOTO))
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.COPIER}").assertIsEnabled()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REPLACE}")
+            .assertIsEnabled()
+            .assertHasClickAction()
     }
 
     @Test
@@ -168,15 +171,13 @@ class BenchContextBarTest {
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, Copy.BenchVerbs.COPIER_ON))
         // The live ordinary verbs must NOT gain one — a state on a control that has none is noise.
         //
-        // `Replace` is deliberately absent from this list, and the omission is the interesting part: it
-        // ships disabled and therefore DOES carry a state, its `unavailableBecause` reason. Both features
-        // ride `stateDescription` and they cannot collide (a disabled verb has no setting; a toggle is
-        // live by construction) — but a blanket "only Copier has a state" would have been false, and the
-        // first draft of this test asserted exactly that.
+        // Replace now belongs with these ordinary actions: its target is carried by the picker effect, not
+        // exposed as a state on the button.
         for (label in listOf(
             Copy.BenchVerbs.REFRAME,
             Copy.BenchVerbs.FLIP,
             Copy.BenchVerbs.ACROSS_FOLD,
+            Copy.BenchVerbs.REPLACE,
             Copy.BenchVerbs.DUPLICATE,
             Copy.BenchVerbs.DELETE,
         )) {
@@ -327,12 +328,12 @@ class BenchContextBarTest {
     }
 
     @Test
-    fun `only Font and Replace are drawn without a behaviour`() {
+    fun `only Font remains drawn without a behaviour`() {
         val inert = (benchContextVerbs(BenchVerbKind.TEXT) + benchContextVerbs(BenchVerbKind.PHOTO))
             .filterNot { it.enabled }
             .map { it.label }
             .toSet()
-        assertEquals(setOf(Copy.BenchVerbs.FONT, Copy.BenchVerbs.REPLACE), inert)
+        assertEquals(setOf(Copy.BenchVerbs.FONT), inert)
     }
 
     // ── Row 2.13a — drawn, and not operable ─────────────────────────────────────────────────────────

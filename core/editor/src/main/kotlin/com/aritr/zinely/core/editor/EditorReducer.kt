@@ -83,7 +83,12 @@ public object EditorReducer {
             val editing = openTextSession(placed.model, id)
             Reduction(editing.model, placed.effects + editing.effects)
         }
-        Intent.RequestAddImage -> Reduction(model, listOf(Effect.PickAndDecodeImage))
+        Intent.RequestAddImage -> Reduction(model, listOf(Effect.PickAndDecodeImage()))
+        is Intent.RequestReplaceImage -> {
+            val image = currentPage(model).elements.firstOrNull { it.id == intent.id } as? ImageElement
+            if (image == null) Reduction(model)
+            else Reduction(model, listOf(Effect.PickAndDecodeImage(replacingId = image.id)))
+        }
         is Intent.CommitAddImage -> {
             // Mint the id reducer-side (single source of id allocation) so it can never collide with an
             // existing element — a duplicate id would make PlaceCommand.invertOn delete BOTH matches.

@@ -177,15 +177,9 @@ internal fun benchContextVerbs(
         // It is live, not drawn-and-inert like Font and Replace: the whole feature is one boolean on
         // the selected photo, so there is nothing left to invent ([ADR-106]).
         BenchVerb(Copy.BenchVerbs.COPIER, Icons.Filled.Grain, checked = copierOn),
-        // Disabled for the same reason as Font, discovered the same way: `Intent.ReplaceImage` exists in
-        // the reducer and is dispatched from nowhere, and reaching it needs a picker bound to an existing
-        // element — a new effect parameterisation, i.e. a flow, not a re-skin. OD-9's class ("a control the
-        // freeze draws is kept drawn and invents nothing") applies; the capability question is
-        // [D-038](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-038), for the owner.
-        BenchVerb(
-            Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz, enabled = false,
-            unavailableBecause = Copy.BenchVerbs.NOT_YET,
-        ),
+        // D-038 is now complete: the existing picker effect carries this photo's id to the existing
+        // reducer-owned ReplaceImage command, so framing and every other property remain untouched.
+        BenchVerb(Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz),
         BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )

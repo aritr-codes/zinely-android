@@ -85,7 +85,8 @@ public object UnavailableImagePipeline : ImagePickDecodePipeline {
  *  - [Effect.Autosave] → [AutosaveSink.markDirty] (pull-based; binder owns timing — required-fix #5) **and**
  *    [SavedSignal.onSaved] (the transient "Saved ✨" reassurance — ADR-034);
  *  - [Effect.PickAndDecodeImage] → launch the [ImagePickDecodePipeline] on [io], then on success dispatch
- *    [Intent.CommitAddImage] (the reducer mints the id), on failure announce, on cancel do nothing;
+ *    [Intent.CommitAddImage] for Add or [Intent.ReplaceImage] for a targeted replacement, on failure
+ *    announce, on cancel do nothing;
  *  - [Effect.Announce] → [Announcer.announce].
  *
  * Background results ([io] pipeline) are routed back to the main thread before touching the store or the
@@ -111,14 +112,17 @@ public class DefaultEditorEffectRunner(
                 savedSignal.onSaved()
             }
             is Effect.Announce -> announcer.announce(effect.text)
-            Effect.PickAndDecodeImage -> launchImagePick(dispatch)
+            is Effect.PickAndDecodeImage -> launchImagePick(effect.replacingId, dispatch)
         }
     }
 
-    private fun launchImagePick(dispatch: (Intent) -> Unit) {
+    private fun launchImagePick(replacingId: String?, dispatch: (Intent) -> Unit) {
         scope.launch(io) {
             when (val result = imagePipeline.pickAndDecode()) {
-                is ImagePickResult.Success -> dispatch(Intent.CommitAddImage(result.element))
+                is ImagePickResult.Success -> dispatch(
+                    replacingId?.let { Intent.ReplaceImage(it, result.element.assetId) }
+                        ?: Intent.CommitAddImage(result.element),
+                )
                 is ImagePickResult.Failure -> withContext(main) { announcer.announce(result.message) }
                 ImagePickResult.Cancelled -> Unit
             }

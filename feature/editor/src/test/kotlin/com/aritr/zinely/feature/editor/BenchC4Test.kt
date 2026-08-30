@@ -316,7 +316,7 @@ class BenchC4Test {
 
         assertTrue(
             "Photo must reach the shipped picker effect: $effects",
-            effects.contains(Effect.PickAndDecodeImage),
+            effects.contains(Effect.PickAndDecodeImage()),
         )
     }
 
