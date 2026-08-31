@@ -108,6 +108,8 @@ class BenchPageNavA11yTest {
                     BenchPageGridSurface(
                         pages = pages,
                         currentPageIndex = currentIndex,
+                        pageSizePt = pageSizePt,
+                        defaults = DocumentDefaults(),
                         onSelectPage = {},
                         onDismiss = {},
                     )

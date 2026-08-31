@@ -224,23 +224,44 @@ class ImageFramingSessionTest {
     // — replace (preserves framing, ADR-053 §6) —
 
     @Test
-    fun `ReplaceImage swaps only the bytes, preserving framing, one undo restores`() {
-        val start = model(img("i", assetId = "old", crop = Crop(0.2, 0.2, 0.8, 0.8), fit = Fit.FIT, z = 2))
+    fun `RequestReplaceImage targets only a current-page photo without mutating it`() {
+        val photo = img("photo")
+        val start = model(photo, TextElement("text", Transform(0.0, 0.0, 5.0, 5.0), text = "words"))
+
+        val request = EditorReducer.reduce(start, Intent.RequestReplaceImage("photo"))
+
+        assertEquals(start, request.model)
+        assertEquals(listOf(Effect.PickAndDecodeImage(replacingId = "photo")), request.effects)
+        for (invalid in listOf("text", "missing")) {
+            val ignored = EditorReducer.reduce(start, Intent.RequestReplaceImage(invalid))
+            assertEquals(start, ignored.model)
+            assertTrue(ignored.effects.isEmpty())
+        }
+    }
+
+    @Test
+    fun `ReplaceImage swaps only the bytes, preserving every other property, undo and redo`() {
+        val before = img("i", assetId = "old", crop = Crop(0.2, 0.2, 0.8, 0.8), fit = Fit.FIT, z = 2).copy(
+            transform = Transform(10.0, 20.0, 30.0, 40.0, 15.0), copier = true,
+            flippedHorizontally = true, flippedVertically = true,
+        )
+        val start = model(before, selection = setOf("i"))
         val r = EditorReducer.reduce(start, Intent.ReplaceImage("i", "new"))
         val out = image(r.model, "i")
-        assertEquals("new", out.assetId)
-        assertEquals(Crop(0.2, 0.2, 0.8, 0.8), out.crop) // framing preserved
-        assertEquals(Fit.FIT, out.fit)
-        assertEquals(2, out.zIndex)
-        assertTrue(r.effects.any { it is Effect.Autosave })
+        assertEquals(before.copy(assetId = "new"), out)
+        assertEquals(setOf("i"), r.model.selection)
+        assertEquals(1, r.effects.count { it is Effect.Autosave })
         assertEquals(start.document, EditorReducer.reduce(r.model, Intent.Undo).model.document)
+        assertEquals(r.model.document, EditorReducer.reduce(EditorReducer.reduce(r.model, Intent.Undo).model, Intent.Redo).model.document)
     }
 
     @Test
     fun `ReplaceImage with the same assetId or a missing id is a no-op`() {
         val start = model(img("i", assetId = "same"))
-        assertEquals(start.document, EditorReducer.reduce(start, Intent.ReplaceImage("i", "same")).model.document)
-        assertTrue(EditorReducer.reduce(start, Intent.ReplaceImage("i", "same")).effects.none { it is Effect.Autosave })
+        val same = EditorReducer.reduce(start, Intent.ReplaceImage("i", "same"))
+        assertEquals(start.document, same.model.document)
+        assertTrue(same.model.history.undo.isEmpty())
+        assertTrue(same.effects.none { it is Effect.Autosave })
         assertEquals(start.document, EditorReducer.reduce(start, Intent.ReplaceImage("nope", "x")).model.document)
     }
 

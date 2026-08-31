@@ -15,6 +15,8 @@
      │    · Art is one surface: BUNDLED ONLY.  See the ADR-104 amendment below.     │
      │    · the shelf gathers material; the filmstrip moves between pages           │
      │    · undo is a snack, not a dialogue                                         │
+     │    · D-079: privacy reassurance lives once in the Shelf-owned Colophon;      │
+     │      Photo, Shelf captions and the Done toast stay operational               │
      │                                                                             │
      │  THE ONE DESIGN RULE THIS SCREEN ADDS.  An editor must not be charming at    │
      │  the cost of being precise, so the handmade voice is spent where it is       │
@@ -163,17 +165,15 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
    ✱ marks a departure from the frozen V2 token contract.
    ========================================================================= */
 :root{
-  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#FBE9CE; --desk-edge:#E9D2AE;
-  --ink:#33261C; --ink-soft:#6E5947; --ink-faint:#A08B74;
-  --leaf:#4E7A3C; --leaf-text:#3E6330; --leaf-tint:#DCE8CE; --on-leaf:#FFF6E8;
-  --butter:#F6B22C; --butter-tint:#FDEBC4;
-  --berry:#E4879F; --berry-tint:#F8DCE2;
-  --jam:#CF4A28;            /* fills, the cut line, the delete affordance              */
-  --jam-text:#A63B20;       /* ✱ jam AS TEXT — AA-measured 2026-08-09, see V21-SPEC §4.1 */
-  --on-jam:#FFF6E8;         /* ✱ label on a jam-text ground (mirrors --on-leaf)          */
-  --hair:rgba(51,38,28,.16); --ink-line:#33261C;
-  --stage:#F2DEBC; --soft-shadow:rgba(74,54,34,.30); --contact:rgba(74,54,34,.20);
-  --bench:#EBD6B4;                    /* ✱ the worktop the page lies on */
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#E9E29B; --desk-edge:#BBCA6F; --bench:#E9E29B;
+  --surface:#F2CFBB; --surface-soft:#F1B4AF;
+  --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546;
+  --leaf:#8E9546; --leaf-text:#555A1B; --leaf-tint:#BBCA6F; --on-leaf:#27270F;
+  --butter:#E9E29B; --butter-tint:#F2CFBB;
+  --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#A9303D; --jam-text:#A9303D; --on-jam:#FFF9DB;
+  --hair:rgba(39,39,15,.16); --ink-line:#27270F;
+  --stage:#F2DEBC; --soft-shadow:rgba(39,39,15,.30); --contact:rgba(39,39,15,.20);
   --br-xs:4px; --br-sm:8px; --br-md:14px; --br-lg:22px; --br-xl:36px; --br-pill:999px;
   /* ✱ the spacing ladder — measured into the corpus 2026-08-09, see V21-SPEC.md §3.3 */
   --gap-hair:2px; --gap-xs:4px; --gap-sm:8px; --gap-md:12px;
@@ -185,22 +185,22 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --bench:#211B15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
+  --bench:#242312;
 }}
 :root[data-theme="dark"]{
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --bench:#211B15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
+  --bench:#242312;
 }
 :root[data-hard="off"]{--hard:0px}
 :root[data-tilt="off"] .thumb,:root[data-tilt="off"] .tile{--tt:0deg!important}
@@ -230,7 +230,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .status{flex:none;display:flex;align-items:center;justify-content:space-between;
   padding:var(--gap-lg) var(--gap-lg) var(--gap-xs);font-size:.7rem;font-weight:600;color:var(--ink-soft)}
 .saved{display:inline-flex;align-items:center;gap:var(--gap-xs);font-size:.68rem;font-weight:700;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--leaf-text);
+  letter-spacing:.09em;text-transform:uppercase;color:var(--on-leaf);
   background:var(--leaf-tint);border:1.5px solid var(--hair);border-radius:var(--br-pill);
   padding:var(--gap-xs) var(--gap-sm);transform:rotate(-1deg)}
 .saved svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:3;
@@ -286,7 +286,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    Appears BELOW the selection, never over it.  No offset shadow, no tilt, no
    tape: it is a tool, and tools do not perform. */
 .ctx{position:absolute;left:50%;bottom:12px;transform:translateX(-50%) translateY(8px);z-index:30;
-  display:flex;gap:var(--gap-hair);background:var(--paper);border:1.5px solid var(--ink);
+  display:flex;gap:var(--gap-hair);background:var(--surface);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);padding:var(--gap-xs);opacity:0;pointer-events:none;
   transition:opacity .16s,transform .16s cubic-bezier(.2,.7,.2,1)}
 .ctx.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
@@ -299,7 +299,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   stroke-linecap:round;stroke-linejoin:round}
 
 /* ===== ink: a tray of spot-ink pots ====================================== */
-.inkpop{position:absolute;left:12px;right:12px;bottom:12px;z-index:34;background:var(--paper);
+.inkpop{position:absolute;left:12px;right:12px;bottom:12px;z-index:34;background:var(--surface);
   border:1.5px solid var(--ink);border-radius:var(--br-lg);padding:var(--gap-md) var(--gap-md) var(--gap-lg);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line);
   opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .18s,transform .18s}
@@ -317,7 +317,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .pot.on::after{content:"";position:absolute;inset:-5px;border:1.6px dashed var(--ink);
   border-radius:var(--br-pill)}
 .presets{display:flex;gap:var(--gap-sm);flex-wrap:wrap}
-.preset{display:flex;align-items:center;gap:var(--gap-sm);background:var(--paper);border:1.5px solid var(--ink);
+.preset{display:flex;align-items:center;gap:var(--gap-sm);background:var(--surface);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md) var(--gap-xs) var(--gap-xs);cursor:pointer;font-size:.72rem;
   font-weight:600;color:var(--ink-soft);box-shadow:2px 2px 0 var(--ink-line)}
 .preset i{display:flex}
@@ -329,13 +329,15 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .kbstack{position:absolute;left:0;right:0;bottom:0;z-index:40;transform:translateY(102%);
   transition:transform .26s cubic-bezier(.05,.7,.1,1)}
 .kbstack.show{transform:none}
-.styletb{display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-md);background:var(--paper);
+.styletb{display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-md);background:var(--surface);
   border-top:1.5px solid var(--ink);border-bottom:1.5px dashed var(--hair)}
 .chip{font-family:var(--sans);font-size:.78rem;font-weight:600;color:var(--ink-soft);
-  background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-pill);
+  background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--br-pill);
   padding:var(--gap-sm) var(--gap-md);cursor:pointer;display:flex;align-items:center;gap:var(--gap-sm);
   box-shadow:2px 2px 0 var(--ink-line)}
 .chip:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
+.editHint{font-family:var(--sans);font-size:.68rem;font-weight:600;color:var(--ink-soft);
+  line-height:1.15;min-width:0;flex:1}
 /* ✱ border and background are both --ink here, and deliberately so.  This is a colour
    SWATCH: the fill is the maker's current ink, set at runtime (see #editSw), and --ink is
    only its default.  The ring's job is to separate the swatch from the chip's --paper
@@ -349,7 +351,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   padding:var(--gap-sm) var(--gap-lg);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
 .kb{background:var(--desk-edge);padding:var(--gap-sm) var(--gap-xs) var(--gap-lg);display:flex;flex-direction:column;gap:var(--gap-sm)}
 .kb .row{display:flex;gap:var(--gap-xs);justify-content:center}
-.kb .key{flex:1;max-width:34px;height:38px;background:var(--paper);border:1px solid var(--hair);
+.kb .key{flex:1;max-width:34px;height:38px;background:var(--surface);border:1px solid var(--hair);
   border-radius:var(--br-sm);display:grid;place-items:center;font-size:.8rem;font-weight:500;
   color:var(--ink-soft)}
 .kb .key.wide{max-width:none;flex:2.4}
@@ -364,7 +366,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .th b{font-family:var(--voice);font-weight:700;font-size:.9rem}
 .th span{font-size:.68rem;color:var(--ink-soft);font-weight:500}
 .fold{width:30px;height:30px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .fold svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
@@ -392,10 +394,10 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 /* ============================ pages + toolbar ============================= */
 .navrow{flex:none;display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-md) var(--gap-xs);background:var(--desk)}
 .gridbtn{flex:none;width:38px;height:38px;border-radius:var(--br-sm);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .gridbtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
-.filmstrip{flex:1;display:flex;gap:var(--gap-sm);overflow-x:auto;padding:var(--gap-hair) 0 var(--gap-xs);scrollbar-width:none}
+.filmstrip{flex:1;display:flex;gap:var(--gap-sm);overflow-x:auto;padding:var(--gap-hair) var(--gap-xs) var(--gap-xs) 0;scrollbar-width:none}
 .filmstrip::-webkit-scrollbar{display:none}
 .fpage{flex:none;width:29px;height:38px;border-radius:var(--br-xs);background:var(--paper);
   border:1.5px solid var(--ink);cursor:pointer;display:grid;place-items:center;
@@ -405,7 +407,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .fpage.on{box-shadow:0 0 0 3px var(--berry)}
 .bar{flex:none;display:flex;align-items:center;gap:var(--gap-sm);padding:var(--gap-sm) var(--gap-lg) var(--gap-lg);background:var(--desk)}
 .icon-btn{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .icon-btn:disabled{opacity:.35;box-shadow:none;cursor:default}
 .icon-btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -421,10 +423,10 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 
 /* ============================ overlays ==================================== */
-.scrim{position:absolute;inset:0;z-index:50;background:rgba(38,26,16,.44);opacity:0;
+.scrim{position:absolute;inset:0;z-index:50;background:rgba(39,39,15,.44);opacity:0;
   pointer-events:none;transition:opacity .22s}
 .scrim.show{opacity:1;pointer-events:auto}
-.sheet{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--paper);
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--surface);
   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
   transform:translateY(103%);transition:transform .3s cubic-bezier(.05,.7,.1,1);
   max-height:86%;overflow:auto;padding:0 var(--gap-lg) var(--gap-xl)}
@@ -433,7 +435,7 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
   margin:var(--gap-md) auto var(--gap-xs);opacity:.5}
 .sheet h3{font-family:var(--voice);font-weight:700;font-size:1.2rem;margin:var(--gap-xs) var(--gap-hair) var(--gap-md)}
 .supply{display:flex;flex-direction:column;gap:var(--gap-sm)}
-.opt{display:flex;align-items:center;gap:var(--gap-md);text-align:left;width:100%;background:var(--paper);
+.opt{display:flex;align-items:center;gap:var(--gap-md);text-align:left;width:100%;background:var(--surface);
   border:1.5px solid var(--ink);border-radius:var(--br-md);padding:var(--gap-md);cursor:pointer;
   box-shadow:3px 3px 0 var(--ink-line);font-family:var(--sans)}
 .opt:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
@@ -458,10 +460,10 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
   color:var(--ink-soft);margin:var(--gap-md) 0 var(--gap-sm)}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap-sm)}
 .tile{position:relative;aspect-ratio:1;border-radius:var(--br-sm);border:1.5px solid var(--ink);
-  background:var(--leaf-tint);color:var(--leaf-text);cursor:pointer;display:grid;place-items:center;
+  background:var(--leaf-tint);color:var(--on-leaf);cursor:pointer;display:grid;place-items:center;
   transform:rotate(var(--tt,0deg));box-shadow:2px 2px 0 var(--ink-line);padding:0}
-.tile:nth-child(3n){--tt:-1.6deg;background:var(--berry-tint);color:var(--jam-text)}
-.tile:nth-child(4n){--tt:1.4deg;background:var(--butter-tint);color:var(--ink-soft)}
+.tile:nth-child(3n){--tt:-1.6deg;background:var(--berry-tint);color:var(--on-leaf)}
+.tile:nth-child(4n){--tt:1.4deg;background:var(--butter-tint);color:var(--ink)}
 .tile:active{transform:translate(2px,2px) rotate(var(--tt,0deg));box-shadow:0 0 0 var(--ink-line)}
 /* AMENDED 2026-08-20 (AMENDMENT LOG A7, owner ruling on D-093).  Was
    `fill:none;stroke:currentColor;stroke-width:1.7`.  That is what drew sixteen HOLLOW tiles for a
@@ -479,14 +481,14 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
   color:var(--ink-soft);opacity:.55}
 .fav{position:absolute;top:2px;right:4px;font-size:.72rem;color:var(--ink-soft);cursor:pointer}
 /* ✱ butter is the FILL; the ink outline carries the state, so §3.2 holds and the
-   shape clears 1.4.11 in light theme (butter alone on paper is 1.73:1). */
+   shape clears 1.4.11 in light theme (37596 butter alone on paper is 1.24:1). */
 .fav.on{color:var(--butter);-webkit-text-stroke:.7px var(--ink);paint-order:stroke fill}
 /* REMOVED 2026-08-15 (ADR-104): .online / .toggle / .disclosure / .onresults / .priv styled the
    online opt-in panel, its switch, its privacy disclosure and its results grid.  Deleted with the
    markup rather than left behind -- a spec that still styles a removed control has not removed it,
    and the next implementer would reasonably read dead CSS as an unimplemented requirement. */
 
-.pgrid{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--paper);
+.pgrid{position:absolute;left:0;right:0;bottom:0;z-index:54;background:var(--surface);
   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
   transform:translateY(103%);transition:transform .3s cubic-bezier(.05,.7,.1,1);
   max-height:78%;overflow:auto;padding:0 var(--gap-lg) var(--gap-xl)}
@@ -498,14 +500,14 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
    amendment: every token .pgc paints with takes its light value in both themes, so a card reads as
    paper on any desk.  --ink-line is restated too because the hard shadow falls on the CARD's own
    plane here, unlike the sheet's, which falls on the bench and must follow the room. */
-.pgc{--paper:#FFF6E8;--ink:#33261C;--ink-soft:#6E5947;--ink-line:#33261C;
-  --leaf-tint:#DCE8CE;--leaf-text:#3E6330;
+.pgc{--paper:#FFF6E8;--ink:#27270F;--ink-soft:#6A452F;--ink-line:#27270F;
+  --leaf-tint:#BBCA6F;--on-leaf:#27270F;
   aspect-ratio:3/4;border-radius:var(--br-sm);background:var(--paper);border:1.5px solid var(--ink);
   cursor:pointer;display:grid;place-items:center;font-size:.72rem;font-weight:700;color:var(--ink-soft);
   box-shadow:3px 3px 0 var(--ink-line);font-variant-numeric:tabular-nums}
-.pgc.on{background:var(--leaf-tint);color:var(--leaf-text)}
+.pgc.on{background:var(--leaf-tint);color:var(--on-leaf)}
 .dclose{width:34px;height:34px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .dclose svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 
@@ -516,16 +518,14 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
      This comment used to claim it was the ONE such case in the corpus.  It was not:
      a review found two more.  The Proof's .flash is the same toast pattern and is now
      resolved identically; .chip .sw below is benign and says why. */
-  gap:var(--gap-md);background:var(--ink);color:var(--paper);border:1.5px solid var(--ink-line);
+  gap:var(--gap-md);background:var(--surface-soft);color:var(--ink);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg);font-size:.79rem;
   opacity:0;transform:translateY(8px) rotate(-.6deg);pointer-events:none;
   transition:opacity .18s,transform .18s}
 .snack.show{opacity:1;transform:rotate(-.6deg);pointer-events:auto}
 .snack span{flex:1}
-/* ✱ Undo was butter — 7.89:1 in light but 1.59:1 in dark, where the ink ground turns
-   cream.  It is now the snackbar's own paper colour, underlined so it still reads as
-   the action.  V21-SPEC §3.2's single butter exception is retired, not lived with. */
-.snack button{font-family:var(--sans);font-size:.78rem;font-weight:700;color:var(--paper);
+/* The action shares the support scrap's ordinary ink and stays underlined. */
+.snack button{font-family:var(--sans);font-size:.78rem;font-weight:700;color:var(--ink);
   text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;
   background:none;border:0;border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md);cursor:pointer}
 
@@ -534,7 +534,7 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
 .state{font-family:var(--voice);font-weight:700;font-size:1rem}
 .hint{font-size:.8rem;color:var(--ink-soft);margin-top:var(--gap-hair)}
 .controls{display:flex;flex-wrap:wrap;gap:var(--gap-sm);justify-content:center;max-width:680px}
-.ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--paper);color:var(--ink);
+.ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--surface);color:var(--ink);
   border:1.5px solid var(--ink);border-radius:var(--br-pill);padding:var(--gap-sm) var(--gap-md);cursor:pointer;
   box-shadow:2px 2px 0 var(--ink-line)}
 .ctl:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink-line)}
@@ -573,10 +573,8 @@ is about <b>material</b> — the page, the shelf, the ink pots, the supply drawe
 
   <div class="kbstack" id="kbstack">
     <div class="styletb">
-      <button class="chip">Aa Font</button>
-      <button class="chip">Size</button>
-      <button class="chip" id="editColour">Ink <span class="sw" id="editSw"></span></button>
-      <span class="grow"></span>
+      <button class="chip" id="editColour" type="button">Ink <span class="sw" id="editSw"></span></button>
+      <span class="editHint">Align, size &amp; more after Done</span>
       <button class="doneEdit" id="doneEdit">Done</button>
     </div>
     <div class="kb" id="kb"></div>
@@ -657,9 +655,9 @@ const DECOR={
 /* ===== ink model — the frozen riso spot-ink palette, unchanged ============ */
 const INKS=[['Matcha','#7C8A3F'],['Forest','#3E5E3A'],['Strawberry','#E27F89'],['Brick','#B0503F'],
             ['Sunflower','#E7B53C'],['Ochre','#D19A3C'],['Aqua','#57B0A9'],['Cornflower','#6E86C9'],
-            ['Plum','#8A5A9B'],['Ink','#2A251E']];
+            ['Plum','#8A5A9B'],['Ink','#2A251E','Spot ink']];
 const TINTS=[['Cream','#F1E9D6'],['Blush','#F0DED9'],['Sky','#DDE9EE'],['Sage','#E1E9D2'],['Kraft','#E4D3B4']];
-const NEUT=[['Ink','#2A251E'],['Slate','#5B5347'],['Stone','#8C8269'],['Fog','#B7AD93']];
+const NEUT=[['Ink','#2A251E','Neutral ink'],['Slate','#5B5347'],['Stone','#8C8269'],['Fog','#B7AD93']];
 const PRESETS=[['Two-colour',['#2A251E','#E27F89']],['Warm zine',['#B0503F','#E7B53C','#F1E9D6']],
                ['Cool zine',['#3E5E3A','#57B0A9','#DDE9EE']]];
 
@@ -734,8 +732,8 @@ $('canvasArea').onclick=e=>{ if(e.target.closest('.el')||e.target.closest('.ctx'
   e.stopPropagation(); deselect(); };
 
 /* ===== ink popover ======================================================== */
-const pots=list=>`<div class="pots">${list.map(([n,c])=>
-  `<button class="pot" style="background:${c}" title="${n}" aria-label="${n}" data-ink="${c}" data-name="${n}"></button>`).join('')}</div>`;
+const pots=list=>`<div class="pots">${list.map(([n,c,spoken])=>
+  `<button class="pot" style="background:${c}" title="${n}" aria-label="${spoken||n}" data-ink="${c}" data-name="${n}"></button>`).join('')}</div>`;
 function openInk(){
   if(!sel) selectByKind('text');
   $('inkpop').innerHTML =
@@ -776,7 +774,8 @@ function edit(){
 }
 $('doneEdit').onclick=e=>{ e.stopPropagation(); sel&&sel.classList.remove('editing');
   $('kbstack').classList.remove('show'); if(sel) select(sel); };
-$('editColour').onclick=e=>{ e.stopPropagation(); $('kbstack').classList.remove('show'); openInk(); };
+$('editColour').onclick=e=>{ e.stopPropagation(); sel&&sel.classList.remove('editing');
+  $('kbstack').classList.remove('show'); openInk(); };
 
 /* ===== delete + undo ====================================================== */
 let bin=null;
@@ -791,7 +790,8 @@ let tt;
 function toast(msg,undoable){
   $('snackText').textContent=msg;
   $('undoSnack').style.display=undoable?'':'none';
-  $('snack').classList.add('show');
+  const c=$('ctx'),s=$('snack'),p=$('phone'),stack=c.classList.contains('show'); s.classList.toggle('with-context',stack); if(stack) s.style.setProperty('--stacked-bottom',(p.getBoundingClientRect().bottom-c.getBoundingClientRect().top+14)+'px');
+  s.classList.add('show');
   clearTimeout(tt); tt=setTimeout(()=>$('snack').classList.remove('show'),3200);
 }
 $('undoSnack').onclick=e=>{ e.stopPropagation();
@@ -808,7 +808,7 @@ $('trayrow').innerHTML =
     : `<button class="thumb" aria-label="Kept ${k}">${svg(DECOR[k])}</button>`).join('');
 $('trayrow').querySelectorAll('.thumb').forEach(t=>t.onclick=e=>{ e.stopPropagation();
   toast(t.classList.contains('keep')?'Pick a photo to keep on your shelf':'Dropped onto the page',false);
-  cap('Shelf','Things you gathered, kept between sessions. Nothing here has left your phone.'); });
+  cap('Shelf','Things you gathered, kept between sessions.'); });
 $('trayFold').onclick=e=>{ e.stopPropagation(); $('tray').classList.toggle('closed'); };
 
 /* ===== pages ============================================================== */
@@ -837,17 +837,17 @@ $('gridBtn').onclick=e=>{ e.stopPropagation(); openGrid(); };
 function openSupply(){
   $('sheet').innerHTML='<div class="grip"></div><h3>Add to your page</h3><div class="supply">'
    +`<button class="opt" data-a="text"><span class="ico">${ICON.font}</span><span class="tx"><b>Text</b><span>Type words onto the page</span></span></button>`
-   +`<button class="opt" data-a="photo"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Photo</b><span>From your phone — it never leaves the device</span></span></button>`
+   +`<button class="opt" data-a="photo"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Photo</b><span>Choose one from your photos</span></span></button>`
    +`<button class="opt" data-a="art"><span class="ico">${svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M4 16l5-6 4 5 3-4 4 5"/>')}</span><span class="tx"><b>Art</b><span>Tape, stamps and cut paper</span></span></button>`
    +'</div>';
   $('sheet').querySelectorAll('.opt').forEach(o=>o.onclick=e=>{ e.stopPropagation();
     const a=o.dataset.a;
     if(a==='art') return openArt();
     closeOverlays();
-    if(a==='text'){ selectByKind('text'); edit(); }
-    else { selectByKind('photo'); cap('Selected · Photo','Your photo drops in at centre — and stays on your phone.'); }
+    if(a==='text'){ placeTextAndEdit(); }
+    else { selectByKind('photo'); cap('Selected · Photo','Your photo drops in at centre.'); }
   });
-  showSheet('Adding','Add stays three verbs — Text · Photo · Art. Your photos and your work never leave the device.');
+  showSheet('Adding','Add stays three verbs — Text · Photo · Art.');
 }
 // AMENDED 2026-08-15 (ADR-104 / Constitution Amendment 3).  The four generic chips became the four
 // AUTHORED FAMILIES; the search field, the online panel and its disclosure are gone.  A cabinet is
@@ -858,7 +858,7 @@ const FAMILIES=['Tape & fixings','Stamps & marks','Cut paper','Cut shapes'];
 // is not authored -- in which case the tile carries the word rather than a picture of a mark that does
 // not exist.  `aria-disabled` mirrors what the Compose tile reports to the platform tree.
 const tile=([id,name,d])=>`<button class="tile${d?'':' na'}" data-supply="${id}" aria-label="${name}"
-  title="${name}"${d?'':' aria-disabled="true"'}>${d?svg(d):'<span class="naw">Not available yet</span>'}`
+  title="${name}"${d?'':' aria-disabled="true"'}>${d?svg(d):'<span class="naw">Not<br>yet</span>'}`
   +'<span class="fav" role="button" aria-label="Favourite">☆</span></button>';
 function openArt(){
   // AMENDED 2026-08-20 (A7).  Every `d` below is GENERATED from SupplyCatalog's authored outline
@@ -868,13 +868,13 @@ function openArt(){
   // tile IS the mark.  A5's DEPICT latitude is retired for these sixteen and kept everywhere else.
   // The four nulls are the four supplies §5 still owes a designer -- three need an authored TEAR,
   // and `fix.clip` is a wire object in a fill-only renderer.
-  const SUP=[['tape.torn','Torn tape',null],['fix.corner','Photo corner','<path d="M0 0 L24 24 L0 24 Z M3.84 10.08 L13.92 20.16 L3.84 20.16 Z"/>'],
-   ['fix.staple','Staple','<path d="M0 7.2 L24 7.2 L24 24 L19.68 24 L19.68 11.52 L4.32 11.52 L4.32 24 L0 24 Z"/>'],['fix.clip','Paper clip',null],
+  const SUP=[['tape.torn','Torn tape','<path d="M0 4.32 L1.44 1.92 L0.48 0 L23.28 0 L22.32 2.4 L24 4.8 L22.8 7.44 L24 10.32 L22.56 13.44 L23.76 16.8 L22.32 20.16 L23.52 24 L0.48 24 L1.68 21.12 L0 18.24 L1.2 15.12 L0.24 11.76 L1.44 8.16 Z"/>'],['fix.corner','Photo corner','<path d="M0 0 L24 24 L0 24 Z M3.84 10.08 L13.92 20.16 L3.84 20.16 Z"/>'],
+   ['fix.staple','Staple','<path d="M0 7.2 L24 7.2 L24 24 L19.68 24 L19.68 11.52 L4.32 11.52 L4.32 24 L0 24 Z"/>'],['fix.clip','Paper clip','<path d="M10.8 4.32 L10.8 14.88 L9.6 16.32 L8.16 16.32 L7.2 14.88 L7.2 5.28 L8.64 2.4 L12 0 L16.8 2.4 L20.16 5.28 L21.12 18.24 L18.24 21.6 L14.4 24 L5.28 24 L2.4 21.12 L1.44 18.24 L1.44 8.16 L3.84 8.16 L3.84 17.28 L4.8 19.2 L6.72 20.16 L13.92 20.16 L16.32 18.72 L17.28 16.8 L17.28 6.24 L15.84 4.32 L13.92 3.36 L12 3.36 Z"/>'],
    ['mark.asterisk','Star','<path d="M12 0.59 L14.97 9.12 L24 9.3 L16.8 14.76 L19.42 23.41 L12 18.25 L4.58 23.41 L7.2 14.76 L0 9.3 L9.03 9.12 Z"/>'],['mark.arrow','Arrow','<path d="M0 8.16 L13.92 8.16 L13.92 1.44 L24 12 L13.92 22.56 L13.92 15.84 L0 15.84 Z"/>'],
    ['mark.halftone','Halftone dots','<path d="M2.64 0 C4.1 0 5.28 1.18 5.28 2.64 C5.28 4.1 4.1 5.28 2.64 5.28 C1.18 5.28 0 4.1 0 2.64 C0 1.18 1.18 0 2.64 0 Z M9.17 0.29 C10.47 0.29 11.52 1.34 11.52 2.64 C11.52 3.94 10.47 4.99 9.17 4.99 C7.87 4.99 6.82 3.94 6.82 2.64 C6.82 1.34 7.87 0.29 9.17 0.29 Z M15.7 0.58 C16.84 0.58 17.76 1.5 17.76 2.64 C17.76 3.78 16.84 4.7 15.7 4.7 C14.56 4.7 13.63 3.78 13.63 2.64 C13.63 1.5 14.56 0.58 15.7 0.58 Z M22.22 0.86 C23.2 0.86 24 1.66 24 2.64 C24 3.62 23.2 4.42 22.22 4.42 C21.24 4.42 20.45 3.62 20.45 2.64 C20.45 1.66 21.24 0.86 22.22 0.86 Z M2.64 6.82 C3.94 6.82 4.99 7.87 4.99 9.17 C4.99 10.47 3.94 11.52 2.64 11.52 C1.34 11.52 0.29 10.47 0.29 9.17 C0.29 7.87 1.34 6.82 2.64 6.82 Z M9.17 7.1 C10.31 7.1 11.23 8.03 11.23 9.17 C11.23 10.31 10.31 11.23 9.17 11.23 C8.03 11.23 7.1 10.31 7.1 9.17 C7.1 8.03 8.03 7.1 9.17 7.1 Z M15.7 7.39 C16.68 7.39 17.47 8.19 17.47 9.17 C17.47 10.15 16.68 10.94 15.7 10.94 C14.72 10.94 13.92 10.15 13.92 9.17 C13.92 8.19 14.72 7.39 15.7 7.39 Z M22.22 7.68 C23.05 7.68 23.71 8.35 23.71 9.17 C23.71 9.99 23.05 10.66 22.22 10.66 C21.4 10.66 20.74 9.99 20.74 9.17 C20.74 8.35 21.4 7.68 22.22 7.68 Z M2.64 13.63 C3.78 13.63 4.7 14.56 4.7 15.7 C4.7 16.84 3.78 17.76 2.64 17.76 C1.5 17.76 0.58 16.84 0.58 15.7 C0.58 14.56 1.5 13.63 2.64 13.63 Z M9.17 13.92 C10.15 13.92 10.94 14.72 10.94 15.7 C10.94 16.68 10.15 17.47 9.17 17.47 C8.19 17.47 7.39 16.68 7.39 15.7 C7.39 14.72 8.19 13.92 9.17 13.92 Z M15.7 14.21 C16.52 14.21 17.18 14.87 17.18 15.7 C17.18 16.52 16.52 17.18 15.7 17.18 C14.87 17.18 14.21 16.52 14.21 15.7 C14.21 14.87 14.87 14.21 15.7 14.21 Z M22.22 14.5 C22.89 14.5 23.42 15.03 23.42 15.7 C23.42 16.36 22.89 16.9 22.22 16.9 C21.56 16.9 21.02 16.36 21.02 15.7 C21.02 15.03 21.56 14.5 22.22 14.5 Z M2.64 20.45 C3.62 20.45 4.42 21.24 4.42 22.22 C4.42 23.2 3.62 24 2.64 24 C1.66 24 0.86 23.2 0.86 22.22 C0.86 21.24 1.66 20.45 2.64 20.45 Z M9.17 20.74 C9.99 20.74 10.66 21.4 10.66 22.22 C10.66 23.05 9.99 23.71 9.17 23.71 C8.35 23.71 7.68 23.05 7.68 22.22 C7.68 21.4 8.35 20.74 9.17 20.74 Z M15.7 21.02 C16.36 21.02 16.9 21.56 16.9 22.22 C16.9 22.89 16.36 23.42 15.7 23.42 C15.03 23.42 14.5 22.89 14.5 22.22 C14.5 21.56 15.03 21.02 15.7 21.02 Z M22.22 21.31 C22.73 21.31 23.14 21.72 23.14 22.22 C23.14 22.73 22.73 23.14 22.22 23.14 C21.72 23.14 21.31 22.73 21.31 22.22 C21.31 21.72 21.72 21.31 22.22 21.31 Z"/>'],
    ['mark.registration','Registration cross','<path d="M0 11.16 L6 11.16 L6 12.84 L0 12.84 Z M18 11.16 L24 11.16 L24 12.84 L18 12.84 Z M11.16 0 L12.84 0 L12.84 6 L11.16 6 Z M11.16 18 L12.84 18 L12.84 24 L11.16 24 Z M12 6 C15.31 6 18 8.69 18 12 C18 15.31 15.31 18 12 18 C8.69 18 6 15.31 6 12 C6 8.69 8.69 6 12 6 Z M12 7.44 C14.52 7.44 16.56 9.48 16.56 12 C16.56 14.52 14.52 16.56 12 16.56 C9.48 16.56 7.44 14.52 7.44 12 C7.44 9.48 9.48 7.44 12 7.44 Z"/>'],
-   ['paper.strip','Torn strip',null],['paper.window','Window frame','<path d="M0 0 L24 0 L24 24 L0 24 Z M3.36 3.36 L20.64 3.36 L20.64 20.64 L3.36 20.64 Z"/>'],
-   ['paper.tag','Speech tag','<path d="M0 0 L24 0 L24 14.88 L10.56 14.88 L2.4 24 L4.8 14.88 L0 14.88 Z"/>'],['paper.underline','Marker underline',null],
+   ['paper.strip','Torn strip','<path d="M0 5.52 L1.92 4.32 L4.32 5.76 L7.44 3.84 L10.32 5.28 L13.44 4.08 L16.8 6 L20.16 4.32 L24 5.52 L24 18.24 L21.12 19.68 L18.24 18 L15.12 20.16 L11.76 18.72 L8.16 19.92 L4.8 18 L1.92 19.68 L0 18.48 Z"/>'],['paper.window','Window frame','<path d="M0 0 L24 0 L24 24 L0 24 Z M3.36 3.36 L20.64 3.36 L20.64 20.64 L3.36 20.64 Z"/>'],
+   ['paper.tag','Speech tag','<path d="M0 0 L24 0 L24 14.88 L10.56 14.88 L2.4 24 L4.8 14.88 L0 14.88 Z"/>'],['paper.underline','Marker underline','<path d="M0 11.04 L3.12 10.08 L6.72 11.52 L11.04 10.32 L15.36 11.28 L19.44 9.84 L24 10.8 L24 14.88 L20.88 16.08 L17.52 14.64 L13.92 16.08 L9.84 15.12 L6.24 16.32 L2.88 14.88 L0 16.08 Z"/>'],
    ['shape.rect','Rectangle','<path d="M0 0 L24 0 L24 24 L0 24 Z"/>'],['shape.circle','Circle','<path d="M12 0 C18.63 0 24 5.37 24 12 C24 18.63 18.63 24 12 24 C5.37 24 0 18.63 0 12 C0 5.37 5.37 0 12 0 Z"/>'],
    ['shape.triangle','Triangle','<path d="M12 0 L24 24 L0 24 Z"/>'],['shape.rule','Straight rule','<path d="M0 9.6 L24 9.6 L24 14.4 L0 14.4 Z"/>']];
   $('sheet').innerHTML='<div class="grip"></div><h3>Art</h3>'
@@ -902,7 +902,7 @@ function closeOverlays(){
 }
 $('scrim').onclick=e=>{ e.stopPropagation(); closeOverlays(); deselect(); };
 $('addBtn').onclick=e=>{ e.stopPropagation(); openSupply(); };
-$('doneBtn').onclick=e=>{ e.stopPropagation(); deselect(); toast('Saved — everything stays on your phone',false); };
+$('doneBtn').onclick=e=>{ e.stopPropagation(); deselect(); toast('Saved',false); };
 
 /* ===== dev controls ======================================================= */
 $('tg').onclick=()=>{
@@ -924,6 +924,245 @@ addEventListener('keydown',e=>{
   document.querySelector('.keepclear').classList.toggle('warn');
 });
 </script>
+
+<!-- ===========================================================================
+A22 · 2026-08-27 (owner-approved, ADR-113) — turn one Photo or Art piece.
+DESIGN FROZEN 2026-08-27.
+
+A single `Flip` verb joins the selected Photo and Art context bars. It replaces
+that bar with one compact tray containing two independent toggles: `Left-right`
+and `Top-bottom`. Each tap applies immediately and is one undo step. The piece
+keeps the same box, centre, crop, rotation, z-order and asset/supply id. The axes
+belong to its own unrotated box, so a rotated piece flips without moving.
+
+Done and Back close the tray without another document change. Outside-tap follows
+the Bench's existing contextual-popover rule and clears selection. Text is
+excluded: mirrored words are not another style. Initial scope is one selected
+piece; multi-selection keeps the shared transform bar and has no Flip action.
+
+Flip is labelled. Opening focuses Left-right. Both choices are 48px+ controls
+with visible labels and `aria-pressed`; state never depends on colour or the
+canvas alone. Done returns focus to Flip. At large text the choices stack and the
+tray scrolls instead of clipping. Production exposes equivalent single-element
+custom actions whose labels say `Remove ... flip` when active.
+=========================================================================== -->
+<style>
+.flip-pop{position:absolute;left:12px;right:12px;bottom:12px;z-index:42;
+  max-height:calc(100% - 24px);overflow:auto;padding:var(--gap-sm);
+  background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);
+  border-radius:var(--br-lg);box-shadow:var(--hard) var(--hard) 0 var(--ink-line);
+  opacity:0;transform:translateY(10px);pointer-events:none;
+  transition:opacity .18s,transform .18s}
+.flip-pop.show{opacity:1;transform:none;pointer-events:auto}
+.flip-pop h4{display:flex;align-items:center;justify-content:space-between;gap:var(--gap-md);
+  margin:0 0 var(--gap-sm);font:700 1.02rem var(--voice)}
+.flip-done{min-width:64px;min-height:48px;padding:0 var(--gap-md);border:1.5px solid var(--ink);
+  border-radius:var(--br-pill);background:var(--leaf);color:var(--on-leaf);
+  font:700 .78rem var(--sans);cursor:pointer}
+.flip-copy{margin:0 0 var(--gap-sm);color:var(--ink);font:500 .72rem/1.35 var(--sans)}
+.flip-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap-sm)}
+.flip-choice{min-height:56px;padding:var(--gap-sm);display:flex;align-items:center;
+  justify-content:center;gap:var(--gap-sm);border:1.5px solid var(--ink);
+  border-radius:var(--br-md);background:var(--paper);color:#27270F;
+  font:700 .72rem/1.15 var(--sans);cursor:pointer}
+.flip-choice svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.flip-choice[aria-pressed="true"]{background:var(--leaf);color:var(--on-leaf)}
+.flip-choice:focus-visible,.flip-done:focus-visible{outline:3px solid var(--berry);outline-offset:2px}
+.el>.photo,.el.sticker>svg{--flip-x:1;--flip-y:1;
+  transform:scale(var(--flip-x),var(--flip-y));transform-origin:center}
+.el[data-flip-x="true"]>.photo,.el.sticker[data-flip-x="true"]>svg{--flip-x:-1}
+.el[data-flip-y="true"]>.photo,.el.sticker[data-flip-y="true"]>svg{--flip-y:-1}
+@media (max-width:340px){.flip-choices{grid-template-columns:1fr}}
+</style>
+
+<!-- ===========================================================================
+A25 · 2026-08-28 (error exit + accessibility) — an unreadable photo is refused
+before Reframe opens, and the refusal is never silent.
+
+The Bench shows its existing support-paper snack for 3200ms with the exact line
+"This photo can’t be reframed. Try adding it again." and no action button.
+The same line is the snack's one polite live-region announcement. Reframe chrome
+never appears, the document is untouched, and the ordinary Add control returns
+as the truthful recovery path. Photo Replace remains unavailable and is not
+promised. The snack, rather than a second
+announcement channel, owns speech so TalkBack does not repeat the outcome.
+
+This is a declarative failure-state ruling rather than dead prototype code: the
+static corpus has no corrupt image fixture capable of entering the state. Compose
+must prove the state through the real asset-read failure seam and its tests.
+=========================================================================== -->
+<script>
+ICON.flip=svg('<path d="M12 3v18"/><path d="M9 7 5 12l4 5"/><path d="m15 7 4 5-4 5"/>');
+const toolsForBeforeA22=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForBeforeA22(kind);
+  if(kind==='photo')return [...tools.slice(0,1),['Flip',ICON.flip,openFlip],...tools.slice(1)];
+  if(kind==='decor')return [...tools.slice(0,2),['Flip',ICON.flip,openFlip],...tools.slice(2)];
+  return tools;
+};
+
+const flipPanel=document.createElement('section');
+flipPanel.className='flip-pop'; flipPanel.id='flipPanel';
+flipPanel.setAttribute('role','dialog');
+flipPanel.setAttribute('aria-modal','false');
+flipPanel.setAttribute('aria-labelledby','flipTitle');
+flipPanel.innerHTML='<h4 id="flipTitle">Flip<button type="button" class="flip-done">Done</button></h4>'
+  +'<p class="flip-copy">Turn the selected piece over without moving it.</p>'
+  +'<div class="flip-choices">'
+  +'<button type="button" class="flip-choice" data-axis="x" aria-label="Flip left to right" aria-pressed="false">'
+  +svg('<path d="M12 3v18"/><path d="M9 7 5 12l4 5"/><path d="m15 7 4 5-4 5"/>')+'<span>Left-right</span></button>'
+  +'<button type="button" class="flip-choice" data-axis="y" aria-label="Flip top to bottom" aria-pressed="false">'
+  +svg('<path d="M3 12h18"/><path d="m7 9 5-4 5 4"/><path d="m7 15 5 4 5-4"/>')+'<span>Top-bottom</span></button>'
+  +'</div>';
+$('phone').appendChild(flipPanel);
+flipPanel.onclick=e=>e.stopPropagation();
+
+function syncFlipPanel(){
+  flipPanel.querySelectorAll('.flip-choice').forEach(button=>{
+    const on=sel&&sel.dataset[button.dataset.axis==='x'?'flipX':'flipY']==='true';
+    button.setAttribute('aria-pressed',String(!!on));
+  });
+}
+function closeFlip(returnFocus){
+  if(!flipPanel.classList.contains('show'))return;
+  flipPanel.classList.remove('show');
+  if(sel){buildCtx(sel.dataset.kind);$('ctx').classList.add('show');}
+  if(returnFocus&&sel){
+    requestAnimationFrame(()=>{
+      const button=[...$('ctx').querySelectorAll('button')].find(x=>x.textContent.trim()==='Flip');
+      if(button)button.focus();
+    });
+  }
+}
+function openFlip(){
+  if(!sel||!['photo','decor'].includes(sel.dataset.kind))return;
+  $('ctx').classList.remove('show'); $('inkpop').classList.remove('show');
+  flipPanel.classList.add('show'); syncFlipPanel();
+  flipPanel.querySelector('.flip-choice').focus();
+  cap('Flip · '+(sel.dataset.kind==='photo'?'Photo':'Art'),
+    'Turn it left to right or top to bottom. Its place and size stay put.');
+}
+flipPanel.querySelector('.flip-done').onclick=e=>{e.stopPropagation();closeFlip(true);};
+flipPanel.querySelectorAll('.flip-choice').forEach(button=>button.onclick=e=>{
+  e.stopPropagation(); if(!sel)return;
+  const key=button.dataset.axis==='x'?'flipX':'flipY';
+  const before=sel.dataset[key]==='true';
+  const target=sel;
+  target.dataset[key]=String(!before); syncFlipPanel();
+  const axis=key==='flipX'?'left to right':'top to bottom';
+  toast((!before?'Flipped ':'Flip removed · ')+axis,true);
+  $('undoSnack').onclick=event=>{
+    event.stopPropagation();target.dataset[key]=String(before);syncFlipPanel();
+    $('snack').classList.remove('show');toast('Put back',false);
+  };
+});
+
+const deselectBeforeA22=deselect;
+deselect=function(){flipPanel.classList.remove('show');deselectBeforeA22();};
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&flipPanel.classList.contains('show')){
+    e.preventDefault();e.stopImmediatePropagation();closeFlip(true);
+  }
+},true);
+</script>
+
+<!-- ===========================================================================
+A18 · 2026-08-26 (D-065 stakeholder page-navigation ruling) — the larger page
+chooser shows the pages, not blank stand-ins. DESIGN FROZEN 2026-08-26.
+
+The filmstrip remains the always-present, compact navigator. Its page tap still
+makes that page the full editing canvas. The summoned All pages sheet remains the
+larger overview, but each card now contains the same live page miniature rather
+than deleting the page's identity and centring a number. The number becomes a
+small on-paper badge. The current page reuses the filmstrip's berry outer ring;
+it does not tint the maker's artwork. No reordering, persistence, document, or
+navigation semantics change. The CSS marks below stand in for document content
+only because this prototype has no real document; Compose must replay the shared
+render-command pipeline. =========================================================================== -->
+<style>
+.pgc.a18{position:relative;display:block;overflow:hidden;padding:0;color:var(--ink-soft)}
+.pgc.a18.on{background:var(--paper);color:var(--ink-soft);box-shadow:0 0 0 3px var(--berry),3px 3px 0 var(--ink-line)}
+.pgmini-a18{position:absolute;inset:0;background:var(--paper);overflow:hidden}
+.pgmini-a18::before,.pgmini-a18::after{content:"";position:absolute;display:block}
+.pgmini-a18[data-page="1"]::before{left:16%;right:16%;top:18%;height:14%;background:var(--berry);transform:rotate(-2deg)}
+.pgmini-a18[data-page="1"]::after{left:22%;right:22%;top:42%;height:30%;border:3px solid var(--ink)}
+.pgmini-a18[data-page="2"]::before{left:13%;top:13%;width:42%;height:56%;background:var(--butter);transform:rotate(-4deg)}
+.pgmini-a18[data-page="2"]::after{right:12%;top:19%;width:32%;height:48%;background:var(--ink)}
+.pgmini-a18[data-page="3"]::before{left:14%;right:14%;top:18%;height:7%;background:var(--ink);box-shadow:0 13px 0 var(--ink),0 26px 0 var(--ink),0 39px 0 var(--ink)}
+.pgmini-a18[data-page="4"]::before{left:14%;top:14%;width:54%;height:54%;border-radius:50%;background:var(--leaf)}
+.pgmini-a18[data-page="4"]::after{right:13%;bottom:15%;width:36%;height:36%;background:var(--berry);transform:rotate(8deg)}
+.pgmini-a18[data-page="5"]::before{left:16%;right:16%;top:17%;height:50%;background:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.pgmini-a18[data-page="5"]::after{left:19%;right:19%;bottom:14%;height:8%;background:var(--leaf)}
+.pgmini-a18[data-page="6"]::before{left:12%;right:12%;top:18%;height:42%;background:var(--berry);transform:rotate(3deg)}
+.pgmini-a18[data-page="6"]::after{left:20%;right:20%;bottom:18%;height:9%;background:var(--ink)}
+.pgmini-a18[data-page="7"]::before{left:18%;top:17%;width:25%;height:58%;background:var(--ink);box-shadow:30px 0 0 var(--leaf)}
+.pgmini-a18[data-page="8"]::before{left:16%;right:16%;top:16%;bottom:16%;border:5px solid var(--ink);transform:rotate(-3deg)}
+.pgnum-a18{position:absolute;right:6px;bottom:6px;z-index:1;min-width:24px;height:24px;padding:0 6px;
+  display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:var(--br-pill);
+  background:var(--paper);color:var(--ink-soft);font:700 .72rem var(--sans);font-variant-numeric:tabular-nums}
+</style>
+<script>
+openGrid=function(){
+  $('pgrid').innerHTML='<div class="grip"></div><div class="pghead"><h3>All pages</h3>'
+   +'<button class="dclose" id="pgClose" aria-label="Close">'+svg('<path d="M6 6l12 12M18 6L6 18"/>')+'</button></div>'
+   +'<div class="pgg">'+Array.from({length:N},(_,i)=>
+      `<button class="pgc a18 ${i+1===cur?'on':''}" aria-label="Page ${i+1}" onclick="goPage(${i+1})"><span class="pgmini-a18" data-page="${i+1}" aria-hidden="true"></span><span class="pgnum-a18">${i+1}</span></button>`).join('')+'</div>';
+  $('scrim').classList.add('show'); $('pgrid').classList.add('show');
+  $('pgClose').onclick=e=>{ e.stopPropagation(); closeOverlays(); };
+  cap('All pages','The whole zine at once — each larger card is the page itself. Tap one to keep making there.');
+};
+$('gridBtn').onclick=e=>{ e.stopPropagation(); openGrid(); };
+</script>
+
+<!-- ===========================================================================
+A17 · 2026-08-26 (D-109 stakeholder discoverability ruling) — name the move the
+maker can already make.
+
+The editor already exposes handles, turn controls, text alignment and non-
+destructive Reframe. The stakeholder found each capability only after asking or
+experimenting, so adding more machinery would solve the wrong problem. The
+existing one-time coach remains one quiet, dismissible support scrap; its words
+now point at the controls actually painted on the screen. Every selected element
+says that handles resize and the controls below turn it. A selected photo adds
+one honest distinction: Reframe crops inside the frame. The typing hand-off names
+Align and Size instead of the vague "More styles" umbrella.
+
+No gesture, handle meaning, crop behavior, persistence flag, context-bar action,
+or document/rendering semantic changes. The photo line is contextual, not a
+second onboarding sequence. DESIGN FROZEN 2026-08-26.
+=========================================================================== -->
+<style>
+.coach-a17{position:absolute;left:50%;top:76px;z-index:61;display:none;align-items:center;
+  width:min(320px,calc(100% - 28px));gap:var(--gap-md);padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg);
+  transform:translateX(-50%) rotate(-.6deg);background:var(--surface-soft);color:var(--ink);
+  border:1.5px solid var(--ink);border-radius:var(--br-pill);font-size:.79rem}
+.coach-a17.show{display:flex}
+.coach-a17 span{flex:1}
+.coach-a17 button{min-width:48px;min-height:48px;padding:var(--gap-xs) var(--gap-md);border:0;
+  border-radius:var(--br-pill);background:none;color:var(--ink);font:700 .78rem var(--sans);
+  text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px;cursor:pointer}
+</style>
+<script>
+const coach=document.createElement('div');
+coach.className='coach-a17'; coach.id='coachA17';
+coach.innerHTML='<span></span><button type="button">Got it</button>';
+$('phone').appendChild(coach);
+coach.onclick=e=>e.stopPropagation();
+coach.querySelector('button').onclick=e=>{e.stopPropagation();coach.classList.remove('show');};
+
+const selectBeforeA17=select;
+select=function(node){
+  selectBeforeA17(node);
+  coach.querySelector('span').textContent=node.dataset.kind==='photo'
+    ? 'Drag to move. Pull a handle to resize. Turn it below; Reframe crops inside.'
+    : 'Drag to move. Pull a handle to resize. Turn it with the arrows below.';
+  coach.classList.add('show');
+};
+const deselectBeforeA17=deselect;
+deselect=function(){coach.classList.remove('show');deselectBeforeA17();};
+</script>
+
 
 <!-- ===========================================================================
      AMENDMENT LOG — appended, never inserted.
@@ -1005,9 +1244,9 @@ addEventListener('keydown',e=>{
      other on-states were considered and rejected by their own stated rules: `--butter-tint` is what
      `.ctx button:hover` already spends and V21-SPEC §3.2 forbids butter as a state at all (butter is
      material); `.fpage.on`'s berry ring is A2's *current-page* assignment, a different question; and
-     `.pgc.on`'s `leaf-tint` ground measures #333B27 against a #332B22 dark paper — the same defect
-     ADR-100 §4 booked against `butterTint`, an on-state you cannot see.  `leaf`/`on-leaf` is legible in
-     both themes because both halves flip.
+     `.pgc.on` now uses the lit `--leaf-tint` ground with lit `--on-leaf`; the pair remains legible on
+     either room because the card represents paper and does not theme. `leaf`/`on-leaf` remains the
+     corresponding themed action pair elsewhere.
 
      A new selector cannot be added in place without shifting citations, so like A1 it lives in the
      trailing <style>, where the cascade gives it the last word over `.ctx button:hover` (equal
@@ -1229,4 +1468,777 @@ from stroke to fill and four lose their glyph.  That is an intended visual chang
 .doneEdit:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 /* A4 — the checked appearance for a toggling verb.  Same reason for living here as A1. */
 .ctx button.on{background:var(--leaf);color:var(--on-leaf)}
+</style>
+
+<!-- ===========================================================================
+A8 · 2026-08-22 (owner ruling, D-089) — confirmation and control both remain reachable.
+
+Placing Art is the first frozen state that raises the transient confirmation and a selected
+element's context bar together. Neither surface yields: the snack's Undo is the fast escape from an
+unwanted placement, while the context bar is the immediate invitation to Replace, Ink or Delete the
+thing that just landed. Hiding either one makes a successful placement less recoverable or less
+editable.
+
+THE RULING: while both are visible, the snack stacks ABOVE the context bar with exactly 12px of clear
+space between their painted bounds. The snack keeps its existing higher z-order. In every state where
+the context bar is absent, the snack keeps its frozen 88px phone-bottom anchor. The prototype measures
+the context bar's live top edge rather than copying its height, so large text cannot turn the ruling
+back into an overlap. Its 14px layout offset includes 2px for the snack's -0.6 degree rotation, leaving
+at least 12px between the transformed, painted bounds rather than only between unrotated layout boxes.
+
+This amendment changes no copy, dwell time, action, selection, or ordinary one-surface position. It
+only specifies the previously missing coexistence state. The two changed `toast()` lines replace two
+lines in place; this log and the trailing selector are appended, so existing numbered citations do not
+move.
+=========================================================================== -->
+<style>
+.snack.with-context{bottom:var(--stacked-bottom)}
+</style>
+
+<!-- ===========================================================================
+A9 · 2026-08-22 (owner accessibility ruling, D-083 / D-103) — print can stay short;
+speech must stay unambiguous.
+
+D-083: the two dark swatches still DRAW `Ink`; changing the printed pigment name would make the
+palette solve a screen-reader collision by changing everybody's vocabulary. Their accessible names
+now carry the band distinction instead: `Spot ink` in Inks and `Neutral ink` in Neutrals. The context
+verb remains `Ink`. `title` and `data-name` remain the visible pigment name, while `aria-label` owns
+the spoken distinction. Every other swatch continues to use one name for both channels.
+
+D-103: an unauthored Art tile now DRAWS `Not yet` on two intentional lines, which stays on word
+boundaries at the verified large-text scale. Its disabled state continues to SPEAK `Not available yet`; that fuller sentence is
+useful when there is no visual context and must not be shortened merely to fit a tile. This deliberately
+overturns A7's requirement that the visible and spoken strings be verbatim. A7's actual invariant —
+unauthored supplies draw no invented mark and explain their disabled state — remains unchanged.
+
+No colour, geometry, action, availability, or archive/rendering semantics change in this amendment.
+=========================================================================== -->
+
+<!-- ===========================================================================
+A10 · 2026-08-22 (accessibility parity ruling) — 50px is a resting minimum, not a ceiling.
+
+The frozen `.ctx button` declares `min-width:50px` and vertical padding, but no fixed height. Compose
+had turned its default-scale intrinsic height into a fixed 50dp box, which clipped Replace / Ink /
+Delete captions at font scale 1.8. Context verbs now grow vertically when their text metrics require
+it. The bar keeps its bottom inset, copy, order and horizontal geometry.
+
+A8 continues to govern coexistence: the placement snack measures the grown bar's live height and
+keeps 12px clear between painted bounds. No text is shrunk, capped, hidden or ellipsized.
+=========================================================================== -->
+
+<!-- ===========================================================================
+A11 · 2026-08-22 (Art completion ruling) — finish the frozen cabinet before growing it.
+
+The sixteen names, families and order were already frozen; four entries alone still drew no mark.
+This amendment authors those four silhouettes without adding a seventeenth supply, another control,
+or any document/rendering semantic. It therefore completes the existing cabinet and does not enact
+ADR-107's proposed 16-to-51 expansion.
+
+THE RULING: torn tape keeps clean long edges and two visibly hand-torn ends. Torn strip and marker
+underline reuse that same irregular seven-beat edge voice across their long edges, at progressively
+lighter depths, so they read as related handmade materials without being procedural variants. The
+paper clip is one closed, non-self-intersecting ribbon around a doubled wire path; it stays fill-only
+and needs no stroke feature. Every tile continues to draw the exact catalogue outline under A7.
+
+All four paths were authored from scratch as coordinates for Zinely. No reference art was traced,
+opened or consulted. The shapes remain deterministic, unit-square geometry and carry no third-party
+licence. Their tile availability changes from disabled `Not yet` to the same actionable semantics as
+the other twelve. Membership, copy, order, colour, placement defaults and interaction rules do not
+change.
+=========================================================================== -->
+
+<!-- ===========================================================================
+A12 · 2026-08-24 (delegated owner ruling, D-052) — a new text box must look new.
+
+The prototype used to answer Add > Text by selecting its first existing text node and opening that
+node's edit state. It therefore specified the editing transition but specified no creation placement
+at all. Compose filled that silence with one centred transform for every addition. On an occupied page,
+the new outline and cursor could sit directly over existing words and read as editing the old block.
+
+THE RULING: the first addition to an empty page keeps the existing centred 70% x 16% text box. Every
+later Add > Text uses the number of elements already on the current page as its zero-based cascade
+ordinal and moves that same base box 12pt down and right per ordinal. Each axis is capped against the
+remaining page room, so the entire unrotated box stays on the page; when the room is exhausted the edge
+is the deterministic fallback. There is no random jitter, rotation, search, refusal or document change.
+
+All element kinds count as occupied for Text: words should not arrive at the exact default origin merely
+because the thing already there is a photo or a supply. This ruling does NOT move the ordinary Photo
+picker or Art defaults, which remain centred. It also does not settle D-081 Q10's consecutive-share
+seed; that path may reuse the pure geometry but keeps its existing per-batch ordinal until separately
+ruled.
+
+Text still enters the newly minted element's edit session immediately. PlaceTextAndEdit remains one
+reducer-owned act, so selection, undo, autosave and cancellation semantics do not move. The function
+below makes the prototype create a second text node and visibly offsets it, rather than pretending that
+selecting the old demo node demonstrates addition.
+=========================================================================== -->
+
+<!-- ===========================================================================
+A13 · 2026-08-24 (delegated owner ruling, D-081 Q10) — separate shares continue one photo cascade.
+
+Share-in has no visible route in this prototype, but its placement still changes what the Bench shows.
+The former rule restarted its ordinal for each incoming share. Two separate one-photo shares therefore
+placed both photos at the centred default and made the second look lost beneath the first.
+
+THE RULING: a shared photo's cascade ordinal starts from the number of Image elements already on the
+actual current page. Later photos in the same share continue from that seed. The existing 12pt bounded
+down-right geometry remains the whole placement language; this is still an offset, not collision search.
+
+Only Image elements seed this path. Text and Art do not move a shared photo, because this ruling closes
+the repeated-photo data-loss misreading rather than defining general occupied-space layout. The ordinary
+Photo picker remains centred, and no route, copy, undo grouping, persistence rule or document format
+changes. A share that lands after a page switch reads the page current at the successful import commit.
+=========================================================================== -->
+
+<!-- ===========================================================================
+A14 · 2026-08-24 (delegated owner ruling, D-078) — the transform bar wraps when it cannot fit.
+
+The frozen Bench keeps both control families from OD-11: the element verbs drawn by `.ctx`, and the
+single-pointer transform alternatives required for moving, scaling, rotating and reordering. On a narrow
+phone the transform set must never trade away a verb, hide one behind an undiscoverable scroll gesture,
+or shrink any target below 48dp.
+
+THE RULING: transform controls keep their order and full target size, remain centred, and flow onto the
+minimum number of additional rows required by the available width. Where every control fits, the bar
+remains one row. There is no horizontal scrolling, overflow menu, clipped-button hint or reduced control
+set. The bar grows vertically toward the page; it does not cover the bottom navigation or page content.
+
+This amendment freezes layout only. Labels, actions, reducer intents, availability rules, haptics and
+platform accessibility semantics do not change. Every rendered control remains named, clickable and
+enabled in the platform accessibility tree.
+=========================================================================== -->
+<!-- ===========================================================================
+A20 · 2026-08-26 (owner-approved, D-110) — new words begin centred.
+
+THE RULING: Add > Text creates the newly minted Text element with centred paragraph alignment. The
+existing centred 70% x 16% frame, D-052 cascade, immediate edit session, selection, undo/autosave and
+accessibility behavior do not change. The Type surface still offers Left, Centre and Right immediately
+after Done, so this is a friendly starting point rather than a restriction.
+
+This is a placement-time default only. Existing Text elements keep their stored alignment, including
+the historical left/start fallback when an older payload omitted the field. The model and serializer
+defaults therefore do not move, and opening an existing zine cannot restyle it. Photo, Art and ordinary
+text-style edits are outside this amendment.
+
+🔒 DESIGN FREEZE — owner approved the mobile-adapted recommendation on 2026-08-26. Compose must
+implement this at the reducer-owned Add > Text placement seam, never by changing TextStyle's model
+default or by applying a render-time override.
+=========================================================================== -->
+<script>
+function placeTextAndEdit(){
+  const source=[...document.querySelectorAll('.el')].find(e=>e.dataset.kind==='text');
+  const ordinal=document.querySelectorAll('.el').length;
+  const entry={kind:'text',label:'Text: New words',html:'<div class="t-title">New words<span class="caret"></span></div>'};
+  const i=ELS.push(entry)-1, node=source.cloneNode(true), offset=Math.min(12*ordinal,48);
+  node.dataset.i=i; node.dataset.kind='text'; node.setAttribute('aria-label',entry.label+'. Tap to select.');
+  node.querySelector('.t-title,.t-body').innerHTML='New words<span class="caret"></span>';
+  node.style.textAlign='center';
+  node.style.transform=`translate(${offset}px,${offset}px)`;
+  node.onclick=e=>{e.stopPropagation();select(node)};
+  node.ondblclick=e=>{e.stopPropagation();select(node);edit()};
+  source.insertAdjacentElement('afterend',node); select(node); edit();
+}
+</script>
+<!-- ===========================================================================
+A15 ITERATION 2 · 2026-08-25 (D-080 / ADR-107 R5) — find a material without
+turning the Art box into a stock browser. OWNER-RULED SCOPE; VISUAL FREEZE PENDING.
+
+WHY THIS DRAFT EXISTS. A5 correctly removed search and filters from a cabinet of
+sixteen things that fit at once. ADR-107 proposes a materially different cabinet:
+roughly fifty-one authored supplies, where showing every family in full makes
+recognition slower and pushes a known material several screens away. D-080 also
+records the duplicate Photo/Art glyph and the missing no-results state.
+
+OWNER RULING, 2026-08-25. Art receives its own collage glyph: two overlapping paper scraps
+and one printed dot, not the Photo frame. The Art sheet keeps one surface and one
+local, offline catalogue. A search field matches the user-facing name and curated
+tags. Four family buttons filter that same catalogue; there is deliberately no
+fifth pseudo-family named All. Pressing the selected family again clears it, so an
+active filter is visible and directly reversible. Typing or filtering hides the
+duplicated Recent row. Clearing both restores the complete, family-shelved box.
+
+No result is not a blank grid. It says `No art found`, suggests another word, and
+offers `Show all art`, which clears search and family together. Result changes are
+announced politely; the search field has a visible label; family buttons expose
+pressed state; every target remains at least 48px. Filtering is immediate and
+local. No query, tag, project data or usage signal leaves the device.
+
+Because Favourites now ships with growth, A15 also pays the accessibility debt
+booked by A7: the 48px star is a sibling of the placement button, never an
+interactive control nested inside it.
+
+The owner also ruled the first expansion is sixteen named additions, for a 32-piece
+cabinet, and upheld the no-randomisation boundary: no shuffled catalogue, generated
+outline, auto-arrangement or surprise placement. The remaining ~19 candidates stay
+in the curated backlog. The preliminary silhouettes below exist to judge the panel's
+real near-term density; production geometry still needs provenance, outline review,
+render parity and its own freeze. Production copy and tag vocabulary belong in
+:core:copy, and filtering remains pure Kotlin.
+=========================================================================== -->
+<style>
+.art-tools{display:flex;flex-direction:column;gap:var(--gap-sm);margin:0 0 var(--gap-md)}
+.art-search-label{font-family:var(--voice);font-size:.78rem;font-weight:700;color:var(--ink)}
+.art-search-wrap{position:relative}
+.art-search{width:100%;min-height:48px;padding:0 44px 0 var(--gap-md);font:500 .88rem var(--sans);
+  color:var(--ink);background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-md);
+  box-shadow:2px 2px 0 var(--ink-line);outline:none}
+.art-search:focus-visible{box-shadow:0 0 0 3px var(--berry),2px 2px 0 var(--ink-line)}
+.art-search-mark{position:absolute;right:var(--gap-md);top:50%;width:20px;height:20px;
+  transform:translateY(-50%);color:var(--ink-soft);pointer-events:none}
+.art-search-mark svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;
+  stroke-linecap:round}
+.art-families{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap-sm)}
+.art-family{min-height:48px;padding:var(--gap-sm) var(--gap-md);font:700 .72rem var(--sans);
+  color:var(--ink-soft);background:var(--surface);border:1.5px solid var(--ink);
+  border-radius:var(--br-pill);box-shadow:2px 2px 0 var(--ink-line);cursor:pointer}
+.art-family[aria-pressed="true"]{color:var(--on-leaf);background:var(--leaf)}
+.art-family:active,.art-reset:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
+.art-results{min-height:20px;color:var(--ink-soft);font-size:.72rem}
+.art-empty{display:none;text-align:center;margin:var(--gap-xl) 0 var(--gap-lg);padding:var(--gap-xl);
+  color:var(--ink-soft);background:var(--butter-tint);border:1.5px dashed var(--ink);
+  border-radius:var(--br-md)}
+.art-empty.show{display:block}
+.art-empty b{display:block;margin-bottom:var(--gap-xs);font:700 1rem var(--voice);color:var(--ink)}
+.art-favourite-empty{margin:-4px 0 var(--gap-md);color:var(--ink-soft);font-size:.72rem}
+.art-tile-wrap{position:relative;min-width:0;aspect-ratio:1}
+.art-tile-wrap>.tile{width:100%;height:100%}
+.art-tile-wrap:nth-child(3n)>.tile{--tt:-1.6deg;background:var(--berry-tint);color:var(--on-leaf)}
+.art-tile-wrap:nth-child(4n)>.tile{--tt:1.4deg;background:var(--butter-tint);color:var(--ink)}
+.art-favourite-action{position:absolute;z-index:1;top:0;right:0;width:48px;height:48px;padding:0;
+  color:var(--ink-soft);background:transparent;border:0;font-size:.9rem;cursor:pointer}
+.art-favourite-action.on{color:var(--butter);-webkit-text-stroke:.7px var(--ink);paint-order:stroke fill}
+.art-favourite-action:focus-visible{outline:3px solid var(--berry);outline-offset:-5px;border-radius:var(--br-md)}
+.art-reset{min-height:48px;margin-top:var(--gap-md);padding:var(--gap-sm) var(--gap-lg);
+  font:700 .78rem var(--sans);color:var(--on-leaf);background:var(--leaf);
+  border:1.5px solid var(--ink);border-radius:var(--br-pill);box-shadow:2px 2px 0 var(--ink-line);
+  cursor:pointer}
+</style>
+<script>
+const openSupplyBeforeA15=openSupply;
+openSupply=function(){
+  openSupplyBeforeA15();
+  const icon=$('sheet').querySelector('[data-a="art"] .ico');
+  if(icon) icon.innerHTML=svg('<path d="M4 7l8-3 3 9-8 3z"/><path d="M11 12l8-2 1 8-8 2z"/><circle cx="17.5" cy="6.5" r="2.5"/>');
+};
+
+const openArtBeforeA15=openArt;
+const ART_FIRST_WAVE=[
+  ['Tape & fixings','tape.masking','Masking tape','<path d="M0 3 L24 3 L24 21 L0 21 Z"/>'],
+  ['Tape & fixings','fix.stitch','Saddle stitch','<path d="M5 0 L8 0 L8 24 L5 24 Z M16 0 L19 0 L19 24 L16 24 Z"/>'],
+  ['Tape & fixings','fix.grommet','Eyelet','<path d="M12 0 C18.63 0 24 5.37 24 12 C24 18.63 18.63 24 12 24 C5.37 24 0 18.63 0 12 C0 5.37 5.37 0 12 0 Z M12 5 C8.13 5 5 8.13 5 12 C5 15.87 8.13 19 12 19 C15.87 19 19 15.87 19 12 C19 8.13 15.87 5 12 5 Z"/>'],
+  ['Tape & fixings','fix.pushpin','Push pin','<path d="M5 2 L19 2 L17 8 L14 10 L14 17 L12 24 L10 17 L10 10 L7 8 Z"/>'],
+  ['Stamps & marks','mark.hand','Pointing hand','<path d="M0 9 L10 9 L10 5 L13 5 L13 8 L16 6 L18 8 L21 8 L24 11 L21 14 L18 14 L16 16 L13 14 L13 18 L10 18 L10 14 L0 14 Z"/>'],
+  ['Stamps & marks','mark.crop','Crop marks','<path d="M0 0 H9 V2 H2 V9 H0 Z M15 0 H24 V9 H22 V2 H15 Z M0 15 H2 V22 H9 V24 H0 Z M22 15 H24 V24 H15 V22 H22 Z"/>'],
+  ['Stamps & marks','mark.bar','Colour bar','<path d="M0 4 H5 V20 H0 Z M6.5 4 H11.5 V20 H6.5 Z M13 4 H18 V20 H13 Z M19.5 4 H24 V20 H19.5 Z"/>'],
+  ['Stamps & marks','mark.scan','Copier streak','<path d="M2 0 H5 L4 24 H0 Z M9 0 H11 L13 24 H8 Z M17 0 H22 L24 24 H19 Z"/>'],
+  ['Stamps & marks','mark.perf','Perforation','<path d="M0 10 H3 V14 H0 Z M5 10 H8 V14 H5 Z M10 10 H13 V14 H10 Z M15 10 H18 V14 H15 Z M20 10 H24 V14 H20 Z"/>'],
+  ['Stamps & marks','mark.burst','Starburst','<path d="M12 0 L14 7 L19 2 L18 9 L24 8 L19 12 L24 16 L18 15 L19 22 L14 17 L12 24 L10 17 L5 22 L6 15 L0 16 L5 12 L0 8 L6 9 L5 2 L10 7 Z"/>'],
+  ['Cut paper','paper.stub','Ticket stub','<path d="M0 3 H24 V9 C20 9 20 15 24 15 V21 H0 V15 C4 15 4 9 0 9 Z"/>'],
+  ['Cut paper','paper.stamp','Postage stamp','<path d="M2 0 L4 2 L6 0 L8 2 L10 0 L12 2 L14 0 L16 2 L18 0 L20 2 L22 0 L24 2 L22 4 L24 6 L22 8 L24 10 L22 12 L24 14 L22 16 L24 18 L22 20 L24 22 L22 24 L20 22 L18 24 L16 22 L14 24 L12 22 L10 24 L8 22 L6 24 L4 22 L2 24 L0 22 L2 20 L0 18 L2 16 L0 14 L2 12 L0 10 L2 8 L0 6 L2 4 L0 2 Z"/>'],
+  ['Cut paper','paper.deckle','Deckle edge','<path d="M1 1 L5 0 L8 2 L12 0 L16 1 L20 0 L24 2 L23 6 L24 10 L22 14 L24 18 L23 23 L19 24 L15 22 L11 24 L7 23 L3 24 L0 21 L2 17 L0 13 L1 9 L0 5 Z"/>'],
+  ['Cut paper','paper.hole','Torn hole','<path d="M2 4 L7 0 L12 2 L17 0 L23 5 L22 10 L24 15 L20 22 L14 21 L9 24 L3 20 L1 14 L0 9 Z M7 8 L6 13 L9 18 L14 17 L18 14 L17 9 L13 6 Z"/>'],
+  ['Cut paper','paper.dogear','Folded corner','<path d="M2 2 H17 L22 7 V22 H2 Z"/>'],
+  ['Cut shapes','shape.ring','Ring','<path d="M12 0 C18.63 0 24 5.37 24 12 C24 18.63 18.63 24 12 24 C5.37 24 0 18.63 0 12 C0 5.37 5.37 0 12 0 Z M12 5 C8.13 5 5 8.13 5 12 C5 15.87 8.13 19 12 19 C15.87 19 19 15.87 19 12 C19 8.13 15.87 5 12 5 Z"/>']
+];
+const ART_TAGS={
+  'tape.torn':'tape torn strip sticky collage','fix.corner':'corner mount photo fixing',
+  'fix.staple':'staple fixing metal','fix.clip':'clip paper wire fixing',
+  'mark.asterisk':'star asterisk burst stamp','mark.arrow':'arrow pointer direction stamp',
+  'mark.halftone':'halftone dots texture print','mark.registration':'registration cross print mark',
+  'paper.strip':'torn strip paper collage','paper.window':'window frame paper cutout',
+  'paper.tag':'speech tag label bubble paper','paper.underline':'marker underline highlight paper',
+  'shape.rect':'rectangle square block shape','shape.circle':'circle dot round shape',
+  'shape.triangle':'triangle shape','shape.rule':'straight rule line shape',
+  'tape.masking':'masking tape clean sticky collage','fix.stitch':'saddle stitch binding thread',
+  'fix.grommet':'eyelet grommet hole binding','fix.pushpin':'push pin tack fixing',
+  'mark.hand':'pointing hand manicule pointer','mark.crop':'crop trim printer marks',
+  'mark.bar':'colour color bar print register','mark.scan':'copier scan streak photocopy',
+  'mark.perf':'perforation tear line print','mark.burst':'starburst burst stamp',
+  'paper.stub':'ticket stub perforated paper','paper.stamp':'postage stamp serrated paper',
+  'paper.deckle':'deckle rough paper edge','paper.hole':'torn hole ripped paper',
+  'paper.dogear':'folded corner dog ear paper','shape.ring':'ring circle hole shape'
+};
+const ART_FAVOURITES=new Set();
+
+openArt=function(){
+  openArtBeforeA15();
+  const sheet=$('sheet'), heading=sheet.querySelector('h3');
+  const controls=document.createElement('div');
+  controls.className='art-tools';
+  controls.innerHTML='<label class="art-search-label" for="artSearch">Find a piece</label>'
+    +'<div class="art-search-wrap"><input class="art-search" id="artSearch" type="search" '
+    +'placeholder="Search names and tags" autocomplete="off">'
+    +'<span class="art-search-mark" aria-hidden="true">'+svg('<circle cx="10" cy="10" r="6"/><path d="M15 15l5 5"/>')+'</span></div>'
+    +'<div class="art-families" aria-label="Art families">'
+    +FAMILIES.map(f=>'<button class="art-family" type="button" aria-pressed="false">'+f+'</button>').join('')
+    +'</div><div class="art-results" role="status" aria-live="polite"></div>';
+  heading.insertAdjacentElement('afterend',controls);
+
+  const empty=document.createElement('div');
+  empty.className='art-empty';
+  empty.innerHTML='<b>No art found</b><span>Try another word, or open the full box.</span>'
+    +'<br><button class="art-reset" type="button">Show all art</button>';
+  sheet.appendChild(empty);
+
+  const recentLabel=[...sheet.querySelectorAll('.lbl')].find(x=>x.textContent.startsWith('Recent'));
+  const recentGrid=recentLabel.nextElementSibling;
+  recentLabel.textContent='Recent';
+  const favouriteLabel=document.createElement('div');
+  favouriteLabel.className='lbl'; favouriteLabel.textContent='Favourites';
+  const favouriteGrid=document.createElement('div');
+  favouriteGrid.className='grid art-favourite-grid';
+  const favouriteEmpty=document.createElement('div');
+  favouriteEmpty.className='art-favourite-empty';
+  favouriteEmpty.textContent='Star pieces to keep them close.';
+  recentGrid.insertAdjacentElement('afterend',favouriteEmpty);
+  recentGrid.insertAdjacentElement('afterend',favouriteGrid);
+  recentGrid.insertAdjacentElement('afterend',favouriteLabel);
+  const familySections=FAMILIES.map(name=>{
+    const label=[...sheet.querySelectorAll('.lbl')].find(x=>x.textContent===name);
+    const grid=label.nextElementSibling;
+    [...grid.querySelectorAll('.tile')].forEach(tile=>tile.dataset.family=name);
+    return {name,label,grid};
+  });
+  ART_FIRST_WAVE.forEach(([family,id,name,d])=>{
+    const section=familySections.find(x=>x.name===family);
+    section.grid.insertAdjacentHTML('beforeend',tile([id,name,d]));
+    const added=section.grid.lastElementChild;
+    added.dataset.family=family;
+    added.onclick=e=>{if(e.target.classList.contains('fav'))return;e.stopPropagation();closeOverlays();selectByKind('decor');toast('Placed on the page',true);};
+  });
+  let activeFamily='';
+  const search=$('artSearch'), status=sheet.querySelector('.art-results');
+  const families=[...sheet.querySelectorAll('.art-family')];
+  const sourceTiles=[...recentGrid.querySelectorAll('.tile'),...familySections.flatMap(x=>[...x.grid.querySelectorAll('.tile')])];
+  sourceTiles.forEach(source=>{
+    const oldStar=source.querySelector('.fav');
+    if(oldStar)oldStar.remove();
+    const wrapper=document.createElement('div'), star=document.createElement('button');
+    wrapper.className='art-tile-wrap';
+    star.className='art-favourite-action'; star.type='button';
+    source.insertAdjacentElement('beforebegin',wrapper);
+    wrapper.append(source,star);
+  });
+
+  function placeArt(e){e.stopPropagation();closeOverlays();selectByKind('decor');toast('Placed on the page',true);}
+  function renderFavourites(){
+    favouriteGrid.replaceChildren();
+    ART_FAVOURITES.forEach(id=>{
+      const source=sourceTiles.find(x=>x.dataset.supply===id);
+      if(!source)return;
+      const copy=source.cloneNode(true), star=copy.querySelector('.fav');
+      if(star)star.remove();
+      copy.onclick=placeArt;
+      favouriteGrid.appendChild(copy);
+    });
+    const hasFavourites=favouriteGrid.childElementCount>0;
+    favouriteGrid.hidden=!hasFavourites; favouriteEmpty.hidden=hasFavourites;
+  }
+  function syncFavourites(){
+    sourceTiles.forEach(source=>{
+      const star=source.parentElement.querySelector('.art-favourite-action'), on=ART_FAVOURITES.has(source.dataset.supply);
+      if(!star)return;
+      star.classList.toggle('on',on); star.textContent=on?'★':'☆';
+      star.setAttribute('aria-label',(on?'Remove ':'Add ')+source.getAttribute('aria-label')+(on?' from favourites':' to favourites'));
+      star.onclick=e=>{e.stopPropagation();on?ART_FAVOURITES.delete(source.dataset.supply):ART_FAVOURITES.add(source.dataset.supply);syncFavourites();renderFavourites();};
+    });
+  }
+  syncFavourites(); renderFavourites();
+
+  function applyArtFilter(){
+    const query=search.value.trim().toLocaleLowerCase();
+    let visible=0;
+    familySections.forEach(section=>{
+      let sectionVisible=0;
+      [...section.grid.querySelectorAll('.tile')].forEach(tile=>{
+        const terms=(tile.getAttribute('aria-label')+' '+(ART_TAGS[tile.dataset.supply]||'')).toLocaleLowerCase();
+        const show=(!activeFamily||section.name===activeFamily)&&(!query||terms.includes(query));
+        tile.closest('.art-tile-wrap').hidden=!show;
+        if(show){ visible++; sectionVisible++; }
+      });
+      section.label.hidden=sectionVisible===0;
+      section.grid.hidden=sectionVisible===0;
+    });
+    const narrowed=Boolean(activeFamily||query);
+    recentLabel.hidden=narrowed; recentGrid.hidden=narrowed;
+    favouriteLabel.hidden=narrowed; favouriteGrid.hidden=narrowed||ART_FAVOURITES.size===0;
+    favouriteEmpty.hidden=narrowed||ART_FAVOURITES.size>0;
+    empty.classList.toggle('show',visible===0);
+    status.textContent=visible+' '+(visible===1?'piece':'pieces');
+  }
+
+  families.forEach(button=>button.onclick=e=>{
+    e.stopPropagation();
+    activeFamily=activeFamily===button.textContent?'':button.textContent;
+    families.forEach(x=>x.setAttribute('aria-pressed',String(x.textContent===activeFamily)));
+    applyArtFilter();
+  });
+  search.oninput=applyArtFilter;
+  empty.querySelector('.art-reset').onclick=e=>{
+    e.stopPropagation(); activeFamily=''; search.value='';
+    families.forEach(x=>x.setAttribute('aria-pressed','false'));
+    applyArtFilter(); search.focus();
+  };
+  applyArtFilter();
+  cap('Adding · Art','Find a piece by name or material family, then place it on the page.');
+};
+</script>
+
+<!-- ===========================================================================
+A16 ITERATION 3 · 2026-08-25 (D-080 / D-107) — a readable
+materials cabinet and an honest active-ink tray. DESIGN FROZEN 2026-08-26.
+
+This amendment responds to the owner's rendered review of A15. The four-column
+anonymous glyph wall made recognition depend on memory, the 2×2 family controls
+spent nearly a screen on navigation, and the star sat on top of the artwork. Ink
+wrapped its final pot onto an orphan row, hid the active ink's name, and called
+its primary-ink shortcuts whole-zine pairs even though OD-24 applies only the
+first swatch.
+
+A16 keeps A15's accepted information architecture and no-randomisation fence.
+Search remains local; the four real families remain the only filters; clearing
+one returns the complete, stable catalogue. The change is presentation: compact
+horizontal filters, three named material cards per row, deterministic family
+papers, Recent/Favourites rails, and a favourite target in the label band rather
+than over the mark. Ink shows the active ink, lays swatches on a deliberate grid,
+keeps 48px targets around smaller painted pots, and labels palette shortcuts by
+the primary ink they actually apply. The owner approved this rendered Art + Ink
+contract on 2026-08-26; its layout, interaction, copy and states are now the
+production source of truth for the Compose implementation.
+=========================================================================== -->
+<style>
+/* A16 · shared surface rhythm */
+.sheet.art-a16{background:var(--surface);padding-left:var(--gap-lg);padding-right:var(--gap-lg)}
+.sheet.art-a16 .sh{margin-bottom:var(--gap-sm)}
+.sheet.art-a16 .art-tools{gap:var(--gap-sm);margin-bottom:var(--gap-sm)}
+.sheet.art-a16 .art-search-label{font-size:.72rem;letter-spacing:.01em}
+.sheet.art-a16 .art-search{min-height:48px;border-radius:var(--br-pill);padding-left:var(--gap-lg);
+  background:var(--paper);color:#27270F;box-shadow:none}
+.sheet.art-a16 .art-search::placeholder{color:#6A452F;opacity:.82}
+.sheet.art-a16 .art-families{display:flex;gap:var(--gap-sm);overflow-x:auto;padding:2px 2px 5px;
+  scrollbar-width:none;scroll-snap-type:x proximity}
+.sheet.art-a16 .art-families::-webkit-scrollbar{display:none}
+.sheet.art-a16 .art-family{flex:0 0 auto;min-height:48px;padding:var(--gap-sm) var(--gap-md);
+  box-shadow:none;scroll-snap-align:start;white-space:nowrap}
+.sheet.art-a16 .art-results{display:flex;align-items:center;min-height:24px;font-weight:700}
+.sheet.art-a16 .lbl{display:flex;align-items:baseline;justify-content:space-between;
+  margin-top:var(--gap-lg);margin-bottom:var(--gap-sm);font-size:.64rem}
+.sheet.art-a16 .art-section-count{font:600 .66rem var(--sans);letter-spacing:0;
+  text-transform:none;color:var(--ink-soft);opacity:.82}
+.sheet.art-a16 .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap-md)}
+.sheet.art-a16 .art-rail{display:grid;grid-auto-flow:column;grid-auto-columns:104px;
+  grid-template-columns:none;overflow-x:auto;padding:2px 4px 8px 2px;scroll-snap-type:x proximity}
+.sheet.art-a16 .art-rail .art-tile-wrap{scroll-snap-align:start}
+.sheet.art-a16 .art-tile-wrap{aspect-ratio:auto;min-height:134px}
+.sheet.art-a16 .art-tile-wrap>.tile{width:100%;height:134px;aspect-ratio:auto;display:flex;
+  flex-direction:column;justify-content:flex-start;overflow:hidden;padding:0;transform:rotate(var(--tt,0deg))}
+.sheet.art-a16 .art-tile-wrap>.tile svg{width:46px;height:46px;margin:auto;flex:none}
+.sheet.art-a16 .art-tile-name{display:flex;align-items:center;width:100%;min-height:48px;
+  margin-top:auto;padding:6px 38px 6px 8px;border-top:1.5px solid rgba(39,39,15,.22);
+  background:rgba(255,246,232,.72);color:#27270F;font:700 .66rem/1.15 var(--sans);
+  text-align:left}
+.sheet.art-a16 .art-favourite-action{top:auto;right:0;bottom:0;width:48px;height:48px;
+  color:#6A452F;font-size:1rem}
+.sheet.art-a16 .art-family-tape>.tile{--tt:-.55deg;background:var(--leaf-tint);color:#27270F}
+.sheet.art-a16 .art-family-marks>.tile{--tt:.45deg;background:var(--berry-tint);color:#27270F}
+.sheet.art-a16 .art-family-paper>.tile{--tt:-.35deg;background:var(--paper);color:#27270F}
+.sheet.art-a16 .art-family-shapes>.tile{--tt:.35deg;background:var(--butter);color:#27270F}
+.sheet.art-a16 .art-favourite-empty{margin:0;padding:var(--gap-md);border:1.5px dashed var(--ink);
+  border-radius:var(--br-md);background:var(--butter-tint)}
+.sheet.art-a16 .art-favourite-grid>.tile{width:104px;height:134px;aspect-ratio:auto;display:flex;
+  flex-direction:column;padding:0;overflow:hidden;scroll-snap-align:start}
+.sheet.art-a16 .art-favourite-grid>.tile svg{width:46px;height:46px;margin:auto}
+
+/* A16 · Ink is a compact tool tray, not a second catalogue. */
+.inkpop.ink-a16{padding:var(--gap-md);background:var(--surface);max-height:calc(100% - 24px);overflow:auto}
+.inkpop.ink-a16 h4{margin-bottom:var(--gap-sm)}
+.inkpop.ink-a16 h4 button{min-width:64px;min-height:48px;padding:0 var(--gap-md)}
+.ink-current{display:flex;align-items:center;gap:var(--gap-sm);min-height:52px;padding:var(--gap-sm) var(--gap-md);
+  background:var(--paper);color:#27270F;border:1.5px solid var(--ink);border-radius:var(--br-md)}
+.ink-current-pot{width:30px;height:30px;flex:none;border:1.5px solid #27270F;border-radius:50%}
+.ink-current-copy{display:flex;min-width:0;flex-direction:column;line-height:1.15}
+.ink-current-copy small{font-size:.61rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6A452F}
+.ink-current-copy b{font:700 .88rem var(--voice);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inkpop.ink-a16 .inklbl{margin-top:var(--gap-sm);margin-bottom:2px}
+.inkpop.ink-a16 .pots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0}
+.ink-choice{display:flex;min-width:0;min-height:56px;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;background:transparent;border:0;color:var(--ink-soft);cursor:pointer;
+  font:600 .56rem/1 var(--sans)}
+.ink-choice .pot{display:block;width:30px;height:30px;flex:none;pointer-events:none}
+.ink-choice .ink-name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ink-choice.on .pot::after{content:"";position:absolute;inset:-5px;border:1.6px dashed var(--ink);
+  border-radius:var(--br-pill)}
+.ink-choice:focus-visible{outline:3px solid var(--berry);outline-offset:-3px;border-radius:var(--br-sm)}
+.inkpop.ink-a16 .presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--gap-sm)}
+.inkpop.ink-a16 .preset{min-height:58px;min-width:0;flex-direction:column;align-items:flex-start;
+  justify-content:center;gap:3px;padding:var(--gap-sm);border-radius:var(--br-md);box-shadow:none;
+  color:var(--ink);text-align:left}
+.inkpop.ink-a16 .preset i b{width:16px;height:16px}
+.ink-preset-name{font-weight:700;line-height:1.05}
+.ink-preset-action{font-size:.57rem;color:var(--ink-soft);line-height:1.1}
+.inkpop.ink-a16 .preset:active{transform:translate(1px,1px)}
+</style>
+<script>
+const openArtBeforeA16=openArt;
+openArt=function(){
+  openArtBeforeA16();
+  const sheet=$('sheet');
+  sheet.classList.add('art-a16');
+  const search=$('artSearch');
+  search.placeholder='Try tape, star, torn…';
+
+  const familyClass={
+    'Tape & fixings':'art-family-tape','Stamps & marks':'art-family-marks',
+    'Cut paper':'art-family-paper','Cut shapes':'art-family-shapes'
+  };
+  sheet.querySelectorAll('.art-tile-wrap').forEach(wrapper=>{
+    const tile=wrapper.querySelector('.tile');
+    if(!tile)return;
+    const matchingFamilyTile=[...sheet.querySelectorAll('.tile')].find(candidate=>
+      candidate!==tile&&candidate.dataset.supply===tile.dataset.supply&&candidate.dataset.family);
+    const family=tile.dataset.family||(matchingFamilyTile&&matchingFamilyTile.dataset.family)||'';
+    wrapper.classList.add(familyClass[family]||'');
+    if(!tile.querySelector('.art-tile-name')){
+      const name=document.createElement('span');
+      name.className='art-tile-name';
+      name.textContent=tile.getAttribute('aria-label');
+      tile.appendChild(name);
+    }
+  });
+  [...sheet.querySelectorAll('.lbl')].forEach(label=>{
+    const grid=label.nextElementSibling;
+    if(!grid||!grid.classList.contains('grid'))return;
+    const count=grid.querySelectorAll('.tile').length;
+    const countNode=document.createElement('span');
+    countNode.className='art-section-count';
+    countNode.textContent=count+(count===1?' piece':' pieces');
+    label.appendChild(countNode);
+    if(label.firstChild.textContent.trim()==='Recent'||label.firstChild.textContent.trim()==='Favourites'){
+      grid.classList.add('art-rail');
+    }
+  });
+  cap('Adding · Art','Browse named materials, narrow by family, or search the box. Nothing is shuffled.');
+};
+
+const inkChoices=list=>'<div class="pots">'+list.map(([name,colour,spoken])=>
+  '<button class="ink-choice" type="button" aria-label="'+(spoken||name)+'" data-ink="'+colour+'" data-name="'+name+'">'
+  +'<span class="pot" style="background:'+colour+'"></span><span class="ink-name" aria-hidden="true">'+name+'</span></button>'
+).join('')+'</div>';
+
+openInk=function(){
+  if(!sel)selectByKind('text');
+  const target=sel&&sel.querySelector('.t-title,.t-body,svg');
+  const targetColour=target?getComputedStyle(target).color:'#2A251E';
+  const colourKey=value=>{const context=document.createElement('canvas').getContext('2d');context.fillStyle=value;return context.fillStyle.toLowerCase();};
+  const allSwatches=[...INKS,...TINTS,...NEUT];
+  const current=allSwatches.find(([,colour])=>colourKey(colour)===colourKey(targetColour));
+  const isText=sel&&sel.dataset.kind==='text';
+  const bands='<div class="inklbl">Spot inks</div>'+inkChoices(INKS)
+    +(isText?'':'<div class="inklbl">Paper tints</div>'+inkChoices(TINTS))
+    +'<div class="inklbl">Neutrals</div>'+inkChoices(NEUT);
+  const presets=PRESETS.map(([name,colours])=>{
+    const primary=allSwatches.find(([,colour])=>colour.toLowerCase()===colours[0].toLowerCase());
+    const primaryName=primary?primary[0]:'primary ink';
+    return '<button class="preset" type="button" data-name="'+name+'" data-ink="'+colours[0]+'" data-primary="'+primaryName
+      +'" aria-label="'+name+'. Apply '+primaryName+'"><i aria-hidden="true">'
+      +colours.map(c=>'<b style="background:'+c+'"></b>').join('')+'</i><span class="ink-preset-name">'+name
+      +'</span><span class="ink-preset-action">Apply '+primaryName+'</span></button>';
+  }).join('');
+  $('inkpop').classList.add('ink-a16');
+  $('inkpop').innerHTML='<h4>Ink<button id="inkClose" type="button">Done</button></h4>'
+    +'<div class="ink-current" aria-live="polite"><span class="ink-current-pot" style="background:'+targetColour+'"></span>'
+    +'<span class="ink-current-copy"><small>Current ink</small><b>'+(current?current[0]:'Custom ink')+'</b></span></div>'
+    +bands+'<div class="inklbl">Starting palettes</div><div class="presets">'+presets+'</div>';
+  $('inkpop').classList.add('show'); $('ctx').classList.remove('show');
+  const currentPot=$('inkpop').querySelector('.ink-current-pot');
+  const currentName=$('inkpop').querySelector('.ink-current-copy b');
+  function applyChoice(name,colour,button){
+    $('inkpop').querySelectorAll('.ink-choice').forEach(x=>x.classList.remove('on'));
+    if(button)button.classList.add('on');
+    if(target)target.style.color=colour;
+    $('editSw').style.background=colour;
+    currentPot.style.background=colour; currentName.textContent=name;
+    toast('Ink · '+name,false);
+  }
+  $('inkClose').onclick=e=>{e.stopPropagation();$('inkpop').classList.remove('show');
+    if(sel){buildCtx(sel.dataset.kind);$('ctx').classList.add('show');}};
+  $('inkpop').querySelectorAll('.ink-choice').forEach(button=>button.onclick=e=>{
+    e.stopPropagation();applyChoice(button.dataset.name,button.dataset.ink,button);
+  });
+  if(current){
+    const selectedChoice=[...$('inkpop').querySelectorAll('.ink-choice')].find(button=>
+      colourKey(button.dataset.ink)===colourKey(current[1]));
+    if(selectedChoice)selectedChoice.classList.add('on');
+  }
+  $('inkpop').querySelectorAll('.preset').forEach(button=>button.onclick=e=>{
+    e.stopPropagation();
+    const matching=[...$('inkpop').querySelectorAll('.ink-choice')].find(x=>x.dataset.ink.toLowerCase()===button.dataset.ink.toLowerCase());
+    applyChoice(button.dataset.primary,button.dataset.ink,matching);
+  });
+  cap('Ink','Choose a named ink. Starting palettes show combinations; tapping one applies the named primary ink.');
+};
+</script>
+
+<!-- ===========================================================================
+A19 · 2026-08-26 (ADR-109 owner ruling) — one photo across the fold.
+DESIGN FROZEN 2026-08-26.
+
+The action belongs to the selected-photo context bar, because it transforms a
+photo already on the page; it is not another kind of thing in Add. "Across
+fold" is the visible verb. It opens one calm confirmation before changing the
+document. The sheet names both pages, states that existing page content stays
+on top, and warns that the middle of the photo lands on the physical fold.
+
+Confirm creates two ordinary full-page photos behind existing content, sharing
+one asset with complementary crops. It replaces the selected photo in place and
+adds its partner on the fixed booklet pair (2|3, 4|5, 6|7, 8|1). It deletes
+nothing else. The whole act is one undo step. The Bench continues to show one
+page at a time; the first complete join is the printed and folded zine, so the
+confirmation says that before the maker commits. Back, outside-tap and Cancel
+dismiss without a document change. Confirm says "Across pages"; success says
+"Photo runs across pages 2 & 3" and offers Undo.
+=========================================================================== -->
+<style>
+.spread-confirm{position:absolute;inset:0;z-index:90;display:none;align-items:flex-end;
+  padding:var(--gap-md);background:rgba(25,22,16,.48)}
+.spread-confirm.show{display:flex}
+.spread-card{width:100%;padding:var(--gap-lg);background:var(--surface);color:var(--ink);
+  border:1.5px solid var(--ink);border-radius:var(--br-lg);box-shadow:var(--shadow-card)}
+.spread-card h3{margin:0 0 var(--gap-sm);font:700 1.22rem/1.1 var(--voice)}
+.spread-card p{margin:0 0 var(--gap-sm);font:500 .82rem/1.45 var(--sans);color:var(--ink-soft)}
+.spread-pages{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin:var(--gap-md) 0;
+  border:1.5px solid var(--ink);border-radius:var(--br-md);overflow:hidden;background:var(--ink)}
+.spread-page{min-height:86px;display:grid;place-items:center;background:var(--paper);color:#27270F;
+  font:700 .7rem var(--sans)}
+.spread-actions{display:flex;justify-content:flex-end;gap:var(--gap-sm);margin-top:var(--gap-md)}
+.spread-actions button{min-height:48px;padding:0 var(--gap-lg);border:1.5px solid var(--ink);
+  border-radius:var(--br-pill);background:transparent;color:var(--ink);font:700 .76rem var(--sans)}
+.spread-actions .spread-do{background:var(--leaf);color:var(--on-leaf)}
+</style>
+<script>
+ICON.spread=svg('<rect x="3" y="5" width="8" height="14" rx="1"/><rect x="13" y="5" width="8" height="14" rx="1"/><path d="M11 5v14M8 12h8"/>');
+const toolsForBeforeA19=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForBeforeA19(kind);
+  if(kind!=='photo')return tools;
+  return [tools[0],['Across fold',ICON.spread,openSpreadConfirm],...tools.slice(1)];
+};
+const spread=document.createElement('div');
+spread.className='spread-confirm'; spread.id='spreadConfirm';
+spread.setAttribute('role','dialog'); spread.setAttribute('aria-modal','true');
+spread.setAttribute('aria-labelledby','spreadTitle');
+spread.innerHTML='<section class="spread-card"><h3 id="spreadTitle">Run this photo across pages 2 &amp; 3?</h3>'
+  +'<p>Zinely will place one half on each page. Existing words and art stay on top.</p>'
+  +'<div class="spread-pages" aria-hidden="true"><div class="spread-page">Page 2</div><div class="spread-page">Page 3</div></div>'
+  +'<p><b>Keep faces and words away from the middle.</b> It lands on the fold. You will see the complete picture after printing and folding.</p>'
+  +'<div class="spread-actions"><button type="button" class="spread-cancel">Cancel</button>'
+  +'<button type="button" class="spread-do">Across pages</button></div></section>';
+$('phone').appendChild(spread);
+function closeSpreadConfirm(){spread.classList.remove('show');if(sel)$('ctx').classList.add('show');}
+function openSpreadConfirm(){
+  $('ctx').classList.remove('show'); spread.classList.add('show');
+  spread.querySelector('.spread-cancel').focus();
+  cap('Across fold','One photo, two ordinary pages, one physical fold. Nothing else is removed.');
+}
+spread.onclick=e=>{e.stopPropagation();if(e.target===spread)closeSpreadConfirm();};
+spread.querySelector('.spread-cancel').onclick=e=>{e.stopPropagation();closeSpreadConfirm();};
+spread.querySelector('.spread-do').onclick=e=>{
+  e.stopPropagation();closeSpreadConfirm();toast('Photo runs across pages 2 & 3',true);
+  cap('Across fold · pages 2 & 3','Each half stays editable. Print and fold the zine to see the complete picture.');
+};
+</script>
+
+<!-- ===========================================================================
+A21 · 2026-08-26 (owner QoL ruling) — duplicate the thing in hand.
+DESIGN FROZEN 2026-08-26.
+
+Duplicate is a universal selected-element verb: Text, Photo and Art all place it
+immediately before destructive Delete in the existing contextual tool. It opens
+no sheet and asks no confirmation. One tap creates one independent copy 12pt down
+and right, raises it above the current page stack, and selects the copy so the next
+drag or style change acts on the new thing. At a page edge the offset reverses on
+that axis; an object that consumes a whole axis stays aligned on that axis. The
+source never moves. Text/style, photo asset/framing/filter, and Art supply/ink/
+mirror properties survive exactly; only id, position and z-rank change.
+
+Six honest actions must still fit a 360dp phone without shrinking their 50dp touch
+floors. This amendment compacts only the new six-verb rows: horizontal button
+padding is 2dp (vertical stays 8dp) and the hair gap is 1dp. Labels, touch floors,
+the content-width pill and every action remain visible without horizontal scroll.
+
+An unfinished blank text box is not authored content: Duplicate stays visible but
+unavailable there and says `Type something first`, matching Size and Ink.
+
+The act is one undo step. Its snack says "Duplicated" and offers Undo. Undo removes
+only the copy. This is the mobile translation of the earlier frozen V1 Bench's
+selected-object Duplicate — not a layer panel, clipboard, multi-select operation,
+or page duplication. Page duplication remains a separate page-navigation ruling.
+=========================================================================== -->
+<script>
+ICON.duplicate=svg('<rect x="8" y="8" width="11" height="11" rx="1.5"/><path d="M16 8V6.5A1.5 1.5 0 0 0 14.5 5h-8A1.5 1.5 0 0 0 5 6.5v8A1.5 1.5 0 0 0 6.5 16H8"/>');
+const a21Style=document.createElement('style');
+a21Style.textContent='.ctx{gap:1px}.ctx button{padding:8px 2px}';
+document.head.appendChild(a21Style);
+const toolsForBeforeA21=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForBeforeA21(kind);
+  return [...tools.slice(0,-1),['Duplicate',ICON.duplicate,duplicateSelected],tools[tools.length-1]];
+};
+function duplicateSelected(){
+  if(!sel)return;
+  const original=sel,copy=original.cloneNode(true),host=$('content').getBoundingClientRect();
+  const box=original.getBoundingClientRect(),offset=12;
+  const axis=(start,size,limit)=>start+size+offset<=limit?start+offset:Math.max(0,start-offset);
+  copy.classList.remove('selected','editing');
+  copy.style.position='absolute';copy.style.width=box.width+'px';copy.style.height=box.height+'px';
+  copy.style.left=axis(box.left-host.left,box.width,host.width)+'px';
+  copy.style.top=axis(box.top-host.top,box.height,host.height)+'px';
+  copy.onclick=e=>{e.stopPropagation();select(copy);};
+  copy.ondblclick=e=>{e.stopPropagation();select(copy);if(copy.dataset.kind==='text')edit();};
+  $('content').appendChild(copy);select(copy);
+  bin={duplicate:copy,original};toast('Duplicated',true);
+}
+const undoSnackBeforeA21=$('undoSnack').onclick;
+$('undoSnack').onclick=e=>{
+  if(!bin||!bin.duplicate)return undoSnackBeforeA21(e);
+  e.stopPropagation();const original=bin.original;bin.duplicate.remove();bin=null;
+  select(original);$('snack').classList.remove('show');toast('Duplicate undone',false);
+};
+</script>
+
+<script>
+// A22 is the latest contextual-bar ruling even though its self-contained prototype block sits beside
+// the original design amendments above. Re-assert its final order after A19/A21 have added their verbs.
+const toolsForA22FrozenOrder=toolsFor;
+toolsFor=function(kind){
+  const tools=toolsForA22FrozenOrder(kind);
+  if(!['photo','decor'].includes(kind))return tools;
+  const flip=tools.find(tool=>tool[0]==='Flip');
+  const without=tools.filter(tool=>tool[0]!=='Flip');
+  const at=kind==='photo'?1:2;
+  return [...without.slice(0,at),flip,...without.slice(at)];
+};
+</script>
+
+<!-- ===========================================================================
+A23 · 2026-08-28 (bug fix + accessibility) — compact stateful controls stay
+compact and never say "on" by colour alone.
+
+Device review found the Compose A22 choices reading taller than the frozen 56px
+resting height because their inner padding was stacked on top of the floor. The
+same pass also left three Bench controls relying on colour alone for their
+active state: Flip choices, Copier, and the Art family filter pills. The fix is
+post-freeze accessibility work, not a redesign: the 56px resting choice stays
+48px+ touchable and gains one small paper check tucked into the corner when
+active. The same visible cue is reused for the other editor toggles so state
+survives greyscale, glare, and low-colour perception.
+=========================================================================== -->
+<style>
+.flip-choice,.ctx button,.art-family{position:relative}
+.flip-choice{padding:6px var(--gap-sm)}
+.flip-choice[aria-pressed="true"]::after,.ctx button.on::after,.art-family.on::after{
+  content:"✓";position:absolute;top:6px;right:6px;width:20px;height:20px;display:grid;place-items:center;
+  border:2px solid var(--ink);border-radius:999px;background:var(--paper);color:var(--ink);
+  font:700 .72rem/1 var(--sans)
+}
 </style>

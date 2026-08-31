@@ -3,12 +3,14 @@ package com.aritr.zinely.feature.editor
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -136,6 +138,11 @@ class BenchDecorInkRoutingTest {
         composeRule.waitForIdle()
     }
 
+    private fun reveal(tag: String) {
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).performScrollToNode(hasTestTag(tag))
+        composeRule.waitForIdle()
+    }
+
     @Test
     fun a_selected_supply_keeps_the_frozen_verb_bar_and_never_opens_an_empty_popover() {
         render()
@@ -228,6 +235,7 @@ class BenchDecorInkRoutingTest {
 
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REPLACE}").performClick()
         composeRule.waitForIdle()
+        reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
 

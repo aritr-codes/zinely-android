@@ -64,6 +64,7 @@ public class CanvasReplayer(
      * PDF backend ignores the AA flag entirely (§3.2).
      */
     private val shapePaint = newShapePaint()
+    private val supplyPathCache = SupplyPathCache()
 
     public fun replay(
         canvas: Canvas,
@@ -127,7 +128,7 @@ public class CanvasReplayer(
             //      not a geometry term.
             is DrawShape -> {
                 shapePaint.color = command.ink.toArgb()
-                canvas.drawPath(command.outline.toPath(), shapePaint)
+                canvas.drawPath(supplyPathCache.pathFor(command.outline), shapePaint)
             }
         }
     }

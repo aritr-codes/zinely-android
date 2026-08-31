@@ -116,9 +116,13 @@
 | [ADR-104](#adr-104) | **The asset layer — curated, generative, personal; no network, permanently.** Owner-adopted as Constitution Amendment 3; online sources closed on *provenance*, not privacy | Accepted |
 | [ADR-105](#adr-105) | **The third primitive — `DecorElement`, and the draw command that does not exist yet.** Implements ADR-104's curated-supply half | Accepted |
 | [ADR-106](#adr-106) | **The photocopier filter — a flag on the tape, not a filtered asset.** Adopted by the implementer under explicit owner delegation of D-082's five questions | Accepted |
-| [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** Grows the catalogue to ~51 inside the frozen families; upholds the randomiser ban; withdraws app-authored composites; ships search. | Proposed |
+| [ADR-107](#adr-107) | **A larger material library — grown inside the frozen four, searchable, composed by hand.** First admits a 16-supply expansion to 32, keeps the remaining ~19 candidates as a curated backlog, upholds the randomiser ban, withdraws app-authored composites, and ships search with growth. | Accepted |
 | [ADR-108](#adr-108) | ✅ **Hollow supplies — not as an axis; admissible one mark at a time.** Fill-only means a flag cannot *implement* hollow, only select a second authored outline. Rule [D-093](design/V2-SPEC-DEFECTS.md#d-093) first: the cheap end of the promise is the tile, not the catalogue | Proposed | **Accepted 2026-08-20**; R4 shipped as *generation* — the tile renders the authored outline, `BenchArtGlyphs` deleted.
-| [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The open question is not rendering but *when the maker first sees the join* — no screen shows it | Proposed |
+| [ADR-109](#adr-109) | **One photo across two pages — a spread is two ordinary images, not a new kind of thing.** An action writes two `ImageElement`s sharing one `assetId` with complementary crops: no element type, no schema bump, no imposition change, no draw command. The frozen confirmation explains that the complete join first appears in the printed and folded zine | Accepted |
+| [ADR-110](#adr-110) | **A v2 `.zine` is one whole-library backup, additive beside the v1 single-project package.** Files remain authoritative, assets remain content-addressed, and restore validates a staged archive before touching live storage. | Accepted |
+| [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
+| [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
+| [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -869,12 +873,13 @@ The MVP requires real projects (create/open/duplicate/delete on a Home shelf), b
 1. **Layering ([ADR-025](#adr-025)).** Room entities/DAO/database + `RoomProjectRepository` live in `:data-android`; the `:core:data` contract is untouched. Catalog pins: Room 2.8.4 (runtime + KSP compiler; Room 2.7+ folds coroutines/Flow into `room-runtime`, so no `room-ktx`) + the `androidx.room` Gradle plugin exporting schemas to `data-android/schemas` (checked in, `exportSchema = true`).
 2. **Schema v1.** Table `projects(id TEXT PK, title, format TEXT enum-name, paperSize TEXT enum-name, createdAtEpochMs, updatedAtEpochMs, documentSchemaVersion)`, index on `updatedAtEpochMs`; DB `zinely.db`, version 1, no `fallbackToDestructiveMigration`. The [ADR-022](#adr-022) asset index table is **not** created — it is deferred with the GC.
 3. **Source-of-truth split ([ADR-003](#adr-003) kept honest).** `document.json` stays the sole authority for content + format/paperSize/schemaVersion. Shelf-only metadata that the document cannot carry — **title, createdAt** — gets a per-project sidecar `projects/<id>/meta.json`, written atomically via the existing `AtomicFileStore` (inherits `.bak` recovery). **Room stays a pure rebuildable index** of (document.json + meta.json); on disagreement, files win. This *refines* ADR-003's "metadata is a derived cache": Tier-C metadata (title/createdAt) is authoritative in the **sidecar file**, never in Room. Alternatives rejected: title only in Room (Room becomes an authority; a rebuilt index loses every title); title inside `ZineDocument` (shelf rename would rewrite the document outside the editor's MVI/undo/autosave path and race its snapshot saves).
-4. **Seeding = idempotent, re-runnable reconcile scan (no destructive migration).** On first repository use (and again whenever the index may have diverged): `projects/` dirs containing a `document.json` and absent from Room are **adopted** — format/paperSize/schemaVersion read from the document, title/createdAt from `meta.json` (a **missing** sidecar is backfilled with a fallback title and createdAt = document mtime, never scan time; a **present-but-unreadable** one is *never overwritten* — fallback title in the row only, bytes left for repair); rows without backing files are dropped. The S4 `"default"` project becomes an ordinary row with zero special-casing, and `EditorRoute("default")` keeps working unchanged. Unreadable documents (Corrupt/SchemaTooNew) are **skipped** — invisible to the future shelf, bytes untouched; a repair/delete surface is future work (**known limitation**).
+4. **Seeding = idempotent, re-runnable reconcile scan (no destructive migration).** On first repository use (and again whenever the index may have diverged): `projects/` dirs containing a `document.json` and absent from Room are **adopted** — format/paperSize/schemaVersion read from the document, title/createdAt from `meta.json` (a **missing** sidecar is backfilled with a fallback title and createdAt = document mtime, never scan time; a **present-but-unreadable** one is *never overwritten* — fallback title in the row only, bytes left for repair); rows without backing files are dropped. The S4 `"default"` project becomes an ordinary row with zero special-casing, and `EditorRoute("default")` keeps working unchanged. Unreadable documents (Corrupt/SchemaTooNew) are **skipped** by reconcile — bytes untouched; the shelf-recovery surface for them is a later amendment below.
 5. **Mutations: files are the transaction; the row is derived.** All ops run under one repository mutex on the injected IO dispatcher (injected `clock`/`newId` for tests) and end by re-deriving the affected row through the **single `syncRowFromDisk` path** the scan also uses. `create` = save a blank document (via `DocumentRepository` — atomic, validated, path-safe) → write meta → sync row; `duplicate` = `load(src)` → `save(newId)` → meta `"<title> copy"` → sync; `rename` = atomic meta rewrite (the commit) → sync; `delete` = remove `document.json` **first** (the commit that releases the project's GC roots), then the dir, then the row (idempotent). A **returned failure cleans up partial files** — no adoptable orphans from failed calls; crash windows heal at the next reconcile (crash-recovery semantics, not API semantics). An index write failing *after* a committed file change returns `DataError.Io` and flags a re-reconcile, so the index converges to file truth. Path safety: the whitelist/normalise/containment chokepoint is **extracted to a shared `ProjectPaths`** used by both `DocumentRepositoryImpl` and the project store (no drift; Codex R8).
 6. **GC live-roots ([ADR-022](#adr-022)) — wired by construction.** The live set derives from project *documents*, not from Room: `duplicate` creates a new document referencing the **same content hashes** (a new live root over shared blobs — blobs are never copied), `delete` removes the document (its roots vanish; orphans become reclaimable by the future sweep). **No sweeper ships here** — [ADR-031](#adr-031) §2's no-sweeper-until-pinned invariant is untouched; when the `GcWorker` lands it enumerates roots from the on-disk project documents this store maintains.
 7. **Recency without autosave coupling.** Content autosaves write `document.json` without touching Room, so the row's `updatedAtEpochMs` records only metadata ops; `observeProjects()` emits `max(row.updatedAt, document mtime)` and sorts newest-first at read. An autosave **is** a durable file write, so its mtime is the honest recency signal. *Scope caveat (Codex):* valid under the current nav assumptions (a fresh subscription on shelf entry; shelf and editor never simultaneously active) — not a general live-ordering mechanism.
-8. **Index corruption path (honest claim).** "Rebuildable" means a **lost/reset/deleted** DB is rebuilt from files by the scan. Open-time SQLite corruption falls to Android's default `DatabaseErrorHandler` (drops the corrupt DB file), after which the same rebuild applies. No claim that every SQLite failure self-heals.
-9. **Privacy invariant.** Room is local-only in app-private storage; no network/analytics; the DB is already excluded from cloud backup and D2D transfer by [ADR-030](#adr-030) §7.
+8. **Shelf-health projection (2026-08-28, D-111; no Room migration).** `observeProjects()` stays the **healthy-only** projection used by mutation paths and the shelf's backupable-card strip. The shelf itself also gets `observeShelfProjects()`: a revalidated files-as-truth projection that enumerates on-disk ids, reloads each authoritative `document.json`, and emits either `Available(summary)` or an `Unavailable` entry carrying the best recoverable title/cover/paper metadata plus one user-facing reason (`Corrupt`, `SchemaTooNew`). This keeps unreadable projects visible enough to rename or delete without making Room authoritative, and without widening mutation/get APIs to half-loadable projects. `NotFound`, writer-busy and transient storage failures stay out of this projection rather than fabricating a false shelf state.
+9. **Index corruption path (honest claim).** "Rebuildable" means a **lost/reset/deleted** DB is rebuilt from files by the scan. Open-time SQLite corruption falls to Android's default `DatabaseErrorHandler` (drops the corrupt DB file), after which the same rebuild applies. No claim that every SQLite failure self-heals.
+10. **Privacy invariant.** Room is local-only in app-private storage; no network/analytics; the DB is already excluded from cloud backup and D2D transfer by [ADR-030](#adr-030) §7.
 
 ### Hard invariants recorded (owners named)
 
@@ -10783,10 +10788,16 @@ Plus one statement of craft, the **colophon**.
 
 1. **The café is retained as register, not place.** Quiet, warm, unhurried, private, yours — still binding.
 2. **Every surface belongs to one of the three places, or is mis-homed** and gets redesigned or removed.
-3. **Settings becomes the colophon** — the printer's note stating how the thing was made. It carries the paper
+3. **Settings becomes the colophon** — the printer's note stating how the thing was made. `Colophon` is the
+   internal small-press concept; **owner copy amendment, 2026-08-29:** the Shelf action says `About`, while the
+   destination, pane title, and licence Back label say `About Zinely`. Its approved opening is
+   `Some things deserve pages.` followed by `Zinely began with a simple wish: to make something for
+   someone. We hope it helps you make something worth keeping.` It carries the paper
    default, the typefaces *with their licences*, one offline sentence, and the version. This discharges a real
    OFL obligation (three notices ship today reachable from no UI) in the one place self-description reads as
-   craft rather than defensiveness.
+   craft rather than defensiveness. **D-079 owner ruling, 2026-08-24:** it is Shelf-owned and reached as the
+   second quiet dock action beside `Backups`; its canonical interaction/copy contract is
+   [COLOPHON-FREEZE.md](design/COLOPHON-FREEZE.md).
 4. **`DESIGN-LANGUAGE.md` is superseded in full.** Its craft-table metaphor (`:64-65`), coral-on-charcoal palette
    (`:71-73`), tilt-and-tape licence (`:74-75`), marker-face typography (`:78-80`) and overshoot motion
    (`:208-213`) had each been overruled elsewhere without the document ever saying so.
@@ -10895,7 +10906,9 @@ modification permission · redistribution permission. Curation and provenance is
    second authored pack**, never a search field returning the same sixteen things.
 2. **Art becomes more important, not less.** `Text + Photo + Art` is the add triad; **Supplies** is the drawer.
 3. **Offline is an invisible strength, not a slogan.** The removed online UI is **not** replaced by *"works
-   offline"* messaging. Reassurance is stated once, in the colophon.
+   offline"* messaging. Reassurance is stated once, in the colophon. [D-079](design/V2-SPEC-DEFECTS.md#d-079)
+   fixes the one honest sentence and strikes the frozen Library/Bench/Proof/Backup repetitions; operational
+   failure/recovery copy remains because it explains a state rather than markets the invariant.
 4. **`v21-bench.html` is amended** under this ADR — the `art · online` control, the search field, the online
    disclosure panel and the *"bundled + online"* subtitle are struck; the four generic chips become the four
    authored families. Recorded as a frozen-spec amendment, not housekeeping.
@@ -11363,8 +11376,10 @@ rule; but amending a freeze is an owner act and this one carries no ruling, whic
 
 ### A larger material library — grown inside the frozen four, searchable, composed by hand
 
-**Status:** `Proposed` · 2026-08-18 · **v2**, superseding a v1 draft that independent review returned **NO-GO**
-**Owner ruling required on:** R5 (amends the frozen Art sheet — [D-080](design/V2-SPEC-DEFECTS.md#d-080))
+**Status:** `Accepted` · 2026-08-18 · owner-ratified with a staged catalogue amendment 2026-08-25 · **v2**, superseding a v1 draft that independent review returned **NO-GO**
+**Owner ruling:** R2's randomiser ban stands; R5's local name/tag search and four family filters are accepted;
+R1 admits the researched first wave of sixteen additions (32 total) while the remaining ~19 stay backlog.
+The visual treatment and preliminary outlines remain pending D-080's rendered HTML freeze.
 **Extends:** [ADR-104](#adr-104) (asset layer, Constitution Amendment 3) — the *curated* leg of Model D
 **Amends:** [SUPPLIES-SPEC §9](design/SUPPLIES-SPEC.md) — **two** bullets: the *search field* one (premise
 expired) and the *"No categories beyond the four. No tags, no filters, no sort"* one (a straight reversal; it
@@ -11586,6 +11601,16 @@ printed zine. Emoticon-*style* marks authored from a permitted filled set are or
 attaches to the licence travelling with the artifact, never to the shape on the page.
 
 #### Consequences
+
+**Owner amendment, 2026-08-25.** The owner accepted the research recommendation in
+[`reviews/2026-08-25-art-panel-research.md`](reviews/2026-08-25-art-panel-research.md): grow first to **32**,
+not directly to 51; keep the four physical families; ship local name/tag search, visible reversible filters,
+Recent and Favourites as retrieval shortcuts; and do not randomise catalogue order, page composition,
+placement, or outline geometry. The first wave is Masking tape · Saddle stitch · Eyelet · Push pin ·
+Pointing hand · Crop marks · Colour bar · Copier streak · Perforation · Starburst · Ticket stub · Postage
+stamp · Deckle edge · Torn hole · Folded corner · Ring. The worked ~51 list remains the curation backlog,
+not a promise that all rows enter one release. A15 iteration 2 draws the ruled density in HTML; D-080 stays
+open until that artifact is rendered and its visual treatment is frozen.
 
 - ⚠ **Sequencing gate, because two clauses of v2 disagreed without it.** R5 says *"search ships with the
   library it serves, or the library does not grow"*; a bare *"R1 needs no owner amendment"* would license a
@@ -12154,7 +12179,7 @@ citing that the draft refuted two of the four claims it was handed — including
 
 ### One photo across two pages — spreads as two ordinary images, and the cue that must stop lying
 
-**Status:** Proposed · **Date:** 2026-08-18 · **Supersedes:** nothing · **Amends the freeze:** yes (`v21-bench.html`, owner act)
+**Status:** Accepted · **Date:** 2026-08-18 · **Accepted:** 2026-08-26 · **Supersedes:** nothing · **Amends the freeze:** yes (`v21-bench.html` A19)
 
 ---
 
@@ -12547,6 +12572,12 @@ command.** Contrast ADR-105, where the new primitive did need one — this one d
 | 1 | Amend `v21-bench.html` with the spread control — placement, label, and the fold warning | Design freeze; no Compose work may precede it |
 | 2 | Rule on **where the maker first sees the join**, given that no on-screen surface shows it | It is the feature's acceptance criterion, not a polish item — see the skeptical pass |
 
+✅ **RESOLVED 2026-08-26 — owner accepted A19.** `v21-bench.html` freezes `Across fold` in the
+selected-photo context bar and one pre-commit confirmation. The confirmation names the fixed partner pages,
+keeps existing words and art on top, warns that faces and words should stay away from the physical fold, and
+states that the complete picture appears after printing and folding. It does not add a side-by-side editor or
+preview. Cancel, Back, and outside-tap are no-ops; confirm is one undoable document action.
+
 *(A third item in an earlier draft asked the owner to confirm the cue change did not contradict
 BETA-DIRECTION §3.10. It never did — §3.10's own corrected paragraph says the same thing. The item is
 deleted rather than downgraded, because a checklist row that asks the owner to rule on a
@@ -12608,3 +12639,242 @@ Three challenges, honestly:
   re-derivation in every cell, and the `safeAreaInsetPt` claim survived an attempt to falsify it.
 - 🟨 **Not re-reviewed after these edits.** The corrections above are the implementer's, not the
   reviewer's, and the strengthened skeptical pass (§challenge 3) is new material rather than a fix.
+
+---
+
+## ADR-110 {#adr-110}
+
+### One file owns the library — additive v2 `.zine` backup beside readable v1
+
+**Status:** Accepted · **Date:** 2026-08-21 · **Supersedes:** nothing · **Extends:** [ADR-009](#adr-009), [ADR-020](#adr-020), [ADR-022](#adr-022), [ADR-025](#adr-025)
+
+#### Context and decision
+
+Zinely's local-only promise makes a user-held backup a durability requirement. The original `ZinePackageManifest` is version 1 and contains one project; V1 product law now requires **all zines in one user-owned file**. Relabelling the old payload as v2 would be a compatibility defect.
+
+1. **Version 1 remains the legacy single-project contract.** A future reader routes `packageVersion == 1` there. It accepts v2 only when `packageVersion == 2` and `kind == "library"`; unknown versions and kinds are refused before live writes.
+2. **Version 2 is one whole-library archive.** `manifest.json` contains project metadata and one global asset table. Documents live at canonical `projects/<safe-id>/document.json` paths and import masters once at `assets/<sha256>`. Thumbnails and Room rows are derived and excluded.
+3. **The public manifest preserves product identity, not private sidecars.** It records ids, titles, format/paper, timestamps, document schema/path/hash/size, asset references, and the optional persisted cover pair. Unknown or partial cover metadata warns and degrades to a coverless shelf item rather than blocking otherwise healthy work, matching the existing repository contract; its raw value may remain preserved for a newer reader.
+4. **Exact closure is required.** References, manifest records, and staged entries must agree exactly. The codec layer must verify streamed sizes and every SHA-256, decode each document, then prove that its image references exactly match that project's manifest asset list.
+5. **Restore is staged, fail-closed, and additive.** Nothing touches live paths until the complete archive validates. Existing projects are never overwritten; id collisions mint a new consistent local id. Verified assets may deduplicate by hash. Room reconciles from committed files afterward.
+6. **Initial refusal caps** are 4 MiB manifest, 16 MiB per document, 128 MiB per asset, 8 GiB expanded total, an 8 GiB + 64 MiB encoded-archive envelope for bounded ZIP framing, 10,000 projects, 100,000 assets, and 4096 px per image dimension. Readers enforce counts and expanded bytes while streaming rather than trusting metadata.
+7. **This package is intentionally pure.** `:core:data` owns the serializable contract and structural validator. ZIP staging belongs in the pure-JVM durability layer; SAF and storage-space checks belong in Android adapters; the user surface still requires design freeze. No network, account, telemetry, encryption claim, or cloud path is introduced.
+
+#### Consequences and verification boundary
+
+The whole library can eventually move through one user-chosen file without making Room authoritative or duplicating assets. Integrity checks detect corruption but do not authenticate or encrypt. Repeated restores may create safe project duplicates; any future merge semantics need a new decision. Staging also needs temporary space and an actionable no-space exit.
+
+The executable and device evidence is [the backup torture matrix](reviews/2026-08-21-zine-backup-torture-matrix.md). This package closes only its pure manifest/structure rows; it does not claim a working user journey before byte verification, transactional commit, SAF, frozen UI, and physical-device passes are green.
+
+**Independent review (2026-08-21):** `GO-WITH-FIXES` first found that unknown or partial cover metadata was being treated more harshly than the existing repository contract. The validator now emits a non-blocking warning and the test/matrix pin that degradation. Re-review verdict: **GO**, with no remaining fix in this package's scope.
+
+**Pure restore-core implementation (2026-08-21):** `:core:data-storage` reads a seekable private archive with JDK `ZipFile`, using the central directory only for early refusal and streaming every authoritative byte into a unique non-live staging tree. It enforces raw/archive/entry/count/expanded-size and compression-ratio limits, rejects unsafe/duplicate/unexpected entries, verifies byte counts and SHA-256 values, strictly decodes each document through the canonical serializer and validator, and proves its `ImageElement` references exactly match the per-project manifest closure. Cancellation and every refused archive clean the staging session best-effort without touching live project paths. No archive dependency was added.
+
+The same layer contains the narrow commit boundary used by the Android adapter: collision-free local-id allocation plus a durable intent journal around additive moves of complete, adapter-prepared project directories. Caught commit failures remove every newly visible project; process interruption leaves a journal that must be recovered before the repository scans files into Room. Verified content-addressed assets may remain as harmless, non-visible orphans after rollback, consistent with the existing no-sweeper guarantee.
+
+**Android repository integration (2026-08-21):** `RoomProjectRepository` exposes a private-archive `LibraryRestoreRepository` boundary; SAF/`Uri` types do not enter the trusted core. Restore takes the process-wide library-writer lease before the repository mutex, recovers the journal before files-to-Room scans, stages complete project directories with authoritative metadata, commits files and deduplicated assets non-cancellably, then reconciles Room strictly. Tests cover collision remapping, shared assets, metadata, hostile no-write behavior, recovery, busy exclusion, and unrelated corruption.
+
+**Backup production + Android SAF transport (2026-08-22):** `:core:data-storage` produces a manifest-first v2 ZIP from a repository-frozen files-as-truth snapshot, streaming documents and globally deduplicated assets while verifying actual SHA-256/byte counts and contract limits. It refuses existing destinations and removes incomplete private output on failure or cancellation. `RoomProjectRepository` exposes `LibraryBackupRepository` under the same writer lease and fails closed on unreadable metadata, missing assets, or poisoned bytes. The thin `LibrarySafTransport` copies provider input to unique bounded private cache before trusted restore and streams a complete private backup to a user-selected provider destination without assuming seeking or duplicating ZIP validation. External delivery remains best-effort because provider storage cannot be made app-private-atomic. JVM matrices and Android `ContentResolver` transport coverage are in place, and a debug-only picker harness exists for the required Samsung `SM-A176B` manual backup/restore/cancel/invalid-file pass. The production user surface, frozen copy, lifecycle-owned progress, and final physical-device picker verification remain later stages; `.zine` is still not user-ready.
+
+**Production user surface (2026-08-22):** the shelf now owns a quiet library-level `Backups` action (or `Restore a backup` when empty), opening the frozen chooser in [BACKUP-RESTORE-FREEZE.md](design/BACKUP-RESTORE-FREEZE.md). `HomeViewModel` owns single-flight picker and operation state, commits pending shelf deletes before handoff, maps storage failures into `:core:copy`, and delegates every byte and transaction to the accepted SAF/repository layers. The Android destination alone owns `CreateDocument` / `OpenDocument`; picker launch failure, picker cancellation, explicit operation cancellation, additive success, newer-version refusal, and retry are distinct states. Shared `ZSheet` lifecycle callbacks make initial focus and post-animation focus return deterministic, and large-font error actions stack before they can clip. Focused Compose/Robolectric tests, eight light/dark backup-surface goldens, the storage and Android unit matrices, lint, debug assembly, and release assembly are green. Both production-UI device passes are accepted on Samsung `SM-A176B` / Android 16: a four-zine shelf saved through the real Android document picker, the exact resulting file restored four additive copies, invalid input and picker cancellation preserved the existing shelf, restored content remained editable and autosaved across cold relaunch, and large-text/platform accessibility checks passed. See [the device-verification report](reviews/2026-08-22-backup-restore-ui-device-verification.md).
+
+## ADR-111 {#adr-111}
+
+### The threshold carries the mark — adaptive logo and system-only launch transition
+
+**Status:** Accepted · **Date:** 2026-08-25 · **Supersedes:** stock Android Studio launcher artwork · **Extends:** [ADR-030](#adr-030)
+
+#### Context and decision
+
+The owner supplied `APP_LOGO.png` as Zinely's application mark. Android also imposes a system splash on modern
+versions, so leaving the stock launcher robot or building a second custom splash would make the product threshold
+either generic or needlessly slow.
+
+1. **`APP_LOGO.png` is the immutable artwork master.** Launcher density assets are deterministic projections of
+   that file; they are not redrawn, recoloured, or generated from a prompt. The packaged adaptive/splash projection
+   may use lossless WebP when the generator verifies decoded-pixel identity with the master.
+2. **Adaptive identity uses platform layers.** The supplied collage is the foreground, its measured edge pink
+   `#FBCDD0` is the background, and a simplified hand-cut Z is the monochrome layer. Android owns the final launcher
+   mask and themed-icon colour.
+3. **Launch uses AndroidX SplashScreen, not another Activity.** `MainActivity` installs the system splash before
+   `super.onCreate()`. The starting theme uses the logo and pink ground, then immediately posts to `Theme.Zinely`.
+   There is no keep condition, custom exit animation, branding image, slogan, progress copy, or minimum duration.
+4. **Single-Activity and share-in ownership remain unchanged.** The splash is a theme transition around the existing
+   `MainActivity`; it adds no route, state holder, persistence dependency, or second intent receiver.
+5. **The mark stays at the threshold.** No persistent Shelf/Bench/Proof logo is introduced. This preserves the
+   experience rule that startup points toward making rather than presenting marketing.
+
+#### Consequences and verification boundary
+
+AndroidX `core-splashscreen` is one narrow platform-compatibility dependency. The full collage may lose decorative
+edge detail under some launcher masks, but its central Z remains inside the safe composition and the monochrome
+fallback remains recognisable. Dark theme deliberately uses the same pink launch artwork because it is brand identity,
+not a document paper or application-surface token.
+
+The frozen visual/interaction contract is [APP-ENTRY-FREEZE.md](design/APP-ENTRY-FREEZE.md), backed by the interactive
+[HTML mask/transition prototype](design/mockups/app-entry.html) and [R13 platform research](RESEARCH.md#r13-android-launcher-identity-and-launch-transition----verified--recommendation). Release packaging plus two physical-device passes must verify launcher masking, cold/warm launch, share-in, light/dark handoff, and absence of a duplicate or delayed splash.
+
+**Implementation and device evidence (2026-08-25):** AndroidX `core-splashscreen:1.2.0` now owns the starting theme
+and `MainActivity` installs it before `super.onCreate()`. The supplied artwork drives deterministic legacy assets and
+the adaptive foreground, bounded by a 6dp safe-zone inset; themed launchers receive a separate Z-only monochrome path.
+The focused manifest/theme regression, lint, debug assembly, signed release assembly, packaged-manifest inspection,
+and independent review are green. Two physical passes on Samsung `SM-A176B` / Android 16 verified the circular launcher
+mask, dark and light cold starts, direct warm return, intact existing library, and restored device settings. See the
+[device-verification report](reviews/2026-08-25-app-entry-device-verification.md).
+
+## ADR-112 {#adr-112}
+
+### Emoji may print only when Zinely owns the glyphs and the output
+
+**Status:** Accepted · **Date:** 2026-08-26 · **Supersedes:** the beta-wide prohibition on
+emoji in text output · **Extends:** [ADR-001](#adr-001), [ADR-028](#adr-028), [ADR-057](#adr-057)
+
+#### Context
+
+The owner has made emoji printing a requirement for the 2026-09-11 public launch. The existing prohibition was
+not aesthetic: Android system emoji differ by OEM and colour-font glyphs can be rasterised or omitted by PDF
+backends. Routing typed emoji through Samsung/Google fallback would therefore make the same document print
+differently on two phones and would violate preview/export parity.
+
+The launch requirement changes scope, not those constraints. Zinely must own a fixed, offline emoji corpus and
+route preview, raster and PDF through the same render seam. The pure document and draw-command modules remain
+platform-independent; no emoji bytes, Android spans, or device font lookup enter them.
+
+#### Decision gate
+
+No production implementation is selected until a focused Android renderer spike measures these candidates:
+
+1. **Bundled Emoji2 font and spans:** broad sequence coverage and one offline payload, but colour glyphs may be
+   fixed-resolution bitmaps in PDF and the bundled font materially increases APK size.
+2. **Bundled monochrome Noto Emoji outlines:** print-native vector output and a Zinely-like ink treatment, but its
+   encoded/sequence coverage must be measured against the launch corpus rather than assumed.
+3. **Bundled Noto vector assets with an inline renderer:** deterministic vector output and broad visual control,
+   but materially more layout, line-breaking and asset-provenance work than either font path.
+
+System fallback and downloadable emoji fonts are rejected: the first is device-dependent and the second breaks
+offline-first. Silently keeping the current warning after accepting launch scope is also rejected.
+
+The spike must render one fixed corpus through the real `CanvasReplayer` to screen bitmap, 300-DPI imposed PNG,
+and PDF at 10, 24 and 48 pt. It includes single-codepoint emoji, variation selectors, skin tones, flags, keycaps,
+ZWJ family/profession sequences, surrounding Latin text and line wraps. Acceptance requires:
+
+- the same grapheme coverage and layout on every surface;
+- no OEM glyph substitution and no network access;
+- readable printed output at all three sizes, with the 48-pt case free of visible source-resolution pixelation;
+- a recorded APK-size delta and bounded render-time/memory delta;
+- deterministic failure before export if the bundled corpus cannot represent a saved sequence.
+
+Only after the evidence selects a representation does this ADR become Accepted. The production change then lands
+at `SharedTextLayout`/`CanvasReplayer`, the existing single preview/export seam, plus coverage analysis and honest
+editor copy. It does not introduce emoji as controls, stickers, or random Art supplies.
+
+#### Outcome and measured evidence
+
+**Bundled Emoji2 1.6.0 is selected.** `ZinelyApplication` starts its local font load; `replaceAll=true` prevents
+OEM substitution; and `SharedTextLayout` processes text once before the existing `StaticLayout` replay. Preview,
+300-DPI raster and PDF therefore keep the same draw-command and Android-Canvas path. The pure document and render
+cores remain Android-free. The product coverage promise now includes emoji while Inter's cmap guard continues to
+own only Latin, Cyrillic and Greek.
+
+The fixed launch corpus (basic, skin tone, profession/family ZWJ, flag, keycap, variation-selector and recent ZWJ
+sequences) produced bundled replacement spans on the Samsung `SM-A176B` / Android 16. Real raster and
+`PdfDocument`→`PdfRenderer` output carried ink at **10, 24 and 48 pt**, with ink area increasing at each size. A
+measured warm 24-pt raster averaged **0.817 ms** with emoji versus **0.727 ms** for plain text. Bundled-font startup
+measured **301.80 ms** off the UI thread and **9,886 KiB** additional PSS in the instrumented process. The signed
+release APK grew from **19,152,384** to **29,024,413 bytes**: **9,872,029 bytes (9.42 MiB)**. That cost is accepted
+for deterministic, offline launch behavior; a downloadable or OEM font is not an allowed size optimization.
+
+The Android proof is `EmojiRenderingInstrumentedTest`; JVM/Robolectric remains the wrong tier because it cannot
+complete Emoji2's bundled asset-font load. The renderer test also holds a 32-MiB load-memory ceiling, a 500-ms
+warm-render ceiling and a relative plain/emoji cost discriminator. No UI control, Art supply or document schema was
+added.
+
+## ADR-113 {#adr-113}
+
+### Turn the piece, not the workspace — mobile flip for Photos and Art
+
+**Status:** Accepted — owner-approved and DESIGN FROZEN 2026-08-27  
+**Date:** 2026-08-27 — **Supersedes:** nothing — **Extends:** [ADR-006](#adr-006),
+[ADR-020](#adr-020), [ADR-027](#adr-027), [ADR-029](#adr-029), [ADR-105](#adr-105)
+
+#### The smallest mobile answer
+
+The Bench answers *“How do I change this piece?”*, not with a desktop properties panel, but with
+[A22 in the canonical Bench prototype](design/mockups/v21-bench.html):
+
+1. A single selected **Photo** or **Art** element gains one labelled **Flip** verb. Text is excluded;
+   mirrored words are not another text style.
+2. Flip replaces the element-verb pill with a compact tray containing two independent, immediately
+   applied toggles: **Left-right** and **Top-bottom**. Each toggle is one reducer action, one autosave and
+   one undo entry; tapping an active toggle removes it. Done and Back close the tray without mutating the
+   document.
+3. The axes are the element's own unrotated box axes. Reflection changes content inside that box; it does
+   not move the box, alter rotation or crop, change z-order, replace an asset, or change Art supply/ink.
+4. Initial scope is exactly one selected element. Multi-selection keeps its existing shared transform bar
+   and exposes no Flip verb or flip custom actions. Group-axis reflection is a separate future feature.
+
+These interaction, scope and schema consequences were explicitly approved by the owner on 2026-08-27.
+A22 is therefore frozen before Compose implementation, as required by the HTML-first workflow.
+
+#### Persistence and downgrade protection
+
+The smallest wire change is:
+
+| Element | Existing field kept | Additive fields | Meaning |
+|---|---|---|---|
+| `ImageElement` | — | `flippedHorizontally: Boolean = false`, `flippedVertically: Boolean = false` | reflect photo content inside its box |
+| `DecorElement` | `mirrored: Boolean = false` | `flippedVertically: Boolean = false` | `mirrored` remains the historical horizontal wire field |
+| `TextElement` | unchanged | none | text is not flippable |
+
+Renaming `mirrored` is rejected: it would add a migration and wire alias only for symmetry. Negative
+dimensions are also rejected because `Transform` requires positive width/height, and rewriting image bytes
+would violate content-addressed, reversible asset semantics.
+
+The document schema moves **v2 → v3** through the existing contiguous identity-migrator chain. Defaults make
+the forward migration structurally empty, but the version gate is load-bearing: an older build must refuse a
+v3 document before it can ignore the flip keys and save the zine back unflipped. Existing v2 documents migrate
+with every new flag false; existing `mirrored=true` remains a horizontal Art flip. Backup manifests already
+carry the document schema version and inherit the same gate.
+
+#### Reducer and undo
+
+One pure `FlipAxis` (`HORIZONTAL`, `VERTICAL`) and `Intent.ToggleFlip(id, axis)` are sufficient. The reducer
+resolves the current page only: Photo commits one `EditImageCommand`; Art maps horizontal to `mirrored` and
+vertical to `flippedVertically`, committing one `EditDecorCommand`. Text, missing ids and off-page ids are
+no-ops with no history or autosave. Undo/redo restore the complete typed element.
+
+#### Shared render invariant
+
+Reflection is folded into each command's `localToPage` inside `SceneRenderer`, before every Android backend:
+
+```text
+Photo: translate + rotate-about-centre + reflect-in-local-box
+Art:   translate + rotate-about-centre + scale-unit-square-to-box + reflect-in-unit-square
+```
+
+The transforms are `x -> width - x` / `y -> height - y` for Photo and their unit-square equivalents for
+Art. `DrawImage`, `DrawShape`, `CanvasReplayer`, preview, page thumbnails, raster and PDF gain no separate
+flip branch. The local clip moves with the content, crop remains a source-region decision, and
+`CanvasReplayer.uniformScale()` already uses `sqrt(abs(determinant))`, so reflection cannot reduce decode
+resolution. A Compose-only `graphicsLayer(scaleX = -1f)` document effect is forbidden.
+
+`ReframeOverlay` is the one direct-draw exception. It must show an already-flipped photo honestly and invert
+pan deltas on active axes so dragging the visible photo right/down still moves it right/down. Reframe commits
+only crop/fit and preserves both flip flags.
+
+#### Accessibility contract
+
+- Flip, Left-right, Top-bottom and Done are text labels. Toggle state is visible and exposed semantically.
+- Controls are at least 48 dp. At large text they grow or stack and the tray scrolls rather than clipping.
+- Opening focuses Left-right; Done and Back close the tray and return focus to Flip. Outside-tap follows the
+  existing contextual-popover rule and clears selection.
+- A Photo or Art element receives matching custom actions. Active labels become **Remove left-right flip**
+  and **Remove top-bottom flip**. Text, multi-selection and Reframe expose neither.
+- The change is immediate and has no decorative flip animation; reduced motion needs no special branch.
+
+#### Verification gate
+
+Acceptance requires v2→v3 migration/round-trip/anti-downgrade tests; reducer no-op and one-step undo/redo
+proofs; asymmetric X/Y/X+Y render matrices for Photo and Art; Reframe orientation and screen-directional pan;
+Compose order/state/focus/large-text and platform-tree checks; shared preview/raster/PDF evidence; both Samsung
+device passes; and independent review of the actual repository state.

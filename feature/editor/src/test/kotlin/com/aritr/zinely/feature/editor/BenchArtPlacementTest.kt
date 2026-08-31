@@ -2,12 +2,17 @@ package com.aritr.zinely.feature.editor
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.editor.Effect
@@ -69,10 +74,13 @@ class BenchArtPlacementTest {
         )
     }
 
-    private fun setScreen(store: EditorStore) {
+    private fun setScreen(store: EditorStore, fontScale: Float = 1f) {
         composeRule.setContent {
-            ZinelyTheme {
-                EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(360.dp, 720.dp))
+            val base = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
+                ZinelyTheme {
+                    EditorScreen(store = store, pageSizePt = pageSizePt, modifier = Modifier.size(360.dp, 720.dp))
+                }
             }
         }
         composeRule.waitForIdle()
@@ -82,6 +90,11 @@ class BenchArtPlacementTest {
         composeRule.onNodeWithTag(BenchBarAddTag).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(BenchAddChooserArtTag).performClick()
+        composeRule.waitForIdle()
+    }
+
+    private fun reveal(tag: String) {
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).performScrollToNode(hasTestTag(tag))
         composeRule.waitForIdle()
     }
 
@@ -104,6 +117,7 @@ class BenchArtPlacementTest {
         setScreen(store)
         openArt()
 
+        reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
 
@@ -120,6 +134,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
+        reveal(benchArtTileTestTag("shape.rect"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.rect")).performClick()
         composeRule.waitForIdle()
 
@@ -131,22 +146,17 @@ class BenchArtPlacementTest {
     }
 
     @Test
-    fun `Given the cabinet, When an unauthored tile is tapped, Then nothing is placed`() {
+    fun `Given the cabinet, When torn tape is tapped, Then the newly authored supply is placed`() {
         val store = store()
         setScreen(store)
         openArt()
 
-        // `tape.torn` has no authored outline, so its tile carries no click at all. `performClick` on a
-        // node with no click action is a no-op — the assertion is that the document did not move.
+        reveal(benchArtTileTestTag("tape.torn"))
         composeRule.onNodeWithTag(benchArtTileTestTag("tape.torn")).performClick()
         composeRule.waitForIdle()
 
-        assertTrue("an unauthored supply must not reach the page", decor(store).isEmpty())
-        // …and the cabinet stays open. This half is a **regression test for a defect this package found**:
-        // an inert tile had no pointer-input node, so the touch fell through to ZSheet's scrim sibling and
-        // dismissed the sheet. Twelve of sixteen tiles closed the cabinet when tapped. Mutation: delete the
-        // `pointerInput` from `BenchArtTile`'s inert branch and this line goes red.
-        composeRule.onNodeWithTag(BenchArtSheetTestTag).assertIsDisplayed()
+        assertEquals("tape.torn", decor(store).single().supplyId)
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).assertDoesNotExist()
     }
 
     @Test
@@ -154,6 +164,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
+        reveal(benchArtTileTestTag("shape.triangle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.triangle")).performClick()
         composeRule.waitForIdle()
 
@@ -166,6 +177,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
+        reveal(benchArtTileTestTag("shape.rule"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.rule")).performClick()
         composeRule.waitForIdle()
 
@@ -183,6 +195,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
+        reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
 
@@ -196,6 +209,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
+        reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
         assertEquals(1, decor(store).size)
@@ -214,10 +228,18 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
+        reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(BenchSnackTestTag).assertIsDisplayed()
+        val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
+        val context = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInRoot
+        val frozenGapPx = with(composeRule.density) { 12.dp.toPx() }
+        assertTrue(
+            "D-089: placement confirmation must clear the selected element's tools by 12dp; snack=$snack context=$context",
+            snack.bottom <= context.top - frozenGapPx + 1.5f,
+        )
         // By content description, not by text: the message node is `clearAndSetSemantics` with a polite
         // live region, so the string a screen reader hears is the one asserted here — which is the copy
         // that matters most on a surface that disappears on a timer.
@@ -229,6 +251,24 @@ class BenchArtPlacementTest {
     }
 
     @Test
+    fun `Given a placement at large text, Then its feedback still clears the grown context bar`() {
+        val store = store()
+        setScreen(store, fontScale = 1.8f)
+        openArt()
+        reveal(benchArtTileTestTag("shape.circle"))
+        composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
+        composeRule.waitForIdle()
+
+        val snack = composeRule.onNodeWithTag(BenchSnackTestTag).fetchSemanticsNode().boundsInRoot
+        val context = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInRoot
+        val frozenGapPx = with(composeRule.density) { 12.dp.toPx() }
+        assertTrue(
+            "D-089/A10: large-text placement feedback must clear the grown tools by 12dp; snack=$snack context=$context",
+            snack.bottom <= context.top - frozenGapPx + 1.5f,
+        )
+    }
+
+    @Test
     fun `Given a selected element, When the cabinet opens, Then the context bar stands down`() {
         // `showSheet` removes `.ctx` (BenchState.Adding). The Art sheet is a *second* sheet, so the Bench
         // state term has to name it too. Mutation: drop `|| artSheetOpen` from `benchStateOf`'s argument in
@@ -236,6 +276,7 @@ class BenchArtPlacementTest {
         val store = store()
         setScreen(store)
         openArt()
+        reveal(benchArtTileTestTag("shape.circle"))
         composeRule.onNodeWithTag(benchArtTileTestTag("shape.circle")).performClick()
         composeRule.waitForIdle()
         // The placement auto-selected, so the context bar is up — the precondition, asserted so this test
@@ -248,9 +289,9 @@ class BenchArtPlacementTest {
     }
 
     @Test
-    fun `Given the sixteen, When the cabinet opens on the real screen, Then every tile is there`() {
+    fun `Given the thirty two, When the cabinet opens on the real screen, Then every tile is there`() {
         // The chooser's promise — "tape, stamps and cut paper live here" — is true of the *cabinet*, not of
-        // every tile in it, so the cabinet must hold all sixteen however few are authored.
+        // every tile in it, so the cabinet must hold all thirty two.
         //
         // ⚠ This test also used to re-assert a hard-coded set of four authored ids, under a comment saying
         // it was pinned against the catalogue so it would "follow instead of failing". It did neither: it
@@ -261,8 +302,9 @@ class BenchArtPlacementTest {
         setScreen(store())
         openArt()
         for (id in Copy.Supplies.NAMES.keys) {
+            reveal(benchArtTileTestTag(id))
             composeRule.onNodeWithTag(benchArtTileTestTag(id)).assertExists()
         }
-        assertEquals("the freeze specifies sixteen", 16, Copy.Supplies.NAMES.size)
+        assertEquals("A16 freezes thirty two", 32, Copy.Supplies.NAMES.size)
     }
 }

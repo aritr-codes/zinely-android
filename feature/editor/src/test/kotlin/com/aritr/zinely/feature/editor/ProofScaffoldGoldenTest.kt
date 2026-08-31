@@ -21,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.GraphicsMode
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 /**
  * The Proof surface frame at rest, light + dark: the desk ground and the band's commit action must
@@ -72,6 +73,32 @@ class ProofScaffoldGoldenTest {
         return Bitmap.createBitmap(full, x, y, w, h)
     }
 
+    private fun savedBitmap(darkTheme: Boolean): Bitmap {
+        val saved = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        composeRule.setContent {
+            ZinelyTheme(darkTheme = darkTheme) {
+                Box(Modifier.size(420.dp, 820.dp)) {
+                    ProofScreen(
+                        onBack = {},
+                        savedSignals = saved,
+                        onOpenSavedPdf = {},
+                        startDrawer = ProofDrawer.None,
+                    )
+                }
+            }
+        }
+        saved.tryEmit("zine.pdf")
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(ProofOpenPdfTestTag).fetchSemanticsNode()
+        val bounds = composeRule.onNodeWithTag(ProofScreenTestTag).fetchSemanticsNode().boundsInRoot
+        val full = composeRule.activity.window.decorView.rasterizeToBitmap()
+        val x = bounds.left.roundToInt().coerceAtLeast(0)
+        val y = bounds.top.roundToInt().coerceAtLeast(0)
+        val w = bounds.width.roundToInt().coerceAtMost(full.width - x)
+        val h = bounds.height.roundToInt().coerceAtMost(full.height - y)
+        return Bitmap.createBitmap(full, x, y, w, h)
+    }
+
     private fun Bitmap.countColour(argb: Int): Int {
         var n = 0
         for (yy in 0 until height) for (xx in 0 until width) if (getPixel(xx, yy) == argb) n++
@@ -81,16 +108,16 @@ class ProofScaffoldGoldenTest {
     @Test
     fun proof_scaffold_light() {
         val bmp = scaffoldBitmap(darkTheme = false)
-        // The V2.1 desk (#FBE9CE) is the frame's ground.
+        // The 37596 Wild Primrose room is the frame's ground.
         assertTrue(
             "light desk did not paint in the proof scaffold",
-            bmp.countColour(Color(0xFFFBE9CE).toArgb()) > 1000,
+            bmp.countColour(Color(0xFFE9E29B).toArgb()) > 1000,
         )
         // The band's commit action ("Save PDF") and the `.ready` tick are `leaf` now — the IOU this
         // file's own header wrote against P6.
         assertTrue(
             "leaf commit action did not paint in the light scaffold",
-            bmp.countColour(Color(0xFF4E7A3C).toArgb()) > 200,
+            bmp.countColour(Color(0xFF8E9546).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/proof_scaffold_light.png", aa())
     }
@@ -98,17 +125,28 @@ class ProofScaffoldGoldenTest {
     @Test
     fun proof_scaffold_dark() {
         val bmp = scaffoldBitmap(darkTheme = true)
-        // The V2.1 dark desk (#241E18). Unlike V1's `stamp`, `leaf` is **not** identical across themes —
-        // it lightens to #8FAE6B so a fill stays legible on a dark desk — so this pair asserts two
+        // The night room is #242312. `leaf` lightens to #BBCA6F so a fill stays legible — this pair asserts two
         // different greens on purpose.
         assertTrue(
             "dark desk did not paint in the proof scaffold",
-            bmp.countColour(Color(0xFF241E18).toArgb()) > 1000,
+            bmp.countColour(Color(0xFF242312).toArgb()) > 1000,
         )
         assertTrue(
             "leaf commit action did not paint in the dark scaffold",
-            bmp.countColour(Color(0xFF8FAE6B).toArgb()) > 200,
+            bmp.countColour(Color(0xFFBBCA6F).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/proof_scaffold_dark.png", aa())
+    }
+
+    @Test
+    fun proof_saved_light() {
+        savedBitmap(darkTheme = false)
+            .captureRoboImage("$GOLDEN_DIR/proof_saved_light.png", aa())
+    }
+
+    @Test
+    fun proof_saved_dark() {
+        savedBitmap(darkTheme = true)
+            .captureRoboImage("$GOLDEN_DIR/proof_saved_dark.png", aa())
     }
 }

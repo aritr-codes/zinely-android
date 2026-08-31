@@ -123,6 +123,7 @@ public object Copy {
     public object A11y {
         public const val EDIT_TEXT: String = "Edit text"
         public const val REFRAME_PHOTO: String = "Reframe photo"
+        public const val REPLACE_PHOTO: String = "Replace photo"
         public const val RESET_FRAMING: String = "Reset framing"
 
         /**
@@ -144,6 +145,10 @@ public object Copy {
          * verb, not its outcome, exactly as `Reframe photo` names the session and not the crop.
          */
         public const val REPLACE_SUPPLY: String = "Replace supply"
+        public const val FLIP_LEFT_RIGHT: String = "Flip left to right"
+        public const val FLIP_TOP_BOTTOM: String = "Flip top to bottom"
+        public const val REMOVE_LEFT_RIGHT_FLIP: String = "Remove left-right flip"
+        public const val REMOVE_TOP_BOTTOM_FLIP: String = "Remove top-bottom flip"
         public const val MOVE_LEFT: String = "Move left"
         public const val MOVE_RIGHT: String = "Move right"
         public const val MOVE_UP: String = "Move up"
@@ -198,8 +203,9 @@ public object Copy {
 
     /**
      * The frozen contextual verb bar (`v2-bench.html` `toolsFor()`, ADR-092 row 2.13). These are the
-     * verbs the freeze names for the selected element, verbatim; each doubles as the control's spoken
-     * label, since the icon above it is decorative.
+     * visible verbs the freeze names for the selected element, verbatim. Their spoken label normally
+     * matches the drawn word because the icon above it is decorative; the two `Replace` routes are the
+     * one exception, where accessibility names the target to distinguish the picker path being opened.
      */
     public object BenchVerbs {
         public const val EDIT: String = "Edit"
@@ -207,6 +213,7 @@ public object Copy {
         public const val SIZE: String = "Size"
         public const val INK: String = "Ink"
         public const val REFRAME: String = "Reframe"
+        public const val ACROSS_FOLD: String = "Across fold"
 
         /** The photocopier filter's toggle (`v21-bench.html:690`, ADR-106). It names the machine, not
          *  the algorithm: nobody asks a copier for Floyd–Steinberg. */
@@ -220,7 +227,9 @@ public object Copy {
          *  them: a disabled verb has no setting to report, a toggle is live by construction. */
         public const val COPIER_ON: String = "On"
         public const val COPIER_OFF: String = "Off"
+        public const val FLIP: String = "Flip"
         public const val REPLACE: String = "Replace"
+        public const val DUPLICATE: String = "Duplicate"
         public const val DELETE: String = "Delete"
 
         /**
@@ -265,6 +274,28 @@ public object Copy {
          * type, then leave the session — and it is true whether the box currently holds words or not.
          */
         public const val FINISH_TYPING: String = "Finish typing to change this"
+    }
+
+    /** One-photo-across-two-pages confirmation (ADR-109 / frozen Bench A19). */
+    public object Spread {
+        public const val CONFIRM: String = "Across pages"
+        public const val CANCEL: String = "Cancel"
+        public const val KEEPS_CONTENT: String =
+            "Zinely will place one half on each page. Existing words and art stay on top."
+        public const val FOLD_WARNING: String =
+            "Keep faces and words away from the middle. It lands on the fold. " +
+                "You will see the complete picture after printing and folding."
+        public const val PHOTO_UNAVAILABLE: String = "This photo couldn’t be prepared for the fold."
+
+        public fun title(leftPageNumber: Int, rightPageNumber: Int): String =
+            if (leftPageNumber == 8 && rightPageNumber == 1) {
+                "Wrap this photo around pages 8 & 1?"
+            } else {
+                "Run this photo across pages $leftPageNumber & $rightPageNumber?"
+            }
+
+        public fun success(leftPageNumber: Int, rightPageNumber: Int): String =
+            "Photo runs across pages $leftPageNumber & $rightPageNumber"
     }
 
     /**
@@ -316,10 +347,12 @@ public object Copy {
         public const val DONE: String = EditText.DONE
 
         // — the four band labels, verbatim (`v2-bench.html:690` Inks/Neutrals, `:688` Paper tints, `:682` the presets) —
-        public const val INKS: String = "Inks"
+        public const val INKS: String = "Spot inks"
         public const val PAPER_TINTS: String = "Paper tints"
         public const val NEUTRALS: String = "Neutrals"
-        public const val PRESETS: String = "Ready-made palettes"
+        public const val PRESETS: String = "Starting palettes"
+        public const val CURRENT_INK: String = "Current ink"
+        public const val CUSTOM_INK: String = "Custom ink"
 
         // — band 1, the ten riso spot inks, in frozen order —
         public const val MATCHA: String = "Matcha"
@@ -332,6 +365,10 @@ public object Copy {
         public const val CORNFLOWER: String = "Cornflower"
         public const val PLUM: String = "Plum"
         public const val INK: String = "Ink"
+
+        /** D-083: the two drawn `Ink` swatches need different names in a non-visual traversal. */
+        public const val SPOT_INK_SPOKEN: String = "Spot ink"
+        public const val NEUTRAL_INK_SPOKEN: String = "Neutral ink"
 
         // — band 2, the paper tints (fenced for a text target, see above) —
         public const val CREAM: String = "Cream"
@@ -373,11 +410,33 @@ public object Copy {
          * circles — so the recipe's name carries it, with its primary ink named because that is the one
          * the tap actually applies (OD-24).
          */
-        public fun presetLabel(name: String, primary: String): String = "$name. Primary ink $primary"
+        public fun apply(primary: String): String = "Apply $primary"
+
+        public fun currentInk(name: String): String = "$CURRENT_INK, $name"
+
+        public fun presetLabel(name: String, primary: String): String = "$name. ${apply(primary)}"
+    }
+
+    public object BenchArt {
+        /** Compact visible state for a tile; the fuller spoken reason remains [BenchVerbs.NOT_YET]. */
+        public const val NOT_YET: String = "Not yet"
+        public const val TITLE: String = "Art"
+        public const val FIND_A_PIECE: String = "Find a piece"
+        public const val SEARCH_HINT: String = "Try tape, star, torn…"
+        public const val RECENT: String = "Recent"
+        public const val FAVOURITES: String = "Favourites"
+        public const val FAVOURITES_EMPTY: String = "Star pieces to keep them close."
+        public const val NO_RESULTS: String = "No art found"
+        public const val NO_RESULTS_HINT: String = "Try another word, or open the full box."
+        public const val SHOW_ALL: String = "Show all art"
+
+        public fun resultCount(count: Int): String = "$count ${if (count == 1) "piece" else "pieces"}"
+        public fun addFavourite(name: String): String = "Add $name to favourites"
+        public fun removeFavourite(name: String): String = "Remove $name from favourites"
     }
 
     /**
-     * **The sixteen supplies** — the Zinely cabinet's whole vocabulary
+     * **The thirty-two supplies** — the Zinely cabinet's current vocabulary
      * ([SUPPLIES-SPEC §4](../../../../../../../docs/design/SUPPLIES-SPEC.md),
      * [ADR-105](../../../../../../../docs/DECISIONS.md#adr-105) step S6). *Art* is the verb; Supplies is
      * the drawer (§1).
@@ -396,7 +455,7 @@ public object Copy {
      *
      * ### The names, and where they depart from §4's prose
      *
-     * §4 restores `ZINE-DIRECTION.md` §9.2's sixteen verbatim, and that prose is a *specification*, not a
+     * §4 restores `ZINE-DIRECTION.md` §9.2's original sixteen verbatim, and that prose is a *specification*, not a
      * set of labels: two entries are slash-pairs (*star/asterisk*, *cut label/speech tag*) and a screen
      * reader cannot say a slash. So the naming here picks one word per supply, and departs in exactly five
      * places, each for a reason that shows up in speech:
@@ -446,9 +505,9 @@ public object Copy {
         /**
          * Family heading → its supplies, `supplyId` → spoken and drawn name, both in §4's frozen order.
          *
-         * Ordered maps throughout: the drawer is *"the same every time you open it"* is the one claim §9
-         * withdrew, but the **order** is still frozen design — sixteen items on one screen have no sort
-         * control and no search, so position is the only way a maker finds a supply twice.
+         * Ordered maps throughout: the **order** is frozen design even though A16 adds local search and
+         * reversible family filters. Search narrows this master order; it never shuffles it, so the cabinet
+         * remains familiar between openings.
          */
         public val BY_FAMILY: Map<String, Map<String, String>> = linkedMapOf(
             TAPE_AND_FIXINGS to linkedMapOf(
@@ -456,30 +515,95 @@ public object Copy {
                 "fix.corner" to "Photo corner",
                 "fix.staple" to "Staple",
                 "fix.clip" to "Paper clip",
+                "tape.masking" to "Masking tape",
+                "fix.stitch" to "Saddle stitch",
+                "fix.grommet" to "Eyelet",
+                "fix.pushpin" to "Push pin",
             ),
             STAMPS_AND_MARKS to linkedMapOf(
                 "mark.asterisk" to "Star",
                 "mark.arrow" to "Arrow",
                 "mark.halftone" to "Halftone dots",
                 "mark.registration" to "Registration cross",
+                "mark.hand" to "Pointing hand",
+                "mark.crop" to "Crop marks",
+                "mark.bar" to "Colour bar",
+                "mark.scan" to "Copier streak",
+                "mark.perf" to "Perforation",
+                "mark.burst" to "Starburst",
             ),
             CUT_PAPER to linkedMapOf(
                 "paper.strip" to "Torn strip",
                 "paper.window" to "Window frame",
                 "paper.tag" to "Speech tag",
                 "paper.underline" to "Marker underline",
+                "paper.stub" to "Ticket stub",
+                "paper.stamp" to "Postage stamp",
+                "paper.deckle" to "Deckle edge",
+                "paper.hole" to "Torn hole",
+                "paper.dogear" to "Folded corner",
             ),
             CUT_SHAPES to linkedMapOf(
                 "shape.rect" to "Rectangle",
                 "shape.circle" to "Circle",
                 "shape.triangle" to "Triangle",
                 "shape.rule" to "Straight rule",
+                "shape.ring" to "Ring",
             ),
         )
 
         /** Every supply, flattened — derived from [BY_FAMILY] so the two can never disagree. */
         public val NAMES: Map<String, String> =
             BY_FAMILY.values.flatMap { it.entries }.associate { it.key to it.value }
+
+        /** Curated local synonyms. They improve recognition; they never leave the device. */
+        public val TAGS: Map<String, String> = mapOf(
+            "tape.torn" to "tape torn strip sticky collage",
+            "fix.corner" to "corner mount photo fixing",
+            "fix.staple" to "staple fixing metal",
+            "fix.clip" to "clip paper wire fixing",
+            "mark.asterisk" to "star asterisk burst stamp",
+            "mark.arrow" to "arrow pointer direction stamp",
+            "mark.halftone" to "halftone dots texture print",
+            "mark.registration" to "registration cross print mark",
+            "paper.strip" to "torn strip paper collage",
+            "paper.window" to "window frame paper cutout",
+            "paper.tag" to "speech tag label bubble paper",
+            "paper.underline" to "marker underline highlight paper",
+            "shape.rect" to "rectangle square block shape",
+            "shape.circle" to "circle dot round shape",
+            "shape.triangle" to "triangle shape",
+            "shape.rule" to "straight rule line shape",
+            "tape.masking" to "masking tape clean sticky collage",
+            "fix.stitch" to "saddle stitch binding thread",
+            "fix.grommet" to "eyelet grommet hole binding",
+            "fix.pushpin" to "push pin tack fixing",
+            "mark.hand" to "pointing hand manicule pointer",
+            "mark.crop" to "crop trim printer marks",
+            "mark.bar" to "colour color bar print register",
+            "mark.scan" to "copier scan streak photocopy",
+            "mark.perf" to "perforation tear line print",
+            "mark.burst" to "starburst burst stamp",
+            "paper.stub" to "ticket stub perforated paper",
+            "paper.stamp" to "postage stamp serrated paper",
+            "paper.deckle" to "deckle rough paper edge",
+            "paper.hole" to "torn hole ripped paper",
+            "paper.dogear" to "folded corner dog ear paper",
+            "shape.ring" to "ring circle hole shape",
+        )
+
+        /** Stable, local name/tag search with an optional one-of-four family filter. */
+        public fun matchingIds(query: String = "", family: String? = null): List<String> {
+            val needle = query.trim().lowercase()
+            return BY_FAMILY.asSequence()
+                .filter { (familyName, _) -> family == null || familyName == family }
+                .flatMap { (_, supplies) -> supplies.asSequence() }
+                .filter { (id, name) ->
+                    needle.isEmpty() || "$name ${TAGS[id].orEmpty()}".lowercase().contains(needle)
+                }
+                .map { it.key }
+                .toList()
+        }
     }
 
     /**
@@ -493,7 +617,7 @@ public object Copy {
         public const val TEXT_TITLE: String = "Text"
         public const val TEXT_SUBTITLE: String = "Type words onto the page"
         public const val PHOTO_TITLE: String = "Photo"
-        public const val PHOTO_SUBTITLE: String = "From your phone — it never leaves the device"
+        public const val PHOTO_SUBTITLE: String = "Choose one from your photos"
 
         /** The frozen `Art` row (`v21-bench.html:841`), title and subtitle verbatim. */
         public const val ART_TITLE: String = "Art"
@@ -510,8 +634,7 @@ public object Copy {
     public object Status {
         public const val SAVED_MARK: String = "✿"
         public const val SAVED_WORD: String = "Saved"
-        public const val SAVED_QUALIFIER: String = " · on this device"
-        public const val SAVED_SPOKEN: String = "Saved on this device"
+        public const val SAVED_SPOKEN: String = "Saved"
     }
 
     /**
@@ -529,6 +652,13 @@ public object Copy {
          * the `Undo` action — the placement is one command, so one press takes it back.
          */
         public const val PLACED: String = "Placed on the page"
+
+        /** One selected page object was copied and the new copy is now selected. */
+        public const val DUPLICATED: String = "Duplicated"
+        public const val FLIPPED_LEFT_RIGHT: String = "Flipped left-right"
+        public const val FLIPPED_TOP_BOTTOM: String = "Flipped top-bottom"
+        public const val LEFT_RIGHT_FLIP_REMOVED: String = "Left-right flip removed"
+        public const val TOP_BOTTOM_FLIP_REMOVED: String = "Top-bottom flip removed"
     }
 
     /** Editor canvas surface — reframe announcements, the whole-photo inert line, the Preview action. */
@@ -559,6 +689,8 @@ public object Copy {
         public const val SHOWING_WHOLE_PHOTO: String = "Showing the whole photo. Margins may appear on paper."
         public const val FRAMING_RESET: String = "Framing reset. Cancel to undo."
         public const val REFRAMING_CANCELLED: String = "Reframing cancelled."
+        public const val REFRAME_UNAVAILABLE: String =
+            "This photo can’t be reframed. Try adding it again."
         public const val WHOLE_PHOTO_INERT: String =
             "Whole photo can’t be moved or zoomed. Choose Fill to adjust it."
         public const val PREVIEW: String = "Preview"
@@ -568,6 +700,13 @@ public object Copy {
         public const val TEXT_STYLE: String = "Text style"
         public const val SHOWING: String = "Showing"
         public const val HIDDEN: String = "Hidden"
+
+        /** Compact selected-piece tray (ADR-113 / frozen Bench A22). */
+        public const val FLIP: String = "Flip"
+        public const val FLIP_HELP: String = "Turn the selected piece over without moving it."
+        public const val LEFT_RIGHT: String = "Left-right"
+        public const val TOP_BOTTOM: String = "Top-bottom"
+        public const val DONE: String = "Done"
     }
 
     /**
@@ -586,12 +725,14 @@ public object Copy {
         public const val FIRST_PAGE_HEADLINE: String = "Let's make something cute."
         public const val LATER_PAGE_HEADLINE: String = "A fresh page. What goes here?"
         public const val SUPPLY_CUE: String = "Grab a photo or a few words from the supplies below."
-        public const val OFFLINE_NOTE: String = "works offline · stays on your phone"
     }
 
     /** The move/resize coach hint (`EditorMoveResizeHint.kt`). Dismiss label is [Common.GOT_IT]. */
     public object MoveResizeHint {
-        public const val TEXT: String = "Drag to move it. Pinch to resize."
+        public const val TEXT: String =
+            "Drag to move. Pull a handle to resize. Turn it with the arrows below."
+        public const val PHOTO_TEXT: String =
+            "Drag to move. Pull a handle to resize. Turn it below; Reframe crops inside."
     }
 
     /** Save-failure banner copy (`EditorSaveFailure.kt`). */
@@ -657,9 +798,12 @@ public object Copy {
     public object EditText {
         public const val ZINE_TEXT: String = "Zine text"
 
+        /** Quiet route from the compact typing row to the complete selected-text style tools. */
+        public const val MORE_STYLES_AFTER_DONE: String = "Align, size & more after Done"
+
         /**
-         * The frozen editing row's `#doneEdit` button (`v2-bench.html:410`) — the one live control in
-         * `BenchStyleRow`. Ends the session and returns the element to Selected (ADR-093 row 3.10).
+         * The frozen editing row's `#doneEdit` button (`v2-bench.html:410`) — the row's primary
+         * completion action. Ends the session and returns the element to Selected (ADR-093 row 3.10).
          */
         public const val DONE: String = "Done"
     }
@@ -797,7 +941,6 @@ public object Copy {
         public const val EMPTY_BODY: String =
             "One sheet of paper, printed at home and folded by hand into a small book. " +
                 "Start one and the bench will teach you the rest."
-        public const val KEPT_ON_DEVICE: String = "Kept on this device — no account, nothing uploaded"
         public const val COULDNT_OPEN_SHELF: String = "Couldn't open your shelf"
         public const val ERROR_BODY: String =
             "Your zines are safe on this device — we just couldn't read them this time."
@@ -834,6 +977,8 @@ public object Copy {
         public const val SAVE: String = "Save"
         public const val SORT: String = "Sort"
         public const val UNDO: String = "Undo"
+        public const val UNAVAILABLE_DAMAGED: String = "This zine looks damaged, so it can’t be opened."
+        public const val UNAVAILABLE_NEWER_APP: String = "This zine needs a newer version of Zinely."
 
         public fun cardOpenLabel(title: String): String = "$title, finished zine. Open on the bench."
         public fun actionsFor(title: String): String = "Actions for $title"
@@ -852,6 +997,35 @@ public object Copy {
         // `A4_DIMENSIONS_LONG` / `LETTER_DIMENSIONS_LONG` were deleted by ADR-101 P3: the paper chooser
         // sheet's sub-line was their only consumer, and the segmented control that replaced it names the
         // size and nothing else.
+    }
+
+    /** The Shelf-owned printer's note: paper preference, bundled type, privacy, and build identity. */
+    public object Colophon {
+        public const val ACTION: String = "About"
+        public const val TITLE: String = "About Zinely"
+        public const val TAGLINE: String = "Some things deserve pages."
+        public const val INTRO: String =
+            "Zinely began with a simple wish: to make something for someone. " +
+                "We hope it helps you make something worth keeping."
+        public const val DEFAULT_PAPER: String = "Paper for new zines"
+        public const val PAPER_EXPLANATION: String =
+            "We’ll suggest this paper when you start. You can always choose the other one."
+        public const val TYPEFACES: String = "Fonts we use"
+        public const val AVERIA_ROLE: String = "Warm, handmade lettering"
+        public const val FRAUNCES_ROLE: String = "A little bookish flair"
+        public const val INTER_ROLE: String = "Clear, everyday text"
+        public const val LICENCE_ACTION: String = "Read font licence"
+        public const val LICENCE_TITLE: String = "Font licence"
+        public const val HOW_IT_WORKS: String = "Your zines stay yours"
+        public const val OFFLINE_PROMISE: String =
+            "Zinely works offline. Your zines stay on this device unless you choose to share or back them up."
+        public const val VERSION: String = "App version"
+        public const val BACK_TO_SHELF: String = "Back to My Shelf"
+        public const val BACK_TO_COLOPHON: String = "Back to About Zinely"
+        public const val LICENCE_UNAVAILABLE: String = "This font licence couldn’t be opened."
+        public const val PAPER_SAVE_FAILED: String = "Couldn’t save that paper choice."
+        public fun licenceButton(family: String): String = "$family, $LICENCE_ACTION"
+        public fun paperSelected(paper: String): String = "$paper is now your default paper"
     }
 
     /** The Proof surface top bar + band (`ProofScreen.kt`). "Try again" is [Common.TRY_AGAIN]. */
@@ -921,9 +1095,9 @@ public object Copy {
          */
         public const val BEFORE_YOU_PRINT: String = "Before you print"
 
-        /** `.ready`'s sub-line — what will be printed, on what, and where it stays. */
+        /** `.ready`'s sub-line — what will be printed and on what paper. */
         public fun readySummary(pages: Int, paper: String): String =
-            "${pagesWord(pages)} · one sheet, one cut · $paper · stays on your phone"
+            "${pagesWord(pages)} · one sheet, one cut · $paper"
 
         /**
          * The whole `.ready` row is **one** control, so it is announced as one string.
@@ -977,6 +1151,9 @@ public object Copy {
 
         /** `.done` — the persistent completion the band raises in place of `.commit` after a save. */
         public const val SAVED_TO_YOUR_PHONE: String = "Saved to your phone"
+
+        /** Explicitly inspect the exact durable file from this save; saving itself never navigates away. */
+        public const val OPEN_PDF: String = "Open PDF"
 
         /**
          * `.done`'s body — and the **last** sentence a user reads before they walk to a printer.
@@ -1305,6 +1482,80 @@ public object Copy {
             "Four panels standing in a cross.",
             "Done — an eight-page zine from one sheet.",
         )
+    }
+
+    /** Whole-library `.zine` backup / restore on the shelf. */
+    public object LibraryBackup {
+        public const val BACKUPS: String = "Backups"
+        public const val BRING_BACK: String = "Restore a backup"
+        public const val TITLE: String = "Your zines, kept safe"
+        public const val SHEET_BODY: String =
+            "Save every zine on this shelf in one file, or bring a backup back. Restoring adds zines — nothing here is replaced."
+        public const val EMPTY_TITLE: String = "Bring your zines back"
+        public const val EMPTY_BODY: String = "Choose a Zinely backup and its zines will be added to this shelf."
+        public const val DESTINATION_NOTE: String =
+            "Backups save as a file you choose. Restores add separate zines."
+        public const val EMPTY_DESTINATION_NOTE: String =
+            "Restoring adds zines to this shelf; it does not replace anything."
+        public const val SAVE_ACTION: String = "Back up this shelf"
+        public const val SAVE_BODY: String = "Choose where to keep a copy of this whole shelf."
+        public const val RESTORE_ACTION: String = "Restore a backup"
+        public const val RESTORE_BODY: String =
+            "Add zines from a Zinely backup. What’s here stays here; a matching zine returns as a separate copy."
+        public const val EMPTY_RESTORE_BODY: String = "Choose a Zinely backup to add its zines to this shelf."
+
+        public const val BACKUP_RUNNING_TITLE: String = "Saving your backup"
+        public const val BACKUP_RUNNING_BODY: String = "Keeping every zine together in one file."
+        public const val BACKUP_RUNNING_HINT: String = "Keep Zinely open for a moment."
+        public const val RESTORE_RUNNING_TITLE: String = "Bringing your zines back"
+        public const val RESTORE_RUNNING_BODY: String = "Checking the backup before anything changes."
+        public const val RESTORE_RUNNING_HINT: String =
+            "Nothing on this shelf changes until the backup passes its checks."
+        public const val RUNNING_STATE_DESCRIPTION: String = "Working"
+
+        public const val RESTORE_SUCCESS_BODY: String = "What was already on this shelf stayed put."
+        public const val ERROR_DAMAGED_TITLE: String = "This backup looks damaged"
+        public const val ERROR_DAMAGED_BODY: String = "Zinely couldn’t safely bring anything back from that file."
+        public const val ERROR_NEWER_TITLE: String = "This backup needs a newer Zinely"
+        public const val ERROR_NEWER_BODY: String =
+            "It was made with a version of Zinely that knows more than this one does."
+        public const val ERROR_READ_TITLE: String = "Couldn’t read that file"
+        public const val ERROR_READ_BODY: String = "Zinely couldn’t safely read that backup."
+        public const val ERROR_SAVE_TITLE: String = "Couldn’t save the backup there"
+        public const val ERROR_SAVE_BODY: String = "Pick another location and try again."
+        public const val ERROR_SPACE_TITLE: String = "Not enough space"
+        public const val ERROR_SPACE_BODY: String = "Free up some space, then try again."
+        public const val ERROR_BUSY_TITLE: String = "Give Zinely a moment"
+        public const val ERROR_BUSY_BODY: String = "A zine is still being put away. Try again shortly."
+        public const val CANCEL: String = "Cancel"
+        public const val DONE: String = Common.GOT_IT
+        public const val GOT_IT: String = Common.GOT_IT
+        public const val TRY_AGAIN: String = Common.TRY_AGAIN
+        public const val TRY_ANOTHER_BACKUP: String = "Try another backup"
+        public const val PICKER_BACKUP_NAME_PREFIX: String = "zinely-backup"
+        public const val BACKUP_CANCELLED: String = "Backup cancelled."
+        public const val RESTORE_CANCELLED: String = "Restore cancelled."
+
+        public fun backupSavedTitle(): String = "Backup saved"
+        public fun backupSavedBody(projectCount: Int): String =
+            "All ${projectCount} ${if (projectCount == 1) "zine is" else "zines are"} together in one backup file."
+
+        public fun restoreAddedTitle(projectCount: Int): String =
+            "$projectCount ${if (projectCount == 1) "zine" else "zines"} added to your shelf"
+
+        public fun errorGenericTitle(isBackup: Boolean): String =
+            if (isBackup) {
+                "Couldn’t finish that backup"
+            } else {
+                "Couldn’t finish that restore"
+            }
+
+        public fun errorGenericBody(isBackup: Boolean): String =
+            if (isBackup) {
+                "Nothing about the zines on this shelf was changed."
+            } else {
+                "Nothing on this shelf was changed."
+            }
     }
 
     /** The Read act — the finished zine, one leaf at a time (`ProofRead.kt`). */

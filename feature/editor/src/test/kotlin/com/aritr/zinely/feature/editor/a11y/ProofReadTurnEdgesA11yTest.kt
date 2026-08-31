@@ -77,7 +77,6 @@ class ProofReadTurnEdgesA11yTest {
                         pages = pages(),
                         pageSizePt = PtSize(200.0, 300.0),
                         defaults = DocumentDefaults(),
-                        reduceMotion = true,
                     )
                 }
             }

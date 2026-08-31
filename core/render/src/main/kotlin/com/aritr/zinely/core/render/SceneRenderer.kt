@@ -80,7 +80,12 @@ public object SceneRenderer {
                 crop = crop,
                 fit = fit,
                 box = box,
-                localToPage = localToPage,
+                localToPage = localBoxFold(
+                    localToPage = localToPage,
+                    transform = transform,
+                    flippedHorizontally = flippedHorizontally,
+                    flippedVertically = flippedVertically,
+                ),
                 localClip = box,
                 copier = copier,
             )
@@ -93,7 +98,12 @@ public object SceneRenderer {
                 DrawShape(
                     outline = outline,
                     ink = ink,
-                    localToPage = unitSquareFold(localToPage, transform, mirrored),
+                    localToPage = unitSquareFold(
+                        localToPage = localToPage,
+                        transform = transform,
+                        flippedHorizontally = mirrored,
+                        flippedVertically = flippedVertically,
+                    ),
                 )
             }
         }
@@ -105,6 +115,7 @@ public object SceneRenderer {
      * drawing rather than the placement: a mirrored supply occupies the identical page box.
      */
     private val MIRROR_X_IN_UNIT_SQUARE = AffineTransform2D(-1.0, 0.0, 0.0, 1.0, 1.0, 0.0)
+    private val MIRROR_Y_IN_UNIT_SQUARE = AffineTransform2D(1.0, 0.0, 0.0, -1.0, 0.0, 1.0)
 
     /**
      * The unit-square fold (SUPPLIES-SPEC §3.4.1) — the term [localToPage] alone cannot supply.
@@ -126,11 +137,39 @@ public object SceneRenderer {
      */
     private fun unitSquareFold(
         localToPage: AffineTransform2D,
-        t: Transform,
-        mirrored: Boolean,
+        transform: Transform,
+        flippedHorizontally: Boolean,
+        flippedVertically: Boolean,
     ): AffineTransform2D {
-        val scaled = localToPage.times(AffineTransform2D.scale(t.widthPt, t.heightPt))
-        return if (mirrored) scaled.times(MIRROR_X_IN_UNIT_SQUARE) else scaled
+        var folded = localToPage.times(AffineTransform2D.scale(transform.widthPt, transform.heightPt))
+        if (flippedHorizontally) folded = folded.times(MIRROR_X_IN_UNIT_SQUARE)
+        if (flippedVertically) folded = folded.times(MIRROR_Y_IN_UNIT_SQUARE)
+        return folded
+    }
+
+    /**
+     * Reflect photo-local point coordinates inside the unchanged element box. The reflection is the
+     * innermost term, so rotation remains about the same page-space centre and crop remains a source
+     * rectangle decision carried by [DrawImage] (ADR-113).
+     */
+    private fun localBoxFold(
+        localToPage: AffineTransform2D,
+        transform: Transform,
+        flippedHorizontally: Boolean,
+        flippedVertically: Boolean,
+    ): AffineTransform2D {
+        var folded = localToPage
+        if (flippedHorizontally) {
+            folded = folded.times(
+                AffineTransform2D(-1.0, 0.0, 0.0, 1.0, transform.widthPt, 0.0),
+            )
+        }
+        if (flippedVertically) {
+            folded = folded.times(
+                AffineTransform2D(1.0, 0.0, 0.0, -1.0, 0.0, transform.heightPt),
+            )
+        }
+        return folded
     }
 
     /** Page background wins; `None` falls back to the document default; `None`/`None` ⇒ no fill. */

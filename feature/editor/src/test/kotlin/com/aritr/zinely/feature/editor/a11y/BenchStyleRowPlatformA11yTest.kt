@@ -1,15 +1,19 @@
 package com.aritr.zinely.feature.editor.a11y
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.unit.Density
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.feature.editor.BenchStyleRow
+import com.aritr.zinely.feature.editor.BenchStyleRowTestTag
 import com.aritr.zinely.ui.a11y.platformNode
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -21,15 +25,10 @@ import org.robolectric.annotation.GraphicsMode
  * The C3 style row on the **platform** accessibility tree — the tier
  * [ReframeControlsRolePlatformA11yTest] exists for, applied to the row ADR-093 rows 3.4–3.7 add.
  *
- * Three of this row's four controls are drawn-and-inert (OD-9), which is the precise shape of the defect
- * this project has already shipped once: `ReframeControls.ZoomButton` passed `assertIsNotEnabled` against
- * Compose's **merged** tree while telling the platform `enabled = true`, so TalkBack invited a tap on a
- * control that could not act. A merged-tree assertion cannot catch that, by construction — only
- * `AccessibilityNodeInfo` can, and that is what [platformNode] reads.
- *
- * So the inert chips are asserted `isEnabled = false` **and** `isClickable = false` here. The second is the
- * one that matters most: `disabled()` alone still leaves a node an accessibility service may offer to
- * activate, and the chips carry no `clickable` modifier precisely so the platform node reports neither.
+ * D-108 removes the fake Font / Size buttons and makes Ink match the already-wired HTML. Compose merged-tree
+ * checks are insufficient for this contract: the row once passed them while a platform node still reported
+ * the wrong enabled/clickable state. [platformNode] therefore proves both remaining actions are real Android
+ * buttons that an accessibility service can activate.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -41,38 +40,54 @@ class BenchStyleRowPlatformA11yTest {
     private fun render() {
         composeRule.setContent {
             ZinelyTheme {
-                BenchStyleRow(visible = true, inkSwatch = Color.Black, onDone = {})
+                BenchStyleRow(visible = true, inkSwatch = Color.Black, onInk = {}, onDone = {})
             }
         }
         composeRule.waitForIdle()
     }
 
-    private fun assertInert(label: String, because: String) {
-        val node = composeRule.onNodeWithContentDescription(label).platformNode(composeRule.activity)
-        assertEquals("$label must carry Role.Button to the platform tree", "android.widget.Button", node.className)
-        assertFalse("$label is drawn-and-inert (OD-9) and must report DISABLED to the platform", node.isEnabled)
-        assertFalse("$label must not be offered as clickable — nothing happens if it is activated", node.isClickable)
-        // F-1: the reason is only worth writing if TalkBack can hear it, and TalkBack reads THIS tree. The
-        // merged-tree assertions in `BenchC3Test` prove the value is set; only this one proves it arrives.
-        assertEquals("$label must tell the platform why it is dim", because, node.stateDescription?.toString())
-        // ...and it must arrive as STATE, never folded into the name: the chip is still called `Size`.
-        assertEquals("the reason must not migrate into the name", label, node.contentDescription?.toString())
-    }
-
     @Test
-    fun the_three_inert_chips_report_disabled_and_unclickable_to_the_platform() {
+    fun ink_is_a_real_platform_button() {
         render()
-        assertInert(Copy.BenchVerbs.FONT, Copy.BenchVerbs.NOT_YET)
-        assertInert(Copy.BenchVerbs.SIZE, Copy.BenchVerbs.FINISH_TYPING)
-        assertInert(Copy.BenchVerbs.INK, Copy.BenchVerbs.FINISH_TYPING)
+        val ink = composeRule.onNodeWithContentDescription(Copy.BenchVerbs.INK)
+            .platformNode(composeRule.activity)
+        assertEquals("android.widget.Button", ink.className)
+        assertTrue("Ink must be enabled to the platform", ink.isEnabled)
+        assertTrue("Ink must be activatable by an accessibility service", ink.isClickable)
     }
 
     @Test
-    fun done_is_the_one_live_control_and_the_platform_can_activate_it() {
+    fun done_remains_a_live_platform_control() {
         render()
         val done = composeRule.onNodeWithContentDescription(Copy.EditText.DONE).platformNode(composeRule.activity)
         assertEquals("android.widget.Button", done.className)
-        assertTrue("Done is the row's only live control and must be enabled to the platform", done.isEnabled)
+        assertTrue("Done must be enabled to the platform", done.isEnabled)
         assertTrue("Done must be activatable by an accessibility service, not only by touch", done.isClickable)
+    }
+
+    @Test
+    fun ink_and_done_remain_inside_the_row_at_maximum_font_scale() {
+        composeRule.setContent {
+            ZinelyTheme {
+                val base = LocalDensity.current
+                CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale = 2f)) {
+                    BenchStyleRow(
+                        visible = true,
+                        inkSwatch = Color.Black,
+                        onInk = {},
+                        onDone = {},
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val row = composeRule.onNodeWithTag(BenchStyleRowTestTag).fetchSemanticsNode().boundsInRoot
+        val ink = composeRule.onNodeWithContentDescription(Copy.BenchVerbs.INK)
+            .fetchSemanticsNode().boundsInRoot
+        val done = composeRule.onNodeWithContentDescription(Copy.EditText.DONE)
+            .fetchSemanticsNode().boundsInRoot
+        assertTrue("Ink must stay inside the leading row edge at 2.0 font scale", ink.left >= row.left)
+        assertTrue("Done must stay inside the trailing row edge at 2.0 font scale", done.right <= row.right)
     }
 }

@@ -103,7 +103,7 @@ class TypeBarGoldenTest {
                 Box(
                     modifier = Modifier
                         .testTag(HOST_TAG)
-                        .background(ZinelyTheme.colors.desk)
+                        .background(ZinelyTheme.v21Colors.desk)
                         .padding(12.dp),
                 ) {
                     TypeBar(element = element, dispatch = {}, onAnnounce = {}, onPreview = {})
@@ -148,15 +148,12 @@ class TypeBarGoldenTest {
     }
 
     /**
-     * The card's `width:max-content` width, **measured rather than derived** — 318.5dp under this
+     * The card's `width:max-content` width, **measured rather than derived** — 288dp under this
      * fixture's density and font scale.
      *
-     * ⚠ Was 278.5dp until 2026-08-15. The +40dp is `SwatchGap` going 8dp → 18dp so the swatch PITCH
-     * reaches the platform's 48dp minimum touch target (30 + 18 = 48); a device dump had four of the five
-     * pots reporting 38.1dp wide to the accessibility tree because neighbouring 48dp expansions overlapped
-     * and the overlap is pruned before `setBoundsInScreen`. The pots still paint 30dp — no control
-     * inflated, which is what the number below is here to prove — and the card is still inside the frozen
-     * `max-width:calc(100% - 24px)` on the narrowest phone
+     * The August 29, 2026 Samsung refinement stacks the Colour caption above one five-tile line. The
+     * physical pots still paint 30dp, every tile remains 48dp, the selected cue is explicit, and the
+     * card is still inside the frozen `max-width:calc(100% - 24px)` on the narrowest phone
      * ([TypeBarTest.the_card_honours_the_frozen_max_width_on_the_smallest_supported_phone]).
      *
      * V1's version of this KDoc computed the number from the rules (`28 + 60 + 192 = 280`) and named
@@ -165,7 +162,7 @@ class TypeBarGoldenTest {
      * sentence case to `.6rem` uppercase on `.13em` tracking, which widens the label column. The net is
      * 1.5dp, which is exactly the kind of near-agreement that makes a recomputed figure look verified when
      * it is not. **Which row is widest at a given font scale is a measurement** — it is open question 2 in
-     * `v21-typebar.html`, still owed a device — so this asserts the fixture's measured width and claims
+     * `v21-typebar.html`, now answered — so this asserts the fixture's measured width and claims
      * nothing about which row produced it.
      *
      * Asserted in the golden tier too, and not only in [TypeBarTest], because this is the number a golden
@@ -181,8 +178,8 @@ class TypeBarGoldenTest {
         val card = composeRule.onNodeWithTag(TypeBarTestTag).fetchSemanticsNode().boundsInRoot
         with(composeRule.density) {
             assertEquals(
-                "the Type bar is not the measured 318.5dp wide; got ${card.width.toDp()}",
-                318.5f, card.width.toDp().value, 0.5f,
+                "the Type bar is not the measured 288dp wide; got ${card.width.toDp()}",
+                288f, card.width.toDp().value, 0.5f,
             )
         }
     }
@@ -197,11 +194,11 @@ class TypeBarGoldenTest {
             "the teal ink swatch did not paint in the light Type bar",
             bmp.countColour(Color(0xFF2A9D8F).toArgb()) > 200,
         )
-        // The light desk (#E7DECE) must be the ground the card floats on — the same non-vacuity floor the
+        // The light 37596 room (#E9E29B) must be the ground the card floats on.
         // dark case asserts.
         assertTrue(
             "the light desk did not paint behind the Type bar",
-            bmp.countColour(Color(0xFFE7DECE).toArgb()) > 200,
+            bmp.countColour(Color(0xFFE9E29B).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/type_bar_light.png", aa())
     }
@@ -216,10 +213,10 @@ class TypeBarGoldenTest {
             "the teal ink swatch did not paint in the dark Type bar",
             bmp.countColour(Color(0xFF2A9D8F).toArgb()) > 200,
         )
-        // Dark desk (#201F1E) must be the ground the card floats on.
+        // Dark room (#242312) must be the ground the card floats on.
         assertTrue(
             "the dark desk did not paint behind the Type bar",
-            bmp.countColour(Color(0xFF201F1E).toArgb()) > 200,
+            bmp.countColour(Color(0xFF242312).toArgb()) > 200,
         )
         bmp.captureRoboImage("$GOLDEN_DIR/type_bar_dark.png", aa())
     }
@@ -240,7 +237,7 @@ class TypeBarGoldenTest {
         showCard(darkTheme = false, element = MinSizeText)
         // V2.1 `--ink`, light (`v21-typebar.html` `.tysize button{border:1.5px solid var(--ink)}`). Was
         // V1's `--field-edge` #DED4C2, a token V2.1 does not define.
-        val unfadedEdge = Color(0xFF33261C).toArgb()
+        val unfadedEdge = Color(0xFF27270F).toArgb()
 
         // Non-vacuity: at the ramp floor "Larger" is still enabled, so the edge IS on screen — proving the
         // crop and the colour are right before the disabled case asserts an absence.

@@ -33,6 +33,7 @@ import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.Transform
 import com.aritr.zinely.core.model.ZineDocument
 import com.aritr.zinely.core.model.ZineFormat
+import com.aritr.zinely.render.android.AssetBytesSource
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.CoroutineScope
@@ -41,6 +42,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -82,9 +84,9 @@ class EditorScreenTest {
      */
     private val midPageTextBox = Transform(20.0, 76.0, 20.0, 18.0)
 
-    private fun store(): EditorStore {
+    private fun store(onEffect: (Effect) -> Unit = {}): EditorStore {
         val runner = object : EditorEffectRunner {
-            override fun run(effect: Effect, dispatch: (Intent) -> Unit) = Unit
+            override fun run(effect: Effect, dispatch: (Intent) -> Unit) = onEffect(effect)
         }
         return EditorStore(
             EditorModel(
@@ -125,12 +127,14 @@ class EditorScreenTest {
         saveError: SaveErrorKind? = null,
         onDismissSaveError: () -> Unit = {},
         pageSizePt: PtSize = this.pageSizePt,
+        imageBytes: AssetBytesSource = AssetBytesSource { null },
     ) {
         composeRule.setContent {
             ZinelyTheme {
                 EditorScreen(
                     store = store,
                     pageSizePt = pageSizePt,
+                    imageBytes = imageBytes,
                     modifier = Modifier.size(300.dp, 400.dp),
                     moveResizeHintSeen = moveResizeHintSeen,
                     onMoveResizeHintSeen = onMoveResizeHintSeen,
@@ -336,6 +340,26 @@ class EditorScreenTest {
     }
 
     @Test
+    fun back_from_add_words_cancels_the_blank_session_without_leaving_the_editor() {
+        val store = store()
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(BenchBarAddTag).performClick()
+        composeRule.onNodeWithTag(BenchAddChooserTextTag).performClick()
+        composeRule.waitForIdle()
+        assertTrue(store.uiState.value.interaction is Interaction.EditingText)
+
+        composeRule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+
+        assertTrue("Back closes only the in-editor text surface", store.uiState.value.interaction is Interaction.Idle)
+        assertTrue("a cancelled fresh blank leaves no element", store.uiState.value.document.pages[0].elements.isEmpty())
+        assertTrue("a cancelled fresh blank leaves no undo step", !store.uiState.value.canUndo)
+        composeRule.onNodeWithTag(BenchBarAddTag).assertIsDisplayed()
+    }
+
+    @Test
     fun on_a_blank_page_the_add_actions_are_not_duplicated_the_bar_owns_them() {
         // ADR-033's de-dup, restated for C4's bar (ADR-094 row 4.7). A blank page raises the invitation
         // overlay AND the persistent bar. The overlay is invitation-only, so the add affordance exists
@@ -401,11 +425,22 @@ class EditorScreenTest {
     @Test
     fun a_move_resize_hint_appears_once_an_element_is_selected() {
         // Discoverability teach: once a placed element is single-selected (handles visible, Idle), the
-        // one-time hint floats in to say the moves are drag/pinch — the gestures that have no other twin.
+        // one-time hint names the handles and lower turn controls already on screen.
         val store = store()
         store.dispatch(Intent.PlaceText(Transform(20.0, 20.0, 20.0, 20.0), "hi")) // auto-selects, Idle
         setScreen(store)
         composeRule.onNodeWithTag(EditorMoveResizeHintTestTag).assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.MoveResizeHint.TEXT).assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.MoveResizeHint.PHOTO_TEXT).assertDoesNotExist()
+    }
+
+    @Test
+    fun a_first_selected_photo_explains_that_Reframe_crops_inside() {
+        setScreen(selectedPhoto())
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(Copy.MoveResizeHint.PHOTO_TEXT).assertIsDisplayed()
+        composeRule.onNodeWithText(Copy.MoveResizeHint.TEXT).assertDoesNotExist()
     }
 
     @Test
@@ -830,7 +865,9 @@ class EditorScreenTest {
     @Test
     @Config(qualifiers = "night")
     fun the_verb_bar_is_legible_at_night() {
-        setScreen(selectedText())
+        // This test samples the context bar's own pixels. Keep the unrelated one-time coach out of the
+        // fixture so a copy/height change to that overlay cannot perturb Robolectric's first raster frame.
+        setScreen(selectedText(), moveResizeHintSeen = true)
         composeRule.waitForIdle()
         val bar = composeRule.onNodeWithTag(BenchContextBarTestTag).fetchSemanticsNode().boundsInWindow
         val bmp = composeRule.activity.window.decorView.rasterizeToBitmap()
@@ -929,12 +966,122 @@ class EditorScreenTest {
         )
     }
 
-    private fun selectedPhoto(): EditorStore = store().also {
+    private fun selectedPhoto(onEffect: (Effect) -> Unit = {}): EditorStore = store(onEffect).also {
         it.dispatch(
             Intent.CommitAddImage(
                 ImageElement(id = "photo", transform = Transform(20.0, 20.0, 40.0, 30.0), assetId = "a"),
             ),
         )
+    }
+
+    @Test
+    fun photo_Replace_requests_the_targeted_picker_without_opening_Art() {
+        val effects = mutableListOf<Effect>()
+        val store = selectedPhoto(effects::add)
+        val photoId = store.uiState.value.selection.single()
+        effects.clear() // The fixture's CommitAddImage autosave is outside the action under test.
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REPLACE}").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf(Effect.PickAndDecodeImage(replacingId = photoId)), effects)
+        composeRule.onNodeWithTag(BenchArtSheetTestTag).assertDoesNotExist()
+    }
+
+    private fun selectedPhotoInEightPageZine(): EditorStore {
+        val runner = object : EditorEffectRunner {
+            override fun run(effect: Effect, dispatch: (Intent) -> Unit) = Unit
+        }
+        return EditorStore(
+            EditorModel(
+                document = ZineDocument(
+                    format = ZineFormat.SINGLE_SHEET_8,
+                    paperSize = PaperSize.LETTER,
+                    pages = List(8) { index -> Page(index = index, role = PageRole.INTERIOR) },
+                ),
+            ),
+            scope, Dispatchers.Unconfined, runner,
+        ).also {
+            it.dispatch(
+                Intent.CommitAddImage(
+                    ImageElement(id = "photo", transform = Transform(20.0, 20.0, 40.0, 30.0), assetId = "a"),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun across_fold_explains_the_two_page_change_before_writing_it() {
+        val store = selectedPhotoInEightPageZine()
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ACROSS_FOLD}").performClick()
+
+        composeRule.onNodeWithTag(ImageSpreadSheetTestTag).assertExists()
+        composeRule.onNodeWithText(Copy.Spread.title(8, 1)).assertExists()
+        assertEquals(1, store.uiState.value.document.pages[0].elements.size)
+        assertTrue(store.uiState.value.document.pages[7].elements.isEmpty())
+    }
+
+    @Test
+    fun cancelling_across_fold_leaves_both_pages_untouched() {
+        val store = selectedPhotoInEightPageZine()
+        setScreen(store)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ACROSS_FOLD}").performClick()
+        composeRule.onNodeWithText(Copy.Spread.CANCEL).performClick()
+
+        composeRule.onNodeWithTag(ImageSpreadSheetTestTag).assertDoesNotExist()
+        assertEquals(1, store.uiState.value.document.pages[0].elements.size)
+        assertTrue(store.uiState.value.document.pages[7].elements.isEmpty())
+    }
+
+    @Test
+    fun duplicate_copies_the_selected_object_selects_the_copy_and_offers_one_undo() {
+        val store = selectedPhoto()
+        val source = store.uiState.value.document.pages.single().elements.single() as ImageElement
+        setScreen(store)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}").performClick()
+        composeRule.waitForIdle()
+
+        val elements = store.uiState.value.document.pages.single().elements
+        assertEquals(2, elements.size)
+        val copy = elements.last() as ImageElement
+        assertNotEquals(source.id, copy.id)
+        assertEquals(source.assetId, copy.assetId)
+        assertEquals(setOf(copy.id), store.uiState.value.selection)
+        composeRule.onNodeWithTag(BenchBarUndoTag).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf(source), store.uiState.value.document.pages.single().elements)
+    }
+
+    @Test
+    fun confirming_across_fold_writes_one_shared_asset_pair() {
+        val store = selectedPhotoInEightPageZine()
+        setScreen(store, imageBytes = reframeTestPhoto(widthPx = 400, heightPx = 200))
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.ACROSS_FOLD}").performClick()
+        composeRule.onNodeWithTag(ImageSpreadConfirmTestTag).performClick()
+        // The production path reads image bounds on Dispatchers.IO. Compose idleness does not include
+        // that dispatcher, so wait on the document result instead of racing the sheet dismissal.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            store.uiState.value.document.pages[7].elements.isNotEmpty()
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(ImageSpreadSheetTestTag).assertDoesNotExist()
+        val left = store.uiState.value.document.pages[7].elements.single() as ImageElement
+        val right = store.uiState.value.document.pages[0].elements.single() as ImageElement
+        assertEquals("a", left.assetId)
+        assertEquals(left.assetId, right.assetId)
+        assertEquals(0.5, left.crop.right, 0.0)
+        assertEquals(0.5, right.crop.left, 0.0)
     }
 
     /**
@@ -976,6 +1123,7 @@ class EditorScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.SIZE}").assertIsNotEnabled()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.INK}").assertIsNotEnabled()
+        composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DUPLICATE}").assertIsNotEnabled()
         // Delete stays live — a blank box is exactly the one you most want to get rid of.
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.DELETE}").assertIsEnabled()
     }

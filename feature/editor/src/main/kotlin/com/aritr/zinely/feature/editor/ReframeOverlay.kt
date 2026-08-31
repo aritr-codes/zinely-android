@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.IntOffset
@@ -79,9 +80,9 @@ public fun ReframeOverlay(
     //    it means the same thing: this is the edge you are working to."* So it is literally the ring's
     //    hand: [SelectionOutlineStrokeDp] and [SelectionOutlineDashDp], the same `1.6px dashed var(--ink)`
     //    declaration, read from the same constants rather than re-transcribed into a second pair.
-    //  * the **scrim** was `ZinelyTheme.colors.scrim` (V1). V2.1 declares no `--scrim` in its token block;
-    //    the prototypes declare one in their own sheets (`v21-bench.html:359`, `rgba(38,26,16,.44)`), now
-    //    hoisted to [ZinelyV21Scrim]. ⚠ Read it from *there* and not from `BenchGridScrimColor`, which is
+    //  * the **scrim** was `ZinelyTheme.colors.scrim` (V1). The 37596 palette derives one invariant wash
+    //    (`v21-bench.html:359`, `rgba(39,39,15,.44)`), hoisted to [ZinelyV21Scrim]. Read it from *there*
+    //    and not from `BenchGridScrimColor`, which is
     //    what this first did: that constant is documented as a **modal backdrop**, and this dim is a
     //    permanent crop dimmer that never animates to full. Same value, different job — so darkening the
     //    modal scrim must not silently change how much of the user's cropped-away photo stays visible.
@@ -94,11 +95,9 @@ public fun ReframeOverlay(
     val frameGround = colors.deskEdge
     // ⚠ The thirds lie **over the user's photograph**, and stay a hardcoded white on purpose.
     //
-    // This was briefly changed to follow `--paper`, on the reasoning that a token-derived guide keeps the
-    // room's voice in both themes. A review killed it and was right: the photograph does not change with
-    // the app's theme, so theming the guide adds a failure mode instead of removing one — in dark, `--paper`
-    // is #332B22 and the guide becomes a near-black line over an arbitrary image, invisible on anything but
-    // a bright photo, for no gain in light where it is indistinguishable from white anyway.
+    // This was briefly changed to follow a theme token, on the reasoning that a token-derived guide keeps
+    // the room's voice. A review killed it and was right: the photograph does not change with the app's
+    // theme, and no palette token can guarantee contrast over an arbitrary photograph.
     //
     // No token can promise a ratio over a photograph — the constraint [SelectionChrome] records for the
     // ring — and the repo already has one answer to that problem: [HandleHaloColor], a hardcoded
@@ -145,8 +144,20 @@ public fun ReframeOverlay(
                     val frameWpx = element.transform.widthPt * screenPxPerPt
                     val frameHpx = element.transform.heightPt * screenPxPerPt
                     val (cw0, ch0) = Framing.coverExtent(pratio, bratio)
-                    val fx = if (frameWpx > 0f) -pan.x * (cw0 / d.zoom) / frameWpx else 0.0
-                    val fy = if (frameHpx > 0f) -pan.y * (ch0 / d.zoom) / frameHpx else 0.0
+                    val fx = reframePanFraction(
+                        panPx = pan.x,
+                        coverExtent = cw0,
+                        zoom = d.zoom,
+                        framePx = frameWpx,
+                        flipped = element.flippedHorizontally,
+                    )
+                    val fy = reframePanFraction(
+                        panPx = pan.y,
+                        coverExtent = ch0,
+                        zoom = d.zoom,
+                        framePx = frameHpx,
+                        flipped = element.flippedVertically,
+                    )
                     onDraft(Framing.panned(d, fx, fy, pratio, bratio))
                 }
             },
@@ -165,11 +176,23 @@ public fun ReframeOverlay(
             // drawing nothing beats drawing a lie (Observation O-1).
             val dst = if (framable) photoDestPx(draft, frame, pratio, bratio) else null
             if (dst != null && decoded != null && dst.width >= 1f && dst.height >= 1f) {
-                drawImage(
-                    image = decoded.bitmap,
-                    dstOffset = IntOffset(dst.left.roundToInt(), dst.top.roundToInt()),
-                    dstSize = IntSize(dst.width.roundToInt(), dst.height.roundToInt()),
-                )
+                withTransform({
+                    scale(
+                        scaleX = if (element.flippedHorizontally) -1f else 1f,
+                        scaleY = if (element.flippedVertically) -1f else 1f,
+                        pivot = center,
+                    )
+                }) {
+                    drawImage(
+                        image = decoded.bitmap,
+                        dstOffset = IntOffset(dst.left.roundToInt(), dst.top.roundToInt()),
+                        dstSize = IntSize(dst.width.roundToInt(), dst.height.roundToInt()),
+                    )
+                    // The dim belongs to the cropped-away photo, so it reflects with that photo too.
+                    for (r in photoScrimRectsPx(dst, frame)) {
+                        drawRect(scrim, topLeft = r.topLeft, size = r.size)
+                    }
+                }
             }
             // 2) Scrim the PHOTO'S OVERFLOW ONLY — `dst - frame`, never the stage.
             //
@@ -191,9 +214,7 @@ public fun ReframeOverlay(
             // deviates is that these rects are square while the frame is rounded, so in each 4dp corner arc
             // a sliver of photo paints outside the ground and outside the boundary, undimmed. Clipping the
             // photo to a rounded rect and drawing it twice would close it, and is not worth 4dp of corner.
-            if (dst != null) {
-                for (r in photoScrimRectsPx(dst, frame)) drawRect(scrim, topLeft = r.topLeft, size = r.size)
-            }
+            // Drawn with the photo above so reflection cannot leave the overflow dim on the old side.
             // 3) The drawn boundary — `.frame::after{border:1.6px dashed var(--ink);border-radius:var(--br-xs)}`.
             val dashPx = SelectionOutlineDashDp.toPx()
             drawRoundRect(
@@ -219,6 +240,19 @@ public fun ReframeOverlay(
             }
         }
     }
+}
+
+/** Screen-directional drag converted into crop-fraction movement for one possibly reflected axis. */
+internal fun reframePanFraction(
+    panPx: Float,
+    coverExtent: Double,
+    zoom: Double,
+    framePx: Double,
+    flipped: Boolean,
+): Double {
+    if (framePx <= 0.0 || !coverExtent.isFinite() || !zoom.isFinite() || zoom <= 0.0) return 0.0
+    val unflipped = -panPx * (coverExtent / zoom) / framePx
+    return if (flipped) -unflipped else unflipped
 }
 
 /** A decoded photo + its aspect (`w/h`). */

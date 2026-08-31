@@ -2,9 +2,13 @@ package com.aritr.zinely.core.editor
 
 import com.aritr.zinely.core.model.ColorRgba
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
 import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
 import com.aritr.zinely.core.model.Transform
+
+/** One element-local reflection axis (ADR-113). */
+public enum class FlipAxis { HORIZONTAL, VERTICAL }
 
 /**
  * Editor intents (ADR-029 §2.2). Each folds purely into a new [EditorModel] via [EditorReducer.reduce].
@@ -19,7 +23,15 @@ public sealed interface Intent {
 
     // — placement / content —
     public data class PlaceText(val transform: Transform, val text: String) : Intent
+    /** Place a new blank text box and open its edit session atomically. The reducer owns the minted id,
+     *  so this cannot accidentally begin editing a previously selected element between two dispatches. */
+    public data class PlaceTextAndEdit(val transform: Transform) : Intent
     public data object RequestAddImage : Intent
+    /**
+     * Ask the existing image pipeline to replace the current-page photo at [id]. This request is deliberately
+     * not a document edit: a picker cancel or failure must leave the document, history and selection intact.
+     */
+    public data class RequestReplaceImage(val id: String) : Intent
     public data class CommitAddImage(val element: com.aritr.zinely.core.model.ImageElement) : Intent
 
     /**
@@ -134,6 +146,25 @@ public sealed interface Intent {
      *  its own inverse; no-op if [id] names nothing or names a text element. */
     public data class ToggleCopier(val id: String) : Intent
 
+    /**
+     * Toggle one reflection axis on a Photo or Art element. Text, missing ids and off-page ids are
+     * no-ops. Each accepted tap is one typed edit command, one autosave and one undo step (ADR-113).
+     */
+    public data class ToggleFlip(val id: String, val axis: FlipAxis) : Intent
+
+    /**
+     * Turn one placed photo into the current page's half of a fixed mini-zine spread and add the other
+     * half to its booklet partner (ADR-109). [photoAspect] is read from the authoritative import master
+     * by the Android feature boundary; [pageSizePt] is the same imposed panel size the editor renders.
+     * The pure reducer owns the fixed 2|3, 4|5, 6|7, 8|1 table, crop geometry, id allocation and one-step
+     * undo. Invalid dimensions, a missing partner page, or a non-image [id] are no-ops.
+     */
+    public data class MakeImageSpread(
+        val id: String,
+        val photoAspect: Double,
+        val pageSizePt: PtSize,
+    ) : Intent
+
     /** Commit the session's draft. [token] rejects a late commit after nav/cancel/new session (D5). */
     public data class CommitText(val id: String, val after: TextElement, val token: Long) : Intent
 
@@ -168,6 +199,13 @@ public sealed interface Intent {
     public data class RotateBy(val degrees: Double) : Intent
 
     // — structure —
+    /**
+     * Make one independent copy of the current page's element at [id]. The reducer mints the copy's id,
+     * raises it above the page's current stack, offsets it within [pageSizePt], and selects the copy. The
+     * complete act is one [PlaceCommand], so Undo removes only the copy. Missing ids, blank text boxes and
+     * invalid page sizes are no-ops.
+     */
+    public data class DuplicateElement(val id: String, val pageSizePt: PtSize) : Intent
     public data class Reorder(val id: String, val op: ReorderOp) : Intent
     public data class Delete(val ids: Set<String>) : Intent
 
@@ -195,8 +233,11 @@ public sealed interface Effect {
     /** Persist the document — emitted ONLY by document-mutating intents; runner debounces (required-fix #5). */
     public data class Autosave(val document: com.aritr.zinely.core.model.ZineDocument) : Effect
 
-    /** Launch the pick→decode→AssetStore pipeline; success dispatches [Intent.CommitAddImage] (rec #6). */
-    public data object PickAndDecodeImage : Effect
+    /**
+     * Launch the pick→decode→AssetStore pipeline. A null [replacingId] adds a photo; a non-null target
+     * replaces that existing photo in place after a successful decode.
+     */
+    public data class PickAndDecodeImage(val replacingId: String? = null) : Effect
 
     /** An accessibility live-region announcement (e.g. selection / off-page undo). */
     public data class Announce(val text: String) : Effect

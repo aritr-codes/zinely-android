@@ -10,9 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.aritr.zinely.core.copy.Copy
@@ -65,6 +67,7 @@ public data class LibraryZine(
     val title: String,
     val subtitle: String,
     val cover: ZineCoverRecipe,
+    val unavailableReason: String? = null,
 )
 
 /**
@@ -95,6 +98,9 @@ public sealed interface LibraryShelfState {
 private sealed interface LibrarySheet {
     /** The paper chooser — the existing creation flow ([ADR-047](docs/DECISIONS.md#adr-047)). */
     data object Create : LibrarySheet
+
+    /** The whole-library backup / restore chooser. */
+    data object KeepSafe : LibrarySheet
 
     /** B3's action sheet, for one zine. */
     data class Actions(val zineId: String) : LibrarySheet
@@ -180,6 +186,7 @@ private class UndoRequest(val id: String, val message: String, val outcome: Comp
 public fun ZineLibraryScreen(
     state: LibraryShelfState,
     events: Flow<HomeShelfEvent>,
+    backupRestoreState: LibraryBackupRestoreUiState?,
     onOpenZine: (String) -> Unit,
     onShareExport: (String) -> Unit,
     onStartZine: (PaperSize) -> Unit,
@@ -189,6 +196,14 @@ public fun ZineLibraryScreen(
     onDeleteUndo: (String) -> Unit,
     onDeleteCommit: (String) -> Unit,
     onRetry: () -> Unit,
+    onStartBackup: () -> Unit,
+    onStartRestore: () -> Unit,
+    onDismissBackupRestore: () -> Unit,
+    onCancelBackupRestore: () -> Unit,
+    onRetryBackupRestore: () -> Unit,
+    preferredPaper: PaperSize = PaperSize.A4,
+    appVersion: String = "",
+    onPreferredPaperChange: (PaperSize) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val colors = ZinelyTheme.v21Colors
@@ -197,10 +212,43 @@ public fun ZineLibraryScreen(
     var openSheet by remember { mutableStateOf<LibrarySheet?>(null) }
     var undo by remember { mutableStateOf<UndoRequest?>(null) }
     var toast by remember { mutableStateOf<Pair<String, CompletableDeferred<Unit>>?>(null) }
+    val backupActionFocusRequester = remember { FocusRequester() }
+    val colophonActionFocusRequester = remember { FocusRequester() }
+    var restoreBackupActionFocus by remember { mutableStateOf(false) }
+    var showColophon by rememberSaveable { mutableStateOf(false) }
+    var restoreColophonActionFocus by remember { mutableStateOf(false) }
+    var createPaperSnapshot by remember { mutableStateOf(preferredPaper) }
 
     // The collector outlives recompositions; always call the latest handlers.
     val currentUndo by rememberUpdatedState(onDeleteUndo)
     val currentCommit by rememberUpdatedState(onDeleteCommit)
+
+    LaunchedEffect(backupRestoreState) {
+        if (backupRestoreState != null) openSheet = null
+    }
+
+    LaunchedEffect(backupRestoreState, state) {
+        if (backupRestoreState != null) {
+            restoreBackupActionFocus = true
+        } else if (
+            restoreBackupActionFocus &&
+            (state is LibraryShelfState.Content || state is LibraryShelfState.Empty)
+        ) {
+            // Dialogs contain focus while visible. Ask for it back only after Compose has removed the
+            // modal surface, so keyboard and accessibility users return to the action that opened it.
+            backupActionFocusRequester.requestFocus()
+            restoreBackupActionFocus = false
+        }
+    }
+
+    LaunchedEffect(showColophon, state) {
+        if (!showColophon && restoreColophonActionFocus &&
+            (state is LibraryShelfState.Content || state is LibraryShelfState.Empty)
+        ) {
+            colophonActionFocusRequester.requestFocus()
+            restoreColophonActionFocus = false
+        }
+    }
 
     // V1's collector, reused whole rather than re-derived — including the two things about it that are
     // not obvious and were paid for once already: it *suspends* per event, so two quick deletes queue
@@ -233,6 +281,29 @@ public fun ZineLibraryScreen(
     }
 
     val zines = (state as? LibraryShelfState.Content)?.zines.orEmpty()
+
+    if (showColophon) {
+        Box(modifier.fillMaxSize()) {
+            ColophonScreen(
+                preferredPaper = preferredPaper,
+                appVersion = appVersion,
+                onPreferredPaperChange = onPreferredPaperChange,
+                onBackToShelf = {
+                    restoreColophonActionFocus = true
+                    showColophon = false
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+            toast?.let { (text, gone) ->
+                ZToast(
+                    message = text,
+                    onTimeout = { gone.complete(Unit) },
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = TransientBottomInset),
+                )
+            }
+        }
+        return
+    }
 
     Box(
         modifier
@@ -271,7 +342,15 @@ public fun ZineLibraryScreen(
 
             is LibraryShelfState.Content -> ZineShelf(
                 zines = zines.map { ZineShelfItem(it.title, it.cover, it.subtitle) },
-                onOpen = { index -> zines.getOrNull(index)?.let { onOpenZine(it.id) } },
+                onOpen = { index ->
+                    zines.getOrNull(index)?.let {
+                        if (it.unavailableReason == null) {
+                            onOpenZine(it.id)
+                        } else {
+                            openSheet = LibrarySheet.Actions(it.id)
+                        }
+                    }
+                },
                 onActions = { index ->
                     zines.getOrNull(index)?.let { openSheet = LibrarySheet.Actions(it.id) }
                 },
@@ -302,11 +381,43 @@ public fun ZineLibraryScreen(
         )
 
         // `.dock{position:absolute;left:0;right:0;bottom:0}` — over the shelf, which scrolls under it and
-        // clears it with a bottom padding of its own (132px on `.shelf`, 150px on `.empty` and `.fail`,
+        // clears it with bottom padding of its own (188dp on `.shelf`, 206dp on `.empty`; the failure
+        // surface keeps its established 150dp because it has no secondary action),
         // each grown by the safe area — see [zineDockClearance]). In a `Column` after the shelf it would
         // look identical at rest and steal that space at every other moment.
         ZineDock(
-            onStart = { haptics.perform(ZinelyHaptic.Tick); openSheet = LibrarySheet.Create },
+            onStart = {
+                haptics.perform(ZinelyHaptic.Tick)
+                createPaperSnapshot = preferredPaper
+                openSheet = LibrarySheet.Create
+            },
+            secondaryActions = when (state) {
+                is LibraryShelfState.Content, is LibraryShelfState.Empty -> listOf(
+                    ZineDockSecondaryAction(
+                        label = if (state is LibraryShelfState.Empty || zines.isEmpty()) {
+                            Copy.LibraryBackup.BRING_BACK
+                        } else {
+                            Copy.LibraryBackup.BACKUPS
+                        },
+                        onClick = {
+                            haptics.perform(ZinelyHaptic.Tick)
+                            restoreBackupActionFocus = true
+                            openSheet = LibrarySheet.KeepSafe
+                        },
+                        focusRequester = backupActionFocusRequester,
+                    ),
+                    ZineDockSecondaryAction(
+                        label = Copy.Colophon.ACTION,
+                        onClick = {
+                            haptics.perform(ZinelyHaptic.Tick)
+                            restoreColophonActionFocus = true
+                            showColophon = true
+                        },
+                        focusRequester = colophonActionFocusRequester,
+                    ),
+                )
+                else -> emptyList()
+            },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
 
@@ -332,10 +443,31 @@ public fun ZineLibraryScreen(
     // The existing creation flow: choosing the paper *is* the create action (ADR-047).
     ShelfCreateSheet(
         visible = openSheet is LibrarySheet.Create,
+        preferredPaper = createPaperSnapshot,
         onDismiss = { openSheet = null },
         onChoosePaper = { paper ->
             openSheet = null
             onStartZine(paper)
+        },
+    )
+
+    KeepSafeSheet(
+        visible = openSheet is LibrarySheet.KeepSafe,
+        canBackup = zines.isNotEmpty(),
+        onDismiss = { openSheet = null },
+        onHidden = {
+            if (backupRestoreState == null && restoreBackupActionFocus) {
+                backupActionFocusRequester.requestFocus()
+                restoreBackupActionFocus = false
+            }
+        },
+        onSaveBackup = {
+            openSheet = null
+            onStartBackup()
+        },
+        onRestoreBackup = {
+            openSheet = null
+            onStartRestore()
         },
     )
 
@@ -346,10 +478,24 @@ public fun ZineLibraryScreen(
     // triggers", which is here. Every row dismisses first: each of the five leads somewhere else, and a
     // sheet left standing over a pushed route is the one shape none of them wants.
     ZineActionSheet(
-        target = actionTarget?.let { ZineActionTarget(it.title, it.subtitle) },
+        target = actionTarget?.let {
+            ZineActionTarget(
+                title = it.title,
+                subtitle = it.subtitle,
+                unavailableReason = it.unavailableReason,
+            )
+        },
         onDismiss = { openSheet = null },
         onAction = { action ->
             val zine = actionTarget ?: return@ZineActionSheet
+            if (
+                zine.unavailableReason != null &&
+                (action == ZineAction.Open ||
+                    action == ZineAction.ShareExport ||
+                    action == ZineAction.Duplicate)
+            ) {
+                return@ZineActionSheet
+            }
             // Every row answers the hand, not only the two that change the shelf. Three of these five
             // buzzed and three did not, which reads as the quiet ones having failed. `Tick` for the rows
             // that lead somewhere; `Snap`/`Boundary` below stay as they are, because duplicating and
@@ -387,6 +533,13 @@ public fun ZineLibraryScreen(
         title = renaming?.title.orEmpty(),
         onDismiss = { openSheet = null },
         onRename = { newTitle -> renaming?.let { onRenameZine(it.zineId, newTitle) } },
+    )
+
+    LibraryBackupRestoreStateSheet(
+        state = backupRestoreState,
+        onDismiss = onDismissBackupRestore,
+        onCancel = onCancelBackupRestore,
+        onRetry = onRetryBackupRestore,
     )
 }
 

@@ -1,8 +1,5 @@
 package com.aritr.zinely.feature.editor
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,7 +26,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +35,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -178,8 +173,6 @@ internal fun bookletLeaves(pageCount: Int): List<ReadLeaf> {
  *   top bar's `.pcount`.
  * @param pageSizePt the page size in points — the same hoisted size the editor canvas renders at.
  * @param defaults document defaults the renderer folds in (background); same value the canvas uses.
- * @param reduceMotion the turn degrades to a short cross-fade, per the frozen
- *   `@media (prefers-reduced-motion)` block.
  * @param imageBytes import-master byte source for image elements; the default renders the missing-asset
  *   placeholder, exactly as [PagePreview] documents.
  * @param modifier sizing/placement applied by [ProofScreen].
@@ -190,7 +183,6 @@ public fun ProofReadAct(
     pageSizePt: PtSize,
     defaults: DocumentDefaults,
     modifier: Modifier = Modifier,
-    reduceMotion: Boolean = false,
     imageBytes: AssetBytesSource = EmptyAssetBytes,
     onLeafChange: (Int) -> Unit = {},
 ) {
@@ -201,50 +193,13 @@ public fun ProofReadAct(
     val leaves = remember(pages.size) { bookletLeaves(pages.size) }
     if (leaves.isEmpty()) return
     var index by rememberSaveable { mutableIntStateOf(0) }
-    // Which leaf is actually on screen. It lags `index` for the length of the swing-out, because the leaf
-    // that moves is the one you are leaving.
-    //
-    // **Saveable, and the review that caught it needed two interactions rather than an argument.** As a
-    // plain `remember`, a rotation at page 4 restored `index = 3` and `shown = 0`, so the effect below
-    // found them unequal on first composition and played a full swing — showing the *cover* for 180ms and
-    // an animation nobody asked for before landing back where the user already was. `rememberPagerState`
-    // did not have that hole; the rewrite reintroduced it.
-    var shown by rememberSaveable { mutableIntStateOf(0) }
-    var leaving by remember { mutableIntStateOf(0) } // -1 back, +1 forward, 0 at rest
-    val turn = remember { Animatable(0f) } // 0 = seated, 1 = swung fully out
-
-    // **One long-lived collector, not `LaunchedEffect(index)`** — and the difference is a real defect, not
-    // a style preference. Keyed on `index`, a second tap *cancels* the running coroutine mid-swing: the
-    // body restarts, returns early because it has already been overtaken, and leaves `turn` frozen
-    // part-way with `leaving` still set. The leaf then sits tilted and half-transparent until some later
-    // turn happens to animate it back. Two taps on two enabled controls, reachable within 180ms — Previous
-    // enables the instant `index` moves, so tapping forward then back does it.
-    //
-    // The prototype carries the same invariant as a `if (turning) return` guard, which drops the second
-    // input. Collecting sequentially is the better half of that trade: the turn always finishes seated,
-    // and a second tap is honoured rather than swallowed.
     // A saved `index` can outlive the page count that made it valid (a document shrinks, the state is
     // restored). Clamping here rather than at the two tap sites keeps one definition of "a position that
     // exists" — and without it the first few Previous taps are silent no-ops, which is the defect this
     // package spent a review round removing.
     LaunchedEffect(leaves.lastIndex) { index = index.coerceIn(leaves.indices) }
 
-    LaunchedEffect(Unit) {
-        snapshotFlow { index }.collect { target ->
-            if (target == shown) return@collect
-            leaving = if (target > shown) 1 else -1
-            turn.animateTo(1f, tween(if (reduceMotion) TURN_FADE_MS else TURN_OUT_MS, easing = TurnEasing))
-            shown = target
-            // The arriving leaf does not swing. Physically it was already there, under the one that just
-            // lifted; it is *revealed*, not thrown in. The frozen prototype does the same thing by
-            // accident — it replaces the node, so the incoming leaf has no transform to animate from — and
-            // the accident is right, so it is kept on purpose.
-            leaving = 0
-            turn.animateTo(0f, tween(if (reduceMotion) TURN_FADE_MS else TURN_IN_MS, easing = TurnEasing))
-        }
-    }
-
-    val leaf = leaves[shown.coerceIn(leaves.indices)]
+    val leaf = leaves[index.coerceIn(leaves.indices)]
     LaunchedEffect(leaf.pageNumber) { onLeafChange(leaf.pageNumber) }
 
     // `.stagewrap::before` — the desk's grain, and it has to sit **behind** the book. In the frozen file
@@ -324,9 +279,6 @@ public fun ProofReadAct(
                 pageSizePt = pageSizePt,
                 defaults = defaults,
                 imageBytes = imageBytes,
-                swing = turn.value,
-                leaving = leaving,
-                reduceMotion = reduceMotion,
             )
             TapEdge(
                 label = Copy.ProofRead.NEXT_PAGE,
@@ -386,24 +338,8 @@ private const val LEAF_GRAIN_ALPHA = ZinelyV21Grain.BakedAlpha * 0.4f
 /** `.leaf::after{background-size:130px}` — a finer tile than the desk's 160, because it is a finer paper. */
 private val LEAF_GRAIN_TILE = 130.dp
 
-/** The out-swing: the leaf you are leaving lifts off its spine. */
-private const val TURN_OUT_MS = 180
-
-/** The in-fade: the leaf underneath is revealed, without moving. */
-private const val TURN_IN_MS = 140
-
-/** Reduced motion — the frozen `.leaf{transition:opacity .12s linear}`, no rotation at all. */
-private const val TURN_FADE_MS = 120
-
-/** The frozen `.leaf{transition:transform .3s cubic-bezier(.22,.61,.24,1)}`. A linear swing is a machine. */
-private val TurnEasing = CubicBezierEasing(0.22f, 0.61f, 0.24f, 1f)
-
-/** The frozen `.book.turn-fwd .leaf{transform:rotateY(-26deg) translateX(-3%)}`. */
-private const val TURN_DEGREES = 26f
-
 /** `:root{--tiltP:-.9deg}` — the book's resting tilt. */
 private const val BOOK_TILT_DEGREES = -0.9f
-private const val TURN_SHIFT_FRACTION = 0.03f
 
 /**
  * One `.tapz` — a third of the stage's width, the full height, and nothing to see.
@@ -492,19 +428,17 @@ private val DRAG_TURN_THRESHOLD = 40.dp
  *   [SceneRenderer] fills **nothing** — so this composable's own `.background(…)` *is* the paper the user
  *   sees, not a backdrop behind a rendered sheet;
  * - the default text colour is `ColorRgba.BLACK`;
- * - V2.1 `paper` flips to `#332B22` in dark.
+ * - before the 37596 palette amendment, V2.1 `paper` flipped to `#332B22` in dark.
  *
- * Black ink on `#332B22` is **1.2:1**. The user's writing disappears, on the one screen whose whole job is
+ * Black ink on that old `#332B22` paper was **1.2:1**. The user's writing disappeared, on the one screen whose whole job is
  * to show them what they made — and the sheet it disappears on is a picture of something that will be
  * printed on **white paper** either way. The reader is not chrome; it is the artefact.
  *
  * So the leaf, its cut edge, its gutter and its stack all take [zinelyV21LightColors] regardless of theme.
  * **This is not a departure from V2.1; it is the rule V1 already encoded** — that palette pins `paper` and
  * `ink` to their light values in dark theme, with a comment saying the sheet stays lit so the ink on it
- * stays dark. The V2.1 palette expresses the room, and the room does get dark; the sheet does not, because
- * a lamp does not change what a printer will do. The frozen `.leaf{background:var(--paper)}` flips, and it
- * can afford to: the prototype draws its own fake content in `--ink`, so it is self-consistent with nothing
- * real on it.
+ * stays dark. The amended V2.1 palette now expresses this directly: the room gets dark, while paper remains
+ * lit because a lamp does not change what a printer will do.
  *
  * The rest of the frozen recipe is transcribed as written: a `1.5dp ink` cut edge and the printed `--hard`
  * shadow in `inkLine` in place of the elevation blur.
@@ -543,9 +477,6 @@ private fun BookLeaf(
     pageSizePt: PtSize,
     defaults: DocumentDefaults,
     imageBytes: AssetBytesSource,
-    swing: Float,
-    leaving: Int,
-    reduceMotion: Boolean,
 ) {
     val colors = rememberLitSheetPalette()
     val leafGrain = rememberZinelyV21GrainBrush(LEAF_GRAIN_TILE)
@@ -593,19 +524,11 @@ private fun BookLeaf(
 
         Row(
             modifier = Modifier.graphicsLayer {
-                alpha = 1f - swing
                 // `.book{transform:rotate(var(--tiltP))}` — a nine-tenths of a degree of hand. It is the
                 // same device the Library's covers use, and it is what stops a rectangle of paper reading
                 // as a rectangle of UI. Static, not motion: nothing animates it, so reduced motion has no
                 // opinion about it.
                 rotationZ = BOOK_TILT_DEGREES
-                if (leaving != 0 && !reduceMotion) {
-                    // The pivot is the spine. Rotating about the leaf's centre would be a card flipping,
-                    // which is the one thing V21-SPEC §5.2 says this must not look like.
-                    transformOrigin = TransformOrigin(if (leaf.spineOnLeft) 0f else 1f, 0.5f)
-                    rotationY = -TURN_DEGREES * leaving * swing
-                    translationX = -size.width * TURN_SHIFT_FRACTION * leaving * swing
-                }
             },
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -674,11 +597,10 @@ private val STAGE_MAX_WIDTH = 480.dp
 private fun Gutter(spineOnLeft: Boolean) {
     // `--shade` is its own token in both themes, and P6 replaces a derivation with it. P5 mixed the wash
     // by hand from `ink` at 7% — correct in V1 light, and the reason the comment here used to be an
-    // argument about which token stays dark. V2.1 settles it by declaring the answer: `--shade` is
-    // `rgba(51,38,28,.07)` light and **`rgba(0,0,0,.22)` dark**, i.e. not a tint of anything, because a
-    // shadow in a dark room is not 7% of a light-room shadow.
+    // argument about which token stays dark. The 37596 amendment makes the answer physical and
+    // theme-invariant: `--shade` is the lit ink at 7%, `rgba(39,39,15,.07)`.
     // The lit palette, for the reason [BookLeaf] gives: this shades the user's page, so it belongs to the
-    // sheet and not to the room. Dark's `shade` is a 22% black that would be a smear on lit paper.
+    // sheet and not to the room.
     val colors = rememberLitSheetPalette()
     val shade = colors.shade
     val hair = colors.hair

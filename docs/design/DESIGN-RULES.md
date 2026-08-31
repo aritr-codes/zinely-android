@@ -38,8 +38,9 @@ quick: a rule is met or it isn't.
     background and reduces no usability. No decoration that competes with content.
 11. **No jargon, no walls, no dead ends.** No "canvas / element / export settings," no settings
     gate before making, no screen a beginner can get stuck on with no way forward.
-12. **Privacy is reassurance, never a wall.** Surface "works offline · stays on your phone" as a
-    gift, once, warmly. Never an account, a permission up front, or a network call
+12. **Privacy is reassurance, never a wall.** State the product-level promise once, in the Shelf-owned
+    **Colophon**, using the [D-079 frozen sentence](COLOPHON-FREEZE.md#frozen-copy). Never repeat it as
+    onboarding, mid-task decoration, or success copy; never an account, a permission up front, or a network call
     ([privacy invariant](../PRD.md#5-product-principles-non-negotiable)).
 
 ## Per-screen review checklist
@@ -56,8 +57,8 @@ Run this before calling any screen done. Every box must be ✅.
 - [ ] **AA contrast verified, including text over texture** (rule 8).
 - [ ] **Screen-reader pass**: labels meaningful, order logical, decoration not announced (rule 9).
 - [ ] **No jargon, no settings wall, no dead end** (rule 11).
-- [ ] **No network, no account, no up-front permission**; privacy line present where it belongs
-      (rule 12).
+- [ ] **No network, no account, no up-front permission**; no product-level privacy slogan outside the
+      Colophon (state-specific error/recovery guidance is allowed) (rule 12).
 - [ ] **Decoration audited** — each flourish is an affordance, a state, or harmless background
       (rule 10).
 - [ ] **Reduced-motion path** degrades gracefully (rule 8 / [motion philosophy](DESIGN-LANGUAGE.md#motion)).

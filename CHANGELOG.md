@@ -14,6 +14,111 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
+
+This focused beta.4 maintenance revision carries `versionCode 9`. It installs over earlier
+release-signed beta builds without uninstalling and changes no saved-document, rendering, export,
+storage, or backup behavior.
+
+### Fixed
+
+- Restored WCAG 2 AA contrast for editor confirmation messages such as **Duplicated** and their
+  **Undo** action in dark mode. The snackbar now keeps the room palette when it is positioned inside
+  the light-paper sheet host: cream `#FFF9DB` on dark brown `#46352E` measures `10.96:1`, replacing
+  the unreadable mixed-palette pair that measured `1.31:1`.
+- Preserved the existing shared sheet, snackbar placement, wording, timing, semantics, Undo behavior,
+  large-text reachability, and light-mode appearance.
+
+### Known limitations
+
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
+- The public privacy-policy page remains blocked on owner-provided publication details.
+
+## [0.9.0-beta.4-r2] — 2026-08-31 — Smaller beta 4 maintenance package
+
+This packaging-only beta.4 revision carries `versionCode 8`. It changes neither saved documents nor
+product behavior and installs over earlier release-signed beta builds without uninstalling.
+
+### Changed
+
+- Enabled release-only R8 code shrinking and Android resource shrinking; debug builds remain unshrunk.
+- Replaced the generated 2.55 MiB adaptive/splash PNG with a lossless WebP projection. The immutable
+  `APP_LOGO.png` master is unchanged, and the generator verifies decoded-pixel identity.
+- Preserved the bundled offline emoji font and shared rendering pipeline so editor, PNG, and PDF output
+  retain the accepted emoji and print-parity behavior.
+
+### Known limitations
+
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
+- The public privacy-policy page remains blocked on owner-provided publication details.
+
+## [0.9.0-beta.4-r1] — 2026-08-31 — Current-source beta 4 maintenance build
+
+This is a maintenance revision of beta.4, not a new feature release. It carries `versionCode 7` so
+Android can install the refreshed release-signed APK over beta.4 without uninstalling or deleting zines.
+
+### Changed
+
+- Rebuilt the unchanged beta.4 application from the current verified release branch after closing its
+  release-checklist and residual Art-performance investigation records.
+- Preserved beta.4's Replace Photo behavior, shared Add/Art host, rendering pipeline, accessibility
+  contracts, saved-document format, and offline/privacy behavior without modification.
+- Preserved the original beta.4 APK and checksum as a separate frozen tester artifact.
+
+### Known limitations
+
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
+- The public privacy-policy page remains blocked on owner-provided publication details.
+
+## [0.9.0-beta.4] — 2026-08-31 — Replace a photo without rebuilding the page
+
+The fourth build for the beta cohort. `versionCode 6`, signed with the same release key as the earlier
+beta builds, so it installs over an existing tester copy and keeps its zines.
+
+### Added — Replace Photo · [D-038](docs/design/V2-SPEC-DEFECTS.md#d-038)
+
+- Select a photo, choose **Replace**, and pick another image through Android's existing photo picker.
+  Zinely uses the same decode and asset-storage path as Add Photo; there is no second import route.
+- The replacement changes only the selected photo's source. Its element identity, position, size,
+  rotation, crop, fit, layer, opacity, photocopier setting, flip state, and selection stay intact.
+- One **Undo** restores the previous photo; **Redo** reapplies the replacement. Cancelling the picker,
+  a decode/storage failure, or choosing the same stored image makes no document or history change.
+- Art's visually identical **Replace** action remains a route to the Art cabinet, not the photo picker.
+
+### Accessibility
+
+- The two visible **Replace** captions keep the frozen design, while the platform accessibility tree
+  now names them **Replace photo** and **Replace supply** so TalkBack does not announce two ambiguous
+  buttons with different destinations.
+- At 1.8× text on Samsung SM-A176B, the selected-photo action strip remains horizontally scrollable;
+  Replace is reachable, enabled, clickable, and measures about 77 × 63 dp.
+
+### Known limitations
+
+- Android owns the system photo picker. Depending on the phone, choosing one image may add a separate
+  **Preview** / **Done** confirmation before returning to Zinely.
+- Replaced and deleted photo assets are retained. This protects other zines or elements that may share
+  the same content-addressed asset, but app storage is not reclaimed yet.
+- Font choice is still unavailable. Text outside the supported print scripts is kept and warned about,
+  but it does not print yet.
+- Zinely creates and saves the PDF; printing itself happens in the phone's PDF or print app.
+
+## [0.9.0-beta.3] — 2026-08-30 — Make the editor lighter, clearer, and more dependable
+
+The third build for the beta cohort. `versionCode 5`, signed with the same release key as earlier
+beta builds, so it installs over an existing tester copy and keeps its zines.
+
+This release includes the editor, accessibility, reliability, backup, rendering, and performance
+work documented below. Highlights include persistent zine deletion, the warmer **About Zinely**
+screen, clearer dark-mode editing controls, more compact Flip/Reframe surfaces, reliable page-panel
+navigation, and reduced Art cold-open contention. Replace Photo is not part of this release.
+
 ### Added — nothing you type disappears without a word · [ADR-070](docs/DECISIONS.md#adr-070)
 
 Zinely prints a defined set of scripts (Latin, Cyrillic, Greek). Type a character outside it — Bengali,
@@ -454,7 +559,13 @@ The riskiest, most isolatable thing first: the math that makes a folded zine cor
   SVG proof sheet); pure Kotlin, golden-tested against the imposition oracle
   ([ADR-007](docs/DECISIONS.md#adr-007)). Tagged `v0.1.0-imposition-engine`.
 
-[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.1...HEAD
+[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r3...HEAD
+[0.9.0-beta.4-r3]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r2...v0.9.0-beta.4-r3
+[0.9.0-beta.4-r2]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r1...v0.9.0-beta.4-r2
+[0.9.0-beta.4-r1]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4...v0.9.0-beta.4-r1
+[0.9.0-beta.4]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.3...v0.9.0-beta.4
+[0.9.0-beta.3]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.2...v0.9.0-beta.3
+[0.9.0-beta.2]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.1...v0.9.0-beta.2
 [0.9.0-beta.1]: https://github.com/aritr-codes/zinely-android/compare/v0.8.0...v0.9.0-beta.1
 [0.8.0]: https://github.com/aritr-codes/zinely-android/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/aritr-codes/zinely-android/compare/v0.6.0-alpha.1...v0.7.0

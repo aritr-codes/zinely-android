@@ -122,11 +122,10 @@ internal class ZineExporter @Inject constructor(
     /**
      * DOWNLOADS (ADR-054 Decision 4/6): a durable copy the user keeps, in the shared Downloads collection.
      * [DownloadsWriter] owns the destination stream + the API split; [writeSheet] supplies the bytes. Returns
-     * the final display name actually written (a legacy collision may have added a `" (N)"` suffix).
+     * the exact durable item and final display name (a legacy collision may have added a `" (N)"` suffix).
      *
      * ponytail: the display base is a neutral default until the real project title (Room metadata, ADR-042)
-     * threads through — the same deferral the Proof topbar carries (`zineName = "Your zine"`). The saved name
-     * is not surfaced yet (the Fold hand-off is a bare signal); the final "Saved to …" copy is a later batch.
+     * threads through — the same deferral the Proof topbar carries (`zineName = "Your zine"`).
      */
     private fun writeToDownloads(
         document: ZineDocument,
@@ -134,10 +133,15 @@ internal class ZineExporter @Inject constructor(
         imageBytes: AssetBytesSource,
         format: ExportFormat,
     ): ExportSaved {
-        val name = downloadsWriter.write(DEFAULT_SAVE_TITLE, format.ext, format.mime) { out ->
+        val downloaded = downloadsWriter.write(DEFAULT_SAVE_TITLE, format.ext, format.mime) { out ->
             writeSheet(out, document, pageSizePt, imageBytes, format)
         }
-        return ExportSaved(displayName = name, location = DOWNLOADS_LOCATION)
+        return ExportSaved(
+            uri = downloaded.uri,
+            mime = format.mime,
+            displayName = downloaded.displayName,
+            location = DOWNLOADS_LOCATION,
+        )
     }
 
     /**

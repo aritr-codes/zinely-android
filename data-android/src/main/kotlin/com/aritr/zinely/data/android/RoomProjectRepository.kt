@@ -1,11 +1,31 @@
 package com.aritr.zinely.data.android
 
+import com.aritr.zinely.core.data.asset.AssetEntry
+import com.aritr.zinely.core.data.asset.CURRENT_LIBRARY_BACKUP_VERSION
+import com.aritr.zinely.core.data.asset.LIBRARY_BACKUP_KIND
+import com.aritr.zinely.core.data.asset.ZineBackupProjectEntry
+import com.aritr.zinely.core.data.asset.ZineLibraryBackupManifest
 import com.aritr.zinely.core.data.repository.DataError
 import com.aritr.zinely.core.data.repository.DataResult
 import com.aritr.zinely.core.data.repository.DocumentRepository
 import com.aritr.zinely.core.data.repository.ProjectRepository
+import com.aritr.zinely.core.data.repository.ProjectShelfEntry
 import com.aritr.zinely.core.data.repository.ProjectSummary
+import com.aritr.zinely.core.data.repository.ProjectUnavailableReason
 import com.aritr.zinely.core.data.storage.AtomicFileStore
+import com.aritr.zinely.core.data.storage.AdditiveLibraryRestoreCommitter
+import com.aritr.zinely.core.data.storage.FileSystemOps
+import com.aritr.zinely.core.data.storage.NioFileSystemOps
+import com.aritr.zinely.core.data.storage.PreparedLibraryRestore
+import com.aritr.zinely.core.data.storage.PreparedRestoreAsset
+import com.aritr.zinely.core.data.storage.PreparedRestoreProject
+import com.aritr.zinely.core.data.storage.RestoreProjectIdAllocator
+import com.aritr.zinely.core.data.storage.StagedZineLibraryBackup
+import com.aritr.zinely.core.data.storage.ZineBackupStagingException
+import com.aritr.zinely.core.data.storage.ZineLibraryBackupStager
+import com.aritr.zinely.core.data.storage.ZineLibraryBackupWriter
+import com.aritr.zinely.core.data.storage.ZineBackupWritingException
+import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -18,14 +38,20 @@ import com.aritr.zinely.core.model.newZineCoverRecipe
 import com.aritr.zinely.data.android.room.ProjectDao
 import com.aritr.zinely.data.android.room.ProjectEntity
 import java.io.IOException
+import java.io.BufferedInputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.FileTime
+import java.security.MessageDigest
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 import kotlin.random.Random
 import kotlin.streams.toList
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -34,6 +60,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * The Room-backed [ProjectRepository] (ADR-042). The **files are the source of truth and the
@@ -64,9 +94,13 @@ internal class RoomProjectRepository(
     private val documents: DocumentRepository,
     private val store: AtomicFileStore,
     private val sessionGate: ProjectSessionGate,
+    private val libraryWriterGate: LibraryWriterGate = LibraryWriterGate { LibraryWriterLease {} },
+    private val fs: FileSystemOps = NioFileSystemOps,
     private val io: CoroutineDispatcher,
     private val clock: () -> Long = System::currentTimeMillis,
     private val newId: () -> String = { UUID.randomUUID().toString() },
+    private val appVersion: String = "unknown",
+    private val assetMetadataReader: LibraryAssetMetadataReader = AndroidLibraryAssetMetadataReader,
     /**
      * Entropy for the cover assigner ([D-017](docs/design/V2-SPEC-DEFECTS.md#d-017-ruling)). Injected
      * for the same reason [clock] and [newId] are — so a test can pin the draw — and, unlike them,
@@ -74,9 +108,19 @@ internal class RoomProjectRepository(
      * neighbour reaches it, which is the ruling stated as a signature.
      */
     private val random: Random = Random.Default,
-) : ProjectRepository {
+) : ProjectRepository, LibraryRestoreRepository, LibraryBackupRepository {
 
-    private val paths = ProjectPaths(rootDir)
+    private val libraryRoot = rootDir.toAbsolutePath().normalize()
+    private val paths = ProjectPaths(libraryRoot)
+    private val restoreWorkDir = libraryRoot.resolve(RESTORE_WORK_DIRECTORY)
+    private val restoreCommitter = AdditiveLibraryRestoreCommitter(
+        liveProjectsDir = paths.projectsRoot,
+        liveAssetsDir = libraryRoot.resolve(ASSETS_DIRECTORY),
+        restoreWorkDir = restoreWorkDir,
+        fs = fs,
+    )
+    private val restoreStager = ZineLibraryBackupStager()
+    private val backupWriter = ZineLibraryBackupWriter()
     private val mutex = Mutex()
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -86,12 +130,32 @@ internal class RoomProjectRepository(
 
     override fun observeProjects(): Flow<List<ProjectSummary>> =
         dao.observeAll()
-            .onStart { mutex.withLock { ensureReconciledLocked() } }
+            .onStart {
+                mutex.withLock {
+                    if (ensureReconciledLocked() is DataResult.Failure) {
+                        throw IOException("library recovery failed before Room reconciliation")
+                    }
+                }
+            }
             .map { rows -> rows.mapNotNull(::toSummary).sortedByDescending { it.updatedAtEpochMs } }
             .flowOn(io)
 
+    override fun observeShelfProjects(): Flow<List<ProjectShelfEntry>> =
+        dao.observeAll()
+            .onStart {
+                mutex.withLock {
+                    if (ensureReconciledLocked() is DataResult.Failure) {
+                        throw IOException("library recovery failed before Room reconciliation")
+                    }
+                }
+            }
+            .map(::toShelfEntries)
+            .flowOn(io)
+
     override suspend fun getProject(id: String): DataResult<ProjectSummary> = withContext(io) {
-        mutex.withLock { ensureReconciledLocked() }
+        mutex.withLock { ensureReconciledLocked() }.let { result ->
+            if (result is DataResult.Failure) return@withContext result
+        }
         val row = try {
             dao.findById(id)
         } catch (e: CancellationException) {
@@ -108,7 +172,10 @@ internal class RoomProjectRepository(
         paperSize: PaperSize,
     ): DataResult<ProjectSummary> = withContext(io) {
         mutex.withLock {
-            ensureReconciledLocked()
+            when (val ready = ensureReconciledLocked()) {
+                is DataResult.Failure -> return@withLock ready
+                is DataResult.Success -> Unit
+            }
             val id = newId()
             when (val saved = documents.save(id, blankDocument(format, paperSize))) {
                 is DataResult.Failure -> return@withLock DataResult.Failure(saved.error)
@@ -137,7 +204,10 @@ internal class RoomProjectRepository(
     override suspend fun renameProject(id: String, title: String): DataResult<Unit> = withContext(io) {
         sessionBusy(id)?.let { return@withContext it }
         mutex.withLock {
-            ensureReconciledLocked()
+            when (val ready = ensureReconciledLocked()) {
+                is DataResult.Failure -> return@withLock ready
+                is DataResult.Success -> Unit
+            }
             val docFile = paths.documentFile(id)
                 ?: return@withLock failure(DataError.NotFound(id))
             if (!Files.isRegularFile(docFile)) return@withLock failure(DataError.NotFound(id))
@@ -174,7 +244,10 @@ internal class RoomProjectRepository(
         // The SOURCE is gated: a live session's unflushed edits would make the copy silently stale.
         sessionBusy(id)?.let { return@withContext it }
         mutex.withLock {
-            ensureReconciledLocked()
+            when (val ready = ensureReconciledLocked()) {
+                is DataResult.Failure -> return@withLock ready
+                is DataResult.Success -> Unit
+            }
             val source = when (val loaded = documents.load(id)) {
                 is DataResult.Failure -> return@withLock DataResult.Failure(loaded.error)
                 is DataResult.Success -> loaded.value
@@ -209,7 +282,10 @@ internal class RoomProjectRepository(
     override suspend fun deleteProject(id: String): DataResult<Unit> = withContext(io) {
         sessionBusy(id)?.let { return@withContext it }
         mutex.withLock {
-            ensureReconciledLocked()
+            when (val ready = ensureReconciledLocked()) {
+                is DataResult.Failure -> return@withLock ready
+                is DataResult.Success -> Unit
+            }
             // An unsafe id can never name a project; deleting it is a no-op success (idempotent).
             val dir = paths.projectDir(id) ?: return@withLock DataResult.Success(Unit)
             try {
@@ -233,6 +309,224 @@ internal class RoomProjectRepository(
     }
 
     /**
+     * Restore a fully validated v2 archive additively under the same writer ownership and repository
+     * mutex as ordinary project mutations. No live path is touched until staging and preparation are
+     * complete; once commit starts, commit plus Room reconciliation are non-cancellable.
+     */
+    override suspend fun restoreLibrary(archive: Path): DataResult<LibraryRestoreReceipt> = withContext(io) {
+        val lease = libraryWriterGate.tryAcquire()
+            ?: return@withContext failure(DataError.Busy("the library has an active editor or restore"))
+        lease.use {
+            mutex.withLock {
+                when (val recovered = recoverInterruptedRestoreLocked()) {
+                    is DataResult.Failure -> return@withLock recovered
+                    is DataResult.Success -> Unit
+                }
+                // Recovery can leave stale rows for project ids whose directories were just removed. A
+                // new restore must reconcile those rows away before it chooses collision-free ids, or a
+                // reused on-disk id could inherit stale Room metadata from the interrupted transaction.
+                reconciled = false
+                when (val indexed = reconcileLocked(requiredProjectIds = emptySet(), strictIo = true)) {
+                    is DataResult.Failure -> return@withLock indexed
+                    is DataResult.Success -> Unit
+                }
+
+                val staged = try {
+                    restoreStager.stage(archive, restoreWorkDir)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (invalid: ZineBackupStagingException) {
+                    if (invalid.reason == ZineBackupStagingException.Reason.FUTURE_VERSION) {
+                        return@withLock failure(
+                            DataError.SchemaTooNew(
+                                documentVersion = invalid.encounteredVersion ?: Int.MAX_VALUE,
+                                supportedVersion = invalid.supportedVersion ?: 0,
+                            ),
+                        )
+                    }
+                    return@withLock failure(DataError.Corrupt(invalid.message ?: "invalid backup", invalid))
+                } catch (failure: Exception) {
+                    return@withLock failure(DataError.Io("failed to stage library backup", failure))
+                }
+
+                staged.use { verified ->
+                    val prepared = try {
+                        prepareRestore(verified)
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (failure: Exception) {
+                        return@withLock failure(DataError.Io("failed to prepare library restore", failure))
+                    }
+
+                    withContext(NonCancellable) {
+                        try {
+                            restoreCommitter.commit(prepared.restore)
+                        } catch (failure: Exception) {
+                            return@withContext failure(DataError.Io("failed to commit library restore", failure))
+                        }
+                        reconciled = false
+                        when (
+                            val indexed = reconcileLocked(
+                                requiredProjectIds = prepared.ids.map { it.second }.toSet(),
+                                strictIo = true,
+                            )
+                        ) {
+                            is DataResult.Failure -> return@withContext indexed
+                            is DataResult.Success -> Unit
+                        }
+                        val restored = ArrayList<RestoredProject>(prepared.ids.size)
+                        for ((sourceId, localId) in prepared.ids) {
+                            val row = try {
+                                dao.findById(localId)
+                            } catch (failure: Exception) {
+                                return@withContext failure(
+                                    DataError.Io("failed to read restored project '$localId'", failure),
+                                )
+                            }
+                            val summary = row?.let(::toSummary)
+                                ?: return@withContext failure(
+                                    DataError.Io("restored project '$localId' was not reconciled"),
+                                )
+                            restored += RestoredProject(sourceId, summary)
+                        }
+                        DataResult.Success(LibraryRestoreReceipt(restored))
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Freeze files-as-truth under the same library-wide lease used by restore, then stream one
+     * self-validating archive to a unique private destination. Room is reconciled first but is not
+     * used as backup authority.
+     */
+    override suspend fun createLibraryBackup(destination: Path): DataResult<LibraryBackupReceipt> = withContext(io) {
+        val lease = libraryWriterGate.tryAcquire()
+            ?: return@withContext failure(DataError.Busy("the library has an active editor or backup"))
+        lease.use {
+            mutex.withLock {
+                when (val recovered = recoverInterruptedRestoreLocked()) {
+                    is DataResult.Failure -> return@withLock recovered
+                    is DataResult.Success -> Unit
+                }
+                reconciled = false
+                when (val indexed = reconcileLocked(requiredProjectIds = emptySet(), strictIo = true)) {
+                    is DataResult.Failure -> return@withLock indexed
+                    is DataResult.Success -> Unit
+                }
+
+                val projectIds = listProjectIds().sorted()
+                if (projectIds.isEmpty()) return@withLock failure(DataError.NotFound("library"))
+
+                val documentSources = linkedMapOf<String, Path>()
+                val projectEntries = ArrayList<ZineBackupProjectEntry>(projectIds.size)
+                val referencedAssets = linkedSetOf<String>()
+                for (id in projectIds) {
+                    currentCoroutineContext().ensureActive()
+                    val documentFile = paths.documentFile(id)
+                        ?: return@withLock failure(DataError.Corrupt("project '$id' has an unsafe path"))
+                    val meta = readMetaOrNull(id)
+                        ?: return@withLock failure(DataError.Corrupt("project '$id' metadata is unreadable"))
+                    val document = when (val loaded = documents.load(id)) {
+                        is DataResult.Failure -> return@withLock loaded
+                        is DataResult.Success -> loaded.value
+                    }
+                    val assetHashes = document.pages.asSequence()
+                        .flatMap { it.elements.asSequence() }
+                        .filterIsInstance<ImageElement>()
+                        .mapTo(linkedSetOf()) { it.assetId }
+                    referencedAssets += assetHashes
+                    val documentByteCount = try {
+                        Files.size(documentFile)
+                    } catch (failure: IOException) {
+                        return@withLock failure(DataError.Io("couldn't read project '$id' for backup", failure))
+                    }
+                    val rawSchemaVersion = try {
+                        json.parseToJsonElement(Files.readString(documentFile)).jsonObject["schemaVersion"]
+                            ?.jsonPrimitive?.intOrNull
+                    } catch (failure: Exception) {
+                        return@withLock failure(DataError.Corrupt("project '$id' document is malformed", failure))
+                    } ?: return@withLock failure(DataError.Corrupt("project '$id' has no document schema version"))
+                    val documentHash = try {
+                        sha256(documentFile)
+                    } catch (failure: IOException) {
+                        return@withLock failure(DataError.Io("couldn't hash project '$id' for backup", failure))
+                    }
+                    projectEntries += ZineBackupProjectEntry(
+                        sourceProjectId = id,
+                        title = meta.title,
+                        format = document.format,
+                        paperSize = document.paperSize,
+                        createdAtEpochMs = meta.createdAtEpochMs,
+                        updatedAtEpochMs = fileMtimeOrNull(documentFile) ?: clock(),
+                        documentSchemaVersion = rawSchemaVersion,
+                        documentPath = "projects/$id/document.json",
+                        documentSha256 = documentHash,
+                        documentByteCount = documentByteCount,
+                        assetHashes = assetHashes.toList(),
+                        coverSurface = meta.coverSurface,
+                        coverStamp = meta.coverStamp,
+                    )
+                    documentSources[id] = documentFile
+                }
+
+                val assetSources = linkedMapOf<String, Path>()
+                val assetEntries = ArrayList<AssetEntry>(referencedAssets.size)
+                for (hash in referencedAssets.sorted()) {
+                    currentCoroutineContext().ensureActive()
+                    val path = libraryRoot.resolve(ASSETS_DIRECTORY).resolve(hash)
+                    if (!Files.isRegularFile(path)) {
+                        return@withLock failure(DataError.Corrupt("project asset '$hash' is missing"))
+                    }
+                    val metadata = try {
+                        assetMetadataReader.read(path)
+                    } catch (failure: Exception) {
+                        return@withLock failure(DataError.Corrupt("project asset '$hash' is not a readable image", failure))
+                    }
+                    val byteCount = try {
+                        Files.size(path)
+                    } catch (failure: IOException) {
+                        return@withLock failure(DataError.Io("couldn't read project asset '$hash'", failure))
+                    }
+                    assetEntries += AssetEntry(hash, metadata.mimeType, metadata.widthPx, metadata.heightPx, byteCount)
+                    assetSources[hash] = path
+                }
+
+                val manifest = ZineLibraryBackupManifest(
+                    packageVersion = CURRENT_LIBRARY_BACKUP_VERSION,
+                    kind = LIBRARY_BACKUP_KIND,
+                    appVersion = appVersion.ifBlank { "unknown" },
+                    createdAtEpochMs = clock(),
+                    projects = projectEntries,
+                    assets = assetEntries,
+                )
+                val archiveByteCount = try {
+                    backupWriter.write(manifest, documentSources, assetSources, destination)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (invalid: ZineBackupWritingException) {
+                    val error = when (invalid.reason) {
+                        ZineBackupWritingException.Reason.IO_FAILURE,
+                        ZineBackupWritingException.Reason.DESTINATION_EXISTS,
+                        ZineBackupWritingException.Reason.SOURCE_UNAVAILABLE,
+                        -> DataError.Io("couldn't create the private library backup", invalid)
+                        else -> DataError.Corrupt("the local library could not be backed up safely", invalid)
+                    }
+                    return@withLock failure(error)
+                }
+                DataResult.Success(
+                    LibraryBackupReceipt(
+                        projectCount = projectEntries.size,
+                        assetCount = assetEntries.size,
+                        archiveByteCount = archiveByteCount,
+                    ),
+                )
+            }
+        }
+    }
+
+    /**
      * ADR-044 §1: await [sessionGate] BEFORE the repository mutex (a gated wait inside the lock would
      * stall unrelated ops) and refuse with [DataError.Busy] while [id] has a live editor session.
      * `create` never calls this — a fresh UUID can have no session. TOCTOU after the gate passes is
@@ -241,6 +535,61 @@ internal class RoomProjectRepository(
     private suspend fun sessionBusy(id: String): DataResult.Failure? =
         if (sessionGate.awaitNoSession(id)) null
         else failure(DataError.Busy("project '$id' has a live editor session"))
+
+    // ---- library restore -----------------------------------------------------------------------
+
+    private suspend fun prepareRestore(staged: StagedZineLibraryBackup): PreparedAndroidRestore {
+        val existingIds = listProjectIds().toSet()
+        val localIds = RestoreProjectIdAllocator.allocate(
+            sourceProjectIds = staged.projects.map { it.manifestEntry.sourceProjectId },
+            existingProjectIds = existingIds,
+            mintId = newId,
+        )
+        val preparedProjectsRoot = staged.root.resolve(PREPARED_PROJECTS_DIRECTORY)
+        Files.createDirectories(preparedProjectsRoot)
+
+        val preparedProjects = ArrayList<PreparedRestoreProject>(staged.projects.size)
+        val idPairs = ArrayList<Pair<String, String>>(staged.projects.size)
+        staged.projects.zip(localIds).forEach { (project, localId) ->
+            currentCoroutineContext().ensureActive()
+            val entry = project.manifestEntry
+            val projectDir = preparedProjectsRoot.resolve(localId)
+            Files.createDirectory(projectDir)
+            val documentFile = projectDir.resolve(ProjectPaths.DOCUMENT_FILE)
+            Files.copy(project.documentPath, documentFile)
+            Files.setLastModifiedTime(documentFile, FileTime.fromMillis(entry.updatedAtEpochMs))
+
+            val meta = ProjectMeta(
+                title = entry.title,
+                createdAtEpochMs = entry.createdAtEpochMs,
+                coverSurface = entry.coverSurface,
+                coverStamp = entry.coverStamp,
+            )
+            store.write(
+                projectDir.resolve(ProjectPaths.META_FILE),
+                json.encodeToString(ProjectMeta.serializer(), meta).encodeToByteArray(),
+            )
+            preparedProjects += PreparedRestoreProject(localId, projectDir)
+            idPairs += entry.sourceProjectId to localId
+        }
+
+        return PreparedAndroidRestore(
+            restore = PreparedLibraryRestore(
+                transactionId = UUID.randomUUID().toString(),
+                projects = preparedProjects,
+                assets = staged.assets.map { (hash, path) -> PreparedRestoreAsset(hash, path) },
+            ),
+            ids = idPairs,
+        )
+    }
+
+    /** Recovery is fail-closed and always precedes any files-to-Room scan. */
+    private fun recoverInterruptedRestoreLocked(): DataResult<Unit> = try {
+        if (restoreCommitter.recoverInterruptedCommit()) reconciled = false
+        DataResult.Success(Unit)
+    } catch (failure: Exception) {
+        failure(DataError.Io("failed to recover an interrupted library restore", failure))
+    }
 
     // ---- the single files→row derivation path ---------------------------------------------------
 
@@ -297,8 +646,25 @@ internal class RoomProjectRepository(
      * next repository use retries, while the current call proceeds against the existing index
      * (files stay the truth regardless).
      */
-    private suspend fun ensureReconciledLocked() {
-        if (reconciled) return
+    private suspend fun ensureReconciledLocked(): DataResult<Unit> {
+        when (val recovered = recoverInterruptedRestoreLocked()) {
+            is DataResult.Failure -> return recovered
+            is DataResult.Success -> Unit
+        }
+        if (reconciled) return DataResult.Success(Unit)
+        return reconcileLocked(requiredProjectIds = emptySet(), strictIo = false)
+    }
+
+    /**
+     * Rebuild Room from authoritative files. Ordinary shelf reads retain ADR-042's degrade-and-retry
+     * behavior; restore names the exact [requiredProjectIds] that must become visible before it may
+     * report success. Unrelated corrupt projects remain the existing "skip and retry later" limitation.
+     */
+    private suspend fun reconcileLocked(
+        requiredProjectIds: Set<String>,
+        strictIo: Boolean,
+    ): DataResult<Unit> {
+        var fullyReconciled = true
         try {
             val onDisk = listProjectIds()
             val indexed = dao.ids().toSet()
@@ -307,19 +673,32 @@ internal class RoomProjectRepository(
                     val docFile = paths.documentFile(id) ?: continue
                     // Unreadable documents (Corrupt/SchemaTooNew) return Failure here and are
                     // skipped — invisible to the shelf, bytes left for a future repair path.
-                    syncRowFromDisk(id, updatedAtEpochMs = fileMtimeOrNull(docFile) ?: clock())
+                    when (val synced = syncRowFromDisk(id, updatedAtEpochMs = fileMtimeOrNull(docFile) ?: clock())) {
+                        is DataResult.Failure -> {
+                            fullyReconciled = false
+                            if (id in requiredProjectIds) return synced
+                        }
+                        is DataResult.Success -> Unit
+                    }
                 }
             }
             val onDiskSet = onDisk.toSet()
             for (id in indexed) {
                 if (id !in onDiskSet) dao.deleteById(id)
             }
-            reconciled = true
+            reconciled = fullyReconciled
+            return DataResult.Success(Unit)
         } catch (e: CancellationException) {
             throw e
-        } catch (_: Exception) {
+        } catch (failure: Exception) {
             // Deliberate degrade-not-fail: the observed list falls back to the current index and
             // the scan retries on the next repository use (reconciled stays false).
+            reconciled = false
+            return if (strictIo) {
+                failure(DataError.Io("failed to reconcile restored projects", failure))
+            } else {
+                DataResult.Success(Unit)
+            }
         }
     }
 
@@ -408,6 +787,11 @@ internal class RoomProjectRepository(
      */
     private fun backfillCoverIfLegacy(id: String, meta: ProjectMeta): ProjectMeta {
         if (meta.coverRecipe() != null) return meta
+        // A v2 backup may deliberately carry partial or future cover names. Those are degraded
+        // metadata, not a legacy sidecar: preserve the raw identity and show no cover rather than
+        // silently replacing it with a new local draw. Only the old both-fields-absent shape is
+        // eligible for D-026's first-presentation backfill.
+        if (meta.coverSurface != null || meta.coverStamp != null) return meta
         val assigned = meta.withCover(newZineCoverRecipe(random))
         return try {
             writeMeta(id, assigned)
@@ -443,6 +827,65 @@ internal class RoomProjectRepository(
         )
     }
 
+    private suspend fun toShelfEntries(rows: List<ProjectEntity>): List<ProjectShelfEntry> {
+        val indexed = rows.associateBy { it.id }
+        return listProjectIds()
+            .mapNotNull { id ->
+                val docFile = paths.documentFile(id) ?: return@mapNotNull null
+                when (val loaded = documents.load(id)) {
+                    is DataResult.Success -> {
+                        indexed[id]?.let(::toSummary)?.let(ProjectShelfEntry::Available)
+                    }
+                    is DataResult.Failure -> unavailableShelfEntry(
+                        id = id,
+                        docFile = docFile,
+                        indexed = indexed[id],
+                        error = loaded.error,
+                    )
+                }
+            }
+            .sortedByDescending { it.updatedAtEpochMs }
+    }
+
+    private fun unavailableShelfEntry(
+        id: String,
+        docFile: Path,
+        indexed: ProjectEntity?,
+        error: DataError,
+    ): ProjectShelfEntry? {
+        val reason = when (error) {
+            is DataError.SchemaTooNew -> ProjectUnavailableReason.NEWER_APP_REQUIRED
+            is DataError.Corrupt, is DataError.Invalid, is DataError.Io, is DataError.Unknown ->
+                ProjectUnavailableReason.CORRUPT
+            is DataError.NotFound, is DataError.Busy -> return null
+            is DataError.OutOfSpace -> return null
+        }
+        val meta = readMetaOrNull(id)
+        val wire = peekDocumentWire(docFile)
+        val updatedAt = max(indexed?.updatedAtEpochMs ?: 0L, fileMtimeOrNull(docFile) ?: clock())
+        return ProjectShelfEntry.Unavailable(
+            id = id,
+            title = indexed?.title ?: meta?.title ?: DEFAULT_TITLE,
+            paperSize = indexed?.paperSizeOrNull() ?: wire.paperSize,
+            updatedAtEpochMs = updatedAt,
+            cover = indexed?.coverRecipe() ?: meta?.coverRecipe(),
+            reason = reason,
+        )
+    }
+
+    private fun peekDocumentWire(docFile: Path): DocumentWirePeek {
+        val root = try {
+            json.parseToJsonElement(Files.readString(docFile)).jsonObject
+        } catch (_: Exception) {
+            return DocumentWirePeek()
+        }
+        return DocumentWirePeek(
+            schemaVersion = root["schemaVersion"]?.jsonPrimitive?.intOrNull,
+            paperSize = root["paperSize"]?.jsonPrimitive?.contentOrNull
+                ?.let { name -> PaperSize.entries.firstOrNull { it.name == name } },
+        )
+    }
+
     /**
      * The indexed cover, or `null` when this project is **legacy** — created before the field existed,
      * so it has never been assigned one ([D-026](docs/design/V2-SPEC-DEFECTS.md#d-026-ruling)).
@@ -456,6 +899,9 @@ internal class RoomProjectRepository(
         val stamp = ZineCoverStamp.entries.firstOrNull { it.name == coverStamp } ?: return null
         return ZineCoverRecipe(surface, stamp)
     }
+
+    private fun ProjectEntity.paperSizeOrNull(): PaperSize? =
+        PaperSize.entries.firstOrNull { it.name == paperSize }
 
     /** The sidecar's cover, by the same total mapping the index uses. */
     private fun ProjectMeta.coverRecipe(): ZineCoverRecipe? {
@@ -500,8 +946,35 @@ internal class RoomProjectRepository(
 
     private fun failure(error: DataError): DataResult.Failure = DataResult.Failure(error)
 
+    private data class PreparedAndroidRestore(
+        val restore: PreparedLibraryRestore,
+        val ids: List<Pair<String, String>>,
+    )
+
+    private data class DocumentWirePeek(
+        val schemaVersion: Int? = null,
+        val paperSize: PaperSize? = null,
+    )
+
     private companion object {
         /** Fallback title for adopted projects with no readable sidecar. */
         const val DEFAULT_TITLE = "My zine"
+        const val ASSETS_DIRECTORY = "assets"
+        const val RESTORE_WORK_DIRECTORY = ".library-restore"
+        const val PREPARED_PROJECTS_DIRECTORY = "prepared-projects"
+    }
+
+    private suspend fun sha256(path: Path): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        val buffer = ByteArray(64 * 1024)
+        BufferedInputStream(Files.newInputStream(path), buffer.size).use { input ->
+            while (true) {
+                currentCoroutineContext().ensureActive()
+                val read = input.read(buffer)
+                if (read < 0) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 }

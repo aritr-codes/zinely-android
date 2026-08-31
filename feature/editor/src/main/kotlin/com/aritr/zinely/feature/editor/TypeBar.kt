@@ -82,6 +82,7 @@ import kotlinx.coroutines.delay
 
 /** Test tag on the Type bar surface; absent from the tree unless a single non-blank text box is selected. */
 public const val TypeBarTestTag: String = "type-bar"
+internal const val TypeBarInkRowTestTag: String = "type-bar-ink-row"
 
 /**
  * The point ramp the size stepper walks (frozen bench.html `SIZES`). This is a **surface-owned
@@ -287,7 +288,7 @@ internal fun TypeBar(
 
     // `v21-typebar.html` `.typebar` — **`.inkpop`'s card**, and deliberately not a card of its own. Same
     // app, same canvas, same job: a floating tray of controls belonging to the element that summoned it,
-    // standing where `.inkpop` and `.ctx` stand. `--paper` ground, 1.5dp ink edge, `--br-lg`, and the 4dp
+    // standing where `.inkpop` and `.ctx` stand. `--surface` ground, 1.5dp ink edge, `--br-lg`, and the 4dp
     // `--hard` offset shadow the corpus gives anything that has left the surface.
     //
     // V1 asked for a `--menu` ground, a `--fieldEdge` hairline and `shadowElevation = 6.dp`: one ground
@@ -301,9 +302,9 @@ internal fun TypeBar(
             // Nothing that clips may sit left of the shadow — it paints outside the node.
             .zinelyV21HardShadow(ZinelyV21Dimens.hardShadow, cardColors.inkLine, cardShape)
             .clip(cardShape)
-            .background(cardColors.paper)
+            .background(cardColors.surface)
             .border(BenchChromeBorder, cardColors.ink, cardShape)
-            // ⚠ **The card must swallow the taps that land on its own paper**, and this empty
+            // ⚠ **The card must swallow the taps that land on its own surface**, and this empty
             // `pointerInput` is the whole of that. It is not decoration: `Surface` installs exactly this
             // (`Modifier.pointerInput(Unit) {}`) and dropping `Surface` for a `Box` dropped it silently.
             //
@@ -405,7 +406,7 @@ internal fun TypeBar(
                         }
                     }
                 }
-                TypeRow(Copy.Type.ROW_COLOUR) {
+                TypeColourRow(Copy.Type.ROW_COLOUR) {
                     InkRow(
                         color = style.color,
                         onInk = { ink ->
@@ -471,7 +472,32 @@ private fun TypeRow(label: String, control: @Composable () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        TypeRowLabel(
+            label = label,
+            modifier = Modifier.padding(end = ZinelyV21Dimens.gapLg),
+        )
+        control()
+    }
+}
+
+/**
+ * Colour is the only five-choice row. Stacking its caption above one 48dp line keeps every ink visible
+ * without making the transient card as tall as the earlier 3+2 grid.
+ */
+@Composable
+private fun TypeColourRow(label: String, control: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(ZinelyV21Dimens.gapXs),
+    ) {
+        TypeRowLabel(label = label)
+        control()
+    }
+}
+
+@Composable
+private fun TypeRowLabel(label: String, modifier: Modifier = Modifier) {
+    Text(
             // `text-transform:uppercase` is a *rendering* transform: the string stays the shipped "Size" /
             // "Align" / "Style" / "Colour" and a screen reader reads it in its own case. Compose has no
             // such transform — uppercasing the string uppercases what TalkBack speaks too — so the case is
@@ -481,11 +507,12 @@ private fun TypeRow(label: String, control: @Composable () -> Unit) {
             // `.tylab{min-width:46px}` — a floor, not a fixed width: under `space-between` a fixed width
             // would clip a longer label instead of widening the label column, and the spec says min-width.
             // Padding sits outside the floor so the row's gap is additive to it.
-            modifier = Modifier
-                .padding(end = ZinelyV21Dimens.gapLg)
+            modifier = modifier
                 .widthIn(min = 46.dp)
                 .semantics { contentDescription = label },
-            color = ZinelyTheme.v21Colors.inkSoft,
+            // This card sits on the room-space dark surface in dark mode. `inkSoft` becomes muddy at the
+            // small all-caps size; primary room ink clears AA while case and weight keep the caption quiet.
+            color = ZinelyTheme.v21Colors.ink,
             // `.tylab{font-size:.6rem;font-weight:700;letter-spacing:.13em}` — `.inklbl`
             // (`v21-bench.html:247-248`) verbatim: the corpus's own row label INSIDE a floating card,
             // which is exactly what these four are. `.inklbl`'s `margin` is the one thing dropped, this
@@ -495,8 +522,6 @@ private fun TypeRow(label: String, control: @Composable () -> Unit) {
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.13.em,
         )
-        control()
-    }
 }
 
 /**
@@ -527,10 +552,10 @@ private fun SizeStepper(index: Int, onStep: (Int) -> Unit) {
                 .clearAndSetSemantics { contentDescription = Copy.Type.sizePointAnnouncement(TypeSizesPt[index].toInt()) },
             textAlign = ComposeTextAlign.Center,
             // `.tyval{font-size:.78rem;font-weight:700;color:var(--ink-soft)}` — a number, so it is quiet
-            // and tabular; `--ink-soft` and never `--ink-faint`, which fails AA at this size on paper.
+            // and tabular; room ink is required here because the dark-theme surface is not paper.
             fontSize = 12.48.sp,
             fontWeight = FontWeight.Bold,
-            color = ZinelyTheme.v21Colors.inkSoft,
+            color = ZinelyTheme.v21Colors.ink,
             // `font-variant-numeric:tabular-nums`. Not cosmetic: the readout is a centred number that
             // changes on every tap, so proportional digits shift the glyph run mid-burst. Tabular figures
             // hold the centre still; the `min-width` alone does not stop the digits dancing. Carried on
@@ -599,7 +624,7 @@ private fun StepButton(icon: ImageVector, description: String, enabled: Boolean,
                 },
             )
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(
                 interactionSource = interaction,
@@ -615,7 +640,7 @@ private fun StepButton(icon: ImageVector, description: String, enabled: Boolean,
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = colors.inkSoft, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = null, tint = colors.ink, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -672,7 +697,7 @@ private fun AlignOption(label: String, value: TextAlign, current: TextAlign, onA
             .defaultMinSize(minWidth = 46.dp, minHeight = 46.dp)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(if (isSel) colors.leaf else colors.paper)
+            .background(if (isSel) colors.leaf else colors.surface)
             // The edge stays `--ink` in both states, as every V2.1 control's does. V1 swapped the border to
             // coral when on and so drew the "on" state twice.
             .border(BenchChromeBorder, colors.ink, shape)
@@ -699,12 +724,12 @@ private fun AlignOption(label: String, value: TextAlign, current: TextAlign, onA
                 selected = isSel
                 onClick { onAlign(value); true }
             }
-            .padding(horizontal = ZinelyV21Dimens.gapMd, vertical = ZinelyV21Dimens.gapSm),
+            .padding(horizontal = ZinelyV21Dimens.gapSm, vertical = ZinelyV21Dimens.gapSm),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = label,
-            color = if (isSel) colors.onLeaf else colors.inkSoft,
+            color = if (isSel) colors.onLeaf else colors.ink,
             fontSize = 12.48.sp,
             fontWeight = FontWeight.SemiBold,
         )
@@ -748,7 +773,7 @@ private fun StyleToggle(
             .defaultMinSize(minWidth = 46.dp, minHeight = 46.dp)
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(if (on) colors.leaf else colors.paper)
+            .background(if (on) colors.leaf else colors.surface)
             // `--ink` in both states. V1 swapped the border to coral when on, drawing the "on" state twice.
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(interactionSource = interaction, indication = null, onClick = { onToggle(!on) })
@@ -771,7 +796,7 @@ private fun StyleToggle(
             fontSize = 16.8.sp,
             fontWeight = weight,
             fontStyle = fontStyle,
-            color = if (on) colors.onLeaf else colors.inkSoft,
+            color = if (on) colors.onLeaf else colors.ink,
         )
     }
 }
@@ -782,61 +807,56 @@ private fun StyleToggle(
  *
  * Single-select, so it reads as a radio group for the same reason alignment does: a box has exactly one
  * ink. A swatch whose RGBA is not one of the five (a document from elsewhere) simply shows none selected.
+ *
+ * The 2026-08-29 hardware refinement keeps one visible line of explicit 48dp tiles. The Colour caption
+ * sits above it, so the transient card stays shorter while every ink remains visible and the chosen ink
+ * keeps its non-colour cue.
  */
 @Composable
 private fun InkRow(color: ColorRgba, onInk: (TextInk) -> Unit) {
     Row(
-        modifier = Modifier.selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(SwatchGap),
+        modifier = Modifier
+            .testTag(TypeBarInkRowTestTag)
+            .selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(SwatchGridGap),
     ) {
         TextInk.entries.forEach { ink -> Swatch(ink = ink, selected = ink.rgba == color, onInk = onInk) }
     }
 }
 
 /**
- * A 30dp ink pot — `.pot` (`v21-bench.html:250-253`), transcribed. The ink popover's pot **is** this
- * control: a colour swatch, single-select, in a floating card on this canvas. So the selected state is the
- * corpus's dashed outer ring rather than V1's 2dp solid inner one — the same hand as the selection ring on
- * the page, meaning the same thing: this is the one that is chosen.
+ * A 48dp ink tile carrying a 30dp physical pot — the 2026-08-29 compactness ruling taken in
+ * `v21-typebar.html`. The chosen state is said twice on purpose: the corpus's dashed pot ring stays, and a
+ * small paper check lands in the corner so the state survives greyscale and low-colour perception without
+ * changing what any ink will print.
  *
  * ⚠ **The fill is a model value, not a token, and the ink edge is why that is safe.** Every pot's fill is
  * now the paper-space RGBA [TextInk] commits — printed ink, theme-independent by ADR-055 Decision 6 — and
  * it must not resolve through a themed token, or a zine styled at night would print differently from one
  * styled at noon. V1 painted the Coral swatch through `ZinelyTheme.colors.coralText`, a themed lookup on
  * the one control whose whole contract is that it is not themed; that is what changed here. The 1.5dp
- * `--ink` ring is what separates any fill from the card's `--paper` ground whatever the fill becomes,
+ * `--ink` ring is what separates any fill from the card's `--surface` ground whatever the fill becomes,
  * which is the reasoning `v21-bench.html:274-278` already records for `.chip .sw`.
  *
  * **What the ring does not do:** it guarantees every pot is *found*, not that two pots are told *apart*.
- * On a dark card `--pen-ink` (#23201C) measures 1.17:1 against `--paper` (#332B22) and `--pen-blue` 1.38:1
- * — so the two darkest read as very nearly the card itself, and as very nearly each other. The values
- * cannot move (ADR-055 D6), so the answer if it reads as a defect is a *treatment*, and that is an owner's
- * design decision. Recorded in `v21-typebar.html`'s closing caption with all five measurements.
+ * The physical ink values cannot move with theme (ADR-055 D6); the label and selection ring carry the
+ * state while the themed surface keeps the surrounding controls readable.
  *
- * **No `minimumInteractiveComponentSize` — the target survives without it, at the spec's pitch.** The
- * modifier does not create the target; it only reserves *layout* space for one ("This modifier is not
- * needed for touch target expansion to happen. It only affects layout" — its own KDoc). The target comes
- * from the input layer, which expands any clickable's touch bounds to
- * `ViewConfiguration.minimumTouchTargetSize` regardless (`NodeCoordinator.touchBoundsInRoot`);
- * [TypeBarTest] asserts exactly that on this swatch.
+ * **No `minimumInteractiveComponentSize` — the visible 48dp tile already is the target.** The modifier
+ * does not create the target; it only reserves *layout* space for one ("This modifier is not needed for
+ * touch target expansion to happen. It only affects layout" — its own KDoc). The target comes from the
+ * clickable tile itself, and the input layer would still expand it to `ViewConfiguration.minimumTouchTargetSize`
+ * if the visible control were smaller. [TypeBarTest] asserts the platform node the service actually reads.
  *
- * **The pitch is [SwatchGap] + [SwatchSize] = 48dp, and that number is the whole reason the gap is 18dp.**
- * Expansion is 48dp; if the pitch is smaller, neighbouring expansions overlap and Compose prunes the
- * overlap before reporting bounds to the accessibility layer (`SemanticsOwner.getAllUncoveredSemanticsNodes`
- * intersects each node against the unaccounted region, which `AndroidComposeViewAccessibilityDelegateCompat`
- * hands to `setBoundsInScreen`). That is not a theory: at V1's 40dp pitch four of five swatches were
- * measured reporting 40×48, and at V2.1's first 38dp pitch (30dp pot + `gapSm`) a device dump reported
- * **38.1 × 48.0dp** for Ink / Coral / Teal / Blue — only Ochre reached 48×48, and only because it has no
- * right-hand neighbour. Both cleared WCAG 2.5.8 AA (24×24) and both were under Material's 48dp guideline.
- * At 48dp pitch the expansions abut exactly and nothing is pruned. Tapping was unaffected throughout: a hit
- * inside the paint always wins outright, and the gaps resolve to the nearest pot.
+ * **The earlier overlap defect stays recorded as history, not as the current geometry.** V1's 40dp pitch and
+ * V2.1's first 38dp pitch let neighbouring 48dp expansions collide, so Compose pruned the overlap before
+ * reporting bounds to accessibility. The 2026-08-29 ruling stops borrowing that hidden expansion: each tile
+ * is explicitly 48dp, the 30dp pot remains centered inside it, and the selected cue is visible rather than
+ * implied by spacing arithmetic.
  *
- * **Confirmed on device 2026-08-15** (SM-A176B, Android 16, density 420). `uiautomator` reports all five
- * swatches at 126 × 126px — a flat **48.0 × 48.0dp** — with bounds that abut exactly:
- * Ink `[307,1574][433,1700]`, Coral `[433,…]`, Teal `[559,…]`, Blue `[685,…]`, Ochre `[811,1574][937,1700]`.
- * Ochre is no longer the only one to reach 48×48. This is the dump `v21-typebar.html` asked for when it
- * said the measurement *"must be re-dumped, not re-reasoned"* — the paragraph above previously rested on
- * `TypeBarSwatchPlatformA11yTest` alone, which is Robolectric's platform tree rather than the device's.
+ * **Confirmed on device 2026-08-15** (SM-A176B, Android 16, density 420): the shipped row already reached a
+ * full 48.0 × 48.0dp per swatch in the platform tree. The stacked-caption row preserves that floor while
+ * shortening the card and making the reachable area match the visible tile.
  *
  * `TypeBarSwatchPlatformA11yTest` asserts this on the **platform** tree, which is the only tree that can
  * fail: `touchBoundsInRoot` is the *pre*-pruning value and reported a flat 48dp all through the defect.
@@ -855,56 +875,63 @@ private fun Swatch(ink: TextInk, selected: Boolean, onInk: (TextInk) -> Unit) {
     Box(
         modifier = Modifier
             .testTag("$TypeBarTestTag-ink-${ink.label}")
-            .size(SwatchSize)
+            .size(SwatchTouchSize)
             // `.pot[aria-checked="true"]::after{inset:-5px;border:1.6px dashed}` — an OUTER ring, so it is
             // drawn behind rather than inset into the 30dp box. The pot's own size is unchanged by
             // selection, which is what keeps the row from reflowing as the choice moves along it.
-            .drawBehind {
-                if (!selected) return@drawBehind
-                val out = SwatchRingInset.toPx()
-                val w = SwatchRingStroke.toPx()
-                // A CSS border paints INSIDE its box, so `inset:-5px` puts the ring's *outer edge* at -5
-                // and its stroke centre-line — which is what Compose's [Stroke] is centred on — half a
-                // stroke further in. Transcribing the literal would stand the ring 0.8dp too far out, the
-                // exact error [SelectionOutlineInsetDp] records against the same declaration.
-                val edge = -out + w / 2f
-                val ringW = size.width + 2f * out - w
-                val ringH = size.height + 2f * out - w
-                val dash = w * 2f
-                drawRoundRect(
-                    color = colors.ink,
-                    topLeft = Offset(edge, edge),
-                    size = Size(ringW, ringH),
-                    cornerRadius = CornerRadius(ringH / 2f, ringH / 2f),
-                    style = Stroke(width = w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))),
-                )
-            }
-            .clip(shape)
-            .background(paint)
-            .border(BenchChromeBorder, colors.ink, shape)
             .selectable(
                 selected = selected,
                 role = Role.RadioButton,
                 onClick = { onInk(ink) },
             )
             .semantics { contentDescription = ink.label },
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(SwatchSize)
+                .drawBehind {
+                    if (!selected) return@drawBehind
+                    val out = SwatchRingInset.toPx()
+                    val w = SwatchRingStroke.toPx()
+                    val edge = -out + w / 2f
+                    val ringW = size.width + 2f * out - w
+                    val ringH = size.height + 2f * out - w
+                    val dash = w * 2f
+                    drawRoundRect(
+                        color = colors.ink,
+                        topLeft = Offset(edge, edge),
+                        size = Size(ringW, ringH),
+                        cornerRadius = CornerRadius(ringH / 2f, ringH / 2f),
+                        style = Stroke(width = w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash))),
+                    )
+                }
+                .clip(shape)
+                .background(paint)
+                .border(BenchChromeBorder, colors.ink, shape),
+        )
+        if (selected) {
+            EditorSelectionCue(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = SwatchCueInset, end = SwatchCueInset)
+                    .testTag(selectionCueTag("$TypeBarTestTag-ink-${ink.label}")),
+            )
+        }
+    }
 }
 
 /** `.pot{width:30px;height:30px}`. */
 private val SwatchSize = 30.dp
 
-/**
- * `.tyinks{--gap-pot:18px}` — the ink row's gap, and the one number in this card derived from the
- * PLATFORM rather than from the corpus.
- *
- * It is `48dp - `[SwatchSize], not a spacing token: 18dp is exactly the gap at which the swatch pitch
- * reaches the platform's minimum touch target, so two neighbouring expansions abut instead of overlapping
- * and neither is pruned out of the accessibility tree (see [Swatch]). Every other cluster in the card sits
- * on `gapSm`; this one cannot, and rounding it up to `gapXl` (24dp) would widen the Colour row 24dp to buy
- * nothing. If either the pot size or `ViewConfiguration.minimumTouchTargetSize` moves, this moves with it.
- */
-private val SwatchGap = 18.dp
+/** The compact colour-tile footprint chosen on 2026-08-29: the visible target is the real target. */
+private val SwatchTouchSize = 48.dp
+
+/** A compact visible gap: every tile itself remains a full 48dp target. */
+private val SwatchGridGap = ZinelyV21Dimens.gapXs
+
+/** The paper check cue sits just inside the 48dp tile. */
+private val SwatchCueInset = 4.dp
 
 /** `.pot[aria-checked="true"]::after{inset:-5px}` — how far the ring sits outside the pot. */
 private val SwatchRingInset = 5.dp

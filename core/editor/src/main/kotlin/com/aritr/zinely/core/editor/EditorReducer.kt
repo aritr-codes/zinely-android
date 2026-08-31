@@ -7,7 +7,10 @@ import com.aritr.zinely.core.model.ImageElement
 import com.aritr.zinely.core.model.Page
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PtPoint
+import com.aritr.zinely.core.model.PtSize
+import com.aritr.zinely.core.model.TextAlign
 import com.aritr.zinely.core.model.TextElement
+import com.aritr.zinely.core.model.TextStyle
 import com.aritr.zinely.core.model.Transform
 
 /**
@@ -62,7 +65,30 @@ public object EditorReducer {
             committing(model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
                 PlaceCommand(model.currentPageIndex, el))
         }
-        Intent.RequestAddImage -> Reduction(model, listOf(Effect.PickAndDecodeImage))
+        is Intent.PlaceTextAndEdit -> {
+            val id = "el-${model.nextToken}"
+            val element = TextElement(
+                id = id,
+                transform = intent.transform,
+                zIndex = nextZ(model),
+                text = "",
+                // D-110/A20 is deliberately a placement default. Keep TextStyle's model/JSON fallback
+                // at START so opening an existing document can never restyle its saved words.
+                style = TextStyle(align = TextAlign.CENTER),
+            )
+            val placed = committing(
+                model.copy(nextToken = model.nextToken + 1, selection = setOf(id)),
+                PlaceCommand(model.currentPageIndex, element),
+            )
+            val editing = openTextSession(placed.model, id)
+            Reduction(editing.model, placed.effects + editing.effects)
+        }
+        Intent.RequestAddImage -> Reduction(model, listOf(Effect.PickAndDecodeImage()))
+        is Intent.RequestReplaceImage -> {
+            val image = currentPage(model).elements.firstOrNull { it.id == intent.id } as? ImageElement
+            if (image == null) Reduction(model)
+            else Reduction(model, listOf(Effect.PickAndDecodeImage(replacingId = image.id)))
+        }
         is Intent.CommitAddImage -> {
             // Mint the id reducer-side (single source of id allocation) so it can never collide with an
             // existing element — a duplicate id would make PlaceCommand.invertOn delete BOTH matches.
@@ -172,6 +198,76 @@ public object EditorReducer {
             if (el == null) Reduction(model)
             else committing(model, EditImageCommand(model.currentPageIndex, el.id, el, el.copy(copier = !el.copier)))
         }
+        is Intent.ToggleFlip -> {
+            when (val el = currentPage(model).elements.firstOrNull { it.id == intent.id }) {
+                is ImageElement -> {
+                    val after = when (intent.axis) {
+                        FlipAxis.HORIZONTAL -> el.copy(flippedHorizontally = !el.flippedHorizontally)
+                        FlipAxis.VERTICAL -> el.copy(flippedVertically = !el.flippedVertically)
+                    }
+                    committing(model, EditImageCommand(model.currentPageIndex, el.id, el, after))
+                }
+                is DecorElement -> {
+                    val after = when (intent.axis) {
+                        FlipAxis.HORIZONTAL -> el.copy(mirrored = !el.mirrored)
+                        FlipAxis.VERTICAL -> el.copy(flippedVertically = !el.flippedVertically)
+                    }
+                    committing(model, EditDecorCommand(model.currentPageIndex, el.id, el, after))
+                }
+                is TextElement, null -> Reduction(model)
+            }
+        }
+        is Intent.MakeImageSpread -> {
+            val sourcePage = currentPage(model)
+            val source = sourcePage.elements.firstOrNull { it.id == intent.id } as? ImageElement
+            val pair = imageSpreadPair(model.currentPageIndex)
+            val pageAspect = intent.pageSizePt.width / intent.pageSizePt.height
+            val crops = imageSpreadCrops(intent.photoAspect, pageAspect)
+            val partnerPage = pair?.partnerPageIndex?.let(model.document.pages::getOrNull)
+            if (source == null || pair == null || crops == null || partnerPage == null) {
+                Reduction(model)
+            } else {
+                val (leftCrop, rightCrop) = crops
+                val fullPage = Transform(
+                    xPt = 0.0,
+                    yPt = 0.0,
+                    widthPt = intent.pageSizePt.width,
+                    heightPt = intent.pageSizePt.height,
+                )
+                val sourceBack = (sourcePage.elements.minOfOrNull { it.zIndex } ?: 0).let {
+                    if (it == Int.MIN_VALUE) it else it - 1
+                }
+                val partnerBack = (partnerPage.elements.minOfOrNull { it.zIndex } ?: 0).let {
+                    if (it == Int.MIN_VALUE) it else it - 1
+                }
+                val sourceCrop = if (pair.sourceIsLeft) leftCrop else rightCrop
+                val partnerCrop = if (pair.sourceIsLeft) rightCrop else leftCrop
+                val sourceAfter = source.copy(
+                    transform = fullPage,
+                    zIndex = sourceBack,
+                    crop = sourceCrop,
+                    fit = Fit.FIT,
+                )
+                val partner = source.copy(
+                    id = "el-${model.nextToken}",
+                    transform = fullPage,
+                    zIndex = partnerBack,
+                    crop = partnerCrop,
+                    fit = Fit.FIT,
+                )
+                committing(
+                    model.copy(nextToken = model.nextToken + 1, selection = setOf(source.id)),
+                    MakeImageSpreadCommand(
+                        sourcePageIndex = model.currentPageIndex,
+                        sourceId = source.id,
+                        beforeSource = source,
+                        afterSource = sourceAfter,
+                        partnerPageIndex = pair.partnerPageIndex,
+                        partner = partner,
+                    ),
+                )
+            }
+        }
 
         // — transform: begin/commit/cancel + a11y twins —
         is Intent.BeginTransform -> {
@@ -214,6 +310,7 @@ public object EditorReducer {
         is Intent.RotateBy -> bakeSelection(model) { it.copy(rotationDegrees = it.rotationDegrees + intent.degrees) }
 
         // — structure —
+        is Intent.DuplicateElement -> duplicateElement(model, intent)
         is Intent.Reorder -> {
             val page = currentPage(model)
             val beforeZ = page.elements.associate { it.id to it.zIndex }
@@ -232,10 +329,10 @@ public object EditorReducer {
         // — pages — selection/interaction are per-page, so a page switch clears them and ends any
         // open transform session (else a stale same-index/same-token commit could hit the wrong page).
         is Intent.GoToPage ->
-            Reduction(leavePage(model, intent.index.coerceIn(0, model.document.pages.lastIndex)))
+            leavePage(model, intent.index.coerceIn(0, model.document.pages.lastIndex))
         Intent.AddPage -> {
             val at = model.document.pages.size
-            committing(leavePage(model, at), AddPageCommand(Page(index = at, role = PageRole.INTERIOR), at))
+            committing(leavePage(model, at).model, AddPageCommand(Page(index = at, role = PageRole.INTERIOR), at))
         }
         is Intent.DeletePage -> {
             if (model.document.pages.size <= 1) Reduction(model) else {
@@ -243,9 +340,14 @@ public object EditorReducer {
                 // If the deleted page is at/ before current, current shifts down one to follow its page.
                 val shifted = if (at <= model.currentPageIndex) model.currentPageIndex - 1 else model.currentPageIndex
                 val newCurrent = shifted.coerceIn(0, model.document.pages.size - 2)
+                val left = leavePage(model, newCurrent).model
+                val liveIds = left.document.pages.asSequence()
+                    .flatMap { it.elements.asSequence() }
+                    .map { it.id }
+                    .toSet()
                 committing(
-                    leavePage(model, newCurrent),
-                    DeletePageCommand(model.document.pages[at], at, model.selection),
+                    left,
+                    DeletePageCommand(left.document.pages[at], at, model.selection.intersect(liveIds)),
                 )
             }
         }
@@ -259,14 +361,70 @@ public object EditorReducer {
 
     private fun currentPage(model: EditorModel): Page = model.document.pages[model.currentPageIndex]
 
-    /** Switch to [pageIndex], dropping the (per-page) selection and ending any open transform session. */
-    private fun leavePage(model: EditorModel, pageIndex: Int): EditorModel =
-        model.copy(currentPageIndex = pageIndex, selection = emptySet(), interaction = Interaction.Idle)
+    /**
+     * Switch to [pageIndex], dropping per-page state after closing an open text session through the same
+     * cleanup seam as Done/Back. This matters for a freshly placed blank box: simply setting the interaction
+     * to Idle leaves an invisible element in the authoritative document (D-041). Add/Delete page callers use
+     * the cleaned model and let their structural commit emit the final autosave; plain navigation returns the
+     * cleanup autosave itself when the document changed.
+     */
+    private fun leavePage(model: EditorModel, pageIndex: Int): Reduction {
+        val closed = (model.interaction as? Interaction.EditingText)
+            ?.let { endTextSession(model, it.id, after = null) }
+            ?: Reduction(model)
+        return closed.copy(
+            model = closed.model.copy(
+                currentPageIndex = pageIndex,
+                selection = emptySet(),
+                interaction = Interaction.Idle,
+            ),
+        )
+    }
 
     private fun nextZ(model: EditorModel): Int = (currentPage(model).elements.maxOfOrNull { it.zIndex } ?: -1) + 1
 
     private fun transformsOf(model: EditorModel, ids: Set<String>): Map<String, Transform> =
         currentPage(model).elements.filter { it.id in ids }.associate { it.id to it.transform }
+
+    /**
+     * Duplicate is placement, not an edit of the source: a fresh reducer-owned id, the next z-rank and the
+     * existing [PlaceCommand] give it the same persistence/undo guarantees as Text, Photo and Art placement.
+     * The 12pt diagonal offset is deterministic. Each axis tries forward first, reverses at the far edge,
+     * and leaves an axis unchanged only when the element already consumes the whole page on that axis.
+     */
+    private fun duplicateElement(model: EditorModel, intent: Intent.DuplicateElement): Reduction {
+        if (!intent.pageSizePt.width.isFinite() || !intent.pageSizePt.height.isFinite() ||
+            intent.pageSizePt.width <= 0.0 || intent.pageSizePt.height <= 0.0
+        ) return Reduction(model)
+        val source = currentPage(model).elements.firstOrNull { it.id == intent.id } ?: return Reduction(model)
+        // A blank box is an unfinished text session, not authored content. Refusing to duplicate it keeps
+        // the same no-invisible-elements invariant as styleText/endTextSession (ADR-055).
+        if (source is TextElement && source.text.isBlank()) return Reduction(model)
+        val id = "el-${model.nextToken}"
+        val copy = source.duplicateAs(
+            id = id,
+            transform = source.transform.offsetForDuplicate(intent.pageSizePt),
+            zIndex = nextZ(model),
+        )
+        return committing(
+            model.copy(nextToken = model.nextToken + 1, selection = setOf(id), interaction = Interaction.Idle),
+            PlaceCommand(model.currentPageIndex, copy),
+        )
+    }
+
+    private fun Transform.offsetForDuplicate(pageSizePt: PtSize): Transform = copy(
+        xPt = duplicateAxisOffset(xPt, widthPt, pageSizePt.width),
+        yPt = duplicateAxisOffset(yPt, heightPt, pageSizePt.height),
+    )
+
+    private fun duplicateAxisOffset(position: Double, extent: Double, pageExtent: Double): Double {
+        if (!position.isFinite() || !extent.isFinite() || extent <= 0.0 || extent >= pageExtent) return position
+        val forwardRoom = pageExtent - position - extent
+        if (forwardRoom > 0.0) return position + minOf(DUPLICATE_OFFSET_PT, forwardRoom)
+        val backwardRoom = position
+        if (backwardRoom > 0.0) return position - minOf(DUPLICATE_OFFSET_PT, backwardRoom)
+        return position
+    }
 
     /** Apply [cmd], push to undo, clear redo, and request an autosave (the only place autosave is emitted). */
     private fun committing(model: EditorModel, cmd: Command): Reduction {
@@ -461,7 +619,11 @@ public object EditorReducer {
         is PlaceCommand -> pageIndex
         is EditTextCommand -> pageIndex
         is EditImageCommand -> pageIndex
+        is MakeImageSpreadCommand -> sourcePageIndex
         is EditDecorCommand -> pageIndex
         is AddPageCommand, is DeletePageCommand -> null
     }
 }
+
+/** One sixth of an inch: visible at phone scale, small enough to preserve the maker's composition. */
+internal const val DUPLICATE_OFFSET_PT: Double = 12.0

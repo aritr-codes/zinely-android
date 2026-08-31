@@ -107,12 +107,12 @@ class EditTextSessionGoldenTest {
     @Test
     fun edit_text_session_light() =
         capture("edit_text_session_light", darkTheme = false) {
-            EditTextSession(session = session, element = element, dispatch = {}, modifier = sheetHost)
+            EditTextSession(session = session, element = element, commitText = { false }, modifier = sheetHost)
         }
 
     @Test
     fun edit_text_session_dark() =
         capture("edit_text_session_dark", darkTheme = true) {
-            EditTextSession(session = session, element = element, dispatch = {}, modifier = sheetHost)
+            EditTextSession(session = session, element = element, commitText = { false }, modifier = sheetHost)
         }
 }

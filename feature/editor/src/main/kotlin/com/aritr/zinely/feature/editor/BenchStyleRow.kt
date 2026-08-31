@@ -34,11 +34,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
@@ -151,27 +150,15 @@ internal val BenchStyleDash = 3.dp
  * is gated on `interaction !is Interaction.EditingText`, so the Type bar is unreachable for the whole of a
  * session. Recorded at [D-042](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-042).
  *
- * ### Why three of its four controls are inert
- *
- * That is the freeze's own arithmetic, not a shortcut. Enumerating every listener in the frozen script:
- * the `Fraunces` and `A 23` chips have no handler, and **`#editColour` has none either** — `openInk` is
- * bound in `toolsFor` and dispatched by `buildCtx`, to the **`.ctx` bar's** `Ink` verb, never to this chip.
- * All three therefore ship drawn-and-disabled under
- * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling), exactly as `Font` and
- * `Replace` already do on the context bar.
- *
- * ### Deviation: the chips are labelled by verb, not by value
- *
- * The freeze draws its chips as *values* — a family name, `A 23`, a swatch. A value display that cannot
- * change the value is still a display, so it must be either true or absent: hard-coding `Fraunces`/`A 23`
- * would misreport every element that is neither. The chips therefore carry the same verb labels the
- * context bar already uses for these controls ([Copy.BenchVerbs]), which invents nothing and reports
- * nothing false. **The swatch is the exception and stays a value** — row 3.9 requires it to seed from the
- * element's own computed colour (`v21-bench.html:279`'s `#editSw`), so a coral heading shows coral.
+ * [D-108](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-108) corrects a stale transcription:
+ * the frozen HTML already wires `#editColour` to the Ink tray. The row therefore exposes that one honest
+ * action, removes the fake `Font` / `Size` buttons, and quietly points to the complete style surface after
+ * Done. The swatch remains the edited element's computed colour (`#editSw`).
  *
  * @param visible whether a text session is open — the frozen `.editing` class.
  * @param inkSwatch the edited element's own colour, for the `Ink` chip's dot (row 3.9).
- * @param onDone the frozen `#doneEdit` handler — the one live control in the row.
+ * @param onInk ends the edit cleanly and opens Ink after the draft commit.
+ * @param onDone the frozen `#doneEdit` handler.
  * @param onDockedTopChanged the row's settled top edge in window coordinates, for the amended pan's
  *   clearance term ([benchEditPanMagnitudeDp], D-043 / OD-16). Reported on every layout, including at rest.
  */
@@ -179,6 +166,7 @@ internal val BenchStyleDash = 3.dp
 internal fun BenchStyleRow(
     visible: Boolean,
     inkSwatch: Color,
+    onInk: () -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier,
     onDockedTopChanged: (Float) -> Unit = {},
@@ -216,8 +204,8 @@ internal fun BenchStyleRow(
             },
     ) {
         // Composed only while it is on screen or on its way off it. A `graphicsLayer` translation moves
-        // pixels, not nodes: left permanently composed, the row's four controls stayed in the platform
-        // accessibility tree at rest, and TalkBack read "Font, Size, Ink, Done" on an editor with no
+        // pixels, not nodes: left permanently composed, the row's actions stayed in the platform
+        // accessibility tree at rest, and TalkBack read editing controls on an editor with no
         // session open — caught by `SurfaceTraversalOrderTest`, which reads the merged tree in the design's
         // order. The outer Box keeps the animation state so the entrance still runs from the rest value.
         val docked = visible || offsetFraction < BenchKbStackRestFraction
@@ -232,20 +220,29 @@ internal fun BenchStyleRow(
                     // is how a raster probe aimed at the top rule ended up reading the chips instead and
                     // reported a deleted rule as present.
                     .testTag(BenchStyleRowTestTag)
-                    .background(colors.paper)
+                    .background(colors.surface)
                     .benchStyleRowRules(solid = colors.ink, dashed = colors.hair)
                     .padding(horizontal = BenchStyleRowPaddingH, vertical = BenchStyleRowPaddingV),
                 horizontalArrangement = Arrangement.spacedBy(BenchStyleRowGap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // The three reasons are not the same sentence, and saying so is the whole point of F-1:
-                // `Font` is a capability the product does not have, while `Size` and `Ink` are one tap away
-                // on the selection bar the moment this row stands down (D-042).
-                InertChip(Copy.BenchVerbs.FONT, because = Copy.BenchVerbs.NOT_YET)
-                InertChip(Copy.BenchVerbs.SIZE, because = Copy.BenchVerbs.FINISH_TYPING)
-                InertChip(Copy.BenchVerbs.INK, because = Copy.BenchVerbs.FINISH_TYPING, swatch = inkSwatch)
-                // Frozen `.grow{flex:1}` — the chips pack left, Done anchors right.
-                Box(Modifier.weight(1f))
+                InkChip(swatch = inkSwatch, onInk = onInk)
+                Text(
+                    text = Copy.EditText.MORE_STYLES_AFTER_DONE,
+                    color = colors.inkSoft,
+                    fontSize = 10.88.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = ZinelyV21Fonts.Work,
+                    lineHeight = 12.5.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("$BenchStyleRowTestTag-hint"),
+                )
+                // The hint owns the frozen flex space: Ink and Done are measured first, so neither can be
+                // pushed off-screen when Android's font scale grows. At ordinary scale it still reads as
+                // one quiet line; at maximum scale it may wrap to two before ellipsising.
                 DoneChip(onDone)
             }
         }
@@ -253,82 +250,43 @@ internal fun BenchStyleRow(
 }
 
 /**
- * A chip the freeze draws and wires to nothing.
- *
- * Announced **disabled** and drawn dim, and the two must agree:
- * [ADR-092](../../../../../../../../docs/DECISIONS.md#adr-092) row 2.13c-i records why — a control that
- * says *disabled* to TalkBack while looking tappable is a defect this programme has already shipped once.
- * It carries no `clickable`, so the platform `AccessibilityNodeInfo` reports it non-clickable too, rather
- * than only the merged Compose tree saying so.
- *
- * ### Two V2.1 consequences of being inert
- *
- * **It sheds its printed shadow.** `.icon-btn:disabled{box-shadow:none}` (`v21-bench.html:345`) is the
- * corpus rule, and it is not an alpha: a disabled control drops its depth *entirely*, because pressed means
- * "you are pushing this" and disabled means "there is nothing here to push". These chips therefore print
- * flat while `Done` beside them stands 2dp off the strip.
- *
- * **The dim reaches the border, not only the label.** The same review finding that governs
- * [BenchBottomBar]'s icon buttons applies: fading the mark and leaving a full-strength outline draws
- * *heavier* chrome than the freeze does. Written as pre-multiplied colours rather than a `graphicsLayer`
- * alpha for one reason — a layer would take the swatch down with it, and row 3.9 requires the swatch to
- * report the element's true ink. A dimmed coral is pale pink, which is a false value, not a quiet one.
- *
- * ### It says why it is dim
- *
- * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) keeps the chip drawn and
- * forbids inventing a capability for it; it does not make it mute, and a device pass found that silence is
- * what a first-time user reads as breakage (`docs/BETA-UX-REVIEW.md` F-1). [because] rides
- * `stateDescription`, never `contentDescription` — the chip keeps the verb name the row is labelled by, so
- * nothing about the frozen vocabulary moves, and explaining an absence claims no capability.
- *
- * @param because why this chip is inert, announced as state. Not optional: a drawn-and-disabled control
- *   that cannot say why is the defect F-1 recorded.
+ * D-108's live Ink chip. It uses the same flat printed press as Done, so touch and TalkBack both receive an
+ * action that agrees with the control's full-strength paint.
  */
 @Composable
-private fun InertChip(label: String, because: String, swatch: Color? = null) {
+private fun InkChip(swatch: Color, onInk: () -> Unit) {
     val colors = ZinelyTheme.v21Colors
+    val ink = benchTap(action = onInk)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
     Row(
         modifier = Modifier
+            .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, BenchStyleChipShape)
             .clip(BenchStyleChipShape)
-            .background(colors.paper)
-            .border(
-                BenchStyleRule,
-                colors.ink.copy(alpha = ZinelyV21Dimens.disabledAlpha),
-                BenchStyleChipShape,
-            )
-            // Tag and semantics ABOVE the padding, for the same reason the row itself does it: below it,
-            // the node is the inner content box, so the chip reported 28dp wide where it is drawn 52dp —
-            // and TalkBack's focus rectangle would have been 24dp narrower than the control it outlines.
-            .testTag("$BenchStyleRowTestTag-$label")
+            .background(colors.surface)
+            .border(BenchStyleRule, colors.ink, BenchStyleChipShape)
+            .clickable(interactionSource = interaction, indication = null, onClick = ink)
+            .testTag("$BenchStyleRowTestTag-${Copy.BenchVerbs.INK}")
             .clearAndSetSemantics {
-                contentDescription = label
+                contentDescription = Copy.BenchVerbs.INK
                 role = Role.Button
-                disabled()
-                // OD-9 keeps the chip drawn; this says WHY it is dim. State, not name.
-                stateDescription = because
+                onClick { ink(); true }
             }
             .padding(horizontal = BenchStyleChipPaddingH, vertical = BenchStyleChipPaddingV),
         horizontalArrangement = Arrangement.spacedBy(BenchStyleRowGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (swatch != null) {
-            // Row 3.9: the dot is the element's own ink, so the chip still reports even though it is inert.
-            // Its `1.5px solid var(--ink)` ring is what separates the fill from the chip's paper ground at
-            // 13.66/11.70 whatever the fill becomes — the freeze's own note at `v21-bench.html:274-278`.
-            // Ring and fill both stay at full strength; see the class note above.
-            Box(
-                Modifier
-                    .size(BenchStyleSwatchSize)
-                    .clip(CircleShape)
-                    .background(swatch)
-                    .border(BenchStyleRule, colors.ink, CircleShape)
-                    .testTag("$BenchStyleRowTestTag-swatch"),
-            )
-        }
+        Box(
+            Modifier
+                .size(BenchStyleSwatchSize)
+                .clip(CircleShape)
+                .background(swatch)
+                .border(BenchStyleRule, colors.ink, CircleShape)
+                .testTag("$BenchStyleRowTestTag-swatch"),
+        )
         Text(
-            text = label,
-            color = colors.inkSoft.copy(alpha = ZinelyV21Dimens.disabledAlpha),
+            text = Copy.BenchVerbs.INK,
+            color = colors.inkSoft,
             fontSize = BenchStyleChipTextSize,
             // `.chip{font-weight:600}` — V2 asked for 500.
             fontWeight = FontWeight.SemiBold,
@@ -339,7 +297,7 @@ private fun InertChip(label: String, because: String, swatch: Color? = null) {
 }
 
 /**
- * Frozen `.doneEdit` — `--leaf` under `--on-leaf`, and the row's only live control.
+ * Frozen `.doneEdit` — `--leaf` under `--on-leaf`, the row's primary completion control.
  *
  * ⚠ Its press is an **amendment**, not a transcription: the frozen file gave `.doneEdit` a 2px resting
  * shadow and no `:active` rule. Amended in `v21-bench.html` on 2026-08-14 to the [ZinelyV21Press.Flat]

@@ -1,0 +1,186 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zinely — About Zinely (DESIGN FREEZE)</title>
+
+<!--
+  DESIGN FREEZE — 2026-08-24 — D-079 / ADR-103
+
+  Canonical interactive specification for the Shelf-owned Colophon, presented to makers as About Zinely.
+  - Entry: the second quiet dock action, beside Backups.
+  - The Shelf action is About; the destination, pane title, and licence Back label are About Zinely.
+  - Back from About Zinely returns to the Shelf; Back from a licence returns to About Zinely.
+  - The page scrolls at large text. No content or action is pinned over the scroll region.
+  - Default paper changes only the preselection for a future zine; it never rewrites an existing zine.
+  - Each bundled typeface opens its locally bundled SIL OFL notice.
+  - The offline/privacy promise appears exactly once, here.
+  - Palette amended 2026-08-24 by THEME-37596-FREEZE; the interaction ruling is unchanged.
+-->
+
+<style>
+:root{
+  --paper:#FFF6E8;--paper-2:#EFDFC6;--desk:#E9E29B;--surface:#F2CFBB;--surface-soft:#F1B4AF;
+  --ink:#27270F;--ink-soft:#6A452F;--ink-faint:#8E9546;--leaf:#8E9546;--leaf-dark:#555A1B;
+  --leaf-tint:#BBCA6F;--on-leaf:#27270F;--butter:#E9E29B;--butter-tint:#F2CFBB;
+  --berry:#F28892;--hair:rgba(39,39,15,.16);--shadow:rgba(39,39,15,.30);--stage:#F2DEBC;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --voice:"Averia Sans Libre","Fraunces",Georgia,serif;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#FFF6E8;--paper-2:#EFDFC6;--desk:#242312;--surface:#3D3920;--surface-soft:#46352E;
+  --ink:#FFF9DB;--ink-soft:#DAD7A0;--ink-faint:#8E9546;--leaf:#BBCA6F;--leaf-dark:#BBCA6F;
+  --leaf-tint:#8E9546;--on-leaf:#242312;--butter:#E9E29B;--butter-tint:#3D3920;
+  --berry:#F28892;--hair:rgba(255,249,219,.15);--shadow:rgba(18,14,10,.62);--stage:#1C1712
+}}
+:root[data-theme="dark"]{--paper:#FFF6E8;--paper-2:#EFDFC6;--desk:#242312;
+  --surface:#3D3920;--surface-soft:#46352E;--ink:#FFF9DB;--ink-soft:#DAD7A0;
+  --ink-faint:#8E9546;--leaf:#BBCA6F;--leaf-dark:#BBCA6F;--leaf-tint:#8E9546;
+  --on-leaf:#242312;--butter:#E9E29B;--butter-tint:#3D3920;--berry:#F28892;
+  --hair:rgba(255,249,219,.15);--shadow:rgba(18,14,10,.62);--stage:#1C1712}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;gap:18px;padding:28px;
+  color:var(--ink);background:var(--stage);font-family:var(--sans)}
+.cap{max-width:560px;margin:0;color:var(--ink-soft);font-size:13px;line-height:1.5;text-align:center}
+.badge{display:inline-block;padding:4px 9px;border:1px solid currentColor;border-radius:99px;
+  font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.phone{position:relative;width:390px;height:812px;overflow:hidden;border:2px solid var(--ink);
+  border-radius:34px;background:var(--desk);box-shadow:9px 10px 0 var(--shadow)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--desk)}
+.top{height:76px;flex:none;display:grid;grid-template-columns:56px 1fr 56px;align-items:end;
+  padding:16px 12px 10px;border-bottom:1px solid var(--hair);background:var(--desk)}
+.back{width:48px;height:48px;border:0;background:transparent;color:var(--ink);border-radius:50%;
+  font:700 22px/1 var(--sans);cursor:pointer}
+.back:focus-visible,.choice:focus-visible,.font-row:focus-visible,.theme:focus-visible{
+  outline:3px solid var(--berry);outline-offset:2px}
+.top h1{margin:0;text-align:center;font:700 25px/1.1 var(--voice)}
+.scroll{overflow-y:auto;overscroll-behavior:contain;padding:22px 24px 42px;scrollbar-gutter:stable}
+.intro{margin:0 0 22px;color:var(--ink-soft);font-size:14px;line-height:1.55}
+.intro p{margin:0}.intro .featured{margin-bottom:8px;color:var(--ink);font:700 19px/1.25 var(--voice)}
+.section{margin-top:24px}.section:first-of-type{margin-top:0}
+.eyebrow{margin:0 0 10px;color:var(--ink-soft);font-size:11px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase}
+.card{--surface:#F2CFBB;--ink:#27270F;--ink-soft:#6A452F;--leaf:#8E9546;
+  --leaf-tint:#BBCA6F;--on-leaf:#27270F;--hair:rgba(39,39,15,.16);
+  background:var(--surface);border:1.5px solid var(--ink);border-radius:16px;
+  box-shadow:3px 3px 0 var(--ink);overflow:hidden}
+.paper-choices{display:grid;grid-template-columns:1fr 1fr;padding:5px;gap:5px}
+.choice{min-height:50px;border:0;border-radius:11px;background:transparent;color:var(--ink);
+  font:700 14px/1.2 var(--sans);cursor:pointer}
+.choice[aria-checked="true"]{background:var(--leaf);color:var(--on-leaf)}
+.note{margin:9px 2px 0;color:var(--ink-soft);font-size:12px;line-height:1.45}
+.font-row{width:100%;min-height:64px;display:grid;grid-template-columns:1fr auto;gap:12px;
+  align-items:center;padding:12px 14px;border:0;border-bottom:1px dashed var(--hair);
+  color:var(--ink);background:transparent;text-align:left;cursor:pointer}
+.font-row:last-child{border-bottom:0}.font-row b{display:block;font-size:15px}.font-row small{
+  display:block;margin-top:3px;color:var(--ink-soft);font-size:11px}.arrow{font-size:18px}
+.promise{margin:0;padding:16px;background:var(--leaf-tint);border-left:4px solid var(--leaf);
+  color:var(--ink);font-size:14px;line-height:1.55}
+.version{display:flex;justify-content:space-between;gap:18px;padding:15px 16px;font-size:14px}
+.version span:last-child{color:var(--ink-soft)}
+.licence-page{display:none}.licence-page.show{display:flex}.main.hide{display:none}
+.licence-page .scroll{background:var(--surface-soft)}
+.licence-lead{margin:0 0 15px;color:var(--ink-soft);font-size:13px;line-height:1.5}
+.licence-frame{width:100%;height:570px;border:1.5px solid var(--ink);border-radius:10px;
+  background:#fff;color:#111}
+.theme{position:absolute;right:16px;bottom:16px;z-index:4;min-width:48px;min-height:48px;
+  border:1.5px solid var(--ink);border-radius:99px;background:var(--surface);color:var(--ink);
+  box-shadow:2px 2px 0 var(--ink);font:700 13px var(--sans);cursor:pointer}
+@media(max-width:480px){body{padding:0;background:var(--desk)}.cap{display:none}.phone{width:100vw;
+  height:100vh;border:0;border-radius:0;box-shadow:none}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<p class="cap"><span class="badge">design freeze · D-079</span><br>
+Shelf → About Zinely. Test the paper preference, each local licence, Back/Escape, scrolling, and day/night.</p>
+
+<main class="phone" aria-label="Interactive About Zinely prototype">
+  <section class="screen main" id="mainScreen" aria-labelledby="colophonTitle">
+    <header class="top">
+      <button class="back" type="button" aria-label="Back to My Shelf" id="shelfBack">←</button>
+      <h1 id="colophonTitle">About Zinely</h1><span></span>
+    </header>
+    <div class="scroll" tabindex="0">
+      <div class="intro">
+        <p class="featured">Some things deserve pages.</p>
+        <p>Zinely began with a simple wish: to make something for someone. We hope it helps you make something worth keeping.</p>
+      </div>
+
+      <section class="section" aria-labelledby="paperTitle">
+        <h2 class="eyebrow" id="paperTitle">Paper for new zines</h2>
+        <div class="card paper-choices" role="radiogroup" aria-labelledby="paperTitle">
+          <button class="choice" role="radio" aria-checked="true" data-paper="A4">A4</button>
+          <button class="choice" role="radio" aria-checked="false" data-paper="US Letter">US Letter</button>
+        </div>
+        <p class="note" id="paperHelp">We’ll suggest this paper when you start. You can always choose the other one.</p>
+      </section>
+
+      <section class="section" aria-labelledby="typeTitle">
+        <h2 class="eyebrow" id="typeTitle">Fonts we use</h2>
+        <div class="card">
+          <button class="font-row" data-name="Averia Sans Libre"
+            data-src="../../../feature/editor/src/main/assets/fonts/OFL-AveriaSansLibre.txt">
+            <span><b>Averia Sans Libre</b><small>Warm, handmade lettering · Read font licence</small></span><span class="arrow">→</span>
+          </button>
+          <button class="font-row" data-name="Fraunces"
+            data-src="../../../feature/editor/src/main/assets/fonts/OFL-Fraunces.txt">
+            <span><b>Fraunces</b><small>A little bookish flair · Read font licence</small></span><span class="arrow">→</span>
+          </button>
+          <button class="font-row" data-name="Inter"
+            data-src="../../../feature/editor/src/main/assets/fonts/OFL-Inter.txt">
+            <span><b>Inter</b><small>Clear, everyday text · Read font licence</small></span><span class="arrow">→</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="careTitle">
+        <h2 class="eyebrow" id="careTitle">Your zines stay yours</h2>
+        <p class="promise">Zinely works offline. Your zines stay on this device unless you choose to share or back them up.</p>
+      </section>
+
+      <section class="section" aria-labelledby="versionTitle">
+        <h2 class="eyebrow" id="versionTitle">App version</h2>
+        <div class="card version"><strong>Zinely</strong><span>0.9.0-beta.2</span></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="screen licence-page" id="licenceScreen" aria-labelledby="licenceTitle">
+    <header class="top">
+      <button class="back" type="button" aria-label="Back to About Zinely" id="licenceBack">←</button>
+      <h1 id="licenceTitle">Typeface</h1><span></span>
+    </header>
+    <div class="scroll" tabindex="0">
+      <p class="licence-lead">Font licence</p>
+      <iframe class="licence-frame" id="licenceFrame" title="Typeface licence text"></iframe>
+    </div>
+  </section>
+
+  <button class="theme" id="theme" aria-label="Switch day or night theme">◐</button>
+</main>
+
+<script>
+const root=document.documentElement,main=document.getElementById('mainScreen');
+const licence=document.getElementById('licenceScreen'),title=document.getElementById('licenceTitle');
+const frame=document.getElementById('licenceFrame');
+document.querySelectorAll('.choice').forEach(button=>button.onclick=()=>{
+  document.querySelectorAll('.choice').forEach(other=>other.setAttribute('aria-checked',String(other===button)));
+});
+function openLicence(button){
+  title.textContent=button.dataset.name;frame.src=button.dataset.src;
+  main.classList.add('hide');licence.classList.add('show');document.getElementById('licenceBack').focus();
+}
+function closeLicence(){
+  licence.classList.remove('show');main.classList.remove('hide');
+  document.querySelector(`.font-row[data-name="${title.textContent}"]`)?.focus();
+}
+document.querySelectorAll('.font-row').forEach(button=>button.onclick=()=>openLicence(button));
+document.getElementById('licenceBack').onclick=closeLicence;
+document.getElementById('shelfBack').onclick=()=>alert('Returns to your shelf.');
+document.getElementById('theme').onclick=()=>{
+  const current=root.getAttribute('data-theme')||'light';root.setAttribute('data-theme',current==='light'?'dark':'light');
+};
+addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&licence.classList.contains('show')){event.preventDefault();closeLicence();}
+  else if(event.key==='Escape')document.getElementById('shelfBack').click();
+});
+</script>

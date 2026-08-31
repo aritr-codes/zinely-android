@@ -9,8 +9,13 @@ import androidx.compose.ui.graphics.Color
  * [V21-SPEC.md](docs/design/V21-SPEC.md) and decided by [ADR-099](docs/DECISIONS.md#adr-099).
  *
  * Invariant, unchanged from V2: **the HTML is the specification.** A value may only change here
- * after it has changed in the corpus first. [ZinelyV21ContrastTest] pins every ratio, so drift in
- * either direction fails the build.
+ * after it has changed in the corpus first. [ZinelyV21ContrastTest] pins the usage-driven pairings
+ * that the shipped UI forms, so meaningful contrast drift fails the build.
+ *
+ * **2026-08-24 palette amendment:** [THEME-37596-FREEZE.md](docs/design/THEME-37596-FREEZE.md)
+ * supersedes the earlier colour values. Its six labelled swatches are now exact identity colours.
+ * [paper] and [paperEdge] are theme-invariant physical stock; [surface] and [surfaceSoft] carry app
+ * chrome. The dark theme changes the studio around the zine, never the zine itself.
  *
  * ### Additive. [ZinelyV2Colors] and [ZinelyColors] are untouched
  *
@@ -20,36 +25,22 @@ import androidx.compose.ui.graphics.Color
  *
  * ### Every pairing here is measured, and the measurement changed the palette
  *
- * ADR-099 opened `Proposed` with no contrast evidence at all. Measuring it found **eight failing
- * pairings** ([V21-SPEC.md §4.1](docs/design/V21-SPEC.md)), five of which needed an owner ruling.
+ * The palette is validated against the pairings the UI actually forms, not against isolated swatches.
  * Two consequences are visible in this file and neither should be "tidied" away:
  *
- * - **[jamText] and [onJam] exist because [jam] cannot carry text.** `jam` on `paper` measures
- *   4.20:1 — under the 4.5 body floor. It keeps the fills, the cut line and the delete affordance;
- *   text and icons take `jamText`. This mirrors the [leaf] / [leafText] / [onLeaf] trio exactly, and
- *   that precedent is now the palette's **only** sanctioned route to a derived hue. A `berryText`
- *   added by analogy, without its own measurement, would be a misuse of it.
- * - **[inkFaint] sets no text.** It measures 3.04 / 3.40 on `paper` and the prototypes were using it
- *   for page numbers, captions and legend labels at 9.6–11.5px. All 26 of those moved to [inkSoft].
- *   The text ramp is **two tiers**, not three. `inkFaint` survives for decorative fills and strokes
- *   only, and [ZinelyV21ContrastTest] pins its ratio so that a future use as text fails loudly.
+ * - **[jamText] and [onJam] keep consequence text separate from consequence fills.** Their actual
+ *   surface pairings are pinned by [ZinelyV21ContrastTest].
+ * - **[inkFaint] sets no text.** It is the exact Matcha swatch used only for decorative fills and
+ *   strokes. Secondary text belongs to [inkSoft].
  *
  * ### A border is not a shadow ([inkLine])
  *
- * [inkLine] is the **hard shadow** colour and nothing else. In dark it is `#120E0A` — deliberately
- * near-black, because a printed shadow must stay darker than the paper it falls on. Every *drawn*
- * line (border, outline, SVG stroke) follows [ink] instead. Collapsing the two put **61 borders**
- * (8 Library · 19 Proof · 34 Bench) at 1.38:1 in dark and very nearly erased the Proof's fold guide;
- * they are byte-identical in light (`#33261C`), which is why the mistake survived a light-theme
- * reading. **56 `inkLine` uses remain and are correct:** 55 hard-shadow declarations plus one
- * deliberate border. See [V21-SPEC.md §4.3](docs/design/V21-SPEC.md).
+ * [inkLine] is the **hard shadow** colour and nothing else. In light it follows the source palette's
+ * lit ink (`#27270F`); in dark it remains near-black (`#120E0A`) so a printed shadow stays darker
+ * than the object it grounds. Every drawn line (border, outline, SVG stroke) follows [ink] instead.
+ * See [V21-SPEC.md §4.3](docs/design/V21-SPEC.md).
  *
- * The exceptions are elements whose own ground **is** [ink], where an ink border would be invisible
- * and the shadow ink is correct: the Bench's snackbar and the Proof's flash toast — the same pattern,
- * resolved the same way. The rule is *a border contrasts with what it sits on*, not *a border is
- * always ink*.
- *
- * (A third ink-on-ink pair, the Bench's `.chip .sw`, is a colour **swatch** whose fill is the maker's
+ * (The Bench's `.chip .sw` is a colour **swatch** whose fill is the maker's
  * runtime ink; its ring separates it from the chip's `paper` ground and is correct as `ink`.)
  *
  * ### butter is material, never chrome
@@ -79,6 +70,10 @@ public data class ZinelyV21Colors(
     val deskEdge: Color,
     /** `--bench` — the Bench worktop; a darker desk, so the page reads as the hero. */
     val bench: Color,
+    /** `--surface` — raised app chrome. Never use this for a zine page or print preview. */
+    val surface: Color,
+    /** `--surface-soft` — supporting chrome and gentle status grounds. */
+    val surfaceSoft: Color,
 
     // ----- ink ---------------------------------------------------------------------------------
     /** `--ink` — body, headings, **and every drawn line**. ★ AA-critical on [paper]. */
@@ -87,8 +82,7 @@ public data class ZinelyV21Colors(
     val inkSoft: Color,
     /**
      * `--ink-faint` — **decorative fills and strokes only; this token sets no text.**
-     * 3.04 / 3.40 on [paper]. Its strokes on meaning-bearing graphics clear 1.4.11 by 0.04 and fail
-     * on [bench] (2.30), which is a hard constraint on where those graphics may be drawn.
+     * It is the source image's exact Matcha swatch; meaning-bearing graphics use a ground-aware ink.
      */
     val inkFaint: Color,
     /** `--ink-line` — **the hard shadow only.** Never a border; see the class docs. */
@@ -117,24 +111,16 @@ public data class ZinelyV21Colors(
     /**
      * `--on-butter` — the label on a [butter] fill. ★ AA-critical on [butter].
      *
-     * **Added 2026-08-11 (ADR-100), and it is dark in *both* themes**, which is why it could not be
-     * inferred from [onLeaf]. `butter` is a bright yellow at `#F6B22C` light and `#E8B458` dark — the one
-     * hue the palette does not darken for the dark theme, because tape and stamps have to stay bright on
-     * a dark desk. A cream label mirroring [onLeaf] would measure 1.6:1 on it. Dark ink measures **7.89**
-     * and **9.15**.
-     *
-     * The dark figure read `9.99` here for one day, and it is worth recording why that survived: this
-     * class's KDoc says [ZinelyV21ContrastTest] pins every ratio, so a wrong number *should* have failed
-     * the build — but the pairing was never added to that file, and an unpinned number cannot be
-     * contradicted by anything. It is pinned now. **A token documented as AA-critical and absent from the
-     * contrast suite is the one shape of drift this palette has no defence against.**
+     * Wild Primrose (`#E9E29B`) stays bright in both themes because it represents a physical material.
+     * Its label therefore uses dark ink in both themes rather than inheriting the surrounding chrome's
+     * light dark-theme copy. [ZinelyV21ContrastTest] pins this shipped pairing.
      */
     val onButter: Color,
 
     // ----- consequence -------------------------------------------------------------------------
     /** `--jam` — the only urgent colour, **as fill and line**: delete, the cut line, error blocks. */
     val jam: Color,
-    /** `--jam-text` — jam **as text or icon**. ★ AA-critical on [paper] and on [berryTint]. */
+    /** `--jam-text` — the consequence hue as text/icon on the dark/light chrome surfaces. */
     val jamText: Color,
     /** `--on-jam` — the label on a [jamText] ground. ★ AA-critical on [jamText]. */
     val onJam: Color,
@@ -157,29 +143,31 @@ public data class ZinelyV21Colors(
 public fun zinelyV21LightColors(): ZinelyV21Colors = ZinelyV21Colors(
     paper = Color(0xFFFFF6E8),
     paperEdge = Color(0xFFEFDFC6),
-    desk = Color(0xFFFBE9CE),
-    deskEdge = Color(0xFFE9D2AE),
-    bench = Color(0xFFEBD6B4),
-    ink = Color(0xFF33261C),
-    inkSoft = Color(0xFF6E5947),
-    inkFaint = Color(0xFFA08B74),
-    inkLine = Color(0xFF33261C),
-    leaf = Color(0xFF4E7A3C),
-    leafText = Color(0xFF3E6330),
-    leafTint = Color(0xFFDCE8CE),
-    onLeaf = Color(0xFFFFF6E8),
-    berry = Color(0xFFE4879F),
-    berryTint = Color(0xFFF8DCE2),
-    butter = Color(0xFFF6B22C),
-    butterTint = Color(0xFFFDEBC4),
-    onButter = Color(0xFF33261C),
-    jam = Color(0xFFCF4A28),
-    jamText = Color(0xFFA63B20),
-    onJam = Color(0xFFFFF6E8),
-    hair = Color(0x2933261C),
-    shade = Color(0x1233261C),
-    softShadow = Color(0x4D4A3622),
-    contact = Color(0x334A3622),
+    desk = Color(0xFFE9E29B),
+    deskEdge = Color(0xFFBBCA6F),
+    bench = Color(0xFFE9E29B),
+    surface = Color(0xFFF2CFBB),
+    surfaceSoft = Color(0xFFF1B4AF),
+    ink = Color(0xFF27270F),
+    inkSoft = Color(0xFF6A452F),
+    inkFaint = Color(0xFF8E9546),
+    inkLine = Color(0xFF27270F),
+    leaf = Color(0xFF8E9546),
+    leafText = Color(0xFF555A1B),
+    leafTint = Color(0xFFBBCA6F),
+    onLeaf = Color(0xFF27270F),
+    berry = Color(0xFFF28892),
+    berryTint = Color(0xFFF1B4AF),
+    butter = Color(0xFFE9E29B),
+    butterTint = Color(0xFFF2CFBB),
+    onButter = Color(0xFF27270F),
+    jam = Color(0xFFA9303D),
+    jamText = Color(0xFFA9303D),
+    onJam = Color(0xFFFFF9DB),
+    hair = Color(0x2927270F),
+    shade = Color(0x1227270F),
+    softShadow = Color(0x4D27270F),
+    contact = Color(0x3327270F),
 )
 
 /**
@@ -191,41 +179,41 @@ public fun zinelyV21LightColors(): ZinelyV21Colors = ZinelyV21Colors(
  * them as two tokens.
  */
 public fun zinelyV21DarkColors(): ZinelyV21Colors = ZinelyV21Colors(
-    paper = Color(0xFF332B22),
-    paperEdge = Color(0xFF3E3529),
-    desk = Color(0xFF241E18),
-    deskEdge = Color(0xFF2F2820),
-    bench = Color(0xFF211B15),
-    ink = Color(0xFFF6EAD6),
-    inkSoft = Color(0xFFBFAC93),
-    inkFaint = Color(0xFF8C7B65),
+    paper = Color(0xFFFFF6E8),
+    paperEdge = Color(0xFFEFDFC6),
+    desk = Color(0xFF242312),
+    deskEdge = Color(0xFF323119),
+    bench = Color(0xFF242312),
+    surface = Color(0xFF3D3920),
+    surfaceSoft = Color(0xFF46352E),
+    ink = Color(0xFFFFF9DB),
+    inkSoft = Color(0xFFDAD7A0),
+    inkFaint = Color(0xFF8E9546),
     inkLine = Color(0xFF120E0A),
-    leaf = Color(0xFF8FAE6B),
-    leafText = Color(0xFFAFC98C),
-    leafTint = Color(0xFF333B27),
-    onLeaf = Color(0xFF1E1A15),
-    berry = Color(0xFFD3899B),
-    berryTint = Color(0xFF3A2A2D),
-    butter = Color(0xFFE8B458),
-    butterTint = Color(0xFF3E3320),
-    onButter = Color(0xFF1E1A15),
-    jam = Color(0xFFE0755A),
-    jamText = Color(0xFFE4856D),
-    onJam = Color(0xFF1E1A15),
-    hair = Color(0x26F6EAD6),
-    shade = Color(0x38000000),
-    softShadow = Color(0x9E000000),
-    contact = Color(0x80000000),
+    leaf = Color(0xFFBBCA6F),
+    leafText = Color(0xFFBBCA6F),
+    leafTint = Color(0xFF8E9546),
+    onLeaf = Color(0xFF242312),
+    berry = Color(0xFFF28892),
+    berryTint = Color(0xFFF1B4AF),
+    butter = Color(0xFFE9E29B),
+    butterTint = Color(0xFF3D3920),
+    onButter = Color(0xFF242312),
+    jam = Color(0xFFFF9CA4),
+    jamText = Color(0xFFFF9CA4),
+    onJam = Color(0xFF242312),
+    hair = Color(0x26FFF9DB),
+    shade = Color(0x1227270F),
+    softShadow = Color(0x9E120E0A),
+    contact = Color(0x80120E0A),
 )
 
 /**
- * `.scrim{background:rgba(38,26,16,.44)}` — the one V2.1 scrim, for **every** surface that dims what is
+ * `.scrim{background:rgba(39,39,15,.44)}` — the one V2.1 scrim, for **every** surface that dims what is
  * behind it. `.44 × 255 = 112 = 0x70`.
  *
- * ⚠ **A literal, and not a token.** The rule sits outside `:root` in all three prototypes
- * (`v21-bench.html:359`, `v21-proof.html:323`, `v21-library.html:343` — the Library writes `.42`), so the
- * `prefers-color-scheme` block cannot reach it and V2.1 publishes no `--scrim` among the 25 the contrast
- * gate measured. Recorded as the same defect recurring rather than as a value anybody chose.
+ * It is deliberately theme-invariant: the palette amendment derives it from the source's lit ink and
+ * shares it across every modal surface so identical overlays never dim the studio differently.
  *
  * ### Why it is here rather than in three files
  *
@@ -243,4 +231,4 @@ public fun zinelyV21DarkColors(): ZinelyV21Colors = ZinelyV21Colors(
  * A future surface that needs a *different* dim needs a different constant and a rule in the prototypes,
  * not an edit here.
  */
-public val ZinelyV21Scrim: Color = Color(0x70261A10)
+public val ZinelyV21Scrim: Color = Color(0x7027270F)

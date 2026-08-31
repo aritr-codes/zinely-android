@@ -97,7 +97,14 @@ public fun ElementSemanticsLayer(
             val hDp = with(density) { hPx.toDp() }
 
             val selected = element.id in uiState.selection
-            val actions = EditorA11y.elementCustomActions(element, dispatch, onDelete, onChangeInk, onReplaceSupply)
+            val actions = EditorA11y.elementCustomActions(
+                element = element,
+                dispatch = dispatch,
+                onDelete = onDelete,
+                onChangeInk = onChangeInk,
+                onReplaceSupply = onReplaceSupply,
+                flipActionsEnabled = uiState.selection.size <= 1,
+            )
             val description = EditorA11y.label(element)
             // The same geometry the visible warning uses — one helper, so the spoken answer and the drawn
             // one cannot disagree about a rotated photo's corner. Stated for **every** element, not only

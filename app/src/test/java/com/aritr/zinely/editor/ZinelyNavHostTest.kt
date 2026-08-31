@@ -22,13 +22,16 @@ import androidx.navigation.testing.TestNavHostController
 import androidx.navigation.toRoute
 import com.aritr.zinely.HiltTestActivity
 import com.aritr.zinely.core.data.repository.DataResult
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.data.storage.AtomicFileStore
 import com.aritr.zinely.data.android.DocumentRepositoryImpl
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
 import kotlinx.coroutines.runBlocking
+import androidx.lifecycle.Lifecycle
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -298,6 +301,27 @@ class ZinelyNavHostTest {
         waitForEditor()
         assertEquals(id, navController.currentBackStackEntry?.toRoute<EditorRoute>()?.projectId)
     }
+
+    @Test
+    fun `backgrounding Home commits a pending delete before a cold return can revive it`() {
+        val id = seedZine()
+        setHost()
+        waitForCard(SEEDED_TITLE)
+
+        composeRule.onNodeWithContentDescription("Actions for $SEEDED_TITLE").performClick()
+        composeRule.onNodeWithContentDescription(Copy.Shelf.DELETE).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.CREATED)
+        composeRule.activityRule.scenario.moveToState(Lifecycle.State.RESUMED)
+
+        composeRule.waitForIdle()
+        assertFalse(rootProjectDir(id).toFile().exists())
+        assertTrue(
+            composeRule.onAllNodesWithContentDescription(cardLabel(SEEDED_TITLE))
+                .fetchSemanticsNodes().isEmpty(),
+        )
+    }
 }
 
 /**
@@ -335,3 +359,6 @@ private const val SEEDED_TITLE = "My zine"
 
 /** `.act` — the frozen row's own words (`v2-library.html:127`), which are also its spoken name. */
 private const val SHARE_AND_EXPORT = "Share & export"
+
+private fun ZinelyNavHostTest.rootProjectDir(id: String) =
+    composeRule.activity.filesDir.toPath().resolve("projects").resolve(id)

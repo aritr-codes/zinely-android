@@ -55,6 +55,14 @@ class ShelfSheetsTest {
     }
 
     @Test
+    fun `the create sheet leads with the saved preferred paper`() {
+        assertEquals(
+            listOf(PaperSize.LETTER, PaperSize.A4),
+            shelfPaperChoices(PaperSize.LETTER),
+        )
+    }
+
+    @Test
     fun `the create sheet names each stock and its real dimensions`() {
         setContent { ShelfCreateSheet(visible = true, onDismiss = {}, onChoosePaper = {}) }
         composeRule.onNodeWithText("210 × 297 mm").assertExists()

@@ -32,9 +32,12 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +51,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.paneTitle
@@ -110,6 +114,10 @@ public data class ZSheetClose(val label: String, val onClose: () -> Unit)
  * .drawer` — and where they disagree the value taken is recorded at the constant.
  *
  * @param close draws the frozen `.dhead` close button. Null (default) draws none.
+ * @param onShown runs after the enter animation has attached and settled the dialog content. Use it
+ * for deterministic initial focus.
+ * @param onHidden runs after the exit animation releases the dialog window. Use it for focus return,
+ * never as the user's dismiss action.
  */
 @Composable
 public fun ZSheet(
@@ -119,10 +127,26 @@ public fun ZSheet(
     modifier: Modifier = Modifier,
     sub: String? = null,
     close: ZSheetClose? = null,
+    onShown: (() -> Unit)? = null,
+    onHidden: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val visibleState = remember { MutableTransitionState(false) }
+    var wasShown by remember { mutableStateOf(false) }
+    var shownNotified by remember { mutableStateOf(false) }
+    SideEffect { if (visible) wasShown = true }
     visibleState.targetState = visible
+    LaunchedEffect(visibleState.isIdle, visibleState.currentState, visibleState.targetState) {
+        if (!shownNotified && visibleState.isIdle && visibleState.currentState && visibleState.targetState) {
+            shownNotified = true
+            onShown?.invoke()
+        }
+        if (wasShown && visibleState.isIdle && !visibleState.currentState && !visibleState.targetState) {
+            wasShown = false
+            shownNotified = false
+            onHidden?.invoke()
+        }
+    }
     if (!visibleState.currentState && !visibleState.targetState) return
 
     Dialog(
@@ -215,7 +239,7 @@ public fun ZSheetSurface(
                 SheetShape,
             )
             .clip(SheetShape)
-            .background(colors.paper)
+            .background(colors.surface)
             // `border-top:2px solid var(--ink)` — the top edge only, and it follows the two corners.
             // A straight `drawLine` is cut by the `clip` at each arc, leaving `radiusXl` of curve with
             // no rule on it exactly where the sheet meets the scrim. So the path IS the top edge — arc,
@@ -241,6 +265,14 @@ public fun ZSheetSurface(
                 end = ZinelyV21Dimens.gapLg,
                 bottom = ZinelyV21Dimens.gapXl,
             )
+            // D-087: make the whole sheet a pointer hit target so inert titles, gaps and padding cannot
+            // fall through to the scrim sibling. Observe without consuming: descendant controls and
+            // scrolling bodies still receive the same gesture stream.
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) awaitPointerEvent()
+                }
+            }
             .semantics { paneTitle = title },
     ) {
         // `.grip`/`.grab{width:44px;height:5px;border-radius:var(--br-pill);background:var(--ink-faint);
@@ -351,7 +383,7 @@ private fun ZSheetCloseButton(close: ZSheetClose) {
                 .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, pill)
                 .size(CloseSize)
                 .clip(pill)
-                .background(colors.paper)
+                .background(colors.surface)
                 .border(CloseBorder, colors.ink, pill),
             contentAlignment = Alignment.Center,
         ) {
@@ -376,13 +408,8 @@ private fun ZSheetCloseGlyph(tint: Color) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * `.scrim{background:rgba(38,26,16,.44)}` — the Bench's and the Proof's value; the Library writes
- * `.42`.
- *
- * ⚠️ A literal, and deliberately so: the rule sits outside `:root` in all three files, so the
- * `prefers-color-scheme` block cannot reach it and **V2.1 publishes no scrim token** to prefer over it
- * — it was not among the 25 the contrast gate measured. Recorded as the same defect recurring rather
- * than as a value that was chosen. `ZineActionSheet` records it identically for the Library's `.42`.
+ * `.scrim{background:rgba(39,39,15,.44)}` — the shared 37596-derived ink wash. It is intentionally one
+ * value in both themes and is published as [ZinelyV21Scrim] for every modal surface.
  */
 private val ScrimFill = ZinelyV21Scrim
 

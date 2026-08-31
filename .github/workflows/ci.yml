@@ -2,8 +2,8 @@ name: CI
 
 # Two jobs run on every push to main and every PR:
 #   * core-tests      — pure-Kotlin core suites with ZINELY_CORE_ONLY=true (no Android SDK needed).
-#   * android-graph   — SDK-provisioned; with ZINELY_CORE_ONLY UNSET it compiles :app (and runs the
-#                       :data-android JVM tests), which is where Hilt/KSP validates the whole
+#   * android-graph   — SDK-provisioned; with ZINELY_CORE_ONLY UNSET it compiles and lints :app (and
+#                       runs the :data-android JVM tests), which is where Hilt/KSP validates the whole
 #                       SingletonComponent graph. This is the PR-A Step 7 acceptance gate
 #                       (docs/spikes/pr-a-step-7-hilt-di.md §13.1): before it, the Android/Hilt graph
 #                       was never compiled in CI, so a broken binding could merge undetected.
@@ -52,7 +52,7 @@ jobs:
           if-no-files-found: warn
 
   android-graph:
-    name: Android Hilt graph validation (SDK)
+    name: Android graph, lint, and test validation (SDK)
     # Pinned image (not ubuntu-latest): this job VERIFIES the Roborazzi goldens, which are only valid
     # against the image they were recorded on (ADR-028 §7.5). The record-goldens.yml workflow pins the
     # SAME ubuntu-24.04 + UTC/en_US so a verify never drifts against the recorded raster.
@@ -78,7 +78,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Validate Hilt graph + run :app, :data-android & :feature:editor unit suites (CI-28)
+      - name: Validate Hilt graph + run app lint and Android unit suites (CI-28)
         # :app:compileDebugKotlin is the minimum graph gate (KSP/Hilt run during Kotlin compilation
         # and fail the build on any missing/duplicate/cyclic binding). :data-android:testDebugUnitTest
         # is the justified stronger equivalent — it additionally runs the pure-JVM binding tests
@@ -93,6 +93,8 @@ jobs:
         # from the golden-verify step; verifyRoborazziDebug still runs (in verify mode, --rerun-tasks)
         # and is not weakened. :app:compileDebugKotlin is kept explicit so the graph-gate wording above
         # stays literally true (:app:testDebugUnitTest depends on it, but the named gate is preserved).
+        # :app:lintDebug is named here so navigation lifecycle mistakes such as remembering a
+        # NavBackStackEntry lookup by route data instead of the destination entry fail CI.
         #
         # :render-android (ADR-028 S3): the Robolectric NATIVE unit proofs run in the next step via
         # verifyRoborazziDebug (which runs testDebugUnitTest in verify mode — real-Skia raster provider +
@@ -112,7 +114,7 @@ jobs:
         # depends on :feature:editor yet, so that verify step is what actually gates it in CI.
         run: |
           chmod +x ./gradlew
-          ./gradlew :app:compileDebugKotlin :app:testDebugUnitTest \
+          ./gradlew :app:compileDebugKotlin :app:testDebugUnitTest :app:lintDebug \
             :data-android:testDebugUnitTest \
             :feature:editor:testDebugUnitTest \
             :core:ui:testDebugUnitTest \
@@ -131,11 +133,9 @@ jobs:
         # roborazzi/. This step is RED until those PNGs are committed — that transient is the deliberate,
         # reviewed golden-landing dance, not drift.
         #
-        # :core:ui (C2, CI-34): the extracted design-system module. It owns no golden of its own yet
-        # (the z_components_* goldens stay under feature/editor/src/test/roborazzi/ with their shared
-        # rasterizeToBitmap host helper), so its verifyRoborazziDebug runs the moved token/contrast
-        # unit tests in verify mode with nothing to pixel-diff — a green no-op that keeps the task wired
-        # for when a golden is co-located here later.
+        # :core:ui (C2, CI-34): the extracted design-system module. Its V2 foundation catalogue golden
+        # is co-located under core/ui/src/test/roborazzi/; the z_components_* goldens remain under
+        # feature/editor/src/test/roborazzi/ with their shared rasterizeToBitmap host helper.
         run: |
           ./gradlew :render-android:verifyRoborazziDebug :feature:editor:verifyRoborazziDebug \
             :core:ui:verifyRoborazziDebug \
@@ -164,4 +164,5 @@ jobs:
           path: |
             render-android/build/outputs/roborazzi/**
             feature/editor/build/outputs/roborazzi/**
+            core/ui/build/outputs/roborazzi/**
           if-no-files-found: ignore

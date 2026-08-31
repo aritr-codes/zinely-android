@@ -37,7 +37,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Fonts
  *
  * ```css
  * .fail{gap:var(--gap-md)}
- * .fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--paper);
+ * .fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--surface);
  *   border:2px solid var(--jam);box-shadow:3px 3px 0 var(--jam)}
  * .fail h2{font-family:var(--voice);font-size:1.6rem;font-weight:700;margin:var(--gap-sm) 0 0}
  * .fail p{color:var(--ink-soft);font-size:.94rem}   .empty p{line-height:1.55}
@@ -45,7 +45,7 @@ import com.aritr.zinely.ui.theme.ZinelyV21Fonts
  *
  * **The badge keeps its parameters, and that constrains what could change here.**
  * [badgeBackground]/[badgeContent] are supplied by the caller — proof's empty state and the shelf's
- * error state pass different pairs — so this component cannot adopt `.fail .mk`'s fixed `--paper`
+ * error state pass different pairs — so this component cannot adopt `.fail .mk`'s fixed `--surface`
  * fill and `--jam` ring without deleting two parameters that live call sites in another module are
  * currently passing. What it does adopt is the *material*: the badge is now a printed object, with an
  * `ink` border and a hard `inkLine` shadow under it, at the V2.1 radius scale. The V2 tint-only chip

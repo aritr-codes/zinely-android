@@ -124,7 +124,7 @@ public fun ZSnackbar(
                 // attitude rather than part of the entrance.
                 .graphicsLayer { rotationZ = Tilt }
                 .clip(SnackShape)
-                .background(colors.ink)
+                .background(colors.surfaceSoft)
                 .border(SnackBorder, colors.inkLine, SnackShape)
                 // padding:var(--gap-md) var(--gap-sm) var(--gap-md) var(--gap-lg)
                 .padding(
@@ -140,7 +140,7 @@ public fun ZSnackbar(
             BasicText(
                 text = message,
                 style = TextStyle(
-                    color = colors.paper,
+                    color = colors.ink,
                     fontFamily = ZinelyV21Fonts.Work,
                     fontSize = MessageSize,
                     lineHeight = ZinelyV21Fonts.InheritedLineHeight,
@@ -168,7 +168,7 @@ public fun ZSnackbar(
                 BasicText(
                     text = actionLabel,
                     style = TextStyle(
-                        color = colors.paper,
+                        color = colors.ink,
                         fontFamily = ZinelyV21Fonts.Work,
                         fontSize = ActionSize,
                         fontWeight = FontWeight.Bold,

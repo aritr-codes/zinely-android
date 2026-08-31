@@ -97,7 +97,7 @@ internal val BenchNavRowPaddingH = ZinelyV21Dimens.gapMd
 internal val BenchNavRowPaddingBottom = ZinelyV21Dimens.gapXs
 
 /**
- * Frozen `.gridbtn{38×38; border-radius:var(--br-sm); border:1.5px solid var(--ink); background:var(--paper);
+ * Frozen `.gridbtn{38×38; border-radius:var(--br-sm); border:1.5px solid var(--ink); background:var(--surface);
  * color:var(--ink-soft); box-shadow:2px 2px 0 var(--ink-line)}` and `svg{17px; stroke-width:1.8}`
  * (`v21-bench.html:329-332`).
  *
@@ -110,9 +110,16 @@ internal val BenchGridBtnRadius = ZinelyV21Dimens.radiusSm
 internal val BenchGridGlyphSize = 17.dp
 internal const val BenchGridGlyphStroke: Float = 1.8f
 
-/** Frozen `.filmstrip{gap:var(--gap-sm); padding:var(--gap-hair) 0 var(--gap-xs)}` (`v21-bench.html:333`). */
+/**
+ * Frozen `.filmstrip{gap:var(--gap-sm); padding:var(--gap-hair) var(--gap-xs) var(--gap-xs) 0}`
+ * (`v21-bench.html:400`).
+ *
+ * The leading edge stays flush; the trailing `4px` is the smallest safe room for the current page's
+ * 3dp outer ring, so the last sheet no longer shears against the viewport edge.
+ */
 internal val BenchStripGap = ZinelyV21Dimens.gapSm
-internal val BenchStripPaddingH = 0.dp
+internal val BenchStripPaddingStart = 0.dp
+internal val BenchStripPaddingEnd = ZinelyV21Dimens.gapXs
 internal val BenchStripPaddingTop = ZinelyV21Dimens.gapHair
 internal val BenchStripPaddingBottom = ZinelyV21Dimens.gapXs
 
@@ -252,11 +259,14 @@ internal fun BenchPageNav(
     var placed by remember { mutableStateOf(false) }
     LaunchedEffect(currentPageIndex, viewportPx, pages.size) {
         if (viewportPx <= 0) return@LaunchedEffect
-        // `BenchStripPaddingH` is 0 in V2.1 (`.filmstrip{padding:2px 0 4px}`); it stays in the arithmetic
-        // rather than being folded away, because the term is what makes this expression the strip's geometry
-        // instead of a coincidence that happens to hold while one value is zero.
+        // The leading term stays explicit even at zero: the arithmetic is the strip's geometry, not a
+        // coincidence that happens to hold while one side is flush.
         val centre = with(density) {
-            (BenchStripPaddingH + BenchThumbWidth / 2 + (BenchThumbWidth + BenchStripGap) * currentPageIndex)
+            (
+                BenchStripPaddingStart +
+                    BenchThumbWidth / 2 +
+                    (BenchThumbWidth + BenchStripGap) * currentPageIndex
+                )
                 .roundToPx()
         }
         val target = (centre - viewportPx / 2).coerceIn(0, scroll.maxValue)
@@ -296,8 +306,8 @@ internal fun BenchPageNav(
                 // scroll container are one node and the ordering applies.
                 .semantics { isTraversalGroup = true }
                 .padding(
-                    start = BenchStripPaddingH,
-                    end = BenchStripPaddingH,
+                    start = BenchStripPaddingStart,
+                    end = BenchStripPaddingEnd,
                     top = BenchStripPaddingTop,
                     bottom = BenchStripPaddingBottom,
                 ),
@@ -339,7 +349,7 @@ private fun BenchGridButton(onOpenGrid: () -> Unit) {
             // Nothing that clips may precede the press — the shadow paints outside the node.
             .zinelyV21Pressable(pressed, ZinelyV21Press.Flat, colors.inkLine, shape)
             .clip(shape)
-            .background(colors.paper)
+            .background(colors.surface)
             .border(BenchChromeBorder, colors.ink, shape)
             .clickable(interactionSource = interaction, indication = null, onClick = openGrid)
             .testTag(BenchGridButtonTestTag)
@@ -531,7 +541,7 @@ private fun BenchPageThumb(
             // scheme reads the page's tokens, not the room's, exactly as `.pthumb`'s five restated custom
             // properties cascade to its contents.
             CompositionLocalProvider(LocalZinelyV2Colors provides sheet) {
-                BenchThumbPage(
+                BenchPageMiniature(
                     page = page,
                     pageSizePt = pageSizePt,
                     defaults = defaults,
@@ -558,7 +568,7 @@ private fun BenchPageThumb(
  * kept the capability, so C5 keeps the code that provides it rather than writing a second one.
  */
 @Composable
-private fun BenchThumbPage(
+internal fun BenchPageMiniature(
     page: Page,
     pageSizePt: PtSize,
     defaults: DocumentDefaults,

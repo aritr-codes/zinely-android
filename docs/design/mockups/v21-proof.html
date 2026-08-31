@@ -3,6 +3,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Zinely V2.1 — Proof (handmade direction, PROPOSAL)</title>
 
+<!-- D-079 AMENDMENT · 2026-08-24: the ready-row privacy suffix is removed. Product-level
+     offline/privacy reassurance appears once in the Shelf-owned Colophon. "Saved to your phone"
+     remains because it identifies the completed save destination, not the product's privacy model. -->
+
 <!-- ┌─────────────────────────────────────────────────────────────────────────────┐
      │  V2.1 PROOF — DESIGN-FROZEN (ADR-099, owner, 2026-08-10).                    │
      │                                                                             │
@@ -25,9 +29,9 @@
      │       A side-by-side spread was built and REJECTED (owner, 2026-08-09):      │
      │       two mini-zine pages at 390px are two pages you cannot read.  A tablet  │
      │       spread stays a scope decision, not a free consequence of this HTML.    │
-     │    3. Turning a page is a restrained swing on the spine (~300ms), not a 3D   │
-     │       flipbook.  prefers-reduced-motion downgrades it to a short cross-fade  │
-     │       rather than removing the page change.                                  │
+     │    3. A page change is immediate. The physical spine, gutter and stack edge  │
+     │       already make the booklet model legible; animating the user's page      │
+     │       delays reading without adding information.                             │
      │    4. The fold ARROWS were rebuilt on the Yoshizawa-Randlett conventions as  │
      │       set out by Robert Lang, after the owner read them as messy:            │
      │       langorigami.com/article/origami-diagramming-conventions.  The defect   │
@@ -63,17 +67,16 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
    the frozen V2 token contract that the owner is being asked to accept.
    ============================================================================ */
 :root{
-  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#FBE9CE; --desk-edge:#E9D2AE;
-  --ink:#33261C; --ink-soft:#6E5947; --ink-faint:#A08B74;
-  --leaf:#4E7A3C; --leaf-text:#3E6330; --leaf-tint:#DCE8CE; --on-leaf:#FFF6E8;
-  --butter:#F6B22C; --butter-tint:#FDEBC4;
-  --berry:#E4879F; --berry-tint:#F8DCE2;
-  --jam:#CF4A28;            /* fills, the cut line, the delete affordance              */
-  --jam-text:#A63B20;       /* ✱ jam AS TEXT — AA-measured 2026-08-09, see V21-SPEC §4.1 */
-  --on-jam:#FFF6E8;         /* ✱ label on a jam-text ground (mirrors --on-leaf)          */
-  --hair:rgba(51,38,28,.16); --ink-line:#33261C;
-  --stage:#F2DEBC; --soft-shadow:rgba(74,54,34,.30); --contact:rgba(74,54,34,.20);
-  --shade:rgba(51,38,28,.07);         /* the gutter shade next to a spine */
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#E9E29B; --desk-edge:#BBCA6F; --bench:#E9E29B;
+  --surface:#F2CFBB; --surface-soft:#F1B4AF;
+  --ink:#27270F; --ink-soft:#6A452F; --ink-faint:#8E9546;
+  --leaf:#8E9546; --leaf-text:#555A1B; --leaf-tint:#BBCA6F; --on-leaf:#27270F;
+  --butter:#E9E29B; --butter-tint:#F2CFBB;
+  --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#A9303D; --jam-text:#A9303D; --on-jam:#FFF9DB;
+  --hair:rgba(39,39,15,.16); --ink-line:#27270F;
+  --stage:#F2DEBC; --soft-shadow:rgba(39,39,15,.30); --contact:rgba(39,39,15,.20);
+  --shade:rgba(39,39,15,.07);         /* the gutter shade next to a spine */
   --br-xs:4px; --br-sm:8px; --br-md:14px; --br-lg:22px; --br-xl:36px; --br-pill:999px;
   /* ✱ the spacing ladder — measured into the corpus 2026-08-09, see V21-SPEC.md §3.3 */
   --gap-hair:2px; --gap-xs:4px; --gap-sm:8px; --gap-md:12px;
@@ -85,22 +88,22 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --shade:rgba(0,0,0,.22);
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
+  --shade:rgba(39,39,15,.07);
 }}
 :root[data-theme="dark"]{
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15; --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
-  --shade:rgba(0,0,0,.22);
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312; --hair:rgba(255,249,219,.15); --ink-line:#120E0A;
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
+  --shade:rgba(39,39,15,.07);
 }
 :root[data-hard="off"]{--hard:0px}
 :root[data-tilt="off"]{--tiltP:0deg}
@@ -133,7 +136,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .topbar{flex:none;display:flex;align-items:center;justify-content:space-between;
   padding:var(--gap-lg) var(--gap-md) var(--gap-sm);gap:var(--gap-sm)}
 .iconbtn{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);display:grid;place-items:center;cursor:pointer;
+  background:var(--surface);color:var(--ink-soft);display:grid;place-items:center;cursor:pointer;
   box-shadow:2px 2px 0 var(--ink-line)}
 .iconbtn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
 .iconbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;
@@ -157,11 +160,14 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .book{position:relative;display:flex;align-items:stretch;justify-content:center;
   transform:rotate(var(--tiltP));transform-style:preserve-3d;
   filter:drop-shadow(var(--hard) var(--hard) 0 var(--ink-line))}
+.leaf,.stack{--paper:#FFF6E8;--paper-edge:#EFDFC6;--ink:#27270F;--ink-soft:#6A452F;
+  --ink-faint:#8E9546;--hair:rgba(39,39,15,.16);--shade:rgba(39,39,15,.07);
+  --leaf:#8E9546;--leaf-text:#555A1B;--leaf-tint:#BBCA6F;--berry-tint:#F1B4AF;
+  --butter:#E9E29B}
 .leaf{position:relative;width:var(--leafw,244px);aspect-ratio:3/4;background:var(--paper);
   border:1.5px solid var(--ink);padding:var(--gap-xl) var(--gap-lg);overflow:hidden;
   display:flex;flex-direction:column;gap:var(--gap-sm);backface-visibility:hidden;
-  transform-origin:var(--spineside,left) center;
-  transition:transform .3s cubic-bezier(.22,.61,.24,1),opacity .3s ease}
+  transform-origin:var(--spineside,left) center}
 .leaf::after{content:"";position:absolute;inset:0;background-image:var(--grain);
   background-size:130px 130px;mix-blend-mode:multiply;opacity:.4;pointer-events:none}
 /* the gutter: a soft shade and a crease line on the bound edge only */
@@ -194,11 +200,6 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .pgn{position:absolute;bottom:8px;font-size:.62rem;font-weight:700;color:var(--ink-soft);
   font-variant-numeric:tabular-nums}
 .leaf.R .pgn{right:12px} .leaf.L .pgn{left:12px}
-
-/* the turn — a restrained swing on the spine, never a 180° flipbook */
-.book.turn-fwd .leaf{transform:rotateY(-26deg) translateX(-3%);opacity:0}
-.book.turn-back .leaf{transform:rotateY(26deg) translateX(3%);opacity:0}
-.book.settle .leaf{transform:none;opacity:1}
 
 /* zine content — set in the voice face, because it is the maker's writing */
 .cv{align-items:center;justify-content:center;text-align:center;gap:var(--gap-md)}
@@ -237,7 +238,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 
 /* ============================ the READY band ============================== */
 .band{flex:none;position:relative;z-index:8;margin:0 var(--gap-md) var(--gap-md);padding:var(--gap-md) var(--gap-md) var(--gap-lg);
-  background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-lg);
+  background:var(--surface);border:1.5px solid var(--ink);border-radius:var(--br-lg);
   box-shadow:var(--hard) calc(var(--hard)*-1) 0 var(--ink-line)}
 .band .tape{position:absolute;top:-11px;left:50%;transform:translateX(-50%) rotate(-2.5deg);
   width:74px;height:20px;background:rgba(246,178,44,.55);
@@ -265,17 +266,17 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   transition:transform .12s cubic-bezier(.2,.8,.2,1),box-shadow .12s}
 .btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;
   stroke-linecap:round;stroke-linejoin:round}
-/* ✱ the frame ring was --butter-tint, which measures 1.10 light / 1.13 dark against the .band's
-   paper ground: an unbounded ring reading as a soft bloom off the button rather than the deliberate
-   misregistration it is. Amended to --butter (1.73 / 7.35) under ADR-100 §4, by ADR-101 P2 —
-   the Library's count-chip defect, on a second surface. */
+/* ✱ before the 37596 palette, the frame ring was --butter-tint and read as an unbounded soft bloom
+   rather than the deliberate misregistration it is. ADR-100 §4 / ADR-101 P2 amended the role to
+   --butter; the current invariant Primrose is 1.24:1 against physical paper in both rooms. The ink
+   button edge carries the boundary while this ring remains a decorative print accent. */
 .btn-save{flex:1;background:var(--leaf);color:var(--on-leaf);font-weight:700;font-size:.96rem;
   flex-direction:column;gap:var(--gap-hair);padding:var(--gap-md) var(--gap-md);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line),0 0 0 var(--frame) var(--butter)}
 .btn-save:active{transform:translate(2px,2px);
   box-shadow:1px 1px 0 var(--ink-line),0 0 0 var(--frame) var(--butter)}
 .btn-save small{font-weight:500;font-size:.66rem;opacity:.9}
-.btn-share{flex:none;background:var(--paper);color:var(--ink-soft);font-size:.88rem;font-weight:600;
+.btn-share{flex:none;background:var(--surface);color:var(--ink-soft);font-size:.88rem;font-weight:600;
   padding:0 var(--gap-lg);box-shadow:var(--hard) var(--hard) 0 var(--ink-line)}
 .btn-share:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
 .btn:focus-visible,.iconbtn:focus-visible,.tapz:focus-visible{outline:2px solid var(--ink);
@@ -299,14 +300,14 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .done h4{font-family:var(--voice);font-weight:700;font-size:1.16rem;margin:var(--gap-xs) 0 0}
 .done p{font-size:.78rem;color:var(--ink-soft);margin:0;max-width:30ch}
 .done .row{display:flex;gap:var(--gap-sm);margin-top:var(--gap-sm)}
-.foldit,.shelf{font-family:var(--sans);font-size:.86rem;font-weight:600;border-radius:var(--br-pill);
+.openpdf,.foldit,.shelf{font-family:var(--sans);font-size:.86rem;font-weight:600;border-radius:var(--br-pill);
   border:1.5px solid var(--ink);padding:var(--gap-md) var(--gap-lg);cursor:pointer;
   box-shadow:3px 3px 0 var(--ink-line)}
 /* "Fold it up" is the next move, so it takes leaf — the ONE action colour.
    Butter never carries an action; it is material (tape, stamps, rings). */
 .foldit{background:var(--leaf);color:var(--on-leaf)}
-.shelf{background:var(--paper);color:var(--ink-soft)}
-.foldit:active,.shelf:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
+.openpdf,.shelf{background:var(--surface);color:var(--ink-soft)}
+.foldit:active,.openpdf:active,.shelf:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
 /* ADR-101 §6.9 — the band's two post-save states. `.wf` is what it says once the fold guide's finish
    button has been pressed; `.wu` is what it says before. The demoted "How to fold" keeps the guide
    reachable without re-issuing an instruction the user has just reported carrying out — it is a link,
@@ -320,10 +321,10 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   padding:var(--gap-sm) var(--gap-md)}
 
 /* ================================ drawers ================================= */
-.scrim{position:absolute;inset:0;z-index:44;background:rgba(38,26,16,.44);opacity:0;
+.scrim{position:absolute;inset:0;z-index:44;background:rgba(39,39,15,.44);opacity:0;
   pointer-events:none;transition:opacity .22s cubic-bezier(.2,0,0,1)}
 .scrim.show{opacity:1;pointer-events:auto}
-.drawer{position:absolute;left:0;right:0;bottom:0;z-index:46;background:var(--paper);
+.drawer{position:absolute;left:0;right:0;bottom:0;z-index:46;background:var(--surface);
   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
   transform:translateY(103%);transition:transform .3s cubic-bezier(.05,.7,.1,1);
   max-height:88%;display:flex;flex-direction:column;
@@ -335,7 +336,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   border-bottom:1.5px dashed var(--hair)}
 .dhead h3{font-family:var(--voice);font-weight:700;font-size:1.2rem;margin:0}
 .dclose{width:34px;height:34px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .dclose svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 .dbody{padding:var(--gap-md) var(--gap-lg) var(--gap-xl);overflow:auto}
@@ -345,7 +346,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 
 .paperseg{display:flex;gap:var(--gap-sm)}
 .paperseg button{flex:1;font-family:var(--sans);font-size:.9rem;font-weight:600;padding:var(--gap-md) var(--gap-sm);
-  border-radius:var(--br-md);border:1.5px solid var(--ink);background:var(--paper);
+  border-radius:var(--br-md);border:1.5px solid var(--ink);background:var(--surface);
   color:var(--ink-soft);cursor:pointer;box-shadow:3px 3px 0 var(--ink-line)}
 .paperseg button[aria-pressed="true"]{background:var(--leaf);color:var(--on-leaf)}
 .paperseg button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
@@ -368,7 +369,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    silently ruin a zine (fit-to-page shrink, portrait default, double-siding), and this is the only place
    the full reason lives. */
 .recipe{display:flex;flex-direction:column;gap:var(--gap-sm);max-width:460px}
-.rrow{display:flex;align-items:center;gap:var(--gap-md);padding:13px 15px;background:var(--paper);
+.rrow{display:flex;align-items:center;gap:var(--gap-md);padding:13px 15px;background:var(--surface);
   border:1px solid var(--ink-line);border-radius:var(--br-md)}
 .rrow .chip{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
   background:color-mix(in srgb, var(--leaf-text) 14%, transparent);color:var(--leaf-text)}
@@ -398,7 +399,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .foldlink{display:block;min-height:48px;margin-top:var(--gap-md);padding:0 4px;background:none;border:0;
   font-family:var(--sans);font-size:.84rem;font-weight:600;color:var(--leaf);text-align:left;cursor:pointer}
 .minisheet{position:relative;width:100%;aspect-ratio:11/8.5;border-radius:var(--br-sm);
-  background:var(--paper);border:1.5px solid var(--ink);
+  background:var(--surface);border:1.5px solid var(--ink);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line);overflow:hidden;
   display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr)}
 .mp{position:relative;border-right:1px dashed var(--hair);border-bottom:1px dashed var(--hair);
@@ -409,7 +410,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .mp.cover{background:var(--leaf-tint);color:var(--leaf-text)}
 .cutline{position:absolute;left:25%;right:25%;top:50%;height:0;border-top:2px dashed var(--jam);z-index:2}
 .cutlbl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-2deg);z-index:3;
-  background:var(--paper);border:1.5px solid var(--jam);color:var(--jam-text);border-radius:var(--br-pill);
+  background:var(--surface);border:1.5px solid var(--jam);color:var(--jam-text);border-radius:var(--br-pill);
   font-size:.6rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;padding:var(--gap-hair) var(--gap-sm)}
 
 /* ============================== fold guide ================================
@@ -432,9 +433,14 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    added to it — invisibly, because every test runs at w430dp, the one width where it fits.  It is
    the same blindness `drawerBodyMaxHeight` records on the other axis. */
 .legend{display:flex;flex-wrap:wrap;gap:var(--gap-xs) var(--gap-md);font-size:.62rem;font-weight:600;color:var(--ink-soft)}
-.legend i{display:inline-flex;align-items:center;gap:var(--gap-xs);font-style:normal}
-.legend i::before{content:"";width:13px;height:0;border-top:2.4px dashed var(--ink-faint)}
-.legend i.now::before{border-top:3px solid var(--leaf);border-style:solid}
+/* ✱ DARK-PAPER RULING (2026-08-22).  The words remain room text, but the swatches name marks on
+   the physical sheet and therefore use the lit sheet palette in both themes.  The same local scope
+   is applied to `.folddiag` below; `.foldstage` deliberately remains themed room/card chrome. */
+.legend i{display:inline-flex;align-items:center;gap:var(--gap-xs);font-style:normal;
+  --paper:#FFF6E8;--ink:#27270F;--ink-soft:#6A452F;--ink-faint:#8E9546;
+  --leaf:#8E9546;--leaf-text:#555A1B;--leaf-tint:#BBCA6F;--jam:#A9303D}
+.legend i::before{content:"";width:13px;height:0;border-top:2.4px dashed var(--ink-soft)}
+.legend i.now::before{border-top:3px solid var(--leaf-text);border-style:solid}
 .legend i.cut::before{border-top:2.4px dashed var(--jam)}
 /* ✱ FOURTH MARK, added 2026-08-11 (ADR-101 P4 first-time-user review).  Three marks made
    the legend a lie: every arrow was drawn in --jam, the same red as the cut, so red meant
@@ -457,18 +463,20 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .foldstage{display:grid;place-items:center;padding:var(--gap-xs) 0 0;
   background:var(--butter-tint);border:1.5px solid var(--ink);border-radius:var(--br-md);
   box-shadow:var(--hard) var(--hard) 0 var(--ink-line)}
-.folddiag{width:100%;max-width:290px;display:block}
+.folddiag{width:100%;max-width:290px;display:block;
+  --paper:#FFF6E8;--paper-edge:#EFDFC6;--ink:#27270F;--ink-soft:#6A452F;--ink-faint:#8E9546;
+  --leaf:#8E9546;--leaf-text:#555A1B;--leaf-tint:#BBCA6F;--jam:#A9303D}
 /* ✱ was stroke:var(--ink-line) — the HARD-SHADOW token, #120E0A in dark, which put the
    fold sheet's own outline at 1.38:1 against its fill.  --ink is byte-identical in light
-   (#33261C), so this is a no-op there and 11.70:1 in dark.  A drawn line follows ink;
+   (#27270F), so this is a no-op there and high-contrast in dark.  A drawn line follows ink;
    only a shadow follows ink-line. */
 .sheetline{fill:var(--paper);stroke:var(--ink);stroke-width:2.4;stroke-linejoin:round}
 /* ✱ was stroke-dasharray:4 4 — a dashed rectangle on a diagram whose dashes already mean
    "crease" reads as four more creases, which is the opposite of what the shape says.
    Solid-and-faint says "this is where that paper starts" without a fifth legend mark. */
 .ghost{fill:var(--paper);fill-opacity:.5;stroke:var(--ink-faint);stroke-width:1.6}
-.crease{stroke:var(--ink-faint);stroke-width:1.5;stroke-dasharray:5 4;fill:none}
-.now{stroke:var(--leaf);stroke-width:3.4;fill:none;stroke-linecap:round}
+.crease{stroke:var(--ink-soft);stroke-width:1.5;stroke-dasharray:5 4;fill:none}
+.now{stroke:var(--leaf-text);stroke-width:3.4;fill:none;stroke-linecap:round}
 .cutmark{stroke:var(--jam);stroke-width:3;stroke-dasharray:6 4;stroke-linecap:round;fill:none}
 /* ✱ Where the cut STOPS.  Solid, because it is not something you cut — it is the end of the
    thing you do cut, and the only mark on the diagram that says "one panel deep" out loud. */
@@ -511,7 +519,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
    284px, ~35px each — for about 14px of height in a drawer that already scrolls. */
 .foldnav{display:flex;align-items:center;justify-content:space-between;margin-top:var(--gap-md);max-width:380px}
 .fnav{width:44px;height:44px;border-radius:var(--br-pill);border:1.5px solid var(--ink);
-  background:var(--paper);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
+  background:var(--surface);color:var(--ink-soft);cursor:pointer;display:grid;place-items:center;
   box-shadow:2px 2px 0 var(--ink-line)}
 .fnav:disabled{opacity:.3;cursor:default;box-shadow:none}
 .fnav:active:not(:disabled){transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-line)}
@@ -520,7 +528,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 /* ✱ was two separate .stepdots blocks, the second re-adding `gap` against the first's
    `space-evenly` — a spec that needs cascade arithmetic to read is not a spec. Merged. */
 .stepdots{display:flex;justify-content:space-evenly;align-items:center;gap:var(--gap-xs);max-width:380px}
-.stepdots button{width:10px;height:10px;padding:0;border-radius:var(--br-pill);background:var(--paper);
+.stepdots button{width:10px;height:10px;padding:0;border-radius:var(--br-pill);background:var(--surface);
   border:1.5px solid var(--ink);cursor:pointer}
 /* ✱ size and ring weight, not hue alone.  In light, berry against ink-faint is 1.28:1 and against
    paper 2.37:1 — a three-state indicator told apart by colour only, which is precisely what a
@@ -534,7 +542,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .stepdots button.done{background:var(--ink-faint)}
 
 .flash{position:absolute;left:50%;bottom:104px;transform:translateX(-50%) rotate(-1deg);z-index:80;
-  background:var(--ink);color:var(--paper);font-size:.78rem;font-weight:500;padding:var(--gap-sm) var(--gap-lg);
+  background:var(--surface-soft);color:var(--ink);font-size:.78rem;font-weight:500;padding:var(--gap-sm) var(--gap-lg);
   border-radius:var(--br-pill);opacity:0;transition:opacity .2s;pointer-events:none;
   /* ✱ ink-line, not ink: this toast's own ground IS --ink, so an ink border is invisible.
      Same pattern and same resolution as the Bench's .snack — the two must not diverge. */
@@ -542,7 +550,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .flash.on{opacity:1}
 
 .controls{display:flex;flex-wrap:wrap;gap:var(--gap-sm);justify-content:center;max-width:660px}
-.ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--paper);color:var(--ink);
+.ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--surface);color:var(--ink);
   border:1.5px solid var(--ink);border-radius:var(--br-pill);padding:var(--gap-sm) var(--gap-md);cursor:pointer;
   box-shadow:2px 2px 0 var(--ink-line)}
 .ctl:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink-line)}
@@ -550,13 +558,9 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 .grp{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
   font-weight:700;width:100%;text-align:center;margin-top:var(--gap-xs)}
 
-/* Reduced motion: the page still CHANGES — it just cross-fades instead of
-   swinging, and the arrow stops pulsing.  Removing the transition entirely
-   would lose the "something turned" signal, which is the accessibility bug,
-   not the fix. */
+/* Reduced motion still governs the instructional fold arrow and chrome. Page
+   changes are immediate for everyone, so they need no separate downgrade. */
 @media (prefers-reduced-motion:reduce){
-  .book.turn-fwd .leaf,.book.turn-back .leaf{transform:none;opacity:0}
-  .leaf{transition:opacity .12s linear}
   .arrow.mv{animation:none;opacity:1}
   .drawer,.scrim,.btn{transition-duration:.01ms}
 }
@@ -566,7 +570,7 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 Proof — “how do I print it correctly?” · <b>V2.1 handmade direction</b></p>
 <p class="cap">Same screen as the frozen <b>v2-proof.html</b>. The pages sit as the booklet they actually are —
 cover alone, then 2|3, 4|5, 6|7, back alone — but <b>one leaf at a time</b>, with the spine on the correct side
-and the rest of the book visible as a stack edge. Turning swings briefly on that spine. The fold guide is eight
+and the rest of the book visible as a stack edge. Page changes are immediate. The fold guide is eight
 single actions drawn on your own printed sheet.</p>
 
 <div class="phone">
@@ -590,7 +594,7 @@ single actions drawn on your own printed sheet.</p>
     <span class="tape"></span>
     <button class="ready" aria-label="Print details" onclick="openDrawer('details')">
       <span class="tick"><svg viewBox="0 0 24 24"><path d="M4 12l5 5 11-12"/></svg></span>
-      <span class="rl"><b id="readyHead">Ready when you are</b><span id="readySub">8 pages · one sheet, one cut · A4 · stays on your phone</span></span>
+      <span class="rl"><b id="readyHead">Ready when you are</b><span id="readySub">8 pages · one sheet, one cut · A4</span></span>
       <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
     </button>
 
@@ -625,6 +629,7 @@ single actions drawn on your own printed sheet.</p>
       <p class="wu">In Downloads — “zine.pdf”. Print it at 100%, landscape, one side — then fold it up.</p>
       <p class="wf">Still in Downloads as “zine.pdf”, if you want to print another.</p>
       <div class="row">
+        <button class="openpdf" onclick="flash('Opens the saved PDF')">Open PDF</button>
         <button class="foldit wu" onclick="openDrawer('fold')">Fold it up</button>
         <button class="foldagain wf" onclick="openDrawer('fold')">How to fold</button>
         <!-- "Back to shelf" is NOT built: its own flash text admits the shelf does not exist ("the
@@ -792,11 +797,7 @@ function render(){
   document.getElementById('tapNext').disabled = (spread === SPREADS.length-1);
 }
 
-/* the turn: swing out on the spine, swap, swing back in */
-let turning = false;
 function turn(dir){
-  if (turning) return;
-  // advance the model first — if there is nowhere to go, don't animate
   const before = [spread, side].join();
   if (dir > 0){
     const [l,r] = SPREADS[spread];
@@ -808,15 +809,7 @@ function turn(dir){
     else if (spread > 0){ spread--; side = SPREADS[spread][1] === null ? 0 : 1; }
   }
   if ([spread, side].join() === before) return;
-
-  turning = true;
-  book.classList.add(dir > 0 ? 'turn-fwd' : 'turn-back');
-  setTimeout(() => {
-    render();
-    book.classList.remove('turn-fwd','turn-back');
-    book.classList.add('settle');
-    setTimeout(() => { book.classList.remove('settle'); turning = false; }, 300);
-  }, 180);
+  render();
 }
 render();
 
@@ -1016,7 +1009,7 @@ function setPaper(p){
   paperName = p==='A4' ? 'A4' : 'US Letter';
   document.getElementById('pA4').setAttribute('aria-pressed', p==='A4');
   document.getElementById('pLetter').setAttribute('aria-pressed', p!=='A4');
-  document.getElementById('readySub').textContent = `8 pages · one sheet, one cut · ${paperName} · stays on your phone`;
+  document.getElementById('readySub').textContent = `8 pages · one sheet, one cut · ${paperName}`;
   document.getElementById('saveSub').textContent = `8 pages · ${paperName}`;
   document.getElementById('recipePaper').textContent = paperName;
   // Dropping `.done` on a paper change is correct and must be SAID — see the note's comment in the band.
@@ -1091,4 +1084,28 @@ addEventListener('keydown', e => {
      the engine convention (`decorativeImpositionRows()`); the numbers here are
      documentation of that derivation, and a future convention change must be
      made in the engine, where both surfaces will follow it.
+
+     P2 (stakeholder feedback, 2026-08-26) — DESIGN FROZEN.
+
+     A successful save keeps the maker in Proof for the physical fold hand-off;
+     it does not automatically launch another app. Automatic ACTION_VIEW would
+     make the completion disappear at the moment it becomes useful, and would
+     turn "Save" into surprising navigation. The persistent `.done` block now
+     offers an explicit `Open PDF` secondary action beside the leaf-primary
+     `Fold it up`. It remains available after the maker marks the fold complete.
+
+     `Open PDF` opens only the exact durable Downloads item created by this save,
+     through Android's scoped content URI. It has a 48dp-or-larger target, reads
+     as a button, survives configuration change with the completion, and a phone
+     with no PDF viewer gets the existing friendly "No app ... can open" message.
+     The action never re-renders, rewrites, or searches Downloads by filename.
+
+     P3 (stakeholder feedback, 2026-08-26) — DESIGN FROZEN.
+
+     Page changes in Read are immediate. The leaf swing and reduced-motion
+     cross-fade are removed; neither communicates state that the page ticket,
+     physical gutter and stack edge do not already state. Tap edges, horizontal
+     drag, reading order, current-page announcement, booklet geometry and all
+     rendering remain unchanged. This does not remove fold instruction motion
+     or chrome transitions: the feedback names the page animation specifically.
 =========================================================================== -->

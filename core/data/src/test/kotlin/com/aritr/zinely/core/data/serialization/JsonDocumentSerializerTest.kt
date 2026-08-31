@@ -1,6 +1,7 @@
 package com.aritr.zinely.core.data.serialization
 
 import com.aritr.zinely.core.model.ColorRgba
+import com.aritr.zinely.core.model.DecorElement
 import com.aritr.zinely.core.model.CURRENT_SCHEMA_VERSION
 import com.aritr.zinely.core.model.PageRole
 import com.aritr.zinely.core.model.PaperSize
@@ -55,6 +56,67 @@ class JsonDocumentSerializerTest {
     }
 
     @Test
+    fun `photo and art flip combinations round-trip in schema v3`() {
+        val elements = buildList {
+            for (horizontal in listOf(false, true)) for (vertical in listOf(false, true)) {
+                add(
+                    ImageElement(
+                        id = "image-$horizontal-$vertical",
+                        transform = Transform(1.0, 2.0, 30.0, 40.0),
+                        assetId = "a".repeat(64),
+                        flippedHorizontally = horizontal,
+                        flippedVertically = vertical,
+                    ),
+                )
+                add(
+                    DecorElement(
+                        id = "decor-$horizontal-$vertical",
+                        transform = Transform(1.0, 2.0, 30.0, 40.0),
+                        supplyId = "shape.star",
+                        ink = ColorRgba.BLACK,
+                        mirrored = horizontal,
+                        flippedVertically = vertical,
+                    ),
+                )
+            }
+        }
+        val doc = sample().copy(pages = listOf(Page(0, PageRole.INTERIOR, elements = elements)))
+
+        assertEquals(doc, serializer.deserialize(serializer.serialize(doc)))
+    }
+
+    @Test
+    fun `v2 payload migrates with flip defaults false and preserves historical art mirror`() {
+        val v3 = sample().copy(
+            pages = listOf(
+                Page(
+                    0,
+                    PageRole.INTERIOR,
+                    elements = listOf(
+                        DecorElement(
+                            id = "old-art",
+                            transform = Transform(0.0, 0.0, 20.0, 20.0),
+                            supplyId = "shape.star",
+                            ink = ColorRgba.BLACK,
+                            mirrored = true,
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val v2 = serializer.serialize(v3)
+            .replace("\"schemaVersion\":3", "\"schemaVersion\":2")
+            .replace(",\"flippedHorizontally\":false", "")
+            .replace(",\"flippedVertically\":false", "")
+
+        val decoded = serializer.deserialize(v2)
+        val art = decoded.pages.single().elements.single() as DecorElement
+        assertEquals(CURRENT_SCHEMA_VERSION, decoded.schemaVersion)
+        assertTrue(art.mirrored)
+        assertEquals(false, art.flippedVertically)
+    }
+
+    @Test
     fun `a fully-styled text element round-trips through JSON (FR-3, ADR-055)`() {
         val doc = ZineDocument(
             format = ZineFormat.SINGLE_SHEET_8,
@@ -86,6 +148,36 @@ class JsonDocumentSerializerTest {
     }
 
     @Test
+    fun `an existing text payload without align keeps the historical start fallback`() {
+        val doc = ZineDocument(
+            format = ZineFormat.SINGLE_SHEET_8,
+            paperSize = PaperSize.LETTER,
+            pages = listOf(
+                Page(
+                    index = 0,
+                    role = PageRole.INTERIOR,
+                    elements = listOf(
+                        TextElement(
+                            id = "legacy-text",
+                            transform = Transform(1.0, 2.0, 30.0, 40.0),
+                            text = "already here",
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val encoded = serializer.serialize(doc)
+        assertTrue(encoded.contains("\"align\":\"start\""), encoded)
+
+        val legacyWithoutAlign = encoded.replace("\"align\":\"start\",", "")
+        assertTrue(!legacyWithoutAlign.contains("\"align\""), legacyWithoutAlign)
+        val decoded = serializer.deserialize(legacyWithoutAlign)
+        val text = decoded.pages.single().elements.single() as TextElement
+
+        assertEquals(TextAlign.START, text.style.align)
+    }
+
+    @Test
     fun `serialize always writes the current schema version`() {
         val stale = sample(schemaVersion = 0)
         val decoded = serializer.deserialize(serializer.serialize(stale))
@@ -113,8 +205,9 @@ class JsonDocumentSerializerTest {
         }
         val migrating = JsonDocumentSerializer(DocumentMigrations(listOf(migrator), targetVersion = 2))
         // Hand-rewrite the stamped version rather than asking `serialize` for a v1 payload: since the
-        // v1→v2 bump (ADR-105) `serialize` always normalises to CURRENT_SCHEMA_VERSION, so a v1 request
-        // would come back as v2 and this migrator would never run — the assertion would still pass and
+        // Versioned bumps (ADR-105/113) mean `serialize` always normalises to CURRENT_SCHEMA_VERSION,
+        // so a v1 request would come back current and this migrator would never run — the assertion would
+        // still pass and
         // prove nothing.
         val v1Json = serializer.serialize(sample())
             .replace("\"schemaVersion\":$CURRENT_SCHEMA_VERSION", "\"schemaVersion\":1")

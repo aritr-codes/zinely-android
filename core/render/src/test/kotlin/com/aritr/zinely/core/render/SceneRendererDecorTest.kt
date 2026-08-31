@@ -36,6 +36,7 @@ class SceneRendererDecorTest {
         supplyId: String = "shape.rect",
         transform: Transform = Transform(10.0, 20.0, 40.0, 25.0),
         mirrored: Boolean = false,
+        flippedVertically: Boolean = false,
     ) = DecorElement(
         id = "d1",
         transform = transform,
@@ -43,6 +44,7 @@ class SceneRendererDecorTest {
         supplyId = supplyId,
         ink = ink,
         mirrored = mirrored,
+        flippedVertically = flippedVertically,
     )
 
     private fun tape(element: DecorElement) =
@@ -109,10 +111,22 @@ class SceneRendererDecorTest {
     }
 
     @Test
-    fun `given an unauthored supplyId, when rendered, then nothing is emitted and nothing throws`() {
-        // Twelve of the sixteen are still owed to a designer, and §2.2 puts this check here rather than
-        // in the document validator precisely so an unknown id cannot make a zine refuse to open.
-        assertTrue(tape(decor(supplyId = "tape.torn")).isEmpty())
+    fun `vertical and combined art flips reflect the outline in unit space without moving its box`() {
+        val vertical = (tape(decor(flippedVertically = true))[0] as DrawShape).localToPage
+        assertPoint(10.0, 45.0, vertical.map(PtPoint(0.0, 0.0)))
+        assertPoint(50.0, 20.0, vertical.map(PtPoint(1.0, 1.0)))
+
+        val both = (tape(decor(mirrored = true, flippedVertically = true))[0] as DrawShape).localToPage
+        assertPoint(50.0, 45.0, both.map(PtPoint(0.0, 0.0)))
+        assertPoint(10.0, 20.0, both.map(PtPoint(1.0, 1.0)))
+        assertPoint(30.0, 32.5, both.map(PtPoint(0.5, 0.5)))
+    }
+
+    @Test
+    fun `given an unknown supplyId, when rendered, then nothing is emitted and nothing throws`() {
+        // §2.2 puts this check here rather than in the document validator precisely so an unknown id
+        // from a newer build cannot make a zine refuse to open.
+        assertTrue(tape(decor(supplyId = "future.ribbon")).isEmpty())
         assertTrue(tape(decor(supplyId = "shape.rectangle")).isEmpty())
     }
 }

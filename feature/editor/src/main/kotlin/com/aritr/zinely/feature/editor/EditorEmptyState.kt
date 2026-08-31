@@ -157,35 +157,6 @@ public fun EditorEmptyState(
             modifier = Modifier.widthIn(max = measureCharacters(BodyMaxCharacters, bodyStyle)),
         )
 
-        // `.empty .pv{font-size:.75rem;color:var(--leaf-text);font-weight:600;margin-top:var(--gap-xs);
-        //   background:var(--leaf-tint);border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md)}`
-        //
-        // The privacy line is the one product promise this surface makes, and V2.1 gives it an object to
-        // sit in rather than a colour to be noticed by — the same move `.saved` makes on the status strip.
-        // `leafText` on `leafTint` is the pairing the contrast gate measured. It is still a `<p>`, so
-        // `.empty p`'s `line-height` and `max-width:29ch` still apply; `ch` is relative to the element's
-        // *own* size, so 29 advances at 12sp bind it much narrower than the sentence above.
-        val privacyStyle = TextStyle(
-            fontFamily = ZinelyV21Fonts.Work,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = PrivacySize,
-            lineHeight = BodyLineHeight,
-            color = colors.leafText,
-        )
-        Text(
-            text = Copy.EmptyState.OFFLINE_NOTE,
-            style = privacyStyle,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(top = PrivacyMarginTop)
-                .widthIn(max = measureCharacters(BodyMaxCharacters, privacyStyle))
-                .background(colors.leafTint, RoundedCornerShape(ZinelyV21Dimens.radiusPill))
-                .padding(
-                    horizontal = ZinelyV21Dimens.gapMd,
-                    vertical = ZinelyV21Dimens.gapXs,
-                ),
-        )
-
         // Orientation cue: a subtle downward chevron beneath the invitation, pointing the eye to where the
         // add actions live. It is a flourish that also does a job — purely static (no motion, so the
         // reduced-motion path is a no-op) and `clearAndSetSemantics` strips it from the a11y tree, so it
@@ -307,8 +278,6 @@ private val BodyLineHeight = 1.55.em
 private const val BodyMaxCharacters = 29
 
 /** `.empty .pv{font-size:.75rem;font-weight:600;margin-top:var(--gap-xs)}` = 12px. */
-private val PrivacySize = 12.sp
-private val PrivacyMarginTop = ZinelyV21Dimens.gapXs
 
 /**
  * `.sheet-ill{border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink-line)}` at the V2 cluster's own

@@ -10,10 +10,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
@@ -36,6 +42,7 @@ import com.aritr.zinely.feature.editor.HomeShelfEvent
 import com.aritr.zinely.feature.editor.homeDeletedMessage
 import com.aritr.zinely.feature.editor.homePaperChoiceTestTag
 import com.aritr.zinely.ui.golden.rasterizeToBitmap
+import com.aritr.zinely.ui.components.ZSheetScrimTestTag
 import com.aritr.zinely.ui.theme.ZinelyTheme
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -80,11 +87,15 @@ class ZineLibraryScreenTest {
     private val undone = mutableListOf<String>()
     private val committed = mutableListOf<String>()
     private var retries = 0
+    private var backups = 0
+    private var restores = 0
+    private val preferredPaperChanges = mutableListOf<PaperSize>()
 
     private val events = Channel<HomeShelfEvent>(Channel.BUFFERED)
 
     private var deskColor: Color = Color.Unspecified
     private var leafColor: Color = Color.Unspecified
+    private lateinit var inputMode: InputModeManager
 
     // ---------------------------------------------------------------------------------------------
     // Row 1 — the ground
@@ -138,6 +149,109 @@ class ZineLibraryScreenTest {
             composeRule.onNodeWithTag(ZineDockTestTag).assertIsDisplayed()
             composeRule.onNodeWithTag(ZineStartTestTag).assertIsDisplayed()
         }
+    }
+
+    @Test
+    fun `dock secondary actions appear only after the shelf has loaded`() {
+        render(LibraryShelfState.Loading)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).assertDoesNotExist()
+
+        render(LibraryShelfState.Error)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).assertDoesNotExist()
+
+        render(LibraryShelfState.Content(zines(1)))
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS))
+            .assertIsDisplayed()
+            .assertContentDescriptionEquals(Copy.LibraryBackup.BACKUPS)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION))
+            .assertIsDisplayed()
+            .assertContentDescriptionEquals(Copy.Colophon.ACTION)
+        assertTrue(
+            "backup action should keep the 48dp touch target floor",
+            bounds(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).height >= 48f,
+        )
+        assertTrue(
+            "colophon action should keep the 48dp touch target floor",
+            bounds(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)).height >= 48f,
+        )
+
+        render(LibraryShelfState.Empty)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK))
+            .assertIsDisplayed()
+            .assertContentDescriptionEquals(Copy.LibraryBackup.BRING_BACK)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.Colophon.ACTION))
+            .assertIsDisplayed()
+            .assertContentDescriptionEquals(Copy.Colophon.ACTION)
+    }
+
+    @Test
+    fun `a shelf with zines offers backup and additive restore`() {
+        content(zines(2))
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).performClick()
+
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertIsDisplayed().performClick()
+        assertEquals("backup was not handed to the host", 1, backups)
+    }
+
+    @Test
+    fun `an empty shelf offers restore without an impossible empty backup`() {
+        render(LibraryShelfState.Empty)
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BRING_BACK)).performClick()
+
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(KeepSafeRestoreActionTestTag).assertIsDisplayed().performClick()
+        assertEquals("restore was not handed to the host", 1, restores)
+    }
+
+    @Test
+    fun `the chooser focuses its first action then returns focus after its full exit`() {
+        content(zines(2))
+        composeRule.runOnUiThread {
+            assertTrue(inputMode.requestInputMode(InputMode.Keyboard))
+        }
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(KeepSafeSaveActionTestTag).assertIsFocused()
+
+        composeRule.onNodeWithTag(ZSheetScrimTestTag).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(KeepSafeSheetTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(zineDockSecondaryActionTestTag(Copy.LibraryBackup.BACKUPS)).assertIsFocused()
+    }
+
+    @Test
+    fun `the colophon action opens and closes without changing the shelf`() {
+        content(zines(2))
+        val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
+
+        composeRule.onNodeWithTag(colophonActionTag).performClick()
+        composeRule.onNodeWithTag(ColophonScreenTestTag).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
+        composeRule.onNodeWithTag(ColophonScreenTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(colophonActionTag).assertIsDisplayed()
+    }
+
+    @Test
+    fun `Colophon can set preferred paper and returns to the shelf action`() {
+        content(zines(2))
+        val colophonActionTag = zineDockSecondaryActionTestTag(Copy.Colophon.ACTION)
+
+        composeRule.onNodeWithTag(colophonActionTag).performClick()
+        composeRule.onNodeWithTag(ColophonPaperGroupTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(colophonPaperTestTag(PaperSize.LETTER)).performClick()
+        assertEquals("the preferred-paper callback was not wired from Colophon", PaperSize.LETTER, preferredPaperChanges.lastOrNull())
+
+        composeRule.onNodeWithTag(ColophonBackTestTag).performClick()
+        composeRule.onNodeWithTag(colophonActionTag).assertIsDisplayed()
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -203,6 +317,24 @@ class ZineLibraryScreenTest {
         // hard-wired to the first zine, which is the defect this row exists to gate.
         composeRule.onNodeWithTag(ZineActionSubtitleTestTag).assertTextEquals(subtitleOf(2))
         composeRule.onNodeWithTag(ZineActionTitleTestTag).assertTextEquals(titleOf(2))
+    }
+
+    @Test
+    fun `tapping an unavailable zine opens its sheet instead of navigating`() {
+        content(
+            listOf(
+                unavailableZine(0, Copy.Shelf.UNAVAILABLE_DAMAGED),
+                zines(1).single(),
+            ),
+        )
+
+        composeRule.onNodeWithTag(zineShelfCoverTestTag(0)).performClick()
+
+        assertTrue("an unavailable zine must not navigate straight to the bench", opened.isEmpty())
+        composeRule.onNodeWithTag(ZineActionSheetTestTag).assertIsDisplayed()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Open)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.ShareExport)).assertIsNotEnabled()
+        composeRule.onNodeWithTag(zineActionTestTag(ZineAction.Duplicate)).assertIsNotEnabled()
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -308,13 +440,13 @@ class ZineLibraryScreenTest {
 
     @Test
     fun `no pixel of the retry control is leaf`() {
-        // `.retry{background:var(--paper);border:1.5px solid var(--ink)}` — the paper + hairline grammar,
+        // `.retry{background:var(--surface);border:1.5px solid var(--ink)}` — the surface + hairline grammar,
         // because `.start` is the screen's one primary and **stands in this state too**; two leaf buttons
         // would make the recovery compete with the invitation. "It looks quiet" is not checkable, and the
         // mutation — style `.retry` as `.start` — is a one-line change that a screenshot ratifies, so the
         // claim is made against the pixels.
         //
-        // Both themes: `--leaf` is a different colour in each (#4E7A3C / #8FAE6B), so a light-only probe
+        // Both themes: `--leaf` is a different colour in each (#8E9546 / #BBCA6F), so a light-only probe
         // would miss a dark-mode-only regression entirely — and dark is where the two inks are closest.
         for (dark in listOf(false, true)) {
             render(LibraryShelfState.Error, dark = dark)
@@ -450,11 +582,13 @@ class ZineLibraryScreenTest {
     @Composable
     private fun Host() {
         ZinelyTheme(darkTheme = darkTheme) {
+            inputMode = LocalInputModeManager.current
             deskColor = ZinelyTheme.v21Colors.desk
             leafColor = ZinelyTheme.v21Colors.leaf
             ZineLibraryScreen(
                 state = shelfState,
                 events = events.receiveAsFlow(),
+                backupRestoreState = null,
                 onOpenZine = { opened += it },
                 onShareExport = { shared += it },
                 onStartZine = { started += it },
@@ -464,6 +598,12 @@ class ZineLibraryScreenTest {
                 onDeleteUndo = { undone += it },
                 onDeleteCommit = { committed += it },
                 onRetry = { retries++ },
+                onStartBackup = { backups++ },
+                onStartRestore = { restores++ },
+                onDismissBackupRestore = {},
+                onCancelBackupRestore = {},
+                onRetryBackupRestore = {},
+                onPreferredPaperChange = { preferredPaperChanges += it },
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -506,11 +646,10 @@ class ZineLibraryScreenTest {
     }
 
     private companion object {
-        const val SHELF_HEADING = "Your shelf"
+        const val SHELF_HEADING = "My Shelf"
         const val NEW_TITLE = "Coffee log"
         const val PLACEHOLDERS = 4
         const val HALF_PIXEL = 0.5f
-
         /** Inside `.shelf{padding:30px 22px}` on both axes: bare ground, above and left of every cell. */
         const val GROUND_PROBE = 8
 
@@ -529,5 +668,8 @@ class ZineLibraryScreenTest {
                 ),
             )
         }
+
+        fun unavailableZine(index: Int, reason: String): LibraryZine =
+            zines(index + 1)[index].copy(unavailableReason = reason)
     }
 }

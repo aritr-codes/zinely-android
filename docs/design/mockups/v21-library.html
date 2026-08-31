@@ -19,6 +19,17 @@
      │                                                                             │
      │  The four DIRECTION toggles at the bottom exist so the moves can be judged  │
      │  one at a time instead of as a single yes/no.                               │
+     │                                                                             │
+     │  D-079 AMENDMENT · 2026-08-24: the empty-Shelf privacy slogan is removed.   │
+     │  Backups + About are equal quiet dock actions; About Zinely is specified    │
+     │  in v21-colophon.html and owns the one product-level privacy sentence.      │
+     │                                                                             │
+     │  D-111 AMENDMENT · 2026-08-28: an unavailable zine remains on the shelf.   │
+     │  Its action sheet preserves all five rows: Open, Share & export and         │
+     │  Duplicate are disabled; Rename and Delete remain live. No shelf badge.     │
+     │                                                                             │
+     │  A24 ACCESSIBILITY AMENDMENT · 2026-08-28: Delete is separated from the    │
+     │  reversible actions by an 8px desk band as well as consequence colour.     │
      └─────────────────────────────────────────────────────────────────────────────┘ -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,32 +54,27 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   /* ground + ink -------------------------------------------------------- */
   --paper:#FFF6E8;          /* the sheet you make on            (V2 #F7F2E7 — warmer) */
   --paper-edge:#EFDFC6;     /* its cut edge                                            */
-  --desk:#FBE9CE;           /* ✱ the desk is now a WARM CREAM BLOCK, not near-white    */
-  --desk-edge:#E9D2AE;
-  --ink:#33261C;            /* ✱ softer, browner black (ref: Maeve #2D2926)            */
-  --ink-soft:#6E5947;
-  --ink-faint:#A08B74;
+  --desk:#E9E29B;           /* exact Wild Primrose room from 37596.jpg                  */
+  --desk-edge:#BBCA6F;
+  --bench:#E9E29B;
+  --surface:#F2CFBB; --surface-soft:#F1B4AF;
+  --ink:#27270F;
+  --ink-soft:#6A452F;
+  --ink-faint:#8E9546;
 
   /* the four hues -------------------------------------------------------- */
-  --leaf:#4E7A3C;           /* THE action colour — "your next move"                    */
-  --leaf-text:#3E6330;      /* leaf as text/icon on paper                              */
-  --leaf-tint:#DCE8CE;
-  --on-leaf:#FFF6E8;
-  --butter:#F6B22C;         /* ✱ highlight / tape / stamp — punctuation, never action   */
-  --butter-tint:#FDEBC4;
-  --on-butter:#33261C;      /* ADR-100 §4 — the label on a butter ground. Dark in BOTH themes. */
-  --berry:#E4879F;          /* ✱ second punctuation — a stamp, a current-page dot       */
-  --berry-tint:#F8DCE2;
-  --jam:#CF4A28;            /* consequence: delete, real error, and nothing else        */
-  --jam-text:#A63B20;       /* ✱ jam AS TEXT — AA-measured 2026-08-09, see V21-SPEC §4.1 */
-  --on-jam:#FFF6E8;         /* ✱ label on a jam-text ground (mirrors --on-leaf)         */
+  --leaf:#8E9546;           /* exact Matcha — THE action colour                         */
+  --leaf-text:#555A1B; --leaf-tint:#BBCA6F; --on-leaf:#27270F;
+  --butter:#E9E29B; --butter-tint:#F2CFBB; --on-butter:#27270F;
+  --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#A9303D; --jam-text:#A9303D; --on-jam:#FFF9DB;
 
   /* hairlines, shadow, stage --------------------------------------------- */
-  --hair:rgba(51,38,28,.16);
-  --ink-line:#33261C;       /* ✱ the HARD offset shadow is drawn in ink, not in grey    */
+  --hair:rgba(39,39,15,.16);
+  --ink-line:#27270F;
   --stage:#F2DEBC;
-  --soft-shadow:rgba(74,54,34,.30);
-  --contact:rgba(74,54,34,.20);
+  --soft-shadow:rgba(39,39,15,.30);
+  --contact:rgba(39,39,15,.20);
 
   /* geometry — a real scale this time, taken from the references ---------- */
   --br-xs:4px; --br-sm:8px; --br-md:14px; --br-lg:22px; --br-xl:36px; --br-pill:999px;
@@ -89,24 +95,24 @@ src:url(data:font/woff2;base64,d09GMgABAAAAAJWAAA0AAAABqSgAAJUkAAEAAAAAAAAAAAAAA
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.42'/%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --on-butter:#1E1A15;
-  --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --on-butter:#242312;
+  --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312;
   --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
 }}
 :root[data-theme="dark"]{
-  --paper:#332B22; --paper-edge:#3E3529; --desk:#241E18; --desk-edge:#2F2820;
-  --ink:#F6EAD6; --ink-soft:#BFAC93; --ink-faint:#8C7B65;
-  --leaf:#8FAE6B; --leaf-text:#AFC98C; --leaf-tint:#333B27; --on-leaf:#1E1A15;
-  --butter:#E8B458; --butter-tint:#3E3320; --on-butter:#1E1A15;
-  --berry:#D3899B; --berry-tint:#3A2A2D;
-  --jam:#E0755A; --jam-text:#E4856D; --on-jam:#1E1A15;
+  --paper:#FFF6E8; --paper-edge:#EFDFC6; --desk:#242312; --desk-edge:#323119; --bench:#242312;
+  --surface:#3D3920; --surface-soft:#46352E; --ink:#FFF9DB; --ink-soft:#DAD7A0; --ink-faint:#8E9546;
+  --leaf:#BBCA6F; --leaf-text:#BBCA6F; --leaf-tint:#8E9546; --on-leaf:#242312;
+  --butter:#E9E29B; --butter-tint:#3D3920; --on-butter:#242312;
+  --berry:#F28892; --berry-tint:#F1B4AF;
+  --jam:#FF9CA4; --jam-text:#FF9CA4; --on-jam:#242312;
   --hair:rgba(246,234,214,.15); --ink-line:#120E0A;
-  --stage:#1C1712; --soft-shadow:rgba(0,0,0,.62); --contact:rgba(0,0,0,.5);
+  --stage:#1C1712; --soft-shadow:rgba(18,14,10,.62); --contact:rgba(18,14,10,.5);
 }
 
 /* ---- direction toggles: each isolates ONE move so it can be judged alone --- */
@@ -220,18 +226,21 @@ body{
 .cover .fill::after{content:"";position:absolute;inset:0;background-image:var(--grain);
   background-size:130px 130px;mix-blend-mode:multiply;opacity:.5}
 .cover .spine{position:absolute;left:6px;top:7px;bottom:7px;width:1px;background:rgba(0,0,0,.18)}
-.ink-leaf  .fill{background:var(--leaf)}
-.ink-berry .fill{background:var(--berry)}
-.ink-butter .fill{background:var(--butter)}
-.ink-jam   .fill{background:var(--jam)}
-/* Amended 2026-08-11 (ADR-100 §2): the two paper stocks are PINNED to their light values in both themes.
+.ink-leaf  .fill{background:#4E7A3C}
+.ink-berry .fill{background:#E4879F}
+.ink-butter .fill{background:#F6B22C}
+.ink-jam   .fill{background:#CF4A28}
+/* Amended 2026-08-24: all six maker cover stocks are PINNED to their authored values in both themes.
+   A theme changes the studio around a zine; it never repaints an existing zine's cover.
+   The earlier paper-stock ruling remains below for its contrast evidence.
+   Amended 2026-08-11 (ADR-100 §2): the two paper stocks are PINNED to their light values in both themes.
    Painted from the themed chrome tokens they measured 1.18:1 on the dark desk, and the hard shadow went with
    them (--ink-line is 1.17 there) — fill gone and shadow gone is a hole cut in the desk, not an object on it.
    A cover is the maker's object (§5.1); an object does not change what it is printed on after dark. The four
-   ink stocks above keep theming, because they are saturated enough to take the dark cut. */
+   ink stocks above are pinned for the same reason. */
 .paper-s   .fill{background:#FFF6E8}
 .paper-c   .fill{background:#FDEBC4}
-/* the stock's own edge, pinned with it — themed --ink is #F6EAD6 in dark, which is the cream the stock
+/* the stock's own edge, pinned with it — themed --ink is #FFF9DB in dark, which is the cream the stock
    already is, so an outline at 1.01:1 (cream) / 1.11:1 (paper) is no outline.
    COMPOUND, not descendant: .paper-s IS the .cover (`<div class="cover paper-s">`). Written
    `.paper-s .cover` for one draft, which matched nothing and left this ruling unimplemented in the
@@ -256,10 +265,10 @@ body{
 /* ✱ the stamp — metadata as a postmark, not a caption */
 .stamp{
   position:absolute;right:-7px;bottom:-9px;z-index:3;
-  background:var(--paper);border:1.5px solid var(--ink);border-radius:var(--br-pill);
+  background:#FFF6E8;border:1.5px solid #27270F;border-radius:var(--br-pill);
   font-family:var(--sans);font-size:9.5px;font-weight:700;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--ink-soft);padding:var(--gap-hair) var(--gap-sm);
-  transform:rotate(-3deg);box-shadow:2px 2px 0 var(--ink-line);
+  text-transform:uppercase;color:#6A452F;padding:var(--gap-hair) var(--gap-sm);
+  transform:rotate(-3deg);box-shadow:2px 2px 0 #27270F;
 }
 /* Amended 2026-08-11 (ADR-100 §3): the corpus holds no title long enough to state this, and the grid needs
    it stated — two equal-height columns mean an unbounded title in one cell pushes its NEIGHBOUR's cover
@@ -289,41 +298,38 @@ body{
 .tf .col{display:flex;flex-direction:column;align-items:center;gap:var(--gap-sm)}
 .tf .lbl{font-family:var(--sans);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;
   color:var(--ink-soft);font-weight:700}
-.sheet-ill{width:94px;height:68px;border-radius:var(--br-xs);background:var(--paper);
-  border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink-line);
+.sheet-ill{width:94px;height:68px;border-radius:var(--br-xs);background:#FFF6E8;
+  border:1.5px solid #27270F;box-shadow:3px 3px 0 #27270F;
   position:relative;transform:rotate(-2deg)}
-.sheet-ill i{position:absolute;background:var(--hair)}
+.sheet-ill i{position:absolute;background:rgba(39,39,15,.16)}
 .sheet-ill .v{top:7px;bottom:7px;width:1px} .sheet-ill .v1{left:33%} .sheet-ill .v3{left:67%}
-.sheet-ill .v2{left:50%;background:repeating-linear-gradient(var(--ink-faint) 0 3px,transparent 3px 6px);opacity:.55}
+.sheet-ill .v2{left:50%;background:repeating-linear-gradient(#8E9546 0 3px,transparent 3px 6px);opacity:.55}
 .sheet-ill .h{left:7px;right:7px;height:1px;top:50%}
 .book-ill{width:54px;height:70px;border-radius:var(--br-xs) 6px 6px var(--br-xs);
-  background:var(--leaf);border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink-line);
+  background:var(--leaf);border:1.5px solid var(--on-leaf);box-shadow:3px 3px 0 var(--on-leaf);
   position:relative;transform:rotate(2deg)}
 .book-ill::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:1px;background:rgba(255,255,255,.3)}
 .tf .arrow{color:var(--jam);font-size:1.5rem;margin-bottom:var(--gap-lg);font-family:var(--voice);font-weight:700}
 .empty h2{font-family:var(--voice);font-size:1.75rem;font-weight:700;margin:var(--gap-xs) 0 0;line-height:1.12}
 .empty p{margin:0;color:var(--ink-soft);max-width:29ch;line-height:1.55;font-size:.94rem}
-.empty .pv{font-size:.75rem;color:var(--leaf-text);font-weight:600;margin-top:var(--gap-xs);
-  background:var(--leaf-tint);border-radius:var(--br-pill);padding:var(--gap-xs) var(--gap-md)}
-
 /* ============================== error state =============================== */
 .fail{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
   justify-content:center;text-align:center;padding:var(--gap-2xl) var(--gap-2xl) 150px;gap:var(--gap-md)}
-.fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--paper);
+.fail .mk{width:60px;height:60px;border-radius:var(--br-pill);background:var(--surface);
   border:2px solid var(--jam);color:var(--jam);display:grid;place-items:center;
   font-family:var(--voice);font-size:1.8rem;font-weight:700;transform:rotate(-4deg);
   box-shadow:3px 3px 0 var(--jam)}
 .fail h2{font-family:var(--voice);font-size:1.6rem;font-weight:700;margin:var(--gap-sm) 0 0}
 .fail p{margin:0;color:var(--ink-soft);max-width:28ch;font-size:.94rem}
 .retry{margin-top:var(--gap-sm);font-family:var(--sans);font-size:.94rem;font-weight:600;
-  background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);
+  background:var(--surface);color:var(--ink);border:1.5px solid var(--ink);
   border-radius:var(--br-pill);padding:var(--gap-md) var(--gap-xl);cursor:pointer;
   box-shadow:3px 3px 0 var(--ink-line)}
 .retry:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line)}
 
 /* ============================== the dock ================================== */
 .dock{position:absolute;left:0;right:0;bottom:0;z-index:40;padding:var(--gap-lg) var(--gap-lg) var(--gap-xl);
-  display:flex;justify-content:center;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:var(--gap-sm);pointer-events:none;
   background:linear-gradient(to top,var(--desk) 58%,transparent)}
 .start{
   pointer-events:auto;font-family:var(--sans);font-size:1rem;font-weight:700;
@@ -338,13 +344,18 @@ body{
 .start:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink-line),0 0 0 var(--frame) var(--butter)}
 .start:focus-visible{outline:2px solid var(--ink);outline-offset:5px}
 .start .plus{font-family:var(--voice);font-size:1.15rem;font-weight:700;line-height:1}
+.quiet-actions{display:flex;align-items:center;justify-content:center;gap:var(--gap-lg);pointer-events:auto}
+.quiet-action{min-height:48px;padding:0 var(--gap-sm);border:0;background:transparent;color:var(--ink-soft);
+  font:600 .82rem/1 var(--sans);text-decoration:underline;text-decoration-color:var(--hair);
+  text-underline-offset:4px;cursor:pointer}
+.quiet-action:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:var(--br-sm)}
 
 /* ============================== action sheet ============================== */
-.scrim{position:absolute;inset:0;z-index:44;background:rgba(38,26,16,.42);opacity:0;
+.scrim{position:absolute;inset:0;z-index:44;background:rgba(39,39,15,.44);opacity:0;
   pointer-events:none;transition:opacity .22s cubic-bezier(.2,0,0,1)}
 .scrim.show{opacity:1;pointer-events:auto}
 .sheet{
-  position:absolute;left:0;right:0;bottom:0;z-index:46;background:var(--paper);
+  position:absolute;left:0;right:0;bottom:0;z-index:46;background:var(--surface);
   border-radius:var(--br-xl) var(--br-xl) 0 0;border-top:2px solid var(--ink);
   transform:translateY(103%);transition:transform .26s cubic-bezier(.05,.7,.1,1);
   padding:0 0 var(--gap-xl);box-shadow:0 -16px 40px -18px var(--soft-shadow);
@@ -359,13 +370,17 @@ body{
   border:none;padding:var(--gap-lg) var(--gap-xl);font-family:var(--sans);font-size:1rem;font-weight:500;
   color:var(--ink);cursor:pointer}
 .act .ic{width:30px;height:30px;flex:none;display:grid;place-items:center;border-radius:var(--br-sm);
-  background:var(--butter-tint);color:var(--ink-soft);font-size:.95rem}
-.act:active{background:var(--leaf-tint)}
-.act.danger{color:var(--jam-text)} .act.danger .ic{background:var(--berry-tint);color:var(--jam-text)}
+  background:var(--butter);color:var(--on-leaf);font-size:.95rem}
+.act:active{background:var(--leaf-tint);color:var(--on-leaf)}
+.act.danger{border-top:8px solid var(--desk);color:var(--jam-text)} .act.danger .ic{background:var(--berry-tint);color:var(--on-leaf)}
+.act:disabled{opacity:.45;cursor:default}
+.act:disabled:active{background:none;color:var(--ink)}
+.act:disabled .ic{background:var(--butter);color:var(--on-leaf)}
+.act.danger:active{color:var(--on-leaf)}
 
 /* ============================== dev controls ============================== */
 .controls{display:flex;flex-wrap:wrap;gap:var(--gap-sm);justify-content:center;max-width:640px}
-.ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--paper);
+.ctl{font-family:var(--sans);font-size:.78rem;font-weight:600;background:var(--surface);
   color:var(--ink);border:1.5px solid var(--ink);border-radius:var(--br-pill);
   padding:var(--gap-sm) var(--gap-md);cursor:pointer;box-shadow:2px 2px 0 var(--ink-line)}
 .ctl:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink-line)}
@@ -386,7 +401,7 @@ Toggle each one below and judge it on its own.</p>
   <div class="shelf" id="shelf">
     <div class="shelf-head">
       <div>
-        <h1>Your shelf</h1>
+        <h1>My Shelf</h1>
         <svg viewBox="0 0 132 9" fill="none" aria-hidden="true"><path d="M2 6.2c22-3.4 46-4.6 74-3.2 18 .9 33 2.4 54 1.1" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/></svg>
       </div>
       <span class="count">6 zines</span>
@@ -463,7 +478,6 @@ Toggle each one below and judge it on its own.</p>
     </div>
     <h2>Make your first little zine.</h2>
     <p>One sheet of paper becomes a little eight-page book you print and fold yourself — we’ll show you each step.</p>
-    <p class="pv">Everything stays on your phone — no account, nothing uploaded.</p>
   </div>
 
   <div class="fail">
@@ -473,17 +487,23 @@ Toggle each one below and judge it on its own.</p>
     <button class="retry">Try again</button>
   </div>
 
-  <div class="dock"><button class="start"><span class="plus">＋</span> Make a zine</button></div>
+  <div class="dock">
+    <button class="start"><span class="plus">＋</span> Make a zine</button>
+    <div class="quiet-actions" aria-label="Shelf actions">
+      <button class="quiet-action" id="backups">Backups</button>
+      <button class="quiet-action" id="colophon">About</button>
+    </div>
+  </div>
 
   <div class="scrim" id="scrim"></div>
   <div class="sheet" id="sheet" role="dialog" aria-label="Zine actions" aria-modal="true">
     <div class="grab"></div>
     <div class="sh-head"><div class="sh-ttl" id="shTtl">Sunday market</div><div class="sh-sub" id="shSub">A4 · 2 days ago</div></div>
-    <button class="act"><span class="ic">↗</span> Open on the bench</button>
-    <button class="act"><span class="ic">⇪</span> Share &amp; export</button>
-    <button class="act"><span class="ic">✎</span> Rename</button>
-    <button class="act"><span class="ic">⧉</span> Duplicate</button>
-    <button class="act danger"><span class="ic">⌫</span> Delete</button>
+    <button class="act" id="sheetOpen"><span class="ic">↗</span> Open on the bench</button>
+    <button class="act" id="sheetShare"><span class="ic">⇪</span> Share &amp; export</button>
+    <button class="act" id="sheetRename"><span class="ic">✎</span> Rename</button>
+    <button class="act" id="sheetDuplicate"><span class="ic">⧉</span> Duplicate</button>
+    <button class="act danger" id="sheetDelete"><span class="ic">⌫</span> Delete</button>
   </div>
 </div>
 
@@ -494,6 +514,7 @@ Toggle each one below and judge it on its own.</p>
   <button class="ctl" id="em">empty</button>
   <button class="ctl" id="ld">loading</button>
   <button class="ctl" id="er">error</button>
+  <button class="ctl" id="ua">unavailable sheet</button>
   <span class="grp">direction — judge each move on its own</span>
   <button class="ctl on" data-t="hard">hard offset shadow</button>
   <button class="ctl on" data-t="tilt">resting at an angle</button>
@@ -529,6 +550,8 @@ document.getElementById('ct').onclick = () => state('content');
 document.getElementById('em').onclick = () => state('empty');
 document.getElementById('ld').onclick = () => state('loading');
 document.getElementById('er').onclick = () => state('error');
+document.getElementById('backups').onclick = () => location.href='backup-restore.html';
+document.getElementById('colophon').onclick = () => location.href='v21-colophon.html';
 
 document.querySelectorAll('.ctl[data-t]').forEach(b => b.onclick = () => {
   const k = b.dataset.t, off = R.getAttribute('data-'+k) === 'off';
@@ -537,6 +560,18 @@ document.querySelectorAll('.ctl[data-t]').forEach(b => b.onclick = () => {
 });
 
 const scrim = document.getElementById('scrim'), sheet = document.getElementById('sheet');
+const unavailableActions = ['sheetOpen','sheetShare','sheetDuplicate']
+  .map(id => document.getElementById(id));
+let unavailable = false;
+function setUnavailable(next){
+  unavailable = next;
+  unavailableActions.forEach(action => action.disabled = unavailable);
+  document.getElementById('ua').classList.toggle('on', unavailable);
+}
+document.getElementById('ua').onclick = () => {
+  setUnavailable(!unavailable);
+  if(unavailable){ scrim.classList.add('show'); sheet.classList.add('show'); }
+};
 function close(){ scrim.classList.remove('show'); sheet.classList.remove('show'); }
 // The sheet's real trigger is `.more`; `.zine-open` is wired to it too because this prototype has no
 // Bench to open, and a tile that does nothing when tapped would misrepresent the design. In the app
@@ -551,6 +586,6 @@ document.querySelectorAll('.zine').forEach(z => {
   z.querySelector('.zine-open').onclick = open;
 });
 scrim.onclick = close;
-document.querySelectorAll('.act').forEach(a => a.onclick = close);
+document.querySelectorAll('.act').forEach(a => a.onclick = () => { if(!a.disabled) close(); });
 addEventListener('keydown', e => e.key === 'Escape' && close());
 </script>

@@ -187,11 +187,12 @@ internal fun benchCaretAlphaAt(elapsedMillis: Long, reduceMotion: Boolean): Floa
 internal fun BenchEditingSurface(
     session: Interaction.EditingText,
     element: TextElement,
-    dispatch: (Intent) -> Unit,
+    commitText: (Intent.CommitText) -> Boolean,
     screenPxPerPt: Float,
     pageOffset: PtPoint,
     modifier: Modifier = Modifier,
     onCoverageChanged: (TextCoverage) -> Unit = {},
+    onCommitted: () -> Unit = {},
 ) {
     val density = LocalDensity.current
     val t = element.transform
@@ -273,7 +274,7 @@ internal fun BenchEditingSurface(
     EditTextSession(
         session = session,
         element = element,
-        dispatch = dispatch,
+        commitText = commitText,
         modifier = modifier
             .offset { IntOffset(xPx.roundToInt(), yPx.roundToInt()) }
             .size(with(density) { wPx.toDp() }, with(density) { hPx.toDp() })
@@ -291,6 +292,7 @@ internal fun BenchEditingSurface(
                 )
             },
         onCoverageChanged = onCoverageChanged,
+        onCommitted = onCommitted,
         textStyle = textStyle,
         // The platform cursor is suppressed, not recoloured — two carets would be two carets.
         cursorColor = Color.Transparent,

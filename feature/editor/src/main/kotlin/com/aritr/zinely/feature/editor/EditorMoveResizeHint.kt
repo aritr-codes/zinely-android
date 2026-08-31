@@ -29,6 +29,9 @@ public const val MoveResizeHintDismissTag: String = "move-resize-hint-dismiss"
 /** The teaching line (canonical, docs/design/VOICE.md §3 "Hints"). */
 public const val MoveResizeHintText: String = Copy.MoveResizeHint.TEXT
 
+/** The photo-specific line that distinguishes frame resize from cropping the contents. */
+public const val PhotoMoveResizeHintText: String = Copy.MoveResizeHint.PHOTO_TEXT
+
 /** The dismiss affordance label (the implicit/explicit "got it" VOICE requires for a one-time hint). */
 public const val MoveResizeHintDismissLabel: String = Copy.Common.GOT_IT
 
@@ -37,9 +40,9 @@ private val HintMaxWidth = 320.dp
 
 /**
  * The one-time **move/resize hint** (docs/design/VOICE.md §3 "Hints"). When a beginner first selects a
- * placed element the resize handles appear, but the two core manipulations — *drag to move*, *pinch to
- * resize* — are gestures with no discrete-control twin, so a first-timer can miss them. This is the gentle
- * note that teaches exactly those two moves, then gets out of the way.
+ * placed element the resize handles and lower transform controls appear, but their meaning is easy to miss.
+ * This gentle note names the handles and turn controls already on screen, then gets out of the way. For a
+ * photo it also distinguishes resizing its frame from [ReframeAffordanceChip]'s crop-inside action.
  *
  * ### ⚠ Unfrozen surface — the analogy is `.snack`, and it replaces V2's invented sticky
  *
@@ -71,11 +74,13 @@ private val HintMaxWidth = 320.dp
  * Stateless: the host owns the screen-local "already dismissed" flag and the visibility gate; this
  * composable only renders and reports the dismiss tap via [onDismiss].
  *
+ * @param photo whether the selected element is a photo, enabling the contextual Reframe sentence.
  * @param onDismiss invoked when the user taps "Got it" (the host marks the hint dismissed for the session).
  * @param modifier sizing/placement applied by the host (typically aligned to the top of the canvas).
  */
 @Composable
 public fun EditorMoveResizeHint(
+    photo: Boolean = false,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -86,9 +91,9 @@ public fun EditorMoveResizeHint(
             .widthIn(max = HintMaxWidth)
             .graphicsLayer { rotationZ = NoticeRotation }
             .clip(NoticeShape)
-            .background(colors.ink)
-            // `inkLine`, not `ink` — this box's own ground is `ink`; see [NoticeBorder].
-            .border(NoticeBorder, colors.inkLine, NoticeShape)
+            .background(colors.surfaceSoft)
+            // A warm support scrap uses the room's ordinary ink for its visible outline.
+            .border(NoticeBorder, colors.ink, NoticeShape)
             .padding(
                 start = NoticePaddingStart,
                 end = NoticePaddingEnd,
@@ -102,16 +107,18 @@ public fun EditorMoveResizeHint(
         horizontalArrangement = Arrangement.spacedBy(NoticeGap),
     ) {
         Text(
-            text = MoveResizeHintText,
+            text = if (photo) PhotoMoveResizeHintText else MoveResizeHintText,
             style = TextStyle(
                 fontFamily = ZinelyV21Fonts.Work,
                 fontSize = NoticeTextSize,
                 lineHeight = ZinelyV21Fonts.InheritedLineHeight,
-                color = colors.paper,
+                color = colors.ink,
             ),
-            // `.snack span{flex:1}`.
-            modifier = Modifier.weight(1f, fill = false),
+            // `.snack span{flex:1}`. Fill the allocated share rather than measuring at the sentence's
+            // intrinsic width: the contextual photo line is longer, and an intrinsic child can otherwise
+            // push both its opening words and Got it outside the 320dp support scrap.
+            modifier = Modifier.weight(1f),
         )
-        NoticeAction(MoveResizeHintDismissLabel, MoveResizeHintDismissTag, onDismiss)
+        NoticeAction(MoveResizeHintDismissLabel, MoveResizeHintDismissTag, colors.ink, onDismiss)
     }
 }

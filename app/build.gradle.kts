@@ -21,7 +21,16 @@ plugins {
 // elements (document schema v1 -> v2), and the Art sheet's sixteen supplies. Still 0.9.x rather than
 // 0.10.0 because the two device passes that would accept those surfaces have not run — see the known
 // limitations in CHANGELOG.md, which are the reason this is an increment and not a milestone.
-val zinelyVersionName = "0.9.0-beta.2"
+// "0.9.0-beta.3" = the 2026-08-30 tester build: editor reliability/accessibility refinements,
+// persistent deletion, About Zinely, and Art cold-open performance work.
+// "0.9.0-beta.4" = the 2026-08-31 tester build: Replace Photo through the existing image pipeline,
+// including one-step undo/redo and type-specific accessibility labels for both Replace routes.
+// "0.9.0-beta.4-r1" = the current-source maintenance revision of beta.4.
+// "0.9.0-beta.4-r2" = the packaging-only maintenance revision: release code/resource shrinking and
+// a lossless WebP projection of the unchanged launcher artwork. It adds no product behavior.
+// "0.9.0-beta.4-r3" = the accessibility maintenance revision that restores readable editor
+// confirmation-snackbar contrast in dark mode. It changes no document, storage, or render behavior.
+val zinelyVersionName = "0.9.0-beta.4-r3"
 
 // Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
 // or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
@@ -29,8 +38,8 @@ val zinelyVersionName = "0.9.0-beta.2"
 // Why this exists: through 0.8.0 the release build was signed with the machine-local *debug*
 // keystore, which cannot be reproduced on another machine. A build signed by a different key
 // cannot be installed over the previous one, so a tester would have to uninstall to take an
-// update — and uninstalling destroys their zines, because backup/restore does not exist yet.
-// A stable release key is what makes a beta patchable.
+// update. Uninstalling still destroys the installed app data, so the stable release key is what makes
+// a beta safely patchable without requiring testers to restore a backup.
 // Read through a *tracked* provider, not File.exists(): an untracked configuration-time file read is
 // invisible to the configuration cache, so creating keystore.properties would not invalidate a cached
 // configuration and the build would go on believing no key exists.
@@ -99,10 +108,12 @@ android {
         // was ever distributed with an upgrade path); 2 was the first beta *build*, which was
         // assembled and smoke-tested but never cut — and it was already installed on a verification
         // device, so shipping the real beta under 2 would be an install that silently refuses to
-        // update. 3 is the artifact actually distributed as 0.9.0-beta.1. 4 is 0.9.0-beta.2, and the
-        // bump is not bookkeeping: anyone holding beta.1 has versionCode 3 installed, and an APK
-        // carrying the same code is refused as an update rather than offered as one.
-        versionCode = 4
+        // update. 3 is the artifact actually distributed as 0.9.0-beta.1, 4 is 0.9.0-beta.2, 5 is
+        // 0.9.0-beta.3, 6 is 0.9.0-beta.4, 7 is beta.4-r1, 8 is the packaging-only beta.4-r2,
+        // and 9 is the dark-mode snackbar contrast maintenance revision beta.4-r3.
+        // These bumps are not bookkeeping: Android uses the code to decide whether an APK can update
+        // an installed tester build.
+        versionCode = 9
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -135,7 +146,10 @@ android {
                 } else {
                     signingConfigs.getByName("debug")
                 }
-            isMinifyEnabled = false
+            // Release-only R8/resource shrinking removes unreachable library code and unused resources.
+            // Debug stays unshrunk so local diagnosis and test behavior remain unchanged.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -187,8 +201,8 @@ if (releaseSigning == null) {
                     "zinely: refusing to package a $version release APK signed with the debug key.\n" +
                         "No release keystore is configured (keystore.properties / ZINELY_KEYSTORE_*).\n" +
                         "A debug-signed build cannot be installed as an update over a properly signed " +
-                        "one, so shipping it would force testers to uninstall — which destroys their " +
-                        "zines, since backup/restore does not exist yet.\n" +
+                        "one, so shipping it would force testers to uninstall and then restore from " +
+                        "a separately saved backup.\n" +
                         "Configure the key (docs/RELEASING.md), or pass -PallowDebugSignedRelease if " +
                         "you deliberately want an undistributable build."
                 )
@@ -249,6 +263,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
+    // ADR-111: one platform-owned launch transition across minSdk 24+; no custom splash Activity.
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     testImplementation(libs.junit)
     // EditorBootstrap unit tests (ADR-030): load over a fake DocumentRepository (runTest) and

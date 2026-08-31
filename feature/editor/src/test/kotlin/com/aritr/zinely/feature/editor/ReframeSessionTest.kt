@@ -5,7 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -15,6 +20,7 @@ import com.aritr.zinely.core.editor.EditorModel
 import com.aritr.zinely.core.editor.Effect
 import com.aritr.zinely.core.editor.Intent
 import com.aritr.zinely.core.editor.Interaction
+import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.core.model.Crop
 import com.aritr.zinely.core.model.Fit
 import com.aritr.zinely.core.model.ImageElement
@@ -150,10 +156,9 @@ class ReframeSessionTest {
      * cannot be framed, so the session must be declined rather than opened inert — and the document must
      * be left exactly as it was.
      *
-     * Asserted through the store: the interaction returns to Idle and no framing is written. The refusal
-     * is currently silent because the explanatory line is founder-owned and still outstanding
-     * (`ReframeUnavailableAnnouncement`); when that lands, this test stands and an announcement assertion
-     * joins it.
+     * Asserted through the store: the interaction returns to Idle and no framing is written. A25 also
+     * requires one visible, politely announced recovery line whose truthful Add exit remains available
+     * after the session is declined.
      */
     @Test
     fun an_unreadable_photo_is_refused_entry_to_reframe() {
@@ -171,6 +176,25 @@ class ReframeSessionTest {
         composeRule.onNodeWithTag(ReframeControlsTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(ReframeOverlayTestTag).assertDoesNotExist()
         composeRule.onNodeWithTag(BenchBottomBarTestTag).assertIsDisplayed()
+        composeRule.onNodeWithContentDescription(Copy.Editor.REFRAME_UNAVAILABLE)
+            .assertIsDisplayed()
+            .assert(
+                SemanticsMatcher.expectValue(
+                    SemanticsProperties.LiveRegion,
+                    LiveRegionMode.Polite,
+                ),
+            )
+        composeRule.onNodeWithTag(BenchSnackActionTestTag).assertDoesNotExist()
+        composeRule.onNodeWithTag(BenchBarAddTag)
+            .assertIsDisplayed()
+            .assertIsEnabled()
+
+        // Refusal is interaction cleanup, not an edit. One undo must therefore walk straight back
+        // past the original placement and remove the photo.
+        s.dispatch(Intent.Undo)
+        val remaining = s.uiState.value.document.pages[s.uiState.value.currentPageIndex].elements
+            .filterIsInstance<ImageElement>()
+        assertTrue("a refused session must record no command", remaining.isEmpty())
     }
 
     /**
