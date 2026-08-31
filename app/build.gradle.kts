@@ -28,7 +28,9 @@ plugins {
 // "0.9.0-beta.4-r1" = the current-source maintenance revision of beta.4.
 // "0.9.0-beta.4-r2" = the packaging-only maintenance revision: release code/resource shrinking and
 // a lossless WebP projection of the unchanged launcher artwork. It adds no product behavior.
-val zinelyVersionName = "0.9.0-beta.4-r2"
+// "0.9.0-beta.4-r3" = the accessibility maintenance revision that restores readable editor
+// confirmation-snackbar contrast in dark mode. It changes no document, storage, or render behavior.
+val zinelyVersionName = "0.9.0-beta.4-r3"
 
 // Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
 // or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
@@ -107,10 +109,11 @@ android {
         // assembled and smoke-tested but never cut — and it was already installed on a verification
         // device, so shipping the real beta under 2 would be an install that silently refuses to
         // update. 3 is the artifact actually distributed as 0.9.0-beta.1, 4 is 0.9.0-beta.2, 5 is
-        // 0.9.0-beta.3, 6 is 0.9.0-beta.4, 7 is beta.4-r1, and 8 is the packaging-only beta.4-r2.
+        // 0.9.0-beta.3, 6 is 0.9.0-beta.4, 7 is beta.4-r1, 8 is the packaging-only beta.4-r2,
+        // and 9 is the dark-mode snackbar contrast maintenance revision beta.4-r3.
         // These bumps are not bookkeeping: Android uses the code to decide whether an APK can update
         // an installed tester build.
-        versionCode = 8
+        versionCode = 9
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

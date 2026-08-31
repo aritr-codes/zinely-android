@@ -14,6 +14,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
+
+This focused beta.4 maintenance revision carries `versionCode 9`. It installs over earlier
+release-signed beta builds without uninstalling and changes no saved-document, rendering, export,
+storage, or backup behavior.
+
+### Fixed
+
+- Restored WCAG 2 AA contrast for editor confirmation messages such as **Duplicated** and their
+  **Undo** action in dark mode. The snackbar now keeps the room palette when it is positioned inside
+  the light-paper sheet host: cream `#FFF9DB` on dark brown `#46352E` measures `10.96:1`, replacing
+  the unreadable mixed-palette pair that measured `1.31:1`.
+- Preserved the existing shared sheet, snackbar placement, wording, timing, semantics, Undo behavior,
+  large-text reachability, and light-mode appearance.
+
+### Known limitations
+
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
+- The public privacy-policy page remains blocked on owner-provided publication details.
+
 ## [0.9.0-beta.4-r2] — 2026-08-31 — Smaller beta 4 maintenance package
 
 This packaging-only beta.4 revision carries `versionCode 8`. It changes neither saved documents nor
@@ -537,7 +559,8 @@ The riskiest, most isolatable thing first: the math that makes a folded zine cor
   SVG proof sheet); pure Kotlin, golden-tested against the imposition oracle
   ([ADR-007](docs/DECISIONS.md#adr-007)). Tagged `v0.1.0-imposition-engine`.
 
-[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r2...HEAD
+[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r3...HEAD
+[0.9.0-beta.4-r3]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r2...v0.9.0-beta.4-r3
 [0.9.0-beta.4-r2]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r1...v0.9.0-beta.4-r2
 [0.9.0-beta.4-r1]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4...v0.9.0-beta.4-r1
 [0.9.0-beta.4]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.3...v0.9.0-beta.4
