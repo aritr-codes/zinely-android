@@ -14,6 +14,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0-beta.4] — 2026-08-31 — Replace a photo without rebuilding the page
+
+The fourth build for the beta cohort. `versionCode 6`, signed with the same release key as the earlier
+beta builds, so it installs over an existing tester copy and keeps its zines.
+
+### Added — Replace Photo · [D-038](docs/design/V2-SPEC-DEFECTS.md#d-038)
+
+- Select a photo, choose **Replace**, and pick another image through Android's existing photo picker.
+  Zinely uses the same decode and asset-storage path as Add Photo; there is no second import route.
+- The replacement changes only the selected photo's source. Its element identity, position, size,
+  rotation, crop, fit, layer, opacity, photocopier setting, flip state, and selection stay intact.
+- One **Undo** restores the previous photo; **Redo** reapplies the replacement. Cancelling the picker,
+  a decode/storage failure, or choosing the same stored image makes no document or history change.
+- Art's visually identical **Replace** action remains a route to the Art cabinet, not the photo picker.
+
+### Accessibility
+
+- The two visible **Replace** captions keep the frozen design, while the platform accessibility tree
+  now names them **Replace photo** and **Replace supply** so TalkBack does not announce two ambiguous
+  buttons with different destinations.
+- At 1.8× text on Samsung SM-A176B, the selected-photo action strip remains horizontally scrollable;
+  Replace is reachable, enabled, clickable, and measures about 77 × 63 dp.
+
+### Known limitations
+
+- Android owns the system photo picker. Depending on the phone, choosing one image may add a separate
+  **Preview** / **Done** confirmation before returning to Zinely.
+- Replaced and deleted photo assets are retained. This protects other zines or elements that may share
+  the same content-addressed asset, but app storage is not reclaimed yet.
+- Font choice is still unavailable. Text outside the supported print scripts is kept and warned about,
+  but it does not print yet.
+- Zinely creates and saves the PDF; printing itself happens in the phone's PDF or print app.
+
 ## [0.9.0-beta.3] — 2026-08-30 — Make the editor lighter, clearer, and more dependable
 
 The third build for the beta cohort. `versionCode 5`, signed with the same release key as earlier
@@ -464,7 +497,8 @@ The riskiest, most isolatable thing first: the math that makes a folded zine cor
   SVG proof sheet); pure Kotlin, golden-tested against the imposition oracle
   ([ADR-007](docs/DECISIONS.md#adr-007)). Tagged `v0.1.0-imposition-engine`.
 
-[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.3...HEAD
+[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4...HEAD
+[0.9.0-beta.4]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.3...v0.9.0-beta.4
 [0.9.0-beta.3]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.2...v0.9.0-beta.3
 [0.9.0-beta.2]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.1...v0.9.0-beta.2
 [0.9.0-beta.1]: https://github.com/aritr-codes/zinely-android/compare/v0.8.0...v0.9.0-beta.1

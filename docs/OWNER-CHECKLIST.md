@@ -127,7 +127,7 @@ Amending a frozen V2 surface is reserved to you (V2-CONSTITUTION §VI); an imple
 | ☑ | ~~[D-078](design/V2-SPEC-DEFECTS.md#d-078)~~ | **CLOSED 2026-08-24 — A14 keeps the full transform set and wraps it into centred rows at full 48dp targets.** | `FlowRow` plus platform `OnClick` restoration; narrow-host and platform-tree regression coverage fence the original failure |
 | ☐ | [D-030](design/V2-SPEC-DEFECTS.md#d-030) | Real fixed 8 pages, or does variable page count arrive? | Filmstrip/dots morph, grid add/delete |
 | ☐ | [D-029 Q1–Q3](design/V2-SPEC-DEFECTS.md#d-029) | The keep-shelf's scope, home and lifetime (Q4 closed) | The tray/shelf capability entirely |
-| ☐ | [D-038](design/V2-SPEC-DEFECTS.md#d-038) | Is `Replace` on the frozen photo bar a capability we ship? | — |
+| ☑ | ~~[D-038](design/V2-SPEC-DEFECTS.md#d-038)~~ | **CLOSED + VERIFIED 2026-08-31 — Replace Photo ships through the existing picker/decode/AssetStore pipeline.** | One reducer command, one autosave/undo step, cancel/no-op safety, distinct Photo/Decor routes, platform labels, and two-reader Samsung verification complete |
 | ☐ | [D-036](design/V2-SPEC-DEFECTS.md#d-036) | Four frozen resize handles vs. eight shipped | — |
 | ☐ | [D-027](design/V2-SPEC-DEFECTS.md#d-027) | Does the shelf sheet's metadata line say "Edited …", with week granularity? | — |
 | ☐ | [D-023](design/V2-SPEC-DEFECTS.md#d-023) | Does the Library's `--paper` primary-button label become `--on-matcha`? | Library's primary action stays off-corpus |
