@@ -675,7 +675,13 @@ class BenchC4Test {
         // it. Mutation: show the button.
         composeRule.setContent {
             ZinelyTheme {
-                BenchSnack(visible = true, message = "Ink · Blush", actionLabel = null, onAction = {})
+                BenchSnack(
+                    visible = true,
+                    message = "Ink · Blush",
+                    actionLabel = null,
+                    onAction = {},
+                    colors = ZinelyTheme.v21Colors,
+                )
             }
         }
         composeRule.waitForIdle()

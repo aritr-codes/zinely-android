@@ -1913,6 +1913,12 @@ public fun EditorScreen(
                 // reading the HTML rather than the ADR. Anchored here, the confirmation appears over the
                 // artifact it is about, and it still takes no layout height — so it cannot resize the
                 // sheet, which is the half of the old reasoning that was true.
+                //
+                // The position is inside [BenchSheetIsland], but the snack itself is room chrome. Pass the
+                // palette captured before the island opened: otherwise dark mode combines the island's
+                // light `ink` (#27270F) with the inherited dark `surfaceSoft` (#46352E), only 1.31:1. The
+                // room pair is #FFF9DB on #46352E, 10.96:1. An explicit parameter makes that boundary
+                // immune to future CompositionLocal nesting changes.
                 BenchSnack(
                     visible = snackVisible,
                     message = snackMessage,
@@ -1923,6 +1929,7 @@ public fun EditorScreen(
                         snackVisible = false
                         dispatch(Intent.Undo)
                     },
+                    colors = roomColors21,
                     modifier = Modifier.align(Alignment.BottomCenter),
                     // D-089 / frozen Bench A8: placement raises both surfaces. Keep Undo and the newly
                     // selected element's verbs reachable by stacking the snack one complete bar footprint

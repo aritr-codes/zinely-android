@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aritr.zinely.core.copy.Copy
 import com.aritr.zinely.ui.theme.ZinelyTheme
+import com.aritr.zinely.ui.theme.ZinelyV21Colors
 import com.aritr.zinely.ui.theme.ZinelyV21Dimens
 import com.aritr.zinely.ui.theme.ZinelyV21Fonts
 
@@ -176,6 +177,10 @@ public const val BenchSnackInkMillis: Long = 1600L
  * @param message the line. `Text deleted.` in the delete case; `Ink · <name>` in C6's.
  * @param actionLabel `null` gives the **buttonless** variant (row 4.15). The freeze hides the button by
  *   setting `display:none` on it and restores it on timeout; a null label is the same thing said once.
+ * @param colors the Bench room palette captured outside [BenchSheetIsland]. This is required rather than
+ *   read from the ambient theme because the snack is room chrome positioned inside the sheet island's
+ *   layout host. In dark mode the island deliberately replaces `ink` with light-theme on-paper ink while
+ *   inheriting dark `surfaceSoft`; reading that mixed palette produced 1.31:1 contrast.
  * @param bottomClearance extra space reserved below the snack when another bottom-anchored surface is
  *   present. D-089 uses the context bar's complete footprint, leaving this component's own 12dp inset as
  *   the frozen gap between their painted bounds.
@@ -186,10 +191,10 @@ internal fun BenchSnack(
     message: String,
     actionLabel: String?,
     onAction: () -> Unit,
+    colors: ZinelyV21Colors,
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
 ) {
-    val colors = ZinelyTheme.v21Colors
     val progress by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,
         // Still routed through the V2 motion object: V2.1 changed the duration, not the arrival, and this

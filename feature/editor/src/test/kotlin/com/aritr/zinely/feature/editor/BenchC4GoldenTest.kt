@@ -421,7 +421,20 @@ class BenchC4GoldenTest {
 
     private fun captureSnack(name: String, darkTheme: Boolean) {
         host(darkTheme) {
-            BenchSnack(visible = true, message = "Text deleted.", actionLabel = UndoActionLabel, onAction = {})
+            // Match the production nesting that exposed the dark-mode defect: layout lives inside the
+            // light-paper island, while the transient confirmation must retain the room palette captured
+            // outside it. Without the explicit palette, dark surfaceSoft inherited through the island
+            // combined with light on-paper ink at 1.31:1 and this exact nested fixture fails its pixel pins.
+            val roomColors = ZinelyTheme.v21Colors
+            BenchSheetIsland {
+                BenchSnack(
+                    visible = true,
+                    message = "Text deleted.",
+                    actionLabel = UndoActionLabel,
+                    onAction = {},
+                    colors = roomColors,
+                )
+            }
         }
         composeRule.mainClock.advanceTimeBy(BenchSnackMillis + 100L)
         composeRule.waitForIdle()
