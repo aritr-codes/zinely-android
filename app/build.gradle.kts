@@ -25,7 +25,10 @@ plugins {
 // persistent deletion, About Zinely, and Art cold-open performance work.
 // "0.9.0-beta.4" = the 2026-08-31 tester build: Replace Photo through the existing image pipeline,
 // including one-step undo/redo and type-specific accessibility labels for both Replace routes.
-val zinelyVersionName = "0.9.0-beta.4"
+// "0.9.0-beta.4-r1" = the current-source maintenance revision of beta.4. It intentionally adds no
+// product behavior; versionCode 7 makes the refreshed release-signed APK a valid tester update while
+// preserving the original beta.4 artifact and release record.
+val zinelyVersionName = "0.9.0-beta.4-r1"
 
 // Release signing (beta). Credentials live in an untracked `keystore.properties` at the repo root,
 // or in ZINELY_KEYSTORE_* environment variables — never in git. See docs/RELEASING.md.
@@ -104,9 +107,10 @@ android {
         // assembled and smoke-tested but never cut — and it was already installed on a verification
         // device, so shipping the real beta under 2 would be an install that silently refuses to
         // update. 3 is the artifact actually distributed as 0.9.0-beta.1, 4 is 0.9.0-beta.2, 5 is
-        // 0.9.0-beta.3, and 6 is 0.9.0-beta.4. These bumps are not bookkeeping: Android uses the code
-        // to decide whether an APK can update an installed tester build.
-        versionCode = 6
+        // 0.9.0-beta.3, 6 is 0.9.0-beta.4, and 7 is its current-source beta.4-r1 maintenance revision.
+        // These bumps are not bookkeeping: Android uses the code to decide whether an APK can update
+        // an installed tester build.
+        versionCode = 7
         versionName = zinelyVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
