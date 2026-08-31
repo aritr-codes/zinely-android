@@ -12691,7 +12691,8 @@ versions, so leaving the stock launcher robot or building a second custom splash
 either generic or needlessly slow.
 
 1. **`APP_LOGO.png` is the immutable artwork master.** Launcher density assets are deterministic projections of
-   that file; they are not redrawn, recoloured, or generated from a prompt.
+   that file; they are not redrawn, recoloured, or generated from a prompt. The packaged adaptive/splash projection
+   may use lossless WebP when the generator verifies decoded-pixel identity with the master.
 2. **Adaptive identity uses platform layers.** The supplied collage is the foreground, its measured edge pink
    `#FBCDD0` is the background, and a simplified hand-cut Z is the monochrome layer. Android owns the final launcher
    mask and themed-icon colour.

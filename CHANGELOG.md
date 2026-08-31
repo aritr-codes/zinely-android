@@ -14,6 +14,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0-beta.4-r2] — 2026-08-31 — Smaller beta 4 maintenance package
+
+This packaging-only beta.4 revision carries `versionCode 8`. It changes neither saved documents nor
+product behavior and installs over earlier release-signed beta builds without uninstalling.
+
+### Changed
+
+- Enabled release-only R8 code shrinking and Android resource shrinking; debug builds remain unshrunk.
+- Replaced the generated 2.55 MiB adaptive/splash PNG with a lossless WebP projection. The immutable
+  `APP_LOGO.png` master is unchanged, and the generator verifies decoded-pixel identity.
+- Preserved the bundled offline emoji font and shared rendering pipeline so editor, PNG, and PDF output
+  retain the accepted emoji and print-parity behavior.
+
+### Known limitations
+
+- Replaced and deleted photo assets are retained; app storage is not reclaimed yet.
+- Font choice remains unavailable. Unsupported print scripts are kept and warned about but do not print.
+- Zinely saves the PDF; printing happens in the phone's PDF or print app.
+- The public privacy-policy page remains blocked on owner-provided publication details.
+
 ## [0.9.0-beta.4-r1] — 2026-08-31 — Current-source beta 4 maintenance build
 
 This is a maintenance revision of beta.4, not a new feature release. It carries `versionCode 7` so
@@ -517,7 +537,8 @@ The riskiest, most isolatable thing first: the math that makes a folded zine cor
   SVG proof sheet); pure Kotlin, golden-tested against the imposition oracle
   ([ADR-007](docs/DECISIONS.md#adr-007)). Tagged `v0.1.0-imposition-engine`.
 
-[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r1...HEAD
+[Unreleased]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r2...HEAD
+[0.9.0-beta.4-r2]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4-r1...v0.9.0-beta.4-r2
 [0.9.0-beta.4-r1]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.4...v0.9.0-beta.4-r1
 [0.9.0-beta.4]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.3...v0.9.0-beta.4
 [0.9.0-beta.3]: https://github.com/aritr-codes/zinely-android/compare/v0.9.0-beta.2...v0.9.0-beta.3

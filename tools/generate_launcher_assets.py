@@ -2,13 +2,12 @@
 
 The source artwork is never recoloured or redrawn. Legacy density assets are resized copies;
 round variants only add the platform-expected circular alpha mask. Adaptive and splash resources
-consume the unchanged drawable-nodpi copy directly.
+consume a lossless WebP projection whose decoded pixels are verified against the source.
 """
 
 from pathlib import Path
-from shutil import copyfile
 
-from PIL import Image, ImageDraw, ImageStat
+from PIL import Image, ImageChops, ImageDraw, ImageStat
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,7 +48,18 @@ def main() -> None:
 
     drawable = RES / "drawable-nodpi"
     drawable.mkdir(parents=True, exist_ok=True)
-    copyfile(SOURCE, drawable / "app_logo.png")
+    adaptive_artwork = drawable / "app_logo.webp"
+    source.save(adaptive_artwork, "WEBP", lossless=True, method=6)
+    with Image.open(adaptive_artwork) as decoded:
+        difference = ImageChops.difference(source, decoded.convert("RGB"))
+        if difference.getbbox() is not None:
+            raise ValueError("Lossless WebP launcher projection changed decoded artwork pixels")
+
+    # The resource name stays app_logo; remove the superseded generated format so Android cannot
+    # package both projections if the generator is rerun over an older checkout.
+    legacy_png = drawable / "app_logo.png"
+    if legacy_png.exists():
+        legacy_png.unlink()
 
     for density, size in LEGACY_SIZES.items():
         target = RES / f"mipmap-{density}"
@@ -63,7 +73,10 @@ def main() -> None:
         round_icon.putalpha(mask)
         round_icon.save(target / "ic_launcher_round.webp", "WEBP", quality=95, method=6)
 
-    print(f"source={source.size[0]}x{source.size[1]} edge={edge_colour(source)}")
+    print(
+        f"source={source.size[0]}x{source.size[1]} edge={edge_colour(source)} "
+        f"adaptive={adaptive_artwork.name}:{adaptive_artwork.stat().st_size}B pixel_identical=true"
+    )
 
 
 if __name__ == "__main__":

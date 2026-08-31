@@ -25,8 +25,9 @@ minimum display time, logo animation, slogan, loading copy, or second branded sc
 | System splash | Supplied mark on `#FBCDD0`, then immediate handoff to `Theme.Zinely` |
 | In-app chrome | No persistent logo added to Shelf, Bench, Proof, menus, or sheets |
 
-`APP_LOGO.png` is the immutable source. Generated density assets may change only by rerunning the checked-in asset
-generator from that source.
+`APP_LOGO.png` is the immutable source. The adaptive/splash projection is lossless WebP with decoded-pixel identity
+checked by the generator; density assets are deterministic resizes. Generated assets may change only by rerunning
+the checked-in asset generator from that source.
 
 ## 3. Adaptive-mask and accessibility rules
 
@@ -57,4 +58,3 @@ generator from that source.
 4. Physical-device review checks the Samsung launcher mask, Recents/task identity, share-in entry, light/dark launch,
    and immediate Shelf handoff.
 5. The supplied source file and deterministic generator output are reviewed for unintended visual changes.
-
