@@ -89,8 +89,9 @@ internal fun benchVerbStateCueTag(label: String): String = "$BenchContextBarTest
 internal enum class BenchVerbKind { TEXT, PHOTO, DECOR }
 
 /**
- * One verb of the frozen contextual bar. [label] is both the drawn caption and the spoken name — the
- * icon above it is decorative, exactly as in the freeze, where the `<span>` carries the word.
+ * One verb of the frozen contextual bar. [label] is the drawn caption. [spokenLabel] normally matches
+ * it, but may name the selected object when two element kinds expose the same visible word; the icon
+ * above it remains decorative, exactly as in the freeze, where the `<span>` carries the word.
  *
  * [enabled] is `false` only for **Font**, which the freeze draws and the product cannot honour:
  * [OD-9](../../../../../../../../docs/design/V2-SPEC-DEFECTS.md#d-031-ruling) ruled that the frozen
@@ -101,6 +102,7 @@ internal enum class BenchVerbKind { TEXT, PHOTO, DECOR }
 internal data class BenchVerb(
     val label: String,
     val icon: ImageVector,
+    val spokenLabel: String = label,
     val danger: Boolean = false,
     val enabled: Boolean = true,
     /**
@@ -179,7 +181,11 @@ internal fun benchContextVerbs(
         BenchVerb(Copy.BenchVerbs.COPIER, Icons.Filled.Grain, checked = copierOn),
         // D-038 is now complete: the existing picker effect carries this photo's id to the existing
         // reducer-owned ReplaceImage command, so framing and every other property remain untouched.
-        BenchVerb(Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz),
+        BenchVerb(
+            Copy.BenchVerbs.REPLACE,
+            Icons.Filled.SwapHoriz,
+            spokenLabel = Copy.A11y.REPLACE_PHOTO,
+        ),
         BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
         BenchVerb(Copy.BenchVerbs.DELETE, Icons.Filled.Delete, danger = true),
     )
@@ -201,7 +207,11 @@ internal fun benchContextVerbs(
     //    counterpart to `styleable`.
     // Delete is live because it is a shared verb that already works on any element id.
     BenchVerbKind.DECOR -> listOf(
-        BenchVerb(Copy.BenchVerbs.REPLACE, Icons.Filled.SwapHoriz),
+        BenchVerb(
+            Copy.BenchVerbs.REPLACE,
+            Icons.Filled.SwapHoriz,
+            spokenLabel = Copy.A11y.REPLACE_SUPPLY,
+        ),
         BenchVerb(Copy.BenchVerbs.INK, Icons.Filled.Palette),
         BenchVerb(Copy.BenchVerbs.FLIP, Icons.Filled.Flip),
         BenchVerb(Copy.BenchVerbs.DUPLICATE, Icons.Filled.ContentCopy),
@@ -476,7 +486,10 @@ private fun BenchVerbButton(
             .then(if (verb.enabled) Modifier.clickable(onClick = fire) else Modifier)
             .testTag("$BenchContextBarTestTag-${verb.label}")
             .clearAndSetSemantics {
-                contentDescription = verb.label
+                // Photo and decor both draw the frozen word `Replace`, but a platform service reaches
+                // this node without a reliable announcement of the selected-object container. Name the
+                // target in the spoken label so the two distinct picker routes cannot sound identical.
+                contentDescription = verb.spokenLabel
                 role = Role.Button
                 // `clearAndSetSemantics` wipes everything the button published, INCLUDING the disabled
                 // state - so without this line Font is announced as an ordinary button that simply does

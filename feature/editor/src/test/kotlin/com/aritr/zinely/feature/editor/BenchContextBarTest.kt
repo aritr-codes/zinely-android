@@ -25,6 +25,7 @@ import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
@@ -153,11 +154,16 @@ class BenchContextBarTest {
     @Test
     fun `Copier and photo Replace are live and semantically operable`() {
         val copier = benchContextVerbs(BenchVerbKind.PHOTO).single { it.label == Copy.BenchVerbs.COPIER }
+        val replace = benchContextVerbs(BenchVerbKind.PHOTO).single { it.label == Copy.BenchVerbs.REPLACE }
         assertEquals(true, copier.enabled)
         assertEquals(false, copier.danger)
+        assertEquals(Copy.A11y.REPLACE_PHOTO, replace.spokenLabel)
         host(benchContextVerbs(BenchVerbKind.PHOTO))
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.COPIER}").assertIsEnabled()
         composeRule.onNodeWithTag("$BenchContextBarTestTag-${Copy.BenchVerbs.REPLACE}")
+            .assertIsEnabled()
+            .assertHasClickAction()
+        composeRule.onNodeWithContentDescription(Copy.A11y.REPLACE_PHOTO)
             .assertIsEnabled()
             .assertHasClickAction()
     }
@@ -267,7 +273,8 @@ class BenchContextBarTest {
      */
     @Test
     fun `the decor set includes Flip and Duplicate immediately before Delete`() {
-        val decor = benchContextVerbs(BenchVerbKind.DECOR).map { it.label }
+        val verbs = benchContextVerbs(BenchVerbKind.DECOR)
+        val decor = verbs.map { it.label }
         assertEquals(
             listOf(
                 Copy.BenchVerbs.REPLACE,
@@ -277,6 +284,10 @@ class BenchContextBarTest {
                 Copy.BenchVerbs.DELETE,
             ),
             decor,
+        )
+        assertEquals(
+            Copy.A11y.REPLACE_SUPPLY,
+            verbs.single { it.label == Copy.BenchVerbs.REPLACE }.spokenLabel,
         )
     }
 

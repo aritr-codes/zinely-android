@@ -123,6 +123,7 @@ public object Copy {
     public object A11y {
         public const val EDIT_TEXT: String = "Edit text"
         public const val REFRAME_PHOTO: String = "Reframe photo"
+        public const val REPLACE_PHOTO: String = "Replace photo"
         public const val RESET_FRAMING: String = "Reset framing"
 
         /**
@@ -202,8 +203,9 @@ public object Copy {
 
     /**
      * The frozen contextual verb bar (`v2-bench.html` `toolsFor()`, ADR-092 row 2.13). These are the
-     * verbs the freeze names for the selected element, verbatim; each doubles as the control's spoken
-     * label, since the icon above it is decorative.
+     * visible verbs the freeze names for the selected element, verbatim. Their spoken label normally
+     * matches the drawn word because the icon above it is decorative; the two `Replace` routes are the
+     * one exception, where accessibility names the target to distinguish the picker path being opened.
      */
     public object BenchVerbs {
         public const val EDIT: String = "Edit"
