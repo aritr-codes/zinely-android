@@ -131,8 +131,12 @@ The mean absolute janky-frame count was 2.0. `gfxinfo`'s separate `Number Missed
 for each sample, so this report uses the absolute janky-frame count consistently with the earlier
 shared-host comparison. Three repeated opens remained three frames and two janky frames, but their
 median/P90 durations fell to 113/125 ms, 117/117 ms, and 105/105 ms. The warm improvement is real but
-does not remove the first-body frame misses. These samples are slightly faster than the earlier tester
-artifact numbers, but they come from a locally signed profiling build and should be treated as a
+does not remove the first-body frame misses. Two additional process-cold checks at font scale 1.8 each
+measured three frames, two janky frames, and 150/150 ms median/P90, so large text did not measurably
+amplify this coarse frame result. Font scale was restored to 1.0 after the check.
+
+The font-scale-1.0 cold samples are slightly faster than the earlier tester artifact numbers, but they
+come from a locally signed profiling build and should be treated as a
 reproduction of the same 2-3-janky-frame band, not as a new release-performance claim.
 
 An app-tagged `atrace` capture of the uninstrumented current-HEAD build changed the attribution:
