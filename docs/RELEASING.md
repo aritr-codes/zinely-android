@@ -12,8 +12,8 @@ Zinely is distributed as a side-loaded APK. Android decides whether a build may 
 an existing one by comparing signing keys — so the key is the app's identity, not a formality.
 
 **If the key is lost, no future build can update an installed Zinely.** Every tester would have to
-uninstall, and uninstalling deletes their zines, because backup/restore does not exist yet
-([zinely-v1.md §7](zinely-v1.md) blocker 2). Treat the keystore as irreplaceable.
+uninstall, which deletes the app-private library. A library backup created beforehand can be restored
+after reinstalling, but anybody without one loses their work. Treat the keystore as irreplaceable.
 
 ### One-time setup
 
@@ -86,9 +86,9 @@ backed-up password agree. If it asks again or errors, the backup is not a backup
 **Why it is irreversible.** Android identifies an app by its signing key, not by its name. Lose the
 key and no build you ever make again can install as an update over the Zinely on a tester's phone —
 the only route is a new key, which means every tester uninstalls, and **uninstalling deletes their
-zines**, because backup/restore does not exist. There is no recovery process, no appeal, and no
-support channel that can reissue it: the key is not registered with anyone. It is a file you either
-have or do not.
+app-private library**. A valid library backup can restore that work; without one, there is no recovery
+process, appeal, or support channel that can reissue the signing key. It is a file you either have or
+do not.
 
 All four values are required together. Supplying only some of them is a configuration error and
 fails the build naming the missing ones — half-configured signing used to fail deep inside AGP with
@@ -154,8 +154,9 @@ filename with a clean log. A human reading build output is not a gate; a failing
 ## 3. Beta distribution (side-load)
 
 Testers install an APK directly, which Android treats as an unknown source. The tester note must say,
-in plain words: what to tap to allow the install, that the app never touches the network, and — until
-backup exists — **that uninstalling deletes their zines, so export anything they care about first**.
+in plain words: what to tap to allow the install, that the app never touches the network, and that they
+should create a fresh library backup before beta changes. Updating a release-signed beta preserves the
+private library; uninstalling deletes it, so the backup is the recovery path.
 
 ### The one-time break at 0.9.0-beta.1
 
