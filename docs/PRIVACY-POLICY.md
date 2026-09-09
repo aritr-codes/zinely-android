@@ -2,17 +2,20 @@
 
 **Last updated: 9 September 2026**
 
-Zinely is an offline app for making printable zines. This policy describes what Zinely does with your
-information. It is short because Zinely does very little with it.
+Zinely is an offline app for making printable zines. This policy covers the Android app, this website,
+and feedback you choose to send to Zinely's independent developer.
 
 ---
 
 ## The short version
 
-**Zinely collects nothing, uploads nothing, and has no servers.**
+**The Zinely Android app collects no information from you, uploads nothing, and has no servers.**
 
 There is no account, no sign-in, no analytics, no advertising, no tracking, and no crash reporting.
 Zinely does not request internet access, so it cannot transmit your information even accidentally.
+
+Feedback is separate: if you submit a Google Form or send an email, the developer receives the
+information you choose to share. You do not need to send feedback to use the app.
 
 ---
 
@@ -63,8 +66,8 @@ only when you ask, using destinations or files that you choose.
 
 ## Children
 
-Zinely does not collect personal information from anyone, including children. There is no account, no
-profile, and no communication feature.
+The Zinely Android app does not collect personal information from anyone, including children. There
+is no account, no profile, and no communication feature inside the app.
 
 ---
 
@@ -82,17 +85,56 @@ them and must be deleted separately if you no longer want them.
 
 ## Changes to this policy
 
-If this policy changes, the "Last updated" date above changes with it, and the change will be noted in
-the app's release notes.
+The "Last updated" date identifies the latest revision. This revision adds the voluntary feedback
+arrangements below; it does not change how the Android app handles your information.
 
 ---
 
 ## This website
 
-The Zinely website has no analytics, advertising, contact form, or third-party fonts. It is hosted by
+The Zinely website has no analytics, advertising, or third-party fonts. It is hosted by
 GitHub Pages, so GitHub may process standard technical data needed to serve the site under the
 [GitHub General Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 This hosting does not change how the Zinely Android app handles your information.
+
+---
+
+## Feedback and email
+
+Sending feedback is optional. If you use the Google Forms feedback form, the developer receives your
+message and submission time, plus the feedback category and reply email if you provide them. Only the
+message is required. The form does not ask for your name, file uploads, or automatic app diagnostics.
+
+If you email **[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**, the developer receives your message,
+sender email address, any sender name supplied by your email service, and any attachments you choose
+to send. Screenshots or short screen recordings can help explain a problem, but are never required.
+Please hide private photos, notifications, names, and other personal information before sending them.
+
+The developer uses feedback to understand problems, improve Zinely, and reply if you provide an email
+address. It is not used for marketing or sold. Identifiable feedback is kept private, not published in
+public response summaries or development issues. Development notes may describe the problem or idea
+without identifying you.
+
+### Google services
+
+The feedback form is hosted by Google Forms, and the contact inbox uses Gmail. Google processes the
+submitted content and may also process technical information such as your IP address, browser or
+device information, and cookies under the [Google Privacy Policy](https://policies.google.com/privacy).
+Leaving the optional email field blank does not mean Google processes no information about your visit.
+These services are separate from the offline Android app; no zines or diagnostics are sent automatically.
+
+### Retention and deletion
+
+The developer deletes identifiable feedback within **90 days of receiving it**, including form
+responses, feedback emails, attachments, and any copies kept in spreadsheets or downloaded files.
+Only development notes that do not identify you may be kept longer. This is a developer-managed
+cleanup commitment, not an automatic Google Forms deletion setting. Google's own retention and
+deletion processes are governed by its privacy policy.
+
+To request earlier deletion of feedback you sent, email
+**[aritr.g06@gmail.com](mailto:aritr.g06@gmail.com)**. Include enough information to locate it, such as
+the approximate submission date and topic. If you did not provide an email, it may not be possible to
+identify your response reliably; please do not send identity documents or other sensitive information.
 
 ---
 
