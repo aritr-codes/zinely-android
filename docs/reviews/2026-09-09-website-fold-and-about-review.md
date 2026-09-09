@@ -157,5 +157,8 @@ authority or promising speculative features.
 
 - Independent review returned **GO** after its findings were fixed: truthful tester/public
   changelog labels, stable repository links, complete fold announcements, a gated canonical Proof experiment,
-  durable visual-inspiration citations, and 320 px/200% text reflow. The remaining gate is the deployed Pages
-  read-back.
+  durable visual-inspiration citations, and 320 px/200% text reflow.
+- GitHub Pages run `34353636558` deployed source commit `4bcd0a9` successfully. Live read-back returned HTTP 200
+  for Home, Changelog, Roadmap, and Privacy with the expected titles and contact address. The logo, three gallery
+  WebPs, stylesheet, script, and beta.4-r3 APK all returned HTTP 200 with their expected media types and byte
+  sizes. A fresh live desktop render was visually inspected with the deployed logo and artsy workbench layout.
