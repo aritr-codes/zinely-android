@@ -193,3 +193,6 @@ Verification on 9 September 2026:
 - Automatic approval review blocked launching the local guide in the connected Samsung browser. No physical-device
   browser pass is claimed. The temporary ADB reverse was removed; no font, theme, accessibility, or animation setting
   was modified. Physical first-time-user folding tests remain the next evidence gate for any native app animation.
+- GitHub Pages run `34357153693` successfully deployed `3c8e0fe`. The same browser checks passed against the
+  published URL, including the updated indie About copy, ten steps, keyboard tracing, reduced motion, and no-JS
+  fallback. The workflow emitted an existing Node-action deprecation advisory, not a deployment failure.
