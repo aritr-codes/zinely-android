@@ -61,7 +61,7 @@ class ColophonScreenTest {
     }
 
     @Test
-    fun `about zinely opens with the approved personal brand note`() {
+    fun `about zinely keeps installed app information without duplicating the website story`() {
         setContent(
             preferredPaper = PaperSize.A4,
             appVersion = "v1",
@@ -70,11 +70,11 @@ class ColophonScreenTest {
         )
 
         composeRule.onNodeWithText("About Zinely").assertTextEquals(Copy.Colophon.TITLE)
-        composeRule.onNodeWithText("Some things deserve pages.").assertTextEquals(Copy.Colophon.TAGLINE)
+        composeRule.onNodeWithText("Some things deserve pages.").assertDoesNotExist()
         composeRule.onNodeWithText(
             "Zinely began with a simple wish: to make something for someone. " +
                 "We hope it helps you make something worth keeping.",
-        ).assertTextEquals(Copy.Colophon.INTRO)
+        ).assertDoesNotExist()
         composeRule.onNodeWithText("Paper for new zines").assertTextEquals(Copy.Colophon.DEFAULT_PAPER)
     }
 

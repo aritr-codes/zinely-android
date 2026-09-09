@@ -188,16 +188,6 @@ private fun ColophonMain(
                 modifier = Modifier.semantics { heading() },
             )
         }
-        item {
-            Text(
-                Copy.Colophon.TAGLINE,
-                color = colors.ink,
-                fontFamily = ZinelyV21Fonts.Editorial,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 21.sp,
-            )
-        }
-        item { BodyText(Copy.Colophon.INTRO) }
         item { SectionHeading(Copy.Colophon.DEFAULT_PAPER) }
         item {
             Column(

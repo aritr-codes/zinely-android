@@ -14,6 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Rebuilt the public website around an expressive, DIY-inspired working-desk presentation with three
+  sanitized light-mode renders produced from the canonical HTML mockups. No private device photos are used.
+- Added concise public Changelog and Roadmap pages. The roadmap separates planned work, explorations, and
+  uncommitted ideas so it does not present tentative work as a promise.
+- Added an optional, non-autoplaying HTML fold-replay experiment with keyboard-operable controls, persistent
+  written instructions, and a reduced-motion path. It remains a prototype and does not alter the app.
+
+### Changed
+
+- Replaced the standalone website Accessibility page with a short accessibility statement and contact route
+  in the home-page About section. Accessibility remains a site-wide implementation requirement rather than a
+  primary navigation destination.
+- Simplified the in-app About surface by removing the duplicated product story. It still provides the
+  default-paper preference, bundled-font licences, offline/privacy assurance, and installed app version.
+
 ## [0.9.0-beta.4-r3] — 2026-08-31 — Readable dark-mode confirmations
 
 This focused beta.4 maintenance revision carries `versionCode 9`. It installs over earlier

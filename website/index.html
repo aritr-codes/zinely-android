@@ -6,11 +6,12 @@
   <meta name="theme-color" content="#E9E29B">
   <meta name="description" content="Make an eight-page printable zine on Android. Zinely works offline, with no account, analytics, or cloud.">
   <meta property="og:title" content="Zinely — make a little zine">
-  <meta property="og:description" content="Photos, words, and whatever you feel like. It folds into a tiny book.">
+  <meta property="og:description" content="Photos, words, and simple art become a tiny book you can print and fold at home.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://aritr-codes.github.io/zinely-android/">
   <meta property="og:image" content="https://aritr-codes.github.io/zinely-android/assets/logo.webp">
   <title>Zinely — make a little zine</title>
+  <link rel="canonical" href="https://aritr-codes.github.io/zinely-android/">
   <link rel="icon" href="assets/logo.webp" type="image/webp">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
@@ -23,9 +24,9 @@
       <span>Zinely</span>
     </a>
     <nav aria-label="Primary navigation">
+      <a href="#see-zinely">See Zinely</a>
       <a href="#how-it-works">How it works</a>
-      <a href="privacy/">Privacy</a>
-      <a href="accessibility/">Accessibility</a>
+      <a href="#fold-guide">Fold guide</a>
     </nav>
   </header>
 
@@ -33,27 +34,52 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-copy">
         <p class="eyebrow">A tiny print studio for Android</p>
-        <h1 id="hero-title">Make a little zine.</h1>
-        <p class="lede">Photos, words, and whatever you feel like. Zinely turns them into an eight-page booklet you can print, cut, and fold at home.</p>
+        <h1 id="hero-title"><span>Make a little</span><span>zine.</span></h1>
+        <p class="lede">Bring together photos, words, and simple art. Zinely turns them into an eight-page booklet you can print, cut, fold, and pass on.</p>
         <div class="actions">
           <a class="button primary" href="https://github.com/aritr-codes/zinely-android/releases/download/v0.9.0-beta.4-r3/zinely-0.9.0-beta.4-r3-release.apk">Download beta for Android</a>
-          <a class="button secondary" href="https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3">Read the release notes</a>
+          <a class="button secondary" href="#see-zinely">See how it looks</a>
         </div>
         <h2 class="visually-hidden" id="trust-title">Zinely at a glance</h2>
-        <ul class="trust-list">
+        <ul class="trust-list" aria-labelledby="trust-title">
           <li>Works offline</li>
           <li>No account</li>
           <li>No analytics</li>
           <li>Android 7.0+</li>
         </ul>
-        <p class="beta-note"><strong>Public beta:</strong> the APK is installed outside Google Play. Back up your zines before updating or uninstalling. Using Zinely 0.8.0 or older? It cannot update directly. Preserve your work before uninstalling—<a href="https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3">read the installation notes</a>.</p>
+        <p class="beta-note"><strong>Public beta:</strong> this APK installs outside Google Play. Back up your zines before updating or uninstalling. If you use Zinely 0.8.0 or older, preserve your work before uninstalling—<a href="https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3">read the installation notes</a>.</p>
       </div>
 
-      <figure class="phone-shot">
+      <figure class="paper-story">
         <span class="tape" aria-hidden="true"></span>
-        <img src="assets/library.png" width="432" height="768" alt="Zinely’s My Shelf screen showing a collection of handmade zine covers">
-        <figcaption>Your zines, together on one shelf.</figcaption>
+        <div class="paper-story-sheet" aria-hidden="true">
+          <span>8</span><span>1</span><span>2</span><span>7</span>
+          <span>6</span><span>3</span><span>4</span><span>5</span>
+        </div>
+        <figcaption><strong>One sheet</strong><span aria-hidden="true"> → </span><strong>one little book</strong></figcaption>
       </figure>
+    </section>
+
+    <section class="gallery-section" id="see-zinely" aria-labelledby="gallery-title">
+      <div class="section-heading">
+        <p class="eyebrow">See the whole journey</p>
+        <h2 id="gallery-title">A working zine desk, in your pocket.</h2>
+        <p>These light-mode views are rendered from Zinely’s canonical HTML mockups using fictional zines—not photos from anyone’s phone.</p>
+      </div>
+      <div class="mockup-gallery">
+        <figure class="mockup-card">
+          <div class="mockup-frame"><img src="assets/mockup-shelf.webp" width="390" height="812" alt="Zinely’s light-mode My Shelf screen with six fictional handmade zine covers"></div>
+          <figcaption><strong>Keep your zines together.</strong> Start a new one or return to something unfinished.</figcaption>
+        </figure>
+        <figure class="mockup-card">
+          <div class="mockup-frame"><img src="assets/mockup-bench.webp" width="390" height="812" loading="lazy" alt="Zinely’s light-mode editing bench showing a fictional garden zine page and editing controls"></div>
+          <figcaption><strong>Work directly on the page.</strong> Add, arrange, reframe, and undo without leaving the bench.</figcaption>
+        </figure>
+        <figure class="mockup-card">
+          <div class="mockup-frame"><img src="assets/mockup-proof.webp" width="390" height="812" loading="lazy" alt="Zinely’s light-mode Proof screen showing a fictional zine cover and Save PDF controls"></div>
+          <figcaption><strong>Make it physical.</strong> Save one correctly imposed PDF, then print and fold it.</figcaption>
+        </figure>
+      </div>
     </section>
 
     <section class="steps" id="how-it-works" aria-labelledby="steps-title">
@@ -64,7 +90,7 @@
       <ol class="step-grid">
         <li>
           <span class="step-number" aria-hidden="true">1</span>
-          <h3>Add what you love</h3>
+          <h3>Add what matters</h3>
           <p>Bring in photos, write a few words, and add a little art.</p>
         </li>
         <li>
@@ -80,13 +106,54 @@
       </ol>
     </section>
 
-    <section class="privacy-card" aria-labelledby="privacy-title">
-      <div class="privacy-mark" aria-hidden="true">Z</div>
+    <section class="fold-lab" id="fold-guide" aria-labelledby="fold-title">
+      <div class="fold-copy">
+        <p class="eyebrow">Prototype on the workbench</p>
+        <h2 id="fold-title">See one fold at a time.</h2>
+        <p>The app already gives you eight tap-through instructions. This prototype tests whether a short, optional replay makes each physical action easier to understand.</p>
+        <p class="fold-principle"><strong>The words and final diagram always remain.</strong> Motion never carries the instruction by itself.</p>
+      </div>
+      <div class="fold-demo" data-fold-demo>
+        <p class="fold-step" id="fold-step-label">Step 1 of 3</p>
+        <div class="fold-stage" role="img" aria-labelledby="fold-step-label fold-instruction">
+          <div class="fold-paper" aria-hidden="true">
+            <span class="crease"></span>
+            <span class="folding-half"></span>
+            <span class="cut-line"></span>
+            <span class="push-left"></span>
+            <span class="push-right"></span>
+          </div>
+        </div>
+        <p id="fold-instruction" class="fold-instruction">Fold the right half over the left half.</p>
+        <div class="fold-actions">
+          <button class="button secondary fold-show" type="button">Show this fold</button>
+          <button class="button quiet fold-next" type="button">Next example</button>
+        </div>
+        <p class="fold-status visually-hidden" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="about-card" id="about" aria-labelledby="about-title">
+      <div class="about-mark" aria-hidden="true">Z</div>
       <div>
-        <p class="eyebrow">Quietly private</p>
-        <h2 id="privacy-title">Your zines stay yours.</h2>
-        <p>Zinely works offline. There is no sign-in, advertising, tracking, analytics, or cloud upload. Your work stays on your device unless you choose to save, share, or back it up.</p>
+        <p class="eyebrow">About Zinely</p>
+        <h2 id="about-title">Small enough to make. Real enough to keep.</h2>
+        <p>Zinely is an Android app for making eight-page mini zines from photos, words, and simple art. It began with a wish to make something personal for someone else—without an account, a feed, or sending your work to a cloud.</p>
+        <p>Make it on your phone. Print one sheet. Cut, fold, and pass it on.</p>
+        <h3 id="accessibility">Accessibility</h3>
+        <p>This website is designed toward WCAG 2.1 Level AA, with keyboard access, visible focus, semantic structure, readable contrast, responsive reflow, and reduced-motion support. If something gets in your way, email <a href="mailto:aritr.g06@gmail.com">aritr.g06@gmail.com</a>.</p>
         <a class="text-link" href="privacy/">Read the privacy policy <span aria-hidden="true">→</span></a>
+      </div>
+    </section>
+
+    <section class="project-notes" aria-labelledby="notes-title">
+      <div class="section-heading">
+        <p class="eyebrow">Open notebook</p>
+        <h2 id="notes-title">What changed, and what might come next.</h2>
+      </div>
+      <div class="note-links">
+        <a href="changelog/"><strong>Changelog</strong><span>Important releases and fixes, newest first.</span></a>
+        <a href="roadmap/"><strong>Roadmap</strong><span>Planned work, explorations, and ideas that are not commitments.</span></a>
       </div>
     </section>
 
@@ -102,12 +169,16 @@
 
   <footer>
     <p><strong>Zinely</strong> — physical media instead of social media.</p>
-    <div>
+    <nav aria-label="Footer navigation">
+      <a href="#about">About</a>
+      <a href="#accessibility">Accessibility</a>
+      <a href="changelog/">Changelog</a>
+      <a href="roadmap/">Roadmap</a>
       <a href="privacy/">Privacy</a>
-      <a href="accessibility/">Accessibility</a>
       <a href="mailto:aritr.g06@gmail.com">Contact</a>
       <a href="https://github.com/aritr-codes/zinely-android">GitHub</a>
-    </div>
+    </nav>
   </footer>
+  <script src="assets/site.js"></script>
 </body>
 </html>

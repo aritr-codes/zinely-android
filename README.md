@@ -5,11 +5,13 @@ Turn photos and words into a physical, foldable zine in minutes — entirely on 
 
 [Website](https://aritr-codes.github.io/zinely-android/) ·
 [Privacy policy](https://aritr-codes.github.io/zinely-android/privacy/) ·
+[Changelog](https://aritr-codes.github.io/zinely-android/changelog/) ·
+[Roadmap](https://aritr-codes.github.io/zinely-android/roadmap/) ·
 [Download the latest beta](https://github.com/aritr-codes/zinely-android/releases/tag/v0.9.0-beta.4-r3)
 
 > *Physical media instead of social media.*
 
-[![status](https://img.shields.io/badge/status-in--development-green)](docs/ROADMAP.md)
+[![status](https://img.shields.io/badge/status-public--beta-green)](docs/ROADMAP.md)
 [![platform](https://img.shields.io/badge/platform-Android-green)]()
 [![stack](https://img.shields.io/badge/Kotlin-Compose-7F52FF)]()
 
@@ -39,9 +41,14 @@ No existing product is **offline-first + account-free + native Android + a real 
 
 ## Status
 
-In development — the app boots onto the **My Shelf** library and mounts a working per-project **editor**. Shipped so far: **S1** imposition engine (`core:model` + `core:imposition`, milestone `v0.1.0-imposition-engine`); **S2** persistence core (`core:data` contracts + pure-JVM `core:data-storage` durability/asset store) plus the Android `data-android` adapters; **S3** render (pure `core:render` + `render-android` PDF/raster backends); **S4** the editor (`core:editor` MVI core + `feature:editor` interaction surface, wired into `:app` with interactive image import and autosave); **S5** the unified Proof experience (read the finished zine, save or share a print-ready vector PDF or 300 DPI PNG, then follow the accessible eight-step fold guide); and **S6** the multi-project layer (Room-backed `ProjectRepository` index over files-as-truth, plus the generated-cover shelf — create, rename, duplicate, and undoable delete — wired as the navigation root). Local `.zine` backup and recovery are also shipped.
+Public beta — the app boots onto the **My Shelf** library and mounts a working per-project **editor**. Shipped so far: **S1** imposition engine (`core:model` + `core:imposition`, milestone `v0.1.0-imposition-engine`); **S2** persistence core (`core:data` contracts + pure-JVM `core:data-storage` durability/asset store) plus the Android `data-android` adapters; **S3** render (pure `core:render` + `render-android` PDF/raster backends); **S4** the editor (`core:editor` MVI core + `feature:editor` interaction surface, wired into `:app` with interactive image import and autosave); **S5** the unified Proof experience (read the finished zine, save or share a print-ready vector PDF or 300 DPI PNG, then follow the accessible eight-step fold guide); and **S6** the multi-project layer (Room-backed `ProjectRepository` index over files-as-truth, plus the generated-cover shelf — create, rename, duplicate, and undoable delete — wired as the navigation root). Local `.zine` backup and recovery are also shipped.
 
 Persistence is **files-as-truth**: `DocumentRepository` writes `projects/<id>/document.json` atomically, with the Room `projects` table as a rebuildable index ([ADR-042](docs/DECISIONS.md#adr-042)). Still deferred: the Settings screen and the asset GC/sweeper. See the [roadmap](docs/ROADMAP.md).
+
+The public website uses sanitized, light-mode renders from the canonical HTML prototypes rather than private
+device photos. It includes a concise About section, public changelog and non-committal roadmap, plus an
+HTML-only fold-replay experiment. The existing in-app fold guide remains unchanged until that experiment is
+shown to improve understanding enough to justify another app interaction.
 
 ---
 

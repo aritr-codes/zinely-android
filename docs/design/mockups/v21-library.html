@@ -3,6 +3,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Zinely V2.1 — Library (handmade direction, PROPOSAL)</title>
 
+<script>
+if (new URLSearchParams(location.search).has('gallery')) {
+  document.documentElement.dataset.gallery = 'true';
+  document.documentElement.dataset.theme = 'light';
+}
+</script>
+
 <!-- ┌─────────────────────────────────────────────────────────────────────────────┐
      │  V2.1 LIBRARY — DESIGN-FROZEN (ADR-099, owner, 2026-08-10).                 │
      │                                                                             │
@@ -387,6 +394,9 @@ body{
 .ctl.on{background:var(--leaf);color:var(--on-leaf)}
 .grp{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
   font-weight:700;width:100%;text-align:center;margin-top:var(--gap-xs)}
+:root[data-gallery="true"] body{width:390px;height:812px;padding:0;overflow:hidden;display:block;background:var(--desk)}
+:root[data-gallery="true"] body>.cap,:root[data-gallery="true"] body>.controls{display:none}
+:root[data-gallery="true"] .phone{margin:0;border:0;border-radius:0;box-shadow:none}
 </style>
 
 <p class="cap lead"><span class="badge">frozen · ADR-099</span><br>

@@ -3,6 +3,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Zinely V2.1 — Bench (handmade direction, PROPOSAL)</title>
 
+<script>
+if (new URLSearchParams(location.search).has('gallery')) {
+  document.documentElement.dataset.gallery = 'true';
+  document.documentElement.dataset.theme = 'light';
+}
+</script>
+
 <!-- ┌─────────────────────────────────────────────────────────────────────────────┐
      │  V2.1 BENCH — DESIGN-FROZEN (ADR-099, owner, 2026-08-10).                    │
      │                                                                             │
@@ -545,6 +552,10 @@ button:focus-visible,.el:focus-visible{outline:2px solid var(--ink);outline-offs
   *{transition-duration:.05ms!important}
   .caret{animation:none;opacity:1}
 }
+:root[data-gallery="true"] body{width:390px;height:812px;padding:0;overflow:hidden;display:block;background:var(--bench)}
+:root[data-gallery="true"] body>.cap,:root[data-gallery="true"] body>.caption,
+:root[data-gallery="true"] body>.controls{display:none}
+:root[data-gallery="true"] .phone{margin:0;border:0;border-radius:0;box-shadow:none}
 </style>
 
 <p class="cap lead"><span class="badge">frozen · ADR-099</span><br>

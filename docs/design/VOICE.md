@@ -95,16 +95,14 @@ The canonical strings. Format: **preferred** — *(avoid: the generic-Android ve
 
 ### About Zinely (internal Colophon surface)
 
-The [D-079](V2-SPEC-DEFECTS.md#d-079) owner ruling makes this the only surface where Zinely describes its
-privacy/offline model as product copy. Error and recovery copy may still say work is safe when that fact is
-the answer to the current failure. `Colophon` remains the architectural small-press term, but it is not
+The public website owns Zinely's origin story and longer product explanation. The in-app surface remains a
+compact utility because it holds the default-paper preference, bundled-font licences, offline/privacy
+assurance, and installed version. Error and recovery copy may still say work is safe when that fact is the
+answer to the current failure. `Colophon` remains the architectural small-press term, but it is not
 maker-facing copy: plain `About` gets the maker there, and `About Zinely` names the destination.
 
 - Shelf action: **"About"**
 - Title and pane title: **"About Zinely"**
-- Featured opening: **"Some things deserve pages."**
-- Intro: **"Zinely began with a simple wish: to make something for someone. We hope it helps you make
-  something worth keeping."**
 - Licence Back label: **"Back to About Zinely"**
 - Paper heading and explanation: **"Paper for new zines"** / **"We’ll suggest this paper when you start. You
   can always choose the other one."**

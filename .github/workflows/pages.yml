@@ -7,7 +7,6 @@ on:
       - website/**
       - .github/workflows/pages.yml
       - app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp
-      - feature/editor/src/test/roborazzi/v21_library_content_light.png
       - docs/PRIVACY-POLICY.md
   workflow_dispatch:
 
@@ -33,7 +32,6 @@ jobs:
           mkdir -p _pages_source/assets _pages_source/privacy
           cp -R website/. _pages_source/
           cp app/src/main/res/mipmap-xxxhdpi/ic_launcher.webp _pages_source/assets/logo.webp
-          cp feature/editor/src/test/roborazzi/v21_library_content_light.png _pages_source/assets/library.png
           printf '%s\n' '---' 'layout: policy' 'permalink: /privacy/' '---' > _pages_source/privacy/index.md
           cat docs/PRIVACY-POLICY.md >> _pages_source/privacy/index.md
 

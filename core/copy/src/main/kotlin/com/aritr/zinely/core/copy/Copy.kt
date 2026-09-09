@@ -1003,10 +1003,6 @@ public object Copy {
     public object Colophon {
         public const val ACTION: String = "About"
         public const val TITLE: String = "About Zinely"
-        public const val TAGLINE: String = "Some things deserve pages."
-        public const val INTRO: String =
-            "Zinely began with a simple wish: to make something for someone. " +
-                "We hope it helps you make something worth keeping."
         public const val DEFAULT_PAPER: String = "Paper for new zines"
         public const val PAPER_EXPLANATION: String =
             "We’ll suggest this paper when you start. You can always choose the other one."

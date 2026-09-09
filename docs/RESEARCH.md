@@ -451,3 +451,51 @@ Sources: [Android Emoji2 guide](https://developer.android.com/develop/ui/views/t
 [ReplacementSpan API](https://developer.android.com/reference/android/text/style/ReplacementSpan) ·
 [Noto Emoji repository](https://github.com/googlefonts/noto-emoji) ·
 [Noto usage guidance](https://github.com/notofonts/noto-docs/blob/main/docs/website/use.md)
+
+## R16. Public product site and optional fold motion — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+### R16.1 Show the small product directly — ✅ VERIFIED
+
+W3C's carousel guidance requires complete keyboard operation, announced changes, focus care, and a way to pause
+automatic movement, while noting that carousel usability is disputed. Google Play requires promotional images to
+represent the app accurately. Responsive-image guidance recommends intrinsic dimensions and deferring images below
+the initial viewport. A visible, non-rotating gallery of three truthful app stages is therefore a better fit for
+Zinely than a carousel or a private-device photo shoot.
+
+**Sources:** [W3C carousel tutorial](https://www.w3.org/WAI/tutorials/carousels/) ·
+[Google Play preview-asset guidance](https://support.google.com/googleplay/android-developer/answer/15191715) ·
+[web.dev responsive images](https://web.dev/learn/design/responsive-images).
+
+### R16.2 Motion must remain optional and redundant — ✅ VERIFIED
+
+WCAG 2.1 requires keyboard access, reflow, sufficient contrast, and user control of moving content. Its animation
+guidance requires motion triggered by interaction to be disableable unless essential. A fold replay may supplement
+an instruction, but may not become the only explanation. It should start only from a native control, preserve the
+written step and final diagram, announce the result without moving focus, and collapse to a static result when the
+user requests reduced motion.
+
+**Sources:** [WCAG 2.1](https://www.w3.org/TR/WCAG21/) ·
+[W3C animation from interactions](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html).
+
+### R16.3 Public information should be curated, short, and qualified — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+W3C recommends that an accessibility statement identify the commitment or standard, contact path, and known
+limitations in simple language, placed somewhere easy to find; it does not require primary navigation. Keep a
+Changelog recommends curated, chronological, user-facing entries rather than raw commit logs. GOV.UK interface
+writing recommends starting with less, leading with important words, and removing duplication. For Zinely, embed a
+concise accessibility statement in About, give growing Changelog and Roadmap material their own pages, and separate
+roadmap items into Planned, Exploring, and Not committed without dates or guarantees.
+
+**Sources:** [W3C accessibility statements](https://www.w3.org/WAI/planning/statements/) ·
+[Keep a Changelog](https://keepachangelog.com/) ·
+[GOV.UK writing for user interfaces](https://www.gov.uk/service-manual/design/writing-for-user-interfaces).
+
+### R16.4 Visual references should inform materiality, not branding — ✅ VERIFIED + 🟦 RECOMMENDATION
+
+NIC Ice Creams and The Belgian Waffle Co. use confident display type, crafted section transitions, playful
+category framing, and tactile product presentation. Zinely should borrow that energy without copying food imagery,
+logos, commercial density, or repeated promotional content. Its own translation is a professional zine workbench:
+paper layers, tape, ink marks, imperfect alignment, and direct interactions around truthful product views.
+
+**Sources:** [NIC Ice Creams](https://www.nicicecreams.com/) ·
+[The Belgian Waffle Co.](https://thebelgianwaffle.co/).

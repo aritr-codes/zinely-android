@@ -123,6 +123,7 @@
 | [ADR-111](#adr-111) | **The supplied collage owns launcher identity; launch is a system-only transition with no delay or marketing screen.** | Accepted |
 | [ADR-112](#adr-112) | **Emoji printing is a September launch requirement, implemented through one bundled, deterministic preview/export path.** Bundled Emoji2 with forced replacement owns the glyphs; system/OEM fallback remains forbidden. | Accepted |
 | [ADR-113](#adr-113) | **Flip is one mobile verb with two local-axis toggles for a single Photo or Art element.** Text and multi-selection are excluded; persistence requires an honest schema v3 rather than a lossy v2 additive field. | Accepted |
+| [ADR-114](#adr-114) | **Public story on the website; installed-app utility in About; fold replay remains an HTML experiment.** The site uses sanitized canonical mockups, a concise embedded accessibility statement, curated release notes, and a non-committal roadmap. | Accepted |
 
 > ADR-014, ADR-016 to ADR-018 are **follow-ups surfaced by the [ADR-007](#adr-007) release-candidate audit** (2026-06-19): rationale/risks/future only, no decision, no engine change. **ADR-015 was resolved during S2A** (2026-06-19) when document validation introduced the first real `Severity.WARNING`.
 > ADR-019 to ADR-023 resolve the **S2 open questions O1–O5** from the [data-storage spike](spikes/data-storage-layer.md#8-open-questions--candidate-adrs); each records alternatives, tradeoffs, and a recommendation, was Codex-reviewed, and is Accepted where justified.
@@ -12878,3 +12879,40 @@ Acceptance requires v2→v3 migration/round-trip/anti-downgrade tests; reducer n
 proofs; asymmetric X/Y/X+Y render matrices for Photo and Art; Reframe orientation and screen-directional pan;
 Compose order/state/focus/large-text and platform-tree checks; shared preview/raster/PDF evidence; both Samsung
 device passes; and independent review of the actual repository state.
+
+## ADR-114 {#adr-114}
+
+### Put the public story on the website; keep installed-app utility in About
+
+**Status:** Accepted — owner-approved 2026-09-09
+**Date:** 2026-09-09 — **Supersedes:** nothing — **Extends:** [ADR-008](#adr-008),
+[ADR-060](#adr-060), [ADR-099](#adr-099)
+
+Evidence and recommendations are recorded in [R16](RESEARCH.md#r16-public-product-site-and-optional-fold-motion--verified--recommendation).
+
+#### Decision
+
+1. The public website owns the short product story, a three-view product gallery, public release notes, and a
+   plainly qualified roadmap. The gallery is generated from the canonical light-mode HTML prototypes using
+   fictional content; private device photos are neither required nor published.
+2. Accessibility is a site-wide implementation requirement, not a marketing category. The former standalone
+   Accessibility page is retired. A concise statement, the supported standard, and a contact route remain in
+   the home-page About section and footer, while the privacy policy keeps its stable page.
+3. The in-app **About Zinely** surface stays because it contains installed-app utilities and locally relevant
+   information: default paper, bundled-font licences, offline/privacy assurance, and the running version. Its
+   product-story opening is removed to avoid duplicating the website. Moving those functions elsewhere would
+   add navigation and reduce clarity rather than simplify the app.
+4. The fold replay is an HTML-only experiment. It never autoplays, leaves the written instruction and final
+   diagram available, works from native buttons, reports completion without moving focus, and collapses to a
+   static result under reduced motion. The existing Compose fold guide does not change unless comparison or
+   user evidence shows that replay materially improves comprehension across all eight steps and large text.
+5. The public roadmap separates **Planned**, **Exploring**, and **Not committed**. It carries no delivery dates
+   or guarantees and remains a public projection of the repository's canonical engineering documents.
+
+#### Why this is the smaller product
+
+A visible, non-rotating gallery explains the product faster than a carousel and makes all three stages
+available to keyboard, touch, and screen-reader users without hidden state. Keeping the app's About utility
+avoids creating a new Settings or Licences route, while removing its duplicated story makes the surface more
+direct. Deferring Compose replay prevents a prototype from becoming eight new animated states before its
+benefit is established.

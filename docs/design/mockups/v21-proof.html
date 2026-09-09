@@ -3,9 +3,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Zinely V2.1 — Proof (handmade direction, PROPOSAL)</title>
 
+<script>
+if (new URLSearchParams(location.search).has('gallery')) {
+  document.documentElement.dataset.gallery = 'true';
+  document.documentElement.dataset.theme = 'light';
+}
+if (new URLSearchParams(location.search).get('fontScale') === '1.8') {
+  document.documentElement.style.fontSize = '180%';
+}
+</script>
+
 <!-- D-079 AMENDMENT · 2026-08-24: the ready-row privacy suffix is removed. Product-level
      offline/privacy reassurance appears once in the Shelf-owned Colophon. "Saved to your phone"
      remains because it identifies the completed save destination, not the product's privacy model. -->
+
+<!-- SHOW THIS FOLD PROTOTYPE · 2026-09-09: HTML ONLY, NOT ACCEPTED FOR COMPOSE.
+     The existing eight-step instruction, caption, final-state diagram, navigation, and completion
+     remain authoritative. This additive button replays one short paper movement on request so its
+     clarity can be judged before any app change. It is hidden unless `foldReplay=1` is supplied,
+     never autoplays, and reduced motion skips it. The canonical default view therefore stays frozen. -->
 
 <!-- ┌─────────────────────────────────────────────────────────────────────────────┐
      │  V2.1 PROOF — DESIGN-FROZEN (ADR-099, owner, 2026-08-10).                    │
@@ -511,6 +527,34 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
   margin:var(--gap-md) var(--gap-sm) 0;line-height:1.5;min-height:88px}
 .foldnow{display:block;font-family:var(--sans);font-size:.74rem;font-weight:600;
   color:var(--leaf-text);margin-top:var(--gap-xs)}
+.foldshow[hidden]{display:none}
+.foldshow{display:block;min-height:48px;margin:var(--gap-sm) auto 0;padding:0 var(--gap-lg);
+  border:1.5px solid var(--ink);border-radius:var(--br-pill);background:var(--paper);color:var(--ink);
+  box-shadow:2px 2px 0 var(--ink-line);font:600 .82rem var(--sans);cursor:pointer}
+.foldshow:active{transform:translate(2px,2px);box-shadow:none}
+.foldshow:focus-visible{outline:3px solid var(--berry);outline-offset:2px}
+.foldreplay{opacity:0;pointer-events:none;fill:var(--leaf-tint);fill-opacity:.7;stroke:var(--leaf-text);
+  stroke-width:2;transform-box:fill-box;transform-origin:center}
+.folddiag.replaying .foldreplay{opacity:1}
+.folddiag.replaying[data-step="0"] .foldreplay{animation:replay-fold-left .82s ease-in-out both}
+.folddiag.replaying[data-step="1"] .foldreplay{animation:replay-fold-up .82s ease-in-out both}
+.folddiag.replaying[data-step="2"] .foldreplay{animation:replay-fold-left-small .82s ease-in-out both}
+.folddiag.replaying[data-step="3"] .foldreplay{animation:replay-open .82s ease-in-out both}
+.folddiag.replaying[data-step="4"] .foldreplay{animation:replay-cut .72s ease-out both}
+.folddiag.replaying[data-step="5"] .foldreplay{animation:replay-fold-up .82s ease-in-out both}
+.folddiag.replaying[data-step="6"] .foldreplay.replay-left{animation:replay-push-left .82s ease-in-out both}
+.folddiag.replaying[data-step="6"] .foldreplay.replay-right{animation:replay-push-right .82s ease-in-out both}
+.folddiag.replaying[data-step="7"] .foldreplay{animation:replay-wrap .82s ease-in-out both}
+@keyframes replay-fold-left{to{transform:translateX(-88px) scaleX(-1)}}
+@keyframes replay-fold-left-small{to{transform:translateX(-44px) scaleX(-1)}}
+@keyframes replay-fold-up{to{transform:translateY(-68px) scaleY(-1)}}
+@keyframes replay-open{from{transform:scaleX(.5)}to{transform:scaleX(1)}}
+@keyframes replay-cut{from{stroke-dashoffset:48}to{stroke-dashoffset:0}}
+@keyframes replay-push-left{to{transform:translateX(44px)}}
+@keyframes replay-push-right{to{transform:translateX(-44px)}}
+@keyframes replay-wrap{to{transform:translate(-22px,18px) rotate(78deg)}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
 /* ✱ was one centred row.  Measured: 52 + 18 + 8×26 + 18 + 52 = 348px of intrinsic width, against the
    284px a 360px phone leaves inside the drawer's padding — the drawer clips, so BOTH arrows lost more
    than half their touch target on every one of eight steps.  Flexing the dots inside that row was the
@@ -563,7 +607,11 @@ body{margin:0;padding:var(--gap-xl) var(--gap-lg) 64px;background:var(--stage);c
 @media (prefers-reduced-motion:reduce){
   .arrow.mv{animation:none;opacity:1}
   .drawer,.scrim,.btn{transition-duration:.01ms}
+  .folddiag.replaying .foldreplay{animation:none!important;opacity:0}
 }
+:root[data-gallery="true"] body{width:390px;height:812px;padding:0;overflow:hidden;display:block;background:var(--desk)}
+:root[data-gallery="true"] body>.cap,:root[data-gallery="true"] body>.controls{display:none}
+:root[data-gallery="true"] .phone{margin:0;border:0;border-radius:0;box-shadow:none}
 </style>
 
 <p class="cap lead"><span class="badge">frozen · ADR-099</span><br>
@@ -710,6 +758,8 @@ single actions drawn on your own printed sheet.</p>
       <div class="foldstage"><svg class="folddiag" id="foldDiagram" viewBox="0 0 230 172"
         role="img" aria-labelledby="foldCap"></svg></div>
       <p class="foldcap" id="foldCap"></p>
+      <button class="foldshow" id="foldShow" type="button" aria-describedby="foldCap" onclick="replayFold()" hidden>Show this fold</button>
+      <p class="sr-only" id="foldReplayStatus" aria-live="polite"></p>
       <div class="foldnav">
         <button class="fnav" id="fPrev" aria-label="Previous fold step" onclick="foldStep(-1)">
           <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
@@ -977,9 +1027,28 @@ const STEPS = [
      + move(CX+58, CY-34, CX+42, CY+34, 26) }
 ];
 
+function replayGraphic(i){
+  switch(i){
+    case 0: return `<rect class="foldreplay" x="${CX}" y="${Y0}" width="${X1-CX}" height="${Y1-Y0}" rx="2"/>`;
+    case 1: return `<rect class="foldreplay" x="${Q1}" y="${CY}" width="${Q3-Q1}" height="${Y1-CY}" rx="2"/>`;
+    case 2: return `<rect class="foldreplay" x="${CX}" y="${CY-34}" width="${Q3-CX}" height="68" rx="2"/>`;
+    case 3: return `<rect class="foldreplay" x="${X0}" y="${Y0}" width="${X1-X0}" height="${Y1-Y0}" rx="2"/>`;
+    case 4: return `<line class="foldreplay" x1="${Q1}" y1="${CY}" x2="${CX}" y2="${CY}" fill="none" stroke-dasharray="48" stroke-dashoffset="48"/>`;
+    case 5: return `<rect class="foldreplay" x="${X0}" y="${CY}" width="${X1-X0}" height="${Y1-CY}" rx="2"/>`;
+    case 6: return `<rect class="foldreplay replay-left" x="${X0}" y="${CY-34}" width="44" height="68" rx="2"/><rect class="foldreplay replay-right" x="${X1-44}" y="${CY-34}" width="44" height="68" rx="2"/>`;
+    default: return `<rect class="foldreplay" x="${CX+30}" y="${CY-48}" width="28" height="96" rx="2"/>`;
+  }
+}
+
 let step = 0;
+let replayTimer;
+const foldReplayPrototype = new URLSearchParams(location.search).get('foldReplay') === '1';
 function drawFold(){
-  document.getElementById('foldDiagram').innerHTML = STEPS[step].d;
+  clearTimeout(replayTimer);
+  const diagram = document.getElementById('foldDiagram');
+  diagram.classList.remove('replaying');
+  diagram.dataset.step = String(step);
+  diagram.innerHTML = STEPS[step].d + (foldReplayPrototype ? replayGraphic(step) : '');
   document.getElementById('foldCap').innerHTML =
     STEPS[step].cap + `<span class="foldnow">${STEPS[step].now}</span>`;
   document.getElementById('stepNo').textContent = `Step ${step+1} of ${STEPS.length}`;
@@ -990,6 +1059,28 @@ function drawFold(){
   document.getElementById('fNext').hidden = last;
   document.getElementById('fDone').hidden = !last;
   document.getElementById('foldIntro').hidden = step !== 0;
+  document.getElementById('foldShow').hidden = !foldReplayPrototype;
+  document.getElementById('foldShow').textContent = 'Show this fold';
+  document.getElementById('foldReplayStatus').textContent = '';
+}
+
+function replayFold(){
+  const diagram = document.getElementById('foldDiagram');
+  const button = document.getElementById('foldShow');
+  const status = document.getElementById('foldReplayStatus');
+  clearTimeout(replayTimer);
+  diagram.classList.remove('replaying');
+  void diagram.getBoundingClientRect();
+  button.textContent = 'Show again';
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches){
+    status.textContent = `Step ${step+1} result shown without motion. ${STEPS[step].now}`;
+    return;
+  }
+  diagram.classList.add('replaying');
+  replayTimer = setTimeout(()=>{
+    diagram.classList.remove('replaying');
+    status.textContent = `Step ${step+1} fold shown. ${STEPS[step].now}`;
+  }, 860);
 }
 
 /* The band has to hear the claim. Re-stating "then fold it up" under a stamp primary, to somebody who
@@ -1062,6 +1153,13 @@ addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft')  foldOpen ? foldStep(-1) : turn(-1);
   else if (e.key === 'ArrowRight') foldOpen ? foldStep(1)  : turn(1);
 });
+const prototypeParams = new URLSearchParams(location.search);
+if (prototypeParams.get('gallery') === 'fold') {
+  const requestedStep = Number(prototypeParams.get('step') || 1);
+  openDrawer('fold');
+  goStep(Number.isFinite(requestedStep) ? requestedStep - 1 : 0);
+  if (foldReplayPrototype && prototypeParams.has('replay')) setTimeout(replayFold, 100);
+}
 </script>
 
 <!-- ===========================================================================
